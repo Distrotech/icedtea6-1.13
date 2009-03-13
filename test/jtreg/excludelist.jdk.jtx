@@ -1,0 +1,18 @@
+# Exclude list for jdk tests. These tests require binary plugs to pass, or are
+# incorrect/obsolete
+
+#
+# Binary plugs
+#
+
+# snmp is not available in openjdk6
+com/sun/jmx/snmp/SnmpOidHashCode.java
+com/sun/jmx/snmp/TimeTicksWrapping.java
+
+#
+# Obsolete
+#
+
+# test checks a bug in CUPS/PostScript that has been fixed
+# see https://bugs.openjdk.java.net/show_bug.cgi?id=100022
+javax/print/attribute/PSCopiesFlavorTest.java

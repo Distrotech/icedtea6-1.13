@@ -1736,6 +1736,7 @@ check-jdk: stamps/jtreg.stamp
 	$(ICEDTEA_BOOT_DIR)/bin/java -jar test/jtreg.jar -v1 -a -ignore:quiet \
 		-w:test/jdk/JTwork -r:test/jdk/JTreport \
 		-s -jdk:`pwd`/$(BUILD_OUTPUT_DIR)/j2sdk-image \
+		-exclude:$(abs_top_srcdir)/test/jtreg/excludelist.jdk.jtx \
 		$(ICEDTEA_JTREG_OPTIONS) \
 		`pwd`/openjdk/jdk/test \
 	    | tee test/$@.log
