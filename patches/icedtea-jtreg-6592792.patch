@@ -1,0 +1,13 @@
+--- openjdk/jdk/test/com/sun/org/apache/xml/internal/ws/server.bak/Test6592792.sh	2009-03-13 15:08:37.000000000 -0400
++++ openjdk/jdk/test/com/sun/org/apache/xml/internal/ws/server/Test6592792.sh	2009-03-13 15:57:46.000000000 -0400
+@@ -52,7 +52,9 @@
+ 
+ ${TESTJAVA}${FS}bin${FS}java ${BIT_FLAG} -version
+ 
+-${TESTJAVA}${FS}bin${FS}javac ${BIT_FLAG} -d . -cp ${TESTJAVA}${FS}jre${FS}lib${FS}rt.jar ${TESTSRC}${FS}Test.java
++# the package com.sun.xml.internal.ws.server rt.jar is filtered by the symbol 
++# file; so ignore it
++${TESTJAVA}${FS}bin${FS}javac ${BIT_FLAG} -XDignore.symbol.file=true -d . ${TESTSRC}${FS}Test.java
+ 
+ ${TESTJAVA}${FS}bin${FS}java ${BIT_FLAG} -cp . Test
+ 

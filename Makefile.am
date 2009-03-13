@@ -662,6 +662,7 @@ ICEDTEA_PATCHES += \
 	patches/hotspot/$(HSBUILD)/icedtea-format.patch \
 	patches/icedtea-cc-interp-backedge.patch \
 	patches/icedtea-xml-encodinginfo.patch \
+	patches/icedtea-jtreg-6592792.patch \
 	$(DISTRIBUTION_PATCHES)
 
 stamps/extract.stamp: stamps/download.stamp
