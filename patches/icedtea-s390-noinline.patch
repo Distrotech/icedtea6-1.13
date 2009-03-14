@@ -1,0 +1,22 @@
+--- openjdk/corba/make/common/shared/Defs-java.gmk.orig	2009-03-13 06:30:44.000000000 +0100
++++ openjdk/corba/make/common/shared/Defs-java.gmk	2009-03-13 06:30:04.000000000 +0100
+@@ -32,7 +32,7 @@
+ # Memory related -J flags that all uses of java tools should use.
+ #
+ JAVA_MEM_FLAGS   = -Xmx$(MAX_VM_MEMORY)m
+-ifeq ($(ARCH), ia64)
++ifneq (,$(filter $(ARCH), ia64 s390))
+   # Special flags for javac on ia64 to work around a VM problem with
+   #   bad code generation during inlining (what version had this problem?):
+   #   Suspect this may not be needed anymore.
+--- openjdk/jdk/make/common/shared/Defs-java.gmk.orig	2009-03-13 00:07:32.000000000 +0100
++++ openjdk/jdk/make/common/shared/Defs-java.gmk	2009-03-13 07:40:42.000000000 +0100
+@@ -36,7 +36,7 @@
+ # Memory related -J flags that all uses of java tools should use.
+ #
+ JAVA_MEM_FLAGS   = -Xmx$(MAX_VM_MEMORY)m
+-ifeq ($(ARCH), ia64)
++ifneq (,$(filter $(ARCH), ia64 s390))
+   # Special flags for javac on ia64 to work around a VM problem with
+   #   bad code generation during inlining (what version had this problem?):
+   #   Suspect this may not be needed anymore.

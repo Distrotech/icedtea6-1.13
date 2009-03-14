@@ -86,6 +86,7 @@ The following patches are currently applied before the building of OpenJDK or Op
 * icedtea-cc-interp-backedge.patch: Remove some duplicated code in DO_BACKEDGE_CHECKS.
 * icedtea-xml-encodinginfo.patch: Fix possible StackOverflowError in EncodingInfo (PR295).
 * icedtea-jtreg-6592792.patch: Fix jtreg test for bug 6592792 so that it compiles.
+* icedtea-s390-noinline.patch: Add special flags for javac on s390 to work around a VM problem with bad code generation during inlining.
 
 The following patches are only applied to OpenJDK6 in IcedTea6:
 
