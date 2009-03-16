@@ -664,6 +664,7 @@ ICEDTEA_PATCHES += \
 	patches/icedtea-xml-encodinginfo.patch \
 	patches/icedtea-jtreg-6592792.patch \
 	patches/icedtea-s390-noinline.patch \
+	patches/icedtea-jtreg-hatrun.patch \
 	$(DISTRIBUTION_PATCHES)
 
 stamps/extract.stamp: stamps/download.stamp
