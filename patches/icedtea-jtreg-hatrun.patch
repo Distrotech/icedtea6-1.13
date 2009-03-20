@@ -1,5 +1,5 @@
---- openjdk/jdk/test/sun/tools/jhat/HatRun.java.orig	2009-03-16 15:01:45.000000000 -0400
-+++ openjdk/jdk/test/sun/tools/jhat/HatRun.java	2009-03-16 15:05:06.000000000 -0400
+--- openjdk/jdk/test/sun/tools/jhat/HatRun.java.orig	2009-03-20 09:55:39.000000000 -0400
++++ openjdk/jdk/test/sun/tools/jhat/HatRun.java	2009-03-20 09:56:48.000000000 -0400
 @@ -161,6 +161,7 @@
      public void runit(String class_name, String vm_options[])
      {
@@ -8,7 +8,14 @@
          String sdk_home  = (jre_home.endsWith("jre") ?
                              (jre_home + File.separator + "..") :
                              jre_home );
-@@ -176,21 +177,25 @@
+@@ -170,27 +171,31 @@
+                            os_arch.equals("amd64");
+         String isa_dir   = d64?(File.separator+os_arch):"";
+         String java      = jre_home
+-                             + File.separator + "bin" + isa_dir
++                             + File.separator + "bin"
+                              + File.separator + "java";
+         String jhat      = sdk_home + File.separator + "bin"
                             + File.separator + "jhat";
          /* Array of strings to be passed in for exec:
           *   1. java
