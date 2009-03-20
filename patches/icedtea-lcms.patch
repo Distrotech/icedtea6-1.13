@@ -1,0 +1,403 @@
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h	2008-11-25 04:06:04.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h	2009-03-20 11:12:53.000000000 -0400
+@@ -1445,7 +1445,17 @@
+ #endif
+ }
+ 
+-
++LCMS_INLINE void* _cmsCalloc(size_t nmemb, size_t size)
++{
++    size_t alloc = nmemb * size;
++    if (size == 0) {
++        return malloc(0);
++    }
++    if (alloc / size != nmemb) {
++        return NULL;
++    }
++    return malloc(alloc);
++}
+ 
+ // Clamp with saturation
+ 
+@@ -2061,6 +2071,11 @@
+ // Build a tone curve for K->K' if possible (only works on CMYK)
+ LPGAMMATABLE _cmsBuildKToneCurve(cmsHTRANSFORM hCMYK2CMYK, int nPoints);
+ 
++// Validates a LUT
++BOOL cdecl _cmsValidateLUT(LPLUT NewLUT);
++
++
++
+ // These are two VITAL macros, from converting between 8 and 16 bit
+ // representation.
+ 
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgamma.c	2008-11-25 04:06:04.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgamma.c	2009-03-20 11:12:49.000000000 -0400
+@@ -144,7 +144,7 @@
+        LPGAMMATABLE p;
+        size_t size;
+ 
+-       if (nEntries > 65530) {
++       if (nEntries > 65530 || nEntries <= 0) {
+                 cmsSignalError(LCMS_ERRC_WARNING, "Couldn't create gammatable of more than 65530 entries; 65530 assumed");
+                 nEntries = 65530;
+        }
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio0.c	2008-11-25 04:06:04.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio0.c	2009-03-20 11:12:53.000000000 -0400
+@@ -62,7 +62,7 @@
+ typedef struct {
+                 LPBYTE Block;           // Points to allocated memory
+                 size_t Size;            // Size of allocated memory
+-                int Pointer;            // Points to current location
++                size_t Pointer;         // Points to current location
+                 int FreeBlockOnClose;   // As title
+ 
+                 } FILEMEM;
+@@ -103,6 +103,21 @@
+      FILEMEM* ResData = (FILEMEM*) Icc ->stream;
+      LPBYTE Ptr;
+      size_t len = size * count;
++     size_t extent = ResData -> Pointer + len;
++
++     if (len == 0) {
++         return 0;
++     }
++
++     if (len / size != count) {
++         cmsSignalError(LCMS_ERRC_ABORTED, "Read from memory error. Integer overflow with count / size.");
++         return 0;
++     }
++
++     if (extent < len || extent < ResData -> Pointer) {
++         cmsSignalError(LCMS_ERRC_ABORTED, "Read from memory error. Integer overflow with len.");
++         return 0;
++     } 
+ 
+ 
+      if (ResData -> Pointer + len > ResData -> Size){
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio1.c	2008-11-25 04:06:04.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio1.c	2009-03-20 11:12:49.000000000 -0400
+@@ -288,11 +288,14 @@
+ // Read profile header and validate it
+ 
+ static
+-LPLCMSICCPROFILE ReadHeader(LPLCMSICCPROFILE Icc, BOOL lIsFromMemory)
++LPLCMSICCPROFILE ReadHeader(LPLCMSICCPROFILE Icc,
++                            BOOL lIsFromMemory,
++                            DWORD dwSize)
+ {
+      icTag Tag;
+      icHeader Header;
+      icInt32Number TagCount, i;
++     icUInt32Number extent;
+ 
+      Icc -> Read(&Header, sizeof(icHeader), 1, Icc);
+ 
+@@ -313,6 +316,9 @@
+ 
+        if (Header.magic != icMagicNumber) goto ErrorCleanup;
+ 
++       if (dwSize && dwSize != Header.size) {
++            goto ErrorCleanup;
++        }
+ 
+        if (Icc ->Read(&TagCount, sizeof(icInt32Number), 1, Icc) != 1)
+                      goto ErrorCleanup;
+@@ -348,7 +354,7 @@
+ 
+        // Read tag directory
+ 
+-       if (TagCount > MAX_TABLE_TAG) {
++       if (TagCount > MAX_TABLE_TAG || TagCount < 0) {
+ 
+            cmsSignalError(LCMS_ERRC_ABORTED, "Too many tags (%d)", TagCount);
+            goto ErrorCleanup;
+@@ -363,6 +369,11 @@
+               AdjustEndianess32((LPBYTE) &Tag.size);
+               AdjustEndianess32((LPBYTE) &Tag.sig);            // Signature
+ 
++              // Perform some sanity check. Offset + size should fall inside file.
++              extent = Tag.offset + Tag.size;
++              if (extent > Header.size || extent < Tag.offset)
++                  goto ErrorCleanup;
++
+               Icc -> TagNames[i]   = Tag.sig;
+               Icc -> TagOffsets[i] = Tag.offset;
+               Icc -> TagSizes[i]   = Tag.size;
+@@ -515,6 +526,10 @@
+        NewLUT -> InputEntries  = 256;
+        NewLUT -> OutputEntries = 256;
+ 
++       // Do some checking
++       if (!_cmsValidateLUT(NewLUT)) {
++          return FALSE;
++       }
+ 
+        AdjustEndianess32((LPBYTE) &LUT8.e00);
+        AdjustEndianess32((LPBYTE) &LUT8.e01);
+@@ -578,7 +593,7 @@
+ 
+        if (nTabSize > 0) {
+ 
+-            PtrW = (LPWORD) malloc(sizeof(WORD) * nTabSize);
++            PtrW = (LPWORD) _cmsCalloc(sizeof(WORD), nTabSize);
+             Temp = (LPBYTE) malloc(nTabSize);
+             Icc ->Read(Temp, 1, nTabSize, Icc);
+ 
+@@ -646,6 +661,15 @@
+            // some profiles does claim to do that. Poor lcms will try
+            // to detect such condition and fix up "on the fly".
+ 
++           switch (sig) {
++
++            case icSigBToA0Tag:
++            case icSigBToA1Tag:
++            case icSigBToA2Tag:
++            case icSigGamutTag:
++            case icSigPreview0Tag:
++            case icSigPreview1Tag:
++            case icSigPreview2Tag: 
+            {
+                LPWORD WhiteLab, ExpectedWhite;
+                WORD WhiteFixed[MAXCHANNELS], WhiteUnfixed[MAXCHANNELS];
+@@ -685,7 +709,10 @@
+                }
+ 
+            }
++           break;
+ 
++        default:;
++        }           
+        }
+ 
+ }
+@@ -718,6 +745,9 @@
+        NewLUT -> InputEntries  = LUT16.inputEnt;
+        NewLUT -> OutputEntries = LUT16.outputEnt;
+ 
++       if (!_cmsValidateLUT(NewLUT)) {
++         return FALSE;
++       }
+ 
+        // Matrix handling
+ 
+@@ -775,7 +805,9 @@
+                                                 NewLUT->InputChan));
+        if (nTabSize > 0) {
+ 
+-           PtrW = (LPWORD) malloc(sizeof(WORD) * nTabSize);
++           PtrW = (LPWORD) _cmsCalloc(sizeof(WORD), nTabSize);
++           if (PtrW == NULL) 
++               return FALSE;
+ 
+            NewLUT -> T = PtrW;
+            NewLUT -> Tsize = (unsigned int) (nTabSize * sizeof(WORD));
+@@ -1070,14 +1102,24 @@
+ BOOL ReadCLUT(LPLCMSICCPROFILE Icc, size_t Offset, LPLUT NewLUT)
+ {
+ 
++    unsigned int j;
+     icCLutStruct CLUT;
+ 
+     if (Icc -> Seek(Icc, Offset)) return FALSE;
+     Icc ->Read(&CLUT, sizeof(icCLutStruct), 1, Icc);
+ 
+ 
+-    cmsAlloc3DGrid(NewLUT, CLUT.gridPoints[0], NewLUT ->InputChan,
+-                                               NewLUT ->OutputChan);
++    for (j=1; j < NewLUT ->InputChan; j++) {
++        if (CLUT.gridPoints[0] != CLUT.gridPoints[j]) {
++            cmsSignalError(LCMS_ERRC_ABORTED, "CLUT with different granulatity is currently unsupported."); 
++            return FALSE;
++        }
++
++                
++    }
++
++    if (cmsAlloc3DGrid(NewLUT, CLUT.gridPoints[0], NewLUT ->InputChan, 
++                                               NewLUT ->OutputChan) == NULL) return FALSE;
+ 
+     // Precission can be 1 or 2 bytes
+ 
+@@ -1134,9 +1176,11 @@
+     else
+         nCurves = NewLUT ->OutputChan;
+ 
++    ZeroMemory(Curves, sizeof(Curves));
+     for (i=0; i < nCurves; i++) {
+ 
+         Curves[i] = ReadCurve(Icc);
++        if (Curves[i] == NULL) goto Error;
+         SkipAlignment(Icc);
+ 
+     }
+@@ -1148,6 +1192,16 @@
+ 
+     return TRUE;
+ 
++Error:
++    for (i=0; i < nCurves; i++) {
++
++        if (Curves[i]) 
++            cmsFreeGamma(Curves[i]);
++    }
++
++    return FALSE;
++
++
+ }
+ 
+ // V4 stuff. LutAtoB type
+@@ -1169,6 +1223,14 @@
+        NewLUT -> InputChan     = LUT16.inputChan;
+        NewLUT -> OutputChan    = LUT16.outputChan;
+ 
++       // Validate the NewLUT here to avoid excessive number of channels
++       // (leading to stack-based buffer overflow in ReadSetOfCurves).
++       // Needs revalidation after table size is filled in.
++       if (!_cmsValidateLUT(NewLUT)) {
++           return FALSE;
++       }
++
++
+        AdjustEndianess32((LPBYTE) &LUT16.offsetB);
+        AdjustEndianess32((LPBYTE) &LUT16.offsetMat);
+        AdjustEndianess32((LPBYTE) &LUT16.offsetM);
+@@ -1229,6 +1291,14 @@
+        NewLUT -> InputChan     = LUT16.inputChan;
+        NewLUT -> OutputChan    = LUT16.outputChan;
+ 
++       // Validate the NewLUT here to avoid excessive number of channels
++       // (leading to stack-based buffer overflow in ReadSetOfCurves).
++       // Needs revalidation after table size is filled in.
++       if (!_cmsValidateLUT(NewLUT)) {
++           return FALSE;
++       }
++
++
+        AdjustEndianess32((LPBYTE) &LUT16.offsetB);
+        AdjustEndianess32((LPBYTE) &LUT16.offsetMat);
+        AdjustEndianess32((LPBYTE) &LUT16.offsetM);
+@@ -1493,10 +1563,12 @@
+ 
+                     char Discard;
+ 
++                    // No return checking; could lead to large loop in
++                    // combination with int oflow above computing Offset.
+                     Icc ->Read(&Discard, 1, 1, Icc);
+             }
+ 
+-            wchar = (wchar_t*) malloc(Len+2);
++            wchar = (wchar_t*) malloc(Len*sizeof(wchar_t)+2);
+             if (!wchar) return -1;
+ 
+             Icc ->Read(wchar, 1, Len, Icc);
+@@ -1867,6 +1939,8 @@
+                     char Root[33];
+ 
+                     ZeroMemory(Colorant, sizeof(WORD) * MAXCHANNELS);
++                    // No return value checking; could cause trouble with
++                    // large count.
+                     Icc -> Read(Root, 1, 32, Icc);
+                     Icc -> Read(PCS,  3, sizeof(WORD), Icc);
+ 
+@@ -1900,7 +1974,8 @@
+ 
+ LPcmsNAMEDCOLORLIST LCMSEXPORT cmsReadColorantTable(cmsHPROFILE hProfile, icTagSignature sig)
+ {
+-    icInt32Number n, Count, i;
++    icInt32Number n;
++    icUInt32Number Count, i; 
+     size_t offset;
+     icTagTypeSignature  BaseType;
+     LPLCMSICCPROFILE   Icc = (LPLCMSICCPROFILE) (LPSTR) hProfile;
+@@ -2231,6 +2306,10 @@
+     Icc ->Read(&Count, sizeof(icUInt32Number), 1, Icc);
+     AdjustEndianess32((LPBYTE) &Count);
+ 
++    if (Count > 1000) {
++         return NULL;
++    }
++ 
+     size = sizeof(int) + Count * sizeof(cmsPSEQDESC);
+     OutSeq = (LPcmsSEQ) malloc(size);
+ 
+@@ -2579,7 +2658,7 @@
+        NewIcc = _cmsCreateProfileFromFilePlaceholder(lpFileName);
+         if (!NewIcc) return NULL;
+ 
+-       if (!ReadHeader(NewIcc, FALSE)) return NULL;
++       if (!ReadHeader(NewIcc, FALSE, 0)) return NULL;
+ 
+        ReadCriticalTags(NewIcc);
+ 
+@@ -2599,7 +2678,7 @@
+        NewIcc = _cmsCreateProfileFromMemPlaceholder(MemPtr, dwSize);
+        if (!NewIcc) return NULL;
+ 
+-       if (!ReadHeader(NewIcc, TRUE)) return NULL;
++       if (!ReadHeader(NewIcc, TRUE, dwSize)) return NULL;
+ 
+        ReadCriticalTags(NewIcc);
+ 
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmslut.c	2008-11-25 04:06:04.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmslut.c	2009-03-20 11:12:53.000000000 -0400
+@@ -210,6 +210,37 @@
+         return rv;
+ }
+ 
++BOOL _cmsValidateLUT(LPLUT NewLUT)
++{
++    unsigned int calc = 1;
++    unsigned int oldCalc;
++    unsigned int power = NewLUT -> InputChan;
++
++    if (NewLUT -> cLutPoints > 100) return FALSE;
++    if (NewLUT -> InputChan > MAXCHANNELS)  return FALSE;
++    if (NewLUT -> OutputChan > MAXCHANNELS) return FALSE;
++
++    if (NewLUT -> cLutPoints == 0) return TRUE;
++    
++    for (; power > 0; power--) {
++
++      oldCalc = calc;
++      calc *= NewLUT -> cLutPoints;
++
++      if (calc / NewLUT -> cLutPoints != oldCalc) {
++        return FALSE;
++      }
++    }
++
++    oldCalc = calc;
++    calc *= NewLUT -> OutputChan;
++    if (NewLUT -> OutputChan && calc / NewLUT -> OutputChan != oldCalc) {
++      return FALSE;
++    }
++
++    return TRUE;
++}
++
+ 
+ LPLUT LCMSEXPORT cmsAlloc3DGrid(LPLUT NewLUT, int clutPoints, int inputChan, int outputChan)
+ {
+@@ -220,12 +251,15 @@
+        NewLUT -> InputChan     = inputChan;
+        NewLUT -> OutputChan    = outputChan;
+ 
++       if (!_cmsValidateLUT(NewLUT)) {
++         return NULL;
++       }
++  
++       nTabSize = NewLUT -> OutputChan * UIpow(NewLUT->cLutPoints,
++                                               NewLUT->InputChan);
+ 
+-       nTabSize = (NewLUT -> OutputChan * UIpow(NewLUT->cLutPoints,
+-                                                NewLUT->InputChan)
+-                                                * sizeof(WORD));
+-
+-       NewLUT -> T = (LPWORD) malloc(nTabSize);
++       NewLUT -> T = (LPWORD) _cmsCalloc(sizeof(WORD), nTabSize);
++       nTabSize *= sizeof(WORD);
+        ZeroMemory(NewLUT -> T, nTabSize);
+        NewLUT ->Tsize = nTabSize;
+ 
