@@ -1735,6 +1735,8 @@ check-langtools: stamps/jtreg.stamp
 	    | tee test/$@.log
 
 check-jdk: stamps/jtreg.stamp
+	chmod -w $(abs_top_srcdir)/openjdk/jdk/test/sun/tools/native2ascii/test2
+	chmod -w $(abs_top_srcdir)/openjdk/jdk/test/sun/tools/native2ascii/test3
 	mkdir -p test/jdk/JTwork test/jdk/JTreport
 	$(ICEDTEA_BOOT_DIR)/bin/java -jar test/jtreg.jar -v1 -a -ignore:quiet \
 		-w:test/jdk/JTwork -r:test/jdk/JTreport \
