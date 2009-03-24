@@ -544,22 +544,22 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-core-build.patch \
 	patches/icedtea-jvmtiEnv.patch \
 	patches/icedtea-lcms.patch \
-	patches/icedtea-6536193.patch \
-	patches/icedtea-6610888.patch \
-	patches/icedtea-6610896.patch \
-	patches/icedtea-6630639.patch \
-	patches/icedtea-6632886.patch \
-	patches/icedtea-6652463.patch \
-	patches/icedtea-6656633.patch \
-	patches/icedtea-6658158.patch \
-	patches/icedtea-6691246.patch \
-	patches/icedtea-6717680.patch \
-	patches/icedtea-6721651.patch \
-	patches/icedtea-6737315.patch \
-	patches/icedtea-6792554.patch \
-	patches/icedtea-6804996.patch \
-	patches/icedtea-6804997.patch \
-	patches/icedtea-6804998.patch
+	patches/security/icedtea-6536193.patch \
+	patches/security/icedtea-6610888.patch \
+	patches/security/icedtea-6610896.patch \
+	patches/security/icedtea-6630639.patch \
+	patches/security/icedtea-6632886.patch \
+	patches/security/icedtea-6652463.patch \
+	patches/security/icedtea-6656633.patch \
+	patches/security/icedtea-6658158.patch \
+	patches/security/icedtea-6691246.patch \
+	patches/security/icedtea-6717680.patch \
+	patches/security/icedtea-6721651.patch \
+	patches/security/icedtea-6737315.patch \
+	patches/security/icedtea-6792554.patch \
+	patches/security/icedtea-6804996.patch \
+	patches/security/icedtea-6804997.patch \
+	patches/security/icedtea-6804998.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
