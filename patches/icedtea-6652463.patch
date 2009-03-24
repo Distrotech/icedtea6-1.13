@@ -1,0 +1,28 @@
+--- old/src/share/classes/javax/print/attribute/standard/MediaSize.java	Tue Mar  3 10:16:15 2009
++++ openjdk/jdk/src/share/classes/javax/print/attribute/standard/MediaSize.java	Tue Mar  3 10:16:14 2009
+@@ -123,8 +123,10 @@
+         if (x > y) {
+             throw new IllegalArgumentException("X dimension > Y dimension");
+         }
+-        mediaName = media;
+-        mediaMap.put(mediaName, this);
++        if (media != null && mediaMap.get(media) == null) {
++            mediaName = media;
++            mediaMap.put(mediaName, this);
++        }
+         sizeVector.add(this);
+     }
+ 
+@@ -147,8 +149,10 @@
+         if (x > y) {
+             throw new IllegalArgumentException("X dimension > Y dimension");
+         }
+-        mediaName = media;
+-        mediaMap.put(mediaName, this);
++        if (media != null && mediaMap.get(media) == null) {
++            mediaName = media;
++            mediaMap.put(mediaName, this);
++        }
+         sizeVector.add(this);
+     }
+ 

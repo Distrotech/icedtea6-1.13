@@ -1,0 +1,51 @@
+--- old/src/share/classes/javax/management/monitor/CounterMonitor.java	Mon Mar  9 13:19:14 2009
++++ openjdk/jdk/src/share/classes/javax/management/monitor/CounterMonitor.java	Mon Mar  9 13:19:14 2009
+@@ -599,7 +599,7 @@
+      */
+     @Override
+     public MBeanNotificationInfo[] getNotificationInfo() {
+-        return notifsInfo;
++        return notifsInfo.clone();
+     }
+ 
+     /*
+--- old/src/share/classes/javax/management/monitor/GaugeMonitor.java	Mon Mar  9 13:19:16 2009
++++ openjdk/jdk//src/share/classes/javax/management/monitor/GaugeMonitor.java	Mon Mar  9 13:19:16 2009
+@@ -481,7 +481,7 @@
+      */
+     @Override
+     public MBeanNotificationInfo[] getNotificationInfo() {
+-        return notifsInfo;
++        return notifsInfo.clone();
+     }
+ 
+     /*
+--- old/src/share/classes/javax/management/monitor/StringMonitor.java	Mon Mar  9 13:19:18 2009
++++ openjdk/jdk//src/share/classes/javax/management/monitor/StringMonitor.java	Mon Mar  9 13:19:18 2009
+@@ -184,6 +184,7 @@
+      * @return The derived gauge of the specified object.
+      *
+      */
++    @Override
+     public synchronized String getDerivedGauge(ObjectName object) {
+         return (String) super.getDerivedGauge(object);
+     }
+@@ -199,6 +200,7 @@
+      * @return The derived gauge timestamp of the specified object.
+      *
+      */
++    @Override
+     public synchronized long getDerivedGaugeTimeStamp(ObjectName object) {
+         return super.getDerivedGaugeTimeStamp(object);
+     }
+@@ -341,8 +343,9 @@
+      * the Java class of the notification and the notification types sent by
+      * the string monitor.
+      */
++    @Override
+     public MBeanNotificationInfo[] getNotificationInfo() {
+-        return notifsInfo;
++        return notifsInfo.clone();
+     }
+ 
+     /*

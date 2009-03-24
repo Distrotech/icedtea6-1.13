@@ -1,0 +1,35 @@
+--- old/src/share/classes/sun/awt/image/GifImageDecoder.java	Thu Mar  5 17:00:25 2009
++++ openjdk/jdk/src/share/classes/sun/awt/image/GifImageDecoder.java	Thu Mar  5 17:00:24 2009
+@@ -585,9 +585,16 @@
+             System.out.print("Reading a " + width + " by " + height + " " +
+                       (interlace ? "" : "non-") + "interlaced image...");
+         }
+-
++        int initCodeSize = ExtractByte(block, 9);
++        if (initCodeSize >= 12) {
++            if (verbose) {
++                System.out.println("Invalid initial code size: " +
++                                   initCodeSize);
++            }
++            return false;
++        }
+         boolean ret = parseImage(x, y, width, height,
+-                                 interlace, ExtractByte(block, 9),
++                                 interlace, initCodeSize,
+                                  block, rasline, model);
+ 
+         if (!ret) {
+--- old/src/share/native/sun/awt/image/gif/gifdecoder.c	Thu Mar  5 17:00:28 2009
++++ openjdk/jdk/src/share/native/sun/awt/image/gif/gifdecoder.c	Thu Mar  5 17:00:27 2009
+@@ -191,6 +191,11 @@
+     int passht = passinc;
+     int len;
+ 
++    /* We have verified the initial code size on the java layer.
++     * Here we just check bounds for particular indexes. */
++    if (freeCode >= 4096 || maxCode >= 4096) {
++        return 0;
++    }
+     if (blockh == 0 || raslineh == 0
+         || prefixh == 0 || suffixh == 0
+         || outCodeh == 0)
