@@ -96,6 +96,8 @@ The following patches are only applied to OpenJDK6 in IcedTea6:
 * icedtea-lucene-crash.patch: Fix lucene bad code generation bug #6707044.
 * icedtea-6700047-loopopts.patch: Fix partial peeling issue, bug #6700047.
 * icedtea-6712835-ifnode.patch: Fix infinite loop in PhaseIterGVN::transform.
+* icedtea-timezone.patch : Makes java only look for time zone information in /etc/sysconfig/clock if /etc/localtime is not found (fix 
+  for rh-489586)
 
 The following patches are only applied to OpenJDK in IcedTea:
 

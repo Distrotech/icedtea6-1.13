@@ -1,0 +1,197 @@
+--- openjdk/jdk/src/solaris/native/java/util/TimeZone_md.c	2008-11-25 04:06:19.000000000 -0500
++++ openjdk/jdk/src/solaris/native/java/util/TimeZone_md_new.c	2009-03-24 12:08:35.000000000 -0400
+@@ -201,115 +201,105 @@
+     size_t size;
+ 
+     /*
+-     * First, try the ZONE entry in /etc/sysconfig/clock. However, the
+-     * ZONE entry is not set up after initial Red Hat Linux
+-     * installation. In case that /etc/localtime is set up without
+-     * using timeconfig, there might be inconsistency between
+-     * /etc/localtime and the ZONE entry. The inconsistency between
+-     * timeconfig and linuxconf is reported as a bug in the Red Hat
+-     * web page as of May 1, 2000.
++     * First, try /etc/localtime to find the zone ID.
+      */
+-    if ((fp = fopen(sysconfig_clock_file, "r")) != NULL) {
+-        char line[256];
+-
+-        while (fgets(line, sizeof(line), fp) != NULL) {
+-            char *p = line;
+-            char *s;
++    if (lstat(defailt_zoneinfo_file, &statbuf) == -1) {
++    
++    	/* If /etc/localtime doesn't exist, try /etc/sysconfig/clock */
++    	if ((fp = fopen(sysconfig_clock_file, "r")) != NULL) {
++     	    char line[256];
++
++            while (fgets(line, sizeof(line), fp) != NULL) {
++                char *p = line;
++                char *s;
+ 
+-            SKIP_SPACE(p);
+-            if (*p != 'Z') {
+-                continue;
+-            }
+-            if (strncmp(p, "ZONE=\"", 6) == 0) {
+-                p += 6;
+-            } else {
+-                /*
+-                 * In case we need to parse it token by token.
+-                 */
+-                if (strncmp(p, "ZONE", 4) != 0) {
++                SKIP_SPACE(p);
++                if (*p != 'Z') {
+                     continue;
+                 }
+-                p += 4;
+-                SKIP_SPACE(p);
+-                if (*p++ != '=') {
+-                    break;
++                if (strncmp(p, "ZONE=\"", 6) == 0) {
++                    p += 6;
++                } else {
++                    /*
++                     * In case we need to parse it token by token.
++                     */
++                    if (strncmp(p, "ZONE", 4) != 0) {
++                        continue;
++                    }
++                    p += 4;
++                    SKIP_SPACE(p);
++                    if (*p++ != '=') {
++                        break;
++                    }
++                    SKIP_SPACE(p);
++                    if (*p++ != '"') {
++                        break;
++                    }
+                 }
+-                SKIP_SPACE(p);
+-                if (*p++ != '"') {
++                for (s = p; *s && *s != '"'; s++)
++                    ;
++                if (*s != '"') {
++                    /* this ZONE entry is broken. */
+                     break;
+                 }
+-            }
+-            for (s = p; *s && *s != '"'; s++)
+-                ;
+-            if (*s != '"') {
+-                /* this ZONE entry is broken. */
++                *s = '\0';
++                tz = strdup(p);
+                 break;
+             }
+-            *s = '\0';
+-            tz = strdup(p);
+-            break;
+-        }
+-        (void) fclose(fp);
+-        if (tz != NULL) {
++            (void) fclose(fp);
+             return tz;
+         }
+-    }
++    } else {
+ 
+-    /*
+-     * Next, try /etc/localtime to find the zone ID.
+-     */
+-    if (lstat(defailt_zoneinfo_file, &statbuf) == -1) {
+-        return NULL;
+-    }
++        /*
++         * If it's a symlink, get the link name and its zone ID part. (The
++         * older versions of timeconfig created a symlink as described in
++         * the Red Hat man page. It was changed in 1999 to create a copy
++         * of a zoneinfo file. It's no longer possible to get the zone ID
++         * from /etc/localtime.)
++         */
++         if (S_ISLNK(statbuf.st_mode)) {
++             char linkbuf[PATH_MAX+1];
++             int len;
++
++             if ((len = readlink(defailt_zoneinfo_file, linkbuf, sizeof(linkbuf)-1)) == -1) {
++                jio_fprintf(stderr, (const char *) "can't get a symlink of %s\n",
++                            defailt_zoneinfo_file);
++                return NULL;
++            }
++            linkbuf[len] = '\0';
++            tz = getZoneName(linkbuf);
++            if (tz != NULL) {
++                tz = strdup(tz);
++            }
++            return tz;
++        }
+ 
+-    /*
+-     * If it's a symlink, get the link name and its zone ID part. (The
+-     * older versions of timeconfig created a symlink as described in
+-     * the Red Hat man page. It was changed in 1999 to create a copy
+-     * of a zoneinfo file. It's no longer possible to get the zone ID
+-     * from /etc/localtime.)
+-     */
+-    if (S_ISLNK(statbuf.st_mode)) {
+-        char linkbuf[PATH_MAX+1];
+-        int len;
+-
+-        if ((len = readlink(defailt_zoneinfo_file, linkbuf, sizeof(linkbuf)-1)) == -1) {
+-            jio_fprintf(stderr, (const char *) "can't get a symlink of %s\n",
+-                        defailt_zoneinfo_file);
++        /*
++         * If it's a regular file, we need to find out the same zoneinfo file
++         * that has been copied as /etc/localtime.
++         */
++         size = (size_t) statbuf.st_size;
++         buf = (char *) malloc(size);
++        if (buf == NULL) {
+             return NULL;
+         }
+-        linkbuf[len] = '\0';
+-        tz = getZoneName(linkbuf);
+-        if (tz != NULL) {
+-            tz = strdup(tz);
++        if ((fd = open(defailt_zoneinfo_file, O_RDONLY)) == -1) {
++            free((void *) buf);
++            return NULL;
+         }
+-        return tz;
+-    }
+ 
+-    /*
+-     * If it's a regular file, we need to find out the same zoneinfo file
+-     * that has been copied as /etc/localtime.
+-     */
+-    size = (size_t) statbuf.st_size;
+-    buf = (char *) malloc(size);
+-    if (buf == NULL) {
+-        return NULL;
+-    }
+-    if ((fd = open(defailt_zoneinfo_file, O_RDONLY)) == -1) {
+-        free((void *) buf);
+-        return NULL;
+-    }
+-
+-    if (read(fd, buf, size) != (ssize_t) size) {
++        if (read(fd, buf, size) != (ssize_t) size) {
++            (void) close(fd);
++            free((void *) buf);
++            return NULL;
++        }
+         (void) close(fd);
++
++        tz = findZoneinfoFile(buf, size, zoneinfo_dir);
+         free((void *) buf);
+-        return NULL;
++        return tz;
+     }
+-    (void) close(fd);
+-
+-    tz = findZoneinfoFile(buf, size, zoneinfo_dir);
+-    free((void *) buf);
+-    return tz;
+ }
+ #else
+ #ifdef __solaris__
