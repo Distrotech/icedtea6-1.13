@@ -673,6 +673,10 @@ if ENABLE_NIO2
 ICEDTEA_PATCHES += patches/icedtea-nio2.patch
 endif
 
+if ENABLE_SYSTEMTAP
+ICEDTEA_PATCHES += patches/icedtea-systemtap.patch
+endif
+
 ICEDTEA_PATCHES += \
 	patches/icedtea-demo-swingapplet.patch \
 	patches/icedtea-awt-window-size.patch \

@@ -1,8 +1,16 @@
+2009-03-27  Mark Wielaard  <mjw@redhat.com>
+
+	* patches/icedtea-systemtap.patch: New patch.
+	* configure.ac: Add AC_ARG_ENABLE systemtap and AC_CHECK_HEADER
+	for sys/sdt.h when --enable-systemtap given.
+	* Makefile.am: Add patches/icedtea-systemtap.patch to
+	ICEDTEA_PATCHES if ENABLE_SYSTEMTAP.
+
 2009-03-24  Ioana Ivan  <iivan@redhat.com>
+
 	* patches/icedtea-timezone.patch:  Makes java only look for time zone
 	information in /etc/sysconfig/clock if /etc/localtime is not found
 	* Makefile.am: apply patch
-
 
 2009-03-24  Lillian Angel  <langel@redhat.com>
 
