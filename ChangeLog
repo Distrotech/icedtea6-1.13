@@ -1,5 +1,12 @@
 2009-03-30  Omair Majid  <omajid@redhat.com>
 
+	* patches/icedtea-jtreg-colortest.patch: New patch. Remove the 
+	System.exit() call that was causing the test to fail.
+	* Makefile.am: Apply the above.
+	* HACKING: Document the above.
+
+2009-03-30  Omair Majid  <omajid@redhat.com>
+
 	* patches/icedtea-jtreg-dnd.patch: New Patch. Fixes classpath issues in
 	java/awt/dnd/FileListBetweenJVMsTest.
 	* Makefile.am: Apply the above.
