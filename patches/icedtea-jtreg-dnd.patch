@@ -1,0 +1,28 @@
+--- openjdk/jdk/test/java/awt/regtesthelpers/process/ProcessCommunicator.java.orig	2009-03-30 11:41:32.000000000 -0400
++++ openjdk/jdk/test/java/awt/regtesthelpers/process/ProcessCommunicator.java	2009-03-30 11:44:21.000000000 -0400
+@@ -146,7 +146,11 @@
+                          final String classPathArguments, final String [] args)
+     {
+         StringBuilder commandBuilder = new StringBuilder();
+-        commandBuilder.append(javaPath).append(classPathArguments).append(classToExecute.getName());
++        commandBuilder.append(javaPath).append(" ");
++        if (classPathArguments.trim().length() > 0) {
++            commandBuilder.append("-cp ").append(classPathArguments).append(" ");
++        }
++        commandBuilder.append(classToExecute.getName());
+         for (String argument:args) {
+             commandBuilder.append(" ").append(argument);
+         }
+--- openjdk/jdk/test/java/awt/dnd/FileListBetweenJVMsTest/FileListBetweenJVMsTest.java.orig	2009-03-30 11:45:16.000000000 -0400
++++ openjdk/jdk/test/java/awt/dnd/FileListBetweenJVMsTest/FileListBetweenJVMsTest.java	2009-03-30 11:46:51.000000000 -0400
+@@ -69,8 +69,9 @@
+                 String.valueOf(sourceFrame.getSourceFilesNumber())
+         };
+ 
++        String classpath = System.getProperty("java.class.path");
+         ProcessResults processResults =
+-                ProcessCommunicator.executeChildProcess(this.getClass(), args);
++                ProcessCommunicator.executeChildProcess(this.getClass(), classpath, args);
+ 
+         verifyTestResults(processResults);
+ 

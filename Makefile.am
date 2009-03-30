@@ -687,6 +687,7 @@ ICEDTEA_PATCHES += \
 	patches/icedtea-jtreg-6592792.patch \
 	patches/icedtea-s390-noinline.patch \
 	patches/icedtea-jtreg-hatrun.patch \
+	patches/icedtea-jtreg-dnd.patch \
 	$(DISTRIBUTION_PATCHES)
 
 stamps/extract.stamp: stamps/download.stamp
