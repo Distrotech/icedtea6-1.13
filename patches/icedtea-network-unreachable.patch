@@ -1,0 +1,31 @@
+--- openjdk/jdk/src/solaris/native/java/net/PlainSocketImpl.c.orig	2008-11-25 04:06:19.000000000 -0500
++++ openjdk/jdk/src/solaris/native/java/net/PlainSocketImpl.c	2009-03-20 16:58:35.000000000 -0400
+@@ -410,8 +410,16 @@
+             jlong prevTime = JVM_CurrentTimeMillis(env, 0);
+ 
+             if (errno != EINPROGRESS) {
+-                NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "ConnectException",
+-                             "connect failed");
++                if (errno == EHOSTUNREACH) {
++                    NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "NoRouteToHostException",
++                           "Host unreachable");
++                } else if (errno == ENETUNREACH) {
++                    NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "NoRouteToHostException",
++                           "Network unreachable");
++                } else {
++                    NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "ConnectException",
++                           "connect failed");
++                }
+                 SET_BLOCKING(fd);
+                 return;
+             }
+@@ -540,6 +548,9 @@
+         } else if (errno == EHOSTUNREACH) {
+             NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "NoRouteToHostException",
+                            "Host unreachable");
++        } else if (errno == ENETUNREACH) {
++            NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "NoRouteToHostException",
++                           "Network unreachable");
+         } else if (errno == EADDRNOTAVAIL) {
+             NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "NoRouteToHostException",
+                              "Address not available");
