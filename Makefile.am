@@ -690,6 +690,7 @@ ICEDTEA_PATCHES += \
 	patches/icedtea-jtreg-dnd.patch \
 	patches/icedtea-jtreg-colortest.patch \
 	patches/icedtea-jtreg-printjob-multiple-end.patch \
+	patches/icedtea-jtreg-printjob-edgetest-manual.patch \
 	patches/icedtea-network-unreachable.patch \
 	$(DISTRIBUTION_PATCHES)
 
