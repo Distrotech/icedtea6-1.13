@@ -689,6 +689,7 @@ ICEDTEA_PATCHES += \
 	patches/icedtea-jtreg-hatrun.patch \
 	patches/icedtea-jtreg-dnd.patch \
 	patches/icedtea-jtreg-colortest.patch \
+	patches/icedtea-jtreg-printjob-multiple-end.patch \
 	$(DISTRIBUTION_PATCHES)
 
 stamps/extract.stamp: stamps/download.stamp
