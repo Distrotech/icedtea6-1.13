@@ -1,3 +1,26 @@
+2009-04-02 Deepak Bhole <dbhole@redhat.com>
+
+	* IcedTeaPlugin.cc: Incremented timeout to 3 minutes. Added functions to
+	process proxy and auth info requests (the latter is unused).
+	* plugin/icedtea/sun/applet/PasswordAuthenticationDialog.java: New file.
+	Displays a username/password input dialog to users for sites and proxies
+	requiring http auth.
+	* plugin/icedtea/sun/applet/PluginAppletViewer.java: Fix wait mechanism to 
+	detect applet initialization failures correctly. Add support for
+	requesting proxy information from the browser.
+	* plugin/icedtea/sun/applet/PluginCallRequestFactory.java: Add support for
+	PluginProxyInfoRequest objects.
+	* plugin/icedtea/sun/applet/PluginMain.java: Wire in custom authenticator
+	and proxy selector.
+	* plugin/icedtea/sun/applet/PluginProxyInfoRequest.java: New file. Object
+	representing proxy information request from browser.
+	* plugin/icedtea/sun/applet/PluginProxySelector.java: Custom proxy
+	selector that requests information from browser and uses it.
+	* plugin/icedtea/sun/applet/PluginStreamHandler.java: Improve handling
+	code for "plugin specific" messages on the wire.
+	* rt/net/sourceforge/jnlp/NetxPanel.java: Add support for improved
+	initialization failure detection.
+
 2009-04-02  Lillian Angel  <langel@redhat.com>
 
 	* patches/icedtea-lcms.patch: Updated with most recent security fixes.

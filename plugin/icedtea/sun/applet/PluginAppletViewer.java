@@ -87,6 +87,7 @@ import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.SocketPermission;
+import java.net.URI;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -99,14 +100,14 @@ import java.util.Vector;
 
 import javax.swing.SwingUtilities;
 
-import com.sun.jndi.toolkit.url.UrlUtil;
-
 import net.sourceforge.jnlp.NetxPanel;
 import net.sourceforge.jnlp.runtime.JNLPClassLoader;
 import sun.awt.AppContext;
 import sun.awt.SunToolkit;
 import sun.awt.X11.XEmbeddedFrame;
 import sun.misc.Ref;
+
+import com.sun.jndi.toolkit.url.UrlUtil;
  
  /**
   * Lets us construct one using unix-style one shot behaviors
@@ -177,7 +178,7 @@ import sun.misc.Ref;
      private static PluginCallRequestFactory requestFactory;
      
      private static HashMap<Integer, String> siteCookies = new HashMap<Integer,String>();
-
+     
      private double proposedHeightFactor;
      private double proposedWidthFactor;
 
@@ -309,7 +310,7 @@ import sun.misc.Ref;
  	// Wait for the panel to initialize
     // (happens in a separate thread)
  	Applet a;
-    while ((a = panel.getApplet()) == null && panel.getAppletHandlerThread().isAlive()) {
+    while ((a = panel.getApplet()) == null && ((NetxPanel) panel).isAlive()) {
    	 try {
    		 Thread.sleep(2000);
    		 PluginDebug.debug("Waiting for applet to initialize... ");
@@ -493,7 +494,7 @@ import sun.misc.Ref;
 
              // Wait for the panel to initialize
              // (happens in a separate thread)
-             while ((o = panel.getApplet()) == null && panel.getAppletHandlerThread().isAlive()) {
+             while ((o = panel.getApplet()) == null && ((NetxPanel) panel).isAlive()) {
             	 try {
             		 Thread.sleep(2000);
             		 PluginDebug.debug("Waiting for applet to initialize...");
@@ -1005,6 +1006,49 @@ import sun.misc.Ref;
          return request.getObject();
      }
  
+     public static Object requestPluginProxyInfo(URI uri) {
+
+         String requestURI = null;
+
+         try {
+
+             // there is no easy way to get SOCKS proxy info. So, we tell mozilla that we want proxy for 
+             // an HTTP uri in case of non http/ftp protocols. If we get back a SOCKS proxy, we can 
+             // use that, if we get back an http proxy, we fallback to DIRECT connect
+
+             String scheme = uri.getScheme();
+             String port = uri.getPort() != -1 ? ":" + uri.getPort() : ""; 
+             if (!uri.getScheme().startsWith("http") && !uri.getScheme().equals("ftp"))
+                 scheme = "http";
+
+             requestURI = UrlUtil.encode(scheme + "://" + uri.getHost() + port + "/" + uri.getPath(), "UTF-8");
+         } catch (Exception e) {
+             PluginDebug.debug("Cannot construct URL from " + uri.toString() + " ... falling back to DIRECT proxy");
+             e.printStackTrace();
+             return null;
+         }
+
+         PluginCallRequest request = requestFactory.getPluginCallRequest("proxyinfo",
+                                            "plugin PluginProxyInfo " + requestURI, 
+                                            "plugin");
+         streamhandler.postCallRequest(request);
+         streamhandler.write(request.getMessage());
+         try {
+             PluginDebug.debug ("wait call request 1");
+             synchronized(request) {
+                 PluginDebug.debug ("wait call request 2");
+                 while (request.isDone() == false)
+                     request.wait();
+                 PluginDebug.debug ("wait call request 3");
+             }
+         } catch (InterruptedException e) {
+             throw new RuntimeException("Interrupted waiting for call request.",
+                                        e);
+         }
+         PluginDebug.debug (" Call DONE");
+         return request.getObject();
+     }
+     
      public static void JavaScriptFinalize(long internal)
      {
          // Prefix with dummy instance for convenience.
