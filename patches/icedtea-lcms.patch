@@ -1,6 +1,6 @@
-diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam02.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam02.c
---- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam02.c	2008-11-25 04:06:03.000000000 -0500
-+++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam02.c	2009-03-24 14:11:33.000000000 -0400
+diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam02.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam02.c
+--- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam02.c	2008-11-25 04:06:03.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam02.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
  //
@@ -79,9 +79,9 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam02.c openj
  }
  
  
-diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam97.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam97.c
---- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam97.c	2008-11-25 04:06:03.000000000 -0500
-+++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam97.c	2009-03-24 14:16:55.000000000 -0400
+diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam97.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam97.c
+--- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam97.c	2008-11-25 04:06:03.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam97.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
  //
@@ -118,9 +118,9 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam97.c openj
  #else
      VEC3divK(&tmp, (LPVEC3) &lpMod -> WP, lpMod->WP.Y);
      MAT3eval(&lpMod -> RGB_subw, &lpMod -> MlamRigg, &tmp);
-diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c
---- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c	2008-11-25 04:06:03.000000000 -0500
-+++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c	2009-03-24 14:17:09.000000000 -0400
+diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c
+--- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c	2008-11-25 04:06:03.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
  //
@@ -285,8 +285,6 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c openj
 +        const char *id;
 +        WRITEMODE as;
 +    } PROPERTY;
-+
-+static PROPERTY PredefinedProperties[] = {
  
 -        "NUMBER_OF_FIELDS",    // Required - NUMBER OF FIELDS
 -        "NUMBER_OF_SETS",      // Required - NUMBER OF SETS
@@ -299,6 +297,9 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c openj
 -        "MANUFACTURE",         // Some broken Fuji targets does store this value
 -        "PROD_DATE",           // Identifies year and month of production of the target in the form yyyy:mm.
 -        "SERIAL",              // Uniquely identifies individual physical target.
++static PROPERTY PredefinedProperties[] = {
+ 
+-        "MATERIAL",            // Identifies the material on which the target was produced using a code
 +        {"NUMBER_OF_FIELDS", WRITE_UNCOOKED},    // Required - NUMBER OF FIELDS
 +        {"NUMBER_OF_SETS",   WRITE_UNCOOKED},    // Required - NUMBER OF SETS
 +        {"ORIGINATOR",       WRITE_STRINGIFY},   // Required - Identifies the specific system, organization or individual that created the data file.
@@ -310,8 +311,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c openj
 +        {"MANUFACTURE",      WRITE_STRINGIFY},   // Some broken Fuji targets does store this value
 +        {"PROD_DATE",        WRITE_STRINGIFY},   // Identifies year and month of production of the target in the form yyyy:mm.
 +        {"SERIAL",           WRITE_STRINGIFY},   // Uniquely identifies individual physical target.
- 
--        "MATERIAL",            // Identifies the material on which the target was produced using a code
++
 +        {"MATERIAL",         WRITE_STRINGIFY},   // Identifies the material on which the target was produced using a code
                                 // uniquely identifying th e material. This is intend ed to be used for IT8.7
                                 // physical targets only (i.e . IT8.7/1 a nd IT8.7/2).
@@ -337,8 +337,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c openj
 -                               // measurement. Allowed values are “black”, “white”, or "na".
 +        {"SAMPLE_BACKING",   WRITE_STRINGIFY},   // Identifies the backing material used behind the sample during
 +                               // measurement. Allowed values are “black”, “white”, or {"na".
- 
--        "CHISQ_DOF"            // Degrees of freedom associated with the Chi squared statistic
++
 +        {"CHISQ_DOF",        WRITE_STRINGIFY},   // Degrees of freedom associated with the Chi squared statistic
 +
 +//    new in recent specs:
@@ -372,7 +371,8 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c openj
 +       {"TARGET_TYPE",        WRITE_STRINGIFY},  // The type of target being measured, e.g. IT8.7/1, IT8.7/3, user defined, etc.
 +
 +       {"COLORANT",           WRITE_STRINGIFY},  // Identifies the colorant(s) used in creating the target.
-+
+ 
+-        "CHISQ_DOF"            // Degrees of freedom associated with the Chi squared statistic
 +       {"TABLE_DESCRIPTOR",   WRITE_STRINGIFY},  // Describes the purpose or contents of a data table.
 +
 +       {"TABLE_NAME",         WRITE_STRINGIFY}   // Provides a short name for a data table.
@@ -408,7 +408,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c openj
          "STDEV_B",        // Standard deviation of b*
          "STDEV_DE",       // Standard deviation of CIE dE
          "CHI_SQD_PAR"};   // The average of the standard deviations of L*, a* and b*. It is
-@@ -397,9 +458,13 @@
+@@ -397,57 +458,119 @@
  
  #define NUMPREDEFINEDSAMPLEID (sizeof(PredefinedSampleID)/sizeof(char *))
  
@@ -422,8 +422,6 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c openj
 +LCMSBOOL isseparator(int c)
  {
          return (c == ' ') || (c == '\t') || (c == '\r');
- }
-@@ -405,49 +470,107 @@
  }
  
  // Checks whatever if c is a valid identifier char
@@ -494,7 +492,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c openj
 +    return TRUE;
 +}
 +
- 
++
 +// Make sure no exploit is being even tried
 +
 +static
@@ -506,7 +504,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c openj
 +    return str;
 +}
 +
-+
+ 
 +// Syntax error
  static
 -BOOL SynError(LPIT8 it8, const char *Txt, ...)
@@ -591,18 +589,18 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c openj
 +                if(_cmsMakePath(it8->str, it8->FileStack[it8->IncludeSP]->FileName, FileNest->FileName) == FALSE)
 +                {
 +                    SynError(it8, "File path too long");
-+                        return;
-+                }
-+
+                         return;
+                 }
+ 
+-                it8 -> Stream[++it8 -> IncludeSP] = IncludeFile;
 +                FileNest->Stream = fopen(FileNest->FileName, "rt");
 +                if (FileNest->Stream == NULL) {
 +
 +                        SynError(it8, "File %s not found", FileNest->FileName);
-                         return;
-                 }
++                        return;
++                }
 +                it8->IncludeSP++;
- 
--                it8 -> Stream[++it8 -> IncludeSP] = IncludeFile;
++
                  it8 ->ch = ' ';
                  InSymbol(it8);
      }
@@ -1564,9 +1562,9 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c openj
  void LCMSEXPORT cmsIT8DefineDblFormat(LCMSHANDLE hIT8, const char* Formatter)
  {
      LPIT8 it8 = (LPIT8) hIT8;
-diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscnvrt.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscnvrt.c
---- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscnvrt.c	2008-11-25 04:06:04.000000000 -0500
-+++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscnvrt.c	2009-03-24 14:17:18.000000000 -0400
+diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmscnvrt.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscnvrt.c
+--- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmscnvrt.c	2008-11-25 04:06:04.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscnvrt.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
  //
@@ -1592,9 +1590,9 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscnvrt.c openj
 +
 +
 +      
-diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmserr.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmserr.c
---- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmserr.c	2008-11-25 04:06:04.000000000 -0500
-+++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmserr.c	2009-03-24 14:17:24.000000000 -0400
+diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmserr.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmserr.c
+--- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmserr.c	2008-11-25 04:06:04.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmserr.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
  //
@@ -1624,9 +1622,9 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmserr.c openjdk
                strcat(Buffer1, Buffer2);
                MessageBox(NULL, Buffer1, "Little cms",
                                            MB_OK|MB_ICONSTOP|MB_TASKMODAL);
-diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgamma.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgamma.c
---- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgamma.c	2008-11-25 04:06:04.000000000 -0500
-+++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgamma.c	2009-03-24 14:17:32.000000000 -0400
+diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgamma.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgamma.c
+--- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgamma.c	2008-11-25 04:06:04.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgamma.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
  //
@@ -1771,9 +1769,9 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgamma.c openj
  
  
      if (cmsIsLinear(Table, nEntries)) return FALSE; // Nothing to do
-diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgmt.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgmt.c
---- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgmt.c	2008-11-25 04:06:04.000000000 -0500
-+++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgmt.c	2009-03-24 14:17:50.000000000 -0400
+diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgmt.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgmt.c
+--- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgmt.c	2008-11-25 04:06:04.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgmt.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
  //
@@ -1875,9 +1873,9 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgmt.c openjdk
  
      }
  
-diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsintrp.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsintrp.c
---- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsintrp.c	2008-11-25 04:06:04.000000000 -0500
-+++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsintrp.c	2009-03-24 14:17:59.000000000 -0400
+diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsintrp.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsintrp.c
+--- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsintrp.c	2008-11-25 04:06:04.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsintrp.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
  //
@@ -1914,9 +1912,9 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsintrp.c openj
  
          f = ((Value - b) / a);
  
-diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio0.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio0.c
---- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio0.c	2008-11-25 04:06:04.000000000 -0500
-+++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio0.c	2009-03-24 14:18:22.000000000 -0400
+diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio0.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio0.c
+--- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio0.c	2008-11-25 04:06:04.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio0.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
  //
@@ -1964,23 +1962,23 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio0.c openjdk
 +      if (len == 0) {
 +          return 0;
 +      }
- 
--     if (ResData -> Pointer + len > ResData -> Size){
++
 +      if (len / size != count) {
 +          cmsSignalError(LCMS_ERRC_ABORTED, "Read from memory error. Integer overflow with count / size.");
 +          return 0;
 +      }
- 
--         len = (ResData -> Size - ResData -> Pointer);
--         cmsSignalError(LCMS_ERRC_WARNING, "Read from memory error. Got %d bytes, block should be of %d bytes", len * size, count * size);
++
 +      if (extent < len || extent < ResData -> Pointer) {
 +          cmsSignalError(LCMS_ERRC_ABORTED, "Read from memory error. Integer overflow with len.");
 +          return 0;
 +      } 
-+
+ 
+-     if (ResData -> Pointer + len > ResData -> Size){
 +      if (ResData -> Pointer + len > ResData -> Size) {
  
-+         len = (ResData -> Size - ResData -> Pointer);
+          len = (ResData -> Size - ResData -> Pointer);
+-         cmsSignalError(LCMS_ERRC_WARNING, "Read from memory error. Got %d bytes, block should be of %d bytes", len * size, count * size);
+-
 +         cmsSignalError(LCMS_ERRC_ABORTED, "Read from memory error. Got %d bytes, block should be of %d bytes", len * size, count * size);
 +         return 0;
       }
@@ -2293,7 +2291,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio0.c openjdk
      _cmsInitTag(Icc, sig, sizeof(cmsNAMEDCOLORLIST) + (nc ->nColors - 1) * sizeof(cmsNAMEDCOLOR), nc);
 -    return FALSE;
 +    return TRUE;
- }
++}
 +
 +
 +LCMSBOOL LCMSEXPORT _cmsAddChromaticAdaptationTag(cmsHPROFILE hProfile, icTagSignature sig, const cmsCIEXYZ* mat)
@@ -2303,12 +2301,12 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio0.c openjdk
 +    _cmsInitTag(Icc, sig, 3*sizeof(cmsCIEXYZ), mat);
 +    return TRUE;
 +
-+}
+ }
 +
 +
-diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio1.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio1.c
---- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio1.c	2008-11-25 04:06:04.000000000 -0500
-+++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio1.c	2009-03-24 14:18:32.000000000 -0400
+diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio1.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio1.c
+--- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio1.c	2008-11-25 04:06:04.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio1.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
  //
@@ -2476,7 +2474,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio1.c openjdk
  
              NewLUT -> T = PtrW;
              NewLUT -> Tsize = (unsigned int) (nTabSize * sizeof(WORD));
-@@ -589,12 +628,12 @@
+@@ -589,25 +628,37 @@
  
                       *PtrW++ = TO16_TAB(Temp[i]);
              }
@@ -2488,10 +2486,6 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio1.c openjdk
             NewLUT ->Tsize = 0;
 -           NewLUT -> wFlags &= ~LUT_HAS3DGRID;
 +           NewLUT ->wFlags &= ~LUT_HAS3DGRID;
-        }
- 
- 
-@@ -598,16 +637,28 @@
         }
  
  
@@ -2985,14 +2979,15 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio1.c openjdk
  
 -    case icSigLut8Type:    ReadLUT8(Icc, NewLUT, sig); break;
 -    case icSigLut16Type:   ReadLUT16(Icc, NewLUT);     break;
+-
+-    case icSiglutAtoBType: ReadLUT_A2B(Icc, NewLUT, offset, sig); break;
+-    case icSiglutBtoAType: ReadLUT_B2A(Icc, NewLUT, offset, sig); break;
 +    case icSigLut8Type:    if (!ReadLUT8(Icc, NewLUT, sig)) {
 +                                cmsFreeLUT(NewLUT);
 +                                return NULL;
 +                           }
 +                           break;
- 
--    case icSiglutAtoBType: ReadLUT_A2B(Icc, NewLUT, offset, sig); break;
--    case icSiglutBtoAType: ReadLUT_B2A(Icc, NewLUT, offset, sig); break;
++
 +    case icSigLut16Type:   if (!ReadLUT16(Icc, NewLUT)) {
 +                                cmsFreeLUT(NewLUT);
 +                                return NULL;
@@ -4284,9 +4279,9 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio1.c openjdk
 -  return TRUE;
 -}
 -
-diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmslut.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmslut.c
---- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmslut.c	2008-11-25 04:06:04.000000000 -0500
-+++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmslut.c	2009-03-24 14:18:49.000000000 -0400
+diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmslut.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmslut.c
+--- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmslut.c	2008-11-25 04:06:04.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmslut.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
  //
@@ -4442,9 +4437,9 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmslut.c openjdk
                                                         &Lut -> In16params);
                Lut ->wFlags &= ~LUT_HASTL1;
             }
-diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmatsh.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmatsh.c
---- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmatsh.c	2008-11-25 04:06:04.000000000 -0500
-+++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmatsh.c	2009-03-24 14:19:12.000000000 -0400
+diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmatsh.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmatsh.c
+--- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmatsh.c	2008-11-25 04:06:04.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmatsh.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
  //
@@ -4505,9 +4500,9 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmatsh.c openj
  }
  
  
-diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmtrx.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmtrx.c
---- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmtrx.c	2008-11-25 04:06:04.000000000 -0500
-+++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmtrx.c	2009-03-24 14:19:17.000000000 -0400
+diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmtrx.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmtrx.c
+--- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmtrx.c	2008-11-25 04:06:04.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmtrx.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
  //
@@ -4569,9 +4564,9 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmtrx.c openjd
  {
          MAT3 m, a_1;
  
-diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsnamed.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsnamed.c
---- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsnamed.c	2008-11-25 04:06:04.000000000 -0500
-+++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsnamed.c	2009-03-24 14:19:23.000000000 -0400
+diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsnamed.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsnamed.c
+--- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsnamed.c	2008-11-25 04:06:04.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsnamed.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
  //
@@ -4630,9 +4625,9 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsnamed.c openj
  {
      _LPcmsTRANSFORM v = (_LPcmsTRANSFORM) xform;
  
-diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmspack.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmspack.c
---- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmspack.c	2008-11-25 04:06:04.000000000 -0500
-+++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmspack.c	2009-03-24 14:19:30.000000000 -0400
+diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmspack.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmspack.c
+--- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmspack.c	2008-11-25 04:06:04.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmspack.c	2009-03-26 15:13:30.000000000 -0400
 @@ -28,7 +28,7 @@
  // file:
  //
@@ -4814,9 +4809,9 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmspack.c openjd
                              break;
  
                       default:;
-diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmspcs.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmspcs.c
---- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmspcs.c	2008-11-25 04:06:04.000000000 -0500
-+++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmspcs.c	2009-03-24 14:19:46.000000000 -0400
+diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmspcs.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmspcs.c
+--- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmspcs.c	2008-11-25 04:06:04.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmspcs.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
  //
@@ -4826,9 +4821,9 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmspcs.c openjdk
  //
  // Permission is hereby granted, free of charge, to any person obtaining
  // a copy of this software and associated documentation files (the "Software"),
-diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsps2.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsps2.c
---- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsps2.c	2008-11-25 04:06:04.000000000 -0500
-+++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsps2.c	2009-03-24 14:19:55.000000000 -0400
+diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsps2.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsps2.c
+--- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsps2.c	2008-11-25 04:06:04.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsps2.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
  //
@@ -5004,14 +4999,14 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsps2.c openjdk
  
 -        if (lIsAbsolute) {
 +            cmsCIEXYZ White;
-+
-+            cmsTakeMediaWhitePoint(&White, hProfile);
  
 -            // For absolute colorimetric intent, do nothing
-+            Writef(m,"/MatrixPQR [1 0 0 0 1 0 0 0 1 ]\n");
-+            Writef(m,"/RangePQR [ -0.5 2 -0.5 2 -0.5 2 ]\n");
++            cmsTakeMediaWhitePoint(&White, hProfile);
  
 -            Writef(m, "%% Absolute colorimetric -- no transformation\n"
++            Writef(m,"/MatrixPQR [1 0 0 0 1 0 0 0 1 ]\n");
++            Writef(m,"/RangePQR [ -0.5 2 -0.5 2 -0.5 2 ]\n");
++
 +            Writef(m, "%% Absolute colorimetric -- encode to relative to maximize LUT usage\n"
                        "/TransformPQR [\n"
 -                      "{exch pop exch pop exch pop exch pop} bind dup dup]\n");
@@ -5190,9 +5185,9 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsps2.c openjdk
  
      // Finally, return used byte count
      return dwBytesUsed;
-diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmssamp.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmssamp.c
---- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmssamp.c	2008-11-25 04:06:04.000000000 -0500
-+++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmssamp.c	2009-03-24 14:20:03.000000000 -0400
+diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmssamp.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmssamp.c
+--- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmssamp.c	2008-11-25 04:06:04.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmssamp.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
  //
@@ -5302,9 +5297,9 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmssamp.c openjd
  {
  
         WORD *WhitePointIn, *WhitePointOut, *BlackPointIn, *BlackPointOut;
-diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsvirt.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsvirt.c
---- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsvirt.c	2008-11-25 04:06:04.000000000 -0500
-+++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsvirt.c	2009-03-24 14:20:10.000000000 -0400
+diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsvirt.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsvirt.c
+--- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsvirt.c	2008-11-25 04:06:04.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsvirt.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
  //
@@ -5457,9 +5452,9 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsvirt.c openjd
  
         Lut -> InputChan = 3;
         Lut -> OutputChan = 1;
-diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmswtpnt.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmswtpnt.c
---- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmswtpnt.c	2008-11-25 04:06:04.000000000 -0500
-+++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmswtpnt.c	2009-03-24 14:20:20.000000000 -0400
+diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmswtpnt.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmswtpnt.c
+--- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmswtpnt.c	2008-11-25 04:06:04.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmswtpnt.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
  //
@@ -5614,9 +5609,9 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmswtpnt.c openj
      if (Intent == INTENT_RELATIVE_COLORIMETRIC &&
              (cmsGetDeviceClass(hProfile) == icSigOutputClass) &&
              (cmsGetColorSpace(hProfile) == icSigCmykData))
-diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c
---- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c	2008-11-25 04:06:04.000000000 -0500
-+++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c	2009-03-24 14:20:26.000000000 -0400
+diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c
+--- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c	2008-11-25 04:06:04.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c	2009-03-26 15:18:47.000000000 -0400
 @@ -29,7 +29,7 @@
  //
  //
@@ -5652,7 +5647,27 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c openj
         cmsTakeIluminant(&Illuminant, hProfile);
  
         if (cmsGetPCS(hProfile) == icSigLabData) {
-@@ -801,7 +802,7 @@
+@@ -688,6 +689,9 @@
+                 GrayTRC = cmsReadICCGamma(hProfile, icSigGrayTRCTag);
+                 FromLstarToXYZ(GrayTRC, Shapes1);
+ 
++		if (GrayTRC == NULL)
++		  return NULL;		
++
+                 // Reversing must be done after curve translation
+ 
+                 Shapes[0] = cmsReverseGamma(Shapes1[0]->nEntries, Shapes1[0]);
+@@ -703,6 +707,9 @@
+ 
+                 GrayTRC = cmsReadICCGammaReversed(hProfile, icSigGrayTRCTag);   // Y
+ 
++                if (GrayTRC == NULL)
++                  return NULL;
++
+                 Shapes[0] = cmsDupGamma(GrayTRC);
+                 Shapes[1] = cmsDupGamma(GrayTRC);
+                 Shapes[2] = cmsDupGamma(GrayTRC);
+@@ -801,7 +808,7 @@
  // This function builds a transform matrix chaining parameters
  
  static
@@ -5661,7 +5676,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c openj
  {
         MAT3 From, To, ToInv, Transfer;
         LPGAMMATABLE In[3], InverseOut[3];
-@@ -838,6 +839,11 @@
+@@ -838,6 +845,11 @@
          InverseOut[1] = cmsReadICCGammaReversed(p -> OutputProfile, icSigGreenTRCTag);
          InverseOut[2] = cmsReadICCGammaReversed(p -> OutputProfile, icSigBlueTRCTag);
  
@@ -5673,7 +5688,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c openj
          p -> SmeltMatShaper = cmsAllocMatShaper2(&Transfer, In, InverseOut, MATSHAPER_ALLSMELTED);
  
          cmsFreeGammaTriple(In);
-@@ -1029,7 +1035,7 @@
+@@ -1029,7 +1041,7 @@
  // Check colorspace
  
  static
@@ -5682,7 +5697,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c openj
  {
         int Space = T_COLORSPACE(dwFormat);
  
-@@ -1049,10 +1055,10 @@
+@@ -1049,10 +1061,10 @@
  {
      // Allocate needed memory
  
@@ -5695,7 +5710,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c openj
            return NULL;
      }
  
-@@ -1269,10 +1275,10 @@
+@@ -1269,10 +1281,10 @@
          else {
                  // Can we optimize matrix-shaper only transform?
  
@@ -5710,7 +5725,16 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c openj
                         (p -> EntryColorSpace == icSigRgbData) &&
                         (p -> ExitColorSpace == icSigRgbData) &&
                         !(p -> dwOriginalFlags & cmsFLAGS_BLACKPOINTCOMPENSATION)) {
-@@ -1553,7 +1559,8 @@
+@@ -1335,7 +1347,7 @@
+                      p -> ToDevice = PCStoShaperMatrix;
+                      p -> OutMatShaper = cmsBuildOutputMatrixShaper(p->OutputProfile);
+ 
+-                     if (!p -> OutMatShaper) {
++                     if (!p || !p -> OutMatShaper) {
+                             cmsSignalError(LCMS_ERRC_ABORTED, "profile is unsuitable for output");
+                             return NULL;
+                             }
+@@ -1553,7 +1565,8 @@
                      DeviceLink = _cmsPrecalculateDeviceLink((cmsHTRANSFORM) p, dwFlags);
                 }
  
@@ -5720,7 +5744,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c openj
  
                     GamutCheck = _cmsPrecalculateGamutCheck((cmsHTRANSFORM) p);
                 }
-@@ -1668,7 +1675,7 @@
+@@ -1668,7 +1681,7 @@
  
             LCMS_FREE_LOCK(&p->rwlock);
  
@@ -5729,7 +5753,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c openj
  }
  
  
-@@ -1704,7 +1711,7 @@
+@@ -1704,7 +1717,7 @@
  
  // Returns TRUE if the profile is implemented as matrix-shaper
  
@@ -5738,7 +5762,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c openj
  {
      switch (cmsGetColorSpace(hProfile)) {
  
-@@ -1728,7 +1735,7 @@
+@@ -1728,7 +1741,7 @@
  }
  
  
@@ -5747,7 +5771,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c openj
                                                  int Intent, int UsedDirection)
  {
  
-@@ -1774,6 +1781,16 @@
+@@ -1774,6 +1787,16 @@
  }
  
  
@@ -5764,7 +5788,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c openj
  // A multiprofile transform does chain several profiles into a single
  // devicelink. It couls also be used to merge named color profiles into
  // a single database.
-@@ -1805,10 +1822,16 @@
+@@ -1805,10 +1828,16 @@
      // There is a simple case with just two profiles, try to catch it in order of getting
      // black preservation to work on this function, at least with two profiles.
  
@@ -5783,7 +5807,29 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c openj
                     return cmsCreateTransform(hProfiles[0], dwInput, hProfiles[1], dwOutput, Intent, dwFlags);
      }
  
-@@ -1984,6 +2007,14 @@
+@@ -1897,6 +1926,7 @@
+ 
+         ColorSpace = ColorSpaceIn;
+ 
++	Transforms[i] = NULL;
+ 
+         if (ColorSpace == CurrentColorSpace) {
+ 
+@@ -1946,7 +1976,12 @@
+                 goto ErrorCleanup;
+         }
+ 
+-        CurrentColorSpace = ColorSpaceOut;
++	if (Transforms[i] == NULL) {
++                cmsSignalError(LCMS_ERRC_ABORTED, "cmsCreateMultiprofileTransform: Invalid profile");
++                goto ErrorCleanup;
++        }
++
++	CurrentColorSpace = ColorSpaceOut;
+ 
+     }
+ 
+@@ -1984,6 +2019,14 @@
      if (hLab) cmsCloseProfile(hLab);
      if (hXYZ) cmsCloseProfile(hXYZ);
  
@@ -5798,9 +5844,9 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c openj
      if ((Intent != INTENT_ABSOLUTE_COLORIMETRIC) &&
          !(dwFlags & cmsFLAGS_NOWHITEONWHITEFIXUP))
                              _cmsFixWhiteMisalignment(p);
-diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/icc34.h openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/icc34.h
---- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/icc34.h	2008-11-25 04:06:04.000000000 -0500
-+++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/icc34.h	2009-03-24 14:21:56.000000000 -0400
+diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/icc34.h openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/icc34.h
+--- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/icc34.h	2008-11-25 04:06:04.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/icc34.h	2009-03-26 15:13:30.000000000 -0400
 @@ -1,5 +1,8 @@
 +/* Header file guard bands */
 +#ifndef ICC_H
@@ -5864,21 +5910,32 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/icc34.h openjdk/
  typedef uint8_t   icUInt8Number;
  typedef uint16_t  icUInt16Number;
  typedef uint32_t  icUInt32Number;
-diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/LCMS.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/LCMS.c
---- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/LCMS.c	2008-11-25 04:06:03.000000000 -0500
-+++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/LCMS.c	2009-03-24 13:18:16.000000000 -0400
-@@ -361,7 +361,7 @@
+diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/LCMS.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/LCMS.c
+--- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/LCMS.c	2008-11-25 04:06:03.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/LCMS.c	2009-03-26 15:16:19.000000000 -0400
+@@ -356,12 +356,18 @@
+       fprintf(stderr, "setTagData on icSigHead not permitted");
+       return;
+     }
++    
++    if (data == NULL)
++    {
++      JNU_ThrowByName(env, "java/lang/NullPointerException", "");
++      return;
++    }
+ 
+     sProf.j = id;
      profile = (cmsHPROFILE) sProf.pf;
      dataArray = (*env)->GetByteArrayElements(env, data, 0);    
      tagSize =(*env)->GetArrayLength(env, data);
 -    _cmsModifyTagData(profile, (icTagSignature) tagSig, dataArray, tagSize);
-+    _cmsInitTag(profile, (icTagSignature) tagSig, dataArray, tagSize);
++    _cmsInitTag(profile, (icTagSignature) tagSig, tagSize, dataArray);
      (*env)->ReleaseByteArrayElements(env, data, dataArray, 0);
  }
  
-diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h
---- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h	2008-11-25 04:06:04.000000000 -0500
-+++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h	2009-03-24 14:22:10.000000000 -0400
+diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h
+--- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h	2008-11-25 04:06:04.000000000 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
  //
@@ -6264,7 +6321,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h openjdk/j
  
  // PostScript ColorRenderingDictionary and ColorSpaceArray
  
-@@ -1326,35 +1304,37 @@
+@@ -1326,35 +1303,37 @@
  // Persistence
  LCMSAPI LCMSHANDLE      LCMSEXPORT cmsIT8LoadFromFile(const char* cFileName);
  LCMSAPI LCMSHANDLE      LCMSEXPORT cmsIT8LoadFromMem(void *Ptr, size_t len);
@@ -6276,15 +6333,15 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h openjdk/j
  // Properties
  LCMSAPI const char*     LCMSEXPORT cmsIT8GetSheetType(LCMSHANDLE hIT8);
 -LCMSAPI BOOL            LCMSEXPORT cmsIT8SetSheetType(LCMSHANDLE hIT8, const char* Type);
-+LCMSAPI LCMSBOOL        LCMSEXPORT cmsIT8SetSheetType(LCMSHANDLE hIT8, const char* Type);
- 
+-
 -LCMSAPI BOOL            LCMSEXPORT cmsIT8SetComment(LCMSHANDLE hIT8, const char* cComment);
-+LCMSAPI LCMSBOOL        LCMSEXPORT cmsIT8SetComment(LCMSHANDLE hIT8, const char* cComment);
++LCMSAPI LCMSBOOL        LCMSEXPORT cmsIT8SetSheetType(LCMSHANDLE hIT8, const char* Type);
  
 -LCMSAPI BOOL            LCMSEXPORT cmsIT8SetPropertyStr(LCMSHANDLE hIT8, const char* cProp, const char *Str);
 -LCMSAPI BOOL            LCMSEXPORT cmsIT8SetPropertyDbl(LCMSHANDLE hIT8, const char* cProp, double Val);
 -LCMSAPI BOOL            LCMSEXPORT cmsIT8SetPropertyHex(LCMSHANDLE hIT8, const char* cProp, int Val);
--
++LCMSAPI LCMSBOOL        LCMSEXPORT cmsIT8SetComment(LCMSHANDLE hIT8, const char* cComment);
+ 
 -LCMSAPI BOOL            LCMSEXPORT cmsIT8SetPropertyUncooked(LCMSHANDLE hIT8, const char* Key, const char* Buffer);
 +LCMSAPI LCMSBOOL        LCMSEXPORT cmsIT8SetPropertyStr(LCMSHANDLE hIT8, const char* cProp, const char *Str);
 +LCMSAPI LCMSBOOL        LCMSEXPORT cmsIT8SetPropertyDbl(LCMSHANDLE hIT8, const char* cProp, double Val);
@@ -6314,7 +6371,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h openjdk/j
                                                  double Val);
  
  LCMSAPI const char*     LCMSEXPORT cmsIT8GetData(LCMSHANDLE IT8, const char* cPatch, const char* cSample);
-@@ -1362,25 +1342,28 @@
+@@ -1362,25 +1341,28 @@
  
  LCMSAPI double          LCMSEXPORT cmsIT8GetDataDbl(LCMSHANDLE IT8, const char* cPatch, const char* cSample);
  
@@ -6346,7 +6403,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h openjdk/j
  // Formatter for double
  LCMSAPI void            LCMSEXPORT cmsIT8DefineDblFormat(LCMSHANDLE IT8, const char* Formatter);
  
-@@ -1406,15 +1389,16 @@
+@@ -1406,15 +1388,16 @@
  
  // Profiling Extensions --- Would be removed from API in future revisions
  
@@ -6372,7 +6429,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h openjdk/j
  
  // --------------------------------------------------------------------------------------------------- Inline functions
  
-@@ -1456,6 +1440,34 @@
+@@ -1456,6 +1439,34 @@
         return (WORD) in;
  }
  
@@ -6407,7 +6464,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h openjdk/j
  // ------------------------------------------------------------------------------------------- end of inline functions
  
  // Signal error from inside lcms code
-@@ -1542,8 +1554,8 @@
+@@ -1542,8 +1553,8 @@
  void   cdecl VEC3perK(LPVEC3 r, LPVEC3 v, double d);
  void   cdecl VEC3minus(LPVEC3 r, LPVEC3 a, LPVEC3 b);
  void   cdecl VEC3perComp(LPVEC3 r, LPVEC3 a, LPVEC3 b);
@@ -6418,7 +6475,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h openjdk/j
  void   cdecl VEC3scaleAndCut(LPWVEC3 r, LPVEC3 v, double d);
  void   cdecl VEC3cross(LPVEC3 r, LPVEC3 u, LPVEC3 v);
  void   cdecl VEC3saturate(LPVEC3 v);
-@@ -1554,13 +1566,13 @@
+@@ -1554,13 +1565,13 @@
  void   cdecl MAT3per(LPMAT3 r, LPMAT3 a, LPMAT3 b);
  void   cdecl MAT3perK(LPMAT3 r, LPMAT3 v, double d);
  int    cdecl MAT3inverse(LPMAT3 a, LPMAT3 b);
@@ -6434,7 +6491,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h openjdk/j
  void   cdecl MAT3scaleAndCut(LPWMAT3 r, LPMAT3 v, double d);
  
  // Is a table linear?
-@@ -1609,7 +1621,7 @@
+@@ -1609,7 +1620,7 @@
  void    cdecl cmsCalcL16Params(int nSamples, LPL16PARAMS p);
  void    cdecl cmsCalcCLUT16Params(int nSamples, int InputChan, int OutputChan, LPL16PARAMS p);
  void    cdecl cmsCalcCLUT16ParamsEx(int nSamples, int InputChan, int OutputChan,
@@ -6443,7 +6500,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h openjdk/j
  
  WORD    cdecl cmsLinearInterpLUT16(WORD Value, WORD LutTable[], LPL16PARAMS p);
  Fixed32 cdecl cmsLinearInterpFixed(WORD Value1, WORD LutTable[], LPL16PARAMS p);
-@@ -1693,7 +1705,7 @@
+@@ -1693,7 +1704,7 @@
  
                 // Gray axes fixup. Only on v2 8-bit Lab LUT
  
@@ -6452,7 +6509,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h openjdk/j
  
  
                             // Parameters used for curve creation
-@@ -1704,7 +1716,7 @@
+@@ -1704,7 +1715,7 @@
                 }; // LUT, FAR* LPLUT;
  
  
@@ -6461,7 +6518,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h openjdk/j
  
  
  // CRC of gamma tables
-@@ -1722,7 +1734,7 @@
+@@ -1722,7 +1733,7 @@
  
  void           cdecl cmsEndpointsOfSampledCurve(LPSAMPLEDCURVE p, double* Min, double* Max);
  void           cdecl cmsClampSampledCurve(LPSAMPLEDCURVE p, double Min, double Max);
@@ -6470,7 +6527,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h openjdk/j
  void           cdecl cmsRescaleSampledCurve(LPSAMPLEDCURVE p, double Min, double Max, int nPoints);
  
  LPSAMPLEDCURVE cdecl cmsJoinSampledCurves(LPSAMPLEDCURVE X, LPSAMPLEDCURVE Y, int nResultingPoints);
-@@ -1756,7 +1768,7 @@
+@@ -1756,7 +1767,7 @@
  void        cdecl cmsFreeMatShaper(LPMATSHAPER MatShaper);
  void        cdecl cmsEvalMatShaper(LPMATSHAPER MatShaper, WORD In[], WORD Out[]);
  
@@ -6479,7 +6536,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h openjdk/j
  
  LPMATSHAPER  cdecl cmsBuildInputMatrixShaper(cmsHPROFILE InputProfile);
  LPMATSHAPER  cdecl cmsBuildOutputMatrixShaper(cmsHPROFILE OutputProfile);
-@@ -1764,11 +1776,11 @@
+@@ -1764,11 +1775,11 @@
  
  
  // White Point & Primary chromas handling
@@ -6495,7 +6552,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h openjdk/j
  
  // Inter-PCS conversion routines. They assume D50 as white point.
  void cdecl cmsXYZ2LabEncoded(WORD XYZ[3], WORD Lab[3]);
-@@ -1783,7 +1795,7 @@
+@@ -1783,7 +1794,7 @@
  LPcmsNAMEDCOLORLIST  cdecl cmsAllocNamedColorList(int n);
  int                  cdecl cmsReadICCnamedColorList(cmsHTRANSFORM xform, cmsHPROFILE hProfile, icTagSignature sig);
  void                 cdecl cmsFreeNamedColorList(LPcmsNAMEDCOLORLIST List);
@@ -6504,7 +6561,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h openjdk/j
  
  
  // I/O
-@@ -1827,8 +1839,8 @@
+@@ -1827,8 +1838,8 @@
  
                 char                    PhysicalFile[MAX_PATH];
  
@@ -6515,7 +6572,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h openjdk/j
  
                 struct tm               Created;
  
-@@ -1836,14 +1848,13 @@
+@@ -1836,14 +1847,13 @@
  
                 size_t (* Read)(void *buffer, size_t size, size_t count, struct _lcms_iccprofile_struct* Icc);
  
@@ -6533,7 +6590,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h openjdk/j
  
                 size_t UsedSpace;
  
-@@ -1855,7 +1866,7 @@
+@@ -1855,7 +1865,7 @@
  cmsHPROFILE cdecl _cmsCreateProfilePlaceholder(void);
  
  // Search into tag dictionary
@@ -6542,7 +6599,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h openjdk/j
  
  // Search for a particular tag, replace if found or add new one else
  LPVOID _cmsInitTag(LPLCMSICCPROFILE Icc, icTagSignature sig, size_t size, const void* Init);
-@@ -1871,6 +1882,7 @@
+@@ -1871,6 +1881,7 @@
  
  // These macros unpack format specifiers into integers
  
@@ -6550,7 +6607,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h openjdk/j
  #define T_COLORSPACE(s)       (((s)>>16)&31)
  #define T_SWAPFIRST(s)        (((s)>>14)&1)
  #define T_FLAVOR(s)           (((s)>>13)&1)
-@@ -1967,7 +1979,7 @@
+@@ -1967,7 +1978,7 @@
  
                      // Flag for transform involving v4 profiles
  
@@ -6559,7 +6616,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h openjdk/j
  
  
                      // 1-pixel cache
-@@ -2014,7 +2026,7 @@
+@@ -2014,7 +2025,7 @@
  
  // Clamping & Gamut handling
  
@@ -6568,7 +6625,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h openjdk/j
                              WORD **White, WORD **Black, int *nOutputs);
  
  WORD * cdecl _cmsWhiteBySpace(icColorSpaceSignature Space);
-@@ -2043,7 +2055,7 @@
+@@ -2043,7 +2054,7 @@
  LPLUT cdecl _cmsPrecalculateGamutCheck(cmsHTRANSFORM h);
  
  // Hot fixes bad profiles
@@ -6577,7 +6634,7 @@ diff -bBruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h openjdk/j
  
  // Marks LUT as 8 bit on input
  LPLUT cdecl _cmsBlessLUT8(LPLUT Lut);
-@@ -2061,6 +2073,10 @@
+@@ -2061,6 +2072,10 @@
  // Build a tone curve for K->K' if possible (only works on CMYK)
  LPGAMMATABLE _cmsBuildKToneCurve(cmsHTRANSFORM hCMYK2CMYK, int nPoints);
  
