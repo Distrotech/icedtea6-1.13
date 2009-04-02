@@ -1,5 +1,5 @@
-diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam02.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam02.c
---- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam02.c	2008-11-25 04:06:03.000000000 -0500
+diff -ruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam02.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam02.c
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam02.c	2008-11-25 04:06:03.000000000 -0500
 +++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam02.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
@@ -79,8 +79,8 @@ diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam02.c openjd
  }
  
  
-diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam97.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam97.c
---- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam97.c	2008-11-25 04:06:03.000000000 -0500
+diff -ruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam97.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam97.c
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam97.c	2008-11-25 04:06:03.000000000 -0500
 +++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam97.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
@@ -118,8 +118,8 @@ diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam97.c openjd
  #else
      VEC3divK(&tmp, (LPVEC3) &lpMod -> WP, lpMod->WP.Y);
      MAT3eval(&lpMod -> RGB_subw, &lpMod -> MlamRigg, &tmp);
-diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c
---- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c	2008-11-25 04:06:03.000000000 -0500
+diff -ruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c	2008-11-25 04:06:03.000000000 -0500
 +++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
@@ -1562,8 +1562,8 @@ diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c openjd
  void LCMSEXPORT cmsIT8DefineDblFormat(LCMSHANDLE hIT8, const char* Formatter)
  {
      LPIT8 it8 = (LPIT8) hIT8;
-diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmscnvrt.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscnvrt.c
---- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmscnvrt.c	2008-11-25 04:06:04.000000000 -0500
+diff -ruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscnvrt.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscnvrt.c
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmscnvrt.c	2008-11-25 04:06:04.000000000 -0500
 +++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscnvrt.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
@@ -1590,8 +1590,8 @@ diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmscnvrt.c openjd
 +
 +
 +      
-diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmserr.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmserr.c
---- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmserr.c	2008-11-25 04:06:04.000000000 -0500
+diff -ruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmserr.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmserr.c
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmserr.c	2008-11-25 04:06:04.000000000 -0500
 +++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmserr.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
@@ -1622,8 +1622,8 @@ diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmserr.c openjdk/
                strcat(Buffer1, Buffer2);
                MessageBox(NULL, Buffer1, "Little cms",
                                            MB_OK|MB_ICONSTOP|MB_TASKMODAL);
-diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgamma.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgamma.c
---- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgamma.c	2008-11-25 04:06:04.000000000 -0500
+diff -ruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgamma.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgamma.c
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgamma.c	2008-11-25 04:06:04.000000000 -0500
 +++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgamma.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
@@ -1769,8 +1769,8 @@ diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgamma.c openjd
  
  
      if (cmsIsLinear(Table, nEntries)) return FALSE; // Nothing to do
-diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgmt.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgmt.c
---- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgmt.c	2008-11-25 04:06:04.000000000 -0500
+diff -ruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgmt.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgmt.c
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgmt.c	2008-11-25 04:06:04.000000000 -0500
 +++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgmt.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
@@ -1873,8 +1873,8 @@ diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgmt.c openjdk/
  
      }
  
-diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsintrp.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsintrp.c
---- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsintrp.c	2008-11-25 04:06:04.000000000 -0500
+diff -ruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsintrp.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsintrp.c
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsintrp.c	2008-11-25 04:06:04.000000000 -0500
 +++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsintrp.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
@@ -1912,8 +1912,8 @@ diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsintrp.c openjd
  
          f = ((Value - b) / a);
  
-diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio0.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio0.c
---- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio0.c	2008-11-25 04:06:04.000000000 -0500
+diff -ruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio0.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio0.c
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio0.c	2008-11-25 04:06:04.000000000 -0500
 +++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio0.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
@@ -2304,8 +2304,8 @@ diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio0.c openjdk/
  }
 +
 +
-diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio1.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio1.c
---- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio1.c	2008-11-25 04:06:04.000000000 -0500
+diff -ruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio1.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio1.c
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio1.c	2008-11-25 04:06:04.000000000 -0500
 +++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio1.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
@@ -4279,8 +4279,8 @@ diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio1.c openjdk/
 -  return TRUE;
 -}
 -
-diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmslut.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmslut.c
---- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmslut.c	2008-11-25 04:06:04.000000000 -0500
+diff -ruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmslut.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmslut.c
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmslut.c	2008-11-25 04:06:04.000000000 -0500
 +++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmslut.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
@@ -4437,8 +4437,8 @@ diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmslut.c openjdk/
                                                         &Lut -> In16params);
                Lut ->wFlags &= ~LUT_HASTL1;
             }
-diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmatsh.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmatsh.c
---- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmatsh.c	2008-11-25 04:06:04.000000000 -0500
+diff -ruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmatsh.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmatsh.c
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmatsh.c	2008-11-25 04:06:04.000000000 -0500
 +++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmatsh.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
@@ -4500,8 +4500,8 @@ diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmatsh.c openjd
  }
  
  
-diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmtrx.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmtrx.c
---- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmtrx.c	2008-11-25 04:06:04.000000000 -0500
+diff -ruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmtrx.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmtrx.c
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmtrx.c	2008-11-25 04:06:04.000000000 -0500
 +++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmtrx.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
@@ -4564,8 +4564,8 @@ diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmtrx.c openjdk
  {
          MAT3 m, a_1;
  
-diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsnamed.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsnamed.c
---- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsnamed.c	2008-11-25 04:06:04.000000000 -0500
+diff -ruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsnamed.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsnamed.c
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsnamed.c	2008-11-25 04:06:04.000000000 -0500
 +++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsnamed.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
@@ -4625,8 +4625,8 @@ diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsnamed.c openjd
  {
      _LPcmsTRANSFORM v = (_LPcmsTRANSFORM) xform;
  
-diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmspack.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmspack.c
---- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmspack.c	2008-11-25 04:06:04.000000000 -0500
+diff -ruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmspack.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmspack.c
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmspack.c	2008-11-25 04:06:04.000000000 -0500
 +++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmspack.c	2009-03-26 15:13:30.000000000 -0400
 @@ -28,7 +28,7 @@
  // file:
@@ -4809,8 +4809,8 @@ diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmspack.c openjdk
                              break;
  
                       default:;
-diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmspcs.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmspcs.c
---- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmspcs.c	2008-11-25 04:06:04.000000000 -0500
+diff -ruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmspcs.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmspcs.c
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmspcs.c	2008-11-25 04:06:04.000000000 -0500
 +++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmspcs.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
@@ -4821,8 +4821,8 @@ diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmspcs.c openjdk/
  //
  // Permission is hereby granted, free of charge, to any person obtaining
  // a copy of this software and associated documentation files (the "Software"),
-diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsps2.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsps2.c
---- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsps2.c	2008-11-25 04:06:04.000000000 -0500
+diff -ruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsps2.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsps2.c
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsps2.c	2008-11-25 04:06:04.000000000 -0500
 +++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsps2.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
@@ -5185,8 +5185,8 @@ diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsps2.c openjdk/
  
      // Finally, return used byte count
      return dwBytesUsed;
-diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmssamp.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmssamp.c
---- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmssamp.c	2008-11-25 04:06:04.000000000 -0500
+diff -ruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmssamp.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmssamp.c
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmssamp.c	2008-11-25 04:06:04.000000000 -0500
 +++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmssamp.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
@@ -5297,8 +5297,8 @@ diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmssamp.c openjdk
  {
  
         WORD *WhitePointIn, *WhitePointOut, *BlackPointIn, *BlackPointOut;
-diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsvirt.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsvirt.c
---- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsvirt.c	2008-11-25 04:06:04.000000000 -0500
+diff -ruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsvirt.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsvirt.c
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsvirt.c	2008-11-25 04:06:04.000000000 -0500
 +++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsvirt.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
@@ -5452,8 +5452,8 @@ diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsvirt.c openjdk
  
         Lut -> InputChan = 3;
         Lut -> OutputChan = 1;
-diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmswtpnt.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmswtpnt.c
---- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmswtpnt.c	2008-11-25 04:06:04.000000000 -0500
+diff -ruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmswtpnt.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmswtpnt.c
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmswtpnt.c	2008-11-25 04:06:04.000000000 -0500
 +++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmswtpnt.c	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
@@ -5609,8 +5609,8 @@ diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmswtpnt.c openjd
      if (Intent == INTENT_RELATIVE_COLORIMETRIC &&
              (cmsGetDeviceClass(hProfile) == icSigOutputClass) &&
              (cmsGetColorSpace(hProfile) == icSigCmykData))
-diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c
---- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c	2008-11-25 04:06:04.000000000 -0500
+diff -ruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c	2008-11-25 04:06:04.000000000 -0500
 +++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c	2009-03-26 15:18:47.000000000 -0400
 @@ -29,7 +29,7 @@
  //
@@ -5844,8 +5844,8 @@ diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c openjd
      if ((Intent != INTENT_ABSOLUTE_COLORIMETRIC) &&
          !(dwFlags & cmsFLAGS_NOWHITEONWHITEFIXUP))
                              _cmsFixWhiteMisalignment(p);
-diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/icc34.h openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/icc34.h
---- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/icc34.h	2008-11-25 04:06:04.000000000 -0500
+diff -ruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/icc34.h openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/icc34.h
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/icc34.h	2008-11-25 04:06:04.000000000 -0500
 +++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/icc34.h	2009-03-26 15:13:30.000000000 -0400
 @@ -1,5 +1,8 @@
 +/* Header file guard bands */
@@ -5910,8 +5910,8 @@ diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/icc34.h openjdk/j
  typedef uint8_t   icUInt8Number;
  typedef uint16_t  icUInt16Number;
  typedef uint32_t  icUInt32Number;
-diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/LCMS.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/LCMS.c
---- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/LCMS.c	2008-11-25 04:06:03.000000000 -0500
+diff -ruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/LCMS.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/LCMS.c
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/LCMS.c	2008-11-25 04:06:03.000000000 -0500
 +++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/LCMS.c	2009-03-26 15:16:19.000000000 -0400
 @@ -356,12 +356,18 @@
        fprintf(stderr, "setTagData on icSigHead not permitted");
@@ -5933,8 +5933,8 @@ diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/LCMS.c openjdk/jd
      (*env)->ReleaseByteArrayElements(env, data, dataArray, 0);
  }
  
-diff -ruN ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h
---- ../openjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h	2008-11-25 04:06:04.000000000 -0500
+diff -ruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h
+--- openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h	2008-11-25 04:06:04.000000000 -0500
 +++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/lcms.h	2009-03-26 15:13:30.000000000 -0400
 @@ -29,7 +29,7 @@
  //
