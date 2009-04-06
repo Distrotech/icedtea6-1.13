@@ -691,6 +691,7 @@ ICEDTEA_PATCHES += \
 	patches/icedtea-jtreg-colortest.patch \
 	patches/icedtea-jtreg-printjob-multiple-end.patch \
 	patches/icedtea-jtreg-printjob-edgetest-manual.patch \
+	patches/icedtea-jtreg-jrunscript.patch \
 	patches/icedtea-network-unreachable.patch \
 	$(DISTRIBUTION_PATCHES)
 
