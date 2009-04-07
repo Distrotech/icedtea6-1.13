@@ -693,6 +693,7 @@ ICEDTEA_PATCHES += \
 	patches/icedtea-jtreg-printjob-edgetest-manual.patch \
 	patches/icedtea-jtreg-jrunscript.patch \
 	patches/icedtea-network-unreachable.patch \
+	patches/icedtea-dnd-filelists.patch \
 	$(DISTRIBUTION_PATCHES)
 
 stamps/extract.stamp: stamps/download.stamp
