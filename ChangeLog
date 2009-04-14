@@ -1,3 +1,10 @@
+2009-04-10 Deepak Bhole <dbhole@redhat.com>
+
+	* IcedTeaPlugin.cc: Fix rhbz478561 (freeze with empty string return from
+	Java side).
+	* plugin/icedtea/sun/applet/PluginMessageConsumer.java: Bump max workers
+	from 3 to 20, limiting initial to 3, and growing if/when needed.
+
 2009-04-10  Matthias Klose  <doko@ubuntu.com>
 
 	* Makefile.am (check-jdk): Fix location of test input files, fix

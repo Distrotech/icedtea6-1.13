@@ -588,7 +588,7 @@ char const* TYPES[10] = { "Object",
   PLUGIN_DEBUG_0ARG ("RECEIVE VALUE 1\n");                                             \
   ResultContainer *resultC;                                              \
   factory->result_map.Get(reference, &resultC);                         \
-  while (resultC->returnValue == "" && \
+  while (resultC->returnValue.IsVoid() == PR_TRUE && \
 	     resultC->errorOccurred == PR_FALSE)            \
     {                                                                      \
       PROCESS_PENDING_EVENTS_REF (reference);                                   \
@@ -607,7 +607,7 @@ char const* TYPES[10] = { "Object",
   PLUGIN_DEBUG_0ARG("RECEIVE SIZE 1\n");                                 \
   ResultContainer *resultC;                                              \
   factory->result_map.Get(reference, &resultC);                         \
-  while (resultC->returnValue == "" && \
+  while (resultC->returnValue.IsVoid() == PR_TRUE && \
 	     resultC->errorOccurred == PR_FALSE) \
     {                                                           \
       PROCESS_PENDING_EVENTS_REF (reference);                        \
@@ -631,7 +631,7 @@ char const* TYPES[10] = { "Object",
   PLUGIN_DEBUG_0ARG("RECEIVE STRING 1\n");                                 \
   ResultContainer *resultC;                                              \
   factory->result_map.Get(reference, &resultC);                         \
-  while (resultC->returnValue == "" && \
+  while (resultC->returnValue.IsVoid() == PR_TRUE && \
 	     resultC->errorOccurred == PR_FALSE)  \
     {                                                           \
       PROCESS_PENDING_EVENTS_REF (reference);                        \
@@ -655,7 +655,7 @@ char const* TYPES[10] = { "Object",
   PLUGIN_DEBUG_0ARG("RECEIVE STRING UCS 1\n");                                 \
   ResultContainer *resultC;                                              \
   factory->result_map.Get(reference, &resultC);                         \
-  while (resultC->returnValueUCS.IsEmpty() && \
+  while (resultC->returnValueUCS.IsVoid() == PR_TRUE && \
 	     resultC->errorOccurred == PR_FALSE) \
     {                                                           \
       PROCESS_PENDING_EVENTS_REF (reference);                        \
@@ -855,6 +855,8 @@ ResultContainer::ResultContainer ()
 	returnIdentifier = -1;
 	returnValue.Truncate();
 	returnValueUCS.Truncate();
+	returnValue.SetIsVoid(PR_TRUE);
+	returnValueUCS.SetIsVoid(PR_TRUE);
 	errorMessage.Truncate();
 	errorOccurred = PR_FALSE;
 
@@ -877,6 +879,8 @@ ResultContainer::Clear()
 	returnIdentifier = -1;
 	returnValue.Truncate();
 	returnValueUCS.Truncate();
+	returnValue.SetIsVoid(PR_TRUE);
+	returnValueUCS.SetIsVoid(PR_TRUE);
 	errorMessage.Truncate();
 	errorOccurred = PR_FALSE;
 
@@ -3352,7 +3356,8 @@ IcedTeaPluginFactory::HandleMessage (nsCString const& message)
           
 		   ResultContainer *resultC;
 		   result_map.Get(reference, &resultC);
-		   resultC->returnValue = rest; 
+		   resultC->returnValue = rest;
+		   resultC->returnValue.SetIsVoid(PR_FALSE);
            PLUGIN_DEBUG_1ARG ("PLUGIN GOT RETURN VALUE: %s\n", resultC->returnValue.get());
         }
       else if (command == "GetStringUTFChars")
@@ -3440,6 +3445,7 @@ IcedTeaPluginFactory::HandleMessage (nsCString const& message)
 		  ResultContainer *resultC;
 		  result_map.Get(reference, &resultC);
 		  resultC->returnValueUCS = returnValueUCS;
+		  resultC->returnValueUCS.SetIsVoid(PR_FALSE);
 
         }
       // Do nothing for: SetStaticField, SetField, ExceptionClear,
