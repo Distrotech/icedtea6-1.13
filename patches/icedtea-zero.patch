@@ -77,6 +77,17 @@
      if (fp) {
 --- openjdk/hotspot/src/share/vm/interpreter/bytecodeInterpreter.cpp.orig	2008-07-27 08:37:03.000000000 +0000
 +++ openjdk/hotspot/src/share/vm/interpreter/bytecodeInterpreter.cpp	2008-07-27 08:38:13.000000000 +0000
+@@ -424,7 +421,9 @@
+ #ifdef ASSERT
+   if (istate->_msg != initialize) {
+     assert(abs(istate->_stack_base - istate->_stack_limit) == (istate->_method->max_stack() + 1), "bad stack limit");
+-   IA32_ONLY(assert(istate->_stack_limit == istate->_thread->last_Java_sp() + 1, "wrong"));
++#if defined(IA32) && !defined(ZERO)
++    assert(istate->_stack_limit == istate->_thread->last_Java_sp() + 1, "wrong");
++#endif // IA32 && !ZERO
+   }
+   // Verify linkages.
+   interpreterState l = istate;
 @@ -3030,9 +3030,9 @@
    tty->print_cr("&native_fresult: " INTPTR_FORMAT, (uintptr_t) &this->_native_fresult);
    tty->print_cr("native_lresult: " INTPTR_FORMAT, (uintptr_t) this->_native_lresult);
