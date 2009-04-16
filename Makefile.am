@@ -1,6 +1,6 @@
-OPENJDK_DATE = 25_nov_2008
-OPENJDK_MD5SUM = 9f9773a822156dd3d576d83d794364ce
-OPENJDK_VERSION = b14
+OPENJDK_DATE = 13_apr_2009
+OPENJDK_MD5SUM = d395b4d4ac8b2aff70730b953f9e2736
+OPENJDK_VERSION = b16
 
 CACAO_VERSION = 0.99.3
 CACAO_MD5SUM = 80de3ad344c1a20c086ec5f1390bd1b8
@@ -106,8 +106,8 @@ EXTRA_DIST = rt generated \
 
 # OpenJDK build environment.
 OS_DIR = $(BUILD_OS_DIR)-$(BUILD_ARCH_DIR)
-BUILD_OUTPUT_DIR = openjdk/control/build/$(OS_DIR)
-ECJ_BUILD_OUTPUT_DIR = openjdk-ecj/control/build/$(OS_DIR)
+BUILD_OUTPUT_DIR = openjdk/build/$(OS_DIR)
+ECJ_BUILD_OUTPUT_DIR = openjdk-ecj/build/$(OS_DIR)
 ICEDTEA_BUILD_DIR = \
 	$(abs_top_builddir)/$(BUILD_OUTPUT_DIR)
 ICEDTEA_RT = \
@@ -544,23 +544,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-javafiles.patch \
 	patches/icedtea-core-build.patch \
 	patches/icedtea-jvmtiEnv.patch \
-	patches/icedtea-lcms.patch \
-	patches/security/icedtea-6536193.patch \
-	patches/security/icedtea-6610888.patch \
-	patches/security/icedtea-6610896.patch \
-	patches/security/icedtea-6630639.patch \
-	patches/security/icedtea-6632886.patch \
-	patches/security/icedtea-6652463.patch \
-	patches/security/icedtea-6656633.patch \
-	patches/security/icedtea-6658158.patch \
-	patches/security/icedtea-6691246.patch \
-	patches/security/icedtea-6717680.patch \
-	patches/security/icedtea-6721651.patch \
-	patches/security/icedtea-6737315.patch \
-	patches/security/icedtea-6792554.patch \
-	patches/security/icedtea-6804996.patch \
-	patches/security/icedtea-6804997.patch \
-	patches/security/icedtea-6804998.patch
+	patches/icedtea-lcms.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
@@ -615,11 +599,9 @@ ICEDTEA_PATCHES += \
 	patches/icedtea-linker-libs-order.patch \
 	patches/icedtea-f2i-overflow.patch \
 	patches/icedtea-6761856-freetypescaler.patch \
-	patches/icedtea-display-mode-changer.patch \
 	patches/icedtea-testenv.patch \
 	patches/icedtea-samejvm-safe.patch \
 	patches/icedtea-6728542-epoll.patch \
-	patches/icedtea-io_util-overflow.patch \
 	patches/icedtea-cc-interp-jvmti.patch \
 	patches/icedtea-pr261.patch \
 	patches/icedtea-doc-headers.patch \
@@ -1130,7 +1112,7 @@ stamps/icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
 	stamps/pulse-java.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV) \
-	  -C openjdk/control/make/ \
+	  -C openjdk \
 	  $(ICEDTEA_BUILD_TARGET)
 	mkdir -p $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
 	mkdir -p $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
@@ -1197,7 +1179,7 @@ stamps/icedtea-debug.stamp: stamps/bootstrap-directory-symlink.stamp \
 	stamps/pulse-java.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV) \
-	  -C openjdk/control/make \
+	  -C openjdk \
 	  $(ICEDTEA_DEBUG_BUILD_TARGET)
 	mkdir -p $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
 	mkdir -p $(BUILD_OUTPUT_DIR)-debug/j2re-image/lib/$(INSTALL_ARCH_DIR)
@@ -1260,7 +1242,7 @@ endif
 clean-icedtea: stamps/extract.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV) \
-	  -C openjdk/control/make clobber
+	  -C openjdk clobber
 	rm -f stamps/icedtea.stamp stamps/icedtea-debug.stamp
 
 icedtea-against-icedtea: \
@@ -1287,7 +1269,7 @@ stamps/icedtea-ecj.stamp: stamps/bootstrap-directory-symlink-ecj.stamp \
 	stamps/ports-ecj.stamp stamps/patch-ecj.stamp stamps/cacao.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV_ECJ) \
-	  -C openjdk-ecj/control/make \
+	  -C openjdk-ecj/make \
 	  $(ICEDTEA_BUILD_TARGET)
 	@echo "ecj-poured IcedTea is served:" \
 	  $(ECJ_BUILD_OUTPUT_DIR)
@@ -1309,13 +1291,13 @@ hotspot-helper: stamps/bootstrap-directory-symlink-ecj.stamp \
 	stamps/ports-ecj.stamp stamps/patch-ecj.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV_ECJ) \
-	  -C openjdk-ecj/control/make hotspot
+	  -C openjdk-ecj/make hotspot
 
 clean-icedtea-ecj: stamps/extract-ecj.stamp
 	rm -f stamps/icedtea-ecj.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV_ECJ) \
-	  -C openjdk-ecj/control/make clobber
+	  -C openjdk-ecj/make clobber
 
 stamps/icedtea-against-ecj.stamp: \
 	stamps/bootstrap-directory-symlink-ecj.stamp \
