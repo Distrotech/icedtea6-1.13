@@ -632,7 +632,8 @@ ICEDTEA_PATCHES += \
 	patches/icedtea-fortify-source.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-sparc-buildfixes.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-6791168.patch \
-	patches/hotspot/$(HSBUILD)/icedtea-includedb.patch
+	patches/hotspot/$(HSBUILD)/icedtea-includedb.patch \
+	patches/hotspot/$(HSBUILD)/icedtea-ignore-unrecognized-options.patch
 endif
 
 if !WITH_ALT_HSBUILD
