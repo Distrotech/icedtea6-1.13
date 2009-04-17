@@ -1269,7 +1269,7 @@ stamps/icedtea-ecj.stamp: stamps/bootstrap-directory-symlink-ecj.stamp \
 	stamps/ports-ecj.stamp stamps/patch-ecj.stamp stamps/cacao.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV_ECJ) \
-	  -C openjdk-ecj/make \
+	  -C openjdk-ecj/ \
 	  $(ICEDTEA_BUILD_TARGET)
 	@echo "ecj-poured IcedTea is served:" \
 	  $(ECJ_BUILD_OUTPUT_DIR)
@@ -1291,13 +1291,13 @@ hotspot-helper: stamps/bootstrap-directory-symlink-ecj.stamp \
 	stamps/ports-ecj.stamp stamps/patch-ecj.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV_ECJ) \
-	  -C openjdk-ecj/make hotspot
+	  -C openjdk-ecj/ hotspot
 
 clean-icedtea-ecj: stamps/extract-ecj.stamp
 	rm -f stamps/icedtea-ecj.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV_ECJ) \
-	  -C openjdk-ecj/make clobber
+	  -C openjdk-ecj/ clobber
 
 stamps/icedtea-against-ecj.stamp: \
 	stamps/bootstrap-directory-symlink-ecj.stamp \
