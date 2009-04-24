@@ -467,7 +467,7 @@ diff -ruN openjdkold/jdk/src/share/classes/com/sun/image/codec/jpeg/JPEGImageDec
 diff -ruN openjdkold/jdk/src/share/classes/com/sun/image/codec/jpeg/JPEGImageEncoder.java openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/JPEGImageEncoder.java
 --- openjdkold/jdk/src/share/classes/com/sun/image/codec/jpeg/JPEGImageEncoder.java	1969-12-31 19:00:00.000000000 -0500
 +++ openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/JPEGImageEncoder.java	2008-03-31 18:04:57.000000000 -0400
-@@ -0,0 +1,67 @@
+@@ -0,0 +1,71 @@
 +/* JPEGImageEncoder.java -- 
 +   Copyright (C) 2007 Free Software Foundation, Inc.
 +
@@ -520,6 +520,10 @@ diff -ruN openjdkold/jdk/src/share/classes/com/sun/image/codec/jpeg/JPEGImageEnc
 +	public JPEGEncodeParam getDefaultJPEGEncodeParam(BufferedImage bi)
 +	{
 +		return null;
++	}
++
++	public void setJPEGEncodeParam(JPEGEncodeParam p)
++	{
 +	}
 +
 +	public void encode(BufferedImage bi, JPEGEncodeParam p)
