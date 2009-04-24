@@ -5,7 +5,7 @@ OPENJDK_VERSION = b16
 CACAO_VERSION = 0.99.3
 CACAO_MD5SUM = 80de3ad344c1a20c086ec5f1390bd1b8
 
-NETBEANS_PROFILER_MD5SUM = 786ab31817cbd902a7211cd6a6161750
+NETBEANS_PROFILER_MD5SUM = a6756a62291ebea5c0e2431389b31380
 VISUALVM_MD5SUM = a289739f4a5bcdb9a2c642cfcc1e83fe
 
 if ENABLE_GCJWEBPLUGIN
@@ -1821,18 +1821,20 @@ stamps/nbplatform.stamp: $(BOOTSTRAP_DIRECTORY_STAMP) stamps/extract.stamp \
 if WITH_VISUALVM
 	cd netbeans ; \
         rm nbbuild/external/binaries-list ; \
-        mkdir -p lib.profiler/release/lib/deployed/jdk15/linux ; \
-        mkdir -p lib.profiler/release/lib/deployed/jdk16/linux ; \
 	mkdir -p ./nbbuild/netbeans_visualvm/ ; \
 	ln -s $(SYSTEM_NETBEANS_DIR)/platform9/ ./nbbuild/netbeans_visualvm/platform9 ; \
 	ln -s $(SYSTEM_NETBEANS_DIR)/apisupport1/ ./nbbuild/netbeans_visualvm/apisupport1 ; \
 	ln -s $(SYSTEM_NETBEANS_DIR)/harness/ ./nbbuild/netbeans_visualvm/harness ; \
-	cd lib.profiler/native/build ; \
 	if ! (uname -a | grep x86_64) ; then \
+	  mkdir -p lib.profiler/release/lib/deployed/jdk15/linux ; \
+	  mkdir -p lib.profiler/release/lib/deployed/jdk16/linux ; \
 	  buildscript=./buildnative-linux-15.sh ; \
 	else \
+	  mkdir -p lib.profiler/release/lib/deployed/jdk15/linux-amd64 ; \
+	  mkdir -p lib.profiler/release/lib/deployed/jdk16/linux-amd64 ; \
 	  buildscript=./buildnative-linux64-15.sh ; \
 	fi ; \
+	cd lib.profiler/native/build ; \
 	JAVA_HOME_15=$(ICEDTEA_HOME) JAVA_HOME_16=$(ICEDTEA_HOME) \
 	  $$buildscript ; \
 	cd ../../.. ; \
