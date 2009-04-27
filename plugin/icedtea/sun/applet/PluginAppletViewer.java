@@ -1635,12 +1635,14 @@ import com.sun.jndi.toolkit.url.UrlUtil;
     							 att = att.replace("&amp;", "&");
     							 att = att.replace("&#10;", "\n");
     							 att = att.replace("&#13;", "\r");
+    							 att = att.replace("&quot;", "\"");
 
     							 val = val.replace("&gt;", ">");
     							 val = val.replace("&lt;", "<");
     							 val = val.replace("&amp;", "&");
     							 val = val.replace("&#10;", "\n");
     							 val = val.replace("&#13;", "\r");
+    							 val = val.replace("&quot;", "\"");
     							 PluginDebug.debug("PUT " + att + " = " + val);
    							     atts.put(att.toLowerCase(), val);
     						 } else {
@@ -1720,13 +1722,6 @@ import com.sun.jndi.toolkit.url.UrlUtil;
                          if (atts.get("java_type") != null) {
                              atts.put("type", ((String) atts.get("java_type")));
                          }
-
-    					 // The <OBJECT> attribute codebase isn't what
-    					 // we want when not dealing with jars. If its 
-    					 // defined, remove it in that case.
-    					 if(atts.get("archive") == null && atts.get("codebase") != null) {
-    						 atts.remove("codebase");
-    					 }
 
     					 if (atts.get("width") == null || !isInt(atts.get("width"))) {
     						 atts.put("width", "1000");
