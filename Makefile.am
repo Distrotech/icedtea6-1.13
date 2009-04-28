@@ -1161,6 +1161,11 @@ if WITH_VISUALVM
 	cp -r netbeans/nbbuild/netbeans_visualvm/profiler3 \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm	
 endif
+if ENABLE_SYSTEMTAP
+	mkdir -p $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset ; \
+	cp $(abs_top_srcdir)/tapset/*.stp \
+	  $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset
+endif
 	cp $(abs_top_srcdir)/rt/net/sourceforge/jnlp/resources/about.jnlp \
 	  extra-lib/about.jar \
 	  $(BUILD_OUTPUT_DIR)/j2re-image/lib ; \
@@ -1227,6 +1232,11 @@ if WITH_VISUALVM
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm ; \
 	cp -r netbeans/nbbuild/netbeans_visualvm/profiler3 \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm
+endif
+if ENABLE_SYSTEMTAP
+	mkdir -p $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset ; \
+	cp $(abs_top_srcdir)/tapset/*.stp \
+	  $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset
 endif
 	cp $(abs_top_srcdir)/rt/net/sourceforge/jnlp/resources/default.jnlp \
 	  extra-lib/about.jar \
