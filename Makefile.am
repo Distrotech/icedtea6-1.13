@@ -1164,7 +1164,7 @@ if WITH_VISUALVM
 endif
 if ENABLE_SYSTEMTAP
 	mkdir -p $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset ; \
-	cp $(abs_top_srcdir)/tapset/*.stp \
+	cp $(abs_top_builddir)/tapset/*.stp \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset
 endif
 	cp $(abs_top_srcdir)/rt/net/sourceforge/jnlp/resources/about.jnlp \
