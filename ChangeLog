@@ -1,5 +1,13 @@
 2009-04-29  Omair Majid  <omajid@redhat.com>
 
+	* patches/icedtea-java2d-stroker-internal-close-joint.patch: New patch.
+	Fix extra line when stroking the final miter joint created by
+	GeneralPath.closePath().
+	* Makefile.am (ICEDTEA_PATCHES): Apply the above.
+	* HACKING: Document the above.
+
+2009-04-29  Omair Majid  <omajid@redhat.com>
+
 	* patches/icedtea-java2d-stroker-internal-joint.patch: New patch. Fixes
 	the penultimate miter joint created by GeneralPath.closePath().
 	* Makefile.am (ICEDTEA_PATCHES): Apply the above.

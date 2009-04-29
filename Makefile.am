@@ -679,6 +679,7 @@ ICEDTEA_PATCHES += \
 	patches/icedtea-dnd-filelists.patch \
 	patches/icedtea-java2d-mitre-join.patch \
 	patches/icedtea-java2d-stroker-internal-joint.patch \
+	patches/icedtea-java2d-stroker-internal-close-joint.patch \
 	$(DISTRIBUTION_PATCHES)
 
 stamps/extract.stamp: stamps/download.stamp
