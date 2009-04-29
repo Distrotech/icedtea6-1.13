@@ -677,6 +677,7 @@ ICEDTEA_PATCHES += \
 	patches/icedtea-jtreg-jrunscript.patch \
 	patches/icedtea-network-unreachable.patch \
 	patches/icedtea-dnd-filelists.patch \
+	patches/icedtea-java2d-mitre-join.patch \
 	$(DISTRIBUTION_PATCHES)
 
 stamps/extract.stamp: stamps/download.stamp
