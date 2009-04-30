@@ -1001,7 +1001,7 @@ public class PluginAppletSecurityContext {
 		PluginDebug.debug("target = " + target + " jsSrc=" + jsSrc + " classSrc=" + classSrc);
 		
 		// if src is not a file and class loader does not map to the same base, UniversalBrowserRead (BrowserReadPermission) must be set
-		if (jsSrc != "file://" && !classSrc.equals(jsSrc)) {
+		if (!jsSrc.equals("file://") && !jsSrc.equals("[System]") && !classSrc.equals(jsSrc)) {
 			acc.checkPermission(new BrowserReadPermission());
 		}
 	}
