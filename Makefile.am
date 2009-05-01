@@ -1,5 +1,5 @@
-OPENJDK_DATE = 13_apr_2009
-OPENJDK_MD5SUM = d395b4d4ac8b2aff70730b953f9e2736
+OPENJDK_DATE = 24_apr_2009
+OPENJDK_MD5SUM = 850a29b70206bc7fa083cd26acc781f3
 OPENJDK_VERSION = b16
 
 CACAO_VERSION = 0.99.4
@@ -580,7 +580,6 @@ ICEDTEA_PATCHES += \
 	patches/icedtea-nomotif.patch \
 	patches/icedtea-alpha-fixes.patch \
 	patches/icedtea-alt-jar.patch \
-	patches/icedtea-enum-bug-181.patch \
 	patches/icedtea-jdk-use-ssize_t.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-use-idx_t.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-params-cast-size_t.patch \
