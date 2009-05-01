@@ -94,6 +94,7 @@ The following patches are currently applied before the building of OpenJDK or Op
 * icedtea-java2d-mitre-join.patch: Backport fix for mitre join decoration (S6812600).
 * icedtea-java2d-stroker-internal-joint.patch: Fix penultimate joint created by GeneralPath.closePath().
 * icedtea-java2d-stroker-internal-close-joint.patch: Fix final joint created by GeneralPath.closePath().
+* icedtea-cacao.patch: For the 'java' command, create new thread depending on the current VM.
 
 The following patches are only applied to OpenJDK6 in IcedTea6:
 
@@ -151,8 +152,6 @@ The following patches are only applied when building with experimental NetX plug
 * icedtea-netx-plugin.patch: Use NetxPanel instead of AppletViewerPanel.
 
 The following patches are only applied when building with the CACAO virtual machine:
-
-* icedtea-cacao.patch: Don't run 'java' in a new thread.
 
 The following patches are to support Xrender pipeline (-Dsun.java2d.xrender):
 
