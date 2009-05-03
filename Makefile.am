@@ -639,8 +639,10 @@ ICEDTEA_PATCHES += \
 	patches/icedtea-rhino.patch
 endif
 
+if BUILD_CACAO
 ICEDTEA_PATCHES += \
 	patches/icedtea-cacao.patch
+endif
 if WITH_CACAO
 ICEDTEA_PATCHES += \
 	patches/icedtea-cacao-ignore-jdi-tests.patch \
@@ -1802,18 +1804,17 @@ ADD_ZERO_EXTRA_BUILD_ENV = \
 	BUILD_JAXP=false      ALT_JAXP_DIST=$(ICEDTEA_BUILD_DIR)/jaxp/dist \
 	BUILD_JAXWS=false     ALT_JAXWS_DIST=$(ICEDTEA_BUILD_DIR)/jaxws/dist \
 	BUILD_CORBA=false     ALT_CORBA_DIST=$(ICEDTEA_BUILD_DIR)/corba/dist \
-	BUILD_JDK=false
+	BUILD_JDK=false \
+	DISTRIBUTION_PATCHES='$(foreach p,$(DISTRIBUTION_PATCHES),$(if $(findstring cacao,$(p)),,$(p)))'
 
 stamps/add-zero.stamp: stamps/icedtea.stamp
 if ADD_ZERO_BUILD
 	mkdir -p zerovm
 
-	for v in $(ICEDTEA_ENV); do case $$v in PATH=*) ;; *) unset $${v%%=*}; esac; done; \
 	cd zerovm && \
 	    $(ADD_ZERO_EXTRA_BUILD_ENV) \
 		$(ARCH_PREFIX) $(abs_top_srcdir)/configure $(ADD_ZERO_CONFIGURE_ARGS)
 
-	for v in $(ICEDTEA_ENV); do case $$v in PATH=*) ;; *) unset $${v%%=*}; esac; done; \
 	$(ADD_ZERO_EXTRA_BUILD_ENV) \
 		$(ARCH_PREFIX) $(MAKE) -C zerovm $(ICEDTEA_BUILD_TARGET)
 
@@ -1830,12 +1831,10 @@ stamps/add-zero-debug.stamp: stamps/icedtea-debug.stamp
 if ADD_ZERO_BUILD
 	mkdir -p zerovm
 
-	for v in $(ICEDTEA_ENV); do case $$v in PATH=*) ;; *) unset $${v%%=*}; esac; done; \
 	cd zerovm && \
 	    $(ADD_ZERO_EXTRA_BUILD_ENV) \
 		$(ARCH_PREFIX) $(abs_top_srcdir)/configure $(ADD_ZERO_CONFIGURE_ARGS)
 
-	for v in $(ICEDTEA_ENV); do case $$v in PATH=*) ;; *) unset $${v%%=*}; esac; done; \
 	$(ADD_ZERO_EXTRA_BUILD_ENV) \
 		$(ARCH_PREFIX) $(MAKE) -C zerovm $(ICEDTEA_DEBUG_BUILD_TARGET)
 
