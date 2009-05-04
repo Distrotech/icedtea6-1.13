@@ -576,6 +576,7 @@ ICEDTEA_PATCHES += \
 	patches/icedtea-jpegclasses.patch \
 	patches/icedtea-uname.patch \
 	patches/icedtea-ia64-fdlibm.patch \
+	patches/icedtea-freetypeversion.patch \
 	patches/icedtea-fonts.patch \
 	patches/icedtea-override-redirect-metacity.patch \
 	patches/icedtea-no-bcopy.patch \
