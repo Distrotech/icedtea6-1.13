@@ -1172,11 +1172,6 @@ if WITH_VISUALVM
 	cp -r netbeans/nbbuild/netbeans_visualvm/profiler3 \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm	
 endif
-if ENABLE_SYSTEMTAP
-	mkdir -p $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset ; \
-	cp $(abs_top_builddir)/tapset/*.stp \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset
-endif
 	cp $(abs_top_srcdir)/rt/net/sourceforge/jnlp/resources/about.jnlp \
 	  extra-lib/about.jar \
 	  $(BUILD_OUTPUT_DIR)/j2re-image/lib ; \
@@ -1188,6 +1183,18 @@ if ZERO_BUILD
 endif
 if WITH_CACAO
 	printf -- '-cacao ALIASED_TO -server\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
+endif
+if ENABLE_SYSTEMTAP
+	mkdir -p $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset ; \
+	grep "client IGNORE" $(BUILD_JRE_ARCH_DIR)/jvm.cfg; \
+	if test $$? -eq 0; then \
+	  sed -e '/\/client\/libjvm.so/d' \
+	    < $(abs_top_builddir)/tapset/hotspot.stp \
+	    > $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
+	else \
+	  cp $(abs_top_builddir)/tapset/hotspot.stp \
+	    $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
+	fi
 endif
 	@echo "IcedTea is served:" $(BUILD_OUTPUT_DIR)
 	mkdir -p stamps
@@ -1250,11 +1257,6 @@ if WITH_VISUALVM
 	cp -r netbeans/nbbuild/netbeans_visualvm/profiler3 \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm
 endif
-if ENABLE_SYSTEMTAP
-	mkdir -p $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset ; \
-	cp $(abs_top_srcdir)/tapset/*.stp \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset
-endif
 	cp $(abs_top_srcdir)/rt/net/sourceforge/jnlp/resources/default.jnlp \
 	  extra-lib/about.jar \
 	  $(BUILD_OUTPUT_DIR)-debug/j2re-image/lib ; \
@@ -1266,6 +1268,18 @@ if ZERO_BUILD
 endif
 if WITH_CACAO
 	printf -- '-cacao ALIASED_TO -server\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
+endif
+if ENABLE_SYSTEMTAP
+	mkdir -p $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset ; \
+	grep "client IGNORE" $(BUILD_JRE_ARCH_DIR)/jvm.cfg; \
+	if test $$? -eq 0; then \
+	  sed -e '/\/client\/libjvm.so/d' \
+	    < $(abs_top_builddir)/tapset/hotspot.stp \
+	    > $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
+	else \
+	  cp $(abs_top_builddir)/tapset/hotspot.stp \
+	    $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
+	fi
 endif
 	@echo "IcedTea (debug build) is served:" \
 	  $(BUILD_OUTPUT_DIR)-debug
