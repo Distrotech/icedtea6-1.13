@@ -6,7 +6,7 @@
 
 HAVE_AUTOCONF=false
 
-for AUTOCONF in autoconf autoconf259; do
+for AUTOCONF in autoconf autoconf259 autoconf2.59; do
     if ${AUTOCONF} --version > /dev/null 2>&1; then
         AUTOCONF_VERSION=`${AUTOCONF} --version | head -1 | sed 's/^[^0-9]*\([0-9.][0-9.]*\).*/\1/'`
 #        echo ${AUTOCONF_VERSION}
@@ -23,7 +23,7 @@ done
 
 HAVE_AUTOHEADER=false
 
-for AUTOHEADER in autoheader autoheader259; do
+for AUTOHEADER in autoheader autoheader259 autoheader2.59; do
     if ${AUTOHEADER} --version > /dev/null 2>&1; then
         AUTOHEADER_VERSION=`${AUTOHEADER} --version | head -1 | sed 's/^[^0-9]*\([0-9.][0-9.]*\).*/\1/'`
 #        echo ${AUTOHEADER_VERSION}
@@ -36,11 +36,28 @@ for AUTOHEADER in autoheader autoheader259; do
     fi
 done
 
+# Test for autom4te.
+
+HAVE_AUTOM4TE=false
+
+for AUTOM4TE in autom4te autom4te259 autom4te2.59; do
+    if ${AUTOM4TE} --version > /dev/null 2>&1; then
+        AUTOM4TE_VERSION=`${AUTOM4TE} --version | head -1 | sed 's/^[^ ]* [^0-9]*\([0-9.][0-9.]*\).*/\1/'`
+#        echo ${AUTOM4TE_VERSION}
+        case ${AUTOM4TE_VERSION} in
+            2.59* | 2.6[0-9]* )
+                HAVE_AUTOM4TE=true
+                break;
+                ;;
+        esac
+    fi
+done
+
 # Test for autoreconf.
 
 HAVE_AUTORECONF=false
 
-for AUTORECONF in autoreconf; do
+for AUTORECONF in autoreconf autoreconf2.59; do
     if ${AUTORECONF} --version > /dev/null 2>&1; then
         AUTORECONF_VERSION=`${AUTORECONF} --version | head -1 | sed 's/^[^0-9]*\([0-9.][0-9.]*\).*/\1/'`
 #        echo ${AUTORECONF_VERSION}
@@ -62,6 +79,12 @@ fi
 if test ${HAVE_AUTOHEADER} = false; then
     echo "No proper autoheader was found."
     echo "You must have autoconf 2.59 or later installed."
+    exit 1
+fi
+
+if test ${HAVE_AUTOM4TE} = false; then
+    echo "No proper autom4te was found."
+    echo "You must have autom4te 2.59 or later installed."
     exit 1
 fi
 
@@ -121,6 +144,6 @@ if test ${HAVE_AUTOMAKE} = false; then
 fi
 
 
-export ACLOCAL AUTOCONF AUTOHEADER AUTOMAKE
+export ACLOCAL AUTOCONF AUTOHEADER AUTOM4TE AUTOMAKE
 
 ${AUTORECONF} --force --install
