@@ -17,13 +17,13 @@
 	* configure.ac: Building --with-additional-vms=zero and
 	srcdir != builddir doesn't work.
 
-2009-05-05 Xerxes Rånby <xerxes@zafena.se>
+2009-05-05  Xerxes Rånby  <xerxes@zafena.se>
 
 	* ports/hotspot/src/share/vm/shark/sharkCompiler.cpp
 	(SharkCompiler::SharkCompiler): Use bool or enum to set
 	JIT optimization dependent on the llvm version.
- 
-2009-05-05 Xerxes Rånby <xerxes@zafena.se>
+
+2009-05-05  Xerxes Rånby  <xerxes@zafena.se>
 
 	* configure.ac (LLVM_CFLAGS): Remove LLVM svn suffix from
 	SHARK_LLVM_VERSION.
@@ -159,10 +159,11 @@
 
 	* ports/hotspot/src/share/vm/includeDB_shark: Updated.
 
-2009-04-30 Deepak Bhole <dbhole@redhat.com>
+2009-04-30  Deepak Bhole  <dbhole@redhat.com>
 
 	* plugin/icedtea/sun/applet/PluginAppletSecurityContext.java: Forgo
-	permission check if JS source is [System] (i.e. Mozilla extension/chrome).
+	permission check if JS source is [System] (i.e. Mozilla 
+	extension/chrome).
 
 2009-04-30  Matthias Klose  <doko@ubuntu.com>
 
@@ -195,7 +196,7 @@
 	Systemtap file.
 
 2009-04-29  Matthias Klose  <doko@ubuntu.com>
-	    Xerxes Rånby <xerxes@zafena.se>
+	    Xerxes Rånby  <xerxes@zafena.se>
 
 	* configure.am (LLVM_CFLAGS): Add SHARK_LLVM_VERSION.
 	* ports/hotspot/src/share/vm/shark/sharkMemoryManager.cpp,
@@ -254,7 +255,7 @@
 	(SharkRuntime::resolve_klass_C): Likewise.
 	(SharkRuntime::initialize): Removed _resolve_klass init.
 
-2009-04-27 Deepak Bhole <dbhole@redhat.com>
+2009-04-27  Deepak Bhole  <dbhole@redhat.com>
 
 	* plugin/icedtea/sun/applet/PluginAppletViewer.java: Unescape &quot;
 	* rt/net/sourceforge/jnlp/runtime/Boot.java: Use custom authenticator for
@@ -309,13 +310,13 @@
 	(NETBEANS_PROFILER_MD5SUM): Updated.
 	(stamps/nbplatform.stamp): Fixed to build on amd64 properly.
 
-2009-04-24 Xerxes Rånby <xerxes@zafena.se>
+2009-04-24  Xerxes Rånby  <xerxes@zafena.se>
 
 	* patches/icedtea-jpegclasses.patch
 	(openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/JPEGImageEncoder.java
 	setJPEGEncodeParam): New function.
 
-2009-04-23 Deepak Bhole <dbhole@redhat.com>
+2009-04-23  Deepak Bhole  <dbhole@redhat.com>
 
 	* rt/net/sourceforge/jnlp/runtime/JNLPClassLoader.java: Handle nested
 	jars.
@@ -324,7 +325,7 @@
 	* rt/net/sourceforge/jnlp/tools/JarSigner.java: Handle nested
 	jars.
 
-2009-04-23 Xerxes Rånby <xerxes@zafena.se>
+2009-04-23  Xerxes Rånby  <xerxes@zafena.se>
 
 	* ports/hotspot/src/share/vm/shark/sharkBuilder.cpp
 	(SharkBuilder::init_external_functions): Use memory address to
@@ -338,7 +339,7 @@
 	(WRITE_MEM_BARRIER): Likewise.
 	(OrderAccess::fence): Updated to use FULL_MEM_BARRIER.
 
-2009-04-23 Xerxes Rånby <xerxes@zafena.se>
+2009-04-23  Xerxes Rånby  <xerxes@zafena.se>
 
 	* ports/hotspot/src/share/vm/shark/sharkBuilder.cpp
 	(zero_cmpxchg_int_fn): New function.
@@ -391,12 +392,12 @@
 	* HACKING: Document the above.
 
 2009-04-15  Gary Benson  <gbenson@redhat.com>
-	    Xerxes Rånby <xerxes@zafena.se>
+	    Xerxes Rånby  <xerxes@zafena.se>
 
 	* patches/icedtea-zero.patch (BytecodeInterpreter::run):
 	Skip a bad assertion on IA32 with Zero.
 
-2009-04-10 Deepak Bhole <dbhole@redhat.com>
+2009-04-10  Deepak Bhole  <dbhole@redhat.com>
 
 	* IcedTeaPlugin.cc: Fix rhbz478561 (freeze with empty string return from
 	Java side).
@@ -430,7 +431,7 @@
 	patch, which is upstream in OpenJDK6, but is not available in the
 	upstream lcms 1.18 sources.
 
-2009-04-02 Deepak Bhole <dbhole@redhat.com>
+2009-04-02  Deepak Bhole  <dbhole@redhat.com>
 
 	* IcedTeaPlugin.cc: Incremented timeout to 3 minutes. Added functions to
 	process proxy and auth info requests (the latter is unused).
@@ -620,7 +621,7 @@
 2009-03-21  Matthias Klose  <doko@ubuntu.com>
 
 	* patches/hotspot/*/icedtea-text-relocations.patch: Build hotspot
-        with -fPIC on alpha.
+	with -fPIC on alpha.
 
 2009-03-21  Lillian Angel  <langel@redhat.com>
 
@@ -1155,7 +1156,7 @@
 	* ports/hotspot/src/share/vm/shark/sharkBlock.cpp
 	(SharkBlock::maybe_inline_call): Inline empty methods.
 
-2009-02-26  Deepak Bhole <dbhole@redhat.com>
+2009-02-26  Deepak Bhole  <dbhole@redhat.com>
 
 	* IcedTeaPlugin.cc: Decode url via nsINetUtil::UnescapeString()
 	* plugin/icedtea/sun/applet/PluginAppletViewer.java: Encode URL before
@@ -1249,7 +1250,7 @@
 	(SharkTrackingState::cache_after_VM_call): Likewise.
 	(SharkTrackingState::decache_for_trap): Likewise.
 
-2009-02-25  Deepak Bhole <dbhole@redhat.com>
+2009-02-25  Deepak Bhole  <dbhole@redhat.com>
 
 	* IcedTeaPlugin.cc: Implement Show/Hide from IJVMConsole, remove
 	IJVMPerfWindow stubs, as they were empty and unused.
@@ -1286,7 +1287,7 @@
 	(SharkBlock::get_interface_callee): Changed prototype.
 	(SharkBlock::get_callee): Removed.
 
-2009-02-23  Deepak Bhole <dbhole@redhat.com>
+2009-02-23  Deepak Bhole  <dbhole@redhat.com>
 
 	* IcedTeaPlugin.cc: Supply cookie info to Java side.
 	* plugin/icedtea/sun/applet/PluginAppletViewer.java: Apply patch from
@@ -1520,7 +1521,7 @@
 	* patches/openjdk/annotation-tests.patch:
 	New.
 	
-2009-02-10  Deepak Bhole <dbhole@redhat.com>
+2009-02-10  Deepak Bhole  <dbhole@redhat.com>
 
 	* plugin/icedtea/sun/applet/PluginAppletSecurityContext.java: Fix
 	exit permissions for applets.
@@ -1732,7 +1733,7 @@
 	(start): Return silently if already started.
 	(stop): Return silently if already stopped.
 
-2009-01-22  Deepak Bhole <dbhole@redhat.com>
+2009-01-22  Deepak Bhole  <dbhole@redhat.com>
 
 	* plugin/icedtea/sun/applet/PluginAppletSecurityContext.java: Use
 	Hashtable to store classloaders, instead of HashMap (values cannot be
@@ -2821,7 +2822,7 @@
 	* patches/hotspot/*/icedtea-parisc-opt.patch: New.
 	* Makefile.am (ICEDTEA_PATCHES): Apply icedtea-parisc-opt.patch.
 
-2008-12-10  Deepak Bhole <dbhole@redhat.com>
+2008-12-10  Deepak Bhole  <dbhole@redhat.com>
 
 	* plugin/icedtea/sun/applet/PluginAppletViewer.java: Remove spurious
 	call to getSecuritymanager() that was causing a CCE.
@@ -4184,7 +4185,7 @@
 	* patches/icedtea-version.patch:
 	Fix to use IcedTea6.
 
-2008-10-15  Xerxes Rånby <xerxes@zafena.se>
+2008-10-15  Xerxes Rånby  <xerxes@zafena.se>
 
 	* patches/icedtea-arch.patch: Update for m68k.
 
@@ -4402,7 +4403,7 @@
 	* ports/hotspot/build/linux/makefiles/shark.make:
 	Work around some GCC optimizer failures.
 
-2008-10-01     Deepak Bhole <dbhole@redhat.com>
+2008-10-01  Deepak Bhole  <dbhole@redhat.com>
 	* .hgignore: Removed IcedTeaPlugin.jar
 	* IcedTeaPlugin.cc: Updated classpath when launching Java. added
 	checks to detect error on Java side.
@@ -4682,7 +4683,7 @@
 	* generated/com/sun/corba/se/impl/logging/*: Regenerate.
 
 2008-09-12  Gary Benson  <gbenson@redhat.com>
-	    Xerxes Rånby <xerxes@zafena.se>
+	    Xerxes Rånby  <xerxes@zafena.se>
 
 	* ports/hotspot/src/os_cpu/linux_zero/vm/atomic_linux_zero.inline.hpp
 	(__m68k_cmpxchg): New function.
@@ -4786,11 +4787,11 @@
 
 	* acinclude.m4 (FIND_LIBGCJ_JAR): Extend check for libgcj-4.2.*.jar.
 
-2008-08-15  Xerxes Ranby <xerxes@zafena.se>
+2008-08-15  Xerxes Ranby  <xerxes@zafena.se>
 
 	* acinclude.m4: Fixed LIBGCJ_JAR check.
 
-2008-08-15  Xerxes Ranby <xerxes@zafena.se>
+2008-08-15  Xerxes Ranby  <xerxes@zafena.se>
 
 	* Makefile.am (CACAO_MD5SUM): Update for 0.99.3.
 
@@ -6202,7 +6203,7 @@
 	* patches/icedtea-libraries.patch: Updated LDLIBS for jpeg.
 
 2008-04-09  Gary Benson  <gbenson@redhat.com>
-	    Xerxes Rånby <xerxes@zafena.se>
+	    Xerxes Rånby  <xerxes@zafena.se>
 
 	* ports/hotspot/src/os_cpu/linux_zero/vm/atomic_linux_zero.inline.hpp
 	(__kernel_cmpxchg_t): New type.
