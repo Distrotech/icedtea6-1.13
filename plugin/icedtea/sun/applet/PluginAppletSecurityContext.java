@@ -248,7 +248,7 @@ public class PluginAppletSecurityContext {
 		// an applet will be loaded at some point, we should make it the SM 
 		// that JNLPRuntime will try to install
 		if (System.getSecurityManager() == null) {
-			JNLPRuntime.initialize();
+			JNLPRuntime.initialize(false);
 		}
 
 		JNLPRuntime.disableExit();

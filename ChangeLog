@@ -1,3 +1,23 @@
+2009-05-06  Lillian Angel  <langel@redhat.com>
+
+	Fixes bz#498108
+	* rt/net/sourceforge/jnlp/NetxPanel.java
+	(runLoader): Pass false to JNLPRuntime.initialize, since this is an 
+	applet.
+	* rt/net/sourceforge/jnlp/runtime/JNLPSecurityManager.java
+	(PluginAppletSecurityContext): Likewise.
+	* rt/net/sourceforge/jnlp/runtime/Boot.java
+	(run): Pass true to JNLPRuntime.initialize, since this 
+	is a webstart app.
+	* rt/net/sourceforge/jnlp/runtime/JNLPRuntime.java
+	(initialize): Added new parameter isApplication, which is used to set
+	global static variable isWebstartApplication.
+	(isWebstartApplication): New accessor function.
+	* rt/net/sourceforge/jnlp/runtime/JNLPSecurityManager.java:
+	(checkPermission): Added call to JNLPRuntime.isWebstartApplication so
+	the check is bypassed if the permissions are to be checked for
+	a webstart application. 
+
 2009-05-05  Deepak Bhole <dbhole@redhat.com>
 
 	* IcedTeaPlugin.cc: Add conditional compilation block.

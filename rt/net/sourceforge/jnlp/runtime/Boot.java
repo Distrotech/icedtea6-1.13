@@ -197,7 +197,7 @@ public final class Boot implements PrivilegedAction {
     public Object run() {
         JNLPRuntime.setBaseDir(getBaseDir());
         JNLPRuntime.setSecurityEnabled(null == getOption("-nosecurity"));
-        JNLPRuntime.initialize();
+        JNLPRuntime.initialize(true);
 
         try {
             new Launcher().launch(getFile());

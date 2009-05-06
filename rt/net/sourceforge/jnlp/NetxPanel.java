@@ -78,7 +78,7 @@ public class NetxPanel extends AppletViewerPanel
     			    if (JNLPRuntime.isDebug())
     			        System.out.println("initializing JNLPRuntime...");
 
-    				JNLPRuntime.initialize();
+    				JNLPRuntime.initialize(false);
     			} else {
     			    if (JNLPRuntime.isDebug())
     			        System.out.println("JNLPRuntime already initialized");

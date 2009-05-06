@@ -255,13 +255,14 @@ class JNLPSecurityManager extends SecurityManager {
      */
     public void checkPermission(Permission perm) {
         String name = perm.getName();
-        
+
         // Enable this manually -- it'll produce too much output for -verbose
         // otherwise.
 //		if (true)
 //			System.out.println("Checking permission: " + perm.toString());
-        if ("setPolicy".equals(name) ||
-            "setSecurityManager".equals(name))
+
+        if (!JNLPRuntime.isWebstartApplication() && ("setPolicy".equals(name) ||
+            "setSecurityManager".equals(name)))
             throw new SecurityException(R("RCantReplaceSM"));
 
         try {
