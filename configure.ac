@@ -127,21 +127,13 @@ AC_ARG_ENABLE([visualvm],
 AM_CONDITIONAL(WITH_VISUALVM, test "x${enable_visualvm}" = "xyes")
 AC_MSG_RESULT(${enable_visualvm})
 
-AC_MSG_CHECKING([whether to build the LiveConnect plugin])
-AC_ARG_ENABLE([liveconnect],
-              [AS_HELP_STRING([--disable-liveconnect],
+AC_MSG_CHECKING([whether to build the browser plugin])
+AC_ARG_ENABLE([plugin],
+              [AS_HELP_STRING([--disable-plugin],
                               [Disable compilation of browser plugin])],
               [enable_plugin="${enableval}"], [enable_plugin="yes"])
 AM_CONDITIONAL(ENABLE_PLUGIN, test "x${enable_plugin}" = "xyes")
 AC_MSG_RESULT(${enable_plugin})
-
-AC_MSG_CHECKING([whether to build gcjwebplugin])
-AC_ARG_ENABLE([gcjwebplugin],
-              [AS_HELP_STRING([--enable-gcjwebplugin],
-                              [Build the GCJ Web Plugin plugin (deprecated)])],
-              [enable_gcjwebplugin="${enableval}"], [enable_gcjwebplugin="no"])
-AM_CONDITIONAL(ENABLE_GCJWEBPLUGIN, test "x${enable_gcjwebplugin}" = "xyes")
-AC_MSG_RESULT(${enable_gcjwebplugin})
 
 AC_MSG_CHECKING([whether to include PulseAudio support])
 AC_ARG_ENABLE([pulse-java],
@@ -452,47 +444,12 @@ fi
 
 dnl Check for plugin support headers and libraries.
 dnl FIXME: use unstable
-if test "x${enable_gcjwebplugin}" = "xyes"
-then
-    PKG_CHECK_MODULES(MOZILLA, mozilla-plugin libxul-unstable, \
-      [MOZILLA_FOUND=yes], [MOZILLA_FOUND=no])
-    if test "x${MOZILLA_FOUND}" = xno
-    then
-      PKG_CHECK_MODULES(MOZILLA, mozilla-plugin, \
-        [MOZILLA_FOUND=yes], [MOZILLA_FOUND=no])
-    fi
-    if test "x${MOZILLA_FOUND}" = xno
-    then
-      PKG_CHECK_MODULES(MOZILLA, firefox-plugin firefox-xpcom, \
-        [MOZILLA_FOUND=yes], [MOZILLA_FOUND=no])
-    fi
-    if test "x${MOZILLA_FOUND}" = xno
-    then
-      PKG_CHECK_MODULES(MOZILLA, xulrunner-plugin xulrunner-xpcom, \
-        [MOZILLA_FOUND=yes], [MOZILLA_FOUND=no])
-    fi
-    if test "x${MOZILLA_FOUND}" = xno
-    then
-      PKG_CHECK_MODULES(MOZILLA, mozilla-firefox-plugin mozilla-firefox-xpcom, \
-        [MOZILLA_FOUND=yes], [MOZILLA_FOUND=no])
-    fi
-    if test "x${MOZILLA_FOUND}" = xno
-    then
-      PKG_CHECK_MODULES(MOZILLA, seamonkey-plugin seamonkey-xpcom, \
-        [MOZILLA_FOUND=yes], [MOZILLA_FOUND=no])
-    fi
-    if test "x${MOZILLA_FOUND}" = xno
-    then
-      PKG_CHECK_MODULES(MOZILLA, iceape-plugin iceape-xpcom, \
-        [MOZILLA_FOUND=yes], [MOZILLA_FOUND=no])
-    fi
-    if test "x${MOZILLA_FOUND}" = xno
-    then
-      AC_MSG_ERROR([Could not find plugin support headers and libraries.])
-    fi
-
+if test "x${enable_plugin}" = "xyes"
+  then
+    PKG_CHECK_MODULES(XULRUNNER, \
+      nspr mozilla-js mozilla-plugin libxul-unstable >= 1.9)
+    PKG_CHECK_MODULES(GTK, gtk+-2.0)
     PKG_CHECK_MODULES(GLIB, glib-2.0)
-    PKG_CHECK_MODULES(GTK, gtk+-2.0 gthread-2.0 gdk-pixbuf-2.0)
 
     AC_SUBST(MOZILLA_CFLAGS)
     AC_SUBST(MOZILLA_LIBS)
@@ -500,14 +457,7 @@ then
     AC_SUBST(GLIB_LIBS)
     AC_SUBST(GTK_CFLAGS)
     AC_SUBST(GTK_LIBS)
-else
-  if test "x${enable_plugin}" = "xyes"
-  then
-    PKG_CHECK_MODULES(XULRUNNER, \
-      nspr mozilla-js mozilla-plugin libxul-unstable >= 1.9)
-    PKG_CHECK_MODULES(GTK, gtk+-2.0)
   fi
-fi
 
 AC_LANG_PUSH([C++])
 OLDCPPFLAGS="$CPPFLAGS"

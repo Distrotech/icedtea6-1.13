@@ -8,12 +8,6 @@ CACAO_MD5SUM = c5e6525c5212ddbb6026e4a7cde37ca6
 NETBEANS_PROFILER_MD5SUM = a6756a62291ebea5c0e2431389b31380
 VISUALVM_MD5SUM = a289739f4a5bcdb9a2c642cfcc1e83fe
 
-if ENABLE_GCJWEBPLUGIN
-GCJWEBPLUGIN_CLEAN = clean-gcjwebplugin
-GCJWEBPLUGIN_TARGET = gcjwebplugin.so
-else
-GCJWEBPLUGIN_CLEAN =
-GCJWEBPLUGIN_TARGET =
 if ENABLE_PLUGIN
 ICEDTEAPLUGIN_CLEAN = clean-IcedTeaPlugin
 ICEDTEAPLUGIN_TARGET = IcedTeaPlugin.so
@@ -22,9 +16,8 @@ LIVECONNECT_DIR = -C lib/rt netscape
 else
 ICEDTEAPLUGIN_CLEAN =
 ICEDTEAPLUGIN_TARGET =
-PLUGIN_PATCH = patches/icedtea-plugin.patch
+PLUGIN_PATCH = 
 LIVECONNECT_DIR =
-endif
 endif
 
 if ENABLE_PULSE_JAVA
@@ -68,9 +61,6 @@ distclean-local: clean-copy clean-jtreg clean-jtreg-reports clean-pulse-java
 if ENABLE_PLUGIN
 	rm -f IcedTeaPlugin.o IcedTeaPlugin.so
 else
-if ENABLE_GCJWEBPLUGIN
-	rm -f gcjwebplugin.so
-endif
 endif
 if BUILD_CACAO
 	rm -rf cacao
@@ -89,13 +79,12 @@ install:
 	clean-bootstrap-directory-symlink-ecj icedtea icedtea-debug \
 	clean-icedtea icedtea-against-icedtea clean-icedtea-ecj clean-plugs \
 	clean-tools-jar clean-shared-objects clean-visualvm clean-nbplatform \
-	clean-copy clean-hotspot-tools clean-rt $(GCJWEBPLUGIN_CLEAN) \
-	$(ICEDTEAPLUGIN_CLEAN) hotspot hotspot-helper clean-extra \
-	clean-jtreg clean-jtreg-reports 
+	clean-copy clean-hotspot-tools clean-rt $(ICEDTEAPLUGIN_CLEAN) \
+	hotspot hotspot-helper clean-extra clean-jtreg clean-jtreg-reports 
 
 EXTRA_DIST = rt generated \
 	patches/* \
-	gcjwebplugin.cc tools-copy contrib ports \
+	tools-copy contrib ports \
 	extra overlays \
 	javaws.png javaws.desktop visualvm.desktop \
 	jconsole.desktop policytool.desktop \
@@ -1119,7 +1108,7 @@ endif
 stamps/icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
 	stamps/hotspot-tools.stamp stamps/plugs.stamp \
 	stamps/ports.stamp stamps/patch.stamp stamps/overlay.stamp \
-	$(GCJWEBPLUGIN_TARGET) $(ICEDTEAPLUGIN_TARGET) \
+	$(ICEDTEAPLUGIN_TARGET) \
 	extra-lib/about.jar stamps/cacao.stamp stamps/visualvm.stamp \
 	stamps/pulse-java.stamp
 	$(ARCH_PREFIX) $(MAKE) \
@@ -1130,18 +1119,11 @@ stamps/icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
 	mkdir -p $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
 	mkdir -p $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/ext
 	mkdir -p $(BUILD_OUTPUT_DIR)/j2re-image/lib/ext
-if ENABLE_GCJWEBPLUGIN
-	cp -pPRf gcjwebplugin.so \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
-	cp -pPRf gcjwebplugin.so \
-	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
-else
 if ENABLE_PLUGIN
 	cp -pPRf IcedTeaPlugin.so \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
 	cp -pPRf IcedTeaPlugin.so \
 	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
-endif
 endif
 if ENABLE_PULSE_JAVA
 	cp -pPRf libpulse-java.so \
@@ -1204,7 +1186,7 @@ endif
 stamps/icedtea-debug.stamp: stamps/bootstrap-directory-symlink.stamp \
 	stamps/hotspot-tools.stamp stamps/plugs.stamp \
 	stamps/ports.stamp stamps/patch.stamp stamps/overlay.stamp \
-	$(GCJWEBPLUGIN_TARGET) $(ICEDTEAPLUGIN_TARGET) \
+	$(ICEDTEAPLUGIN_TARGET) \
 	extra-lib/about.jar stamps/cacao.stamp stamps/visualvm.stamp \
 	stamps/pulse-java.stamp
 	$(ARCH_PREFIX) $(MAKE) \
@@ -1215,18 +1197,11 @@ stamps/icedtea-debug.stamp: stamps/bootstrap-directory-symlink.stamp \
 	mkdir -p $(BUILD_OUTPUT_DIR)-debug/j2re-image/lib/$(INSTALL_ARCH_DIR)
 	mkdir -p $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/ext
 	mkdir -p $(BUILD_OUTPUT_DIR)-debug/j2re-image/lib/ext
-if ENABLE_GCJWEBPLUGIN
-	cp -pPRf gcjwebplugin.so \
-	  $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
-	cp -pPRf gcjwebplugin.so \
-	  $(BUILD_OUTPUT_DIR)-debug/j2re-image/lib/$(INSTALL_ARCH_DIR)
-else
 if ENABLE_PLUGIN
 	cp -pPRf IcedTeaPlugin.so \
 	  $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
 	cp -pPRf IcedTeaPlugin.so \
 	  $(BUILD_OUTPUT_DIR)-debug/j2re-image/lib/$(INSTALL_ARCH_DIR)
-endif
 endif
 if ENABLE_PULSE_JAVA
 	cp -pPRf libpulse-java.so \
@@ -1624,24 +1599,6 @@ clean-cacao:
 	rm -rf cacao
 	rm -f stamps/cacao.stamp
 
-if ENABLE_GCJWEBPLUGIN
-# gcjwebplugin.so.
-gcjwebplugin.so: gcjwebplugin.cc
-	if [ -e $(abs_top_srcdir)/.hg ] && which $(HG) >/dev/null; then \
-	  revision="-r`(cd $(abs_top_srcdir); $(HG) tip --template '{rev}')`" ; \
-	fi ; \
-	if [ -n "$(PKGVERSION)" ]; then plugin_version=" ($(PKGVERSION))"; fi; \
-	plugin_version=" $(PACKAGE_VERSION)$$revision$$plugin_version"; \
-	$(CXX) $(CXXFLAGS) $(MOZILLA_CFLAGS) \
-	  $(MOZILLA_LIBS) $(GLIB_CFLAGS) $(GLIB_LIBS) \
-	  $(GTK_CFLAGS) $(GTK_LIBS) \
-	  -DPACKAGE_VERSION="\"$(PACKAGE_VERSION)\"" \
-	  -DPLUGIN_VERSION="\"$$plugin_version\"" \
-	  -fPIC -shared -o $@ $<
-
-clean-gcjwebplugin:
-	rm -f gcjwebplugin.so
-else
 if ENABLE_PLUGIN
 # IcedTeaPlugin.so.
 # Separate compile and link invocations to ensure intermediate object
@@ -1671,8 +1628,6 @@ clean-IcedTeaPlugin:
 	rm -f IcedTeaPlugin.o
 	rm -f IcedTeaPlugin.so
 endif
-endif
-
 
 # PulseAudio based mixer
 # (pulse-java)
