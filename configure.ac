@@ -151,6 +151,15 @@ AC_ARG_ENABLE([docs],
 AM_CONDITIONAL([ENABLE_DOCS], [test x$ENABLE_DOCS = xyes])
 AC_MSG_RESULT(${ENABLE_DOCS})
 
+# OpenJDK cross-compilation support which is not yet complete
+AC_MSG_CHECKING(whether to enable experimental OpenJDK cross-compilation support)
+AC_ARG_ENABLE([experimental-openjdk-cross-compilation],
+	      [AS_HELP_STRING([--enable-experimental-openjdk-cross-compilation],
+	      		      [Enable experimental OpenJDK cross-compilation support])],
+	      [ENABLE_CROSS_COMPILATION="${enableval}"], [ENABLE_CROSS_COMPILATION="${cross_compiling}"])
+AM_CONDITIONAL([ENABLE_CROSS_COMPILATION], [test x$ENABLE_CROSS_COMPILATION = xyes])
+AC_MSG_RESULT(${ENABLE_CROSS_COMPILATION})
+
 AC_MSG_CHECKING(whether to include the XRender pipeline)
 AC_ARG_ENABLE([xrender],
 	      [AS_HELP_STRING([--disable-xrender],

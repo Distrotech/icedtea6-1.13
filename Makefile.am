@@ -186,6 +186,11 @@ ICEDTEA_ENV += \
 	NO_DOCS="true"
 endif
 
+if ENABLE_CROSS_COMPILATION
+ICEDTEA_ENV += \
+	"CROSS_COMPILATION=true"
+endif
+
 if USE_ALT_JAR
 ICEDTEA_ENV += \
 	ALT_JAR_CMD="$(ALT_JAR_CMD)"
@@ -261,6 +266,11 @@ endif
 if !ENABLE_DOCS
 ICEDTEA_ENV_ECJ += \
 	NO_DOCS="true"
+endif
+
+if ENABLE_CROSS_COMPILATION
+ICEDTEA_ENV_ECJ += \
+	"CROSS_COMPILATION=true"
 endif
 
 env-ecj:
@@ -652,6 +662,7 @@ ICEDTEA_PATCHES += \
 	patches/icedtea-java2d-mitre-join.patch \
 	patches/icedtea-java2d-stroker-internal-joint.patch \
 	patches/icedtea-java2d-stroker-internal-close-joint.patch \
+	patches/icedtea-disable-cc-incompatible-sanity-checks.patch \
 	$(DISTRIBUTION_PATCHES)
 
 stamps/extract.stamp: stamps/download.stamp
