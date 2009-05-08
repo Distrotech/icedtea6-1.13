@@ -459,21 +459,6 @@ else
 	patches/hotspot/$(HSBUILD)/icedtea-gcc-4.3.patch
 endif
 
-# Zero patches
-ZERO_PATCHES = \
-	patches/hotspot/$(HSBUILD)/icedtea-bytecodeInterpreter.patch \
-	patches/icedtea-signature-iterator.patch \
-	patches/icedtea-test-atomic-operations.patch \
-	patches/icedtea-zero.patch \
-	patches/icedtea-ia64-bugfix.patch \
-	patches/hotspot/$(HSBUILD)/icedtea-parisc-opt.patch
-
-if ZERO_BUILD
-  ZERO_PATCHES_COND = $(ZERO_PATCHES)
-else
-  ZERO_PATCHES_COND = 
-endif
-
 # Patches needed when not using the newer OpenJDK 7 HotSpot
 OLD_HOTSPOT_PATCHES = \
 	patches/icedtea-signed-types-hot6.patch \
@@ -487,17 +472,15 @@ else
   OLD_HOTSPOT_PATCHES_COND = $(OLD_HOTSPOT_PATCHES)
 endif
 
-# If Shark is required, apply shark patch
-if SHARK_BUILD
-  SHARK_PATCH = patches/hotspot/$(HSBUILD)/icedtea-shark.patch
-else
-  SHARK_PATCH =
-endif
-
 ICEDTEA_FSG_PATCHES =
 
 ICEDTEA_PATCHES = \
-	$(ZERO_PATCHES_COND) \
+	patches/hotspot/$(HSBUILD)/icedtea-bytecodeInterpreter.patch \
+	patches/icedtea-signature-iterator.patch \
+	patches/icedtea-test-atomic-operations.patch \
+	patches/icedtea-zero.patch \
+	patches/icedtea-ia64-bugfix.patch \
+	patches/hotspot/$(HSBUILD)/icedtea-parisc-opt.patch \
 	$(OLD_HOTSPOT_PATCHES_COND) \
 	patches/icedtea-version.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-version.patch \
@@ -557,7 +540,7 @@ ICEDTEA_PATCHES = \
 	patches/hotspot/$(HSBUILD)/icedtea-use-idx_t.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-params-cast-size_t.patch \
 	patches/icedtea-clean-crypto.patch \
-	$(SHARK_PATCH) \
+	patches/hotspot/$(HSBUILD)/icedtea-shark.patch \
 	$(GCC_PATCH) \
 	patches/icedtea-arch.patch \
 	patches/icedtea-lc_ctype.patch \

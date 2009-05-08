@@ -97,6 +97,12 @@ The following patches are currently applied before the building of OpenJDK or Op
 * icedtea-java2d-stroker-internal-joint.patch: Fix penultimate joint created by GeneralPath.closePath().
 * icedtea-java2d-stroker-internal-close-joint.patch: Fix final joint created by GeneralPath.closePath().
 * icedtea-cacao.patch: For the 'java' command, create new thread depending on the current VM.
+* icedtea-bytecodeInterpreter.patch: Replace fast opcodes with opc_default.
+* icedtea-ia64-bugfix.patch: Remove workaround for IA64 GCC bug.
+* icedtea-signature-iterator.patch: Add zero-specific signature handling.
+* icedtea-test-atomic-operations.patch: Add check to see if GCC's sync_lock_test works.
+* icedtea-zero.patch: Generalise architecture support, add ARM and #ifdef out non-zero applicable parts.
+* icedtea-shark.patch: Add support for the Shark JIT.
 
 The following patches are only applied to OpenJDK6 in IcedTea6:
 
@@ -108,6 +114,7 @@ The following patches are only applied to OpenJDK6 in IcedTea6:
 * icedtea-timezone.patch : Makes java only look for time zone information in /etc/sysconfig/clock if /etc/localtime is not found (fix 
   for rh-489586)
 * icedtea-dnd-filelists.patch: Fix drag and drop behaviour when dragging a file list between JVMs (S5079469). Backported from OpenJDK.
+* icedtea-signed-types-hot6.patch: Make use of unsigned/signed types explicit.
 
 The following patches are only applied to OpenJDK in IcedTea:
 
@@ -122,23 +129,6 @@ The following patches are only applied to the icedtea-ecj bootstrap tree:
   calls, replace hexadecimal floating point literals with decimal variants in
   java.lang.Double and java.lang.Float.
 * icedtea-ecj-pr261.patch: Adds a couple of classes that are omitted from rt.jar. (PR261)
-
-The following patches are only applied for IcedTea builds using the zero-assembler:
-
-* icedtea-bytecodeInterpreter.patch: Replace fast opcodes with opc_default.
-* icedtea-eclipse-hotspot-6614100-7b24.patch: Fix Eclipse crash (S6614100). Fixed in OpenJDK7 b29/hs13.
-* icedtea-ia64-bugfix.patch: Remove workaround for IA64 GCC bug.
-* icedtea-signature-iterator.patch: Add zero-specific signature handling.
-* icedtea-test-atomic-operations.patch: Add check to see if GCC's sync_lock_test works.
-* icedtea-zero.patch: Generalise architecture support, add ARM and #ifdef out non-zero applicable parts.
-
-The following patches are only applied for IcedTea builds not using the zero-assembler:
-
-* icedtea-signed-types-hot6.patch: Make use of unsigned/signed types explicit.
-
-The following patches are only applied for IcedTea builds using the Shark JIT:
-
-* icedtea-shark.patch: Add support for the Shark JIT.
 
 The following patches are only applied when building with experimental NetX plugin support:
 
@@ -173,3 +163,4 @@ changes to the OpenJDK code base and/or changes within IcedTea:
 * icedtea-hotspot-citypeflow.patch: Not required with HS14.
 * icedtea-core-zero-build.patch: Not required with HS14.
 * icedtea-bytecodeInterpreterWithChecks.patch: Same as icedtea-xslfix.patch (OpenJDK6 only, S6707485); not required with HS14.
+* icedtea-eclipse-hotspot-6614100-7b24.patch: Fix Eclipse crash (S6614100). Fixed in OpenJDK7 b29/hs13.  Not required with HS14.
