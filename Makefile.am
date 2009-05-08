@@ -529,6 +529,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-core-build.patch \
 	patches/icedtea-jvmtiEnv.patch \
 	patches/icedtea-lcms.patch \
+	patches/icedtea-lcms-2.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-core-build.patch \
 	patches/icedtea-linker-options.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-static-libstdc++.patch \
