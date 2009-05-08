@@ -459,16 +459,8 @@ else
 	patches/hotspot/$(HSBUILD)/icedtea-gcc-4.3.patch
 endif
 
-# If ZERO_BUILD is set then we are building zero and need
-# to patch up to OpenJDK 7 HotSpot for the C++ interpreter.
-if WITH_ALT_HSBUILD
-ZERO_PATCHES =
-else
+# Zero patches
 ZERO_PATCHES = \
-	patches/icedtea-hotspot-6b14-7b24.patch \
-	patches/icedtea-hotspot7-build-fixes.patch
-endif
-ZERO_PATCHES += \
 	patches/hotspot/$(HSBUILD)/icedtea-bytecodeInterpreter.patch \
 	patches/icedtea-signature-iterator.patch \
 	patches/icedtea-test-atomic-operations.patch \
@@ -476,27 +468,23 @@ ZERO_PATCHES += \
 	patches/icedtea-ia64-bugfix.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-parisc-opt.patch
 
-if !WITH_ALT_HSBUILD
-ZERO_PATCHES += \
-	patches/icedtea-signed-types.patch \
-	patches/icedtea-hotspot-citypeflow.patch
+if ZERO_BUILD
+  ZERO_PATCHES_COND = $(ZERO_PATCHES)
+else
+  ZERO_PATCHES_COND = 
 endif
 
-# Patches needed when not using the newer OpenJDK 7 HotSpot for zero.
-NON_ZERO_PATCHES = \
+# Patches needed when not using the newer OpenJDK 7 HotSpot
+OLD_HOTSPOT_PATCHES = \
 	patches/icedtea-signed-types-hot6.patch \
 	patches/icedtea-lucene-crash.patch \
 	patches/icedtea-6700047-loopopts.patch \
 	patches/icedtea-6712835-ifnode.patch
 
-if ZERO_BUILD
-  ZERO_PATCHES_COND = $(ZERO_PATCHES)
-else
 if WITH_ALT_HSBUILD
-  ZERO_PATCHES_COND = 
+  OLD_HOTSPOT_PATCHES_COND =
 else
-  ZERO_PATCHES_COND = $(NON_ZERO_PATCHES)
-endif
+  OLD_HOTSPOT_PATCHES_COND = $(OLD_HOTSPOT_PATCHES)
 endif
 
 # If Shark is required, apply shark patch
@@ -510,6 +498,7 @@ ICEDTEA_FSG_PATCHES =
 
 ICEDTEA_PATCHES = \
 	$(ZERO_PATCHES_COND) \
+	$(OLD_HOTSPOT_PATCHES_COND) \
 	patches/icedtea-version.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-version.patch \
 	patches/icedtea-copy-plugs.patch \
@@ -539,22 +528,8 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-javafiles.patch \
 	patches/icedtea-core-build.patch \
 	patches/icedtea-jvmtiEnv.patch \
-	patches/icedtea-lcms.patch
-
-if WITH_ALT_HSBUILD
-ICEDTEA_PATCHES += \
-	patches/hotspot/$(HSBUILD)/icedtea-core-build.patch
-else
-if ZERO_BUILD
-ICEDTEA_PATCHES += \
-	patches/hotspot/$(HSBUILD)/icedtea-core-zero-build.patch
-else
-ICEDTEA_PATCHES += \
-	patches/hotspot/$(HSBUILD)/icedtea-core-build.patch
-endif
-endif
-
-ICEDTEA_PATCHES += \
+	patches/icedtea-lcms.patch \
+	patches/hotspot/$(HSBUILD)/icedtea-core-build.patch \
 	patches/icedtea-linker-options.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-static-libstdc++.patch \
 	patches/icedtea-timerqueue.patch \
@@ -615,7 +590,6 @@ endif
 
 if !WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
-	patches/icedtea-bytecodeInterpreterWithChecks.patch \
 	patches/icedtea-sparc.patch
 endif
 
