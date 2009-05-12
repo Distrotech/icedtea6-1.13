@@ -280,8 +280,9 @@ public class JNLPRuntime {
         if (isHeadless())
             return null;
 
-        File baseDir = new File(System.getProperty("user.home") + "/.netx/");
-	if (baseDir == null || !baseDir.mkdir())
+        String homeDir = System.getProperty("user.home");
+	File baseDir = new File(homeDir + "/.netx/");
+	if (homeDir == null || !baseDir.mkdir())
             return null;
 
         props.setProperty("basedir", baseDir.toString());
