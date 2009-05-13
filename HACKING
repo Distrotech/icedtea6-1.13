@@ -130,9 +130,9 @@ The following patches are only applied to the icedtea-ecj bootstrap tree:
   java.lang.Double and java.lang.Float.
 * icedtea-ecj-pr261.patch: Adds a couple of classes that are omitted from rt.jar. (PR261)
 
-The following patches are only applied when building with experimental NetX plugin support:
+The following patches are only applied when building with the plugin support:
 
-* icedtea-netx-plugin.patch: Use NetxPanel instead of AppletViewerPanel.
+* icedtea-liveconnect.patch: Add LiveConnect support to plugin.
 
 The following patches are only applied when building with the CACAO virtual machine:
 
@@ -151,7 +151,6 @@ changes to the OpenJDK code base and/or changes within IcedTea:
 * icedtea-color-profiles.patch: Add missing color profiles (S6523403): Included upstream in OpenJDK6 b10 and OpenJDK7 b28. 
 * icedtea-hat-spl-gpl.patch: JHat has conflicting GPL/SPL licensing terms (PR143/S6695553): Included upstream in OpenJDK6 b10 and OpenJDK7 b29.
 * icedtea-freetype.patch: Use detected freetype in $FT2_LIB and $FREETYPE_HEADERS_PATH: Obsoleted by icedtea-headers.patch.
-* icedtea-liveconnect.patch: Add LiveConnect support to plugin: No longer developed.
 * icedtea-netx-applet-visibility.patch: Make applet classes package-private for the plugin: Obsoleted by icedtea-webservices.patch.
 * icedtea-xinerama.patch: Fix crash talking to second X screen (S6604044): Included upstream in OpenJDK6 b10 and OpenJDK7 b28.
 * icedtea-xslfix.patch: Fix malformed bytecodeInterpreterWithChecks XSL file (S6707485): Included upstream in OpenJDK7 b29/hs13.
