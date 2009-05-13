@@ -276,7 +276,7 @@ snapshot: dist
 
 # Download OpenJDK sources.
 OPENJDK_URL = http://download.java.net/openjdk/jdk6/promoted/$(OPENJDK_VERSION)/
-HOTSPOT_URL = http://hg.openjdk.java.net/jdk7/hotspot/hotspot/archive/
+HOTSPOT_URL = http://hg.openjdk.java.net/hsx/hsx14/master/archive/
 OPENJDK_HG_URL = http://hg.openjdk.java.net/jdk6/jdk6
 
 if USE_ALT_OPENJDK_SRC_ZIP
@@ -658,8 +658,8 @@ if WITH_ALT_HSBUILD
 	  if ! test -d openjdk/hotspot ; \
 	  then \
 	    $(TAR) xf $(HOTSPOT_SRC_ZIP) ; \
-	    chmod -R ug+w hotspot-* ; \
-	    mv hotspot-$$($(AWK) 'version==$$1 {print $$2}' version=$(HSBUILD) \
+	    chmod -R ug+w master-* ; \
+	    mv master-$$($(AWK) 'version==$$1 {print $$2}' version=$(HSBUILD) \
 	      $(abs_top_srcdir)/hotspot.map) openjdk/hotspot ; \
 	  fi ; \
 	fi
