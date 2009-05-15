@@ -8,6 +8,12 @@ CACAO_MD5SUM = c5e6525c5212ddbb6026e4a7cde37ca6
 NETBEANS_PROFILER_MD5SUM = a6756a62291ebea5c0e2431389b31380
 VISUALVM_MD5SUM = a289739f4a5bcdb9a2c642cfcc1e83fe
 
+if ENABLE_NPPLUGIN
+ICEDTEAPLUGIN_CLEAN = clean-IcedTeaNPPlugin
+ICEDTEAPLUGIN_TARGET = IcedTeaNPPlugin.so
+PLUGIN_PATCH = patches/icedtea-liveconnect.patch
+LIVECONNECT_DIR = -C lib/rt netscape
+else
 if ENABLE_PLUGIN
 ICEDTEAPLUGIN_CLEAN = clean-IcedTeaPlugin
 ICEDTEAPLUGIN_TARGET = IcedTeaPlugin.so
@@ -18,6 +24,7 @@ ICEDTEAPLUGIN_CLEAN =
 ICEDTEAPLUGIN_TARGET =
 PLUGIN_PATCH = 
 LIVECONNECT_DIR =
+endif
 endif
 
 if ENABLE_PULSE_JAVA
@@ -58,10 +65,14 @@ distclean-local: clean-copy clean-jtreg clean-jtreg-reports clean-pulse-java
 	rm -rf rt/netscape
 	rm -rf visualvm
 	rm -rf netbeans
+if ENABLE_NPPLUGIN
+	rm -f IcedTeaNPPlugin.o IcedTeaNPPlugin.so
+else
 if ENABLE_PLUGIN
 	rm -f IcedTeaPlugin.o IcedTeaPlugin.so
-else
 endif
+endif
+
 if BUILD_CACAO
 	rm -rf cacao
 endif
@@ -80,7 +91,8 @@ install:
 	clean-icedtea icedtea-against-icedtea clean-icedtea-ecj clean-plugs \
 	clean-tools-jar clean-shared-objects clean-visualvm clean-nbplatform \
 	clean-copy clean-hotspot-tools clean-rt $(ICEDTEAPLUGIN_CLEAN) \
-	hotspot hotspot-helper clean-extra clean-jtreg clean-jtreg-reports 
+	$(ICEDTEANPPLUGIN_CLEAN) hotspot hotspot-helper clean-extra clean-jtreg \
+	clean-jtreg-reports 
 
 EXTRA_DIST = rt generated \
 	patches/* \
@@ -90,6 +102,7 @@ EXTRA_DIST = rt generated \
 	jconsole.desktop policytool.desktop \
 	test/jtreg \
 	IcedTeaPlugin.cc \
+	IcedTeaNPPlugin.cc \
 	HACKING pulseaudio fsg.sh \
 	plugin \
 	hotspot.map \
@@ -748,10 +761,16 @@ stamps/patch.stamp: stamps/patch-fsg.stamp
 	    >>openjdk/jdk/make/common/shared/Defs.gmk ; \
 	fi
 
+if ENABLE_NPPLUGIN
+	cp -a $(abs_top_srcdir)/plugin/icedteanp/sun/applet/*java openjdk/jdk/src/share/classes/sun/applet/
+	mkdir -p rt
+	cp -a $(abs_top_srcdir)/plugin/icedteanp/netscape rt/
+else
 if ENABLE_PLUGIN
 	cp -a $(abs_top_srcdir)/plugin/icedtea/sun/applet/*java openjdk/jdk/src/share/classes/sun/applet/
 	mkdir -p rt
 	cp -a $(abs_top_srcdir)/plugin/icedtea/netscape rt/
+endif
 endif
 
 clean-patch:
@@ -1065,7 +1084,7 @@ endif
 stamps/icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
 	stamps/hotspot-tools.stamp stamps/plugs.stamp \
 	stamps/ports.stamp stamps/patch.stamp stamps/overlay.stamp \
-	$(ICEDTEAPLUGIN_TARGET) \
+	$(ICEDTEAPLUGIN_TARGET) $(ICEDTEANPPLUGIN_TARGET) \
 	extra-lib/about.jar stamps/cacao.stamp stamps/visualvm.stamp \
 	stamps/pulse-java.stamp
 	$(ARCH_PREFIX) $(MAKE) \
@@ -1076,11 +1095,18 @@ stamps/icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
 	mkdir -p $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
 	mkdir -p $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/ext
 	mkdir -p $(BUILD_OUTPUT_DIR)/j2re-image/lib/ext
+if ENABLE_NPPLUGIN
+	cp -pPRf IcedTeaNPPlugin.so \
+	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
+	cp -pPRf IcedTeaNPPlugin.so \
+	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
+else
 if ENABLE_PLUGIN
 	cp -pPRf IcedTeaPlugin.so \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
 	cp -pPRf IcedTeaPlugin.so \
 	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
+endif
 endif
 if ENABLE_PULSE_JAVA
 	cp -pPRf libpulse-java.so \
@@ -1143,7 +1169,7 @@ endif
 stamps/icedtea-debug.stamp: stamps/bootstrap-directory-symlink.stamp \
 	stamps/hotspot-tools.stamp stamps/plugs.stamp \
 	stamps/ports.stamp stamps/patch.stamp stamps/overlay.stamp \
-	$(ICEDTEAPLUGIN_TARGET) \
+	$(ICEDTEAPLUGIN_TARGET) $(ICEDTEANPPLUGIN_TARGET) \
 	extra-lib/about.jar stamps/cacao.stamp stamps/visualvm.stamp \
 	stamps/pulse-java.stamp
 	$(ARCH_PREFIX) $(MAKE) \
@@ -1154,11 +1180,18 @@ stamps/icedtea-debug.stamp: stamps/bootstrap-directory-symlink.stamp \
 	mkdir -p $(BUILD_OUTPUT_DIR)-debug/j2re-image/lib/$(INSTALL_ARCH_DIR)
 	mkdir -p $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/ext
 	mkdir -p $(BUILD_OUTPUT_DIR)-debug/j2re-image/lib/ext
+if ENABLE_NPPLUGIN
+	cp -pPRf IcedTeaNPPlugin.so \
+	  $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
+	cp -pPRf IcedTeaNPPlugin.so \
+	  $(BUILD_OUTPUT_DIR)-debug/j2re-image/lib/$(INSTALL_ARCH_DIR)
+else
 if ENABLE_PLUGIN
 	cp -pPRf IcedTeaPlugin.so \
 	  $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
 	cp -pPRf IcedTeaPlugin.so \
 	  $(BUILD_OUTPUT_DIR)-debug/j2re-image/lib/$(INSTALL_ARCH_DIR)
+endif
 endif
 if ENABLE_PULSE_JAVA
 	cp -pPRf libpulse-java.so \
@@ -1556,6 +1589,37 @@ clean-cacao:
 	rm -rf cacao
 	rm -f stamps/cacao.stamp
 
+if ENABLE_NPPLUGIN
+# IcedTeaNPPlugin.so.
+# Separate compile and link invocations to ensure intermediate object
+# is listed before -l options.  See:
+# http://developer.mozilla.org/en/docs/XPCOM_Glue
+IcedTeaNPPlugin.o: IcedTeaNPPlugin.cc
+	if [ -e $(abs_top_srcdir)/.hg ] && which $(HG) >/dev/null; then \
+	  revision="-r`(cd $(abs_top_srcdir); $(HG) tip --template '{rev}')`" ; \
+	fi ; \
+	if [ -n "$(PKGVERSION)" ]; then plugin_version=" ($(PKGVERSION))"; fi; \
+	plugin_version=" $(PACKAGE_VERSION)$$revision$$plugin_version"; \
+	$(CXX) $(CXXFLAGS) \
+	  -DPACKAGE_VERSION="\"$(PACKAGE_VERSION)\"" \
+	  -DPLUGIN_VERSION="\"$$plugin_version\"" \
+	  -DMOZILLA_VERSION_COLLAPSED="$(MOZILLA_VERSION_COLLAPSED)" \
+	  $(GLIB_CFLAGS) \
+	  $(GTK_CFLAGS) \
+	  $(MOZILLA_CFLAGS) \
+	  -fPIC -c -o $@ $<
+IcedTeaNPPlugin.so: IcedTeaNPPlugin.o
+	$(CXX) $(CXXFLAGS) \
+	  $< \
+	  $(GLIB_LIBS) \
+	  $(GTK_LIBS) \
+	  $(MOZILLA_LIBS)\
+	  -shared -o $@
+
+clean-IcedTeaNPPlugin:
+	rm -f IcedTeaNPPlugin.o
+	rm -f IcedTeaNPPlugin.so
+else
 if ENABLE_PLUGIN
 # IcedTeaPlugin.so.
 # Separate compile and link invocations to ensure intermediate object
@@ -1584,6 +1648,7 @@ IcedTeaPlugin.so: IcedTeaPlugin.o
 clean-IcedTeaPlugin:
 	rm -f IcedTeaPlugin.o
 	rm -f IcedTeaPlugin.so
+endif
 endif
 
 # PulseAudio based mixer
