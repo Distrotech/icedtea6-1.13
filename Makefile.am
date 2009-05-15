@@ -494,7 +494,6 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-webstart.patch \
 	patches/icedtea-webstart-umask.patch \
 	patches/icedtea-rmi_amd64.patch \
-	patches/icedtea-tools.patch \
 	patches/icedtea-demos.patch \
 	patches/icedtea-timezone.patch \
 	patches/icedtea-use-system-tzdata.patch \
@@ -508,7 +507,6 @@ ICEDTEA_PATCHES = \
 	patches/hotspot/$(HSBUILD)/icedtea-memory-limits.patch \
 	patches/icedtea-sunsrc.patch \
 	patches/icedtea-libraries.patch \
-	patches/icedtea-javafiles.patch \
 	patches/icedtea-core-build.patch \
 	patches/icedtea-jvmtiEnv.patch \
 	patches/icedtea-lcms.patch \
