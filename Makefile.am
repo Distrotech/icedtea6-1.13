@@ -587,7 +587,8 @@ endif
 
 if BUILD_CACAO
 ICEDTEA_PATCHES += \
-	patches/icedtea-cacao.patch
+	patches/icedtea-cacao.patch \
+	patches/icedtea-cacao-no-mmap-first-page.patch
 endif
 if WITH_CACAO
 ICEDTEA_PATCHES += \
