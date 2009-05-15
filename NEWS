@@ -1,4 +1,4 @@
-New in release 1.5 (UNRELEASED)
+ew in release 1.5 (2009-05-15)
 
 - Static trace support through systemtap.
   When given the configure option --enable-systemtap IcedTea will build
@@ -12,6 +12,21 @@ New in release 1.5 (UNRELEASED)
   not possible to build cacao as the default VM, and zero as additional VM.
 - Update to latest HotSpot minor build (hs14b10-->hs14b15) from the new
   HotSpot Express repository.
+- Updated to OpenJDK b16 build.
+- Visual VM updated to 1.1.1.
+- Several web browser plugin and javaws support fixes:
+  - Fixed security handling to prevent access denials when there is a site
+  specific exception in the policy file
+  - Allow extentions (chrome) to run Java code with full permissions
+  - Added non-trusted SSL support to WebStart (javaws)
+  - Added proxy support
+  - Other improvements that were breaking specific sites (tag parser fix,
+    nested jar support, etc.)
+  - Added JVM Console (used by http://chrispederick.com/work/web-developer/)
+- LCMS security fixes.
+- Many build improvements.
+- Many java2d, nio2, pulse java, zero/shark, jtreg fixes.
+- Other bug fixes.
 
 New in release 1.4 (2009-01-29)
 
