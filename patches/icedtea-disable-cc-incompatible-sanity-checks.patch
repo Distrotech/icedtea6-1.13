@@ -1,0 +1,110 @@
+Index: openjdk/jdk/make/common/shared/Sanity.gmk
+===================================================================
+--- openjdk.orig/jdk/make/common/shared/Sanity.gmk	2009-03-28 18:14:30.000000000 +0100
++++ openjdk/jdk/make/common/shared/Sanity.gmk	2009-03-28 18:20:33.000000000 +0100
+@@ -75,9 +75,14 @@
+         fi )
+   endif
+   ifneq ($(ARCH), ia64)
+-    # dummy program that outputs ALSA's version (created in target sane-alsa-versioncheck)
+-    ALSA_VERSION_CHECK = $(TEMPDIR)/alsaversioncheck
+-    ALSA_VERSION = `if [ -f "$(ALSA_VERSION_CHECK)" ] ; then $(ALSA_VERSION_CHECK) ; fi`
++    ifdef CROSS_COMPILATION
++      # assume alsa version is correct and do not check it
++      ALSA_VERSION = 1.0.0
++    else
++      # dummy program that outputs ALSA's version (created in target sane-alsa-versioncheck)
++      ALSA_VERSION_CHECK = $(TEMPDIR)/alsaversioncheck
++      ALSA_VERSION = `if [ -f "$(ALSA_VERSION_CHECK)" ] ; then $(ALSA_VERSION_CHECK) ; fi`
++    endif
+   endif
+ endif
+ 
+@@ -124,6 +129,15 @@
+ # Get ALL_SETTINGS defined
+ include $(JDK_MAKE_SHARED_DIR)/Sanity-Settings.gmk
+ 
++ifndef CROSS_COMPILATION
++MORE_PHONY_RULES = \
++	sane-freetype \
++  sane-cups \
++  sane-motif \
++  sane-alsa-versioncheck \
++  sane-alsa-headers
++endif
++
+ .PHONY: \
+ 	sane-copyrightyear\
+ 	sane-settings \
+@@ -153,8 +167,6 @@
+ 	sane-outputdir \
+ 	sane-alt_bootdir \
+ 	sane-bootdir \
+-	sane-motif \
+-        sane-cups \
+ 	sane-devtools_path \
+ 	sane-compiler_path \
+ 	sane-unixcommand_path \
+@@ -172,14 +184,14 @@
+ 	sane-compiler \
+ 	sane-link \
+ 	sane-cacerts \
+-	sane-alsa-versioncheck \
+-	sane-alsa-headers \
+ 	sane-ant_version \
+ 	sane-findbugs_version \
+ 	sane-zip_version \
+ 	sane-unzip_version \
+- 	sane-msvcrt_path \
+-        sane-freetype
++	sane-msvcrt_path \
++	$(MORE_PHONY_RULES)
++
++
+ 
+ ######################################################
+ # check for COPYRIGHT_YEAR variable
+Index: openjdk/jdk/make/common/Sanity.gmk
+===================================================================
+--- openjdk.orig/jdk/make/common/Sanity.gmk	2009-03-28 18:14:30.000000000 +0100
++++ openjdk/jdk/make/common/Sanity.gmk	2009-03-28 18:17:44.000000000 +0100
+@@ -93,8 +93,11 @@
+     sane-ld_options \
+     sane-ld_run_path \
+     sane-alt_bootdir \
+-    sane-bootdir \
+-    sane-alsa-headers
++    sane-bootdir
++
++ifndef CROSS_COMPILATION
++sanity-all:: sane-alsa-headers
++endif
+ 
+ ifdef OPENJDK
+ sanity-all:: sane-freetype 
+@@ -110,17 +113,21 @@
+ #   (Which only happens with a full control build. The control makefiles are
+ #    the files that set BUILD_MOTIF).
+ #   We cannot sanity check something that has not been built yet. 
+-ifeq ($(PLATFORM), linux)
+-  ifneq ($(BUILD_MOTIF), true)
++ifndef CROSS_COMPILATION
++  ifeq ($(PLATFORM), linux)
++    ifneq ($(BUILD_MOTIF), true)
+ sanity-all:: \
+-    sane-motif
++  sane-motif
++    endif
+   endif
+ endif
+ 
+ # Always check cups header paths on solaris & linux
+-ifneq ($(PLATFORM), windows)
++ifndef CROSS_COMPILATION
++  ifneq ($(PLATFORM), windows)
+ sanity-all:: \
+     sane-cups
++  endif
+ endif
+ 
+ # Always check hotspot binary paths even if we are building them from scratch
