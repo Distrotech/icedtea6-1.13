@@ -1,0 +1,68 @@
+Index: openjdk/hotspot/make/linux/makefiles/defs.make
+===================================================================
+--- openjdk.orig/hotspot/make/linux/makefiles/defs.make	2009-05-18 14:09:57.812930043 +0200
++++ openjdk/hotspot/make/linux/makefiles/defs.make	2009-05-18 14:30:46.318871170 +0200
+@@ -1,4 +1,4 @@
+-#
++
+ # Copyright 2006-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ #
+@@ -29,7 +29,11 @@
+ SLASH_JAVA ?= /java
+ 
+ # Need PLATFORM (os-arch combo names) for jdk and hotspot, plus libarch name
+-ARCH:=$(shell uname -m)
++ifndef CROSS_COMPILATION
++  ARCH:=$(shell uname -m)
++else
++  ARCH:=$(TARGET_ARCH)
++endif
+ PATH_SEP = :
+ ifeq ($(LP64), 1)
+   ARCH_DATA_MODEL ?= 64
+Index: openjdk/jdk/make/common/shared/Platform.gmk
+===================================================================
+--- openjdk.orig/jdk/make/common/shared/Platform.gmk	2009-05-18 14:09:57.950854863 +0200
++++ openjdk/jdk/make/common/shared/Platform.gmk	2009-05-18 14:18:59.387528133 +0200
+@@ -190,9 +190,13 @@
+   OS_NAME = linux
+   OS_VERSION := $(shell uname -r)
+   # Arch and OS name/version
+-  mach := $(shell uname -m)
+-  ifneq (,$(wildcard /usr/bin/dpkg-architecture))
+-    mach := $(shell (dpkg-architecture -qDEB_BUILD_ARCH_CPU 2>/dev/null || echo $(mach)) | sed 's/powerpc$$/ppc/;s/hppa/parisc/')
++  ifndef CROSS_COMPILATION
++    mach := $(shell uname -m)
++    ifneq (,$(wildcard /usr/bin/dpkg-architecture))
++      mach := $(shell (dpkg-architecture -qDEB_BUILD_ARCH_CPU 2>/dev/null || echo $(mach)) | sed 's/powerpc$$/ppc/;s/hppa/parisc/')
++    endif
++  else
++    mach := $(TARGET_ARCH)
+   endif
+   archExpr = case "$(mach)" in \
+                 i[3-9]86) \
+Index: openjdk/corba/make/common/shared/Platform.gmk
+===================================================================
+--- openjdk.orig/corba/make/common/shared/Platform.gmk	2009-05-18 14:09:58.044921758 +0200
++++ openjdk/corba/make/common/shared/Platform.gmk	2009-05-18 14:17:30.760805124 +0200
+@@ -179,10 +179,15 @@
+   PLATFORM = linux
+   OS_NAME = linux
+   OS_VERSION := $(shell uname -r)
+-  # Arch and OS name/version
+-  mach := $(shell uname -m)
+-  ifneq (,$(wildcard /usr/bin/dpkg-architecture))
+-    mach := $(shell (dpkg-architecture -qDEB_BUILD_ARCH_CPU 2>/dev/null || echo $(mach)) | sed 's/powerpc$$/ppc/;s/hppa/parisc/')
++  ifndef CROSS_COMPILATION
++    # Not cross-compiling. Take architecture from running system.
++    mach := $(shell uname -m)
++    ifneq (,$(wildcard /usr/bin/dpkg-architecture))
++      mach := $(shell (dpkg-architecture -qDEB_BUILD_ARCH_CPU 2>/dev/null || echo $(mach)) | sed 's/powerpc$$/ppc/;s/hppa/parisc/')
++    endif
++  else
++    # Cross-compilation: Assume target archicture is given.
++    mach := $(TARGET_ARCH)
+   endif
+   archExpr = case "$(mach)" in \
+                 i[3-9]86) \

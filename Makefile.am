@@ -201,7 +201,8 @@ endif
 
 if ENABLE_CROSS_COMPILATION
 ICEDTEA_ENV += \
-	"CROSS_COMPILATION=true"
+	"CROSS_COMPILATION=true" \
+	"TARGET_ARCH=$(TARGET_ARCH)"
 endif
 
 if USE_ALT_JAR
@@ -283,7 +284,8 @@ endif
 
 if ENABLE_CROSS_COMPILATION
 ICEDTEA_ENV_ECJ += \
-	"CROSS_COMPILATION=true"
+	"CROSS_COMPILATION=true" \
+	"TARGET_ARCH=$(TARGET_ARCH)"
 endif
 
 env-ecj:
@@ -661,6 +663,7 @@ ICEDTEA_PATCHES += \
 	patches/icedtea-java2d-stroker-internal-joint.patch \
 	patches/icedtea-java2d-stroker-internal-close-joint.patch \
 	patches/icedtea-disable-cc-incompatible-sanity-checks.patch \
+	patches/icedtea-explicit-target-arch.patch \
 	$(DISTRIBUTION_PATCHES)
 
 stamps/extract.stamp: stamps/download.stamp
