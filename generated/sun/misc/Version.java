@@ -39,7 +39,13 @@ public class Version {
         "OpenJDK Runtime Environment";
 
     private static final String java_runtime_version =
-        "1.6.0_0-b12";
+        "1.6.0_0-b16";
+
+    private static final String jdk_derivative_name =
+        "IcedTea6 1.5-r84a527d1a06c";
+
+    private static final String distro_package_version =
+        "";
 
     static {
         init();
@@ -81,12 +87,26 @@ public class Version {
         /* First line: platform version. */
         ps.println(launcher_name + " version \"" + java_version + "\"");
 
+        String java_vm_name    = System.getProperty("java.vm.name");
+
         /* Second line: runtime version (ie, libraries). */
-        ps.println(java_runtime_name + " (build " +
-                           java_runtime_version + ")");
+	StringBuilder sb = new StringBuilder();
+	if (java_vm_name.toLowerCase().startsWith("cacao")) {
+	    sb.append("IcedTea Runtime Environment");
+	} else {
+	    sb.append(java_runtime_name);
+	}
+	if (jdk_derivative_name.length() > 0) {
+	    sb.append(" (").append(jdk_derivative_name).append(")");
+	}
+	if (distro_package_version.length() > 0) {
+	    sb.append(" (").append(distro_package_version).append(")");
+	} else {
+	    sb.append(" (build ").append(java_runtime_version).append(")");
+	}
+	ps.println(sb.toString());
 
         /* Third line: JVM information. */
-        String java_vm_name    = System.getProperty("java.vm.name");
         String java_vm_version = System.getProperty("java.vm.version");
         String java_vm_info    = System.getProperty("java.vm.info");
         ps.println(java_vm_name + " (build " + java_vm_version + ", " +

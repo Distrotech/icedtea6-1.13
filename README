@@ -87,39 +87,17 @@ license header.  Instances are:
  - We are assuming that these files are owned by Sun:
    openjdk/jdk/src/share/classes/**/resources/*.properties
 
+Web Browser Plugin support
+===========================
 
-gcjwebplugin
-============
+The default web browser plugin has LiveConnect support. It will only build
+against a very recent version of XULRunner, such as that available in Fedora
+Rawhide as of 2008-05-16.  The required development headers are provided by
+the xulrunner-devel package.
 
-gcjwebplugin provides basic support for running applets in
-Mozilla-based web browsers.  It does not support applet/Javascript
-communication (LiveConnect) and support for signed applets needs
-further testing.  The current applet security manager may be too
-strict and may require tuning to allow otherwise-legitimate calls by
-untrusted applets.
-
-gcjwebplugin itself is a shared object, gcjwebplugin.so, built from a
-single source file, gcjwebplugin.cc.  The IcedTea adaptation of
-gcjwebplugin communicates through named pipes with a modified version
-of IcedTea's appletviewer.  Two source files,
-openjdk/jdk/src/share/classes/sun/applet/PluginAppletViewer.java,
-openjdk/jdk/src/share/classes/sun/applet/PluginMain.java are added to
-rt.jar and tools.jar to provide gcjwebplugin with an interface into
-the appletviewer code.  This support code is provided in
-patches/icedtea-plugin.patch.
-
-Experimental LiveConnect support
-================================
-
-The configure option --enable-liveconnect enables experimental
-LiveConnect support, implemented by IcedTeaPlugin.cc and
-patches/icedtea-liveconnect.patch.  Currently IcedTeaPlugin.cc will
-only build against a very recent version of XULRunner, such as that
-available in Fedora Rawhide as of 2008-02-23.  The required
-development headers are provided by the xulrunner-devel package.
-
-To run IcedTeaPlugin you'll need to add
-/usr/lib/xulrunner-sdk-1.9pre/sdk/lib/ to LD_LIBRARY_PATH.
+A new plugin is being developed to support the new Mozilla API changes. It can 
+be enabled with the option --enable-npplugin, and it is based on gcjwebplugin.
+At the moment there is no liveconnect support for it.
 
 NetX
 ====
