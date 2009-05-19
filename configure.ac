@@ -491,13 +491,15 @@ if test "x${enable_npplugin}" = "xyes"
     AC_SUBST(GTK_LIBS)
   fi
 
-AC_LANG_PUSH([C++])
-OLDCPPFLAGS="$CPPFLAGS"
-CPPFLAGS="$CPPFLAGS $XULRUNNER_CFLAGS"
+if test "x${enable_plugin}" = "xyes" -o "x${enable_npplugin}" = "xyes"
+then
+  AC_LANG_PUSH([C++])
+  OLDCPPFLAGS="$CPPFLAGS"
+  CPPFLAGS="$CPPFLAGS $XULRUNNER_CFLAGS"
 
-AC_CACHE_CHECK([for xulrunner version], [xulrunner_cv_collapsed_version],
-    [AC_RUN_IFELSE(
-      [AC_LANG_PROGRAM([[
+  AC_CACHE_CHECK([for xulrunner version], [xulrunner_cv_collapsed_version],
+      [AC_RUN_IFELSE(
+        [AC_LANG_PROGRAM([[
 #include <mozilla-config.h>
 #include <math.h>
 #include <string.h>
@@ -534,11 +536,11 @@ return EXIT_SUCCESS;
     [AC_MSG_FAILURE([cannot determine xulrunner version])])],
   [xulrunner_cv_collapsed_version="190000"])
 
-CPPFLAGS="$OLDCPPFLAGS"
-AC_LANG_POP([C++])
+  CPPFLAGS="$OLDCPPFLAGS"
+  AC_LANG_POP([C++])
 
-AC_SUBST(MOZILLA_VERSION_COLLAPSED, $xulrunner_cv_collapsed_version)
-
+  AC_SUBST(MOZILLA_VERSION_COLLAPSED, $xulrunner_cv_collapsed_version)
+fi
 
 AC_MSG_CHECKING(for --with-additional-vms)
 AC_ARG_WITH(additional-vms,
