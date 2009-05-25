@@ -5,77 +5,77 @@ AC_DEFUN([SET_ARCH_DIRS],
       BUILD_ARCH_DIR=amd64
       INSTALL_ARCH_DIR=amd64
       JRE_ARCH_DIR=amd64
-      TARGET_ARCH=x86_64
+      CROSS_TARGET_ARCH=x86_64
       ;;
     i?86-*-*)
       BUILD_ARCH_DIR=i586
       INSTALL_ARCH_DIR=i386
       JRE_ARCH_DIR=i386
       ARCH_PREFIX=${LINUX32}
-      TARGET_ARCH=i386
+      CROSS_TARGET_ARCH=i386
       ;;
     alpha*-*-*)
       BUILD_ARCH_DIR=alpha
       INSTALL_ARCH_DIR=alpha
       JRE_ARCH_DIR=alpha
-      TARGET_ARCH=alpha
+      CROSS_TARGET_ARCH=alpha
       ;;
     arm*-*-*)
       BUILD_ARCH_DIR=arm
       INSTALL_ARCH_DIR=arm
       JRE_ARCH_DIR=arm
-      TARGET_ARCH=arm
+      CROSS_TARGET_ARCH=arm
       ;;
     mips-*-*)
       BUILD_ARCH_DIR=mips
       INSTALL_ARCH_DIR=mips
       JRE_ARCH_DIR=mips
-      TARGET_ARCH=mips
+      CROSS_TARGET_ARCH=mips
        ;;
     mipsel-*-*)
       BUILD_ARCH_DIR=mipsel
       INSTALL_ARCH_DIR=mipsel
       JRE_ARCH_DIR=mipsel
-      TARGET_ARCH=mipsel
+      CROSS_TARGET_ARCH=mipsel
        ;;
     powerpc-*-*)
       BUILD_ARCH_DIR=ppc
       INSTALL_ARCH_DIR=ppc
       JRE_ARCH_DIR=ppc
       ARCH_PREFIX=${LINUX32}
-      TARGET_ARCH=ppc
+      CROSS_TARGET_ARCH=ppc
        ;;
     powerpc64-*-*)
       BUILD_ARCH_DIR=ppc64
       INSTALL_ARCH_DIR=ppc64
       JRE_ARCH_DIR=ppc64
-      TARGET_ARCH=ppc64
+      CROSS_TARGET_ARCH=ppc64
        ;;
     sparc64-*-*)
       BUILD_ARCH_DIR=sparcv9
       INSTALL_ARCH_DIR=sparcv9
       JRE_ARCH_DIR=sparc64
-      TARGET_ARCH=sparc64
+      CROSS_TARGET_ARCH=sparc64
        ;;
     s390-*-*)
       BUILD_ARCH_DIR=s390
       INSTALL_ARCH_DIR=s390
       JRE_ARCH_DIR=s390
       ARCH_PREFIX=${LINUX32}
-      TARGET_ARCH=s390
+      CROSS_TARGET_ARCH=s390
        ;;
     *)
       BUILD_ARCH_DIR=`uname -m`
       INSTALL_ARCH_DIR=$BUILD_ARCH_DIR
       JRE_ARCH_DIR=$INSTALL_ARCH_DIR
-      TARGET_ARCH=$BUILD_ARCH_DIR
+      CROSS_TARGET_ARCH=$BUILD_ARCH_DIR
       ;;
   esac
   AC_SUBST(BUILD_ARCH_DIR)
   AC_SUBST(INSTALL_ARCH_DIR)
   AC_SUBST(JRE_ARCH_DIR)
   AC_SUBST(ARCH_PREFIX)
-  AC_SUBST(TARGET_ARCH)
+  AC_SUBST(CROSS_TARGET_ARCH)
 ])
 
 AC_DEFUN([SET_OS_DIRS],

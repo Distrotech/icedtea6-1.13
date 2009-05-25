@@ -1,3 +1,10 @@
+2009-05-25  Xerxes Rånby  <xerxes@zafena.se>
+
+	* acinclude.m4: Fix: Renamed TARGET_ARCH to CROSS_TARGET_ARCH
+	to prevent unintended use by make builtin LINK.c rule.
+	* Makefile.am: Likewise.
+	* patches/icedtea-explicit-target-arch.patch: Likewise.
+
 2009-05-22  Omair Majid  <omajid@redhat.com>
 
 	* rt/net/sourceforge/jnlp/JNLPFile.java (parse): Fix comment to reflect 

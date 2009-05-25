@@ -16,7 +16,7 @@ Index: openjdk/hotspot/make/linux/makefiles/defs.make
 +ifndef CROSS_COMPILATION
 +  ARCH:=$(shell uname -m)
 +else
-+  ARCH:=$(TARGET_ARCH)
++  ARCH:=$(CROSS_TARGET_ARCH)
 +endif
  PATH_SEP = :
  ifeq ($(LP64), 1)
@@ -38,7 +38,7 @@ Index: openjdk/jdk/make/common/shared/Platform.gmk
 +      mach := $(shell (dpkg-architecture -qDEB_BUILD_ARCH_CPU 2>/dev/null || echo $(mach)) | sed 's/powerpc$$/ppc/;s/hppa/parisc/')
 +    endif
 +  else
-+    mach := $(TARGET_ARCH)
++    mach := $(CROSS_TARGET_ARCH)
    endif
    archExpr = case "$(mach)" in \
                  i[3-9]86) \
@@ -62,7 +62,7 @@ Index: openjdk/corba/make/common/shared/Platform.gmk
 +    endif
 +  else
 +    # Cross-compilation: Assume target archicture is given.
-+    mach := $(TARGET_ARCH)
++    mach := $(CROSS_TARGET_ARCH)
    endif
    archExpr = case "$(mach)" in \
                  i[3-9]86) \
