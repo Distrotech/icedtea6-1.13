@@ -1,3 +1,16 @@
+2009-05-29  Omair Majid  <omajid@redhat.com>
+
+	* rt/net/sourceforge/jnlp/JREDesc.java:
+	Change initialHeapSize and maximumHeapSize to String.
+	(JREDesc): Check and store initialHeapSize and maximumHeapSize. Throw
+	ParseException on error.
+	(getMaximumHeapSize): Return String.
+	(getInitialHeapSize): Likewise.
+	(heapToLong): Renamed to...
+	(checkHeapSize): New method. Check for valid heap size.
+	* rt/net/sourceforge/jnlp/resources/Messages.properties: Add PBadHeapSize
+	to indicate a bad heap size.
+
 2009-05-29  Gary Benson  <gbenson@redhat.com>
 
 	* ports/hotspot/src/share/vm/shark/sharkBlock.hpp
