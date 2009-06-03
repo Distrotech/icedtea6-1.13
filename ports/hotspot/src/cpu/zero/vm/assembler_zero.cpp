@@ -60,6 +60,12 @@ void MacroAssembler::advance(int bytes)
   sync();
 }
 
+void MacroAssembler::store_oop(jobject obj)
+{
+  code_section()->relocate(pc(), oop_Relocation::spec_for_immediate());
+  emit_address((address) obj);
+}
+
 static void _UnimplementedStub()
 {
   report_unimplemented(__FILE__, __LINE__);
