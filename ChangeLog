@@ -1,3 +1,21 @@
+2009-06-08  Omair Majid  <omajid@redhat.com>
+
+	* Makefile.am
+	(stamps/ports.stamp): Depend on stamps/replace-hotspot.stamp instead
+	of stamps/extract.stamp.
+	(stamps/extract.stamp): Dont replace hotspot.
+	(stamps/replace-hotspot.stamp): New target. Replace hotspot without
+	assuming anything about the build.
+	(clean-replace-hotspot): New target.
+	(stamps/patch-fsg.stamp): Depend on stamps/replace-hotspot.stamp
+	instead of stamps/extract.stamp.
+	(stamps/hotspot-tools-source-files.txt): Likewise.
+	(rt-source-files.txt): Likewise.
+	(stamps/cacao.stamp): Likewise.
+	(stamps/visualvm.stamp): Likewise.
+	(stamps/nbplatform.stamp): Likewise.
+	(replace-hotspot): New alias for stamps/replace-hotspot.stamp. 
+
 2009-06-08  Gary Benson  <gbenson@redhat.com>
 
 	* ports/hotspot/src/share/vm/shark/sharkTopLevelBlock.hpp

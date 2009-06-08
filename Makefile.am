@@ -455,7 +455,7 @@ if WITH_VISUALVM
 endif
 
 # Link ports sources into tree
-stamps/ports.stamp: stamps/extract.stamp
+stamps/ports.stamp: stamps/replace-hotspot.stamp
 	for target in $(abs_top_srcdir)/ports/hotspot/build/*/makefiles/* \
 		      $(abs_top_srcdir)/ports/hotspot/src/*cpu/* \
 		      $(abs_top_srcdir)/ports/hotspot/src/share/vm/*; do \
@@ -675,23 +675,8 @@ else
 	  mkdir openjdk ; \
 	  $(TAR) xf $(OPENJDK_SRC_ZIP) -C openjdk; \
 	  chmod -R ug+w openjdk ; \
-	  if test "x${HSBUILD}" != "xoriginal"; then \
-	    rm -rf openjdk/hotspot ; \
-	  fi ; \
 	  sh $(abs_top_srcdir)/fsg.sh ; \
 	fi
-if WITH_ALT_HSBUILD
-	if test -e ${HOTSPOT_SRC_ZIP} ; \
-	then \
-	  if ! test -d openjdk/hotspot ; \
-	  then \
-	    $(TAR) xf $(HOTSPOT_SRC_ZIP) ; \
-	    chmod -R ug+w master-* ; \
-	    mv master-$$($(AWK) 'version==$$1 {print $$2}' version=$(HSBUILD) \
-	      $(abs_top_srcdir)/hotspot.map) openjdk/hotspot ; \
-	  fi ; \
-	fi
-endif
 endif
 if BUILD_CACAO
 if !USE_SYSTEM_CACAO
@@ -726,6 +711,24 @@ endif
 
 clean-extract:
 	rm -f stamps/extract.stamp
+
+stamps/replace-hotspot.stamp: stamps/extract.stamp
+if WITH_ALT_HSBUILD
+	if test "x${HSBUILD}" != "xoriginal"; then \
+	  rm -rf openjdk/hotspot ; \
+	  if test -e ${HOTSPOT_SRC_ZIP} ; \
+	  then \
+	    $(TAR) xf $(HOTSPOT_SRC_ZIP) ; \
+	    chmod -R ug+w master-* ; \
+	    mv master-$$($(AWK) 'version==$$1 {print $$2}' version=$(HSBUILD) \
+	      $(abs_top_srcdir)/hotspot.map) openjdk/hotspot ; \
+	  fi ; \
+	fi ;
+endif
+	touch stamps/replace-hotspot.stamp
+
+clean-replace-hotspot:
+	rm -rf stamps/replace-hotspot.stamp
 
 stamps/patch.stamp: stamps/patch-fsg.stamp
 	mkdir -p stamps ; \
@@ -812,7 +815,7 @@ clean-patch:
 		rm -f openjdk/jdk/src/share/classes/sun/applet/`basename $file` ; \
 	done ;
 
-stamps/patch-fsg.stamp: stamps/extract.stamp
+stamps/patch-fsg.stamp: stamps/replace-hotspot.stamp
 	mkdir -p stamps ; \
 	rm -f stamps/patch-fsg.stamp.tmp ; \
 	touch stamps/patch-fsg.stamp.tmp ; \
@@ -1445,7 +1448,7 @@ stamps/hotspot-tools-copy-source-files.stamp: stamps/overlay.stamp
 	mkdir -p stamps
 	touch stamps/hotspot-tools-copy-source-files.stamp
 
-hotspot-tools-source-files.txt: stamps/extract.stamp \
+hotspot-tools-source-files.txt: stamps/replace-hotspot.stamp \
 	stamps/hotspot-tools-copy-source-files.stamp
 	find hotspot-tools -name '*.java' | sort > $@
 	mkdir -p lib/hotspot-tools
@@ -1498,7 +1501,7 @@ bootstrap/jdk1.7.0/jre/lib/tools.jar: stamps/hotspot-tools-class-files.stamp
 	fi
 
 # rt-closed.jar class files.
-rt-source-files.txt: stamps/extract.stamp stamps/copy-source-files.stamp
+rt-source-files.txt: stamps/replace-hotspot.stamp stamps/copy-source-files.stamp
 	find $(abs_top_srcdir)/rt $(abs_top_builddir)/rt -name '*.java' \
 	  | sort -u > $@
 
@@ -1582,7 +1585,7 @@ extra-lib/about.jar: stamps/extra-class-files.stamp
 	  $(ICEDTEA_BOOT_DIR)/bin/jar cf $@ -C extra-lib net ; \
 	fi
 
-stamps/cacao.stamp: stamps/extract.stamp stamps/rt-class-files.stamp
+stamps/cacao.stamp: stamps/replace-hotspot.stamp stamps/rt-class-files.stamp
 if BUILD_CACAO
 if !USE_SYSTEM_CACAO
 	cd cacao/cacao && \
@@ -1956,7 +1959,7 @@ check-local: jtregcheck
 # VisualVM
 
 stamps/visualvm.stamp: $(BOOTSTRAP_DIRECTORY_STAMP) stamps/download.stamp \
-	stamps/extract.stamp stamps/nbplatform.stamp
+	stamps/replace-hotspot.stamp stamps/nbplatform.stamp
 if WITH_VISUALVM
 	cd visualvm ; \
 	ln -s $(abs_top_srcdir)/netbeans/nbbuild/netbeans_visualvm netbeans ; \
@@ -1969,7 +1972,7 @@ clean-visualvm:
 	rm -rf visualvm
 	rm -f stamps/visualvm.stamp
 
-stamps/nbplatform.stamp: $(BOOTSTRAP_DIRECTORY_STAMP) stamps/extract.stamp \
+stamps/nbplatform.stamp: $(BOOTSTRAP_DIRECTORY_STAMP) stamps/replace-hotspot.stamp \
 	stamps/download.stamp
 if WITH_VISUALVM
 	cd netbeans ; \
@@ -2058,6 +2061,8 @@ overlay: stamps/overlay.stamp
 plugs: stamps/plugs.stamp
 
 rt-class-files: stamps/rt-class-files.stamp
+
+replace-hotspot: stamps/replace-hotspot.stamp
 
 hotspot-tools-class-files: stamps/hotspot-tools-class-files.stamp
 
