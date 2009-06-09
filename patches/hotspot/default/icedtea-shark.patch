@@ -337,46 +337,40 @@
  }
  
  // ------------------------------------------------------------------
-diff -r 5297ff20101d openjdk-ecj/hotspot/src/share/vm/ci/ciInstanceKlass.cpp
---- openjdk/hotspot/src/share/vm/ci/ciInstanceKlass.cpp	Mon Dec 15 15:32:37 2008 +0000
-+++ openjdk/hotspot/src/share/vm/ci/ciInstanceKlass.cpp	Tue Apr 21 09:47:27 2009 +0100
-@@ -548,3 +548,23 @@
-   }
-   return impl;
+diff -r 12c97e7e55eb -r e6fef2ef2fea openjdk/hotspot/src/share/vm/ci/ciMethod.cpp
+--- openjdk/hotspot/src/share/vm/ci/ciMethod.cpp	Tue Jun 09 09:17:11 2009 +0100
++++ openjdk/hotspot/src/share/vm/ci/ciMethod.cpp	Tue Jun 09 10:04:02 2009 +0100
+@@ -229,6 +229,20 @@
  }
-+
+ 
+ 
 +#ifdef SHARK
 +// ------------------------------------------------------------------
-+// ciInstanceKlass::constant_pool_tag_at
++// ciMethod::itable_index
 +//
-+// What is in this constant pool slot?
-+constantTag ciInstanceKlass::constant_pool_tag_at(int index) {
++// Get the position of this method's entry in the itable, if any.
++int ciMethod::itable_index() {
++  check_is_loaded();
++  assert(holder()->is_linked(), "must be linked");
 +  VM_ENTRY_MARK;
-+  return get_instanceKlass()->constants()->tag_at(index);
-+}
-+
-+// ------------------------------------------------------------------
-+// ciInstanceKlass::is_cache_entry_resolved
-+//
-+// Is this entry in the constant pool cache resolved?
-+bool ciInstanceKlass::is_cache_entry_resolved(int index, Bytecodes::Code opcode) {
-+  VM_ENTRY_MARK;
-+  return get_instanceKlass()->constants()->cache()->entry_at(index)->is_resolved(opcode);
++  return klassItable::compute_itable_index(get_methodOop());
 +}
 +#endif // SHARK
-diff -r 5297ff20101d openjdk-ecj/hotspot/src/share/vm/ci/ciInstanceKlass.hpp
---- openjdk/hotspot/src/share/vm/ci/ciInstanceKlass.hpp	Mon Dec 15 15:32:37 2008 +0000
-+++ openjdk/hotspot/src/share/vm/ci/ciInstanceKlass.hpp	Tue Apr 21 09:47:27 2009 +0100
-@@ -198,4 +198,12 @@
-   // What kind of ciObject is this?
-   bool is_instance_klass() { return true; }
-   bool is_java_klass()     { return true; }
 +
++
+ // ------------------------------------------------------------------
+ // ciMethod::native_entry
+ //
+diff -r 12c97e7e55eb -r e6fef2ef2fea openjdk/hotspot/src/share/vm/ci/ciMethod.hpp
+--- openjdk/hotspot/src/share/vm/ci/ciMethod.hpp	Tue Jun 09 09:17:11 2009 +0100
++++ openjdk/hotspot/src/share/vm/ci/ciMethod.hpp	Tue Jun 09 10:04:02 2009 +0100
+@@ -139,6 +139,9 @@
+ 
+   // Runtime information.
+   int           vtable_index();
 +#ifdef SHARK
-+  // What is in this constant pool slot?
-+  constantTag constant_pool_tag_at(int index);
-+
-+  // Is this entry in the constant pool cache resolved?
-+  bool is_cache_entry_resolved(int index, Bytecodes::Code opcode);
++  int           itable_index();
 +#endif // SHARK
- };
+   address       native_entry();
+   address       interpreter_entry();
+ 
