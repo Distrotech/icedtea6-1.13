@@ -221,3 +221,19 @@
          }
       }
  
+Index: openjdk/hotspot/src/share/vm/runtime/jniHandles.cpp
+===================================================================
+--- openjdk/hotspot/src/share/vm/runtime/jniHandles.cpp.orig	2009-06-10 11:30:46.000000000 +0200
++++ openjdk/hotspot/src/share/vm/runtime/jniHandles.cpp	2009-06-10 11:37:07.000000000 +0200
+@@ -173,7 +173,11 @@
+   // is not permitted.
+   return (thr->has_last_Java_frame() &&
+          (void*)obj < (void*)thr->stack_base() &&
++#ifdef ZERO
++         (void*)obj >= (void*)os::current_stack_pointer());
++#else
+          (void*)obj >= (void*)thr->last_Java_sp());
++#endif // ZERO
+ }
+ 
+ 
