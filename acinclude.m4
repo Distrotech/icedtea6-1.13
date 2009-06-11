@@ -998,18 +998,20 @@ AC_DEFUN([AC_CHECK_FOR_GCJ_JDK],
   AC_SUBST(SYSTEM_GCJ_DIR)
 ])
 
+dnl This option allows the initial build to be skipped, and a single build
+dnl to be completed using an existing OpenJDK installation.  It can be used
+dnl in three ways:
+dnl   * --with-openjdk: look for OpenJDK in one of a series of predefined dirs
+dnl   * --without-openjdk (default): do a full bootstrap, no OpenJDK required
+dnl   * --with-openjdk=${path}: use the OpenJDK installed in the specified location
 AC_DEFUN([AC_CHECK_FOR_OPENJDK],
 [
   AC_MSG_CHECKING([for an existing OpenJDK installation])
-  AC_ARG_WITH([openjdk-home],
-              [AS_HELP_STRING([--with-openjdk-home],
-                              [OpenJDK home directory \
-                               (default is /usr/lib/jvm/java-openjdk)])],
+  AC_ARG_WITH([openjdk],
+              [AS_HELP_STRING([--with-openjdk],
+                              [perform a quick build with an installed copy of OpenJDK])],
               [
-                if test "x${withval}" = xyes
-                then
-                  SYSTEM_OPENJDK_DIR=
-                elif test "x${withval}" = xno
+                if test "x${withval}" = xno
                 then
 	          SYSTEM_OPENJDK_DIR=
 	        else
@@ -1019,55 +1021,22 @@ AC_DEFUN([AC_CHECK_FOR_OPENJDK],
               [
                 SYSTEM_OPENJDK_DIR=
               ])
-  if test -z "${SYSTEM_OPENJDK_DIR}"; then
-    for dir in /usr/lib/jvm/java-openjdk /usr/lib/jvm/openjdk ; do
+  if test "x${SYSTEM_OPENJDK_DIR}" = xyes; then
+    for dir in /usr/lib/jvm/java-openjdk /usr/lib/jvm/openjdk \
+    	       /usr/lib/jvm/icedtea6 /usr/lib/jvm/java-6-openjdk \
+	       /usr/lib/jvm/java-icedtea ; do
        if test -d $dir; then
          SYSTEM_OPENJDK_DIR=$dir
 	 break
        fi
     done
+  elif ! test -z "${SYSTEM_OPENJDK_DIR}"; then
+    if ! test -d "${SYSTEM_OPENJDK_DIR}"; then
+      AC_MSG_ERROR("An OpenJDK home directory could not be found.")
+    fi
   fi
+  AM_CONDITIONAL(WITH_OPENJDK, test "x${SYSTEM_OPENJDK_DIR}" != x)
   AC_MSG_RESULT(${SYSTEM_OPENJDK_DIR})
-  if ! test -d "${SYSTEM_OPENJDK_DIR}"; then
-    AC_MSG_ERROR("An OpenJDK home directory could not be found.")
-  fi
   AC_SUBST(SYSTEM_OPENJDK_DIR)
 ])
-
-AC_DEFUN([AC_CHECK_FOR_ICEDTEA],
-[
-  AC_MSG_CHECKING(for an existing IcedTea installation)
-  AC_ARG_WITH([icedtea-home],
-              [AS_HELP_STRING([--with-icedtea-home],
-                              [IcedTea home directory \
-                               (default is /usr/lib/jvm/java-icedtea)])],
-              [
-                if test "x${withval}" = xyes
-                then
-                  SYSTEM_ICEDTEA_DIR=
-                elif test "x${withval}" = xno
-                then
-	          SYSTEM_ICEDTEA_DIR=
-	        else
-                  SYSTEM_ICEDTEA_DIR=${withval}
-                fi
-              ],
-              [
-                SYSTEM_ICEDTEA_DIR=
-              ])
-  if test -z "${SYSTEM_ICEDTEA_DIR}"; then
-    for dir in /usr/lib/jvm/java-icedtea /usr/lib/jvm/icedtea6 /usr/lib/jvm/java-6-openjdk ; do
-       if test -d $dir; then
-         SYSTEM_ICEDTEA_DIR=$dir
-	 break
-       fi
-    done
-  fi
-  AC_MSG_RESULT(${SYSTEM_ICEDTEA_DIR})
-  if ! test -d "${SYSTEM_ICEDTEA_DIR}"; then
-    AC_MSG_ERROR("An IcedTea home directory could not be found.")
-  fi
-  AC_SUBST(SYSTEM_ICEDTEA_DIR)
-])
-
 

@@ -986,13 +986,8 @@ if WITH_OPENJDK
   BOOTSTRAP_DIRECTORY_STAMP =
   ICEDTEA_HOME = $(SYSTEM_OPENJDK_DIR)
 else
-if WITH_ICEDTEA
-  BOOTSTRAP_DIRECTORY_STAMP =
-  ICEDTEA_HOME = $(SYSTEM_ICEDTEA_DIR)
-else
   BOOTSTRAP_DIRECTORY_STAMP = stamps/bootstrap-directory.stamp
   ICEDTEA_HOME = $(abs_top_builddir)/bootstrap/icedtea
-endif
 endif
 
 # bootstrap/jdk1.6.0 to bootstrap/icedtea symlink.
@@ -1080,14 +1075,10 @@ clean-bootstrap-directory-symlink-ecj:
 # OpenJDK Targets
 # ===============
 
-if WITH_ICEDTEA
+if WITH_OPENJDK
   MEMORY_LIMIT = -J-Xmx1024m
 else
-if WITH_OPENJDK
-  MEMORY_LIMIT = -J-Xmx512m
-else
   MEMORY_LIMIT =
-endif
 endif
 
 if WITH_CACAO

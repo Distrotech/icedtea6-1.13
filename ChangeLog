@@ -1,3 +1,15 @@
+2009-06-10  Andrew John Hughes  <ahughes@redhat.com>
+	
+	* Makefile.am:
+	Remove duplicate WITH_ICEDTEA blocks.
+	* acinclude.m4:
+	(AC_CHECK_FOR_OPENJDK): Updated so that no
+	turns off the option rather than dropping out.
+	(AC_CHECK_FOR_ICEDTEA): Removed.
+	* configure.ac:
+	Remove --with-icedtea and --with-openjdk blocks
+	and duplicate --with-icedtea logic.
+
 2009-06-10  Omair Majid  <omajid@redhat.com>
 
 	* rt/net/sourceforge/jnlp/JNLPFile.java
