@@ -1788,8 +1788,7 @@ endif
 # configure script arguments, quoted in single quotes
 CONFIGURE_ARGS = @CONFIGURE_ARGS@
 ADD_ZERO_CONFIGURE_ARGS = \
-	--with-openjdk \
-	--with-openjdk-home=$(abs_top_builddir)/$(BUILD_OUTPUT_DIR)/j2sdk-image \
+	--with-openjdk=$(abs_top_builddir)/$(BUILD_OUTPUT_DIR)/j2sdk-image \
 	--enable-zero
 if ADD_SHARK_BUILD
 ADD_ZERO_CONFIGURE_ARGS += \
@@ -1800,8 +1799,7 @@ ADD_ZERO_CONFIGURE_ARGS += \
 	$(filter-out '--with-gcj-home=% '--with-ecj=% \
 			'--with-java=% '--with-javah=% \
 			'--with-rmic=% '--with-additional-vms=% \
-			'--with-icedtea '--with-icedtea-home=% \
-			'--with-openjdk '--with-openjdk-home=% , \
+			'--with-openjdk '--with-openjdk=% , \
 		$(CONFIGURE_ARGS))
 
 ADD_ZERO_EXTRA_BUILD_ENV = \
