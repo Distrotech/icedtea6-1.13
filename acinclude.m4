@@ -1014,12 +1014,15 @@ AC_DEFUN([AC_CHECK_FOR_OPENJDK],
                 if test "x${withval}" = xno
                 then
 	          SYSTEM_OPENJDK_DIR=
+		  with_openjdk=false
 	        else
                   SYSTEM_OPENJDK_DIR=${withval}
+		  with_openjdk=true
                 fi
               ],
               [
                 SYSTEM_OPENJDK_DIR=
+		with_openjdk=false
               ])
   if test "x${SYSTEM_OPENJDK_DIR}" = xyes; then
     for dir in /usr/lib/jvm/java-openjdk /usr/lib/jvm/openjdk \
@@ -1038,5 +1041,6 @@ AC_DEFUN([AC_CHECK_FOR_OPENJDK],
   AM_CONDITIONAL(WITH_OPENJDK, test "x${SYSTEM_OPENJDK_DIR}" != x)
   AC_MSG_RESULT(${SYSTEM_OPENJDK_DIR})
   AC_SUBST(SYSTEM_OPENJDK_DIR)
+  AC_SUBST(with_openjdk)
 ])
 
