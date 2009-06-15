@@ -520,7 +520,6 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-webstart-umask.patch \
 	patches/icedtea-rmi_amd64.patch \
 	patches/icedtea-tools.patch \
-	patches/icedtea-demos.patch \
 	patches/icedtea-timezone.patch \
 	patches/icedtea-use-system-tzdata.patch \
 	patches/icedtea-headers.patch \
