@@ -1,11 +1,10 @@
---- openjdk6.old/jdk/src/solaris/classes/sun/awt/X11/XToolkit.java	2008-03-26 05:00:00.000000000 -0400
-+++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XToolkit.java	2008-06-26 11:59:28.000000000 -0400
-@@ -1097,7 +1097,7 @@
+--- jdk6-original/jdk/src/solaris/classes/sun/awt/X11/XToolkit.java	2009-06-19 11:08:06.000000000 -0400
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XToolkit.java	2009-06-19 11:06:43.000000000 -0400
+@@ -1096,6 +1096,7 @@
+         awtLock();
          try {
              XlibWrapper.XBell(getDisplay(), 0);
++	    XlibWrapper.XFlush(getDisplay());
          } finally {
--            awtUnlock();
-+            awtFUnlock();
+             awtUnlock();
          }
-     }
- 
