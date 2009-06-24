@@ -1,5 +1,24 @@
 2009-06-24  Omair Majid  <omajid@redhat.com>
 
+	* rt/net/sourceforge/jnlp/Launcher.java (launchApplication): Check for any 
+	existing single instance.  Dont start a second instance.
+	* rt/net/sourceforge/jnlp/resources/Messages.properties: Add RNoLockDir.
+	* rt/net/sourceforge/jnlp/runtime/JNLPRuntime.java:
+	Added USER, TMP_DIR, and changed LOCKS_DIR.
+	* rt/net/sourceforge/jnlp/services/ExtendedSingleInstanceService.java
+	New file.
+	* rt/net/sourceforge/jnlp/services/InstanceExistsException.java: New file.
+	* rt/net/sourceforge/jnlp/services/ServiceUtil.java
+	(getSingleInstanceService): New function.
+	(checkExistingSingleInstance): New function.
+	* rt/net/sourceforge/jnlp/services/SingleInstanceLock.java: New file.
+	* rt/net/sourceforge/jnlp/services/XServiceManagerStub.java: Add
+	SingleInstanceService to serviceNames. Create a new instance of
+	XSingleInstanceService as a privileged proxy.
+	* rt/net/sourceforge/jnlp/services/XSingleInstanceService.java: New file. 
+
+2009-06-24  Omair Majid  <omajid@redhat.com>
+
 	* rt/net/sourceforge/jnlp/Parser.java: Add 1.5 and 6.0 to
 	supportedVersions.
 
