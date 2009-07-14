@@ -13,17 +13,20 @@ ICEDTEAPLUGIN_CLEAN = clean-IcedTeaNPPlugin
 ICEDTEAPLUGIN_TARGET = IcedTeaNPPlugin.so
 PLUGIN_PATCH = patches/icedtea-liveconnect.patch
 LIVECONNECT_DIR = -C lib/rt netscape
+NPPLUGIN_DIR=$(abs_top_srcdir)/plugin/icedteanp
 else
 if ENABLE_PLUGIN
 ICEDTEAPLUGIN_CLEAN = clean-IcedTeaPlugin
 ICEDTEAPLUGIN_TARGET = IcedTeaPlugin.so
 PLUGIN_PATCH = patches/icedtea-liveconnect.patch
 LIVECONNECT_DIR = -C lib/rt netscape
+NPPLUGIN_DIR = 
 else
 ICEDTEAPLUGIN_CLEAN =
 ICEDTEAPLUGIN_TARGET =
 PLUGIN_PATCH = 
 LIVECONNECT_DIR =
+NPPLUGIN_DIR =
 endif
 endif
 
@@ -66,7 +69,7 @@ distclean-local: clean-copy clean-jtreg clean-jtreg-reports clean-pulse-java
 	rm -rf visualvm
 	rm -rf netbeans
 if ENABLE_NPPLUGIN
-	rm -f IcedTeaNPPlugin.o IcedTeaNPPlugin.so
+	rm -f $(NPPLUGIN_DIR)/*.o $(NPPLUGIN_DIR)/IcedTeaNPPlugin.so
 else
 if ENABLE_PLUGIN
 	rm -f IcedTeaPlugin.o IcedTeaPlugin.so
@@ -781,9 +784,9 @@ stamps/patch.stamp: stamps/patch-fsg.stamp
 	fi
 
 if ENABLE_NPPLUGIN
-	cp -a $(abs_top_srcdir)/plugin/icedteanp/sun/applet/*java openjdk/jdk/src/share/classes/sun/applet/
+	cp -a $(abs_top_srcdir)/plugin/icedteanp/java/sun/applet/*java openjdk/jdk/src/share/classes/sun/applet/
 	mkdir -p rt
-	cp -a $(abs_top_srcdir)/plugin/icedteanp/netscape rt/
+	cp -a $(abs_top_srcdir)/plugin/icedteanp/java/netscape rt/
 else
 if ENABLE_PLUGIN
 	cp -a $(abs_top_srcdir)/plugin/icedtea/sun/applet/*java openjdk/jdk/src/share/classes/sun/applet/
@@ -1106,9 +1109,9 @@ stamps/icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
 	mkdir -p $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/ext
 	mkdir -p $(BUILD_OUTPUT_DIR)/j2re-image/lib/ext
 if ENABLE_NPPLUGIN
-	cp -pPRf IcedTeaNPPlugin.so \
+	cp -pPRf $(NPPLUGIN_DIR)/IcedTeaNPPlugin.so \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
-	cp -pPRf IcedTeaNPPlugin.so \
+	cp -pPRf $(NPPLUGIN_DIR)/IcedTeaNPPlugin.so \
 	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
 else
 if ENABLE_PLUGIN
@@ -1191,9 +1194,9 @@ stamps/icedtea-debug.stamp: stamps/bootstrap-directory-symlink.stamp \
 	mkdir -p $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/ext
 	mkdir -p $(BUILD_OUTPUT_DIR)-debug/j2re-image/lib/ext
 if ENABLE_NPPLUGIN
-	cp -pPRf IcedTeaNPPlugin.so \
+	cp -pPRf $(NPPLUGIN_DIR)/IcedTeaNPPlugin.so \
 	  $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
-	cp -pPRf IcedTeaNPPlugin.so \
+	cp -pPRf $(NPPLUGIN_DIR)/IcedTeaNPPlugin.so \
 	  $(BUILD_OUTPUT_DIR)-debug/j2re-image/lib/$(INSTALL_ARCH_DIR)
 else
 if ENABLE_PLUGIN
@@ -1614,7 +1617,7 @@ NPPLUGIN_OBJECTS=IcedTeaNPPlugin.o IcedTeaScriptablePluginObject.o \
 		IcedTeaPluginUtils.o
 
 IcedTeaNPPlugin_objects:
-	(cd plugin/icedteanp
+	cd $(NPPLUGIN_DIR); \
 	if [ -e $(abs_top_srcdir)/.hg ] && which $(HG) >/dev/null; then \
 	  revision="-r`(cd $(abs_top_srcdir); $(HG) tip --template '{rev}')`" ; \
 	fi ; \
@@ -1627,24 +1630,24 @@ IcedTeaNPPlugin_objects:
 	  $(GLIB_CFLAGS) \
 	  $(GTK_CFLAGS) \
 	  $(MOZILLA_CFLAGS) \
-	  -fPIC -c $(NPPLUGIN_SRC)
-	  )
+	  -fPIC -c $(NPPLUGIN_SRC); \
+	cd ../
 
 IcedTeaNPPlugin.so: IcedTeaNPPlugin_objects
-	(cd plugin/icedteanp
+	cd $(NPPLUGIN_DIR); \
 	$(CXX) $(CXXFLAGS) \
 	  $(NPPLUGIN_OBJECTS) \
 	  $(GLIB_LIBS) \
 	  $(GTK_LIBS) \
 	  $(MOZILLA_LIBS)\
-	  -shared -o $@
-	  )
+	  -shared -o $@; \
+	cd ../
 
 clean-IcedTeaNPPlugin:
-	(cd plugin/icedteanp
-	rm -f $(NPPLUGIN_OBJECTS)
-	rm -f IcedTeaNPPlugin.so
-	)
+	cd $(NPPLUGIN_DIR);\
+	rm -f *.o; \
+	rm -f IcedTeaNPPlugin.so; \
+	cd ../
 else
 if ENABLE_PLUGIN
 # IcedTeaPlugin.so.
