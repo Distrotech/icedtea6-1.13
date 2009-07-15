@@ -247,6 +247,7 @@ void CppInterpreter::native_entry(methodOop method, intptr_t UNUSED, TRAPS)
     Unimplemented();
   }
   void **arguments;
+  void *mirror = NULL;
   {
     arguments =
       (void **) stack->alloc(handler->argument_count() * sizeof(void **));
@@ -255,7 +256,6 @@ void CppInterpreter::native_entry(methodOop method, intptr_t UNUSED, TRAPS)
     void *env = thread->jni_environment();
     *(dst++) = &env;
   
-    void *mirror = NULL;
     if (method->is_static()) {
       istate->set_oop_temp(
         method->constants()->pool_holder()->klass_part()->java_mirror());
