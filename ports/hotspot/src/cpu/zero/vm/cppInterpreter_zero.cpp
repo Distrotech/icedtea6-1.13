@@ -247,7 +247,7 @@ void CppInterpreter::native_entry(methodOop method, intptr_t UNUSED, TRAPS)
     Unimplemented();
   }
   void **arguments;
-  void *mirror = NULL;
+  void *mirror;
   {
     arguments =
       (void **) stack->alloc(handler->argument_count() * sizeof(void **));
