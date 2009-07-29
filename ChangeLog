@@ -1,5 +1,29 @@
 2009-07-29  Omair Majid  <omajid@redhat.com>
 
+	* rt/net/sourceforge/jnlp/IconDesc.java: Add new icon kind SHORTCUT.
+	* rt/net/sourceforge/jnlp/Launcher.java: Move StreamEater class to ...
+	* rt/net/sourceforge/jnlp/StreamEater.java: New file.
+	* rt/net/sourceforge/jnlp/resources/Messages.properties: Add
+	SDesktopShortcut.
+	* rt/net/sourceforge/jnlp/runtime/ApplicationInstance.java
+	(initialize): Call addMenuAndDesktopEntries.
+	(addMenuAndDesktopEntries): New function.
+	* rt/net/sourceforge/jnlp/security/SecurityWarningDialog.java: Add
+	CREATE_DESKTOP_SHORTCUT to AccessType.
+	* rt/net/sourceforge/jnlp/security/AccessWarningPane.java
+	(installComponents): Add a case for CREATE_DESKTOP_SHORTCUT
+	* rt/net/sourceforge/jnlp/services/ServiceUtil.java
+	Remove duplicate enum AccessType.
+	(checkAccess): New function.
+	(checkAccess): Add a new argument app.
+	* rt/net/sourceforge/jnlp/services/SingleInstanceLock.java
+	(getLockFileName): Call FileUtils.sanitizeFileName to sanitize the 
+	filename.
+	* rt/net/sourceforge/jnlp/util/FileUtils.java: New file.
+	* rt/net/sourceforge/jnlp/util/XDesktopEntry.java: New file. 
+
+2009-07-29  Omair Majid  <omajid@redhat.com>
+
 	* rt/net/sourceforge/jnlp/security/VariableX509TrustManager.java
 	(checkServerTrusted): Synchronize the function.
 
