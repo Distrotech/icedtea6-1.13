@@ -587,7 +587,8 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-pr261.patch \
 	patches/icedtea-doc-headers.patch \
 	patches/openjdk/bidi-tests.patch \
-	patches/openjdk/annotation-tests.patch
+	patches/openjdk/annotation-tests.patch \
+	patches/openjdk/rename-execvpe.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
