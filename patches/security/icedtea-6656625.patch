@@ -1,0 +1,180 @@
+--- old/src/share/classes/com/sun/imageio/plugins/bmp/BMPImageReaderSpi.java	2009-04-24 17:32:19.463300000 +0400
++++ openjdk/jdk/src/share/classes/com/sun/imageio/plugins/bmp/BMPImageReaderSpi.java	2009-04-24 17:32:18.529300000 +0400
+@@ -51,7 +51,7 @@
+               entensions,
+               mimeType,
+               "com.sun.imageio.plugins.bmp.BMPImageReader",
+-              STANDARD_INPUT_TYPE,
++              new Class[] { ImageInputStream.class },
+               writerSpiNames,
+               false,
+               null, null, null, null,
+--- old/src/share/classes/com/sun/imageio/plugins/bmp/BMPImageWriterSpi.java	2009-04-24 17:32:32.537300000 +0400
++++ openjdk/jdk/src/share/classes/com/sun/imageio/plugins/bmp/BMPImageWriterSpi.java	2009-04-24 17:32:31.632300000 +0400
+@@ -32,6 +32,7 @@
+ import javax.imageio.spi.ImageWriterSpi;
+ import javax.imageio.spi.ServiceRegistry;
+ import javax.imageio.spi.IIORegistry;
++import javax.imageio.stream.ImageOutputStream;
+ import javax.imageio.ImageWriter;
+ import javax.imageio.ImageTypeSpecifier;
+ import javax.imageio.IIOException;
+@@ -55,7 +56,7 @@
+               entensions,
+               mimeType,
+               "com.sun.imageio.plugins.bmp.BMPImageWriter",
+-              STANDARD_OUTPUT_TYPE,
++              new Class[] { ImageOutputStream.class },
+               readerSpiNames,
+               false,
+               null, null, null, null,
+--- old/src/share/classes/com/sun/imageio/plugins/gif/GIFImageReaderSpi.java	2009-04-24 17:32:39.646300000 +0400
++++ openjdk/jdk/src/share/classes/com/sun/imageio/plugins/gif/GIFImageReaderSpi.java	2009-04-24 17:32:38.722300000 +0400
+@@ -62,7 +62,7 @@
+               suffixes,
+               MIMETypes,
+               readerClassName,
+-              STANDARD_INPUT_TYPE,
++              new Class[] { ImageInputStream.class },
+               writerSpiNames,
+               true,
+               GIFStreamMetadata.nativeMetadataFormatName,
+--- old/src/share/classes/com/sun/imageio/plugins/gif/GIFImageWriterSpi.java	2009-04-24 17:32:48.539300000 +0400
++++ openjdk/jdk/src/share/classes/com/sun/imageio/plugins/gif/GIFImageWriterSpi.java	2009-04-24 17:32:44.764300000 +0400
+@@ -31,6 +31,7 @@
+ import javax.imageio.ImageTypeSpecifier;
+ import javax.imageio.ImageWriter;
+ import javax.imageio.spi.ImageWriterSpi;
++import javax.imageio.stream.ImageOutputStream;
+ import com.sun.imageio.plugins.common.PaletteBuilder;
+ 
+ public class GIFImageWriterSpi extends ImageWriterSpi {
+@@ -59,7 +60,7 @@
+               suffixes,
+               MIMETypes,
+               writerClassName,
+-              STANDARD_OUTPUT_TYPE,
++              new Class[] { ImageOutputStream.class },
+               readerSpiNames,
+               true,
+               GIFWritableStreamMetadata.NATIVE_FORMAT_NAME,
+--- old/src/share/classes/com/sun/imageio/plugins/jpeg/JPEGImageReaderSpi.java	2009-04-24 17:32:57.302300000 +0400
++++ openjdk/jdk/src/share/classes/com/sun/imageio/plugins/jpeg/JPEGImageReaderSpi.java	2009-04-24 17:32:56.484300000 +0400
+@@ -48,7 +48,7 @@
+               JPEG.suffixes,
+               JPEG.MIMETypes,
+               "com.sun.imageio.plugins.jpeg.JPEGImageReader",
+-              STANDARD_INPUT_TYPE,
++              new Class[] { ImageInputStream.class },
+               writerSpiNames,
+               true,
+               JPEG.nativeStreamMetadataFormatName,
+--- old/src/share/classes/com/sun/imageio/plugins/jpeg/JPEGImageWriterSpi.java	2009-04-24 17:33:03.013300000 +0400
++++ openjdk/jdk/src/share/classes/com/sun/imageio/plugins/jpeg/JPEGImageWriterSpi.java	2009-04-24 17:33:02.189300000 +0400
+@@ -28,6 +28,7 @@
+ import javax.imageio.spi.ImageWriterSpi;
+ import javax.imageio.spi.ServiceRegistry;
+ import javax.imageio.spi.IIORegistry;
++import javax.imageio.stream.ImageOutputStream;
+ import javax.imageio.ImageWriter;
+ import javax.imageio.ImageTypeSpecifier;
+ import javax.imageio.IIOException;
+@@ -51,7 +52,7 @@
+               JPEG.suffixes,
+               JPEG.MIMETypes,
+               "com.sun.imageio.plugins.jpeg.JPEGImageWriter",
+-              STANDARD_OUTPUT_TYPE,
++              new Class[] { ImageOutputStream.class },
+               readerSpiNames,
+               true,
+               JPEG.nativeStreamMetadataFormatName,
+--- old/src/share/classes/com/sun/imageio/plugins/png/PNGImageReaderSpi.java	2009-04-24 17:33:08.626300000 +0400
++++ openjdk/jdk/src/share/classes/com/sun/imageio/plugins/png/PNGImageReaderSpi.java	2009-04-24 17:33:07.782300000 +0400
+@@ -62,7 +62,7 @@
+               suffixes,
+               MIMETypes,
+               readerClassName,
+-              STANDARD_INPUT_TYPE,
++              new Class[] { ImageInputStream.class },
+               writerSpiNames,
+               false,
+               null, null,
+--- old/src/share/classes/com/sun/imageio/plugins/png/PNGImageWriterSpi.java	2009-04-24 17:33:16.641300000 +0400
++++ openjdk/jdk/src/share/classes/com/sun/imageio/plugins/png/PNGImageWriterSpi.java	2009-04-24 17:33:15.880300000 +0400
+@@ -34,6 +34,7 @@
+ import javax.imageio.metadata.IIOMetadataFormat;
+ import javax.imageio.metadata.IIOMetadataFormatImpl;
+ import javax.imageio.spi.ImageWriterSpi;
++import javax.imageio.stream.ImageOutputStream;
+ 
+ /**
+  */
+@@ -63,7 +64,7 @@
+                 suffixes,
+                 MIMETypes,
+                 writerClassName,
+-                STANDARD_OUTPUT_TYPE,
++                new Class[] { ImageOutputStream.class },
+                 readerSpiNames,
+                 false,
+                 null, null,
+--- old/src/share/classes/com/sun/imageio/plugins/wbmp/WBMPImageReaderSpi.java	2009-04-24 17:33:24.247300000 +0400
++++ openjdk/jdk/src/share/classes/com/sun/imageio/plugins/wbmp/WBMPImageReaderSpi.java	2009-04-24 17:33:23.392300000 +0400
+@@ -51,7 +51,7 @@
+               entensions,
+               mimeType,
+               "com.sun.imageio.plugins.wbmp.WBMPImageReader",
+-              STANDARD_INPUT_TYPE,
++              new Class[] { ImageInputStream.class },
+               writerSpiNames,
+               true,
+               null, null, null, null,
+--- old/src/share/classes/com/sun/imageio/plugins/wbmp/WBMPImageWriterSpi.java	2009-04-24 17:33:30.351300000 +0400
++++ openjdk/jdk/src/share/classes/com/sun/imageio/plugins/wbmp/WBMPImageWriterSpi.java	2009-04-24 17:33:29.522300000 +0400
+@@ -28,6 +28,7 @@
+ import javax.imageio.spi.ImageWriterSpi;
+ import javax.imageio.spi.ServiceRegistry;
+ import javax.imageio.spi.IIORegistry;
++import javax.imageio.stream.ImageOutputStream;
+ import javax.imageio.ImageWriter;
+ import javax.imageio.ImageTypeSpecifier;
+ import javax.imageio.IIOException;
+@@ -54,7 +55,7 @@
+               entensions,
+               mimeType,
+               "com.sun.imageio.plugins.wbmp.WBMPImageWriter",
+-              STANDARD_OUTPUT_TYPE,
++              new Class[] { ImageOutputStream.class },
+               readerSpiNames,
+               true,
+               null, null, null, null,
+--- old/src/share/classes/javax/imageio/spi/ImageReaderSpi.java	2009-04-24 17:33:36.338300000 +0400
++++ openjdk/jdk/src/share/classes/javax/imageio/spi/ImageReaderSpi.java	2009-04-24 17:33:35.313300000 +0400
+@@ -227,7 +227,11 @@
+             throw new IllegalArgumentException
+                 ("inputTypes.length == 0!");
+         }
+-        this.inputTypes = (Class[])inputTypes.clone();
++
++        this.inputTypes = (inputTypes == STANDARD_INPUT_TYPE) ?
++            new Class<?>[] { ImageInputStream.class } :
++            inputTypes.clone();
++
+         // If length == 0, leave it null
+         if (writerSpiNames != null && writerSpiNames.length > 0) {
+             this.writerSpiNames = (String[])writerSpiNames.clone();
+--- old/src/share/classes/javax/imageio/spi/ImageWriterSpi.java	2009-04-24 17:33:48.992300000 +0400
++++ openjdk/jdk/src/share/classes/javax/imageio/spi/ImageWriterSpi.java	2009-04-24 17:33:48.164300000 +0400
+@@ -228,7 +228,11 @@
+             throw new IllegalArgumentException
+                 ("outputTypes.length == 0!");
+         }
+-        this.outputTypes = (Class[])outputTypes.clone();
++
++        this.outputTypes = (outputTypes == STANDARD_OUTPUT_TYPE) ?
++            new Class<?>[] { ImageOutputStream.class } :
++            outputTypes.clone();
++
+         // If length == 0, leave it null
+         if (readerSpiNames != null && readerSpiNames.length > 0) {
+             this.readerSpiNames = (String[])readerSpiNames.clone();

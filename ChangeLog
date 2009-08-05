@@ -1,3 +1,38 @@
+2009-08-05  Lillian Angel  <langel@redhat.com>
+
+	* Makefile.am: Added new security patches.
+	* plugin/icedtea/netscape/javascript/JSObject.java: Security patch
+	applied to disallow the ability to run unsigned code as 
+	signed under some cases.
+	* plugin/icedtea/sun/applet/PluginAppletSecurityContext.java:
+	Likewise.
+	* rt/net/sourceforge/jnlp/SecurityDesc.java: Likewise.
+	* rt/net/sourceforge/jnlp/runtime/JNLPClassLoader.java: Likewise.
+	* plugin/icedtea/netscape/javascript/JSObjectCreatePermission.java:
+	Likewise.
+	* rt/netscape/javascript/JSObjectCreatePermission.java: Likewise.
+	* patches/security/icedtea-6588003.patch,
+	patches/security/icedtea-6656586.patch,
+	patches/security/icedtea-6656610.patch,
+	patches/security/icedtea-6656625.patch,
+	patches/security/icedtea-6657133.patch,
+	patches/security/icedtea-6657619.patch,
+	patches/security/icedtea-6657625.patch,
+	patches/security/icedtea-6657695.patch,
+	patches/security/icedtea-6660049.patch,
+	patches/security/icedtea-6660539.patch,
+	patches/security/icedtea-6736293.patch,
+	patches/security/icedtea-6738524.patch,
+	patches/security/icedtea-6777448.patch,
+	patches/security/icedtea-6777487.patch,
+	patches/security/icedtea-6801071.patch,
+	patches/security/icedtea-6801497.patch,
+	patches/security/icedtea-6813167.patch,
+	patches/security/icedtea-6823373.patch,
+	patches/security/icedtea-6824440.patch,
+	patches/security/icedtea-6830335.patch,
+	patches/security/icedtea-6845701.patch: New security patches.
+
 2009-08-04  Matthias Klose  <doko@ubuntu.com>
 
 	* ports/hotspot/src/share/vm/shark/llvmValue.hpp: Adjust to rev 78061.

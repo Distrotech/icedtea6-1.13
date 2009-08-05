@@ -1,0 +1,30 @@
+--- old/src/share/classes/javax/accessibility/AccessibleResourceBundle.java	Fri Jun 19 15:30:16 2009
++++ openjdk/jdk/src/share/classes/javax/accessibility/AccessibleResourceBundle.java	Fri Jun 19 15:30:14 2009
+@@ -44,15 +44,11 @@
+      * localized display strings.
+      */
+     public Object[][] getContents() {
+-        return contents;
+-    }
++        // The table holding the mapping between the programmatic keys
++        // and the display strings for the en_US locale.
++        return new Object[][] {
+ 
+-    /**
+-     * The table holding the mapping between the programmatic keys
+-     * and the display strings for the en_US locale.
+-     */
+-    static final Object[][] contents = {
+-    // LOCALIZE THIS
++        // LOCALIZE THIS
+         // Role names
+ //        { "application","application" },
+ //        { "border","border" },
+@@ -151,5 +147,6 @@
+         { "vertical","vertical" },
+         { "horizontal","horizontal" }
+     // END OF MATERIAL TO LOCALIZE
+-    };
++        };
++    }
+ }

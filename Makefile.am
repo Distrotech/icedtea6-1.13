@@ -588,7 +588,28 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-doc-headers.patch \
 	patches/openjdk/bidi-tests.patch \
 	patches/openjdk/annotation-tests.patch \
-	patches/openjdk/rename-execvpe.patch
+	patches/openjdk/rename-execvpe.patch \
+	patches/security/icedtea-6588003.patch \
+	patches/security/icedtea-6656586.patch \
+	patches/security/icedtea-6656610.patch \
+	patches/security/icedtea-6656625.patch \
+	patches/security/icedtea-6657133.patch \
+	patches/security/icedtea-6657619.patch \
+	patches/security/icedtea-6657625.patch \
+	patches/security/icedtea-6657695.patch \
+	patches/security/icedtea-6660049.patch \
+	patches/security/icedtea-6660539.patch \
+	patches/security/icedtea-6736293.patch \
+	patches/security/icedtea-6738524.patch \
+	patches/security/icedtea-6777448.patch \
+	patches/security/icedtea-6801497.patch \
+	patches/security/icedtea-6801071.patch \
+	patches/security/icedtea-6777487.patch \
+	patches/security/icedtea-6823373.patch \
+	patches/security/icedtea-6824440.patch \
+	patches/security/icedtea-6830335.patch \
+	patches/security/icedtea-6845701.patch \
+	patches/security/icedtea-6813167.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \

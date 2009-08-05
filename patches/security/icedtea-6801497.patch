@@ -1,0 +1,59 @@
+--- old/src/share/classes/java/net/Socket.java	Thu Apr 30 16:27:37 2009
++++ openjdk/jdk/src/share/classes/java/net/Socket.java	Thu Apr 30 16:27:37 2009
+@@ -114,9 +114,14 @@
+      * @since   1.5
+      */
+     public Socket(Proxy proxy) {
+-        if (proxy != null && proxy.type() == Proxy.Type.SOCKS) {
++        // Create a copy of Proxy as a security measure
++        if (proxy == null) {
++            throw new IllegalArgumentException("Invalid Proxy");
++        }
++        Proxy p = proxy == Proxy.NO_PROXY ? Proxy.NO_PROXY : new Proxy(proxy.type(), proxy.address());
++        if (p.type() == Proxy.Type.SOCKS) {
+             SecurityManager security = System.getSecurityManager();
+-            InetSocketAddress epoint = (InetSocketAddress) proxy.address();
++            InetSocketAddress epoint = (InetSocketAddress) p.address();
+             if (security != null) {
+                 if (epoint.isUnresolved())
+                     epoint = new InetSocketAddress(epoint.getHostName(), epoint.getPort());
+@@ -127,10 +132,10 @@
+                     security.checkConnect(epoint.getAddress().getHostAddress(),
+                                           epoint.getPort());
+             }
+-            impl = new SocksSocketImpl(proxy);
++            impl = new SocksSocketImpl(p);
+             impl.setSocket(this);
+         } else {
+-            if (proxy == Proxy.NO_PROXY) {
++            if (p == Proxy.NO_PROXY) {
+                 if (factory == null) {
+                     impl = new PlainSocketImpl();
+                     impl.setSocket(this);
+
+--- old/src/share/classes/java/net/URL.java	Thu Apr 30 16:27:37 2009
++++ openjdk/jdk/src/share/classes/java/net/URL.java	Thu Apr 30 16:27:37 2009
+@@ -998,9 +998,11 @@
+             throw new IllegalArgumentException("proxy can not be null");
+         }
+ 
++        // Create a copy of Proxy as a security measure
++        Proxy p = proxy == Proxy.NO_PROXY ? Proxy.NO_PROXY : new Proxy(proxy.type(), proxy.address());
+         SecurityManager sm = System.getSecurityManager();
+-        if (proxy.type() != Proxy.Type.DIRECT && sm != null) {
+-            InetSocketAddress epoint = (InetSocketAddress) proxy.address();
++        if (p.type() != Proxy.Type.DIRECT && sm != null) {
++            InetSocketAddress epoint = (InetSocketAddress) p.address();
+             if (epoint.isUnresolved())
+                 sm.checkConnect(epoint.getHostName(), epoint.getPort());
+             else
+@@ -1007,7 +1009,7 @@
+                 sm.checkConnect(epoint.getAddress().getHostAddress(),
+                                 epoint.getPort());
+         }
+-        return handler.openConnection(this, proxy);
++        return handler.openConnection(this, p);
+     }
+ 
+     /**
+

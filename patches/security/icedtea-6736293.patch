@@ -1,0 +1,61 @@
+--- old/src/share/classes/javax/management/openmbean/OpenMBeanAttributeInfoSupport.java	Wed May  6 16:57:04 2009
++++ openjdk/jdk/src/share/classes/javax/management/openmbean/OpenMBeanAttributeInfoSupport.java	Wed May  6 16:57:04 2009
+@@ -690,7 +690,7 @@
+     private static <T> T convertFromString(String s, OpenType<T> openType) {
+         Class<T> c;
+         try {
+-            c = cast(Class.forName(openType.getClassName()));
++            c = cast(Class.forName(openType.safeGetClassName()));
+         } catch (ClassNotFoundException e) {
+             throw new NoClassDefFoundError(e.toString());  // can't happen
+         }
+@@ -711,7 +711,7 @@
+             } catch (Exception e) {
+                 final String msg =
+                     "Could not convert \"" + s + "\" using method: " + valueOf;
+-                throw new IllegalArgumentException(msg);
++                throw new IllegalArgumentException(msg, e);
+             }
+         }
+ 
+@@ -728,7 +728,7 @@
+             } catch (Exception e) {
+                 final String msg =
+                     "Could not convert \"" + s + "\" using constructor: " + con;
+-                throw new IllegalArgumentException(msg);
++                throw new IllegalArgumentException(msg, e);
+             }
+         }
+ 
+@@ -757,7 +757,7 @@
+             stringArrayClass =
+                 Class.forName(squareBrackets + "Ljava.lang.String;");
+             targetArrayClass =
+-                Class.forName(squareBrackets + "L" + baseType.getClassName() +
++                Class.forName(squareBrackets + "L" + baseType.safeGetClassName() +
+                               ";");
+         } catch (ClassNotFoundException e) {
+             throw new NoClassDefFoundError(e.toString());  // can't happen
+@@ -769,7 +769,6 @@
+                 "array with same dimensions";
+             throw new IllegalArgumentException(msg);
+         }
+-        Class<?> targetComponentClass = targetArrayClass.getComponentType();
+         OpenType<?> componentOpenType;
+         if (dim == 1)
+             componentOpenType = baseType;
+--- old/src/share/classes/javax/management/openmbean/OpenType.java	Wed May  6 16:57:05 2009
++++ openjdk/jdk/src/share/classes/javax/management/openmbean/OpenType.java	Wed May  6 16:57:05 2009
+@@ -304,7 +304,12 @@
+      * @return the class name.
+      */
+     public String getClassName() {
++        return className;
++    }
+ 
++    // A version of getClassName() that can only be called from within this
++    // package and that cannot be overridden.
++    String safeGetClassName() {
+         return className;
+     }
+ 

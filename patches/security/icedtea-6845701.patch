@@ -1,0 +1,12 @@
+--- old/src/share/classes/com/sun/org/apache/xerces/internal/impl/XMLScanner.java	Thu Jun 18 23:37:50 2009
++++ openjdk/jaxp/src/share/classes/com/sun/org/apache/xerces/internal/impl/XMLScanner.java	Thu Jun 18 23:37:49 2009
+@@ -1027,6 +1027,9 @@
+                     int c = fEntityScanner.peekChar();
+                     if (XMLChar.isMarkup(c) || c == ']') {
+                         fStringBuffer.append((char)fEntityScanner.scanChar());
++                    } else if (c != -1 && isInvalidLiteral(c)) {
++                        reportFatalError("InvalidCharInSystemID",
++                            new Object[] {Integer.toString(c, 16)});
+                     }
+                 } while (fEntityScanner.scanLiteral(quote, ident) != quote);
+                 fStringBuffer.append(ident);

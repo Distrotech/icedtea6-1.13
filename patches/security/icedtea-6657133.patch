@@ -1,0 +1,190 @@
+--- old/src/share/classes/com/sun/imageio/stream/StreamCloser.java	2009-04-24 17:51:15.411300000 +0400
++++ openjdk/jdk/src/share/classes/com/sun/imageio/stream/StreamCloser.java	2009-04-24 17:51:14.693300000 +0400
+@@ -43,35 +43,35 @@
+  */
+ public class StreamCloser {
+ 
+-    private static WeakHashMap<ImageInputStream, Object> toCloseQueue;
++    private static WeakHashMap<CloseAction, Object> toCloseQueue;
+     private static Thread streamCloser;
+ 
+-    public static void addToQueue(ImageInputStream iis) {
++    public static void addToQueue(CloseAction ca) {
+         synchronized (StreamCloser.class) {
+             if (toCloseQueue == null) {
+                 toCloseQueue =
+-                    new WeakHashMap<ImageInputStream, Object>();
++                    new WeakHashMap<CloseAction, Object>();
+             }
+ 
+-            toCloseQueue.put(iis, null);
++            toCloseQueue.put(ca, null);
+ 
+             if (streamCloser == null) {
+                 final Runnable streamCloserRunnable = new Runnable() {
+                     public void run() {
+                         if (toCloseQueue != null) {
+                             synchronized (StreamCloser.class) {
+-                                Set<ImageInputStream> set =
++                                Set<CloseAction> set =
+                                     toCloseQueue.keySet();
+                                 // Make a copy of the set in order to avoid
+                                 // concurrent modification (the is.close()
+                                 // will in turn call removeFromQueue())
+-                                ImageInputStream[] streams =
+-                                    new ImageInputStream[set.size()];
+-                                streams = set.toArray(streams);
+-                                for (ImageInputStream is : streams) {
+-                                    if (is != null) {
++                                CloseAction[] actions =
++                                    new CloseAction[set.size()];
++                                actions = set.toArray(actions);
++                                for (CloseAction ca : actions) {
++                                    if (ca != null) {
+                                         try {
+-                                            is.close();
++                                            ca.performAction();
+                                         } catch (IOException e) {
+                                         }
+                                     }
+@@ -102,10 +102,28 @@
+         }
+     }
+ 
+-    public static void removeFromQueue(ImageInputStream iis) {
++    public static void removeFromQueue(CloseAction ca) {
+         synchronized (StreamCloser.class) {
+             if (toCloseQueue != null) {
+-                toCloseQueue.remove(iis);
++                toCloseQueue.remove(ca);
++            }
++        }
++    }
++
++    public static CloseAction createCloseAction(ImageInputStream iis) {
++        return new CloseAction(iis);
++    }
++
++    public static final class CloseAction {
++        private ImageInputStream iis;
++
++        private CloseAction(ImageInputStream iis) {
++            this.iis = iis;
++        }
++
++        public void performAction() throws IOException {
++            if (iis != null) {
++                iis.close();
+             }
+         }
+     }
+--- old/src/share/classes/javax/imageio/plugins/bmp/BMPImageWriteParam.java	2009-04-24 17:51:20.931300000 +0400
++++ openjdk/jdk/src/share/classes/javax/imageio/plugins/bmp/BMPImageWriteParam.java	2009-04-24 17:51:20.193300000 +0400
+@@ -78,7 +78,7 @@
+         super(locale);
+ 
+         // Set compression types ("BI_RGB" denotes uncompressed).
+-        compressionTypes = BMPConstants.compressionTypeNames;
++        compressionTypes = BMPConstants.compressionTypeNames.clone();
+ 
+         // Set compression flag.
+         canWriteCompressed = true;
+--- old/src/share/classes/javax/imageio/stream/FileCacheImageInputStream.java	2009-04-24 17:51:26.427300000 +0400
++++ openjdk/jdk/src/share/classes/javax/imageio/stream/FileCacheImageInputStream.java	2009-04-24 17:51:25.718300000 +0400
+@@ -62,6 +62,10 @@
+     /** The DisposerRecord that closes the underlying cache. */
+     private final DisposerRecord disposerRecord;
+ 
++    /** The CloseAction that closes the stream in
++     *  the StreamCloser's shutdown hook                     */
++    private final StreamCloser.CloseAction closeAction;
++
+     /**
+      * Constructs a <code>FileCacheImageInputStream</code> that will read
+      * from a given <code>InputStream</code>.
+@@ -96,7 +100,9 @@
+         this.cacheFile =
+             File.createTempFile("imageio", ".tmp", cacheDir);
+         this.cache = new RandomAccessFile(cacheFile, "rw");
+-        StreamCloser.addToQueue(this);
++
++        this.closeAction = StreamCloser.createCloseAction(this);
++        StreamCloser.addToQueue(closeAction);
+ 
+         disposerRecord = new StreamDisposerRecord(cacheFile, cache);
+         if (getClass() == FileCacheImageInputStream.class) {
+@@ -242,7 +248,7 @@
+         stream = null;
+         cache = null;
+         cacheFile = null;
+-        StreamCloser.removeFromQueue(this);
++        StreamCloser.removeFromQueue(closeAction);
+     }
+ 
+     /**
+--- old/src/share/classes/javax/imageio/stream/FileCacheImageOutputStream.java	2009-04-24 17:51:31.903300000 +0400
++++ openjdk/jdk/src/share/classes/javax/imageio/stream/FileCacheImageOutputStream.java	2009-04-24 17:51:31.186300000 +0400
+@@ -48,6 +48,10 @@
+     // Pos after last (rightmost) byte written
+     private long maxStreamPos = 0L;
+ 
++    /** The CloseAction that closes the stream in
++     *  the StreamCloser's shutdown hook                     */
++    private final StreamCloser.CloseAction closeAction;
++
+     /**
+      * Constructs a <code>FileCacheImageOutputStream</code> that will write
+      * to a given <code>outputStream</code>.
+@@ -82,7 +86,9 @@
+         this.cacheFile =
+             File.createTempFile("imageio", ".tmp", cacheDir);
+         this.cache = new RandomAccessFile(cacheFile, "rw");
+-        StreamCloser.addToQueue(this);
++
++        this.closeAction = StreamCloser.createCloseAction(this);
++        StreamCloser.addToQueue(closeAction);
+     }
+ 
+     public int read() throws IOException {
+@@ -227,7 +233,7 @@
+         cacheFile = null;
+         stream.flush();
+         stream = null;
+-        StreamCloser.removeFromQueue(this);
++        StreamCloser.removeFromQueue(closeAction);
+     }
+ 
+     public void flushBefore(long pos) throws IOException {
+--- old/src/share/lib/security/java.security	2009-04-24 17:51:37.610300000 +0400
++++ openjdk/jdk/src/share/lib/security/java.security	2009-04-24 17:51:36.806300000 +0400
+@@ -127,7 +127,7 @@
+ # passed to checkPackageAccess unless the
+ # corresponding RuntimePermission ("accessClassInPackage."+package) has
+ # been granted.
+-package.access=sun.,com.sun.xml.internal.ws.,com.sun.xml.internal.bind.
++package.access=sun.,com.sun.xml.internal.ws.,com.sun.xml.internal.bind.,com.sun.imageio.
+ 
+ #
+ # List of comma-separated packages that start with or equal this string
+--- old/src/share/lib/security/java.security-solaris	2009-04-24 17:51:42.988300000 +0400
++++ openjdk/jdk/src/share/lib/security/java.security-solaris	2009-04-24 17:51:42.256300000 +0400
+@@ -128,7 +128,7 @@
+ # passed to checkPackageAccess unless the
+ # corresponding RuntimePermission ("accessClassInPackage."+package) has
+ # been granted.
+-package.access=sun.,com.sun.xml.internal.ws.,com.sun.xml.internal.bind.
++package.access=sun.,com.sun.xml.internal.ws.,com.sun.xml.internal.bind.,com.sun.imageio.
+ 
+ #
+ # List of comma-separated packages that start with or equal this string
+--- old/src/share/lib/security/java.security-windows	2009-04-24 17:51:48.445300000 +0400
++++ openjdk/jdk/src/share/lib/security/java.security-windows	2009-04-24 17:51:47.730300000 +0400
+@@ -128,7 +128,7 @@
+ # passed to checkPackageAccess unless the
+ # corresponding RuntimePermission ("accessClassInPackage."+package) has
+ # been granted.
+-package.access=sun.,com.sun.xml.internal.ws.,com.sun.xml.internal.bind.
++package.access=sun.,com.sun.xml.internal.ws.,com.sun.xml.internal.bind.,com.sun.imageio.
+ 
+ #
+ # List of comma-separated packages that start with or equal this string

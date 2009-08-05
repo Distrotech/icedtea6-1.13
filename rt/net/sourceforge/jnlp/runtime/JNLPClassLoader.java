@@ -435,11 +435,27 @@ public class JNLPClassLoader extends URLClassLoader {
         // access w/o security dialog once we actually check certificates.
 
         // copy security permissions from SecurityDesc element
-		if (security != null) {
-        	Enumeration e = security.getPermissions().elements();
-        	while (e.hasMoreElements())
-            	result.add((Permission) e.nextElement());
-		}
+	 if (security != null) {
+            // Security desc. is used only to track security settings for the
+            // application. However, an application may comprise of multiple
+            // jars, and as such, security must be evaluated on a per jar basis.
+            
+            // set default perms
+            PermissionCollection permissions = security.getSandBoxPermissions();
+            
+            // If more than default is needed, evaluate based on codesource
+            if (security.getSecurityType().equals(SecurityDesc.ALL_PERMISSIONS) ||
+                security.getSecurityType().equals(SecurityDesc.J2EE_PERMISSIONS)) {
+
+                if (cs.getCodeSigners() != null) {
+                    permissions = security.getPermissions();
+                }
+            }
+
+            Enumeration<Permission> e = permissions.elements();
+            while (e.hasMoreElements())
+                result.add(e.nextElement());
+        }
 
         // add in permission to read the cached JAR files
         for (int i=0; i < resourcePermissions.size(); i++)
