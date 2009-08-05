@@ -1469,7 +1469,7 @@ hotspot-tools-source-files.txt: stamps/replace-hotspot.stamp \
 	find hotspot-tools -name '*.java' | sort > $@
 	mkdir -p lib/hotspot-tools
 
-ABS_SOURCE_DIRS = $(abs_top_builddir)/generated:$(abs_top_srcdir)/rt
+ABS_SOURCE_DIRS = $(abs_top_builddir)/generated:$(abs_top_builddir)/rt:$(abs_top_srcdir)/rt
 stamps/hotspot-tools-class-files.stamp: hotspot-tools-source-files.txt
 	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
 	then \
