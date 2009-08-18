@@ -23,6 +23,15 @@
 #
 #
 
+ifeq ($(ZERO_LIBARCH),arm)
+Obj_Files += cppInterpreter_arm.o
+CFLAGS += -DHOTSPOT_ASM -DHW_NULL_PTR_CHECK
+%.o: %.S
+	@echo Assembling $<
+	$(QUIETLY) $(REMOVE_TARGET)
+	$(COMPILE.CC) -o $@ $< $(COMPILE_DONE)
+endif
+
 # The copied fdlibm routines in sharedRuntimeTrig.o must not be optimized
 OPT_CFLAGS/sharedRuntimeTrig.o = $(OPT_CFLAGS/NOOPT)
 # The copied fdlibm routines in sharedRuntimeTrans.o must not be optimized

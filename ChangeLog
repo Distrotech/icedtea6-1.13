@@ -1,3 +1,38 @@
+2009-08-18  Edward Nevill <ed@camswl.com>
+
+	Added ARM assembler interpreter
+
+	* openjdk/hotspot/src/share/vm/interpreter.hpp
+	Allow ARM interpreter to notice safepoints
+	Changed via patches/icedtea-notice-safepoints.patch
+
+	* ports/hotspot/build/linux/makefiles/zero.make
+	Add cppInterpreter_arm
+	Add CFLAGS for ARM asm interpreter
+	Add rules to build .o from .S
+
+	* ports/hotspot/src/cpu/zero/vm/bytecodes_zero.cpp
+	Add initialisation of new bytecodes for asm interpreter
+
+	* ports/hotspot/src/cpu/zero/vm/bytecodes_zero.hpp
+	Add definitions of new bytecodes for asm interpreter
+
+	* ports/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp
+	Add hooks to call asm interpreter
+
+	* ports/hotspot/src/os_cpu/linux_zero/vm/os_linux_zero.cpp
+	Add hooks to allow HW null pointer detection
+
+	[ NEW FILES ]
+	* ports/hotspot/src/cpu/zero/vm/bc.def
+	Bytecode templates
+	* ports/hotspot/src/cpu/zero/vm/bytecodes.s
+	Bytecode implementations (manually generated from bc.def)
+	* ports/hotspot/src/cpu/zero/vm/cppInterpreter_asm.S
+	Complex bytecode implementations, entry points and support code
+	* ports/hotspot/src/cpu/zero/vm/mkbc.c
+	Bytecode generator, use to generate bytecodes.s from bc.def
+
 2009-08-14	Deepak Bhole <dbhole@redhat.com>
 
 	* plugin/icedteanp/IcedTeaJavaRequestProcessor.cc

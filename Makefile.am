@@ -503,6 +503,7 @@ endif
 ICEDTEA_FSG_PATCHES =
 
 ICEDTEA_PATCHES = \
+	patches/icedtea-notice-safepoints.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-bytecodeInterpreter.patch \
 	patches/icedtea-signature-iterator.patch \
 	patches/icedtea-test-atomic-operations.patch \
