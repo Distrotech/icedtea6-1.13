@@ -701,6 +701,7 @@ ICEDTEA_PATCHES += \
 	patches/icedtea-java2d-stroker-internal-close-joint.patch \
 	patches/icedtea-disable-cc-incompatible-sanity-checks.patch \
 	patches/icedtea-explicit-target-arch.patch \
+	patches/openjdk/6648816.patch \
 	$(DISTRIBUTION_PATCHES)
 
 stamps/extract.stamp: stamps/download.stamp

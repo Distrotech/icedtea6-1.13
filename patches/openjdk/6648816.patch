@@ -1,0 +1,82 @@
+
+# HG changeset patch
+# User xuelei
+# Date 1205602985 14400
+# Node ID 7dc3b56f220faa1aa6418462eb362276599a045a
+# Parent 32e7ba670b0e599646931954ab2b0cc3feb1e7b4
+6648816: REGRESSION: setting -Djava.security.debug=failure result in NPE in ACC
+Summary: unchecking the null pointer of the debug handle
+Reviewed-by: mullan, weijun
+
+--- openjdk.orig/jdk/src/share/classes/java/security/AccessControlContext.java	Fri Mar 14 10:33:21 2008 -0400
++++ openjdk/jdk/src/share/classes/java/security/AccessControlContext.java	Sat Mar 15 13:43:05 2008 -0400
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
++ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -322,7 +322,7 @@ public final class AccessControlContext 
+                     debug.println("access denied " + perm);
+                 }
+ 
+-                if (Debug.isOn("failure")) {
++                if (Debug.isOn("failure") && debug != null) {
+                     // Want to make sure this is always displayed for failure,
+                     // but do not want to display again if already displayed
+                     // above.
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/java/security/AccessControlContext/FailureDebugOption.java	Sat Mar 15 13:43:05 2008 -0400
+@@ -0,0 +1,50 @@
++/*
++ * Copyright 2008 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/*
++ * @test
++ * @bug 6648816
++ * @summary REGRESSION: setting -Djava.security.debug=failure result in NPE
++ * in ACC
++ * @run main/othervm -Djava.security.debug=failure FailureDebugOption
++ */
++
++import java.security.ProtectionDomain;
++import java.security.AccessController;
++import java.security.AccessControlException;
++import java.security.BasicPermission;
++
++public class FailureDebugOption {
++
++   public static void main (String argv[]) throws Exception {
++        try {
++            AccessController.checkPermission(
++                        new BasicPermission("no such permission"){});
++        } catch (NullPointerException npe) {
++           throw new Exception("Unexpected NullPointerException for security" +
++                        " debug option, -Djava.security.debug=failure");
++        } catch (AccessControlException ace) {
++        }
++   }
++}
++
+
