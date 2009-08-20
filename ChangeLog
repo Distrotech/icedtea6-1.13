@@ -1,3 +1,17 @@
+2009-08-20  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/src/cpu/zero/vm/bc.def: Renamed to...
+	* ports/hotspot/src/cpu/zero/vm/bytecodes_arm.def: New file.
+
+	* Makefile.am: Build bytecodes_arm.s from bytecodes_arm.def.
+
+	* ports/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S: Include
+	bytecodes_arm.s rather than bytecodes.s.
+
+	* ports/hotspot/src/cpu/zero/vm/bytecodes.s: Removed.
+
+	* .hgignore: Updated.
+
 2009-08-18  Edward Nevill <ed@camswl.com>
 
 	Added ARM assembler interpreter
@@ -33,7 +47,7 @@
 	* ports/hotspot/src/cpu/zero/vm/mkbc.c
 	Bytecode generator, use to generate bytecodes.s from bc.def
 
-2009-08-14	Deepak Bhole <dbhole@redhat.com>
+2009-08-14  Deepak Bhole <dbhole@redhat.com>
 
 	* plugin/icedteanp/IcedTeaJavaRequestProcessor.cc
 	(newMessageOnBus): Handle additional request types.

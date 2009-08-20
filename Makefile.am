@@ -457,6 +457,17 @@ if WITH_VISUALVM
 	rm -f $(NETBEANS_PROFILER_SRC_ZIP)
 endif
 
+# Build asm interpreter bytecodes
+ZERO_ASM_BC_DEF = $(abs_top_srcdir)/ports/hotspot/src/cpu/zero/vm/bytecodes_$(ZERO_LIBARCH).def
+ZERO_ASM_BC_ASM = $(abs_top_srcdir)/ports/hotspot/src/cpu/zero/vm/bytecodes_$(ZERO_LIBARCH).s
+ZERO_ASM_BC_ASM_COND = $(shell test -f ${ZERO_ASM_BC_DEF} && echo ${ZERO_ASM_BC_ASM})
+
+$(abs_top_srcdir)/mkbc: $(abs_top_srcdir)/mkbc.c
+	$(CC) $< -o $@
+
+${ZERO_ASM_BC_ASM}: ${ZERO_ASM_BC_DEF} $(abs_top_srcdir)/mkbc
+	$(abs_top_srcdir)/mkbc $< $@
+
 # Link ports sources into tree
 stamps/ports.stamp: stamps/replace-hotspot.stamp
 	for target in $(abs_top_srcdir)/ports/hotspot/build/*/makefiles/* \
@@ -1122,7 +1133,7 @@ stamps/icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
 	stamps/ports.stamp stamps/patch.stamp stamps/overlay.stamp \
 	$(ICEDTEAPLUGIN_TARGET) $(ICEDTEANPPLUGIN_TARGET) \
 	extra-lib/about.jar stamps/cacao.stamp stamps/visualvm.stamp \
-	stamps/pulse-java.stamp
+	stamps/pulse-java.stamp $(ZERO_ASM_BC_ASM_COND)
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV) \
 	  -C openjdk \
@@ -1207,7 +1218,7 @@ stamps/icedtea-debug.stamp: stamps/bootstrap-directory-symlink.stamp \
 	stamps/ports.stamp stamps/patch.stamp stamps/overlay.stamp \
 	$(ICEDTEAPLUGIN_TARGET) $(ICEDTEANPPLUGIN_TARGET) \
 	extra-lib/about.jar stamps/cacao.stamp stamps/visualvm.stamp \
-	stamps/pulse-java.stamp
+	stamps/pulse-java.stamp $(ZERO_ASM_BC_ASM_COND)
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV) \
 	  -C openjdk \
@@ -1319,7 +1330,8 @@ stamps/native-ecj.stamp:
 
 stamps/icedtea-ecj.stamp: stamps/bootstrap-directory-symlink-ecj.stamp \
 	stamps/hotspot-tools.stamp stamps/plugs.stamp \
-	stamps/ports-ecj.stamp stamps/patch-ecj.stamp stamps/cacao.stamp
+	stamps/ports-ecj.stamp stamps/patch-ecj.stamp stamps/cacao.stamp \
+	$(ZERO_ASM_BC_ASM_COND)
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV_ECJ) \
 	  -C openjdk-ecj/ \

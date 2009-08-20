@@ -1578,7 +1578,7 @@ fast_native_entry:
 	bne	invokespecial_exception_fix
 	DISPATCH_FINISH
 
-#include "bytecodes.s"
+#include "bytecodes_arm.s"
 
 	Opcode	idiv
 
