@@ -1490,14 +1490,14 @@ stamps/hotspot-tools-class-files.stamp: hotspot-tools-source-files.txt
             -source 1.5 \
             -sourcepath \
 	      'hotspot-tools:$(OPENJDK_SOURCEPATH_DIRS):$(ABS_SOURCE_DIRS)' \
-            -bootclasspath \'\' @$< ; \
+            -classpath \'\' -bootclasspath \'\' @$< ; \
 	else \
 	  $(ICEDTEA_BOOT_DIR)/bin/javac $(MEMORY_LIMIT) -g \
 	    -d lib/hotspot-tools \
 	    -source 1.5 \
 	    -sourcepath \
 	      'hotspot-tools:$(OPENJDK_SOURCEPATH_DIRS):$(ABS_SOURCE_DIRS)' \
-	    -bootclasspath \'\' @$< ; \
+	    -classpath \'\' -bootclasspath \'\' @$< ; \
 	fi
 	mkdir -p stamps
 	touch stamps/hotspot-tools-class-files.stamp
@@ -1542,13 +1542,13 @@ stamps/rt-class-files.stamp: rt-source-files.txt
 	    -source 1.5 \
 	    -sourcepath \
 	      '$(OPENJDK_SOURCEPATH_DIRS):$(abs_top_builddir)/generated' \
-	    -bootclasspath \'\' @$< ; \
+	    -classpath \'\' -bootclasspath \'\' @$< ; \
 	else \
 	  $(ICEDTEA_BOOT_DIR)/bin/javac $(MEMORY_LIMIT) -g -d lib/rt \
             -source 1.5 \
             -sourcepath \
 	      '$(OPENJDK_SOURCEPATH_DIRS):$(abs_top_builddir)/generated' \
-            -bootclasspath \'\' @$< ; \
+            -classpath \'\' -bootclasspath \'\' @$< ; \
 	fi
 	cp -r $(abs_top_srcdir)/rt/net/sourceforge/jnlp/resources \
 	  lib/rt/net/sourceforge/jnlp/
