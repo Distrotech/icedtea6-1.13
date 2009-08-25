@@ -1,3 +1,19 @@
+2009-08-25  Deepak Bhole  <dbhole@redhat.com>
+
+	* rt/net/sourceforge/jnlp/JNLPFile.java: Add a new key variable that is
+	unique to each instance.
+	(JNLPFile): Existing constructor changed to generate a new key on call.
+	(JNLPFile): New constructor that takes a key. If called, sets the file's
+	key to it.
+	(getUniqueKey): Returns the unique key for the instance.
+	* rt/net/sourceforge/jnlp/PluginBridge.java: Generate new instance
+	specific unique key.
+	* rt/net/sourceforge/jnlp/runtime/JNLPClassLoader.java
+	(getInstance): Use unique instance keys to determine which classloader to
+	use, rather than using the URL.
+	(getInstance): Same.
+	(initializeExtensions): Provide unique key to getInstance.
+
 2009-08-21  Xerxes Rånby  <xerxes@zafena.se>
 
 	* ports/hotspot/src/share/vm/shark/sharkBuilder.cpp
