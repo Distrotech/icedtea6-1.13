@@ -706,6 +706,7 @@ ICEDTEA_PATCHES += \
 	patches/icedtea-disable-cc-incompatible-sanity-checks.patch \
 	patches/icedtea-explicit-target-arch.patch \
 	patches/openjdk/6648816.patch \
+	patches/openjdk/oj100103-debugger-socket-overflow.patch \
 	$(DISTRIBUTION_PATCHES)
 
 stamps/extract.stamp: stamps/download.stamp
