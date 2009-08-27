@@ -246,11 +246,6 @@ then
   FIND_NETBEANS
 fi
 
-if test "x${enable_pulse_java}" = "xyes"
-then
-  FIND_PULSEAUDIO
-fi
-
 dnl pkgconfig cannot be used to finid these headers and libraries.
 AC_CHECK_HEADERS([cups/cups.h cups/ppd.h],[]
 	,[AC_MSG_ERROR("CUPS headers were not found -
