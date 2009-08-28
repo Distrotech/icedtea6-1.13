@@ -1,7 +1,24 @@
 diff -r e0f4330c215b openjdk/hotspot/src/share/vm/interpreter/bytecodeInterpreter.cpp
 --- openjdk/hotspot/src/share/vm/interpreter/bytecodeInterpreter.cpp	Fri Feb 20 16:46:08 2009 +0000
 +++ openjdk/hotspot/src/share/vm/interpreter/bytecodeInterpreter.cpp	Fri Feb 20 17:12:20 2009 +0000
-@@ -296,9 +296,6 @@
+@@ -281,7 +281,7 @@
+ 
+ #define DO_BACKEDGE_CHECKS(skip, branch_pc)                                                         \
+     if ((skip) <= 0) {                                                                              \
+-      if (UseCompiler && UseLoopCounter) {                                                          \
++      if (UseLoopCounter) {                                                                         \
+         bool do_OSR = UseOnStackReplacement;                                                        \
+         BACKEDGE_COUNT->increment();                                                                \
+         if (do_OSR) do_OSR = BACKEDGE_COUNT->reached_InvocationLimit();                             \
+@@ -289,16 +289,12 @@
+           nmethod*  osr_nmethod;                                                                    \
+           OSR_REQUEST(osr_nmethod, branch_pc);                                                      \
+           if (osr_nmethod != NULL && osr_nmethod->osr_entry_bci() != InvalidOSREntryBci) {          \
+-            intptr_t* buf;                                                                          \
+-            CALL_VM(buf=SharedRuntime::OSR_migration_begin(THREAD), handle_exception);              \
++            intptr_t* buf = SharedRuntime::OSR_migration_begin(THREAD);                             \
+             istate->set_msg(do_osr);                                                                \
+             istate->set_osr_buf((address)buf);                                                      \
              istate->set_osr_entry(osr_nmethod->osr_entry());                                        \
              return;                                                                                 \
            }                                                                                         \

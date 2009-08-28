@@ -95,6 +95,14 @@
   {
     return _result._to_call._callee_entry_point;
   }
+  inline address osr_buf()
+  {
+    return _result._osr._osr_buf;
+  }
+  inline address osr_entry()
+  {
+    return _result._osr._osr_entry;
+  }
 
  public:
   const char *name_of_field_at_address(address addr);

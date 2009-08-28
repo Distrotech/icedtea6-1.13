@@ -32,6 +32,10 @@ class ZeroEntry {
 
  public:
   typedef void (*method_entry_t)(methodOop method, intptr_t base_pc, TRAPS);
+  typedef void (*osr_entry_t)(methodOop method,
+                              address   osr_buf,
+                              intptr_t  base_pc,
+                              TRAPS);
 
  private:
   method_entry_t _entry_point;
@@ -50,6 +54,10 @@ class ZeroEntry {
   void invoke(methodOop method, TRAPS) const
   {
     entry_point()(method, (intptr_t) this, THREAD);
+  }
+  void invoke_osr(methodOop method, address osr_buf, TRAPS) const
+  {
+    ((osr_entry_t) entry_point())(method, osr_buf, (intptr_t) this, THREAD);
   }
 
  public:

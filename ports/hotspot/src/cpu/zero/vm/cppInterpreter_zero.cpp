@@ -156,6 +156,19 @@ void CppInterpreter::main_loop(int recurse, TRAPS)
       assert(HAS_PENDING_EXCEPTION, "should do");
       break;
     }
+    else if (istate->msg() == BytecodeInterpreter::do_osr) {
+      // Unwind the current frame
+      thread->pop_zero_frame();
+
+      // Remove any extension of the previous frame
+      int extra_locals = method->max_locals() - method->size_of_parameters();
+      stack->set_sp(stack->sp() + extra_locals);
+
+      // Jump into the OSR method
+      Interpreter::invoke_osr(
+        method, istate->osr_entry(), istate->osr_buf(), THREAD);
+      return;
+    }
     else {
       ShouldNotReachHere();
     }
