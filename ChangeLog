@@ -1,3 +1,12 @@
+2009-08-30  Mark Wielaard  <mark@klomp.org>
+
+	PR377. SimpleTimeZone checks too strict for Asia/Amman TimeZone.
+	* overlays/openjdk/jdk/test/java/util/SimpleTimeZone/EndOfDay.java:
+	New test.
+	* patches/icedtea-simpletimezone-relax.patch: New patch.
+	* Makefile.am: Add new patch.
+	* HACKING: Describe new patch.
+
 2009-08-28  Gary Benson  <gbenson@redhat.com>
 
 	* patches/icedtea-cc-interp-backedge.patch: Various fixes

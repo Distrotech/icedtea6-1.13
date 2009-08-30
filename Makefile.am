@@ -540,6 +540,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-rmi_amd64.patch \
 	patches/icedtea-tools.patch \
 	patches/icedtea-timezone.patch \
+	patches/icedtea-simpletimezone-relax.patch \
 	patches/icedtea-use-system-tzdata.patch \
 	patches/icedtea-headers.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-headers.patch \
