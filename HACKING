@@ -116,6 +116,10 @@ The following patches are only applied to OpenJDK6 in IcedTea6:
 * icedtea-6712835-ifnode.patch: Fix infinite loop in PhaseIterGVN::transform.
 * icedtea-timezone.patch : Makes java only look for time zone information in
   /etc/sysconfig/clock if /etc/localtime is not found (fix for rh-489586)
+* icedtea-timezone-default-permission.patch: Partial fix for PR381
+  (in combination with icedtea-use-system-tzdata.patch) security check
+  debug printing overflow. Also in openjdk7 b22, but apparently lost
+  since b22 was from "before hg".
 * icedtea-simpletimezone-relax.patch: Fix for PR377, Jordan end of day rule
   in Asia/Amman TimeZone. SimpleTimeZone checks too strict.
 * icedtea-dnd-filelists.patch: Fix drag and drop behaviour when dragging a file list between JVMs (S5079469). Backported from OpenJDK.

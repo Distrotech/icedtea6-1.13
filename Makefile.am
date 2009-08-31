@@ -540,6 +540,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-rmi_amd64.patch \
 	patches/icedtea-tools.patch \
 	patches/icedtea-timezone.patch \
+	patches/icedtea-timezone-default-permission.patch \
 	patches/icedtea-simpletimezone-relax.patch \
 	patches/icedtea-use-system-tzdata.patch \
 	patches/icedtea-headers.patch \

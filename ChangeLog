@@ -1,3 +1,16 @@
+2009-08-31  Mark Wielaard  <mjw@redhat.com>
+	    Keith Seitz  <keiths@redhat.com>
+
+	PR381 Stackoverflow error with SecurityManager, signed jar and debug
+	* patches/icedtea-use-system-tzdata.patch: Updated to initialize
+	JAVAZI_DIR once and inside a AccessController.doPrivileged() block.
+	* patches/icedtea-timezone-default-permission.patch: New patch.
+	* overlays/openjdk/jdk/test/java/util/TimeZone/
+	(TimeZoneDatePermissionCheck.java, TimeZoneDatePermissionCheck.sh):
+	New test.
+	* Makefile.am: Add new patch.
+	* HACKING: Describe new patch.
+
 2009-08-30  Mark Wielaard  <mark@klomp.org>
 
 	PR377. SimpleTimeZone checks too strict for Asia/Amman TimeZone.
