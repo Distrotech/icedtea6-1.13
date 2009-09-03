@@ -28,8 +28,7 @@
 
 #ifdef CC_INTERP
 
-const char *BytecodeInterpreter::name_of_field_at_address(address addr)
-{
+const char *BytecodeInterpreter::name_of_field_at_address(address addr) {
 #define DO(member) {if (addr == (address) &(member)) return XSTR(member);}
   DO(_thread);
   DO(_bcp);

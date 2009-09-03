@@ -38,8 +38,7 @@
 
 void NativeJump::patch_verified_entry(address entry,
                                       address verified_entry,
-                                      address dest)
-{
+                                      address dest) {
   assert(dest == SharedRuntime::get_handle_wrong_method_stub(), "should be");
 
 #ifdef CC_INTERP

@@ -27,24 +27,20 @@
 #include "incls/_frame_zero.cpp.incl"
 
 #ifdef ASSERT
-void RegisterMap::check_location_valid()
-{
+void RegisterMap::check_location_valid() {
   Unimplemented();
 }
 #endif
 
-bool frame::is_interpreted_frame() const
-{
+bool frame::is_interpreted_frame() const {
   return zeroframe()->is_interpreter_frame();
 }
 
-bool frame::is_deoptimizer_frame() const
-{
+bool frame::is_deoptimizer_frame() const {
   return zeroframe()->is_deoptimizer_frame();
 }
 
-frame frame::sender_for_entry_frame(RegisterMap *map) const
-{
+frame frame::sender_for_entry_frame(RegisterMap *map) const {
   assert(map != NULL, "map must be set");
   assert(!entry_frame_is_first(), "next Java fp must be non zero");
   assert(entry_frame_call_wrapper()->anchor()->last_Java_sp() == sender_sp(),
@@ -54,23 +50,19 @@ frame frame::sender_for_entry_frame(RegisterMap *map) const
   return frame(sender_sp());
 }
 
-frame frame::sender_for_interpreter_frame(RegisterMap *map) const
-{
+frame frame::sender_for_interpreter_frame(RegisterMap *map) const {
   return frame(sender_sp());
 }
 
-frame frame::sender_for_compiled_frame(RegisterMap *map) const
-{
+frame frame::sender_for_compiled_frame(RegisterMap *map) const {
   return frame(sender_sp());
 }
 
-frame frame::sender_for_deoptimizer_frame(RegisterMap *map) const
-{
+frame frame::sender_for_deoptimizer_frame(RegisterMap *map) const {
   return frame(sender_sp());
 }
 
-frame frame::sender(RegisterMap* map) const
-{
+frame frame::sender(RegisterMap* map) const {
   // Default is not to follow arguments; the various
   // sender_for_xxx methods update this accordingly.
   map->set_include_argument_oops(false);
@@ -93,42 +85,35 @@ frame frame::sender(RegisterMap* map) const
 }
 
 #ifdef CC_INTERP
-BasicObjectLock* frame::interpreter_frame_monitor_begin() const
-{
+BasicObjectLock* frame::interpreter_frame_monitor_begin() const {
   return get_interpreterState()->monitor_base();
 }
 
-BasicObjectLock* frame::interpreter_frame_monitor_end() const
-{
+BasicObjectLock* frame::interpreter_frame_monitor_end() const {
   return (BasicObjectLock*) get_interpreterState()->stack_base();
 }
 #endif // CC_INTERP
 
-void frame::patch_pc(Thread* thread, address pc)
-{
+void frame::patch_pc(Thread* thread, address pc) {
   // We borrow this call to set the thread pointer in the interpreter
   // state; the hook to set up deoptimized frames isn't supplied it.
   assert(pc == NULL, "should be");
   get_interpreterState()->set_thread((JavaThread *) thread);
 }
 
-bool frame::safe_for_sender(JavaThread *thread)
-{
+bool frame::safe_for_sender(JavaThread *thread) {
   Unimplemented();
 }
 
-void frame::pd_gc_epilog()
-{
+void frame::pd_gc_epilog() {
 }
 
-bool frame::is_interpreted_frame_valid(JavaThread *thread) const
-{
+bool frame::is_interpreted_frame_valid(JavaThread *thread) const {
   Unimplemented();
 }
 
 BasicType frame::interpreter_frame_result(oop* oop_result,
-                                          jvalue* value_result)
-{
+                                          jvalue* value_result) {
   assert(is_interpreted_frame(), "interpreted frame expected");
   methodOop method = interpreter_frame_method();
   BasicType type = method->result_type();
@@ -183,8 +168,7 @@ BasicType frame::interpreter_frame_result(oop* oop_result,
   return type;
 }
 
-int frame::frame_size() const
-{
+int frame::frame_size() const {
 #ifdef PRODUCT
   ShouldNotCallThis();
 #else
@@ -192,8 +176,7 @@ int frame::frame_size() const
 #endif // PRODUCT
 }
 
-intptr_t* frame::interpreter_frame_tos_at(jint offset) const
-{
+intptr_t* frame::interpreter_frame_tos_at(jint offset) const {
   int index = (Interpreter::expr_offset_in_bytes(offset) / wordSize);
   return &interpreter_frame_tos_address()[index];
 }

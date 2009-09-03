@@ -43,8 +43,7 @@ class InterpreterFrame : public ZeroFrame {
   friend class AbstractInterpreter;
 
  private:
-  InterpreterFrame() : ZeroFrame()
-  {
+  InterpreterFrame() : ZeroFrame() {
     ShouldNotCallThis();
   }
 
@@ -63,8 +62,7 @@ class InterpreterFrame : public ZeroFrame {
   static InterpreterFrame *build(ZeroStack* stack, int size);
 
  public:
-  interpreterState interpreter_state() const
-  {
+  interpreterState interpreter_state() const {
     return (interpreterState) addr_of_word(istate_off);
   }
 };

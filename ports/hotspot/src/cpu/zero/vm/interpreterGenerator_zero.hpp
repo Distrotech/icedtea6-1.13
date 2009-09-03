@@ -23,7 +23,6 @@
  *
  */
 
-
   // Generation of Interpreter
   //
   friend class AbstractInterpreterGenerator;

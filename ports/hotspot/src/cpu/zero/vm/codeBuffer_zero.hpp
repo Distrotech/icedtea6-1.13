@@ -23,5 +23,5 @@
  *
  */
 
-private:
+ private:
   void pd_initialize() {}

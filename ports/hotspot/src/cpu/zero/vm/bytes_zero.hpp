@@ -27,8 +27,7 @@ class Bytes: AllStatic {
  public:
   // Returns true if the byte ordering used by Java is different
   // from the native byte ordering of the underlying machine.
-  static inline bool is_Java_byte_ordering_different()
-  {
+  static inline bool is_Java_byte_ordering_different() {
 #ifdef VM_LITTLE_ENDIAN
     return true;
 #else
@@ -48,10 +47,10 @@ class Bytes: AllStatic {
 
   static inline u4   get_native_u4(address p) {
     switch (intptr_t(p) & 3) {
-     case 0:  return *(u4*)p;
+    case 0:  return *(u4*)p;
 
-     case 2:  return (  u4( ((u2*)p)[1] ) << 16  )
-                   | (  u4( ((u2*)p)[0] )                  );
+    case 2:  return (  u4( ((u2*)p)[1] ) << 16  )
+                  | (  u4( ((u2*)p)[0] )        );
 
     default:  return ( u4(p[3]) << 24 )
                    | ( u4(p[2]) << 16 )
@@ -62,29 +61,29 @@ class Bytes: AllStatic {
 
   static inline u8   get_native_u8(address p) {
     switch (intptr_t(p) & 7) {
-      case 0:  return *(u8*)p;
+    case 0:  return *(u8*)p;
 
-      case 4:  return (  u8( ((u4*)p)[1] ) << 32  )
-                    | (  u8( ((u4*)p)[0] )        );
+    case 4:  return (  u8( ((u4*)p)[1] ) << 32  )
+                  | (  u8( ((u4*)p)[0] )        );
 
-      case 2:  return (  u8( ((u2*)p)[3] ) << 48  )
-                    | (  u8( ((u2*)p)[2] ) << 32  )
-                    | (  u8( ((u2*)p)[1] ) << 16  )
-                    | (  u8( ((u2*)p)[0] )        );
+    case 2:  return (  u8( ((u2*)p)[3] ) << 48  )
+                  | (  u8( ((u2*)p)[2] ) << 32  )
+                  | (  u8( ((u2*)p)[1] ) << 16  )
+                  | (  u8( ((u2*)p)[0] )        );
 
-     default:  return ( u8(p[7]) << 56 )
-                    | ( u8(p[6]) << 48 )
-                    | ( u8(p[5]) << 40 )
-                    | ( u8(p[4]) << 32 )
-                    | ( u8(p[3]) << 24 )
-                    | ( u8(p[2]) << 16 )
-                    | ( u8(p[1]) <<  8 )
-                    |   u8(p[0]);
+    default:  return ( u8(p[7]) << 56 )
+                   | ( u8(p[6]) << 48 )
+                   | ( u8(p[5]) << 40 )
+                   | ( u8(p[4]) << 32 )
+                   | ( u8(p[3]) << 24 )
+                   | ( u8(p[2]) << 16 )
+                   | ( u8(p[1]) <<  8 )
+                   |   u8(p[0]);
     }
   }
 
-  static inline void put_native_u2(address p, u2 x)   {
-    if ( (intptr_t(p) & 1) == 0 )  *(u2*)p = x;
+  static inline void put_native_u2(address p, u2 x) {
+    if ((intptr_t(p) & 1) == 0)  *(u2*) p = x;
     else {
       p[1] = x >> 8;
       p[0] = x;
@@ -143,10 +142,10 @@ class Bytes: AllStatic {
 
   static inline u4   get_native_u4(address p) {
     switch (intptr_t(p) & 3) {
-     case 0:  return *(u4*)p;
+    case 0:  return *(u4*)p;
 
-     case 2:  return (  u4( ((u2*)p)[0] ) << 16  )
-                   | (  u4( ((u2*)p)[1] )                  );
+    case 2:  return (  u4( ((u2*)p)[0] ) << 16  )
+                  | (  u4( ((u2*)p)[1] )        );
 
     default:  return ( u4(p[0]) << 24 )
                    | ( u4(p[1]) << 16 )
@@ -157,28 +156,28 @@ class Bytes: AllStatic {
 
   static inline u8   get_native_u8(address p) {
     switch (intptr_t(p) & 7) {
-      case 0:  return *(u8*)p;
+    case 0:  return *(u8*)p;
 
-      case 4:  return (  u8( ((u4*)p)[0] ) << 32  )
-                    | (  u8( ((u4*)p)[1] )        );
+    case 4:  return (  u8( ((u4*)p)[0] ) << 32  )
+                  | (  u8( ((u4*)p)[1] )        );
 
-      case 2:  return (  u8( ((u2*)p)[0] ) << 48  )
-                    | (  u8( ((u2*)p)[1] ) << 32  )
-                    | (  u8( ((u2*)p)[2] ) << 16  )
-                    | (  u8( ((u2*)p)[3] )        );
+    case 2:  return (  u8( ((u2*)p)[0] ) << 48  )
+                  | (  u8( ((u2*)p)[1] ) << 32  )
+                  | (  u8( ((u2*)p)[2] ) << 16  )
+                  | (  u8( ((u2*)p)[3] )        );
 
-     default:  return ( u8(p[0]) << 56 )
-                    | ( u8(p[1]) << 48 )
-                    | ( u8(p[2]) << 40 )
-                    | ( u8(p[3]) << 32 )
-                    | ( u8(p[4]) << 24 )
-                    | ( u8(p[5]) << 16 )
-                    | ( u8(p[6]) <<  8 )
-                    |   u8(p[7]);
+    default:  return ( u8(p[0]) << 56 )
+                   | ( u8(p[1]) << 48 )
+                   | ( u8(p[2]) << 40 )
+                   | ( u8(p[3]) << 32 )
+                   | ( u8(p[4]) << 24 )
+                   | ( u8(p[5]) << 16 )
+                   | ( u8(p[6]) <<  8 )
+                   |   u8(p[7]);
     }
   }
 
-  static inline void put_native_u2(address p, u2 x)   {
+  static inline void put_native_u2(address p, u2 x) {
     if ( (intptr_t(p) & 1) == 0 )  *(u2*)p = x;
     else {
       p[0] = x >> 8;
@@ -235,29 +234,23 @@ class Bytes: AllStatic {
   // byte ordering (i.e. big-endian ordering).
 #ifdef VM_LITTLE_ENDIAN
   // Byte-order reversal is needed
-  static inline u2 get_Java_u2(address p)
-  {
+  static inline u2 get_Java_u2(address p) {
     return swap_u2(get_native_u2(p));
   }
-  static inline u4 get_Java_u4(address p)
-  {
+  static inline u4 get_Java_u4(address p) {
     return swap_u4(get_native_u4(p));
   }
-  static inline u8 get_Java_u8(address p)
-  {
+  static inline u8 get_Java_u8(address p) {
     return swap_u8(get_native_u8(p));
   }
 
-  static inline void put_Java_u2(address p, u2 x)
-  {
+  static inline void put_Java_u2(address p, u2 x) {
     put_native_u2(p, swap_u2(x));
   }
-  static inline void put_Java_u4(address p, u4 x)
-  {
+  static inline void put_Java_u4(address p, u4 x) {
     put_native_u4(p, swap_u4(x));
   }
-  static inline void put_Java_u8(address p, u8 x)
-  {
+  static inline void put_Java_u8(address p, u8 x) {
     put_native_u8(p, swap_u8(x));
   }
 
@@ -267,29 +260,23 @@ class Bytes: AllStatic {
   static inline u8 swap_u8(u8 x);
 #else
   // No byte-order reversal is needed
-  static inline u2 get_Java_u2(address p)
-  {
+  static inline u2 get_Java_u2(address p) {
     return get_native_u2(p);
   }
-  static inline u4 get_Java_u4(address p)
-  {
+  static inline u4 get_Java_u4(address p) {
     return get_native_u4(p);
   }
-  static inline u8 get_Java_u8(address p)
-  {
+  static inline u8 get_Java_u8(address p) {
     return get_native_u8(p);
   }
 
-  static inline void put_Java_u2(address p, u2 x)
-  {
+  static inline void put_Java_u2(address p, u2 x) {
     put_native_u2(p, x);
   }
-  static inline void put_Java_u4(address p, u4 x)
-  {
+  static inline void put_Java_u4(address p, u4 x) {
     put_native_u4(p, x);
   }
-  static inline void put_Java_u8(address p, u8 x)
-  {
+  static inline void put_Java_u8(address p, u8 x) {
     put_native_u8(p, x);
   }
 

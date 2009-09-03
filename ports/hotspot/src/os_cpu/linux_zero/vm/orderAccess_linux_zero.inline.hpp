@@ -66,26 +66,22 @@ inline void OrderAccess::storestore() { release(); }
 inline void OrderAccess::loadstore()  { acquire(); }
 inline void OrderAccess::storeload()  { fence(); }
 
-inline void OrderAccess::acquire()
-{
+inline void OrderAccess::acquire() {
   READ_MEM_BARRIER;
 }
 
-inline void OrderAccess::release()
-{
+inline void OrderAccess::release() {
   WRITE_MEM_BARRIER;
 }
 
-inline void OrderAccess::fence()
-{
+inline void OrderAccess::fence() {
   FULL_MEM_BARRIER;
 }
 
 inline jbyte    OrderAccess::load_acquire(volatile jbyte*   p) { jbyte data = *p; acquire(); return data; }
 inline jshort   OrderAccess::load_acquire(volatile jshort*  p) { jshort data = *p; acquire(); return data; }
 inline jint     OrderAccess::load_acquire(volatile jint*    p) { jint data = *p; acquire(); return data; }
-inline jlong    OrderAccess::load_acquire(volatile jlong*   p)
-{
+inline jlong    OrderAccess::load_acquire(volatile jlong*   p) {
   jlong tmp;
   os::atomic_copy64(p, &tmp);
   acquire();
@@ -94,36 +90,31 @@ inline jlong    OrderAccess::load_acquire(volatile jlong*   p)
 inline jubyte    OrderAccess::load_acquire(volatile jubyte*   p) { jubyte data = *p; acquire(); return data; }
 inline jushort   OrderAccess::load_acquire(volatile jushort*  p) { jushort data = *p; acquire(); return data; }
 inline juint     OrderAccess::load_acquire(volatile juint*    p) { juint data = *p; acquire(); return data; }
-inline julong   OrderAccess::load_acquire(volatile julong*  p)
-{
+inline julong   OrderAccess::load_acquire(volatile julong*  p) {
   julong tmp;
   os::atomic_copy64(p, &tmp);
   acquire();
   return tmp;
 }
 inline jfloat   OrderAccess::load_acquire(volatile jfloat*  p) { jfloat data = *p; acquire(); return data; }
-inline jdouble  OrderAccess::load_acquire(volatile jdouble* p)
-{
+inline jdouble  OrderAccess::load_acquire(volatile jdouble* p) {
   jdouble tmp;
   os::atomic_copy64(p, &tmp);
   acquire();
   return tmp;
 }
 
-inline intptr_t OrderAccess::load_ptr_acquire(volatile intptr_t*   p) 
-{ 
+inline intptr_t OrderAccess::load_ptr_acquire(volatile intptr_t*   p) {
   intptr_t data = *p; 
   acquire();
   return data; 
 }
-inline void*    OrderAccess::load_ptr_acquire(volatile void*       p) 
-{ 
+inline void*    OrderAccess::load_ptr_acquire(volatile void*       p) {
   void *data = *(void* volatile *)p;
   acquire();
   return data; 
 }
-inline void*    OrderAccess::load_ptr_acquire(const volatile void* p) 
-{
+inline void*    OrderAccess::load_ptr_acquire(const volatile void* p) {
   void *data = *(void* const volatile *)p; 
   acquire(); 
   return data;

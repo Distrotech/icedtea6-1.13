@@ -34,8 +34,7 @@ class DeoptimizerFrame : public ZeroFrame {
   friend class ZeroStackPrinter;
 
  private:
-  DeoptimizerFrame() : ZeroFrame()
-  {
+  DeoptimizerFrame() : ZeroFrame() {
     ShouldNotCallThis();
   }
 

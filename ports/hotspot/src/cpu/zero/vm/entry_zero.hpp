@@ -25,8 +25,7 @@
 
 class ZeroEntry {
  public:
-  ZeroEntry()
-  {
+  ZeroEntry() {
     ShouldNotCallThis();
   }
 
@@ -41,28 +40,23 @@ class ZeroEntry {
   method_entry_t _entry_point;
 
  public:
-  method_entry_t entry_point() const
-  {
+  method_entry_t entry_point() const {
     return _entry_point;
   }
-  void set_entry_point(method_entry_t entry_point)
-  {
+  void set_entry_point(method_entry_t entry_point) {
     _entry_point = entry_point;
   }
 
  public:
-  void invoke(methodOop method, TRAPS) const
-  {
+  void invoke(methodOop method, TRAPS) const {
     entry_point()(method, (intptr_t) this, THREAD);
   }
-  void invoke_osr(methodOop method, address osr_buf, TRAPS) const
-  {
+  void invoke_osr(methodOop method, address osr_buf, TRAPS) const {
     ((osr_entry_t) entry_point())(method, osr_buf, (intptr_t) this, THREAD);
   }
 
  public:
-  static ByteSize entry_point_offset()
-  {
+  static ByteSize entry_point_offset() {
     return byte_offset_of(ZeroEntry, _entry_point);
   }
 };

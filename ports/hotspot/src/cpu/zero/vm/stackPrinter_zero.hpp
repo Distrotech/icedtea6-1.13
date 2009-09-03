@@ -36,8 +36,7 @@ class ZeroStackPrinter {
   ZeroStackPrinter(outputStream *st, char *buf, int buflen)
     : _st(st), _buf(buf), _buflen(buflen) {}
 
-  void print(JavaThread *thread)
-  {
+  void print(JavaThread *thread) {
     intptr_t *lo_addr = thread->zero_stack()->sp();
     if (!lo_addr) {
       _st->print_cr(" stack not set up");
@@ -65,8 +64,7 @@ class ZeroStackPrinter {
   }
 
  private:
-  void print_word(ZeroFrame *frame, intptr_t *addr, bool top_frame)
-  {
+  void print_word(ZeroFrame *frame, intptr_t *addr, bool top_frame) {
     const char *field = NULL;
     const char *value = NULL;
 

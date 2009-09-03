@@ -52,8 +52,7 @@ class MacroAssembler : public Assembler {
 };
 
 #ifdef ASSERT
-inline bool AbstractAssembler::pd_check_instruction_mark()
-{
+inline bool AbstractAssembler::pd_check_instruction_mark() {
   Unimplemented();
 }
 #endif

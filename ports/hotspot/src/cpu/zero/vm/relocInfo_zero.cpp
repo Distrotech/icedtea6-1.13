@@ -26,52 +26,49 @@
 #include "incls/_precompiled.incl"
 #include "incls/_relocInfo_zero.cpp.incl"
 
-void Relocation::pd_set_data_value(address x, intptr_t o)
-{
+void Relocation::pd_set_data_value(address x, intptr_t o) {
   Unimplemented();
 }
 
-address Relocation::pd_call_destination(address orig_addr)
-{
+address Relocation::pd_call_destination(address orig_addr) {
   Unimplemented();
 }
 
-void Relocation::pd_set_call_destination(address x)
-{
+void Relocation::pd_set_call_destination(address x) {
   Unimplemented();
 }
 
-address Relocation::pd_get_address_from_code()
-{
+address Relocation::pd_get_address_from_code() {
   Unimplemented();
 }
 
-address* Relocation::pd_address_in_code()
-{
+address* Relocation::pd_address_in_code() {
   // Relocations in Shark are just stored directly
   return (address *) addr();
 }
 
-int Relocation::pd_breakpoint_size()
-{
+int Relocation::pd_breakpoint_size() {
   Unimplemented();
 }
 
-void Relocation::pd_swap_in_breakpoint(address x, short* instrs,
-                                       int instrlen)
-{
+void Relocation::pd_swap_in_breakpoint(address x,
+                                       short*  instrs,
+                                       int     instrlen) {
   Unimplemented();
 }
 
-void Relocation::pd_swap_out_breakpoint(address x, short* instrs, int instrlen)
-{
+void Relocation::pd_swap_out_breakpoint(address x,
+                                        short*  instrs,
+                                        int     instrlen) {
   Unimplemented();
 }
 
-void poll_Relocation::fix_relocation_after_move(const CodeBuffer* src, CodeBuffer *dest) {
+void poll_Relocation::fix_relocation_after_move(const CodeBuffer* src,
+                                                CodeBuffer*       dst) {
   Unimplemented();
 }
 
-void poll_return_Relocation::fix_relocation_after_move(const CodeBuffer* src, CodeBuffer* dest) {
+void poll_return_Relocation::fix_relocation_after_move(const CodeBuffer* src,
+                                                       CodeBuffer*       dst) {
   Unimplemented();
 }

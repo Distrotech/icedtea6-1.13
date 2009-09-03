@@ -28,6 +28,5 @@
 // has to be flushed.
 
 class ICache : public AbstractICache {
-
   // Use default implementation
 };

@@ -24,14 +24,12 @@
  */
 
  protected:
-  MacroAssembler* assembler() const
-  {
+  MacroAssembler* assembler() const {
     return _masm;
   }
 
  protected:
-  address generate_entry(ZeroEntry::method_entry_t entry_point)
-  {
+  address generate_entry(ZeroEntry::method_entry_t entry_point) {
     ZeroEntry *entry = (ZeroEntry *) assembler()->pc();
     assembler()->advance(sizeof(ZeroEntry));
     entry->set_entry_point(entry_point);

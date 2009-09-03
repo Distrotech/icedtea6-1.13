@@ -25,7 +25,7 @@
 
 //
 // Sets the default values for platform dependent flags used by the
-// shark compiler.
+// Shark compiler.
 //
 
 define_pd_global(bool,  BackgroundCompilation,        true );

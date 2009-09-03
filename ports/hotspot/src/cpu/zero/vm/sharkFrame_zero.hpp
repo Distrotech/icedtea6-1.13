@@ -45,8 +45,7 @@ class SharkFrame : public ZeroFrame {
   friend class SharkFunction;
 
  private:
-  SharkFrame() : ZeroFrame()
-  {
+  SharkFrame() : ZeroFrame() {
     ShouldNotCallThis();
   }
 
@@ -60,18 +59,15 @@ class SharkFrame : public ZeroFrame {
   };
 
  public:
-  address pc() const
-  {
+  address pc() const {
     return (address) value_of_word(pc_off);
   }
 
-  intptr_t* unextended_sp() const
-  {
+  intptr_t* unextended_sp() const {
     return (intptr_t *) value_of_word(unextended_sp_off);
   }
 
-  methodOop method() const
-  {
+  methodOop method() const {
     return (methodOop) value_of_word(method_off);
   }
 };

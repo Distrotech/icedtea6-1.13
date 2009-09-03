@@ -38,8 +38,7 @@ RuntimeStub        *SharedRuntime::_resolve_static_call_blob;
 int SharedRuntime::java_calling_convention(const BasicType *sig_bt,
                                            VMRegPair *regs,
                                            int total_args_passed,
-                                           int is_outgoing)
-{
+                                           int is_outgoing) {
   return 0;
 }
 
@@ -48,8 +47,7 @@ AdapterHandlerEntry* SharedRuntime::generate_i2c2i_adapters(
                         int total_args_passed,
                         int comp_args_on_stack,
                         const BasicType *sig_bt,
-                        const VMRegPair *regs)
-{
+                        const VMRegPair *regs) {
   address i2c_entry = UnimplementedStub();
   address c2i_entry = UnimplementedStub();
   address c2i_unverified_entry = UnimplementedStub();
@@ -62,35 +60,30 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
                                                 int comp_args_on_stack,
                                                 BasicType *in_sig_bt,
                                                 VMRegPair *in_regs,
-                                                BasicType ret_type)
-{
+                                                BasicType ret_type) {
   Unimplemented();
 }
 
-int Deoptimization::last_frame_adjust(int callee_parameters, int callee_locals)
-{
+int Deoptimization::last_frame_adjust(int callee_parameters,
+                                      int callee_locals) {
   return 0;
 }
 
-uint SharedRuntime::out_preserve_stack_slots()
-{
+uint SharedRuntime::out_preserve_stack_slots() {
   Unimplemented();
 }
 
-static RuntimeStub* generate_empty_runtime_stub(const char* name)
-{
+static RuntimeStub* generate_empty_runtime_stub(const char* name) {
   CodeBuffer buffer(name, 0, 0);
   return RuntimeStub::new_runtime_stub(name, &buffer, 0, 0, NULL, false);
 }
 
-static SafepointBlob* generate_empty_safepoint_blob()
-{
+static SafepointBlob* generate_empty_safepoint_blob() {
   CodeBuffer buffer("handler_blob", 0, 0);
   return SafepointBlob::create(&buffer, NULL, 0);
 }
 
-void SharedRuntime::generate_stubs()
-{
+void SharedRuntime::generate_stubs() {
   _wrong_method_blob =
     generate_empty_runtime_stub("wrong_method_stub");
   _ic_miss_blob =
@@ -110,7 +103,6 @@ void SharedRuntime::generate_stubs()
 
 int SharedRuntime::c_calling_convention(const BasicType *sig_bt,
                                          VMRegPair *regs,
-                                         int total_args_passed)
-{
+                                         int total_args_passed) {
   Unimplemented();
 }

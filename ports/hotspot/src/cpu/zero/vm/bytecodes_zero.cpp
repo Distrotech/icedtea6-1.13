@@ -26,8 +26,7 @@
 #include "incls/_precompiled.incl"
 #include "incls/_bytecodes_zero.cpp.incl"
 
-void Bytecodes::pd_initialize()
-{
+void Bytecodes::pd_initialize() {
 #if defined(PRODUCT) && defined(HOTSPOT_ASM)
   def(_iaccess_0, "_iaccess_0", "b_jj", NULL, T_INT,  1, true, _aload_0);
   def(_iaccess_1, "_iaccess_1", "b_jj", NULL, T_INT,  1, true, _aload_1);

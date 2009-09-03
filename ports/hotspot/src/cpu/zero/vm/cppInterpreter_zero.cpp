@@ -37,8 +37,7 @@
   thread->reset_last_Java_frame();              \
   fixup_after_potential_safepoint()
 
-void CppInterpreter::normal_entry(methodOop method, intptr_t UNUSED, TRAPS)
-{
+void CppInterpreter::normal_entry(methodOop method, intptr_t UNUSED, TRAPS) {
   JavaThread *thread = (JavaThread *) THREAD;
   ZeroStack *stack = thread->zero_stack();
 
@@ -61,8 +60,7 @@ void CppInterpreter::normal_entry(methodOop method, intptr_t UNUSED, TRAPS)
   main_loop(0, THREAD);
 }
 
-void CppInterpreter::main_loop(int recurse, TRAPS)
-{
+void CppInterpreter::main_loop(int recurse, TRAPS) {
   JavaThread *thread = (JavaThread *) THREAD;
   ZeroStack *stack = thread->zero_stack();
 
@@ -187,8 +185,7 @@ void CppInterpreter::main_loop(int recurse, TRAPS)
     stack->push(result[-i]);
 }
 
-void CppInterpreter::native_entry(methodOop method, intptr_t UNUSED, TRAPS)
-{
+void CppInterpreter::native_entry(methodOop method, intptr_t UNUSED, TRAPS) {
   // Make sure method is native and not abstract
   assert(method->is_native() && !method->is_abstract(), "should be");
 
@@ -229,8 +226,7 @@ void CppInterpreter::native_entry(methodOop method, intptr_t UNUSED, TRAPS)
   }
 
   // Get the signature handler
-  InterpreterRuntime::SignatureHandler *handler;
-  {
+  InterpreterRuntime::SignatureHandler *handler; {
     address handlerAddr = method->signature_handler();
     if (handlerAddr == NULL) {
       CALL_VM_NOCHECK(InterpreterRuntime::prepare_native_call(thread, method));
@@ -260,8 +256,7 @@ void CppInterpreter::native_entry(methodOop method, intptr_t UNUSED, TRAPS)
     Unimplemented();
   }
   void **arguments;
-  void *mirror;
-  {
+  void *mirror; {
     arguments =
       (void **) stack->alloc(handler->argument_count() * sizeof(void **));
     void **dst = arguments;
@@ -367,8 +362,7 @@ void CppInterpreter::native_entry(methodOop method, intptr_t UNUSED, TRAPS)
 
     if (header != NULL) {
       if (Atomic::cmpxchg_ptr(header, rcvr->mark_addr(), lock) != lock) {
-        monitor->set_obj(rcvr);
-        {
+        monitor->set_obj(rcvr); {
           HandleMark hm(thread);
           CALL_VM_NOCHECK(InterpreterRuntime::monitorexit(thread, monitor));
         }
@@ -450,8 +444,7 @@ void CppInterpreter::native_entry(methodOop method, intptr_t UNUSED, TRAPS)
   }
 }
 
-void CppInterpreter::accessor_entry(methodOop method, intptr_t UNUSED, TRAPS)
-{
+void CppInterpreter::accessor_entry(methodOop method, intptr_t UNUSED, TRAPS) {
   JavaThread *thread = (JavaThread *) THREAD;
   ZeroStack *stack = thread->zero_stack();
   intptr_t *locals = stack->sp();
@@ -581,8 +574,7 @@ void CppInterpreter::accessor_entry(methodOop method, intptr_t UNUSED, TRAPS)
   }
 }
 
-void CppInterpreter::empty_entry(methodOop method, intptr_t UNUSED, TRAPS)
-{
+void CppInterpreter::empty_entry(methodOop method, intptr_t UNUSED, TRAPS) {
   JavaThread *thread = (JavaThread *) THREAD;
   ZeroStack *stack = thread->zero_stack();
 
@@ -596,8 +588,7 @@ void CppInterpreter::empty_entry(methodOop method, intptr_t UNUSED, TRAPS)
   stack->set_sp(stack->sp() + method->size_of_parameters());
 }
 
-bool CppInterpreter::stack_overflow_imminent(JavaThread *thread)
-{
+bool CppInterpreter::stack_overflow_imminent(JavaThread *thread) {
   // How is the ABI stack?
   address stack_top = thread->stack_base() - thread->stack_size();
   int free_stack = os::current_stack_pointer() - stack_top;
@@ -622,8 +613,7 @@ bool CppInterpreter::stack_overflow_imminent(JavaThread *thread)
 
 InterpreterFrame *InterpreterFrame::build(ZeroStack*       stack,
                                           const methodOop  method,
-                                          JavaThread*      thread)
-{
+                                          JavaThread*      thread) {
   int monitor_words =
     method->is_synchronized() ? frame::interpreter_frame_monitor_size() : 0;
   int stack_words = method->is_native() ? 0 : method->max_stack();
@@ -682,8 +672,7 @@ InterpreterFrame *InterpreterFrame::build(ZeroStack*       stack,
   return (InterpreterFrame *) fp;
 }
 
-int AbstractInterpreter::BasicType_as_index(BasicType type)
-{
+int AbstractInterpreter::BasicType_as_index(BasicType type) {
   int i = 0;
   switch (type) {
     case T_BOOLEAN: i = 0; break;
@@ -704,31 +693,27 @@ int AbstractInterpreter::BasicType_as_index(BasicType type)
   return i;
 }
 
-address InterpreterGenerator::generate_empty_entry()
-{
+address InterpreterGenerator::generate_empty_entry() {
   if (!UseFastEmptyMethods)
     return NULL;
 
   return generate_entry(CppInterpreter::empty_entry);
 }
 
-address InterpreterGenerator::generate_accessor_entry()
-{
+address InterpreterGenerator::generate_accessor_entry() {
   if (!UseFastAccessorMethods)
     return NULL;
 
   return generate_entry(CppInterpreter::accessor_entry);
 }
 
-address InterpreterGenerator::generate_native_entry(bool synchronized)
-{
+address InterpreterGenerator::generate_native_entry(bool synchronized) {
   assert (synchronized == false, "should be");
 
   return generate_entry(CppInterpreter::native_entry);
 }
 
-address InterpreterGenerator::generate_normal_entry(bool synchronized)
-{
+address InterpreterGenerator::generate_normal_entry(bool synchronized) {
   assert (synchronized == false, "should be");
 
   return generate_entry(CppInterpreter::normal_entry);
@@ -736,7 +721,8 @@ address InterpreterGenerator::generate_normal_entry(bool synchronized)
 
 #if defined(PRODUCT) && defined(HOTSPOT_ASM)
 typedef void (*BCI_ENTRY)(methodOopDesc*, intptr_t, Thread*);
-extern "C" BCI_ENTRY asm_generate_method_entry(AbstractInterpreter::MethodKind kind);
+extern "C" BCI_ENTRY asm_generate_method_entry(
+  AbstractInterpreter::MethodKind kind);
 #endif // HOTSPOT_ASM
 
 address AbstractInterpreterGenerator::generate_method_entry(
@@ -745,11 +731,12 @@ address AbstractInterpreterGenerator::generate_method_entry(
   address entry_point = NULL;
 
 #if defined(PRODUCT) && defined(HOTSPOT_ASM)
-  if (!UseCompiler && !TaggedStackInterpreter && !JvmtiExport::can_post_interpreter_events()
-						&& !PrintCommandLineFlags) {
-      BCI_ENTRY asm_entry = asm_generate_method_entry(kind);
-      if (asm_entry)
-	return ((InterpreterGenerator*)this)->generate_entry(asm_entry);
+  if (!UseCompiler && !TaggedStackInterpreter &&
+      !JvmtiExport::can_post_interpreter_events() &&
+      !PrintCommandLineFlags) {
+    BCI_ENTRY asm_entry = asm_generate_method_entry(kind);
+    if (asm_entry)
+      return ((InterpreterGenerator*)this)->generate_entry(asm_entry);
   }
 #endif // HOTSPOT_ASM
 
@@ -805,8 +792,7 @@ InterpreterGenerator::InterpreterGenerator(StubQueue* code)
 
 // Deoptimization helpers
 
-InterpreterFrame *InterpreterFrame::build(ZeroStack* stack, int size)
-{
+InterpreterFrame *InterpreterFrame::build(ZeroStack* stack, int size) {
   int size_in_words = size >> LogBytesPerWord;
   assert(size_in_words * wordSize == size, "unaligned");
   assert(size_in_words >= header_words, "too small");
@@ -840,8 +826,7 @@ int AbstractInterpreter::layout_activation(methodOop method,
                                            int       callee_locals,
                                            frame*    caller,
                                            frame*    interpreter_frame,
-                                           bool      is_top_frame)
-{
+                                           bool      is_top_frame) {
   assert(popframe_extra_args == 0, "what to do?");
   assert(!is_top_frame || (!callee_locals && !callee_param_count),
          "top frame should have no caller")
@@ -894,8 +879,7 @@ void BytecodeInterpreter::layout_interpreterState(interpreterState istate,
                                                   intptr_t* stack_base,
                                                   intptr_t* monitor_base,
                                                   intptr_t* frame_bottom,
-                                                  bool      is_top_frame)
-{
+                                                  bool      is_top_frame) {
   istate->set_locals(locals);
   istate->set_method(method);
   istate->set_self_link(istate);
@@ -922,27 +906,23 @@ void BytecodeInterpreter::layout_interpreterState(interpreterState istate,
   istate->set_stack_limit(stack_base - method->max_stack() - 1);
 }
 
-address CppInterpreter::return_entry(TosState state, int length)
-{
+address CppInterpreter::return_entry(TosState state, int length) {
   Unimplemented();
 }
 
-address CppInterpreter::deopt_entry(TosState state, int length)
-{
+address CppInterpreter::deopt_entry(TosState state, int length) {
   return NULL;
 }
 
 // Helper for (runtime) stack overflow checks
 
-int AbstractInterpreter::size_top_interpreter_activation(methodOop method)
-{
+int AbstractInterpreter::size_top_interpreter_activation(methodOop method) {
   return 0;
 }
 
 // Helper for figuring out if frames are interpreter frames
 
-bool CppInterpreter::contains(address pc)
-{
+bool CppInterpreter::contains(address pc) {
 #ifdef PRODUCT
   ShouldNotCallThis();
 #else

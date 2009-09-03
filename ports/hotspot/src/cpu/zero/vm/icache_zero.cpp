@@ -32,5 +32,5 @@ void ICacheStubGenerator::generate_icache_flush(
 
   StubCodeMark mark(this, "ICache", "flush_icache_stub");
 
-  *flush_icache_stub = (ICache::flush_icache_stub_t)UnimplementedStub();
+  *flush_icache_stub = (ICache::flush_icache_stub_t) UnimplementedStub();
 }

@@ -38,151 +38,122 @@
 // The base class for different kinds of native instruction abstractions.
 // Provides the primitive operations to manipulate code relative to this.
 
-class NativeInstruction VALUE_OBJ_CLASS_SPEC
-{
+class NativeInstruction VALUE_OBJ_CLASS_SPEC {
  public:
-  bool is_jump()
-  {
+  bool is_jump() {
     Unimplemented();
   }
 
-  bool is_safepoint_poll()
-  {
+  bool is_safepoint_poll() {
     Unimplemented();
   }
 };
 
-inline NativeInstruction* nativeInstruction_at(address address)
-{
+inline NativeInstruction* nativeInstruction_at(address address) {
   Unimplemented();
 }
 
-class NativeCall : public NativeInstruction
-{
+class NativeCall : public NativeInstruction {
  public:
   enum zero_specific_constants {
     instruction_size = 0 // not used within the interpreter
   };
 
-  address instruction_address() const
-  {
+  address instruction_address() const {
     Unimplemented();
   }
 
-  address next_instruction_address() const
-  {
+  address next_instruction_address() const {
     Unimplemented();
   }
 
-  address return_address() const
-  {
+  address return_address() const {
     Unimplemented();
   }
 
-  address destination() const
-  {
+  address destination() const {
     Unimplemented();
   }
 
-  void set_destination_mt_safe(address dest)
-  {
+  void set_destination_mt_safe(address dest) {
     Unimplemented();
   }
 
-  void verify_alignment()
-  {
+  void verify_alignment() {
     Unimplemented();
   }
 
-  void verify()
-  {
+  void verify() {
     Unimplemented();
   }
 
-  static bool is_call_before(address return_address)
-  {
+  static bool is_call_before(address return_address) {
     Unimplemented();
   }
 };
 
-inline NativeCall* nativeCall_before(address return_address)
-{
+inline NativeCall* nativeCall_before(address return_address) {
   Unimplemented();
 }
 
-inline NativeCall* nativeCall_at(address address)
-{
+inline NativeCall* nativeCall_at(address address) {
   Unimplemented();
 }
 
-class NativeMovConstReg : public NativeInstruction
-{
+class NativeMovConstReg : public NativeInstruction {
  public:
-  address next_instruction_address() const
-  {
+  address next_instruction_address() const {
     Unimplemented();
   }
 
-  intptr_t data() const
-  {
+  intptr_t data() const {
     Unimplemented();
   }
 
-  void set_data(intptr_t x)
-  {
+  void set_data(intptr_t x) {
     Unimplemented();
   }
 };
 
-inline NativeMovConstReg* nativeMovConstReg_at(address address)
-{
+inline NativeMovConstReg* nativeMovConstReg_at(address address) {
   Unimplemented();
 }
 
-class NativeMovRegMem : public NativeInstruction
-{
+class NativeMovRegMem : public NativeInstruction {
  public:
-  int offset() const
-  {
+  int offset() const {
     Unimplemented();
   }
 
-  void set_offset(intptr_t x)
-  {
+  void set_offset(intptr_t x) {
     Unimplemented();
   }
 
-  void add_offset_in_bytes(int add_offset)
-  {
+  void add_offset_in_bytes(int add_offset) {
     Unimplemented();
   }
 };
 
-inline NativeMovRegMem* nativeMovRegMem_at(address address)
-{
+inline NativeMovRegMem* nativeMovRegMem_at(address address) {
   Unimplemented();
 }
 
-class NativeJump : public NativeInstruction
-{
+class NativeJump : public NativeInstruction {
  public:
   enum zero_specific_constants {
     instruction_size = 0 // not used within the interpreter
   };
 
-  address jump_destination() const
-  {
+  address jump_destination() const {
     Unimplemented();
   }
 
-  void set_jump_destination(address dest)
-  {
+  void set_jump_destination(address dest) {
     Unimplemented();
   }
 
   static void check_verified_entry_alignment(address entry,
-                                             address verified_entry) 
-  {
+                                             address verified_entry) {
   }
 
   static void patch_verified_entry(address entry,
@@ -190,31 +161,25 @@ class NativeJump : public NativeInstruction
                                    address dest);
 };
 
-inline NativeJump* nativeJump_at(address address)
-{
+inline NativeJump* nativeJump_at(address address) {
   Unimplemented();
 }
 
-class NativeGeneralJump : public NativeInstruction
-{
+class NativeGeneralJump : public NativeInstruction {
  public:
-  address jump_destination() const
-  {
+  address jump_destination() const {
     Unimplemented();
   }
 
-  static void insert_unconditional(address code_pos, address entry)
-  {
+  static void insert_unconditional(address code_pos, address entry) {
     Unimplemented();
   }
 
-  static void replace_mt_safe(address instr_addr, address code_buffer)
-  {
+  static void replace_mt_safe(address instr_addr, address code_buffer) {
     Unimplemented();
   }
 };
 
-inline NativeGeneralJump* nativeGeneralJump_at(address address)
-{
+inline NativeGeneralJump* nativeGeneralJump_at(address address) {
   Unimplemented();
 }

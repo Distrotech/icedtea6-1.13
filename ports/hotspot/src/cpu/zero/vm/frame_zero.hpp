@@ -23,11 +23,11 @@
  *
  */
 
-  // A frame represents a physical stack frame (an activation).  Frames
-  // can be C or Java frames, and the Java frames can be interpreted or
-  // compiled.  In contrast, vframes represent source-level activations,
-  // so that one physical frame can correspond to multiple source level
-  // frames because of inlining.  A frame is comprised of {pc, sp}
+// A frame represents a physical stack frame (an activation).  Frames
+// can be C or Java frames, and the Java frames can be interpreted or
+// compiled.  In contrast, vframes represent source-level activations,
+// so that one physical frame can correspond to multiple source level
+// frames because of inlining.  A frame is comprised of {pc, sp}
 
  public:
   enum {
@@ -39,8 +39,7 @@
   frame(intptr_t* sp);
 
   // accessors for the instance variables
-  intptr_t* fp() const
-  {
+  intptr_t* fp() const {
     return (intptr_t *) -1;
   }
 
@@ -49,21 +48,17 @@
 #endif // CC_INTERP
 
  public:
-  const ZeroFrame *zeroframe() const
-  {
+  const ZeroFrame *zeroframe() const {
     return (ZeroFrame *) sp();
   }
 
-  const EntryFrame *zero_entryframe() const
-  {
+  const EntryFrame *zero_entryframe() const {
     return zeroframe()->as_entry_frame();
   }
-  const InterpreterFrame *zero_interpreterframe() const
-  {
+  const InterpreterFrame *zero_interpreterframe() const {
     return zeroframe()->as_interpreter_frame();
   }
-  const SharkFrame *zero_sharkframe() const
-  {
+  const SharkFrame *zero_sharkframe() const {
     return zeroframe()->as_shark_frame();
   }
 

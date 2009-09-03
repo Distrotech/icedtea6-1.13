@@ -24,9 +24,7 @@
 
 // Processor dependent parts of ThreadLocalStorage
 
-public:
-
-  static Thread* thread()
-  {
+ public:
+  static Thread* thread() {
     return (Thread*) os::thread_local_storage_at(thread_index());
   }

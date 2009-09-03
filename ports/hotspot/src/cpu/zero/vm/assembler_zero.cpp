@@ -26,67 +26,55 @@
 #include "incls/_precompiled.incl"
 #include "incls/_assembler_zero.cpp.incl"
 
-int AbstractAssembler::code_fill_byte()
-{
+int AbstractAssembler::code_fill_byte() {
   return 0;
 }
 
-void Assembler::pd_patch_instruction(address branch, address target)
-{
+void Assembler::pd_patch_instruction(address branch, address target) {
   Unimplemented();
 }
 
 #ifndef PRODUCT
-void Assembler::pd_print_patched_instruction(address branch)
-{
+void Assembler::pd_print_patched_instruction(address branch) {
   Unimplemented();
 }
 #endif // PRODUCT
 
-void MacroAssembler::align(int modulus)
-{
+void MacroAssembler::align(int modulus) {
   while (offset() % modulus != 0)
     emit_byte(AbstractAssembler::code_fill_byte());
 }
 
-void MacroAssembler::bang_stack_with_offset(int offset)
-{
+void MacroAssembler::bang_stack_with_offset(int offset) {
   Unimplemented();
 }
 
-void MacroAssembler::advance(int bytes)
-{
+void MacroAssembler::advance(int bytes) {
   _code_pos += bytes;
   sync();
 }
 
-void MacroAssembler::store_oop(jobject obj)
-{
+void MacroAssembler::store_oop(jobject obj) {
   code_section()->relocate(pc(), oop_Relocation::spec_for_immediate());
   emit_address((address) obj);
 }
 
-static void _UnimplementedStub()
-{
+static void _UnimplementedStub() {
   report_unimplemented(__FILE__, __LINE__);
 }
 
-address UnimplementedStub()
-{
+address UnimplementedStub() {
   return (address) _UnimplementedStub;
 }
 
-address UnimplementedEntry()
-{
+address UnimplementedEntry() {
   return (address) _UnimplementedStub;
 }
 
-static void _ShouldNotReachHereStub()
-{
+static void _ShouldNotReachHereStub() {
   report_should_not_reach_here(__FILE__, __LINE__);
 }
 
-address ShouldNotReachHereStub()
-{
+address ShouldNotReachHereStub() {
   return (address) _ShouldNotReachHereStub;
 }

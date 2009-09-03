@@ -35,72 +35,55 @@
   interpreterState _self_link;
 
  public:
-  inline void set_locals(intptr_t* new_locals)
-  {
+  inline void set_locals(intptr_t* new_locals) {
     _locals = new_locals;
   }
-  inline void set_method(methodOop new_method)
-  {
+  inline void set_method(methodOop new_method) {
     _method = new_method;
   }
-  inline interpreterState self_link()
-  {
+  inline interpreterState self_link() {
     return _self_link;
   }
-  inline void set_self_link(interpreterState new_self_link)
-  {
+  inline void set_self_link(interpreterState new_self_link) {
     _self_link = new_self_link;
   }
-  inline interpreterState prev_link()
-  {
+  inline interpreterState prev_link() {
     return _prev_link;
   }
-  inline void set_prev_link(interpreterState new_prev_link)
-  {
+  inline void set_prev_link(interpreterState new_prev_link) {
     _prev_link = new_prev_link;
   }
-  inline void set_stack_limit(intptr_t* new_stack_limit)
-  {
+  inline void set_stack_limit(intptr_t* new_stack_limit) {
     _stack_limit = new_stack_limit;
   }
-  inline void set_stack_base(intptr_t* new_stack_base)
-  {
+  inline void set_stack_base(intptr_t* new_stack_base) {
     _stack_base = new_stack_base;
   }
-  inline void set_monitor_base(BasicObjectLock *new_monitor_base)
-  {
+  inline void set_monitor_base(BasicObjectLock *new_monitor_base) {
     _monitor_base = new_monitor_base;
   }
-  inline void set_thread(JavaThread* new_thread)
-  {
+  inline void set_thread(JavaThread* new_thread) {
     _thread = new_thread;
   }
-  inline void set_constants(constantPoolCacheOop new_constants)
-  {
+  inline void set_constants(constantPoolCacheOop new_constants) {
     _constants = new_constants;
   }
-  inline oop oop_temp()
-  {
+  inline oop oop_temp() {
     return _oop_temp;
   }
-  inline oop *oop_temp_addr()
-  {
+  inline oop *oop_temp_addr() {
     return &_oop_temp;
   }
-  inline void set_oop_temp(oop new_oop_temp)
-  {
+  inline void set_oop_temp(oop new_oop_temp) {
     _oop_temp = new_oop_temp;
   }
-  inline address callee_entry_point()
-  {
+  inline address callee_entry_point() {
     return _result._to_call._callee_entry_point;
   }
-  inline address osr_buf()
-  {
+  inline address osr_buf() {
     return _result._osr._osr_buf;
   }
-  inline address osr_entry()
-  {
+  inline address osr_entry() {
     return _result._osr._osr_entry;
   }
 

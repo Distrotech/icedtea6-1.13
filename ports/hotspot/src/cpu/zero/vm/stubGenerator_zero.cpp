@@ -30,8 +30,7 @@
 // For a more detailed description of the stub routine structure
 // see the comment in stubRoutines.hpp
 
-class StubGenerator: public StubCodeGenerator
-{
+class StubGenerator: public StubCodeGenerator {
  private:
   // The call stub is used to call Java from C
   static void call_stub(
@@ -42,8 +41,7 @@ class StubGenerator: public StubCodeGenerator
     address          entry_point,
     intptr_t*        parameters,
     int              parameter_words,
-    TRAPS)
-  {
+    TRAPS) {
     JavaThread *thread = (JavaThread *) THREAD;
     ZeroStack *stack = thread->zero_stack();
 
@@ -102,13 +100,11 @@ class StubGenerator: public StubCodeGenerator
   // These stubs get called from some dumb test routine.
   // I'll write them properly when they're called from
   // something that's actually doing something.
-  static void fake_arraycopy_stub(address src, address dst, int count)
-  {
+  static void fake_arraycopy_stub(address src, address dst, int count) {
     assert(count == 0, "huh?");
   }
 
-  void generate_arraycopy_stubs()
-  {
+  void generate_arraycopy_stubs() {
     // Call the conjoint generation methods immediately after
     // the disjoint ones so that short branches from the former
     // to the latter can be generated.
@@ -159,8 +155,7 @@ class StubGenerator: public StubCodeGenerator
       StubRoutines::_oop_arraycopy;
   }
 
-  void generate_initial()
-  {
+  void generate_initial() {
     // Generates all stubs and initializes the entry points
 
     // entry points that exist in all platforms Note: This is code
@@ -188,8 +183,7 @@ class StubGenerator: public StubCodeGenerator
       UnimplementedStub();
   }
 
-  void generate_all()
-  {
+  void generate_all() {
     // Generates all stubs and initializes the entry points
 
     // These entry points require SharedInfo::stack0 to be set up in
@@ -219,8 +213,7 @@ class StubGenerator: public StubCodeGenerator
   }
 
  public:
-  StubGenerator(CodeBuffer* code, bool all) : StubCodeGenerator(code)
-  {
+  StubGenerator(CodeBuffer* code, bool all) : StubCodeGenerator(code) {
     if (all) {
       generate_all();
     } else {
@@ -229,16 +222,14 @@ class StubGenerator: public StubCodeGenerator
   }
 };
 
-void StubGenerator_generate(CodeBuffer* code, bool all)
-{
+void StubGenerator_generate(CodeBuffer* code, bool all) {
   StubGenerator g(code, all);
 }
 
 EntryFrame *EntryFrame::build(ZeroStack*       stack,
                               const intptr_t*  parameters,
                               int              parameter_words,
-                              JavaCallWrapper* call_wrapper)
-{
+                              JavaCallWrapper* call_wrapper) {
   if (header_words + parameter_words > stack->available_words()) {
     Unimplemented();
   }

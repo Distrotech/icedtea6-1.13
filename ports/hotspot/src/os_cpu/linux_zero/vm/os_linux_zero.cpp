@@ -26,24 +26,20 @@
 // do not include precompiled header file
 #include "incls/_os_linux_zero.cpp.incl"
 
-address os::current_stack_pointer()
-{
+address os::current_stack_pointer() {
   address dummy = (address) &dummy;
   return dummy;
 }
 
-frame os::get_sender_for_C_frame(frame* fr)
-{
+frame os::get_sender_for_C_frame(frame* fr) {
   Unimplemented();
 }
 
-frame os::current_frame()
-{
+frame os::current_frame() {
   Unimplemented();
 }
 
-char* os::non_memory_address_word()
-{
+char* os::non_memory_address_word() {
   // Must never look like an address returned by reserve_memory,
   // even in its subfields (as defined by the CPU immediate fields,
   // if the CPU splits constants across multiple instructions).
@@ -57,13 +53,11 @@ char* os::non_memory_address_word()
 #endif // SPARC
 }
 
-void os::initialize_thread()
-{
+void os::initialize_thread() {
   // Nothing to do.
 }
 
-address os::Linux::ucontext_get_pc(ucontext_t* uc)
-{
+address os::Linux::ucontext_get_pc(ucontext_t* uc) {
   Unimplemented();
 }
 
@@ -73,8 +67,7 @@ ExtendedPC os::fetch_frame_from_context(void* ucVoid,
   Unimplemented();
 }
 
-frame os::fetch_frame_from_context(void* ucVoid)
-{
+frame os::fetch_frame_from_context(void* ucVoid) {
   Unimplemented();
 }
 
@@ -86,8 +79,7 @@ extern "C" int
 JVM_handle_linux_signal(int sig,
                         siginfo_t* info,
                         void* ucVoid,
-                        int abort_if_unrecognized)
-{
+                        int abort_if_unrecognized) {
   ucontext_t* uc = (ucontext_t*) ucVoid;
 
 #if defined(PRODUCT) && defined(HOTSPOT_ASM)
@@ -233,23 +225,19 @@ JVM_handle_linux_signal(int sig,
   fatal(buf);
 }
 
-void os::Linux::init_thread_fpu_state(void)
-{
+void os::Linux::init_thread_fpu_state(void) {
   // Nothing to do
 }
 
-int os::Linux::get_fpu_control_word()
-{
+int os::Linux::get_fpu_control_word() {
   Unimplemented();
 }
 
-void os::Linux::set_fpu_control_word(int fpu)
-{
+void os::Linux::set_fpu_control_word(int fpu) {
   Unimplemented();
 }
 
-bool os::is_allocatable(size_t bytes)
-{
+bool os::is_allocatable(size_t bytes) {
   Unimplemented();
 }
 
@@ -258,13 +246,11 @@ bool os::is_allocatable(size_t bytes)
 
 size_t os::Linux::min_stack_allowed = 64 * K;
 
-bool os::Linux::supports_variable_stack_size()
-{
+bool os::Linux::supports_variable_stack_size() {
   return true;
 }
 
-size_t os::Linux::default_stack_size(os::ThreadType thr_type)
-{
+size_t os::Linux::default_stack_size(os::ThreadType thr_type) {
 #ifdef _LP64
   size_t s = (thr_type == os::compiler_thread ? 4 * M : 1 * M);
 #else
@@ -273,15 +259,13 @@ size_t os::Linux::default_stack_size(os::ThreadType thr_type)
   return s;
 }
 
-size_t os::Linux::default_guard_size(os::ThreadType thr_type)
-{
+size_t os::Linux::default_guard_size(os::ThreadType thr_type) {
   // Only enable glibc guard pages for non-Java threads
   // (Java threads have HotSpot guard pages)
   return (thr_type == java_thread ? 0 : page_size());
 }
 
-static void current_stack_region(address *bottom, size_t *size)
-{
+static void current_stack_region(address *bottom, size_t *size) {
   pthread_attr_t attr;
   int res = pthread_getattr_np(pthread_self(), &attr);
   if (res != 0) {
@@ -349,16 +333,14 @@ static void current_stack_region(address *bottom, size_t *size)
   *size = stack_top - stack_bottom;
 }
 
-address os::current_stack_base()
-{
+address os::current_stack_base() {
   address bottom;
   size_t size;
   current_stack_region(&bottom, &size);
   return bottom + size;
 }
 
-size_t os::current_stack_size()
-{
+size_t os::current_stack_size() {
   // stack size includes normal stack and HotSpot guard pages
   address bottom;
   size_t size;
@@ -369,8 +351,7 @@ size_t os::current_stack_size()
 /////////////////////////////////////////////////////////////////////////////
 // helper functions for fatal error handler
 
-void os::print_context(outputStream* st, void* context)
-{
+void os::print_context(outputStream* st, void* context) {
   Unimplemented();
 }
 
@@ -379,25 +360,21 @@ void os::print_context(outputStream* st, void* context)
 // You probably want to disassemble these monkeys to check they're ok.
 
 extern "C" {
-  int SpinPause()
-  {
+  int SpinPause() {
   }
 
-  int SafeFetch32(int *adr, int errValue)
-  {
+  int SafeFetch32(int *adr, int errValue) {
     int value = errValue;
     value = *adr;
     return value;
   }
-  intptr_t SafeFetchN(intptr_t *adr, intptr_t errValue)
-  {
+  intptr_t SafeFetchN(intptr_t *adr, intptr_t errValue) {
     intptr_t value = errValue;
     value = *adr;
     return value;
   }
 
-  void _Copy_conjoint_jshorts_atomic(jshort* from, jshort* to, size_t count)
-  {
+  void _Copy_conjoint_jshorts_atomic(jshort* from, jshort* to, size_t count) {
     if (from > to) {
       jshort *end = from + count;
       while (from < end)
@@ -411,8 +388,7 @@ extern "C" {
         *(to--) = *(from--);
     }
   }
-  void _Copy_conjoint_jints_atomic(jint* from, jint* to, size_t count)
-  {
+  void _Copy_conjoint_jints_atomic(jint* from, jint* to, size_t count) {
     if (from > to) {
       jint *end = from + count;
       while (from < end)
@@ -426,8 +402,7 @@ extern "C" {
         *(to--) = *(from--);
     }
   }
-  void _Copy_conjoint_jlongs_atomic(jlong* from, jlong* to, size_t count)
-  {
+  void _Copy_conjoint_jlongs_atomic(jlong* from, jlong* to, size_t count) {
     if (from > to) {
       jlong *end = from + count;
       while (from < end)
@@ -442,20 +417,24 @@ extern "C" {
     }
   }
 
-  void _Copy_arrayof_conjoint_bytes(HeapWord* from, HeapWord* to, size_t count)
-  {
+  void _Copy_arrayof_conjoint_bytes(HeapWord* from,
+                                    HeapWord* to,
+                                    size_t    count) {
     Unimplemented();
   }
-  void _Copy_arrayof_conjoint_jshorts(HeapWord* from, HeapWord* to,
-                                      size_t count) {
+  void _Copy_arrayof_conjoint_jshorts(HeapWord* from,
+                                      HeapWord* to,
+                                      size_t    count) {
     Unimplemented();
   }
-  void _Copy_arrayof_conjoint_jints(HeapWord* from, HeapWord* to, size_t count)
-  {
+  void _Copy_arrayof_conjoint_jints(HeapWord* from,
+                                    HeapWord* to,
+                                    size_t    count) {
     Unimplemented();
   }
-  void _Copy_arrayof_conjoint_jlongs(HeapWord* from, HeapWord* to,
-                                     size_t count) {
+  void _Copy_arrayof_conjoint_jlongs(HeapWord* from,
+                                     HeapWord* to,
+                                     size_t    count) {
     Unimplemented();
   }
 };
@@ -469,8 +448,7 @@ extern "C" {
   long long unsigned int __sync_val_compare_and_swap_8(
     volatile void *ptr,
     long long unsigned int oldval,
-    long long unsigned int newval)
-  {
+    long long unsigned int newval) {
     Unimplemented();
   }
 };

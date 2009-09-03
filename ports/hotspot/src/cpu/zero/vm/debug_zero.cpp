@@ -26,7 +26,6 @@
 #include "incls/_precompiled.incl"
 #include "incls/_debug_zero.cpp.incl"
 
-void pd_ps(frame f)
-{
+void pd_ps(frame f) {
   Unimplemented();
 }
