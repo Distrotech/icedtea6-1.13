@@ -697,26 +697,26 @@ address InterpreterGenerator::generate_empty_entry() {
   if (!UseFastEmptyMethods)
     return NULL;
 
-  return generate_entry(CppInterpreter::empty_entry);
+  return generate_entry((address) CppInterpreter::empty_entry);
 }
 
 address InterpreterGenerator::generate_accessor_entry() {
   if (!UseFastAccessorMethods)
     return NULL;
 
-  return generate_entry(CppInterpreter::accessor_entry);
+  return generate_entry((address) CppInterpreter::accessor_entry);
 }
 
 address InterpreterGenerator::generate_native_entry(bool synchronized) {
-  assert (synchronized == false, "should be");
+  assert(synchronized == false, "should be");
 
-  return generate_entry(CppInterpreter::native_entry);
+  return generate_entry((address) CppInterpreter::native_entry);
 }
 
 address InterpreterGenerator::generate_normal_entry(bool synchronized) {
-  assert (synchronized == false, "should be");
+  assert(synchronized == false, "should be");
 
-  return generate_entry(CppInterpreter::normal_entry);
+  return generate_entry((address) CppInterpreter::normal_entry);
 }
 
 #if defined(PRODUCT) && defined(HOTSPOT_ASM)
@@ -727,16 +727,15 @@ extern "C" BCI_ENTRY asm_generate_method_entry(
 
 address AbstractInterpreterGenerator::generate_method_entry(
     AbstractInterpreter::MethodKind kind) {
-
   address entry_point = NULL;
 
 #if defined(PRODUCT) && defined(HOTSPOT_ASM)
   if (!UseCompiler && !TaggedStackInterpreter &&
       !JvmtiExport::can_post_interpreter_events() &&
       !PrintCommandLineFlags) {
-    BCI_ENTRY asm_entry = asm_generate_method_entry(kind);
+    address asm_entry = (address) asm_generate_method_entry(kind);
     if (asm_entry)
-      return ((InterpreterGenerator*)this)->generate_entry(asm_entry);
+      return ((InterpreterGenerator*) this)->generate_entry(asm_entry);
   }
 #endif // HOTSPOT_ASM
 
@@ -746,23 +745,23 @@ address AbstractInterpreterGenerator::generate_method_entry(
     break;
 
   case Interpreter::native:
-    entry_point = ((InterpreterGenerator*)this)->generate_native_entry(false);
+    entry_point = ((InterpreterGenerator*) this)->generate_native_entry(false);
     break;
 
   case Interpreter::native_synchronized:
-    entry_point = ((InterpreterGenerator*)this)->generate_native_entry(false);
+    entry_point = ((InterpreterGenerator*) this)->generate_native_entry(false);
     break;
 
   case Interpreter::empty:
-    entry_point = ((InterpreterGenerator*)this)->generate_empty_entry();
+    entry_point = ((InterpreterGenerator*) this)->generate_empty_entry();
     break;
 
   case Interpreter::accessor:
-    entry_point = ((InterpreterGenerator*)this)->generate_accessor_entry();
+    entry_point = ((InterpreterGenerator*) this)->generate_accessor_entry();
     break;
 
   case Interpreter::abstract:
-    entry_point = ((InterpreterGenerator*)this)->generate_abstract_entry();
+    entry_point = ((InterpreterGenerator*) this)->generate_abstract_entry();
     break;
 
   case Interpreter::java_lang_math_sin:
@@ -772,7 +771,7 @@ address AbstractInterpreterGenerator::generate_method_entry(
   case Interpreter::java_lang_math_log:
   case Interpreter::java_lang_math_log10:
   case Interpreter::java_lang_math_sqrt:
-    entry_point = ((InterpreterGenerator*)this)->generate_math_entry(kind);
+    entry_point = ((InterpreterGenerator*) this)->generate_math_entry(kind);
     break;
 
   default:
@@ -780,7 +779,7 @@ address AbstractInterpreterGenerator::generate_method_entry(
   }
 
   if (entry_point == NULL)
-    entry_point = ((InterpreterGenerator*)this)->generate_normal_entry(false);
+    entry_point = ((InterpreterGenerator*) this)->generate_normal_entry(false);
 
   return entry_point;
 }

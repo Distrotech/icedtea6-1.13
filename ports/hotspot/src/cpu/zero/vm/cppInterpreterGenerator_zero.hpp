@@ -1,6 +1,6 @@
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
- * Copyright 2008 Red Hat, Inc.
+ * Copyright 2008, 2009 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,7 @@
   }
 
  protected:
-  address generate_entry(ZeroEntry::method_entry_t entry_point) {
+  address generate_entry(address entry_point) {
     ZeroEntry *entry = (ZeroEntry *) assembler()->pc();
     assembler()->advance(sizeof(ZeroEntry));
     entry->set_entry_point(entry_point);

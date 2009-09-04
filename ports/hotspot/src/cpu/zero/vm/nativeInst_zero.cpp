@@ -42,7 +42,8 @@ void NativeJump::patch_verified_entry(address entry,
   assert(dest == SharedRuntime::get_handle_wrong_method_stub(), "should be");
 
 #ifdef CC_INTERP
-  ((ZeroEntry*) verified_entry)->set_entry_point(CppInterpreter::normal_entry);
+  ((ZeroEntry*) verified_entry)->set_entry_point(
+    (address) CppInterpreter::normal_entry);
 #else
   Unimplemented();
 #endif // CC_INTERP  

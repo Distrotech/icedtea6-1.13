@@ -1,5 +1,37 @@
 2009-09-04  Gary Benson  <gbenson@redhat.com>
 
+	* ports/hotspot/src/cpu/zero/vm/entry_zero.hpp
+	(ZeroEntry::method_entry_t): Renamed as...
+	(ZeroEntry::NormalEntryFunc): New type.
+	(ZeroEntry::osr_entry_t): Renamed as...
+	(ZeroEntry::OSREntryFunc): New type.
+	(ZeroEntry::_entry_point): Changed type.
+	(ZeroEntry::entry_point): Changed signature.
+	(ZeroEntry::set_entry_point): Likewise.
+	(ZeroEntry::invoke): Added cast.
+	(ZeroEntry::invoke_osr): Updated cast.
+
+	* ports/hotspot/src/cpu/zero/vm/cppInterpreterGenerator_zero.hpp
+	(CppInterpreter::generate_entry): Changed signature.
+
+	* ports/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp
+	(InterpreterGenerator::generate_normal_entry): Added cast.
+	(InterpreterGenerator::generate_native_entry): Likewise.
+	(InterpreterGenerator::generate_accessor_entry): Likewise.
+	(InterpreterGenerator::generate_empty_entry): Likewise.
+	(AbstractInterpreterGenerator::generate_method_entry): Likewise.
+
+	* ports/hotspot/src/share/vm/shark/sharkCompiler.cpp
+	(SharkCompiler::compile_method): Updated cast.
+
+	* ports/hotspot/src/share/vm/shark/sharkEntry.hpp
+	(SharkEntry::code_start): Removed cast.
+
+	* ports/hotspot/src/cpu/zero/vm/nativeInst_zero.cpp
+	(NativeJump::patch_verified_entry): Added cast.
+
+2009-09-04  Gary Benson  <gbenson@redhat.com>
+
 	* ports/hotspot/src/cpu/zero/vm/icache_zero.hpp
 	(ICache::initialize): New method.
 	(ICache::invalidate_word): Likewise.
