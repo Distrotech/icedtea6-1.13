@@ -1,3 +1,16 @@
+2009-09-04  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/src/cpu/zero/vm/icache_zero.hpp
+	(ICache::initialize): New method.
+	(ICache::invalidate_word): Likewise.
+	(ICache::invalidate_range): Likewise.
+
+	* ports/hotspot/src/cpu/zero/vm/icache_zero.cpp
+	(ICacheStubGenerator::generate_icache_flush): Replaced with stub.
+
+	* patches/icedtea-zero.patch
+	(AbstractICache::invalidate_range): Removed #ifdef ZERO.
+
 2009-09-03  Gary Benson  <gbenson@redhat.com>
 
 	* ports/hotspot/src/cpu/zero/vm/assembler_zero.cpp: Reformatted

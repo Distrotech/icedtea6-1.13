@@ -100,24 +100,6 @@
    tty->print_cr("self_link: " INTPTR_FORMAT, (uintptr_t) this->_self_link);
  }
  
---- openjdk/hotspot/src/share/vm/runtime/icache.cpp.orig	2008-07-27 08:37:02.000000000 +0000
-+++ openjdk/hotspot/src/share/vm/runtime/icache.cpp	2008-07-27 08:38:13.000000000 +0000
-@@ -78,6 +78,7 @@
- }
- 
- void AbstractICache::invalidate_range(address start, int nbytes) {
-+#ifndef ZERO
-   static bool firstTime = true;
-   if (firstTime) {
-     guarantee(start == CAST_FROM_FN_PTR(address, _flush_icache_stub),
-@@ -97,6 +98,7 @@
-   }
-   call_flush_stub(start, round_to(nbytes, ICache::line_size) >>
- 		         ICache::log2_line_size);
-+#endif
- }
- 
- // For init.cpp
 --- openjdk/hotspot/src/share/vm/runtime/mutex.hpp.orig	2008-07-27 08:37:02.000000000 +0000
 +++ openjdk/hotspot/src/share/vm/runtime/mutex.hpp	2008-07-27 08:38:13.000000000 +0000
 @@ -61,18 +61,10 @@
