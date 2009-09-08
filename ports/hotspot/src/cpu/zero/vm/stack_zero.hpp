@@ -45,7 +45,6 @@ class ZeroStack {
     _top  = _base + (size >> LogBytesPerWord);
     _sp   = _top;
   }
-
   void teardown() {
     assert(!needs_setup(), "not set up");
     assert(_sp == _top, "stuff on stack at teardown");
@@ -58,7 +57,6 @@ class ZeroStack {
   intptr_t *sp() const {
     return _sp;
   }
-
   void set_sp(intptr_t *new_sp) {
     assert(_top >= new_sp && new_sp >= _base, "bad stack pointer");
     _sp = new_sp;
@@ -72,7 +70,6 @@ class ZeroStack {
     assert(_sp > _base, "stack overflow");
     *(--_sp) = value;
   }
-
   intptr_t pop() {
     assert(_sp < _top, "stack underflow");
     return *(_sp++);
@@ -88,11 +85,9 @@ class ZeroStack {
   static ByteSize base_offset() {
     return byte_offset_of(ZeroStack, _base);
   }
-
   static ByteSize top_offset() {
     return byte_offset_of(ZeroStack, _top);
   }
-
   static ByteSize sp_offset() {
     return byte_offset_of(ZeroStack, _sp);
   } 
@@ -139,7 +134,6 @@ class ZeroFrame {
   intptr_t *addr_of_word(int offset) const {
     return (intptr_t *) this - offset;
   }
-
   intptr_t value_of_word(int offset) const {
     return *addr_of_word(offset);
   }
@@ -158,15 +152,12 @@ class ZeroFrame {
   bool is_entry_frame() const {
     return type() == ENTRY_FRAME;
   }
-
   bool is_interpreter_frame() const {
     return type() == INTERPRETER_FRAME;
   }
-
   bool is_shark_frame() const {
     return type() == SHARK_FRAME;
   }
-
   bool is_deoptimizer_frame() const {
     return type() == DEOPTIMIZER_FRAME;
   }
@@ -176,17 +167,14 @@ class ZeroFrame {
     assert(is_entry_frame(), "should be");
     return (EntryFrame *) this;
   }
-
   InterpreterFrame *as_interpreter_frame() const {
     assert(is_interpreter_frame(), "should be");
     return (InterpreterFrame *) this;
   }
-
   SharkFrame *as_shark_frame() const {
     assert(is_shark_frame(), "should be");
     return (SharkFrame *) this;
   }
-
   DeoptimizerFrame *as_deoptimizer_frame() const {
     assert(is_deoptimizer_frame(), "should be");
     return (DeoptimizerFrame *) this;
