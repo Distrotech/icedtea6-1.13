@@ -45,7 +45,7 @@
     _top_zero_frame = frame;
   }
   void pop_zero_frame() {
-    _zero_stack.set_sp((intptr_t *) _top_zero_frame + 1);
+    zero_stack()->set_sp((intptr_t *) _top_zero_frame + 1);
     _top_zero_frame = *(ZeroFrame **) _top_zero_frame;
   }
 
