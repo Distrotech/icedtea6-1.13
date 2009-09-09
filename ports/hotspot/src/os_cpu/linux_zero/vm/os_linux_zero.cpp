@@ -36,7 +36,18 @@ frame os::get_sender_for_C_frame(frame* fr) {
 }
 
 frame os::current_frame() {
-  Unimplemented();
+  // The only thing that calls this is the stack printing code in
+  // VMError::report:
+  //   - Step 110 (printing stack bounds) uses the sp in the frame
+  //     to determine the amount of free space on the stack.  We
+  //     set the sp to a close approximation of the real value in
+  //     order to allow this step to complete.
+  //   - Step 120 (printing native stack) tries to walk the stack.
+  //     The frame we create has a NULL pc, which is ignored as an
+  //     invalid frame.
+  frame dummy = frame();
+  dummy.set_sp((intptr_t *) current_stack_pointer());
+  return dummy;
 }
 
 char* os::non_memory_address_word() {

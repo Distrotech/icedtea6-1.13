@@ -57,4 +57,11 @@ class EntryFrame : public ZeroFrame {
   JavaCallWrapper *call_wrapper() const {
     return (JavaCallWrapper *) value_of_word(call_wrapper_off);
   }
+
+ public:
+  void identify_word(int   frame_index,
+                     int   offset,
+                     char* fieldbuf,
+                     char* valuebuf,
+                     int   buflen) const;
 };

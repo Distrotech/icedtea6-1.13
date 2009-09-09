@@ -70,4 +70,11 @@ class SharkFrame : public ZeroFrame {
   methodOop method() const {
     return (methodOop) value_of_word(method_off);
   }
+
+ public:
+  void identify_word(int   frame_index,
+                     int   offset,
+                     char* fieldbuf,
+                     char* valuebuf,
+                     int   buflen) const;
 };

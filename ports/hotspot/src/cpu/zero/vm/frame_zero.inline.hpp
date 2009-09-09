@@ -1,6 +1,6 @@
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
- * Copyright 2007, 2008 Red Hat, Inc.
+ * Copyright 2007, 2008, 2009 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,13 +32,15 @@
 
 inline frame::frame() {
   _sp = NULL;
+  _fp = NULL;
   _pc = NULL;
   _cb = NULL;
   _deopt_state = unknown;
 }
 
-inline frame::frame(intptr_t* sp) {
+inline frame::frame(intptr_t* sp, intptr_t* fp) {
   _sp = sp;
+  _fp = fp;
   switch (zeroframe()->type()) {
   case ZeroFrame::ENTRY_FRAME:
     _pc = StubRoutines::call_stub_return_pc();

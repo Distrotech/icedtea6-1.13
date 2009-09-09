@@ -179,4 +179,19 @@ class ZeroFrame {
     assert(is_deoptimizer_frame(), "should be");
     return (DeoptimizerFrame *) this;
   }
+
+ public:
+  void identify_word(int   frame_index,
+                     int   offset,
+                     char* fieldbuf,
+                     char* valuebuf,
+                     int   buflen) const;
+
+ protected:
+  void identify_vp_word(int       frame_index,
+                        intptr_t* addr,
+                        intptr_t* monitor_base,
+                        intptr_t* stack_base,
+                        char*     fieldbuf,
+                        int       buflen) const;
 };

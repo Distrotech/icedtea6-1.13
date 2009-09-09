@@ -65,5 +65,12 @@ class InterpreterFrame : public ZeroFrame {
   interpreterState interpreter_state() const {
     return (interpreterState) addr_of_word(istate_off);
   }
+
+ public:
+  void identify_word(int   frame_index,
+                     int   offset,
+                     char* fieldbuf,
+                     char* valuebuf,
+                     int   buflen) const;
 };
 #endif // CC_INTERP

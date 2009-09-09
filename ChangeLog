@@ -1,3 +1,50 @@
+2009-09-09  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/src/cpu/zero/vm/stack_zero.hpp
+	(ZeroFrame::identify_word): New method.
+	(ZeroFrame::identify_vp_word): Likewise.
+	
+	* ports/hotspot/src/cpu/zero/vm/entryFrame_zero.hpp
+	(EntryFrame::identify_word): New method.
+	* ports/hotspot/src/cpu/zero/vm/interpreterFrame_zero.hpp
+	(InterpreterFrame::identify_word): New method.
+	* ports/hotspot/src/cpu/zero/vm/sharkFrame_zero.hpp
+	(SharkFrame::identify_word): New method.
+	* ports/hotspot/src/cpu/zero/vm/deoptimizerFrame_zero.hpp
+	(DeoptimizerFrame::identify_word): Likewise.
+
+	* ports/hotspot/src/cpu/zero/vm/frame_zero.hpp
+	(frame::frame): Added frame pointer argument.
+	(frame::_fp): New field.
+	(frame::fp): Return the above, instead of a dummy value.
+	(frame::zero_print_on_error): New method.
+	* ports/hotspot/src/cpu/zero/vm/frame_zero.inline.hpp
+	(frame::frame): Initialize frame pointer.
+	* ports/hotspot/src/cpu/zero/vm/frame_zero.cpp
+	(frame::sender_for_entry_frame): Pass frame pointer.
+	(frame::sender_for_interpreter_frame): Likewise.
+	(frame::sender_for_compiled_frame): Likewise.
+	(frame::sender_for_deoptimizer_frame): Likewise.
+	(frame::zero_print_on_error): New method.
+	(ZeroFrame::identify_word): Likewise.
+	(EntryFrame::identify_word): Likewise.
+	(InterpreterFrame::identify_word): Likewise.
+	(SharkFrame::identify_word): Likewise.
+	(ZeroFrame::identify_vp_word): Likewise.
+	(DeoptimizerFrame::identify_word): Likewise.
+
+	* ports/hotspot/src/os_cpu/linux_zero/vm/thread_linux_zero.hpp
+	(JavaThread::pd_last_frame): Pass frame pointer.
+
+	* ports/hotspot/src/os_cpu/linux_zero/vm/os_linux_zero.cpp
+	(os::current_frame): Implemented.
+	
+	* patches/icedtea-zero.patch
+	(VMError::report): Replace stack printer code.
+	(hotspot/src/share/vm/includeDB_core): Updated.
+
+	* ports/hotspot/src/cpu/zero/vm/stackPrinter_zero.hpp: Removed.
+	
 2009-09-08  Gary Benson  <gbenson@redhat.com>
 
 	* ports/hotspot/src/cpu/zero/vm/stack_zero.hpp: Whitespace changes.
