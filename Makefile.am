@@ -627,7 +627,8 @@ ICEDTEA_PATCHES = \
 	patches/security/icedtea-6824440.patch \
 	patches/security/icedtea-6830335.patch \
 	patches/security/icedtea-6845701.patch \
-	patches/security/icedtea-6813167.patch
+	patches/security/icedtea-6813167.patch \
+	patches/icedtea-jar-misc.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
