@@ -26,7 +26,7 @@
 // Inline functions for memory copy and fill.
 
 static void pd_conjoint_words(HeapWord* from, HeapWord* to, size_t count) {
-  (void)memmove(to, from, count * HeapWordSize);
+  memmove(to, from, count * HeapWordSize);
 }
 
 static void pd_disjoint_words(HeapWord* from, HeapWord* to, size_t count) {
@@ -41,7 +41,7 @@ static void pd_disjoint_words(HeapWord* from, HeapWord* to, size_t count) {
   case 1:  to[0] = from[0];
   case 0:  break;
   default:
-    (void)memcpy(to, from, count * HeapWordSize);
+    memcpy(to, from, count * HeapWordSize);
     break;
   }
 }
@@ -70,7 +70,7 @@ static void pd_disjoint_words_atomic(HeapWord* from,
 static void pd_aligned_conjoint_words(HeapWord* from,
                                       HeapWord* to,
                                       size_t count) {
-  (void)memmove(to, from, count * HeapWordSize);
+  memmove(to, from, count * HeapWordSize);
 }
 
 static void pd_aligned_disjoint_words(HeapWord* from,
@@ -80,11 +80,11 @@ static void pd_aligned_disjoint_words(HeapWord* from,
 }
 
 static void pd_conjoint_bytes(void* from, void* to, size_t count) {
-  (void)memmove(to, from, count);
+  memmove(to, from, count);
 }
 
 static void pd_conjoint_bytes_atomic(void* from, void* to, size_t count) {
-  (void)memmove(to, from, count);
+  memmove(to, from, count);
 }
 
 static void pd_conjoint_jshorts_atomic(jshort* from, jshort* to, size_t count) {
@@ -109,23 +109,33 @@ static void pd_conjoint_oops_atomic(oop* from, oop* to, size_t count) {
 #endif // _LP64
 }
 
-static void pd_arrayof_conjoint_bytes(HeapWord* from, HeapWord* to, size_t count) {
+static void pd_arrayof_conjoint_bytes(HeapWord* from,
+                                      HeapWord* to,
+                                      size_t    count) {
   _Copy_arrayof_conjoint_bytes(from, to, count);
 }
 
-static void pd_arrayof_conjoint_jshorts(HeapWord* from, HeapWord* to, size_t count) {
+static void pd_arrayof_conjoint_jshorts(HeapWord* from,
+                                        HeapWord* to,
+                                        size_t    count) {
   _Copy_arrayof_conjoint_jshorts(from, to, count);
 }
 
-static void pd_arrayof_conjoint_jints(HeapWord* from, HeapWord* to, size_t count) {
+static void pd_arrayof_conjoint_jints(HeapWord* from,
+                                      HeapWord* to,
+                                      size_t    count) {
   _Copy_arrayof_conjoint_jints(from, to, count);
 }
 
-static void pd_arrayof_conjoint_jlongs(HeapWord* from, HeapWord* to, size_t count) {
+static void pd_arrayof_conjoint_jlongs(HeapWord* from,
+                                       HeapWord* to,
+                                       size_t    count) {
   _Copy_arrayof_conjoint_jlongs(from, to, count);
 }
 
-static void pd_arrayof_conjoint_oops(HeapWord* from, HeapWord* to, size_t count) {
+static void pd_arrayof_conjoint_oops(HeapWord* from,
+                                     HeapWord* to,
+                                     size_t    count) {
 #ifdef _LP64
   assert(BytesPerLong == BytesPerOop, "jlongs and oops must be the same size");
   _Copy_arrayof_conjoint_jlongs(from, to, count);
@@ -149,12 +159,14 @@ static void pd_fill_to_words(HeapWord* tohw, size_t count, juint value) {
   }
 }
 
-static void pd_fill_to_aligned_words(HeapWord* tohw, size_t count, juint value) {
+static void pd_fill_to_aligned_words(HeapWord* tohw,
+                                     size_t    count,
+                                     juint     value) {
   pd_fill_to_words(tohw, count, value);
 }
 
 static void pd_fill_to_bytes(void* to, size_t count, jubyte value) {
-  (void)memset(to, value, count);
+  memset(to, value, count);
 }
 
 static void pd_zero_to_words(HeapWord* tohw, size_t count) {
@@ -162,5 +174,5 @@ static void pd_zero_to_words(HeapWord* tohw, size_t count) {
 }
 
 static void pd_zero_to_bytes(void* to, size_t count) {
-  (void)memset(to, 0, count);
+  memset(to, 0, count);
 }

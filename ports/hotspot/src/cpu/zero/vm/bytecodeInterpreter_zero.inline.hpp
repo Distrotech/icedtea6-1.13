@@ -25,15 +25,33 @@
 
 // Inline interpreter functions for zero
 
-inline jfloat BytecodeInterpreter::VMfloatAdd(jfloat op1, jfloat op2) { return op1 + op2; }
-inline jfloat BytecodeInterpreter::VMfloatSub(jfloat op1, jfloat op2) { return op1 - op2; }
-inline jfloat BytecodeInterpreter::VMfloatMul(jfloat op1, jfloat op2) { return op1 * op2; }
-inline jfloat BytecodeInterpreter::VMfloatDiv(jfloat op1, jfloat op2) { return op1 / op2; }
-inline jfloat BytecodeInterpreter::VMfloatRem(jfloat op1, jfloat op2) { return fmod(op1, op2); }
+inline jfloat BytecodeInterpreter::VMfloatAdd(jfloat op1, jfloat op2) {
+  return op1 + op2;
+}
 
-inline jfloat BytecodeInterpreter::VMfloatNeg(jfloat op) { return -op; }
+inline jfloat BytecodeInterpreter::VMfloatSub(jfloat op1, jfloat op2) {
+  return op1 - op2;
+}
 
-inline int32_t BytecodeInterpreter::VMfloatCompare(jfloat op1, jfloat op2, int32_t direction) {
+inline jfloat BytecodeInterpreter::VMfloatMul(jfloat op1, jfloat op2) {
+  return op1 * op2;
+}
+
+inline jfloat BytecodeInterpreter::VMfloatDiv(jfloat op1, jfloat op2) {
+  return op1 / op2;
+}
+
+inline jfloat BytecodeInterpreter::VMfloatRem(jfloat op1, jfloat op2) {
+  return fmod(op1, op2);
+}
+
+inline jfloat BytecodeInterpreter::VMfloatNeg(jfloat op) {
+  return -op;
+}
+
+inline int32_t BytecodeInterpreter::VMfloatCompare(jfloat  op1,
+                                                   jfloat  op2,
+                                                   int32_t direction) {
   return ( op1 < op2 ? -1 :
                op1 > op2 ? 1 :
                    op1 == op2 ? 0 :
@@ -41,7 +59,8 @@ inline int32_t BytecodeInterpreter::VMfloatCompare(jfloat op1, jfloat op2, int32
 
 }
 
-inline void BytecodeInterpreter::VMmemCopy64(uint32_t to[2], const uint32_t from[2]) {
+inline void BytecodeInterpreter::VMmemCopy64(uint32_t       to[2],
+                                             const uint32_t from[2]) {
   *(uint64_t *) to = *(uint64_t *) from;
 }
 
@@ -182,7 +201,9 @@ inline jdouble BytecodeInterpreter::VMdoubleSub(jdouble op1, jdouble op2) {
   return op1 - op2;
 }
 
-inline int32_t BytecodeInterpreter::VMdoubleCompare(jdouble op1, jdouble op2, int32_t direction) {
+inline int32_t BytecodeInterpreter::VMdoubleCompare(jdouble op1,
+                                                    jdouble op2,
+                                                    int32_t direction) {
   return ( op1 < op2 ? -1 :
                op1 > op2 ? 1 :
                    op1 == op2 ? 0 :

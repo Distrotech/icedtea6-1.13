@@ -23,23 +23,21 @@
  *
  */
 
-public:
+ public:
   // Each arch must define reset, save, restore
   // These are used by objects that only care about:
   //  1 - initializing a new state (thread creation, javaCalls)
   //  2 - saving a current state (javaCalls)
   //  3 - restoring an old state (javaCalls)
 
-  void clear()
-  {
+  void clear() {
     // clearing _last_Java_sp must be first
     _last_Java_sp = NULL;
     // fence?
     _last_Java_pc = NULL;
   }
 
-  void copy(JavaFrameAnchor* src)
-  {
+  void copy(JavaFrameAnchor* src) {
     // In order to make sure the transition state is valid for "this"
     // We must clear _last_Java_sp before copying the rest of the new
     // data
@@ -57,22 +55,18 @@ public:
     _last_Java_sp = src->_last_Java_sp;
   }
 
-  bool walkable()
-  {
+  bool walkable() {
     return true;
   }
 
-  void make_walkable(JavaThread* thread)
-  {
+  void make_walkable(JavaThread* thread) {
     // nothing to do
   }
 
-  intptr_t* last_Java_sp() const
-  {
+  intptr_t* last_Java_sp() const {
     return _last_Java_sp;
   }
 
-  void set_last_Java_sp(intptr_t* sp)
-  {
+  void set_last_Java_sp(intptr_t* sp) {
     _last_Java_sp = sp;
   }

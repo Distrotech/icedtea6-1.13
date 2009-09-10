@@ -34,8 +34,7 @@ class DeoptimizerFrame : public ZeroFrame {
   friend class ZeroStackPrinter;
 
  private:
-  DeoptimizerFrame() : ZeroFrame()
-  {
+  DeoptimizerFrame() : ZeroFrame() {
     ShouldNotCallThis();
   }
 
@@ -46,4 +45,11 @@ class DeoptimizerFrame : public ZeroFrame {
 
  public:
   static DeoptimizerFrame *build(ZeroStack* stack);
+
+ public:
+  void identify_word(int   frame_index,
+                     int   offset,
+                     char* fieldbuf,
+                     char* valuebuf,
+                     int   buflen) const;
 };

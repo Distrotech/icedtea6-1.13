@@ -33,13 +33,11 @@ class ZeroStack {
   ZeroStack()
     : _base(NULL), _top(NULL), _sp(NULL) {}
 
-  bool needs_setup() const
-  {
+  bool needs_setup() const {
     return _base == NULL;
   }
 
-  void setup(void *mem, size_t size)
-  {
+  void setup(void *mem, size_t size) {
     assert(needs_setup(), "already set up");
     assert(!(size & WordAlignmentMask), "unaligned");
 
@@ -47,9 +45,7 @@ class ZeroStack {
     _top  = _base + (size >> LogBytesPerWord);
     _sp   = _top;
   }
-
-  void teardown()
-  {
+  void teardown() {
     assert(!needs_setup(), "not set up");
     assert(_sp == _top, "stuff on stack at teardown");
 
@@ -58,54 +54,41 @@ class ZeroStack {
     _sp   = NULL;
   }
 
-  intptr_t *sp() const
-  {
+  intptr_t *sp() const {
     return _sp;
   }
-
-  void set_sp(intptr_t *new_sp)
-  {
+  void set_sp(intptr_t *new_sp) {
     assert(_top >= new_sp && new_sp >= _base, "bad stack pointer");
     _sp = new_sp;
   }
 
-  int available_words() const
-  {
+  int available_words() const {
     return _sp - _base;
   }
 
-  void push(intptr_t value)
-  {
+  void push(intptr_t value) {
     assert(_sp > _base, "stack overflow");
     *(--_sp) = value;
   }
-
-  intptr_t pop()
-  {
+  intptr_t pop() {
     assert(_sp < _top, "stack underflow");
     return *(_sp++);
   }
 
-  void *alloc(size_t size)
-  {
+  void *alloc(size_t size) {
     int count = align_size_up(size, wordSize) >> LogBytesPerWord;
     assert(count <= available_words(), "stack overflow");
     return _sp -= count;
   }
 
  public:
-  static ByteSize base_offset()
-  {
+  static ByteSize base_offset() {
     return byte_offset_of(ZeroStack, _base);
   }
-
-  static ByteSize top_offset()
-  {
+  static ByteSize top_offset() {
     return byte_offset_of(ZeroStack, _top);
   }
-
-  static ByteSize sp_offset()
-  {
+  static ByteSize sp_offset() {
     return byte_offset_of(ZeroStack, _sp);
   } 
 };
@@ -130,8 +113,7 @@ class ZeroFrame {
   friend class ZeroStackPrinter;
 
  protected:
-  ZeroFrame()
-  {
+  ZeroFrame() {
     ShouldNotCallThis();
   }
 
@@ -149,71 +131,67 @@ class ZeroFrame {
   };
 
  protected:
-  intptr_t *addr_of_word(int offset) const
-  {
+  intptr_t *addr_of_word(int offset) const {
     return (intptr_t *) this - offset;
   }
-
-  intptr_t value_of_word(int offset) const
-  {
+  intptr_t value_of_word(int offset) const {
     return *addr_of_word(offset);
   }
   
  public:
-  ZeroFrame *next() const
-  {
+  ZeroFrame *next() const {
     return (ZeroFrame *) value_of_word(next_frame_off);
   }
 
  protected:
-  FrameType type() const
-  {
+  FrameType type() const {
     return (FrameType) value_of_word(frame_type_off);
   }
 
  public:
-  bool is_entry_frame() const
-  {
+  bool is_entry_frame() const {
     return type() == ENTRY_FRAME;
   }
-
-  bool is_interpreter_frame() const
-  {
+  bool is_interpreter_frame() const {
     return type() == INTERPRETER_FRAME;
   }
-
-  bool is_shark_frame() const
-  {
+  bool is_shark_frame() const {
     return type() == SHARK_FRAME;
   }
-
-  bool is_deoptimizer_frame() const
-  {
+  bool is_deoptimizer_frame() const {
     return type() == DEOPTIMIZER_FRAME;
   }
 
  public:
-  EntryFrame *as_entry_frame() const
-  {
+  EntryFrame *as_entry_frame() const {
     assert(is_entry_frame(), "should be");
     return (EntryFrame *) this;
   }
-
-  InterpreterFrame *as_interpreter_frame() const
-  {
+  InterpreterFrame *as_interpreter_frame() const {
     assert(is_interpreter_frame(), "should be");
     return (InterpreterFrame *) this;
   }
-
-  SharkFrame *as_shark_frame() const
-  {
+  SharkFrame *as_shark_frame() const {
     assert(is_shark_frame(), "should be");
     return (SharkFrame *) this;
   }
-
-  DeoptimizerFrame *as_deoptimizer_frame() const
-  {
+  DeoptimizerFrame *as_deoptimizer_frame() const {
     assert(is_deoptimizer_frame(), "should be");
     return (DeoptimizerFrame *) this;
   }
+
+ public:
+  void identify_word(int   frame_index,
+                     int   offset,
+                     char* fieldbuf,
+                     char* valuebuf,
+                     int   buflen) const;
+
+ protected:
+  void identify_vp_word(int       frame_index,
+                        intptr_t* addr,
+                        intptr_t* monitor_base,
+                        intptr_t* stack_base,
+                        char*     fieldbuf,
+                        int       buflen) const;
 };

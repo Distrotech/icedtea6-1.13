@@ -41,8 +41,7 @@
  *
  */
  
-static inline int __m68k_cmpxchg(int oldval, int newval, volatile int *ptr)
-{ 
+static inline int __m68k_cmpxchg(int oldval, int newval, volatile int *ptr) {
   int ret;
   __asm __volatile ("cas%.l %0,%2,%1"
                    : "=d" (ret), "+m" (*(ptr))
@@ -55,10 +54,8 @@ static inline int __m68k_cmpxchg(int oldval, int newval, volatile int *ptr)
    `*PTR' before the operation.*/
 static inline int m68k_compare_and_swap(volatile int *ptr,
                                         int oldval,
-                                        int newval) 
-{
-  for (;;)
-    {
+                                        int newval) {
+  for (;;) {
       int prev = *ptr;
       if (prev != oldval)
 	return prev;
@@ -72,10 +69,8 @@ static inline int m68k_compare_and_swap(volatile int *ptr,
 }
 
 /* Atomically add an int to memory.  */
-static inline int m68k_add_and_fetch(volatile int *ptr, int add_value)
-{
-  for (;;)
-    {
+static inline int m68k_add_and_fetch(volatile int *ptr, int add_value) {
+  for (;;) {
       // Loop until success.
 
       int prev = *ptr;
@@ -87,10 +82,8 @@ static inline int m68k_add_and_fetch(volatile int *ptr, int add_value)
 
 /* Atomically write VALUE into `*PTR' and returns the previous
    contents of `*PTR'.  */
-static inline int m68k_lock_test_and_set(volatile int *ptr, int newval)
-{
-  for (;;)
-    {
+static inline int m68k_lock_test_and_set(volatile int *ptr, int newval) {
+  for (;;) {
       // Loop until success.
       int prev = *ptr;
 
@@ -122,10 +115,8 @@ typedef int (__kernel_cmpxchg_t)(int oldval, int newval, volatile int *ptr);
    `*PTR' before the operation.*/
 static inline int arm_compare_and_swap(volatile int *ptr,
                                        int oldval,
-                                       int newval) 
-{
-  for (;;)
-    {
+                                       int newval) {
+  for (;;) {
       int prev = *ptr;
       if (prev != oldval)
 	return prev;
@@ -139,10 +130,8 @@ static inline int arm_compare_and_swap(volatile int *ptr,
 }
 
 /* Atomically add an int to memory.  */
-static inline int arm_add_and_fetch(volatile int *ptr, int add_value)
-{
-  for (;;)
-    {
+static inline int arm_add_and_fetch(volatile int *ptr, int add_value) {
+  for (;;) {
       // Loop until a __kernel_cmpxchg succeeds.
 
       int prev = *ptr;
@@ -154,10 +143,8 @@ static inline int arm_add_and_fetch(volatile int *ptr, int add_value)
 
 /* Atomically write VALUE into `*PTR' and returns the previous
    contents of `*PTR'.  */
-static inline int arm_lock_test_and_set(volatile int *ptr, int newval)
-{
-  for (;;)
-    {
+static inline int arm_lock_test_and_set(volatile int *ptr, int newval) {
+  for (;;) {
       // Loop until a __kernel_cmpxchg succeeds.
       int prev = *ptr;
 
@@ -167,18 +154,15 @@ static inline int arm_lock_test_and_set(volatile int *ptr, int newval)
 }
 #endif // ARM
 
-inline void Atomic::store(jint store_value, volatile jint* dest)
-{
+inline void Atomic::store(jint store_value, volatile jint* dest) {
   *dest = store_value;
 }
 
-inline void Atomic::store_ptr(intptr_t store_value, intptr_t* dest)
-{
+inline void Atomic::store_ptr(intptr_t store_value, intptr_t* dest) {
   *dest = store_value;
 }
 
-inline jint Atomic::add(jint add_value, volatile jint* dest)
-{
+inline jint Atomic::add(jint add_value, volatile jint* dest) {
 #ifdef ARM
   return arm_add_and_fetch(dest, add_value);
 #else
@@ -190,8 +174,7 @@ inline jint Atomic::add(jint add_value, volatile jint* dest)
 #endif // ARM
 }
 
-inline intptr_t Atomic::add_ptr(intptr_t add_value, volatile intptr_t* dest)
-{
+inline intptr_t Atomic::add_ptr(intptr_t add_value, volatile intptr_t* dest) {
 #ifdef ARM
   return arm_add_and_fetch(dest, add_value);
 #else
@@ -203,43 +186,35 @@ inline intptr_t Atomic::add_ptr(intptr_t add_value, volatile intptr_t* dest)
 #endif // ARM
 }
 
-inline void* Atomic::add_ptr(intptr_t add_value, volatile void* dest)
-{
+inline void* Atomic::add_ptr(intptr_t add_value, volatile void* dest) {
   return (void *) add_ptr(add_value, (volatile intptr_t *) dest);
 }
 
-inline void Atomic::inc(volatile jint* dest)
-{
+inline void Atomic::inc(volatile jint* dest) {
   add(1, dest);
 }
 
-inline void Atomic::inc_ptr(volatile intptr_t* dest)
-{
+inline void Atomic::inc_ptr(volatile intptr_t* dest) {
   add_ptr(1, dest);
 }
 
-inline void Atomic::inc_ptr(volatile void* dest)
-{
+inline void Atomic::inc_ptr(volatile void* dest) {
   add_ptr(1, dest);
 }
 
-inline void Atomic::dec(volatile jint* dest)
-{
+inline void Atomic::dec(volatile jint* dest) {
   add(-1, dest);
 }
 
-inline void Atomic::dec_ptr(volatile intptr_t* dest)
-{
+inline void Atomic::dec_ptr(volatile intptr_t* dest) {
   add_ptr(-1, dest);
 }
 
-inline void Atomic::dec_ptr(volatile void* dest)
-{
+inline void Atomic::dec_ptr(volatile void* dest) {
   add_ptr(-1, dest);
 }
 
-inline jint Atomic::xchg(jint exchange_value, volatile jint* dest)
-{
+inline jint Atomic::xchg(jint exchange_value, volatile jint* dest) {
 #ifdef ARM
   return arm_lock_test_and_set(dest, exchange_value);
 #else
@@ -268,8 +243,7 @@ inline intptr_t Atomic::xchg_ptr(intptr_t exchange_value,
 #endif // ARM
 }
 
-inline void* Atomic::xchg_ptr(void* exchange_value, volatile void* dest)
-{
+inline void* Atomic::xchg_ptr(void* exchange_value, volatile void* dest) {
   return (void *) xchg_ptr((intptr_t) exchange_value,
                            (volatile intptr_t*) dest);
 }

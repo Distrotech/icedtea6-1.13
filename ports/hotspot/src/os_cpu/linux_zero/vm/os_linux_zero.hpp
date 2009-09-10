@@ -32,8 +32,7 @@
   static bool register_code_area(char *low, char *high) { return true; }
 
   // Atomically copy 64 bits of data
-  static void atomic_copy64(volatile void *src, volatile void *dst)
-  {
+  static void atomic_copy64(volatile void *src, volatile void *dst) {
 #if defined(PPC) && !defined(_LP64)
     double tmp;
     asm volatile ("lfd  %0, 0(%1)\n"

@@ -1,6 +1,6 @@
 /*
  * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
- * Copyright 2007 Red Hat, Inc.
+ * Copyright 2007, 2009 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,11 +26,7 @@
 #include "incls/_precompiled.incl"
 #include "incls/_icache_zero.cpp.incl"
 
-
 void ICacheStubGenerator::generate_icache_flush(
   ICache::flush_icache_stub_t* flush_icache_stub) {
-
-  StubCodeMark mark(this, "ICache", "flush_icache_stub");
-
-  *flush_icache_stub = (ICache::flush_icache_stub_t)UnimplementedStub();
+  Unimplemented();
 }

@@ -100,24 +100,6 @@
    tty->print_cr("self_link: " INTPTR_FORMAT, (uintptr_t) this->_self_link);
  }
  
---- openjdk/hotspot/src/share/vm/runtime/icache.cpp.orig	2008-07-27 08:37:02.000000000 +0000
-+++ openjdk/hotspot/src/share/vm/runtime/icache.cpp	2008-07-27 08:38:13.000000000 +0000
-@@ -78,6 +78,7 @@
- }
- 
- void AbstractICache::invalidate_range(address start, int nbytes) {
-+#ifndef ZERO
-   static bool firstTime = true;
-   if (firstTime) {
-     guarantee(start == CAST_FROM_FN_PTR(address, _flush_icache_stub),
-@@ -97,6 +98,7 @@
-   }
-   call_flush_stub(start, round_to(nbytes, ICache::line_size) >>
- 		         ICache::log2_line_size);
-+#endif
- }
- 
- // For init.cpp
 --- openjdk/hotspot/src/share/vm/runtime/mutex.hpp.orig	2008-07-27 08:37:02.000000000 +0000
 +++ openjdk/hotspot/src/share/vm/runtime/mutex.hpp	2008-07-27 08:38:13.000000000 +0000
 @@ -61,18 +61,10 @@
@@ -162,43 +144,48 @@
  
 --- openjdk/hotspot/src/share/vm/utilities/vmError.cpp.orig	2008-07-27 08:37:02.000000000 +0000
 +++ openjdk/hotspot/src/share/vm/utilities/vmError.cpp	2008-07-27 08:38:13.000000000 +0000
-@@ -25,6 +25,10 @@
- # include "incls/_precompiled.incl"
- # include "incls/_vmError.cpp.incl"
- 
-+# ifdef ZERO
-+# include <stackPrinter_zero.hpp>
-+# endif // ZERO
-+
- // List of environment variables that should be reported in error log file.
- const char *env_list[] = {
-   // All platforms
-@@ -392,6 +397,7 @@
-        st->cr();
-      }
- 
-+#ifndef ZERO
-   STEP(110, "(printing stack bounds)" )
- 
-      if (_verbose) {
-@@ -449,11 +455,16 @@
-           st->cr();
-        }
-      }
-+#endif // !ZERO
- 
-   STEP(130, "(printing Java stack)" )
+@@ -462,6 +462,40 @@
  
       if (_verbose && _thread && _thread->is_Java_thread()) {
         JavaThread* jt = (JavaThread*)_thread;
 +#ifdef ZERO
-+       st->print_cr("Java stack:");
-+       ZeroStackPrinter(st, buf, sizeof(buf)).print(jt);
++       if (jt->zero_stack()->sp() && jt->top_zero_frame()) {
++         // StackFrameStream uses the frame anchor, which may not have
++         // been set up.  This can be done at any time in Zero, however,
++         // so if it hasn't been set up then we just set it up now and
++         // clear it again when we're done.
++         bool has_last_Java_frame = jt->has_last_Java_frame();
++         if (!has_last_Java_frame)
++           jt->set_last_Java_frame();
++         st->print("Java frames:");
++  
++         // If the top frame is a Shark frame and the frame anchor isn't
++         // set up then it's possible that the information in the frame
++         // is garbage: it could be from a previous decache, or it could
++         // simply have never been written.  So we print a warning...
++         StackFrameStream sfs(jt);
++         if (!has_last_Java_frame && !sfs.is_done()) {
++           if (sfs.current()->zeroframe()->is_shark_frame()) {
++             st->print(" (TOP FRAME MAY BE JUNK)");
++           }
++         }
++         st->cr();
++  
++         // Print the frames
++         for(int i = 0; !sfs.is_done(); sfs.next(), i++) {
++           sfs.current()->zero_print_on_error(i, st, buf, sizeof(buf));
++           st->cr();
++         }
++  
++         // Reset the frame anchor if necessary
++         if (!has_last_Java_frame)
++           jt->reset_last_Java_frame();
++       }
 +#else
         if (jt->has_last_Java_frame()) {
           st->print_cr("Java frames: (J=compiled Java code, j=interpreted, Vv=VM code)");
           for(StackFrameStream sfs(jt); !sfs.is_done(); sfs.next()) {
-@@ -461,6 +472,7 @@
+@@ -469,6 +503,7 @@
             st->cr();
           }
         }
@@ -206,21 +193,7 @@
       }
  
    STEP(140, "(printing VM operation)" )
-@@ -472,6 +484,14 @@ void VMError::report(outputStream* st) {
-           op->print_on_error(st);
-           st->cr();
-           st->cr();
-+#ifdef ZERO
-+          if (op->calling_thread()->is_Java_thread()) {
-+            st->print_cr("Calling thread's Java stack:");
-+            ZeroStackPrinter(st, buf, sizeof(buf)).print(
-+              (JavaThread *) op->calling_thread());
-+            st->cr();
-+          }
-+#endif // ZERO
-         }
-      }
- 
+
 Index: openjdk/hotspot/src/share/vm/runtime/jniHandles.cpp
 ===================================================================
 --- openjdk/hotspot/src/share/vm/runtime/jniHandles.cpp.orig	2009-06-10 11:30:46.000000000 +0200
@@ -237,3 +210,20 @@ Index: openjdk/hotspot/src/share/vm/runtime/jniHandles.cpp
  }
  
  
+--- openjdk/hotspot/src/share/vm/includeDB_core	2009-09-08 13:22:25.000000000 +0100
++++ openjdk/hotspot/src/share/vm/includeDB_core	2009-09-08 13:41:57.000000000 +0100
+@@ -1655,12 +1655,14 @@
+ frame_<arch>.cpp                        frame.inline.hpp
+ frame_<arch>.cpp                        handles.inline.hpp
+ frame_<arch>.cpp                        interpreter.hpp
++frame_<arch>.cpp                        interpreterRuntime.hpp
+ frame_<arch>.cpp                        javaCalls.hpp
+ frame_<arch>.cpp                        markOop.hpp
+ frame_<arch>.cpp                        methodOop.hpp
+ frame_<arch>.cpp                        monitorChunk.hpp
+ frame_<arch>.cpp                        oop.inline.hpp
+ frame_<arch>.cpp                        resourceArea.hpp
++frame_<arch>.cpp                        scopeDesc.hpp
+ frame_<arch>.cpp                        signature.hpp
+ frame_<arch>.cpp                        stubCodeGenerator.hpp
+ frame_<arch>.cpp                        stubRoutines.hpp

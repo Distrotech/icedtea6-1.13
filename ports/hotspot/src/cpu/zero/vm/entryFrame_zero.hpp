@@ -38,8 +38,7 @@ class EntryFrame : public ZeroFrame {
   friend class ZeroStackPrinter;
 
  private:
-  EntryFrame() : ZeroFrame()
-  {
+  EntryFrame() : ZeroFrame() {
     ShouldNotCallThis();
   }
 
@@ -55,8 +54,14 @@ class EntryFrame : public ZeroFrame {
                            int              parameter_words,
                            JavaCallWrapper* call_wrapper);
  public:
-  JavaCallWrapper *call_wrapper() const
-  {
+  JavaCallWrapper *call_wrapper() const {
     return (JavaCallWrapper *) value_of_word(call_wrapper_off);
   }
+
+ public:
+  void identify_word(int   frame_index,
+                     int   offset,
+                     char* fieldbuf,
+                     char* valuebuf,
+                     int   buflen) const;
 };

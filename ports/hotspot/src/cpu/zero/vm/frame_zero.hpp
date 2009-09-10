@@ -23,25 +23,26 @@
  *
  */
 
-  // A frame represents a physical stack frame (an activation).  Frames
-  // can be C or Java frames, and the Java frames can be interpreted or
-  // compiled.  In contrast, vframes represent source-level activations,
-  // so that one physical frame can correspond to multiple source level
-  // frames because of inlining.  A frame is comprised of {pc, sp}
+// A frame represents a physical stack frame on the Zero stack.
 
  public:
   enum {
     pc_return_offset = 0
   };
 
+  // Constructor
  public:
-  // Constructors
-  frame(intptr_t* sp);
+  frame(intptr_t* sp, intptr_t* fp);
 
-  // accessors for the instance variables
-  intptr_t* fp() const
-  {
-    return (intptr_t *) -1;
+  // The sp of a Zero frame is the address of the highest word in
+  // that frame.  We keep track of the lowest address too, so the
+  // boundaries of the frame are available for debug printing.
+ private:
+  intptr_t* _fp;
+
+ public:
+  intptr_t* fp() const {
+    return _fp;
   }
 
 #ifdef CC_INTERP
@@ -49,21 +50,17 @@
 #endif // CC_INTERP
 
  public:
-  const ZeroFrame *zeroframe() const
-  {
+  const ZeroFrame *zeroframe() const {
     return (ZeroFrame *) sp();
   }
 
-  const EntryFrame *zero_entryframe() const
-  {
+  const EntryFrame *zero_entryframe() const {
     return zeroframe()->as_entry_frame();
   }
-  const InterpreterFrame *zero_interpreterframe() const
-  {
+  const InterpreterFrame *zero_interpreterframe() const {
     return zeroframe()->as_interpreter_frame();
   }
-  const SharkFrame *zero_sharkframe() const
-  {
+  const SharkFrame *zero_sharkframe() const {
     return zeroframe()->as_shark_frame();
   }
 
@@ -72,3 +69,9 @@
 
  public:
   frame sender_for_deoptimizer_frame(RegisterMap* map) const;  
+
+ public:
+  void zero_print_on_error(int           index,
+                           outputStream* st,
+                           char*         buf,
+                           int           buflen) const;

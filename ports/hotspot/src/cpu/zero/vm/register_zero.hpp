@@ -46,19 +46,16 @@ class RegisterImpl : public AbstractRegisterImpl {
   VMReg as_VMReg();
 
   // derived registers, offsets, and addresses
-  Register successor() const
-  {
+  Register successor() const {
     return as_Register(encoding() + 1);
   }
 
   // accessors
-  int encoding() const
-  {
+  int encoding() const {
     assert(is_valid(), "invalid register");
     return (intptr_t)this;
   }
-  bool is_valid() const
-  {
+  bool is_valid() const {
     return 0 <= (intptr_t) this && (intptr_t)this < number_of_registers;
   }
   const char* name() const;
@@ -84,19 +81,16 @@ class FloatRegisterImpl : public AbstractRegisterImpl {
   VMReg as_VMReg();
 
   // derived registers, offsets, and addresses
-  FloatRegister successor() const
-  {
+  FloatRegister successor() const {
     return as_FloatRegister(encoding() + 1);
   }
 
   // accessors
-  int encoding() const
-  {
+  int encoding() const {
     assert(is_valid(), "invalid register");
     return (intptr_t)this;
   }
-  bool is_valid() const
-  {
+  bool is_valid() const {
     return 0 <= (intptr_t) this && (intptr_t)this < number_of_registers;
   }
   const char* name() const;

@@ -22,11 +22,11 @@
  * have any questions.
  *
  */
-inline VMReg RegisterImpl::as_VMReg()
-{
+
+inline VMReg RegisterImpl::as_VMReg() {
   return VMRegImpl::as_VMReg(encoding());
 }
-inline VMReg FloatRegisterImpl::as_VMReg()
-{
+
+inline VMReg FloatRegisterImpl::as_VMReg() {
   return VMRegImpl::as_VMReg(encoding() + ConcreteRegisterImpl::max_gpr);
 }

@@ -23,7 +23,6 @@
  *
  */
 
-
  protected:
   // Size of interpreter code
   const static int InterpreterCodeSize = 6 * K;

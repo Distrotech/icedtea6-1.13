@@ -27,17 +27,14 @@
 
 #include <byteswap.h>
 
-inline u2 Bytes::swap_u2(u2 x)
-{
+inline u2 Bytes::swap_u2(u2 x) {
   return bswap_16(x);
 }
 
-inline u4 Bytes::swap_u4(u4 x)
-{
+inline u4 Bytes::swap_u4(u4 x) {
   return bswap_32(x);
 }
 
-inline u8 Bytes::swap_u8(u8 x)
-{
+inline u8 Bytes::swap_u8(u8 x) {
   return bswap_64(x);
 }
