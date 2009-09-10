@@ -39,6 +39,8 @@ netbeans = 6.5
 
 For building the zero-assembler port (see below), you will need libffi.
 
+For building the Shark JIT, you will need LLVM 2.5 or current SVN.
+
 For building with systemtap support (--enable-systemtap), you will need
 systemtap-sdt-devel (available since systemtap 0.9.5). This also needs
 the --with-abs-install-dir configure option to make sure the hotspot.stp.in
@@ -51,21 +53,20 @@ in the tapset/hotspot.stp file. For example:
 
 See ./configure --help if you need to override the defaults.
 
-To bootstrap IcedTea with ecj:
+To bootstrap IcedTea with ecj and a Classpath-based JDK such as GCJ:
 autoreconf
 ./configure 
 make
 
-To build IcedTea with an older version of IcedTea, use:
+To build IcedTea with an older version of IcedTea or OpenJDK, use:
 autoreconf
-./configure --with-icedtea 
-	[default location: /usr/lib/jvm/java-icedtea, 
-		to specifiy location use --with-icedtea-home=/path/to/icedtea]
+./configure --with-openjdk 
+	to specify the location use --with-openjdk=/path/to/icedtea]
 make
 
 There is currently no install target.
 
-IcedTea ends up in openjdk/control/build/<os>-<arch> when the build completes.
+IcedTea ends up in openjdk/build/<os>-<arch> when the build completes.
 Example instantiations of <os>-<arch> include linux-i586, linux-amd64 and linux-ppc64.
 
 Rebuilding The IcedTea Plugs
