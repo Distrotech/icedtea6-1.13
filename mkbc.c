@@ -1,3 +1,17 @@
+/*
+ * Copyright 2009 Edward Nevill
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,7 +24,7 @@ static char *prefix = DEFAULT_PREFIX;
 #define ISALPHA(c) (isalpha(c) || (c) == '_')
 #define ISALNUM(c) (isalnum(c) || (c) == '_')
 
-FILE *source_f, *bci_f, *bci_f;
+FILE *source_f, *bci_f;
 
 typedef struct Bytecode {
 	char	*name;
@@ -282,7 +296,7 @@ void mkbc(void)
 	c = (readchar)();
 	c = skipwhitespace(c);
 	while (c != EOF) {
-		if (c == '#') {
+		if (c == '@' || c == '#') {
 			c = skipeol(c);
 		} else if (ISALPHA(c)) {
 			c = readsymbol(c, buf, BUFLEN);
@@ -546,7 +560,7 @@ int main(int argc, char **argv)
 
 	source = bci = 0;
 	while (s = *++argv) {
-		if (*s == '-') {
+		if (s[0] == '-' && s[1] != 0) {
 			if (s[1] == 'P') {
 				prefix = s+2;
 			} else {
@@ -566,16 +580,26 @@ int main(int argc, char **argv)
 		fprintf(stderr, "Too few arguments\n");
 		usage();
 	}
-	source_f = fopen(source, "r");
-	if (!source_f) fatal("Error opening source file");
-	bci_f = fopen(bci, "w");
-	if (!bci_f) fatal("Error opening bci file for write");
+	if (strcmp(source, "-") == 0) {
+		source_f = stdin;
+	} else {
+		source_f = fopen(source, "r");
+		if (!source_f) fatal("Error opening source file");
+	}
+	if (strcmp(bci, "-") == 0) {
+		bci_f = stdout;
+	} else {
+		bci_f = fopen(bci, "w");
+		if (!bci_f) fatal("Error opening bci file for write");
+	}
 	for (i = 0; i < 256; i++) {
 		bytecodes[i].name = "undefined";
 		bytecodes[i].len = -1;
 	}
 	mkbc();
 	dumpbc();
-	if (fclose(source_f)) fatal("Error reading source");
-	if (fclose(bci_f)) fatal("Error writing bci");
+	if (ferror(source_f)) fatal("Error reading source");
+	if (ferror(bci_f)) fatal("Error writing bci");
+	if (source_f != stdin) fclose(source_f);
+	if (bci_f != stdout) fclose(bci_f);
 }

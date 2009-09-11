@@ -477,8 +477,18 @@ ZERO_ASM_BC_ASM_COND = $(shell test -f ${ZERO_ASM_BC_DEF} && echo ${ZERO_ASM_BC_
 $(abs_top_srcdir)/mkbc: $(abs_top_srcdir)/mkbc.c
 	$(CC) $< -o $@
 
+# ECN: The following rule has been changed to allow preprocessing of the bytecode definition
+# file prior to running 'mkbc'. This allows you to use -DXXX on the gcc command. There are two
+# options currently recognized.
+#
+# -DDISABLE_NOTICE_SAFEPONTS	- Always run in 'safe' mode.
+# -DDISABLE_FAST_BYTECODES	- Disable fast bytecode replacement and bytecode sequences
+#
+# These options are provided mainly to assist debugging by returning the bytecode interpreter
+# to a 'vanilla' interpreter.
+#
 ${ZERO_ASM_BC_ASM}: ${ZERO_ASM_BC_DEF} $(abs_top_srcdir)/mkbc
-	$(abs_top_srcdir)/mkbc $< $@
+	gcc -E - < $< | $(abs_top_srcdir)/mkbc - $@
 
 # Link ports sources into tree
 stamps/ports.stamp: stamps/replace-hotspot.stamp

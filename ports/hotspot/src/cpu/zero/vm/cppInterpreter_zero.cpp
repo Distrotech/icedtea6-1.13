@@ -719,9 +719,8 @@ address InterpreterGenerator::generate_normal_entry(bool synchronized) {
   return generate_entry((address) CppInterpreter::normal_entry);
 }
 
-#if defined(PRODUCT) && defined(HOTSPOT_ASM)
-typedef void (*BCI_ENTRY)(methodOopDesc*, intptr_t, Thread*);
-extern "C" BCI_ENTRY asm_generate_method_entry(
+#ifdef HOTSPOT_ASM
+extern "C" address asm_generate_method_entry(
   AbstractInterpreter::MethodKind kind);
 #endif // HOTSPOT_ASM
 
@@ -729,14 +728,10 @@ address AbstractInterpreterGenerator::generate_method_entry(
     AbstractInterpreter::MethodKind kind) {
   address entry_point = NULL;
 
-#if defined(PRODUCT) && defined(HOTSPOT_ASM)
-  if (!UseCompiler && !TaggedStackInterpreter &&
-      !JvmtiExport::can_post_interpreter_events() &&
-      !PrintCommandLineFlags) {
-    address asm_entry = (address) asm_generate_method_entry(kind);
+#ifdef HOTSPOT_ASM
+    address asm_entry = asm_generate_method_entry(kind);
     if (asm_entry)
       return ((InterpreterGenerator*) this)->generate_entry(asm_entry);
-  }
 #endif // HOTSPOT_ASM
 
   switch (kind) {
