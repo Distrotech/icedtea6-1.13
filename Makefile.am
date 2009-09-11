@@ -14,6 +14,7 @@ ICEDTEAPLUGIN_TARGET = IcedTeaNPPlugin.so
 PLUGIN_PATCH = patches/icedtea-liveconnect.patch
 LIVECONNECT_DIR = -C lib/rt netscape
 NPPLUGIN_DIR=$(abs_top_srcdir)/plugin/icedteanp
+LIVECONNECT_SRCS = $(NPPLUGIN_DIR)/java
 else
 if ENABLE_PLUGIN
 ICEDTEAPLUGIN_CLEAN = clean-IcedTeaPlugin
@@ -21,12 +22,14 @@ ICEDTEAPLUGIN_TARGET = IcedTeaPlugin.so
 PLUGIN_PATCH = patches/icedtea-liveconnect.patch
 LIVECONNECT_DIR = -C lib/rt netscape
 NPPLUGIN_DIR = 
+LIVECONNECT_SRCS = $(abs_top_srcdir)/plugin/icedtea
 else
 ICEDTEAPLUGIN_CLEAN =
 ICEDTEAPLUGIN_TARGET =
 PLUGIN_PATCH = 
 LIVECONNECT_DIR =
 NPPLUGIN_DIR =
+LIVECONNECT_SRCS =
 endif
 endif
 
@@ -829,13 +832,9 @@ stamps/patch.stamp: stamps/patch-fsg.stamp
 
 if ENABLE_NPPLUGIN
 	cp -a $(abs_top_srcdir)/plugin/icedteanp/java/sun/applet/*java openjdk/jdk/src/share/classes/sun/applet/
-	mkdir -p rt
-	cp -a $(abs_top_srcdir)/plugin/icedteanp/java/netscape rt/
 else
 if ENABLE_PLUGIN
 	cp -a $(abs_top_srcdir)/plugin/icedtea/sun/applet/*java openjdk/jdk/src/share/classes/sun/applet/
-	mkdir -p rt
-	cp -a $(abs_top_srcdir)/plugin/icedtea/netscape rt/
 endif
 endif
 
@@ -1492,7 +1491,7 @@ hotspot-tools-source-files.txt: stamps/replace-hotspot.stamp \
 	find hotspot-tools -name '*.java' | sort > $@
 	mkdir -p lib/hotspot-tools
 
-ABS_SOURCE_DIRS = $(abs_top_builddir)/generated:$(abs_top_builddir)/rt:$(abs_top_srcdir)/rt
+ABS_SOURCE_DIRS = $(abs_top_builddir)/generated:$(abs_top_builddir)/rt:$(abs_top_srcdir)/rt:$(LIVECONNECT_SRCS)
 stamps/hotspot-tools-class-files.stamp: hotspot-tools-source-files.txt
 	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
 	then \
@@ -1541,7 +1540,7 @@ bootstrap/jdk1.7.0/jre/lib/tools.jar: stamps/hotspot-tools-class-files.stamp
 
 # rt-closed.jar class files.
 rt-source-files.txt: stamps/replace-hotspot.stamp stamps/copy-source-files.stamp
-	find $(abs_top_srcdir)/rt $(abs_top_builddir)/rt -name '*.java' \
+	find $(abs_top_srcdir)/rt $(abs_top_builddir)/rt $(LIVECONNECT_SRCS) -name '*.java' \
 	  | sort -u > $@
 
 stamps/rt-class-files.stamp: rt-source-files.txt
