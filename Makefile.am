@@ -33,6 +33,14 @@ LIVECONNECT_SRCS =
 endif
 endif
 
+if WITH_VISUALVM
+NB_PLATFORM= $(shell ls /usr/share/netbeans | grep platform | tail -n1)
+NB_APISUPPORT=$(shell ls /usr/share/netbeans | grep apisupport | tail -n1)
+else
+NB_PLATFORM=
+NB_APISUPPORT=
+endif
+
 if ENABLE_PULSE_JAVA
 # include the makefile in pulseaudio subdir
 PULSE_JAVA_DIR = $(abs_top_srcdir)/pulseaudio
@@ -472,8 +480,18 @@ ZERO_ASM_BC_ASM_COND = $(shell test -f ${ZERO_ASM_BC_DEF} && echo ${ZERO_ASM_BC_
 $(abs_top_srcdir)/mkbc: $(abs_top_srcdir)/mkbc.c
 	$(CC) $< -o $@
 
+# ECN: The following rule has been changed to allow preprocessing of the bytecode definition
+# file prior to running 'mkbc'. This allows you to use -DXXX on the gcc command. There are two
+# options currently recognized.
+#
+# -DDISABLE_NOTICE_SAFEPONTS	- Always run in 'safe' mode.
+# -DDISABLE_FAST_BYTECODES	- Disable fast bytecode replacement and bytecode sequences
+#
+# These options are provided mainly to assist debugging by returning the bytecode interpreter
+# to a 'vanilla' interpreter.
+#
 ${ZERO_ASM_BC_ASM}: ${ZERO_ASM_BC_DEF} $(abs_top_srcdir)/mkbc
-	$(abs_top_srcdir)/mkbc $< $@
+	gcc -E - < $< | $(abs_top_srcdir)/mkbc - $@
 
 # Link ports sources into tree
 stamps/ports.stamp: stamps/replace-hotspot.stamp
@@ -1189,7 +1207,7 @@ if WITH_VISUALVM
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm/etc/visualvm.clusters ; \
 	cp -r visualvm/build/cluster/* \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm/visualvm ; \
-	cp -r netbeans/nbbuild/netbeans_visualvm/platform9 \
+	cp -r netbeans/nbbuild/netbeans_visualvm/$(NB_PLATFORM) \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm ; \
 	cp -r netbeans/nbbuild/netbeans_visualvm/profiler3 \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm	
@@ -1274,7 +1292,7 @@ if WITH_VISUALVM
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm/etc/visualvm.clusters ; \
 	cp -r visualvm/build/cluster/* \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm/visualvm ; \
-	cp -r netbeans/nbbuild/netbeans_visualvm/platform9 \
+	cp -r netbeans/nbbuild/netbeans_visualvm/$(NB_PLATFORM) \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm ; \
 	cp -r netbeans/nbbuild/netbeans_visualvm/profiler3 \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm
@@ -2032,8 +2050,8 @@ if WITH_VISUALVM
 	cd netbeans ; \
         rm nbbuild/external/binaries-list ; \
 	mkdir -p ./nbbuild/netbeans_visualvm/ ; \
-	ln -s $(SYSTEM_NETBEANS_DIR)/platform9/ ./nbbuild/netbeans_visualvm/platform9 ; \
-	ln -s $(SYSTEM_NETBEANS_DIR)/apisupport1/ ./nbbuild/netbeans_visualvm/apisupport1 ; \
+	ln -s $(SYSTEM_NETBEANS_DIR)/$(NB_PLATFORM)/ ./nbbuild/netbeans_visualvm/$(NB_PLATFORM) ; \
+	ln -s $(SYSTEM_NETBEANS_DIR)/$(NB_APISUPPORT)/ ./nbbuild/netbeans_visualvm/$(NB_APISUPPORT) ; \
 	ln -s $(SYSTEM_NETBEANS_DIR)/harness/ ./nbbuild/netbeans_visualvm/harness ; \
 	if ! (uname -a | grep x86_64) ; then \
 	  mkdir -p lib.profiler/release/lib/deployed/jdk15/linux ; \

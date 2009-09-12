@@ -4,7 +4,34 @@
 	Reference netscape.* plugin sources by path rather than
 	copying them to rt.  This avoids them getting packaged
 	in tarballs.
-	
+
+2009-09-11  Edward Nevill  <ed@camswl.com>
+
+	* Makefile.am: Changed mkbc rule to allow preprocessing by gcc
+	* mkbc.c: Changed to allow preprocessing by gcc
+	* zero.make: Added support for automatic offset generation
+	* asm_helper.c: Support for offset generation and calling of
+	C++ virtual functions from Asm
+	* bytecodes_zero.cpp: Added new fast bytecodes
+	* bytecodes_zero.hpp: Ditto
+	* bytes_zero.hpp: Optimised get_native_X and get_Java_X
+	* cppInterpreter_zero.cpp: Fixed some type definitions & casts
+	Moved configuration checking from here to asm_generate_entry
+	* os_linux_zero.cpp: Removed #if defined(PRODUCT)
+	* cppInterpreter_arm.S:
+	* bytecodes_arm.def:
+	Support for HW FP. Lots of debugs and asserts. Build for gcc 4.1
+	Automatic generation of asm offsets. Removed sync. native entry.
+	Support for UseCompiler. Fastpath invokeinterface. Optimised new,
+	instanceof & checkcast. Additional fast bytecodes and bc sequences.
+	Fast div and rem by constant. Other minor optimisations.
+
+2009-09-09  Lillian Angel  <langel@redhat.com>
+
+	* Makefile.am: Added NB_PLATFORM and NB_APISUPPORT to determine
+	current versions to use. This will prevent future failures whenever
+	NetBeans is updated.
+
 2009-09-09  Andrew Haley  <aph@redhat.com>
 
 	* NEWS: Update for 1.6.

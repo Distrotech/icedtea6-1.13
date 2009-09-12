@@ -82,7 +82,7 @@ frame os::fetch_frame_from_context(void* ucVoid) {
   Unimplemented();
 }
 
-#if defined(PRODUCT) && defined(HOTSPOT_ASM)
+#ifdef HOTSPOT_ASM
 extern "C" int asm_check_null_ptr(ucontext_t *uc);
 #endif // HOTSPOT_ASM
 
@@ -93,7 +93,7 @@ JVM_handle_linux_signal(int sig,
                         int abort_if_unrecognized) {
   ucontext_t* uc = (ucontext_t*) ucVoid;
 
-#if defined(PRODUCT) && defined(HOTSPOT_ASM)
+#ifdef HOTSPOT_ASM
   if (sig == SIGSEGV) {
         if (asm_check_null_ptr(uc)) return 1;
   }

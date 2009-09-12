@@ -24,12 +24,28 @@
 #
 
 ifeq ($(ZERO_LIBARCH),arm)
+
+Obj_Files += asm_helper.o
 Obj_Files += cppInterpreter_arm.o
-CFLAGS += -DHOTSPOT_ASM -DHW_NULL_PTR_CHECK
+
+CFLAGS += -DHOTSPOT_ASM
+
 %.o: %.S
 	@echo Assembling $<
 	$(QUIETLY) $(REMOVE_TARGET)
 	$(COMPILE.CC) -o $@ $< $(COMPILE_DONE)
+
+cppInterpreter_arm.o:	offsets_arm.s
+
+offsets_arm.s:	mkoffsets
+	@echo Generating assembler offsets
+	./mkoffsets > $@
+
+mkoffsets:	asm_helper.cpp
+	@echo Compiling offset generator
+	$(QUIETLY) $(REMOVE_TARGET)
+	$(CC_COMPILE) -DSTATIC_OFFSETS -o $@ $< $(COMPILE_DONE)
+
 endif
 
 # The copied fdlibm routines in sharedRuntimeTrig.o must not be optimized
