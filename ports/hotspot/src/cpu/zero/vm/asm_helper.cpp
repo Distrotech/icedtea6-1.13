@@ -16,23 +16,6 @@
 
 #ifndef STATIC_OFFSETS
 
-extern "C" void sanity_check_backtrace(ZeroFrame *frame, int *regs);
-
-extern "C" void check_java_threads_backtrace(int *regs)
-{
-  for (JavaThread* jt = Threads::first(); jt != NULL; jt = jt->next()) {
-    if (jt->threadObj() == NULL   ||
-        jt->is_exiting() ||
-        !java_lang_Thread::is_alive(jt->threadObj())   ||
-        jt->is_hidden_from_external_view()) {
-      continue;
-    }
-    if (jt->is_jvmti_agent_thread()) continue;
-    if (jt->is_attaching()) continue;
-    sanity_check_backtrace(jt->top_zero_frame(), regs);
-  }
-}
-
 /* Thease functions allow the ASM interpreter to call CPP virtual functions.
  * Otherwise the ASM interpreter has to grup around in the VTABLE which is
  * not very portable.
