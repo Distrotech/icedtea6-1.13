@@ -26,9 +26,7 @@
 #include "incls/_precompiled.incl"
 #include "incls/_bytecodes_zero.cpp.incl"
 
-void Bytecodes::pd_initialize()
-{
-  // No zero specific initialization
+void Bytecodes::pd_initialize() {
 #ifdef HOTSPOT_ASM
   def(_iaccess_0, "_iaccess_0", "b_jj", NULL, T_INT,  1, true, _aload_0);
   def(_iaccess_1, "_iaccess_1", "b_jj", NULL, T_INT,  1, true, _aload_1);
@@ -72,5 +70,5 @@ void Bytecodes::pd_initialize()
   def(_iload_2_iload_N,	 "iload_2_iload_N",  "b_",  NULL, T_INT, 2, false, _iload_2);
   def(_iload_3_iload_N,	 "iload_3_iload_N",  "b_",  NULL, T_INT, 2, false, _iload_3);
 
-#endif
+#endif // HOTSPOT_ASM
 }
