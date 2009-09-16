@@ -32,6 +32,7 @@ class Assembler : public AbstractAssembler {
  public:
   Assembler(CodeBuffer* code) : AbstractAssembler(code) {}
 
+ public:
   void pd_patch_instruction(address branch, address target);
 #ifndef PRODUCT
   static void pd_print_patched_instruction(address branch);
@@ -42,6 +43,7 @@ class MacroAssembler : public Assembler {
  public:
   MacroAssembler(CodeBuffer* code) : Assembler(code) {}
 
+ public:
   void align(int modulus);
   void bang_stack_with_offset(int offset);
   bool needs_explicit_null_check(intptr_t offset);
@@ -53,13 +55,12 @@ class MacroAssembler : public Assembler {
 
 #ifdef ASSERT
 inline bool AbstractAssembler::pd_check_instruction_mark() {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 #endif
 
-address UnimplementedStub();
-address UnimplementedEntry();
-address ShouldNotReachHereStub();
+address ShouldNotCallThisStub();
+address ShouldNotCallThisEntry();
 
 // Nothing to do with the assembler (or lack of),
 // just a real convenient place to include these.

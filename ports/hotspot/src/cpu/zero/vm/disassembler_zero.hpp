@@ -27,9 +27,9 @@
 // with Java specific information.
 
   static int pd_instruction_alignment() {
-    Unimplemented();
+    ShouldNotCallThis();
   }
 
   static const char* pd_cpu_opts() {
-    Unimplemented();
+    ShouldNotCallThis();
   }

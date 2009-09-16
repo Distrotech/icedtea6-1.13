@@ -31,12 +31,12 @@ int AbstractAssembler::code_fill_byte() {
 }
 
 void Assembler::pd_patch_instruction(address branch, address target) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 #ifndef PRODUCT
 void Assembler::pd_print_patched_instruction(address branch) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 #endif // PRODUCT
 
@@ -46,7 +46,7 @@ void MacroAssembler::align(int modulus) {
 }
 
 void MacroAssembler::bang_stack_with_offset(int offset) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 void MacroAssembler::advance(int bytes) {
@@ -59,22 +59,14 @@ void MacroAssembler::store_oop(jobject obj) {
   emit_address((address) obj);
 }
 
-static void _UnimplementedStub() {
-  report_unimplemented(__FILE__, __LINE__);
+static void should_not_call() {
+  report_should_not_call(__FILE__, __LINE__);
 }
 
-address UnimplementedStub() {
-  return (address) _UnimplementedStub;
+address ShouldNotCallThisStub() {
+  return (address) should_not_call;
 }
 
-address UnimplementedEntry() {
-  return (address) _UnimplementedStub;
-}
-
-static void _ShouldNotReachHereStub() {
-  report_should_not_reach_here(__FILE__, __LINE__);
-}
-
-address ShouldNotReachHereStub() {
-  return (address) _ShouldNotReachHereStub;
+address ShouldNotCallThisEntry() {
+  return (address) should_not_call;
 }

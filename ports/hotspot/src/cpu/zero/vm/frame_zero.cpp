@@ -28,7 +28,7 @@
 
 #ifdef ASSERT
 void RegisterMap::check_location_valid() {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 #endif
 
@@ -81,7 +81,7 @@ frame frame::sender(RegisterMap* map) const {
   if (is_deoptimizer_frame())
     return sender_for_deoptimizer_frame(map);
 
-  Unimplemented();
+  ShouldNotReachHere();
 }
 
 #ifdef CC_INTERP
@@ -102,14 +102,14 @@ void frame::patch_pc(Thread* thread, address pc) {
 }
 
 bool frame::safe_for_sender(JavaThread *thread) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 void frame::pd_gc_epilog() {
 }
 
 bool frame::is_interpreted_frame_valid(JavaThread *thread) const {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 BasicType frame::interpreter_frame_result(oop* oop_result,

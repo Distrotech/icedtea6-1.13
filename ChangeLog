@@ -1,3 +1,28 @@
+2009-09-16  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/src/cpu/zero/vm/assembler_zero.cpp:
+	* ports/hotspot/src/cpu/zero/vm/assembler_zero.hpp:
+	* ports/hotspot/src/cpu/zero/vm/bytes_zero.hpp:
+	* ports/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp:
+	* ports/hotspot/src/cpu/zero/vm/debug_zero.cpp:
+	* ports/hotspot/src/cpu/zero/vm/disassembler_zero.hpp:
+	* ports/hotspot/src/cpu/zero/vm/dump_zero.cpp:
+	* ports/hotspot/src/cpu/zero/vm/frame_zero.cpp:
+	* ports/hotspot/src/cpu/zero/vm/frame_zero.inline.hpp:
+	* ports/hotspot/src/cpu/zero/vm/icBuffer_zero.cpp:
+	* ports/hotspot/src/cpu/zero/vm/icache_zero.cpp:
+	* ports/hotspot/src/cpu/zero/vm/interpreter_zero.cpp:
+	* ports/hotspot/src/cpu/zero/vm/nativeInst_zero.hpp:
+	* ports/hotspot/src/cpu/zero/vm/register_zero.cpp:
+	* ports/hotspot/src/cpu/zero/vm/relocInfo_zero.cpp:
+	* ports/hotspot/src/cpu/zero/vm/sharedRuntime_zero.cpp:
+	* ports/hotspot/src/cpu/zero/vm/stubGenerator_zero.cpp:
+	* ports/hotspot/src/cpu/zero/vm/vtableStubs_zero.cpp:
+	* ports/hotspot/src/os_cpu/linux_zero/vm/os_linux_zero.cpp:
+	* ports/hotspot/src/os_cpu/linux_zero/vm/thread_linux_zero.hpp:
+	Replaced calls to "Unimplemented()" in stubs with calls to
+	"ShouldNotCallThis()".
+
 2009-09-15  Deepak Bhole  <dbhole@redhat.com>
 
 	* plugin/icedteanp/IcedTeaJavaRequestProcessor.cc

@@ -27,5 +27,5 @@
 #include "incls/_debug_zero.cpp.incl"
 
 void pd_ps(frame f) {
-  Unimplemented();
+  ShouldNotCallThis();
 }

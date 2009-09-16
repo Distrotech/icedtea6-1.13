@@ -901,7 +901,7 @@ void BytecodeInterpreter::layout_interpreterState(interpreterState istate,
 }
 
 address CppInterpreter::return_entry(TosState state, int length) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 address CppInterpreter::deopt_entry(TosState state, int length) {
@@ -929,25 +929,25 @@ bool CppInterpreter::contains(address pc) {
 address CppInterpreterGenerator::generate_result_handler_for(
     BasicType type) {
   assembler()->advance(1);
-  return ShouldNotReachHereStub();
+  return ShouldNotCallThisStub();
 }
 
 address CppInterpreterGenerator::generate_tosca_to_stack_converter(
     BasicType type) {
   assembler()->advance(1);
-  return ShouldNotReachHereStub();
+  return ShouldNotCallThisStub();
 }
 
 address CppInterpreterGenerator::generate_stack_to_stack_converter(
     BasicType type) {
   assembler()->advance(1);
-  return ShouldNotReachHereStub();
+  return ShouldNotCallThisStub();
 }
 
 address CppInterpreterGenerator::generate_stack_to_native_abi_converter(
     BasicType type) {
   assembler()->advance(1);
-  return ShouldNotReachHereStub();
+  return ShouldNotCallThisStub();
 }
 
 #endif // CC_INTERP

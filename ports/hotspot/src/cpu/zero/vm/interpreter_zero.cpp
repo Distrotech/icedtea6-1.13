@@ -40,7 +40,7 @@ address InterpreterGenerator::generate_math_entry(
 }
 
 address InterpreterGenerator::generate_abstract_entry() {
-  return UnimplementedEntry();
+  return ShouldNotCallThisEntry();
 }
 
 int AbstractInterpreter::size_activation(methodOop method,

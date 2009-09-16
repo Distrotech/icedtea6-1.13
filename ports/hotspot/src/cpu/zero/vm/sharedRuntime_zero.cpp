@@ -48,10 +48,10 @@ AdapterHandlerEntry* SharedRuntime::generate_i2c2i_adapters(
                         int comp_args_on_stack,
                         const BasicType *sig_bt,
                         const VMRegPair *regs) {
-  address i2c_entry = UnimplementedStub();
-  address c2i_entry = UnimplementedStub();
-  address c2i_unverified_entry = UnimplementedStub();
-  return new AdapterHandlerEntry(i2c_entry, c2i_entry, c2i_unverified_entry);
+  return new AdapterHandlerEntry(
+    ShouldNotCallThisStub(),
+    ShouldNotCallThisStub(),
+    ShouldNotCallThisStub());
 }
 
 nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
@@ -61,7 +61,7 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
                                                 BasicType *in_sig_bt,
                                                 VMRegPair *in_regs,
                                                 BasicType ret_type) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 int Deoptimization::last_frame_adjust(int callee_parameters,
@@ -70,7 +70,7 @@ int Deoptimization::last_frame_adjust(int callee_parameters,
 }
 
 uint SharedRuntime::out_preserve_stack_slots() {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 static RuntimeStub* generate_empty_runtime_stub(const char* name) {
@@ -104,5 +104,5 @@ void SharedRuntime::generate_stubs() {
 int SharedRuntime::c_calling_convention(const BasicType *sig_bt,
                                          VMRegPair *regs,
                                          int total_args_passed) {
-  Unimplemented();
+  ShouldNotCallThis();
 }

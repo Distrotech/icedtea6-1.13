@@ -41,16 +41,16 @@
 class NativeInstruction VALUE_OBJ_CLASS_SPEC {
  public:
   bool is_jump() {
-    Unimplemented();
+    ShouldNotCallThis();
   }
 
   bool is_safepoint_poll() {
-    Unimplemented();
+    ShouldNotCallThis();
   }
 };
 
 inline NativeInstruction* nativeInstruction_at(address address) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 class NativeCall : public NativeInstruction {
@@ -60,82 +60,82 @@ class NativeCall : public NativeInstruction {
   };
 
   address instruction_address() const {
-    Unimplemented();
+    ShouldNotCallThis();
   }
 
   address next_instruction_address() const {
-    Unimplemented();
+    ShouldNotCallThis();
   }
 
   address return_address() const {
-    Unimplemented();
+    ShouldNotCallThis();
   }
 
   address destination() const {
-    Unimplemented();
+    ShouldNotCallThis();
   }
 
   void set_destination_mt_safe(address dest) {
-    Unimplemented();
+    ShouldNotCallThis();
   }
 
   void verify_alignment() {
-    Unimplemented();
+    ShouldNotCallThis();
   }
 
   void verify() {
-    Unimplemented();
+    ShouldNotCallThis();
   }
 
   static bool is_call_before(address return_address) {
-    Unimplemented();
+    ShouldNotCallThis();
   }
 };
 
 inline NativeCall* nativeCall_before(address return_address) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 inline NativeCall* nativeCall_at(address address) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 class NativeMovConstReg : public NativeInstruction {
  public:
   address next_instruction_address() const {
-    Unimplemented();
+    ShouldNotCallThis();
   }
 
   intptr_t data() const {
-    Unimplemented();
+    ShouldNotCallThis();
   }
 
   void set_data(intptr_t x) {
-    Unimplemented();
+    ShouldNotCallThis();
   }
 };
 
 inline NativeMovConstReg* nativeMovConstReg_at(address address) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 class NativeMovRegMem : public NativeInstruction {
  public:
   int offset() const {
-    Unimplemented();
+    ShouldNotCallThis();
   }
 
   void set_offset(intptr_t x) {
-    Unimplemented();
+    ShouldNotCallThis();
   }
 
   void add_offset_in_bytes(int add_offset) {
-    Unimplemented();
+    ShouldNotCallThis();
   }
 };
 
 inline NativeMovRegMem* nativeMovRegMem_at(address address) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 class NativeJump : public NativeInstruction {
@@ -145,11 +145,11 @@ class NativeJump : public NativeInstruction {
   };
 
   address jump_destination() const {
-    Unimplemented();
+    ShouldNotCallThis();
   }
 
   void set_jump_destination(address dest) {
-    Unimplemented();
+    ShouldNotCallThis();
   }
 
   static void check_verified_entry_alignment(address entry,
@@ -162,24 +162,24 @@ class NativeJump : public NativeInstruction {
 };
 
 inline NativeJump* nativeJump_at(address address) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 class NativeGeneralJump : public NativeInstruction {
  public:
   address jump_destination() const {
-    Unimplemented();
+    ShouldNotCallThis();
   }
 
   static void insert_unconditional(address code_pos, address entry) {
-    Unimplemented();
+    ShouldNotCallThis();
   }
 
   static void replace_mt_safe(address instr_addr, address code_buffer) {
-    Unimplemented();
+    ShouldNotCallThis();
   }
 };
 
 inline NativeGeneralJump* nativeGeneralJump_at(address address) {
-  Unimplemented();
+  ShouldNotCallThis();
 }

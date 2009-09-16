@@ -32,7 +32,7 @@ address os::current_stack_pointer() {
 }
 
 frame os::get_sender_for_C_frame(frame* fr) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 frame os::current_frame() {
@@ -69,17 +69,17 @@ void os::initialize_thread() {
 }
 
 address os::Linux::ucontext_get_pc(ucontext_t* uc) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 ExtendedPC os::fetch_frame_from_context(void* ucVoid,
                                         intptr_t** ret_sp,
                                         intptr_t** ret_fp) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 frame os::fetch_frame_from_context(void* ucVoid) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 #ifdef HOTSPOT_ASM
@@ -149,11 +149,11 @@ JVM_handle_linux_signal(int sig,
         // stack overflow
         if (thread->in_stack_yellow_zone(addr)) {
           thread->disable_stack_yellow_zone();
-          Unimplemented();
+          ShouldNotCallThis();
         }
         else if (thread->in_stack_red_zone(addr)) {
           thread->disable_stack_red_zone();
-          Unimplemented();
+          ShouldNotCallThis();
         }
         else {
           // Accessing stack address below sp may cause SEGV if
@@ -177,11 +177,11 @@ JVM_handle_linux_signal(int sig,
     }
 
     /*if (thread->thread_state() == _thread_in_Java) {
-      Unimplemented();
+      ShouldNotCallThis();
     }
     else*/ if (thread->thread_state() == _thread_in_vm &&
                sig == SIGBUS && thread->doing_unsafe_access()) {
-      Unimplemented();
+      ShouldNotCallThis();
     }
 
     // jni_fast_Get<Primitive>Field can trap at certain pc's if a GC
@@ -241,15 +241,15 @@ void os::Linux::init_thread_fpu_state(void) {
 }
 
 int os::Linux::get_fpu_control_word() {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 void os::Linux::set_fpu_control_word(int fpu) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 bool os::is_allocatable(size_t bytes) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -363,7 +363,7 @@ size_t os::current_stack_size() {
 // helper functions for fatal error handler
 
 void os::print_context(outputStream* st, void* context) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -431,22 +431,22 @@ extern "C" {
   void _Copy_arrayof_conjoint_bytes(HeapWord* from,
                                     HeapWord* to,
                                     size_t    count) {
-    Unimplemented();
+    ShouldNotCallThis();
   }
   void _Copy_arrayof_conjoint_jshorts(HeapWord* from,
                                       HeapWord* to,
                                       size_t    count) {
-    Unimplemented();
+    ShouldNotCallThis();
   }
   void _Copy_arrayof_conjoint_jints(HeapWord* from,
                                     HeapWord* to,
                                     size_t    count) {
-    Unimplemented();
+    ShouldNotCallThis();
   }
   void _Copy_arrayof_conjoint_jlongs(HeapWord* from,
                                      HeapWord* to,
                                      size_t    count) {
-    Unimplemented();
+    ShouldNotCallThis();
   }
 };
 
@@ -460,7 +460,7 @@ extern "C" {
     volatile void *ptr,
     long long unsigned int oldval,
     long long unsigned int newval) {
-    Unimplemented();
+    ShouldNotCallThis();
   }
 };
 #endif // !_LP64

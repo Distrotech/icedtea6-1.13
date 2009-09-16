@@ -94,7 +94,7 @@
   bool pd_get_top_frame_for_signal_handler(frame* fr_addr,
                                            void* ucontext,
                                            bool isInJava) {
-    Unimplemented();
+    ShouldNotCallThis();
   }
 
   // These routines are only used on cpu architectures that

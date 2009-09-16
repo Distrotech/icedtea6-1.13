@@ -75,7 +75,7 @@ inline intptr_t* frame::sender_sp() const {
 }
 
 inline intptr_t* frame::link() const {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 #ifdef CC_INTERP
@@ -133,19 +133,19 @@ inline JavaCallWrapper* frame::entry_frame_call_wrapper() const {
 }
 
 inline void frame::set_saved_oop_result(RegisterMap* map, oop obj) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 inline oop frame::saved_oop_result(RegisterMap* map) const {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 inline bool frame::is_older(intptr_t* id) const {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 inline intptr_t* frame::entry_frame_argument_at(int offset) const {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 inline intptr_t* frame::unextended_sp() const {

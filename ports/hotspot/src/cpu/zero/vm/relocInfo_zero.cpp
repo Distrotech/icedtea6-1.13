@@ -27,19 +27,19 @@
 #include "incls/_relocInfo_zero.cpp.incl"
 
 void Relocation::pd_set_data_value(address x, intptr_t o) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 address Relocation::pd_call_destination(address orig_addr) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 void Relocation::pd_set_call_destination(address x) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 address Relocation::pd_get_address_from_code() {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 address* Relocation::pd_address_in_code() {
@@ -48,27 +48,27 @@ address* Relocation::pd_address_in_code() {
 }
 
 int Relocation::pd_breakpoint_size() {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 void Relocation::pd_swap_in_breakpoint(address x,
                                        short*  instrs,
                                        int     instrlen) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 void Relocation::pd_swap_out_breakpoint(address x,
                                         short*  instrs,
                                         int     instrlen) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 void poll_Relocation::fix_relocation_after_move(const CodeBuffer* src,
                                                 CodeBuffer*       dst) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 void poll_return_Relocation::fix_relocation_after_move(const CodeBuffer* src,
                                                        CodeBuffer*       dst) {
-  Unimplemented();
+  ShouldNotCallThis();
 }

@@ -120,12 +120,12 @@ class StubGenerator: public StubCodeGenerator {
     StubRoutines::_jlong_disjoint_arraycopy  = (address) fake_arraycopy_stub;
     StubRoutines::_jlong_arraycopy           = (address) fake_arraycopy_stub;
 
-    StubRoutines::_oop_disjoint_arraycopy    = UnimplementedStub();
-    StubRoutines::_oop_arraycopy             = UnimplementedStub();
+    StubRoutines::_oop_disjoint_arraycopy    = ShouldNotCallThisStub();
+    StubRoutines::_oop_arraycopy             = ShouldNotCallThisStub();
 
-    StubRoutines::_checkcast_arraycopy       = UnimplementedStub();
-    StubRoutines::_unsafe_arraycopy          = UnimplementedStub();
-    StubRoutines::_generic_arraycopy         = UnimplementedStub();
+    StubRoutines::_checkcast_arraycopy       = ShouldNotCallThisStub();
+    StubRoutines::_unsafe_arraycopy          = ShouldNotCallThisStub();
+    StubRoutines::_generic_arraycopy         = ShouldNotCallThisStub();
 
     // We don't generate specialized code for HeapWord-aligned source
     // arrays, so just use the code we've already generated
@@ -164,23 +164,23 @@ class StubGenerator: public StubCodeGenerator {
     // much more complicated generator structure. See also comment in
     // stubRoutines.hpp.
 
-    StubRoutines::_forward_exception_entry   = UnimplementedStub();
+    StubRoutines::_forward_exception_entry   = ShouldNotCallThisStub();
     StubRoutines::_call_stub_entry           = (address) call_stub;
-    StubRoutines::_catch_exception_entry     = UnimplementedStub();
+    StubRoutines::_catch_exception_entry     = ShouldNotCallThisStub();
 
     // atomic calls
-    StubRoutines::_atomic_xchg_entry         = UnimplementedStub();
-    StubRoutines::_atomic_xchg_ptr_entry     = UnimplementedStub();
-    StubRoutines::_atomic_cmpxchg_entry      = UnimplementedStub();
-    StubRoutines::_atomic_cmpxchg_ptr_entry  = UnimplementedStub();
-    StubRoutines::_atomic_cmpxchg_long_entry = UnimplementedStub();
-    StubRoutines::_atomic_add_entry          = UnimplementedStub();
-    StubRoutines::_atomic_add_ptr_entry      = UnimplementedStub();
-    StubRoutines::_fence_entry               = UnimplementedStub();
+    StubRoutines::_atomic_xchg_entry         = ShouldNotCallThisStub();
+    StubRoutines::_atomic_xchg_ptr_entry     = ShouldNotCallThisStub();
+    StubRoutines::_atomic_cmpxchg_entry      = ShouldNotCallThisStub();
+    StubRoutines::_atomic_cmpxchg_ptr_entry  = ShouldNotCallThisStub();
+    StubRoutines::_atomic_cmpxchg_long_entry = ShouldNotCallThisStub();
+    StubRoutines::_atomic_add_entry          = ShouldNotCallThisStub();
+    StubRoutines::_atomic_add_ptr_entry      = ShouldNotCallThisStub();
+    StubRoutines::_fence_entry               = ShouldNotCallThisStub();
 
     // amd64 does this here, sparc does it in generate_all()
     StubRoutines::_handler_for_unsafe_access_entry =
-      UnimplementedStub();
+      ShouldNotCallThisStub();
   }
 
   void generate_all() {
@@ -190,23 +190,23 @@ class StubGenerator: public StubCodeGenerator {
     // non-core builds and need to be relocatable, so they each
     // fabricate a RuntimeStub internally.
     StubRoutines::_throw_AbstractMethodError_entry =
-      UnimplementedStub();
+      ShouldNotCallThisStub();
 
     StubRoutines::_throw_ArithmeticException_entry =
-      UnimplementedStub();
+      ShouldNotCallThisStub();
 
     StubRoutines::_throw_NullPointerException_entry =
-      UnimplementedStub();
+      ShouldNotCallThisStub();
 
     StubRoutines::_throw_NullPointerException_at_call_entry =
-      UnimplementedStub();
+      ShouldNotCallThisStub();
 
     StubRoutines::_throw_StackOverflowError_entry =
-      UnimplementedStub();
+      ShouldNotCallThisStub();
 
     // support for verify_oop (must happen after universe_init)
     StubRoutines::_verify_oop_subroutine_entry =
-      UnimplementedStub();
+      ShouldNotCallThisStub();
 
     // arraycopy stubs used by compilers
     generate_arraycopy_stubs();

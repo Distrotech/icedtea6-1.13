@@ -31,9 +31,9 @@ const int ConcreteRegisterImpl::max_fpr =
   ConcreteRegisterImpl::max_gpr + FloatRegisterImpl::number_of_registers;
 
 const char* RegisterImpl::name() const {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 const char* FloatRegisterImpl::name() const {
-  Unimplemented();
+  ShouldNotCallThis();
 }

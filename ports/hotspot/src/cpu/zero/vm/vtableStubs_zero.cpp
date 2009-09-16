@@ -27,17 +27,17 @@
 #include "incls/_vtableStubs_zero.cpp.incl"
 
 VtableStub* VtableStubs::create_vtable_stub(int vtable_index) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 VtableStub* VtableStubs::create_itable_stub(int vtable_index) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 int VtableStub::pd_code_size_limit(bool is_vtable_stub) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
 
 int VtableStub::pd_code_alignment() {
-  Unimplemented();
+  ShouldNotCallThis();
 }

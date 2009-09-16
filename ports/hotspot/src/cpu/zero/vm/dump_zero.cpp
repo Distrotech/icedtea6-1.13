@@ -32,5 +32,5 @@ void CompactingPermGenGen::generate_vtable_methods(void** vtbl_list,
                                                    char*  md_end,
                                                    char** mc_top,
                                                    char*  mc_end) {
-  Unimplemented();
+  ShouldNotCallThis();
 }
