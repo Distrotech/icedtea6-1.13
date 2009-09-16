@@ -54,7 +54,7 @@ inline frame::frame(intptr_t* sp, intptr_t* fp) {
 
   case ZeroFrame::SHARK_FRAME:
     _pc = zero_sharkframe()->pc();
-    _cb = CodeCache::find_blob(pc());
+    _cb = CodeCache::find_blob_unsafe(pc());
     break;
 
   case ZeroFrame::DEOPTIMIZER_FRAME:
