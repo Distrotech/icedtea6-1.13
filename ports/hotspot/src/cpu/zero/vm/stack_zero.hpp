@@ -90,7 +90,7 @@ class ZeroStack {
   }
   static ByteSize sp_offset() {
     return byte_offset_of(ZeroStack, _sp);
-  } 
+  }
 };
 
 
@@ -99,7 +99,7 @@ class InterpreterFrame;
 class SharkFrame;
 class DeoptimizerFrame;
 
-// 
+//
 // |  ...               |
 // +--------------------+  ------------------
 // |  ...               |       low addresses
@@ -137,7 +137,7 @@ class ZeroFrame {
   intptr_t value_of_word(int offset) const {
     return *addr_of_word(offset);
   }
-  
+
  public:
   ZeroFrame *next() const {
     return (ZeroFrame *) value_of_word(next_frame_off);

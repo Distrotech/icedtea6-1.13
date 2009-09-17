@@ -69,7 +69,7 @@ void InterpreterRuntime::SignatureHandlerGeneratorBase::push(BasicType type) {
   case T_BYTE:
     ftype = &ffi_type_sint8;
     break;
-    
+
   case T_SHORT:
     ftype = &ffi_type_sint16;
     break;
@@ -85,7 +85,7 @@ void InterpreterRuntime::SignatureHandlerGeneratorBase::push(BasicType type) {
   case T_FLOAT:
     ftype = &ffi_type_float;
     break;
-    
+
   case T_DOUBLE:
     ftype = &ffi_type_double;
     break;
@@ -156,7 +156,7 @@ IRT_END
 
 void SignatureHandlerLibrary::pd_set_handler(address handlerAddr) {
   InterpreterRuntime::SignatureHandler *handler =
-    InterpreterRuntime::SignatureHandler::from_handlerAddr(handlerAddr);  
+    InterpreterRuntime::SignatureHandler::from_handlerAddr(handlerAddr);
 
   handler->finalize();
 }

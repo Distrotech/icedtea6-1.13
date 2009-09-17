@@ -25,11 +25,11 @@
 
 #ifdef ARM
 
-/* 
- * ARM Kernel helper for memory barrier. 
+/*
+ * ARM Kernel helper for memory barrier.
  * Using __asm __volatile ("":::"memory") does not work reliable on ARM
  * and gcc __sync_synchronize(); implementation does not use the kernel
- * helper for all gcc versions so it is unreliable to use as well. 
+ * helper for all gcc versions so it is unreliable to use as well.
  */
 typedef void (__kernel_dmb_t) (void);
 #define __kernel_dmb (*(__kernel_dmb_t *) 0xffff0fa0)
@@ -105,25 +105,25 @@ inline jdouble  OrderAccess::load_acquire(volatile jdouble* p) {
 }
 
 inline intptr_t OrderAccess::load_ptr_acquire(volatile intptr_t*   p) {
-  intptr_t data = *p; 
+  intptr_t data = *p;
   acquire();
-  return data; 
+  return data;
 }
 inline void*    OrderAccess::load_ptr_acquire(volatile void*       p) {
   void *data = *(void* volatile *)p;
   acquire();
-  return data; 
+  return data;
 }
 inline void*    OrderAccess::load_ptr_acquire(const volatile void* p) {
-  void *data = *(void* const volatile *)p; 
-  acquire(); 
+  void *data = *(void* const volatile *)p;
+  acquire();
   return data;
 }
 
 inline void     OrderAccess::release_store(volatile jbyte*   p, jbyte   v) { release(); *p = v; }
 inline void     OrderAccess::release_store(volatile jshort*  p, jshort  v) { release(); *p = v; }
 inline void     OrderAccess::release_store(volatile jint*    p, jint    v) { release(); *p = v; }
-inline void     OrderAccess::release_store(volatile jlong*   p, jlong   v) 
+inline void     OrderAccess::release_store(volatile jlong*   p, jlong   v)
 { release(); os::atomic_copy64(&v, p); }
 inline void     OrderAccess::release_store(volatile jubyte*  p, jubyte  v) { release(); *p = v; }
 inline void     OrderAccess::release_store(volatile jushort* p, jushort v) { release(); *p = v; }

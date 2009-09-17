@@ -46,5 +46,5 @@ void NativeJump::patch_verified_entry(address entry,
     (address) CppInterpreter::normal_entry);
 #else
   Unimplemented();
-#endif // CC_INTERP  
+#endif // CC_INTERP
 }

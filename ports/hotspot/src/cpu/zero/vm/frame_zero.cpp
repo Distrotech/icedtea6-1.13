@@ -148,7 +148,7 @@ BasicType frame::interpreter_frame_result(oop* oop_result,
     value_result->d = *(jdouble *) tos_addr;
     break;
 
-  case T_OBJECT: 
+  case T_OBJECT:
   case T_ARRAY:
     if (method->is_native()) {
       obj = get_interpreterState()->oop_temp();
@@ -395,7 +395,7 @@ void ZeroFrame::identify_vp_word(int       frame_index,
     intptr_t monitor = (intptr_t) (
       (BasicObjectLock *) monitor_base - 1 - index);
     intptr_t offset = (intptr_t) addr - monitor;
-    
+
     if (offset == BasicObjectLock::obj_offset_in_bytes())
       snprintf(fieldbuf, buflen, "monitor[%d]->_obj", index);
     else if (offset ==  BasicObjectLock::lock_offset_in_bytes())

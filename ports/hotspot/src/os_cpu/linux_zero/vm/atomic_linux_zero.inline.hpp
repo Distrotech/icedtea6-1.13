@@ -31,16 +31,16 @@
  * __m68k_cmpxchg
  *
  * Atomically store newval in *ptr if *ptr is equal to oldval for user space.
- * Returns newval on success and oldval if no exchange happened. 
- * This implementation is processor specific and works on 
+ * Returns newval on success and oldval if no exchange happened.
+ * This implementation is processor specific and works on
  * 68020 68030 68040 and 68060.
  *
  * It will not work on ColdFire, 68000 and 68010 since they lack the CAS
- * instruction. 
+ * instruction.
  * Using a kernelhelper would be better for arch complete implementation.
  *
  */
- 
+
 static inline int __m68k_cmpxchg(int oldval, int newval, volatile int *ptr) {
   int ret;
   __asm __volatile ("cas%.l %0,%2,%1"
@@ -58,11 +58,11 @@ static inline int m68k_compare_and_swap(volatile int *ptr,
   for (;;) {
       int prev = *ptr;
       if (prev != oldval)
-	return prev;
+        return prev;
 
       if (__m68k_cmpxchg (prev, newval, ptr) == newval)
-	// Success.
-	return prev;
+        // Success.
+        return prev;
 
       // We failed even though prev == oldval.  Try again.
     }
@@ -76,7 +76,7 @@ static inline int m68k_add_and_fetch(volatile int *ptr, int add_value) {
       int prev = *ptr;
 
       if (__m68k_cmpxchg (prev, prev + add_value, ptr) == prev + add_value)
-	return prev + add_value;
+        return prev + add_value;
     }
 }
 
@@ -88,7 +88,7 @@ static inline int m68k_lock_test_and_set(volatile int *ptr, int newval) {
       int prev = *ptr;
 
       if (__m68k_cmpxchg (prev, newval, ptr) == prev)
-	return prev;
+        return prev;
     }
 }
 #endif // M68K
@@ -119,11 +119,11 @@ static inline int arm_compare_and_swap(volatile int *ptr,
   for (;;) {
       int prev = *ptr;
       if (prev != oldval)
-	return prev;
+        return prev;
 
       if (__kernel_cmpxchg (prev, newval, ptr) == 0)
-	// Success.
-	return prev;
+        // Success.
+        return prev;
 
       // We failed even though prev == oldval.  Try again.
     }
@@ -137,7 +137,7 @@ static inline int arm_add_and_fetch(volatile int *ptr, int add_value) {
       int prev = *ptr;
 
       if (__kernel_cmpxchg (prev, prev + add_value, ptr) == 0)
-	return prev + add_value;
+        return prev + add_value;
     }
 }
 
@@ -149,7 +149,7 @@ static inline int arm_lock_test_and_set(volatile int *ptr, int newval) {
       int prev = *ptr;
 
       if (__kernel_cmpxchg (prev, newval, ptr) == 0)
-	return prev;
+        return prev;
     }
 }
 #endif // ARM

@@ -31,7 +31,7 @@
   static address call_stub_return_pc() {
     return (address) -1;
   }
- 
+
   static bool returns_to_call_stub(address return_pc) {
     return return_pc == call_stub_return_pc();
   }

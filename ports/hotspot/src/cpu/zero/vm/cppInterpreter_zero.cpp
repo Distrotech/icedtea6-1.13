@@ -105,7 +105,7 @@ void CppInterpreter::main_loop(int recurse, TRAPS) {
 
       // Trim back the stack to put the parameters at the top
       stack->set_sp(istate->stack() + 1);
-    
+
       // Make the call
       Interpreter::invoke_method(callee, istate->callee_entry_point(), THREAD);
       fixup_after_potential_safepoint();
@@ -114,7 +114,7 @@ void CppInterpreter::main_loop(int recurse, TRAPS) {
       istate->set_stack(stack->sp() - 1);
 
       // Restore the stack
-      stack->set_sp(istate->stack_limit() + 1);    
+      stack->set_sp(istate->stack_limit() + 1);
 
       // Resume the interpreter
       istate->set_msg(BytecodeInterpreter::method_resume);
@@ -260,17 +260,17 @@ void CppInterpreter::native_entry(methodOop method, intptr_t UNUSED, TRAPS) {
     arguments =
       (void **) stack->alloc(handler->argument_count() * sizeof(void **));
     void **dst = arguments;
-  
+
     void *env = thread->jni_environment();
     *(dst++) = &env;
-  
+
     if (method->is_static()) {
       istate->set_oop_temp(
         method->constants()->pool_holder()->klass_part()->java_mirror());
       mirror = istate->oop_temp_addr();
       *(dst++) = &mirror;
     }
-  
+
     intptr_t *src = locals;
     for (int i = dst - arguments; i < handler->argument_count(); i++) {
       ffi_type *type = handler->argument_type(i);
@@ -297,7 +297,7 @@ void CppInterpreter::native_entry(methodOop method, intptr_t UNUSED, TRAPS) {
     }
   }
 
-  // Set up the Java frame anchor  
+  // Set up the Java frame anchor
   thread->set_last_Java_frame();
 
   // Change the thread state to _thread_in_native
@@ -350,7 +350,7 @@ void CppInterpreter::native_entry(methodOop method, intptr_t UNUSED, TRAPS) {
 
   // Reset handle block
   thread->active_handles()->clear();
-  
+
   // Unlock if necessary.  It seems totally wrong that this
   // is skipped in the event of an exception but apparently
   // the template interpreter does this so we do too.
@@ -424,7 +424,7 @@ void CppInterpreter::native_entry(methodOop method, intptr_t UNUSED, TRAPS) {
     case T_LONG:
       SET_LOCALS_LONG(*(jlong *) result, 0);
       break;
-      
+
     case T_FLOAT:
       SET_LOCALS_FLOAT(*(jfloat *) result, 0);
       break;
@@ -516,8 +516,8 @@ void CppInterpreter::accessor_entry(methodOop method, intptr_t UNUSED, TRAPS) {
 
     case ltos:
       SET_LOCALS_LONG(object->long_field_acquire(entry->f2()), 0);
-      break;      
-      
+      break;
+
     case ftos:
       SET_LOCALS_FLOAT(object->float_field_acquire(entry->f2()), 0);
       break;
@@ -554,8 +554,8 @@ void CppInterpreter::accessor_entry(methodOop method, intptr_t UNUSED, TRAPS) {
 
     case ltos:
       SET_LOCALS_LONG(object->long_field(entry->f2()), 0);
-      break;      
-      
+      break;
+
     case ftos:
       SET_LOCALS_FLOAT(object->float_field(entry->f2()), 0);
       break;
@@ -607,7 +607,7 @@ bool CppInterpreter::stack_overflow_imminent(JavaThread *thread) {
   if (free_stack < StackShadowPages * os::vm_page_size()) {
     return true;
   }
-  
+
   return false;
 }
 
@@ -850,14 +850,14 @@ int AbstractInterpreter::layout_activation(methodOop method,
     intptr_t *stack_base    = monitor_base - monitor_words;
     intptr_t *stack         = stack_base - tempcount - 1;
 
-    BytecodeInterpreter::layout_interpreterState(istate, 
+    BytecodeInterpreter::layout_interpreterState(istate,
                                                  caller,
                                                  NULL,
-                                                 method, 
-                                                 locals, 
-                                                 stack, 
-                                                 stack_base, 
-                                                 monitor_base, 
+                                                 method,
+                                                 locals,
+                                                 stack,
+                                                 stack_base,
+                                                 monitor_base,
                                                  NULL,
                                                  is_top_frame);
   }
@@ -921,7 +921,7 @@ bool CppInterpreter::contains(address pc) {
   ShouldNotCallThis();
 #else
   return false; // make frame::print_value_on work
-#endif // !PRODUCT  
+#endif // !PRODUCT
 }
 
 // Result handlers and convertors

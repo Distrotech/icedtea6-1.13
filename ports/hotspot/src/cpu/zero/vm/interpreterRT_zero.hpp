@@ -37,7 +37,7 @@ class SignatureHandler {
   int argument_count() const {
     return cif()->nargs;
   }
-  
+
   ffi_type** argument_types() const {
     return (ffi_type**) (cif() + 1);
   }

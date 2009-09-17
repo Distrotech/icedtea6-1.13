@@ -50,7 +50,7 @@ int AbstractInterpreter::size_activation(methodOop method,
                                          int callee_param_count,
                                          int callee_locals,
                                          bool is_top_frame) {
-  return layout_activation(method, 
+  return layout_activation(method,
                            tempcount,
                            popframe_extra_args,
                            moncount,

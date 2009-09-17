@@ -68,7 +68,7 @@
   bool is_deoptimizer_frame() const;
 
  public:
-  frame sender_for_deoptimizer_frame(RegisterMap* map) const;  
+  frame sender_for_deoptimizer_frame(RegisterMap* map) const;
 
  public:
   void zero_print_on_error(int           index,

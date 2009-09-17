@@ -37,10 +37,10 @@ void Bytecodes::pd_initialize() {
   def(_invokespecialresolved, "invokespecialresolved", "bjj", NULL, T_ILLEGAL, -1, true, _invokespecial);
   def(_invokestaticresolved,  "invokestaticresolved",  "bjj", NULL, T_ILLEGAL,  0, true, _invokestatic);
 
-  def(_dmac,		"dmac",	     "b_",  NULL, T_DOUBLE, -16, false, _dmul);
+  def(_dmac,            "dmac",      "b_",  NULL, T_DOUBLE, -16, false, _dmul);
 
-  def(_iload_iload,	 "iload_iload",      "bi_i",NULL, T_INT, 2, false, _iload);
-  def(_iload_iload_N,	 "ilaod_iload_N",    "bi_", NULL, T_INT, 2, false, _iload);
+  def(_iload_iload,      "iload_iload",      "bi_i",NULL, T_INT, 2, false, _iload);
+  def(_iload_iload_N,    "ilaod_iload_N",    "bi_", NULL, T_INT, 2, false, _iload);
 
   def(_iload_0_iconst_N, "iload_0_iconst_N", "b_",  NULL, T_INT, 2, false, _iload_0);
   def(_iload_1_iconst_N, "iload_1_iconst_N", "b_",  NULL, T_INT, 2, false, _iload_1);
@@ -60,15 +60,15 @@ void Bytecodes::pd_initialize() {
   def(_ior_u4store,      "ior_u4store",      "b_i", NULL, T_VOID, -2, false, _ior);
   def(_ixor_u4store,     "ixor_u4store",     "b_i", NULL, T_VOID, -2, false, _ixor);
 
-  def(_iload_0_iload,	 "iload_0_iload",    "b_i", NULL, T_INT, 2, false, _iload_0);
-  def(_iload_1_iload,	 "iload_1_iload",    "b_i", NULL, T_INT, 2, false, _iload_1);
-  def(_iload_2_iload,	 "iload_2_iload",    "b_i", NULL, T_INT, 2, false, _iload_2);
-  def(_iload_3_iload,	 "iload_3_iload",    "b_i", NULL, T_INT, 2, false, _iload_3);
+  def(_iload_0_iload,    "iload_0_iload",    "b_i", NULL, T_INT, 2, false, _iload_0);
+  def(_iload_1_iload,    "iload_1_iload",    "b_i", NULL, T_INT, 2, false, _iload_1);
+  def(_iload_2_iload,    "iload_2_iload",    "b_i", NULL, T_INT, 2, false, _iload_2);
+  def(_iload_3_iload,    "iload_3_iload",    "b_i", NULL, T_INT, 2, false, _iload_3);
 
-  def(_iload_0_iload_N,	 "iload_0_iload_N",  "b_",  NULL, T_INT, 2, false, _iload_0);
-  def(_iload_1_iload_N,	 "iload_1_iload_N",  "b_",  NULL, T_INT, 2, false, _iload_1);
-  def(_iload_2_iload_N,	 "iload_2_iload_N",  "b_",  NULL, T_INT, 2, false, _iload_2);
-  def(_iload_3_iload_N,	 "iload_3_iload_N",  "b_",  NULL, T_INT, 2, false, _iload_3);
+  def(_iload_0_iload_N,  "iload_0_iload_N",  "b_",  NULL, T_INT, 2, false, _iload_0);
+  def(_iload_1_iload_N,  "iload_1_iload_N",  "b_",  NULL, T_INT, 2, false, _iload_1);
+  def(_iload_2_iload_N,  "iload_2_iload_N",  "b_",  NULL, T_INT, 2, false, _iload_2);
+  def(_iload_3_iload_N,  "iload_3_iload_N",  "b_",  NULL, T_INT, 2, false, _iload_3);
 
 #endif // HOTSPOT_ASM
 }

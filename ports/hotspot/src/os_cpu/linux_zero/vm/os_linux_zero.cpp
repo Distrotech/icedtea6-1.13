@@ -172,7 +172,7 @@ JVM_handle_linux_signal(int sig,
           else {
             fatal("recursive segv. expanding stack.");
           }
-        } 
+        }
       }
     }
 
@@ -228,7 +228,7 @@ JVM_handle_linux_signal(int sig,
           "\n#    OOO        c_c_(___)");
   }
 #endif // !PRODUCT
-  
+
   const char *fmt = "caught unhandled signal %d";
   char buf[64];
 
