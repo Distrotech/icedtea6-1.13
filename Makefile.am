@@ -649,8 +649,7 @@ ICEDTEA_PATCHES = \
 	patches/security/icedtea-6830335.patch \
 	patches/security/icedtea-6845701.patch \
 	patches/security/icedtea-6813167.patch \
-	patches/icedtea-jar-misc.patch \
-	patches/icedtea-jtreg-layoutextragap.patch
+	patches/icedtea-jar-misc.patch 
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
@@ -723,6 +722,7 @@ ICEDTEA_PATCHES += \
 	patches/icedtea-jtreg-printjob-multiple-end.patch \
 	patches/icedtea-jtreg-printjob-edgetest-manual.patch \
 	patches/icedtea-jtreg-jrunscript.patch \
+	patches/icedtea-jtreg-layoutextragap.patch \
 	patches/icedtea-network-unreachable.patch \
 	patches/icedtea-dnd-filelists.patch \
 	patches/icedtea-java2d-mitre-join.patch \
