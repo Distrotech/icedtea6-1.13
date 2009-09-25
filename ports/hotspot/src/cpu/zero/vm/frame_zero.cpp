@@ -36,8 +36,8 @@ bool frame::is_interpreted_frame() const {
   return zeroframe()->is_interpreter_frame();
 }
 
-bool frame::is_deoptimizer_frame() const {
-  return zeroframe()->is_deoptimizer_frame();
+bool frame::is_fake_stub_frame() const {
+  return zeroframe()->is_fake_stub_frame();
 }
 
 frame frame::sender_for_entry_frame(RegisterMap *map) const {
@@ -58,7 +58,7 @@ frame frame::sender_for_compiled_frame(RegisterMap *map) const {
   return frame(sender_sp(), sp() + 1);
 }
 
-frame frame::sender_for_deoptimizer_frame(RegisterMap *map) const {
+frame frame::sender_for_fake_stub_frame(RegisterMap *map) const {
   return frame(sender_sp(), sp() + 1);
 }
 
@@ -73,13 +73,11 @@ frame frame::sender(RegisterMap* map) const {
   if (is_interpreted_frame())
     return sender_for_interpreter_frame(map);
 
-  assert(_cb == CodeCache::find_blob(pc()),"Must be the same");
-  if (_cb != NULL) {
+  if (is_compiled_frame())
     return sender_for_compiled_frame(map);
-  }
 
-  if (is_deoptimizer_frame())
-    return sender_for_deoptimizer_frame(map);
+  if (is_fake_stub_frame())
+    return sender_for_fake_stub_frame(map);
 
   ShouldNotReachHere();
 }
@@ -224,8 +222,8 @@ void ZeroFrame::identify_word(int   frame_index,
       strncpy(valuebuf, "INTERPRETER_FRAME", buflen);
     else if (is_shark_frame())
       strncpy(valuebuf, "SHARK_FRAME", buflen);
-    else if (is_deoptimizer_frame())
-      strncpy(valuebuf, "DEOPTIMIZER_FRAME", buflen);
+    else if (is_fake_stub_frame())
+      strncpy(valuebuf, "FAKE_STUB_FRAME", buflen);
     break;
 
   default:
@@ -241,8 +239,8 @@ void ZeroFrame::identify_word(int   frame_index,
       as_shark_frame()->identify_word(
         frame_index, offset, fieldbuf, valuebuf, buflen);
     }
-    else if (is_deoptimizer_frame()) {
-      as_deoptimizer_frame()->identify_word(
+    else if (is_fake_stub_frame()) {
+      as_fake_stub_frame()->identify_word(
         frame_index, offset, fieldbuf, valuebuf, buflen);
     }
   }
@@ -281,7 +279,8 @@ void InterpreterFrame::identify_word(int   frame_index,
       }
       else if (is_valid && !strcmp(field, "_bcp") && istate->bcp()) {
         snprintf(valuebuf, buflen, PTR_FORMAT " (bci %d)",
-                 istate->bcp(), istate->method()->bci_from(istate->bcp()));
+                 (intptr_t) istate->bcp(),
+                 istate->method()->bci_from(istate->bcp()));
       }
       snprintf(fieldbuf, buflen, "%sistate->%s",
                field[strlen(field) - 1] == ')' ? "(": "", field);
@@ -351,7 +350,8 @@ void SharkFrame::identify_word(int   frame_index,
       nmethod *code = method()->code();
       if (code && code->pc_desc_at(pc())) {
         SimpleScopeDesc ssd(code, pc());
-        snprintf(valuebuf, buflen, PTR_FORMAT " (bci %d)", pc(), ssd.bci());
+        snprintf(valuebuf, buflen, PTR_FORMAT " (bci %d)",
+                 (intptr_t) pc(), ssd.bci());
       }
     }
     return;
@@ -411,12 +411,4 @@ void ZeroFrame::identify_vp_word(int       frame_index,
              (int) (stack_base - addr - 1));
     return;
   }
-}
-
-void DeoptimizerFrame::identify_word(int   frame_index,
-                                     int   offset,
-                                     char* fieldbuf,
-                                     char* valuebuf,
-                                     int   buflen) const {
-  // Deoptimizer frames have no extra words to identify
 }

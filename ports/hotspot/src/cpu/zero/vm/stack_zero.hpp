@@ -97,7 +97,7 @@ class ZeroStack {
 class EntryFrame;
 class InterpreterFrame;
 class SharkFrame;
-class DeoptimizerFrame;
+class FakeStubFrame;
 
 //
 // |  ...               |
@@ -127,7 +127,7 @@ class ZeroFrame {
     ENTRY_FRAME = 0xCAFEBABE,
     INTERPRETER_FRAME,
     SHARK_FRAME,
-    DEOPTIMIZER_FRAME
+    FAKE_STUB_FRAME
   };
 
  protected:
@@ -158,8 +158,8 @@ class ZeroFrame {
   bool is_shark_frame() const {
     return type() == SHARK_FRAME;
   }
-  bool is_deoptimizer_frame() const {
-    return type() == DEOPTIMIZER_FRAME;
+  bool is_fake_stub_frame() const {
+    return type() == FAKE_STUB_FRAME;
   }
 
  public:
@@ -175,9 +175,9 @@ class ZeroFrame {
     assert(is_shark_frame(), "should be");
     return (SharkFrame *) this;
   }
-  DeoptimizerFrame *as_deoptimizer_frame() const {
-    assert(is_deoptimizer_frame(), "should be");
-    return (DeoptimizerFrame *) this;
+  FakeStubFrame *as_fake_stub_frame() const {
+    assert(is_fake_stub_frame(), "should be");
+    return (FakeStubFrame *) this;
   }
 
  public:

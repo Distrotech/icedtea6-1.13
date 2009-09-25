@@ -35,8 +35,6 @@
 // |  ...               |
 
 class EntryFrame : public ZeroFrame {
-  friend class ZeroStackPrinter;
-
  private:
   EntryFrame() : ZeroFrame() {
     ShouldNotCallThis();

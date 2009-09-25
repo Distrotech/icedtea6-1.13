@@ -1,10 +1,33 @@
+2009-09-25  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/src/cpu/zero/vm/assembler_zero.hpp: Moved ffi.h to...
+	* ports/hotspot/src/cpu/zero/vm/globalDefinitions_zero.hpp: ...here.
+
+	* ports/hotspot/src/cpu/zero/vm/deoptimizerFrame_zero.hpp:
+	Replaced with...
+	* ports/hotspot/src/cpu/zero/vm/fakeStubFrame_zero.hpp: New file.
+
+	* ports/hotspot/src/cpu/zero/vm/entryFrame_zero.hpp:
+	Removed reference to ZeroStackPrinter.
+	* ports/hotspot/src/cpu/zero/vm/interpreterFrame_zero.hpp: Likewise.
+	* ports/hotspot/src/cpu/zero/vm/sharkFrame_zero.hpp: Likewise.
+
+	* ports/hotspot/src/cpu/zero/vm/frame_zero.hpp:
+	Replaced references to deoptimizer frame with fake stub frame.
+	* ports/hotspot/src/cpu/zero/vm/frame_zero.inline.hpp: Likewise.
+	* ports/hotspot/src/cpu/zero/vm/frame_zero.cpp: Likewise.
+	* ports/hotspot/src/cpu/zero/vm/stack_zero.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkRuntime.cpp: Likewise.
+
 2009-09-24  Jon VanAlten  <jon.vanalten@redhat.com>
+
 	* Makefile.am:
 	Build PulseAudio class files into distinct subdirectory.
 
 2009-09-18  Man Lung Wong  <mwong@redhat.com>
-	* Makefile.am: Move the line patches/icedtea-jtreg-layoutextragap.patch to
-	the proper location.
+
+	* Makefile.am: Move the line
+	patches/icedtea-jtreg-layoutextragap.patch to the proper location.
 
 2009-09-17  Man Lung Wong  <mwong@redhat.com>
 

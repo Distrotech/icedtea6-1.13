@@ -30,11 +30,9 @@
 // +--------------------+  ------------------
 // |  ...               |
 
-class DeoptimizerFrame : public ZeroFrame {
-  friend class ZeroStackPrinter;
-
+class FakeStubFrame : public ZeroFrame {
  private:
-  DeoptimizerFrame() : ZeroFrame() {
+  FakeStubFrame() : ZeroFrame() {
     ShouldNotCallThis();
   }
 
@@ -44,12 +42,12 @@ class DeoptimizerFrame : public ZeroFrame {
   };
 
  public:
-  static DeoptimizerFrame *build(ZeroStack* stack);
+  static FakeStubFrame *build(ZeroStack* stack);
 
  public:
   void identify_word(int   frame_index,
                      int   offset,
                      char* fieldbuf,
                      char* valuebuf,
-                     int   buflen) const;
+                     int   buflen) const {}
 };

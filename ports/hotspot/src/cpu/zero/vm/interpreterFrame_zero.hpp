@@ -39,7 +39,6 @@
 // |  ...               |
 
 class InterpreterFrame : public ZeroFrame {
-  friend class ZeroStackPrinter;
   friend class AbstractInterpreter;
 
  private:

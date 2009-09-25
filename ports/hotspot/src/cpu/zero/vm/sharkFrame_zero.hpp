@@ -41,7 +41,6 @@
 // |  ...               |
 
 class SharkFrame : public ZeroFrame {
-  friend class ZeroStackPrinter;
   friend class SharkFunction;
 
  private:

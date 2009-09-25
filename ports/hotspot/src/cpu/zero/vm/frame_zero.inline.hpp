@@ -26,7 +26,7 @@
 #include <entryFrame_zero.hpp>
 #include <interpreterFrame_zero.hpp>
 #include <sharkFrame_zero.hpp>
-#include <deoptimizerFrame_zero.hpp>
+#include <fakeStubFrame_zero.hpp>
 
 // Constructors
 
@@ -57,7 +57,7 @@ inline frame::frame(intptr_t* sp, intptr_t* fp) {
     _cb = CodeCache::find_blob_unsafe(pc());
     break;
 
-  case ZeroFrame::DEOPTIMIZER_FRAME:
+  case ZeroFrame::FAKE_STUB_FRAME:
     _pc = NULL;
     _cb = NULL;
     break;
