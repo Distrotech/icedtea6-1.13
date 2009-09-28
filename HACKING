@@ -124,7 +124,9 @@ The following patches are only applied to OpenJDK6 in IcedTea6:
   in Asia/Amman TimeZone. SimpleTimeZone checks too strict.
 * icedtea-dnd-filelists.patch: Fix drag and drop behaviour when dragging a file list between JVMs (S5079469). Backported from OpenJDK.
 * icedtea-signed-types-hot6.patch: Make use of unsigned/signed types explicit.
-* openjdk/6648816.patch: Backport of regression (NPE) fix in AccessControlContext
+* openjdk/6648816.patch: Backport of regression (NPE) fix in AccessControlContext (PR364/S6648816)
+* icedtea-nss-config.patch: Add the NSS PKCS11 security provider. (PR356)
+* icedtea-nss-6763530.patch: Fix PKCS11 provider when used with newer version of NSS (>=3.12.3) (PR356, S6763530).
 
 The following patches are only applied to OpenJDK in IcedTea:
 

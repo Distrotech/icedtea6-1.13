@@ -711,6 +711,11 @@ if ENABLE_SYSTEMTAP
 ICEDTEA_PATCHES += patches/icedtea-systemtap.patch
 endif
 
+if ENABLE_NSS
+ICEDTEA_PATCHES += patches/icedtea-nss-config.patch \
+		   patches/icedtea-nss-6763530.patch
+endif
+
 ICEDTEA_PATCHES += \
 	patches/icedtea-demo-swingapplet.patch \
 	patches/icedtea-awt-window-size.patch \
@@ -1241,6 +1246,10 @@ if ENABLE_SYSTEMTAP
 	    $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
 	fi
 endif
+if ENABLE_NSS
+	cp $(abs_top_builddir)/nss.cfg \
+	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security;
+endif
 	@echo "IcedTea is served:" $(BUILD_OUTPUT_DIR)
 	mkdir -p stamps
 	touch stamps/icedtea.stamp
@@ -1325,6 +1334,10 @@ if ENABLE_SYSTEMTAP
 	  cp $(abs_top_builddir)/tapset/hotspot.stp \
 	    $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
 	fi
+endif
+if ENABLE_NSS
+	cp $(abs_top_builddir)/nss.cfg \
+	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security;
 endif
 	@echo "IcedTea (debug build) is served:" \
 	  $(BUILD_OUTPUT_DIR)-debug
