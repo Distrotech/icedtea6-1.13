@@ -348,7 +348,11 @@ CACAO_URL = $(CACAO_BASE_URL)/cacaojvm/download/cacao-$(CACAO_VERSION)/
 if USE_ALT_CACAO_SRC_ZIP
   CACAO_SRC_ZIP = $(ALT_CACAO_SRC_ZIP)
 else
+if USE_ALT_CACAO_SRC_DIR
+  CACAO_SRC_ZIP = "not needed"
+else
   CACAO_SRC_ZIP = cacao-$(CACAO_VERSION).tar.gz
+endif
 endif
 
 # VisualVM sources. Alternatives cannot be used here.
@@ -424,6 +428,8 @@ if BUILD_CACAO
 if !USE_SYSTEM_CACAO
 if USE_ALT_CACAO_SRC_ZIP
 else
+if USE_ALT_CACAO_SRC_DIR
+else
 	if ! echo "$(CACAO_MD5SUM)  $(CACAO_SRC_ZIP)" \
 	 | $(MD5SUM) --check ; \
 	then \
@@ -433,6 +439,7 @@ else
 	 fi ; \
 	 $(WGET) $(CACAO_URL)$(CACAO_SRC_ZIP) -O $(CACAO_SRC_ZIP); \
 	fi
+endif
 endif
 endif
 endif
@@ -469,7 +476,10 @@ clean-download:
 	rm -f stamps/download.stamp
 	rm -f $(OPENJDK_SRC_ZIP)
 if BUILD_CACAO
+if USE_ALT_CACAO_SRC_DIR
+else
 	rm -f $(CACAO_SRC_ZIP)
+endif
 endif
 if WITH_VISUALVM
 	rm -f $(VISUALVM_SRC_ZIP)
@@ -758,6 +768,13 @@ else
 endif
 if BUILD_CACAO
 if !USE_SYSTEM_CACAO
+if USE_ALT_CACAO_SRC_DIR
+	if ! test -d cacao ; \
+	then \
+	  mkdir -p cacao/cacao ; \
+	  cp -r $(ALT_CACAO_SRC_DIR)/* cacao/cacao/ ; \
+	fi
+else
 	if ! test -d cacao ; \
 	then \
 	  mkdir cacao ; \
@@ -765,6 +782,7 @@ if !USE_SYSTEM_CACAO
 	  dir=$$(basename cacao/cacao-*) ; \
 	  ln -s $$dir cacao/cacao ; \
 	fi
+endif
 endif
 endif
 if WITH_VISUALVM

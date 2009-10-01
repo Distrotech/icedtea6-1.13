@@ -857,6 +857,23 @@ AC_DEFUN([AC_CHECK_WITH_CACAO_SRC_ZIP],
   AC_SUBST(ALT_CACAO_SRC_ZIP)
 ])
 
+AC_DEFUN([AC_CHECK_WITH_CACAO_SRC_DIR],
+[
+  AC_MSG_CHECKING(for a Cacao source directory)
+  AC_ARG_WITH([cacao-src-dir],
+              [AS_HELP_STRING(--with-cacao-src-dir,specify the location of the Cacao sources)],
+  [
+    ALT_CACAO_SRC_DIR=${withval}
+    AM_CONDITIONAL(USE_ALT_CACAO_SRC_DIR, test x = x)
+  ],
+  [
+    ALT_CACAO_SRC_DIR="not specified"
+    AM_CONDITIONAL(USE_ALT_CACAO_SRC_DIR, test x != x)
+  ])
+  AC_MSG_RESULT(${ALT_CACAO_SRC_DIR})
+  AC_SUBST(ALT_CACAO_SRC_DIR)
+])
+
 AC_DEFUN([AC_CHECK_WITH_GCJ],
 [
   AC_MSG_CHECKING([whether to compile ecj natively])
