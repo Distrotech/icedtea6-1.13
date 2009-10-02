@@ -58,11 +58,7 @@ PULSE_JAVA_JAVA_SRCDIR =
 PULSE_JAVA_CLASS_DIR =
 endif
 
-if WITH_ALT_HSBUILD
 HOTSPOT_MAKE_DIR = make
-else
-HOTSPOT_MAKE_DIR = build
-endif
 
 # Top-Level Targets
 # =================
@@ -163,7 +159,7 @@ endif
 ICEDTEA_ENV = \
 	IMPORT_BINARY_PLUGS=true \
 	ALT_JDK_IMPORT_PATH="$(ICEDTEA_BOOT_DIR)" \
-	ANT_HOME="$(SYSTEM_ANT_DIR)" \
+	ANT="$(ANT)" \
         BUILD_NUMBER="$(OPENJDK_VERSION)" \
 	JDK_UPDATE_VERSION="$(JDK_UPDATE_VERSION)" \
         JRE_RELEASE_VERSION="1.6.0_$(COMBINED_VERSION)" \
@@ -201,7 +197,9 @@ ICEDTEA_ENV = \
 	JAVA_HOME="" \
 	JDK_HOME="" \
 	RHINO_JAR="$(RHINO_JAR)" \
-	DISTRIBUTION_ID="$(DIST_ID)"
+	DISTRIBUTION_ID="$(DIST_ID)" \
+	DEBUG_CLASSFILES="true" \
+	DEBUG_BINARIES="true"
 
 if WITH_CACAO
 ICEDTEA_ENV += \
@@ -242,7 +240,7 @@ ICEDTEA_CLS_DIR_ECJ = \
 ICEDTEA_ENV_ECJ = \
 	IMPORT_BINARY_PLUGS=true \
 	ALT_JDK_IMPORT_PATH="$(ICEDTEA_BOOT_DIR)" \
-	ANT_HOME="$(SYSTEM_ANT_DIR)" \
+	ANT="$(ANT)" \
 	BUILD_NUMBER="$(OPENJDK_VERSION)" \
 	JDK_UPDATE_VERSION="$(JDK_UPDATE_VERSION)" \
         JRE_RELEASE_VERSION="1.6.0_$(COMBINED_VERSION)" \
@@ -286,7 +284,9 @@ ICEDTEA_ENV_ECJ = \
 	RHINO_JAR="$(RHINO_JAR)" \
 	JAR_KNOWS_ATFILE="$(JAR_KNOWS_ATFILE)" \
 	JAR_KNOWS_J_OPTIONS="$(JAR_KNOWS_J_OPTIONS)" \
-	JAR_ACCEPTS_STDIN_LIST="$(JAR_ACCEPTS_STDIN_LIST)"
+	JAR_ACCEPTS_STDIN_LIST="$(JAR_ACCEPTS_STDIN_LIST)" \
+	DEBUG_CLASSFILES="true" \
+	DEBUG_BINARIES="true"
 
 if WITH_CACAO
 ICEDTEA_ENV_ECJ += \
@@ -537,19 +537,6 @@ else
 	patches/hotspot/$(HSBUILD)/icedtea-gcc-4.3.patch
 endif
 
-# Patches needed when not using the newer OpenJDK 7 HotSpot
-OLD_HOTSPOT_PATCHES = \
-	patches/icedtea-signed-types-hot6.patch \
-	patches/icedtea-lucene-crash.patch \
-	patches/icedtea-6700047-loopopts.patch \
-	patches/icedtea-6712835-ifnode.patch
-
-if WITH_ALT_HSBUILD
-  OLD_HOTSPOT_PATCHES_COND =
-else
-  OLD_HOTSPOT_PATCHES_COND = $(OLD_HOTSPOT_PATCHES)
-endif
-
 ICEDTEA_FSG_PATCHES =
 
 ICEDTEA_PATCHES = \
@@ -560,14 +547,11 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-zero.patch \
 	patches/icedtea-ia64-bugfix.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-parisc-opt.patch \
-	$(OLD_HOTSPOT_PATCHES_COND) \
+	patches/icedtea-lucene-crash.patch \
 	patches/icedtea-version.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-version.patch \
 	patches/icedtea-copy-plugs.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-text-relocations.patch \
-	patches/icedtea-graphics.patch \
-	patches/icedtea-debuginfo.patch \
-	patches/hotspot/$(HSBUILD)/icedtea-debuginfo.patch \
 	patches/icedtea-ssl.patch \
 	$(PLUGIN_PATCH) \
 	patches/icedtea-webstart.patch \
@@ -576,15 +560,12 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-tools.patch \
 	patches/icedtea-timezone.patch \
 	patches/icedtea-timezone-default-permission.patch \
-	patches/icedtea-simpletimezone-relax.patch \
 	patches/icedtea-use-system-tzdata.patch \
 	patches/icedtea-headers.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-headers.patch \
-	patches/icedtea-ant.patch \
 	patches/icedtea-gcc-suffix.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-gcc-suffix.patch \
 	patches/icedtea-bytebuffer-compact.patch \
-	patches/icedtea-float-double-trailing-zeros.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-memory-limits.patch \
 	patches/icedtea-sunsrc.patch \
 	patches/icedtea-libraries.patch \
@@ -592,7 +573,6 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-core-build.patch \
 	patches/icedtea-jvmtiEnv.patch \
 	patches/icedtea-lcms.patch \
-	patches/icedtea-lcms-2.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-core-build.patch \
 	patches/icedtea-linker-options.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-static-libstdc++.patch \
@@ -606,11 +586,8 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-ia64-fdlibm.patch \
 	patches/icedtea-freetypeversion.patch \
 	patches/icedtea-fonts.patch \
-	patches/icedtea-override-redirect-metacity.patch \
-	patches/icedtea-no-bcopy.patch \
 	patches/icedtea-shark-build.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-shark-build.patch \
-	patches/icedtea-toolkit.patch \
 	patches/icedtea-jdk-docs-target.patch \
 	patches/icedtea-nomotif-6706121.patch \
 	patches/icedtea-nomotif.patch \
@@ -625,62 +602,22 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-arch.patch \
 	patches/icedtea-lc_ctype.patch \
 	patches/icedtea-messageutils.patch \
-	patches/icedtea-javac-debuginfo.patch \
 	patches/icedtea-xjc.patch \
 	patches/icedtea-renderer-crossing.patch \
 	patches/icedtea-stroker-finish.patch \
-	patches/icedtea-alsa-default-device.patch \
 	patches/icedtea-linker-libs-order.patch \
 	patches/icedtea-f2i-overflow.patch \
 	patches/icedtea-6761856-freetypescaler.patch \
 	patches/icedtea-testenv.patch \
 	patches/icedtea-samejvm-safe.patch \
-	patches/icedtea-6728542-epoll.patch \
 	patches/icedtea-cc-interp-jvmti.patch \
 	patches/icedtea-pr261.patch \
 	patches/icedtea-doc-headers.patch \
 	patches/openjdk/bidi-tests.patch \
 	patches/openjdk/annotation-tests.patch \
-	patches/openjdk/rename-execvpe.patch \
-	patches/security/icedtea-6588003.patch \
-	patches/security/icedtea-6656586.patch \
-	patches/security/icedtea-6656610.patch \
-	patches/security/icedtea-6656625.patch \
-	patches/security/icedtea-6657133.patch \
-	patches/security/icedtea-6657619.patch \
-	patches/security/icedtea-6657625.patch \
-	patches/security/icedtea-6657695.patch \
-	patches/security/icedtea-6660049.patch \
-	patches/security/icedtea-6660539.patch \
-	patches/security/icedtea-6736293.patch \
-	patches/security/icedtea-6738524.patch \
-	patches/security/icedtea-6777448.patch \
-	patches/security/icedtea-6801497.patch \
-	patches/security/icedtea-6801071.patch \
-	patches/security/icedtea-6777487.patch \
-	patches/security/icedtea-6823373.patch \
-	patches/security/icedtea-6824440.patch \
-	patches/security/icedtea-6830335.patch \
-	patches/security/icedtea-6845701.patch \
-	patches/security/icedtea-6813167.patch \
-	patches/icedtea-jar-misc.patch 
-
-if WITH_ALT_HSBUILD
-ICEDTEA_PATCHES += \
-	patches/icedtea-format-warnings.patch \
-	patches/icedtea-fortify-source.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-sparc-buildfixes.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-6791168.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-includedb.patch \
-	patches/hotspot/$(HSBUILD)/icedtea-ignore-unrecognized-options.patch
-endif
-
-if !WITH_ALT_HSBUILD
-ICEDTEA_PATCHES += \
-	patches/icedtea-sparc.patch
-endif
-
-ICEDTEA_PATCHES += \
 	patches/hotspot/$(HSBUILD)/icedtea-sparc64-linux.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-sparc-ptracefix.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-sparc-trapsfix.patch
@@ -730,27 +667,20 @@ ICEDTEA_PATCHES += \
 	patches/icedtea-demo-swingapplet.patch \
 	patches/icedtea-awt-window-size.patch \
 	patches/icedtea-java2d-dasher.patch \
-	patches/hotspot/$(HSBUILD)/icedtea-format.patch \
 	patches/icedtea-cc-interp-backedge.patch \
 	patches/icedtea-xml-encodinginfo.patch \
 	patches/icedtea-jtreg-6592792.patch \
 	patches/icedtea-s390-noinline.patch \
 	patches/icedtea-jtreg-hatrun.patch \
 	patches/icedtea-jtreg-dnd.patch \
-	patches/icedtea-jtreg-colortest.patch \
-	patches/icedtea-jtreg-printjob-multiple-end.patch \
-	patches/icedtea-jtreg-printjob-edgetest-manual.patch \
 	patches/icedtea-jtreg-jrunscript.patch \
-	patches/icedtea-jtreg-layoutextragap.patch \
 	patches/icedtea-network-unreachable.patch \
 	patches/icedtea-dnd-filelists.patch \
-	patches/icedtea-java2d-mitre-join.patch \
 	patches/icedtea-java2d-stroker-internal-joint.patch \
 	patches/icedtea-java2d-stroker-internal-close-joint.patch \
 	patches/icedtea-disable-cc-incompatible-sanity-checks.patch \
 	patches/icedtea-explicit-target-arch.patch \
-	patches/openjdk/6648816.patch \
-	patches/openjdk/oj100103-debugger-socket-overflow.patch \
+	patches/openjdk/6432567-debugger-socket-overflow.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-gcc-stack-markings.patch \
 	$(DISTRIBUTION_PATCHES)
 
@@ -1001,7 +931,8 @@ stamps/ports-ecj.stamp: stamps/extract-ecj.stamp
 	touch stamps/ports-ecj.stamp
 
 # Patch OpenJDK for plug replacements and ecj.
-ICEDTEA_ECJ_PATCHES = patches/ecj/icedtea.patch \
+ICEDTEA_ECJ_PATCHES = patches/ecj/icedtea-ant.patch \
+	patches/ecj/icedtea.patch \
 	patches/ecj/icedtea-hotspot-$(HSBUILD).patch \
 	patches/ecj/icedtea-spp.patch \
 	patches/ecj/icedtea-jopt.patch
@@ -1469,12 +1400,8 @@ ICEDTEA_COPY_DIRS = \
 	java/util \
 	java/rmi \
 	sun/awt/ \
-	javax/net/ssl
-
-if WITH_ALT_HSBUILD
-ICEDTEA_COPY_DIRS += \
+	javax/net/ssl \
 	javax/script
-endif
 
 stamps/copy-source-files.stamp: stamps/overlay.stamp
 	for copy_dir in $(ICEDTEA_COPY_DIRS) ; \

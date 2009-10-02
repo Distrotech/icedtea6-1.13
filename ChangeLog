@@ -1,3 +1,124 @@
+2009-10-02  Andrew John Hughes  <ahughes@redhat.com>
+
+	Bump to b17 and use original HotSpot.
+	* patches/ecj/icedtea-hotspot-default.patch:
+	Moved to icedtea-hotspot-original.patch.
+	* patches/hotspot/default/icedtea-6791168.patch,
+	* patches/hotspot/default/icedtea-bytecodeInterpreter.patch,
+	* patches/hotspot/default/icedtea-core-build.patch,
+	* patches/hotspot/default/icedtea-debuginfo.patch,
+	* patches/hotspot/default/icedtea-format.patch,
+	* patches/hotspot/default/icedtea-gcc-4.3.patch,
+	* patches/hotspot/default/icedtea-gcc-stack-markings.patch,
+	* patches/hotspot/default/icedtea-gcc-suffix.patch,
+	* patches/hotspot/default/icedtea-headers.patch,
+	* patches/hotspot/default/icedtea-ignore-unrecognized-options.patch,
+	* patches/hotspot/default/icedtea-includedb.patch,
+	* patches/hotspot/default/icedtea-memory-limits.patch,
+	* patches/hotspot/default/icedtea-no-precompiled.patch,
+	* patches/hotspot/default/icedtea-params-cast-size_t.patch,
+	* patches/hotspot/default/icedtea-parisc-opt.patch,
+	* patches/hotspot/default/icedtea-shark-build.patch,
+	* patches/hotspot/default/icedtea-shark.patch,
+	* patches/hotspot/default/icedtea-sparc-buildfixes.patch,
+	* patches/hotspot/default/icedtea-sparc-ptracefix.patch,
+	* patches/hotspot/default/icedtea-sparc-trapsfix.patch,
+	* patches/hotspot/default/icedtea-sparc64-linux.patch,
+	* patches/hotspot/default/icedtea-static-libstdc++.patch,
+	* patches/hotspot/default/icedtea-text-relocations.patch,
+	* patches/hotspot/default/icedtea-use-idx_t.patch,
+	* patches/hotspot/default/icedtea-version.patch,
+	* patches/hotspot/default/icedtea-zero-build.patch:
+	Moved to patches/hotspot/original.
+	* patches/icedtea-6700047-loopopts.patch,
+	* patches/icedtea-6712835-ifnode.patch,
+	* patches/icedtea-6728542-epoll.patch,
+	* patches/icedtea-alsa-default-device.patch:
+	Removed, upstream.
+	* patches/icedtea-ant.patch: Moved to ecj subdirectory.
+	* patches/icedtea-debuginfo.patch,
+	* patches/icedtea-float-double-trailing-zeros.patch,
+	* patches/icedtea-format-warnings.patch,
+	* patches/icedtea-fortify-source.patch,
+	* patches/icedtea-graphics.patch,
+	* patches/icedtea-jar-misc.patch,
+	* patches/icedtea-java2d-mitre-join.patch,
+	* patches/icedtea-javac-debuginfo.patch,
+	* patches/icedtea-jtreg-colortest.patch,
+	* patches/icedtea-jtreg-layoutextragap.patch,
+	* patches/icedtea-jtreg-printjob-edgetest-manual.patch,
+	* patches/icedtea-jtreg-printjob-multiple-end.patch,
+	* patches/icedtea-lcms-2.patch,
+	* patches/icedtea-no-bcopy.patch,
+	* patches/icedtea-override-redirect-metacity.patch,
+	* patches/icedtea-signed-types-hot6.patch,
+	* patches/icedtea-simpletimezone-relax.patch,
+	* patches/icedtea-toolkit.patch,
+	* patches/openjdk/6648816.patch:
+	Removed, upstream.
+	* patches/openjdk/oj100103-debugger-socket-overflow.patch:
+	Renamed to include Sun bug ID.
+	* patches/openjdk/rename-execvpe.patch,
+	* patches/security/icedtea-6588003.patch,
+	* patches/security/icedtea-6656586.patch,
+	* patches/security/icedtea-6656610.patch,
+	* patches/security/icedtea-6656625.patch,
+	* patches/security/icedtea-6657133.patch,
+	* patches/security/icedtea-6657619.patch,
+	* patches/security/icedtea-6657625.patch,
+	* patches/security/icedtea-6657695.patch,
+	* patches/security/icedtea-6660049.patch,
+	* patches/security/icedtea-6660539.patch,
+	* patches/security/icedtea-6736293.patch,
+	* patches/security/icedtea-6738524.patch,
+	* patches/security/icedtea-6777448.patch,
+	* patches/security/icedtea-6777487.patch,
+	* patches/security/icedtea-6801071.patch,
+	* patches/security/icedtea-6801497.patch,
+	* patches/security/icedtea-6813167.patch,
+	* patches/security/icedtea-6823373.patch,
+	* patches/security/icedtea-6824440.patch,
+	* patches/security/icedtea-6830335.patch,
+	* patches/security/icedtea-6845701.patch:
+	Removed, upstream.
+	* Makefile.am:
+	Make WITH_ALT_HSBUILD conditionals the default,
+	set ANT rather than ANT, set DEBUG_CLASSFILES and
+	DEBUG_BINARIES to true, remove patches no longer
+	needed in b17.
+	* acinclude.m4: Use original HotSpot, not a download.
+	* patches/ecj/icedtea-ant.patch: Moved from patches,
+	and reduced to just add additional paths for bootstrap.
+	* patches/ecj/icedtea-hotspot-original.patch: Moved from
+	icedtea-hotspot-default, original hotspot-original patch removed.
+	* patches/ecj/icedtea.patch: Recreated.
+	* patches/hotspot/original/icedtea-6791168.patch,
+	* patches/hotspot/original/icedtea-bytecodeInterpreter.patch,
+	* patches/hotspot/original/icedtea-core-build.patch,
+	* patches/hotspot/original/icedtea-gcc-4.3.patch,
+	* patches/hotspot/original/icedtea-gcc-stack-markings.patch,
+	* patches/hotspot/original/icedtea-gcc-suffix.patch,
+	* patches/hotspot/original/icedtea-headers.patch,
+	* patches/hotspot/original/icedtea-includedb.patch,
+	* patches/hotspot/original/icedtea-no-precompiled.patch,
+	* patches/hotspot/original/icedtea-params-cast-size_t.patch,
+	* patches/hotspot/original/icedtea-parisc-opt.patch,
+	* patches/hotspot/original/icedtea-shark-build.patch,
+	* patches/hotspot/original/icedtea-shark.patch,
+	* patches/hotspot/original/icedtea-sparc-buildfixes.patch,
+	* patches/hotspot/original/icedtea-sparc-trapsfix.patch,
+	* patches/hotspot/original/icedtea-sparc64-linux.patch,
+	* patches/hotspot/original/icedtea-static-libstdc++.patch,
+	* patches/hotspot/original/icedtea-text-relocations.patch,
+	* patches/hotspot/original/icedtea-use-idx_t.patch,
+	* patches/hotspot/original/icedtea-version.patch,
+	* patches/hotspot/original/icedtea-zero-build.patch:
+	Moved from patches/hotspot/default.
+	* patches/icedtea-disable-cc-incompatible-sanity-checks.patch,
+	* patches/icedtea-zero-build.patch: Recreated.
+	* patches/openjdk/6432567-debugger-socket-overflow.patch:
+	Renamed from oj100013-debugger-socket-overflow.patch.
+	
 2009-10-01  Robert Schuster  <robertschuster@fsfe.org>
 
 	* configure.ac: Added --with-cacao-src-dir option.

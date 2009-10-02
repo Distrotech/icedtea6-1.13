@@ -1,0 +1,17 @@
+Description: buffer not large enough for maximum size of debugger warning.
+ (Largest error could be 73 bytes long: "handshake failed - received >Here's
+ a poke < - excepted >JDWP-Handshake<")
+Ubuntu: https://launchpad.net/bugs/419018
+Upstream: https://bugs.openjdk.java.net/show_bug.cgi?id=100103
+
+--- openjdk/jdk/src/share/transport/socket/socketTransport.c~	2009-08-25 21:19:38.000000000 -0700
++++ openjdk/jdk/src/share/transport/socket/socketTransport.c	2009-08-25 21:19:55.000000000 -0700
+@@ -168,7 +168,7 @@ handshake(int fd, jlong timeout) {
+     }
+     for (i=0; i<(int)strlen(hello); i++) {
+         if (b[i] != hello[i]) {
+-            char msg[64];
++            char msg[80];
+             strcpy(msg, "handshake failed - received >");
+             strncat(msg, b, strlen(hello));
+             strcat(msg, "< - excepted >");
