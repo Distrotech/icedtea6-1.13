@@ -10,6 +10,10 @@
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 #include "incls/_precompiled.incl"
@@ -74,8 +78,8 @@ void VMStructs::print_vm_offsets(void)
 	print_def("THREAD_STATE", offset_of(JavaThread, _thread_state));
 	print_def("THREAD_DO_NOT_UNLOCK", offset_of(JavaThread, _do_not_unlock_if_synchronized));
 
-	print_def("THREAD_JAVA_STACK_BASE", offset_of(JavaThread, _zero_stack) + ZeroStack::base_offset());
-	print_def("THREAD_JAVA_SP", offset_of(JavaThread, _zero_stack) + ZeroStack::sp_offset());
+	print_def("THREAD_JAVA_STACK_BASE", offset_of(JavaThread, _zero_stack) + in_bytes(ZeroStack::base_offset()));
+	print_def("THREAD_JAVA_SP", offset_of(JavaThread, _zero_stack) + in_bytes(ZeroStack::sp_offset()));
 	print_def("THREAD_TOP_ZERO_FRAME", offset_of(JavaThread, _top_zero_frame));
 	print_def("THREAD_SPECIALRUNTIMEEXITCONDITION", offset_of(JavaThread, _special_runtime_exit_condition));
 	nl();
