@@ -1,0 +1,15 @@
+diff -r 54de806cda4f -r 16b4f99fe54e openjdk-ecj/hotspot/src/share/vm/runtime/os.hpp
+--- openjdk/hotspot/src/share/vm/runtime/os.hpp	Fri Oct 02 14:46:11 2009 +0100
++++ openjdk/hotspot/src/share/vm/runtime/os.hpp	Fri Oct 02 15:28:00 2009 +0100
+@@ -300,6 +300,11 @@
+     // of the form:
+     // return ((_mem_serialize_page ^ addr) & -pagesize) == 0
+     //
++#ifdef S390
++    // s390 is one of those "some platforms"
++    if (addr == (address)_mem_serialize_page)
++      return true;
++#endif // S390
+     thr_addr  = (address)(((uintptr_t)thread >>
+                 get_serialize_page_shift_count()) &
+                 get_serialize_page_mask()) + (uintptr_t)_mem_serialize_page;

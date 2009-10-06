@@ -752,6 +752,7 @@ ICEDTEA_PATCHES += \
 	patches/openjdk/6648816.patch \
 	patches/openjdk/oj100103-debugger-socket-overflow.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-gcc-stack-markings.patch \
+	patches/icedtea-s390-serialize.patch \
 	$(DISTRIBUTION_PATCHES)
 
 stamps/extract.stamp: stamps/download.stamp
