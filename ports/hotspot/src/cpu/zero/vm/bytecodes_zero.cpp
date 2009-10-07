@@ -1,6 +1,7 @@
 /*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * Copyright 2007 Red Hat, Inc.
+ * Copyright 2009 Edward Nevill
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +29,12 @@
 
 void Bytecodes::pd_initialize() {
 #ifdef HOTSPOT_ASM
+  // Because iaccess_N can trap, we must say aload_N can trap, otherwise
+  // we get an assertion failure
+  def(_aload_1, "aload_1", "b", NULL, T_OBJECT ,  1, true);
+  def(_aload_2, "aload_2", "b", NULL, T_OBJECT ,  1, true);
+  def(_aload_3, "aload_3", "b", NULL, T_OBJECT ,  1, true);
+
   def(_iaccess_0, "_iaccess_0", "b_jj", NULL, T_INT,  1, true, _aload_0);
   def(_iaccess_1, "_iaccess_1", "b_jj", NULL, T_INT,  1, true, _aload_1);
   def(_iaccess_2, "_iaccess_2", "b_jj", NULL, T_INT,  1, true, _aload_2);

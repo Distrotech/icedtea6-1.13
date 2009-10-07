@@ -1,3 +1,20 @@
+@ Copyright 2009 Edward Nevill
+@ DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+@
+@ This code is free software; you can redistribute it and/or modify it
+@ under the terms of the GNU General Public License version 2 only, as
+@ published by the Free Software Foundation.
+@
+@ This code is distributed in the hope that it will be useful, but WITHOUT
+@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+@ version 2 for more details (a copy is included in the LICENSE file that
+@ accompanied this code).
+@
+@ You should have received a copy of the GNU General Public License version
+@ 2 along with this work; if not, write to the Free Software Foundation,
+@ Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+
 #ifdef HOTSPOT_ASM
 
 #define ARMv4
@@ -33,7 +50,6 @@
 
 #define tmp_xxx		r7
 #define tmp_yyy		r5
-#define tmp_zzz		r8
 #define tmp_vvv		r9
 
 #define tmp1		r11
@@ -542,6 +558,22 @@ do_\label:
 	ldrb	r0, [jpc, \reg]!
 	.endm
 
+	.macro	DISPATCH_START_R2_R0
+	.set	dispatch_state, 1
+	mov	r0, r2
+	.endm
+
+	.macro	DISPATCH_START_R2_JPC
+	.set	dispatch_state, 1
+	add	jpc, jpc, #1
+	.endm
+
+	.macro	DISPATCH_START_R2
+	.set	dispatch_state, 1
+	add	jpc, jpc, #1
+	mov	r0, r2
+	.endm
+
 #ifdef DISPATCH_LOOP
 	.macro	DISPATCH_NEXT
 	.endm
@@ -560,7 +592,7 @@ do_\label:
 	.endm
 #else
 	.macro	DISPATCH_1
-        ldrb    r1, [jpc, #2]
+@        ldrb    r1, [jpc, #2]
 	.endm
 
 	.macro	DISPATCH_2
@@ -613,34 +645,31 @@ do_\label:
         moveq   pc, ip
 	ldrb	r1, [jpc, lr]
         bic     ip, ip, #7
-        ldr     ip, [ip, r1, lsl #2]
-        mov     pc, ip
+        ldr     pc, [ip, r1, lsl #2]
 	.set	dispatch_state, 0
 	.endm
 
 	.macro	DISPATCH_BYTECODE
-        ldrb    r1, [jpc, #2]
+@        ldrb    r1, [jpc, #2]
         ldr     ip, [dispatch, r0, lsl #2]
         ldrb    r2, [jpc, #1]
         ands    lr, ip, #7
         moveq   pc, ip
 	ldrb	r1, [jpc, lr]
         bic     ip, ip, #7
-        ldr     ip, [ip, r1, lsl #2]
-        mov     pc, ip
+        ldr     pc, [ip, r1, lsl #2]
 	.endm
 
 	.macro	DISPATCH step=0
 	ldrb	r0, [jpc, #\step]!
-        ldrb    r1, [jpc, #2]
+@        ldrb    r1, [jpc, #2]
         ldr     ip, [dispatch, r0, lsl #2]
         ldrb    r2, [jpc, #1]
         ands    lr, ip, #7
         moveq   pc, ip
 	ldrb	r1, [jpc, lr]
         bic     ip, ip, #7
-        ldr     ip, [ip, r1, lsl #2]
-        mov     pc, ip
+        ldr     pc, [ip, r1, lsl #2]
 	.endm
 #endif // DISPATCH_LOOP
 
@@ -2818,6 +2847,7 @@ accessor_dw:
 	bx	lr
 
 	Opcode	getfield
+	ldrb	r1, [jpc, #2]
         add     tmp2, constpool, r1, lsl #12
 	add	tmp2, tmp2, r2, lsl #4
 	ldr	r3, [tmp2, #CP_OFFSET]
@@ -2882,6 +2912,7 @@ getfield_dw:
 #endif
 
 	Opcode	putfield
+	ldrb	r1, [jpc, #2]
         add     tmp2, constpool, r1, lsl #12
 	add	tmp2, tmp2, r2, lsl #4
 	ldr	r3, [tmp2, #CP_OFFSET]
@@ -3069,6 +3100,7 @@ resolve_invoke:
 # r2 = [jpc, #1]
 # r1 = [jpc, #2]
 	Opcode	new
+	ldrb	r1, [jpc, #2]
 #define k_entry		tmp2
 #define new_result	r7
 #define top_addr	r7
@@ -3253,6 +3285,7 @@ bytecode_interpreter_str:
 # r2 = [jpc, #1]
 # r1 = [jpc, #2]
 	Opcode	checkcast
+	ldrb	r1, [jpc, #2]
 	ldr	r3, [istate, #ISTATE_METHOD]
 	ldr	r0, [stack, #4]
 	ldr	r3, [r3, #METHOD_CONSTANTS]		@ R3 = METHOD->constants()
@@ -3355,6 +3388,7 @@ bytecode_interpreter_str:
 # r2 = [jpc, #1]
 # r1 = [jpc, #2]
 	Opcode	instanceof
+	ldrb	r1, [jpc, #2]
 	ldr	r3, [istate, #ISTATE_METHOD]
 	ldr	r0, [stack, #4]
 	ldr	r3, [r3, #METHOD_CONSTANTS]
@@ -3903,16 +3937,34 @@ normal_entry_synchronized:
 	stmfd	arm_sp!, {regset, lr}
 	mov	sl, r0
 	mov	tmp1, r2
+
+	ldr	r0, [tmp1, #THREAD_STACK_SIZE]
+	ldr	r3, [tmp1, #THREAD_STACK_BASE]
+	rsb	r3, r0, r3
+	rsb	r3, r3, arm_sp
+	cmp	r3, #32768
+	blt	stack_overflow_no_frame
+
 	ldrh	r2, [sl, #METHOD_MAXLOCALS]
 	ldrh	r3, [sl, #METHOD_SIZEOFPARAMETERS]
-	rsb	tmp_zzz, r3, r2
-	cmp	tmp_zzz, #0
+	rsb	r8, r3, r2
+
+	ldr	r1, [tmp1, #THREAD_JAVA_SP]
+	ldrh	r0, [sl, #METHOD_MAXSTACK]
+	ldr	r3, [tmp1, #THREAD_JAVA_STACK_BASE]
+
+	sub	r5, r1, r8, lsl #2
+	sub	r5, r5, #FRAME_SIZE+4
+	sub	r5, r5, r0, lsl #2
+	cmp	r3, r5
+	bcs	stack_overflow_no_frame
+
+	cmp	r8, #0
 	ble	.normal_entry_synchronized_no_locals
 
 	mov	r2, #0
-	ldr	r1, [tmp1, #THREAD_JAVA_SP]
 .zero_locals_synchronized:
-	subs	tmp_zzz, tmp_zzz, #1
+	subs	r8, r8, #1
 	str	r2, [r1, #-4]!
 	bgt	.zero_locals_synchronized
 	str	r1, [tmp1, #THREAD_JAVA_SP]
@@ -3927,23 +3979,13 @@ normal_entry_synchronized:
 	sub	r0, r0, #72
 	mov	istate, r0
 	str	r3, [tmp_vvv, #0]
-	ldr	r0, [tmp1, #THREAD_STACK_SIZE]
-	ldr	r3, [tmp1, #THREAD_STACK_BASE]
-	ldr	r2, [tmp1, #THREAD_JAVA_SP]
-	ldr	r1, [tmp1, #THREAD_JAVA_STACK_BASE]
 	adrl	ip, dispatch_init_adcon
-	rsb	r3, r0, r3
-	rsb	r2, r1, r2
 	ldm	ip, {r0, r1}
-	rsb	r3, r3, arm_sp
-	cmp	r2, #4096
-	cmpge	r3, #32768
 	add	r0, r0, ip
 	str	tmp_vvv, [tmp1, #THREAD_TOP_ZERO_FRAME]
 	CACHE_JPC
 	str	tmp_vvv, [tmp1, #THREAD_LAST_JAVA_SP]
 	add	dispatch, r1, r0
-	blt	.throw_stack_overflow
 	ldr	r0, [istate, #ISTATE_METHOD]
 	CACHE_STACK
 	ldr	r3, [r0, #METHOD_ACCESSFLAGS]
@@ -4009,6 +4051,7 @@ normal_do_synchronization:
 # r2 = [jpc, #1]
 # r1 = [jpc, #2]
 	Opcode	invokeinterface
+	ldrb	r1, [jpc, #2]
 	DECACHE_STACK
         add     r0, constpool, r1, lsl #12
 	add	r0, r0, r2, asl #4
@@ -4069,9 +4112,11 @@ normal_do_synchronization:
 
 	mov	tmp_invoke_len, #5
 
+#ifdef FASTPATH_ENTRY
 	adr	r0, normal_entry
 	cmp	r3, r0
 	beq	fast_normal_entry_with_len
+#endif
 
 	mov	r0, tmp2
 	mov	r1, ip
@@ -4114,6 +4159,7 @@ normal_do_synchronization:
 # r2 = [jpc, #1]
 # r1 = [jpc, #2]
 	Opcode	invokevfinal
+	ldrb	r1, [jpc, #2]
 	DECACHE_STACK
 	add	r0, constpool, r1, lsl #12
 	DECACHE_JPC
@@ -4158,6 +4204,7 @@ normal_do_synchronization:
 # r2 = [jpc, #1]
 # r1 = [jpc, #2]
         Opcode  invokevirtual
+	ldrb	r1, [jpc, #2]
         add     r0, constpool, r1, lsl #12
 	add	r0, r0, r2, asl #4
         ldr     r2, [r0, #CP_OFFSET]
@@ -4194,6 +4241,7 @@ normal_do_synchronization:
 # r2 = [jpc, #1]
 # r1 = [jpc, #2]
         Opcode  invokeresolved
+	ldrb	r1, [jpc, #2]
         DECACHE_STACK
         add     r0, constpool, r1, lsl #12
 	DECACHE_JPC
@@ -4267,6 +4315,7 @@ normal_dispatch_and_return:
 	DISPATCH_FINISH
 
 	Opcode	invokestatic
+	ldrb	r1, [jpc, #2]
         add     r0, constpool, r1, lsl #12
 	add	r0, r0, r2, asl #4
         ldr     r2, [r0, #CP_OFFSET]
@@ -4277,6 +4326,7 @@ normal_dispatch_and_return:
   FBC	b	rewrite_bytecode
 
   FBC	Opcode	invokestaticresolved
+  FBC	ldrb	r1, [jpc, #2]
         DECACHE_STACK
   FBC   add     r0, constpool, r1, lsl #12
 	DECACHE_JPC
@@ -4332,12 +4382,10 @@ normal_entry:
 	cmp	r3, #32768
 	bge	fast_normal_entry_with_len
 
-	mov	r0, tmp1
-        bl      _ZN18InterpreterRuntime24throw_StackOverflowErrorEP10JavaThread
-
-	ldmfd	arm_sp!, {regset, pc}
+	b	stack_overflow_before_frame
 
 	Opcode	invokespecial
+     	ldrb	r1, [jpc, #2]
         add     r0, constpool, r1, lsl #12
 	add	r0, r0, r2, asl #4
         ldr     r2, [r0, #CP_OFFSET]
@@ -4348,6 +4396,7 @@ normal_entry:
   FBC	b	rewrite_bytecode
 
   FBC	Opcode	invokespecialresolved
+  FBC	ldrb	r1, [jpc, #2]
         DECACHE_STACK
   FBC   add     r0, constpool, r1, lsl #12
 	DECACHE_JPC
@@ -4456,6 +4505,14 @@ fast_normal_entry_with_len:
 	ldrh	r2, [tmp2, #METHOD_MAXSTACK]
         bic     ip, ip, #0x35000000
         sub     r7, r0, r3
+
+	ldr	r3, [tmp1, #THREAD_JAVA_STACK_BASE]
+	sub	r5, stack, r7, lsl #2
+	sub	r5, r5, #FRAME_SIZE+4
+	sub	r5, r5, r2, lsl #2
+	cmp	r3, r5
+	bcs	stack_overflow_before_frame
+
         subs    r5, r7, #2
         tst     r7, #1
         bic     ip, ip, #0x14000
@@ -4482,7 +4539,6 @@ fast_normal_entry_with_len:
         sub     locals, stack, #4
 	str	r1, [istate, #ISTATE_OOP_TEMP]
         add     locals, locals, r0, lsl #2
-        ldr     r3, [tmp1, #THREAD_JAVA_STACK_BASE]
         sub     stack, istate, #4
         ldr     jpc, [tmp2, #METHOD_CONSTMETHOD]
         ldr     constpool, [tmp2, #METHOD_CONSTANTS]
@@ -4490,15 +4546,12 @@ fast_normal_entry_with_len:
 	DISPATCH_START	48
         ldr     constpool, [constpool, #CONSTANTPOOL_CACHE]
         str     ip, [tmp1, #THREAD_TOP_ZERO_FRAME]
-        rsb     r2, r3, r2
         str     ip, [tmp1, #THREAD_LAST_JAVA_SP]
 	DISPATCH_NEXT
         str     tmp1, [istate, #ISTATE_THREAD]
 	str	locals, [istate, #ISTATE_LOCALS]
 	str	constpool, [istate, #ISTATE_CONSTANTS]
 	DISPATCH_NEXT
-        cmp     r2, #4096
-	blt	1f
 	DISPATCH_NEXT
 	DISPATCH_NEXT
 	str	r10, [istate, #ISTATE_METHOD]
@@ -4506,13 +4559,6 @@ fast_normal_entry_with_len:
 @        str     lr, [istate, #ISTATE_PREV_LINK]
 @	str	lr, [istate, #ISTATE_CALLEE]
 	DISPATCH_FINISH
-1:
-	str	r10, [istate, #ISTATE_METHOD]
-	DECACHE_JPC
-	ldr	stack, [istate, #ISTATE_STACK_BASE]
-	sub	stack, stack, #4
-	DECACHE_STACK
-	b	.throw_stack_overflow
 
 handle_return:
 @	CHECK_CONSTPOOL
@@ -4687,28 +4733,17 @@ return_throw_illegal_monitor_state:
 	b	handle_exception_with_bcp
 
 @ ----------------------------------------------------------------------------------------
-.throw_stack_overflow:
-	ldr	r0, [istate, #ISTATE_THREAD]
+stack_overflow_no_frame:
+	mov	tmp_invoke_len, #0
+stack_overflow_before_frame:
+	mov	r0, tmp1
+	ldr	ip, [r0, #THREAD_TOP_ZERO_FRAME]
+	str	ip, [r0, #THREAD_LAST_JAVA_SP]
+	mov	tmp1, tmp_invoke_len
 	bl	_ZN18InterpreterRuntime24throw_StackOverflowErrorEP10JavaThread
-	ldr	r3, [istate, #ISTATE_THREAD]
-	ldr	ip, [istate, #ISTATE_THREAD]
-	ldr	r2, [r3, #THREAD_TOP_ZERO_FRAME]
-	mov	r3, #0
-	add	r1, r2, #4
-	str	r3, [ip, #THREAD_LAST_JAVA_SP]
-	str	r1, [ip, #THREAD_JAVA_SP]
-	ldr	r3, [r2, #0]
-	str	r3, [ip, #THREAD_TOP_ZERO_FRAME]
-	ldr	r2, [istate, #ISTATE_METHOD]
-	ldrh	r3, [r2, #40]
-	mov	r3, r3, asl #2
-	add	r1, r1, r3
-	str	r1, [ip, #THREAD_JAVA_SP]
-	ldr	ip, [istate, #ISTATE_ADVANCE_PC]
-	ldr	istate, [istate, #ISTATE_NEXT_FRAME]
-	cmp	ip, #0
-	ldmeqfd	arm_sp!, {regset, pc}
-	b	fast_handle_return
+	cmp	tmp1, #0
+	bne	handle_exception_with_bcp
+	ldmfd	arm_sp!, {regset, pc}
 
 handle_exception_do_not_unlock:
 	mov	r3, #1
