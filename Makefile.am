@@ -1250,6 +1250,9 @@ endif
 if ZERO_BUILD
 	printf -- '-zero ALIASED_TO -server\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
 endif
+if SHARK_BUILD
+	printf -- '-shark ALIASED_TO -server\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
+endif
 if WITH_CACAO
 	printf -- '-cacao ALIASED_TO -server\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
 endif
@@ -1338,6 +1341,9 @@ endif
 	  $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib
 if ZERO_BUILD
 	printf -- '-zero ALIASED_TO -server\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
+endif
+if SHARK_BUILD
+	printf -- '-shark ALIASED_TO -server\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
 endif
 if WITH_CACAO
 	printf -- '-cacao ALIASED_TO -server\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
@@ -1940,12 +1946,20 @@ if ADD_ZERO_BUILD
 	$(ADD_ZERO_EXTRA_BUILD_ENV) \
 		$(ARCH_PREFIX) $(MAKE) -C zerovm $(ICEDTEA_BUILD_TARGET)
 
+if ZERO_BUILD
+	mkdir -p $(BUILD_JRE_ARCH_DIR)/shark
+	cp -a zerovm/openjdk/build/$(OS_DIR)/hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server/* \
+		$(BUILD_JRE_ARCH_DIR)/shark/
+	printf -- '-shark KNOWN\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
+else
 	mkdir -p $(BUILD_JRE_ARCH_DIR)/zero
 	cp -a zerovm/openjdk/build/$(OS_DIR)/hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server/* \
 		$(BUILD_JRE_ARCH_DIR)/zero/
 	printf -- '-zero KNOWN\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
+endif
 else
 	printf -- '-zero ERROR\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
+	printf -- '-shark ERROR\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
 endif
 	touch $@
 
@@ -1960,12 +1974,20 @@ if ADD_ZERO_BUILD
 	$(ADD_ZERO_EXTRA_BUILD_ENV) \
 		$(ARCH_PREFIX) $(MAKE) -C zerovm $(ICEDTEA_DEBUG_BUILD_TARGET)
 
+if ZERO_BUILD
+	mkdir -p $(BUILD_DEBUG_JRE_ARCH_DIR)/shark
+	cp -a zerovm/openjdk/build/$(OS_DIR)/hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server/* \
+		$(BUILD_DEBUG_JRE_ARCH_DIR)/shark/
+	printf -- '-shark KNOWN\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
+else
 	mkdir -p $(BUILD_DEBUG_JRE_ARCH_DIR)/zero
 	cp -a zerovm/openjdk/build/$(OS_DIR)/hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server/* \
 		$(BUILD_DEBUG_JRE_ARCH_DIR)/zero/
 	printf -- '-zero KNOWN\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
+endif
 else
 	printf -- '-zero ERROR\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
+	printf -- '-shark ERROR\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
 endif
 	touch $@
 
