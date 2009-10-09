@@ -504,8 +504,14 @@ $(abs_top_srcdir)/mkbc: $(abs_top_srcdir)/mkbc.c
 # These options are provided mainly to assist debugging by returning the bytecode interpreter
 # to a 'vanilla' interpreter.
 #
+if SHARK_BUILD
+${ZERO_ASM_BC_ASM}: ${ZERO_ASM_BC_DEF} $(abs_top_srcdir)/mkbc
+	gcc -E -DDISABLE_NOTICE_SAFEPOINTS - < $< | $(abs_top_srcdir)/mkbc - $@
+else
 ${ZERO_ASM_BC_ASM}: ${ZERO_ASM_BC_DEF} $(abs_top_srcdir)/mkbc
 	gcc -E - < $< | $(abs_top_srcdir)/mkbc - $@
+endif
+
 
 # Link ports sources into tree
 stamps/ports.stamp: stamps/replace-hotspot.stamp
