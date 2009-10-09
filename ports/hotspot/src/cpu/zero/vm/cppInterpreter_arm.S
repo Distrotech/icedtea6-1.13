@@ -1058,7 +1058,7 @@ build_frame:
 asm_generate_method_entry:
 	mov	r3, r0
 	mov	r0, #0
-
+#ifdef PRODUCT
 	adrl	ip, dispatch_init_adcon
 	ldm	ip, {r1, r2}
 	add	r1, r1, ip
@@ -1085,6 +1085,7 @@ asm_generate_method_entry:
 	adrcc	ip, asm_method_table
 	ldrcc	r0, [ip, r3, lsl #2]
 1:
+#endif // PRODUCT
 	bx	lr
 asm_method_table:
 	.word	normal_entry
@@ -2162,8 +2163,8 @@ int_rem:
         bne     .r_loop2
         movs    lr, lr, lsl #1
 	DISPATCH_NEXT
-	DISPATCH_NEXT
 	rsbmi	tmp1, tmp1, #0
+	DISPATCH_NEXT
 	PUSH	tmp1
 	DISPATCH_FINISH
 
