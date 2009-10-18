@@ -17,6 +17,10 @@
 
 #ifdef HOTSPOT_ASM
 
+#ifdef SHARK
+#define USE_COMPILER
+#endif
+
 #define ARMv4
 
 #ifndef DISABLE_NOTICE_SAFEPOINTS
@@ -1058,7 +1062,7 @@ build_frame:
 asm_generate_method_entry:
 	mov	r3, r0
 	mov	r0, #0
-
+#ifdef PRODUCT
 	adrl	ip, dispatch_init_adcon
 	ldm	ip, {r1, r2}
 	add	r1, r1, ip
@@ -1085,6 +1089,7 @@ asm_generate_method_entry:
 	adrcc	ip, asm_method_table
 	ldrcc	r0, [ip, r3, lsl #2]
 1:
+#endif // PRODUCT
 	bx	lr
 asm_method_table:
 	.word	normal_entry
@@ -2162,8 +2167,8 @@ int_rem:
         bne     .r_loop2
         movs    lr, lr, lsl #1
 	DISPATCH_NEXT
-	DISPATCH_NEXT
 	rsbmi	tmp1, tmp1, #0
+	DISPATCH_NEXT
 	PUSH	tmp1
 	DISPATCH_FINISH
 
@@ -3988,12 +3993,34 @@ normal_entry_synchronized:
 	add	dispatch, r1, r0
 	ldr	r0, [istate, #ISTATE_METHOD]
 	CACHE_STACK
+  USEC	ldr	r2, [r0, #METHOD_INVOCATIONCOUNTER]
+  USEC	ldr	lr, [dispatch, #InterpreterInvocationLimit_Address-XXX]
+  USEC	add	r2, r2, #INVOCATIONCOUNTER_COUNTINCREMENT
+  USEC	ldr	lr, [lr]
+  USEC	str	r2, [r0, #METHOD_INVOCATIONCOUNTER]
+  USEC	cmp	r2, lr
+	ldr	r3, [r0, #METHOD_ACCESSFLAGS]
+  USEC	bcs	sync_method_entry_freq_count_overflow
+	CACHE_LOCALS
+	tst	r3, #JVM_ACC_SYNCHRONIZED
+	CACHE_CP
+	bne	normal_do_synchronization
+	DISPATCH	0
+
+#ifdef USE_COMPILER
+sync_method_entry_freq_count_overflow:
+	mov	r1, #0
+	mov	r0, tmp1
+	bl	_ZN18InterpreterRuntime26frequency_counter_overflowEP10JavaThreadPh
+	ldr	r0, [istate, #ISTATE_METHOD]
+	CACHE_JPC
 	ldr	r3, [r0, #METHOD_ACCESSFLAGS]
 	CACHE_LOCALS
 	tst	r3, #JVM_ACC_SYNCHRONIZED
 	CACHE_CP
 	bne	normal_do_synchronization
 	DISPATCH	0
+#endif
 
 do_execute_java_bytecodes_restore_locals_and_jpc:
 	CACHE_JPC
@@ -4546,11 +4573,18 @@ fast_normal_entry_with_len:
 	DISPATCH_START	48
         ldr     constpool, [constpool, #CONSTANTPOOL_CACHE]
         str     ip, [tmp1, #THREAD_TOP_ZERO_FRAME]
+  USEC	ldr	r3, [r10, #METHOD_INVOCATIONCOUNTER]
         str     ip, [tmp1, #THREAD_LAST_JAVA_SP]
 	DISPATCH_NEXT
+  USEC	ldr	lr, [dispatch, #InterpreterInvocationLimit_Address-XXX]
+  USEC	add	r3, r3, #INVOCATIONCOUNTER_COUNTINCREMENT
         str     tmp1, [istate, #ISTATE_THREAD]
+  USEC	ldr	lr, [lr]
+  USEC	str	r3, [tmp2, #METHOD_INVOCATIONCOUNTER]
 	str	locals, [istate, #ISTATE_LOCALS]
+  USEC	cmp	r3, lr
 	str	constpool, [istate, #ISTATE_CONSTANTS]
+  USEC	bcs	method_entry_freq_count_overflow
 	DISPATCH_NEXT
 	DISPATCH_NEXT
 	DISPATCH_NEXT
@@ -4559,6 +4593,18 @@ fast_normal_entry_with_len:
 @        str     lr, [istate, #ISTATE_PREV_LINK]
 @	str	lr, [istate, #ISTATE_CALLEE]
 	DISPATCH_FINISH
+#ifdef USE_COMPILER
+method_entry_freq_count_overflow:
+	DECACHE_JPC
+	str	r10, [istate, #ISTATE_METHOD]
+	mov	r1, #0
+	mov	r0, tmp1
+	bl	_ZN18InterpreterRuntime26frequency_counter_overflowEP10JavaThreadPh
+	CACHE_JPC
+	CACHE_CP
+	DISPATCH	0
+#endif
+
 
 handle_return:
 @	CHECK_CONSTPOOL
@@ -6301,6 +6347,7 @@ adcon_init_table:
 	.word	PrintCommandLineFlags(GOT)
 	.word	_ZN11JvmtiExport28_can_post_interpreter_eventsE(GOT)
 	.word	UseCompiler(GOT)
+	.word	_ZN17InvocationCounter26InterpreterInvocationLimitE(GOT)
 	.word	0
 
 	ALIGN_DATA
@@ -6580,10 +6627,10 @@ safe_dispatch_table:
 CodeTrace_Buffer_Base:
 	.space	CODETRACE_BUFFER_SIZE
 #endif
-	.word	0
 DispatchBreakPoint:					.word	0
 VFP_Flag:						.word	0
 CodeTrace_Idx:						.word	0
+InterpreterInvocationLimit_Address:			.word	0
 UseCompiler_Address:					.word	0
 can_post_interpreter_events:				.word	0
 PrintCommandLineFlags_Address:				.word	0

@@ -504,8 +504,14 @@ $(abs_top_srcdir)/mkbc: $(abs_top_srcdir)/mkbc.c
 # These options are provided mainly to assist debugging by returning the bytecode interpreter
 # to a 'vanilla' interpreter.
 #
+if SHARK_BUILD
+${ZERO_ASM_BC_ASM}: ${ZERO_ASM_BC_DEF} $(abs_top_srcdir)/mkbc
+	gcc -E -DDISABLE_NOTICE_SAFEPOINTS - < $< | $(abs_top_srcdir)/mkbc - $@
+else
 ${ZERO_ASM_BC_ASM}: ${ZERO_ASM_BC_DEF} $(abs_top_srcdir)/mkbc
 	gcc -E - < $< | $(abs_top_srcdir)/mkbc - $@
+endif
+
 
 # Link ports sources into tree
 stamps/ports.stamp: stamps/replace-hotspot.stamp
@@ -1181,6 +1187,9 @@ endif
 if ZERO_BUILD
 	printf -- '-zero ALIASED_TO -server\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
 endif
+if SHARK_BUILD
+	printf -- '-shark ALIASED_TO -server\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
+endif
 if WITH_CACAO
 	printf -- '-cacao ALIASED_TO -server\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
 endif
@@ -1269,6 +1278,9 @@ endif
 	  $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib
 if ZERO_BUILD
 	printf -- '-zero ALIASED_TO -server\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
+endif
+if SHARK_BUILD
+	printf -- '-shark ALIASED_TO -server\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
 endif
 if WITH_CACAO
 	printf -- '-cacao ALIASED_TO -server\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
@@ -1867,12 +1879,20 @@ if ADD_ZERO_BUILD
 	$(ADD_ZERO_EXTRA_BUILD_ENV) \
 		$(ARCH_PREFIX) $(MAKE) -C zerovm $(ICEDTEA_BUILD_TARGET)
 
+if ZERO_BUILD
+	mkdir -p $(BUILD_JRE_ARCH_DIR)/shark
+	cp -a zerovm/openjdk/build/$(OS_DIR)/hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server/* \
+		$(BUILD_JRE_ARCH_DIR)/shark/
+	printf -- '-shark KNOWN\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
+else
 	mkdir -p $(BUILD_JRE_ARCH_DIR)/zero
 	cp -a zerovm/openjdk/build/$(OS_DIR)/hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server/* \
 		$(BUILD_JRE_ARCH_DIR)/zero/
 	printf -- '-zero KNOWN\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
+endif
 else
 	printf -- '-zero ERROR\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
+	printf -- '-shark ERROR\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
 endif
 	touch $@
 
@@ -1887,12 +1907,20 @@ if ADD_ZERO_BUILD
 	$(ADD_ZERO_EXTRA_BUILD_ENV) \
 		$(ARCH_PREFIX) $(MAKE) -C zerovm $(ICEDTEA_DEBUG_BUILD_TARGET)
 
+if ZERO_BUILD
+	mkdir -p $(BUILD_DEBUG_JRE_ARCH_DIR)/shark
+	cp -a zerovm/openjdk/build/$(OS_DIR)/hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server/* \
+		$(BUILD_DEBUG_JRE_ARCH_DIR)/shark/
+	printf -- '-shark KNOWN\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
+else
 	mkdir -p $(BUILD_DEBUG_JRE_ARCH_DIR)/zero
 	cp -a zerovm/openjdk/build/$(OS_DIR)/hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server/* \
 		$(BUILD_DEBUG_JRE_ARCH_DIR)/zero/
 	printf -- '-zero KNOWN\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
+endif
 else
 	printf -- '-zero ERROR\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
+	printf -- '-shark ERROR\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
 endif
 	touch $@
 
