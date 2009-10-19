@@ -607,7 +607,6 @@ ICEDTEA_PATCHES = \
 	$(GCC_PATCH) \
 	patches/icedtea-arch.patch \
 	patches/icedtea-lc_ctype.patch \
-	patches/icedtea-messageutils.patch \
 	patches/icedtea-xjc.patch \
 	patches/icedtea-renderer-crossing.patch \
 	patches/icedtea-stroker-finish.patch \
