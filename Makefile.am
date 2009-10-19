@@ -120,7 +120,11 @@ EXTRA_DIST = rt generated \
 	HACKING pulseaudio fsg.sh \
 	plugin \
 	hotspot.map \
-	autogen.sh
+	autogen.sh \
+	tapset/hotspot.stp.in \
+	tapset/hotspot_jni.stp.in \
+	scripts/jni_create_stap.c \
+	scripts/jni_desc
 
 # The Binary plugs directory is called jdk1.7.0 for historical reasons. The
 # name is completely irrelevant; only contains the plugs to build IcedTea.
@@ -1199,9 +1203,14 @@ if ENABLE_SYSTEMTAP
 	  sed -e '/\/client\/libjvm.so/d' \
 	    < $(abs_top_builddir)/tapset/hotspot.stp \
 	    > $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
+	  sed -e '/\/client\/libjvm.so/d' \
+	    < $(abs_top_builddir)/tapset/hotspot_jni.stp \
+	    > $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_jni.stp; \
 	else \
 	  cp $(abs_top_builddir)/tapset/hotspot.stp \
 	    $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
+	  cp $(abs_top_builddir)/tapset/hotspot_jni.stp \
+	    $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_jni.stp; \
 	fi
 endif
 if ENABLE_NSS
@@ -1291,9 +1300,14 @@ if ENABLE_SYSTEMTAP
 	  sed -e '/\/client\/libjvm.so/d' \
 	    < $(abs_top_builddir)/tapset/hotspot.stp \
 	    > $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
+	  sed -e '/\/client\/libjvm.so/d' \
+	    < $(abs_top_builddir)/tapset/hotspot_jni.stp \
+	    > $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_jni.stp; \
 	else \
 	  cp $(abs_top_builddir)/tapset/hotspot.stp \
 	    $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
+	  cp $(abs_top_builddir)/tapset/hotspot_jni.stp \
+	    $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_jni.stp; \
 	fi
 endif
 if ENABLE_NSS
