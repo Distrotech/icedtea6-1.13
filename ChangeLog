@@ -1,5 +1,72 @@
 2009-10-21  Andrew John Hughes  <ahughes@redhat.com>
 
+	Move non-version-dependent HotSpot patches back
+	to top-level.
+	* patches/hotspot/default/icedtea-bytecodeInterpreter.patch,
+	* patches/hotspot/default/icedtea-core-build.patch,
+	* patches/hotspot/default/icedtea-gcc-stack-markings.patch,
+	* patches/hotspot/default/icedtea-gcc-suffix.patch,
+	* patches/hotspot/default/icedtea-headers.patch,
+	* patches/hotspot/default/icedtea-memory-limits.patch,
+	* patches/hotspot/default/icedtea-no-precompiled.patch,
+	* patches/hotspot/default/icedtea-parisc-opt.patch,
+	* patches/hotspot/default/icedtea-shark-build.patch,
+	* patches/hotspot/default/icedtea-shark.patch,
+	* patches/hotspot/default/icedtea-sparc-buildfixes.patch,
+	* patches/hotspot/default/icedtea-sparc-ptracefix.patch,
+	* patches/hotspot/default/icedtea-sparc-trapsfix.patch,
+	* patches/hotspot/default/icedtea-sparc64-linux.patch,
+	* patches/hotspot/default/icedtea-static-libstdc++.patch,
+	* patches/hotspot/default/icedtea-text-relocations.patch,
+	* patches/hotspot/default/icedtea-use-idx_t.patch,
+	* patches/hotspot/default/icedtea-version.patch,
+	* patches/hotspot/default/icedtea-zero-build.patch:
+	Removed, duplicates of versions in hotspot/original.
+	* patches/hotspot/original/icedtea-bytecodeInterpreter.patch,
+	* patches/hotspot/original/icedtea-core-build.patch,
+	* patches/hotspot/original/icedtea-gcc-stack-markings.patch,
+	* patches/hotspot/original/icedtea-gcc-suffix.patch,
+	* patches/hotspot/original/icedtea-headers.patch,
+	* patches/hotspot/original/icedtea-memory-limits.patch,
+	* patches/hotspot/original/icedtea-no-precompiled.patch,
+	* patches/hotspot/original/icedtea-parisc-opt.patch,
+	* patches/hotspot/original/icedtea-shark-build.patch,
+	* patches/hotspot/original/icedtea-shark.patch,
+	* patches/hotspot/original/icedtea-sparc-buildfixes.patch,
+	* patches/hotspot/original/icedtea-sparc-ptracefix.patch,
+	* patches/hotspot/original/icedtea-sparc-trapsfix.patch,
+	* patches/hotspot/original/icedtea-sparc64-linux.patch,
+	* patches/hotspot/original/icedtea-static-libstdc++.patch,
+	* patches/hotspot/original/icedtea-text-relocations.patch,
+	* patches/hotspot/original/icedtea-use-idx_t.patch,
+	* patches/hotspot/original/icedtea-version.patch,
+	* patches/hotspot/original/icedtea-zero-build.patch:
+	Moved to top-level.
+	* Makefile.am:
+	Remove $(HSBUILD) in patches moved to the top.
+	* patches/icedtea-bytecodeInterpreter.patch,
+	* patches/icedtea-core-build-hotspot.patch,
+	* patches/icedtea-gcc-stack-markings.patch,
+	* patches/icedtea-gcc-suffix-hotspot.patch,
+	* patches/icedtea-headers-hotspot.patch,
+	* patches/icedtea-memory-limits.patch,
+	* patches/icedtea-no-precompiled.patch,
+	* patches/icedtea-parisc-opt.patch,
+	* patches/icedtea-shark-build-hotspot.patch,
+	* patches/icedtea-shark.patch,
+	* patches/icedtea-sparc-buildfixes.patch,
+	* patches/icedtea-sparc-ptracefix.patch,
+	* patches/icedtea-sparc-trapsfix.patch,
+	* patches/icedtea-sparc64-linux.patch,
+	* patches/icedtea-static-libstdc++.patch,
+	* patches/icedtea-text-relocations.patch,
+	* patches/icedtea-use-idx_t.patch,
+	* patches/icedtea-version-hotspot.patch,
+	* patches/icedtea-zero-build-hotspot.patch:
+	Moved from hotspot/original.
+
+2009-10-21  Andrew John Hughes  <ahughes@redhat.com>
+
 	* patches/ecj/icedtea-hotspot-original.patch:
 	Renamed to be used in all builds.
 	* patches/hotspot/original/icedtea-gcc-4.3.patch:

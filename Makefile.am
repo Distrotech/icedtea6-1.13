@@ -542,17 +542,17 @@ ICEDTEA_FSG_PATCHES =
 
 ICEDTEA_PATCHES = \
 	patches/icedtea-notice-safepoints.patch \
-	patches/hotspot/$(HSBUILD)/icedtea-bytecodeInterpreter.patch \
+	patches/icedtea-bytecodeInterpreter.patch \
 	patches/icedtea-signature-iterator.patch \
 	patches/icedtea-test-atomic-operations.patch \
 	patches/icedtea-zero.patch \
 	patches/icedtea-ia64-bugfix.patch \
-	patches/hotspot/$(HSBUILD)/icedtea-parisc-opt.patch \
+	patches/icedtea-parisc-opt.patch \
 	patches/icedtea-lucene-crash.patch \
 	patches/icedtea-version.patch \
-	patches/hotspot/$(HSBUILD)/icedtea-version.patch \
+	patches/icedtea-version-hotspot.patch \
 	patches/icedtea-copy-plugs.patch \
-	patches/hotspot/$(HSBUILD)/icedtea-text-relocations.patch \
+	patches/icedtea-text-relocations.patch \
 	patches/icedtea-ssl.patch \
 	$(PLUGIN_PATCH) \
 	patches/icedtea-webstart.patch \
@@ -563,23 +563,23 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-timezone-default-permission.patch \
 	patches/icedtea-use-system-tzdata.patch \
 	patches/icedtea-headers.patch \
-	patches/hotspot/$(HSBUILD)/icedtea-headers.patch \
+	patches/icedtea-headers-hotspot.patch \
 	patches/icedtea-gcc-suffix.patch \
-	patches/hotspot/$(HSBUILD)/icedtea-gcc-suffix.patch \
+	patches/icedtea-gcc-suffix-hotspot.patch \
 	patches/icedtea-bytebuffer-compact.patch \
-	patches/hotspot/$(HSBUILD)/icedtea-memory-limits.patch \
+	patches/icedtea-memory-limits.patch \
 	patches/icedtea-sunsrc.patch \
 	patches/icedtea-libraries.patch \
 	patches/icedtea-javafiles.patch \
 	patches/icedtea-core-build.patch \
 	patches/icedtea-jvmtiEnv.patch \
 	patches/icedtea-lcms.patch \
-	patches/hotspot/$(HSBUILD)/icedtea-core-build.patch \
+	patches/icedtea-core-build-hotspot.patch \
 	patches/icedtea-linker-options.patch \
-	patches/hotspot/$(HSBUILD)/icedtea-static-libstdc++.patch \
+	patches/icedtea-static-libstdc++.patch \
 	patches/icedtea-timerqueue.patch \
 	patches/icedtea-zero-build.patch \
-	patches/hotspot/$(HSBUILD)/icedtea-zero-build.patch \
+	patches/icedtea-zero-build-hotspot.patch \
 	patches/icedtea-print-lsb-release.patch \
 	patches/icedtea-jpegclasses.patch \
 	patches/icedtea-uname.patch \
@@ -587,17 +587,17 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-freetypeversion.patch \
 	patches/icedtea-fonts.patch \
 	patches/icedtea-shark-build.patch \
-	patches/hotspot/$(HSBUILD)/icedtea-shark-build.patch \
+	patches/icedtea-shark-build-hotspot.patch \
 	patches/icedtea-jdk-docs-target.patch \
 	patches/icedtea-nomotif-6706121.patch \
 	patches/icedtea-nomotif.patch \
 	patches/icedtea-alpha-fixes.patch \
 	patches/icedtea-alt-jar.patch \
 	patches/icedtea-jdk-use-ssize_t.patch \
-	patches/hotspot/$(HSBUILD)/icedtea-use-idx_t.patch \
+	patches/icedtea-use-idx_t.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-params-cast-size_t.patch \
 	patches/icedtea-clean-crypto.patch \
-	patches/hotspot/$(HSBUILD)/icedtea-shark.patch \
+	patches/icedtea-shark.patch \
 	patches/icedtea-arch.patch \
 	patches/icedtea-lc_ctype.patch \
 	patches/icedtea-xjc.patch \
@@ -612,10 +612,10 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-doc-headers.patch \
 	patches/openjdk/bidi-tests.patch \
 	patches/openjdk/annotation-tests.patch \
-	patches/hotspot/$(HSBUILD)/icedtea-sparc-buildfixes.patch \
-	patches/hotspot/$(HSBUILD)/icedtea-sparc64-linux.patch \
-	patches/hotspot/$(HSBUILD)/icedtea-sparc-ptracefix.patch \
-	patches/hotspot/$(HSBUILD)/icedtea-sparc-trapsfix.patch
+	patches/icedtea-sparc-buildfixes.patch \
+	patches/icedtea-sparc64-linux.patch \
+	patches/icedtea-sparc-ptracefix.patch \
+	patches/icedtea-sparc-trapsfix.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -685,7 +685,7 @@ ICEDTEA_PATCHES += \
 	patches/icedtea-disable-cc-incompatible-sanity-checks.patch \
 	patches/icedtea-explicit-target-arch.patch \
 	patches/openjdk/6432567-debugger-socket-overflow.patch \
-	patches/hotspot/$(HSBUILD)/icedtea-gcc-stack-markings.patch \
+	patches/icedtea-gcc-stack-markings.patch \
 	patches/icedtea-s390-serialize.patch \
 	patches/openjdk/6879689-hotspot_warning_fix.patch \
 	$(DISTRIBUTION_PATCHES)
