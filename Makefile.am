@@ -327,7 +327,6 @@ snapshot: dist
 
 # Download OpenJDK sources.
 OPENJDK_URL = http://download.java.net/openjdk/jdk6/promoted/$(OPENJDK_VERSION)/
-HOTSPOT_URL = http://hg.openjdk.java.net/hsx/hsx14/master/archive/
 OPENJDK_HG_URL = http://hg.openjdk.java.net/jdk6/jdk6
 
 if USE_ALT_OPENJDK_SRC_ZIP
@@ -412,7 +411,7 @@ endif
 if WITH_ALT_HSBUILD
 if USE_ALT_HOTSPOT_SRC_ZIP
 else
-	hotspot_md5sum="`$(AWK) 'version==$$1 {print $$3}' version=$(HSBUILD) \
+	hotspot_md5sum="`$(AWK) 'version==$$1 {print $$4}' version=$(HSBUILD) \
 	  $(abs_top_srcdir)/hotspot.map`" ; \
 	if ! echo "$${hotspot_md5sum}  $(HOTSPOT_SRC_ZIP)" \
 	  | $(MD5SUM) --check ; \
@@ -421,9 +420,9 @@ else
 	  then \
 	    mv $(HOTSPOT_SRC_ZIP) $(HOTSPOT_SRC_ZIP).old ; \
 	  fi ; \
-	  changeset="`$(AWK) 'version==$$1 {print $$2}' version=$(HSBUILD) \
-	    $(abs_top_srcdir)/hotspot.map`" ; \
-	  $(WGET) $(HOTSPOT_URL)$${changeset}.tar.gz -O $(HOTSPOT_SRC_ZIP) ; \
+	  hotspot_url="`$(AWK) 'version==$$1 {print $$2 "/archive/" $$3 ".tar.gz"}' \
+	    version=$(HSBUILD) $(abs_top_srcdir)/hotspot.map`"; \
+	  $(WGET) $${hotspot_url} -O $(HOTSPOT_SRC_ZIP) ; \
 	fi
 endif
 endif
@@ -539,14 +538,6 @@ stamps/ports.stamp: stamps/replace-hotspot.stamp
 	mkdir -p stamps
 	touch stamps/ports.stamp
 
-# If new gcc is installed, apply 4.3 patch
-if GCC_OLD
-  GCC_PATCH =
-else
-  GCC_PATCH = patches/icedtea-gcc-4.3.patch \
-	patches/hotspot/$(HSBUILD)/icedtea-gcc-4.3.patch
-endif
-
 ICEDTEA_FSG_PATCHES =
 
 ICEDTEA_PATCHES = \
@@ -587,7 +578,6 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-linker-options.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-static-libstdc++.patch \
 	patches/icedtea-timerqueue.patch \
-	patches/icedtea-lib64.patch \
 	patches/icedtea-zero-build.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-zero-build.patch \
 	patches/icedtea-print-lsb-release.patch \
@@ -608,14 +598,12 @@ ICEDTEA_PATCHES = \
 	patches/hotspot/$(HSBUILD)/icedtea-params-cast-size_t.patch \
 	patches/icedtea-clean-crypto.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-shark.patch \
-	$(GCC_PATCH) \
 	patches/icedtea-arch.patch \
 	patches/icedtea-lc_ctype.patch \
 	patches/icedtea-xjc.patch \
 	patches/icedtea-renderer-crossing.patch \
 	patches/icedtea-stroker-finish.patch \
 	patches/icedtea-linker-libs-order.patch \
-	patches/icedtea-f2i-overflow.patch \
 	patches/icedtea-6761856-freetypescaler.patch \
 	patches/icedtea-testenv.patch \
 	patches/icedtea-samejvm-safe.patch \
@@ -625,8 +613,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/bidi-tests.patch \
 	patches/openjdk/annotation-tests.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-sparc-buildfixes.patch \
-	patches/hotspot/$(HSBUILD)/icedtea-6791168.patch \
-	patches/hotspot/$(HSBUILD)/icedtea-includedb.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-sparc64-linux.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-sparc-ptracefix.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-sparc-trapsfix.patch
@@ -672,6 +658,15 @@ ICEDTEA_PATCHES += patches/icedtea-nss-config.patch \
 		   patches/icedtea-nss-6763530.patch
 endif
 
+if WITH_ALT_HSBUILD
+ICEDTEA_PATCHES += patches/hotspot/$(HSBUILD)/openjdk-6886353-ignore_deoptimizealot.patch
+else
+ICEDTEA_PATCHES += patches/hotspot/original/icedtea-6778662-lib64.patch \
+	patches/hotspot/original/icedtea-6778657-f2i-overflow.patch \
+	patches/hotspot/original/icedtea-6791168.patch \
+	patches/hotspot/original/icedtea-6793825-includedb.patch
+endif
+
 ICEDTEA_PATCHES += \
 	patches/icedtea-demo-swingapplet.patch \
 	patches/icedtea-awt-window-size.patch \
@@ -692,6 +687,7 @@ ICEDTEA_PATCHES += \
 	patches/openjdk/6432567-debugger-socket-overflow.patch \
 	patches/hotspot/$(HSBUILD)/icedtea-gcc-stack-markings.patch \
 	patches/icedtea-s390-serialize.patch \
+	patches/openjdk/6879689-hotspot_warning_fix.patch \
 	$(DISTRIBUTION_PATCHES)
 
 stamps/extract.stamp: stamps/download.stamp
@@ -756,7 +752,7 @@ if WITH_ALT_HSBUILD
 	  then \
 	    $(TAR) xf $(HOTSPOT_SRC_ZIP) ; \
 	    chmod -R ug+w master-* ; \
-	    mv master-$$($(AWK) 'version==$$1 {print $$2}' version=$(HSBUILD) \
+	    mv master-$$($(AWK) 'version==$$1 {print $$3}' version=$(HSBUILD) \
 	      $(abs_top_srcdir)/hotspot.map) openjdk/hotspot ; \
 	  fi ; \
 	fi ;
@@ -943,7 +939,7 @@ stamps/ports-ecj.stamp: stamps/extract-ecj.stamp
 # Patch OpenJDK for plug replacements and ecj.
 ICEDTEA_ECJ_PATCHES = patches/ecj/icedtea-ant.patch \
 	patches/ecj/icedtea.patch \
-	patches/ecj/icedtea-hotspot-$(HSBUILD).patch \
+	patches/ecj/icedtea-hotspot.patch \
 	patches/ecj/icedtea-spp.patch \
 	patches/ecj/icedtea-jopt.patch
 

@@ -1,3 +1,58 @@
+2009-10-21  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/ecj/icedtea-hotspot-original.patch:
+	Renamed to be used in all builds.
+	* patches/hotspot/original/icedtea-gcc-4.3.patch:
+	Dropped, redundant.
+	* patches/hotspot/original/icedtea-includedb.patch:
+	Renamed to include bug ID.
+	* patches/icedtea-f2i-overflow.patch:
+	Moved to HotSpot original directory and renamed to include bug ID.
+	* patches/icedtea-gcc-4.3.patch:
+	Dropped, redundant.
+	* patches/icedtea-lib64.patch:
+	Moved to HotSpot original directory and renamed to include bug ID.
+	* Makefile.am:
+	Pick up HotSpot URL from hotspot.map, remove GCC_OLD logic,
+	only apply some patches when building hs14.
+	* hotspot.map: Add hs16.
+	* patches/ecj/icedtea-hotspot.patch: Moved from icedtea-hotspot-original.patch.
+	* patches/hotspot/default/icedtea-bytecodeInterpreter.patch,
+	* patches/hotspot/default/icedtea-core-build.patch,
+	* patches/hotspot/default/icedtea-gcc-stack-markings.patch,
+	* patches/hotspot/default/icedtea-gcc-suffix.patch,
+	* patches/hotspot/default/icedtea-headers.patch,
+	* patches/hotspot/default/icedtea-memory-limits.patch,
+	* patches/hotspot/default/icedtea-no-precompiled.patch,
+	* patches/hotspot/default/icedtea-params-cast-size_t.patch,
+	* patches/hotspot/default/icedtea-parisc-opt.patch,
+	* patches/hotspot/default/icedtea-shark-build.patch,
+	* patches/hotspot/default/icedtea-shark.patch,
+	* patches/hotspot/default/icedtea-sparc-buildfixes.patch,
+	* patches/hotspot/default/icedtea-sparc-ptracefix.patch,
+	* patches/hotspot/default/icedtea-sparc-trapsfix.patch,
+	* patches/hotspot/default/icedtea-sparc64-linux.patch,
+	* patches/hotspot/default/icedtea-static-libstdc++.patch,
+	* patches/hotspot/default/icedtea-text-relocations.patch,
+	* patches/hotspot/default/icedtea-use-idx_t.patch,
+	* patches/hotspot/default/icedtea-version.patch,
+	* patches/hotspot/default/icedtea-zero-build.patch:
+	Copied from hotspot/original.
+	* patches/hotspot/default/openjdk-6886353-ignore_deoptimizealot.patch:
+	New patch for hs16 to ignore DeoptimizeALot on product builds;
+	backported from my fix for JDK7.
+	* patches/hotspot/original/icedtea-6778657-f2i-overflow.patch,
+	* patches/hotspot/original/icedtea-6778662-lib64.patch:
+	Moved from main directory as only needed for hs14.  Added
+	Sun bug IDs.
+	* patches/hotspot/original/icedtea-6793825-includedb.patch:
+	Renamed to include bug ID.
+	* patches/icedtea-use-system-tzdata.patch:
+	Use new SystemProperty to avoid a GCC warning.
+	* patches/openjdk/6879689-hotspot_warning_fix.patch:
+	Backported from my fix in JDK7.  Prevents a GCC warning
+	when compiling with optimisation.
+
 2009-10-19  Mark Wielaard  <mjw@redhat.com>
 
 	* tapset/hotspot_jni.stp.in: New tapset.

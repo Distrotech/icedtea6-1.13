@@ -1,0 +1,33 @@
+# HG changeset patch
+# User andrew
+# Date 1254183265 25200
+# Node ID d6b9fd78f38951b6c8b2912701f52aa9fbc08a63
+# Parent  ddd6f1182ae3c0014cbc139952ba8d9d14bfb3d1
+6886353: For DeoptimizeALot, JTreg tests should "IgnoreUnrecognizedVMOptions on a product build
+Summary: Add IgnoreUnrecognizedVMOptions for JTreg tests (on a product build) to pass with DeoptimizeALot
+Reviewed-by: kvn
+
+diff -r ddd6f1182ae3 -r d6b9fd78f389 test/compiler/6823453/Test.java
+--- openjdk/hotspot/test/compiler/6823453/Test.java	Fri Sep 25 13:26:02 2009 -0700
++++ openjdk/hotspot/test/compiler/6823453/Test.java	Mon Sep 28 17:14:25 2009 -0700
+@@ -26,7 +26,7 @@
+  * @test
+  * @bug 6823453
+  * @summary DeoptimizeALot causes fastdebug server jvm to fail with assert(false,"unscheduable graph")
+- * @run main/othervm -Xcomp -XX:CompileOnly=Test -XX:+DeoptimizeALot Test
++ * @run main/othervm -Xcomp -XX:+IgnoreUnrecognizedVMOptions -XX:CompileOnly=Test -XX:+DeoptimizeALot Test
+  */
+ 
+ public class Test {
+diff -r ddd6f1182ae3 -r d6b9fd78f389 test/compiler/6833129/Test.java
+--- openjdk/hotspot/test/compiler/6833129/Test.java	Fri Sep 25 13:26:02 2009 -0700
++++ openjdk/hotspot/test/compiler/6833129/Test.java	Mon Sep 28 17:14:25 2009 -0700
+@@ -25,7 +25,7 @@
+  * @test
+  * @bug 6833129
+  * @summary Object.clone() and Arrays.copyOf ignore coping with -XX:+DeoptimizeALot
+- * @run main/othervm -Xbatch -XX:+DeoptimizeALot Test
++ * @run main/othervm -Xbatch -XX:+IgnoreUnrecognizedVMOptions -XX:+DeoptimizeALot Test
+  */
+ 
+ public class Test{
