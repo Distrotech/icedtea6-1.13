@@ -894,7 +894,7 @@ AC_DEFUN([AC_CHECK_WITH_GCJ],
 
 AC_DEFUN([AC_CHECK_WITH_HOTSPOT_BUILD],
 [
-  DEFAULT_BUILD="original"
+  DEFAULT_BUILD="default"
   AC_MSG_CHECKING([which HotSpot build to use])
   AC_ARG_WITH([hotspot-build],
 	      [AS_HELP_STRING(--with-hotspot-build,the HotSpot build to use)],
@@ -902,7 +902,7 @@ AC_DEFUN([AC_CHECK_WITH_HOTSPOT_BUILD],
     HSBUILD="${withval}"
   ],
   [ 
-    HSBUILD="${DEFAULT_BUILD}"
+    HSBUILD="original"
   ])
   if test "x${HSBUILD}" = xyes; then
 	HSBUILD="${DEFAULT_BUILD}"

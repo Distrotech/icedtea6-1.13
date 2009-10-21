@@ -1,5 +1,13 @@
 2009-10-21  Andrew John Hughes  <ahughes@redhat.com>
 
+	Correctly use original build by default.
+	* acinclude.m4:
+	(AC_CHECK_WITH_HOTSPOT_BUILD): Default should
+	be "default", it's the no clause that
+	should be changed to "original".
+
+2009-10-21  Andrew John Hughes  <ahughes@redhat.com>
+
 	Move non-version-dependent HotSpot patches back
 	to top-level.
 	* patches/hotspot/default/icedtea-bytecodeInterpreter.patch,
