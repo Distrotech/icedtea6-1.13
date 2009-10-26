@@ -25045,14 +25045,17 @@ diff -ruN ..openjdk.old/openjdk/jdk/src/share/native/sun/awt/image/jpeg/README o
  }
  
  
-@@ -2317,6 +2377,142 @@
+@@ -2317,6 +2377,145 @@
  
  /********************** end of destination manager ************/
  
 +METHODDEF(void)
 +initIDs()
 +{
-+    void *handle = dlopen("libjpeg.so.62", RTLD_LAZY | RTLD_GLOBAL);
++    void *handle = dlopen("libjpeg.so.7", RTLD_LAZY | RTLD_GLOBAL);
++    if (handle == NULL) {
++       handle = dlopen("libjpeg.so.62", RTLD_LAZY | RTLD_GLOBAL);
++    }
 +    
 +    jpegstderror = (fn_jpegstderror)dlsym(handle, "jpeg_std_error");
 +    if (jpegstderror == NULL) {
@@ -25188,7 +25191,7 @@ diff -ruN ..openjdk.old/openjdk/jdk/src/share/native/sun/awt/image/jpeg/README o
  /********************** Writer JNI calls **********************/
  
  
-@@ -2328,6 +2524,8 @@
+@@ -2328,6 +2527,8 @@
       jclass qTableClass,
       jclass huffClass) {
  
@@ -25197,7 +25200,7 @@ diff -ruN ..openjdk.old/openjdk/jdk/src/share/native/sun/awt/image/jpeg/README o
      ImageOutputStream_writeID = (*env)->GetMethodID(env,
                                                      IOSClass,
                                                      "write",
-@@ -2401,7 +2599,7 @@
+@@ -2401,7 +2602,7 @@
      }
  
      /* We set up the normal JPEG error routines, then override error_exit. */
@@ -25206,7 +25209,7 @@ diff -ruN ..openjdk.old/openjdk/jdk/src/share/native/sun/awt/image/jpeg/README o
      jerr->pub.error_exit = sun_jpeg_error_exit;
      /* We need to setup our own print routines */
      jerr->pub.output_message = sun_jpeg_output_message;
-@@ -2418,7 +2616,7 @@
+@@ -2418,7 +2619,7 @@
      }
  
      /* Perform library initialization */
@@ -25215,7 +25218,7 @@ diff -ruN ..openjdk.old/openjdk/jdk/src/share/native/sun/awt/image/jpeg/README o
  
      /* Now set up the destination  */
      dest = malloc(sizeof(struct jpeg_destination_mgr));
-@@ -2527,7 +2725,7 @@
+@@ -2527,7 +2728,7 @@
          return;
      }
  
@@ -25224,7 +25227,7 @@ diff -ruN ..openjdk.old/openjdk/jdk/src/share/native/sun/awt/image/jpeg/README o
  
      data->streamBuf.suspendable = FALSE;
      if (qtables != NULL) {
-@@ -2542,7 +2740,7 @@
+@@ -2542,7 +2743,7 @@
                     DCHuffmanTables, ACHuffmanTables, TRUE);
      }
  
@@ -25233,7 +25236,7 @@ diff -ruN ..openjdk.old/openjdk/jdk/src/share/native/sun/awt/image/jpeg/README o
      RELEASE_ARRAYS(env, data, NULL);
  }
  
-@@ -2698,9 +2896,9 @@
+@@ -2698,9 +2899,9 @@
      cinfo->input_components = numBands;
      cinfo->in_color_space = inCs;
  
@@ -25245,7 +25248,7 @@ diff -ruN ..openjdk.old/openjdk/jdk/src/share/native/sun/awt/image/jpeg/README o
  
      cinfo->optimize_coding = optimize;
  
-@@ -2737,7 +2935,7 @@
+@@ -2737,7 +2938,7 @@
      (*env)->ReleaseIntArrayElements(env, QtableSelectors,
                                      qsels, JNI_ABORT);
  
@@ -25254,7 +25257,7 @@ diff -ruN ..openjdk.old/openjdk/jdk/src/share/native/sun/awt/image/jpeg/README o
  
      qlen = setQTables(env, (j_common_ptr) cinfo, qtables, writeDQT);
  
-@@ -2762,7 +2960,7 @@
+@@ -2762,7 +2963,7 @@
  
      if (progressive) {
          if (numScans == 0) { // then use default scans
@@ -25263,7 +25266,7 @@ diff -ruN ..openjdk.old/openjdk/jdk/src/share/native/sun/awt/image/jpeg/README o
          } else {
              cinfo->num_scans = numScans;
              // Copy the scanInfo to a local array
-@@ -2804,7 +3002,7 @@
+@@ -2804,7 +3005,7 @@
  #endif
  
      // start the compressor; tables must already be set
@@ -25272,7 +25275,7 @@ diff -ruN ..openjdk.old/openjdk/jdk/src/share/native/sun/awt/image/jpeg/README o
  
      if (haveMetadata) {
          // Flush the buffer
-@@ -2868,7 +3066,7 @@
+@@ -2868,7 +3069,7 @@
              }
          }
          // write it out
@@ -25281,7 +25284,7 @@ diff -ruN ..openjdk.old/openjdk/jdk/src/share/native/sun/awt/image/jpeg/README o
          targetLine += stepY;
      }
  
-@@ -2877,9 +3075,9 @@
+@@ -2877,9 +3078,9 @@
       * so use jpeg_abort instead of jpeg_finish_compress.
       */
      if (cinfo->next_scanline == cinfo->image_height) {
@@ -25339,11 +25342,14 @@ diff -ruN ..openjdk.old/openjdk/jdk/src/share/native/sun/awt/image/jpeg/README o
  /* Initialize the Java VM instance variable when the library is
     first loaded */
  JavaVM *jvm;
-@@ -462,6 +490,68 @@
+@@ -462,6 +493,71 @@
  Java_sun_awt_image_JPEGImageDecoder_initIDs(JNIEnv *env, jclass cls,
                                              jclass InputStreamClass)
  {
-+    void *handle = dlopen("libjpeg.so.62", RTLD_LAZY | RTLD_GLOBAL);
++    void *handle = dlopen("libjpeg.so.7", RTLD_LAZY | RTLD_GLOBAL);
++    if (handle == NULL) {
++       handle = dlopen("libjpeg.so.62", RTLD_LAZY | RTLD_GLOBAL);
++    }
 + 
 +    jpegstderror = (fn_jpegstderror)dlsym(handle, "jpeg_std_error");
 +    if (jpegstderror == NULL) {
@@ -25408,7 +25414,7 @@ diff -ruN ..openjdk.old/openjdk/jdk/src/share/native/sun/awt/image/jpeg/README o
      sendHeaderInfoID = (*env)->GetMethodID(env, cls, "sendHeaderInfo",
                                             "(IIZZZ)Z");
      sendPixelsByteID = (*env)->GetMethodID(env, cls, "sendPixels", "([BI)Z");
-@@ -519,7 +609,7 @@
+@@ -519,7 +612,7 @@
    /* Step 1: allocate and initialize JPEG decompression object */
  
    /* We set up the normal JPEG error routines, then override error_exit. */
@@ -25417,7 +25423,7 @@ diff -ruN ..openjdk.old/openjdk/jdk/src/share/native/sun/awt/image/jpeg/README o
    jerr.pub.error_exit = sun_jpeg_error_exit;
  
    /* We need to setup our own print routines */
-@@ -530,7 +620,7 @@
+@@ -530,7 +623,7 @@
      /* If we get here, the JPEG code has signaled an error.
       * We need to clean up the JPEG object, close the input file, and return.
       */
@@ -25426,7 +25432,7 @@ diff -ruN ..openjdk.old/openjdk/jdk/src/share/native/sun/awt/image/jpeg/README o
      RELEASE_ARRAYS(env, &jsrc);
      if (!(*env)->ExceptionOccurred(env)) {
          char buffer[JMSG_LENGTH_MAX];
-@@ -541,7 +631,7 @@
+@@ -541,7 +634,7 @@
      return;
    }
    /* Now we can initialize the JPEG decompression object. */
@@ -25435,7 +25441,7 @@ diff -ruN ..openjdk.old/openjdk/jdk/src/share/native/sun/awt/image/jpeg/README o
  
    /* Step 2: specify data source (eg, a file) */
  
-@@ -555,17 +645,17 @@
+@@ -555,17 +648,17 @@
    jsrc.pub.init_source = sun_jpeg_init_source;
    jsrc.pub.fill_input_buffer = sun_jpeg_fill_input_buffer;
    jsrc.pub.skip_input_data = sun_jpeg_skip_input_data;
@@ -25457,7 +25463,7 @@ diff -ruN ..openjdk.old/openjdk/jdk/src/share/native/sun/awt/image/jpeg/README o
    grayscale = (cinfo.out_color_space == JCS_GRAYSCALE);
  #ifdef YCCALPHA
    hasalpha = (cinfo.out_color_space == JCS_RGBA);
-@@ -584,7 +674,7 @@
+@@ -584,7 +677,7 @@
                                    grayscale, hasalpha, buffered_mode);
    if ((*env)->ExceptionOccurred(env) || !ret) {
      /* No more interest in this image... */
@@ -25466,7 +25472,7 @@ diff -ruN ..openjdk.old/openjdk/jdk/src/share/native/sun/awt/image/jpeg/README o
      return;
    }
    /* Make a one-row-high sample array with enough room to expand to ints */
-@@ -595,7 +685,7 @@
+@@ -595,7 +688,7 @@
    }
  
    if (jsrc.hOutputBuffer == 0 || !GET_ARRAYS(env, &jsrc)) {
@@ -25475,7 +25481,7 @@ diff -ruN ..openjdk.old/openjdk/jdk/src/share/native/sun/awt/image/jpeg/README o
      return;
    }
  
-@@ -613,7 +703,7 @@
+@@ -613,7 +706,7 @@
  
    /* Step 5: Start decompressor */
  
@@ -25484,7 +25490,7 @@ diff -ruN ..openjdk.old/openjdk/jdk/src/share/native/sun/awt/image/jpeg/README o
  
    /* We may need to do some setup of our own at this point before reading
     * the data.  After jpeg_start_decompress() we have the correct scaled
-@@ -638,28 +728,28 @@
+@@ -638,28 +731,28 @@
            do {
                sun_jpeg_fill_suspended_buffer(&cinfo);
                jsrc.suspendable = TRUE;
@@ -25517,7 +25523,7 @@ diff -ruN ..openjdk.old/openjdk/jdk/src/share/native/sun/awt/image/jpeg/README o
  
            if (grayscale) {
                RELEASE_ARRAYS(env, &jsrc);
-@@ -695,18 +785,18 @@
+@@ -695,18 +788,18 @@
            if ((*env)->ExceptionOccurred(env) || !ret ||
                !GET_ARRAYS(env, &jsrc)) {
                /* No more interest in this image... */
@@ -25539,7 +25545,7 @@ diff -ruN ..openjdk.old/openjdk/jdk/src/share/native/sun/awt/image/jpeg/README o
    /* We can ignore the return value since suspension is not possible
     * with the stdio data source.
     * (nor with the Java data source)
-@@ -715,7 +805,7 @@
+@@ -715,7 +808,7 @@
    /* Step 8: Release JPEG decompression object */
  
    /* This is an important step since it will release a good deal of memory. */
