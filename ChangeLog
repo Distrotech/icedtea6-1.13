@@ -1,5 +1,17 @@
 2009-10-27  Andrew John Hughes  <ahughes@redhat.com>
 
+	* INSTALL: Replace references to default with hs16.
+	* patches/hotspot/default/icedtea-params-cast-size_t.patch,
+	* patches/hotspot/default/openjdk-6886353-ignore_deoptimizealot.patch,
+	* patches/hotspot/default/zero.patch: Moved to...
+	* acinclude.m4: Make hs16 the default build.
+	* hotspot.map: Rename 'default' as 'hs16'.
+	* patches/hotspot/hs16/icedtea-params-cast-size_t.patch,
+	* patches/hotspot/hs16/openjdk-6886353-ignore_deoptimizealot.patch,
+	* patches/hotspot/hs16/zero.patch: ...here.
+
+2009-10-27  Andrew John Hughes  <ahughes@redhat.com>
+
 	* ports/hotspot/src/cpu/zero/vm/methodHandles_zero.cpp:
 	Empty class required by invokedynamic support.
 	* Makefile.am:

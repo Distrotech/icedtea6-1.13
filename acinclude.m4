@@ -894,10 +894,10 @@ AC_DEFUN([AC_CHECK_WITH_GCJ],
 
 AC_DEFUN([AC_CHECK_WITH_HOTSPOT_BUILD],
 [
-  DEFAULT_BUILD="default"
+  DEFAULT_BUILD="hs16"
   AC_MSG_CHECKING([which HotSpot build to use])
   AC_ARG_WITH([hotspot-build],
-	      [AS_HELP_STRING(--with-hotspot-build,the HotSpot build to use)],
+	      [AS_HELP_STRING(--with-hotspot-build,the HotSpot build to use (see hotspot.map))],
   [
     HSBUILD="${withval}"
   ],
