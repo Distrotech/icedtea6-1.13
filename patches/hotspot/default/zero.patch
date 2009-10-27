@@ -1,0 +1,107 @@
+diff -r 7d2ae1d67c95 ports/hotspot/src/cpu/zero/vm/assembler_zero.cpp
+--- openjdk.orig/hotspot/src/cpu/zero/vm/assembler_zero.cpp	Mon Oct 26 23:26:33 2009 +0000
++++ openjdk/hotspot/src/cpu/zero/vm/assembler_zero.cpp	Tue Oct 27 15:06:00 2009 +0000
+@@ -54,6 +54,12 @@
+   sync();
+ }
+ 
++RegisterOrConstant MacroAssembler::delayed_value_impl(intptr_t* delayed_value_addr,
++						      Register tmpl, int offset) 
++{
++  Unimplemented();
++}
++
+ void MacroAssembler::store_oop(jobject obj) {
+   code_section()->relocate(pc(), oop_Relocation::spec_for_immediate());
+   emit_address((address) obj);
+diff -r 7d2ae1d67c95 ports/hotspot/src/cpu/zero/vm/assembler_zero.hpp
+--- openjdk.orig/hotspot/src/cpu/zero/vm/assembler_zero.hpp	Mon Oct 26 23:26:33 2009 +0000
++++ openjdk/hotspot/src/cpu/zero/vm/assembler_zero.hpp	Tue Oct 27 15:06:00 2009 +0000
+@@ -47,7 +47,8 @@
+   void align(int modulus);
+   void bang_stack_with_offset(int offset);
+   bool needs_explicit_null_check(intptr_t offset);
+-
++  RegisterOrConstant delayed_value_impl(intptr_t* delayed_value_addr,
++					Register tmp, int offset);
+  public:
+   void advance(int bytes);
+   void store_oop(jobject obj);
+diff -r 7d2ae1d67c95 ports/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp
+--- openjdk.orig/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp	Mon Oct 26 23:26:33 2009 +0000
++++ openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp	Tue Oct 27 15:06:00 2009 +0000
+@@ -759,6 +759,10 @@
+     entry_point = ((InterpreterGenerator*) this)->generate_abstract_entry();
+     break;
+ 
++  case Interpreter::method_handle:
++    entry_point = ((InterpreterGenerator*)this)->generate_method_handle_entry();
++    break;
++
+   case Interpreter::java_lang_math_sin:
+   case Interpreter::java_lang_math_cos:
+   case Interpreter::java_lang_math_tan:
+diff -r 7d2ae1d67c95 ports/hotspot/src/cpu/zero/vm/frame_zero.cpp
+--- openjdk.orig/hotspot/src/cpu/zero/vm/frame_zero.cpp	Mon Oct 26 23:26:33 2009 +0000
++++ openjdk/hotspot/src/cpu/zero/vm/frame_zero.cpp	Tue Oct 27 15:06:00 2009 +0000
+@@ -166,7 +166,7 @@
+   return type;
+ }
+ 
+-int frame::frame_size() const {
++int frame::frame_size(RegisterMap* map) const {
+ #ifdef PRODUCT
+   ShouldNotCallThis();
+ #else
+diff -r 7d2ae1d67c95 ports/hotspot/src/cpu/zero/vm/interp_masm_zero.hpp
+--- openjdk.orig/hotspot/src/cpu/zero/vm/interp_masm_zero.hpp	Mon Oct 26 23:26:33 2009 +0000
++++ openjdk/hotspot/src/cpu/zero/vm/interp_masm_zero.hpp	Tue Oct 27 15:06:00 2009 +0000
+@@ -28,4 +28,7 @@
+ class InterpreterMacroAssembler : public MacroAssembler {
+  public:
+   InterpreterMacroAssembler(CodeBuffer* code) : MacroAssembler(code) {}
++  RegisterOrConstant delayed_value_impl(intptr_t* delayed_value_addr, Register tmp, int offset) {
++    Unimplemented();
++  }
+ };
+diff -r 7d2ae1d67c95 ports/hotspot/src/cpu/zero/vm/interpreterGenerator_zero.hpp
+--- openjdk.orig/hotspot/src/cpu/zero/vm/interpreterGenerator_zero.hpp	Mon Oct 26 23:26:33 2009 +0000
++++ openjdk/hotspot/src/cpu/zero/vm/interpreterGenerator_zero.hpp	Tue Oct 27 15:06:00 2009 +0000
+@@ -34,3 +34,4 @@
+   address generate_math_entry(AbstractInterpreter::MethodKind kind);
+   address generate_empty_entry();
+   address generate_accessor_entry();
++  address generate_method_handle_entry();
+diff -r 7d2ae1d67c95 ports/hotspot/src/cpu/zero/vm/interpreter_zero.cpp
+--- openjdk.orig/hotspot/src/cpu/zero/vm/interpreter_zero.cpp	Mon Oct 26 23:26:33 2009 +0000
++++ openjdk/hotspot/src/cpu/zero/vm/interpreter_zero.cpp	Tue Oct 27 15:06:00 2009 +0000
+@@ -43,6 +43,11 @@
+   return ShouldNotCallThisEntry();
+ }
+ 
++address InterpreterGenerator::generate_method_handle_entry()
++{
++  return ShouldNotCallThisEntry();
++}
++
+ int AbstractInterpreter::size_activation(methodOop method,
+                                          int tempcount,
+                                          int popframe_extra_args,
+diff -r 7d2ae1d67c95 ports/hotspot/src/cpu/zero/vm/register_zero.hpp
+--- openjdk.orig/hotspot/src/cpu/zero/vm/register_zero.hpp	Mon Oct 26 23:26:33 2009 +0000
++++ openjdk/hotspot/src/cpu/zero/vm/register_zero.hpp	Tue Oct 27 15:06:00 2009 +0000
+@@ -106,3 +106,5 @@
+   static const int max_gpr;
+   static const int max_fpr;
+ };
++
++CONSTANT_REGISTER_DECLARATION(Register, noreg, (-1));
+diff -r 7d2ae1d67c95 ports/hotspot/src/os_cpu/linux_zero/vm/globals_linux_zero.hpp
+--- openjdk.orig/hotspot/src/os_cpu/linux_zero/vm/globals_linux_zero.hpp	Mon Oct 26 23:26:33 2009 +0000
++++ openjdk/hotspot/src/os_cpu/linux_zero/vm/globals_linux_zero.hpp	Tue Oct 27 15:06:00 2009 +0000
+@@ -41,3 +41,5 @@
+ define_pd_global(uintx, JVMInvokeMethodSlack,    8192);
+ 
+ define_pd_global(bool,  UseVectoredExceptions,   false);
++// Only used on 64 bit platforms
++define_pd_global(uintx, HeapBaseMinAddress,      2*G);

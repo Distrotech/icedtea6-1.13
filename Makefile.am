@@ -516,13 +516,13 @@ ${ZERO_ASM_BC_ASM}: ${ZERO_ASM_BC_DEF} $(abs_top_srcdir)/mkbc
 endif
 
 
-# Link ports sources into tree
+# Copy ports sources into tree
 stamps/ports.stamp: stamps/replace-hotspot.stamp
 	for target in $(abs_top_srcdir)/ports/hotspot/build/*/makefiles/* \
 		      $(abs_top_srcdir)/ports/hotspot/src/*cpu/* \
 		      $(abs_top_srcdir)/ports/hotspot/src/share/vm/*; do \
 	  link=$$(dirname $$target | sed 's/^.*ports/openjdk/'|sed "s#hotspot/build#hotspot/$(HOTSPOT_MAKE_DIR)#"); \
-	  ln -sfv $$target $$link; \
+	  cp -rv $$target $$link; \
 	done
 	ln -sf $(abs_top_builddir)/platform_zero openjdk/hotspot/$(HOTSPOT_MAKE_DIR)/linux
 	if ! test "x$(ICEDTEA_CORE_BUILD)$(ICEDTEA_SHARK_BUILD)$(WITH_CACAO)" \
@@ -659,7 +659,8 @@ ICEDTEA_PATCHES += patches/icedtea-nss-config.patch \
 endif
 
 if WITH_ALT_HSBUILD
-ICEDTEA_PATCHES += patches/hotspot/$(HSBUILD)/openjdk-6886353-ignore_deoptimizealot.patch
+ICEDTEA_PATCHES += patches/hotspot/$(HSBUILD)/openjdk-6886353-ignore_deoptimizealot.patch \
+	patches/hotspot/$(HSBUILD)/zero.patch
 else
 ICEDTEA_PATCHES += patches/hotspot/original/icedtea-6778662-lib64.patch \
 	patches/hotspot/original/icedtea-6778657-f2i-overflow.patch \
@@ -843,7 +844,7 @@ clean-patch:
 		rm -f openjdk/jdk/src/share/classes/sun/applet/`basename $file` ; \
 	done ;
 
-stamps/patch-fsg.stamp: stamps/replace-hotspot.stamp
+stamps/patch-fsg.stamp: stamps/ports.stamp
 	mkdir -p stamps ; \
 	rm -f stamps/patch-fsg.stamp.tmp ; \
 	touch stamps/patch-fsg.stamp.tmp ; \
@@ -913,28 +914,6 @@ stamps/extract-ecj.stamp: stamps/overlay.stamp
 clean-extract-ecj:
 	rm -f stamps/extract-ecj.stamp
 	rm -rf openjdk-ecj
-
-# Link ports sources into tree
-stamps/ports-ecj.stamp: stamps/extract-ecj.stamp
-	for target in $(abs_top_srcdir)/ports/hotspot/build/*/makefiles/* \
-		      $(abs_top_srcdir)/ports/hotspot/src/*cpu/* \
-		      $(abs_top_srcdir)/ports/hotspot/src/share/vm/*; do \
-	  link=$$(dirname $$target | sed 's/^.*ports/openjdk-ecj/'|sed "s#hotspot/build#hotspot/$(HOTSPOT_MAKE_DIR)#"); \
-	  ln -sfv $$target $$link; \
-	done
-	ln -sf $(abs_top_builddir)/platform_zero openjdk-ecj/hotspot/$(HOTSPOT_MAKE_DIR)/linux
-	if ! test "x$(ICEDTEA_CORE_BUILD)$(ICEDTEA_SHARK_BUILD)$(WITH_CACAO)" \
-	  = "xno"; then \
-	  mkdir -p openjdk-ecj/jdk/src/solaris/bin/$(BUILD_ARCH_DIR); \
-	  ln -sf $(abs_top_builddir)/jvm.cfg \
-	    openjdk-ecj/jdk/src/solaris/bin/$(BUILD_ARCH_DIR)/jvm.cfg; \
-	fi
-	if ! test "x$(ICEDTEA_ZERO_BUILD)$(WITH_CACAO)" = "xno"; then \
-	  ln -sf $(abs_top_builddir)/ergo.c \
-	    openjdk-ecj/jdk/src/solaris/bin/ergo_$(BUILD_ARCH_DIR).c; \
-	fi
-	mkdir -p stamps
-	touch stamps/ports-ecj.stamp
 
 # Patch OpenJDK for plug replacements and ecj.
 ICEDTEA_ECJ_PATCHES = patches/ecj/icedtea-ant.patch \
@@ -1346,7 +1325,7 @@ stamps/native-ecj.stamp:
 
 stamps/icedtea-ecj.stamp: stamps/bootstrap-directory-symlink-ecj.stamp \
 	stamps/hotspot-tools.stamp stamps/plugs.stamp \
-	stamps/ports-ecj.stamp stamps/patch-ecj.stamp stamps/cacao.stamp \
+	stamps/patch-ecj.stamp stamps/cacao.stamp \
 	$(ZERO_ASM_BC_ASM_COND)
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV_ECJ) \
@@ -1371,7 +1350,7 @@ hotspot:
 
 hotspot-helper: stamps/bootstrap-directory-symlink-ecj.stamp \
 	stamps/hotspot-tools.stamp stamps/plugs.stamp \
-	stamps/ports-ecj.stamp stamps/patch-ecj.stamp
+	stamps/patch-ecj.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV_ECJ) \
 	  -C openjdk-ecj/ hotspot
@@ -2143,8 +2122,6 @@ hotspot-tools-copy-source-files: stamps/hotspot-tools-copy-source-files.stamp
 hotspot-tools: stamps/hotspot-tools.stamp
 
 hotspot-ports: stamps/ports.stamp
-
-hotspot-ports-ecj: stamps/ports-ecj.stamp
 
 clean: distclean-local
 
