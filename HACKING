@@ -77,7 +77,7 @@ The following patches are currently applied before the building of OpenJDK or Op
 * icedtea-cc-interp-jvmti.patch: Disable some JVMTI capabilities which are unsupported or do not work with the C++ interpreter.
 * icedtea-demo-swingapplet.patch: Add missing html file needed to run the demo.
 * icedtea-6791168.patch: Fix build failure with GCC-4.4 (PR 38725) and compiler warnings.
-* icedtea-no-precompiled.patch: Don't use precompiled header files in hotspot.
+* icedtea-no-precompiled.patch: Don't use precompiled header files in hotspot when DISABLE_PRECOMPILED_HEADER is set.
 * icedtea-includedb.patch: Add missing include files.
 * icedtea-awt-window-size.patch: Fix X11 window size calculation (S6721088).
 * icedtea-java2d-dasher.patch: Fix interpretation of dash array elements in BasicStroke (S6793344).

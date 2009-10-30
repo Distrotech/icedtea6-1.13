@@ -689,6 +689,7 @@ ICEDTEA_PATCHES += \
 	patches/icedtea-gcc-stack-markings.patch \
 	patches/icedtea-s390-serialize.patch \
 	patches/openjdk/6879689-hotspot_warning_fix.patch \
+	patches/icedtea-no-precompiled.patch \
 	$(DISTRIBUTION_PATCHES)
 
 stamps/extract.stamp: stamps/download.stamp
