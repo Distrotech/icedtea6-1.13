@@ -19,7 +19,7 @@
 
 #define DEFAULT_PREFIX	"do_"
 
-static char *prefix = DEFAULT_PREFIX;
+static char *prefix = (char *)DEFAULT_PREFIX;
 
 #define ISALPHA(c) (isalpha(c) || (c) == '_')
 #define ISALNUM(c) (isalnum(c) || (c) == '_')
@@ -159,7 +159,7 @@ int bcdef(int c, char *buf, int len)
 	int i;
 	int length, overall_len;
 
-	def = malloc(sizeof(BytecodeImpl));
+	def = (BytecodeImpl *)malloc(sizeof(BytecodeImpl));
 	if (!def) outmem();
 	def->next = 0;
 	def->opcode_seq = 0;
@@ -171,7 +171,7 @@ int bcdef(int c, char *buf, int len)
 	seqp = &(def->opcode_seq);
 	overall_len = 0;
 	do {
-		seq = malloc(sizeof(OpcodeSequence));
+		seq = (OpcodeSequence *)malloc(sizeof(OpcodeSequence));
 		if (!seq) outmem();
 		seq->next = 0;
 		seq->opcode_list = 0;
@@ -185,7 +185,7 @@ int bcdef(int c, char *buf, int len)
 			if (!ISALPHA(c)) synerr();
 			c = readsymbol(c, buf, len);
 			c = skipwhitespace(c);
-			opc = malloc(sizeof(OpcodeList));
+			opc = (OpcodeList *)malloc(sizeof(OpcodeList));
 			if (!opc) outmem();
 			opc->next = 0;
 			opc->opcode = -1;
@@ -242,7 +242,7 @@ int bcdef(int c, char *buf, int len)
 		c = readeol(c, buf + strlen(buf), len - strlen(buf));
 		line = strdup(buf);
 		if (!line) outmem();
-		macro = malloc(sizeof(StringList));
+		macro = (StringList *)malloc(sizeof(StringList));
 		if (!macro) outmem();
 		*macrop = macro;
 		macrop = &(macro->next);
@@ -271,7 +271,7 @@ int bcdef(int c, char *buf, int len)
 			c = readeol(c, buf + strlen(buf), len - strlen(buf));
 			line = strdup(buf);
 			if (!line) outmem();
-			direct = malloc(sizeof(StringList));
+			direct = (StringList *)malloc(sizeof(StringList));
 			if (!direct) outmem();
 			*directp = direct;
 			directp = &(direct->next);
@@ -426,14 +426,14 @@ void writeouttable(TableEntry *table, int *table_indices, int depth)
 void do_tableentry(BytecodeImpl *impl, TableEntry **tablep, int *table_indices, int depth)
 {
 	TableEntry *table;
-	char *def = "undefined";
+	char *def = (char *)"undefined";
 	int i,j;
 
 	if (depth == 0) fatal("Depth = 0 for tableentry\n");
 	for (i = 0; i < depth; i++) {
 		table = *tablep;
 		if (!table) {
-			table = malloc(sizeof(TableEntry) * 256);
+			table = (TableEntry *)malloc(sizeof(TableEntry) * 256);
 			if (!table) outmem();
 			*tablep = table;
 			def = strdup(def);
@@ -478,7 +478,7 @@ void dumptable(void)
 	char	buf[256];
 	char *def;
 
-	the_table = malloc(sizeof(TableEntry) * 256);
+	the_table = (TableEntry *)malloc(sizeof(TableEntry) * 256);
 	if (!the_table) outmem();
 	for (j = 0; j < 256; j++) {
 		sprintf(buf, "%s", bytecodes[j].name);
@@ -593,7 +593,7 @@ int main(int argc, char **argv)
 		if (!bci_f) fatal("Error opening bci file for write");
 	}
 	for (i = 0; i < 256; i++) {
-		bytecodes[i].name = "undefined";
+		bytecodes[i].name = (char *)"undefined";
 		bytecodes[i].len = -1;
 	}
 	mkbc();

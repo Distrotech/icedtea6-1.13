@@ -489,36 +489,10 @@ if WITH_VISUALVM
 	rm -f $(NETBEANS_PROFILER_SRC_ZIP)
 endif
 
-# Build asm interpreter bytecodes
-ZERO_ASM_BC_DEF = $(abs_top_srcdir)/ports/hotspot/src/cpu/zero/vm/bytecodes_$(ZERO_LIBARCH).def
-ZERO_ASM_BC_ASM = $(abs_top_srcdir)/ports/hotspot/src/cpu/zero/vm/bytecodes_$(ZERO_LIBARCH).s
-ZERO_ASM_BC_ASM_COND = $(shell test -f ${ZERO_ASM_BC_DEF} && echo ${ZERO_ASM_BC_ASM})
-
-$(abs_top_srcdir)/mkbc: $(abs_top_srcdir)/mkbc.c
-	$(CC) $< -o $@
-
-# ECN: The following rule has been changed to allow preprocessing of the bytecode definition
-# file prior to running 'mkbc'. This allows you to use -DXXX on the gcc command. There are two
-# options currently recognized.
-#
-# -DDISABLE_NOTICE_SAFEPONTS	- Always run in 'safe' mode.
-# -DDISABLE_FAST_BYTECODES	- Disable fast bytecode replacement and bytecode sequences
-#
-# These options are provided mainly to assist debugging by returning the bytecode interpreter
-# to a 'vanilla' interpreter.
-#
-if SHARK_BUILD
-${ZERO_ASM_BC_ASM}: ${ZERO_ASM_BC_DEF} $(abs_top_srcdir)/mkbc
-	gcc -E -DDISABLE_NOTICE_SAFEPOINTS - < $< | $(abs_top_srcdir)/mkbc - $@
-else
-${ZERO_ASM_BC_ASM}: ${ZERO_ASM_BC_DEF} $(abs_top_srcdir)/mkbc
-	gcc -E - < $< | $(abs_top_srcdir)/mkbc - $@
-endif
-
-
 # Copy ports sources into tree
 stamps/ports.stamp: stamps/replace-hotspot.stamp
 	for target in $(abs_top_srcdir)/ports/hotspot/build/*/makefiles/* \
+		      $(abs_top_srcdir)/ports/hotspot/tools \
 		      $(abs_top_srcdir)/ports/hotspot/src/*cpu/* \
 		      $(abs_top_srcdir)/ports/hotspot/src/share/vm/*; do \
 	  link=$$(dirname $$target | sed 's/^.*ports/openjdk/'|sed "s#hotspot/build#hotspot/$(HOTSPOT_MAKE_DIR)#"); \
@@ -1105,7 +1079,7 @@ stamps/icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
 	stamps/ports.stamp stamps/patch.stamp stamps/overlay.stamp \
 	$(ICEDTEAPLUGIN_TARGET) $(ICEDTEANPPLUGIN_TARGET) \
 	extra-lib/about.jar stamps/cacao.stamp stamps/visualvm.stamp \
-	stamps/pulse-java.stamp $(ZERO_ASM_BC_ASM_COND)
+	stamps/pulse-java.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV) \
 	  -C openjdk \
@@ -1202,7 +1176,7 @@ stamps/icedtea-debug.stamp: stamps/bootstrap-directory-symlink.stamp \
 	stamps/ports.stamp stamps/patch.stamp stamps/overlay.stamp \
 	$(ICEDTEAPLUGIN_TARGET) $(ICEDTEANPPLUGIN_TARGET) \
 	extra-lib/about.jar stamps/cacao.stamp stamps/visualvm.stamp \
-	stamps/pulse-java.stamp $(ZERO_ASM_BC_ASM_COND)
+	stamps/pulse-java.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV) \
 	  -C openjdk \
@@ -1326,8 +1300,7 @@ stamps/native-ecj.stamp:
 
 stamps/icedtea-ecj.stamp: stamps/bootstrap-directory-symlink-ecj.stamp \
 	stamps/hotspot-tools.stamp stamps/plugs.stamp \
-	stamps/patch-ecj.stamp stamps/cacao.stamp \
-	$(ZERO_ASM_BC_ASM_COND)
+	stamps/patch-ecj.stamp stamps/cacao.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV_ECJ) \
 	  -C openjdk-ecj/ \

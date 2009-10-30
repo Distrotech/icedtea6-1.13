@@ -35,11 +35,19 @@ CFLAGS += -DHOTSPOT_ASM
 	$(QUIETLY) $(REMOVE_TARGET)
 	$(COMPILE.CC) -o $@ $< $(COMPILE_DONE)
 
-cppInterpreter_arm.o:	offsets_arm.s
+cppInterpreter_arm.o:	offsets_arm.s bytecodes_arm.s
 
 offsets_arm.s:	mkoffsets
 	@echo Generating assembler offsets
 	./mkoffsets > $@
+
+bytecodes_arm.s: bytecodes_arm.def mkbc
+	@echo Generatine ARM assembler bytecode sequences
+	$(CC_COMPILE) -E -x c++ - < $< | ./mkbc - $@ $(COMPILE_DONE)
+
+mkbc:	$(GAMMADIR)/tools/mkbc.c
+	@echo Compiling mkbc tool
+	$(CC_COMPILE) -o $@ $< $(COMPILE_DONE)
 
 mkoffsets:	asm_helper.cpp
 	@echo Compiling offset generator

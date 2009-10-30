@@ -19,6 +19,7 @@
 
 #ifdef SHARK
 #define USE_COMPILER
+#define DISABLE_NOTICE_SAFEPOINTS
 #endif
 
 #define ARMv4
@@ -3366,7 +3367,7 @@ bytecode_interpreter_str:
 	bl	_ZNK5Klass13external_nameEv
 	mov	r1, r0
 	mov	r0, tmp1
-	bl	_ZN13SharedRuntime27generate_class_cast_messageEPKcS1_
+	bl	SharedRuntime_generate_class_cast_message
 	str	r0, [arm_sp, #0]
 	ldr	r0, [istate, #ISTATE_THREAD]
 	adrl	r1, bytecode_interpreter_str

@@ -39,6 +39,11 @@ extern "C" HeapWord **CollectedHeap_end_addr(CollectedHeap *r0)
 	return r0->end_addr();
 }
 
+extern "C" char *SharedRuntime_generate_class_cast_message(const char *name, const char *klass)
+{
+	return SharedRuntime::generate_class_cast_message(name, klass);
+}
+
 #endif // STATIC_OFFSETS
 
 #ifdef STATIC_OFFSETS
