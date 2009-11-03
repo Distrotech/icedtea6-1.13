@@ -664,6 +664,7 @@ ICEDTEA_PATCHES += \
 	patches/icedtea-s390-serialize.patch \
 	patches/openjdk/6879689-hotspot_warning_fix.patch \
 	patches/icedtea-no-precompiled.patch \
+	patches/icedtea-xshm.patch \
 	$(DISTRIBUTION_PATCHES)
 
 stamps/extract.stamp: stamps/download.stamp
