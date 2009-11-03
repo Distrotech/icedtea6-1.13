@@ -1,0 +1,16 @@
+--- old/src/share/native/sun/awt/image/jpeg/imageioJPEG.c	Mon Sep  7 13:25:13 2009
++++ openjdk/jdk/src/share/native/sun/awt/image/jpeg/imageioJPEG.c	Mon Sep  7 13:25:12 2009
+@@ -1837,6 +1837,13 @@
+         return JNI_FALSE;
+     }
+ 
++    if (stepX > cinfo->image_width) {
++        stepX = cinfo->image_width;
++    }
++    if (stepY > cinfo->image_height) {
++        stepY = cinfo->image_height;
++    }
++
+     /*
+      * First get the source bands array and copy it to our local array
+      * so we don't have to worry about pinning and unpinning it again.

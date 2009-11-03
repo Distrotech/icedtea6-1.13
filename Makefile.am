@@ -589,7 +589,12 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-sparc-buildfixes.patch \
 	patches/icedtea-sparc64-linux.patch \
 	patches/icedtea-sparc-ptracefix.patch \
-	patches/icedtea-sparc-trapsfix.patch
+	patches/icedtea-sparc-trapsfix.patch \
+	patches/security/icedtea-6862968.patch \
+	patches/security/icedtea-6863503.patch \
+	patches/security/icedtea-6864911.patch \
+	patches/security/icedtea-6872357.patch \
+	patches/security/icedtea-6874643.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
