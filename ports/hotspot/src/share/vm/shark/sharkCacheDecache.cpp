@@ -189,9 +189,6 @@ void SharkOSREntryCacher::process_monitor(int index,
                                           int box_offset,
                                           int obj_offset)
 {
-  if (max_monitors() > 1)
-    Unimplemented();   // XXX which order will they be in?
-
   // Copy the monitor from the OSR buffer to the frame
   int src_offset = max_locals() + index * 2;
   builder()->CreateStore(

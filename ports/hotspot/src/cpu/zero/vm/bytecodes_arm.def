@@ -521,7 +521,7 @@ return_register_finalizer = 0xe5, 1
 	DISPATCH_NEXT
 	add	r3, r3, r2, lsl #2
 	DISPATCH_NEXT
-	ldr	tmp1, [r3, #12]
+	ldr	tmp1, [r3, #BASE_OFFSET_WORD]
 	DISPATCH_NEXT
 	PUT_STACK	0, tmp1
 	DISPATCH_FINISH
@@ -541,7 +541,7 @@ return_register_finalizer = 0xe5, 1
 	bcs	array_bound_exception_jpc_1
 	DISPATCH_NEXT
 	add	r3, r3, r2, lsl #3
-	ldr	tmp2, [r3, #16]
+	ldr	tmp2, [r3, #BASE_OFFSET_LONG]
 	DISPATCH_NEXT
 	ldr	tmp1, [r3, #20]
 	DISPATCH_NEXT
@@ -565,7 +565,7 @@ return_register_finalizer = 0xe5, 1
 	DISPATCH_NEXT
 	add	r3, r3, r2
 	DISPATCH_NEXT
-	ldrsb	tmp1, [r3, #12]
+	ldrsb	tmp1, [r3, #BASE_OFFSET_BYTE]
 	DISPATCH_NEXT
 	PUT_STACK	0, tmp1
 	DISPATCH_FINISH
@@ -586,7 +586,7 @@ return_register_finalizer = 0xe5, 1
 	DISPATCH_NEXT
 	add	r3, r3, r2, lsl #1
 	DISPATCH_NEXT
-	ldrh	tmp1, [r3, #12]
+	ldrh	tmp1, [r3, #BASE_OFFSET_SHORT]
 	DISPATCH_NEXT
 	PUT_STACK	0, tmp1
 	DISPATCH_FINISH
@@ -607,7 +607,7 @@ return_register_finalizer = 0xe5, 1
 	DISPATCH_NEXT
 	add	r3, r3, r2, lsl #1
 	DISPATCH_NEXT
-	ldrsh	tmp1, [r3, #12]
+	ldrsh	tmp1, [r3, #BASE_OFFSET_SHORT]
 	DISPATCH_NEXT
 	PUT_STACK	0, tmp1
 	DISPATCH_FINISH
@@ -742,7 +742,7 @@ return_register_finalizer = 0xe5, 1
 	DISPATCH_NEXT
 	add	tmp1, tmp1, tmp2, lsl #2
 	DISPATCH_NEXT
-	str	r3, [tmp1, #12]
+	str	r3, [tmp1, #BASE_OFFSET_WORD]
 	DISPATCH_FINISH
 }
 
@@ -758,7 +758,7 @@ return_register_finalizer = 0xe5, 1
 	bcs	array_bound_exception_jpc_1_tmp2
 	DISPATCH_NEXT
 	add	tmp2, tmp1, tmp2, lsl #3
-	str	r1, [tmp2, #16]
+	str	r1, [tmp2, #BASE_OFFSET_LONG]
 	DISPATCH_NEXT
 	DISPATCH_NEXT
 	str	r3, [tmp2, #20]
@@ -778,7 +778,7 @@ return_register_finalizer = 0xe5, 1
 	DISPATCH_NEXT
 	add	tmp1, tmp1, tmp2
 	DISPATCH_NEXT
-	strb	r3, [tmp1, #12]
+	strb	r3, [tmp1, #BASE_OFFSET_BYTE]
 	DISPATCH_FINISH
 }
 
@@ -795,7 +795,7 @@ return_register_finalizer = 0xe5, 1
 	DISPATCH_NEXT
 	add	tmp1, tmp1, tmp2, lsl #1
 	DISPATCH_NEXT
-	strh	r3, [tmp1, #12]
+	strh	r3, [tmp1, #BASE_OFFSET_SHORT]
 	DISPATCH_FINISH
 }
 
@@ -1994,7 +1994,7 @@ return_register_finalizer = 0xe5, 1
 	ldr	r3, [istate, #ISTATE_METHOD]			@ method
 	ldrb	lr, [jpc, #1]
 
-	ldr	tmp1, [r3, #12]			@ constants
+	ldr	tmp1, [r3, #METHOD_CONSTANTS]			@ constants
 
 	DISPATCH_START	\seq_len
 
@@ -2012,14 +2012,14 @@ return_register_finalizer = 0xe5, 1
 	bne	1f
 
 	add	r3, tmp1, lr, lsl #2
-	ldr	r3, [r3, #32]
+	ldr	r3, [r3, #CONSTANTPOOL_BASE]
 	DISPATCH_NEXT
 	PUSH	r3
 	DISPATCH_FINISH
 1:
 	cmp	r3, #JVM_CONSTANT_Class
 	bne	2f
-	add	r0, tmp1, #32
+	add	r0, tmp1, #CONSTANTPOOL_BASE
 	ldr	r0, [r0, lr, lsl #2]
 	ldr	r1, [r0, #60]
 	PUSH	r1
@@ -2051,7 +2051,7 @@ return_register_finalizer = 0xe5, 1
 
 	ldr	r3, [istate, #ISTATE_METHOD]			@ method
 	ldrb	ip, [jpc, #2]
-	ldr	r2, [r3, #12]			@ constants
+	ldr	r2, [r3, #METHOD_CONSTANTS]			@ constants
 
 	DISPATCH_START	\seq_len
 
@@ -2069,7 +2069,7 @@ return_register_finalizer = 0xe5, 1
 	bne	1f
 
 	add	r3, r2, lr, lsl #2
-	ldr	r3, [r3, #32]
+	ldr	r3, [r3, #CONSTANTPOOL_BASE]
 	DISPATCH_NEXT
 	DISPATCH_NEXT
 	PUSH	r3
@@ -2077,7 +2077,7 @@ return_register_finalizer = 0xe5, 1
 1:
 	cmp	r3, #JVM_CONSTANT_Class
 	bne	2f
-	add	r0, r2, #32
+	add	r0, r2, #CONSTANTPOOL_BASE
 	ldr	r0, [r0, lr, lsl #2]
 	ldr	r1, [r0, #60]
 	PUSH	r1
@@ -2109,7 +2109,7 @@ return_register_finalizer = 0xe5, 1
 
 	ldr	tmp1, [istate, #ISTATE_METHOD]			@ method
 	ldrb	lr, [jpc, #2]
-	ldr	r2, [tmp1, #12]			@ constants
+	ldr	r2, [tmp1, #METHOD_CONSTANTS]			@ constants
 
 	DISPATCH_START	\seq_len
 
@@ -2126,8 +2126,8 @@ return_register_finalizer = 0xe5, 1
 	bne	vm_fatal_error
 
 	add	tmp1, r2, r3, lsl #2
-	ldr	r3, [tmp1, #32]
-	ldr	tmp1, [tmp1, #36]
+	ldr	r3, [tmp1, #CONSTANTPOOL_BASE]
+	ldr	tmp1, [tmp1, #CONSTANTPOOL_BASE+4]
 	DISPATCH_NEXT
 	DISPATCH_NEXT
 	PUSH	r3, tmp1
@@ -3126,7 +3126,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, lr
 	bcs	array_bound_exception_jpc_1
 	add	r3, r3, r2, lsl #2
-	ldr	lr, [r3, #12]
+	ldr	lr, [r3, #BASE_OFFSET_WORD]
 	DISPATCH_NEXT
 	PUSH	lr
 	DISPATCH_FINISH
@@ -3145,7 +3145,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, lr
 	bcs	array_bound_exception_jpc_1
 	add	r3, r3, r2, lsl #2
-	ldr	lr, [r3, #12]
+	ldr	lr, [r3, #BASE_OFFSET_WORD]
 	DISPATCH_NEXT
 	PUSH	lr
 	DISPATCH_FINISH
@@ -3166,7 +3166,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, lr
 	bcs	array_bound_exception_jpc_1
 	add	r3, r3, r2
-	ldrsb	lr, [r3, #12]
+	ldrsb	lr, [r3, #BASE_OFFSET_BYTE]
 	DISPATCH_NEXT
 	PUSH	lr
 	DISPATCH_FINISH
@@ -3187,7 +3187,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, lr
 	bcs	array_bound_exception_jpc_1
 	add	r3, r3, r2, lsl #1
-	ldrh	lr, [r3, #12]
+	ldrh	lr, [r3, #BASE_OFFSET_SHORT]
 	DISPATCH_NEXT
 	PUSH	lr
 	DISPATCH_FINISH
@@ -3208,7 +3208,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, lr
 	bcs	array_bound_exception_jpc_1
 	add	r3, r3, r2, lsl #1
-	ldrsh	lr, [r3, #12]
+	ldrsh	lr, [r3, #BASE_OFFSET_SHORT]
 	DISPATCH_NEXT
 	PUSH	lr
 	DISPATCH_FINISH
@@ -3227,7 +3227,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, lr
 	bcs	array_bound_exception_jpc_1
 	add	r3, r3, r2
-	ldrsb	lr, [r3, #12]
+	ldrsb	lr, [r3, #BASE_OFFSET_BYTE]
 	DISPATCH_NEXT
 	PUSH	lr
 	DISPATCH_FINISH
@@ -3246,7 +3246,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, lr
 	bcs	array_bound_exception_jpc_1
 	add	r3, r3, r2, lsl #1
-	ldrh	lr, [r3, #12]
+	ldrh	lr, [r3, #BASE_OFFSET_SHORT]
 	DISPATCH_NEXT
 	PUSH	lr
 	DISPATCH_FINISH
@@ -3265,7 +3265,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, lr
 	bcs	array_bound_exception_jpc_1
 	add	r3, r3, r2, lsl #1
-	ldrsh	lr, [r3, #12]
+	ldrsh	lr, [r3, #BASE_OFFSET_SHORT]
 	DISPATCH_NEXT
 	PUSH	lr
 	DISPATCH_FINISH
@@ -3289,7 +3289,7 @@ return_register_finalizer = 0xe5, 1
 	bcs	array_bound_exception_jpc_1
 	DISPATCH_NEXT
 	add	r3, r3, r2, lsl #2
-	str	tmp1, [r3, #12]
+	str	tmp1, [r3, #BASE_OFFSET_WORD]
 	DISPATCH_FINISH
 }
 
@@ -3309,7 +3309,7 @@ return_register_finalizer = 0xe5, 1
 	bcs	array_bound_exception_jpc_1
 	DISPATCH_NEXT
 	add	r3, r3, r2
-	strb	tmp1, [r3, #12]
+	strb	tmp1, [r3, #BASE_OFFSET_BYTE]
 	DISPATCH_FINISH
 }
 
@@ -3329,7 +3329,7 @@ return_register_finalizer = 0xe5, 1
 	bcs	array_bound_exception_jpc_1
 	DISPATCH_NEXT
 	add	r3, r3, r2, lsl #1
-	strh	tmp1, [r3, #12]
+	strh	tmp1, [r3, #BASE_OFFSET_SHORT]
 	DISPATCH_FINISH
 }
 
@@ -3346,7 +3346,7 @@ return_register_finalizer = 0xe5, 1
 	bcs	array_bound_exception_jpc_1_r3
 	DISPATCH_NEXT
 	add	tmp1, tmp1, r3, lsl #2
-	str	r2, [tmp1, #12]
+	str	r2, [tmp1, #BASE_OFFSET_WORD]
 	DISPATCH_FINISH
 }
 
@@ -3363,7 +3363,7 @@ return_register_finalizer = 0xe5, 1
 	bcs	array_bound_exception_jpc_1_r3
 	DISPATCH_NEXT
 	add	tmp1, tmp1, r3
-	strb	r2, [tmp1, #12]
+	strb	r2, [tmp1, #BASE_OFFSET_BYTE]
 	DISPATCH_FINISH
 }
 
@@ -3380,7 +3380,7 @@ return_register_finalizer = 0xe5, 1
 	bcs	array_bound_exception_jpc_1_r3
 	DISPATCH_NEXT
 	add	tmp1, tmp1, r3, lsl #1
-	strh	r2, [tmp1, #12]
+	strh	r2, [tmp1, #BASE_OFFSET_SHORT]
 	DISPATCH_FINISH
 }
 
@@ -4754,7 +4754,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r3, tmp1
 	bcs	array_bound_exception_jpc_3_r3
 	add	lr, lr, r3, lsl #2
-	ldr	r3, [lr, #12]
+	ldr	r3, [lr, #BASE_OFFSET_WORD]
 	DISPATCH_NEXT
 	PUSH	r2, r3
 	DISPATCH_FINISH
@@ -4775,7 +4775,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r3, tmp1
 	bcs	array_bound_exception_jpc_2_r3
 	add	lr, lr, r3, lsl #2
-	ldr	r3, [lr, #12]
+	ldr	r3, [lr, #BASE_OFFSET_WORD]
 	DISPATCH_NEXT
 	PUSH	r2, r3
 	DISPATCH_FINISH
@@ -4796,7 +4796,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r3, tmp1
 	bcs	array_bound_exception_jpc_2_r3
 	add	lr, lr, r3, lsl #2
-	ldr	r3, [lr, #12]
+	ldr	r3, [lr, #BASE_OFFSET_WORD]
 	DISPATCH_NEXT
 	PUSH	r2, r3
 	DISPATCH_FINISH
@@ -4814,7 +4814,7 @@ return_register_finalizer = 0xe5, 1
 	bcs	array_bound_exception_jpc_2
 	add	r3, r3, r2, lsl #2
 	POP	lr			@ r2 = index, lr = arrayref
-	ldr	r2, [r3, #12]
+	ldr	r2, [r3, #BASE_OFFSET_WORD]
 	SW_NPC	cmp	lr, #0
 	SW_NPC	beq	null_ptr_exception_jpc_1
 .abortentry44:
@@ -4823,7 +4823,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, tmp1
 	bcs	array_bound_exception_jpc_1
 	add	lr, lr, r2, lsl #2
-	ldr	r2, [lr, #12]
+	ldr	r2, [lr, #BASE_OFFSET_WORD]
 	DISPATCH_NEXT
 	PUSH	r2
 	DISPATCH_FINISH
@@ -4841,7 +4841,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r3, tmp1
 	bcs	array_bound_exception_jpc_3_r3
 	add	lr, lr, r3, lsl #2
-	ldr	r3, [lr, #12]
+	ldr	r3, [lr, #BASE_OFFSET_WORD]
 	DISPATCH_NEXT
 	str	r3, [locals, -r2, lsl #2]
 	DISPATCH_FINISH
@@ -4860,7 +4860,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r3, tmp1
 	bcs	array_bound_exception_jpc_2_r3
 	add	lr, lr, r3, lsl #2
-	ldr	r3, [lr, #12]
+	ldr	r3, [lr, #BASE_OFFSET_WORD]
 	DISPATCH_NEXT
 	str	r3, [locals, r2, lsl #2]
 	DISPATCH_FINISH
@@ -4876,7 +4876,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r3, tmp1
 	bcs	array_bound_exception_jpc_2_r3
 	add	lr, lr, r3, lsl #2
-	ldr	tmp1, [lr, #12]
+	ldr	tmp1, [lr, #BASE_OFFSET_WORD]
 
 	POP	r2, r3		@ tmp1 = value, r2 = index, r3 = arrayref
 	SW_NPC	cmp	r3, #0
@@ -4888,7 +4888,7 @@ return_register_finalizer = 0xe5, 1
 	bcs	array_bound_exception_jpc_1
 	DISPATCH_NEXT
 	add	r3, r3, r2, lsl #2
-	str	tmp1, [r3, #12]
+	str	tmp1, [r3, #BASE_OFFSET_WORD]
 	DISPATCH_FINISH
 }
 
@@ -4902,7 +4902,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r3, tmp1
 	bcs	array_bound_exception_jpc_2_r3
 	add	lr, lr, r3, lsl #2
-	ldr	tmp1, [lr, #12]
+	ldr	tmp1, [lr, #BASE_OFFSET_WORD]
 
 	POP	r2, r3		@ tmp1 = value, r2 = index, r3 = arrayref
 	SW_NPC	cmp	r3, #0
@@ -4914,7 +4914,7 @@ return_register_finalizer = 0xe5, 1
 	bcs	array_bound_exception_jpc_1
 	DISPATCH_NEXT
 	add	r3, r3, r2
-	strb	tmp1, [r3, #12]
+	strb	tmp1, [r3, #BASE_OFFSET_BYTE]
 	DISPATCH_FINISH
 }
 
@@ -4928,7 +4928,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r3, tmp1
 	bcs	array_bound_exception_jpc_2_r3
 	add	lr, lr, r3, lsl #2
-	ldr	tmp1, [lr, #12]
+	ldr	tmp1, [lr, #BASE_OFFSET_WORD]
 
 	POP	r2, r3		@ tmp1 = value, r2 = index, r3 = arrayref
 	SW_NPC	cmp	r3, #0
@@ -4940,7 +4940,7 @@ return_register_finalizer = 0xe5, 1
 	bcs	array_bound_exception_jpc_1
 	DISPATCH_NEXT
 	add	r3, r3, r2, lsl #1
-	strh	tmp1, [r3, #12]
+	strh	tmp1, [r3, #BASE_OFFSET_BYTE]
 	DISPATCH_FINISH
 }
 
@@ -4955,7 +4955,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, tmp1
 	bcs	array_bound_exception_jpc_2
 	add	r3, r3, r2, lsl #2
-	ldr	tmp1, [r3, #12]		@ tmp1 = tos
+	ldr	tmp1, [r3, #BASE_OFFSET_WORD]		@ tmp1 = tos
 	POP	r2			@ r2 = tosm1
 	DISPATCH_NEXT
 	and	tmp1, r2, tmp1		@ tosm1 <dop> tos
@@ -4974,7 +4974,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, tmp1
 	bcs	array_bound_exception_jpc_2
 	add	r3, r3, r2, lsl #2
-	ldr	tmp1, [r3, #12]		@ tmp1 = tos
+	ldr	tmp1, [r3, #BASE_OFFSET_WORD]		@ tmp1 = tos
 	POP	r2			@ r2 = tosm1
 	DISPATCH_NEXT
 	orr	tmp1, r2, tmp1		@ tosm1 <dop> tos
@@ -4993,7 +4993,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, tmp1
 	bcs	array_bound_exception_jpc_2
 	add	r3, r3, r2, lsl #2
-	ldr	tmp1, [r3, #12]		@ tmp1 = tos
+	ldr	tmp1, [r3, #BASE_OFFSET_WORD]		@ tmp1 = tos
 	POP	r2			@ r2 = tosm1
 	DISPATCH_NEXT
 	eor	tmp1, r2, tmp1		@ tosm1 <dop> tos
@@ -5012,7 +5012,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, r1
 	bcs	array_bound_exception_jpc_0
 	add	r3, r3, r2, lsl #2
-	ldr	r3, [r3, #12]		@ r1 = tos
+	ldr	r3, [r3, #BASE_OFFSET_WORD]		@ r1 = tos
 
         ldrsb   r1, [jpc, #2]
         ldrb    ip, [jpc, #3]
@@ -5035,7 +5035,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, r1
 	bcs	array_bound_exception_jpc_0
 	add	r3, r3, r2, lsl #2
-	ldr	r3, [r3, #12]		@ r1 = tos
+	ldr	r3, [r3, #BASE_OFFSET_WORD]		@ r1 = tos
 
         ldrsb   r1, [jpc, #2]
         ldrb    ip, [jpc, #3]
@@ -5058,7 +5058,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, r1
 	bcs	array_bound_exception_jpc_0
 	add	r3, r3, r2, lsl #2
-	ldr	r3, [r3, #12]		@ r1 = tos
+	ldr	r3, [r3, #BASE_OFFSET_WORD]		@ r1 = tos
 
         ldrsb   r1, [jpc, #2]
         ldrb    ip, [jpc, #3]
@@ -5081,7 +5081,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, r1
 	bcs	array_bound_exception_jpc_0
 	add	r3, r3, r2, lsl #2
-	ldr	r3, [r3, #12]		@ r1 = tos
+	ldr	r3, [r3, #BASE_OFFSET_WORD]		@ r1 = tos
 
         ldrsb   r1, [jpc, #2]
         ldrb    ip, [jpc, #3]
@@ -5104,7 +5104,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, r1
 	bcs	array_bound_exception_jpc_0
 	add	r3, r3, r2, lsl #2
-	ldr	r3, [r3, #12]		@ r1 = tos
+	ldr	r3, [r3, #BASE_OFFSET_WORD]		@ r1 = tos
 
         ldrsb   r1, [jpc, #2]
         ldrb    ip, [jpc, #3]
@@ -5127,7 +5127,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, r1
 	bcs	array_bound_exception_jpc_0
 	add	r3, r3, r2, lsl #2
-	ldr	r3, [r3, #12]		@ r1 = tos
+	ldr	r3, [r3, #BASE_OFFSET_WORD]		@ r1 = tos
 
         ldrsb   r1, [jpc, #2]
         ldrb    ip, [jpc, #3]
@@ -5150,7 +5150,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, r1
 	bcs	array_bound_exception_jpc_0
 	add	r3, r3, r2, lsl #2
-	ldr	r2, [r3, #12]		@ r1 = tos
+	ldr	r2, [r3, #BASE_OFFSET_WORD]		@ r1 = tos
 
 	POP	r3
         ldrsb   r1, [jpc, #2]
@@ -5174,7 +5174,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, r1
 	bcs	array_bound_exception_jpc_0
 	add	r3, r3, r2, lsl #2
-	ldr	r2, [r3, #12]		@ r1 = tos
+	ldr	r2, [r3, #BASE_OFFSET_WORD]		@ r1 = tos
 
 	POP	r3
         ldrsb   r1, [jpc, #2]
@@ -5198,7 +5198,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, r1
 	bcs	array_bound_exception_jpc_0
 	add	r3, r3, r2, lsl #2
-	ldr	r2, [r3, #12]		@ r1 = tos
+	ldr	r2, [r3, #BASE_OFFSET_WORD]		@ r1 = tos
 
 	POP	r3
         ldrsb   r1, [jpc, #2]
@@ -5222,7 +5222,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, r1
 	bcs	array_bound_exception_jpc_0
 	add	r3, r3, r2, lsl #2
-	ldr	r2, [r3, #12]		@ r1 = tos
+	ldr	r2, [r3, #BASE_OFFSET_WORD]		@ r1 = tos
 
 	POP	r3
         ldrsb   r1, [jpc, #2]
@@ -5246,7 +5246,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, r1
 	bcs	array_bound_exception_jpc_0
 	add	r3, r3, r2, lsl #2
-	ldr	r2, [r3, #12]		@ r1 = tos
+	ldr	r2, [r3, #BASE_OFFSET_WORD]		@ r1 = tos
 
 	POP	r3
         ldrsb   r1, [jpc, #2]
@@ -5270,7 +5270,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, r1
 	bcs	array_bound_exception_jpc_0
 	add	r3, r3, r2, lsl #2
-	ldr	r2, [r3, #12]		@ r1 = tos
+	ldr	r2, [r3, #BASE_OFFSET_WORD]		@ r1 = tos
 
 	POP	r3
         ldrsb   r1, [jpc, #2]
@@ -5332,7 +5332,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, tmp1
 	bcs	array_bound_exception_jpc_1
 	add	lr, lr, r2, lsl #2
-	ldr	tmp1, [lr, #12]
+	ldr	tmp1, [lr, #BASE_OFFSET_WORD]
 	DISPATCH_NEXT
 	PUSH	tmp1
 	DISPATCH_FINISH
@@ -5365,7 +5365,7 @@ return_register_finalizer = 0xe5, 1
 	bcs	array_bound_exception_jpc_1
 	DISPATCH_NEXT
 	add	r3, r3, r2, lsl #2
-	str	tmp1, [r3, #12]
+	str	tmp1, [r3, #BASE_OFFSET_WORD]
 	DISPATCH_FINISH
 }
 
@@ -5698,7 +5698,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, tmp1
 	bcs	array_bound_exception_jpc_1
 	add	lr, lr, r2, lsl #2
-	ldr	tmp1, [lr, #12]
+	ldr	tmp1, [lr, #BASE_OFFSET_WORD]
 	DISPATCH_NEXT
 	PUSH	tmp1
 	DISPATCH_FINISH
@@ -5731,7 +5731,7 @@ return_register_finalizer = 0xe5, 1
 	bcs	array_bound_exception_jpc_1
 	DISPATCH_NEXT
 	add	r3, r3, r2, lsl #2
-	str	tmp1, [r3, #12]
+	str	tmp1, [r3, #BASE_OFFSET_WORD]
 	DISPATCH_FINISH
 }
 
@@ -6064,7 +6064,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, tmp1
 	bcs	array_bound_exception_jpc_1
 	add	lr, lr, r2, lsl #2
-	ldr	tmp1, [lr, #12]
+	ldr	tmp1, [lr, #BASE_OFFSET_WORD]
 	DISPATCH_NEXT
 	PUSH	tmp1
 	DISPATCH_FINISH
@@ -6097,7 +6097,7 @@ return_register_finalizer = 0xe5, 1
 	bcs	array_bound_exception_jpc_1
 	DISPATCH_NEXT
 	add	r3, r3, r2, lsl #2
-	str	tmp1, [r3, #12]
+	str	tmp1, [r3, #BASE_OFFSET_WORD]
 	DISPATCH_FINISH
 }
 
@@ -6430,7 +6430,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, tmp1
 	bcs	array_bound_exception_jpc_1
 	add	lr, lr, r2, lsl #2
-	ldr	tmp1, [lr, #12]
+	ldr	tmp1, [lr, #BASE_OFFSET_WORD]
 	DISPATCH_NEXT
 	PUSH	tmp1
 	DISPATCH_FINISH
@@ -6463,7 +6463,7 @@ return_register_finalizer = 0xe5, 1
 	bcs	array_bound_exception_jpc_1
 	DISPATCH_NEXT
 	add	r3, r3, r2, lsl #2
-	str	tmp1, [r3, #12]
+	str	tmp1, [r3, #BASE_OFFSET_WORD]
 	DISPATCH_FINISH
 }
 
@@ -6797,7 +6797,7 @@ return_register_finalizer = 0xe5, 1
 	cmp	r2, tmp1
 	bcs	array_bound_exception_jpc_1
 	add	lr, lr, r2, lsl #2
-	ldr	tmp1, [lr, #12]
+	ldr	tmp1, [lr, #BASE_OFFSET_WORD]
 	DISPATCH_NEXT
 	PUSH	tmp1
 	DISPATCH_FINISH
@@ -6830,7 +6830,7 @@ return_register_finalizer = 0xe5, 1
 	bcs	array_bound_exception_jpc_1
 	DISPATCH_NEXT
 	add	r3, r3, r2, lsl #2
-	str	tmp1, [r3, #12]
+	str	tmp1, [r3, #BASE_OFFSET_WORD]
 	DISPATCH_FINISH
 }
 
@@ -10032,7 +10032,7 @@ return_register_finalizer = 0xe5, 1
 	DISPATCH_NEXT
 	add	tmp2, tmp1, tmp2, lsl #3
 	fmacd	d2, d1, d0
-	vstr	d2, [tmp2, #16]
+	vstr	d2, [tmp2, #BASE_OFFSET_LONG]
 	DISPATCH_NEXT
 	DISPATCH_NEXT
 	add	stack, stack, #32

@@ -110,6 +110,7 @@ void VMStructs::print_vm_offsets(void)
 	print_def("METHOD_NATIVEHANDLER", sizeof(methodOopDesc));
 	print_def("METHOD_SIGNATUREHANDLER", sizeof(methodOopDesc)+4);
 	nl();
+        print_def("CONSTMETHOD_CODESIZE", offset_of(constMethodOopDesc, _code_size));
 	print_def("CONSTMETHOD_CODEOFFSET", sizeof(constMethodOopDesc));
 	nl();
 	print_def("JNIHANDLEBLOCK_TOP", offset_of(JNIHandleBlock, _top));
@@ -124,6 +125,14 @@ void VMStructs::print_vm_offsets(void)
 	nl();
 	print_def("CONSTANTPOOL_TAGS", offset_of(constantPoolOopDesc, _tags));
 	print_def("CONSTANTPOOL_CACHE", offset_of(constantPoolOopDesc, _cache));
+	print_def("CONSTANTPOOL_BASE", sizeof(constantPoolOopDesc));
+	nl();
+	print_def("CP_OFFSET", in_bytes(constantPoolCacheOopDesc::base_offset()));
+	nl();
+	print_def("BASE_OFFSET_BYTE", arrayOopDesc::base_offset_in_bytes(T_BYTE));
+	print_def("BASE_OFFSET_SHORT", arrayOopDesc::base_offset_in_bytes(T_SHORT));
+	print_def("BASE_OFFSET_WORD", arrayOopDesc::base_offset_in_bytes(T_INT));
+	print_def("BASE_OFFSET_LONG", arrayOopDesc::base_offset_in_bytes(T_LONG));
 	nl();
 	print_def("SIZEOF_HANDLEMARK", sizeof(HandleMark));
 }

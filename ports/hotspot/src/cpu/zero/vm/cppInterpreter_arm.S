@@ -17,12 +17,28 @@
 
 #ifdef HOTSPOT_ASM
 
+#define ARMv4
+
 #ifdef SHARK
 #define USE_COMPILER
 #define DISABLE_NOTICE_SAFEPOINTS
 #endif
 
-#define ARMv4
+#ifdef USE_COMPILER
+
+#define MP_COMPILE_THRESHOLD    0x10000         // 65536 - must be a single MOV constant
+#define UP_COMPILE_THRESHOLD    0x30000         // 196608 - must be a single MOV constant
+
+#define MAX_FG_METHOD_SIZE      500
+
+#ifndef DISABLE_ON_STACK_REPLACEMENT
+#define ON_STACK_REPLACEMENT
+#endif
+#ifndef ENABLE_BG_COMP_ON_NON_MP
+#define DISABLE_BG_COMP_ON_NON_MP
+#endif
+
+#endif // USE_COMPILER
 
 #ifndef DISABLE_NOTICE_SAFEPOINTS
 #define NOTICE_SAFEPOINTS
@@ -50,8 +66,6 @@
 #define istate		r8
 #define constpool	r9
 #define arm_sp		r13
-
-#define CP_OFFSET	16
 
 #define tmp_xxx		r7
 #define tmp_yyy		r5
@@ -237,6 +251,25 @@
   .endif
 #endif
 	.endm
+
+@------------------------------------------------
+@ On stack replacement macro
+@ Usage:
+@       OSR     <compiler specific code>
+@------------------------------------------------
+        .macro  OSR     p1, p2, p3, p4
+#ifdef ON_STACK_REPLACEMENT
+  .ifnes "\p4", ""
+        \p1 \p2, \p3, \p4
+  .else
+    .ifnes "\p3", ""
+        \p1 \p2, \p3
+    .else
+        \p1 \p2
+    .endif
+  .endif
+#endif
+        .endm
 
 	.macro	Opcode	label
 	ALIGN_OPCODE
@@ -2582,42 +2615,39 @@ int_rem:
 	PUSH	tmp2
 	DISPATCH_FINISH
 
-@ ip = branch offset
-@ r0 = 1st bytecode
-@ jpc has been updated
 	Opcode	goto
         ldrsb   r1, [jpc, #1]
         ldrb    tmp1, [jpc, #2]
+branch_taken:
         orr     tmp1, tmp1, r1, lsl #8
         DISPATCH_START_REG	tmp1
-branch_taken:
-	ldr	r2, [dispatch, #SafePointSynchronize_state_Address-XXX]
 	cmp	tmp1, #0
+	ble	do_backedge
+	DISPATCH_FINISH
+
+do_backedge:
   USEC	ldr	tmp2, [istate, #ISTATE_METHOD]
-	ldr	r1, [r2]
-	bgt	branch_no_check
+  OSR	ldr	lr, [dispatch, #InterpreterInvocationLimit_Address-XXX]
+  USEC	ldr	r1, [tmp2, #METHOD_BACKEDGECOUNTER]
+  USEC	ldr	ip, [tmp2, #METHOD_INVOCATIONCOUNTER]
+  USEC	add	r1, r1, #INVOCATIONCOUNTER_COUNTINCREMENT
+  OSR	ldr	lr, [lr]
+  USEC	add	ip, ip, #INVOCATIONCOUNTER_COUNTINCREMENT
+  USEC	str	r1, [tmp2, #METHOD_BACKEDGECOUNTER]
+  OSR	cmp	r1, lr, lsl #2
+  USEC	str	ip, [tmp2, #METHOD_INVOCATIONCOUNTER]
+  OSR	bcs	do_osr
 
-@ ECN: The C code does...
-@	if (UseCompiler && UseLoopCounter) {
-@		BACKEDGE_COUNT->increment();
-@		...
-@	}
-@ However, I just increment the counter because the check is actually
-@ more expensive than the increment. I don't believe this matters
-@ semantically, since is UseCompiler or UseLoopCounter is false then
-@ we shouldn't even be looking at the backedge counter.
-@
-@ ECN:	Concerns about counter overflowing
-@
-  USEC	ldr	r3, [tmp2, #METHOD_BACKEDGECOUNTER]
+osr_continue:
+	ldr	ip, [dispatch, #SafePointSynchronize_state_Address-XXX]
+	ldr	r1, [ip]
 	cmp	r1, #1
-  USEC	add	r3, r3, #INVOCATIONCOUNTER_COUNTINCREMENT
-  USEC	str	r3, [tmp2, #METHOD_BACKEDGECOUNTER]
+	beq	do_synchronize
+	DISPATCH_STATE	1
+	DISPATCH_FINISH
 
-	bne	branch_no_check
 
-	sub	jpc, jpc, tmp1		@ Point jpc back at the branch!!!
-
+do_synchronize:
 	add	r0, istate, #ISTATE_THREAD
 	bl	HandleMarkCleanerD
 	ldr	r0, [istate, #ISTATE_THREAD]
@@ -2632,16 +2662,103 @@ branch_taken:
 	CACHE_JPC
 	cmp	r3, #0
 	bne	handle_exception
+	DISPATCH	0
 
-	DISPATCH_START_REG	tmp1	@ Refetch opcode and update jpc again
-branch_no_check:
-@ ECN: There is no protection against INVOCATIONCOUNTER overflowing!!!
-  USEC	ldr	r3, [tmp2, #METHOD_INVOCATIONCOUNTER]
+#ifdef ON_STACK_REPLACEMENT
+do_osr:
+	ldr	ip, [dispatch, #UseOnStackReplacement_Address-XXX]
+	ldrb	ip, [ip]
+	cmp	ip, #0
+	beq	osr_continue
+
+	ldr	r3, [tmp2, #METHOD_CONSTMETHOD]
+	DECACHE_JPC
+	ldrh	r3, [r3, #CONSTMETHOD_CODESIZE]
+	DECACHE_STACK
+	ldr	r0, [istate, #ISTATE_THREAD]
+	sub	r1, jpc, tmp1
+	cmp	r3, #MAX_FG_METHOD_SIZE
+	bcc	1f
+	ldr	tmp2, [dispatch, #BackgroundCompilation_Address-XXX]
+	mov	r3, #1
+	ldr	r5, [tmp2]
+	str	r3, [tmp2]
+	bl	_ZN18InterpreterRuntime26frequency_counter_overflowEP10JavaThreadPh
+	str	r5, [tmp2]
+	b	2f
+1:
+	bl	_ZN18InterpreterRuntime26frequency_counter_overflowEP10JavaThreadPh
+2:
+	ldr	r3, [istate, #ISTATE_THREAD]
+	ASSERT_LOCALS_CACHED
+	ASSERT_STACK_CACHED
+	CACHE_CP
+	ldr	r1, [r3, #THREAD_PENDING_EXC]
+	CACHE_JPC
+	cmp	r1, #0
+	bne	handle_exception
+	cmp	r0, #0
+	beq	1f
+	ldr	r1, [r0, #56]
+	cmn	r1, #2
+	bne	osr_migrate
+1:
+	DISPATCH_START	0
+	b	osr_continue
+#endif
+
+#ifdef ON_STACK_REPLACEMENT
+osr_migrate:
+	ldr	tmp1, [r0, #128]	@ osr_method->osr_entry()
+	ldr	tmp2, [istate, #ISTATE_ADVANCE_PC]
+@	ldr	istate, [istate, #ISTATE_NEXT_FRAME]
+	mov	r0, r3
+	bl	_ZN13SharedRuntime19OSR_migration_beginEP10JavaThread
+	mov	r1, r0
+	ldr	r0, [istate, #ISTATE_METHOD]
+	ldrh	lr, [r0, #METHOD_MAXLOCALS]
+	ldrh	ip, [r0, #METHOD_SIZEOFPARAMETERS]
+	ldr	r3, [istate, #ISTATE_THREAD]
+	sub	lr, lr, ip
+	ldr	r2, [r3, #THREAD_TOP_ZERO_FRAME]
+	add	ip, r2, #4
+	ldr	r2, [r2]
+	add	ip, ip, lr, lsl #2
+	str	r2, [r3, #THREAD_TOP_ZERO_FRAME]
+	str	ip, [r3, #THREAD_JAVA_SP]
+	mov	r2, tmp1
+@ r0 = method
+@ r1 = osr_buf
+@ r2 = osr_entry
+	mov	lr, pc
+	ldr	pc, [tmp1]
+
+	cmp	tmp2, #0
+	ldmeqfd	arm_sp!, {regset, pc}
+
+	ldr	istate, [istate, #ISTATE_NEXT_FRAME]
+        ldr	lr, [istate, #-ISTATE_NEXT_FRAME+ISTATE_THREAD]!
+        CACHE_JPC
+        ldr     stack, [lr, #THREAD_JAVA_SP]
+        ldr     r2, [istate, #ISTATE_STACK_LIMIT]
+        sub     stack, stack, #4
+
+        ldr     r1, [lr, #THREAD_TOP_ZERO_FRAME]
+        add     r2, r2, #4
+        str     r2, [lr, #THREAD_JAVA_SP]
+        str     r1, [lr, #THREAD_LAST_JAVA_SP]
+        ldr     r3, [lr, #THREAD_PENDING_EXC]
+        DISPATCH_START_REG tmp2
+        CACHE_LOCALS
 	DISPATCH_NEXT
-  USEC	add	r3, r3, #INVOCATIONCOUNTER_COUNTINCREMENT
 	DISPATCH_NEXT
-  USEC	str	r3, [tmp2, #METHOD_INVOCATIONCOUNTER]
+        cmp     r3, #0
+        DISPATCH_NEXT
+        bne     return_exception
+	DISPATCH_NEXT
+        CACHE_CP
 	DISPATCH_FINISH
+#endif
 
 	Opcode	ifeq
 	Opcode	ifnull
@@ -2649,11 +2766,8 @@ branch_no_check:
         ldrsb   r1, [jpc, #1]
         ldrb    tmp1, [jpc, #2]
         cmp     r3, #0
-        orreq   tmp1, tmp1, r1, lsl #8
-        ldreqb  r0, [jpc, tmp1]!
-        ldrneb  r0, [jpc, #3]!
 	beq	branch_taken
-	DISPATCH_BYTECODE
+	DISPATCH	3
 
 	Opcode	ifne
 	Opcode	ifnonnull
@@ -2661,55 +2775,40 @@ branch_no_check:
         ldrsb   r1, [jpc, #1]
         ldrb    tmp1, [jpc, #2]
         cmp     r3, #0
-        orrne   tmp1, tmp1, r1, lsl #8
-        ldrneb  r0, [jpc, tmp1]!
-        ldreqb  r0, [jpc, #3]!
 	bne	branch_taken
-	DISPATCH_BYTECODE
+	DISPATCH	3
 
 	Opcode	iflt
         POP     r3
         ldrsb   r1, [jpc, #1]
         ldrb    tmp1, [jpc, #2]
         cmp     r3, #0
-        orrlt   tmp1, tmp1, r1, lsl #8
-        ldrltb  r0, [jpc, tmp1]!
-        ldrgeb  r0, [jpc, #3]!
 	blt	branch_taken
-	DISPATCH_BYTECODE
+	DISPATCH	3
 
 	Opcode	ifge
         POP     r3
         ldrsb   r1, [jpc, #1]
         ldrb    tmp1, [jpc, #2]
         cmp     r3, #0
-        orrge   tmp1, tmp1, r1, lsl #8
-        ldrgeb  r0, [jpc, tmp1]!
-        ldrltb  r0, [jpc, #3]!
 	bge	branch_taken
-	DISPATCH_BYTECODE
+	DISPATCH	3
 
 	Opcode	ifgt
         POP     r3
         ldrsb   r1, [jpc, #1]
         ldrb    tmp1, [jpc, #2]
         cmp     r3, #0
-        orrgt   tmp1, tmp1, r1, lsl #8
-        ldrgtb  r0, [jpc, tmp1]!
-        ldrleb  r0, [jpc, #3]!
 	bgt	branch_taken
-	DISPATCH_BYTECODE
+	DISPATCH	3
 
 	Opcode	ifle
         POP     r3
         ldrsb   r1, [jpc, #1]
         ldrb    tmp1, [jpc, #2]
         cmp     r3, #0
-        orrle   tmp1, tmp1, r1, lsl #8
-        ldrleb  r0, [jpc, tmp1]!
-        ldrgtb  r0, [jpc, #3]!
 	ble	branch_taken
-	DISPATCH_BYTECODE
+	DISPATCH	3
 
 	Opcode	if_icmpeq
 	Opcode	if_acmpeq
@@ -2717,11 +2816,8 @@ branch_no_check:
         ldrsb   r1, [jpc, #1]
         ldrb    tmp1, [jpc, #2]
         cmp     r3, r2
-        orreq   tmp1, tmp1, r1, lsl #8
-        ldreqb  r0, [jpc, tmp1]!
-        ldrneb  r0, [jpc, #3]!
 	beq	branch_taken
-	DISPATCH_BYTECODE
+	DISPATCH	3
 
 	Opcode	if_icmpne
 	Opcode	if_acmpne
@@ -2729,55 +2825,40 @@ branch_no_check:
         ldrsb   r1, [jpc, #1]
         ldrb    tmp1, [jpc, #2]
         cmp     r3, r2
-        orrne   tmp1, tmp1, r1, lsl #8
-        ldrneb  r0, [jpc, tmp1]!
-        ldreqb  r0, [jpc, #3]!
 	bne	branch_taken
-	DISPATCH_BYTECODE
+	DISPATCH	3
 
 	Opcode	if_icmplt
         POP    r2, r3
         ldrsb   r1, [jpc, #1]
         ldrb    tmp1, [jpc, #2]
         cmp     r3, r2
-        orrlt   tmp1, tmp1, r1, lsl #8
-        ldrltb  r0, [jpc, tmp1]!
-        ldrgeb  r0, [jpc, #3]!
 	blt	branch_taken
-	DISPATCH_BYTECODE
+	DISPATCH	3
 
 	Opcode	if_icmpge
         POP    r2, r3
         ldrsb   r1, [jpc, #1]
         ldrb    tmp1, [jpc, #2]
         cmp     r3, r2
-        orrge   tmp1, tmp1, r1, lsl #8
-        ldrgeb  r0, [jpc, tmp1]!
-        ldrltb  r0, [jpc, #3]!
 	bge	branch_taken
-	DISPATCH_BYTECODE
+	DISPATCH	3
 
 	Opcode	if_icmpgt
         POP    r2, r3
         ldrsb   r1, [jpc, #1]
         ldrb    tmp1, [jpc, #2]
         cmp     r3, r2
-        orrgt   tmp1, tmp1, r1, lsl #8
-        ldrgtb  r0, [jpc, tmp1]!
-        ldrleb  r0, [jpc, #3]!
 	bgt	branch_taken
-	DISPATCH_BYTECODE
+	DISPATCH	3
 
 	Opcode	if_icmple
         POP    r2, r3
         ldrsb   r1, [jpc, #1]
         ldrb    tmp1, [jpc, #2]
         cmp     r3, r2
-        orrle   tmp1, tmp1, r1, lsl #8
-        ldrleb  r0, [jpc, tmp1]!
-        ldrgtb  r0, [jpc, #3]!
 	ble	branch_taken
-	DISPATCH_BYTECODE
+	DISPATCH	3
 
 	Opcode	ireturn
 	Opcode	freturn
@@ -3122,7 +3203,7 @@ resolve_invoke:
 	cmpne	r3, #JVM_CONSTANT_UnresolvedClass
 	beq	.new_slow_case
 
-	add	r3, lr, #32
+	add	r3, lr, #CONSTANTPOOL_BASE
 	ldr	k_entry, [r3, r2, lsl #2]
 
 	add	r1, k_entry, #KLASS_PART
@@ -3308,7 +3389,7 @@ bytecode_interpreter_str:
 4:
 	ldr	r0, [r0, #4]
 	add	r3, r3, tmp2, lsl #2
-	ldr	tmp1, [r3, #32]
+	ldr	tmp1, [r3, #CONSTANTPOOL_BASE]
 	cmp	tmp1, r0
 	beq	.checkcast_exit
 
@@ -3401,7 +3482,7 @@ bytecode_interpreter_str:
 	cmp	r0, #0
 	ldr	ip, [r3, #CONSTANTPOOL_TAGS]
 	beq	.instanceof_not_instance
-	add	ip, ip, #12
+	add	ip, ip, #BASE_OFFSET_BYTE
 	orr	tmp2, r1, r2, lsl #8
 	ldrb	r2, [ip, tmp2]
 	cmp	r2, #JVM_CONSTANT_UnresolvedClassInError
@@ -3411,7 +3492,7 @@ bytecode_interpreter_str:
 1:
 	ldr	r0, [r0, #4]
 	add	r3, r3, tmp2, lsl #2
-	ldr	tmp1, [r3, #32]
+	ldr	tmp1, [r3, #CONSTANTPOOL_BASE]
 	cmp	tmp1, r0
 	beq	.instanceof_is_instance
 
@@ -3685,7 +3766,7 @@ vm_fatal_error:
 	beq	raise_exception
 .aastore_exit:
     ldr r2, [dispatch, #Universe_collectedHeap_Address-XXX]
-	add	r1, tmp1, #12
+	add	r1, tmp1, #BASE_OFFSET_WORD
 	str	sl, [r1, tmp_vvv, asl #2]!
     ldr	r3, [r2]
 	mov	lr, #0
@@ -4010,9 +4091,22 @@ normal_entry_synchronized:
 
 #ifdef USE_COMPILER
 sync_method_entry_freq_count_overflow:
+        ldr     r3, [r0, #METHOD_CONSTMETHOD]
+        ldrh    r3, [r3, #CONSTMETHOD_CODESIZE]
 	mov	r1, #0
 	mov	r0, tmp1
+        cmp     r3, #MAX_FG_METHOD_SIZE
+        bcc     1f
+        ldr     tmp2, [dispatch, #BackgroundCompilation_Address-XXX]
+        mov     r3, #1
+        ldr     r5, [tmp2]
+        str     r3, [tmp2]
+        bl      _ZN18InterpreterRuntime26frequency_counter_overflowEP10JavaThreadPh
+        str     r5, [tmp2]
+        b       2f
+1:
 	bl	_ZN18InterpreterRuntime26frequency_counter_overflowEP10JavaThreadPh
+2:
 	ldr	r0, [istate, #ISTATE_METHOD]
 	CACHE_JPC
 	ldr	r3, [r0, #METHOD_ACCESSFLAGS]
@@ -4401,12 +4495,16 @@ normal_entry:
 	add	r0, r0, ip
 	add	dispatch, r1, r0
 
+  USEC  ldr     r2, [r10, #METHOD_INVOCATIONCOUNTER]
+
 	ldr	stack, [tmp1, #THREAD_JAVA_SP]
 
 	ldr	r0, [tmp1, #THREAD_STACK_SIZE]
+  USEC  add     r2, r2, #INVOCATIONCOUNTER_COUNTINCREMENT * 4
 	ldr	r3, [tmp1, #THREAD_STACK_BASE]
 	rsb	r3, r0, r3
 	rsb	r3, r3, arm_sp
+  USEC  str     r2, [tmp2, #METHOD_INVOCATIONCOUNTER]
 	cmp	r3, #32768
 	bge	fast_normal_entry_with_len
 
@@ -4596,11 +4694,24 @@ fast_normal_entry_with_len:
 	DISPATCH_FINISH
 #ifdef USE_COMPILER
 method_entry_freq_count_overflow:
+        ldr     r3, [r10, #METHOD_CONSTMETHOD]
 	DECACHE_JPC
+        ldrh    r3, [r3, #CONSTMETHOD_CODESIZE]
 	str	r10, [istate, #ISTATE_METHOD]
 	mov	r1, #0
 	mov	r0, tmp1
+        cmp     r3, #MAX_FG_METHOD_SIZE
+        bcc     1f
+        ldr     tmp2, [dispatch, #BackgroundCompilation_Address-XXX]
+        mov     r3, #1
+        ldr     r5, [tmp2]
+        str     r3, [tmp2]
+        bl      _ZN18InterpreterRuntime26frequency_counter_overflowEP10JavaThreadPh
+        str     r5, [tmp2]
+        b       2f
+1:
 	bl	_ZN18InterpreterRuntime26frequency_counter_overflowEP10JavaThreadPh
+2:
 	CACHE_JPC
 	CACHE_CP
 	DISPATCH	0
@@ -6230,12 +6341,14 @@ _ZN14CppInterpreter17notice_safepointsEv:
 
 	ALIGN_CODE
 bci_init:
+        stmfd   sp!, {r4, lr}
+
 	adrl	r3, dispatch_init_adcon
 	ldm	r3, {r0, r1}
 	add	r0, r0, r3
-	add	r1, r1, r0
+        add     r4, r1, r0
 	adrl	r2, adcon_init_table
-	mov	r3, r1
+        mov     r1, r4
 1:
 	ldr	ip, [r2], #4
 	cmp	ip, #0
@@ -6244,11 +6357,36 @@ bci_init:
 	bne	1b
 	adrl	r2, main_dispatch_table
 	mov	r1, #256
+        mov     r3, r4
 2:
 	ldr	ip, [r2], #4
 	str	ip, [r3], #4
 	subs	r1, r1, #1
 	bne	2b
+
+#ifdef USE_COMPILER
+
+#define NPROCESSORS_CONF        83
+
+        mov     r0, #NPROCESSORS_CONF
+        bl      sysconf
+        cmp     r0, #2
+
+#ifdef DISABLE_BG_COMP_ON_NON_MP
+        movcc   r0, #0
+        ldrcc   r1, [r4, #BackgroundCompilation_Address-XXX]
+        strccb  r0, [r1]
+#endif
+
+        movcs   r0, #MP_COMPILE_THRESHOLD
+        movcc   r0, #UP_COMPILE_THRESHOLD
+        ldr     r1, [r4, #CompileThreshold_Address-XXX]
+        str     r0, [r1]
+
+
+#endif // USE_COMPILER
+
+        ldmfd   sp!, {r4, lr}
 
 #ifdef HW_FP
 vfp_init:
@@ -6349,6 +6487,9 @@ adcon_init_table:
 	.word	_ZN11JvmtiExport28_can_post_interpreter_eventsE(GOT)
 	.word	UseCompiler(GOT)
 	.word	_ZN17InvocationCounter26InterpreterInvocationLimitE(GOT)
+        .word   CompileThreshold(GOT)
+        .word   BackgroundCompilation(GOT)
+        .word   UseOnStackReplacement(GOT)
 	.word	0
 
 	ALIGN_DATA
@@ -6628,9 +6769,14 @@ safe_dispatch_table:
 CodeTrace_Buffer_Base:
 	.space	CODETRACE_BUFFER_SIZE
 #endif
+        .word   0, 0, 0, 0, 0, 0, 0, 0
+        .word   0, 0, 0, 0, 0
 DispatchBreakPoint:					.word	0
 VFP_Flag:						.word	0
 CodeTrace_Idx:						.word	0
+UseOnStackReplacement_Address:                          .word   0
+BackgroundCompilation_Address:                          .word   0
+CompileThreshold_Address:                               .word   0
 InterpreterInvocationLimit_Address:			.word	0
 UseCompiler_Address:					.word	0
 can_post_interpreter_events:				.word	0
