@@ -1,0 +1,775 @@
+--- old/src/share/classes/javax/swing/plaf/basic/BasicButtonUI.java	Tue Jul 14 16:21:58 2009
++++ openjdk/jdk/src/share/classes/javax/swing/plaf/basic/BasicButtonUI.java	Tue Jul 14 16:21:58 2009
+@@ -8,6 +8,8 @@
+ package javax.swing.plaf.basic;
+ 
+ import sun.swing.SwingUtilities2;
++import sun.awt.AppContext;
++
+ import java.awt.*;
+ import java.awt.event.*;
+ import java.io.Serializable;
+@@ -27,9 +29,6 @@
+  * @author Jeff Dinkins
+  */
+ public class BasicButtonUI extends ButtonUI{
+-    // Shared UI object
+-    private final static BasicButtonUI buttonUI = new BasicButtonUI();
+-
+     // Visual constants
+     // NOTE: This is not used or set any where. Were we allowed to remove
+     // fields, this would be removed.
+@@ -43,11 +42,20 @@
+     protected int defaultTextShiftOffset;
+ 
+     private final static String propertyPrefix = "Button" + ".";
++    
++    private static final Object BASIC_BUTTON_UI_KEY = new Object();
+ 
+     // ********************************
+     //          Create PLAF
+     // ********************************
+     public static ComponentUI createUI(JComponent c) {
++        AppContext appContext = AppContext.getAppContext();
++        BasicButtonUI buttonUI = 
++                (BasicButtonUI) appContext.get(BASIC_BUTTON_UI_KEY);
++        if (buttonUI == null) {
++            buttonUI = new BasicButtonUI();
++            appContext.put(BASIC_BUTTON_UI_KEY, buttonUI);
++        }
+         return buttonUI;
+     }
+ 
+--- old/src/share/classes/javax/swing/plaf/basic/BasicToggleButtonUI.java	Tue Jul 14 16:21:58 2009
++++ openjdk/jdk/src/share/classes/javax/swing/plaf/basic/BasicToggleButtonUI.java	Tue Jul 14 16:21:58 2009
+@@ -7,6 +7,8 @@
+  
+ package javax.swing.plaf.basic;
+ 
++import sun.awt.AppContext;
++
+ import java.awt.*;
+ import java.awt.event.*;
+ 
+@@ -26,7 +28,7 @@
+  */
+ public class BasicToggleButtonUI extends BasicButtonUI {
+ 
+-    private final static BasicToggleButtonUI toggleButtonUI = new BasicToggleButtonUI();
++    private static final Object BASIC_TOGGLE_BUTTON_UI_KEY = new Object();
+ 
+     private final static String propertyPrefix = "ToggleButton" + ".";
+ 
+@@ -34,6 +36,13 @@
+     //          Create PLAF
+     // ********************************
+     public static ComponentUI createUI(JComponent b) {
++        AppContext appContext = AppContext.getAppContext();
++        BasicToggleButtonUI toggleButtonUI = 
++                (BasicToggleButtonUI) appContext.get(BASIC_TOGGLE_BUTTON_UI_KEY);
++        if (toggleButtonUI == null) {
++            toggleButtonUI = new BasicToggleButtonUI();
++            appContext.put(BASIC_TOGGLE_BUTTON_UI_KEY, toggleButtonUI);
++        }
+         return toggleButtonUI;
+     }
+ 
+--- old/src/share/classes/javax/swing/plaf/basic/BasicCheckBoxUI.java	Tue Jul 14 16:21:59 2009
++++ openjdk/jdk/src/share/classes/javax/swing/plaf/basic/BasicCheckBoxUI.java	Tue Jul 14 16:21:59 2009
+@@ -7,6 +7,8 @@
+ 
+ package javax.swing.plaf.basic;
+ 
++import sun.awt.AppContext;
++
+ import javax.swing.*;
+ 
+ import java.awt.*;
+@@ -32,7 +34,7 @@
+  */
+ public class BasicCheckBoxUI extends BasicRadioButtonUI {
+ 
+-    private final static BasicCheckBoxUI checkboxUI = new BasicCheckBoxUI();
++    private static final Object BASIC_CHECK_BOX_UI_KEY = new Object();
+ 
+     private final static String propertyPrefix = "CheckBox" + "."; 
+ 
+@@ -40,6 +42,13 @@
+     //            Create PLAF 
+     // ********************************
+     public static ComponentUI createUI(JComponent b) {
++        AppContext appContext = AppContext.getAppContext();
++        BasicCheckBoxUI checkboxUI = 
++                (BasicCheckBoxUI) appContext.get(BASIC_CHECK_BOX_UI_KEY);
++        if (checkboxUI == null) {
++            checkboxUI = new BasicCheckBoxUI();
++            appContext.put(BASIC_CHECK_BOX_UI_KEY, checkboxUI);
++        }
+         return checkboxUI;
+     }
+ 
+--- old/src/share/classes/javax/swing/plaf/basic/BasicRadioButtonUI.java	Tue Jul 14 16:21:59 2009
++++ openjdk/jdk/src/share/classes/javax/swing/plaf/basic/BasicRadioButtonUI.java	Tue Jul 14 16:21:59 2009
+@@ -14,6 +14,7 @@
+ import javax.swing.plaf.*;
+ import javax.swing.text.View;
+ import sun.swing.SwingUtilities2;
++import sun.awt.AppContext;
+ 
+ 
+ /**
+@@ -24,7 +25,7 @@
+  */
+ public class BasicRadioButtonUI extends BasicToggleButtonUI 
+ {
+-    private final static BasicRadioButtonUI radioButtonUI = new BasicRadioButtonUI();
++    private static final Object BASIC_RADIO_BUTTON_UI_KEY = new Object();
+ 
+     protected Icon icon;
+ 
+@@ -36,6 +37,13 @@
+     //        Create PLAF 
+     // ********************************
+     public static ComponentUI createUI(JComponent b) {
++        AppContext appContext = AppContext.getAppContext();
++        BasicRadioButtonUI radioButtonUI = 
++                (BasicRadioButtonUI) appContext.get(BASIC_RADIO_BUTTON_UI_KEY);
++        if (radioButtonUI == null) {
++            radioButtonUI = new BasicRadioButtonUI();
++            appContext.put(BASIC_RADIO_BUTTON_UI_KEY, radioButtonUI);
++        }
+         return radioButtonUI;
+     }
+ 
+--- old/src/share/classes/javax/swing/plaf/basic/BasicLabelUI.java	Tue Jul 14 16:22:00 2009
++++ openjdk/jdk/src/share/classes/javax/swing/plaf/basic/BasicLabelUI.java	Tue Jul 14 16:22:00 2009
+@@ -10,6 +10,8 @@
+ import sun.swing.SwingUtilities2;
+ import sun.swing.DefaultLookup;
+ import sun.swing.UIAction;
++import sun.awt.AppContext;
++
+ import javax.swing.*;
+ import javax.swing.plaf.*;
+ import javax.swing.text.View;
+@@ -46,7 +48,8 @@
+     * name in defaults table under the key "LabelUI".
+     */ 
+     protected static BasicLabelUI labelUI = new BasicLabelUI();
+-    private final static BasicLabelUI SAFE_BASIC_LABEL_UI = new BasicLabelUI();
++    
++    private static final Object BASIC_LABEL_UI_KEY = new Object();
+ 
+     static void loadActionMap(LazyActionMap map) {
+         map.put(new Actions(Actions.PRESS));
+@@ -123,10 +126,10 @@
+      * implementation.  Re-using rectangles rather than allocating
+      * them in each paint call halved the time it took paint to run.
+      */
+-    private static Rectangle paintIconR = new Rectangle();
+-    private static Rectangle paintTextR = new Rectangle();
+-    private static Rectangle paintViewR = new Rectangle();
+-    private static Insets paintViewInsets = new Insets(0, 0, 0, 0);
++    private Rectangle paintIconR = new Rectangle();
++    private Rectangle paintTextR = new Rectangle();
++    private Rectangle paintViewR = new Rectangle();
++    private Insets paintViewInsets = new Insets(0, 0, 0, 0);
+     
+ 
+     /** 
+@@ -196,10 +199,10 @@
+      * implementation.  Re-using rectangles rather than allocating
+      * them in each getPreferredSize call sped up the method substantially.
+      */
+-    private static Rectangle iconR = new Rectangle();
+-    private static Rectangle textR = new Rectangle();
+-    private static Rectangle viewR = new Rectangle();
+-    private static Insets viewInsets = new Insets(0, 0, 0, 0);
++    private Rectangle iconR = new Rectangle();
++    private Rectangle textR = new Rectangle();
++    private Rectangle viewR = new Rectangle();
++    private Insets viewInsets = new Insets(0, 0, 0, 0);
+ 
+ 
+     public Dimension getPreferredSize(JComponent c) 
+@@ -392,10 +395,16 @@
+ 
+     public static ComponentUI createUI(JComponent c) {
+         if (System.getSecurityManager() != null) {
+-            return SAFE_BASIC_LABEL_UI;
+-        } else {
+-            return labelUI;
+-        }
++            AppContext appContext = AppContext.getAppContext();
++            BasicLabelUI safeBasicLabelUI = 
++                    (BasicLabelUI) appContext.get(BASIC_LABEL_UI_KEY);
++            if (safeBasicLabelUI == null) {
++                safeBasicLabelUI = new BasicLabelUI();
++                appContext.put(BASIC_LABEL_UI_KEY, safeBasicLabelUI);
++            }
++            return safeBasicLabelUI;
++        }   
++        return labelUI;
+     }
+ 
+     public void propertyChange(PropertyChangeEvent e) {
+--- old/src/share/classes/javax/swing/plaf/metal/MetalButtonUI.java	Tue Jul 14 16:22:00 2009
++++ openjdk/jdk/src/share/classes/javax/swing/plaf/metal/MetalButtonUI.java	Tue Jul 14 16:22:00 2009
+@@ -8,6 +8,8 @@
+ package javax.swing.plaf.metal;
+ 
+ import sun.swing.SwingUtilities2;
++import sun.awt.AppContext;
++
+ import javax.swing.*;
+ import javax.swing.border.*;
+ import javax.swing.plaf.basic.*;
+@@ -32,19 +34,25 @@
+  * @author Tom Santos
+  */
+ public class MetalButtonUI extends BasicButtonUI {
+-
+-    private final static MetalButtonUI metalButtonUI = new MetalButtonUI(); 
+-
+     // NOTE: These are not really needed, but at this point we can't pull
+     // them. Their values are updated purely for historical reasons.
+     protected Color focusColor;
+     protected Color selectColor;
+     protected Color disabledTextColor;
++    
++    private static final Object METAL_BUTTON_UI_KEY = new Object();
+  
+     // ********************************
+     //          Create PLAF
+     // ********************************
+     public static ComponentUI createUI(JComponent c) {
++        AppContext appContext = AppContext.getAppContext();
++        MetalButtonUI metalButtonUI = 
++                (MetalButtonUI) appContext.get(METAL_BUTTON_UI_KEY);
++        if (metalButtonUI == null) {
++            metalButtonUI = new MetalButtonUI();
++            appContext.put(METAL_BUTTON_UI_KEY, metalButtonUI);
++        }
+         return metalButtonUI;
+     }
+  
+--- old/src/share/classes/javax/swing/plaf/metal/MetalToggleButtonUI.java	Tue Jul 14 16:22:01 2009
++++ openjdk/jdk/src/share/classes/javax/swing/plaf/metal/MetalToggleButtonUI.java	Tue Jul 14 16:22:01 2009
+@@ -8,6 +8,8 @@
+ package javax.swing.plaf.metal;
+ 
+ import sun.swing.SwingUtilities2;
++import sun.awt.AppContext;
++
+ import java.awt.*;
+ import java.awt.event.*;
+ import java.lang.ref.*;
+@@ -38,7 +40,7 @@
+  */
+ public class MetalToggleButtonUI extends BasicToggleButtonUI {
+ 
+-    private static final MetalToggleButtonUI metalToggleButtonUI = new MetalToggleButtonUI();
++    private static final Object METAL_TOGGLE_BUTTON_UI_KEY = new Object();
+ 
+     protected Color focusColor;
+     protected Color selectColor;
+@@ -50,6 +52,13 @@
+     //        Create PLAF
+     // ********************************
+     public static ComponentUI createUI(JComponent b) {
++        AppContext appContext = AppContext.getAppContext();
++        MetalToggleButtonUI metalToggleButtonUI = 
++                (MetalToggleButtonUI) appContext.get(METAL_TOGGLE_BUTTON_UI_KEY);
++        if (metalToggleButtonUI == null) {
++            metalToggleButtonUI = new MetalToggleButtonUI();
++            appContext.put(METAL_TOGGLE_BUTTON_UI_KEY, metalToggleButtonUI);
++        }
+         return metalToggleButtonUI;
+     }
+ 
+--- old/src/share/classes/javax/swing/plaf/metal/MetalCheckBoxUI.java	Tue Jul 14 16:22:01 2009
++++ openjdk/jdk/src/share/classes/javax/swing/plaf/metal/MetalCheckBoxUI.java	Tue Jul 14 16:22:01 2009
+@@ -7,6 +7,8 @@
+ 
+ package javax.swing.plaf.metal;
+ 
++import sun.awt.AppContext;
++
+ import javax.swing.*;
+ import javax.swing.plaf.basic.BasicCheckBoxUI;
+ 
+@@ -38,7 +40,7 @@
+     // of BasicCheckBoxUI because we want to pick up all the
+     // painting changes made in MetalRadioButtonUI.
+ 
+-    private final static MetalCheckBoxUI checkboxUI = new MetalCheckBoxUI();
++    private static final Object METAL_CHECK_BOX_UI_KEY = new Object();
+ 
+     private final static String propertyPrefix = "CheckBox" + ".";
+ 
+@@ -48,6 +50,13 @@
+     //         Create PlAF
+     // ********************************
+     public static ComponentUI createUI(JComponent b) {
++        AppContext appContext = AppContext.getAppContext();
++        MetalCheckBoxUI checkboxUI = 
++                (MetalCheckBoxUI) appContext.get(METAL_CHECK_BOX_UI_KEY);
++        if (checkboxUI == null) {
++            checkboxUI = new MetalCheckBoxUI();
++            appContext.put(METAL_CHECK_BOX_UI_KEY, checkboxUI);
++        }
+         return checkboxUI;
+     }
+ 
+--- old/src/share/classes/javax/swing/plaf/metal/MetalRadioButtonUI.java	Tue Jul 14 16:22:02 2009
++++ openjdk/jdk/src/share/classes/javax/swing/plaf/metal/MetalRadioButtonUI.java	Tue Jul 14 16:22:01 2009
+@@ -8,6 +8,8 @@
+ package javax.swing.plaf.metal;
+ 
+ import sun.swing.SwingUtilities2;
++import sun.awt.AppContext;
++
+ import java.awt.*;
+ import java.awt.event.*;
+ import javax.swing.*;
+@@ -36,7 +38,7 @@
+  */
+ public class MetalRadioButtonUI extends BasicRadioButtonUI {
+ 
+-    private static final MetalRadioButtonUI metalRadioButtonUI = new MetalRadioButtonUI();
++    private static final Object METAL_RADIO_BUTTON_UI_KEY = new Object();
+ 
+     protected Color focusColor;
+     protected Color selectColor;
+@@ -48,6 +50,13 @@
+     //        Create PlAF
+     // ********************************
+     public static ComponentUI createUI(JComponent c) {
++        AppContext appContext = AppContext.getAppContext();
++        MetalRadioButtonUI metalRadioButtonUI = 
++                (MetalRadioButtonUI) appContext.get(METAL_RADIO_BUTTON_UI_KEY);
++        if (metalRadioButtonUI == null) {
++            metalRadioButtonUI = new MetalRadioButtonUI();
++            appContext.put(METAL_RADIO_BUTTON_UI_KEY, metalRadioButtonUI);
++        }
+         return metalRadioButtonUI;
+     }
+ 
+--- old/src/share/classes/javax/swing/plaf/metal/MetalLabelUI.java	Tue Jul 14 16:22:05 2009
++++ openjdk/jdk/src/share/classes/javax/swing/plaf/metal/MetalLabelUI.java	Tue Jul 14 16:22:05 2009
+@@ -8,6 +8,8 @@
+ package javax.swing.plaf.metal;
+ 
+ import sun.swing.SwingUtilities2;
++import sun.awt.AppContext;
++
+ import javax.swing.*;
+ import javax.swing.plaf.*;
+ import javax.swing.plaf.basic.*;
+@@ -34,15 +36,21 @@
+     * name in defaults table under the key "LabelUI".
+     */ 
+     protected static MetalLabelUI metalLabelUI = new MetalLabelUI();
+-    private final static MetalLabelUI SAFE_METAL_LABEL_UI = new MetalLabelUI();
++    
++    private static final Object METAL_LABEL_UI_KEY = new Object();
+ 
+-
+     public static ComponentUI createUI(JComponent c) {
+         if (System.getSecurityManager() != null) {
+-            return SAFE_METAL_LABEL_UI;
+-        } else {
+-            return metalLabelUI;
+-        }
++            AppContext appContext = AppContext.getAppContext();
++            MetalLabelUI safeMetalLabelUI = 
++                    (MetalLabelUI) appContext.get(METAL_LABEL_UI_KEY);
++            if (safeMetalLabelUI == null) {
++                safeMetalLabelUI = new MetalLabelUI();
++                appContext.put(METAL_LABEL_UI_KEY, safeMetalLabelUI);
++            }
++            return safeMetalLabelUI;
++        }   
++        return metalLabelUI;
+     }
+ 
+     /**
+--- old/src/share/classes/com/sun/java/swing/plaf/windows/WindowsButtonUI.java	Tue Jul 14 16:22:05 2009
++++ openjdk/jdk/src/share/classes/com/sun/java/swing/plaf/windows/WindowsButtonUI.java	Tue Jul 14 16:22:05 2009
+@@ -17,6 +17,7 @@
+ import static com.sun.java.swing.plaf.windows.TMSchema.*;
+ import static com.sun.java.swing.plaf.windows.TMSchema.Part.*;
+ import static com.sun.java.swing.plaf.windows.XPStyle.Skin;
++import sun.awt.AppContext;
+ 
+ 
+ /**
+@@ -35,8 +36,6 @@
+  */
+ public class WindowsButtonUI extends BasicButtonUI
+ {
+-    private final static WindowsButtonUI windowsButtonUI = new WindowsButtonUI();
+-
+     protected int dashedRectGapX;
+     protected int dashedRectGapY;
+     protected int dashedRectGapWidth;
+@@ -46,12 +45,20 @@
+ 
+     private boolean defaults_initialized = false;
+     
+-
++    private static final Object WINDOWS_BUTTON_UI_KEY = new Object();
++    
+     // ********************************
+     //          Create PLAF
+     // ********************************
+     public static ComponentUI createUI(JComponent c){
+-	return windowsButtonUI;
++        AppContext appContext = AppContext.getAppContext();
++        WindowsButtonUI windowsButtonUI = 
++                (WindowsButtonUI) appContext.get(WINDOWS_BUTTON_UI_KEY);
++        if (windowsButtonUI == null) {
++            windowsButtonUI = new WindowsButtonUI();
++            appContext.put(WINDOWS_BUTTON_UI_KEY, windowsButtonUI);
++        }
++        return windowsButtonUI;
+     }
+     
+ 
+@@ -134,7 +141,7 @@
+      * allocating them in each paint call substantially reduced the time
+      * it took paint to run.  Obviously, this method can't be re-entered.
+      */
+-    private static Rectangle viewRect = new Rectangle();
++    private Rectangle viewRect = new Rectangle();
+ 
+     public void paint(Graphics g, JComponent c) {
+ 	if (XPStyle.getXP() != null) {
+--- old/src/share/classes/com/sun/java/swing/plaf/windows/WindowsToggleButtonUI.java	Tue Jul 14 16:22:06 2009
++++ openjdk/jdk/src/share/classes/com/sun/java/swing/plaf/windows/WindowsToggleButtonUI.java	Tue Jul 14 16:22:06 2009
+@@ -7,6 +7,8 @@
+ 
+ package com.sun.java.swing.plaf.windows;
+ 
++import sun.awt.AppContext;
++
+ import javax.swing.plaf.basic.*;
+ import javax.swing.border.*;
+ import javax.swing.plaf.*;
+@@ -32,19 +34,26 @@
+  */
+ public class WindowsToggleButtonUI extends BasicToggleButtonUI
+ {
+-    protected static int dashedRectGapX;
+-    protected static int dashedRectGapY;
+-    protected static int dashedRectGapWidth;
+-    protected static int dashedRectGapHeight;
++    protected int dashedRectGapX;
++    protected int dashedRectGapY;
++    protected int dashedRectGapWidth;
++    protected int dashedRectGapHeight;
+ 
+     protected Color focusColor;
+     
+-    private final static WindowsToggleButtonUI windowsToggleButtonUI = new WindowsToggleButtonUI();
++    private static final Object WINDOWS_TOGGLE_BUTTON_UI_KEY = new Object();
+ 
+     private boolean defaults_initialized = false;
+     
+     public static ComponentUI createUI(JComponent b) {
+-	return windowsToggleButtonUI;
++        AppContext appContext = AppContext.getAppContext();
++        WindowsToggleButtonUI windowsToggleButtonUI = 
++                (WindowsToggleButtonUI) appContext.get(WINDOWS_TOGGLE_BUTTON_UI_KEY);
++        if (windowsToggleButtonUI == null) {
++            windowsToggleButtonUI = new WindowsToggleButtonUI();
++            appContext.put(WINDOWS_TOGGLE_BUTTON_UI_KEY, windowsToggleButtonUI);
++        }
++        return windowsToggleButtonUI;
+     }
+ 
+ 
+--- old/src/share/classes/com/sun/java/swing/plaf/windows/WindowsCheckBoxUI.java	Tue Jul 14 16:22:06 2009
++++ openjdk/jdk/src/share/classes/com/sun/java/swing/plaf/windows/WindowsCheckBoxUI.java	Tue Jul 14 16:22:06 2009
+@@ -7,6 +7,8 @@
+ 
+ package com.sun.java.swing.plaf.windows;
+ 
++import sun.awt.AppContext;
++
+ import javax.swing.plaf.basic.*;
+ import javax.swing.*;
+ import javax.swing.plaf.*;
+@@ -32,7 +34,7 @@
+     // of BasicCheckBoxUI because we want to pick up all the
+     // painting changes made in MetalRadioButtonUI.
+ 
+-    private static final WindowsCheckBoxUI windowsCheckBoxUI = new WindowsCheckBoxUI();
++    private static final Object WINDOWS_CHECK_BOX_UI_KEY = new Object();
+ 
+     private final static String propertyPrefix = "CheckBox" + ".";
+ 
+@@ -42,7 +44,14 @@
+     //          Create PLAF
+     // ********************************
+     public static ComponentUI createUI(JComponent c) {
+-	return windowsCheckBoxUI;
++        AppContext appContext = AppContext.getAppContext();
++        WindowsCheckBoxUI windowsCheckBoxUI = 
++                (WindowsCheckBoxUI) appContext.get(WINDOWS_CHECK_BOX_UI_KEY);
++        if (windowsCheckBoxUI == null) {
++            windowsCheckBoxUI = new WindowsCheckBoxUI();
++            appContext.put(WINDOWS_CHECK_BOX_UI_KEY, windowsCheckBoxUI);
++        }
++        return windowsCheckBoxUI;
+     }
+ 
+ 
+--- old/src/share/classes/com/sun/java/swing/plaf/windows/WindowsRadioButtonUI.java	Tue Jul 14 16:22:07 2009
++++ openjdk/jdk/src/share/classes/com/sun/java/swing/plaf/windows/WindowsRadioButtonUI.java	Tue Jul 14 16:22:07 2009
+@@ -7,6 +7,8 @@
+ 
+ package com.sun.java.swing.plaf.windows;
+ 
++import sun.awt.AppContext;
++
+ import javax.swing.plaf.basic.*;
+ import javax.swing.*;
+ import javax.swing.plaf.*;
+@@ -26,7 +28,7 @@
+  */
+ public class WindowsRadioButtonUI extends BasicRadioButtonUI
+ {
+-    private static final WindowsRadioButtonUI windowsRadioButtonUI = new WindowsRadioButtonUI();
++    private static final Object WINDOWS_RADIO_BUTTON_UI_KEY = new Object();
+ 
+     protected int dashedRectGapX;
+     protected int dashedRectGapY;
+@@ -41,7 +43,14 @@
+     //          Create PLAF
+     // ********************************
+     public static ComponentUI createUI(JComponent c) {
+-	return windowsRadioButtonUI;
++        AppContext appContext = AppContext.getAppContext();
++        WindowsRadioButtonUI windowsRadioButtonUI = 
++                (WindowsRadioButtonUI) appContext.get(WINDOWS_RADIO_BUTTON_UI_KEY);
++        if (windowsRadioButtonUI == null) {
++            windowsRadioButtonUI = new WindowsRadioButtonUI();
++            appContext.put(WINDOWS_RADIO_BUTTON_UI_KEY, windowsRadioButtonUI);
++        }
++        return windowsRadioButtonUI;
+     }
+ 
+     // ********************************
+--- old/src/share/classes/com/sun/java/swing/plaf/windows/WindowsLabelUI.java	Tue Jul 14 16:22:07 2009
++++ openjdk/jdk/src/share/classes/com/sun/java/swing/plaf/windows/WindowsLabelUI.java	Tue Jul 14 16:22:07 2009
+@@ -8,6 +8,8 @@
+ package com.sun.java.swing.plaf.windows;
+ 
+ import sun.swing.SwingUtilities2;
++import sun.awt.AppContext;
++
+ import java.awt.Color;
+ import java.awt.Graphics;
+ 
+@@ -33,13 +35,20 @@
+  */
+ public class WindowsLabelUI extends BasicLabelUI {
+ 
+-    private final static WindowsLabelUI windowsLabelUI = new WindowsLabelUI();
++    private static final Object WINDOWS_LABEL_UI_KEY = new Object();
+ 
+     // ********************************
+     //          Create PLAF
+     // ********************************
+-    public static ComponentUI createUI(JComponent c){
+-	return windowsLabelUI;
++    public static ComponentUI createUI(JComponent c) {
++        AppContext appContext = AppContext.getAppContext();
++        WindowsLabelUI windowsLabelUI = 
++                (WindowsLabelUI) appContext.get(WINDOWS_LABEL_UI_KEY);
++        if (windowsLabelUI == null) {
++            windowsLabelUI = new WindowsLabelUI();
++            appContext.put(WINDOWS_LABEL_UI_KEY, windowsLabelUI);
++        }
++        return windowsLabelUI;
+     }
+ 
+     protected void paintEnabledText(JLabel l, Graphics g, String s, 
+--- old/src/share/classes/com/sun/java/swing/plaf/motif/MotifButtonUI.java	Tue Jul 14 16:22:07 2009
++++ openjdk/jdk/src/share/classes/com/sun/java/swing/plaf/motif/MotifButtonUI.java	Tue Jul 14 16:22:07 2009
+@@ -7,6 +7,8 @@
+  
+ package com.sun.java.swing.plaf.motif;
+ 
++import sun.awt.AppContext;
++
+ import javax.swing.*;
+ import javax.swing.border.*;
+ import javax.swing.plaf.basic.*;
+@@ -29,17 +31,24 @@
+  */
+ public class MotifButtonUI extends BasicButtonUI {
+ 
+-    private final static MotifButtonUI motifButtonUI = new MotifButtonUI();
+-
+     protected Color selectColor; 
+ 
+     private boolean defaults_initialized = false;
+     
++    private static final Object MOTIF_BUTTON_UI_KEY = new Object();
++    
+     // ********************************
+     //          Create PLAF
+     // ********************************
+     public static ComponentUI createUI(JComponent c){
+-	return motifButtonUI;
++        AppContext appContext = AppContext.getAppContext();
++        MotifButtonUI motifButtonUI = 
++                (MotifButtonUI) appContext.get(MOTIF_BUTTON_UI_KEY);
++        if (motifButtonUI == null) {
++            motifButtonUI = new MotifButtonUI();
++            appContext.put(MOTIF_BUTTON_UI_KEY, motifButtonUI);
++        }
++        return motifButtonUI;
+     }
+     
+     // ********************************
+--- old/src/share/classes/com/sun/java/swing/plaf/motif/MotifToggleButtonUI.java	Tue Jul 14 16:22:08 2009
++++ openjdk/jdk/src/share/classes/com/sun/java/swing/plaf/motif/MotifToggleButtonUI.java	Tue Jul 14 16:22:08 2009
+@@ -7,6 +7,8 @@
+  
+ package com.sun.java.swing.plaf.motif;
+ 
++import sun.awt.AppContext;
++
+ import java.awt.*;
+ import java.awt.event.*;
+ 
+@@ -31,7 +33,7 @@
+  */
+ public class MotifToggleButtonUI extends BasicToggleButtonUI 
+ {
+-    private final static MotifToggleButtonUI motifToggleButtonUI = new MotifToggleButtonUI();
++    private static final Object MOTIF_TOGGLE_BUTTON_UI_KEY = new Object();
+ 
+     protected Color selectColor;
+ 
+@@ -41,7 +43,14 @@
+     //         Create PLAF
+     // ********************************
+     public static ComponentUI createUI(JComponent b) {
+-	return motifToggleButtonUI;
++        AppContext appContext = AppContext.getAppContext();
++        MotifToggleButtonUI motifToggleButtonUI = 
++                (MotifToggleButtonUI) appContext.get(MOTIF_TOGGLE_BUTTON_UI_KEY);
++        if (motifToggleButtonUI == null) {
++            motifToggleButtonUI = new MotifToggleButtonUI();
++            appContext.put(MOTIF_TOGGLE_BUTTON_UI_KEY, motifToggleButtonUI);
++        }
++        return motifToggleButtonUI;
+     }
+ 
+     // ********************************
+--- old/src/share/classes/com/sun/java/swing/plaf/motif/MotifCheckBoxUI.java	Tue Jul 14 16:22:08 2009
++++ openjdk/jdk/src/share/classes/com/sun/java/swing/plaf/motif/MotifCheckBoxUI.java	Tue Jul 14 16:22:08 2009
+@@ -7,6 +7,8 @@
+ 
+ package com.sun.java.swing.plaf.motif;
+ 
++import sun.awt.AppContext;
++
+ import javax.swing.*;
+ 
+ import javax.swing.plaf.*;
+@@ -28,7 +30,7 @@
+  */
+ public class MotifCheckBoxUI extends MotifRadioButtonUI {
+ 
+-    private static final MotifCheckBoxUI motifCheckBoxUI = new MotifCheckBoxUI();
++    private static final Object MOTIF_CHECK_BOX_UI_KEY = new Object();
+ 
+     private final static String propertyPrefix = "CheckBox" + ".";
+ 
+@@ -39,7 +41,14 @@
+     //         Create PLAF
+     // ********************************
+     public static ComponentUI createUI(JComponent c){
+-	return motifCheckBoxUI;
++        AppContext appContext = AppContext.getAppContext();
++        MotifCheckBoxUI motifCheckBoxUI = 
++                (MotifCheckBoxUI) appContext.get(MOTIF_CHECK_BOX_UI_KEY);
++        if (motifCheckBoxUI == null) {
++            motifCheckBoxUI = new MotifCheckBoxUI();
++            appContext.put(MOTIF_CHECK_BOX_UI_KEY, motifCheckBoxUI);
++        }
++        return motifCheckBoxUI;
+     }
+ 
+     public String getPropertyPrefix() {
+--- old/src/share/classes/com/sun/java/swing/plaf/motif/MotifRadioButtonUI.java	Tue Jul 14 16:22:09 2009
++++ openjdk/jdk/src/share/classes/com/sun/java/swing/plaf/motif/MotifRadioButtonUI.java	Tue Jul 14 16:22:09 2009
+@@ -7,6 +7,8 @@
+ 
+ package com.sun.java.swing.plaf.motif;
+ 
++import sun.awt.AppContext;
++
+ import javax.swing.*;
+ import javax.swing.border.*;
+ import javax.swing.plaf.basic.BasicRadioButtonUI;
+@@ -30,7 +32,7 @@
+  */
+ public class MotifRadioButtonUI extends BasicRadioButtonUI {
+ 
+-    private static final MotifRadioButtonUI motifRadioButtonUI = new MotifRadioButtonUI();
++    private static final Object MOTIF_RADIO_BUTTON_UI_KEY = new Object();
+ 
+     protected Color focusColor;
+ 
+@@ -40,7 +42,14 @@
+     //         Create PLAF
+     // ********************************
+     public static ComponentUI createUI(JComponent c) {
+-	return motifRadioButtonUI;
++        AppContext appContext = AppContext.getAppContext();
++        MotifRadioButtonUI motifRadioButtonUI = 
++                (MotifRadioButtonUI) appContext.get(MOTIF_RADIO_BUTTON_UI_KEY);
++        if (motifRadioButtonUI == null) {
++            motifRadioButtonUI = new MotifRadioButtonUI();
++            appContext.put(MOTIF_RADIO_BUTTON_UI_KEY, motifRadioButtonUI);
++        }
++        return motifRadioButtonUI;
+     }
+ 
+     // ********************************
+--- old/src/share/classes/com/sun/java/swing/plaf/motif/MotifLabelUI.java	Tue Jul 14 16:22:09 2009
++++ openjdk/jdk/src/share/classes/com/sun/java/swing/plaf/motif/MotifLabelUI.java	Tue Jul 14 16:22:09 2009
+@@ -7,6 +7,8 @@
+ 
+ package com.sun.java.swing.plaf.motif;
+ 
++import sun.awt.AppContext;
++
+ import javax.swing.*;
+ import javax.swing.plaf.basic.BasicLabelUI;
+ import javax.swing.plaf.ComponentUI;
+@@ -27,9 +29,16 @@
+  */
+ public class MotifLabelUI extends BasicLabelUI
+ {
+-    static MotifLabelUI sharedInstance = new MotifLabelUI();
++    private static final Object MOTIF_LABEL_UI_KEY = new Object();
+ 
+     public static ComponentUI createUI(JComponent c) {
+-        return sharedInstance;
++        AppContext appContext = AppContext.getAppContext();
++        MotifLabelUI motifLabelUI = 
++                (MotifLabelUI) appContext.get(MOTIF_LABEL_UI_KEY);
++        if (motifLabelUI == null) {
++            motifLabelUI = new MotifLabelUI();
++            appContext.put(MOTIF_LABEL_UI_KEY, motifLabelUI);
++        }
++        return motifLabelUI;
+     }
+ }

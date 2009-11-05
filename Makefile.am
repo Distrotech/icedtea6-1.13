@@ -594,7 +594,16 @@ ICEDTEA_PATCHES = \
 	patches/security/icedtea-6863503.patch \
 	patches/security/icedtea-6864911.patch \
 	patches/security/icedtea-6872357.patch \
-	patches/security/icedtea-6874643.patch
+	patches/security/icedtea-6874643.patch \
+	patches/security/icedtea-6631533.patch \
+	patches/security/icedtea-6632445.patch \
+	patches/security/icedtea-6636650.patch \
+	patches/security/icedtea-6657026.patch \
+	patches/security/icedtea-6657138.patch \
+	patches/security/icedtea-6822057.patch \
+	patches/security/icedtea-6824265.patch \
+	patches/security/icedtea-6861062.patch \
+	patches/security/icedtea-6872358.patch 
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \

@@ -1,0 +1,139 @@
+--- old/src/share/classes/java/lang/ClassLoader.java	Fri Jul 31 15:59:47 2009
++++ openjdk/jdk/src/share/classes/java/lang/ClassLoader.java	Fri Jul 31 15:59:46 2009
+@@ -147,11 +147,6 @@
+         registerNatives();
+     }
+ 
+-    // If initialization succeed this is set to true and security checks will
+-    // succeed.  Otherwise the object is not initialized and the object is
+-    // useless.
+-    private boolean initialized = false;
+-
+     // The parent class loader for delegation
+     private ClassLoader parent;
+ 
+@@ -177,6 +172,18 @@
+     // to its corresponding Package object.
+     private HashMap packages = new HashMap();
+ 
++    private static Void checkCreateClassLoader() {
++        SecurityManager security = System.getSecurityManager();
++        if (security != null) {
++            security.checkCreateClassLoader();
++        }
++        return null;
++    }
++
++    private ClassLoader(Void unused, ClassLoader parent) {
++        this.parent = parent;
++    }
++
+     /**
+      * Creates a new class loader using the specified parent class loader for
+      * delegation.
+@@ -197,12 +204,7 @@
+      * @since  1.2
+      */
+     protected ClassLoader(ClassLoader parent) {
+-	SecurityManager security = System.getSecurityManager();
+-	if (security != null) {
+-	    security.checkCreateClassLoader();
+-	}
+-	this.parent = parent;
+-	initialized = true;
++        this(checkCreateClassLoader(), parent);
+     }
+ 
+     /**
+@@ -221,15 +223,9 @@
+      *          of a new class loader.
+      */
+     protected ClassLoader() {
+-	SecurityManager security = System.getSecurityManager();
+-	if (security != null) {
+-	    security.checkCreateClassLoader();
+-	}
+-	this.parent = getSystemClassLoader();
+-	initialized = true;
++        this(checkCreateClassLoader(), getSystemClassLoader());
+     }
+ 
+-
+     // -- Class --
+ 
+     /**
+@@ -611,7 +607,6 @@
+ 					 ProtectionDomain protectionDomain)
+ 	throws ClassFormatError
+     {
+-	check();
+ 	protectionDomain = preDefineClass(name, protectionDomain);
+ 
+ 	Class c = null;
+@@ -693,8 +688,6 @@
+ 					 ProtectionDomain protectionDomain)
+ 	throws ClassFormatError
+     {
+-	check();
+-
+ 	int len = b.remaining();
+ 
+ 	// Use byte[] if not a direct ByteBufer:
+@@ -842,7 +835,6 @@
+      * @see  #defineClass(String, byte[], int, int)
+      */
+     protected final void resolveClass(Class<?> c) {
+-	check();
+ 	resolveClass0(c);
+     }
+ 
+@@ -873,7 +865,6 @@
+     protected final Class<?> findSystemClass(String name)
+ 	throws ClassNotFoundException
+     {
+-	check();
+ 	ClassLoader system = getSystemClassLoader();
+ 	if (system == null) {
+ 	    if (!checkName(name))
+@@ -886,7 +877,6 @@
+     private Class findBootstrapClass0(String name)
+ 	throws ClassNotFoundException
+     {
+-	check();
+ 	if (!checkName(name))
+ 	    throw new ClassNotFoundException(name);
+ 	return findBootstrapClass(name);
+@@ -895,13 +885,6 @@
+     private native Class findBootstrapClass(String name)
+ 	throws ClassNotFoundException;
+ 
+-    // Check to make sure the class loader has been initialized.
+-    private void check() {
+-	if (!initialized) {
+-	    throw new SecurityException("ClassLoader object not initialized");
+-	}
+-    }
+-
+     /**
+      * Returns the class with the given <a href="#name">binary name</a> if this
+      * loader has been recorded by the Java virtual machine as an initiating
+@@ -917,7 +900,6 @@
+      * @since  1.1
+      */
+     protected final Class<?> findLoadedClass(String name) {
+-	check();
+ 	if (!checkName(name))
+ 	    return null;
+ 	return findLoadedClass0(name);
+@@ -938,11 +920,9 @@
+      * @since  1.1
+      */
+     protected final void setSigners(Class<?> c, Object[] signers) {
+-        check();
+ 	c.setSigners(signers);
+     }
+ 
+-
+     // -- Resource --
+ 
+     /**

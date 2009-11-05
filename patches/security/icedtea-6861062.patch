@@ -1,0 +1,344 @@
+--- old/src/share/classes/sun/security/provider/certpath/DistributionPointFetcher.java	Tue Sep 22 05:44:00 2009
++++ openjdk/jdk/src/share/classes/sun/security/provider/certpath/DistributionPointFetcher.java	Tue Sep 22 05:43:59 2009
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
++ * Copyright 2002-2009 Sun Microsystems, Inc.  All Rights Reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -308,6 +308,16 @@
+         X500Name certIssuer = (X500Name) certImpl.getIssuerDN();
+         X500Name crlIssuer = (X500Name) crlImpl.getIssuerDN();
+ 
++        // check the crl signature algorithm
++        try {
++            AlgorithmChecker.check(crl);
++        } catch (CertPathValidatorException cpve) {
++            if (debug != null) {
++                debug.println("CRL signature algorithm check failed: " + cpve);
++            }
++            return false;
++        }
++
+         // if crlIssuer is set, verify that it matches the issuer of the
+         // CRL and the CRL contains an IDP extension with the indirectCRL
+         // boolean asserted. Otherwise, verify that the CRL issuer matches the
+--- old/src/share/classes/sun/security/provider/certpath/ForwardBuilder.java	Tue Sep 22 05:44:02 2009
++++ openjdk/jdk/src/share/classes/sun/security/provider/certpath/ForwardBuilder.java	Tue Sep 22 05:44:01 2009
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
++ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -676,6 +676,11 @@
+         /* we don't perform any validation of the trusted cert */
+         if (!isTrustedCert) {
+             /*
++             * check that the signature algorithm is not disabled.
++             */
++            AlgorithmChecker.check(cert);
++
++            /*
+              * Check CRITICAL private extensions for user checkers that
+              * support forward checking (forwardCheckers) and remove
+              * ones we know how to check.
+--- old/src/share/classes/sun/security/provider/certpath/OCSPChecker.java	Tue Sep 22 05:44:05 2009
++++ openjdk/jdk/src/share/classes/sun/security/provider/certpath/OCSPChecker.java	Tue Sep 22 05:44:04 2009
+@@ -290,12 +290,29 @@
+                     }
+                     if (filter != null) {
+                         List<CertStore> certStores = pkixParams.getCertStores();
++                        AlgorithmChecker algChecker=
++                                                AlgorithmChecker.getInstance();
+                         for (CertStore certStore : certStores) {
+-                            Iterator i =
+-                                certStore.getCertificates(filter).iterator();
+-                            if (i.hasNext()) {
+-                                responderCert = (X509Certificate) i.next();
+-                                seekResponderCert = false; // done
++                            for (Certificate selected :
++                                    certStore.getCertificates(filter)) {
++                                try {
++                                    // don't bother to trust algorithm disabled
++                                    // certificate as responder
++                                    algChecker.check(selected);
++
++                                    responderCert = (X509Certificate)selected;
++                                    seekResponderCert = false; // done
++                                    break;
++                                } catch (CertPathValidatorException cpve) {
++                                    if (DEBUG != null) {
++                                        DEBUG.println(
++                                            "OCSP responder certificate " +
++                                            "algorithm check failed: " + cpve);
++                                    }
++                                }
++                            }
++
++                            if (!seekResponderCert) {
+                                 break;
+                             }
+                         }
+--- old/src/share/classes/sun/security/provider/certpath/OCSPResponse.java	Tue Sep 22 05:44:07 2009
++++ openjdk/jdk/src/share/classes/sun/security/provider/certpath/OCSPResponse.java	Tue Sep 22 05:44:07 2009
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
++ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -222,6 +222,10 @@
+                 new DerInputStream(derIn.getOctetString());
+ 
+             DerValue[]  seqTmp = basicOCSPResponse.getSequence(2);
++            if (seqTmp.length < 3) {
++                throw new IOException("Unexpected BasicOCSPResponse value");
++            }
++
+             DerValue responseData = seqTmp[0];
+ 
+             // Need the DER encoded ResponseData to verify the signature later
+@@ -304,6 +308,9 @@
+             // signatureAlgorithmId
+             sigAlgId = AlgorithmId.parse(seqTmp[1]);
+ 
++            // check that the signature algorithm is not disabled.
++            AlgorithmChecker.check(sigAlgId);
++
+             // signature
+             byte[] signature = seqTmp[2].getBitString();
+             X509CertImpl[] x509Certs = null;
+@@ -337,6 +344,9 @@
+                 } else if (cert.getIssuerDN().equals(
+                     responderCert.getSubjectDN())) {
+ 
++                    // check the certificate algorithm
++                    AlgorithmChecker.check(cert);
++
+                     // Check for the OCSPSigning key purpose
+                     List<String> keyPurposes = cert.getExtendedKeyUsage();
+                     if (keyPurposes == null ||
+--- old/src/share/classes/sun/security/provider/certpath/PKIXCertPathValidator.java	Tue Sep 22 05:44:09 2009
++++ openjdk/jdk/src/share/classes/sun/security/provider/certpath/PKIXCertPathValidator.java	Tue Sep 22 05:44:09 2009
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
++ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -268,6 +268,7 @@
+         int certPathLen = certList.size();
+ 
+         basicChecker = new BasicChecker(anchor, testDate, sigProvider, false);
++        AlgorithmChecker algorithmChecker= AlgorithmChecker.getInstance();
+         KeyChecker keyChecker = new KeyChecker(certPathLen,
+             pkixParam.getTargetCertConstraints());
+         ConstraintsChecker constraintsChecker =
+@@ -282,6 +283,7 @@
+                               rootNode);
+ 
+         // add standard checkers that we will be using
++        certPathCheckers.add(algorithmChecker);
+         certPathCheckers.add(keyChecker);
+         certPathCheckers.add(constraintsChecker);
+         certPathCheckers.add(policyChecker);
+--- old/src/share/classes/sun/security/provider/certpath/ReverseBuilder.java	Tue Sep 22 05:44:11 2009
++++ openjdk/jdk/src/share/classes/sun/security/provider/certpath/ReverseBuilder.java	Tue Sep 22 05:44:11 2009
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
++ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -346,6 +346,9 @@
+             return;
+         }
+ 
++        /* check that the signature algorithm is not disabled. */
++        AlgorithmChecker.check(cert);
++
+         /*
+          * check for looping - abort a loop if
+          * ((we encounter the same certificate twice) AND
+--- old/src/share/classes/sun/security/validator/SimpleValidator.java	Tue Sep 22 05:44:14 2009
++++ openjdk/jdk/src/share/classes/sun/security/validator/SimpleValidator.java	Tue Sep 22 05:44:13 2009
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2002-2006 Sun Microsystems, Inc.  All Rights Reserved.
++ * Copyright 2002-2009 Sun Microsystems, Inc.  All Rights Reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -40,6 +40,8 @@
+ import sun.security.util.DerOutputStream;
+ import sun.security.util.ObjectIdentifier;
+ 
++import sun.security.provider.certpath.AlgorithmChecker;
++
+ /**
+  * A simple validator implementation. It is based on code from the JSSE
+  * X509TrustManagerImpl. This implementation is designed for compatibility with
+@@ -133,6 +135,13 @@
+             X509Certificate issuerCert = chain[i + 1];
+             X509Certificate cert = chain[i];
+ 
++            // check certificate algorithm
++            try {
++                AlgorithmChecker.check(cert);
++            } catch (CertPathValidatorException cpve) {
++                throw new ValidatorException
++                        (ValidatorException.T_ALGORITHM_DISABLED, cert, cpve);
++            }
+ 
+             // no validity check for code signing certs
+             if ((variant.equals(VAR_CODE_SIGNING) == false)
+--- old/src/share/classes/sun/security/validator/ValidatorException.java	Tue Sep 22 05:44:16 2009
++++ openjdk/jdk/src/share/classes/sun/security/validator/ValidatorException.java	Tue Sep 22 05:44:15 2009
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2002-2003 Sun Microsystems, Inc.  All Rights Reserved.
++ * Copyright 2002-2009 Sun Microsystems, Inc.  All Rights Reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -55,6 +55,9 @@
+     public final static Object T_NAME_CHAINING =
+         "Certificate chaining error";
+ 
++    public final static Object T_ALGORITHM_DISABLED =
++        "Certificate signature algorithm disabled";
++
+     private Object type;
+     private X509Certificate cert;
+ 
+--- /dev/null	Tue Sep 22 05:44:18 2009
++++ openjdk/jdk/src/share/classes/sun/security/provider/certpath/AlgorithmChecker.java	Tue Sep 22 05:44:17 2009
+@@ -0,0 +1,119 @@
++/*
++ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.  Sun designates this
++ * particular file as subject to the "Classpath" exception as provided
++ * by Sun in the LICENSE file that accompanied this code.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++package sun.security.provider.certpath;
++
++import java.util.Set;
++import java.util.Collection;
++import java.util.Locale;
++import java.security.cert.Certificate;
++import java.security.cert.X509Certificate;
++import java.security.cert.X509CRL;
++import java.security.cert.CertPathValidatorException;
++import java.security.cert.PKIXCertPathChecker;
++
++import sun.security.x509.AlgorithmId;
++
++/**
++ * AlgorithmChecker is a <code>PKIXCertPathChecker</code> that checks that
++ * the signature algorithm of the specified certificate is not disabled.
++ *
++ * @author      Xuelei Fan
++ */
++final public class AlgorithmChecker extends PKIXCertPathChecker {
++
++    // the disabled algorithms
++    private static final String[] disabledAlgorithms = new String[] {"md2"};
++
++    // singleton instance
++    static final AlgorithmChecker INSTANCE = new AlgorithmChecker();
++
++    /**
++     * Default Constructor
++     */
++    private AlgorithmChecker() {
++        // do nothing
++    }
++
++    /**
++     * Return a AlgorithmChecker instance.
++     */
++    static AlgorithmChecker getInstance() {
++        return INSTANCE;
++    }
++
++    /**
++     * Initializes the internal state of the checker from parameters
++     * specified in the constructor.
++     */
++    public void init(boolean forward) throws CertPathValidatorException {
++        // do nothing
++    }
++
++    public boolean isForwardCheckingSupported() {
++        return false;
++    }
++
++    public Set<String> getSupportedExtensions() {
++        return null;
++    }
++
++    /**
++     * Checks the signature algorithm of the specified certificate.
++     */
++    public void check(Certificate cert, Collection<String> unresolvedCritExts)
++            throws CertPathValidatorException {
++        check(cert);
++    }
++
++    public static void check(Certificate cert)
++            throws CertPathValidatorException {
++        X509Certificate xcert = (X509Certificate)cert;
++        check(xcert.getSigAlgName());
++    }
++
++    static void check(AlgorithmId aid) throws CertPathValidatorException {
++        check(aid.getName());
++    }
++
++    static void check(X509CRL crl) throws CertPathValidatorException {
++        check(crl.getSigAlgName());
++    }
++
++    private static void check(String algName)
++            throws CertPathValidatorException {
++
++        String lowerCaseAlgName = algName.toLowerCase(Locale.ENGLISH);
++
++        for (String disabled : disabledAlgorithms) {
++            // checking the signature algorithm name
++            if (lowerCaseAlgName.indexOf(disabled) != -1) {
++                throw new CertPathValidatorException(
++                    "algorithm check failed: " + algName + " is disabled");
++            }
++        }
++    }
++
++}
+
+
+
