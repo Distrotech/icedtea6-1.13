@@ -1,3 +1,10 @@
+2009-11-06  Xerxes Rånby  <xerxes@zafena.se>
+
+	* ports/hotspot/src/share/vm/shark/sharkBuilder.cpp
+	(SharkBuilder::cmpxchg_int): Correct suffix for the
+	llvm.atomic.cmp.swap intrinsic.
+	(SharkBuilder::cmpxchg_ptr): Likewise.
+
 2009-11-05 Martin Matejovic <mmatejov@redhat.com>
 	* patches/security/icedtea-6631533.patch
 	* patches/security/icedtea-6632445.patch
