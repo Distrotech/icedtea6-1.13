@@ -604,7 +604,29 @@ ICEDTEA_PATCHES = \
 	patches/security/icedtea-6824265.patch \
 	patches/security/icedtea-6861062.patch \
 	patches/security/icedtea-6872358.patch \
-	patches/security/icedtea-6664512.patch
+	patches/security/icedtea-6664512.patch \
+	patches/icedtea-demo-swingapplet.patch \
+	patches/icedtea-awt-window-size.patch \
+	patches/icedtea-java2d-dasher.patch \
+	patches/icedtea-cc-interp-backedge.patch \
+	patches/icedtea-xml-encodinginfo.patch \
+	patches/icedtea-jtreg-6592792.patch \
+	patches/icedtea-s390-noinline.patch \
+	patches/icedtea-jtreg-hatrun.patch \
+	patches/icedtea-jtreg-dnd.patch \
+	patches/icedtea-jtreg-jrunscript.patch \
+	patches/icedtea-network-unreachable.patch \
+	patches/icedtea-dnd-filelists.patch \
+	patches/icedtea-java2d-stroker-internal-joint.patch \
+	patches/icedtea-java2d-stroker-internal-close-joint.patch \
+	patches/icedtea-disable-cc-incompatible-sanity-checks.patch \
+	patches/icedtea-explicit-target-arch.patch \
+	patches/openjdk/6432567-debugger-socket-overflow.patch \
+	patches/icedtea-gcc-stack-markings.patch \
+	patches/icedtea-s390-serialize.patch \
+	patches/openjdk/6879689-hotspot_warning_fix.patch \
+	patches/icedtea-no-precompiled.patch \
+	patches/icedtea-6897844-xshm.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -657,30 +679,7 @@ ICEDTEA_PATCHES += patches/hotspot/original/icedtea-6778662-lib64.patch \
 	patches/hotspot/original/icedtea-6793825-includedb.patch
 endif
 
-ICEDTEA_PATCHES += \
-	patches/icedtea-demo-swingapplet.patch \
-	patches/icedtea-awt-window-size.patch \
-	patches/icedtea-java2d-dasher.patch \
-	patches/icedtea-cc-interp-backedge.patch \
-	patches/icedtea-xml-encodinginfo.patch \
-	patches/icedtea-jtreg-6592792.patch \
-	patches/icedtea-s390-noinline.patch \
-	patches/icedtea-jtreg-hatrun.patch \
-	patches/icedtea-jtreg-dnd.patch \
-	patches/icedtea-jtreg-jrunscript.patch \
-	patches/icedtea-network-unreachable.patch \
-	patches/icedtea-dnd-filelists.patch \
-	patches/icedtea-java2d-stroker-internal-joint.patch \
-	patches/icedtea-java2d-stroker-internal-close-joint.patch \
-	patches/icedtea-disable-cc-incompatible-sanity-checks.patch \
-	patches/icedtea-explicit-target-arch.patch \
-	patches/openjdk/6432567-debugger-socket-overflow.patch \
-	patches/icedtea-gcc-stack-markings.patch \
-	patches/icedtea-s390-serialize.patch \
-	patches/openjdk/6879689-hotspot_warning_fix.patch \
-	patches/icedtea-no-precompiled.patch \
-	patches/icedtea-xshm.patch \
-	$(DISTRIBUTION_PATCHES)
+ICEDTEA_PATCHES += $(DISTRIBUTION_PATCHES)
 
 stamps/extract.stamp: stamps/download.stamp
 if OPENJDK_SRC_DIR_FOUND
