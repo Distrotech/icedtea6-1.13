@@ -603,7 +603,8 @@ ICEDTEA_PATCHES = \
 	patches/security/icedtea-6822057.patch \
 	patches/security/icedtea-6824265.patch \
 	patches/security/icedtea-6861062.patch \
-	patches/security/icedtea-6872358.patch 
+	patches/security/icedtea-6872358.patch \
+	patches/security/icedtea-6664512.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
