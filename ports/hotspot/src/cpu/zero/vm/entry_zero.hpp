@@ -33,7 +33,7 @@ class ZeroEntry {
   address _entry_point;
 
  public:
-  address entry_point() const {
+  inline address entry_point() const {
     return _entry_point;
   }
   void set_entry_point(address entry_point) {
@@ -50,10 +50,10 @@ class ZeroEntry {
                                TRAPS);
 
  public:
-  void invoke(methodOop method, TRAPS) const {
+  inline void invoke(methodOop method, TRAPS) const {
     ((NormalEntryFunc) entry_point())(method, (intptr_t) this, THREAD);
   }
-  void invoke_osr(methodOop method, address osr_buf, TRAPS) const {
+  inline void invoke_osr(methodOop method, address osr_buf, TRAPS) const {
     ((OSREntryFunc) entry_point())(method, osr_buf, (intptr_t) this, THREAD);
   }
 
