@@ -1,5 +1,17 @@
 2009-11-11  Gary Benson  <gbenson@redhat.com>
 
+	* ports/hotspot/src/cpu/zero/vm/frame_zero.hpp
+	(frame::is_fake_stub_frame): Removed.
+	(frame::sender_for_fake_stub_frame): Likewise.
+	(frame::sender_for_nonentry_frame): New method.
+	* ports/hotspot/src/cpu/zero/vm/frame_zero.cpp
+	(frame::is_fake_stub_frame): Removed.
+	(frame::sender_for_fake_stub_frame): Likewise.
+	(frame::sender_for_nonentry_frame): New method.
+	(frame::sender): Refactored.
+
+2009-11-11  Gary Benson  <gbenson@redhat.com>
+
 	* ports/hotspot/src/cpu/zero/vm/entry_zero.hpp 
 	(ZeroEntry::entry_point): Inlined.
 	(ZeroEntry::invoke): Likewise.

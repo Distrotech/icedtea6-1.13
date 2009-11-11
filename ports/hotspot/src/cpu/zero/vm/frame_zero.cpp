@@ -36,10 +36,6 @@ bool frame::is_interpreted_frame() const {
   return zeroframe()->is_interpreter_frame();
 }
 
-bool frame::is_fake_stub_frame() const {
-  return zeroframe()->is_fake_stub_frame();
-}
-
 frame frame::sender_for_entry_frame(RegisterMap *map) const {
   assert(map != NULL, "map must be set");
   assert(!entry_frame_is_first(), "next Java fp must be non zero");
@@ -50,15 +46,7 @@ frame frame::sender_for_entry_frame(RegisterMap *map) const {
   return frame(sender_sp(), sp() + 1);
 }
 
-frame frame::sender_for_interpreter_frame(RegisterMap *map) const {
-  return frame(sender_sp(), sp() + 1);
-}
-
-frame frame::sender_for_compiled_frame(RegisterMap *map) const {
-  return frame(sender_sp(), sp() + 1);
-}
-
-frame frame::sender_for_fake_stub_frame(RegisterMap *map) const {
+frame frame::sender_for_nonentry_frame(RegisterMap *map) const {
   return frame(sender_sp(), sp() + 1);
 }
 
@@ -69,17 +57,8 @@ frame frame::sender(RegisterMap* map) const {
 
   if (is_entry_frame())
     return sender_for_entry_frame(map);
-
-  if (is_interpreted_frame())
-    return sender_for_interpreter_frame(map);
-
-  if (is_compiled_frame())
-    return sender_for_compiled_frame(map);
-
-  if (is_fake_stub_frame())
-    return sender_for_fake_stub_frame(map);
-
-  ShouldNotReachHere();
+  else
+    return sender_for_nonentry_frame(map);
 }
 
 #ifdef CC_INTERP
