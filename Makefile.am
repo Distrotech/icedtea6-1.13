@@ -383,6 +383,16 @@ ICEDTEA_ECJ_PATCHES = patches/ecj/icedtea.patch \
 	patches/ecj/icedtea-jaxp-dependency.patch \
 	patches/ecj/bootver.patch
 
+# Patches for JAXWS
+
+if DTDTYPE_QNAME
+JAXWS_PATCHES = patches/icedtea-jaxws-getdtdtype.patch
+else
+JAXWS_PATCHES = 
+endif
+
+ICEDTEA_ECJ_PATCHES += $(JAXWS_PATCHES)
+
 # OpenJDK build environment.
 if ZERO_BUILD
   ICEDTEA_ZERO_BUILD = true
