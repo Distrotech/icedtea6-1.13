@@ -146,5 +146,3 @@
                                                   ((VMJavaVal64*)(addr))->d)
 #define SET_LOCALS_LONG_FROM_ADDR(addr, offset) (((VMJavaVal64*)&locals[-((offset)+1)])->l = \
                                                 ((VMJavaVal64*)(addr))->l)
-
-

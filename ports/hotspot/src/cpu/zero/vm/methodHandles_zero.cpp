@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * Copyright 2009 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -23,5 +23,4 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_methodHandles_zero.cpp.incl"
+// This file is intentionally empty
