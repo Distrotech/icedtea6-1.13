@@ -1,13 +1,116 @@
+# Dependencies
+
 OPENJDK_DATE = 14_oct_2009
 OPENJDK_MD5SUM = 078fe0ab744c98694decc77f2456c560
 OPENJDK_VERSION = b17
+OPENJDK_URL = http://download.java.net/openjdk/jdk6/promoted/$(OPENJDK_VERSION)/
 
 CACAO_VERSION = 0.99.4
 CACAO_MD5SUM = c5e6525c5212ddbb6026e4a7cde37ca6
+CACAO_BASE_URL = http://www.complang.tuwien.ac.at
+CACAO_URL = $(CACAO_BASE_URL)/cacaojvm/download/cacao-$(CACAO_VERSION)/
 
 NETBEANS_PROFILER_MD5SUM = a6756a62291ebea5c0e2431389b31380
-VISUALVM_MD5SUM = a289739f4a5bcdb9a2c642cfcc1e83fe
+NETBEANS_PROFILER_URL = http://icedtea.classpath.org/visualvm/
+NETBEANS_PROFILER_SRC_ZIP = netbeans-profiler-visualvm_release65_mod.tar.gz
 
+VISUALVM_MD5SUM = a289739f4a5bcdb9a2c642cfcc1e83fe
+VISUALVM_URL = https://visualvm.dev.java.net/files/documents/7163/127170/
+VISUALVM_SRC_ZIP = visualvm-111-src.tar.gz
+
+OPENJDK_HG_URL = http://hg.openjdk.java.net/jdk6/jdk6
+
+# Build directories
+
+OS_DIR = $(BUILD_OS_DIR)-$(BUILD_ARCH_DIR)
+BUILD_OUTPUT_DIR = openjdk/build/$(OS_DIR)
+ECJ_BUILD_OUTPUT_DIR = openjdk-ecj/build/$(OS_DIR)
+ICEDTEA_BUILD_DIR = \
+	$(abs_top_builddir)/$(BUILD_OUTPUT_DIR)
+# The Binary plugs directory is called jdk1.7.0 for historical reasons. The
+# name is completely irrelevant; only contains the plugs to build IcedTea.
+ICEDTEA_RT = \
+	$(abs_top_builddir)/bootstrap/jdk1.7.0/jre/lib/rt-closed.jar
+ICEDTEA_CLS_DIR = \
+	$(abs_top_builddir)/$(BUILD_OUTPUT_DIR)/classes
+ICEDTEA_BOOT_DIR= \
+	$(abs_top_builddir)/bootstrap/jdk1.6.0
+ICEDTEA_ENDORSED_DIR = \
+	$(ICEDTEA_BOOT_DIR)/lib/endorsed
+ICEDTEA_BUILD_DIR_ECJ = \
+	$(abs_top_builddir)/$(ECJ_BUILD_OUTPUT_DIR)/
+ICEDTEA_CLS_DIR_ECJ = \
+	$(abs_top_builddir)/$(ECJ_BUILD_OUTPUT_DIR)/classes
+SERVER_DIR = hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server
+BUILD_JRE_ARCH_DIR = $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
+BUILD_DEBUG_JRE_ARCH_DIR = $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
+
+# Source directories
+
+SHARE = openjdk/jdk/src/share/classes
+SOLARIS = openjdk/jdk/src/solaris/classes
+LANGTOOLS = openjdk/langtools/src/share/classes
+JAXP = openjdk/jaxp/src/share/classes
+CORBA = openjdk/corba/src/share/classes
+JAXWS = openjdk/jaxws/src/share/classes
+
+# FIXME (netx): NetX source directories go here
+
+OPENJDK_SOURCEPATH_DIRS = \
+        $(SHARE):$(SOLARIS):$(LANGTOOLS):$(JAXP):$(CORBA):$(JAXWS)
+
+ABS_SOURCE_DIRS = $(abs_top_builddir)/generated:$(abs_top_builddir)/rt:$(abs_top_srcdir)/rt:$(LIVECONNECT_SRCS)
+
+# Sources copied from OpenJDK.
+ICEDTEA_COPY_DIRS = \
+	com/sun/jdi \
+	com/sun/jdi/connect \
+	com/sun/jdi/connect/spi \
+	com/sun/jdi/event \
+	com/sun/jdi/request \
+	com/sun/jmx/snmp/agent \
+	com/sun/tools/jdi \
+	java/io \
+	java/util \
+	java/rmi \
+	sun/awt/ \
+	javax/net/ssl \
+	javax/script
+
+# FIXME (javac): Settings for javac go here
+
+# Conditional defintions
+
+if USE_ALT_OPENJDK_SRC_ZIP
+  OPENJDK_SRC_ZIP = $(ALT_OPENJDK_SRC_ZIP)
+else
+if USE_HG
+  OPENJDK_SRC_ZIP = 
+else
+  OPENJDK_SRC_ZIP = openjdk-6-src-$(OPENJDK_VERSION)-$(OPENJDK_DATE).tar.gz
+endif
+endif
+
+if USE_ALT_HOTSPOT_SRC_ZIP
+  HOTSPOT_SRC_ZIP = $(ALT_HOTSPOT_SRC_ZIP)
+else
+  HOTSPOT_SRC_ZIP = hotspot.tar.gz
+endif
+
+if USE_ALT_CACAO_SRC_ZIP
+  CACAO_SRC_ZIP = $(ALT_CACAO_SRC_ZIP)
+else
+if USE_ALT_CACAO_SRC_DIR
+  CACAO_SRC_ZIP = "not needed"
+else
+  CACAO_SRC_ZIP = cacao-$(CACAO_VERSION).tar.gz
+endif
+endif
+
+# FIXME (HotSpot): HotSpot changeset logic goes here
+
+# FIXME (plugin): LIVECONNECT_DIR becomes sun/applet netscape
+# FIXME (plugin): NPPLUGIN_DIR becomes PLUGIN_DIR
 if ENABLE_NPPLUGIN
 ICEDTEAPLUGIN_CLEAN = clean-IcedTeaNPPlugin
 ICEDTEAPLUGIN_TARGET = IcedTeaNPPlugin.so
@@ -58,459 +161,36 @@ PULSE_JAVA_JAVA_SRCDIR =
 PULSE_JAVA_CLASS_DIR =
 endif
 
+# FIXME (HotSpot): no longer needed
 HOTSPOT_MAKE_DIR = make
 
-# Top-Level Targets
-# =================
-
-all-local: icedtea-against-icedtea
-
-distclean-local: clean-copy clean-jtreg clean-jtreg-reports clean-pulse-java 
-	rm -rf stamps
-	rm -f rt-source-files.txt \
-	  hotspot-tools-source-files.txt \
-	  extra-source-files.txt
-	rm -rf bootstrap
-	rm -rf lib
-	rm -rf extra-lib
-	rm -rf openjdk-ecj
-	rm -rf openjdk
-	rm -rf hotspot-tools
-	rm -rf rt/netscape
-	rm -rf visualvm
-	rm -rf netbeans
-if ENABLE_NPPLUGIN
-	rm -f $(NPPLUGIN_DIR)/*.o $(NPPLUGIN_DIR)/IcedTeaNPPlugin.so
+# FIXME: This should not depend on bootstrapping
+# but on whether MEMORY_LIMIT is accepted
+# as an argument to javac
+if WITH_OPENJDK
+  MEMORY_LIMIT = -J-Xmx1024m
 else
-if ENABLE_PLUGIN
-	rm -f IcedTeaPlugin.o IcedTeaPlugin.so
+  MEMORY_LIMIT =
 endif
-endif
-
-if BUILD_CACAO
-	rm -rf cacao
-endif
-	rm -f jni-common.o
-if ADD_ZERO_BUILD
-	rm -rf zerovm
-endif
-
-install:
-
-.PHONY: \
-	env env-ecj snapshot clean-clone clean-patch \
-	clean-clone-ecj clean-patch-ecj clean-bootstrap-directory \
-	clean-bootstrap-directory-symlink clean-bootstrap-directory-ecj \
-	clean-bootstrap-directory-symlink-ecj icedtea icedtea-debug \
-	clean-icedtea icedtea-against-icedtea clean-icedtea-ecj clean-plugs \
-	clean-tools-jar clean-shared-objects clean-visualvm clean-nbplatform \
-	clean-copy clean-hotspot-tools clean-rt $(ICEDTEAPLUGIN_CLEAN) \
-	$(ICEDTEANPPLUGIN_CLEAN) hotspot hotspot-helper clean-extra clean-jtreg \
-	clean-jtreg-reports 
-
-EXTRA_DIST = rt generated \
-	patches/* \
-	tools-copy contrib ports \
-	extra overlays \
-	javaws.png javaws.desktop visualvm.desktop \
-	jconsole.desktop policytool.desktop \
-	test/jtreg \
-	IcedTeaPlugin.cc \
-	IcedTeaNPPlugin.cc \
-	HACKING pulseaudio fsg.sh \
-	plugin \
-	hotspot.map \
-	autogen.sh \
-	tapset/hotspot.stp.in \
-	tapset/hotspot_jni.stp.in \
-	scripts/jni_create_stap.c \
-	scripts/jni_desc
-
-# The Binary plugs directory is called jdk1.7.0 for historical reasons. The
-# name is completely irrelevant; only contains the plugs to build IcedTea.
-
-# OpenJDK build environment.
-OS_DIR = $(BUILD_OS_DIR)-$(BUILD_ARCH_DIR)
-BUILD_OUTPUT_DIR = openjdk/build/$(OS_DIR)
-ECJ_BUILD_OUTPUT_DIR = openjdk-ecj/build/$(OS_DIR)
-ICEDTEA_BUILD_DIR = \
-	$(abs_top_builddir)/$(BUILD_OUTPUT_DIR)
-ICEDTEA_RT = \
-	$(abs_top_builddir)/bootstrap/jdk1.7.0/jre/lib/rt-closed.jar
-ICEDTEA_CLS_DIR = \
-	$(abs_top_builddir)/$(BUILD_OUTPUT_DIR)/classes
-ICEDTEA_BOOT_DIR= \
-	$(abs_top_builddir)/bootstrap/jdk1.6.0
-ICEDTEA_ENDORSED_DIR = \
-	$(ICEDTEA_BOOT_DIR)/lib/endorsed
-JDK_UPDATE_VERSION = 0
-COMBINED_VERSION = $(JDK_UPDATE_VERSION)-$(OPENJDK_VERSION)
-if CORE_BUILD
-  ICEDTEA_CORE_BUILD = yes
-else
-  ICEDTEA_CORE_BUILD =
-endif
-if ZERO_BUILD
-  ICEDTEA_ZERO_BUILD = yes
-else
-  ICEDTEA_ZERO_BUILD =
-endif
-if SHARK_BUILD
-  ICEDTEA_SHARK_BUILD = yes
-else
-  ICEDTEA_SHARK_BUILD =
-endif
-ICEDTEA_ENV = \
-	IMPORT_BINARY_PLUGS=true \
-	ALT_JDK_IMPORT_PATH="$(ICEDTEA_BOOT_DIR)" \
-	ANT="$(ANT)" \
-        BUILD_NUMBER="$(OPENJDK_VERSION)" \
-	JDK_UPDATE_VERSION="$(JDK_UPDATE_VERSION)" \
-        JRE_RELEASE_VERSION="1.6.0_$(COMBINED_VERSION)" \
-	MILESTONE="fcs" \
-	LANG="C" \
-	PATH="$(abs_top_builddir)/bootstrap/jdk1.6.0/bin:$(OS_PATH):$$PATH" \
-	ALT_BOOTDIR="$(ICEDTEA_BOOT_DIR)" \
-	ALT_BINARY_PLUGS_PATH="$(abs_top_builddir)/bootstrap/jdk1.7.0" \
-	BUILD_ARCH_DIR="$(BUILD_ARCH_DIR)" \
-	ICEDTEA_RT="$(ICEDTEA_RT)" \
-	ICEDTEA_BUILD_DIR="$(ICEDTEA_BUILD_DIR)" \
-	ICEDTEA_CLS_DIR="$(ICEDTEA_CLS_DIR)" \
-	ICEDTEA_ENDORSED_DIR="$(ICEDTEA_ENDORSED_DIR)" \
-	ENDORSED="-Djava.endorsed.dirs=$(ICEDTEA_ENDORSED_DIR)" \
-	CLASSPATH="" \
-	LD_LIBRARY_PATH="" \
-	ICEDTEA_CORE_BUILD="$(ICEDTEA_CORE_BUILD)" \
-	ICEDTEA_ZERO_BUILD="$(ICEDTEA_ZERO_BUILD)" \
-	ICEDTEA_SHARK_BUILD="$(ICEDTEA_SHARK_BUILD)" \
-	ZERO_LIBARCH="$(ZERO_LIBARCH)" \
-	ZERO_BITSPERWORD="$(ZERO_BITSPERWORD)" \
-	ZERO_ENDIANNESS="$(ZERO_ENDIANNESS)" \
-	ZERO_ARCHDEF="$(ZERO_ARCHDEF)" \
-	ZERO_ARCHFLAG="$(ZERO_ARCHFLAG)" \
-	LIBFFI_CFLAGS="$(LIBFFI_CFLAGS)" \
-	LIBFFI_LIBS="$(LIBFFI_LIBS)" \
-	LLVM_CFLAGS="$(LLVM_CFLAGS)" \
-	LLVM_LDFLAGS="$(LLVM_LDFLAGS)" \
-	LLVM_LIBS="$(LLVM_LIBS)" \
-	FREETYPE2_HEADERS="$(FREETYPE2_CFLAGS)" \
-	FT2_LIB="$(FREETYPE2_LIBS)" \
-	ALT_PARALLEL_COMPILE_JOBS="$(PARALLEL_JOBS)" \
-	HOTSPOT_BUILD_JOBS="$(PARALLEL_JOBS)" \
-	JAVAC="" \
-	JAVA_HOME="" \
-	JDK_HOME="" \
-	RHINO_JAR="$(RHINO_JAR)" \
-	DISTRIBUTION_ID="$(DIST_ID)" \
-	DEBUG_CLASSFILES="true" \
-	DEBUG_BINARIES="true"
 
 if WITH_CACAO
-ICEDTEA_ENV += \
-	ALT_HOTSPOT_IMPORT_PATH="$(CACAO_IMPORT_PATH)"
-endif
-
-if !ENABLE_OPTIMIZATIONS
-ICEDTEA_ENV += \
-	NO_OPTIMIZATIONS="true" \
-	CC_NO_OPT="-O0 -g"
-endif
-
-if !ENABLE_DOCS
-ICEDTEA_ENV += \
-	NO_DOCS="true"
-endif
-
-if ENABLE_CROSS_COMPILATION
-ICEDTEA_ENV += \
-	CROSS_COMPILATION="true" \
-	CROSS_TARGET_ARCH="$(CROSS_TARGET_ARCH)"
-endif
-
-if USE_ALT_JAR
-ICEDTEA_ENV += \
-	ALT_JAR_CMD="$(ALT_JAR_CMD)"
-endif
-
-env:
-	@echo 'unset JAVA_HOME'
-	@echo 'export $(ICEDTEA_ENV)'
-
-# OpenJDK ecj build environment.
-ICEDTEA_BUILD_DIR_ECJ = \
-	$(abs_top_builddir)/$(ECJ_BUILD_OUTPUT_DIR)/
-ICEDTEA_CLS_DIR_ECJ = \
-	$(abs_top_builddir)/$(ECJ_BUILD_OUTPUT_DIR)/classes
-ICEDTEA_ENV_ECJ = \
-	IMPORT_BINARY_PLUGS=true \
-	ALT_JDK_IMPORT_PATH="$(ICEDTEA_BOOT_DIR)" \
-	ANT="$(ANT)" \
-	BUILD_NUMBER="$(OPENJDK_VERSION)" \
-	JDK_UPDATE_VERSION="$(JDK_UPDATE_VERSION)" \
-        JRE_RELEASE_VERSION="1.6.0_$(COMBINED_VERSION)" \
-	MILESTONE="fcs" \
-	LANG=C"" \
-	PATH="$(abs_top_builddir)/bootstrap/jdk1.6.0/bin:$(OS_PATH):$$PATH" \
-	ALT_BOOTDIR="$(ICEDTEA_BOOT_DIR)" \
-	ALT_BINARY_PLUGS_PATH="$(abs_top_builddir)/bootstrap/jdk1.7.0" \
-	BUILD_ARCH_DIR="$(BUILD_ARCH_DIR)" \
-	ICEDTEA_RT="$(ICEDTEA_RT)" \
-	ICEDTEA_BUILD_DIR="$(ICEDTEA_BUILD_DIR_ECJ)" \
-	ICEDTEA_CLS_DIR="$(ICEDTEA_CLS_DIR_ECJ)" \
-	ICEDTEA_ENDORSED_DIR="$(ICEDTEA_ENDORSED_DIR)" \
-	ENDORSED="-Djava.endorsed.dirs=$(ICEDTEA_ENDORSED_DIR)" \
-	BOOTCLASSPATH_CLS_RT="-bootclasspath $(ICEDTEA_CLS_DIR_ECJ):$(ICEDTEA_RT)" \
-	BOOTCLASSPATH_CLS="-bootclasspath $(ICEDTEA_CLS_DIR_ECJ)" \
-	BOOTCLASSPATH_RT_LIBGCJ="-bootclasspath $(ICEDTEA_RT):$(SYSTEM_GCJ_DIR)/jre/lib/rt.jar" \
-	CLASSPATH="" \
-	LD_LIBRARY_PATH="" \
-	GENSRCDIR="$(abs_top_builddir)/generated" \
-	ICEDTEA_CORE_BUILD="$(ICEDTEA_CORE_BUILD)" \
-	ICEDTEA_ZERO_BUILD="$(ICEDTEA_ZERO_BUILD)" \
-	ICEDTEA_SHARK_BUILD="$(ICEDTEA_SHARK_BUILD)" \
-	ZERO_LIBARCH="$(ZERO_LIBARCH)" \
-	ZERO_BITSPERWORD="$(ZERO_BITSPERWORD)" \
-	ZERO_ENDIANNESS="$(ZERO_ENDIANNESS)" \
-	ZERO_ARCHDEF="$(ZERO_ARCHDEF)" \
-	ZERO_ARCHFLAG="$(ZERO_ARCHFLAG)" \
-	LIBFFI_CFLAGS="$(LIBFFI_CFLAGS)" \
-	LIBFFI_LIBS="$(LIBFFI_LIBS)" \
-	LLVM_CFLAGS="$(LLVM_CFLAGS)" \
-	LLVM_LDFLAGS="$(LLVM_LDFLAGS)" \
-	LLVM_LIBS="$(LLVM_LIBS)" \
-	FREETYPE2_HEADERS="$(FREETYPE2_CFLAGS)" \
-	FT2_LIB="$(FREETYPE2_LIBS)" \
-	ALT_PARALLEL_COMPILE_JOBS="$(PARALLEL_JOBS)" \
-	HOTSPOT_BUILD_JOBS="$(PARALLEL_JOBS)" \
-	JAVAC="" \
-	JAVA_HOME="" \
-	JDK_HOME="" \
-	RHINO_JAR="$(RHINO_JAR)" \
-	JAR_KNOWS_ATFILE="$(JAR_KNOWS_ATFILE)" \
-	JAR_KNOWS_J_OPTIONS="$(JAR_KNOWS_J_OPTIONS)" \
-	JAR_ACCEPTS_STDIN_LIST="$(JAR_ACCEPTS_STDIN_LIST)" \
-	DEBUG_CLASSFILES="true" \
-	DEBUG_BINARIES="true"
-
-if WITH_CACAO
-ICEDTEA_ENV_ECJ += \
-	ALT_HOTSPOT_IMPORT_PATH="$(CACAO_IMPORT_PATH)"
-endif
-
-if !ENABLE_OPTIMIZATIONS
-ICEDTEA_ENV_ECJ += \
-	NO_OPTIMIZATIONS="true" \
-	CC_NO_OPT="-O0 -g"
-endif
-
-if !ENABLE_DOCS
-ICEDTEA_ENV_ECJ += \
-	NO_DOCS="true"
-endif
-
-if ENABLE_CROSS_COMPILATION
-ICEDTEA_ENV_ECJ += \
-	CROSS_COMPILATION="true" \
-	CROSS_TARGET_ARCH="$(CROSS_TARGET_ARCH)"
-endif
-
-env-ecj:
-	@echo 'unset JAVA_HOME'
-	@echo 'export $(ICEDTEA_ENV_ECJ)'
-
-# Mercurial snapshot.
-snapshot: dist
-	mv $(DIST_ARCHIVES) $(distdir)-`$(HG) tip --template '{node}'`.tar.gz
-
-# OpenJDK Source Preparation Targets
-# ==================================
-
-# Download OpenJDK sources.
-OPENJDK_URL = http://download.java.net/openjdk/jdk6/promoted/$(OPENJDK_VERSION)/
-OPENJDK_HG_URL = http://hg.openjdk.java.net/jdk6/jdk6
-
-if USE_ALT_OPENJDK_SRC_ZIP
-  OPENJDK_SRC_ZIP = $(ALT_OPENJDK_SRC_ZIP)
+  ICEDTEA_BUILD_TARGET=j2se_only
+  ICEDTEA_DEBUG_BUILD_TARGET=j2se_fastdebug_only
 else
-if USE_HG
-  OPENJDK_SRC_ZIP = 
-else
-  OPENJDK_SRC_ZIP = openjdk-6-src-$(OPENJDK_VERSION)-$(OPENJDK_DATE).tar.gz
-endif
+  ICEDTEA_BUILD_TARGET=
+  ICEDTEA_DEBUG_BUILD_TARGET=debug_build
 endif
 
-if USE_ALT_HOTSPOT_SRC_ZIP
-  HOTSPOT_SRC_ZIP = $(ALT_HOTSPOT_SRC_ZIP)
+# FIXME (bootstrap): Assumption is WITH_OPENJDK == no bootstrap
+if WITH_OPENJDK
+  BOOTSTRAP_DIRECTORY_STAMP =
+  ICEDTEA_HOME = $(SYSTEM_OPENJDK_DIR)
 else
-  HOTSPOT_SRC_ZIP = hotspot.tar.gz
+  BOOTSTRAP_DIRECTORY_STAMP = stamps/bootstrap-directory.stamp
+  ICEDTEA_HOME = $(abs_top_builddir)/bootstrap/icedtea
 endif
 
-CACAO_BASE_URL = http://www.complang.tuwien.ac.at
-CACAO_URL = $(CACAO_BASE_URL)/cacaojvm/download/cacao-$(CACAO_VERSION)/
-
-if USE_ALT_CACAO_SRC_ZIP
-  CACAO_SRC_ZIP = $(ALT_CACAO_SRC_ZIP)
-else
-if USE_ALT_CACAO_SRC_DIR
-  CACAO_SRC_ZIP = "not needed"
-else
-  CACAO_SRC_ZIP = cacao-$(CACAO_VERSION).tar.gz
-endif
-endif
-
-# VisualVM sources. Alternatives cannot be used here.
-NETBEANS_PROFILER_URL = http://icedtea.classpath.org/visualvm/
-NETBEANS_PROFILER_SRC_ZIP = netbeans-profiler-visualvm_release65_mod.tar.gz
-
-VISUALVM_URL = https://visualvm.dev.java.net/files/documents/7163/127170/
-VISUALVM_SRC_ZIP = visualvm-111-src.tar.gz
-
-
-stamps/hgforest.stamp:
-if OPENJDK_SRC_DIR_FOUND
-else
-if USE_ALT_OPENJDK_SRC_ZIP
-else
-if !USE_HG
-else
-	if ! $(HG) fclone -h; \
-          then \
-          echo "No forest extension found. Please refer to" \
-            "http://selenic.com/mercurial/wiki/index.cgi/ForestExtension"; \
-          exit 1; \
-          fi;
-endif
-endif
-endif
-	mkdir -p stamps 
-	touch stamps/hgforest.stamp
-
-stamps/download.stamp: stamps/hgforest.stamp
-if OPENJDK_SRC_DIR_FOUND
-else
-if USE_ALT_OPENJDK_SRC_ZIP
-else
-if USE_HG
-if WITH_HGREV
-	$(HG) fclone -r $(HGREV) $(OPENJDK_HG_URL) openjdk;
-else
-	$(HG) fclone $(OPENJDK_HG_URL) openjdk;
-endif
-else
-	if ! echo "$(OPENJDK_MD5SUM)  $(OPENJDK_SRC_ZIP)" \
-	  | $(MD5SUM) --check ; \
-	then \
-	  if [ $(OPENJDK_SRC_ZIP) ] ; \
-	  then \
-	    mv $(OPENJDK_SRC_ZIP) $(OPENJDK_SRC_ZIP).old ; \
-	  fi ; \
-	  $(WGET) $(OPENJDK_URL)$(OPENJDK_SRC_ZIP) -O $(OPENJDK_SRC_ZIP); \
-	fi
-endif
-endif
-if WITH_ALT_HSBUILD
-if USE_ALT_HOTSPOT_SRC_ZIP
-else
-	hotspot_md5sum="`$(AWK) 'version==$$1 {print $$4}' version=$(HSBUILD) \
-	  $(abs_top_srcdir)/hotspot.map`" ; \
-	if ! echo "$${hotspot_md5sum}  $(HOTSPOT_SRC_ZIP)" \
-	  | $(MD5SUM) --check ; \
-	then \
-	  if [ $(HOTSPOT_SRC_ZIP) ] ; \
-	  then \
-	    mv $(HOTSPOT_SRC_ZIP) $(HOTSPOT_SRC_ZIP).old ; \
-	  fi ; \
-	  hotspot_url="`$(AWK) 'version==$$1 {print $$2 "/archive/" $$3 ".tar.gz"}' \
-	    version=$(HSBUILD) $(abs_top_srcdir)/hotspot.map`"; \
-	  $(WGET) $${hotspot_url} -O $(HOTSPOT_SRC_ZIP) ; \
-	fi
-endif
-endif
-endif
-if BUILD_CACAO
-if !USE_SYSTEM_CACAO
-if USE_ALT_CACAO_SRC_ZIP
-else
-if USE_ALT_CACAO_SRC_DIR
-else
-	if ! echo "$(CACAO_MD5SUM)  $(CACAO_SRC_ZIP)" \
-	 | $(MD5SUM) --check ; \
-	then \
-	 if [ $(CACAO_SRC_ZIP) ] ; \
-	 then \
-	   mv $(CACAO_SRC_ZIP) $(CACAO_SRC_ZIP).old ; \
-	 fi ; \
-	 $(WGET) $(CACAO_URL)$(CACAO_SRC_ZIP) -O $(CACAO_SRC_ZIP); \
-	fi
-endif
-endif
-endif
-endif
-if WITH_VISUALVM
-	if ! echo "$(NETBEANS_PROFILER_MD5SUM)  $(NETBEANS_PROFILER_SRC_ZIP)" \
-	 | $(MD5SUM) --check ; \
-	then \
-	 if [ $(NETBEANS_PROFILER_SRC_ZIP) ] ; \
-	 then \
-	  mv $(NETBEANS_PROFILER_SRC_ZIP) $(NETBEANS_PROFILER_SRC_ZIP).old ; \
-	 fi ; \
-	 $(WGET) $(NETBEANS_PROFILER_URL)$(NETBEANS_PROFILER_SRC_ZIP) \
-	  -O $(NETBEANS_PROFILER_SRC_ZIP) ; \
-	 fi
-
-	if ! echo "$(VISUALVM_MD5SUM)  $(VISUALVM_SRC_ZIP)" \
-         | $(MD5SUM) --check ; \
-        then \
-         if [ $(VISUALVM_SRC_ZIP) ] ; \
-         then \
-          mv $(VISUALVM_SRC_ZIP) $(VISUALVM_SRC_ZIP).old ; \
-         fi ; \
-         $(WGET) $(VISUALVM_URL)$(VISUALVM_SRC_ZIP) \
-          -O $(VISUALVM_SRC_ZIP) ; \
-         fi
-endif
-	mkdir -p stamps
-	touch stamps/download.stamp
-
-clean-hgforest:
-	rm -f stamps/hgforest.stamp
-
-clean-download:
-	rm -f stamps/download.stamp
-	rm -f $(OPENJDK_SRC_ZIP)
-if BUILD_CACAO
-if USE_ALT_CACAO_SRC_DIR
-else
-	rm -f $(CACAO_SRC_ZIP)
-endif
-endif
-if WITH_VISUALVM
-	rm -f $(VISUALVM_SRC_ZIP)
-	rm -f $(NETBEANS_PROFILER_SRC_ZIP)
-endif
-
-# Copy ports sources into tree
-stamps/ports.stamp: stamps/replace-hotspot.stamp
-	for target in $(abs_top_srcdir)/ports/hotspot/build/*/makefiles/* \
-		      $(abs_top_srcdir)/ports/hotspot/tools \
-		      $(abs_top_srcdir)/ports/hotspot/src/*cpu/* \
-		      $(abs_top_srcdir)/ports/hotspot/src/share/vm/*; do \
-	  link=$$(dirname $$target | sed 's/^.*ports/openjdk/'|sed "s#hotspot/build#hotspot/$(HOTSPOT_MAKE_DIR)#"); \
-	  cp -rv $$target $$link; \
-	done
-	ln -sf $(abs_top_builddir)/platform_zero openjdk/hotspot/$(HOTSPOT_MAKE_DIR)/linux
-	if ! test "x$(ICEDTEA_CORE_BUILD)$(ICEDTEA_SHARK_BUILD)$(WITH_CACAO)" \
-	  = "xno" ; then \
-	  mkdir -p openjdk/jdk/src/solaris/bin/$(BUILD_ARCH_DIR) ; \
-	  ln -sf $(abs_top_builddir)/jvm.cfg \
-	    openjdk/jdk/src/solaris/bin/$(BUILD_ARCH_DIR)/jvm.cfg ; \
-	fi
-	if ! test "x$(ICEDTEA_ZERO_BUILD)$(WITH_CACAO)" = "xno"; then \
-	  ln -sf $(abs_top_builddir)/ergo.c \
-	    openjdk/jdk/src/solaris/bin/ergo_$(BUILD_ARCH_DIR).c; \
-	fi
-	mkdir -p stamps
-	touch stamps/ports.stamp
+# Patch list
 
 ICEDTEA_FSG_PATCHES =
 
@@ -681,6 +361,406 @@ endif
 
 ICEDTEA_PATCHES += $(DISTRIBUTION_PATCHES)
 
+# Bootstrapping patches
+
+ICEDTEA_ECJ_PATCHES = patches/ecj/icedtea-ant.patch \
+	patches/ecj/icedtea.patch \
+	patches/ecj/icedtea-hotspot.patch \
+	patches/ecj/icedtea-spp.patch \
+	patches/ecj/icedtea-jopt.patch
+
+# OpenJDK build environment.
+if CORE_BUILD
+  ICEDTEA_CORE_BUILD = yes
+else
+  ICEDTEA_CORE_BUILD =
+endif
+if ZERO_BUILD
+  ICEDTEA_ZERO_BUILD = yes
+else
+  ICEDTEA_ZERO_BUILD =
+endif
+if SHARK_BUILD
+  ICEDTEA_SHARK_BUILD = yes
+else
+  ICEDTEA_SHARK_BUILD =
+endif
+
+JDK_UPDATE_VERSION = 0
+COMBINED_VERSION = $(JDK_UPDATE_VERSION)-$(OPENJDK_VERSION)
+ICEDTEA_ENV = \
+	IMPORT_BINARY_PLUGS=true \
+	ALT_JDK_IMPORT_PATH="$(ICEDTEA_BOOT_DIR)" \
+	ANT="$(ANT)" \
+        BUILD_NUMBER="$(OPENJDK_VERSION)" \
+	JDK_UPDATE_VERSION="$(JDK_UPDATE_VERSION)" \
+        JRE_RELEASE_VERSION="1.6.0_$(COMBINED_VERSION)" \
+	MILESTONE="fcs" \
+	LANG="C" \
+	PATH="$(abs_top_builddir)/bootstrap/jdk1.6.0/bin:$(OS_PATH):$$PATH" \
+	ALT_BOOTDIR="$(ICEDTEA_BOOT_DIR)" \
+	ALT_BINARY_PLUGS_PATH="$(abs_top_builddir)/bootstrap/jdk1.7.0" \
+	BUILD_ARCH_DIR="$(BUILD_ARCH_DIR)" \
+	ICEDTEA_RT="$(ICEDTEA_RT)" \
+	ICEDTEA_BUILD_DIR="$(ICEDTEA_BUILD_DIR)" \
+	ICEDTEA_CLS_DIR="$(ICEDTEA_CLS_DIR)" \
+	ICEDTEA_ENDORSED_DIR="$(ICEDTEA_ENDORSED_DIR)" \
+	ENDORSED="-Djava.endorsed.dirs=$(ICEDTEA_ENDORSED_DIR)" \
+	CLASSPATH="" \
+	LD_LIBRARY_PATH="" \
+	ICEDTEA_CORE_BUILD="$(ICEDTEA_CORE_BUILD)" \
+	ICEDTEA_ZERO_BUILD="$(ICEDTEA_ZERO_BUILD)" \
+	ICEDTEA_SHARK_BUILD="$(ICEDTEA_SHARK_BUILD)" \
+	ZERO_LIBARCH="$(ZERO_LIBARCH)" \
+	ZERO_BITSPERWORD="$(ZERO_BITSPERWORD)" \
+	ZERO_ENDIANNESS="$(ZERO_ENDIANNESS)" \
+	ZERO_ARCHDEF="$(ZERO_ARCHDEF)" \
+	ZERO_ARCHFLAG="$(ZERO_ARCHFLAG)" \
+	LIBFFI_CFLAGS="$(LIBFFI_CFLAGS)" \
+	LIBFFI_LIBS="$(LIBFFI_LIBS)" \
+	LLVM_CFLAGS="$(LLVM_CFLAGS)" \
+	LLVM_LDFLAGS="$(LLVM_LDFLAGS)" \
+	LLVM_LIBS="$(LLVM_LIBS)" \
+	FREETYPE2_HEADERS="$(FREETYPE2_CFLAGS)" \
+	FT2_LIB="$(FREETYPE2_LIBS)" \
+	ALT_PARALLEL_COMPILE_JOBS="$(PARALLEL_JOBS)" \
+	HOTSPOT_BUILD_JOBS="$(PARALLEL_JOBS)" \
+	JAVAC="" \
+	JAVA_HOME="" \
+	JDK_HOME="" \
+	RHINO_JAR="$(RHINO_JAR)" \
+	DISTRIBUTION_ID="$(DIST_ID)" \
+	DEBUG_CLASSFILES="true" \
+	DEBUG_BINARIES="true"
+
+if WITH_CACAO
+ICEDTEA_ENV += \
+	ALT_HOTSPOT_IMPORT_PATH="$(CACAO_IMPORT_PATH)"
+endif
+
+if !ENABLE_OPTIMIZATIONS
+ICEDTEA_ENV += \
+	NO_OPTIMIZATIONS="true" \
+	CC_NO_OPT="-O0 -g"
+endif
+
+if !ENABLE_DOCS
+ICEDTEA_ENV += \
+	NO_DOCS="true"
+endif
+
+if ENABLE_CROSS_COMPILATION
+ICEDTEA_ENV += \
+	CROSS_COMPILATION="true" \
+	CROSS_TARGET_ARCH="$(CROSS_TARGET_ARCH)"
+endif
+
+if USE_ALT_JAR
+ICEDTEA_ENV += \
+	ALT_JAR_CMD="$(ALT_JAR_CMD)"
+endif
+
+# OpenJDK ecj build environment.
+# FIXME (bootstrap): Remove duplication
+ICEDTEA_ENV_ECJ = \
+	IMPORT_BINARY_PLUGS=true \
+	ALT_JDK_IMPORT_PATH="$(ICEDTEA_BOOT_DIR)" \
+	ANT="$(ANT)" \
+	BUILD_NUMBER="$(OPENJDK_VERSION)" \
+	JDK_UPDATE_VERSION="$(JDK_UPDATE_VERSION)" \
+        JRE_RELEASE_VERSION="1.6.0_$(COMBINED_VERSION)" \
+	MILESTONE="fcs" \
+	LANG=C"" \
+	PATH="$(abs_top_builddir)/bootstrap/jdk1.6.0/bin:$(OS_PATH):$$PATH" \
+	ALT_BOOTDIR="$(ICEDTEA_BOOT_DIR)" \
+	ALT_BINARY_PLUGS_PATH="$(abs_top_builddir)/bootstrap/jdk1.7.0" \
+	BUILD_ARCH_DIR="$(BUILD_ARCH_DIR)" \
+	ICEDTEA_RT="$(ICEDTEA_RT)" \
+	ICEDTEA_BUILD_DIR="$(ICEDTEA_BUILD_DIR_ECJ)" \
+	ICEDTEA_CLS_DIR="$(ICEDTEA_CLS_DIR_ECJ)" \
+	ICEDTEA_ENDORSED_DIR="$(ICEDTEA_ENDORSED_DIR)" \
+	ENDORSED="-Djava.endorsed.dirs=$(ICEDTEA_ENDORSED_DIR)" \
+	BOOTCLASSPATH_CLS_RT="-bootclasspath $(ICEDTEA_CLS_DIR_ECJ):$(ICEDTEA_RT)" \
+	BOOTCLASSPATH_CLS="-bootclasspath $(ICEDTEA_CLS_DIR_ECJ)" \
+	BOOTCLASSPATH_RT_LIBGCJ="-bootclasspath $(ICEDTEA_RT):$(SYSTEM_GCJ_DIR)/jre/lib/rt.jar" \
+	CLASSPATH="" \
+	LD_LIBRARY_PATH="" \
+	GENSRCDIR="$(abs_top_builddir)/generated" \
+	ICEDTEA_CORE_BUILD="$(ICEDTEA_CORE_BUILD)" \
+	ICEDTEA_ZERO_BUILD="$(ICEDTEA_ZERO_BUILD)" \
+	ICEDTEA_SHARK_BUILD="$(ICEDTEA_SHARK_BUILD)" \
+	ZERO_LIBARCH="$(ZERO_LIBARCH)" \
+	ZERO_BITSPERWORD="$(ZERO_BITSPERWORD)" \
+	ZERO_ENDIANNESS="$(ZERO_ENDIANNESS)" \
+	ZERO_ARCHDEF="$(ZERO_ARCHDEF)" \
+	ZERO_ARCHFLAG="$(ZERO_ARCHFLAG)" \
+	LIBFFI_CFLAGS="$(LIBFFI_CFLAGS)" \
+	LIBFFI_LIBS="$(LIBFFI_LIBS)" \
+	LLVM_CFLAGS="$(LLVM_CFLAGS)" \
+	LLVM_LDFLAGS="$(LLVM_LDFLAGS)" \
+	LLVM_LIBS="$(LLVM_LIBS)" \
+	FREETYPE2_HEADERS="$(FREETYPE2_CFLAGS)" \
+	FT2_LIB="$(FREETYPE2_LIBS)" \
+	ALT_PARALLEL_COMPILE_JOBS="$(PARALLEL_JOBS)" \
+	HOTSPOT_BUILD_JOBS="$(PARALLEL_JOBS)" \
+	JAVAC="" \
+	JAVA_HOME="" \
+	JDK_HOME="" \
+	RHINO_JAR="$(RHINO_JAR)" \
+	JAR_KNOWS_ATFILE="$(JAR_KNOWS_ATFILE)" \
+	JAR_KNOWS_J_OPTIONS="$(JAR_KNOWS_J_OPTIONS)" \
+	JAR_ACCEPTS_STDIN_LIST="$(JAR_ACCEPTS_STDIN_LIST)" \
+	DEBUG_CLASSFILES="true" \
+	DEBUG_BINARIES="true"
+
+if WITH_CACAO
+ICEDTEA_ENV_ECJ += \
+	ALT_HOTSPOT_IMPORT_PATH="$(CACAO_IMPORT_PATH)"
+endif
+
+if !ENABLE_OPTIMIZATIONS
+ICEDTEA_ENV_ECJ += \
+	NO_OPTIMIZATIONS="true" \
+	CC_NO_OPT="-O0 -g"
+endif
+
+if !ENABLE_DOCS
+ICEDTEA_ENV_ECJ += \
+	NO_DOCS="true"
+endif
+
+if ENABLE_CROSS_COMPILATION
+ICEDTEA_ENV_ECJ += \
+	CROSS_COMPILATION="true" \
+	CROSS_TARGET_ARCH="$(CROSS_TARGET_ARCH)"
+endif
+
+# Source files
+# FIXME (distclean): Add generated file list
+# FIXME (distclean): Add jtreg sources
+# FIXME (distclean): Add pulseaudio sources
+
+EXTRA_DIST = rt generated \
+	patches/* \
+	tools-copy contrib ports \
+	extra overlays \
+	javaws.png javaws.desktop visualvm.desktop \
+	jconsole.desktop policytool.desktop \
+	test/jtreg \
+	IcedTeaPlugin.cc \
+	IcedTeaNPPlugin.cc \
+	HACKING pulseaudio fsg.sh \
+	plugin \
+	hotspot.map \
+	autogen.sh \
+	tapset/hotspot.stp.in \
+	tapset/hotspot_jni.stp.in \
+	scripts/jni_create_stap.c \
+	scripts/jni_desc
+
+# Top-Level Targets
+# =================
+
+all-local: icedtea-against-icedtea
+
+check-local: jtregcheck
+
+#FIXME (clean): Should become clean-local.
+distclean-local: clean-copy clean-jtreg clean-jtreg-reports clean-pulse-java 
+	rm -rf stamps
+	rm -f rt-source-files.txt \
+	  hotspot-tools-source-files.txt \
+	  extra-source-files.txt
+	rm -rf bootstrap
+	rm -rf lib
+	rm -rf extra-lib
+	rm -rf openjdk-ecj
+	rm -rf openjdk
+	rm -rf hotspot-tools
+	rm -rf rt/netscape
+	rm -rf visualvm
+	rm -rf netbeans
+if ENABLE_NPPLUGIN
+	rm -f $(NPPLUGIN_DIR)/*.o $(NPPLUGIN_DIR)/IcedTeaNPPlugin.so
+else
+if ENABLE_PLUGIN
+	rm -f IcedTeaPlugin.o IcedTeaPlugin.so
+endif
+endif
+
+if BUILD_CACAO
+	rm -rf cacao
+endif
+	rm -f jni-common.o
+if ADD_ZERO_BUILD
+	rm -rf zerovm
+endif
+
+#FIXME (clean): Missing distclean-local for downloads only
+
+install:
+
+.PHONY: \
+	env env-ecj snapshot clean-clone clean-patch \
+	clean-clone-ecj clean-patch-ecj clean-bootstrap-directory \
+	clean-bootstrap-directory-symlink clean-bootstrap-directory-ecj \
+	clean-bootstrap-directory-symlink-ecj icedtea icedtea-debug \
+	clean-icedtea icedtea-against-icedtea clean-icedtea-ecj clean-plugs \
+	clean-tools-jar clean-shared-objects clean-visualvm clean-nbplatform \
+	clean-copy clean-hotspot-tools clean-rt $(ICEDTEAPLUGIN_CLEAN) \
+	$(ICEDTEANPPLUGIN_CLEAN) hotspot hotspot-helper clean-extra clean-jtreg \
+	clean-jtreg-reports 
+
+env:
+	@echo 'unset JAVA_HOME'
+	@echo 'export $(ICEDTEA_ENV)'
+
+env-ecj:
+	@echo 'unset JAVA_HOME'
+	@echo 'export $(ICEDTEA_ENV_ECJ)'
+
+# Mercurial snapshot.
+snapshot: dist
+	mv $(DIST_ARCHIVES) $(distdir)-`$(HG) tip --template '{node}'`.tar.gz
+
+# fsg-tarball
+
+# Creates archive of openjdk that is compliant with Free Software guidelines.
+dist-openjdk-fsg: stamps/patch-fsg.stamp
+	$(ZIP) -r openjdk-fsg-$(OPENJDK_VERSION) openjdk/
+
+# OpenJDK Source Preparation Targets
+# ==================================
+
+# Download OpenJDK sources.
+
+stamps/hgforest.stamp:
+if OPENJDK_SRC_DIR_FOUND
+else
+if USE_ALT_OPENJDK_SRC_ZIP
+else
+if !USE_HG
+else
+	if ! $(HG) fclone -h; \
+          then \
+          echo "No forest extension found. Please refer to" \
+            "http://selenic.com/mercurial/wiki/index.cgi/ForestExtension"; \
+          exit 1; \
+          fi;
+endif
+endif
+endif
+	mkdir -p stamps 
+	touch stamps/hgforest.stamp
+
+clean-hgforest:
+	rm -f stamps/hgforest.stamp
+
+#FIXME (meta): Split into multiple targets
+#FIXME (missing): Download drops targets
+stamps/download.stamp: stamps/hgforest.stamp
+if OPENJDK_SRC_DIR_FOUND
+else
+if USE_ALT_OPENJDK_SRC_ZIP
+else
+if USE_HG
+if WITH_HGREV
+	$(HG) fclone -r $(HGREV) $(OPENJDK_HG_URL) openjdk;
+else
+	$(HG) fclone $(OPENJDK_HG_URL) openjdk;
+endif
+else
+	if ! echo "$(OPENJDK_MD5SUM)  $(OPENJDK_SRC_ZIP)" \
+	  | $(MD5SUM) --check ; \
+	then \
+	  if [ $(OPENJDK_SRC_ZIP) ] ; \
+	  then \
+	    mv $(OPENJDK_SRC_ZIP) $(OPENJDK_SRC_ZIP).old ; \
+	  fi ; \
+	  $(WGET) $(OPENJDK_URL)$(OPENJDK_SRC_ZIP) -O $(OPENJDK_SRC_ZIP); \
+	fi
+endif
+endif
+if WITH_ALT_HSBUILD
+if USE_ALT_HOTSPOT_SRC_ZIP
+else
+	hotspot_md5sum="`$(AWK) 'version==$$1 {print $$4}' version=$(HSBUILD) \
+	  $(abs_top_srcdir)/hotspot.map`" ; \
+	if ! echo "$${hotspot_md5sum}  $(HOTSPOT_SRC_ZIP)" \
+	  | $(MD5SUM) --check ; \
+	then \
+	  if [ $(HOTSPOT_SRC_ZIP) ] ; \
+	  then \
+	    mv $(HOTSPOT_SRC_ZIP) $(HOTSPOT_SRC_ZIP).old ; \
+	  fi ; \
+	  hotspot_url="`$(AWK) 'version==$$1 {print $$2 "/archive/" $$3 ".tar.gz"}' \
+	    version=$(HSBUILD) $(abs_top_srcdir)/hotspot.map`"; \
+	  $(WGET) $${hotspot_url} -O $(HOTSPOT_SRC_ZIP) ; \
+	fi
+endif
+endif
+endif
+if BUILD_CACAO
+if !USE_SYSTEM_CACAO
+if USE_ALT_CACAO_SRC_ZIP
+else
+if USE_ALT_CACAO_SRC_DIR
+else
+	if ! echo "$(CACAO_MD5SUM)  $(CACAO_SRC_ZIP)" \
+	 | $(MD5SUM) --check ; \
+	then \
+	 if [ $(CACAO_SRC_ZIP) ] ; \
+	 then \
+	   mv $(CACAO_SRC_ZIP) $(CACAO_SRC_ZIP).old ; \
+	 fi ; \
+	 $(WGET) $(CACAO_URL)$(CACAO_SRC_ZIP) -O $(CACAO_SRC_ZIP); \
+	fi
+endif
+endif
+endif
+endif
+if WITH_VISUALVM
+	if ! echo "$(NETBEANS_PROFILER_MD5SUM)  $(NETBEANS_PROFILER_SRC_ZIP)" \
+	 | $(MD5SUM) --check ; \
+	then \
+	 if [ $(NETBEANS_PROFILER_SRC_ZIP) ] ; \
+	 then \
+	  mv $(NETBEANS_PROFILER_SRC_ZIP) $(NETBEANS_PROFILER_SRC_ZIP).old ; \
+	 fi ; \
+	 $(WGET) $(NETBEANS_PROFILER_URL)$(NETBEANS_PROFILER_SRC_ZIP) \
+	  -O $(NETBEANS_PROFILER_SRC_ZIP) ; \
+	 fi
+
+	if ! echo "$(VISUALVM_MD5SUM)  $(VISUALVM_SRC_ZIP)" \
+         | $(MD5SUM) --check ; \
+        then \
+         if [ $(VISUALVM_SRC_ZIP) ] ; \
+         then \
+          mv $(VISUALVM_SRC_ZIP) $(VISUALVM_SRC_ZIP).old ; \
+         fi ; \
+         $(WGET) $(VISUALVM_URL)$(VISUALVM_SRC_ZIP) \
+          -O $(VISUALVM_SRC_ZIP) ; \
+         fi
+endif
+	mkdir -p stamps
+	touch stamps/download.stamp
+
+#FIXME (meta): split into multiple targets
+clean-download:
+	rm -f stamps/download.stamp
+	rm -f $(OPENJDK_SRC_ZIP)
+if BUILD_CACAO
+if USE_ALT_CACAO_SRC_DIR
+else
+	rm -f $(CACAO_SRC_ZIP)
+endif
+endif
+if WITH_VISUALVM
+	rm -f $(VISUALVM_SRC_ZIP)
+	rm -f $(NETBEANS_PROFILER_SRC_ZIP)
+endif
+
+#FIXME (meta): Split into multiple targets
 stamps/extract.stamp: stamps/download.stamp
 if OPENJDK_SRC_DIR_FOUND
 	cp -a $(OPENJDK_SRC_DIR) openjdk
@@ -753,86 +833,34 @@ endif
 clean-replace-hotspot:
 	rm -rf stamps/replace-hotspot.stamp
 
-stamps/patch.stamp: stamps/patch-fsg.stamp
-	mkdir -p stamps ; \
-	rm -f stamps/patch.stamp.tmp ; \
-	touch stamps/patch.stamp.tmp ; \
-	all_patches_ok=yes; \
-	for p in $(ICEDTEA_PATCHES) ; \
-	do \
-	  if test x$${all_patches_ok} = "xyes" \
-	    && echo Checking $$p \
-	    && $(PATCH) -l -p0 --dry-run -s -t -f \
-	      < $(abs_top_srcdir)/$$p ; \
-	  then \
-	    echo Applying $$p ; \
-	    $(PATCH) -l -p0 < $(abs_top_srcdir)/$$p ; \
-	    if ! grep "^\* $$(basename $$p)" $(abs_top_srcdir)/HACKING \
-	      >> stamps/patch.stamp.tmp ; \
-	    then \
-	      echo "* $$(basename $$p): UNDOCUMENTED" \
-	        >> stamps/patch.stamp.tmp ; \
-	    fi ; \
-	  else \
-	    test x$${all_patches_ok} = "xyes" && all_patches_ok=$$p ; \
-	  fi ; \
-	done ; \
-	mv stamps/patch.stamp.tmp stamps/patch.stamp ; \
-	if ! test x$${all_patches_ok} = "xyes"; then \
-	  echo ERROR patch $${all_patches_ok} FAILED! ; \
-	  echo WARNING make clean-patch before retrying a fix ; \
-	  exit 2; \
+# Copy ports sources into tree
+stamps/ports.stamp: stamps/replace-hotspot.stamp
+	for target in $(abs_top_srcdir)/ports/hotspot/build/*/makefiles/* \
+		      $(abs_top_srcdir)/ports/hotspot/tools \
+		      $(abs_top_srcdir)/ports/hotspot/src/*cpu/* \
+		      $(abs_top_srcdir)/ports/hotspot/src/share/vm/*; do \
+	  link=$$(dirname $$target | sed 's/^.*ports/openjdk/'|sed "s#hotspot/build#hotspot/$(HOTSPOT_MAKE_DIR)#"); \
+	  cp -rv $$target $$link; \
+	done
+	ln -sf $(abs_top_builddir)/platform_zero openjdk/hotspot/$(HOTSPOT_MAKE_DIR)/linux
+	if ! test "x$(ICEDTEA_CORE_BUILD)$(ICEDTEA_SHARK_BUILD)$(WITH_CACAO)" \
+	  = "xno" ; then \
+	  mkdir -p openjdk/jdk/src/solaris/bin/$(BUILD_ARCH_DIR) ; \
+	  ln -sf $(abs_top_builddir)/jvm.cfg \
+	    openjdk/jdk/src/solaris/bin/$(BUILD_ARCH_DIR)/jvm.cfg ; \
 	fi
-
-	if [ -e $(abs_top_srcdir)/.hg ] && which $(HG) >/dev/null; then \
-	  revision="-r`(cd $(abs_top_srcdir); $(HG) tip --template '{node|short}')`" ; \
-	fi ; \
-	icedtea_version="$(PACKAGE_VERSION)$${revision}" ; \
-	if ! test "x$(WITH_CACAO)" = "xno"; then \
-	  echo "JDK_DERIVATIVE_NAME=$${icedtea_version}" \
-	    >>openjdk/jdk/make/common/shared/Defs.gmk ; \
-	  echo "PRODUCT_NAME=IcedTea6" \
-	    >>openjdk/jdk/make/common/shared/Defs.gmk ; \
-	else \
-	  echo "JDK_DERIVATIVE_NAME=IcedTea6 $${icedtea_version}" \
-	    >>openjdk/jdk/make/common/shared/Defs.gmk ; \
+	if ! test "x$(ICEDTEA_ZERO_BUILD)$(WITH_CACAO)" = "xno"; then \
+	  ln -sf $(abs_top_builddir)/ergo.c \
+	    openjdk/jdk/src/solaris/bin/ergo_$(BUILD_ARCH_DIR).c; \
 	fi
+	mkdir -p stamps
+	touch stamps/ports.stamp
 
-	if [ -n "$(PKGVERSION)" ]; then \
-	  echo "DISTRO_PACKAGE_VERSION=$(PKGVERSION)" \
-	    >>openjdk/jdk/make/common/shared/Defs.gmk ; \
-	fi
+#FIXME (clean): Missing clean-ports
 
-if ENABLE_NPPLUGIN
-	cp -a $(abs_top_srcdir)/plugin/icedteanp/java/sun/applet/*java openjdk/jdk/src/share/classes/sun/applet/
-else
-if ENABLE_PLUGIN
-	cp -a $(abs_top_srcdir)/plugin/icedtea/sun/applet/*java openjdk/jdk/src/share/classes/sun/applet/
-endif
-endif
+#FIXME (missing): Missing generated.stamp 
 
-clean-patch:
-	rm -f stamps/patch.stamp
-	all_patches_ok=yes; \
-	for p in $(ICEDTEA_PATCHES) ; \
-	do \
-	  echo Checking $$p ; \
-	  if $(PATCH) -l -p0 -R --dry-run -s -t -f < $(abs_top_srcdir)/$$p ; \
-	  then \
-	    echo Reverting $$p ; \
-	    $(PATCH) -l -p0 -R < $(abs_top_srcdir)/$$p ; \
-	  else \
-	    all_patches_ok=no ; \
-	  fi ; \
-	done ; \
-	if ! test x$${all_patches_ok} = "xyes" ; then \
-	  echo "WARNING Not all patches reverted cleanly" ; \
-	fi
-	rm -rf rt/netscape
-	for file in plugin/icedtea/sun/applet/*java ; \
-	do \
-		rm -f openjdk/jdk/src/share/classes/sun/applet/`basename $file` ; \
-	done ;
+#FIXME (clean): Missing clean-generated
 
 stamps/patch-fsg.stamp: stamps/ports.stamp
 	mkdir -p stamps ; \
@@ -883,6 +911,91 @@ clean-patch-fsg:
 	  echo "WARNING Not all patches reverted cleanly" ; \
 	fi
 
+stamps/patch.stamp: stamps/patch-fsg.stamp
+	mkdir -p stamps ; \
+	rm -f stamps/patch.stamp.tmp ; \
+	touch stamps/patch.stamp.tmp ; \
+	all_patches_ok=yes; \
+	for p in $(ICEDTEA_PATCHES) ; \
+	do \
+	  if test x$${all_patches_ok} = "xyes" \
+	    && echo Checking $$p \
+	    && $(PATCH) -l -p0 --dry-run -s -t -f \
+	      < $(abs_top_srcdir)/$$p ; \
+	  then \
+	    echo Applying $$p ; \
+	    $(PATCH) -l -p0 < $(abs_top_srcdir)/$$p ; \
+	    if ! grep "^\* $$(basename $$p)" $(abs_top_srcdir)/HACKING \
+	      >> stamps/patch.stamp.tmp ; \
+	    then \
+	      echo "* $$(basename $$p): UNDOCUMENTED" \
+	        >> stamps/patch.stamp.tmp ; \
+	    fi ; \
+	  else \
+	    test x$${all_patches_ok} = "xyes" && all_patches_ok=$$p ; \
+	  fi ; \
+	done ; \
+	mv stamps/patch.stamp.tmp stamps/patch.stamp ; \
+	if ! test x$${all_patches_ok} = "xyes"; then \
+	  echo ERROR patch $${all_patches_ok} FAILED! ; \
+	  echo WARNING make clean-patch before retrying a fix ; \
+	  exit 2; \
+	fi
+
+	if [ -e $(abs_top_srcdir)/.hg ] && which $(HG) >/dev/null; then \
+	  revision="-r`(cd $(abs_top_srcdir); $(HG) tip --template '{node|short}')`" ; \
+	fi ; \
+	icedtea_version="$(PACKAGE_VERSION)$${revision}" ; \
+	if ! test "x$(WITH_CACAO)" = "xno"; then \
+	  echo "JDK_DERIVATIVE_NAME=$${icedtea_version}" \
+	    >>openjdk/jdk/make/common/shared/Defs.gmk ; \
+	  echo "PRODUCT_NAME=IcedTea6" \
+	    >>openjdk/jdk/make/common/shared/Defs.gmk ; \
+	else \
+	  echo "JDK_DERIVATIVE_NAME=IcedTea6 $${icedtea_version}" \
+	    >>openjdk/jdk/make/common/shared/Defs.gmk ; \
+	fi
+
+	if [ -n "$(PKGVERSION)" ]; then \
+	  echo "DISTRO_PACKAGE_VERSION=$(PKGVERSION)" \
+	    >>openjdk/jdk/make/common/shared/Defs.gmk ; \
+	fi
+
+#FIXME (plugin): Don't do this copying
+if ENABLE_NPPLUGIN
+	cp -a $(abs_top_srcdir)/plugin/icedteanp/java/sun/applet/*java openjdk/jdk/src/share/classes/sun/applet/
+else
+if ENABLE_PLUGIN
+	cp -a $(abs_top_srcdir)/plugin/icedtea/sun/applet/*java openjdk/jdk/src/share/classes/sun/applet/
+endif
+endif
+
+clean-patch:
+	rm -f stamps/patch.stamp
+	all_patches_ok=yes; \
+	for p in $(ICEDTEA_PATCHES) ; \
+	do \
+	  echo Checking $$p ; \
+	  if $(PATCH) -l -p0 -R --dry-run -s -t -f < $(abs_top_srcdir)/$$p ; \
+	  then \
+	    echo Reverting $$p ; \
+	    $(PATCH) -l -p0 -R < $(abs_top_srcdir)/$$p ; \
+	  else \
+	    all_patches_ok=no ; \
+	  fi ; \
+	done ; \
+	if ! test x$${all_patches_ok} = "xyes" ; then \
+	  echo "WARNING Not all patches reverted cleanly" ; \
+	fi
+	rm -rf rt/netscape
+	for file in plugin/icedtea/sun/applet/*java ; \
+	do \
+		rm -f openjdk/jdk/src/share/classes/sun/applet/`basename $file` ; \
+	done ;
+
+#FIXME (missing): versioning.stamp
+#FIXME (clean): Missing clean-versioning
+
 stamps/overlay.stamp: stamps/patch.stamp
 	cp -r $(abs_top_srcdir)/overlays/openjdk/* openjdk/
 if ENABLE_NIO2
@@ -890,10 +1003,13 @@ if ENABLE_NIO2
 endif
 	touch stamps/overlay.stamp
 
+#FIXME (clean): Missing clean-overlay
+
 # OpenJDK ecj Source Preparation Targets
 # ======================================
 
 # Copy over OpenJDK sources for ecj.
+# FIXME (missing): Rename to clone-ecj.
 stamps/extract-ecj.stamp: stamps/overlay.stamp
 	if ! test -d openjdk-ecj ; then \
 	    cp -pPRl openjdk openjdk-ecj ; \
@@ -901,16 +1017,12 @@ stamps/extract-ecj.stamp: stamps/overlay.stamp
 	mkdir -p stamps
 	touch stamps/extract-ecj.stamp
 
+# FIXME (missing): Rename to clean-clone-ecj.
 clean-extract-ecj:
 	rm -f stamps/extract-ecj.stamp
 	rm -rf openjdk-ecj
 
-# Patch OpenJDK for plug replacements and ecj.
-ICEDTEA_ECJ_PATCHES = patches/ecj/icedtea-ant.patch \
-	patches/ecj/icedtea.patch \
-	patches/ecj/icedtea-hotspot.patch \
-	patches/ecj/icedtea-spp.patch \
-	patches/ecj/icedtea-jopt.patch
+# Patch OpenJDK for ecj.
 
 stamps/patch-ecj.stamp: stamps/extract-ecj.stamp
 	mkdir -p stamps; \
@@ -964,50 +1076,15 @@ clean-patch-ecj:
 # Bootstrap Directory Targets
 # ===========================
 
-# bootstrap/icedtea.
-stamps/bootstrap-directory.stamp: stamps/icedtea-against-ecj.stamp
-	rm -rf bootstrap/icedtea
-	ln -s \
-	  $(abs_top_builddir)/$(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/ \
-	  bootstrap/icedtea
-	if ! test -d bootstrap/icedtea/include; then \
-	  ln -sf $(ICEDTEA_BUILD_DIR_ECJ)/include bootstrap/icedtea/include; \
-	fi
-	mkdir -p stamps
-	touch stamps/bootstrap-directory.stamp
+stamps/native-ecj.stamp: 
+	mkdir -p stamps ; \
+	if test "x${GCJ}" != "xno"; then \
+	  ${GCJ} ${CFLAGS} -Wl,-Bsymbolic -findirect-dispatch -o native-ecj \
+	    --main=org.eclipse.jdt.internal.compiler.batch.Main ${ECJ_JAR} ; \
+	fi ; \
+	touch stamps/native-ecj.stamp
 
-clean-bootstrap-directory:
-	rm -f stamps/bootstrap-directory.stamp
-	rm -rf bootstrap/icedtea
-
-if WITH_OPENJDK
-  BOOTSTRAP_DIRECTORY_STAMP =
-  ICEDTEA_HOME = $(SYSTEM_OPENJDK_DIR)
-else
-  BOOTSTRAP_DIRECTORY_STAMP = stamps/bootstrap-directory.stamp
-  ICEDTEA_HOME = $(abs_top_builddir)/bootstrap/icedtea
-endif
-
-# bootstrap/jdk1.6.0 to bootstrap/icedtea symlink.
-stamps/bootstrap-directory-symlink.stamp: $(BOOTSTRAP_DIRECTORY_STAMP)
-	mkdir -p bootstrap
-	rm -f bootstrap/jdk1.6.0
-	ln -sf $(ICEDTEA_HOME) bootstrap/jdk1.6.0; \
-	if ! bootstrap/jdk1.6.0/bin/java -version ; \
-         then \
-           echo "bootstrap/jdk1.6.0/bin/java" \
-               "cannot be found or is corrupted." ; \
-           exit 1; \
-        fi
-	mkdir -p stamps
-	touch stamps/bootstrap-directory-symlink.stamp
-
-clean-bootstrap-directory-symlink:
-	rm -f stamps/bootstrap-directory-symlink.stamp
-	rm -f bootstrap/jdk1.6.0
-
-# Bootstrap ecj Directory Targets
-# ===============================
+# FIXME(clean): Missing clean-native-ecj
 
 # bootstrap/ecj.
 stamps/bootstrap-directory-ecj.stamp: stamps/native-ecj.stamp
@@ -1057,6 +1134,22 @@ clean-bootstrap-directory-ecj:
 	rm -f stamps/bootstrap-directory-ecj.stamp
 	rm -rf bootstrap/ecj
 
+# bootstrap/icedtea.
+stamps/bootstrap-directory.stamp: stamps/icedtea-against-ecj.stamp
+	rm -rf bootstrap/icedtea
+	ln -s \
+	  $(abs_top_builddir)/$(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/ \
+	  bootstrap/icedtea
+	if ! test -d bootstrap/icedtea/include; then \
+	  ln -sf $(ICEDTEA_BUILD_DIR_ECJ)/include bootstrap/icedtea/include; \
+	fi
+	mkdir -p stamps
+	touch stamps/bootstrap-directory.stamp
+
+clean-bootstrap-directory:
+	rm -f stamps/bootstrap-directory.stamp
+	rm -rf bootstrap/icedtea
+
 # bootstrap/jdk1.6.0 to bootstrap/ecj symlink.
 stamps/bootstrap-directory-symlink-ecj.stamp: \
 	stamps/bootstrap-directory-ecj.stamp
@@ -1069,23 +1162,26 @@ clean-bootstrap-directory-symlink-ecj:
 	rm -f stamps/bootstrap-directory-symlink-ecj.stamp
 	rm -f bootstrap/jdk1.6.0
 
+# bootstrap/jdk1.6.0 to bootstrap/icedtea symlink.
+stamps/bootstrap-directory-symlink.stamp: $(BOOTSTRAP_DIRECTORY_STAMP)
+	mkdir -p bootstrap
+	rm -f bootstrap/jdk1.6.0
+	ln -sf $(ICEDTEA_HOME) bootstrap/jdk1.6.0; \
+	if ! bootstrap/jdk1.6.0/bin/java -version ; \
+         then \
+           echo "bootstrap/jdk1.6.0/bin/java" \
+               "cannot be found or is corrupted." ; \
+           exit 1; \
+        fi
+	mkdir -p stamps
+	touch stamps/bootstrap-directory-symlink.stamp
+
+clean-bootstrap-directory-symlink:
+	rm -f stamps/bootstrap-directory-symlink.stamp
+	rm -f bootstrap/jdk1.6.0
 
 # OpenJDK Targets
 # ===============
-
-if WITH_OPENJDK
-  MEMORY_LIMIT = -J-Xmx1024m
-else
-  MEMORY_LIMIT =
-endif
-
-if WITH_CACAO
-  ICEDTEA_BUILD_TARGET=j2se_only
-  ICEDTEA_DEBUG_BUILD_TARGET=j2se_fastdebug_only
-else
-  ICEDTEA_BUILD_TARGET=
-  ICEDTEA_DEBUG_BUILD_TARGET=debug_build
-endif
 
 # If you change anything here in the icedtea target, please make sure
 # you change it in the icedtea-debug target as well.
@@ -1296,22 +1392,18 @@ icedtea-against-icedtea: \
 	stamps/add-cacao.stamp \
 	stamps/add-zero.stamp
 
+#FIXME (clean): Missing clean-icedtea-against-icedtea
+
 icedtea-debug-against-icedtea: \
 	stamps/bootstrap-directory-symlink.stamp \
 	stamps/icedtea-debug.stamp \
 	stamps/add-cacao-debug.stamp \
 	stamps/add-zero-debug.stamp
 
+#FIXME (clean): Missing clean-icedtea-debug-against-icedtea
+
 # OpenJDK ecj Targets
 # ===================
-
-stamps/native-ecj.stamp: 
-	mkdir -p stamps ; \
-	if test "x${GCJ}" != "xno"; then \
-	  ${GCJ} ${CFLAGS} -Wl,-Bsymbolic -findirect-dispatch -o native-ecj \
-	    --main=org.eclipse.jdt.internal.compiler.batch.Main ${ECJ_JAR} ; \
-	fi ; \
-	touch stamps/native-ecj.stamp
 
 stamps/icedtea-ecj.stamp: stamps/bootstrap-directory-symlink-ecj.stamp \
 	stamps/hotspot-tools.stamp stamps/plugs.stamp \
@@ -1325,7 +1417,6 @@ stamps/icedtea-ecj.stamp: stamps/bootstrap-directory-symlink-ecj.stamp \
 	mkdir -p stamps
 	touch stamps/icedtea-ecj.stamp
 
-SERVER_DIR = hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server
 hotspot:
 	rm -f stamps/bootstrap-directory-symlink-ecj.stamp
 	rm -f stamps/icedtea-ecj.stamp
@@ -1356,266 +1447,9 @@ stamps/icedtea-against-ecj.stamp: \
 	mkdir -p stamps
 	touch stamps/icedtea-against-ecj.stamp
 
-# Binary Plugs and Tools Targets
-# ==============================
+#FIXME (clean): Missing clean-icedtea-against-ecj
 
-stamps/plugs.stamp: bootstrap/jdk1.7.0/jre/lib/rt-closed.jar
-	mkdir -p stamps
-	touch stamps/plugs.stamp
-
-stamps/hotspot-tools.stamp: bootstrap/jdk1.7.0/jre/lib/tools.jar
-	mkdir -p stamps
-	touch stamps/hotspot-tools.stamp
-
-clean-plugs: clean-plugs clean-shared-objects \
-	clean-copy clean-rt
-	rm -f stamps/plugs.stamp
-	rm -f bootstrap/jdk1.7.0/jre/lib/rt-closed.jar
-
-clean-tools-jar: clean-hotspot-tools
-	rm -f stamps/hotspot-tools.stamp
-	rm -rf tools/
-	rm -f bootstrap/jdk1.7.0/jre/lib/tools.jar
-
-# Sources copied from OpenJDK.
-ICEDTEA_COPY_DIRS = \
-	com/sun/jdi \
-	com/sun/jdi/connect \
-	com/sun/jdi/connect/spi \
-	com/sun/jdi/event \
-	com/sun/jdi/request \
-	com/sun/jmx/snmp/agent \
-	com/sun/tools/jdi \
-	java/io \
-	java/util \
-	java/rmi \
-	sun/awt/ \
-	javax/net/ssl \
-	javax/script
-
-stamps/copy-source-files.stamp: stamps/overlay.stamp
-	for copy_dir in $(ICEDTEA_COPY_DIRS) ; \
-	do \
-	  mkdir -p rt/$$copy_dir ; \
-	  cp -pPRf openjdk/jdk/src/share/classes/$$copy_dir/*.java \
-	    rt/$$copy_dir ; \
-	done
-	mkdir -p stamps
-	touch stamps/copy-source-files.stamp
-
-clean-copy:
-	rm -f stamps/copy-source-files.stamp
-	for copy_dir in $(ICEDTEA_COPY_DIRS) ; \
-	do \
-	  rm -rf rt/$$copy_dir ; \
-	done
-
-SHARE = openjdk/jdk/src/share/classes
-SOLARIS = openjdk/jdk/src/solaris/classes
-LANGTOOLS = openjdk/langtools/src/share/classes
-JAXP = openjdk/jaxp/src/share/classes
-CORBA = openjdk/corba/src/share/classes
-JAXWS = openjdk/jaxws/src/share/classes
-
-OPENJDK_SOURCEPATH_DIRS = \
-        $(SHARE):$(SOLARIS):$(LANGTOOLS):$(JAXP):$(CORBA):$(JAXWS)
-
-# tools.jar class files.
-stamps/hotspot-tools-copy-source-files.stamp: stamps/overlay.stamp
-	for copy_dir in \
-	  `cat $(abs_top_srcdir)/tools-copy/tools-jdk-copy-files.txt` ; \
-	do \
-	  mkdir -p hotspot-tools/$$copy_dir ; \
-	  cp -pPRf openjdk/jdk/src/share/classes/$$copy_dir/* \
-	    hotspot-tools/$$copy_dir ; \
-	done
-
-	for copy_dir in \
-	  `cat $(abs_top_srcdir)/tools-copy/tools-langtools-copy-files.txt` ; \
-	do \
-	  mkdir -p hotspot-tools/$$copy_dir ; \
-	  cp -pPRf openjdk/langtools/src/share/classes/$$copy_dir/* \
-	    hotspot-tools/$$copy_dir ; \
-	done
-
-	for copy_dir in \
-	  `cat $(abs_top_srcdir)/tools-copy/tools-corba-copy-files.txt` ; \
-	do \
-	  mkdir -p hotspot-tools/$$copy_dir ; \
-	  cp -pPRf openjdk/corba/src/share/classes/$$copy_dir/* \
-	    hotspot-tools/$$copy_dir ; \
-	done
-
-	for copy_dir in \
-	  `cat $(abs_top_srcdir)/tools-copy/tools-jaxws-copy-files.txt` ; \
-	do \
-	  mkdir -p hotspot-tools/$$copy_dir ; \
-	  cp -pPRf openjdk/jaxws/src/share/classes/$$copy_dir/* \
-	    hotspot-tools/$$copy_dir ; \
-	done
-
-	mkdir -p stamps
-	touch stamps/hotspot-tools-copy-source-files.stamp
-
-hotspot-tools-source-files.txt: stamps/replace-hotspot.stamp \
-	stamps/hotspot-tools-copy-source-files.stamp
-	find hotspot-tools -name '*.java' | sort > $@
-	mkdir -p lib/hotspot-tools
-
-ABS_SOURCE_DIRS = $(abs_top_builddir)/generated:$(abs_top_builddir)/rt:$(abs_top_srcdir)/rt:$(LIVECONNECT_SRCS)
-stamps/hotspot-tools-class-files.stamp: hotspot-tools-source-files.txt
-	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
-	then \
-	  $(JAVAC) $(MEMORY_LIMIT) -g -d lib/hotspot-tools \
-            -source 1.5 \
-            -sourcepath \
-	      'hotspot-tools:$(OPENJDK_SOURCEPATH_DIRS):$(ABS_SOURCE_DIRS)' \
-            -classpath \'\' -bootclasspath \'\' @$< ; \
-	else \
-	  $(ICEDTEA_BOOT_DIR)/bin/javac $(MEMORY_LIMIT) -g \
-	    -d lib/hotspot-tools \
-	    -source 1.5 \
-	    -sourcepath \
-	      'hotspot-tools:$(OPENJDK_SOURCEPATH_DIRS):$(ABS_SOURCE_DIRS)' \
-	    -classpath \'\' -bootclasspath \'\' @$< ; \
-	fi
-	mkdir -p stamps
-	touch stamps/hotspot-tools-class-files.stamp
-
-clean-hotspot-tools:
-	rm -rf lib/hotspot-tools
-	rm -f stamps/hotspot-tools-class-files.stamp
-	rm -f hotspot-tools-source-files.txt
-	rm -f stamps/hotspot-tools-copy-source-files.stamp
-
-# tools.jar
-bootstrap/jdk1.7.0/jre/lib/tools.jar: stamps/hotspot-tools-class-files.stamp
-	mkdir -p bootstrap/jdk1.7.0/jre/lib/
-	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
-	then \
-	  $(JAR) cf $@ -C lib/hotspot-tools com -C lib/hotspot-tools sun \
-            -C lib/hotspot-tools org -C lib/hotspot-tools java \
-            -C lib/hotspot-tools javax ; \
-	else \
-	  $(ICEDTEA_BOOT_DIR)/bin/jar cf $@ -C lib/hotspot-tools com \
-	    -C lib/hotspot-tools sun \
-            -C lib/hotspot-tools org -C lib/hotspot-tools java \
-            -C lib/hotspot-tools javax ; \
-	fi
-	if test -d bootstrap/ecj ; \
-	then \
-	  mkdir -p bootstrap/ecj/lib/; \
-	  ln -sf $(abs_top_builddir)/bootstrap/jdk1.7.0/jre/lib/tools.jar \
-	    $(abs_top_builddir)/bootstrap/ecj/lib/tools.jar; \
-	fi
-
-# rt-closed.jar class files.
-rt-source-files.txt: stamps/replace-hotspot.stamp stamps/copy-source-files.stamp
-	find $(abs_top_srcdir)/rt $(abs_top_builddir)/rt $(LIVECONNECT_SRCS) -name '*.java' \
-	  | sort -u > $@
-
-stamps/rt-class-files.stamp: rt-source-files.txt
-	mkdir -p lib/rt
-	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
-	then \
-	  $(JAVAC) $(MEMORY_LIMIT) -g -d lib/rt \
-	    -source 1.5 \
-	    -sourcepath \
-	      '$(OPENJDK_SOURCEPATH_DIRS):$(abs_top_builddir)/generated' \
-	    -classpath \'\' -bootclasspath \'\' @$< ; \
-	else \
-	  $(ICEDTEA_BOOT_DIR)/bin/javac $(MEMORY_LIMIT) -g -d lib/rt \
-            -source 1.5 \
-            -sourcepath \
-	      '$(OPENJDK_SOURCEPATH_DIRS):$(abs_top_builddir)/generated' \
-            -classpath \'\' -bootclasspath \'\' @$< ; \
-	fi
-	cp -r $(abs_top_srcdir)/rt/net/sourceforge/jnlp/resources \
-	  lib/rt/net/sourceforge/jnlp/
-	mkdir -p stamps
-	touch stamps/rt-class-files.stamp
-
-clean-rt:
-	rm -rf lib/rt
-	rm -f stamps/rt-class-files.stamp
-	rm -f rt-source-files.txt
-
-# rt-closed.jar.
-bootstrap/jdk1.7.0/jre/lib/rt-closed.jar: stamps/rt-class-files.stamp
-	mkdir -p bootstrap/jdk1.7.0/jre/lib
-	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
-	then \
-	  $(JAR) cf $@ -C lib/rt com -C lib/rt java \
-	    -C lib/rt javax $(LIVECONNECT_DIR) -C lib/rt net -C lib/rt sun ; \
-	else \
-	  $(ICEDTEA_BOOT_DIR)/bin/jar cf $@ -C lib/rt com -C lib/rt java \
-	    -C lib/rt javax $(LIVECONNECT_DIR) -C lib/rt net -C lib/rt sun ; \
-	fi
-	if test -d bootstrap/ecj/jre/lib ; \
-	then \
-	  cp bootstrap/jdk1.7.0/jre/lib/rt-closed.jar \
-	    bootstrap/ecj/jre/lib/rt.jar; \
-	fi
-
-# extras -- used to create about.jar for javaws.
-extra-source-files.txt:
-	find $(abs_top_srcdir)/extra -name '*.java' | sort > $@
-
-stamps/extra-class-files.stamp: extra-source-files.txt \
-	bootstrap/jdk1.7.0/jre/lib/rt-closed.jar
-	mkdir -p extra-lib
-	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
-	then \
-	  $(JAVAC) $(MEMORY_LIMIT) -g -d extra-lib \
-	    -source 1.5 \
-	    -sourcepath extra -cp bootstrap/jdk1.7.0/jre/lib/rt-closed.jar \
-	    -bootclasspath \'\' @extra-source-files.txt ; \
-	else \
-	  $(ICEDTEA_BOOT_DIR)/bin/javac $(MEMORY_LIMIT) -g -d extra-lib \
-            -source 1.5 \
-            -sourcepath extra -cp bootstrap/jdk1.7.0/jre/lib/rt-closed.jar \
-            -bootclasspath \'\' @extra-source-files.txt ; \
-	fi
-	cp -r $(abs_top_srcdir)/extra/net/sourceforge/jnlp/about/resources \
-	  extra-lib/net/sourceforge/jnlp/about
-	mkdir -p stamps
-	touch $@
-
-clean-extra:
-	rm -rf extra-lib
-	rm -f stamps/extra-class-files.stamp
-	rm -f extra-source-files.txt
-
-extra-lib/about.jar: stamps/extra-class-files.stamp
-	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
-	then \
-	  $(JAR) cf $@ -C extra-lib net ; \
-	else \
-	  $(ICEDTEA_BOOT_DIR)/bin/jar cf $@ -C extra-lib net ; \
-	fi
-
-stamps/cacao.stamp: stamps/replace-hotspot.stamp stamps/rt-class-files.stamp
-if BUILD_CACAO
-if !USE_SYSTEM_CACAO
-	cd cacao/cacao && \
-	$(ARCH_PREFIX) ./configure \
-	  --host=$(host_alias) \
-	  --build=$(build_alias) \
-	  --target=$(target_alias) \
-	  --prefix=$(abs_top_builddir)/cacao/install \
-	  --with-java-runtime-library=openjdk \
-	  --with-java-runtime-library-prefix=$(abs_top_builddir)/openjdk \
-	  --with-java-runtime-library-classes=$(abs_top_builddir)/lib/rt \
-	  --enable-jre-layout $(CACAO_CONFIGURE_ARGS); \
-	$(ARCH_PREFIX) $(MAKE) install
-endif
-endif
-	mkdir -p stamps
-	touch $@
-
-clean-cacao:
-	rm -rf cacao
-	rm -f stamps/cacao.stamp
+# Plugin
 
 if ENABLE_NPPLUGIN
 # IcedTeaNPPlugin.so.
@@ -1695,8 +1529,58 @@ clean-IcedTeaPlugin:
 endif
 endif
 
+#FIXME (plugin): Missing plugin.stamp
+#FIXME (clean): Missing clean-plugin
+#FIXME (plugin): Missing liveconnect-source-files.txt
+#FIXME (plugin): Missing liveconnect.stamp
+#FIXME (plugin): Missing liveconnect-dist.stamp
+#FIXME (clean): Missing clean-liveconnect
+#FIXME (netx): Missing netx-source-files.txt
+#FIXME (netx): Missing netx.stamp
+#FIXME (netx): Missing netx-dist.stamp
+#FIXME (clean): Missing clean-netx
+
+# extras -- used to create about.jar for javaws.
+extra-source-files.txt:
+	find $(abs_top_srcdir)/extra -name '*.java' | sort > $@
+
+stamps/extra-class-files.stamp: extra-source-files.txt \
+	bootstrap/jdk1.7.0/jre/lib/rt-closed.jar
+	mkdir -p extra-lib
+	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
+	then \
+	  $(JAVAC) $(MEMORY_LIMIT) -g -d extra-lib \
+	    -source 1.5 \
+	    -sourcepath extra -cp bootstrap/jdk1.7.0/jre/lib/rt-closed.jar \
+	    -bootclasspath \'\' @extra-source-files.txt ; \
+	else \
+	  $(ICEDTEA_BOOT_DIR)/bin/javac $(MEMORY_LIMIT) -g -d extra-lib \
+            -source 1.5 \
+            -sourcepath extra -cp bootstrap/jdk1.7.0/jre/lib/rt-closed.jar \
+            -bootclasspath \'\' @extra-source-files.txt ; \
+	fi
+	cp -r $(abs_top_srcdir)/extra/net/sourceforge/jnlp/about/resources \
+	  extra-lib/net/sourceforge/jnlp/about
+	mkdir -p stamps
+	touch $@
+
+clean-extra:
+	rm -rf extra-lib
+	rm -f stamps/extra-class-files.stamp
+	rm -f extra-source-files.txt
+
+extra-lib/about.jar: stamps/extra-class-files.stamp
+	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
+	then \
+	  $(JAR) cf $@ -C extra-lib net ; \
+	else \
+	  $(ICEDTEA_BOOT_DIR)/bin/jar cf $@ -C extra-lib net ; \
+	fi
+
 # PulseAudio based mixer
 # (pulse-java)
+
+#FIXME (meta): Need pulse-java meta target
 
 stamps/pulse-java.stamp: stamps/pulse-java-jar.stamp stamps/pulse-java-headers.stamp
 if ENABLE_PULSE_JAVA
@@ -1782,10 +1666,85 @@ endif
 
 # end of pulse-java
 
-# targets for additional VMs
+# VisualVM
 
-BUILD_JRE_ARCH_DIR = $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
-BUILD_DEBUG_JRE_ARCH_DIR = $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
+stamps/nbplatform.stamp: $(BOOTSTRAP_DIRECTORY_STAMP) stamps/replace-hotspot.stamp \
+	stamps/download.stamp
+if WITH_VISUALVM
+	cd netbeans ; \
+        rm nbbuild/external/binaries-list ; \
+	mkdir -p ./nbbuild/netbeans_visualvm/ ; \
+	ln -s $(SYSTEM_NETBEANS_DIR)/$(NB_PLATFORM)/ ./nbbuild/netbeans_visualvm/$(NB_PLATFORM) ; \
+	ln -s $(SYSTEM_NETBEANS_DIR)/$(NB_APISUPPORT)/ ./nbbuild/netbeans_visualvm/$(NB_APISUPPORT) ; \
+	ln -s $(SYSTEM_NETBEANS_DIR)/harness/ ./nbbuild/netbeans_visualvm/harness ; \
+	if ! (uname -a | grep x86_64) ; then \
+	  mkdir -p lib.profiler/release/lib/deployed/jdk15/linux ; \
+	  mkdir -p lib.profiler/release/lib/deployed/jdk16/linux ; \
+	  buildscript=./buildnative-linux-15.sh ; \
+	else \
+	  mkdir -p lib.profiler/release/lib/deployed/jdk15/linux-amd64 ; \
+	  mkdir -p lib.profiler/release/lib/deployed/jdk16/linux-amd64 ; \
+	  buildscript=./buildnative-linux64-15.sh ; \
+	fi ; \
+	cd lib.profiler/native/build ; \
+	JAVA_HOME_15=$(ICEDTEA_HOME) JAVA_HOME_16=$(ICEDTEA_HOME) \
+	  $$buildscript ; \
+	cd ../../.. ; \
+        JAVA_HOME=$(ICEDTEA_HOME) $(ANT) -Dpermit.jdk6.builds=true \
+            -f nbbuild/build.xml bootstrap ; \
+	for dir in lib.profiler lib.profiler.ui lib.profiler.common profiler ; do \
+	  JAVA_HOME=$(ICEDTEA_HOME) $(ANT) -Dpermit.jdk6.builds=true -Dbuildnumber=081204 \
+            -Dnetbeans.dest.dir=../nbbuild/netbeans_visualvm \
+	    -f $$dir/build.xml ; \
+	done 
+endif
+	mkdir -p stamps
+	touch $@
+
+clean-nbplatform:
+	rm -rf netbeans
+	rm -f stamps/nbplatform.stamp
+
+stamps/visualvm.stamp: $(BOOTSTRAP_DIRECTORY_STAMP) stamps/download.stamp \
+	stamps/replace-hotspot.stamp stamps/nbplatform.stamp
+if WITH_VISUALVM
+	cd visualvm ; \
+	ln -s $(abs_top_srcdir)/netbeans/nbbuild/netbeans_visualvm netbeans ; \
+	JAVA_HOME=$(ICEDTEA_HOME) $(ANT) build
+endif
+	mkdir -p stamps
+	touch $@
+
+clean-visualvm:
+	rm -rf visualvm
+	rm -f stamps/visualvm.stamp
+
+# CACAO
+
+stamps/cacao.stamp: stamps/replace-hotspot.stamp stamps/rt-class-files.stamp
+if BUILD_CACAO
+if !USE_SYSTEM_CACAO
+	cd cacao/cacao && \
+	$(ARCH_PREFIX) ./configure \
+	  --host=$(host_alias) \
+	  --build=$(build_alias) \
+	  --target=$(target_alias) \
+	  --prefix=$(abs_top_builddir)/cacao/install \
+	  --with-java-runtime-library=openjdk \
+	  --with-java-runtime-library-prefix=$(abs_top_builddir)/openjdk \
+	  --with-java-runtime-library-classes=$(abs_top_builddir)/lib/rt \
+	  --enable-jre-layout $(CACAO_CONFIGURE_ARGS); \
+	$(ARCH_PREFIX) $(MAKE) install
+endif
+endif
+	mkdir -p stamps
+	touch $@
+
+clean-cacao:
+	rm -rf cacao
+	rm -f stamps/cacao.stamp
+
+# targets for additional VMs
 
 stamps/add-cacao.stamp: stamps/icedtea.stamp stamps/cacao.stamp
 if ADD_CACAO_BUILD
@@ -1802,6 +1761,8 @@ else
 endif
 	touch $@
 
+#FIXME (clean): Missing clean-add-cacao
+
 stamps/add-cacao-debug.stamp: stamps/icedtea-debug.stamp stamps/cacao.stamp
 if ADD_CACAO_BUILD
 	mkdir -p $(BUILD_DEBUG_JRE_ARCH_DIR)/cacao
@@ -1817,6 +1778,7 @@ else
 endif
 	touch $@
 
+#FIXME (clean): Missing clean-add-cacao-debug
 
 # configure script arguments, quoted in single quotes
 CONFIGURE_ARGS = @CONFIGURE_ARGS@
@@ -1873,6 +1835,8 @@ else
 endif
 	touch $@
 
+#FIXME (clean): Missing clean-add-zero
+
 stamps/add-zero-debug.stamp: stamps/icedtea-debug.stamp
 if ADD_ZERO_BUILD
 	mkdir -p zerovm
@@ -1900,6 +1864,8 @@ else
 	printf -- '-shark ERROR\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
 endif
 	touch $@
+
+#FIXME (clean): Missing clean-add-zero-debug
 
 # end additional VMs
 
@@ -1994,66 +1960,185 @@ jtregcheck: jtreg check-hotspot check-langtools check-jdk
 	  $(jtreg_processes); \
 	fi
 
-check-local: jtregcheck
+# Support classes for non-OpenJDK bootstraps
 
-# VisualVM
+# FIXME (plugs): Remove this
+# tools.jar class files.
+stamps/hotspot-tools-copy-source-files.stamp: stamps/overlay.stamp
+	for copy_dir in \
+	  `cat $(abs_top_srcdir)/tools-copy/tools-jdk-copy-files.txt` ; \
+	do \
+	  mkdir -p hotspot-tools/$$copy_dir ; \
+	  cp -pPRf openjdk/jdk/src/share/classes/$$copy_dir/* \
+	    hotspot-tools/$$copy_dir ; \
+	done
 
-stamps/visualvm.stamp: $(BOOTSTRAP_DIRECTORY_STAMP) stamps/download.stamp \
-	stamps/replace-hotspot.stamp stamps/nbplatform.stamp
-if WITH_VISUALVM
-	cd visualvm ; \
-	ln -s $(abs_top_srcdir)/netbeans/nbbuild/netbeans_visualvm netbeans ; \
-	JAVA_HOME=$(ICEDTEA_HOME) $(ANT) build
-endif
+	for copy_dir in \
+	  `cat $(abs_top_srcdir)/tools-copy/tools-langtools-copy-files.txt` ; \
+	do \
+	  mkdir -p hotspot-tools/$$copy_dir ; \
+	  cp -pPRf openjdk/langtools/src/share/classes/$$copy_dir/* \
+	    hotspot-tools/$$copy_dir ; \
+	done
+
+	for copy_dir in \
+	  `cat $(abs_top_srcdir)/tools-copy/tools-corba-copy-files.txt` ; \
+	do \
+	  mkdir -p hotspot-tools/$$copy_dir ; \
+	  cp -pPRf openjdk/corba/src/share/classes/$$copy_dir/* \
+	    hotspot-tools/$$copy_dir ; \
+	done
+
+	for copy_dir in \
+	  `cat $(abs_top_srcdir)/tools-copy/tools-jaxws-copy-files.txt` ; \
+	do \
+	  mkdir -p hotspot-tools/$$copy_dir ; \
+	  cp -pPRf openjdk/jaxws/src/share/classes/$$copy_dir/* \
+	    hotspot-tools/$$copy_dir ; \
+	done
+
 	mkdir -p stamps
-	touch $@
+	touch stamps/hotspot-tools-copy-source-files.stamp
 
-clean-visualvm:
-	rm -rf visualvm
-	rm -f stamps/visualvm.stamp
+# FIXME (plugs): Remove this
+hotspot-tools-source-files.txt: stamps/replace-hotspot.stamp \
+	stamps/hotspot-tools-copy-source-files.stamp
+	find hotspot-tools -name '*.java' | sort > $@
+	mkdir -p lib/hotspot-tools
 
-stamps/nbplatform.stamp: $(BOOTSTRAP_DIRECTORY_STAMP) stamps/replace-hotspot.stamp \
-	stamps/download.stamp
-if WITH_VISUALVM
-	cd netbeans ; \
-        rm nbbuild/external/binaries-list ; \
-	mkdir -p ./nbbuild/netbeans_visualvm/ ; \
-	ln -s $(SYSTEM_NETBEANS_DIR)/$(NB_PLATFORM)/ ./nbbuild/netbeans_visualvm/$(NB_PLATFORM) ; \
-	ln -s $(SYSTEM_NETBEANS_DIR)/$(NB_APISUPPORT)/ ./nbbuild/netbeans_visualvm/$(NB_APISUPPORT) ; \
-	ln -s $(SYSTEM_NETBEANS_DIR)/harness/ ./nbbuild/netbeans_visualvm/harness ; \
-	if ! (uname -a | grep x86_64) ; then \
-	  mkdir -p lib.profiler/release/lib/deployed/jdk15/linux ; \
-	  mkdir -p lib.profiler/release/lib/deployed/jdk16/linux ; \
-	  buildscript=./buildnative-linux-15.sh ; \
+# FIXME (plugs): Remove this
+stamps/hotspot-tools-class-files.stamp: hotspot-tools-source-files.txt
+	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
+	then \
+	  $(JAVAC) $(MEMORY_LIMIT) -g -d lib/hotspot-tools \
+            -source 1.5 \
+            -sourcepath \
+	      'hotspot-tools:$(OPENJDK_SOURCEPATH_DIRS):$(ABS_SOURCE_DIRS)' \
+            -classpath \'\' -bootclasspath \'\' @$< ; \
 	else \
-	  mkdir -p lib.profiler/release/lib/deployed/jdk15/linux-amd64 ; \
-	  mkdir -p lib.profiler/release/lib/deployed/jdk16/linux-amd64 ; \
-	  buildscript=./buildnative-linux64-15.sh ; \
-	fi ; \
-	cd lib.profiler/native/build ; \
-	JAVA_HOME_15=$(ICEDTEA_HOME) JAVA_HOME_16=$(ICEDTEA_HOME) \
-	  $$buildscript ; \
-	cd ../../.. ; \
-        JAVA_HOME=$(ICEDTEA_HOME) $(ANT) -Dpermit.jdk6.builds=true \
-            -f nbbuild/build.xml bootstrap ; \
-	for dir in lib.profiler lib.profiler.ui lib.profiler.common profiler ; do \
-	  JAVA_HOME=$(ICEDTEA_HOME) $(ANT) -Dpermit.jdk6.builds=true -Dbuildnumber=081204 \
-            -Dnetbeans.dest.dir=../nbbuild/netbeans_visualvm \
-	    -f $$dir/build.xml ; \
-	done 
-endif
+	  $(ICEDTEA_BOOT_DIR)/bin/javac $(MEMORY_LIMIT) -g \
+	    -d lib/hotspot-tools \
+	    -source 1.5 \
+	    -sourcepath \
+	      'hotspot-tools:$(OPENJDK_SOURCEPATH_DIRS):$(ABS_SOURCE_DIRS)' \
+	    -classpath \'\' -bootclasspath \'\' @$< ; \
+	fi
 	mkdir -p stamps
-	touch $@
+	touch stamps/hotspot-tools-class-files.stamp
 
-clean-nbplatform:
-	rm -rf netbeans
-	rm -f stamps/nbplatform.stamp
+# FIXME (plugs): Remove this
+clean-hotspot-tools:
+	rm -rf lib/hotspot-tools
+	rm -f stamps/hotspot-tools-class-files.stamp
+	rm -f hotspot-tools-source-files.txt
+	rm -f stamps/hotspot-tools-copy-source-files.stamp
 
-# fsg-tarball
+# FIXME (plugs): Remove this
+stamps/hotspot-tools.stamp: bootstrap/jdk1.7.0/jre/lib/tools.jar
+	mkdir -p stamps
+	touch stamps/hotspot-tools.stamp
 
-# Creates archive of openjdk that is compliant with Free Software guidelines.
-dist-openjdk-fsg: stamps/patch-fsg.stamp
-	$(ZIP) -r openjdk-fsg-$(OPENJDK_VERSION) openjdk/
+#FIXME (plugs): Remove this
+stamps/copy-source-files.stamp: stamps/overlay.stamp
+	for copy_dir in $(ICEDTEA_COPY_DIRS) ; \
+	do \
+	  mkdir -p rt/$$copy_dir ; \
+	  cp -pPRf openjdk/jdk/src/share/classes/$$copy_dir/*.java \
+	    rt/$$copy_dir ; \
+	done
+	mkdir -p stamps
+	touch stamps/copy-source-files.stamp
+
+#FIXME (plugs): Remove this
+clean-copy:
+	rm -f stamps/copy-source-files.stamp
+	for copy_dir in $(ICEDTEA_COPY_DIRS) ; \
+	do \
+	  rm -rf rt/$$copy_dir ; \
+	done
+
+# rt-closed.jar class files.
+rt-source-files.txt: stamps/replace-hotspot.stamp stamps/copy-source-files.stamp
+	find $(abs_top_srcdir)/rt $(abs_top_builddir)/rt $(LIVECONNECT_SRCS) -name '*.java' \
+	  | sort -u > $@
+
+stamps/rt-class-files.stamp: rt-source-files.txt
+	mkdir -p lib/rt
+	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
+	then \
+	  $(JAVAC) $(MEMORY_LIMIT) -g -d lib/rt \
+	    -source 1.5 \
+	    -sourcepath \
+	      '$(OPENJDK_SOURCEPATH_DIRS):$(abs_top_builddir)/generated' \
+	    -classpath \'\' -bootclasspath \'\' @$< ; \
+	else \
+	  $(ICEDTEA_BOOT_DIR)/bin/javac $(MEMORY_LIMIT) -g -d lib/rt \
+            -source 1.5 \
+            -sourcepath \
+	      '$(OPENJDK_SOURCEPATH_DIRS):$(abs_top_builddir)/generated' \
+            -classpath \'\' -bootclasspath \'\' @$< ; \
+	fi
+	cp -r $(abs_top_srcdir)/rt/net/sourceforge/jnlp/resources \
+	  lib/rt/net/sourceforge/jnlp/
+	mkdir -p stamps
+	touch stamps/rt-class-files.stamp
+
+clean-rt:
+	rm -rf lib/rt
+	rm -f stamps/rt-class-files.stamp
+	rm -f rt-source-files.txt
+
+# tools.jar
+bootstrap/jdk1.7.0/jre/lib/tools.jar: stamps/hotspot-tools-class-files.stamp
+	mkdir -p bootstrap/jdk1.7.0/jre/lib/
+	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
+	then \
+	  $(JAR) cf $@ -C lib/hotspot-tools com -C lib/hotspot-tools sun \
+            -C lib/hotspot-tools org -C lib/hotspot-tools java \
+            -C lib/hotspot-tools javax ; \
+	else \
+	  $(ICEDTEA_BOOT_DIR)/bin/jar cf $@ -C lib/hotspot-tools com \
+	    -C lib/hotspot-tools sun \
+            -C lib/hotspot-tools org -C lib/hotspot-tools java \
+            -C lib/hotspot-tools javax ; \
+	fi
+	if test -d bootstrap/ecj ; \
+	then \
+	  mkdir -p bootstrap/ecj/lib/; \
+	  ln -sf $(abs_top_builddir)/bootstrap/jdk1.7.0/jre/lib/tools.jar \
+	    $(abs_top_builddir)/bootstrap/ecj/lib/tools.jar; \
+	fi
+
+clean-tools-jar: clean-hotspot-tools
+	rm -f stamps/hotspot-tools.stamp
+	rm -rf tools/
+	rm -f bootstrap/jdk1.7.0/jre/lib/tools.jar
+
+# rt-closed.jar.
+bootstrap/jdk1.7.0/jre/lib/rt-closed.jar: stamps/rt-class-files.stamp
+	mkdir -p bootstrap/jdk1.7.0/jre/lib
+	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
+	then \
+	  $(JAR) cf $@ -C lib/rt com -C lib/rt java \
+	    -C lib/rt javax $(LIVECONNECT_DIR) -C lib/rt net -C lib/rt sun ; \
+	else \
+	  $(ICEDTEA_BOOT_DIR)/bin/jar cf $@ -C lib/rt com -C lib/rt java \
+	    -C lib/rt javax $(LIVECONNECT_DIR) -C lib/rt net -C lib/rt sun ; \
+	fi
+	if test -d bootstrap/ecj/jre/lib ; \
+	then \
+	  cp bootstrap/jdk1.7.0/jre/lib/rt-closed.jar \
+	    bootstrap/ecj/jre/lib/rt.jar; \
+	fi
+
+stamps/plugs.stamp: bootstrap/jdk1.7.0/jre/lib/rt-closed.jar
+	mkdir -p stamps
+	touch stamps/plugs.stamp
+
+clean-plugs: clean-plugs clean-shared-objects \
+	clean-copy clean-rt
+	rm -f stamps/plugs.stamp
+	rm -f bootstrap/jdk1.7.0/jre/lib/rt-closed.jar
 
 # Target Aliases
 # ===============
