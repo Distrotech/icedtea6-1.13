@@ -130,7 +130,7 @@ class JNLPSecurityManager extends SecurityManager {
         public void windowDeactivated(WindowEvent e) {
             activeApplication = null;
         }
-        
+
         public void windowClosing(WindowEvent e) {
         	System.err.println("Disposing window");
         	e.getWindow().dispose();
