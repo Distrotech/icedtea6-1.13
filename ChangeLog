@@ -1,3 +1,26 @@
+2009-12-02  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am: Add support
+	for new JAXP and JAXWS drop zips.
+	(download-jaxp-drop.stamp): New target.
+	(download-jaf-drop.stamp): Likewise.
+	(download-jaxp-drop.stamp): Likewise.
+	(download-drops.stamp): Likewise.
+	(clean-drops): Likewise.
+	(clean-download-jaf-drop): Likewise.
+	(clean-download-jaxp-drop): Likewise.
+	(clean-download-jaxws-drop): Likewise.
+	(download-jaxp-drop): New alias.
+	(download-jaxws-drop): Likewise.
+	(download-jaf-drop): Likewise.
+	* acinclude.m4:
+	(WITH_JAXP_DROP_ZIP): New options --with-jaxp-drop-zip
+	to specify location of the JAXP drop.
+	(WITH_JAF_DROP_ZIP): Likewise for JAF.
+	(WITH_JAXWS_DROP_ZIP): And JAXWS.
+	* configure.ac: Run new macros for drop zips and
+	find the sha256sum tool for checking the drop zips.
+
 2009-11-27  Deepak Bhole <dbhole@redhat.com>
 
 	* plugin/icedtea/sun/applet/PluginAppletViewer.java

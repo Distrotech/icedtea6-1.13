@@ -18,6 +18,15 @@ VISUALVM_MD5SUM = a289739f4a5bcdb9a2c642cfcc1e83fe
 VISUALVM_URL = https://visualvm.dev.java.net/files/documents/7163/127170/
 VISUALVM_SRC_ZIP = visualvm-111-src.tar.gz
 
+JAXWS_DROP_URL = http://kenai.com/projects/jdk6-drops/downloads/download
+JAXWS_DROP_ZIP = jdk6-jaxws-2009_10_27.zip
+JAXWS_DROP_SHA256SUM = 155ff3be83c980e197621a2fbf7ee34e8e0f536489351a5865cf0e52206245e2
+JAF_DROP_ZIP = jdk6-jaf-2009_10_27.zip
+JAF_DROP_SHA256SUM = fdc51476fc6bcc69ea1f099f33e84601a126bfa8b11c8fa11c25dc574345aa9f
+JAXP_DROP_URL = http://kenai.com/projects/jdk6-drops/downloads/download
+JAXP_DROP_ZIP = jdk6-jaxp-2009_10_27.zip
+JAXP_DROP_SHA256SUM = c027858c5a6195c8b06cdb5f5fb289054e65845594b0f0414f2514abcfca7422
+
 OPENJDK_HG_URL = http://hg.openjdk.java.net/jdk6/jdk6
 
 # Build directories
@@ -431,7 +440,8 @@ ICEDTEA_ENV = \
 	RHINO_JAR="$(RHINO_JAR)" \
 	DISTRIBUTION_ID="$(DIST_ID)" \
 	DEBUG_CLASSFILES="true" \
-	DEBUG_BINARIES="true"
+	DEBUG_BINARIES="true" \
+	ALT_DROPS_DIR="$(abs_top_builddir)/drops"
 
 if WITH_CACAO
 ICEDTEA_ENV += \
@@ -658,7 +668,95 @@ clean-hgforest:
 
 #FIXME (meta): Split into multiple targets
 #FIXME (missing): Download drops targets
-stamps/download.stamp: stamps/hgforest.stamp
+
+stamps/download-jaxp-drop.stamp:
+	mkdir -p drops
+if USE_ALT_JAXP_DROP_ZIP
+	ln -sf $(ALT_JAXP_DROP_ZIP) drops/$(JAXP_DROP_ZIP)
+endif
+	if ! echo "$(JAXP_DROP_SHA256SUM)  drops/$(JAXP_DROP_ZIP)" \
+	  | $(SHA256SUM) --check ; \
+	then \
+	  if [ -f drops/$(JAXP_DROP_ZIP) ] ; \
+	  then \
+	    mv drops/$(JAXP_DROP_ZIP) drops/$(JAXP_DROP_ZIP).old ; \
+	  fi ; \
+	  $(WGET) $(JAXP_DROP_URL)/$(JAXP_DROP_ZIP) -O drops/$(JAXP_DROP_ZIP); \
+	  if ! echo "$(JAXP_DROP_SHA256SUM)  drops/$(JAXP_DROP_ZIP)" \
+	    | $(SHA256SUM) --check ; \
+	  then echo "ERROR: Bad download of jaxp drop zip"; false; \
+	  fi; \
+	fi ;
+	mkdir -p stamps
+	touch $@
+
+clean-download-jaxp-drop:
+	rm -f drops/$(JAXP_DROP_ZIP)
+	rm -f stamps/download-jaxp-drop.stamp
+
+stamps/download-jaf-drop.stamp:
+	mkdir -p drops
+if USE_ALT_JAF_DROP_ZIP
+	ln -sf $(ALT_JAF_DROP_ZIP) drops/$(JAF_DROP_ZIP)
+endif
+	if ! echo "$(JAF_DROP_SHA256SUM)  drops/$(JAF_DROP_ZIP)" \
+	  | $(SHA256SUM) --check ; \
+	then \
+	  if [ -f drops/$(JAF_DROP_ZIP) ] ; \
+	  then \
+	    mv drops/$(JAF_DROP_ZIP) drops/$(JAF_DROP_ZIP).old ; \
+	  fi ; \
+	  $(WGET) $(JAXWS_DROP_URL)/$(JAF_DROP_ZIP) -O drops/$(JAF_DROP_ZIP); \
+	  if ! echo "$(JAF_DROP_SHA256SUM)  drops/$(JAF_DROP_ZIP)" \
+	    | $(SHA256SUM) --check ; \
+	  then echo "ERROR: Bad download of jaf drop zip"; false; \
+	  fi; \
+	fi ;
+	mkdir -p stamps
+	touch $@
+
+clean-download-jaf-drop:
+	rm -f drops/$(JAF_DROP_ZIP)
+	rm -f stamps/download-jaf-drop.stamp
+
+stamps/download-jaxws-drop.stamp:
+	mkdir -p drops
+if USE_ALT_JAXWS_DROP_ZIP
+	ln -sf $(ALT_JAXWS_DROP_ZIP) drops/$(JAXWS_DROP_ZIP)
+endif
+	if ! echo "$(JAXWS_DROP_SHA256SUM)  drops/$(JAXWS_DROP_ZIP)" \
+	  | $(SHA256SUM) --check ; \
+	then \
+	  if [ -f drops/$(JAXWS_DROP_ZIP) ] ; \
+	  then \
+	    mv drops/$(JAXWS_DROP_ZIP) drops/$(JAXWS_DROP_ZIP).old ; \
+	  fi ; \
+	  $(WGET) $(JAXWS_DROP_URL)/$(JAXWS_DROP_ZIP) -O drops/$(JAXWS_DROP_ZIP); \
+	  if ! echo "$(JAXWS_DROP_SHA256SUM)  drops/$(JAXWS_DROP_ZIP)" \
+	    | $(SHA256SUM) --check ; \
+	  then echo "ERROR: Bad download of jaxws drop zip"; false; \
+	  fi; \
+	fi ;
+	mkdir -p stamps
+	touch $@
+
+clean-download-jaxws-drop:
+	rm -f drops/$(JAXWS_DROP_ZIP)
+	rm -f stamps/download-jaxws-drop.stamp
+
+stamps/download-drops.stamp: stamps/download-jaxp-drop.stamp \
+ stamps/download-jaxws-drop.stamp stamps/download-jaf-drop.stamp
+	mkdir -p stamps
+	touch $@
+
+clean-drops: clean-download-jaxp-drop clean-download-jaf-drop \
+ clean-download-jaxws-drop
+	if [ -e drops ] ; then \
+	  rmdir drops ; \
+	fi
+	rm -f stamps/download-drops.stamp
+
+stamps/download.stamp: stamps/hgforest.stamp stamps/download-drops.stamp
 if OPENJDK_SRC_DIR_FOUND
 else
 if USE_ALT_OPENJDK_SRC_ZIP
@@ -746,7 +844,7 @@ endif
 	touch stamps/download.stamp
 
 #FIXME (meta): split into multiple targets
-clean-download:
+clean-download: clean-drops
 	rm -f stamps/download.stamp
 	rm -f $(OPENJDK_SRC_ZIP)
 if BUILD_CACAO
@@ -2160,6 +2258,14 @@ nbplatform: stamps/nbplatform.stamp
 copy-source-files: stamps/copy-source-files.stamp
 
 download: stamps/download.stamp
+
+download-drops: stamps/download-drops.stamp
+
+download-jaf-drop: stamps/download-jaf-drop.stamp
+
+download-jaxp-drop: stamps/download-jaxp-drop.stamp
+
+download-jaxws-drop: stamps/download-jaxws-drop.stamp
 
 extract: stamps/extract.stamp
 
