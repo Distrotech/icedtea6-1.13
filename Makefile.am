@@ -516,7 +516,6 @@ ICEDTEA_FSG_PATCHES =
 
 ICEDTEA_PATCHES = \
 	patches/icedtea-notice-safepoints.patch \
-	patches/icedtea-bytecodeInterpreter.patch \
 	patches/icedtea-signature-iterator.patch \
 	patches/icedtea-test-atomic-operations.patch \
 	patches/icedtea-zero.patch \

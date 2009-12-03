@@ -99,8 +99,6 @@ The following patches are currently applied before the building of OpenJDK or Op
 * icedtea-cacao.patch: For the 'java' command, create new thread depending on the current VM.
 * icedtea-cacao-no-mmap-first-page.patch: Don't mmap the first memory page.
 * cacao/no-strict-aliasing.patch: Turn off strict aliasing which causes an issue with the verifier when building with GCC 4.4 (cacao PR129).
-
-* icedtea-bytecodeInterpreter.patch: Replace fast opcodes with opc_default.
 * icedtea-ia64-bugfix.patch: Remove workaround for IA64 GCC bug.
 * icedtea-signature-iterator.patch: Add zero-specific signature handling.
 * icedtea-test-atomic-operations.patch: Add check to see if GCC's sync_lock_test works.
@@ -177,3 +175,4 @@ changes to the OpenJDK code base and/or changes within IcedTea:
 * icedtea-core-zero-build.patch: Not required with HS14.
 * icedtea-bytecodeInterpreterWithChecks.patch: Same as icedtea-xslfix.patch (OpenJDK6 only, S6707485); not required with HS14.
 * icedtea-eclipse-hotspot-6614100-7b24.patch: Fix Eclipse crash (S6614100). Fixed in OpenJDK7 b29/hs13.  Not required with HS14.
+* icedtea-bytecodeInterpreter.patch: Replace fast opcodes with opc_default.  Not required with HS14.
