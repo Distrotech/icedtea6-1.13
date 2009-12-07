@@ -1,3 +1,10 @@
+2009-12-07  Gary Benson  <gbenson@redhat.com>
+
+	PR icedtea/416:
+	* ports/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp
+	(CppInterpreter::native_entry): Always unlock synchronized
+	native methods prior to returning.
+
 2009-12-03  Man Lung Wong <mwong@redhat.com>
 
 	* rt/net/sourceforge/jnlp/JNLPFile.java
