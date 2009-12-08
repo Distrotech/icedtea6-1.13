@@ -90,10 +90,10 @@
  CFLAGS_REQUIRED_sparc   += -m32 -mcpu=v9
 --- openjdk/jdk/make/common/shared/Compiler-gcc.gmk.orig	2008-10-15 17:04:19.000000000 +0200
 +++ openjdk/jdk/make/common/shared/Compiler-gcc.gmk	2008-10-15 17:11:28.000000000 +0200
-@@ -75,28 +75,56 @@
-     REQUIRED_CC_VER = 3.2
-     REQUIRED_GCC_VER = 3.2.*
+@@ -70,28 +70,56 @@
    else
+     CXX            = $(COMPILER_PATH)g++$(GCC_SUFFIX)
+   endif
 -  ifneq ("$(findstring sparc,$(ARCH))", "")
 -    # sparc or sparcv9
 -    REQUIRED_CC_VER = 4.0
@@ -155,8 +155,8 @@
 +    REQUIRED_CC_VER = 4.0
 +    REQUIRED_GCC_VER = 4.0.*
    endif
-   endif
    # Option used to create a shared library
+   SHARED_LIBRARY_FLAG = -shared -mimpure-text
 --- openjdk/jdk/make/common/shared/Platform.gmk.orig	2008-10-15 17:04:19.000000000 +0200
 +++ openjdk/jdk/make/common/shared/Platform.gmk	2008-10-15 17:13:49.000000000 +0200
 @@ -237,9 +237,40 @@

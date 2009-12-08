@@ -37,6 +37,7 @@ bool frame::is_interpreted_frame() const {
 }
 
 frame frame::sender_for_entry_frame(RegisterMap *map) const {
+  assert(zeroframe()->is_entry_frame(), "wrong type of frame");
   assert(map != NULL, "map must be set");
   assert(!entry_frame_is_first(), "next Java fp must be non zero");
   assert(entry_frame_call_wrapper()->anchor()->last_Java_sp() == sender_sp(),
@@ -47,6 +48,9 @@ frame frame::sender_for_entry_frame(RegisterMap *map) const {
 }
 
 frame frame::sender_for_nonentry_frame(RegisterMap *map) const {
+  assert(zeroframe()->is_interpreter_frame() ||
+         zeroframe()->is_shark_frame() ||
+         zeroframe()->is_fake_stub_frame(), "wrong type of frame");
   return frame(sender_sp(), sp() + 1);
 }
 

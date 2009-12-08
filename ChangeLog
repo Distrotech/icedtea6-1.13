@@ -1,3 +1,63 @@
+2009-12-08  Gary Benson  <gbenson@redhat.com>
+
+	* Makefile.am
+	(ICEDTEA_CORE_BUILD): Removed.
+	(ICEDTEA_ZERO_BUILD): Set to "yes" instead of "true".
+	(ICEDTEA_ENV): Removed ICEDTEA_CORE_BUILD, replaced
+	ICEDTEA_ZERO_BUILD with ZERO_BUILD, and replaced ZERO_BITSPERWORD
+	with ARCH_DATA_MODEL.
+	(ICEDTEA_ENV_ECJ): Likewise.
+	(stamps/ports.stamp): Updated paths, and don't make jvm.cfg or
+	ergo_$arch.c for Zero.
+	(ICEDTEA_PATCHES): Added new patches and removed old ones.
+
+	* acinclude.m4
+	(ENABLE_ZERO_BUILD): Removed old CORE_BUILD stuff.
+	(SET_CORE_OR_SHARK_BUILD): Replaced with...
+	(SET_SHARK_BUILD): New macro.
+
+	* configure.ac: Use SET_SHARK_BUILD before ENABLE_ZERO_BUILD in
+	place of SET_CORE_OR_SHARK_BUILD after it.
+
+	* patches/zero/6890308.patch: New file.
+	* patches/zero/6891677.patch: Likewise.
+
+	* patches/icedtea-core-build.patch: Removed.
+	* patches/icedtea-core-build-hotspot.patch: Likewise.
+	* patches/icedtea-linker-options.patch: Likewise.
+	* patches/icedtea-signature-iterator.patch: Likewise.
+	* patches/icedtea-static-libstdc++.patch: Likewise.
+	* patches/icedtea-zero.patch: Likewise.
+	* patches/icedtea-zero-build.patch: Likewise.
+	* patches/icedtea-zero-build-hotspot.patch: Likewise.
+
+	* patches/ecj/icedtea-hotspot.patch: Updated.
+	* patches/icedtea-shark-build.patch: Likewise.
+	* patches/icedtea-shark-build-hotspot.patch: Likewise.
+	
+	* patches/icedtea-arch.patch: Fixed up.
+	* patches/icedtea-libraries.patch: Likewise.
+	* patches/icedtea-shark.patch: Likewise.
+
+	* ports/hotspot/build/linux/makefiles/shark.make: Moved to...
+	* ports/hotspot/make/linux/makefiles/shark.make: New file.
+
+	* ports/hotspot/build/linux/makefiles/zero.make: Moved to...
+	* ports/hotspot/make/linux/makefiles/zeroshark.make: New file.
+
+	* ports/hotspot/make/linux/makefiles/zero.make: New file.
+	* ports/hotspot/src/share/vm/includeDB_zero: Likewise.
+
+	* ports/hotspot/make/linux/platform_zero.in: Removed.
+
+	* ports/hotspot/src/cpu/zero/vm/assembler_zero.hpp: Sync with upstream.
+	* ports/hotspot/src/cpu/zero/vm/frame_zero.cpp: Likewise.
+	* ports/hotspot/src/cpu/zero/vm/frame_zero.inline.hpp: Likewise.
+	* ports/hotspot/src/cpu/zero/vm/globals_zero.hpp: Likewise.
+	* ports/hotspot/src/cpu/zero/vm/stack_zero.hpp: Likewise.
+	
+	* ports/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S: Fixed up.
+
 2009-12-07  Gary Benson  <gbenson@redhat.com>
 
 	PR icedtea/416:

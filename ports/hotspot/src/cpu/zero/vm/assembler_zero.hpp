@@ -61,8 +61,3 @@ inline bool AbstractAssembler::pd_check_instruction_mark() {
 
 address ShouldNotCallThisStub();
 address ShouldNotCallThisEntry();
-
-// Nothing to do with the assembler (or lack of),
-// just a real convenient place to include these.
-#include <entry_zero.hpp>
-#include <stack_zero.hpp>

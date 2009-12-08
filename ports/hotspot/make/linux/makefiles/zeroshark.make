@@ -23,6 +23,8 @@
 #
 #
 
+# Setup common to Zero (non-Shark) and Shark versions of VM
+
 ifeq ($(ZERO_LIBARCH),arm)
 
 Obj_Files += asm_helper.o
@@ -67,7 +69,7 @@ ifeq ($(ZERO_ENDIANNESS), little)
 endif
 
 # Specify that the CPU is 64 bit, if necessary
-ifeq ($(ZERO_BITSPERWORD), 64)
+ifeq ($(ARCH_DATA_MODEL), 64)
   CFLAGS += -D_LP64=1
 endif
 

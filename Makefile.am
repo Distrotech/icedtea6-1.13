@@ -145,13 +145,8 @@ ICEDTEA_ENDORSED_DIR = \
 	$(ICEDTEA_BOOT_DIR)/lib/endorsed
 JDK_UPDATE_VERSION = 0
 COMBINED_VERSION = $(JDK_UPDATE_VERSION)-$(OPENJDK_VERSION)
-if CORE_BUILD
-  ICEDTEA_CORE_BUILD = yes
-else
-  ICEDTEA_CORE_BUILD =
-endif
 if ZERO_BUILD
-  ICEDTEA_ZERO_BUILD = yes
+  ICEDTEA_ZERO_BUILD = true
 else
   ICEDTEA_ZERO_BUILD =
 endif
@@ -180,11 +175,10 @@ ICEDTEA_ENV = \
 	ENDORSED="-Djava.endorsed.dirs=$(ICEDTEA_ENDORSED_DIR)" \
 	CLASSPATH="" \
 	LD_LIBRARY_PATH="" \
-	ICEDTEA_CORE_BUILD="$(ICEDTEA_CORE_BUILD)" \
-	ICEDTEA_ZERO_BUILD="$(ICEDTEA_ZERO_BUILD)" \
+	ZERO_BUILD="$(ICEDTEA_ZERO_BUILD)" \
 	ICEDTEA_SHARK_BUILD="$(ICEDTEA_SHARK_BUILD)" \
 	ZERO_LIBARCH="$(ZERO_LIBARCH)" \
-	ZERO_BITSPERWORD="$(ZERO_BITSPERWORD)" \
+	ARCH_DATA_MODEL="$(ZERO_BITSPERWORD)" \
 	ZERO_ENDIANNESS="$(ZERO_ENDIANNESS)" \
 	ZERO_ARCHDEF="$(ZERO_ARCHDEF)" \
 	ZERO_ARCHFLAG="$(ZERO_ARCHFLAG)" \
@@ -265,11 +259,10 @@ ICEDTEA_ENV_ECJ = \
 	CLASSPATH="" \
 	LD_LIBRARY_PATH="" \
 	GENSRCDIR="$(abs_top_builddir)/generated" \
-	ICEDTEA_CORE_BUILD="$(ICEDTEA_CORE_BUILD)" \
-	ICEDTEA_ZERO_BUILD="$(ICEDTEA_ZERO_BUILD)" \
+	ZERO_BUILD="$(ICEDTEA_ZERO_BUILD)" \
 	ICEDTEA_SHARK_BUILD="$(ICEDTEA_SHARK_BUILD)" \
 	ZERO_LIBARCH="$(ZERO_LIBARCH)" \
-	ZERO_BITSPERWORD="$(ZERO_BITSPERWORD)" \
+	ARCH_DATA_MODEL="$(ZERO_BITSPERWORD)" \
 	ZERO_ENDIANNESS="$(ZERO_ENDIANNESS)" \
 	ZERO_ARCHDEF="$(ZERO_ARCHDEF)" \
 	ZERO_ARCHFLAG="$(ZERO_ARCHFLAG)" \
@@ -491,21 +484,20 @@ endif
 
 # Copy ports sources into tree
 stamps/ports.stamp: stamps/replace-hotspot.stamp
-	for target in $(abs_top_srcdir)/ports/hotspot/build/*/makefiles/* \
+	for target in $(abs_top_srcdir)/ports/hotspot/make/*/platform_zero.in \
+		      $(abs_top_srcdir)/ports/hotspot/make/*/makefiles/* \
 		      $(abs_top_srcdir)/ports/hotspot/tools \
 		      $(abs_top_srcdir)/ports/hotspot/src/*cpu/* \
 		      $(abs_top_srcdir)/ports/hotspot/src/share/vm/*; do \
 	  link=$$(dirname $$target | sed 's/^.*ports/openjdk/'|sed "s#hotspot/build#hotspot/$(HOTSPOT_MAKE_DIR)#"); \
 	  cp -rv $$target $$link; \
 	done
-	ln -sf $(abs_top_builddir)/platform_zero openjdk/hotspot/$(HOTSPOT_MAKE_DIR)/linux
-	if ! test "x$(ICEDTEA_CORE_BUILD)$(ICEDTEA_SHARK_BUILD)$(WITH_CACAO)" \
-	  = "xno" ; then \
+	if ! test "x$(WITH_CACAO)" = "xno" ; then \
 	  mkdir -p openjdk/jdk/src/solaris/bin/$(BUILD_ARCH_DIR) ; \
 	  ln -sf $(abs_top_builddir)/jvm.cfg \
 	    openjdk/jdk/src/solaris/bin/$(BUILD_ARCH_DIR)/jvm.cfg ; \
 	fi
-	if ! test "x$(ICEDTEA_ZERO_BUILD)$(WITH_CACAO)" = "xno"; then \
+	if ! test "x$(WITH_CACAO)" = "xno"; then \
 	  ln -sf $(abs_top_builddir)/ergo.c \
 	    openjdk/jdk/src/solaris/bin/ergo_$(BUILD_ARCH_DIR).c; \
 	fi
@@ -515,10 +507,10 @@ stamps/ports.stamp: stamps/replace-hotspot.stamp
 ICEDTEA_FSG_PATCHES =
 
 ICEDTEA_PATCHES = \
+	patches/zero/6890308.patch \
+	patches/zero/6891677.patch \
 	patches/icedtea-notice-safepoints.patch \
-	patches/icedtea-signature-iterator.patch \
 	patches/icedtea-test-atomic-operations.patch \
-	patches/icedtea-zero.patch \
 	patches/icedtea-ia64-bugfix.patch \
 	patches/icedtea-parisc-opt.patch \
 	patches/icedtea-lucene-crash.patch \
@@ -544,15 +536,9 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-sunsrc.patch \
 	patches/icedtea-libraries.patch \
 	patches/icedtea-javafiles.patch \
-	patches/icedtea-core-build.patch \
 	patches/icedtea-jvmtiEnv.patch \
 	patches/icedtea-lcms.patch \
-	patches/icedtea-core-build-hotspot.patch \
-	patches/icedtea-linker-options.patch \
-	patches/icedtea-static-libstdc++.patch \
 	patches/icedtea-timerqueue.patch \
-	patches/icedtea-zero-build.patch \
-	patches/icedtea-zero-build-hotspot.patch \
 	patches/icedtea-print-lsb-release.patch \
 	patches/icedtea-jpegclasses.patch \
 	patches/icedtea-uname.patch \

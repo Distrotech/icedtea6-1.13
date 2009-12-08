@@ -39,10 +39,10 @@ public class Version {
         "OpenJDK Runtime Environment";
 
     private static final String java_runtime_version =
-        "1.6.0_0-b16";
+        "1.6.0_0-b17";
 
     private static final String jdk_derivative_name =
-        "IcedTea6 1.5-r84a527d1a06c";
+        "IcedTea6 1.7pre-r046c77dadfb3";
 
     private static final String distro_package_version =
         "";
