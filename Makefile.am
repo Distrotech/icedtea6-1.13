@@ -510,6 +510,7 @@ ICEDTEA_PATCHES = \
 	patches/zero/6890308.patch \
 	patches/zero/6891677.patch \
 	patches/zero/6896043.patch \
+	patches/zero/6903453.patch \
 	patches/icedtea-notice-safepoints.patch \
 	patches/icedtea-parisc-opt.patch \
 	patches/icedtea-lucene-crash.patch \
@@ -541,7 +542,6 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-print-lsb-release.patch \
 	patches/icedtea-jpegclasses.patch \
 	patches/icedtea-uname.patch \
-	patches/icedtea-ia64-fdlibm.patch \
 	patches/icedtea-freetypeversion.patch \
 	patches/icedtea-fonts.patch \
 	patches/icedtea-shark-build.patch \
