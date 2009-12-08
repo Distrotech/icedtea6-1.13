@@ -1,5 +1,14 @@
 2009-12-08  Gary Benson  <gbenson@redhat.com>
 
+	* Makefile.am
+	(ICEDTEA_SHARK_BUILD): Set to "yes" instead of "true".
+	(ICEDTEA_ENV): Replaced ICEDTEA_SHARK_BUILD with SHARK_BUILD.
+	(ICEDTEA_ENV_ECJ): Likewise.
+	* patches/icedtea-shark-build.patch: Changed to reflect the above.
+	* patches/icedtea-shark-build-hotspot.patch: Likewise.
+
+2009-12-08  Gary Benson  <gbenson@redhat.com>
+
 	* ports/hotspot/make/linux/platform_zero.in: New file.
 	* .hgignore: Updated.
 

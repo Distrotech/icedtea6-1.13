@@ -6,7 +6,7 @@ diff -r 8e41d25d7665 openjdk/control/make/make/hotspot-rules.gmk
  
  ifeq ($(ZERO_BUILD), true)
 -  HOTSPOT_TARGET := $(HOTSPOT_TARGET)zero
-+  ifdef ICEDTEA_SHARK_BUILD
++  ifeq ($(SHARK_BUILD), true)
 +    HOTSPOT_TARGET := $(HOTSPOT_TARGET)shark
 +  else
 +    HOTSPOT_TARGET := $(HOTSPOT_TARGET)zero

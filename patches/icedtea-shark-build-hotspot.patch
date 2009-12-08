@@ -119,7 +119,7 @@ diff -Nru openjdk.orig/hotspot/make/linux/makefiles/gcc.make openjdk/hotspot/mak
  ifdef ICEDTEA_ZERO_BUILD
  CFLAGS += $(LIBFFI_CFLAGS)
  endif
-+ifdef ICEDTEA_SHARK_BUILD
++ifeq ($(SHARK_BUILD), true)
 +CFLAGS += $(LLVM_CFLAGS)
 +endif
  CFLAGS += $(VM_PICFLAG)
@@ -144,7 +144,7 @@ diff -Nru openjdk.orig/hotspot/make/linux/makefiles/vm.make openjdk/hotspot/make
  STATIC_CXX = true
  
 -ifeq ($(ZERO_LIBARCH), ppc64)
-+ifdef ICEDTEA_SHARK_BUILD
++ifeq ($(SHARK_BUILD), true)
    STATIC_CXX = false
  else
 -  STATIC_CXX = true
@@ -160,7 +160,7 @@ diff -Nru openjdk.orig/hotspot/make/linux/makefiles/vm.make openjdk/hotspot/make
  ifdef ICEDTEA_ZERO_BUILD
  LIBS_VM += $(LIBFFI_LIBS)
  endif
-+ifdef ICEDTEA_SHARK_BUILD
++ifeq ($(SHARK_BUILD), true)
 +LFLAGS_VM += $(LLVM_LDFLAGS)
 +LIBS_VM   += $(LLVM_LIBS)
 +endif
@@ -228,7 +228,7 @@ diff -Nru openjdk.orig/hotspot/make/Makefile openjdk/hotspot/make/Makefile
  
  # Misc files and generated files need to come from C1 or C2 area
  ifeq ($(ZERO_BUILD), true)
-+ifdef ICEDTEA_SHARK_BUILD
++ifeq ($(SHARK_BUILD), true)
 +  MISC_DIR=$(SHARK_DIR)
 +  GEN_DIR=$(SHARK_BASE_DIR)/generated
 +else
@@ -242,7 +242,7 @@ diff -Nru openjdk.orig/hotspot/make/Makefile openjdk/hotspot/make/Makefile
  # Shared Library
  ifneq ($(OSNAME),windows)
    ifeq ($(ZERO_BUILD), true)
-+    ifdef ICEDTEA_SHARK_BUILD
++    ifeq ($(SHARK_BUILD), true)
 +$(EXPORT_JRE_LIB_ARCH_DIR)/%.so: $(SHARK_DIR)/%.so
 +	$(install-file)
 +$(EXPORT_SERVER_DIR)/%.so:       $(SHARK_DIR)/%.so
