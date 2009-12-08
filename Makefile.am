@@ -509,9 +509,8 @@ ICEDTEA_FSG_PATCHES =
 ICEDTEA_PATCHES = \
 	patches/zero/6890308.patch \
 	patches/zero/6891677.patch \
+	patches/zero/6896043.patch \
 	patches/icedtea-notice-safepoints.patch \
-	patches/icedtea-test-atomic-operations.patch \
-	patches/icedtea-ia64-bugfix.patch \
 	patches/icedtea-parisc-opt.patch \
 	patches/icedtea-lucene-crash.patch \
 	patches/icedtea-version.patch \
@@ -566,7 +565,6 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-6761856-freetypescaler.patch \
 	patches/icedtea-testenv.patch \
 	patches/icedtea-samejvm-safe.patch \
-	patches/icedtea-cc-interp-jvmti.patch \
 	patches/icedtea-pr261.patch \
 	patches/icedtea-doc-headers.patch \
 	patches/openjdk/bidi-tests.patch \
@@ -593,7 +591,6 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-demo-swingapplet.patch \
 	patches/icedtea-awt-window-size.patch \
 	patches/icedtea-java2d-dasher.patch \
-	patches/icedtea-cc-interp-backedge.patch \
 	patches/icedtea-xml-encodinginfo.patch \
 	patches/icedtea-jtreg-6592792.patch \
 	patches/icedtea-s390-noinline.patch \
@@ -608,7 +605,6 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-explicit-target-arch.patch \
 	patches/openjdk/6432567-debugger-socket-overflow.patch \
 	patches/icedtea-gcc-stack-markings.patch \
-	patches/icedtea-s390-serialize.patch \
 	patches/openjdk/6879689-hotspot_warning_fix.patch \
 	patches/icedtea-no-precompiled.patch \
 	patches/icedtea-6897844-xshm.patch
