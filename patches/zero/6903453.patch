@@ -1,0 +1,38 @@
+diff -r 937144222e22 -r 28b983e5bb5f make/common/shared/Platform.gmk
+--- openjdk/corba/make/common/shared/Platform.gmk	Sun Nov 08 14:49:40 2009 -0800
++++ openjdk/corba/make/common/shared/Platform.gmk	Mon Nov 23 10:04:41 2009 +0000
+@@ -187,6 +187,9 @@
+                 sparc*) \
+                     echo sparc \
+                     ;; \
++                arm*) \
++                    echo arm \
++                    ;; \
+                 *) \
+                     echo $(mach) \
+                     ;; \
+diff -r 8fb602395be0 -r ad1c88142958 make/common/shared/Platform.gmk
+--- openjdk/jdk/make/common/shared/Platform.gmk	Sun Nov 08 14:49:18 2009 -0800
++++ openjdk/jdk/make/common/shared/Platform.gmk	Mon Nov 23 10:04:47 2009 +0000
+@@ -165,6 +165,9 @@
+                 sparc*) \
+                     echo sparc \
+                     ;; \
++                arm*) \
++                    echo arm \
++                    ;; \
+                 *) \
+                     echo $(mach) \
+                     ;; \
+diff -r 8fb602395be0 -r ad1c88142958 src/share/native/java/lang/fdlibm/include/fdlibm.h
+--- openjdk/jdk/src/share/native/java/lang/fdlibm/include/fdlibm.h	Sun Nov 08 14:49:18 2009 -0800
++++ openjdk/jdk/src/share/native/java/lang/fdlibm/include/fdlibm.h	Mon Nov 23 10:04:47 2009 +0000
+@@ -29,7 +29,7 @@
+ #ifdef __NEWVALID       /* special setup for Sun test regime */
+ #if defined(i386) || defined(i486) || \
+         defined(intel) || defined(x86) || \
+-        defined(i86pc) || defined(_M_IA64)
++        defined(i86pc) || defined(_M_IA64) || defined(ia64)
+ #define _LITTLE_ENDIAN
+ #endif
+ #endif

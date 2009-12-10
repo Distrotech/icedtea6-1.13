@@ -78,6 +78,7 @@
 
 #define regset r3-r11
 
+// XXX hardwired constants!
 #define tos_btos        0
 #define tos_ctos        1
 #define tos_stos        2
@@ -89,11 +90,13 @@
 
 #include "offsets_arm.s"
 
+// XXX hardwired constants!
 #define RESOURCEAREA_AREA	0
 #define RESOURCEAREA_CHUNK	4
 #define RESOURCEAREA_HWM	8
 #define RESOURCEAREA_MAX	12
 
+// XXX hardwired constants!
 #define ISTATE_THREAD		0
 #define ISTATE_BCP		4
 #define	ISTATE_LOCALS		8
@@ -104,18 +107,21 @@
 #define ISTATE_ADVANCE_PC	28
 #define ISTATE_MSG		28
 #define ISTATE_CALLEE		32	// union frame_manager_message
-
 #define	ISTATE_PREV_LINK	44
 #define ISTATE_OOP_TEMP		48
 #define ISTATE_STACK_BASE	52
 #define ISTATE_STACK_LIMIT	56
 #define ISTATE_MONITOR_BASE	60
 #define ISTATE_SELF_LINK	64
-#define ISTATE_CAFEBABF		68
-
+#define ISTATE_FRAME_TYPE	68
 #define ISTATE_NEXT_FRAME	72
-
 #define FRAME_SIZE		76
+
+// XXX hardwired constants!
+#define ENTRY_FRAME             1
+#define INTERPRETER_FRAME       2
+#define SHARK_FRAME             3
+#define FAKE_STUB_FRAME         4
 
 #define last_implemented_bytecode 201
 
@@ -428,12 +434,9 @@ do_\label:
 
 	.macro	CHECK_FRAME
 #ifdef DISPATCH_ASSERTS
-	@ Check 0xCAFEBABF hasn't been overwritten
-	ldr	r1, [istate, #ISTATE_CAFEBABF]
-	mvn	ip, #0x540		@ form 0xCAFEBABF
-	bic	ip, ip, #0x14000
-	bic	ip, ip, #0x35000000
-	cmp	r1, ip
+	@ Check #INTERPRETER_FRAME hasn't been overwritten
+	ldr	r1, [istate, #ISTATE_FRAME_TYPE]
+	cmp	r1, #INTERPRETER_FRAME
 	ABORTNE
 	@ Check we are still the topmost frame
 	ldr	r1, [istate, #ISTATE_THREAD]
@@ -441,12 +444,11 @@ do_\label:
 	add	r2, istate, #ISTATE_NEXT_FRAME
 	cmp	r1, r2
 	ABORTNE
-	@ And check the NEXT_FRAME pointer points to a valid frame (CAFEBABF intact)
+	@ And check the NEXT_FRAME pointer points to a valid frame
 	ldr	r1, [istate, #ISTATE_NEXT_FRAME]
-	ldr	r2, [r1, #-ISTATE_NEXT_FRAME + ISTATE_CAFEBABF]
-	bic	r2, r2, #0xff	@ ECN: Allow for differing frames
-	bic	ip, ip, #0xff	@ Eg. ENTRY_FRAME/INTERPRETER_FRAME/SHARK_FRAME
-	cmp	r2, ip
+	ldr	r2, [r1, #-ISTATE_NEXT_FRAME + ISTATE_FRAME_TYPE]
+	bic	r2, r2, #7	@ ECN: Allow for differing frames
+	cmp	r2, #0
 	ABORTNE
 #endif
 	.endm
@@ -454,17 +456,13 @@ do_\label:
 	.macro	CHECK_BACKTRACE
 #ifdef DISPATCH_ASSERTS
 	add	r3, istate, #ISTATE_NEXT_FRAME
-	mvn	ip, #0x540		@ form 0xCAFEBABF
-	bic	ip, ip, #0x14000
-	bic	ip, ip, #0x35000000
 @ ECN: Only check a limited no of frames back. topmost frame already checked
 @ Check 2nd frame up
 	ldr	r3, [r3]
-	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_CAFEBABF]
-	bic	r1, ip, #1
-	cmp	r1, r2
+	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_FRAME_TYPE]
+	cmp	r2, #ENTRY_FRAME
 	beq	2f
-	cmp	ip, r2
+	cmp	ip, #INTERPRETER_FRAME
 	ABORTNE				@ Must be ENTRY_FRAME, or INTERPRETER_FRAME
 	ldr	r1, [r3, #-ISTATE_NEXT_FRAME + ISTATE_CONSTANTS]
 	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_METHOD]
@@ -474,11 +472,10 @@ do_\label:
 	ABORTNE
 @ Check 3rd frame up
 	ldr	r3, [r3]
-	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_CAFEBABF]
-	bic	r1, ip, #1
-	cmp	r1, r2
+	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_FRAME_TYPE]
+	cmp	r2, #ENTRY_FRAME
 	beq	2f
-	cmp	ip, r2
+	cmp	r2, #INTERPRETER_FRAME
 	ABORTNE				@ Must be ENTRY_FRAME, or INTERPRETER_FRAME
 	ldr	r1, [r3, #-ISTATE_NEXT_FRAME + ISTATE_CONSTANTS]
 	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_METHOD]
@@ -488,11 +485,10 @@ do_\label:
 	ABORTNE
 @ Check 4th frame up
 	ldr	r3, [r3]
-	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_CAFEBABF]
-	bic	r1, ip, #1
-	cmp	r1, r2
+	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_FRAME_TYPE]
+	cmp	r2, #ENTRY_FRAME
 	beq	2f
-	cmp	ip, r2
+	cmp	r2, #INTERPRETER_FRAME
 	ABORTNE				@ Must be ENTRY_FRAME, or INTERPRETER_FRAME
 	ldr	r1, [r3, #-ISTATE_NEXT_FRAME + ISTATE_CONSTANTS]
 	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_METHOD]
@@ -502,11 +498,10 @@ do_\label:
 	ABORTNE
 @ Check 5th frame up
 	ldr	r3, [r3]
-	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_CAFEBABF]
-	bic	r1, ip, #1
-	cmp	r1, r2
+	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_FRAME_TYPE]
+	cmp	r2, #ENTRY_FRAME
 	beq	2f
-	cmp	ip, r2
+	cmp	r2, #INTERPRETER_FRAME
 	ABORTNE				@ Must be ENTRY_FRAME, or INTERPRETER_FRAME
 	ldr	r1, [r3, #-ISTATE_NEXT_FRAME + ISTATE_CONSTANTS]
 	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_METHOD]
@@ -516,11 +511,10 @@ do_\label:
 	ABORTNE
 @ Check 7th frame up
 	ldr	r3, [r3]
-	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_CAFEBABF]
-	bic	r1, ip, #1
-	cmp	r1, r2
+	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_FRAME_TYPE]
+	cmp	r2, #ENTRY_FRAME
 	beq	2f
-	cmp	ip, r2
+	cmp	r2, #INTERPRETER_FRAME
 	ABORTNE				@ Must be ENTRY_FRAME, or INTERPRETER_FRAME
 	ldr	r1, [r3, #-ISTATE_NEXT_FRAME + ISTATE_CONSTANTS]
 	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_METHOD]
@@ -530,11 +524,10 @@ do_\label:
 	ABORTNE
 @ Check 8th frame up
 	ldr	r3, [r3]
-	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_CAFEBABF]
-	bic	r1, ip, #1
-	cmp	r1, r2
+	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_FRAME_TYPE]
+	cmp	r2, #ENTRY_FRAME
 	beq	2f
-	cmp	ip, r2
+	cmp	r2, #INTERPRETER_FRAME
 	ABORTNE				@ Must be ENTRY_FRAME, or INTERPRETER_FRAME
 	ldr	r1, [r3, #-ISTATE_NEXT_FRAME + ISTATE_CONSTANTS]
 	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_METHOD]
@@ -1030,9 +1023,7 @@ build_frame:
 	addne	r6, r0, r6, asl #2
 	sub	ip, r0, #4
 	str	ip, [r3, #8]
-	mvn	ip, #0x540		@ form 0xCAFEBABF
-	bic	ip, ip, #0x14000
-	bic	ip, ip, #0x35000000
+	mov     ip, #INTERPRETER_FRAME
 	str	r4, [r0, #-4]
 	ldr	r0, [r3, #8]
 	sub	r8, r0, #4
@@ -1326,14 +1317,12 @@ fast_native_entry_with_args:
 	ldr	r4, [r2, #THREAD_JAVA_SP]
 	ldr	r3, [r2, #THREAD_TOP_ZERO_FRAME]
 	mov	r0, #0
-	mvn	ip, #0x540		@ form 0xCAFEBABF in ip
+	mov	ip, #INTERPRETER_FRAME
 	sub	r9, r4, #FRAME_SIZE
-	bic	ip, ip, #0x14000
 	str	r9, [r2, #THREAD_JAVA_SP]	@ drop stack
 	sub	r5, r9, #4		@ stack limit = r9 - 4
-	bic	ip, ip, #0x35000000
 	str	r3, [r9, #ISTATE_NEXT_FRAME]
-	str	ip, [r9, #ISTATE_CAFEBABF]
+	str	ip, [r9, #ISTATE_FRAME_TYPE]
 	str	r9, [r9, #ISTATE_MONITOR_BASE]
 	str	r5, [r9, #ISTATE_STACK_LIMIT]
 	str	r9, [r9, #ISTATE_STACK_BASE]
@@ -4627,9 +4616,8 @@ fast_normal_entry_with_len:
 	ldrh	r0, [tmp2, #METHOD_MAXLOCALS]
 	mov	r1, #0
 	ldrh	r3, [tmp2, #METHOD_SIZEOFPARAMETERS]
-        mvn     ip, #0x540             @ form 0xCAFEBABF in ip
+        mov     ip, #INTERPRETER_FRAME
 	ldrh	r2, [tmp2, #METHOD_MAXSTACK]
-        bic     ip, ip, #0x35000000
         sub     r7, r0, r3
 
 	ldr	r3, [tmp1, #THREAD_JAVA_STACK_BASE]
@@ -4641,7 +4629,6 @@ fast_normal_entry_with_len:
 
         subs    r5, r7, #2
         tst     r7, #1
-        bic     ip, ip, #0x14000
         strne   r1, [stack, #-4]!
         bcc     3f
 1:
@@ -4657,7 +4644,7 @@ fast_normal_entry_with_len:
 	str	r2, [tmp1, #THREAD_JAVA_SP]
         sub     r5, r2, #4                      @ stack limit = istate - stackwords - 4
 	str	r3, [istate, #ISTATE_NEXT_FRAME]
-	str	ip, [istate, #ISTATE_CAFEBABF]
+	str	ip, [istate, #ISTATE_FRAME_TYPE]
 @	str	istate, [istate, #ISTATE_SELF_LINK]
 	str	istate, [istate, #ISTATE_MONITOR_BASE]
 	str	r5, [istate, #ISTATE_STACK_LIMIT]

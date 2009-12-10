@@ -58,24 +58,18 @@
  
 --- openjdk/hotspot/src/share/vm/runtime/vm_version.cpp.orig	2008-12-03 14:23:37.000000000 +0000
 +++ openjdk/hotspot/src/share/vm/runtime/vm_version.cpp	2008-12-03 14:33:48.000000000 +0000
-@@ -94,6 +94,9 @@
- #ifdef TIERED
+@@ -95,7 +95,11 @@
    #define VMTYPE "Server"
- #else
+ #else // TIERED
+ #ifdef ZERO
 +#ifdef SHARK
 +  #define VMTYPE "Shark"
-+#else
- #if defined(COMPILER1) || defined(COMPILER2)
++#else // SHARK
+   #define VMTYPE "Zero"
++#endif // SHARK
+ #else // ZERO
     #define VMTYPE COMPILER1_PRESENT("Client")   \
                    COMPILER2_PRESENT("Server")
-@@ -104,6 +107,7 @@
-   #define VMTYPE "Core"
- #endif // ZERO
- #endif // COMPILER1 || COMPILER2
-+#endif // SHARK
- #endif // TIERED
- #endif // KERNEL
- 
 --- openjdk/hotspot/src/share/vm/runtime/deoptimization.cpp.orig	2008-11-22 00:11:18.000000000 +0000
 +++ openjdk/hotspot/src/share/vm/runtime/deoptimization.cpp	2008-12-03 14:33:48.000000000 +0000
 @@ -229,6 +229,7 @@

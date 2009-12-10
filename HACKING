@@ -19,7 +19,6 @@ The following patches are currently applied before the building of OpenJDK or Op
 * icedtea-bytebuffer-compact.patch: Add clearMark() method to java.nio.Buffer (PR60).
 * icedtea-copy-plugs.patch: Add IcedTea's 'plugs' for Java WebStart support, add
   cast to getAnnotation and trapAuthenticationFailure variable to com.sun.jmx.snmp.SnmpPduTrap.
-* icedtea-core-build.patch: Add support for building IcedTea core VM.
 * icedtea-debuginfo.patch: Add -g option to build to generate debugging information.
 * icedtea-demos.patch: Fix building of JVMTI demo.
 * icedtea-float-double-trailing-zeros.patch: Remove trailing zeros from Double/Float (PR29/30)
@@ -28,7 +27,6 @@ The following patches are currently applied before the building of OpenJDK or Op
 * icedtea-gcc-4.3.patch: Fix code to compile with GCC 4.3 and turn off -Werror.
 * icedtea-gcc-suffix.patch: Append $(GCC_SUFFIX) to end of 'gcc' binary name.
 * icedtea-graphics.patch: Fix word wrap in JTextArea (PR57/S6593649)
-* icedtea-ia64-fdlibm.patch: Fix name of ia64 architecture from _M_IA64 to ia64.
 * icedtea-javac-debuginfo.patch: Ensure debugging information is generated for all class files.
 * icedtea-javafiles.patch: Add missing Java files to list.
 * icedtea-jpegclasses.patch: Add com.sun.image.codec.jpeg support.
@@ -36,7 +34,6 @@ The following patches are currently applied before the building of OpenJDK or Op
 * icedtea-lcms-2.patch: Temporary fix for https://bugs.openjdk.java.net/show_bug.cgi?id=100050.
 * icedtea-lib64.patch: Add support for building on platforms with /usr/lib64.
 * icedtea-libraries.patch: Use system JPEG and zlib libraries.
-* icedtea-linker-options.patch: Add -Xlinker option when linking.
 * icedtea-memory-limits.patch: Increase default memory limits.
 * icedtea-no-bcopy.patch: Don't define local copies of bcopy, bzero and bcmp from BSD.
 * icedtea-override-redirect-metacity.patch: Enable override redirect for Metacity window manager.
@@ -47,7 +44,6 @@ The following patches are currently applied before the building of OpenJDK or Op
 * icedtea-sparc-ptracefix.patch: Avoid importing asm-sparc/ptrace.h by including pt_regs directly.
 * icedtea-sparc-trapsfix.patch: Include traps.h from correct directory.
 * icedtea-ssl.patch: Add casts to AlgorithmParameterSpec in sun.security.ssl package.
-* icedtea-static-libstdc++.patch: Don't use static C++ on PPC64.
 * icedtea-sunsrc.patch: Remove service property files from TOOLS list.
 * icedtea-text-relocations.patch: Use correct -fPIC/-fpic flag on all platforms.
 * icedtea-timerqueue.patch: Fix setting of running variable (PR87).
@@ -55,7 +51,6 @@ The following patches are currently applied before the building of OpenJDK or Op
 * icedtea-use-system-tzdata.patch: Use timezone data from the system (PR70/S6593486).
 * icedtea-version.patch: Replace name and bug URL with IcedTea versions.
 * icedtea-webservices.patch: Add applet support.
-* icedtea-zero-build.patch: Add support for the zero assembler build.
 * icedtea-shark-build.patch: Add support for building the Shark JIT.
 * icedtea-alpha-fixes.patch: Fix build issues on alpha-linux.
 * icedtea-arch.patch: Add support for additional architectures.
@@ -74,14 +69,12 @@ The following patches are currently applied before the building of OpenJDK or Op
 * icedtea-6728542-epoll.patch: Make EPoll work on non-x86 platforms. (PR265)
 * icedtea-fortify-source.patch: Fix build failures with -D_FORTIFY_SOURCE=2.
 * icedtea-format-warnings.patch: Fix build failures with -Wformat=1.
-* icedtea-cc-interp-jvmti.patch: Disable some JVMTI capabilities which are unsupported or do not work with the C++ interpreter.
 * icedtea-demo-swingapplet.patch: Add missing html file needed to run the demo.
 * icedtea-6791168.patch: Fix build failure with GCC-4.4 (PR 38725) and compiler warnings.
 * icedtea-no-precompiled.patch: Don't use precompiled header files in hotspot when DISABLE_PRECOMPILED_HEADER is set.
 * icedtea-includedb.patch: Add missing include files.
 * icedtea-awt-window-size.patch: Fix X11 window size calculation (S6721088).
 * icedtea-java2d-dasher.patch: Fix interpretation of dash array elements in BasicStroke (S6793344).
-* icedtea-cc-interp-backedge.patch: Remove some duplicated code in DO_BACKEDGE_CHECKS.
 * icedtea-xml-encodinginfo.patch: Fix possible StackOverflowError in EncodingInfo (PR295).
 * icedtea-jtreg-6592792.patch: Fix jtreg test for bug 6592792 so that it compiles.
 * icedtea-s390-noinline.patch: Add special flags for javac on s390 to work around a VM problem with bad code generation during inlining.
@@ -99,14 +92,7 @@ The following patches are currently applied before the building of OpenJDK or Op
 * icedtea-cacao.patch: For the 'java' command, create new thread depending on the current VM.
 * icedtea-cacao-no-mmap-first-page.patch: Don't mmap the first memory page.
 * cacao/no-strict-aliasing.patch: Turn off strict aliasing which causes an issue with the verifier when building with GCC 4.4 (cacao PR129).
-
-* icedtea-bytecodeInterpreter.patch: Replace fast opcodes with opc_default.
-* icedtea-ia64-bugfix.patch: Remove workaround for IA64 GCC bug.
-* icedtea-signature-iterator.patch: Add zero-specific signature handling.
-* icedtea-test-atomic-operations.patch: Add check to see if GCC's sync_lock_test works.
-* icedtea-zero.patch: Generalise architecture support, add ARM and #ifdef out non-zero applicable parts.
 * icedtea-shark.patch: Add support for the Shark JIT.
-* icedtea-s390-serialize.patch: Correctly detect serialization segfaults on s390.
 * icedtea-xshm.patch: Support newer X11 headers for awt_GraphicsEnv.h.
 
 The following patches are only applied to OpenJDK6 in IcedTea6:
@@ -177,3 +163,16 @@ changes to the OpenJDK code base and/or changes within IcedTea:
 * icedtea-core-zero-build.patch: Not required with HS14.
 * icedtea-bytecodeInterpreterWithChecks.patch: Same as icedtea-xslfix.patch (OpenJDK6 only, S6707485); not required with HS14.
 * icedtea-eclipse-hotspot-6614100-7b24.patch: Fix Eclipse crash (S6614100). Fixed in OpenJDK7 b29/hs13.  Not required with HS14.
+* icedtea-bytecodeInterpreter.patch: Replace fast opcodes with opc_default.  Not required with HS14.
+* icedtea-signature-iterator.patch: Add zero-specific signature handling.  Obsoleted by zero/6890308.patch.
+* icedtea-static-libstdc++.patch: Don't use static C++ on PPC64.  Obsoleted by zero/6890308.patch.
+* icedtea-zero.patch: Generalise architecture support, add ARM and #ifdef out non-zero applicable parts.  Obsoleted by zero/6890308.patch.
+* icedtea-core-build.patch: Add support for building IcedTea core VM.  Obsoleted by zero/6891677.patch.
+* icedtea-linker-options.patch: Add -Xlinker option when linking.  Obsoleted by zero/6891677.patch.
+* icedtea-zero-build.patch: Add support for the zero assembler build.  Obsoleted by zero/6891677.patch.
+* icedtea-cc-interp-backedge.patch: Remove some duplicated code in DO_BACKEDGE_CHECKS.  Obsoleted by zero/6896043.patch.
+* icedtea-cc-interp-jvmti.patch: Disable some JVMTI capabilities which are unsupported or do not work with the C++ interpreter.  Obsoleted by zero/6896043.patch.
+* icedtea-ia64-bugfix.patch: Remove workaround for IA64 GCC bug.  Obsoleted by zero/6896043.patch.
+* icedtea-s390-serialize.patch: Correctly detect serialization segfaults on s390.  Obsoleted by zero/6896043.patch.
+* icedtea-test-atomic-operations.patch: Add check to see if GCC's sync_lock_test works.  Obsoleted by zero/6896043.patch.
+* icedtea-ia64-fdlibm.patch: Fix name of ia64 architecture from _M_IA64 to ia64.  Obsoleted by zero/6903453.patch.

@@ -70,8 +70,8 @@
  	endif
      endif
      ifeq ($(PLATFORM), linux)
--	LDFLAGS += -z origin
-+	LDFLAGS += -lz -z origin
+-	LDFLAGS += -Wl,-z -Wl,origin
++	LDFLAGS += -lz -Wl,-z -Wl,origin
  	LDFLAGS += -Wl,--allow-shlib-undefined
  	LDFLAGS += -Wl,-rpath -Wl,\$$ORIGIN/../lib/$(LIBARCH)/jli
  	LDFLAGS += -Wl,-rpath -Wl,\$$ORIGIN/../jre/lib/$(LIBARCH)/jli
