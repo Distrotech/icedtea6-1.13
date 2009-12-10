@@ -1110,7 +1110,7 @@ asm_generate_method_entry:
 	cmp	r2, #0
 	bne	1f
 
-	cmp	r3, #6
+	cmp	r3, #14
 	adrcc	ip, asm_method_table
 	ldrcc	r0, [ip, r3, lsl #2]
 1:
@@ -1127,6 +1127,14 @@ asm_method_table:
 	.word	0			@ cppInterpreter can handle native_entry_synchronized
 	.word	empty_entry
 	.word	accessor_entry
+	.word	normal_entry
+	.word	normal_entry
+	.word	normal_entry
+	.word	normal_entry
+	.word	normal_entry
+	.word	normal_entry
+	.word	normal_entry
+	.word	normal_entry
 
 	ALIGN_CODE
 	.global	empty_entry
@@ -6284,17 +6292,42 @@ _ZN14CppInterpreter17ignore_safepointsEv:
 	mov	r3, #0
 	strb	r3, [r2, #0]
 	adrl	r3, main_dispatch_table
+#ifdef HW_FP
+	ldr	r0, [ip, #VFP_Flag-XXX]
+	cmp	r0, #0
+	bne	2f
+#endif
 	mov	r2, #256
 1:
 	ldr	r1, [r3], #4
 	str	r1, [ip], #4
 	subs	r2, r2, #1
 	bne	1b
+	bx	lr
+
+@ No HW FP - must update the table from a combination main_dispatch_table and
+@ vfp_table. Previously this updated from main_dispatch_table first, and then
+@ overwrite the updated entries with those from vfp_table. However, this creates
+@ a window where the jump table has vfp entries, so in a multithreaded world we
+@ can get undefined VFP instructions.
+@ The code below updates from both tables simultaneously. Note: this relies on
+@ the enties in vfp_table being in opcode order.
 #ifdef HW_FP
-	sub	ip, ip, #256*4
-	ldr	r0, [ip, #VFP_Flag-XXX]
-	cmp	r0, #0
-	beq	update_vfp_table
+2:
+	stmdb	arm_sp!, {r4, lr}
+	mov	r2, #0
+	adrl	r0, vfp_table
+	ldr	r4, [r0], #4
+3:
+	ldr	r1, [r3], #4
+	cmp	r2, r4
+	ldreq	r1, [r0], #4
+	ldreq	r4, [r0], #4
+	str	r1, [ip], #4
+	add	r2, r2, #1
+	cmp	r2, #256
+	bcc	3b
+	ldmia	arm_sp!, {r4, lr}
 #endif // HW_FP
 #endif // NOTICE_SAFEPOINTS
 	bx	lr
