@@ -25,9 +25,8 @@ diff -u ../openjdk/icedtea6/openjdk/hotspot/agent/src/os/linux/libproc_impl.c op
     if (newlib->symtab == NULL) {
        print_debug("symbol table build failed for %s\n", newlib->name);
     }
-diff -u ../openjdk/icedtea6/openjdk/hotspot/agent/src/os/linux/symtab.c openjdk/hotspot/agent/src/os/linux/symtab.c
---- ../openjdk/icedtea6/openjdk/hotspot/agent/src/os/linux/symtab.c	2009-05-15 00:36:38.000000000 +0100
-+++ openjdk/hotspot/agent/src/os/linux/symtab.c	2009-12-07 13:53:13.107734342 +0000
+--- openjdk/hotspot/agent/src/os/linux/symtab.c	2009-10-14 18:13:08.000000000 +0100
++++ openjdk/hotspot/agent/src/os/linux/symtab.c	2009-12-11 16:16:39.106634861 +0000
 @@ -53,8 +53,272 @@
    struct hsearch_data *hash_table;
  } symtab_t;
@@ -313,12 +312,13 @@ diff -u ../openjdk/icedtea6/openjdk/hotspot/agent/src/os/linux/symtab.c openjdk/
        if ( (scn_cache[cnt].c_data = read_section_data(fd, &ehdr, cursct)) == NULL) {
           goto quit;
        }
-@@ -163,6 +428,28 @@
+@@ -163,6 +428,30 @@
      }
    }
  
 +  // If we have no symtab in this file, look for a separate debuginfo file
 +  if (try_debuginfo) {
++#ifdef NT_GNU_BUILD_ID
 +    // First we look for a Build ID
 +    for (cursct = shbuf, cnt = 0;
 +	 symtab == NULL && cnt < ehdr.e_shnum;
@@ -331,6 +331,7 @@ diff -u ../openjdk/icedtea6/openjdk/hotspot/agent/src/os/linux/symtab.c openjdk/
 +      }
 +      cursct++;
 +    }
++#endif
 +
 +    // Then, if that doesn't work, the debug link
 +    if (symtab == NULL) {
@@ -342,7 +343,7 @@ diff -u ../openjdk/icedtea6/openjdk/hotspot/agent/src/os/linux/symtab.c openjdk/
  quit:
    if (shbuf) free(shbuf);
    if (phbuf) free(phbuf);
-@@ -177,6 +464,11 @@
+@@ -177,6 +466,11 @@
    return symtab;
  }
  
