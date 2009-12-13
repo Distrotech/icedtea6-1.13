@@ -1255,7 +1255,9 @@ if ENABLE_SYSTEMTAP
 	    $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
 	  cp $(abs_top_builddir)/tapset/hotspot_jni.stp \
 	    $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_jni.stp; \
-	fi
+	fi; \
+	cp $(abs_top_builddir)/tapset/jstack.stp \
+	  $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/jstack.stp
 endif
 if ENABLE_NSS
 	cp $(abs_top_builddir)/nss.cfg \
@@ -1352,7 +1354,9 @@ if ENABLE_SYSTEMTAP
 	    $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
 	  cp $(abs_top_builddir)/tapset/hotspot_jni.stp \
 	    $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_jni.stp; \
-	fi
+	fi; \
+	cp $(abs_top_builddir)/tapset/jstack.stp \
+	  $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/jstack.stp
 endif
 if ENABLE_NSS
 	cp $(abs_top_builddir)/nss.cfg \
