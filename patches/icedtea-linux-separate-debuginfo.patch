@@ -13,6 +13,13 @@
 	* openjdk/hotspot/agent/src/os/linux/symtab.h (build_symtab):
 	Add FILENAME arg.
 
+2009-12-16  Andrew Haley  <aph@redhat.com>
+
+	* openjdk/hotspot/agent/src/os/linux/symtab.c (open_file_from_debug_link):
+	Check for NULL.
+	Fix off by one error in aligning the CRC: the offset is 4 bytes,
+	not 3.
+
 diff -u ../openjdk/icedtea6/openjdk/hotspot/agent/src/os/linux/libproc_impl.c openjdk/hotspot/agent/src/os/linux/libproc_impl.c
 --- ../openjdk/icedtea6/openjdk/hotspot/agent/src/os/linux/libproc_impl.c	2009-05-15 00:36:38.000000000 +0100
 +++ openjdk/hotspot/agent/src/os/linux/libproc_impl.c	2009-12-04 16:29:27.552837905 +0000
@@ -25,9 +32,22 @@ diff -u ../openjdk/icedtea6/openjdk/hotspot/agent/src/os/linux/libproc_impl.c op
     if (newlib->symtab == NULL) {
        print_debug("symbol table build failed for %s\n", newlib->name);
     }
---- openjdk/hotspot/agent/src/os/linux/symtab.c	2009-10-14 18:13:08.000000000 +0100
-+++ openjdk/hotspot/agent/src/os/linux/symtab.c	2009-12-11 16:16:39.106634861 +0000
-@@ -53,8 +53,272 @@
+diff -u ../openjdk/icedtea6/openjdk/hotspot/agent/src/os/linux/symtab.h openjdk/hotspot/agent/src/os/linux/symtab.h
+--- ../openjdk/icedtea6/openjdk/hotspot/agent/src/os/linux/symtab.h	2009-05-15 00:36:38.000000000 +0100
++++ openjdk/hotspot/agent/src/os/linux/symtab.h	2009-12-04 16:30:38.797838015 +0000
+@@ -32,7 +32,7 @@
+ struct symtab;
+ 
+ // build symbol table for a given ELF file descriptor
+-struct symtab* build_symtab(int fd);
++struct symtab* build_symtab(int fd, const char *filename);
+ 
+ // destroy the symbol table
+ void destroy_symtab(struct symtab* symtab);
+
+--- openjdk/hotspot/agent/src/os/linux/symtab.c	2009-12-16 17:13:28.879599584 +0000
++++ openjdk/hotspot/agent/src/os/linux/symtab.c	2009-12-16 17:14:15.871601226 +0000
+@@ -53,8 +53,274 @@
    struct hsearch_data *hash_table;
  } symtab_t;
  
@@ -178,11 +198,13 @@ diff -u ../openjdk/icedtea6/openjdk/hotspot/agent/src/os/linux/libproc_impl.c op
 +				     ELF_SHDR *shbuf,
 +				     struct elf_section *scn_cache)
 +{
++  int debug_fd;
 +  struct elf_section *debug_link = find_section_by_name(".gnu_debuglink", fd, ehdr,
 +							shbuf, scn_cache);
-+  int debug_fd;
++  if (debug_link == NULL)
++    return -1;
 +  char *debug_filename = debug_link->c_data;
-+  int offset = strlen(debug_filename) + 3 >> 2;
++  int offset = (strlen(debug_filename) + 4) >> 2;
 +  static unsigned int crc;
 +  crc = ((unsigned int*)debug_link->c_data)[offset];
 +  char *debug_pathname = malloc(strlen(debug_filename)
@@ -302,7 +324,7 @@ diff -u ../openjdk/icedtea6/openjdk/hotspot/agent/src/os/linux/libproc_impl.c op
    ELF_EHDR ehdr;
    char *names = NULL;
    struct symtab* symtab = NULL;
-@@ -90,7 +354,8 @@
+@@ -90,7 +356,8 @@
  
    for (cursct = shbuf, cnt = 0; cnt < ehdr.e_shnum; cnt++) {
      scn_cache[cnt].c_shdr = cursct;
@@ -312,7 +334,7 @@ diff -u ../openjdk/icedtea6/openjdk/hotspot/agent/src/os/linux/libproc_impl.c op
        if ( (scn_cache[cnt].c_data = read_section_data(fd, &ehdr, cursct)) == NULL) {
           goto quit;
        }
-@@ -163,6 +428,30 @@
+@@ -163,6 +430,30 @@
      }
    }
  
@@ -343,7 +365,7 @@ diff -u ../openjdk/icedtea6/openjdk/hotspot/agent/src/os/linux/libproc_impl.c op
  quit:
    if (shbuf) free(shbuf);
    if (phbuf) free(phbuf);
-@@ -177,6 +466,11 @@
+@@ -177,6 +468,11 @@
    return symtab;
  }
  
@@ -355,16 +377,3 @@ diff -u ../openjdk/icedtea6/openjdk/hotspot/agent/src/os/linux/libproc_impl.c op
  void destroy_symtab(struct symtab* symtab) {
    if (!symtab) return;
    if (symtab->strs) free(symtab->strs);
-diff -u ../openjdk/icedtea6/openjdk/hotspot/agent/src/os/linux/symtab.h openjdk/hotspot/agent/src/os/linux/symtab.h
---- ../openjdk/icedtea6/openjdk/hotspot/agent/src/os/linux/symtab.h	2009-05-15 00:36:38.000000000 +0100
-+++ openjdk/hotspot/agent/src/os/linux/symtab.h	2009-12-04 16:30:38.797838015 +0000
-@@ -32,7 +32,7 @@
- struct symtab;
- 
- // build symbol table for a given ELF file descriptor
--struct symtab* build_symtab(int fd);
-+struct symtab* build_symtab(int fd, const char *filename);
- 
- // destroy the symbol table
- void destroy_symtab(struct symtab* symtab);
-
