@@ -307,7 +307,8 @@ if BUILD_CACAO
 ICEDTEA_PATCHES += \
 	patches/icedtea-cacao.patch \
 	patches/icedtea-cacao-no-mmap-first-page.patch \
-	patches/cacao/no-strict-aliasing.patch
+	patches/cacao/no-strict-aliasing.patch \
+	patches/cacao/arm-arch-defines.patch
 endif
 if WITH_CACAO
 ICEDTEA_PATCHES += \
