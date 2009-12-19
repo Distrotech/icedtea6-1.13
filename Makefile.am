@@ -296,7 +296,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6879689-hotspot_warning_fix.patch \
 	patches/icedtea-no-precompiled.patch \
 	patches/icedtea-6897844-xshm.patch \
-	patches/icedtea-linux-separate-debuginfo.patch
+	patches/icedtea-linux-separate-debuginfo.patch \
+	patches/icedtea-parisc.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
