@@ -1,0 +1,172 @@
+diff -Nru openjdk.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthComboBoxUI.java openjdk/jdk/src/share/classes/javax/swing/plaf/synth/SynthComboBoxUI.java
+--- openjdk.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthComboBoxUI.java	2009-12-15 00:04:14.000000000 +0000
++++ openjdk/jdk/src/share/classes/javax/swing/plaf/synth/SynthComboBoxUI.java	2009-12-15 00:09:04.000000000 +0000
+@@ -200,7 +200,6 @@
+         super.uninstallListeners();
+     }
+ 
+-    @Override
+     public SynthContext getContext(JComponent c) {
+         return getContext(c, getComponentState(c));
+     }
+@@ -273,7 +272,6 @@
+     // end UI Initialization
+     //======================
+ 
+-    @Override
+     public void propertyChange(PropertyChangeEvent e) {
+         if (SynthLookAndFeel.shouldUpdateStyle(e)) {
+             updateStyle(comboBox);
+@@ -318,7 +316,6 @@
+         }
+     }
+ 
+-    @Override
+     public void paintBorder(SynthContext context, Graphics g, int x,
+                             int y, int w, int h) {
+         context.getPainter().paintComboBoxBorder(context, g, x, y, w, h);
+@@ -424,7 +421,6 @@
+             setText(" ");
+         }
+ 
+-        @Override
+         public Component getListCellRendererComponent(JList list, Object value,
+                          int index, boolean isSelected, boolean cellHasFocus) {
+             setName("ComboBox.listRenderer");
+@@ -491,7 +487,6 @@
+             editor.setName("ComboBox.textField");
+         }
+ 
+-        @Override
+         public Component getEditorComponent() {
+             return editor;
+         }
+@@ -501,7 +496,6 @@
+          *
+          * @param anObject the displayed value of the editor
+          */
+-        @Override
+         public void setItem(Object anObject) {
+             String text;
+ 
+@@ -517,7 +511,6 @@
+             }
+         }
+ 
+-        @Override
+         public Object getItem() {
+             Object newValue = editor.getText();
+ 
+@@ -540,18 +533,15 @@
+             return newValue;
+         }
+ 
+-        @Override
+         public void selectAll() {
+             editor.selectAll();
+             editor.requestFocus();
+         }
+ 
+-        @Override
+         public void addActionListener(ActionListener l) {
+             editor.addActionListener(l);
+         }
+ 
+-        @Override
+         public void removeActionListener(ActionListener l) {
+             editor.removeActionListener(l);
+         }
+@@ -685,27 +675,22 @@
+         // MouseListener/MouseMotionListener Methods
+         //------------------------------------------------------------------
+ 
+-        @Override
+         public void mouseEntered(MouseEvent mouseEvent) {
+             updateOver(true);
+         }
+ 
+-        @Override
+         public void mouseExited(MouseEvent mouseEvent) {
+             updateOver(false);
+         }
+ 
+-        @Override
+         public void mousePressed(MouseEvent mouseEvent) {
+             updatePressed(true);
+         }
+ 
+-        @Override
+         public void mouseReleased(MouseEvent mouseEvent) {
+             updatePressed(false);
+         }
+ 
+-        @Override
+         public void mouseClicked(MouseEvent e) {}
+ 
+         //------------------------------------------------------------------
+@@ -722,16 +707,13 @@
+          * This bug was only noticed when acting as a button, but may be generally
+          * present. If so, remove the if() block
+          */
+-        @Override
+         public void popupMenuCanceled(PopupMenuEvent e) {
+             if (shouldActLikeButton() || pressedWhenPopupVisible) {
+                 comboBox.repaint();
+             }
+         }
+ 
+-        @Override
+         public void popupMenuWillBecomeVisible(PopupMenuEvent e) {}
+-        @Override
+         public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {}
+     }
+ 
+diff -Nru openjdk.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthLookAndFeel.java openjdk/jdk/src/share/classes/javax/swing/plaf/synth/SynthLookAndFeel.java
+--- openjdk.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthLookAndFeel.java	2009-12-09 16:38:59.000000000 +0000
++++ openjdk/jdk/src/share/classes/javax/swing/plaf/synth/SynthLookAndFeel.java	2009-12-09 16:38:39.000000000 +0000
+@@ -832,7 +832,6 @@
+             tk.addPropertyChangeListener(key, this);
+         }
+ 
+-        @Override
+         public void propertyChange(PropertyChangeEvent pce) {
+             UIDefaults defaults = UIManager.getLookAndFeelDefaults();
+             if (defaults.getBoolean("Synth.doNotSetTextAA")) {
+@@ -901,7 +900,6 @@
+             if (!isUpdatePending()) {
+                 setUpdatePending(true);
+                 Runnable uiUpdater = new Runnable() {
+-                    @Override
+                     public void run() {
+                         updateAllUIs();
+                         setUpdatePending(false);
+@@ -918,7 +916,6 @@
+     }
+ 
+     private class Handler implements PropertyChangeListener {
+-        @Override
+         public void propertyChange(PropertyChangeEvent evt) {
+             String propertyName = evt.getPropertyName();
+             Object newValue = evt.getNewValue();
+diff -Nru openjdk.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthTreeUI.java openjdk/jdk/src/share/classes/javax/swing/plaf/synth/SynthTreeUI.java
+--- openjdk.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthTreeUI.java	2009-12-15 00:31:41.000000000 +0000
++++ openjdk/jdk/src/share/classes/javax/swing/plaf/synth/SynthTreeUI.java	2009-12-15 00:32:03.000000000 +0000
+@@ -154,7 +154,6 @@
+         tree.addPropertyChangeListener(this);
+     }
+ 
+-    @Override
+     public SynthContext getContext(JComponent c) {
+         return getContext(c, getComponentState(c));
+     }
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java openjdk/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java
+--- openjdk.orig/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java	2009-12-15 00:44:58.000000000 +0000
++++ openjdk/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java	2009-12-15 00:45:15.000000000 +0000
+@@ -701,7 +701,6 @@
+             this.delegate = delegate;
+         }
+ 
+-        @Override
+         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+             Component c = delegate.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+ 

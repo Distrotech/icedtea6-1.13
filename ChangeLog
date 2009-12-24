@@ -1,3 +1,79 @@
+2009-12-22  Andrew John Hughes  <ahughes@redhat.com>
+
+	Support b18.  Add --with-tzdata-dir option,
+	use updated system rt.jar rather than a fresh
+	one to avoid the need for JAXP sources, remove
+	unnecessary copying.
+	* overlays/openjdk/jdk/test/java/util/SimpleTimeZone/EndOfDay.java,
+	* patches/icedtea-jtreg-hatrun.patch,
+	* patches/openjdk/6432567-debugger-socket-overflow.patch,
+	* patches/security/icedtea-6631533.patch,
+	* patches/security/icedtea-6632445.patch,
+	* patches/security/icedtea-6636650.patch,
+	* patches/security/icedtea-6657026.patch,
+	* patches/security/icedtea-6657138.patch,
+	* patches/security/icedtea-6664512.patch,
+	* patches/security/icedtea-6822057.patch,
+	* patches/security/icedtea-6824265.patch,
+	* patches/security/icedtea-6861062.patch,
+	* patches/security/icedtea-6862968.patch,
+	* patches/security/icedtea-6863503.patch,
+	* patches/security/icedtea-6864911.patch,
+	* patches/security/icedtea-6872357.patch,
+	* patches/security/icedtea-6872358.patch,
+	* patches/security/icedtea-6874643.patch:
+	Removed.
+	* Makefile.am:
+	Bump to b18.  Change ICEDTEA_RT to point to
+	rt.jar rather than rt-closed.jar.  Rename
+	ICEDTEA_COPY_DIRS to ICEDTEA_BOOTSTRAP_DIRS
+	and prefix with full path.  Add sun/applet to
+	$(LIVECONNECT_DIR).  Set SYSTEM_JDK_DIR to
+	either SYSTEM_GCJ_DIR or SYSTEM_OPENJDK_DIR
+	depending on configuration.  Remove dead patches,
+	add new @Override patch and jaxp dependency and bootver
+	ecj patches. Set JAVA_TOOLS_DIR to point to
+	ICEDTEA_BOOT_DIR/bin.  Set DISABLE_NIMBUS, NO_DOCS
+	and ALT_DROPS_DIR for ecj build.  Remove dead
+	clean-shared-objects reference.  Use SYSTEM_JDK_DIR
+	in place of SYSTEM_GCJ_DIR and SYSTEM_OPENJDK_DIR.
+	Copy and extend system rt.jar rather than using
+	both.  Copy tz.properties when TZDATA_DIR is specified.
+	(hotspot-tools-copy-source-files.stamp): Don't copy
+	from jaxws -- no longer exists.
+	(hotspot-tools-class-files.stamp): Specify system rt.jar
+	as classpath.
+	(copy-source-files.stamp): Removed.
+	(clean-copy): Likewise.
+	(rt-source-files.txt): Use BOOTSTRAP_DIRS directly.
+	(rt-class-files.stamp): Specify system rt.jar as classpath.
+	(rt.stamp): Update rt.jar with class files compiled by
+	rt-class-files.stamp.
+	(plugs.stamp): Create rt-closed.jar from class files in lib/rt.
+	(clean-plugs): Revert to system rt.jar.
+	* acinclude.m4:
+	(CHECK_WITH_TZDATA_DIR): Allow a directory containing timezone
+	data to be specified.  Defaults to /usr/share/javazi.
+	* configure.ac: Call CHECK_WITH_TZDATA_DIR.
+	* javac.in: Use local rt.jar as bootclasspath.
+	* patches/ecj/bootver.patch: Set REQUIRED_BOOT_VER to 1.5
+	if Nimbus is disabled.
+	* patches/ecj/icedtea-jaxp-dependency.patch:
+	Add JAXP classes to classpath when building JAXWS.
+	* patches/ecj/icedtea.patch: Recreated.
+	* patches/icedtea-alpha-fixes.patch: Dropped.
+	* patches/icedtea-override.patch: New
+	patch to remove @Override from interfaces.
+	* patches/icedtea-use-system-tzdata.patch:
+	New version which uses configurable datadir.
+	As in IcedTea7.
+	* patches/icedtea-xjc.patch:
+	Changed to apply as a patch in the JAXWS build.
+	* patches/icedtea-xml-encodinginfo.patch:
+	Likewise, but for JAXP.
+	* tz.properties.in:
+	Input file for tzdata directory setting.
+
 2009-12-03  Gary Benson  <gbenson@redhat.com>
 
 	* overlays/openjdk/jdk/src/share/classes/com/sun/media/sound/:

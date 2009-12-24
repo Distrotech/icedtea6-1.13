@@ -1103,3 +1103,33 @@ AC_DEFUN([AC_CHECK_FOR_OPENJDK],
   AC_SUBST(with_openjdk)
 ])
 
+AC_DEFUN([AC_CHECK_WITH_TZDATA_DIR],
+[
+  DEFAULT="/usr/share/javazi"
+  AC_MSG_CHECKING([which Java timezone data directory to use])
+  AC_ARG_WITH([tzdata-dir],
+	      [AS_HELP_STRING(--with-tzdata-dir,set the Java timezone data directory [[default=${DEFAULT}]])],
+  [
+    if test "x${withval}" = x || test "x${withval}" = xyes; then
+      TZDATA_DIR_SET=yes
+      TZDATA_DIR="${DEFAULT}"
+    else
+      if test "x${withval}" = xno; then
+        TZDATA_DIR_SET=no
+        AC_MSG_RESULT([no])
+      else
+        TZDATA_DIR_SET=yes
+        TZDATA_DIR="${withval}"
+      fi
+    fi
+  ],
+  [ 
+    TZDATA_DIR="${DEFAULT}"
+  ])
+  if test "x${TZDATA_DIR}" != "x"; then
+    AC_MSG_RESULT([${TZDATA_DIR}])
+  fi
+  AC_SUBST([TZDATA_DIR])
+  AM_CONDITIONAL(WITH_TZDATA_DIR, test "x${TZDATA_DIR}" != "x")
+  AC_CONFIG_FILES([tz.properties])
+])

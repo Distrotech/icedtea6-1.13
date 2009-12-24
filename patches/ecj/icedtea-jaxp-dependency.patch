@@ -1,0 +1,24 @@
+diff -Nru openjdk-ecj.orig/jaxws/build.properties openjdk-ecj/jaxws/build.properties
+--- openjdk-ecj.orig/jaxws/build.properties	2009-12-15 12:58:08.000000000 +0000
++++ openjdk-ecj/jaxws/build.properties	2009-12-15 13:56:49.000000000 +0000
+@@ -58,6 +58,9 @@
+ build.dir=${output.dir}/build
+ build.classes.dir=${build.dir}/classes
+ 
++# JAXP built files
++jaxp.classes.dir=${output.dir}/../jaxp/build/classes
++
+ # Distributed results
+ dist.dir=${output.dir}/dist
+ dist.lib.dir=${dist.dir}/lib
+diff -Nru openjdk-ecj.orig/jaxws/build.xml openjdk-ecj/jaxws/build.xml
+--- openjdk-ecj.orig/jaxws/build.xml	2009-12-15 13:00:19.000000000 +0000
++++ openjdk-ecj/jaxws/build.xml	2009-12-15 13:57:26.000000000 +0000
+@@ -114,6 +114,7 @@
+     <target name="build"
+ 	    depends="init, -init-src-dirs, -build-prep">
+         <javac fork="true"
++	     classpath="${jaxp.classes.dir}:${build.classes.dir}"
+              destdir="${build.classes.dir}"
+              memoryInitialSize="${javac.memoryInitialSize}"
+              memoryMaximumSize="${javac.memoryMaximumSize}"
