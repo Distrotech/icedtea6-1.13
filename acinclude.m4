@@ -691,82 +691,78 @@ AC_DEFUN([ENABLE_ZERO_BUILD],
     esac
   ],
   [
-    case "${host}" in
-      i?86-*-*) ;;
-      sparc*-*-*) ;;
-      x86_64-*-*) ;;
-      *)
-        if test "x${WITH_CACAO}" != xno; then
-          use_zero=no
-        else
-          use_zero=yes
-        fi
-        ;;
-    esac
+    if test "x${use_shark}" = "xyes"; then
+      use_zero=yes;
+    else
+      case "${host}" in
+        i?86-*-*) ;;
+        sparc*-*-*) ;;
+        x86_64-*-*) ;;
+        *)
+          if test "x${WITH_CACAO}" != xno; then
+            use_zero=no
+          else
+            use_zero=yes
+          fi
+          ;;
+      esac
+    fi
   ])
   AC_MSG_RESULT($use_zero)
   AM_CONDITIONAL(ZERO_BUILD, test "x${use_zero}" = xyes)
 
-  ZERO_LIBARCH=
-  ZERO_BITSPERWORD=
-  ZERO_ENDIANNESS=
-  ZERO_ARCHDEF=
-  ZERO_ARCHFLAG=
-  if test "x${use_zero}" = xyes; then
-    ZERO_LIBARCH="${INSTALL_ARCH_DIR}"
-    dnl can't use AC_CHECK_SIZEOF on multilib
-    case "${ZERO_LIBARCH}" in
-      i386|ppc|s390|sparc)
-        ZERO_BITSPERWORD=32
-        ;;
-      amd64|ppc64|s390x|sparc64)
-        ZERO_BITSPERWORD=64
-        ;;
-      *)
-        AC_CHECK_SIZEOF(void *)
-        ZERO_BITSPERWORD=`expr "${ac_cv_sizeof_void_p}" "*" 8`
-    esac
-    AC_C_BIGENDIAN([ZERO_ENDIANNESS="big"], [ZERO_ENDIANNESS="little"])
-    case "${ZERO_LIBARCH}" in
-      i386)
-        ZERO_ARCHDEF="IA32"
-        ;;
-      ppc*)
-        ZERO_ARCHDEF="PPC"
-        ;;
-      s390*)
-        ZERO_ARCHDEF="S390"
-        ;;
-      sparc*)
-        ZERO_ARCHDEF="SPARC"
-        ;;
-      *)
-        ZERO_ARCHDEF=`echo ${ZERO_LIBARCH} | tr a-z A-Z`
-    esac
-    dnl multilib machines need telling which mode to build for
-    case "${ZERO_LIBARCH}" in
-      i386|ppc|sparc)
-        ZERO_ARCHFLAG="-m32"
-        ;;
-      s390)
-        ZERO_ARCHFLAG="-m31"
-        ;;
-      amd64|ppc64|s390x|sparc64)
-        ZERO_ARCHFLAG="-m64"
-        ;;
-    esac
-  fi
+  ZERO_LIBARCH="${INSTALL_ARCH_DIR}"
+  dnl can't use AC_CHECK_SIZEOF on multilib
+  case "${ZERO_LIBARCH}" in
+    i386|ppc|s390|sparc)
+      ZERO_BITSPERWORD=32
+      ;;
+    amd64|ppc64|s390x|sparc64)
+      ZERO_BITSPERWORD=64
+      ;;
+    *)
+      AC_CHECK_SIZEOF(void *)
+      ZERO_BITSPERWORD=`expr "${ac_cv_sizeof_void_p}" "*" 8`
+  esac
+  AC_C_BIGENDIAN([ZERO_ENDIANNESS="big"], [ZERO_ENDIANNESS="little"])
+  case "${ZERO_LIBARCH}" in
+    i386)
+      ZERO_ARCHDEF="IA32"
+      ;;
+    ppc*)
+      ZERO_ARCHDEF="PPC"
+      ;;
+    s390*)
+      ZERO_ARCHDEF="S390"
+      ;;
+    sparc*)
+      ZERO_ARCHDEF="SPARC"
+      ;;
+    *)
+      ZERO_ARCHDEF=`echo ${ZERO_LIBARCH} | tr a-z A-Z`
+  esac
+  dnl multilib machines need telling which mode to build for
+  case "${ZERO_LIBARCH}" in
+    i386|ppc|sparc)
+      ZERO_ARCHFLAG="-m32"
+      ;;
+    s390)
+      ZERO_ARCHFLAG="-m31"
+      ;;
+    amd64|ppc64|s390x|sparc64)
+      ZERO_ARCHFLAG="-m64"
+      ;;
+  esac
   AC_SUBST(ZERO_LIBARCH)
   AC_SUBST(ZERO_BITSPERWORD)
   AC_SUBST(ZERO_ENDIANNESS)
   AC_SUBST(ZERO_ARCHDEF)
   AC_SUBST(ZERO_ARCHFLAG)
-  AC_CONFIG_FILES([platform_zero])
   AC_CONFIG_FILES([jvm.cfg])
   AC_CONFIG_FILES([ergo.c])
 ])
 
-AC_DEFUN([SET_CORE_OR_SHARK_BUILD],
+AC_DEFUN([SET_SHARK_BUILD],
 [
   AC_MSG_CHECKING(whether to use the Shark JIT)
   shark_selected=no
@@ -781,20 +777,12 @@ AC_DEFUN([SET_CORE_OR_SHARK_BUILD],
     esac
   ])
 
-  use_core=no
   use_shark=no
-  if test "x${WITH_CACAO}" != "xno"; then
-    use_core=yes
-  elif test "x${use_zero}" = "xyes"; then
-    if test "x${shark_selected}" = "xyes"; then
+  if test "x${shark_selected}" = "xyes"; then
       use_shark=yes
-    else
-      use_core=yes
-    fi
   fi
   AC_MSG_RESULT($use_shark)
 
-  AM_CONDITIONAL(CORE_BUILD, test "x${use_core}" = xyes)
   AM_CONDITIONAL(SHARK_BUILD, test "x${use_shark}" = xyes)
 ])
 

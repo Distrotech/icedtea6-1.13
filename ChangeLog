@@ -1,3 +1,7 @@
+2009-12-22  Deepak Bhole <dbhole@redhat.com>
+
+	* Makefile.am: Set JDK_UPDATE_VERSION based on upstream drop version
+
 2009-12-22  Andrew John Hughes  <ahughes@redhat.com>
 
 	Support b18.  Add --with-tzdata-dir option,
@@ -73,6 +77,191 @@
 	Likewise, but for JAXP.
 	* tz.properties.in:
 	Input file for tzdata directory setting.
+
+2009-12-22  Gary Benson  <gbenson@redhat.com>
+
+	* contrib/checkopts/checkopts: New file.
+	* contrib/checkopts/Test.java: Likewise.
+
+2009-12-19  Matthias Klose  <doko@ubuntu.com>
+
+	* patches/icedtea-parisc.patch: Fix sanity check for parisc.
+	* Makefile.am (ICEDTEA_PATCHES): Apply the above.
+
+2009-12-17  Matthias Klose  <doko@ubuntu.com>
+
+	* patches/cacao/arm-arch-defines.patch: New, fix cacao build on
+	ARM in thumb mode. Cacao bug PR135.
+	* Makefile.am (ICEDTEA_PATCHES): Apply the above.
+
+2009-12-16  Andrew Haley  <aph@redhat.com>
+
+	* patches/icedtea-linux-separate-debuginfo.patch: Fix buglets.
+
+2009-12-14  Man Lung Wong  <mwong@redhat.com>
+
+	* rt/net/sourceforge/jnlp/Launcher.java
+	(launch): File is not launched if offline-allowed tag not present and 
+	system offline.
+
+2009-12-13  Mark Wielaard  <mjw@redhat.com>
+
+	* Makefile.am (stamps/icedtea.stamp): Install jstack.stp.
+	(stamps/icedtea-debug.stamp): Likewise.
+	* configure.ac (AC_CONFIG_FILES): Add tapset/jstack.stp.
+	* tapset/jstack.stp.in: New tapset.
+
+2009-12-11  Andrew Haley  <aph@redhat.com>
+
+	* patches/icedtea-linux-separate-debuginfo.patch: Add #ifdef
+	for NT_GNU_BUILD_ID.
+
+2009-12-10  Edward Nevill       <ed@camswl.com>
+
+	* cppInterpreter_asm.S
+	Fix bug where it could execute VFP on non-VFP processors
+	Fix bug where it was calling C interpreter for java_lang_Math_sin and co.
+
+2009-11-23  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Reorganise to match IcedTea7 layout.
+	Add FIXMEs for targets which still need
+	to be moved across.
+
+2009-12-10  Andrew Haley  <aph@redhat.com>
+
+	* patches/icedtea-linux-separate-debuginfo.patch: New file.
+	* Makefile.am (ICEDTEA_PATCHES): Add it.
+
+2009-12-08  Gary Benson  <gbenson@redhat.com>
+
+	* Makefile.am
+	(ICEDTEA_SHARK_BUILD): Set to "yes" instead of "true".
+	(ICEDTEA_ENV): Replaced ICEDTEA_SHARK_BUILD with SHARK_BUILD.
+	(ICEDTEA_ENV_ECJ): Likewise.
+	* patches/icedtea-shark-build.patch: Changed to reflect the above.
+	* patches/icedtea-shark-build-hotspot.patch: Likewise.
+
+2009-12-08  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/make/linux/platform_zero.in: New file.
+	* .hgignore: Updated.
+
+2009-12-08  Gary Benson  <gbenson@redhat.com>
+
+	* HACKING: Updated.
+
+2009-12-08  Gary Benson  <gbenson@redhat.com>
+
+	* patches/zero/6903453.patch: New file.
+	* patches/icedtea-ia64-fdlibm.patch: Removed.
+	* patches/icedtea-uname.patch: Fixed up.
+	* Makefile.am (ICEDTEA_PATCHES): Updated.
+
+2009-12-08  Gary Benson  <gbenson@redhat.com>
+
+	* patches/zero/6896043.patch: New file.
+	* patches/icedtea-cc-interp-backedge.patch: Removed.
+	* patches/icedtea-cc-interp-jvmti.patch: Likewise.
+	* patches/icedtea-ia64-bugfix.patch: Likewise.
+	* patches/icedtea-s390-serialize.patch: Likewise.
+	* patches/icedtea-test-atomic-operations.patch: Likewise.
+	* Makefile.am (ICEDTEA_PATCHES): Updated.
+
+2009-12-08  Gary Benson  <gbenson@redhat.com>
+
+	* Makefile.am
+	(ICEDTEA_CORE_BUILD): Removed.
+	(ICEDTEA_ZERO_BUILD): Set to "yes" instead of "true".
+	(ICEDTEA_ENV): Removed ICEDTEA_CORE_BUILD, replaced
+	ICEDTEA_ZERO_BUILD with ZERO_BUILD, and replaced ZERO_BITSPERWORD
+	with ARCH_DATA_MODEL.
+	(ICEDTEA_ENV_ECJ): Likewise.
+	(stamps/ports.stamp): Updated paths, and don't make jvm.cfg or
+	ergo_$arch.c for Zero.
+	(ICEDTEA_PATCHES): Added new patches and removed old ones.
+
+	* acinclude.m4
+	(ENABLE_ZERO_BUILD): Removed old CORE_BUILD stuff.
+	(SET_CORE_OR_SHARK_BUILD): Replaced with...
+	(SET_SHARK_BUILD): New macro.
+
+	* configure.ac: Use SET_SHARK_BUILD before ENABLE_ZERO_BUILD in
+	place of SET_CORE_OR_SHARK_BUILD after it.
+
+	* patches/zero/6890308.patch: New file.
+	* patches/zero/6891677.patch: Likewise.
+
+	* patches/icedtea-core-build.patch: Removed.
+	* patches/icedtea-core-build-hotspot.patch: Likewise.
+	* patches/icedtea-linker-options.patch: Likewise.
+	* patches/icedtea-signature-iterator.patch: Likewise.
+	* patches/icedtea-static-libstdc++.patch: Likewise.
+	* patches/icedtea-zero.patch: Likewise.
+	* patches/icedtea-zero-build.patch: Likewise.
+	* patches/icedtea-zero-build-hotspot.patch: Likewise.
+
+	* patches/ecj/icedtea-hotspot.patch: Updated.
+	* patches/icedtea-shark-build.patch: Likewise.
+	* patches/icedtea-shark-build-hotspot.patch: Likewise.
+	
+	* patches/icedtea-arch.patch: Fixed up.
+	* patches/icedtea-libraries.patch: Likewise.
+	* patches/icedtea-shark.patch: Likewise.
+
+	* ports/hotspot/build/linux/makefiles/shark.make: Moved to...
+	* ports/hotspot/make/linux/makefiles/shark.make: New file.
+
+	* ports/hotspot/build/linux/makefiles/zero.make: Moved to...
+	* ports/hotspot/make/linux/makefiles/zeroshark.make: New file.
+
+	* ports/hotspot/make/linux/makefiles/zero.make: New file.
+	* ports/hotspot/src/share/vm/includeDB_zero: Likewise.
+
+	* ports/hotspot/make/linux/platform_zero.in: Removed.
+
+	* ports/hotspot/src/cpu/zero/vm/assembler_zero.hpp: Sync with upstream.
+	* ports/hotspot/src/cpu/zero/vm/frame_zero.cpp: Likewise.
+	* ports/hotspot/src/cpu/zero/vm/frame_zero.inline.hpp: Likewise.
+	* ports/hotspot/src/cpu/zero/vm/globals_zero.hpp: Likewise.
+	* ports/hotspot/src/cpu/zero/vm/stack_zero.hpp: Likewise.
+	
+	* ports/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S: Fixed up.
+
+2009-12-07  Gary Benson  <gbenson@redhat.com>
+
+	PR icedtea/416:
+	* ports/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp
+	(CppInterpreter::native_entry): Always unlock synchronized
+	native methods prior to returning.
+
+2009-12-03  Man Lung Wong <mwong@redhat.com>
+
+	* rt/net/sourceforge/jnlp/JNLPFile.java
+	(JNLPFile): Download the jnlp file from the webspace it originated, if
+	it exists.
+	* rt/net/sourceforge/jnlp/runtime/ApplicationInstance.java
+	(initialize): Enable desktop element and revise the list of fixme.
+	(addMenuAndDesktopEntries): No longer errors out when shortcut tag not
+	specified.
+	* rt/net/sourceforge/jnlp/runtime/Boot.java
+	(getFile): Launches the original jnlp file (i.e. if the file was
+	downloaded from http://icedtea.classpath.org, then it will launch the
+	one from http://icedtea.classpath.org).
+	* rt/net/sourceforge/jnlp/util/XDesktopEntry.java
+	(getContentsAsReader): Shortcut uses jnlp file in cache and launches
+	with system preferred javaws.
+
+2009-12-03  Gary Benson  <gbenson@redhat.com>
+
+	* patches/icedtea-core-build.patch: Remove a very old workaround.
+
+2009-12-03  Gary Benson  <gbenson@redhat.com>
+
+	* patches/icedtea-bytecodeInterpreter.patch: Removed.
+	* Makefile.am (ICEDTEA_PATCHES): Don't apply the above.
+	* HACKING: Document the above.
 
 2009-12-03  Gary Benson  <gbenson@redhat.com>
 

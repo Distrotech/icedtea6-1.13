@@ -1,0 +1,760 @@
+diff -r 03b336640699 -r 354d3184f6b2 make/Makefile
+--- openjdk/hotspot/make/Makefile	Wed Oct 07 15:38:37 2009 -0700
++++ openjdk/hotspot/make/Makefile	Tue Oct 13 12:04:21 2009 -0700
+@@ -84,6 +84,7 @@
+ C1_VM_TARGETS=product1 fastdebug1 optimized1 jvmg1
+ C2_VM_TARGETS=product  fastdebug  optimized  jvmg
+ KERNEL_VM_TARGETS=productkernel fastdebugkernel optimizedkernel jvmgkernel
++ZERO_VM_TARGETS=productzero fastdebugzero optimizedzero jvmgzero
+ 
+ # JDK directory list
+ JDK_DIRS=bin include jre lib demo
+@@ -94,6 +95,12 @@
+ all_debug:     jvmg jvmg1 jvmgkernel docs export_debug
+ all_optimized: optimized optimized1 optimizedkernel docs export_optimized
+ 
++allzero:           all_productzero all_fastdebugzero
++all_productzero:   productzero docs export_product
++all_fastdebugzero: fastdebugzero docs export_fastdebug
++all_debugzero:     jvmgzero docs export_debug
++all_optimizedzero: optimizedzero docs export_optimized
++
+ # Do everything
+ world:         all create_jdk
+ 
+@@ -120,6 +127,10 @@
+ 	$(CD) $(GAMMADIR)/make; \
+ 	$(MAKE) VM_TARGET=$@ generic_buildkernel $(ALT_OUT)
+ 
++$(ZERO_VM_TARGETS):
++	$(CD) $(GAMMADIR)/make; \
++	$(MAKE) VM_TARGET=$@ generic_buildzero $(ALT_OUT)
++
+ # Build compiler1 (client) rule, different for platforms
+ generic_build1:
+ 	$(MKDIR) -p $(OUTPUTDIR)
+@@ -180,6 +191,12 @@
+ 	@$(ECHO) "No kernel ($(VM_TARGET)) for OS_NAME=$(OSNAME)"
+ endif
+ 
++generic_buildzero:
++	$(MKDIR) -p $(OUTPUTDIR)
++	$(CD) $(OUTPUTDIR); \
++		$(MAKE) -f $(ABS_OS_MAKEFILE) \
++			$(MAKE_ARGS) $(VM_TARGET)
++
+ # Export file rule
+ generic_export: $(EXPORT_LIST)
+ export_product:
+@@ -210,11 +227,17 @@
+ C1_BASE_DIR=$(OUTPUTDIR)/$(VM_PLATFORM)_compiler1
+ C2_BASE_DIR=$(OUTPUTDIR)/$(VM_PLATFORM)_compiler2
+ KERNEL_BASE_DIR=$(OUTPUTDIR)/$(VM_PLATFORM)_kernel
++ZERO_BASE_DIR=$(OUTPUTDIR)/$(VM_PLATFORM)_zero
+ C1_DIR=$(C1_BASE_DIR)/$(VM_SUBDIR)
+ C2_DIR=$(C2_BASE_DIR)/$(VM_SUBDIR)
+ KERNEL_DIR=$(KERNEL_BASE_DIR)/$(VM_SUBDIR)
++ZERO_DIR=$(ZERO_BASE_DIR)/$(VM_SUBDIR)
+ 
+ # Misc files and generated files need to come from C1 or C2 area
++ifeq ($(ZERO_BUILD), true)
++  MISC_DIR=$(ZERO_DIR)
++  GEN_DIR=$(ZERO_BASE_DIR)/generated
++else
+ ifeq ($(ARCH_DATA_MODEL), 32)
+   MISC_DIR=$(C1_DIR)
+   GEN_DIR=$(C1_BASE_DIR)/generated
+@@ -222,6 +245,7 @@
+   MISC_DIR=$(C2_DIR)
+   GEN_DIR=$(C2_BASE_DIR)/generated
+ endif
++endif
+ 
+ # Bin files (windows)
+ ifeq ($(OSNAME),windows)
+@@ -265,6 +289,12 @@
+ 
+ # Shared Library
+ ifneq ($(OSNAME),windows)
++  ifeq ($(ZERO_BUILD), true)
++$(EXPORT_JRE_LIB_ARCH_DIR)/%.so: $(ZERO_DIR)/%.so
++	$(install-file)
++$(EXPORT_SERVER_DIR)/%.so:       $(ZERO_DIR)/%.so
++	$(install-file)
++  else
+ $(EXPORT_JRE_LIB_ARCH_DIR)/%.so: $(C2_DIR)/%.so
+ 	$(install-file)
+ $(EXPORT_CLIENT_DIR)/%.so:       $(C1_DIR)/%.so
+@@ -275,6 +305,7 @@
+ 	$(install-file)
+ $(EXPORT_SERVER_DIR)/64/%.so:    $(C2_DIR)/%.so
+ 	$(install-file)
++  endif
+ endif
+ 
+ # Jar file (sa-jdi.jar)
+@@ -313,6 +344,7 @@
+ 	$(RM) -r $(C1_DIR)
+ 	$(RM) -r $(C2_DIR)
+ 	$(RM) -r $(KERNEL_DIR)
++	$(RM) -r $(ZERO_DIR)
+ clean_export:
+ 	$(RM) -r $(EXPORT_PATH)
+ clean_jdk:
+@@ -335,8 +367,10 @@
+ 	 ($(CD) $(JDK_IMAGE_DIR) && $(TAR) -xf -)
+ 
+ test_jdk:
+-  ifeq ($(ARCH_DATA_MODEL), 32)
++  ifneq ($(ZERO_BUILD), true)
++    ifeq ($(ARCH_DATA_MODEL), 32)
+ 	$(JDK_IMAGE_DIR)/bin/java -client -version
++    endif
+   endif
+ 	$(JDK_IMAGE_DIR)/bin/java -server -version
+ 
+diff -r 03b336640699 -r 354d3184f6b2 make/defs.make
+--- openjdk/hotspot/make/defs.make	Wed Oct 07 15:38:37 2009 -0700
++++ openjdk/hotspot/make/defs.make	Tue Oct 13 12:04:21 2009 -0700
+@@ -192,13 +192,14 @@
+ 
+   # Use uname output for SRCARCH, but deal with platform differences. If ARCH
+   # is not explicitly listed below, it is treated as x86. 
+-  SRCARCH     = $(ARCH/$(filter sparc sparc64 ia64 amd64 x86_64,$(ARCH)))
++  SRCARCH     = $(ARCH/$(filter sparc sparc64 ia64 amd64 x86_64 zero,$(ARCH)))
+   ARCH/       = x86
+   ARCH/sparc  = sparc
+   ARCH/sparc64= sparc
+   ARCH/ia64   = ia64
+   ARCH/amd64  = x86
+   ARCH/x86_64 = x86
++  ARCH/zero   = zero
+ 
+   # BUILDARCH is usually the same as SRCARCH, except for sparcv9
+   BUILDARCH = $(SRCARCH)
+@@ -222,8 +223,9 @@
+   LIBARCH/sparc   = sparc
+   LIBARCH/sparcv9 = sparcv9
+   LIBARCH/ia64    = ia64
++  LIBARCH/zero    = $(ZERO_LIBARCH)
+ 
+-  LP64_ARCH = sparcv9 amd64 ia64
++  LP64_ARCH = sparcv9 amd64 ia64 zero
+ endif
+ 
+ # Required make macro settings for all platforms
+diff -r 03b336640699 -r 354d3184f6b2 make/linux/Makefile
+--- openjdk/hotspot/make/linux/Makefile	Wed Oct 07 15:38:37 2009 -0700
++++ openjdk/hotspot/make/linux/Makefile	Tue Oct 13 12:04:21 2009 -0700
+@@ -132,6 +132,9 @@
+ 
+ endif
+ 
++# BUILDARCH is set to "zero" for Zero builds.  VARIANTARCH
++# is used to give the build directories meaningful names.
++VARIANTARCH = $(subst i386,i486,$(ZERO_LIBARCH))
+ 
+ # There is a (semi-) regular correspondence between make targets and actions:
+ #
+@@ -158,6 +161,13 @@
+ #       profiledcore    core            <os>_<arch>_core/profiled
+ #       productcore     core            <os>_<arch>_core/product
+ #
++#       debugzero       zero            <os>_<arch>_zero/debug
++#       fastdebugzero   zero            <os>_<arch>_zero/fastdebug
++#       jvmgzero        zero            <os>_<arch>_zero/jvmg
++#       optimizedzero   zero            <os>_<arch>_zero/optimized
++#       profiledzero    zero            <os>_<arch>_zero/profiled
++#       productzero     zero            <os>_<arch>_zero/product
++#
+ # What you get with each target:
+ #
+ # debug*     - "thin" libjvm_g - debug info linked into the gamma_g launcher
+@@ -171,16 +181,22 @@
+ # in the build.sh script:
+ TARGETS           = debug jvmg fastdebug optimized profiled product
+ 
+-SUBDIR_DOCS       = $(OSNAME)_$(BUILDARCH)_docs
++ifeq ($(ZERO_BUILD), true)
++  SUBDIR_DOCS     = $(OSNAME)_$(VARIANTARCH)_docs
++else
++  SUBDIR_DOCS     = $(OSNAME)_$(BUILDARCH)_docs
++endif
+ SUBDIRS_C1        = $(addprefix $(OSNAME)_$(BUILDARCH)_compiler1/,$(TARGETS))
+ SUBDIRS_C2        = $(addprefix $(OSNAME)_$(BUILDARCH)_compiler2/,$(TARGETS))
+ SUBDIRS_TIERED    = $(addprefix $(OSNAME)_$(BUILDARCH)_tiered/,$(TARGETS))
+ SUBDIRS_CORE      = $(addprefix $(OSNAME)_$(BUILDARCH)_core/,$(TARGETS))
++SUBDIRS_ZERO      = $(addprefix $(OSNAME)_$(VARIANTARCH)_zero/,$(TARGETS))
+ 
+ TARGETS_C2        = $(TARGETS)
+ TARGETS_C1        = $(addsuffix 1,$(TARGETS))
+ TARGETS_TIERED    = $(addsuffix tiered,$(TARGETS))
+ TARGETS_CORE      = $(addsuffix core,$(TARGETS))
++TARGETS_ZERO      = $(addsuffix zero,$(TARGETS))
+ 
+ BUILDTREE_MAKE    = $(GAMMADIR)/make/$(OSNAME)/makefiles/buildtree.make
+ BUILDTREE_VARS    = GAMMADIR=$(GAMMADIR) OS_FAMILY=$(OSNAME) ARCH=$(SRCARCH) BUILDARCH=$(BUILDARCH) LIBARCH=$(LIBARCH)
+@@ -196,6 +212,7 @@
+ 	@echo "  $(TARGETS_C2)"
+ 	@echo "  $(TARGETS_C1)"
+ 	@echo "  $(TARGETS_CORE)"
++	@echo "  $(TARGETS_ZERO)"
+ 
+ checks: check_os_version check_j2se_version
+ 
+@@ -245,6 +262,13 @@
+ 	$(QUIETLY) $(MAKE) -f $(GAMMADIR)/make/$(OSNAME)/Makefile checks
+ 	$(BUILDTREE) VARIANT=core
+ 
++$(SUBDIRS_ZERO): $(BUILDTREE_MAKE) platform_zero
++	$(QUIETLY) $(MAKE) -f $(GAMMADIR)/make/$(OSNAME)/Makefile checks
++	$(BUILDTREE) VARIANT=zero VARIANTARCH=$(VARIANTARCH)
++
++platform_zero: $(GAMMADIR)/make/$(OSNAME)/platform_zero.in
++	$(SED) 's/@ZERO_ARCHDEF@/$(ZERO_ARCHDEF)/g;s/@ZERO_LIBARCH@/$(ZERO_LIBARCH)/g;' < $< > $@
++
+ # Define INSTALL=y at command line to automatically copy JVM into JAVA_HOME
+ 
+ $(TARGETS_C2):  $(SUBDIRS_C2)
+@@ -275,10 +299,18 @@
+ 	cd $(OSNAME)_$(BUILDARCH)_core/$(patsubst %core,%,$@) && $(MAKE) $(MFLAGS) install
+ endif
+ 
++$(TARGETS_ZERO):  $(SUBDIRS_ZERO)
++	cd $(OSNAME)_$(VARIANTARCH)_zero/$(patsubst %zero,%,$@) && $(MAKE) $(MFLAGS)
++	cd $(OSNAME)_$(VARIANTARCH)_zero/$(patsubst %zero,%,$@) && ./test_gamma
++ifdef INSTALL
++	cd $(OSNAME)_$(VARIANTARCH)_zero/$(patsubst %zero,%,$@) && $(MAKE) $(MFLAGS) install
++endif
++
+ # Just build the tree, and nothing else:
+ tree:      $(SUBDIRS_C2)
+ tree1:     $(SUBDIRS_C1)
+ treecore:  $(SUBDIRS_CORE)
++treezero:  $(SUBDIRS_ZERO)
+ 
+ # Doc target.  This is the same for all build options.
+ #     Hence create a docs directory beside ...$(ARCH)_[...]
+@@ -293,20 +325,22 @@
+ 
+ core: jvmgcore productcore
+ 
++zero: jvmgzero productzero
++
+ clean_docs:
+ 	rm -rf $(SUBDIR_DOCS)
+ 
+-clean_compiler1 clean_compiler2 clean_core:
++clean_compiler1 clean_compiler2 clean_core clean_zero:
+ 	rm -rf $(OSNAME)_$(BUILDARCH)_$(subst clean_,,$@)
+ 
+-clean:  clean_compiler2 clean_compiler1 clean_core clean_docs
++clean:  clean_compiler2 clean_compiler1 clean_core clean_zero clean_docs
+ 
+ include $(GAMMADIR)/make/$(OSNAME)/makefiles/cscope.make
+ 
+ #-------------------------------------------------------------------------------
+ 
+-.PHONY: $(TARGETS_C2) $(TARGETS_C1) $(TARGETS_CORE)
+-.PHONY: tree tree1 treecore
+-.PHONY: all compiler1 compiler2 core
+-.PHONY: clean clean_compiler1 clean_compiler2 clean_core docs clean_docs
++.PHONY: $(TARGETS_C2) $(TARGETS_C1) $(TARGETS_CORE) $(TARGETS_ZERO)
++.PHONY: tree tree1 treecore treezero
++.PHONY: all compiler1 compiler2 core zero
++.PHONY: clean clean_compiler1 clean_compiler2 clean_core clean_zero docs clean_docs
+ .PHONY: checks check_os_version check_j2se_version
+diff -r 03b336640699 -r 354d3184f6b2 make/linux/makefiles/buildtree.make
+--- openjdk/hotspot/make/linux/makefiles/buildtree.make	Wed Oct 07 15:38:37 2009 -0700
++++ openjdk/hotspot/make/linux/makefiles/buildtree.make	Tue Oct 13 12:04:21 2009 -0700
+@@ -63,20 +63,30 @@
+ # For now, until the compiler is less wobbly:
+ TESTFLAGS	= -Xbatch -showversion
+ 
+-ifdef USE_SUNCC
+-PLATFORM_FILE	= $(GAMMADIR)/make/$(OS_FAMILY)/platform_$(BUILDARCH).suncc
++ifeq ($(ZERO_BUILD), true)
++  PLATFORM_FILE = $(shell dirname $(shell dirname $(shell pwd)))/platform_zero
+ else
+-PLATFORM_FILE   = $(GAMMADIR)/make/$(OS_FAMILY)/platform_$(BUILDARCH)
++  ifdef USE_SUNCC
++    PLATFORM_FILE = $(GAMMADIR)/make/$(OS_FAMILY)/platform_$(BUILDARCH).suncc
++  else
++    PLATFORM_FILE = $(GAMMADIR)/make/$(OS_FAMILY)/platform_$(BUILDARCH)
++  endif
++endif
++
++# Allow overriding of the arch part of the directory but default
++# to BUILDARCH if nothing is specified
++ifeq ($(VARIANTARCH),)
++  VARIANTARCH=$(BUILDARCH)
+ endif
+ 
+ ifdef FORCE_TIERED
+ ifeq		($(VARIANT),tiered)
+-PLATFORM_DIR	= $(OS_FAMILY)_$(BUILDARCH)_compiler2
++PLATFORM_DIR	= $(OS_FAMILY)_$(VARIANTARCH)_compiler2
+ else
+-PLATFORM_DIR	= $(OS_FAMILY)_$(BUILDARCH)_$(VARIANT)
++PLATFORM_DIR	= $(OS_FAMILY)_$(VARIANTARCH)_$(VARIANT)
+ endif
+ else
+-PLATFORM_DIR    = $(OS_FAMILY)_$(BUILDARCH)_$(VARIANT)
++PLATFORM_DIR    = $(OS_FAMILY)_$(VARIANTARCH)_$(VARIANT)
+ endif
+ 
+ #
+@@ -321,6 +331,7 @@
+ DATA_MODE/sparcv9 = 64
+ DATA_MODE/amd64   = 64
+ DATA_MODE/ia64    = 64
++DATA_MODE/zero    = $(ARCH_DATA_MODEL)
+ 
+ JAVA_FLAG/32 = -d32
+ JAVA_FLAG/64 = -d64
+diff -r 03b336640699 -r 354d3184f6b2 make/linux/makefiles/defs.make
+--- openjdk/hotspot/make/linux/makefiles/defs.make	Wed Oct 07 15:38:37 2009 -0700
++++ openjdk/hotspot/make/linux/makefiles/defs.make	Tue Oct 13 12:04:21 2009 -0700
+@@ -37,6 +37,17 @@
+   ARCH_DATA_MODEL ?= 32
+ endif
+ 
++# zero
++ifeq ($(ZERO_BUILD), true)
++  ifeq ($(ARCH_DATA_MODEL), 64)
++    MAKE_ARGS      += LP64=1
++  endif
++  PLATFORM         = linux-zero
++  VM_PLATFORM      = linux_$(subst i386,i486,$(ZERO_LIBARCH))
++  HS_ARCH          = zero
++  ARCH             = zero
++endif
++
+ # ia64
+ ifeq ($(ARCH), ia64)
+   ARCH_DATA_MODEL = 64
+@@ -97,17 +108,19 @@
+ EXPORT_LIST += $(EXPORT_SERVER_DIR)/Xusage.txt
+ EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjsig.so
+ EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm.so
+-ifeq ($(ARCH_DATA_MODEL), 32)
+-  EXPORT_CLIENT_DIR = $(EXPORT_JRE_LIB_ARCH_DIR)/client
+-  EXPORT_LIST += $(EXPORT_CLIENT_DIR)/Xusage.txt
+-  EXPORT_LIST += $(EXPORT_CLIENT_DIR)/libjsig.so
+-  EXPORT_LIST += $(EXPORT_CLIENT_DIR)/libjvm.so 
+-  EXPORT_LIST += $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.so
+-  EXPORT_LIST += $(EXPORT_LIB_DIR)/sa-jdi.jar 
+-else
+-  ifeq ($(ARCH),ia64)
+-    else
+-      EXPORT_LIST += $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.so
+-      EXPORT_LIST += $(EXPORT_LIB_DIR)/sa-jdi.jar
++ifneq ($(ZERO_BUILD), true)
++  ifeq ($(ARCH_DATA_MODEL), 32)
++    EXPORT_CLIENT_DIR = $(EXPORT_JRE_LIB_ARCH_DIR)/client
++    EXPORT_LIST += $(EXPORT_CLIENT_DIR)/Xusage.txt
++    EXPORT_LIST += $(EXPORT_CLIENT_DIR)/libjsig.so
++    EXPORT_LIST += $(EXPORT_CLIENT_DIR)/libjvm.so 
++    EXPORT_LIST += $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.so
++    EXPORT_LIST += $(EXPORT_LIB_DIR)/sa-jdi.jar 
++  else
++    ifeq ($(ARCH),ia64)
++      else
++        EXPORT_LIST += $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.so
++        EXPORT_LIST += $(EXPORT_LIB_DIR)/sa-jdi.jar
+     endif
++  endif
+ endif
+diff -r 03b336640699 -r 354d3184f6b2 make/linux/makefiles/gcc.make
+--- openjdk/hotspot/make/linux/makefiles/gcc.make	Wed Oct 07 15:38:37 2009 -0700
++++ openjdk/hotspot/make/linux/makefiles/gcc.make	Tue Oct 13 12:04:21 2009 -0700
+@@ -52,6 +52,9 @@
+ VM_PICFLAG/AOUT   =
+ VM_PICFLAG        = $(VM_PICFLAG/$(LINK_INTO))
+ 
++ifeq ($(ZERO_BUILD), true)
++CFLAGS += $(LIBFFI_CFLAGS)
++endif
+ CFLAGS += $(VM_PICFLAG)
+ CFLAGS += -fno-rtti
+ CFLAGS += -fno-exceptions
+@@ -64,6 +67,7 @@
+ ARCHFLAG/ia64    =
+ ARCHFLAG/sparc   = -m32 -mcpu=v9
+ ARCHFLAG/sparcv9 = -m64 -mcpu=v9
++ARCHFLAG/zero    = $(ZERO_ARCHFLAG)
+ 
+ CFLAGS     += $(ARCHFLAG)
+ AOUT_FLAGS += $(ARCHFLAG)
+diff -r 03b336640699 -r 354d3184f6b2 make/linux/makefiles/sa.make
+--- openjdk/hotspot/make/linux/makefiles/sa.make	Wed Oct 07 15:38:37 2009 -0700
++++ openjdk/hotspot/make/linux/makefiles/sa.make	Tue Oct 13 12:04:21 2009 -0700
+@@ -52,10 +52,10 @@
+ SA_PROPERTIES = $(SA_CLASSDIR)/sa.properties
+ 
+ # if $(AGENT_DIR) does not exist, we don't build SA
+-# also, we don't build SA on Itanium.
++# also, we don't build SA on Itanium or zero.
+ 
+ all: 
+-	if [ -d $(AGENT_DIR) -a "$(SRCARCH)" != "ia64" ] ; then \
++	if [ -d $(AGENT_DIR) -a "$(SRCARCH)" != "ia64" -a "$(SRCARCH)" != "zero" ] ; then \
+ 	   $(MAKE) -f sa.make $(GENERATED)/sa-jdi.jar; \
+ 	fi
+ 
+diff -r 03b336640699 -r 354d3184f6b2 make/linux/makefiles/saproc.make
+--- openjdk/hotspot/make/linux/makefiles/saproc.make	Wed Oct 07 15:38:37 2009 -0700
++++ openjdk/hotspot/make/linux/makefiles/saproc.make	Tue Oct 13 12:04:21 2009 -0700
+@@ -49,10 +49,10 @@
+ endif
+ 
+ # if $(AGENT_DIR) does not exist, we don't build SA
+-# also, we don't build SA on Itanium.
++# also, we don't build SA on Itanium or zero.
+ 
+ checkAndBuildSA:
+-	$(QUIETLY) if [ -d $(AGENT_DIR) -a "$(SRCARCH)" != "ia64" ] ; then \
++	$(QUIETLY) if [ -d $(AGENT_DIR) -a "$(SRCARCH)" != "ia64" -a "$(SRCARCH)" != "zero" ] ; then \
+ 	   $(MAKE) -f vm.make $(LIBSAPROC); \
+ 	fi
+ 
+diff -r 03b336640699 -r 354d3184f6b2 make/linux/makefiles/top.make
+--- openjdk/hotspot/make/linux/makefiles/top.make	Wed Oct 07 15:38:37 2009 -0700
++++ openjdk/hotspot/make/linux/makefiles/top.make	Tue Oct 13 12:04:21 2009 -0700
+@@ -74,6 +74,7 @@
+ Include_DBs/COMPILER1   = $(Include_DBs/CORE) $(VM)/includeDB_compiler1
+ Include_DBs/COMPILER2   = $(Include_DBs/CORE) $(VM)/includeDB_compiler2
+ Include_DBs/TIERED      = $(Include_DBs/CORE) $(VM)/includeDB_compiler1 $(VM)/includeDB_compiler2
++Include_DBs/ZERO        = $(Include_DBs/CORE) $(VM)/includeDB_zero
+ Include_DBs = $(Include_DBs/$(TYPE))
+ 
+ Cached_plat = $(GENERATED)/platform.current
+diff -r 03b336640699 -r 354d3184f6b2 make/linux/makefiles/vm.make
+--- openjdk/hotspot/make/linux/makefiles/vm.make	Wed Oct 07 15:38:37 2009 -0700
++++ openjdk/hotspot/make/linux/makefiles/vm.make	Tue Oct 13 12:04:21 2009 -0700
+@@ -40,7 +40,11 @@
+ include $(GENERATED)/Dependencies
+ 
+ # read machine-specific adjustments (%%% should do this via buildtree.make?)
+-include $(MAKEFILES_DIR)/$(BUILDARCH).make
++ifeq ($(ZERO_BUILD), true)
++  include $(MAKEFILES_DIR)/zeroshark.make
++else
++  include $(MAKEFILES_DIR)/$(BUILDARCH).make
++endif
+ 
+ # set VPATH so make knows where to look for source files
+ # Src_Dirs is everything in src/share/vm/*, plus the right os/*/vm and cpu/*/vm
+@@ -124,7 +128,11 @@
+ 	rm -f $@
+ 	cat $^ > $@
+ 
+-STATIC_CXX = true
++ifeq ($(ZERO_LIBARCH), ppc64)
++  STATIC_CXX = false
++else
++  STATIC_CXX = true
++endif
+ 
+ ifeq ($(LINK_INTO),AOUT)
+   LIBJVM.o                 =
+@@ -148,6 +156,9 @@
+ 
+   LIBS_VM                  += $(LIBS)
+ endif
++ifeq ($(ZERO_BUILD), true)
++  LIBS_VM += $(LIBFFI_LIBS)
++endif
+ 
+ LINK_VM = $(LINK_LIB.c)
+ 
+diff -r 03b336640699 -r 354d3184f6b2 src/os/linux/vm/os_linux.cpp
+--- openjdk/hotspot/src/os/linux/vm/os_linux.cpp	Wed Oct 07 15:38:37 2009 -0700
++++ openjdk/hotspot/src/os/linux/vm/os_linux.cpp	Tue Oct 13 12:04:21 2009 -0700
+@@ -176,7 +176,9 @@
+ #endif
+ 
+ // Cpu architecture string
+-#if   defined(IA64)
++#if   defined(ZERO)
++static char cpu_arch[] = ZERO_LIBARCH;
++#elif defined(IA64)
+ static char cpu_arch[] = "ia64";
+ #elif defined(IA32)
+ static char cpu_arch[] = "i386";
+@@ -1743,7 +1745,14 @@
+     {EM_SPARC32PLUS, EM_SPARC,   ELFCLASS32, ELFDATA2MSB, (char*)"Sparc 32"},
+     {EM_SPARCV9,     EM_SPARCV9, ELFCLASS64, ELFDATA2MSB, (char*)"Sparc v9 64"},
+     {EM_PPC,         EM_PPC,     ELFCLASS32, ELFDATA2MSB, (char*)"Power PC 32"},
+-    {EM_PPC64,       EM_PPC64,   ELFCLASS64, ELFDATA2MSB, (char*)"Power PC 64"}
++    {EM_PPC64,       EM_PPC64,   ELFCLASS64, ELFDATA2MSB, (char*)"Power PC 64"},
++    {EM_ARM,         EM_ARM,     ELFCLASS32,   ELFDATA2LSB, (char*)"ARM"},
++    {EM_S390,        EM_S390,    ELFCLASSNONE, ELFDATA2MSB, (char*)"IBM System/390"},
++    {EM_ALPHA,       EM_ALPHA,   ELFCLASS64, ELFDATA2LSB, (char*)"Alpha"},
++    {EM_MIPS_RS3_LE, EM_MIPS_RS3_LE, ELFCLASS32, ELFDATA2LSB, (char*)"MIPSel"},
++    {EM_MIPS,        EM_MIPS,    ELFCLASS32, ELFDATA2MSB, (char*)"MIPS"},
++    {EM_PARISC,      EM_PARISC,  ELFCLASS32, ELFDATA2MSB, (char*)"PARISC"},
++    {EM_68K,         EM_68K,     ELFCLASS32, ELFDATA2MSB, (char*)"M68k"}
+   };
+ 
+   #if  (defined IA32)
+@@ -1760,9 +1769,23 @@
+     static  Elf32_Half running_arch_code=EM_PPC64;
+   #elif  (defined __powerpc__)
+     static  Elf32_Half running_arch_code=EM_PPC;
++  #elif  (defined ARM)
++    static  Elf32_Half running_arch_code=EM_ARM;
++  #elif  (defined S390)
++    static  Elf32_Half running_arch_code=EM_S390;
++  #elif  (defined ALPHA)
++    static  Elf32_Half running_arch_code=EM_ALPHA;
++  #elif  (defined MIPSEL)
++    static  Elf32_Half running_arch_code=EM_MIPS_RS3_LE;
++  #elif  (defined PARISC)
++    static  Elf32_Half running_arch_code=EM_PARISC;
++  #elif  (defined MIPS)
++    static  Elf32_Half running_arch_code=EM_MIPS;
++  #elif  (defined M68K)
++    static  Elf32_Half running_arch_code=EM_68K;
+   #else
+     #error Method os::dll_load requires that one of following is defined:\
+-         IA32, AMD64, IA64, __sparc, __powerpc__
++         IA32, AMD64, IA64, __sparc, __powerpc__, ARM, S390, ALPHA, MIPS, MIPSEL, PARISC, M68K
+   #endif
+ 
+   // Identify compatability class for VM's architecture and library's architecture
+@@ -1794,10 +1817,12 @@
+     return NULL;
+   }
+ 
++#ifndef S390
+   if (lib_arch.elf_class != arch_array[running_arch_index].elf_class) {
+     ::snprintf(diag_msg_buf, diag_msg_max_length-1," (Possible cause: architecture word width mismatch)");
+     return NULL;
+   }
++#endif // !S390
+ 
+   if (lib_arch.compat_class != arch_array[running_arch_index].compat_class) {
+     if ( lib_arch.name!=NULL ) {
+@@ -2586,7 +2611,9 @@
+     // format has been changed), we'll use the largest page size supported by
+     // the processor.
+ 
++#ifndef ZERO
+     _large_page_size = IA32_ONLY(4 * M) AMD64_ONLY(2 * M) IA64_ONLY(256 * M) SPARC_ONLY(4 * M);
++#endif // ZERO
+ 
+     FILE *fp = fopen("/proc/meminfo", "r");
+     if (fp) {
+diff -r 03b336640699 -r 354d3184f6b2 src/share/vm/interpreter/bytecodeInterpreter.cpp
+--- openjdk/hotspot/src/share/vm/interpreter/bytecodeInterpreter.cpp	Wed Oct 07 15:38:37 2009 -0700
++++ openjdk/hotspot/src/share/vm/interpreter/bytecodeInterpreter.cpp	Tue Oct 13 12:04:21 2009 -0700
+@@ -3031,9 +3031,9 @@
+   tty->print_cr("&native_fresult: " INTPTR_FORMAT, (uintptr_t) &this->_native_fresult);
+   tty->print_cr("native_lresult: " INTPTR_FORMAT, (uintptr_t) this->_native_lresult);
+ #endif
+-#ifdef IA64
++#if defined(IA64) && !defined(ZERO)
+   tty->print_cr("last_Java_fp: " INTPTR_FORMAT, (uintptr_t) this->_last_Java_fp);
+-#endif // IA64
++#endif // IA64 && !ZERO
+   tty->print_cr("self_link: " INTPTR_FORMAT, (uintptr_t) this->_self_link);
+ }
+ 
+diff -r 03b336640699 -r 354d3184f6b2 src/share/vm/interpreter/oopMapCache.cpp
+--- openjdk/hotspot/src/share/vm/interpreter/oopMapCache.cpp	Wed Oct 07 15:38:37 2009 -0700
++++ openjdk/hotspot/src/share/vm/interpreter/oopMapCache.cpp	Tue Oct 13 12:04:21 2009 -0700
+@@ -281,7 +281,7 @@
+  public:
+   void pass_int()                                { /* ignore */ }
+   void pass_long()                               { /* ignore */ }
+-#ifdef _LP64
++#if defined(_LP64) || defined(ZERO)
+   void pass_float()                              { /* ignore */ }
+ #endif
+   void pass_double()                             { /* ignore */ }
+diff -r 03b336640699 -r 354d3184f6b2 src/share/vm/runtime/arguments.cpp
+--- openjdk/hotspot/src/share/vm/runtime/arguments.cpp	Wed Oct 07 15:38:37 2009 -0700
++++ openjdk/hotspot/src/share/vm/runtime/arguments.cpp	Tue Oct 13 12:04:21 2009 -0700
+@@ -1229,6 +1229,7 @@
+     }
+   }
+ 
++#ifndef ZERO
+ #ifdef _LP64
+   // Check that UseCompressedOops can be set with the max heap size allocated
+   // by ergonomics.
+@@ -1254,6 +1255,7 @@
+   // Also checks that certain machines are slower with compressed oops
+   // in vm_version initialization code.
+ #endif // _LP64
++#endif // !ZERO
+ }
+ 
+ void Arguments::set_parallel_gc_flags() {
+diff -r 03b336640699 -r 354d3184f6b2 src/share/vm/runtime/jniHandles.hpp
+--- openjdk/hotspot/src/share/vm/runtime/jniHandles.hpp	Wed Oct 07 15:38:37 2009 -0700
++++ openjdk/hotspot/src/share/vm/runtime/jniHandles.hpp	Tue Oct 13 12:04:21 2009 -0700
+@@ -99,6 +99,8 @@
+ 
+ class JNIHandleBlock : public CHeapObj {
+   friend class VMStructs;
++  friend class CppInterpreter;
++
+  private:
+   enum SomeConstants {
+     block_size_in_oops  = 32                    // Number of handles per handle block
+@@ -126,9 +128,11 @@
+   // Fill block with bad_handle values
+   void zap();
+ 
++ protected:
+   // No more handles in the both the current and following blocks
+   void clear() { _top = 0; }
+ 
++ private:
+   // Free list computation
+   void rebuild_free_list();
+ 
+diff -r 03b336640699 -r 354d3184f6b2 src/share/vm/runtime/mutex.hpp
+--- openjdk/hotspot/src/share/vm/runtime/mutex.hpp	Wed Oct 07 15:38:37 2009 -0700
++++ openjdk/hotspot/src/share/vm/runtime/mutex.hpp	Tue Oct 13 12:04:21 2009 -0700
+@@ -61,18 +61,10 @@
+ } ;
+ 
+ // Endian-ness ... index of least-significant byte in SplitWord.Bytes[]
+-#ifdef AMD64        // little
++#ifdef VM_LITTLE_ENDIAN
+  #define _LSBINDEX 0
+ #else
+-#if IA32            // little
+- #define _LSBINDEX 0
+-#else
+-#ifdef SPARC        // big
+  #define _LSBINDEX (sizeof(intptr_t)-1)
+-#else
+- #error "unknown architecture"
+-#endif
+-#endif
+ #endif
+ 
+ class ParkEvent ;
+diff -r 03b336640699 -r 354d3184f6b2 src/share/vm/runtime/signature.hpp
+--- openjdk/hotspot/src/share/vm/runtime/signature.hpp	Wed Oct 07 15:38:37 2009 -0700
++++ openjdk/hotspot/src/share/vm/runtime/signature.hpp	Tue Oct 13 12:04:21 2009 -0700
+@@ -275,11 +275,14 @@
+ 
+   void do_bool  ()                     { pass_int();    _jni_offset++; _offset++;       }
+   void do_char  ()                     { pass_int();    _jni_offset++; _offset++;       }
++#if defined(_LP64) || defined(ZERO)
++  void do_float ()                     { pass_float();  _jni_offset++; _offset++;       }
++#else
++  void do_float ()                     { pass_int();    _jni_offset++; _offset++;       }
++#endif
+ #ifdef _LP64
+-  void do_float ()                     { pass_float();  _jni_offset++; _offset++;       }
+   void do_double()                     { pass_double(); _jni_offset++; _offset += 2;    }
+ #else
+-  void do_float ()                     { pass_int();    _jni_offset++; _offset++;       }
+   void do_double()                     { pass_double(); _jni_offset += 2; _offset += 2; }
+ #endif
+   void do_byte  ()                     { pass_int();    _jni_offset++; _offset++;       }
+@@ -303,8 +306,10 @@
+   virtual void pass_int()              = 0;
+   virtual void pass_long()             = 0;
+   virtual void pass_object()           = 0;
++#if defined(_LP64) || defined(ZERO)
++  virtual void pass_float()            = 0;
++#endif
+ #ifdef _LP64
+-  virtual void pass_float()            = 0;
+   virtual void pass_double()           = 0;
+ #else
+   virtual void pass_double()           { pass_long(); }  // may be same as long
+diff -r 03b336640699 -r 354d3184f6b2 src/share/vm/runtime/vm_version.cpp
+--- openjdk/hotspot/src/share/vm/runtime/vm_version.cpp	Wed Oct 07 15:38:37 2009 -0700
++++ openjdk/hotspot/src/share/vm/runtime/vm_version.cpp	Tue Oct 13 12:04:21 2009 -0700
+@@ -93,9 +93,13 @@
+ #else // KERNEL
+ #ifdef TIERED
+   #define VMTYPE "Server"
+-#else
+-  #define VMTYPE COMPILER1_PRESENT("Client")   \
+-                 COMPILER2_PRESENT("Server")
++#else // TIERED
++#ifdef ZERO
++  #define VMTYPE "Zero"
++#else // ZERO
++   #define VMTYPE COMPILER1_PRESENT("Client")   \
++                  COMPILER2_PRESENT("Server")
++#endif // ZERO
+ #endif // TIERED
+ #endif // KERNEL
+ 
+@@ -142,10 +146,14 @@
+                  WINDOWS_ONLY("windows")         \
+                  SOLARIS_ONLY("solaris")
+ 
++#ifdef ZERO
++#define CPU      ZERO_LIBARCH
++#else
+ #define CPU      IA32_ONLY("x86")                \
+                  IA64_ONLY("ia64")               \
+                  AMD64_ONLY("amd64")             \
+                  SPARC_ONLY("sparc")
++#endif // ZERO
+ 
+ const char *Abstract_VM_Version::vm_platform_string() {
+   return OS "-" CPU;
+diff -r 03b336640699 -r 354d3184f6b2 src/share/vm/utilities/vmError.cpp
+--- openjdk/hotspot/src/share/vm/utilities/vmError.cpp	Wed Oct 07 15:38:37 2009 -0700
++++ openjdk/hotspot/src/share/vm/utilities/vmError.cpp	Tue Oct 13 12:04:21 2009 -0700
+@@ -458,6 +458,40 @@
+ 
+      if (_verbose && _thread && _thread->is_Java_thread()) {
+        JavaThread* jt = (JavaThread*)_thread;
++#ifdef ZERO
++       if (jt->zero_stack()->sp() && jt->top_zero_frame()) {
++         // StackFrameStream uses the frame anchor, which may not have
++         // been set up.  This can be done at any time in Zero, however,
++         // so if it hasn't been set up then we just set it up now and
++         // clear it again when we're done.
++         bool has_last_Java_frame = jt->has_last_Java_frame();
++         if (!has_last_Java_frame)
++           jt->set_last_Java_frame();
++         st->print("Java frames:");
++
++         // If the top frame is a Shark frame and the frame anchor isn't
++         // set up then it's possible that the information in the frame
++         // is garbage: it could be from a previous decache, or it could
++         // simply have never been written.  So we print a warning...
++         StackFrameStream sfs(jt);
++         if (!has_last_Java_frame && !sfs.is_done()) {
++           if (sfs.current()->zeroframe()->is_shark_frame()) {
++             st->print(" (TOP FRAME MAY BE JUNK)");
++           }
++         }
++         st->cr();
++
++         // Print the frames
++         for(int i = 0; !sfs.is_done(); sfs.next(), i++) {
++           sfs.current()->zero_print_on_error(i, st, buf, sizeof(buf));
++           st->cr();
++         }
++
++         // Reset the frame anchor if necessary
++         if (!has_last_Java_frame)
++           jt->reset_last_Java_frame();
++       }
++#else
+        if (jt->has_last_Java_frame()) {
+          st->print_cr("Java frames: (J=compiled Java code, j=interpreted, Vv=VM code)");
+          for(StackFrameStream sfs(jt); !sfs.is_done(); sfs.next()) {
+@@ -465,6 +499,7 @@
+            st->cr();
+          }
+        }
++#endif // ZERO
+      }
+ 
+   STEP(140, "(printing VM operation)" )

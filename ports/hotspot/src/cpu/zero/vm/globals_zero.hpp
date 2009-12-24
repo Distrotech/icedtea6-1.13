@@ -23,10 +23,8 @@
  *
  */
 
-//
 // Set the default values for platform dependent flags used by the
 // runtime system.  See globals.hpp for details of what they do.
-//
 
 define_pd_global(bool,  ConvertSleepToYield,  true);
 define_pd_global(bool,  ShareVtableStubs,     true);
