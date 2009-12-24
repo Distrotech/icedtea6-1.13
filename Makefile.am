@@ -2177,6 +2177,7 @@ clean-tools-jar: clean-hotspot-tools
 stamps/rt.stamp: stamps/rt-class-files.stamp \
  stamps/bootstrap-directory-ecj.stamp
 	mkdir -p stamps
+if LACKS_SUN_AWT_TOOLKIT
 	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
 	then \
 	  $(JAR) uf $(ICEDTEA_RT) -C lib/rt com -C lib/rt java \
@@ -2185,6 +2186,7 @@ stamps/rt.stamp: stamps/rt-class-files.stamp \
 	  $(ICEDTEA_BOOT_DIR)/bin/jar uf $(ICEDTEA_RT) -C lib/rt com -C lib/rt java \
 	    -C lib/rt javax $(LIVECONNECT_DIR) -C lib/rt net -C lib/rt sun ; \
 	fi
+endif
 	touch stamps/rt.stamp
 
 stamps/plugs.stamp: stamps/rt.stamp

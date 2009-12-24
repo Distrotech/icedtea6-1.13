@@ -1,3 +1,16 @@
+2009-12-24  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(rt.stamp): Make zip updating dependent
+	on LACKS_SUN_AWT_TOOLKIT.
+	* acinclude.m4:
+	(IT_CHECK_FOR_CLASS): Generic macro to check for
+	any class.  Takes as arguments the define and
+	the name of the class.
+	* configure.ac:
+	Check for sun.awt.SunToolkit using the
+	new IT_CHECK_FOR_CLASS macro.
+
 2009-12-22  Deepak Bhole <dbhole@redhat.com>
 
 	* Makefile.am: Set JDK_UPDATE_VERSION based on upstream drop version

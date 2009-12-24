@@ -256,6 +256,8 @@ ENABLE_HG
 AC_CHECK_WITH_HG_REVISION
 AC_CHECK_WITH_TZDATA_DIR
 
+IT_CHECK_FOR_CLASS([SUN_AWT_TOOLKIT], [sun.awt.SunToolkit])
+
 if test "x${enable_visualvm}" = "xyes"
 then
   FIND_NETBEANS

@@ -1121,3 +1121,43 @@ AC_DEFUN([AC_CHECK_WITH_TZDATA_DIR],
   AM_CONDITIONAL(WITH_TZDATA_DIR, test "x${TZDATA_DIR}" != "x")
   AC_CONFIG_FILES([tz.properties])
 ])
+
+dnl Generic macro to check for a Java class
+dnl Takes two arguments: the name of the macro
+dnl and the name of the class.  The macro name
+dnl is usually the name of the class with '.'
+dnl replaced by '_' and all letters capitalised.
+dnl e.g. IT_CHECK_FOR_CLASS([JAVA_UTIL_SCANNER],[java.util.Scanner])
+AC_DEFUN([IT_CHECK_FOR_CLASS],[
+AC_CACHE_CHECK([if $2 is missing], it_cv_$1, [
+CLASS=Test.java
+BYTECODE=$(echo $CLASS|sed 's#\.java##')
+mkdir tmp.$$
+cd tmp.$$
+cat << \EOF > $CLASS
+[/* [#]line __oline__ "configure" */
+public class Test
+{
+  public static void main(String[] args)
+  {
+    $2.class.toString();
+  }
+}
+]
+EOF
+if $JAVAC -cp . $JAVACFLAGS -nowarn $CLASS >&AS_MESSAGE_LOG_FD 2>&1; then
+  if $JAVA -classpath . $BYTECODE >&AS_MESSAGE_LOG_FD 2>&1; then
+      it_cv_$1=no;
+  else
+      it_cv_$1=yes;
+  fi
+else
+  it_cv_$1=yes;
+fi
+])
+rm -f $CLASS *.class
+cd ..
+rmdir tmp.$$
+AM_CONDITIONAL([LACKS_$1], test x"${it_cv_$1}" = "xyes")
+AC_PROVIDE([$0])dnl
+])
