@@ -240,7 +240,10 @@ import com.sun.jndi.toolkit.url.UrlUtil;
  	appletPanels.addElement(panel);
  
  	pack();
- 	setVisible(true);
+ 	
+ 	// 0 handle implies 0x0 plugin, don't show it else it creates an entry in the window list
+ 	if (handle != 0) 
+ 	    setVisible(true);
  
  	WindowListener windowEventListener = new WindowAdapter() {
  
@@ -593,6 +596,7 @@ import com.sun.jndi.toolkit.url.UrlUtil;
              dispose();
              status.put(identifier, PAV_INIT_STATUS.INACTIVE);
          } else if (message.startsWith("GetJavaObject")) {
+
              // FIXME: how do we determine what security context this
              // object should belong to?
              Object o;
@@ -1874,7 +1878,7 @@ import com.sun.jndi.toolkit.url.UrlUtil;
     					 atts = scanTag(in);
 
                          // If there is a classid and no code tag present, transform it to code tag
-                         if (atts.get("code") == null && atts.get("classid") != null && ((String) atts.get("classid")).endsWith(".class")) {
+                         if (atts.get("code") == null && atts.get("classid") != null && !((String) atts.get("classid")).startsWith("clsid:")) {
                              atts.put("code", atts.get("classid"));
                          }
                          
@@ -1893,7 +1897,7 @@ import com.sun.jndi.toolkit.url.UrlUtil;
     						 atts.put("widthPercentage", 100);
     					 } else if (((String) atts.get("width")).endsWith("%")) {
     						 String w = (String) atts.get("width");
-    						 atts.put("width", "1000");
+    						 atts.put("width", "100");
     						 atts.put("widthPercentage", Integer.parseInt((w.substring(0,  w.length() -1))));
     					  }
 
@@ -1902,7 +1906,7 @@ import com.sun.jndi.toolkit.url.UrlUtil;
     						 atts.put("heightPercentage", 100);
     					 } else if (((String) atts.get("height")).endsWith("%")) {
     						 String h = (String) atts.get("height");
-    						 atts.put("height", "1000");
+    						 atts.put("height", "100");
     						 atts.put("heightPercentage", Integer.parseInt(h.substring(0,  h.length() -1)));
     					 }
     				 }
@@ -1916,7 +1920,7 @@ import com.sun.jndi.toolkit.url.UrlUtil;
     				     }
 
     					 // If there is a classid and no code tag present, transform it to code tag
-    				     if (atts.get("code") == null && atts.get("classid") != null && ((String) atts.get("classid")).endsWith(".class")) {
+    				     if (atts.get("code") == null && atts.get("classid") != null && !((String) atts.get("classid")).startsWith("clsid:")) {
                              atts.put("code", atts.get("classid"));
                          }
                          
@@ -1956,7 +1960,7 @@ import com.sun.jndi.toolkit.url.UrlUtil;
     						 atts.put("widthPercentage", 100);
     					 } else if (((String) atts.get("width")).endsWith("%")) {
     						 String w = (String) atts.get("width");
-    						 atts.put("width", "1000");
+    						 atts.put("width", "100");
     						 atts.put("widthPercentage", Integer.parseInt(w.substring(0,  w.length() -1)));
     					 }
 
@@ -1965,7 +1969,7 @@ import com.sun.jndi.toolkit.url.UrlUtil;
     						 atts.put("heightPercentage", 100);
     					 } else if (((String) atts.get("height")).endsWith("%")) {
     						 String h = (String) atts.get("height");
-    						 atts.put("height", "1000");
+    						 atts.put("height", "100");
     						 atts.put("heightPercentage", Integer.parseInt(h.substring(0,  h.length() -1)));
     					 }
     				 }
@@ -1974,10 +1978,10 @@ import com.sun.jndi.toolkit.url.UrlUtil;
     					 atts = scanTag(in);
 
                          // If there is a classid and no code tag present, transform it to code tag
-                         if (atts.get("code") == null && atts.get("classid") != null && ((String) atts.get("classid")).endsWith(".class")) {
+                         if (atts.get("code") == null && atts.get("classid") != null && !((String) atts.get("classid")).startsWith("clsid:")) {
                              atts.put("code", atts.get("classid"));
                          }
-                         
+
                          // remove java: from code tag
                          if (atts.get("code") != null && ((String) atts.get("code")).startsWith("java:")) {
                              atts.put("code", ((String) atts.get("code")).substring(5));

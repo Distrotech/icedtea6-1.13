@@ -210,7 +210,7 @@ PluginRequestProcessor::eval(std::vector<std::string>* message_parts)
     CHECK_JAVA_RESULT(java_result);
     script.append(*(java_result->return_string));
 
-    AyncCallThreadData thread_data = AyncCallThreadData();
+    AsyncCallThreadData thread_data = AsyncCallThreadData();
     thread_data.result_ready = false;
     thread_data.parameters = std::vector<void*>();
     thread_data.result = std::string();
@@ -219,9 +219,20 @@ PluginRequestProcessor::eval(std::vector<std::string>* message_parts)
     thread_data.parameters.push_back(NPVARIANT_TO_OBJECT(*window_ptr));
     thread_data.parameters.push_back(&script);
 
-    browser_functions.pluginthreadasynccall(instance, &_eval, &thread_data);
+#ifdef CHROMIUM_WORKAROUND
+    // Workaround for chromium
+    _eval(&thread_data);
 
-    while (!thread_data.result_ready) usleep(2000); // Wait till result is ready
+    if (!thread_data.call_successful)
+    {
+#endif
+        thread_data.result_ready = false;
+        browser_functions.pluginthreadasynccall(instance, &_eval, &thread_data);
+
+        while (!thread_data.result_ready) usleep(2000); // Wait till result is ready
+#ifdef CHROMIUM_WORKAROUND
+    }
+#endif
 
     NPVariant* result_variant = (NPVariant*) IcedTeaPluginUtilities::stringToJSID(thread_data.result);
     std::string result_variant_jniid = std::string();
@@ -292,7 +303,7 @@ PluginRequestProcessor::call(std::vector<std::string>* message_parts)
     for (int i=0; i < args.size(); i++)
         args_array[i] = args[i];
 
-    AyncCallThreadData thread_data = AyncCallThreadData();
+    AsyncCallThreadData thread_data = AsyncCallThreadData();
     thread_data.result_ready = false;
     thread_data.parameters = std::vector<void*>();
     thread_data.result = std::string();
@@ -303,10 +314,20 @@ PluginRequestProcessor::call(std::vector<std::string>* message_parts)
     thread_data.parameters.push_back(&arg_count);
     thread_data.parameters.push_back(args_array);
 
-    printf("Packing %p [%p] %p %s@%p %p %p\n", instance, thread_data.parameters.at(0), window_ptr, window_function_name.c_str(), &window_function_name, &arg_count, args_array);
-    browser_functions.pluginthreadasynccall(instance, &_call, &thread_data);
+#ifdef CHROMIUM_WORKAROUND
+    // Workaround for chromium
+    _call(&thread_data);
 
-    while (!thread_data.result_ready) usleep(2000); // wait till ready
+    if (!thread_data.call_successful)
+    {
+#endif
+        thread_data.result_ready = false;
+        browser_functions.pluginthreadasynccall(instance, &_call, &thread_data);
+
+        while (!thread_data.result_ready) usleep(2000); // wait till ready
+#ifdef CHROMIUM_WORKAROUND
+    }
+#endif
 
     NPVariant* result_variant = (NPVariant*) IcedTeaPluginUtilities::stringToJSID(thread_data.result);
     std::string result_variant_jniid = std::string();
@@ -339,7 +360,7 @@ PluginRequestProcessor::sendString(std::vector<std::string>* message_parts)
     variant_ptr = message_parts->at(3);
 
     variant = (NPVariant*) IcedTeaPluginUtilities::stringToJSID(variant_ptr);
-    AyncCallThreadData thread_data = AyncCallThreadData();
+    AsyncCallThreadData thread_data = AsyncCallThreadData();
     thread_data.result_ready = false;
     thread_data.parameters = std::vector<void*>();
     thread_data.result = std::string();
@@ -348,9 +369,19 @@ PluginRequestProcessor::sendString(std::vector<std::string>* message_parts)
     thread_data.parameters.push_back(instance);
     thread_data.parameters.push_back(variant);
 
-    browser_functions.pluginthreadasynccall(instance, &_getString, &thread_data);
+#ifdef CHROMIUM_WORKAROUND
+    // Workaround for chromium
+    _getString(&thread_data);
 
-    while (!thread_data.result_ready) usleep(2000); // wait till ready
+    if (!thread_data.call_successful)
+    {
+#endif
+        thread_data.result_ready = false;
+        browser_functions.pluginthreadasynccall(instance, &_getString, &thread_data);
+        while (!thread_data.result_ready) usleep(2000); // wait till ready
+#ifdef CHROMIUM_WORKAROUND
+    }
+#endif
 
     // We need the context 0 for backwards compatibility with the Java side
     IcedTeaPluginUtilities::constructMessagePrefix(0, &response);
@@ -415,7 +446,7 @@ PluginRequestProcessor::setMember(std::vector<std::string>* message_parts)
     // Copy into local variable before disposing the object
     property_name.append(*(java_result->return_string));
 
-    AyncCallThreadData thread_data = AyncCallThreadData();
+    AsyncCallThreadData thread_data = AsyncCallThreadData();
     thread_data.result_ready = false;
     thread_data.parameters = std::vector<void*>();
     thread_data.result = std::string();
@@ -425,9 +456,20 @@ PluginRequestProcessor::setMember(std::vector<std::string>* message_parts)
     thread_data.parameters.push_back(&property_name);
     thread_data.parameters.push_back(&value);
 
-    browser_functions.pluginthreadasynccall(instance, &_setMember, &thread_data);
+#ifdef CHROMIUM_WORKAROUND
+    // Workaround for chromium
+    _setMember(&thread_data);
 
-    while (!thread_data.result_ready) usleep(2000); // wait till ready
+    if (!thread_data.call_successful)
+    {
+#endif
+        thread_data.result_ready = false;
+        browser_functions.pluginthreadasynccall(instance, &_setMember, &thread_data);
+
+        while (!thread_data.result_ready) usleep(2000); // wait till ready
+#ifdef CHROMIUM_WORKAROUND
+    }
+#endif
 
     cleanup:
     delete message_parts;
@@ -491,7 +533,7 @@ PluginRequestProcessor::sendMember(std::vector<std::string>* message_parts)
 
     reference = internal_req_ref_counter++;
 
-    AyncCallThreadData thread_data = AyncCallThreadData();
+    AsyncCallThreadData thread_data = AsyncCallThreadData();
     thread_data.result_ready = false;
     thread_data.parameters = std::vector<void*>();
     thread_data.result = std::string();
@@ -501,9 +543,21 @@ PluginRequestProcessor::sendMember(std::vector<std::string>* message_parts)
     thread_data.parameters.push_back(NPVARIANT_TO_OBJECT(*parent_ptr));
     thread_data.parameters.push_back(java_result->return_string);
 
-    browser_functions.pluginthreadasynccall(instance, &_getMember, &thread_data);
+#ifdef CHROMIUM_WORKAROUND
+    // Workaround for chromium
+    _getMember(&thread_data);
 
-    while (!thread_data.result_ready) usleep(2000); // wait till ready
+    if (!thread_data.call_successful)
+    {
+#endif
+        thread_data.result_ready = false;
+        browser_functions.pluginthreadasynccall(instance, &_getMember, &thread_data);
+
+        while (!thread_data.result_ready) usleep(2000); // wait till ready
+
+#ifdef CHROMIUM_WORKAROUND
+    }
+#endif
 
     PLUGIN_DEBUG_1ARG("Member PTR after internal request: %s\n", thread_data.result.c_str());
 
@@ -659,7 +713,7 @@ _setMember(void* data)
     NPObject* member;
     NPIdentifier property;
 
-    std::vector<void*> parameters = ((AyncCallThreadData*) data)->parameters;
+    std::vector<void*> parameters = ((AsyncCallThreadData*) data)->parameters;
     instance = (NPP) parameters.at(0);
     member = (NPObject*) parameters.at(1);
     property_name = (std::string*) parameters.at(2);
@@ -670,13 +724,13 @@ _setMember(void* data)
     IcedTeaPluginUtilities::javaResultToNPVariant(instance, value, &value_variant);
 
     property = browser_functions.getstringidentifier(property_name->c_str());
-    browser_functions.setproperty(instance, member, property, &value_variant);
+    ((AsyncCallThreadData*) data)->call_successful = browser_functions.setproperty(instance, member, property, &value_variant);
 
     IcedTeaPluginUtilities::constructMessagePrefix(0, &response);
     response.append(" JavaScriptSetMember ");
     plugin_to_java_bus->post(response.c_str());
 
-    ((AyncCallThreadData*) data)->result_ready = true;
+    ((AsyncCallThreadData*) data)->result_ready = true;
 
 }
 
@@ -691,7 +745,7 @@ _getMember(void* data)
     NPP instance;
     NPIdentifier member_identifier;
 
-    std::vector<void*> parameters = ((AyncCallThreadData*) data)->parameters;
+    std::vector<void*> parameters = ((AsyncCallThreadData*) data)->parameters;
 
     instance = (NPP) parameters.at(0);
     parent_ptr = (NPObject*) parameters.at(1);
@@ -707,14 +761,16 @@ _getMember(void* data)
     {
         printf("%s not found!\n", member_name->c_str());
     }
-    browser_functions.getproperty(instance, parent_ptr, member_identifier, member_ptr);
+    ((AsyncCallThreadData*) data)->call_successful = browser_functions.getproperty(instance, parent_ptr, member_identifier, member_ptr);
 
     IcedTeaPluginUtilities::printNPVariant(*member_ptr);
-    IcedTeaPluginUtilities::JSIDToString(member_ptr, &member_ptr_str);
-    PLUGIN_DEBUG_2ARG("Got variant %p (integer value = %s)\n", member_ptr, member_ptr_str.c_str());
 
-    ((AyncCallThreadData*) data)->result.append(member_ptr_str);
-    ((AyncCallThreadData*) data)->result_ready = true;
+    if (((AsyncCallThreadData*) data)->call_successful)
+    {
+        IcedTeaPluginUtilities::JSIDToString(member_ptr, &member_ptr_str);
+        ((AsyncCallThreadData*) data)->result.append(member_ptr_str);
+    }
+    ((AsyncCallThreadData*) data)->result_ready = true;
 
     // store member -> instance link
     IcedTeaPluginUtilities::storeInstanceID(member_ptr, instance);
@@ -753,12 +809,15 @@ _eval(void* data)
     PLUGIN_DEBUG_1ARG("Evaluating: %s\n", script.UTF8Characters);
 #endif
 
-    browser_functions.evaluate(instance, window_ptr, &script, eval_result);
+    ((AsyncCallThreadData*) data)->call_successful = browser_functions.evaluate(instance, window_ptr, &script, eval_result);
     IcedTeaPluginUtilities::printNPVariant(*eval_result);
 
-    IcedTeaPluginUtilities::JSIDToString(eval_result, &eval_result_ptr_str);
-    ((AyncCallThreadData*) data)->result.append(eval_result_ptr_str);
-    ((AyncCallThreadData*) data)->result_ready = true;
+    if (((AsyncCallThreadData*) data)->call_successful)
+    {
+        IcedTeaPluginUtilities::JSIDToString(eval_result, &eval_result_ptr_str);
+        ((AsyncCallThreadData*) data)->result.append(eval_result_ptr_str);
+    }
+    ((AsyncCallThreadData*) data)->result_ready = true;
 
     PLUGIN_DEBUG_0ARG("_eval returning\n");
 }
@@ -788,19 +847,21 @@ _call(void* data)
     arg_count = (int*) call_data->at(3);
     args = (NPVariant*) call_data->at(4);
 
-    printf("Extracted %p -- %p -- %s@%p -- %d -- %p\n", instance, window_ptr, function_name->c_str(), function_name, *arg_count, args);
-
     for (int i=0; i < *arg_count; i++) {
         IcedTeaPluginUtilities::printNPVariant(args[i]);
     }
 
-    browser_functions.invoke(instance, window_ptr, function, args, *arg_count, call_result);
+    ((AsyncCallThreadData*) data)->call_successful = browser_functions.invoke(instance, window_ptr, function, args, *arg_count, call_result);
 
     IcedTeaPluginUtilities::printNPVariant(*call_result);
 
-    IcedTeaPluginUtilities::JSIDToString(call_result, &call_result_ptr_str);
-    ((AyncCallThreadData*) data)->result.append(call_result_ptr_str);
-    ((AyncCallThreadData*) data)->result_ready = true;
+    if (((AsyncCallThreadData*) data)->call_successful)
+    {
+        IcedTeaPluginUtilities::JSIDToString(call_result, &call_result_ptr_str);
+        ((AsyncCallThreadData*) data)->result.append(call_result_ptr_str);
+    }
+
+    ((AsyncCallThreadData*) data)->result_ready = true;
 
     PLUGIN_DEBUG_0ARG("_call returning\n");
 }
@@ -822,20 +883,24 @@ _getString(void* data)
 
     if (NPVARIANT_IS_OBJECT(*variant))
     {
-        browser_functions.invoke(instance, NPVARIANT_TO_OBJECT(*variant), toString, NULL, 0, &tostring_result);
+        ((AsyncCallThreadData*) data)->call_successful = browser_functions.invoke(instance, NPVARIANT_TO_OBJECT(*variant), toString, NULL, 0, &tostring_result);
     }
     else
     {
         IcedTeaPluginUtilities::NPVariantToString(*variant, &result);
         tostring_result = NPVariant();
         STRINGZ_TO_NPVARIANT(result.c_str(), tostring_result);
+        ((AsyncCallThreadData*) data)->call_successful = true;
     }
 
     PLUGIN_DEBUG_0ARG("ToString result: ");
     IcedTeaPluginUtilities::printNPVariant(tostring_result);
 
-    createJavaObjectFromVariant(instance, tostring_result, &(((AyncCallThreadData*) data)->result));
-    ((AyncCallThreadData*) data)->result_ready = true;
+    if (((AsyncCallThreadData*) data)->call_successful)
+    {
+        createJavaObjectFromVariant(instance, tostring_result, &(((AsyncCallThreadData*) data)->result));
+    }
+    ((AsyncCallThreadData*) data)->result_ready = true;
 
     PLUGIN_DEBUG_0ARG("_getString returning\n");
 }

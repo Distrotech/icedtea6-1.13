@@ -777,8 +777,6 @@ IcedTeaPluginUtilities::javaResultToNPVariant(NPP instance,
             PLUGIN_DEBUG_1ARG("Method call returned a string: \"%s\"\n", return_str);
             STRINGZ_TO_NPVARIANT(return_str, *variant);
 
-            // delete string from java side, as it is no longer needed
-            java_request.deleteReference(return_obj_instance_id);
         } else {
 
             // Else this is a regular class. Reference the class object so
@@ -837,6 +835,42 @@ IcedTeaPluginUtilities::isObjectJSArray(NPP instance, NPObject* object)
     PLUGIN_DEBUG_1ARG("Constructor for NPObject is %s\n", constructor_name.c_str());
 
     return constructor_name.find("function Array") == 0;
+}
+
+void
+IcedTeaPluginUtilities::decodeURL(const gchar* url, gchar** decoded_url)
+{
+
+    PLUGIN_DEBUG_2ARG("GOT URL: %s -- %s\n", url, *decoded_url);
+    int length = strlen(url);
+    for (int i=0; i < length; i++)
+    {
+        if (url[i] == '%' && i < length - 2)
+        {
+            unsigned char code1 = (unsigned char) url[i+1];
+            unsigned char code2 = (unsigned char) url[i+2];
+
+            if (!IS_VALID_HEX(&code1) || !IS_VALID_HEX(&code2))
+                continue;
+
+            // Convert hex value to integer
+            int converted1 = HEX_TO_INT(&code1);
+            int converted2 = HEX_TO_INT(&code2);
+
+            // bitshift 4 to simulate *16
+            int value = (converted1 << 4) + converted2;
+            char decoded = value;
+
+            strncat(*decoded_url, &decoded, 1);
+
+            i += 2;
+        } else
+        {
+            strncat(*decoded_url, &url[i], 1);
+        }
+    }
+
+    PLUGIN_DEBUG_1ARG("SENDING URL: %s\n", *decoded_url);
 }
 
 /******************************************
