@@ -402,7 +402,7 @@ IcedTeaScriptableJavaPackageObject::get_scriptable_java_object(NPP instance,
     // didn't work? try creating asynch
     if (!scriptable_object)
     {
-        AyncCallThreadData thread_data = AyncCallThreadData();
+        AsyncCallThreadData thread_data = AsyncCallThreadData();
         thread_data.result_ready = false;
         thread_data.parameters = std::vector<void*>();
         thread_data.result = std::string();
@@ -441,7 +441,7 @@ _createAndRetainJavaObject(void* data)
 {
     PLUGIN_DEBUG_0ARG("Asynchronously creating/retaining object ...\n");
 
-    std::vector<void*> parameters = ((AyncCallThreadData*) data)->parameters;
+    std::vector<void*> parameters = ((AsyncCallThreadData*) data)->parameters;
     NPP instance = (NPP) parameters.at(0);
     NPClass* np_class = (NPClass*) parameters.at(1);
     NPObject** scriptable_object = (NPObject**) parameters.at(2);
@@ -449,7 +449,7 @@ _createAndRetainJavaObject(void* data)
     *scriptable_object = browser_functions.createobject(instance, np_class);
     browser_functions.retainobject(*scriptable_object);
 
-    ((AyncCallThreadData*) data)->result_ready = true;
+    ((AsyncCallThreadData*) data)->result_ready = true;
 }
 
 bool
@@ -834,8 +834,6 @@ bool
 IcedTeaScriptableJavaObject::construct(NPObject *npobj, const NPVariant *args, uint32_t argCount,
 	           NPVariant *result)
 {
-    NPUTF8* method_name = "";
-
     // Extract arg type array
     PLUGIN_DEBUG_1ARG("IcedTeaScriptableJavaObject::construct %s. Args follow.\n", ((IcedTeaScriptableJavaObject*) npobj)->getClassID().c_str());
     for (int i=0; i < argCount; i++)

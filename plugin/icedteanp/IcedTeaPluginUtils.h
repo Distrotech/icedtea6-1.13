@@ -57,7 +57,7 @@ exception statement from your version. */
 
 #include <npapi.h>
 
-#if MOZILLA_VERSION_COLLAPSED < 1090200
+#if MOZILLA_VERSION_COLLAPSED < 1090100
 #include <npupp.h>
 #else
 #include <npapi.h>
@@ -135,6 +135,16 @@ exception statement from your version. */
         return;                                                      \
     }                                                                \
 }
+
+#define HEX_TO_INT(c) \
+    ((*c >= 'A') ? *c - 'A' + 10 : \
+     (*c >= 'a') ? *c - 'a' + 10 : \
+     *c - '0')
+
+#define IS_VALID_HEX(c) \
+    ((*c >= '0' && *c <= '9') || \
+     (*c >= 'a' && *c <= 'f') || \
+     (*c >= 'A' && *c <= 'F'))
 
 /*
  * This struct holds data specific to a Java operation requested by the plugin
@@ -264,6 +274,8 @@ class IcedTeaPluginUtilities
     	static void invalidateInstance(NPP instance);
 
     	static bool isObjectJSArray(NPP instance, NPObject* object);
+
+    	static void decodeURL(const char* url, char** decoded_url);
 };
 
 /*
