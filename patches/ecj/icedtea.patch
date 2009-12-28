@@ -489,21 +489,10 @@ diff -Nru openjdk-ecj.orig/jaxp/build.xml openjdk-ecj/jaxp/build.xml
  	     debug="${javac.debug}"
 -             target="${javac.target}">
 +             target="${javac.target}"
-+	     executable="${boot.java.home}/bin/javac">
++	     executable="${jdk.home}/bin/javac">
              <compilerarg value="-J-Xbootclasspath/p:${javac.jar}"/>
              <compilerarg line="${javac.version.opt} ${javac.lint.opts} ${javac.no.jdk.warnings}"/>
              <src refid="src.dir.id"/>
-diff -Nru openjdk-ecj.orig/jaxp/make/Makefile openjdk-ecj/jaxp/make/Makefile
---- openjdk-ecj.orig/jaxp/make/Makefile	2009-11-08 23:44:24.000000000 +0000
-+++ openjdk-ecj/jaxp/make/Makefile	2009-12-15 21:20:03.000000000 +0000
-@@ -113,6 +113,7 @@
- ifdef ALT_LANGTOOLS_DIST
-   ifdef ALT_BOOTDIR
-     ANT_JAVA_HOME = JAVA_HOME=$(ALT_BOOTDIR)
-+    ANT_OPTIONS += -Dboot.java.home=$(ALT_BOOTDIR)
-   endif
-   ANT_OPTIONS += -Dbootstrap.dir=$(ALT_LANGTOOLS_DIST)/bootstrap
- else
 diff -Nru openjdk-ecj.orig/jaxws/build.xml openjdk-ecj/jaxws/build.xml
 --- openjdk-ecj.orig/jaxws/build.xml	2009-11-08 23:47:47.000000000 +0000
 +++ openjdk-ecj/jaxws/build.xml	2009-12-15 21:20:03.000000000 +0000
@@ -513,21 +502,10 @@ diff -Nru openjdk-ecj.orig/jaxws/build.xml openjdk-ecj/jaxws/build.xml
  	     debug="${javac.debug}"
 -             target="${javac.target}">
 +             target="${javac.target}"
-+	     executable="${boot.java.home}/bin/javac">
++	     executable="${jdk.home}/bin/javac">
              <compilerarg value="-J-Xbootclasspath/p:${javac.jar}"/>
              <compilerarg line="${javac.version.opt} ${javac.lint.opts} ${javac.no.jdk.warnings}"/>
              <src refid="src.dir.id"/>
-diff -Nru openjdk-ecj.orig/jaxws/make/Makefile openjdk-ecj/jaxws/make/Makefile
---- openjdk-ecj.orig/jaxws/make/Makefile	2009-11-09 00:21:32.000000000 +0000
-+++ openjdk-ecj/jaxws/make/Makefile	2009-12-15 21:20:03.000000000 +0000
-@@ -113,6 +113,7 @@
- ifdef ALT_LANGTOOLS_DIST
-   ifdef ALT_BOOTDIR
-     ANT_JAVA_HOME = JAVA_HOME=$(ALT_BOOTDIR)
-+    ANT_OPTIONS += -Dboot.java.home=$(ALT_BOOTDIR)
-   endif
-   ANT_OPTIONS += -Dbootstrap.dir=$(ALT_LANGTOOLS_DIST)/bootstrap
- else
 diff -Nru openjdk-ecj.orig/jdk/make/common/BuildToolJar.gmk openjdk-ecj/jdk/make/common/BuildToolJar.gmk
 --- openjdk-ecj.orig/jdk/make/common/BuildToolJar.gmk	2009-11-23 13:01:47.000000000 +0000
 +++ openjdk-ecj/jdk/make/common/BuildToolJar.gmk	2009-12-15 21:20:03.000000000 +0000
