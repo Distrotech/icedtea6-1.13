@@ -2197,7 +2197,6 @@ stamps/plugs.stamp: stamps/rt.stamp
 	  $(ICEDTEA_BOOT_DIR)/bin/jar cf $(abs_top_builddir)/bootstrap/jdk1.7.0/jre/lib/rt-closed.jar \
 	    -C lib/rt com/sun/jmx/snmp $(LIVECONNECT_DIR) -C lib/rt net -C lib/rt javax/jnlp ; \
 	fi
-	ln -s $(ICEDTEA_RT) 
 	mkdir -p stamps
 	touch stamps/plugs.stamp
 
