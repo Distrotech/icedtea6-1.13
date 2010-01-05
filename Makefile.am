@@ -211,6 +211,8 @@ ICEDTEA_PATCHES = \
 	patches/zero/6891677.patch \
 	patches/zero/6896043.patch \
 	patches/zero/6903453.patch \
+	patches/zero/6909153.patch \
+	patches/zero/6913869.patch \
 	patches/icedtea-notice-safepoints.patch \
 	patches/icedtea-parisc-opt.patch \
 	patches/icedtea-lucene-crash.patch \
