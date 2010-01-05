@@ -42,6 +42,8 @@ ICEDTEA_BOOT_DIR= \
 	$(abs_top_builddir)/bootstrap/jdk1.6.0
 ICEDTEA_RT = \
 	$(ICEDTEA_BOOT_DIR)/jre/lib/rt.jar
+ICEDTEA_PLUGS = \
+	$(abs_top_builddir)/bootstrap/jdk1.7.0/jre/lib/rt-closed.jar
 ICEDTEA_ENDORSED_DIR = \
 	$(ICEDTEA_BOOT_DIR)/lib/endorsed
 ICEDTEA_BUILD_DIR_ECJ = \
@@ -1623,18 +1625,18 @@ endif
 extra-source-files.txt:
 	find $(abs_top_srcdir)/extra -name '*.java' | sort > $@
 
-stamps/extra-class-files.stamp: extra-source-files.txt stamps/rt.stamp
+stamps/extra-class-files.stamp: extra-source-files.txt stamps/plugs.stamp
 	mkdir -p extra-lib
 	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
 	then \
 	  $(JAVAC) $(MEMORY_LIMIT) -g -d extra-lib \
 	    -source 1.5 \
-	    -sourcepath extra -cp $(ICEDTEA_RT) \
+	    -sourcepath extra -cp $(ICEDTEA_RT):$(ICEDTEA_PLUGS) \
 	    -bootclasspath \'\' @extra-source-files.txt ; \
 	else \
 	  $(ICEDTEA_BOOT_DIR)/bin/javac $(MEMORY_LIMIT) -g -d extra-lib \
             -source 1.5 \
-            -sourcepath extra -cp $(ICEDTEA_RT) \
+            -sourcepath extra -cp $(ICEDTEA_RT):$(ICEDTEA_PLUGS) \
             -bootclasspath \'\' @extra-source-files.txt ; \
 	fi
 	cp -r $(abs_top_srcdir)/extra/net/sourceforge/jnlp/about/resources \
@@ -2152,13 +2154,11 @@ bootstrap/jdk1.7.0/jre/lib/tools.jar: stamps/hotspot-tools-class-files.stamp
 	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
 	then \
 	  $(JAR) cf $@ -C lib/hotspot-tools com -C lib/hotspot-tools sun \
-            -C lib/hotspot-tools org -C lib/hotspot-tools java \
-            -C lib/hotspot-tools javax ; \
+            -C lib/hotspot-tools org -C lib/hotspot-tools java ; \
 	else \
 	  $(ICEDTEA_BOOT_DIR)/bin/jar cf $@ -C lib/hotspot-tools com \
 	    -C lib/hotspot-tools sun \
-            -C lib/hotspot-tools org -C lib/hotspot-tools java \
-            -C lib/hotspot-tools javax ; \
+            -C lib/hotspot-tools org -C lib/hotspot-tools java ; \
 	fi
 	if test -d bootstrap/ecj ; \
 	then \
@@ -2191,17 +2191,17 @@ stamps/plugs.stamp: stamps/rt.stamp
 	mkdir -p bootstrap/jdk1.7.0/jre/lib
 	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
 	then \
-	  $(JAR) cf $(abs_top_builddir)/bootstrap/jdk1.7.0/jre/lib/rt-closed.jar \
+	  $(JAR) cf $(ICEDTEA_PLUGS) \
 	    -C lib/rt com/sun/jmx/snmp $(LIVECONNECT_DIR) -C lib/rt net -C lib/rt javax/jnlp ; \
 	else \
-	  $(ICEDTEA_BOOT_DIR)/bin/jar cf $(abs_top_builddir)/bootstrap/jdk1.7.0/jre/lib/rt-closed.jar \
+	  $(ICEDTEA_BOOT_DIR)/bin/jar cf $(ICEDTEA_PLUGS) \
 	    -C lib/rt com/sun/jmx/snmp $(LIVECONNECT_DIR) -C lib/rt net -C lib/rt javax/jnlp ; \
 	fi
 	mkdir -p stamps
 	touch stamps/plugs.stamp
 
 clean-plugs: clean-plugs clean-copy clean-rt
-	rm -f $(abs_top_builddir)/bootstrap/jdk1.7.0/jre/lib/rt-closed.jar
+	rm -f $(ICEDTEA_PLUGS)
 	cp $(SYSTEM_JDK_DIR)/jre/lib/rt.jar $(ICEDTEA_RT)
 	rm -f stamps/plugs.stamp
 
