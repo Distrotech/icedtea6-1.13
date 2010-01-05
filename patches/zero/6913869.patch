@@ -1,0 +1,12 @@
+diff -r 40e7c1d24e4a -r 896da934748c src/share/vm/prims/jni.cpp
+--- openjdk/hotspot/src/share/vm/prims/jni.cpp	Mon Jan 04 00:22:57 2010 -0800
++++ openjdk/hotspot/src/share/vm/prims/jni.cpp	Mon Jan 04 03:34:40 2010 -0800
+@@ -3241,7 +3241,7 @@
+     jint b = Atomic::xchg(0xdeadbeef, &a);
+     void *c = &a;
+     void *d = Atomic::xchg_ptr(&b, &c);
+-    assert(a == 0xdeadbeef && b == (jint) 0xcafebabe, "Atomic::xchg() works");
++    assert(a == (jint) 0xdeadbeef && b == (jint) 0xcafebabe, "Atomic::xchg() works");
+     assert(c == &b && d == &a, "Atomic::xchg_ptr() works");
+   }
+ #endif // ZERO && ASSERT
