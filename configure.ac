@@ -471,7 +471,7 @@ if test "x${enable_plugin}" = "xyes"
 if test "x${enable_npplugin}" = "xyes"
   then
     PKG_CHECK_MODULES(MOZILLA, \
-      mozilla-plugin libxul-unstable)
+      mozilla-plugin libxul)
     PKG_CHECK_MODULES(GTK, gtk+-2.0)
     PKG_CHECK_MODULES(GLIB, glib-2.0)
 

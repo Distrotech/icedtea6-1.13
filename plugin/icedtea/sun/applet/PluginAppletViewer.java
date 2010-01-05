@@ -402,7 +402,7 @@ import com.sun.jndi.toolkit.url.UrlUtil;
         			 }
         			 int index = message.indexOf(' ', "tag".length() + 1);
         			 request.documentbase =
-        				 message.substring("tag".length() + 1, index);
+        				 UrlUtil.decode(message.substring("tag".length() + 1, index));
         			 request.tag = message.substring(index + 1);
         			 PluginDebug.debug ("REQUEST TAG: " + request.tag + " " +
         					 Thread.currentThread());
@@ -1788,7 +1788,7 @@ import com.sun.jndi.toolkit.url.UrlUtil;
     					 atts = scanTag(in);
 
                          // If there is a classid and no code tag present, transform it to code tag
-                         if (atts.get("code") == null && atts.get("classid") != null && ((String) atts.get("classid")).endsWith(".class")) {
+                         if (atts.get("code") == null && atts.get("classid") != null && !((String) atts.get("classid")).startsWith("clsid:")) {
                              atts.put("code", atts.get("classid"));
                          }
                          
@@ -1830,7 +1830,7 @@ import com.sun.jndi.toolkit.url.UrlUtil;
     				     }
 
     				     // If there is a classid and no code tag present, transform it to code tag
-    				     if (atts.get("code") == null && atts.get("classid") != null && ((String) atts.get("classid")).endsWith(".class")) {
+    				     if (atts.get("code") == null && atts.get("classid") != null && !((String) atts.get("classid")).startsWith("clsid:")) {
     				         atts.put("code", atts.get("classid"));
     				     }
                         
@@ -1888,7 +1888,7 @@ import com.sun.jndi.toolkit.url.UrlUtil;
     					 atts = scanTag(in);
 
                          // If there is a classid and no code tag present, transform it to code tag
-                         if (atts.get("code") == null && atts.get("classid") != null && ((String) atts.get("classid")).endsWith(".class")) {
+                         if (atts.get("code") == null && atts.get("classid") != null && !((String) atts.get("classid")).startsWith("clsid:")) {
                              atts.put("code", atts.get("classid"));
                          }
                          
