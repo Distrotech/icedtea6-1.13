@@ -246,7 +246,6 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-fonts.patch \
 	patches/icedtea-shark-build.patch \
 	patches/icedtea-shark-build-hotspot.patch \
-	patches/icedtea-jdk-docs-target.patch \
 	patches/icedtea-nomotif-6706121.patch \
 	patches/icedtea-nomotif.patch \
 	patches/icedtea-alpha-fixes.patch \
