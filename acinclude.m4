@@ -1161,3 +1161,21 @@ rmdir tmp.$$
 AM_CONDITIONAL([LACKS_$1], test x"${it_cv_$1}" = "xyes")
 AC_PROVIDE([$0])dnl
 ])
+
+AC_DEFUN([IT_GET_LSB_DATA],
+[
+if test -n "$LSB_RELEASE"; then
+  lsb_info="$($LSB_RELEASE -ds | sed 's/^"//;s/"$//')"
+  if test -n "$PKGVERSION"; then
+    DIST_ID="$lsb_info, package $PKGVERSION"
+  else
+    DIST_ID="Built on $lsb_info ($(date))"
+  fi
+  DIST_NAME="$($LSB_RELEASE -is | sed 's/^"//;s/"$//')"
+else
+  DIST_ID="Custom build ($(date))"
+  DIST_NAME="$build_os"
+fi
+AC_SUBST(DIST_ID)
+AC_SUBST(DIST_NAME)
+])
