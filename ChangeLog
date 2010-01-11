@@ -1,4 +1,16 @@
-2009-01-11  Nobuhiro Iwamatsu <iwamatsu@nigauri.org>
+2010-01-11 Andrew John Hughes  <ahughes@redhat.com>
+
+	Fix issues with the CACAO build.
+	* Makefile.am:
+	Add new CACAO nio2 patch.
+	* patches/cacao/nio2.patch:
+	Implement different functions in sun.misc.Unsafe
+	(copyMemory backported from OpenJDK7).
+	* patches/cacao/no-strict-aliasing.patch:
+	Always append -fno-strict-aliasing, even if CFLAGS
+	are specified.  Otherwise, a broken CACAO results.
+
+2010-01-11  Nobuhiro Iwamatsu <iwamatsu@nigauri.org>
 	    Matthias Klose  <doko@ubuntu.com>
 
 	* patches/icedtea-sh4-support.patch: Add zero support for Hitachi SH.

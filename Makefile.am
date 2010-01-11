@@ -314,6 +314,9 @@ ICEDTEA_PATCHES += \
 	patches/icedtea-cacao-no-mmap-first-page.patch \
 	patches/cacao/no-strict-aliasing.patch \
 	patches/cacao/arm-arch-defines.patch
+if ENABLE_NIO2
+ICEDTEA_PATCHES += patches/cacao/nio2.patch
+endif
 endif
 if WITH_CACAO
 ICEDTEA_PATCHES += \
