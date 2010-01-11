@@ -25045,17 +25045,18 @@ diff -ruN ..openjdk.old/openjdk/jdk/src/share/native/sun/awt/image/jpeg/README o
  }
  
  
-@@ -2317,6 +2377,145 @@
+@@ -2317,6 +2377,146 @@
  
  /********************** end of destination manager ************/
  
 +METHODDEF(void)
 +initIDs()
 +{
++#if JPEG_LIB_VERSION >= 70
 +    void *handle = dlopen("libjpeg.so.7", RTLD_LAZY | RTLD_GLOBAL);
-+    if (handle == NULL) {
-+       handle = dlopen("libjpeg.so.62", RTLD_LAZY | RTLD_GLOBAL);
-+    }
++#else
++    void *handle = dlopen("libjpeg.so.62", RTLD_LAZY | RTLD_GLOBAL);
++#endif
 +    
 +    jpegstderror = (fn_jpegstderror)dlsym(handle, "jpeg_std_error");
 +    if (jpegstderror == NULL) {
