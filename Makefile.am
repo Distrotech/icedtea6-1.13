@@ -300,7 +300,8 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-no-precompiled.patch \
 	patches/icedtea-6897844-xshm.patch \
 	patches/icedtea-linux-separate-debuginfo.patch \
-	patches/icedtea-parisc.patch
+	patches/icedtea-parisc.patch \
+	patches/icedtea-sh4-support.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
