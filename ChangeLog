@@ -1,5 +1,16 @@
 2010-01-11 Andrew John Hughes  <ahughes@redhat.com>
 
+	Bump to latest HotSpot 16 (b13).
+	* patches/icedtea-memory-limits.patch:
+	Moved to HotSpot-specific directories.
+	* Makefile.am: Use new memory-limits patches.
+	* hotspot.map: Bump to HotSpot 16 b13.
+	* patches/hotspot/hs16/icedtea-params-cast-size_t.patch,
+	* patches/hotspot/original/memory-limits.patch:
+	Recreated for the new build.
+
+2010-01-11 Andrew John Hughes  <ahughes@redhat.com>
+
 	* patches/icedtea-libraries.patch:
 	Decide which libjpeg library to load
 	at compile-time not runtime using
