@@ -213,6 +213,7 @@ ICEDTEA_PATCHES = \
 	patches/zero/6903453.patch \
 	patches/zero/6909153.patch \
 	patches/zero/6913869.patch \
+	patches/zero/6914622.patch \
 	patches/icedtea-notice-safepoints.patch \
 	patches/icedtea-parisc-opt.patch \
 	patches/icedtea-lucene-crash.patch \
@@ -291,7 +292,8 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-no-precompiled.patch \
 	patches/icedtea-6897844-xshm.patch \
 	patches/icedtea-linux-separate-debuginfo.patch \
-	patches/icedtea-parisc.patch
+	patches/icedtea-parisc.patch \
+	patches/icedtea-sh4-support.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -304,6 +306,9 @@ ICEDTEA_PATCHES += \
 	patches/icedtea-cacao-no-mmap-first-page.patch \
 	patches/cacao/no-strict-aliasing.patch \
 	patches/cacao/arm-arch-defines.patch
+if ENABLE_NIO2
+ICEDTEA_PATCHES += patches/cacao/nio2.patch
+endif
 endif
 if WITH_CACAO
 ICEDTEA_PATCHES += \

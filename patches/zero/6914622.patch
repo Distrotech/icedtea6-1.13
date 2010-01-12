@@ -1,0 +1,98 @@
+diff -r 9b9c1ee9b3f6 -r f62a22282a47 src/share/vm/runtime/arguments.cpp
+--- openjdk/hotspot/src/share/vm/runtime/arguments.cpp	Wed Jan 06 22:21:39 2010 -0800
++++ openjdk/hotspot/src/share/vm/runtime/arguments.cpp	Thu Jan 07 16:24:17 2010 -0800
+@@ -2633,6 +2633,10 @@
+     if (match_option(option, "-XX:-IgnoreUnrecognizedVMOptions", &tail)) {
+       IgnoreUnrecognizedVMOptions = false;
+     }
++    if (match_option(option, "-XX:+PrintFlagsInitial", &tail)) {
++      CommandLineFlags::printFlags();
++      vm_exit(0);
++    }
+   }
+ 
+   if (IgnoreUnrecognizedVMOptions) {
+@@ -2795,11 +2799,9 @@
+     CommandLineFlags::printSetFlags();
+   }
+ 
+-#ifdef ASSERT
+   if (PrintFlagsFinal) {
+     CommandLineFlags::printFlags();
+   }
+-#endif
+ 
+   return JNI_OK;
+ }
+diff -r 9b9c1ee9b3f6 -r f62a22282a47 src/share/vm/runtime/globals.cpp
+--- openjdk/hotspot/src/share/vm/runtime/globals.cpp	Wed Jan 06 22:21:39 2010 -0800
++++ openjdk/hotspot/src/share/vm/runtime/globals.cpp	Thu Jan 07 16:24:17 2010 -0800
+@@ -468,6 +468,8 @@
+   assert(Arguments::check_vm_args_consistency(), "Some flag settings conflict");
+ }
+ 
++#endif // PRODUCT
++
+ void CommandLineFlags::printFlags() {
+   // Print the flags sorted by name
+   // note: this method is called before the thread structure is in place
+@@ -493,5 +495,3 @@
+   }
+   FREE_C_HEAP_ARRAY(Flag*, array);
+ }
+-
+-#endif
+diff -r 9b9c1ee9b3f6 -r f62a22282a47 src/share/vm/runtime/globals.hpp
+--- openjdk/hotspot/src/share/vm/runtime/globals.hpp	Wed Jan 06 22:21:39 2010 -0800
++++ openjdk/hotspot/src/share/vm/runtime/globals.hpp	Thu Jan 07 16:24:17 2010 -0800
+@@ -211,7 +211,7 @@
+   static bool wasSetOnCmdline(const char* name, bool* value);
+   static void printSetFlags();
+ 
+-  static void printFlags() PRODUCT_RETURN;
++  static void printFlags();
+ 
+   static void verify() PRODUCT_RETURN;
+ };
+@@ -327,9 +327,6 @@
+   product(bool, UseMembar, false,                                           \
+           "(Unstable) Issues membars on thread state transitions")          \
+                                                                             \
+-  product(bool, PrintCommandLineFlags, false,                               \
+-          "Prints flags that appeared on the command line")                 \
+-                                                                            \
+   diagnostic(bool, UnlockDiagnosticVMOptions, trueInDebug,                  \
+           "Enable normal processing of flags relating to field diagnostics")\
+                                                                             \
+@@ -1967,9 +1964,6 @@
+           "number of times a GC thread (minus the coordinator) "            \
+           "will sleep while yielding before giving up and resuming GC")     \
+                                                                             \
+-  notproduct(bool, PrintFlagsFinal, false,                                  \
+-          "Print all command line flags after argument processing")         \
+-                                                                            \
+   /* gc tracing */                                                          \
+   manageable(bool, PrintGC, false,                                          \
+           "Print message at garbage collect")                               \
+@@ -2269,11 +2263,20 @@
+          "If false, restricts profiled locations to the root method only")  \
+                                                                             \
+   product(bool, PrintVMOptions, trueInDebug,                                \
+-         "print VM flag settings")                                          \
++         "Print flags that appeared on the command line")                   \
+                                                                             \
+   product(bool, IgnoreUnrecognizedVMOptions, false,                         \
+          "Ignore unrecognized VM options")                                  \
+                                                                             \
++  product(bool, PrintCommandLineFlags, false,                               \
++         "Print flags specified on command line or set by ergonomics")      \
++                                                                            \
++  product(bool, PrintFlagsInitial, false,                                   \
++         "Print all VM flags before argument processing and exit VM")       \
++                                                                            \
++  product(bool, PrintFlagsFinal, false,                                     \
++         "Print all VM flags after argument and ergonomic processing")      \
++                                                                            \
+   diagnostic(bool, SerializeVMOutput, true,                                 \
+          "Use a mutex to serialize output to tty and hotspot.log")          \
+                                                                             \
