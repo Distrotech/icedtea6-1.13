@@ -350,7 +350,8 @@ endif
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += patches/hotspot/$(HSBUILD)/openjdk-6886353-ignore_deoptimizealot.patch \
-	patches/hotspot/$(HSBUILD)/zero.patch
+	patches/hotspot/$(HSBUILD)/zero.patch \
+	patches/hotspot/$(HSBUILD)/shark.patch
 else
 ICEDTEA_PATCHES += patches/hotspot/original/icedtea-6778662-lib64.patch \
 	patches/hotspot/original/icedtea-6778657-f2i-overflow.patch \
@@ -835,7 +836,6 @@ stamps/ports.stamp: stamps/replace-hotspot.stamp
 	  link=$$(dirname $$target | sed 's/^.*ports/openjdk/'|sed "s#hotspot/build#hotspot/$(HOTSPOT_MAKE_DIR)#"); \
 	  cp -rv $$target $$link; \
 	done
-	ln -sf $(abs_top_builddir)/platform_zero openjdk/hotspot/$(HOTSPOT_MAKE_DIR)/linux
 	if ! test "x$(WITH_CACAO)" = "xno" ; then \
 	  mkdir -p openjdk/jdk/src/solaris/bin/$(BUILD_ARCH_DIR) ; \
 	  ln -sf $(abs_top_builddir)/jvm.cfg \
