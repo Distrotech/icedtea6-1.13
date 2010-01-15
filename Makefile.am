@@ -113,7 +113,7 @@ endif
 # FIXME (plugin): NPPLUGIN_DIR becomes PLUGIN_DIR
 if ENABLE_NPPLUGIN
 ICEDTEAPLUGIN_CLEAN = clean-IcedTeaNPPlugin
-ICEDTEAPLUGIN_TARGET = IcedTeaNPPlugin.so
+ICEDTEAPLUGIN_TARGET = stamps/icedtea-npplugin
 PLUGIN_PATCH = patches/icedtea-liveconnect.patch
 LIVECONNECT_DIR = -C lib/rt netscape
 NPPLUGIN_DIR=$(abs_top_srcdir)/plugin/icedteanp
@@ -1461,7 +1461,7 @@ NPPLUGIN_OBJECTS=IcedTeaNPPlugin.o IcedTeaScriptablePluginObject.o \
         IcedTeaJavaRequestProcessor.o IcedTeaPluginRequestProcessor.o \
 		IcedTeaPluginUtils.o
 
-IcedTeaNPPlugin_objects:
+$(addprefix $(NPPLUGIN_DIR)/,$(NPPLUGIN_OBJECTS)): $(addprefix $(NPPLUGIN_DIR)/,$(NPPLUGIN_SRC))
 	cd $(NPPLUGIN_DIR); \
 	if [ -e $(abs_top_srcdir)/.hg ] && which $(HG) >/dev/null; then \
 	  revision="-r`(cd $(abs_top_srcdir); $(HG) tip --template '{rev}')`" ; \
@@ -1478,7 +1478,7 @@ IcedTeaNPPlugin_objects:
 	  -fPIC -c $(NPPLUGIN_SRC); \
 	cd ../
 
-IcedTeaNPPlugin.so: IcedTeaNPPlugin_objects
+$(NPPLUGIN_DIR)/IcedTeaNPPlugin.so: $(addprefix $(NPPLUGIN_DIR)/,$(NPPLUGIN_OBJECTS))
 	cd $(NPPLUGIN_DIR); \
 	$(CXX) $(CXXFLAGS) \
 	  $(NPPLUGIN_OBJECTS) \
@@ -1487,6 +1487,9 @@ IcedTeaNPPlugin.so: IcedTeaNPPlugin_objects
 	  $(MOZILLA_LIBS)\
 	  -shared -o $@; \
 	cd ../
+
+stamps/icedtea-npplugin: $(NPPLUGIN_DIR)/IcedTeaNPPlugin.so
+	touch stamps/icedtea-npplugin
 
 clean-IcedTeaNPPlugin:
 	cd $(NPPLUGIN_DIR);\
