@@ -238,41 +238,33 @@ AC_DEFUN([WITH_OPENJDK_SRC_DIR],
 
 AC_DEFUN([FIND_ECJ_JAR],
 [
+  AC_MSG_CHECKING([for an ecj JAR file])
   AC_ARG_WITH([ecj-jar],
               [AS_HELP_STRING(--with-ecj-jar,specify location of the ECJ jar)],
   [
     if test -f "${withval}"; then
-      AC_MSG_CHECKING(for an ecj jar)
       ECJ_JAR="${withval}"
-      AC_MSG_RESULT(${withval})
     fi
   ],
   [
     ECJ_JAR=
   ])
   if test -z "${ECJ_JAR}"; then
-    AC_MSG_CHECKING(for eclipse-ecj.jar)
-    if test -e "/usr/share/java/eclipse-ecj.jar"; then
-      ECJ_JAR=/usr/share/java/eclipse-ecj.jar
-      AC_MSG_RESULT(${ECJ_JAR})
-    elif test -e "/usr/share/java/ecj.jar"; then
-      ECJ_JAR=/usr/share/java/ecj.jar
-      AC_MSG_RESULT(${ECJ_JAR})
-    elif test -e "/usr/share/eclipse-ecj-3.3/lib/ecj.jar"; then
-      ECJ_JAR=/usr/share/eclipse-ecj-3.3/lib/ecj.jar
-      AC_MSG_RESULT(${ECJ_JAR})
-    elif test -e "/usr/share/eclipse-ecj-3.2/lib/ecj.jar"; then
-      ECJ_JAR=/usr/share/eclipse-ecj-3.2/lib/ecj.jar
-      AC_MSG_RESULT(${ECJ_JAR})
-    elif test -e "/usr/share/eclipse-ecj-3.1/lib/ecj.jar"; then
-      ECJ_JAR=/usr/share/eclipse-ecj-3.1/lib/ecj.jar
-      AC_MSG_RESULT(${ECJ_JAR})
-    else
-      AC_MSG_RESULT(no)
-    fi
+    for jar in /usr/share/java/eclipse-ecj.jar \
+      /usr/share/java/ecj.jar \
+      /usr/share/eclipse-ecj-3.{2,3,4,5}/lib/ecj.jar; do
+        if test -e $jar; then
+          ECJ_JAR=$jar
+	  break
+        fi
+      done
+      if test -z "${ECJ_JAR}"; then
+        ECJ_JAR=no
+      fi
   fi
-  if test -z "${ECJ_JAR}"; then
-    AC_MSG_ERROR("A ECJ jar was not found.")
+  AC_MSG_RESULT(${ECJ_JAR})
+  if test "x${ECJ_JAR}" = "xno"; then
+    AC_MSG_ERROR("No compiler or ecj JAR file was found.")
   fi
   AC_SUBST(ECJ_JAR)
 ])
@@ -289,20 +281,27 @@ AC_DEFUN([AC_CHECK_GCC_VERSION],
 
 AC_DEFUN([FIND_JAVAH],
 [
+  AC_MSG_CHECKING([if a javah executable is specified])
   AC_ARG_WITH([javah],
-              [AS_HELP_STRING(--with-javah,specify location of the javah)],
+              [AS_HELP_STRING(--with-javah,specify location of javah)],
   [
-    if test -f "${withval}"; then
-      AC_MSG_CHECKING(for javah)
-      JAVAH="${withval}"
-      AC_MSG_RESULT(${withval})
+    if test "x${withval}" = "xyes"; then
+      JAVAH=no
     else
-      AC_PATH_PROG(JAVAH, "${withval}")
+      JAVAH="${withval}"
     fi
   ],
   [
-    JAVAH=
+    JAVAH=no
   ])
+  AC_MSG_RESULT(${JAVAH})
+  if ! test -f "${JAVAH}"; then
+    if test "x${JAVAH}" = "xno"; then
+      JAVAH=
+    else
+      AC_PATH_PROG(JAVAH, "${JAVAH}")
+    fi
+  fi
   if test -z "${JAVAH}"; then
     AC_PATH_PROG(JAVAH, "gjavah")
   fi
@@ -310,27 +309,34 @@ AC_DEFUN([FIND_JAVAH],
     AC_PATH_PROG(JAVAH, "javah")
   fi
   if test -z "${JAVAH}"; then
-    AC_MSG_ERROR("javah was not found.")
+    AC_MSG_ERROR("A Java header generator was not found.")
   fi
   AC_SUBST(JAVAH)
 ])
 
 AC_DEFUN([FIND_JAR],
 [
+  AC_MSG_CHECKING([if a jar executable is specified])
   AC_ARG_WITH([jar],
-              [AS_HELP_STRING(--with-jar,specify location of the jar)],
+              [AS_HELP_STRING(--with-jar,specify location of jar)],
   [
-    if test -f "${withval}"; then
-      AC_MSG_CHECKING(for jar)
-      JAR="${withval}"
-      AC_MSG_RESULT(${withval})
+    if test "x${withval}" = "xyes"; then
+      JAR=no
     else
-      AC_PATH_PROG(JAR, "${withval}")
+      JAR="${withval}"
     fi
   ],
   [
-    JAR=
+    JAR=no
   ])
+  AC_MSG_RESULT(${JAR})
+  if ! test -f "${JAR}"; then
+    if test "x${JAR}" = "xno"; then
+      JAR=
+    else
+      AC_PATH_PROG(JAR, "${JAR}")
+    fi
+  fi
   if test -z "${JAR}"; then
     AC_PATH_PROG(JAR, "gjar")
   fi
@@ -338,14 +344,14 @@ AC_DEFUN([FIND_JAR],
     AC_PATH_PROG(JAR, "jar")
   fi
   if test -z "${JAR}"; then
-    AC_MSG_ERROR("jar was not found.")
+    AC_MSG_ERROR("A jar tool was not found.")
   fi
   AC_MSG_CHECKING([whether jar supports @<file> argument])
   touch _config.txt
   cat >_config.list <<EOF
 _config.txt
 EOF
-  if $JAR cf _config.jar @_config.list 2>/dev/null; then
+  if $JAR cf _config.jar @_config.list 2>&AS_MESSAGE_LOG_FD; then
     JAR_KNOWS_ATFILE=1
     AC_MSG_RESULT(yes)
   else
@@ -353,7 +359,7 @@ EOF
     AC_MSG_RESULT(no)
   fi
   AC_MSG_CHECKING([whether jar supports stdin file arguments])
-  if cat _config.list | $JAR cf@ _config.jar 2>/dev/null; then
+  if cat _config.list | $JAR cf@ _config.jar 2>&AS_MESSAGE_LOG_FD; then
     JAR_ACCEPTS_STDIN_LIST=1
     AC_MSG_RESULT(yes)
   else
@@ -362,7 +368,7 @@ EOF
   fi
   rm -f _config.list _config.jar
   AC_MSG_CHECKING([whether jar supports -J options at the end])
-  if $JAR cf _config.jar _config.txt -J-Xmx896m 2>/dev/null; then
+  if $JAR cf _config.jar _config.txt -J-Xmx896m 2>&AS_MESSAGE_LOG_FD; then
     JAR_KNOWS_J_OPTIONS=1
     AC_MSG_RESULT(yes)
   else
@@ -378,20 +384,27 @@ EOF
 
 AC_DEFUN([FIND_RMIC],
 [
+  AC_MSG_CHECKING(if an rmic executable is specified)
   AC_ARG_WITH([rmic],
-              [AS_HELP_STRING(--with-rmic,specify location of the rmic)],
+              [AS_HELP_STRING(--with-rmic,specify location of rmic)],
   [
-    if test -f "${withval}"; then
-      AC_MSG_CHECKING(for rmic)
-      RMIC="${withval}"
-      AC_MSG_RESULT(${withval})
+    if test "x${withval}" = "xyes"; then
+      RMIC=no
     else
-      AC_PATH_PROG(RMIC, "${withval}")
+      RMIC="${withval}"
     fi
   ],
   [
-    RMIC=
+    RMIC=no
   ])
+  AC_MSG_RESULT(${RMIC})
+  if ! test -f "${RMIC}"; then
+    if test "x${RMIC}" = "xno"; then
+      RMIC=
+    else
+      AC_PATH_PROG(RMIC, "${RMIC}")
+    fi
+  fi
   if test -z "${RMIC}"; then
     AC_PATH_PROG(RMIC, "grmic")
   fi
@@ -399,7 +412,7 @@ AC_DEFUN([FIND_RMIC],
     AC_PATH_PROG(RMIC, "rmic")
   fi
   if test -z "${RMIC}"; then
-    AC_MSG_ERROR("rmic was not found.")
+    AC_MSG_ERROR("An RMI compiler was not found.")
   fi
   AC_SUBST(RMIC)
 ])
@@ -446,7 +459,7 @@ AC_DEFUN([FIND_ENDORSED_JARS],
 
 AC_DEFUN([WITH_OPENJDK_SRC_ZIP],
 [
-  AC_MSG_CHECKING(for an OpenJDK source zip)
+  AC_MSG_CHECKING([for an OpenJDK source zip])
   AC_ARG_WITH([openjdk-src-zip],
               [AS_HELP_STRING(--with-openjdk-src-zip,specify the location of the openjdk source zip)],
   [
@@ -463,7 +476,7 @@ AC_DEFUN([WITH_OPENJDK_SRC_ZIP],
 
 AC_DEFUN([WITH_ALT_JAR_BINARY],
 [
-  AC_MSG_CHECKING(for an alternate jar command)
+  AC_MSG_CHECKING([for an alternate jar command])
   AC_ARG_WITH([alt-jar],
               [AS_HELP_STRING(--with-alt-jar, specify the location of an alternate jar binary to use for building)],
   [
@@ -480,7 +493,7 @@ AC_DEFUN([WITH_ALT_JAR_BINARY],
 
 AC_DEFUN([FIND_XALAN2_JAR],
 [
-  AC_MSG_CHECKING(xalan2 jar)
+  AC_MSG_CHECKING([for a xalan2 jar])
   AC_ARG_WITH([xalan2-jar],
               [AS_HELP_STRING(--with-xalan2-jar,specify location of the xalan2 jar)],
   [
@@ -511,7 +524,7 @@ AC_DEFUN([FIND_XALAN2_JAR],
 
 AC_DEFUN([FIND_XALAN2_SERIALIZER_JAR],
 [
-  AC_MSG_CHECKING(for xalan2 serializer jar)
+  AC_MSG_CHECKING([for a xalan2 serializer jar])
   AC_ARG_WITH([xalan2-serializer-jar],
               [AS_HELP_STRING(--with-xalan2-serializer-jar,specify location of the xalan2-serializer jar)],
   [
@@ -542,7 +555,7 @@ AC_DEFUN([FIND_XALAN2_SERIALIZER_JAR],
 
 AC_DEFUN([FIND_XERCES2_JAR],
 [
-  AC_MSG_CHECKING(for xerces2 jar)
+  AC_MSG_CHECKING([for a xerces2 jar])
   AC_ARG_WITH([xerces2-jar],
               [AS_HELP_STRING(--with-xerces2-jar,specify location of the xerces2 jar)],
   [
@@ -575,20 +588,27 @@ AC_DEFUN([FIND_XERCES2_JAR],
 
 AC_DEFUN([FIND_NETBEANS],
 [
+  AC_MSG_CHECKING([if the location of NetBeans is specified])
   AC_ARG_WITH([netbeans],
               [AS_HELP_STRING(--with-netbeans,specify location of netbeans)],
   [
-    if test -f "${withval}"; then
-      AC_MSG_CHECKING(netbeans)
-      NETBEANS="${withval}"
-      AC_MSG_RESULT(${withval})
+    if test "x${withval}" = "xyes"; then
+      NETBEANS=no
     else
-      AC_PATH_PROG(NETBEANS, "${withval}")
+      NETBEANS="${withval}"
     fi
   ],
   [
-    NETBEANS=
+    NETBEANS=no
   ])
+  AC_MSG_RESULT(${NETBEANS})
+  if ! test -f "${NETBEANS}"; then
+    if test "x${NETBEANS}" = "xno"; then
+      NETBEANS=
+    else
+      AC_PATH_PROG(NETBEANS, "${NETBEANS}")
+    fi
+  fi
   if test -z "${NETBEANS}"; then
     AC_PATH_PROG(NETBEANS, "netbeans")
   fi
@@ -600,7 +620,7 @@ AC_DEFUN([FIND_NETBEANS],
 
 AC_DEFUN([FIND_RHINO_JAR],
 [
-  AC_MSG_CHECKING(whether to include Javascript support via Rhino)
+  AC_MSG_CHECKING([whether to include Javascript support via Rhino])
   AC_ARG_WITH([rhino],
               [AS_HELP_STRING(--with-rhino,specify location of the rhino jar)],
   [
@@ -642,27 +662,26 @@ AC_DEFUN([FIND_RHINO_JAR],
   AC_SUBST(RHINO_JAR)
 ])
 
-AC_DEFUN([ENABLE_OPTIMIZATIONS],
+AC_DEFUN([DISABLE_OPTIMIZATIONS],
 [
-  AC_MSG_CHECKING(whether to disable optimizations)
+  AC_MSG_CHECKING([whether to disable optimizations and build with -O0 -g])
   AC_ARG_ENABLE([optimizations],
                 [AS_HELP_STRING(--disable-optimizations,build with -O0 -g [[default=no]])],
   [
     case "${enableval}" in
       no)
-        AC_MSG_RESULT([yes, building with -O0 -g])
-        enable_optimizations=no
+        disable_optimizations=yes
         ;;
       *)
-        AC_MSG_RESULT([no])
-        enable_optimizations=yes
+        disable_optimizations=no
         ;;
     esac
   ],
   [
-    enable_optimizations=yes
+    disable_optimizations=no
   ])
-  AM_CONDITIONAL([ENABLE_OPTIMIZATIONS], test x"${enable_optimizations}" = "xyes")
+  AC_MSG_RESULT([$disable_optimizations])
+  AM_CONDITIONAL([DISABLE_OPTIMIZATIONS], test x"${disable_optimizations}" = "xyes")
 ])
 
 AC_DEFUN([FIND_TOOL],
@@ -675,7 +694,7 @@ AC_DEFUN([FIND_TOOL],
 
 AC_DEFUN([ENABLE_ZERO_BUILD],
 [
-  AC_MSG_CHECKING(whether to use the zero-assembler port)
+  AC_MSG_CHECKING([whether to use the zero-assembler port])
   use_zero=no
   AC_ARG_ENABLE([zero],
                 [AS_HELP_STRING(--enable-zero,
@@ -805,7 +824,7 @@ AC_DEFUN([AC_CHECK_ENABLE_CACAO],
 
 AC_DEFUN([AC_CHECK_WITH_CACAO_HOME],
 [
-  AC_MSG_CHECKING(for CACAO home directory)
+  AC_MSG_CHECKING([for a CACAO home directory])
   AC_ARG_WITH([cacao-home],
               [AS_HELP_STRING([--with-cacao-home],
                               [CACAO home directory [[default=/usr/local/cacao]]])],
@@ -830,7 +849,7 @@ AC_DEFUN([AC_CHECK_WITH_CACAO_HOME],
 
 AC_DEFUN([AC_CHECK_WITH_CACAO_SRC_ZIP],
 [
-  AC_MSG_CHECKING(for a CACAO source zip)
+  AC_MSG_CHECKING([for a CACAO source zip])
   AC_ARG_WITH([cacao-src-zip],
               [AS_HELP_STRING(--with-cacao-src-zip,specify the location of the CACAO source zip)],
   [
@@ -847,7 +866,7 @@ AC_DEFUN([AC_CHECK_WITH_CACAO_SRC_ZIP],
 
 AC_DEFUN([AC_CHECK_WITH_CACAO_SRC_DIR],
 [
-  AC_MSG_CHECKING(for a Cacao source directory)
+  AC_MSG_CHECKING([for a CACAO source directory])
   AC_ARG_WITH([cacao-src-dir],
               [AS_HELP_STRING(--with-cacao-src-dir,specify the location of the Cacao sources)],
   [
@@ -1060,7 +1079,7 @@ AC_DEFUN([AC_CHECK_FOR_OPENJDK],
               [
                 if test "x${withval}" = xno
                 then
-	          SYSTEM_OPENJDK_DIR=
+	          SYSTEM_OPENJDK_DIR=no
 		  with_openjdk=false
 	        else
                   SYSTEM_OPENJDK_DIR=${withval}
@@ -1068,7 +1087,7 @@ AC_DEFUN([AC_CHECK_FOR_OPENJDK],
                 fi
               ],
               [
-                SYSTEM_OPENJDK_DIR=
+                SYSTEM_OPENJDK_DIR=no
 		with_openjdk=false
               ])
   if test "x${SYSTEM_OPENJDK_DIR}" = xyes; then
@@ -1080,12 +1099,12 @@ AC_DEFUN([AC_CHECK_FOR_OPENJDK],
 	 break
        fi
     done
-  elif ! test -z "${SYSTEM_OPENJDK_DIR}"; then
+  elif ! test x"${SYSTEM_OPENJDK_DIR}" = xno; then
     if ! test -d "${SYSTEM_OPENJDK_DIR}"; then
       AC_MSG_ERROR("An OpenJDK home directory could not be found.")
     fi
   fi
-  AM_CONDITIONAL(WITH_OPENJDK, test "x${SYSTEM_OPENJDK_DIR}" != x)
+  AM_CONDITIONAL(WITH_OPENJDK, test "x${SYSTEM_OPENJDK_DIR}" != xno)
   AC_MSG_RESULT(${SYSTEM_OPENJDK_DIR})
   AC_SUBST(SYSTEM_OPENJDK_DIR)
   AC_SUBST(with_openjdk)
@@ -1120,6 +1139,51 @@ AC_DEFUN([AC_CHECK_WITH_TZDATA_DIR],
   AC_SUBST([TZDATA_DIR])
   AM_CONDITIONAL(WITH_TZDATA_DIR, test "x${TZDATA_DIR}" != "x")
   AC_CONFIG_FILES([tz.properties])
+])
+
+AC_DEFUN([IT_CHECK_ADDITIONAL_VMS],
+AC_MSG_CHECKING([for additional virtual machines to build])
+AC_ARG_WITH(additional-vms,
+            AC_HELP_STRING([--with-additional-vms=vm-list],
+	    [build additional virtual machines. Valid value is a comma separated string with the backend names `cacao', `zero' and `shark'.]),
+[
+if test "x${withval}" != x
+then
+  with_additional_vms=${withval}
+  for vm in `echo $with_additional_vms | sed 's/,/ /g'`; do
+    case "x$vm" in
+      xcacao) add_vm_cacao=yes;;
+      xzero)  add_vm_zero=yes;;
+      xshark) add_vm_shark=yes;;
+      *) AC_MSG_ERROR([proper usage is --with-additional-vms=vm1,vm2,...])
+    esac
+  done
+fi])
+if test "x${with_additional_vms}" = x; then
+   with_additional_vms="none";
+fi
+AC_MSG_RESULT($with_additional_vms)
+
+AM_CONDITIONAL(ADD_CACAO_BUILD, test x$add_vm_cacao != x)
+AM_CONDITIONAL(ADD_ZERO_BUILD,  test x$add_vm_zero  != x || test x$add_vm_shark != x)
+AM_CONDITIONAL(ADD_SHARK_BUILD, test x$add_vm_shark != x)
+AM_CONDITIONAL(BUILD_CACAO, test x$add_vm_cacao != x || test "x${WITH_CACAO}" = xyes)
+
+if test "x${WITH_CACAO}" = xyes && test "x${ADD_CACAO_BUILD_TRUE}" = x; then
+  AC_MSG_ERROR([additional vm is the default vm])
+fi
+if test "x${ZERO_BUILD_TRUE}" = x && test "x${ADD_ZERO_BUILD_TRUE}" = x && test "x${ADD_SHARK_BUILD_TRUE}" != x; then
+  AC_MSG_ERROR([additional vm is the default vm])
+fi
+if test "x${SHARK_BUILD_TRUE}" = x && test "x${ADD_SHARK_BUILD_TRUE}" = x; then
+  AC_MSG_ERROR([additional vm is the default vm])
+fi
+if test "x${USE_SYSTEM_CACAO_TRUE}" = x; then
+  AC_MSG_ERROR([cannot build with system cacao as additional vm])
+fi
+if test "x${ADD_ZERO_BUILD_TRUE}" = x && test "x${abs_top_builddir}" = "x${abs_top_srcdir}"; then
+  AC_MSG_ERROR([build of additional zero/shark VM requires build with srcdir != builddir])
+fi
 ])
 
 dnl Generic macro to check for a Java class
@@ -1160,6 +1224,47 @@ cd ..
 rmdir tmp.$$
 AM_CONDITIONAL([LACKS_$1], test x"${it_cv_$1}" = "xyes")
 AC_PROVIDE([$0])dnl
+])
+
+# Finds number of available processors using sysconf
+AC_DEFUN_ONCE([IT_FIND_NUMBER_OF_PROCESSORS],[
+  FIND_TOOL([GETCONF], [getconf])
+  AC_CACHE_CHECK([the number of online processors], it_cv_proc, [
+    if number=$($GETCONF _NPROCESSORS_ONLN); then
+      it_cv_proc=$number;
+    else
+      it_cv_proc=2;
+    fi
+  ])
+  AC_PROVIDE([$0])dnl
+])
+
+# Provides the option --with-parallel-jobs
+#  * --with-parallel-jobs; use jobs=processors + 1
+#  * --with-parallel-jobs=x; use jobs=x
+#  * --without-parallel-jobs (default); use jobs=2
+AC_DEFUN_ONCE([IT_CHECK_NUMBER_OF_PARALLEL_JOBS],
+[
+AC_REQUIRE([IT_FIND_NUMBER_OF_PROCESSORS])
+proc_default=$(($it_cv_proc + 1))
+AC_MSG_CHECKING([how many parallel build jobs to execute])
+AC_ARG_WITH([parallel-jobs],
+	[AS_HELP_STRING([--with-parallel-jobs],
+			[build IcedTea using the specified number of parallel jobs])],
+	[
+          if test "x${withval}" = xyes; then
+            PARALLEL_JOBS=${proc_default}
+	  elif test "x${withval}" = xno; then
+	    PARALLEL_JOBS=2
+          else
+            PARALLEL_JOBS=${withval}
+          fi
+        ],
+        [
+          PARALLEL_JOBS=2
+        ])
+AC_MSG_RESULT(${PARALLEL_JOBS})
+AC_SUBST(PARALLEL_JOBS)
 ])
 
 AC_DEFUN([IT_GET_LSB_DATA],

@@ -249,7 +249,23 @@ void os::Linux::set_fpu_control_word(int fpu) {
 }
 
 bool os::is_allocatable(size_t bytes) {
-  ShouldNotCallThis();
+#ifdef AMD64
+  // unused on amd64?
+  return true;
+#else
+
+  if (bytes < 2 * G) {
+    return true;
+  }
+
+  char* addr = reserve_memory(bytes, NULL);
+
+  if (addr != NULL) {
+    release_memory(addr, bytes);
+  }
+
+  return addr != NULL;
+#endif // AMD64
 }
 
 ///////////////////////////////////////////////////////////////////////////////

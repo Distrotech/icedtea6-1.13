@@ -123,7 +123,7 @@ endif
 # FIXME (plugin): NPPLUGIN_DIR becomes PLUGIN_DIR
 if ENABLE_NPPLUGIN
 ICEDTEAPLUGIN_CLEAN = clean-IcedTeaNPPlugin
-ICEDTEAPLUGIN_TARGET = IcedTeaNPPlugin.so
+ICEDTEAPLUGIN_TARGET = stamps/icedtea-npplugin
 PLUGIN_PATCH = patches/icedtea-liveconnect.patch
 LIVECONNECT_DIR = -C lib/rt netscape -C lib/rt sun/applet
 NPPLUGIN_DIR=$(abs_top_srcdir)/plugin/icedteanp
@@ -233,7 +233,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-gcc-suffix.patch \
 	patches/icedtea-gcc-suffix-hotspot.patch \
 	patches/icedtea-bytebuffer-compact.patch \
-	patches/icedtea-memory-limits.patch \
+	patches/hotspot/$(HSBUILD)/memory-limits.patch \
 	patches/icedtea-sunsrc.patch \
 	patches/icedtea-libraries.patch \
 	patches/icedtea-javafiles.patch \
@@ -342,7 +342,8 @@ endif
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += patches/hotspot/$(HSBUILD)/openjdk-6886353-ignore_deoptimizealot.patch \
-	patches/hotspot/$(HSBUILD)/zero.patch
+	patches/hotspot/$(HSBUILD)/zero.patch \
+	patches/hotspot/$(HSBUILD)/shark.patch
 else
 ICEDTEA_PATCHES += patches/hotspot/original/icedtea-6778662-lib64.patch \
 	patches/hotspot/original/icedtea-6778657-f2i-overflow.patch \
@@ -426,7 +427,7 @@ ICEDTEA_ENV += \
 	ALT_HOTSPOT_IMPORT_PATH="$(CACAO_IMPORT_PATH)"
 endif
 
-if !ENABLE_OPTIMIZATIONS
+if DISABLE_OPTIMIZATIONS
 ICEDTEA_ENV += \
 	NO_OPTIMIZATIONS="true" \
 	CC_NO_OPT="-O0 -g"
@@ -509,7 +510,7 @@ ICEDTEA_ENV_ECJ += \
 	ALT_HOTSPOT_IMPORT_PATH="$(CACAO_IMPORT_PATH)"
 endif
 
-if !ENABLE_OPTIMIZATIONS
+if DISABLE_OPTIMIZATIONS
 ICEDTEA_ENV_ECJ += \
 	NO_OPTIMIZATIONS="true" \
 	CC_NO_OPT="-O0 -g"
@@ -922,7 +923,6 @@ stamps/ports.stamp: stamps/replace-hotspot.stamp
 	  link=$$(dirname $$target | sed 's/^.*ports/openjdk/'|sed "s#hotspot/build#hotspot/$(HOTSPOT_MAKE_DIR)#"); \
 	  cp -rv $$target $$link; \
 	done
-	ln -sf $(abs_top_builddir)/platform_zero openjdk/hotspot/$(HOTSPOT_MAKE_DIR)/linux
 	if ! test "x$(WITH_CACAO)" = "xno" ; then \
 	  mkdir -p openjdk/jdk/src/solaris/bin/$(BUILD_ARCH_DIR) ; \
 	  ln -sf $(abs_top_builddir)/jvm.cfg \
@@ -1562,7 +1562,7 @@ NPPLUGIN_OBJECTS=IcedTeaNPPlugin.o IcedTeaScriptablePluginObject.o \
         IcedTeaJavaRequestProcessor.o IcedTeaPluginRequestProcessor.o \
 		IcedTeaPluginUtils.o
 
-IcedTeaNPPlugin_objects:
+$(addprefix $(NPPLUGIN_DIR)/,$(NPPLUGIN_OBJECTS)): $(addprefix $(NPPLUGIN_DIR)/,$(NPPLUGIN_SRC))
 	cd $(NPPLUGIN_DIR); \
 	if [ -e $(abs_top_srcdir)/.hg ] && which $(HG) >/dev/null; then \
 	  revision="-r`(cd $(abs_top_srcdir); $(HG) tip --template '{rev}')`" ; \
@@ -1579,7 +1579,7 @@ IcedTeaNPPlugin_objects:
 	  -fPIC -c $(NPPLUGIN_SRC); \
 	cd ../
 
-IcedTeaNPPlugin.so: IcedTeaNPPlugin_objects
+$(NPPLUGIN_DIR)/IcedTeaNPPlugin.so: $(addprefix $(NPPLUGIN_DIR)/,$(NPPLUGIN_OBJECTS))
 	cd $(NPPLUGIN_DIR); \
 	$(CXX) $(CXXFLAGS) \
 	  $(NPPLUGIN_OBJECTS) \
@@ -1588,6 +1588,9 @@ IcedTeaNPPlugin.so: IcedTeaNPPlugin_objects
 	  $(MOZILLA_LIBS)\
 	  -shared -o $@; \
 	cd ../
+
+stamps/icedtea-npplugin: $(NPPLUGIN_DIR)/IcedTeaNPPlugin.so
+	touch stamps/icedtea-npplugin
 
 clean-IcedTeaNPPlugin:
 	cd $(NPPLUGIN_DIR);\
