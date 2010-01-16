@@ -351,7 +351,7 @@ AC_DEFUN([FIND_JAR],
   cat >_config.list <<EOF
 _config.txt
 EOF
-  if $JAR cf _config.jar @_config.list 2>/dev/null; then
+  if $JAR cf _config.jar @_config.list 2>&AS_MESSAGE_LOG_FD; then
     JAR_KNOWS_ATFILE=1
     AC_MSG_RESULT(yes)
   else
@@ -359,7 +359,7 @@ EOF
     AC_MSG_RESULT(no)
   fi
   AC_MSG_CHECKING([whether jar supports stdin file arguments])
-  if cat _config.list | $JAR cf@ _config.jar 2>/dev/null; then
+  if cat _config.list | $JAR cf@ _config.jar 2>&AS_MESSAGE_LOG_FD; then
     JAR_ACCEPTS_STDIN_LIST=1
     AC_MSG_RESULT(yes)
   else
@@ -368,7 +368,7 @@ EOF
   fi
   rm -f _config.list _config.jar
   AC_MSG_CHECKING([whether jar supports -J options at the end])
-  if $JAR cf _config.jar _config.txt -J-Xmx896m 2>/dev/null; then
+  if $JAR cf _config.jar _config.txt -J-Xmx896m 2>&AS_MESSAGE_LOG_FD; then
     JAR_KNOWS_J_OPTIONS=1
     AC_MSG_RESULT(yes)
   else
