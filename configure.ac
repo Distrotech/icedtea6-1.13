@@ -47,6 +47,7 @@ AC_CHECK_WITH_HOTSPOT_BUILD
 AC_PATH_TOOL([LINUX32],[linux32])
 AC_CHECK_GCC_VERSION
 AC_CHECK_FOR_OPENJDK
+IT_CHECK_NUMBER_OF_PARALLEL_JOBS
 
 AC_MSG_CHECKING([for a NetBeans installation])
 AC_ARG_WITH([netbeans-home],
@@ -66,7 +67,7 @@ AC_ARG_WITH([netbeans-home],
 AC_MSG_RESULT([${SYSTEM_NETBEANS_DIR}])
 AC_SUBST(SYSTEM_NETBEANS_DIR)
 
-AC_MSG_CHECKING(for Ant home directory)
+AC_MSG_CHECKING([for an Ant home directory])
 AC_ARG_WITH([ant-home],
             [AS_HELP_STRING([--with-ant-home],
                             [Ant home directory (default is /usr/share/ant)])],
@@ -84,7 +85,7 @@ AC_ARG_WITH([ant-home],
 AC_SUBST(SYSTEM_ANT_DIR)
 AC_MSG_RESULT(${SYSTEM_ANT_DIR})
 
-AC_MSG_CHECKING(whether to build VisualVM)
+AC_MSG_CHECKING([whether to build VisualVM])
 AC_ARG_ENABLE([visualvm],
               [AS_HELP_STRING([--enable-visualvm],
                                          [Enable compilation of visualvm.])],
@@ -116,7 +117,7 @@ AC_ARG_ENABLE([pulse-java],
 AM_CONDITIONAL(ENABLE_PULSE_JAVA, test "x${enable_pulse_java}" = "xyes")
 AC_MSG_RESULT(${enable_pulse_java})
 
-AC_MSG_CHECKING(whether to build documentation)
+AC_MSG_CHECKING([whether to build documentation])
 AC_ARG_ENABLE([docs],
 	      [AS_HELP_STRING([--disable-docs],
 	      		      [Disable generation of documentation])],
@@ -125,7 +126,7 @@ AM_CONDITIONAL([ENABLE_DOCS], [test x$ENABLE_DOCS = xyes])
 AC_MSG_RESULT(${ENABLE_DOCS})
 
 # OpenJDK experimental cross-compilation support which is not yet complete
-AC_MSG_CHECKING(whether to enable experimental OpenJDK cross-compilation support)
+AC_MSG_CHECKING([whether to enable experimental OpenJDK cross-compilation support])
 AC_ARG_ENABLE([openjdk-cross-compilation],
 	      [AS_HELP_STRING([--enable-openjdk-cross-compilation],
 	      		      [Enable experimental OpenJDK cross-compilation support])],
@@ -133,7 +134,7 @@ AC_ARG_ENABLE([openjdk-cross-compilation],
 AM_CONDITIONAL([ENABLE_CROSS_COMPILATION], [test x$ENABLE_CROSS_COMPILATION = xyes])
 AC_MSG_RESULT(${ENABLE_CROSS_COMPILATION})
 
-AC_MSG_CHECKING(whether to include the XRender pipeline)
+AC_MSG_CHECKING([whether to include the XRender pipeline])
 AC_ARG_ENABLE([xrender],
 	      [AS_HELP_STRING([--disable-xrender],
 	      		      [Disable inclusion of xrender pipeline])],
@@ -141,7 +142,7 @@ AC_ARG_ENABLE([xrender],
 AM_CONDITIONAL([ENABLE_XRENDER], [test x$ENABLE_XRENDER = xyes])
 AC_MSG_RESULT(${ENABLE_XRENDER})
 
-AC_MSG_CHECKING(whether to include NIO2 support)
+AC_MSG_CHECKING([whether to include NIO2 support])
 AC_ARG_ENABLE([nio2],
 	      [AS_HELP_STRING([--disable-nio2],
 	      		      [Disable inclusion of backported NIO2])],
@@ -149,10 +150,10 @@ AC_ARG_ENABLE([nio2],
 AM_CONDITIONAL([ENABLE_NIO2], [test x$ENABLE_NIO2 = xyes])
 AC_MSG_RESULT(${ENABLE_NIO2})
 
-AC_MSG_CHECKING([whether to include systemtap tracing support])
+AC_MSG_CHECKING([whether to include SystemTap tracing support])
 AC_ARG_ENABLE([systemtap],
 	      [AS_HELP_STRING([--enable-systemtap],
-	      		      [Enable inclusion of systemtap trace support])],
+	      		      [Enable inclusion of SystemTap trace support])],
 	      [ENABLE_SYSTEMTAP="${enableval}"], [ENABLE_SYSTEMTAP='no'])
 AM_CONDITIONAL([ENABLE_SYSTEMTAP], [test x$ENABLE_SYSTEMTAP = xyes])
 AC_MSG_RESULT(${ENABLE_SYSTEMTAP})
@@ -164,24 +165,6 @@ AC_ARG_ENABLE([nss],
 	      [ENABLE_NSS="${enableval}"], [ENABLE_NSS='no'])
 AM_CONDITIONAL([ENABLE_NSS], [test x$ENABLE_NSS = xyes])
 AC_MSG_RESULT(${ENABLE_NSS})
-
-AC_MSG_CHECKING(how many parallel build jobs to execute)
-AC_ARG_WITH([parallel-jobs],
-	[AS_HELP_STRING([--with-parallel-jobs],
-			[build IcedTea using the specified number of parallel jobs])],
-	[
-          if test "x${withval}" = x
-          then
-            PARALLEL_JOBS=2
-          else
-            PARALLEL_JOBS=${withval}
-          fi
-        ],
-        [
-          PARALLEL_JOBS=2
-        ])
-AC_MSG_RESULT(${PARALLEL_JOBS})
-AC_SUBST(PARALLEL_JOBS)
 
 AC_ARG_WITH([pkgversion],
         [AS_HELP_STRING([--with-pkgversion=PKG],
@@ -244,9 +227,10 @@ AC_CHECK_ENABLE_CACAO
 AC_CHECK_WITH_CACAO_HOME
 AC_CHECK_WITH_CACAO_SRC_ZIP
 AC_CHECK_WITH_CACAO_SRC_DIR
-ENABLE_OPTIMIZATIONS
+DISABLE_OPTIMIZATIONS
 SET_SHARK_BUILD
 ENABLE_ZERO_BUILD
+IT_CHECK_ADDITIONAL_VMS
 ENABLE_HG
 AC_CHECK_WITH_HG_REVISION
 
@@ -255,7 +239,7 @@ then
   FIND_NETBEANS
 fi
 
-dnl pkgconfig cannot be used to finid these headers and libraries.
+dnl pkgconfig cannot be used to find these headers and libraries.
 AC_CHECK_HEADERS([cups/cups.h cups/ppd.h],[]
 	,[AC_MSG_ERROR("CUPS headers were not found -
 	try installing cups-devel.")])
@@ -544,44 +528,6 @@ then
   NSS_LIBDIR=`$PKG_CONFIG --variable=libdir nss`
   AC_SUBST(NSS_LIBDIR)
   AC_CONFIG_FILES([nss.cfg])
-fi
-
-AC_MSG_CHECKING(for --with-additional-vms)
-AC_ARG_WITH(additional-vms,
-            AC_HELP_STRING([--with-additional-vms=vm-list], [build additional virtual machines. Valid value is a comma separated string with the backend names `cacao', `zero' and `shark'.]),
-[
-if test x$with_additional_vms != x
-then
-  for vm in `echo $with_additional_vms | sed 's/,/ /g'`; do
-    case "x$vm" in
-      xcacao) add_vm_cacao=yes;;
-      xzero)  add_vm_zero=yes;;
-      xshark) add_vm_shark=yes;;
-      *) AC_MSG_ERROR([proper usage is --with-additional-vms=vm1,vm2,...])
-    esac
-  done
-fi])
-AC_MSG_RESULT($with_additional_vms)
-
-AM_CONDITIONAL(ADD_CACAO_BUILD, test x$add_vm_cacao != x)
-AM_CONDITIONAL(ADD_ZERO_BUILD,  test x$add_vm_zero  != x || test x$add_vm_shark != x)
-AM_CONDITIONAL(ADD_SHARK_BUILD, test x$add_vm_shark != x)
-AM_CONDITIONAL(BUILD_CACAO, test x$add_vm_cacao != x || test "x${WITH_CACAO}" = xyes)
-
-if test "x${WITH_CACAO}" = xyes && test "x${ADD_CACAO_BUILD_TRUE}" = x; then
-  AC_MSG_ERROR([additional vm is the default vm])
-fi
-if test "x${ZERO_BUILD_TRUE}" = x && test "x${ADD_ZERO_BUILD_TRUE}" = x && test "x${ADD_SHARK_BUILD_TRUE}" != x; then
-  AC_MSG_ERROR([additional vm is the default vm])
-fi
-if test "x${SHARK_BUILD_TRUE}" = x && test "x${ADD_SHARK_BUILD_TRUE}" = x; then
-  AC_MSG_ERROR([additional vm is the default vm])
-fi
-if test "x${USE_SYSTEM_CACAO_TRUE}" = x; then
-  AC_MSG_ERROR([cannot build with system cacao as additional vm])
-fi
-if test "x${ADD_ZERO_BUILD_TRUE}" = x && test "x${abs_top_builddir}" = "x${abs_top_srcdir}"; then
-  AC_MSG_ERROR([build of additional zero/shark VM requires build with srcdir != builddir])
 fi
 
 if test "x${ZERO_BUILD_TRUE}" = x || test "x${ADD_ZERO_BUILD_TRUE}" = x; then

@@ -1,4 +1,40 @@
-2010-01-15  Edard Nevill <ed@camswl.com>
+2010-01-16 Andrew John Hughes  <ahughes@redhat.com>
+
+	configure output and option cleanup
+	* Makefile.am:
+	Change !ENABLE_OPTIMIZATIONS to
+	DISABLE_OPTIMIZATIONS.
+	* acinclude.m4:
+	(FIND_ECJ_JAR): Always produce output,
+	not just when explicitly specified.
+	(FIND_JAVAH): Handle the yes and no
+	possibilities better.
+	(FIND_JAR): Likewise.
+	(FIND_RMIC): Likewise.
+	(WITH_OPENJDK_SRC_ZIP): Quote checking output.
+	(WITH_ALT_JAR_BINARY): Likewise.
+	(FIND_XALAN2_JAR): Improve wording.
+	(FIND_XALAN2_SERIALIZER_JAR): Likewise.
+	(FIND_XERCES_JAR): Likewise.
+	(FIND_NETBEANS): Handle yes and no
+	possibilities better.
+	(FIND_RHINO_JAR): Quote checking output.
+	(ENABLE_OPTIMIZATIONS): Rename to
+	DISABLE_OPTIMIZATIONS for clarity.
+	(ENABLE_ZERO_BUILD): Quote checking output.
+	(AC_CHECK_WITH_CACAO_SRC_ZIP): Likewise.
+	(AC_CHECK_WITH_CACAO_SRC_DIR): Likewise.
+	(WITH_OPENJDK): Complete output
+	with no when not specified.
+	(IT_CHECK_ADDITIONAL_VMS): Moved to a macro
+	from configure.ac
+	(IT_CHECK_NUMBER_OF_PARALLEL_JOBS): Likewise.
+	* configure.ac:
+	Invoke new macros.  Quote output and correct
+	typos.  Perform IT_CHECK_ADDITIONAL_VMS earlier
+	with Shark, Zero and CACAO checks.
+
+2010-01-15  Edward Nevill <ed@camswl.com>
 
         * ports/hotspot/src/os_cpu/linux_zero/vm/os_linux_zero.cpp
 	Implement is_allocatable to make build word with hs16
