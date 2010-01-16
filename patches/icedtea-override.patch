@@ -170,3 +170,29 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChoos
          public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
              Component c = delegate.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
  
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/provider/certpath/OCSPResponse.java openjdk/jdk/src/share/classes/sun/security/provider/certpath/OCSPResponse.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/provider/certpath/OCSPResponse.java	2010-01-16 03:11:22.000000000 +0000
++++ openjdk/jdk/src/share/classes/sun/security/provider/certpath/OCSPResponse.java	2010-01-16 03:11:57.000000000 +0000
+@@ -572,7 +572,7 @@
+         /*
+          * Return the certificate's revocation status code
+          */
+-        @Override public CertStatus getCertStatus() {
++        public CertStatus getCertStatus() {
+             return certStatus;
+         }
+ 
+@@ -580,11 +580,11 @@
+             return certId;
+         }
+ 
+-        @Override public Date getRevocationTime() {
++        public Date getRevocationTime() {
+             return (Date) revocationTime.clone();
+         }
+ 
+-        @Override public Reason getRevocationReason() {
++        public Reason getRevocationReason() {
+             return revocationReason;
+         }
+ 
