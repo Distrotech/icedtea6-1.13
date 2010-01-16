@@ -1105,16 +1105,36 @@ if test "x${ADD_ZERO_BUILD_TRUE}" = x && test "x${abs_top_builddir}" = "x${abs_t
 fi
 ])
 
-AC_DEFUN([IT_CHECK_NUMBER_OF_PARALLEL_JOBS],
+# Finds number of available processors using sysconf
+AC_DEFUN_ONCE([IT_FIND_NUMBER_OF_PROCESSORS],[
+  FIND_TOOL([GETCONF], [getconf])
+  AC_CACHE_CHECK([the number of online processors], it_cv_proc, [
+    if number=$($GETCONF _NPROCESSORS_ONLN); then
+      it_cv_proc=$number;
+    else
+      it_cv_proc=2;
+    fi
+  ])
+  AC_PROVIDE([$0])dnl
+])
+
+# Provides the option --with-parallel-jobs
+#  * --with-parallel-jobs; use jobs=processors + 1
+#  * --with-parallel-jobs=x; use jobs=x
+#  * --without-parallel-jobs (default); use jobs=2
+AC_DEFUN_ONCE([IT_CHECK_NUMBER_OF_PARALLEL_JOBS],
 [
+AC_REQUIRE([IT_FIND_NUMBER_OF_PROCESSORS])
+proc_default=$(($it_cv_proc + 1))
 AC_MSG_CHECKING([how many parallel build jobs to execute])
 AC_ARG_WITH([parallel-jobs],
 	[AS_HELP_STRING([--with-parallel-jobs],
 			[build IcedTea using the specified number of parallel jobs])],
 	[
-          if test "x${withval}" = x
-          then
-            PARALLEL_JOBS=2
+          if test "x${withval}" = xyes; then
+            PARALLEL_JOBS=${proc_default}
+	  elif test "x${withval}" = xno; then
+	    PARALLEL_JOBS=2
           else
             PARALLEL_JOBS=${withval}
           fi
@@ -1125,3 +1145,4 @@ AC_ARG_WITH([parallel-jobs],
 AC_MSG_RESULT(${PARALLEL_JOBS})
 AC_SUBST(PARALLEL_JOBS)
 ])
+
