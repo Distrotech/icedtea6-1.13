@@ -1142,6 +1142,7 @@ AC_DEFUN([AC_CHECK_WITH_TZDATA_DIR],
 ])
 
 AC_DEFUN([IT_CHECK_ADDITIONAL_VMS],
+[
 AC_MSG_CHECKING([for additional virtual machines to build])
 AC_ARG_WITH(additional-vms,
             AC_HELP_STRING([--with-additional-vms=vm-list],
