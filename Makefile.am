@@ -1795,8 +1795,10 @@ ADD_ZERO_CONFIGURE_ARGS += \
 			'--with-rmic=% '--with-additional-vms=% \
 			'--with-openjdk '--with-openjdk=% , \
 		$(CONFIGURE_ARGS)) \
-	$(foreach i, openjdk hotspot, \
-	  $(if $(findstring --with-$(i)-src-zip=, $(CONFIGURE_ARGS)),, --with-$(i)-src-zip=$(abs_top_builddir)/$(i).tar.gz))
+	$(if $(findstring --with-openjdk-src-zip=, $(CONFIGURE_ARGS)),, \
+	  --with-openjdk-src-zip=$(abs_top_builddir)/$(OPENJDK_SRC_ZIP)) \
+	$(if $(findstring --with-hotspot-src-zip=, $(CONFIGURE_ARGS)),, \
+	  --with-hotspot-src-zip=$(abs_top_builddir)/$(HOTSPOT_SRC_ZIP))
 
 ADD_ZERO_EXTRA_BUILD_ENV = \
 	BUILD_LANGTOOLS=false ALT_LANGTOOLS_DIST=$(ICEDTEA_BUILD_DIR)/langtools/dist \
