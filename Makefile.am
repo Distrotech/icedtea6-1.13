@@ -934,8 +934,16 @@ stamps/patch.stamp: stamps/patch-fsg.stamp
 	  exit 2; \
 	fi
 
-	if [ -e $(abs_top_srcdir)/.hg ] && which $(HG) >/dev/null; then \
-	  revision="-r`(cd $(abs_top_srcdir); $(HG) tip --template '{node|short}')`" ; \
+	if which $(HG) >/dev/null; then \
+	  if [ -e $(abs_top_srcdir)/.hg ] ; then \
+	    revision="+r`(cd $(abs_top_srcdir); $(HG) tip --template '{node|short}')`" ; \
+	  fi ; \
+	  if [ -e openjdk/jdk/.hg ] ; then \
+	    jdk_rev="r`(cd openjdk/jdk; $(HG) tip --template '{node|short}')`" ; \
+	  fi ; \
+	  if [ -e openjdk/hotspot/.hg ] ; then \
+	    hotspot_rev="r`(cd openjdk/hotspot; $(HG) tip --template '{node|short}')`" ; \
+	  fi ; \
 	fi ; \
 	icedtea_version="$(PACKAGE_VERSION)$${revision}" ; \
 	if ! test "x$(WITH_CACAO)" = "xno"; then \
@@ -946,8 +954,10 @@ stamps/patch.stamp: stamps/patch-fsg.stamp
 	else \
 	  echo "JDK_DERIVATIVE_NAME=IcedTea6 $${icedtea_version}" \
 	    >>openjdk/jdk/make/common/shared/Defs.gmk ; \
-	fi
-
+	fi ; \
+	echo "JDK_REVID=$${jdk_rev}" >>openjdk/jdk/make/common/shared/Defs.gmk ; \
+	echo "HOTSPOT_REVID=$${hotspot_rev}" >>openjdk/jdk/make/common/shared/Defs.gmk ; \
+	echo "DISTRO_NAME=$(DIST_NAME)" >>openjdk/jdk/make/common/shared/Defs.gmk ; \
 	if [ -n "$(PKGVERSION)" ]; then \
 	  echo "DISTRO_PACKAGE_VERSION=$(PKGVERSION)" \
 	    >>openjdk/jdk/make/common/shared/Defs.gmk ; \
