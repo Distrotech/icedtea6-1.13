@@ -552,14 +552,13 @@ endif
 # FIXME (distclean): Add pulseaudio sources
 
 EXTRA_DIST = rt generated \
-	patches/* \
+	$(abs_top_srcdir)/patches/* \
 	tools-copy contrib ports \
 	extra overlays \
 	javaws.png javaws.desktop visualvm.desktop \
 	jconsole.desktop policytool.desktop \
 	test/jtreg \
 	IcedTeaPlugin.cc \
-	IcedTeaNPPlugin.cc \
 	HACKING pulseaudio fsg.sh \
 	plugin \
 	hotspot.map \
