@@ -378,6 +378,11 @@ endif
 
 JDK_UPDATE_VERSION = $(shell echo $(OPENJDK_VERSION) | sed -e "s/^b//")
 COMBINED_VERSION = $(JDK_UPDATE_VERSION)-$(OPENJDK_VERSION)
+
+if HAS_ICEDTEA_REVISION
+ICEDTEA_REV="+${ICEDTEA_REVISION}"
+endif
+
 ICEDTEA_ENV = \
 	IMPORT_BINARY_PLUGS=true \
 	ALT_JDK_IMPORT_PATH="$(ICEDTEA_BOOT_DIR)" \
@@ -418,6 +423,7 @@ ICEDTEA_ENV = \
 	JDK_HOME="" \
 	RHINO_JAR="$(RHINO_JAR)" \
 	DISTRIBUTION_ID="$(DIST_ID)" \
+	DERIVATIVE_ID="IcedTea6 $(PACKAGE_VERSION)$(ICEDTEA_REV)" \
 	DEBUG_CLASSFILES="true" \
 	DEBUG_BINARIES="true" \
 	ALT_DROPS_DIR="$(abs_top_builddir)/drops"
@@ -447,6 +453,11 @@ endif
 if USE_ALT_JAR
 ICEDTEA_ENV += \
 	ALT_JAR_CMD="$(ALT_JAR_CMD)"
+endif
+
+if HAS_HOTSPOT_REVISION
+ICEDTEA_ENV += \
+	HOTSPOT_BUILD_VERSION="$(HOTSPOT_REVISION)" 
 endif
 
 # OpenJDK ecj build environment.
@@ -499,6 +510,8 @@ ICEDTEA_ENV_ECJ = \
 	JAR_KNOWS_ATFILE="$(JAR_KNOWS_ATFILE)" \
 	JAR_KNOWS_J_OPTIONS="$(JAR_KNOWS_J_OPTIONS)" \
 	JAR_ACCEPTS_STDIN_LIST="$(JAR_ACCEPTS_STDIN_LIST)" \
+	DISTRIBUTION_ID="$(DIST_ID)" \
+	DERIVATIVE_ID="IcedTea6 $(PACKAGE_VERSION)$(ICEDTEA_REV)" \
 	DEBUG_CLASSFILES="true" \
 	DEBUG_BINARIES="true" \
 	DISABLE_NIMBUS="true" \
@@ -525,6 +538,11 @@ if ENABLE_CROSS_COMPILATION
 ICEDTEA_ENV_ECJ += \
 	CROSS_COMPILATION="true" \
 	CROSS_TARGET_ARCH="$(CROSS_TARGET_ARCH)"
+endif
+
+if HAS_HOTSPOT_REVISION
+ICEDTEA_ENV_ECJ += \
+	HOTSPOT_BUILD_VERSION="$(HOTSPOT_REVISION)"
 endif
 
 # Source files
@@ -1021,18 +1039,7 @@ stamps/patch.stamp: stamps/patch-fsg.stamp
 	  exit 2; \
 	fi
 
-	if which $(HG) >/dev/null; then \
-	  if [ -e $(abs_top_srcdir)/.hg ] ; then \
-	    revision="+r`(cd $(abs_top_srcdir); $(HG) tip --template '{node|short}')`" ; \
-	  fi ; \
-	  if [ -e openjdk/jdk/.hg ] ; then \
-	    jdk_rev="r`(cd openjdk/jdk; $(HG) tip --template '{node|short}')`" ; \
-	  fi ; \
-	  if [ -e openjdk/hotspot/.hg ] ; then \
-	    hotspot_rev="r`(cd openjdk/hotspot; $(HG) tip --template '{node|short}')`" ; \
-	  fi ; \
-	fi ; \
-	icedtea_version="$(PACKAGE_VERSION)$${revision}" ; \
+	icedtea_version="$(PACKAGE_VERSION)$(ICEDTEA_REV)" ; \
 	if ! test "x$(WITH_CACAO)" = "xno"; then \
 	  echo "JDK_DERIVATIVE_NAME=$${icedtea_version}" \
 	    >>openjdk/jdk/make/common/shared/Defs.gmk ; \
@@ -1041,9 +1048,12 @@ stamps/patch.stamp: stamps/patch-fsg.stamp
 	else \
 	  echo "JDK_DERIVATIVE_NAME=IcedTea6 $${icedtea_version}" \
 	    >>openjdk/jdk/make/common/shared/Defs.gmk ; \
-	fi ; \
-	echo "JDK_REVID=$${jdk_rev}" >>openjdk/jdk/make/common/shared/Defs.gmk ; \
-	echo "HOTSPOT_REVID=$${hotspot_rev}" >>openjdk/jdk/make/common/shared/Defs.gmk ; \
+	fi ; 
+
+if HAS_JDK_REVISION
+	echo "JDK_REVID=$(JDK_REVISION)" >>openjdk/jdk/make/common/shared/Defs.gmk ;
+endif
+
 	echo "DISTRO_NAME=$(DIST_NAME)" >>openjdk/jdk/make/common/shared/Defs.gmk ; \
 	if [ -n "$(PKGVERSION)" ]; then \
 	  echo "DISTRO_PACKAGE_VERSION=$(PKGVERSION)" \
