@@ -775,6 +775,7 @@ stamps/extract.stamp: stamps/download.stamp
 if OPENJDK_SRC_DIR_FOUND
 	cp -a $(OPENJDK_SRC_DIR) openjdk
 else
+	set -e ; \
 	if ! test -d openjdk ; \
 	then \
 	  mkdir openjdk ; \
@@ -786,12 +787,14 @@ endif
 if BUILD_CACAO
 if !USE_SYSTEM_CACAO
 if USE_ALT_CACAO_SRC_DIR
+	set -e ; \
 	if ! test -d cacao ; \
 	then \
 	  mkdir -p cacao/cacao ; \
 	  cp -r $(ALT_CACAO_SRC_DIR)/* cacao/cacao/ ; \
 	fi
 else
+	set -e ; \
 	if ! test -d cacao ; \
 	then \
 	  mkdir cacao ; \
@@ -803,17 +806,20 @@ endif
 endif
 endif
 if WITH_VISUALVM
+	set -e ; \
 	if ! test -d netbeans ; \
 	then \
 	  mkdir netbeans ; \
 	  $(TAR) xf $(NETBEANS_PROFILER_SRC_ZIP) -C netbeans ; \
 	fi
 
+	set -e ; \
 	if ! test -d visualvm ; \
 	then \
 	  $(TAR) xf $(VISUALVM_SRC_ZIP) ; \
 	fi
 endif
+	set -e ; \
 	if [ ! -e $(abs_top_builddir)/generated ]; then \
 	  cp -a $(abs_top_srcdir)/generated $(abs_top_builddir); \
 	  find $(abs_top_builddir)/generated -type f -exec chmod 640 '{}' ';' \
