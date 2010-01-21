@@ -51,7 +51,7 @@ diff -r 134c345baf84 src/share/classes/sun/misc/Version-template.java
      static {
          init();
      }
-@@ -81,14 +96,36 @@
+@@ -81,14 +96,34 @@
          /* First line: platform version. */
          ps.println(launcher_name + " version \"" + java_version + "\"");
  
@@ -86,8 +86,6 @@ diff -r 134c345baf84 src/share/classes/sun/misc/Version-template.java
 -        String java_vm_name    = System.getProperty("java.vm.name");
          String java_vm_version = System.getProperty("java.vm.version");
          String java_vm_info    = System.getProperty("java.vm.info");
-+        if (hotspot_revid.length() > 0)
-+            java_vm_version += "+" + hotspot_revid;
          ps.println(java_vm_name + " (build " + java_vm_version + ", " +
                     java_vm_info + ")");
      }
