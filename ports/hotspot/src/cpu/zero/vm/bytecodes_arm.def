@@ -267,8 +267,6 @@ iload_iload_N	= 0xe4, 3
 
 @return_register_finalizer = 0xe5, 1
 
-dmac			= 0xe6, 2
-
 iload_0_iconst_N        = 0xe7, 2
 iload_1_iconst_N        = 0xe8, 2
 iload_2_iconst_N        = 0xe9, 2
@@ -967,7 +965,7 @@ return_register_finalizer = 0xe5, 1
 }
 
 (frem) frem {
-@ ECN: It must be possible to do better than this
+@ It must be possible to do better than this
 	POP	r0
         bl      __aeabi_f2d
 	PUSH	r0, r1
@@ -1336,166 +1334,138 @@ return_register_finalizer = 0xe5, 1
 @ r2 = [jpc, #1]
 @ r1 = [jpc, #2]
 (ifeq,ifnull) ifeq_unsafe {
-	ldrb	r1, [jpc, #2]
 	POP	r3
-	mov	r2, r2, lsl #24
+	ldrb	r1, [jpc, #2]
         cmp     r3, #0
-        orr     ip, r1, r2, asr #16
 	beq	1f
-	mov	ip, #3
+	DISPATCH 3
 1:
+	mov	r2, r2, lsl #24
+        orr     ip, r1, r2, asr #16
         ldrb  r0, [jpc, ip]!
 	DISPATCH_BYTECODE
 }
 
 (ifne,ifnonnull) ifne_unsafe {
-	ldrb	r1, [jpc, #2]
 	POP	r3
-	mov	r2, r2, lsl #24
+	ldrb	r1, [jpc, #2]
         cmp     r3, #0
-        orr     ip, r1, r2, asr #16
 	bne	1f
-	mov	ip, #3
+	DISPATCH 3
 1:
+	mov	r2, r2, lsl #24
+        orr     ip, r1, r2, asr #16
         ldrb  r0, [jpc, ip]!
 	DISPATCH_BYTECODE
 }
 
 (iflt) iflt_unsafe {
-	ldrb	r1, [jpc, #2]
 	POP	r3
-	mov	r2, r2, lsl #24
+	ldrb	r1, [jpc, #2]
         cmp     r3, #0
-        orr     ip, r1, r2, asr #16
 	blt	1f
-	mov	ip, #3
+	DISPATCH 3
 1:
+	mov	r2, r2, lsl #24
+        orr     ip, r1, r2, asr #16
         ldrb  r0, [jpc, ip]!
 	DISPATCH_BYTECODE
 }
 
 (ifge) ifge_unsafe {
-	ldrb	r1, [jpc, #2]
 	POP	r3
-	mov	r2, r2, lsl #24
+	ldrb	r1, [jpc, #2]
         cmp     r3, #0
-        orr     ip, r1, r2, asr #16
 	bge	1f
-	mov	ip, #3
+	DISPATCH 3
 1:
+	mov	r2, r2, lsl #24
+        orr     ip, r1, r2, asr #16
         ldrb  r0, [jpc, ip]!
 	DISPATCH_BYTECODE
 }
 
 (ifgt) ifgt_unsafe {
-	ldrb	r1, [jpc, #2]
 	POP	r3
-	mov	r2, r2, lsl #24
+	ldrb	r1, [jpc, #2]
         cmp     r3, #0
-        orr     ip, r1, r2, asr #16
 	bgt	1f
-	mov	ip, #3
+	DISPATCH 3
 1:
+	mov	r2, r2, lsl #24
+        orr     ip, r1, r2, asr #16
         ldrb  r0, [jpc, ip]!
 	DISPATCH_BYTECODE
 }
 
 (ifle) ifle_unsafe {
-	ldrb	r1, [jpc, #2]
 	POP	r3
-	mov	r2, r2, lsl #24
+	ldrb	r1, [jpc, #2]
         cmp     r3, #0
-        orr     ip, r1, r2, asr #16
 	ble	1f
-	mov	ip, #3
+	DISPATCH 3
 1:
+	mov	r2, r2, lsl #24
+        orr     ip, r1, r2, asr #16
         ldrb  r0, [jpc, ip]!
 	DISPATCH_BYTECODE
 }
 
 (if_icmpeq,if_acmpeq) if_icmpeq_unsafe {
-	ldrb	r1, [jpc, #2]
 	POP	r3, tmp1
-	mov	r2, r2, lsl #24
+	ldrb	r1, [jpc, #2]
         cmp     tmp1, r3
-	orr	ip, r1, r2, asr #16
-	beq	1f
-	mov	ip, #3
-1:
-        ldrb  r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	beq	branch_taken_unsafe
+	DISPATCH 3
 }
 
 (if_icmpne,if_acmpne) if_icmpne_unsafe {
-	ldrb	r1, [jpc, #2]
 	POP	r3, tmp1
-	mov	r2, r2, lsl #24
+	ldrb	r1, [jpc, #2]
         cmp     tmp1, r3
-	orr	ip, r1, r2, asr #16
-	bne	1f
-	mov	ip, #3
-1:
-        ldrb  r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bne	branch_taken_unsafe
+	DISPATCH 3
 }
 
 (if_icmplt) if_icmplt_unsafe {
-	ldrb	r1, [jpc, #2]
 	POP	r3, tmp1
-	mov	r2, r2, lsl #24
+	ldrb	r1, [jpc, #2]
         cmp     tmp1, r3
-	orr	ip, r1, r2, asr #16
-	blt	1f
-	mov	ip, #3
-1:
-        ldrb  r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	blt	branch_taken_unsafe
+	DISPATCH 3
 }
 
 (if_icmpge) if_icmpge_unsafe {
-	ldrb	r1, [jpc, #2]
 	POP	r3, tmp1
-	mov	r2, r2, lsl #24
+	ldrb	r1, [jpc, #2]
         cmp     tmp1, r3
-	orr	ip, r1, r2, asr #16
-	bge	1f
-	mov	ip, #3
-1:
-        ldrb  r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bge	branch_taken_unsafe
+	DISPATCH 3
 }
 
 (if_icmpgt) if_icmpgt_unsafe {
-	ldrb	r1, [jpc, #2]
 	POP	r3, tmp1
-	mov	r2, r2, lsl #24
+	ldrb	r1, [jpc, #2]
         cmp     tmp1, r3
-	orr	ip, r1, r2, asr #16
-	bgt	1f
-	mov	ip, #3
-1:
-        ldrb  r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bgt	branch_taken_unsafe
+	DISPATCH 3
 }
 
 (if_icmple) if_icmple_unsafe {
-	ldrb	r1, [jpc, #2]
 	POP	r3, tmp1
-	mov	r2, r2, lsl #24
+	ldrb	r1, [jpc, #2]
         cmp     tmp1, r3
-	orr	ip, r1, r2, asr #16
-	ble	1f
-	mov	ip, #3
-1:
-        ldrb  r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	ble	branch_taken_unsafe
+	DISPATCH 3
 }
 
 (goto) goto_unsafe {
 	ldrb	r1, [jpc, #2]
 	mov	r2, r2, lsl #24
-        orr     ip, r1, r2, asr #16
-        DISPATCH_START_REG	ip
+        orr     tmp1, r1, r2, asr #16
+        DISPATCH_START_REG	tmp1
+  USEC  cmp     tmp1, #0
+  USEC  ble     do_backedge
 	DISPATCH_BYTECODE
 }
 
@@ -1520,7 +1490,7 @@ return_register_finalizer = 0xe5, 1
 	DISPATCH	48
 }
 
-@ ECN: We dont do safe and unsafe versions of tableswitch and lookupswitch
+@ We dont do safe and unsafe versions of tableswitch and lookupswitch
 (tableswitch) tableswitch {
 	POP	a2
         bic     a1, jpc, #3
@@ -1752,28 +1722,17 @@ return_register_finalizer = 0xe5, 1
 
 (aputfield) aputfield {
 	ldrb	r1, [jpc, #2]
-	GET_STACK	1, r0		@ r0 = object
-	POP	oop_value_tmp			@ r1 = value
-        add     r3, constpool, r1, lsl #12
-	add	r3, r3, r2, lsl #4
-	ldr	r3, [r3, #CP_OFFSET+8]
-	SW_NPC	cmp	r0, #0
-	add	oop_address_tmp, r0, r3
-	SW_NPC	beq	null_ptr_exception
+	POP	r3, tmp1		@ r3 = value, tmp1 = object
+        add     tmp2, constpool, r1, lsl #12
+	add	tmp2, tmp2, r2, lsl #4
+	SW_NPC	cmp	tmp1, #0
+	SW_NPC	beq	null_ptr_exception_jpc_3
+	ldr	tmp2, [tmp2, #CP_OFFSET+8]
 .abortentry113:
-	HW_NPC	ldr	ip, [r0]		@ Only to provoke an abort
-	bl	oop_store
-    ldr	r3, [dispatch, #Universe_collectedHeap_Address-XXX]
-        DISPATCH_START  3
-        POP     r2
-    ldr r3, [r3, #0]
-        DISPATCH_NEXT
-    ldr r3, [r3, #12]
-        DISPATCH_NEXT
-    ldr r3, [r3, #76]
-        mov     tmp2, #0
-        strb    tmp2, [r3, r2, lsr #9]
-        DISPATCH_FINISH
+	str	r3, [tmp1, tmp2]
+	mov	r0, tmp1
+	bl	Helper_aputfield
+	DISPATCH 3
 }
 
 (lputfield) lputfield {
@@ -1862,29 +1821,11 @@ return_register_finalizer = 0xe5, 1
 	add	r1, r2, #4
 	str	r3, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
 
-	ldr	ip, [istate, #ISTATE_ADVANCE_PC]
-	ldr	istate, [istate, #ISTATE_NEXT_FRAME]
 	add	stack, r1, r0, lsl #2
-	cmp	ip, #0
-	beq	normal_return
 
-	sub	istate, istate, #ISTATE_NEXT_FRAME
+	str	stack, [tmp_xxx, #THREAD_JAVA_SP]
 
-        CACHE_JPC
-        ldr     r2, [istate, #ISTATE_STACK_LIMIT]
-        DISPATCH_START_REG ip
-        sub     stack, stack, #4
-        ldr     r3, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
-        DISPATCH_NEXT
-        add     r2, r2, #4
-        DISPATCH_NEXT
-        str     r2, [tmp_xxx, #THREAD_JAVA_SP]
-        DISPATCH_NEXT
-        str     r3, [tmp_xxx, #THREAD_LAST_JAVA_SP]
-        CACHE_CP
-        CACHE_LOCALS
-        DISPATCH_NEXT
-        DISPATCH_FINISH
+	ldmfd	arm_sp!, {fast_regset, pc}
 1:
 	bl	return_check_monitors
 	b	2b
@@ -1909,30 +1850,12 @@ return_register_finalizer = 0xe5, 1
 	ldr	r3, [stack, #0]
 	ldrh	r0, [r0, #40]
 
-	ldr	ip, [istate, #ISTATE_ADVANCE_PC]
-	ldr	istate, [istate, #ISTATE_NEXT_FRAME]
 	str	r3, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
 	str	r1, [stack, r0, lsl #2]!
-	cmp	ip, #0
-	beq	normal_return
 
-	sub	istate, istate, #ISTATE_NEXT_FRAME
+	str	stack, [tmp_xxx, #THREAD_JAVA_SP]
 
-        CACHE_JPC
-        ldr     r2, [istate, #ISTATE_STACK_LIMIT]
-	DISPATCH_START_REG ip
-        sub     stack, stack, #4
-        ldr     r3, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
-	DISPATCH_NEXT					@ ldrb	r1, [jpc, #2]
-        add     r2, r2, #4
-	DISPATCH_NEXT					@ ldr	ip, [dispatch, r0, lsl #2]
-        str     r2, [tmp_xxx, #THREAD_JAVA_SP]
-	DISPATCH_NEXT					@ ldrb	r2, [jpc, #1]
-        str     r3, [tmp_xxx, #THREAD_LAST_JAVA_SP]
-        CACHE_CP
-        CACHE_LOCALS
-	DISPATCH_NEXT					@ ands	lr, ip, lr
-        DISPATCH_FINISH
+	ldmfd	arm_sp!, {fast_regset, pc}
 1:
 	bl	return_check_monitors
 	b	2b
@@ -1956,33 +1879,14 @@ return_register_finalizer = 0xe5, 1
 	add	r1, r2, #4
 	str	r3, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
 
-	ldr	ip, [istate, #ISTATE_ADVANCE_PC]
-	ldr	istate, [istate, #ISTATE_NEXT_FRAME]
-
 	POP	r2, r3
 
 	add	stack, r1, r0, lsl #2
 	stmdb	stack!, {r2, r3}
-	cmp	ip, #0
-	beq	normal_return
 
-	sub	istate, istate, #ISTATE_NEXT_FRAME
+	str	stack, [tmp_xxx, #THREAD_JAVA_SP]
 
-        CACHE_JPC
-        ldr     r2, [istate, #ISTATE_STACK_LIMIT]
-        DISPATCH_START_REG ip
-        sub     stack, stack, #4
-        ldr     r3, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
-        DISPATCH_NEXT
-        add     r2, r2, #4
-        DISPATCH_NEXT
-        str     r2, [tmp_xxx, #THREAD_JAVA_SP]
-        DISPATCH_NEXT
-        str     r3, [tmp_xxx, #THREAD_LAST_JAVA_SP]
-        CACHE_CP
-        CACHE_LOCALS
-        DISPATCH_NEXT
-        DISPATCH_FINISH
+	ldmfd	arm_sp!, {fast_regset, pc}
 1:
 	bl	return_check_monitors
 	b	2b
@@ -2032,12 +1936,10 @@ return_register_finalizer = 0xe5, 1
 	mov	r1, #0
         bl      _ZN18InterpreterRuntime3ldcEP10JavaThreadb
 	ldr	r0, [istate, #ISTATE_THREAD]			@ thread
-	ASSERT_STACK_CACHED
 	CACHE_CP
 	ldr	r1, [r0, #THREAD_PENDING_EXC]
 	CACHE_JPC
 	cmp	r1, #0
-	ASSERT_LOCALS_CACHED
 	bne	handle_exception
 	ldr	r3, [r0, #THREAD_VM_RESULT]
 	mov	r2, #0
@@ -2089,8 +1991,6 @@ return_register_finalizer = 0xe5, 1
         DECACHE_STACK
 	mov	r1, #1
         bl      _ZN18InterpreterRuntime3ldcEP10JavaThreadb
-	ASSERT_STACK_CACHED
-	ASSERT_LOCALS_CACHED
 	ldr	r0, [istate, #ISTATE_THREAD]			@ thread
 	CACHE_CP
 	ldr	r1, [r0, #THREAD_PENDING_EXC]
@@ -2455,10 +2355,7 @@ return_register_finalizer = 0xe5, 1
 }
 
 (dmul) dmul_vfp {
-	FBC	cmp	r2, #opc_dadd
 	DISPATCH_START_R2
-	FBC	beq	1f
-2:
 	vldr	d7, [stack, #12]
 	vldr	d6, [stack, #4]
 	DISPATCH_NEXT
@@ -2469,30 +2366,7 @@ return_register_finalizer = 0xe5, 1
 	vstr	d0, [stack, #12]
 	add	stack, stack, #8
 	DISPATCH_FINISH
-1:
-	FBC	mov	r2, #opc_dmac
-	FBC	strb	r2, [jpc, #-1]
-	FBC	b	2b
 }
-
-#ifdef FAST_BYTECODES
-
-(dmac) dmac_vfp {
-	DISPATCH_START	\seq_len
-	vldr	d2, [stack, #20]
-	vldr	d1, [stack, #12]
-	vldr	d0, [stack, #4]
-	DISPATCH_NEXT
-	DISPATCH_NEXT
-	fmacd	d2, d1, d0
-	DISPATCH_NEXT
-	DISPATCH_NEXT
-	vstr	d2, [stack, #20]
-	add	stack, stack, #16
-	DISPATCH_FINISH
-}
-
-#endif // FAST_BYTECODES
 
 (fdiv) fdiv_vfp {
 	DISPATCH_START_R2
@@ -2623,10 +2497,10 @@ return_register_finalizer = 0xe5, 1
 #ifdef FAST_BYTECODES
 
 @##############################################################################
-@ ECN: Optimised bytecode pairs
+@ Optimised bytecode pairs
 @##############################################################################
 
-@ --- ECN: load; iaccess ------------------------------------------------------
+@ --- load; iaccess ------------------------------------------------------
 
 (iload_0,iload_1,iload_2,iload_3)
 (iaccess_0,iaccess_1,iaccess_2,iaccess_3)
@@ -2680,7 +2554,7 @@ return_register_finalizer = 0xe5, 1
 	DISPATCH_FINISH
 }
 
-@ --- ECN: load; load ---------------------------------------------------------
+@ --- load; load ---------------------------------------------------------
 
 (aload_0,aload_1,aload_2,aload_3)
 (aload_0,aload_1,aload_2,aload_3)
@@ -2875,7 +2749,7 @@ return_register_finalizer = 0xe5, 1
 	DISPATCH_FINISH
 }
 
-@ --- ECN: load; store --------------------------------------------------------
+@ --- load; store --------------------------------------------------------
 
 (aload_0,aload_1,aload_2,aload_3)
 (astore_0,astore_1,astore_2,astore_3)
@@ -2986,7 +2860,7 @@ return_register_finalizer = 0xe5, 1
 	DISPATCH_FINISH
 }
 
-@ --- ECN: load; const -------------------------------------------------------
+@ --- load; const -------------------------------------------------------
 
 (aload_0,aload_1,aload_2,aload_3)
 (iconst_m1,iconst_0,iconst_1,iconst_2,iconst_3,iconst_4,iconst_5)
@@ -3109,7 +2983,7 @@ return_register_finalizer = 0xe5, 1
 	DISPATCH_FINISH
 }
 
-@ --- ECN: load; Xaload -------------------------------------------------------
+@ --- load; Xaload -------------------------------------------------------
 
 (iload_0,iload_1,iload_2,iload_3)
 (iaload,aaload,faload)
@@ -3271,7 +3145,7 @@ return_register_finalizer = 0xe5, 1
 	DISPATCH_FINISH
 }
 
-@ --- ECN: load; Xastore -------------------------------------------------------
+@ --- load; Xastore -------------------------------------------------------
 
 (iload_0,iload_1,iload_2,iload_3)
 (iastore,fastore)
@@ -3384,7 +3258,7 @@ return_register_finalizer = 0xe5, 1
 	DISPATCH_FINISH
 }
 
-@ --- ECN: load; dataop -------------------------------------------------------
+@ --- load; dataop -------------------------------------------------------
 
 (iload_0,iload_1,iload_2,iload_3)
 (iadd)
@@ -3469,40 +3343,6 @@ return_register_finalizer = 0xe5, 1
 	DISPATCH_NEXT
 	PUSH	lr
 	DISPATCH_FINISH
-}
-
-(iload_0,iload_1,iload_2,iload_3)
-(idiv)
-{
-	rsb	tmp2, r0, #opc_iload_0
-	DISPATCH_START	2
-	ldr	tmp2, [locals, tmp2, lsl #2]
-	POP	tmp1
-	b	int_div
-}
-
-(iload,aload,fload)(idiv) {
-	DISPATCH_START	3
-	POP	tmp1
-	ldr	tmp2, [locals, -r2, lsl #2]
-	b	int_div
-}
-
-(iload_0,iload_1,iload_2,iload_3)
-(irem)
-{
-	rsb	tmp2, r0, #opc_iload_0
-	DISPATCH_START	2
-	ldr	tmp2, [locals, tmp2, lsl #2]
-	POP	tmp1
-	b	int_rem
-}
-
-(iload,aload,fload)(irem) {
-	DISPATCH_START	3
-	POP	tmp1
-	ldr	tmp2, [locals, -r2, lsl #2]
-	b	int_rem
 }
 
 (iload_0,iload_1,iload_2,iload_3)
@@ -3717,192 +3557,138 @@ return_register_finalizer = 0xe5, 1
 
 #ifdef NOTICE_SAFEPOINTS
 
-@ --- ECN: load; branch -------------------------------------------------------
+@ --- load; branch -------------------------------------------------------
 
 (iload_0,iload_1,iload_2,iload_3)
 (ifeq,ifnull)
 {
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
 	rsb	r3, r0, #opc_iload_0
-	add	jpc, jpc, #1
+        ldrsb   r1, [jpc, #2]
 	ldr	r3, [locals, r3, lsl #2]
+        ldrb    ip, [jpc, #3]
         cmp     r3, #0
-	orr	ip, ip, r1, lsl #8
-	beq	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	beq	branch_taken_unsafe_1
+	DISPATCH 4
 }
 
 (iload,aload,fload)(ifeq,ifnull) {
+	rsb	r2, r2, #0
         ldrsb   r1, [jpc, #3]
+	ldr	r3, [locals, r2, lsl #2]
         ldrb    ip, [jpc, #4]
-	add	jpc, jpc, #2
-	ldr	r3, [locals, -r2, lsl #2]
         cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	beq	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	beq	branch_taken_unsafe_2
+	DISPATCH 5
 }
 
 (iload_0,iload_1,iload_2,iload_3)
 (ifne,ifnonnull)
 {
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
 	rsb	r3, r0, #opc_iload_0
-	add	jpc, jpc, #1
+        ldrsb   r1, [jpc, #2]
 	ldr	r3, [locals, r3, lsl #2]
+        ldrb    ip, [jpc, #3]
         cmp     r3, #0
-	orr	ip, ip, r1, lsl #8
-	bne	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bne	branch_taken_unsafe_1
+	DISPATCH 4
 }
 
 (iload,aload,fload)(ifne,ifnonnull) {
+	rsb	r2, r2, #0
         ldrsb   r1, [jpc, #3]
+	ldr	r3, [locals, r2, lsl #2]
         ldrb    ip, [jpc, #4]
-	add	jpc, jpc, #2
-	ldr	r3, [locals, -r2, lsl #2]
         cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	bne	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bne	branch_taken_unsafe_2
+	DISPATCH 5
 }
 
 (iload_0,iload_1,iload_2,iload_3)
 (iflt)
 {
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
 	rsb	r3, r0, #opc_iload_0
-	add	jpc, jpc, #1
+        ldrsb   r1, [jpc, #2]
 	ldr	r3, [locals, r3, lsl #2]
+        ldrb    ip, [jpc, #3]
         cmp     r3, #0
-	orr	ip, ip, r1, lsl #8
-	blt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	blt	branch_taken_unsafe_1
+	DISPATCH 4
 }
 
 (iload,aload,fload)(iflt) {
+	rsb	r2, r2, #0
         ldrsb   r1, [jpc, #3]
+	ldr	r3, [locals, r2, lsl #2]
         ldrb    ip, [jpc, #4]
-	add	jpc, jpc, #2
-	ldr	r3, [locals, -r2, lsl #2]
         cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	blt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	blt	branch_taken_unsafe_2
+	DISPATCH 5
 }
 
 (iload_0,iload_1,iload_2,iload_3)
 (ifge)
 {
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
 	rsb	r3, r0, #opc_iload_0
-	add	jpc, jpc, #1
+        ldrsb   r1, [jpc, #2]
 	ldr	r3, [locals, r3, lsl #2]
+        ldrb    ip, [jpc, #3]
         cmp     r3, #0
-	orr	ip, ip, r1, lsl #8
-	bge	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bge	branch_taken_unsafe_1
+	DISPATCH 4
 }
 
 (iload,aload,fload)(ifge) {
+	rsb	r2, r2, #0
         ldrsb   r1, [jpc, #3]
+	ldr	r3, [locals, r2, lsl #2]
         ldrb    ip, [jpc, #4]
-	add	jpc, jpc, #2
-	ldr	r3, [locals, -r2, lsl #2]
         cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	bge	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bge	branch_taken_unsafe_2
+	DISPATCH 5
 }
 
 (iload_0,iload_1,iload_2,iload_3)
 (ifgt)
 {
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
 	rsb	r3, r0, #opc_iload_0
-	add	jpc, jpc, #1
+        ldrsb   r1, [jpc, #2]
 	ldr	r3, [locals, r3, lsl #2]
+        ldrb    ip, [jpc, #3]
         cmp     r3, #0
-	orr	ip, ip, r1, lsl #8
-	bgt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bgt	branch_taken_unsafe_1
+	DISPATCH 4
 }
 
 (iload,aload,fload)(ifgt) {
+	rsb	r2, r2, #0
         ldrsb   r1, [jpc, #3]
+	ldr	r3, [locals, r2, lsl #2]
         ldrb    ip, [jpc, #4]
-	add	jpc, jpc, #2
-	ldr	r3, [locals, -r2, lsl #2]
         cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	bgt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bgt	branch_taken_unsafe_2
+	DISPATCH 5
 }
 
 (iload_0,iload_1,iload_2,iload_3)
 (ifle)
 {
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
 	rsb	r3, r0, #opc_iload_0
-	add	jpc, jpc, #1
+        ldrsb   r1, [jpc, #2]
 	ldr	r3, [locals, r3, lsl #2]
+        ldrb    ip, [jpc, #3]
         cmp     r3, #0
-	orr	ip, ip, r1, lsl #8
-	ble	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	ble	branch_taken_unsafe_1
+	DISPATCH 4
 }
 
 (iload,aload,fload)(ifle) {
+	rsb	r2, r2, #0
         ldrsb   r1, [jpc, #3]
+	ldr	r3, [locals, r2, lsl #2]
         ldrb    ip, [jpc, #4]
-	add	jpc, jpc, #2
-	ldr	r3, [locals, -r2, lsl #2]
         cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	ble	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	ble	branch_taken_unsafe_2
+	DISPATCH 5
 }
 
 (iload_0,iload_1,iload_2,iload_3)
@@ -3911,31 +3697,22 @@ return_register_finalizer = 0xe5, 1
 	POP	r3
 	rsb	r2, r0, #opc_iload_0
         ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
 	ldr	r2, [locals, r2, lsl #2]
-	add	jpc, jpc, #1
+        ldrb    ip, [jpc, #3]
         cmp     r3, r2
-	orr	ip, ip, r1, lsl #8
-	beq	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	beq	branch_taken_unsafe_1
+	DISPATCH 4
 }
 
 (iload,aload,fload)(if_icmpeq,if_acmpeq) {
 	POP	r3
+	rsb	r2, r2, #0
         ldrsb   r1, [jpc, #3]
+	ldr	r2, [locals, r2, lsl #2]
         ldrb    ip, [jpc, #4]
-	ldr	r2, [locals, -r2, lsl #2]
-	add	jpc, jpc, #2
         cmp     r3, r2
-        orr     ip, ip, r1, lsl #8
-	beq	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	beq	branch_taken_unsafe_2
+	DISPATCH 5
 }
 
 (iload_0,iload_1,iload_2,iload_3)
@@ -3944,31 +3721,22 @@ return_register_finalizer = 0xe5, 1
 	POP	r3
 	rsb	r2, r0, #opc_iload_0
         ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
 	ldr	r2, [locals, r2, lsl #2]
-	add	jpc, jpc, #1
+        ldrb    ip, [jpc, #3]
         cmp     r3, r2
-	orr	ip, ip, r1, lsl #8
-	bne	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bne	branch_taken_unsafe_1
+	DISPATCH 4
 }
 
 (iload,aload,fload)(if_icmpne,if_acmpne) {
 	POP	r3
+	rsb	r2, r2, #0
         ldrsb   r1, [jpc, #3]
+	ldr	r2, [locals, r2, lsl #2]
         ldrb    ip, [jpc, #4]
-	ldr	r2, [locals, -r2, lsl #2]
-	add	jpc, jpc, #2
         cmp     r3, r2
-        orr     ip, ip, r1, lsl #8
-	bne	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bne	branch_taken_unsafe_2
+	DISPATCH 5
 }
 
 (iload_0,iload_1,iload_2,iload_3)
@@ -3977,31 +3745,22 @@ return_register_finalizer = 0xe5, 1
 	POP	r3
 	rsb	r2, r0, #opc_iload_0
         ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
 	ldr	r2, [locals, r2, lsl #2]
-	add	jpc, jpc, #1
+        ldrb    ip, [jpc, #3]
         cmp     r3, r2
-	orr	ip, ip, r1, lsl #8
-	blt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	blt	branch_taken_unsafe_1
+	DISPATCH 4
 }
 
 (iload,aload,fload)(if_icmplt) {
 	POP	r3
+	rsb	r2, r2, #0
         ldrsb   r1, [jpc, #3]
+	ldr	r2, [locals, r2, lsl #2]
         ldrb    ip, [jpc, #4]
-	ldr	r2, [locals, -r2, lsl #2]
-	add	jpc, jpc, #2
         cmp     r3, r2
-        orr     ip, ip, r1, lsl #8
-	blt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	blt	branch_taken_unsafe_2
+	DISPATCH 5
 }
 
 (iload_0,iload_1,iload_2,iload_3)
@@ -4010,31 +3769,22 @@ return_register_finalizer = 0xe5, 1
 	POP	r3
 	rsb	r2, r0, #opc_iload_0
         ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
 	ldr	r2, [locals, r2, lsl #2]
-	add	jpc, jpc, #1
+        ldrb    ip, [jpc, #3]
         cmp     r3, r2
-	orr	ip, ip, r1, lsl #8
-	bge	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bge	branch_taken_unsafe_1
+	DISPATCH 4
 }
 
 (iload,aload,fload)(if_icmpge) {
 	POP	r3
+	rsb	r2, r2, #0
         ldrsb   r1, [jpc, #3]
+	ldr	r2, [locals, r2, lsl #2]
         ldrb    ip, [jpc, #4]
-	ldr	r2, [locals, -r2, lsl #2]
-	add	jpc, jpc, #2
         cmp     r3, r2
-        orr     ip, ip, r1, lsl #8
-	bge	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bge	branch_taken_unsafe_2
+	DISPATCH 5
 }
 
 (iload_0,iload_1,iload_2,iload_3)
@@ -4043,31 +3793,22 @@ return_register_finalizer = 0xe5, 1
 	POP	r3
 	rsb	r2, r0, #opc_iload_0
         ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
 	ldr	r2, [locals, r2, lsl #2]
-	add	jpc, jpc, #1
+        ldrb    ip, [jpc, #3]
         cmp     r3, r2
-	orr	ip, ip, r1, lsl #8
-	bgt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bgt	branch_taken_unsafe_1
+	DISPATCH 4
 }
 
 (iload,aload,fload)(if_icmpgt) {
 	POP	r3
+	rsb	r2, r2, #0
         ldrsb   r1, [jpc, #3]
+	ldr	r2, [locals, r2, lsl #2]
         ldrb    ip, [jpc, #4]
-	ldr	r2, [locals, -r2, lsl #2]
-	add	jpc, jpc, #2
         cmp     r3, r2
-        orr     ip, ip, r1, lsl #8
-	bgt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bgt	branch_taken_unsafe_2
+	DISPATCH 5
 }
 
 (iload_0,iload_1,iload_2,iload_3)
@@ -4076,34 +3817,25 @@ return_register_finalizer = 0xe5, 1
 	POP	r3
 	rsb	r2, r0, #opc_iload_0
         ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
 	ldr	r2, [locals, r2, lsl #2]
-	add	jpc, jpc, #1
+        ldrb    ip, [jpc, #3]
         cmp     r3, r2
-	orr	ip, ip, r1, lsl #8
-	ble	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	ble	branch_taken_unsafe_1
+	DISPATCH 4
 }
 
 (iload,aload,fload)(if_icmple) {
 	POP	r3
+	rsb	r2, r2, #0
         ldrsb   r1, [jpc, #3]
+	ldr	r2, [locals, r2, lsl #2]
         ldrb    ip, [jpc, #4]
-	ldr	r2, [locals, -r2, lsl #2]
-	add	jpc, jpc, #2
         cmp     r3, r2
-        orr     ip, ip, r1, lsl #8
-	ble	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	ble	branch_taken_unsafe_2
+	DISPATCH 5
 }
 
-@ --- ECN: load; return/invoke -------------------------------------------------
+@ --- load; return/invoke -------------------------------------------------
 
 (iload_0,iload_1,iload_2,iload_3)
 (ireturn,areturn,freturn)
@@ -4122,30 +3854,12 @@ return_register_finalizer = 0xe5, 1
 	ldr	r0, [istate, #ISTATE_METHOD]
 	ldr	r3, [stack, #0]
 	ldrh	r0, [r0, #40]
-	ldr	ip, [istate, #ISTATE_ADVANCE_PC]
-	ldr	istate, [istate, #ISTATE_NEXT_FRAME]
 	str	r3, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
 	str	r1, [stack, r0, lsl #2]!
-	cmp	ip, #0
-	beq	normal_return
 
-	sub	istate, istate, #ISTATE_NEXT_FRAME
+	str	stack, [tmp_xxx, #THREAD_JAVA_SP]
 
-        CACHE_JPC
-        ldr     r2, [istate, #ISTATE_STACK_LIMIT]
-	DISPATCH_START_REG ip
-        sub     stack, stack, #4
-        ldr     r3, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
-	DISPATCH_NEXT					@ ldrb	r1, [jpc, #2]
-        add     r2, r2, #4
-	DISPATCH_NEXT					@ ldr	ip, [dispatch, r0, lsl #2]
-        str     r2, [tmp_xxx, #THREAD_JAVA_SP]
-	DISPATCH_NEXT					@ ldrb	r2, [jpc, #1]
-        str     r3, [tmp_xxx, #THREAD_LAST_JAVA_SP]
-        CACHE_CP
-        CACHE_LOCALS
-	DISPATCH_NEXT					@ ands	lr, ip, lr
-        DISPATCH_FINISH
+	ldmfd	arm_sp!, {fast_regset, pc}
 1:
 	PUSH	r1
 	add	jpc, jpc, #1
@@ -4169,30 +3883,12 @@ return_register_finalizer = 0xe5, 1
 	ldr	r0, [istate, #ISTATE_METHOD]
 	ldr	r3, [stack, #0]
 	ldrh	r0, [r0, #40]
-	ldr	ip, [istate, #ISTATE_ADVANCE_PC]
-	ldr	istate, [istate, #ISTATE_NEXT_FRAME]
 	str	r3, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
 	str	r1, [stack, r0, lsl #2]!
-	cmp	ip, #0
-	beq	normal_return
 
-	sub	istate, istate, #ISTATE_NEXT_FRAME
+	str	stack, [tmp_xxx, #THREAD_JAVA_SP]
 
-        CACHE_JPC
-        ldr     r2, [istate, #ISTATE_STACK_LIMIT]
-	DISPATCH_START_REG ip
-        sub     stack, stack, #4
-        ldr     r3, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
-	DISPATCH_NEXT					@ ldrb	r1, [jpc, #2]
-        add     r2, r2, #4
-	DISPATCH_NEXT					@ ldr	ip, [dispatch, r0, lsl #2]
-        str     r2, [tmp_xxx, #THREAD_JAVA_SP]
-	DISPATCH_NEXT					@ ldrb	r2, [jpc, #1]
-        str     r3, [tmp_xxx, #THREAD_LAST_JAVA_SP]
-        CACHE_CP
-        CACHE_LOCALS
-	DISPATCH_NEXT					@ ands	lr, ip, lr
-        DISPATCH_FINISH
+	ldmfd	arm_sp!, {fast_regset, pc}
 1:
 	PUSH	r1
 	add	jpc, jpc, #2
@@ -4399,7 +4095,7 @@ return_register_finalizer = 0xe5, 1
 	DISPATCH_FINISH
 }
 
-@ --- ECN: iconst; store -------------------------------------------------
+@ --- iconst; store -------------------------------------------------
 
 (iconst_m1,iconst_0,iconst_1,iconst_2,iconst_3,iconst_4,iconst_5)
 (istore_0,istore_1,istore_2,istore_3)
@@ -4419,7 +4115,7 @@ return_register_finalizer = 0xe5, 1
 	DISPATCH_BYTECODE
 }
 
-@ --- ECN: iconst; dataop -------------------------------------------------
+@ --- iconst; dataop -------------------------------------------------
 
 (iconst_m1,iconst_0,iconst_1,iconst_2,iconst_3,iconst_4,iconst_5)(iadd) {
 	sub	tmp1, r0, #opc_iconst_0
@@ -4505,7 +4201,7 @@ return_register_finalizer = 0xe5, 1
 	DISPATCH_FINISH
 }
 
-@ --- ECN: iconst; branch -------------------------------------------------
+@ --- iconst; branch -------------------------------------------------
 
 #ifdef NOTICE_SAFEPOINTS
 
@@ -4513,90 +4209,60 @@ return_register_finalizer = 0xe5, 1
 	POP	r3
 	sub	r2, r0, #opc_iconst_0
         ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	jpc, jpc, #1
         cmp     r3, r2
-        orr     ip, ip, r1, lsl #8
-	beq	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+        ldrb    ip, [jpc, #3]
+	beq	branch_taken_unsafe_1
+	DISPATCH 4
 }
 
 (iconst_m1,iconst_0,iconst_1,iconst_2,iconst_3,iconst_4,iconst_5)(if_icmpne) {
 	POP	r3
 	sub	r2, r0, #opc_iconst_0
         ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	jpc, jpc, #1
         cmp     r3, r2
-        orr     ip, ip, r1, lsl #8
-	bne	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+        ldrb    ip, [jpc, #3]
+	bne	branch_taken_unsafe_1
+	DISPATCH 4
 }
 
 (iconst_m1,iconst_0,iconst_1,iconst_2,iconst_3,iconst_4,iconst_5)(if_icmplt) {
 	POP	r3
 	sub	r2, r0, #opc_iconst_0
         ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	jpc, jpc, #1
         cmp     r3, r2
-        orr     ip, ip, r1, lsl #8
-	blt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+        ldrb    ip, [jpc, #3]
+	blt	branch_taken_unsafe_1
+	DISPATCH 4
 }
 
 (iconst_m1,iconst_0,iconst_1,iconst_2,iconst_3,iconst_4,iconst_5)(if_icmpge) {
 	POP	r3
 	sub	r2, r0, #opc_iconst_0
         ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	jpc, jpc, #1
         cmp     r3, r2
-        orr     ip, ip, r1, lsl #8
-	bge	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+        ldrb    ip, [jpc, #3]
+	bge	branch_taken_unsafe_1
+	DISPATCH 4
 }
 
 (iconst_m1,iconst_0,iconst_1,iconst_2,iconst_3,iconst_4,iconst_5)(if_icmpgt) {
 	POP	r3
 	sub	r2, r0, #opc_iconst_0
         ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	jpc, jpc, #1
         cmp     r3, r2
-        orr     ip, ip, r1, lsl #8
-	bgt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+        ldrb    ip, [jpc, #3]
+	bgt	branch_taken_unsafe_1
+	DISPATCH 4
 }
 
 (iconst_m1,iconst_0,iconst_1,iconst_2,iconst_3,iconst_4,iconst_5)(if_icmple) {
 	POP	r3
 	sub	r2, r0, #opc_iconst_0
         ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	jpc, jpc, #1
         cmp     r3, r2
-        orr     ip, ip, r1, lsl #8
-	ble	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+        ldrb    ip, [jpc, #3]
+	ble	branch_taken_unsafe_1
+	DISPATCH 4
 }
 
 (iconst_m1,iconst_0,iconst_1,iconst_2,iconst_3,iconst_4,iconst_5)(ireturn) {
@@ -4613,30 +4279,12 @@ return_register_finalizer = 0xe5, 1
 	ldr	r0, [istate, #ISTATE_METHOD]
 	ldr	r3, [stack, #0]
 	ldrh	r0, [r0, #40]
-	ldr	ip, [istate, #ISTATE_ADVANCE_PC]
-	ldr	istate, [istate, #ISTATE_NEXT_FRAME]
 	str	r3, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
 	str	r1, [stack, r0, lsl #2]!
-	cmp	ip, #0
-	beq	normal_return
 
-	sub	istate, istate, #ISTATE_NEXT_FRAME
+	str	stack, [tmp_xxx, #THREAD_JAVA_SP]
 
-        CACHE_JPC
-        ldr     r2, [istate, #ISTATE_STACK_LIMIT]
-	DISPATCH_START_REG ip
-        sub     stack, stack, #4
-        ldr     r3, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
-	DISPATCH_NEXT					@ ldrb	r1, [jpc, #2]
-        add     r2, r2, #4
-	DISPATCH_NEXT					@ ldr	ip, [dispatch, r0, lsl #2]
-        str     r2, [tmp_xxx, #THREAD_JAVA_SP]
-	DISPATCH_NEXT					@ ldrb	r2, [jpc, #1]
-        str     r3, [tmp_xxx, #THREAD_LAST_JAVA_SP]
-        CACHE_CP
-        CACHE_LOCALS
-	DISPATCH_NEXT					@ ands	lr, ip, lr
-        DISPATCH_FINISH
+	ldmfd	arm_sp!, {fast_regset, pc}
 1:
 	PUSH	r1
 	add	jpc, jpc, #1
@@ -5001,292 +4649,6 @@ return_register_finalizer = 0xe5, 1
 	DISPATCH_FINISH
 }
 
-#ifdef NOTICE_SAFEPOINTS
-
-(iaload,faload,aaload)(ifeq,ifnull) {
-	POP	r2, r3			@ r2 = index, r3 = arrayref
-	SW_NPC	cmp	r3, #0
-	SW_NPC	beq	null_ptr_exception_jpc_0
-.abortentry61:
-	ldr	r1, [r3, #8]		@ r1 = length
-	cmp	r2, r1
-	bcs	array_bound_exception_jpc_0
-	add	r3, r3, r2, lsl #2
-	ldr	r3, [r3, #BASE_OFFSET_WORD]		@ r1 = tos
-
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	beq	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iaload,faload,aaload)(ifne,ifnonnull) {
-	POP	r2, r3			@ r2 = index, r3 = arrayref
-	SW_NPC	cmp	r3, #0
-	SW_NPC	beq	null_ptr_exception_jpc_0
-.abortentry62:
-	ldr	r1, [r3, #8]		@ r1 = length
-	cmp	r2, r1
-	bcs	array_bound_exception_jpc_0
-	add	r3, r3, r2, lsl #2
-	ldr	r3, [r3, #BASE_OFFSET_WORD]		@ r1 = tos
-
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	bne	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iaload,faload,aaload)(iflt) {
-	POP	r2, r3			@ r2 = index, r3 = arrayref
-	SW_NPC	cmp	r3, #0
-	SW_NPC	beq	null_ptr_exception_jpc_0
-.abortentry63:
-	ldr	r1, [r3, #8]		@ r1 = length
-	cmp	r2, r1
-	bcs	array_bound_exception_jpc_0
-	add	r3, r3, r2, lsl #2
-	ldr	r3, [r3, #BASE_OFFSET_WORD]		@ r1 = tos
-
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	blt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iaload,faload,aaload)(ifge) {
-	POP	r2, r3			@ r2 = index, r3 = arrayref
-	SW_NPC	cmp	r3, #0
-	SW_NPC	beq	null_ptr_exception_jpc_0
-.abortentry64:
-	ldr	r1, [r3, #8]		@ r1 = length
-	cmp	r2, r1
-	bcs	array_bound_exception_jpc_0
-	add	r3, r3, r2, lsl #2
-	ldr	r3, [r3, #BASE_OFFSET_WORD]		@ r1 = tos
-
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	bge	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iaload,faload,aaload)(ifgt) {
-	POP	r2, r3			@ r2 = index, r3 = arrayref
-	SW_NPC	cmp	r3, #0
-	SW_NPC	beq	null_ptr_exception_jpc_0
-.abortentry65:
-	ldr	r1, [r3, #8]		@ r1 = length
-	cmp	r2, r1
-	bcs	array_bound_exception_jpc_0
-	add	r3, r3, r2, lsl #2
-	ldr	r3, [r3, #BASE_OFFSET_WORD]		@ r1 = tos
-
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	bgt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iaload,faload,aaload)(ifle) {
-	POP	r2, r3			@ r2 = index, r3 = arrayref
-	SW_NPC	cmp	r3, #0
-	SW_NPC	beq	null_ptr_exception_jpc_0
-.abortentry66:
-	ldr	r1, [r3, #8]		@ r1 = length
-	cmp	r2, r1
-	bcs	array_bound_exception_jpc_0
-	add	r3, r3, r2, lsl #2
-	ldr	r3, [r3, #BASE_OFFSET_WORD]		@ r1 = tos
-
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	ble	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iaload,faload,aaload)(if_icmpeq,if_acmpeq) {
-	POP	r2, r3			@ r2 = index, r3 = arrayref
-	SW_NPC	cmp	r3, #0
-	SW_NPC	beq	null_ptr_exception_jpc_0
-.abortentry67:
-	ldr	r1, [r3, #8]		@ r1 = length
-	cmp	r2, r1
-	bcs	array_bound_exception_jpc_0
-	add	r3, r3, r2, lsl #2
-	ldr	r2, [r3, #BASE_OFFSET_WORD]		@ r1 = tos
-
-	POP	r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	jpc, jpc, #1
-        cmp     r3, r2
-        orr     ip, ip, r1, lsl #8
-	beq	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iaload,faload,aaload)(if_icmpne,if_acmpne) {
-	POP	r2, r3			@ r2 = index, r3 = arrayref
-	SW_NPC	cmp	r3, #0
-	SW_NPC	beq	null_ptr_exception_jpc_0
-.abortentry68:
-	ldr	r1, [r3, #8]		@ r1 = length
-	cmp	r2, r1
-	bcs	array_bound_exception_jpc_0
-	add	r3, r3, r2, lsl #2
-	ldr	r2, [r3, #BASE_OFFSET_WORD]		@ r1 = tos
-
-	POP	r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	jpc, jpc, #1
-        cmp     r3, r2
-        orr     ip, ip, r1, lsl #8
-	bne	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iaload,faload,aaload)(if_icmplt) {
-	POP	r2, r3			@ r2 = index, r3 = arrayref
-	SW_NPC	cmp	r3, #0
-	SW_NPC	beq	null_ptr_exception_jpc_0
-.abortentry69:
-	ldr	r1, [r3, #8]		@ r1 = length
-	cmp	r2, r1
-	bcs	array_bound_exception_jpc_0
-	add	r3, r3, r2, lsl #2
-	ldr	r2, [r3, #BASE_OFFSET_WORD]		@ r1 = tos
-
-	POP	r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	jpc, jpc, #1
-        cmp     r3, r2
-        orr     ip, ip, r1, lsl #8
-	blt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iaload,faload,aaload)(if_icmpge) {
-	POP	r2, r3			@ r2 = index, r3 = arrayref
-	SW_NPC	cmp	r3, #0
-	SW_NPC	beq	null_ptr_exception_jpc_0
-.abortentry70:
-	ldr	r1, [r3, #8]		@ r1 = length
-	cmp	r2, r1
-	bcs	array_bound_exception_jpc_0
-	add	r3, r3, r2, lsl #2
-	ldr	r2, [r3, #BASE_OFFSET_WORD]		@ r1 = tos
-
-	POP	r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	jpc, jpc, #1
-        cmp     r3, r2
-        orr     ip, ip, r1, lsl #8
-	bge	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iaload,faload,aaload)(if_icmpgt) {
-	POP	r2, r3			@ r2 = index, r3 = arrayref
-	SW_NPC	cmp	r3, #0
-	SW_NPC	beq	null_ptr_exception_jpc_0
-.abortentry71:
-	ldr	r1, [r3, #8]		@ r1 = length
-	cmp	r2, r1
-	bcs	array_bound_exception_jpc_0
-	add	r3, r3, r2, lsl #2
-	ldr	r2, [r3, #BASE_OFFSET_WORD]		@ r1 = tos
-
-	POP	r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	jpc, jpc, #1
-        cmp     r3, r2
-        orr     ip, ip, r1, lsl #8
-	bgt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iaload,faload,aaload)(if_icmple) {
-	POP	r2, r3			@ r2 = index, r3 = arrayref
-	SW_NPC	cmp	r3, #0
-	SW_NPC	beq	null_ptr_exception_jpc_0
-.abortentry72:
-	ldr	r1, [r3, #8]		@ r1 = length
-	cmp	r2, r1
-	bcs	array_bound_exception_jpc_0
-	add	r3, r3, r2, lsl #2
-	ldr	r2, [r3, #BASE_OFFSET_WORD]		@ r1 = tos
-
-	POP	r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	jpc, jpc, #1
-        cmp     r3, r2
-        orr     ip, ip, r1, lsl #8
-	ble	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-#endif // NOTICE_SAFEPOINTS
-
 @ ---- iadd; xxx ------------------------------------------------------------
 
 (iadd)(iload,fload,aload) {
@@ -5395,255 +4757,11 @@ return_register_finalizer = 0xe5, 1
 	DISPATCH_FINISH
 }
 
-#ifdef NOTICE_SAFEPOINTS
-
-(iadd)(ifeq,ifnull) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	beq	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iadd)(ifne,ifnonnull) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	bne	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iadd)(iflt) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	blt	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iadd)(ifge) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	bge	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iadd)(ifgt) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	bgt	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iadd)(ifle) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	ble	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iadd)(if_icmpeq,if_acmpeq) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	beq	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iadd)(if_icmpne,if_acmpne) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	bne	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iadd)(if_icmplt) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	blt	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iadd)(if_icmpge) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	bge	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iadd)(if_icmpgt) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	bgt	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iadd)(if_icmple) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	ble	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iadd)(goto) {
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	jpc, jpc, #1
-	orr	ip, ip, r1, lsl #8
-	DISPATCH_START_REG	ip
-	POP	r2, r3
-	add	r2, r3, r2
-	DISPATCH_NEXT
-	PUSH	r2
-	DISPATCH_FINISH
-}
-
-(iadd)(ireturn) {
-	POP	r2, r3
-	ldr	tmp2, [istate, #ISTATE_MONITOR_BASE]	@ tmp2 = base
-	ldr	tmp1, [istate, #ISTATE_STACK_BASE]	@ tmp1 = end
-	add	r1, r3, r2
-	ldr	tmp_xxx, [istate, #ISTATE_THREAD]
-	cmp	tmp1, tmp2
-	bcc	1f
-2:
-	mov	r3, #0
-	ldr	stack, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
-	str	r3, [tmp_xxx, #THREAD_LAST_JAVA_SP]
-	ldr	r0, [istate, #ISTATE_METHOD]
-	ldr	r3, [stack, #0]
-	ldrh	r0, [r0, #40]
-	ldr	ip, [istate, #ISTATE_ADVANCE_PC]
-	ldr	istate, [istate, #ISTATE_NEXT_FRAME]
-	str	r3, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
-	str	r1, [stack, r0, lsl #2]!
-	cmp	ip, #0
-	beq	normal_return
-
-	sub	istate, istate, #ISTATE_NEXT_FRAME
-
-        CACHE_JPC
-        ldr     r2, [istate, #ISTATE_STACK_LIMIT]
-	DISPATCH_START_REG ip
-        sub     stack, stack, #4
-        ldr     r3, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
-	DISPATCH_NEXT					@ ldrb	r1, [jpc, #2]
-        add     r2, r2, #4
-	DISPATCH_NEXT					@ ldr	ip, [dispatch, r0, lsl #2]
-        str     r2, [tmp_xxx, #THREAD_JAVA_SP]
-	DISPATCH_NEXT					@ ldrb	r2, [jpc, #1]
-        str     r3, [tmp_xxx, #THREAD_LAST_JAVA_SP]
-        CACHE_CP
-        CACHE_LOCALS
-	DISPATCH_NEXT					@ ands	lr, ip, lr
-        DISPATCH_FINISH
-1:
-	PUSH	r1
-	add	jpc, jpc, #1
-	bl	return_check_monitors
-	POP	r1
-	b	2b
-}
-
-#endif // NOTICE_SAFEPOINTS
-
 (iadd)(iinc) {
 	POP	tmp1, lr
 	DISPATCH_START	\seq_len
 	add	tmp1, lr, tmp1
-        ldrb    r3, [jpc, #-2]	@ ECN: jpc now points to next bc
+        ldrb    r3, [jpc, #-2]	@ jpc now points to next bc
         ldrsb   r2, [jpc, #-1]
 	DISPATCH_NEXT
 	PUSH	tmp1
@@ -5761,255 +4879,11 @@ return_register_finalizer = 0xe5, 1
 	DISPATCH_FINISH
 }
 
-#ifdef NOTICE_SAFEPOINTS
-
-(isub)(ifeq,ifnull) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	sub	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	beq	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(isub)(ifne,ifnonnull) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	sub	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	bne	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(isub)(iflt) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	sub	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	blt	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(isub)(ifge) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	sub	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	bge	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(isub)(ifgt) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	sub	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	bgt	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(isub)(ifle) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	sub	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	ble	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(isub)(if_icmpeq,if_acmpeq) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	sub	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	beq	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(isub)(if_icmpne,if_acmpne) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	sub	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	bne	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(isub)(if_icmplt) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	sub	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	blt	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(isub)(if_icmpge) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	sub	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	bge	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(isub)(if_icmpgt) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	sub	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	bgt	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(isub)(if_icmple) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	sub	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	ble	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(isub)(goto) {
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	jpc, jpc, #1
-	orr	ip, ip, r1, lsl #8
-	DISPATCH_START_REG	ip
-	POP	r2, r3
-	sub	r2, r3, r2
-	DISPATCH_NEXT
-	PUSH	r2
-	DISPATCH_FINISH
-}
-
-(isub)(ireturn) {
-	POP	r2, r3
-	ldr	tmp2, [istate, #ISTATE_MONITOR_BASE]	@ tmp2 = base
-	ldr	tmp1, [istate, #ISTATE_STACK_BASE]	@ tmp1 = end
-	sub	r1, r3, r2
-	ldr	tmp_xxx, [istate, #ISTATE_THREAD]
-	cmp	tmp1, tmp2
-	bcc	1f
-2:
-	mov	r3, #0
-	ldr	stack, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
-	str	r3, [tmp_xxx, #THREAD_LAST_JAVA_SP]
-	ldr	r0, [istate, #ISTATE_METHOD]
-	ldr	r3, [stack, #0]
-	ldrh	r0, [r0, #40]
-	ldr	ip, [istate, #ISTATE_ADVANCE_PC]
-	ldr	istate, [istate, #ISTATE_NEXT_FRAME]
-	str	r3, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
-	str	r1, [stack, r0, lsl #2]!
-	cmp	ip, #0
-	beq	normal_return
-
-	sub	istate, istate, #ISTATE_NEXT_FRAME
-
-        CACHE_JPC
-        ldr     r2, [istate, #ISTATE_STACK_LIMIT]
-	DISPATCH_START_REG ip
-        sub     stack, stack, #4
-        ldr     r3, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
-	DISPATCH_NEXT					@ ldrb	r1, [jpc, #2]
-        add     r2, r2, #4
-	DISPATCH_NEXT					@ ldr	ip, [dispatch, r0, lsl #2]
-        str     r2, [tmp_xxx, #THREAD_JAVA_SP]
-	DISPATCH_NEXT					@ ldrb	r2, [jpc, #1]
-        str     r3, [tmp_xxx, #THREAD_LAST_JAVA_SP]
-        CACHE_CP
-        CACHE_LOCALS
-	DISPATCH_NEXT					@ ands	lr, ip, lr
-        DISPATCH_FINISH
-1:
-	PUSH	r1
-	add	jpc, jpc, #1
-	bl	return_check_monitors
-	POP	r1
-	b	2b
-}
-
-#endif // NOTICE_SAFEPOINTS
-
 (isub)(iinc) {
 	POP	tmp1, lr
 	DISPATCH_START	\seq_len
 	sub	tmp1, lr, tmp1
-        ldrb    r3, [jpc, #-2]	@ ECN: jpc now points to next bc
+        ldrb    r3, [jpc, #-2]	@ jpc now points to next bc
         ldrsb   r2, [jpc, #-1]
 	DISPATCH_NEXT
 	PUSH	tmp1
@@ -6127,255 +5001,11 @@ return_register_finalizer = 0xe5, 1
 	DISPATCH_FINISH
 }
 
-#ifdef NOTICE_SAFEPOINTS
-
-(iand)(ifeq,ifnull) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	and	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	beq	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iand)(ifne,ifnonnull) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	and	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	bne	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iand)(iflt) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	and	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	blt	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iand)(ifge) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	and	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	bge	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iand)(ifgt) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	and	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	bgt	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iand)(ifle) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	and	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	ble	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iand)(if_icmpeq,if_acmpeq) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	and	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	beq	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iand)(if_icmpne,if_acmpne) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	and	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	bne	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iand)(if_icmplt) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	and	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	blt	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iand)(if_icmpge) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	and	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	bge	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iand)(if_icmpgt) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	and	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	bgt	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iand)(if_icmple) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	and	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	ble	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iand)(goto) {
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	jpc, jpc, #1
-	orr	ip, ip, r1, lsl #8
-	DISPATCH_START_REG	ip
-	POP	r2, r3
-	and	r2, r3, r2
-	DISPATCH_NEXT
-	PUSH	r2
-	DISPATCH_FINISH
-}
-
-(iand)(ireturn) {
-	POP	r2, r3
-	ldr	tmp2, [istate, #ISTATE_MONITOR_BASE]	@ tmp2 = base
-	ldr	tmp1, [istate, #ISTATE_STACK_BASE]	@ tmp1 = end
-	and	r1, r3, r2
-	ldr	tmp_xxx, [istate, #ISTATE_THREAD]
-	cmp	tmp1, tmp2
-	bcc	1f
-2:
-	mov	r3, #0
-	ldr	stack, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
-	str	r3, [tmp_xxx, #THREAD_LAST_JAVA_SP]
-	ldr	r0, [istate, #ISTATE_METHOD]
-	ldr	r3, [stack, #0]
-	ldrh	r0, [r0, #40]
-	ldr	ip, [istate, #ISTATE_ADVANCE_PC]
-	ldr	istate, [istate, #ISTATE_NEXT_FRAME]
-	str	r3, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
-	str	r1, [stack, r0, lsl #2]!
-	cmp	ip, #0
-	beq	normal_return
-
-	sub	istate, istate, #ISTATE_NEXT_FRAME
-
-        CACHE_JPC
-        ldr     r2, [istate, #ISTATE_STACK_LIMIT]
-	DISPATCH_START_REG ip
-        sub     stack, stack, #4
-        ldr     r3, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
-	DISPATCH_NEXT					@ ldrb	r1, [jpc, #2]
-        add     r2, r2, #4
-	DISPATCH_NEXT					@ ldr	ip, [dispatch, r0, lsl #2]
-        str     r2, [tmp_xxx, #THREAD_JAVA_SP]
-	DISPATCH_NEXT					@ ldrb	r2, [jpc, #1]
-        str     r3, [tmp_xxx, #THREAD_LAST_JAVA_SP]
-        CACHE_CP
-        CACHE_LOCALS
-	DISPATCH_NEXT					@ ands	lr, ip, lr
-        DISPATCH_FINISH
-1:
-	PUSH	r1
-	add	jpc, jpc, #1
-	bl	return_check_monitors
-	POP	r1
-	b	2b
-}
-
-#endif // NOTICE_SAFEPOINTS
-
 (iand)(iinc) {
 	POP	tmp1, lr
 	DISPATCH_START	\seq_len
 	and	tmp1, lr, tmp1
-        ldrb    r3, [jpc, #-2]	@ ECN: jpc now points to next bc
+        ldrb    r3, [jpc, #-2]	@ jpc now points to next bc
         ldrsb   r2, [jpc, #-1]
 	DISPATCH_NEXT
 	PUSH	tmp1
@@ -6493,255 +5123,11 @@ return_register_finalizer = 0xe5, 1
 	DISPATCH_FINISH
 }
 
-#ifdef NOTICE_SAFEPOINTS
-
-(ior)(ifeq,ifnull) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	orr	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	beq	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(ior)(ifne,ifnonnull) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	orr	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	bne	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(ior)(iflt) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	orr	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	blt	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(ior)(ifge) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	orr	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	bge	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(ior)(ifgt) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	orr	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	bgt	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(ior)(ifle) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	orr	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	ble	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(ior)(if_icmpeq,if_acmpeq) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	orr	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	beq	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(ior)(if_icmpne,if_acmpne) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	orr	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	bne	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(ior)(if_icmplt) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	orr	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	blt	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(ior)(if_icmpge) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	orr	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	bge	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(ior)(if_icmpgt) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	orr	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	bgt	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(ior)(if_icmple) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	orr	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	ble	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(ior)(goto) {
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	jpc, jpc, #1
-	orr	ip, ip, r1, lsl #8
-	DISPATCH_START_REG	ip
-	POP	r2, r3
-	orr	r2, r3, r2
-	DISPATCH_NEXT
-	PUSH	r2
-	DISPATCH_FINISH
-}
-
-(ior)(ireturn) {
-	POP	r2, r3
-	ldr	tmp2, [istate, #ISTATE_MONITOR_BASE]	@ tmp2 = base
-	ldr	tmp1, [istate, #ISTATE_STACK_BASE]	@ tmp1 = end
-	orr	r1, r3, r2
-	ldr	tmp_xxx, [istate, #ISTATE_THREAD]
-	cmp	tmp1, tmp2
-	bcc	1f
-2:
-	mov	r3, #0
-	ldr	stack, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
-	str	r3, [tmp_xxx, #THREAD_LAST_JAVA_SP]
-	ldr	r0, [istate, #ISTATE_METHOD]
-	ldr	r3, [stack, #0]
-	ldrh	r0, [r0, #40]
-	ldr	ip, [istate, #ISTATE_ADVANCE_PC]
-	ldr	istate, [istate, #ISTATE_NEXT_FRAME]
-	str	r3, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
-	str	r1, [stack, r0, lsl #2]!
-	cmp	ip, #0
-	beq	normal_return
-
-	sub	istate, istate, #ISTATE_NEXT_FRAME
-
-        CACHE_JPC
-        ldr     r2, [istate, #ISTATE_STACK_LIMIT]
-	DISPATCH_START_REG ip
-        sub     stack, stack, #4
-        ldr     r3, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
-	DISPATCH_NEXT					@ ldrb	r1, [jpc, #2]
-        add     r2, r2, #4
-	DISPATCH_NEXT					@ ldr	ip, [dispatch, r0, lsl #2]
-        str     r2, [tmp_xxx, #THREAD_JAVA_SP]
-	DISPATCH_NEXT					@ ldrb	r2, [jpc, #1]
-        str     r3, [tmp_xxx, #THREAD_LAST_JAVA_SP]
-        CACHE_CP
-        CACHE_LOCALS
-	DISPATCH_NEXT					@ ands	lr, ip, lr
-        DISPATCH_FINISH
-1:
-	PUSH	r1
-	add	jpc, jpc, #1
-	bl	return_check_monitors
-	POP	r1
-	b	2b
-}
-
-#endif // NOTICE_SAFEPOINTS
-
 (ior)(iinc) {
 	POP	tmp1, lr
 	DISPATCH_START	\seq_len
 	orr	tmp1, lr, tmp1
-        ldrb    r3, [jpc, #-2]	@ ECN: jpc now points to next bc
+        ldrb    r3, [jpc, #-2]	@ jpc now points to next bc
         ldrsb   r2, [jpc, #-1]
 	DISPATCH_NEXT
 	PUSH	tmp1
@@ -6844,7 +5230,7 @@ return_register_finalizer = 0xe5, 1
 	DISPATCH_NEXT
 	DISPATCH_NEXT
 	PUSH	tmp2
-	DISPATCH_FINISH
+        DISPATCH_FINISH
 }
 
 (ixor)(isub) {
@@ -6860,255 +5246,11 @@ return_register_finalizer = 0xe5, 1
 	DISPATCH_FINISH
 }
 
-#ifdef NOTICE_SAFEPOINTS
-
-(ixor)(ifeq,ifnull) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	eor	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	beq	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(ixor)(ifne,ifnonnull) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	eor	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	bne	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(ixor)(iflt) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	eor	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	blt	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(ixor)(ifge) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	eor	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	bge	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(ixor)(ifgt) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	eor	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	bgt	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(ixor)(ifle) {
-	POP	r2, r3
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	eor	r3, r3, r2
-	add	jpc, jpc, #1
-        cmp     r3, #0
-        orr     ip, ip, r1, lsl #8
-	ble	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(ixor)(if_icmpeq,if_acmpeq) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	eor	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	beq	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(ixor)(if_icmpne,if_acmpne) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	eor	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	bne	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(ixor)(if_icmplt) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	eor	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	blt	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(ixor)(if_icmpge) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	eor	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	bge	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(ixor)(if_icmpgt) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	eor	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	bgt	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(ixor)(if_icmple) {
-	POP	r2, r3, lr
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	eor	r2, r3, r2
-	add	jpc, jpc, #1
-        cmp     lr, r2
-        orr     ip, ip, r1, lsl #8
-	ble	1f
-	mov	ip, #3
-1:
-        ldrb    r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(ixor)(goto) {
-        ldrsb   r1, [jpc, #2]
-        ldrb    ip, [jpc, #3]
-	add	jpc, jpc, #1
-	orr	ip, ip, r1, lsl #8
-	DISPATCH_START_REG	ip
-	POP	r2, r3
-	eor	r2, r3, r2
-	DISPATCH_NEXT
-	PUSH	r2
-	DISPATCH_FINISH
-}
-
-(ixor)(ireturn) {
-	POP	r2, r3
-	ldr	tmp2, [istate, #ISTATE_MONITOR_BASE]	@ tmp2 = base
-	ldr	tmp1, [istate, #ISTATE_STACK_BASE]	@ tmp1 = end
-	eor	r1, r3, r2
-	ldr	tmp_xxx, [istate, #ISTATE_THREAD]
-	cmp	tmp1, tmp2
-	bcc	1f
-2:
-	mov	r3, #0
-	ldr	stack, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
-	str	r3, [tmp_xxx, #THREAD_LAST_JAVA_SP]
-	ldr	r0, [istate, #ISTATE_METHOD]
-	ldr	r3, [stack, #0]
-	ldrh	r0, [r0, #40]
-	ldr	ip, [istate, #ISTATE_ADVANCE_PC]
-	ldr	istate, [istate, #ISTATE_NEXT_FRAME]
-	str	r3, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
-	str	r1, [stack, r0, lsl #2]!
-	cmp	ip, #0
-	beq	normal_return
-
-	sub	istate, istate, #ISTATE_NEXT_FRAME
-
-        CACHE_JPC
-        ldr     r2, [istate, #ISTATE_STACK_LIMIT]
-	DISPATCH_START_REG ip
-        sub     stack, stack, #4
-        ldr     r3, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
-	DISPATCH_NEXT					@ ldrb	r1, [jpc, #2]
-        add     r2, r2, #4
-	DISPATCH_NEXT					@ ldr	ip, [dispatch, r0, lsl #2]
-        str     r2, [tmp_xxx, #THREAD_JAVA_SP]
-	DISPATCH_NEXT					@ ldrb	r2, [jpc, #1]
-        str     r3, [tmp_xxx, #THREAD_LAST_JAVA_SP]
-        CACHE_CP
-        CACHE_LOCALS
-	DISPATCH_NEXT					@ ands	lr, ip, lr
-        DISPATCH_FINISH
-1:
-	PUSH	r1
-	add	jpc, jpc, #1
-	bl	return_check_monitors
-	POP	r1
-	b	2b
-}
-
-#endif // NOTICE_SAFEPOINTS
-
 (ixor)(iinc) {
 	POP	tmp1, lr
 	DISPATCH_START	\seq_len
 	eor	tmp1, lr, tmp1
-        ldrb    r3, [jpc, #-2]	@ ECN: jpc now points to next bc
+        ldrb    r3, [jpc, #-2]	@ jpc now points to next bc
         ldrsb   r2, [jpc, #-1]
 	DISPATCH_NEXT
 	PUSH	tmp1
@@ -7175,7 +5317,7 @@ return_register_finalizer = 0xe5, 1
 }
 
 @###############################################################################
-@# ECN: Optimised bytecode triples
+@# Optimised bytecode triples
 @###############################################################################
 
 (iaccess_0,iaccess_1,iaccess_2,iaccess_3)
@@ -7250,316 +5392,6 @@ return_register_finalizer = 0xe5, 1
 	PUSH	tmp2
 	DISPATCH_FINISH
 }
-
-#ifdef NOTICE_SAFEPOINTS
-
-(iaccess_0,iaccess_1,iaccess_2,iaccess_3)
-(ifeq,ifnull) {
-	ldrb	r2, [jpc, #3]
-	rsb	tmp1, r0, #opc_iaccess_0
-	ldrb	ip, [jpc, #2]
-	add	jpc, jpc, #4
-	ldrsb	r0, [jpc, #1]
-	add	tmp2, constpool, r2, lsl #12
-	ldr	tmp1, [locals, tmp1, lsl #2]
-	add	tmp2, ip, lsl #4
-	ldrb	ip, [jpc, #2]
-	SW_NPC	cmp	tmp1, #0
-	SW_NPC	beq	null_ptr_exception_jpc_3
-        ldr     tmp2, [tmp2, #CP_OFFSET+8]
-	orr	ip, ip, r0, lsl #8
-.abortentry92:
-	ldr	tmp2, [tmp1, tmp2]
-	cmp	tmp2, #0
-	beq	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iaccess_0,iaccess_1,iaccess_2,iaccess_3)
-(ifne,ifnonnull) {
-	ldrb	r2, [jpc, #3]
-	rsb	tmp1, r0, #opc_iaccess_0
-	ldrb	ip, [jpc, #2]
-	add	jpc, jpc, #4
-	ldrsb	r0, [jpc, #1]
-	add	tmp2, constpool, r2, lsl #12
-	ldr	tmp1, [locals, tmp1, lsl #2]
-	add	tmp2, ip, lsl #4
-	ldrb	ip, [jpc, #2]
-	SW_NPC	cmp	tmp1, #0
-	SW_NPC	beq	null_ptr_exception_jpc_3
-        ldr     tmp2, [tmp2, #CP_OFFSET+8]
-	orr	ip, ip, r0, lsl #8
-.abortentry93:
-	ldr	tmp2, [tmp1, tmp2]
-	cmp	tmp2, #0
-	bne	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iaccess_0,iaccess_1,iaccess_2,iaccess_3)
-(iflt) {
-	ldrb	r2, [jpc, #3]
-	rsb	tmp1, r0, #opc_iaccess_0
-	ldrb	ip, [jpc, #2]
-	add	jpc, jpc, #4
-	ldrsb	r0, [jpc, #1]
-	add	tmp2, constpool, r2, lsl #12
-	ldr	tmp1, [locals, tmp1, lsl #2]
-	add	tmp2, ip, lsl #4
-	ldrb	ip, [jpc, #2]
-	SW_NPC	cmp	tmp1, #0
-	SW_NPC	beq	null_ptr_exception_jpc_3
-        ldr     tmp2, [tmp2, #CP_OFFSET+8]
-	orr	ip, ip, r0, lsl #8
-.abortentry94:
-	ldr	tmp2, [tmp1, tmp2]
-	cmp	tmp2, #0
-	blt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iaccess_0,iaccess_1,iaccess_2,iaccess_3)
-(ifge) {
-	ldrb	r2, [jpc, #3]
-	rsb	tmp1, r0, #opc_iaccess_0
-	ldrb	ip, [jpc, #2]
-	add	jpc, jpc, #4
-	ldrsb	r0, [jpc, #1]
-	add	tmp2, constpool, r2, lsl #12
-	ldr	tmp1, [locals, tmp1, lsl #2]
-	add	tmp2, ip, lsl #4
-	ldrb	ip, [jpc, #2]
-	SW_NPC	cmp	tmp1, #0
-	SW_NPC	beq	null_ptr_exception_jpc_3
-        ldr     tmp2, [tmp2, #CP_OFFSET+8]
-	orr	ip, ip, r0, lsl #8
-.abortentry95:
-	ldr	tmp2, [tmp1, tmp2]
-	cmp	tmp2, #0
-	bge	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iaccess_0,iaccess_1,iaccess_2,iaccess_3)
-(ifgt) {
-	ldrb	r2, [jpc, #3]
-	rsb	tmp1, r0, #opc_iaccess_0
-	ldrb	ip, [jpc, #2]
-	add	jpc, jpc, #4
-	ldrsb	r0, [jpc, #1]
-	add	tmp2, constpool, r2, lsl #12
-	ldr	tmp1, [locals, tmp1, lsl #2]
-	add	tmp2, ip, lsl #4
-	ldrb	ip, [jpc, #2]
-	SW_NPC	cmp	tmp1, #0
-	SW_NPC	beq	null_ptr_exception_jpc_3
-        ldr     tmp2, [tmp2, #CP_OFFSET+8]
-	orr	ip, ip, r0, lsl #8
-.abortentry96:
-	ldr	tmp2, [tmp1, tmp2]
-	cmp	tmp2, #0
-	bgt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iaccess_0,iaccess_1,iaccess_2,iaccess_3)
-(ifle) {
-	ldrb	r2, [jpc, #3]
-	rsb	tmp1, r0, #opc_iaccess_0
-	ldrb	ip, [jpc, #2]
-	add	jpc, jpc, #4
-	ldrsb	r0, [jpc, #1]
-	add	tmp2, constpool, r2, lsl #12
-	ldr	tmp1, [locals, tmp1, lsl #2]
-	add	tmp2, ip, lsl #4
-	ldrb	ip, [jpc, #2]
-	SW_NPC	cmp	tmp1, #0
-	SW_NPC	beq	null_ptr_exception_jpc_3
-        ldr     tmp2, [tmp2, #CP_OFFSET+8]
-	orr	ip, ip, r0, lsl #8
-.abortentry97:
-	ldr	tmp2, [tmp1, tmp2]
-	cmp	tmp2, #0
-	ble	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iaccess_0,iaccess_1,iaccess_2,iaccess_3)
-(if_icmpeq,if_acmpeq) {
-	ldrb	r2, [jpc, #3]
-	rsb	tmp1, r0, #opc_iaccess_0
-	ldrb	ip, [jpc, #2]
-	add	jpc, jpc, #4
-	ldrsb	r0, [jpc, #1]
-	add	tmp2, constpool, r2, lsl #12
-	ldr	tmp1, [locals, tmp1, lsl #2]
-	add	tmp2, ip, lsl #4
-	ldrb	ip, [jpc, #2]
-	SW_NPC	cmp	tmp1, #0
-	SW_NPC	beq	null_ptr_exception_jpc_3
-        ldr     tmp2, [tmp2, #CP_OFFSET+8]
-	POP	r3
-	orr	ip, ip, r0, lsl #8
-.abortentry98:
-	ldr	tmp2, [tmp1, tmp2]
-	cmp	r3, tmp2
-	beq	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iaccess_0,iaccess_1,iaccess_2,iaccess_3)
-(if_icmpne,if_acmpne) {
-	ldrb	r2, [jpc, #3]
-	rsb	tmp1, r0, #opc_iaccess_0
-	ldrb	ip, [jpc, #2]
-	add	jpc, jpc, #4
-	ldrsb	r0, [jpc, #1]
-	add	tmp2, constpool, r2, lsl #12
-	ldr	tmp1, [locals, tmp1, lsl #2]
-	add	tmp2, ip, lsl #4
-	ldrb	ip, [jpc, #2]
-	SW_NPC	cmp	tmp1, #0
-	SW_NPC	beq	null_ptr_exception_jpc_3
-        ldr     tmp2, [tmp2, #CP_OFFSET+8]
-	POP	r3
-	orr	ip, ip, r0, lsl #8
-.abortentry99:
-	ldr	tmp2, [tmp1, tmp2]
-	cmp	r3, tmp2
-	bne	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iaccess_0,iaccess_1,iaccess_2,iaccess_3)
-(if_icmplt) {
-	ldrb	r2, [jpc, #3]
-	rsb	tmp1, r0, #opc_iaccess_0
-	ldrb	ip, [jpc, #2]
-	add	jpc, jpc, #4
-	ldrsb	r0, [jpc, #1]
-	add	tmp2, constpool, r2, lsl #12
-	ldr	tmp1, [locals, tmp1, lsl #2]
-	add	tmp2, ip, lsl #4
-	ldrb	ip, [jpc, #2]
-	SW_NPC	cmp	tmp1, #0
-	SW_NPC	beq	null_ptr_exception_jpc_3
-        ldr     tmp2, [tmp2, #CP_OFFSET+8]
-	POP	r3
-	orr	ip, ip, r0, lsl #8
-.abortentry100:
-	ldr	tmp2, [tmp1, tmp2]
-	cmp	r3, tmp2
-	blt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iaccess_0,iaccess_1,iaccess_2,iaccess_3)
-(if_icmpge) {
-	ldrb	r2, [jpc, #3]
-	rsb	tmp1, r0, #opc_iaccess_0
-	ldrb	ip, [jpc, #2]
-	add	jpc, jpc, #4
-	ldrsb	r0, [jpc, #1]
-	add	tmp2, constpool, r2, lsl #12
-	ldr	tmp1, [locals, tmp1, lsl #2]
-	add	tmp2, ip, lsl #4
-	ldrb	ip, [jpc, #2]
-	SW_NPC	cmp	tmp1, #0
-	SW_NPC	beq	null_ptr_exception_jpc_3
-        ldr     tmp2, [tmp2, #CP_OFFSET+8]
-	POP	r3
-	orr	ip, ip, r0, lsl #8
-.abortentry101:
-	ldr	tmp2, [tmp1, tmp2]
-	cmp	r3, tmp2
-	bge	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iaccess_0,iaccess_1,iaccess_2,iaccess_3)
-(if_icmpgt) {
-	ldrb	r2, [jpc, #3]
-	rsb	tmp1, r0, #opc_iaccess_0
-	ldrb	ip, [jpc, #2]
-	add	jpc, jpc, #4
-	ldrsb	r0, [jpc, #1]
-	add	tmp2, constpool, r2, lsl #12
-	ldr	tmp1, [locals, tmp1, lsl #2]
-	add	tmp2, ip, lsl #4
-	ldrb	ip, [jpc, #2]
-	SW_NPC	cmp	tmp1, #0
-	SW_NPC	beq	null_ptr_exception_jpc_3
-        ldr     tmp2, [tmp2, #CP_OFFSET+8]
-	POP	r3
-	orr	ip, ip, r0, lsl #8
-.abortentry102:
-	ldr	tmp2, [tmp1, tmp2]
-	cmp	r3, tmp2
-	bgt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-(iaccess_0,iaccess_1,iaccess_2,iaccess_3)
-(if_icmple) {
-	ldrb	r2, [jpc, #3]
-	rsb	tmp1, r0, #opc_iaccess_0
-	ldrb	ip, [jpc, #2]
-	add	jpc, jpc, #4
-	ldrsb	r0, [jpc, #1]
-	add	tmp2, constpool, r2, lsl #12
-	ldr	tmp1, [locals, tmp1, lsl #2]
-	add	tmp2, ip, lsl #4
-	ldrb	ip, [jpc, #2]
-	SW_NPC	cmp	tmp1, #0
-	SW_NPC	beq	null_ptr_exception_jpc_3
-        ldr     tmp2, [tmp2, #CP_OFFSET+8]
-	POP	r3
-	orr	ip, ip, r0, lsl #8
-.abortentry103:
-	ldr	tmp2, [tmp1, tmp2]
-	cmp	r3, tmp2
-	ble	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
-}
-
-#endif // NOTICE_SAFEPOINTS
 
 (iload_0_iconst_N,iload_1_iconst_N,iload_2_iconst_N,iload_3_iconst_N)
 (iadd)
@@ -8564,23 +6396,20 @@ return_register_finalizer = 0xe5, 1
 	DISPATCH_FINISH
 }
 
+#ifdef NOTICE_SAFEPOINTS
+
 (iload_0_iconst_N,iload_1_iconst_N,iload_2_iconst_N,iload_3_iconst_N)
 (if_icmpeq,if_acmpeq)
 {
 	ldrb	r3, [jpc, #1]
 	rsb	r2, r0, #opc_iload_0_iconst_N
 	ldrsb	r1, [jpc, #3]
+	ldr	r2, [locals, r2, lsl #2]
 	sub	r3, r3, #opc_iconst_0
 	ldrb	ip, [jpc, #4]
-	ldr	r2, [locals, r2, lsl #2]
-	add	jpc, jpc, #2
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	beq	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	beq	branch_taken_unsafe_2
+	DISPATCH 5
 }
 
 (iload_iconst_N)
@@ -8589,17 +6418,12 @@ return_register_finalizer = 0xe5, 1
 	ldrb	r3, [jpc, #2]
 	rsb	r2, r2, #0
 	ldrsb	r1, [jpc, #4]
+	ldr	r2, [locals, r2, lsl #2]
 	sub	r3, r3, #opc_iconst_0
 	ldrb	ip, [jpc, #5]
-	ldr	r2, [locals, r2, lsl #2]
-	add	jpc, jpc, #3
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	beq	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	beq	branch_taken_unsafe_3
+	DISPATCH 6
 }
 
 (iload_0_iconst_N,iload_1_iconst_N,iload_2_iconst_N,iload_3_iconst_N)
@@ -8608,17 +6432,12 @@ return_register_finalizer = 0xe5, 1
 	ldrb	r3, [jpc, #1]
 	rsb	r2, r0, #opc_iload_0_iconst_N
 	ldrsb	r1, [jpc, #3]
+	ldr	r2, [locals, r2, lsl #2]
 	sub	r3, r3, #opc_iconst_0
 	ldrb	ip, [jpc, #4]
-	ldr	r2, [locals, r2, lsl #2]
-	add	jpc, jpc, #2
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	bne	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bne	branch_taken_unsafe_2
+	DISPATCH 5
 }
 
 (iload_iconst_N)
@@ -8627,17 +6446,12 @@ return_register_finalizer = 0xe5, 1
 	ldrb	r3, [jpc, #2]
 	rsb	r2, r2, #0
 	ldrsb	r1, [jpc, #4]
+	ldr	r2, [locals, r2, lsl #2]
 	sub	r3, r3, #opc_iconst_0
 	ldrb	ip, [jpc, #5]
-	ldr	r2, [locals, r2, lsl #2]
-	add	jpc, jpc, #3
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	bne	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bne	branch_taken_unsafe_3
+	DISPATCH 6
 }
 
 (iload_0_iconst_N,iload_1_iconst_N,iload_2_iconst_N,iload_3_iconst_N)
@@ -8646,17 +6460,12 @@ return_register_finalizer = 0xe5, 1
 	ldrb	r3, [jpc, #1]
 	rsb	r2, r0, #opc_iload_0_iconst_N
 	ldrsb	r1, [jpc, #3]
+	ldr	r2, [locals, r2, lsl #2]
 	sub	r3, r3, #opc_iconst_0
 	ldrb	ip, [jpc, #4]
-	ldr	r2, [locals, r2, lsl #2]
-	add	jpc, jpc, #2
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	blt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	blt	branch_taken_unsafe_2
+	DISPATCH 5
 }
 
 (iload_iconst_N)
@@ -8665,17 +6474,12 @@ return_register_finalizer = 0xe5, 1
 	ldrb	r3, [jpc, #2]
 	rsb	r2, r2, #0
 	ldrsb	r1, [jpc, #4]
+	ldr	r2, [locals, r2, lsl #2]
 	sub	r3, r3, #opc_iconst_0
 	ldrb	ip, [jpc, #5]
-	ldr	r2, [locals, r2, lsl #2]
-	add	jpc, jpc, #3
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	blt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	blt	branch_taken_unsafe_3
+	DISPATCH 6
 }
 
 (iload_0_iconst_N,iload_1_iconst_N,iload_2_iconst_N,iload_3_iconst_N)
@@ -8684,17 +6488,12 @@ return_register_finalizer = 0xe5, 1
 	ldrb	r3, [jpc, #1]
 	rsb	r2, r0, #opc_iload_0_iconst_N
 	ldrsb	r1, [jpc, #3]
+	ldr	r2, [locals, r2, lsl #2]
 	sub	r3, r3, #opc_iconst_0
 	ldrb	ip, [jpc, #4]
-	ldr	r2, [locals, r2, lsl #2]
-	add	jpc, jpc, #2
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	bge	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bge	branch_taken_unsafe_2
+	DISPATCH 5
 }
 
 (iload_iconst_N)
@@ -8703,17 +6502,12 @@ return_register_finalizer = 0xe5, 1
 	ldrb	r3, [jpc, #2]
 	rsb	r2, r2, #0
 	ldrsb	r1, [jpc, #4]
+	ldr	r2, [locals, r2, lsl #2]
 	sub	r3, r3, #opc_iconst_0
 	ldrb	ip, [jpc, #5]
-	ldr	r2, [locals, r2, lsl #2]
-	add	jpc, jpc, #3
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	bge	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bge	branch_taken_unsafe_3
+	DISPATCH 6
 }
 
 (iload_0_iconst_N,iload_1_iconst_N,iload_2_iconst_N,iload_3_iconst_N)
@@ -8722,17 +6516,12 @@ return_register_finalizer = 0xe5, 1
 	ldrb	r3, [jpc, #1]
 	rsb	r2, r0, #opc_iload_0_iconst_N
 	ldrsb	r1, [jpc, #3]
+	ldr	r2, [locals, r2, lsl #2]
 	sub	r3, r3, #opc_iconst_0
 	ldrb	ip, [jpc, #4]
-	ldr	r2, [locals, r2, lsl #2]
-	add	jpc, jpc, #2
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	bgt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bgt	branch_taken_unsafe_2
+	DISPATCH 5
 }
 
 (iload_iconst_N)
@@ -8741,17 +6530,12 @@ return_register_finalizer = 0xe5, 1
 	ldrb	r3, [jpc, #2]
 	rsb	r2, r2, #0
 	ldrsb	r1, [jpc, #4]
+	ldr	r2, [locals, r2, lsl #2]
 	sub	r3, r3, #opc_iconst_0
 	ldrb	ip, [jpc, #5]
-	ldr	r2, [locals, r2, lsl #2]
-	add	jpc, jpc, #3
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	bgt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bgt	branch_taken_unsafe_3
+	DISPATCH 6
 }
 
 (iload_0_iconst_N,iload_1_iconst_N,iload_2_iconst_N,iload_3_iconst_N)
@@ -8760,17 +6544,12 @@ return_register_finalizer = 0xe5, 1
 	ldrb	r3, [jpc, #1]
 	rsb	r2, r0, #opc_iload_0_iconst_N
 	ldrsb	r1, [jpc, #3]
+	ldr	r2, [locals, r2, lsl #2]
 	sub	r3, r3, #opc_iconst_0
 	ldrb	ip, [jpc, #4]
-	ldr	r2, [locals, r2, lsl #2]
-	add	jpc, jpc, #2
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	ble	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	ble	branch_taken_unsafe_2
+	DISPATCH 5
 }
 
 (iload_iconst_N)
@@ -8779,18 +6558,15 @@ return_register_finalizer = 0xe5, 1
 	ldrb	r3, [jpc, #2]
 	rsb	r2, r2, #0
 	ldrsb	r1, [jpc, #4]
+	ldr	r2, [locals, r2, lsl #2]
 	sub	r3, r3, #opc_iconst_0
 	ldrb	ip, [jpc, #5]
-	ldr	r2, [locals, r2, lsl #2]
-	add	jpc, jpc, #3
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	ble	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	ble	branch_taken_unsafe_3
+	DISPATCH 6
 }
+
+#endif // NOTICE_SAFEPOINTS
 
 (iload_iload)
 (iadd_istore_N)
@@ -9581,6 +7357,8 @@ return_register_finalizer = 0xe5, 1
         str     r3, [locals, tmp1, lsl #2]
 	DISPATCH_FINISH
 }
+
+#ifdef NOTICE_SAFEPOINTS
 
 (iload_iload)
 (if_icmpeq,if_acmpeq) {
@@ -9588,17 +7366,12 @@ return_register_finalizer = 0xe5, 1
 	rsb	r2, r2, #0
 	ldrsb	r1, [jpc, #5]
 	rsb	r3, r3, #0
-	ldrb	ip, [jpc, #6]
 	ldr	r2, [locals, r2, lsl #2]
 	ldr	r3, [locals, r3, lsl #2]
-	add	jpc, jpc, #4
+	ldrb	ip, [jpc, #6]
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	beq	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	beq	branch_taken_unsafe_4
+	DISPATCH 7
 }
 
 (iload_iload_N)
@@ -9607,17 +7380,12 @@ return_register_finalizer = 0xe5, 1
 	rsb	r2, r2, #0
 	ldrsb	r1, [jpc, #4]
 	rsb	r3, r3, #opc_iload_0
-	ldrb	ip, [jpc, #5]
 	ldr	r2, [locals, r2, lsl #2]
 	ldr	r3, [locals, r3, lsl #2]
-	add	jpc, jpc, #3
+	ldrb	ip, [jpc, #5]
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	beq	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	beq	branch_taken_unsafe_3
+	DISPATCH 6
 }
 
 (iload_0_iload,iload_1_iload,iload_2_iload,iload_3_iload)
@@ -9626,35 +7394,39 @@ return_register_finalizer = 0xe5, 1
 	rsb	r2, r0, #opc_iload_0_iload
 	ldrsb	r1, [jpc, #4]
 	rsb	r3, r3, #0
-	ldrb	ip, [jpc, #5]
 	ldr	r2, [locals, r2, lsl #2]
 	ldr	r3, [locals, r3, lsl #2]
-	add	jpc, jpc, #3
+	ldrb	ip, [jpc, #5]
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	beq	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	beq	branch_taken_unsafe_3
+	DISPATCH 6
 }
 
 (iload_0_iload_N,iload_1_iload_N,iload_2_iload_N,iload_3_iload_N)
 (if_icmpeq,if_acmpeq) {
 	rsb	r3, r2, #opc_iload_0
-	rsb	r2, r0, #opc_iload_0_iload_N
 	ldrsb	r1, [jpc, #3]
+	rsb	r2, r0, #opc_iload_0_iload_N
+	ldr	r3, [locals, r3, lsl #2]
+	ldr	r2, [locals, r2, lsl #2]
 	ldrb	ip, [jpc, #4]
+	cmp	r2, r3
+	beq	branch_taken_unsafe_2
+	DISPATCH 5
+}
+
+(iload_iload)
+(if_icmpne,if_acmpne) {
+	ldrb	r3, [jpc, #3]
+	rsb	r2, r2, #0
+	ldrsb	r1, [jpc, #5]
+	rsb	r3, r3, #0
 	ldr	r2, [locals, r2, lsl #2]
 	ldr	r3, [locals, r3, lsl #2]
-	add	jpc, jpc, #2
+	ldrb	ip, [jpc, #6]
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	beq	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bne	branch_taken_unsafe_4
+	DISPATCH 7
 }
 
 (iload_iload_N)
@@ -9663,17 +7435,12 @@ return_register_finalizer = 0xe5, 1
 	rsb	r2, r2, #0
 	ldrsb	r1, [jpc, #4]
 	rsb	r3, r3, #opc_iload_0
-	ldrb	ip, [jpc, #5]
 	ldr	r2, [locals, r2, lsl #2]
 	ldr	r3, [locals, r3, lsl #2]
-	add	jpc, jpc, #3
+	ldrb	ip, [jpc, #5]
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	bne	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bne	branch_taken_unsafe_3
+	DISPATCH 6
 }
 
 (iload_0_iload,iload_1_iload,iload_2_iload,iload_3_iload)
@@ -9682,35 +7449,25 @@ return_register_finalizer = 0xe5, 1
 	rsb	r2, r0, #opc_iload_0_iload
 	ldrsb	r1, [jpc, #4]
 	rsb	r3, r3, #0
-	ldrb	ip, [jpc, #5]
 	ldr	r2, [locals, r2, lsl #2]
 	ldr	r3, [locals, r3, lsl #2]
-	add	jpc, jpc, #3
+	ldrb	ip, [jpc, #5]
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	bne	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bne	branch_taken_unsafe_3
+	DISPATCH 6
 }
 
 (iload_0_iload_N,iload_1_iload_N,iload_2_iload_N,iload_3_iload_N)
 (if_icmpne,if_acmpne) {
 	rsb	r3, r2, #opc_iload_0
-	rsb	r2, r0, #opc_iload_0_iload_N
 	ldrsb	r1, [jpc, #3]
-	ldrb	ip, [jpc, #4]
-	ldr	r2, [locals, r2, lsl #2]
+	rsb	r2, r0, #opc_iload_0_iload_N
 	ldr	r3, [locals, r3, lsl #2]
-	add	jpc, jpc, #2
+	ldr	r2, [locals, r2, lsl #2]
+	ldrb	ip, [jpc, #4]
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	bne	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bne	branch_taken_unsafe_2
+	DISPATCH 5
 }
 
 (iload_iload)
@@ -9719,17 +7476,12 @@ return_register_finalizer = 0xe5, 1
 	rsb	r2, r2, #0
 	ldrsb	r1, [jpc, #5]
 	rsb	r3, r3, #0
-	ldrb	ip, [jpc, #6]
 	ldr	r2, [locals, r2, lsl #2]
 	ldr	r3, [locals, r3, lsl #2]
-	add	jpc, jpc, #4
+	ldrb	ip, [jpc, #6]
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	blt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	blt	branch_taken_unsafe_4
+	DISPATCH 7
 }
 
 (iload_iload_N)
@@ -9738,17 +7490,12 @@ return_register_finalizer = 0xe5, 1
 	rsb	r2, r2, #0
 	ldrsb	r1, [jpc, #4]
 	rsb	r3, r3, #opc_iload_0
-	ldrb	ip, [jpc, #5]
 	ldr	r2, [locals, r2, lsl #2]
 	ldr	r3, [locals, r3, lsl #2]
-	add	jpc, jpc, #3
+	ldrb	ip, [jpc, #5]
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	blt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	blt	branch_taken_unsafe_3
+	DISPATCH 6
 }
 
 (iload_0_iload,iload_1_iload,iload_2_iload,iload_3_iload)
@@ -9757,35 +7504,25 @@ return_register_finalizer = 0xe5, 1
 	rsb	r2, r0, #opc_iload_0_iload
 	ldrsb	r1, [jpc, #4]
 	rsb	r3, r3, #0
-	ldrb	ip, [jpc, #5]
 	ldr	r2, [locals, r2, lsl #2]
 	ldr	r3, [locals, r3, lsl #2]
-	add	jpc, jpc, #3
+	ldrb	ip, [jpc, #5]
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	blt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	blt	branch_taken_unsafe_3
+	DISPATCH 6
 }
 
 (iload_0_iload_N,iload_1_iload_N,iload_2_iload_N,iload_3_iload_N)
 (if_icmplt) {
 	rsb	r3, r2, #opc_iload_0
-	rsb	r2, r0, #opc_iload_0_iload_N
 	ldrsb	r1, [jpc, #3]
-	ldrb	ip, [jpc, #4]
-	ldr	r2, [locals, r2, lsl #2]
+	rsb	r2, r0, #opc_iload_0_iload_N
 	ldr	r3, [locals, r3, lsl #2]
-	add	jpc, jpc, #2
+	ldr	r2, [locals, r2, lsl #2]
+	ldrb	ip, [jpc, #4]
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	blt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	blt	branch_taken_unsafe_2
+	DISPATCH 5
 }
 
 (iload_iload)
@@ -9794,17 +7531,12 @@ return_register_finalizer = 0xe5, 1
 	rsb	r2, r2, #0
 	ldrsb	r1, [jpc, #5]
 	rsb	r3, r3, #0
-	ldrb	ip, [jpc, #6]
 	ldr	r2, [locals, r2, lsl #2]
 	ldr	r3, [locals, r3, lsl #2]
-	add	jpc, jpc, #4
+	ldrb	ip, [jpc, #6]
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	bge	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bge	branch_taken_unsafe_4
+	DISPATCH 7
 }
 
 (iload_iload_N)
@@ -9813,17 +7545,12 @@ return_register_finalizer = 0xe5, 1
 	rsb	r2, r2, #0
 	ldrsb	r1, [jpc, #4]
 	rsb	r3, r3, #opc_iload_0
-	ldrb	ip, [jpc, #5]
 	ldr	r2, [locals, r2, lsl #2]
 	ldr	r3, [locals, r3, lsl #2]
-	add	jpc, jpc, #3
+	ldrb	ip, [jpc, #5]
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	bge	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bge	branch_taken_unsafe_3
+	DISPATCH 6
 }
 
 (iload_0_iload,iload_1_iload,iload_2_iload,iload_3_iload)
@@ -9832,35 +7559,25 @@ return_register_finalizer = 0xe5, 1
 	rsb	r2, r0, #opc_iload_0_iload
 	ldrsb	r1, [jpc, #4]
 	rsb	r3, r3, #0
-	ldrb	ip, [jpc, #5]
 	ldr	r2, [locals, r2, lsl #2]
 	ldr	r3, [locals, r3, lsl #2]
-	add	jpc, jpc, #3
+	ldrb	ip, [jpc, #5]
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	bge	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bge	branch_taken_unsafe_3
+	DISPATCH 6
 }
 
 (iload_0_iload_N,iload_1_iload_N,iload_2_iload_N,iload_3_iload_N)
 (if_icmpge) {
 	rsb	r3, r2, #opc_iload_0
-	rsb	r2, r0, #opc_iload_0_iload_N
 	ldrsb	r1, [jpc, #3]
-	ldrb	ip, [jpc, #4]
-	ldr	r2, [locals, r2, lsl #2]
+	rsb	r2, r0, #opc_iload_0_iload_N
 	ldr	r3, [locals, r3, lsl #2]
-	add	jpc, jpc, #2
+	ldr	r2, [locals, r2, lsl #2]
+	ldrb	ip, [jpc, #4]
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	bge	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bge	branch_taken_unsafe_2
+	DISPATCH 5
 }
 
 (iload_iload)
@@ -9869,17 +7586,12 @@ return_register_finalizer = 0xe5, 1
 	rsb	r2, r2, #0
 	ldrsb	r1, [jpc, #5]
 	rsb	r3, r3, #0
-	ldrb	ip, [jpc, #6]
 	ldr	r2, [locals, r2, lsl #2]
 	ldr	r3, [locals, r3, lsl #2]
-	add	jpc, jpc, #4
+	ldrb	ip, [jpc, #6]
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	bgt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bgt	branch_taken_unsafe_4
+	DISPATCH 7
 }
 
 (iload_iload_N)
@@ -9888,17 +7600,12 @@ return_register_finalizer = 0xe5, 1
 	rsb	r2, r2, #0
 	ldrsb	r1, [jpc, #4]
 	rsb	r3, r3, #opc_iload_0
-	ldrb	ip, [jpc, #5]
 	ldr	r2, [locals, r2, lsl #2]
 	ldr	r3, [locals, r3, lsl #2]
-	add	jpc, jpc, #3
+	ldrb	ip, [jpc, #5]
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	bgt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bgt	branch_taken_unsafe_3
+	DISPATCH 6
 }
 
 (iload_0_iload,iload_1_iload,iload_2_iload,iload_3_iload)
@@ -9907,35 +7614,25 @@ return_register_finalizer = 0xe5, 1
 	rsb	r2, r0, #opc_iload_0_iload
 	ldrsb	r1, [jpc, #4]
 	rsb	r3, r3, #0
-	ldrb	ip, [jpc, #5]
 	ldr	r2, [locals, r2, lsl #2]
 	ldr	r3, [locals, r3, lsl #2]
-	add	jpc, jpc, #3
+	ldrb	ip, [jpc, #5]
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	bgt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bgt	branch_taken_unsafe_3
+	DISPATCH 6
 }
 
 (iload_0_iload_N,iload_1_iload_N,iload_2_iload_N,iload_3_iload_N)
 (if_icmpgt) {
 	rsb	r3, r2, #opc_iload_0
-	rsb	r2, r0, #opc_iload_0_iload_N
 	ldrsb	r1, [jpc, #3]
-	ldrb	ip, [jpc, #4]
-	ldr	r2, [locals, r2, lsl #2]
+	rsb	r2, r0, #opc_iload_0_iload_N
 	ldr	r3, [locals, r3, lsl #2]
-	add	jpc, jpc, #2
+	ldr	r2, [locals, r2, lsl #2]
+	ldrb	ip, [jpc, #4]
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	bgt	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	bgt	branch_taken_unsafe_2
+	DISPATCH 5
 }
 
 (iload_iload)
@@ -9944,17 +7641,12 @@ return_register_finalizer = 0xe5, 1
 	rsb	r2, r2, #0
 	ldrsb	r1, [jpc, #5]
 	rsb	r3, r3, #0
-	ldrb	ip, [jpc, #6]
 	ldr	r2, [locals, r2, lsl #2]
 	ldr	r3, [locals, r3, lsl #2]
-	add	jpc, jpc, #4
+	ldrb	ip, [jpc, #6]
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	ble	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	ble	branch_taken_unsafe_4
+	DISPATCH 7
 }
 
 (iload_iload_N)
@@ -9963,17 +7655,12 @@ return_register_finalizer = 0xe5, 1
 	rsb	r2, r2, #0
 	ldrsb	r1, [jpc, #4]
 	rsb	r3, r3, #opc_iload_0
-	ldrb	ip, [jpc, #5]
 	ldr	r2, [locals, r2, lsl #2]
 	ldr	r3, [locals, r3, lsl #2]
-	add	jpc, jpc, #3
+	ldrb	ip, [jpc, #5]
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	ble	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	ble	branch_taken_unsafe_3
+	DISPATCH 6
 }
 
 (iload_0_iload,iload_1_iload,iload_2_iload,iload_3_iload)
@@ -9982,63 +7669,27 @@ return_register_finalizer = 0xe5, 1
 	rsb	r2, r0, #opc_iload_0_iload
 	ldrsb	r1, [jpc, #4]
 	rsb	r3, r3, #0
-	ldrb	ip, [jpc, #5]
 	ldr	r2, [locals, r2, lsl #2]
 	ldr	r3, [locals, r3, lsl #2]
-	add	jpc, jpc, #3
+	ldrb	ip, [jpc, #5]
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	ble	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	ble	branch_taken_unsafe_3
+	DISPATCH 6
 }
 
 (iload_0_iload_N,iload_1_iload_N,iload_2_iload_N,iload_3_iload_N)
 (if_icmple) {
 	rsb	r3, r2, #opc_iload_0
-	rsb	r2, r0, #opc_iload_0_iload_N
 	ldrsb	r1, [jpc, #3]
-	ldrb	ip, [jpc, #4]
-	ldr	r2, [locals, r2, lsl #2]
+	rsb	r2, r0, #opc_iload_0_iload_N
 	ldr	r3, [locals, r3, lsl #2]
-	add	jpc, jpc, #2
+	ldr	r2, [locals, r2, lsl #2]
+	ldrb	ip, [jpc, #4]
 	cmp	r2, r3
-	orr	ip, ip, r1, lsl #8
-	ble	1f
-	mov	ip, #3
-1:
-	ldrb	r0, [jpc, ip]!
-	DISPATCH_BYTECODE
+	ble	branch_taken_unsafe_2
+	DISPATCH 5
 }
 
-#ifdef HW_FP
-
-(dmac)(dastore) {
-	ldr	tmp2, [stack, #28]
-	ldr	tmp1, [stack, #32]
-	vldr	d2, [stack, #20]
-	vldr	d1, [stack, #12]
-	vldr	d0, [stack, #4]
-	DISPATCH_START	\seq_len
-	SW_NPC	cmp	tmp1, #0
-	SW_NPC	beq	null_ptr_exception
-.abortentry120:
-	ldr	ip, [tmp1, #8]
-	cmp	tmp2, ip
-	DISPATCH_NEXT
-	bcs	array_bound_exception_jpc_1_tmp2
-	DISPATCH_NEXT
-	add	tmp2, tmp1, tmp2, lsl #3
-	fmacd	d2, d1, d0
-	vstr	d2, [tmp2, #BASE_OFFSET_LONG]
-	DISPATCH_NEXT
-	DISPATCH_NEXT
-	add	stack, stack, #32
-	DISPATCH_FINISH
-}
-
-#endif //HW_FP
+#endif
 
 #endif // FAST_BYTECODES

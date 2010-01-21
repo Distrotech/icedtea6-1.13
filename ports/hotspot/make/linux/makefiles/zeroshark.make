@@ -29,6 +29,7 @@ ifeq ($(ZERO_LIBARCH),arm)
 
 Obj_Files += asm_helper.o
 Obj_Files += cppInterpreter_arm.o
+Obj_Files += thumb2.o
 
 CFLAGS += -DHOTSPOT_ASM
 
@@ -38,6 +39,7 @@ CFLAGS += -DHOTSPOT_ASM
 	$(COMPILE.CC) -o $@ $< $(COMPILE_DONE)
 
 cppInterpreter_arm.o:	offsets_arm.s bytecodes_arm.s
+thumb2.o:		offsets_arm.s
 
 offsets_arm.s:	mkoffsets
 	@echo Generating assembler offsets

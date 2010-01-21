@@ -19,15 +19,21 @@
 
 #define ARMv4
 
-#ifdef SHARK
+#if defined(SHARK) || defined(THUMB2EE)
+
 #define USE_COMPILER
-#define DISABLE_NOTICE_SAFEPOINTS
+
 #endif
 
 #ifdef USE_COMPILER
 
+#ifdef SHARK
 #define MP_COMPILE_THRESHOLD    0x10000         // 65536 - must be a single MOV constant
 #define UP_COMPILE_THRESHOLD    0x30000         // 196608 - must be a single MOV constant
+#else
+#define MP_COMPILE_THRESHOLD    0x2700		// 10000 - must be a single MOV constant
+#define UP_COMPILE_THRESHOLD    0x2700		// 10000 - must be a single MOV constant
+#endif
 
 #define MAX_FG_METHOD_SIZE      500
 
@@ -38,6 +44,12 @@
 #define DISABLE_BG_COMP_ON_NON_MP
 #endif
 
+#ifdef THUMB2EE
+#define FREQ_COUNT_OVERFLOW Thumb2_Compile
+#else
+#define FREQ_COUNT_OVERFLOW _ZN18InterpreterRuntime26frequency_counter_overflowEP10JavaThreadPh
+#endif
+
 #endif // USE_COMPILER
 
 #ifndef DISABLE_NOTICE_SAFEPOINTS
@@ -45,12 +57,6 @@
 #endif
 #ifndef DISABLE_HW_NULL_PTR_CHECK
 #define HW_NULL_PTR_CHECK
-#endif
-#ifndef DISABLE_FASTPATH_ENTRY
-#define FASTPATH_ENTRY
-#endif
-#ifndef DISABLE_NATIVE_ENTRY
-#define NATIVE_ENTRY
 #endif
 #ifndef DISABLE_FAST_BYTECODES
 #define FAST_BYTECODES
@@ -74,67 +80,25 @@
 #define tmp1		r11
 #define tmp2		r10
 
-#define tmp_invoke_len	lr
-
-#define regset r3-r11
-
-// XXX hardwired constants!
-#define tos_btos        0
-#define tos_ctos        1
-#define tos_stos        2
-#define tos_itos        3
-#define tos_ltos        4
-#define tos_ftos        5
-#define tos_dtos        6
-#define tos_atos        7
+#define regset		r4,r5,r6,r7,r9,r10,r11
+#define fast_regset	r8
 
 #include "offsets_arm.s"
 
-// XXX hardwired constants!
-#define RESOURCEAREA_AREA	0
-#define RESOURCEAREA_CHUNK	4
-#define RESOURCEAREA_HWM	8
-#define RESOURCEAREA_MAX	12
-
-// XXX hardwired constants!
-#define ISTATE_THREAD		0
-#define ISTATE_BCP		4
-#define	ISTATE_LOCALS		8
-#define	ISTATE_CONSTANTS	12
-#define ISTATE_METHOD		16
-#define ISTATE_MDX		20
-#define ISTATE_STACK		24
-#define ISTATE_ADVANCE_PC	28
-#define ISTATE_MSG		28
-#define ISTATE_CALLEE		32	// union frame_manager_message
-#define	ISTATE_PREV_LINK	44
-#define ISTATE_OOP_TEMP		48
-#define ISTATE_STACK_BASE	52
-#define ISTATE_STACK_LIMIT	56
-#define ISTATE_MONITOR_BASE	60
-#define ISTATE_SELF_LINK	64
-#define ISTATE_FRAME_TYPE	68
-#define ISTATE_NEXT_FRAME	72
-#define FRAME_SIZE		76
-
-// XXX hardwired constants!
-#define ENTRY_FRAME             1
-#define INTERPRETER_FRAME       2
-#define SHARK_FRAME             3
-#define FAKE_STUB_FRAME         4
-
 #define last_implemented_bytecode 201
 
+#define CODE_ALIGN_SIZE 64
+
 	.macro	ALIGN_CODE
-	.align	3
+	.align	6
 	.endm
 
 	.macro	ALIGN_DATA
-	.align	3
+	.align	6
 	.endm
 
 	.macro	ALIGN_OPCODE
-	.align	3
+	.align	6
 	.endm
 
 	.macro	ALIGN_WORD
@@ -276,6 +240,24 @@
   .endif
 #endif
         .endm
+@------------------------------------------------
+@ THUMB2 specific code macro
+@ Usage:
+@	T2	<thumb2 specific code>
+@------------------------------------------------
+	.macro	T2	p1, p2, p3, p4
+#ifdef THUMB2EE
+  .ifnes "\p4", ""
+        \p1 \p2, \p3, \p4
+  .else
+    .ifnes "\p3", ""
+        \p1 \p2, \p3
+    .else
+        \p1 \p2
+    .endif
+  .endif
+#endif
+        .endm
 
 	.macro	Opcode	label
 	ALIGN_OPCODE
@@ -290,6 +272,7 @@ do_\label:
 	str	\reg, [stack, #(\offset+1) * 4]
 	.endm
 
+#define PUSH	java_push
 	.macro	PUSH	reg1, reg2, reg3, reg4
   .ifnes "\reg4", ""
 	stmda	stack!, {\reg1, \reg2, \reg3, \reg4}
@@ -306,6 +289,7 @@ do_\label:
   .endif
 	.endm
 
+#define POP	java_pop
 	.macro	POP	reg1, reg2, reg3, reg4
   .ifnes "\reg4", ""
 	ldmib	stack!, {\reg1, \reg2, \reg3, \reg4}
@@ -346,227 +330,6 @@ do_\label:
 	str	jpc, [istate, #ISTATE_BCP]
 	.endm
 
-@ ECN:	I assert that istate->locals and istate->stack cannot move on a GC.
-@	The reasoning is that istate itself is stored on the Java stack
-@	and locals and stack are relative to istate. Therefore if locals or
-@	stack were to move, istate itself would have to move and we would
-@	lose our entire interpreter state.
-@ To prove this I have changed the code which recaches locals and stack
-@ to assert that locals == istate->locals and stack == istate->stack.
-@ This saves a lot of needles recaching of interpreter state.
-	.macro	ASSERT_LOCALS_CACHED
-#if 0
-	str	ip, [arm_sp, #-4]!
-	mrs	ip, cpsr
-	str	ip, [arm_sp, #-4]!
-	mov	ip, locals
-	ldr	locals, [istate, #ISTATE_LOCALS]
-	cmp	ip, locals
-	strne	r0, [r0, -r0]
-	ldr	ip, [arm_sp], #4
-	msr	cpsr, ip
-	ldr	ip, [arm_sp], #4
-#endif
-	.endm
-
-	.macro	ASSERT_STACK_CACHED
-#if 0
-	str	ip, [arm_sp, #-4]!
-	mrs	ip, cpsr
-	str	ip, [arm_sp, #-4]!
-	mov	ip, stack
-	ldr	stack, [istate, #ISTATE_STACK]
-	cmp	ip, stack
-	strne	r0, [r0, -r0]
-	ldr	ip, [arm_sp], #4
-	msr	cpsr, ip
-	ldr	ip, [arm_sp], #4
-#endif
-	.endm
-
-@ DISPATCH_LOOP causes the dispatch code to branch every time to a label 'dispatch_loop'
-@ This is primarily for debugging so we can stick assertions at the dispatch_loop label
-@ which will then be checked after every bytcode.
-@ #define DISPATCH_LOOP
-
-@ CODETRACE tarces bytecodes in a code buffer which can be examined under gdb
-@ Note: DISPATCH_LOOP must be enabled for CODETRACE to work
-@ #define CODETRACE
-
-@ DISPATCH_ASSERTS enables various assertions in the dispatch loop, such as checking
-@ stack, frame, locals and constpool are all consistent and not corrupted
-@#define DISPATCH_ASSERTS
-
-	.macro	ABORTNE
-	strne	r0, [r0, -r0]
-	.endm
-
-	.macro	ABORTCS
-	strcs	r0, [r0, -r0]
-	.endm
-
-	.macro	ABORTCC
-	strcc	r0, [r0, -r0]
-	.endm
-
-	.macro	CHECK_CONSTPOOL
-#ifdef DISPATCH_ASSERTS
-	@ First check istate->constpool == method->constpool
-	ldr	r1, [istate, #ISTATE_CONSTANTS]
-	ldr	r2, [istate, #ISTATE_METHOD]
-	ldr	r2, [r2, #METHOD_CONSTANTS]
-	ldr	r2, [r2, #CONSTANTPOOL_CACHE]
-	cmp	r1, r2
-	ABORTNE
-@	cmp	r1, constpool
-@	ABORTNE
-#endif
-	.endm
-
-	.macro	CHECK_LOCALS
-#ifdef DISPATCH_ASSERTS
-	@ Check cached locals var is the same as that in istate
-	ldr	r1, [istate, #ISTATE_LOCALS]
-	cmp	r1, locals
-	ABORTNE
-#endif
-	.endm
-
-	.macro	CHECK_FRAME
-#ifdef DISPATCH_ASSERTS
-	@ Check #INTERPRETER_FRAME hasn't been overwritten
-	ldr	r1, [istate, #ISTATE_FRAME_TYPE]
-	cmp	r1, #INTERPRETER_FRAME
-	ABORTNE
-	@ Check we are still the topmost frame
-	ldr	r1, [istate, #ISTATE_THREAD]
-	ldr	r1, [r1, #THREAD_TOP_ZERO_FRAME]
-	add	r2, istate, #ISTATE_NEXT_FRAME
-	cmp	r1, r2
-	ABORTNE
-	@ And check the NEXT_FRAME pointer points to a valid frame
-	ldr	r1, [istate, #ISTATE_NEXT_FRAME]
-	ldr	r2, [r1, #-ISTATE_NEXT_FRAME + ISTATE_FRAME_TYPE]
-	bic	r2, r2, #7	@ ECN: Allow for differing frames
-	cmp	r2, #0
-	ABORTNE
-#endif
-	.endm
-
-	.macro	CHECK_BACKTRACE
-#ifdef DISPATCH_ASSERTS
-	add	r3, istate, #ISTATE_NEXT_FRAME
-@ ECN: Only check a limited no of frames back. topmost frame already checked
-@ Check 2nd frame up
-	ldr	r3, [r3]
-	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_FRAME_TYPE]
-	cmp	r2, #ENTRY_FRAME
-	beq	2f
-	cmp	ip, #INTERPRETER_FRAME
-	ABORTNE				@ Must be ENTRY_FRAME, or INTERPRETER_FRAME
-	ldr	r1, [r3, #-ISTATE_NEXT_FRAME + ISTATE_CONSTANTS]
-	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_METHOD]
-	ldr	r2, [r2, #12]
-	ldr	r2, [r2, #12]
-	cmp	r1, r2
-	ABORTNE
-@ Check 3rd frame up
-	ldr	r3, [r3]
-	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_FRAME_TYPE]
-	cmp	r2, #ENTRY_FRAME
-	beq	2f
-	cmp	r2, #INTERPRETER_FRAME
-	ABORTNE				@ Must be ENTRY_FRAME, or INTERPRETER_FRAME
-	ldr	r1, [r3, #-ISTATE_NEXT_FRAME + ISTATE_CONSTANTS]
-	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_METHOD]
-	ldr	r2, [r2, #12]
-	ldr	r2, [r2, #12]
-	cmp	r1, r2
-	ABORTNE
-@ Check 4th frame up
-	ldr	r3, [r3]
-	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_FRAME_TYPE]
-	cmp	r2, #ENTRY_FRAME
-	beq	2f
-	cmp	r2, #INTERPRETER_FRAME
-	ABORTNE				@ Must be ENTRY_FRAME, or INTERPRETER_FRAME
-	ldr	r1, [r3, #-ISTATE_NEXT_FRAME + ISTATE_CONSTANTS]
-	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_METHOD]
-	ldr	r2, [r2, #12]
-	ldr	r2, [r2, #12]
-	cmp	r1, r2
-	ABORTNE
-@ Check 5th frame up
-	ldr	r3, [r3]
-	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_FRAME_TYPE]
-	cmp	r2, #ENTRY_FRAME
-	beq	2f
-	cmp	r2, #INTERPRETER_FRAME
-	ABORTNE				@ Must be ENTRY_FRAME, or INTERPRETER_FRAME
-	ldr	r1, [r3, #-ISTATE_NEXT_FRAME + ISTATE_CONSTANTS]
-	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_METHOD]
-	ldr	r2, [r2, #12]
-	ldr	r2, [r2, #12]
-	cmp	r1, r2
-	ABORTNE
-@ Check 7th frame up
-	ldr	r3, [r3]
-	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_FRAME_TYPE]
-	cmp	r2, #ENTRY_FRAME
-	beq	2f
-	cmp	r2, #INTERPRETER_FRAME
-	ABORTNE				@ Must be ENTRY_FRAME, or INTERPRETER_FRAME
-	ldr	r1, [r3, #-ISTATE_NEXT_FRAME + ISTATE_CONSTANTS]
-	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_METHOD]
-	ldr	r2, [r2, #12]
-	ldr	r2, [r2, #12]
-	cmp	r1, r2
-	ABORTNE
-@ Check 8th frame up
-	ldr	r3, [r3]
-	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_FRAME_TYPE]
-	cmp	r2, #ENTRY_FRAME
-	beq	2f
-	cmp	r2, #INTERPRETER_FRAME
-	ABORTNE				@ Must be ENTRY_FRAME, or INTERPRETER_FRAME
-	ldr	r1, [r3, #-ISTATE_NEXT_FRAME + ISTATE_CONSTANTS]
-	ldr	r2, [r3, #-ISTATE_NEXT_FRAME + ISTATE_METHOD]
-	ldr	r2, [r2, #12]
-	ldr	r2, [r2, #12]
-	cmp	r1, r2
-	ABORTNE
-2:
-#endif
-	.endm
-
-	.macro	CHECK_STACK
-#ifdef DISPATCH_ASSERTS
-	ldr	r1, [istate, #ISTATE_STACK_BASE]
-	cmp	stack, r1
-	ABORTCS
-	ldr	r1, [istate, #ISTATE_STACK_LIMIT]
-	@ ECN: The stack can point below the stack limit in the
-	@	case that we have a full stack. As long as we dont actually
-	@	try writing to it.
-	add	r2, stack, #4
-	cmp	r2, r1
-	ABORTCC
-#endif
-	.endm
-
-#define CODETRACE_BUFFER_SIZE	(1 * 1024)
-	.macro	TRACE_CODE
-#ifdef CODETRACE
-	ldr	r1, [dispatch, #CodeTrace_Idx-XXX]
-	cmp	r1, #CODETRACE_BUFFER_SIZE
-	moveq	r1, #0
-	sub	r2, dispatch, #XXX-CodeTrace_Buffer_Base
-	str	jpc, [r2, r1]
-	add	r1, r1, #4
-	str	r1, [dispatch, #CodeTrace_Idx-XXX]
-#endif
-	.endm
-
 	.macro	BREAK_DISPATCH
 	ldr	r1, [dispatch, #DispatchBreakPoint-XXX]
 	cmp	r1, jpc
@@ -605,23 +368,6 @@ do_\label:
 	mov	r0, r2
 	.endm
 
-#ifdef DISPATCH_LOOP
-	.macro	DISPATCH_NEXT
-	.endm
-
-	.macro	DISPATCH_FINISH
-	b	dispatch_loop
-	.endm
-
-	.macro	DISPATCH_BYTECODE
-	b	dispatch_loop
-	.endm
-
-	.macro	DISPATCH	step=0
-	ldrb	r0, [jpc, #\step]!
-	b	dispatch_loop
-	.endm
-#else
 	.macro	DISPATCH_1
 @        ldrb    r1, [jpc, #2]
 	.endm
@@ -702,7 +448,6 @@ do_\label:
         bic     ip, ip, #7
         ldr     pc, [ip, r1, lsl #2]
 	.endm
-#endif // DISPATCH_LOOP
 
 #define FFI_TYPE_VOID		0
 #define FFI_TYPE_FLOAT		2
@@ -759,105 +504,6 @@ do_\label:
 
 	.text
 
-do_dispatch_break:
-	mov	pc, lr
-
-#ifdef DISPATCH_LOOP
-@ r0 = bytecode
-@ jpc has been updated
-dispatch_loop:
-	TRACE_CODE
-dispatch_check_constpool:
-	CHECK_CONSTPOOL
-dispatch_check_locals:
-	CHECK_LOCALS
-dispatch_check_stack:
-	CHECK_STACK
-dispatch_check_frame:
-	CHECK_FRAME
-dispatch_check_backtrace:
-	CHECK_BACKTRACE
-dispatch_break:
-	BREAK_DISPATCH
-        ldrb    r1, [jpc, #2]
-        ldr     ip, [dispatch, r0, lsl #2]
-        ldrb    r2, [jpc, #1]
-        ands    lr, ip, #7
-        moveq   pc, ip
-	ldrb	r1, [jpc, lr]
-        bic     ip, ip, #7
-        ldr     ip, [ip, r1, lsl #2]
-        mov     pc, ip
-#endif
-
-is_subtype_of:
-	ldr	r2, [r1, #16]
-	add	ip, r0, r2
-	ldr	ip, [ip, #-8]
-	cmp	ip, r1
-	moveq	r0, #1
-	bxeq	lr
-	cmp	r2, #20
-	movne	r0, #0
-	bxne	lr
-	b	_ZNK5Klass23search_secondary_supersEP12klassOopDesc
-
-HandleC:
-	stmfd	sp!, {r4, r5, r6, lr}
-	ldr	r3, HandleC_adcons
-	subs	r5, r1, #0
-	mov	r4, r0
-.HandleC_pic:
-	add	r3, pc, r3
-	streq	r5, [r0, #0]
-	beq	2f
-	ldr	r2, HandleC_adcons+4
-	ldr	r3, [r3, r2]
-	ldr	r0, [r3, #0]
-	bl	pthread_getspecific
-	ldr	r3, [r0, #THREAD_HANDLE_AREA]
-	ldr	r0, [r3, #8]
-	ldr	r1, [r3, #12]
-	add	r2, r0, #4
-	cmp	r2, r1
-	strls	r2, [r3, #8]
-	bhi	3f
-1:
-	str	r5, [r0, #0]
-	str	r0, [r4, #0]
-2:
-	mov	r0, r4
-	ldmfd	sp!, {r4, r5, r6, pc}
-3:
-	mov	r0, r3
-	mov	r1, #4
-	bl	_ZN5Arena4growEj
-	b	1b
-HandleC_adcons:
-	.word	_GLOBAL_OFFSET_TABLE_-(.HandleC_pic+8)
-	.word	_ZN18ThreadLocalStorage13_thread_indexE(GOT)
-
-HandleMarkCleanerD:
-	stmfd	sp!, {r4, r5, r6, lr}
-	ldr	r3, [r0, #0]
-	mov	r6, r0
-	ldr	r4, [r3, #40]
-	ldr	r0, [r4, #8]
-	ldr	r5, [r4, #4]
-	ldr	r3, [r0, #0]
-	cmp	r3, #0
-	beq	1f
-	bl	_ZN5Chunk9next_chopEv
-	ldr	r0, [r4, #8]
-1:
-	str	r0, [r5, #4]
-	mov	r0, r6
-	ldr	r3, [r4, #12]
-	str	r3, [r5, #8]
-	ldr	r3, [r4, #16]
-	str	r3, [r5, #12]
-	ldmfd	sp!, {r4, r5, r6, pc}
-
 cmpxchg_ptr:
 	stmfd	sp!, {r4, r5, r6, r7, r8, lr}
 	mov	r6, #0xffffffc0
@@ -882,126 +528,6 @@ cmpxchg_ptr:
 	mov	r8, r3
 	mov	r0, r8
 	ldmfd	sp!, {r4, r5, r6, r7, r8, pc}
-
-ThreadInVMfromJavaD:
-	stmfd	sp!, {r4, r5, r6, lr}
-	ldr	r5, ThreadInVMfromJavaD_adcons
-	ldr	r3, ThreadInVMfromJavaD_adcons+4
-	mov	r2, #_thread_in_vm_trans
-.ThreadInVMfromJavaD_pic:
-	add	r5, pc, r5
-	ldr	r6, [r0, #0]
-	mov	r4, r0
-	ldr	r3, [r5, r3]
-	str	r2, [r6, #THREAD_STATE]
-	ldr	r3, [r3, #0]
-	cmp	r3, #1
-	ble	1f
-	ldr	r3, ThreadInVMfromJavaD_adcons+8
-	ldr	r3, [r5, r3]
-	ldrb	r3, [r3, #0]	@ zero_extendqisi2
-	cmp	r3, #0
-	bne	6f
-	ldr	r3, ThreadInVMfromJavaD_adcons+12
-	mov	r1, #1
-	ldr	r2, ThreadInVMfromJavaD_adcons+16
-	ldr	r3, [r5, r3]
-	ldr	r2, [r5, r2]
-	ldr	r3, [r3, #0]
-	ldr	r2, [r2, #0]
-	and	r3, r3, r6, lsr #3
-	str	r1, [r2, r3]
-1:
-	ldr	r3, ThreadInVMfromJavaD_adcons+20
-	ldr	r3, [r5, r3]
-	ldr	r3, [r3, #0]
-	cmp	r3, #0
-	bne	5f
-2:
-	mov	r3, #8
-	str	r3, [r6, #THREAD_STATE]
-	ldr	r0, [r4, #0]
-	ldr	r3, [r0, #THREAD_SPECIALRUNTIMEEXITCONDITION]
-	cmp	r3, #0
-	bne	3f
-	ldr	r3, [r0, #THREAD_SUSPEND_FLAGS]
-	tst	r3, #_thread_external_suspend
-	beq	4f
-3:
-	mov	r1, #1
-	bl	_ZN10JavaThread37handle_special_runtime_exit_conditionEb
-	mov	r0, r4
-	ldmfd	sp!, {r4, r5, r6, pc}
-4:
-	ldr	r3, [r0, #THREAD_SUSPEND_FLAGS]
-	tst	r3, #_thread_deopt_suspend
-	bne	3b
-	mov	r0, r4
-	ldmfd	sp!, {r4, r5, r6, pc}
-5:
-	mov	r0, r6
-	bl	_ZN20SafepointSynchronize5blockEP10JavaThread
-	b	2b
-6:
-	mov	r3, #0xffffffa0
-	bic	r3, r3, #0xf000
-	blx	r3
-	b	1b
-ThreadInVMfromJavaD_adcons:
-	.word	_GLOBAL_OFFSET_TABLE_-(.ThreadInVMfromJavaD_pic+8)
-	.word	_ZN2os16_processor_countE(GOT)
-	.word	UseMembar(GOT)
-	.word	_ZN2os20_serialize_page_maskE(GOT)
-	.word	_ZN2os19_mem_serialize_pageE(GOT)
-	.word	_ZN20SafepointSynchronize6_stateE(GOT)
-
-#define oop_address_tmp	tmp1
-#define oop_value_tmp	tmp2
-#define oop_lr		locals
-
-	ALIGN_CODE
-oop_store:
-	mov	oop_lr, lr
-@	mov	oop_address_tmp, r0
-@	mov	oop_value_tmp, r1
-	ldr	r3, [dispatch, #oopDesc_Address-XXX]
-	ldr	r3, [r3, #0]
-	ldr	r2, [r3, #8]
-	cmp	r2, #1
-	beq	1f
-	mov	r0, r3
-	mov	r1, oop_address_tmp
-	ldr	r3, [r3, #0]
-	mov	r2, oop_value_tmp
-	mov	lr, pc
-	ldr	pc, [r3, #48]
-1:
-	ldr	r3, [dispatch, #always_do_update_barrier_Address-XXX]
-	ldrb	r3, [r3]
-	cmp	r3, #0
-	beq	2f
-	mov	r3, #0xffffffa0
-	bic	r3, r3, #0xf000
-	blx	r3
-2:
-	mov	lr, oop_lr
-	CACHE_LOCALS
-	ldr	r3, [dispatch, #oopDesc_Address-XXX]
-	str	oop_value_tmp, [oop_address_tmp, #0]
-	ldr	r3, [r3, #0]
-	ldr	r2, [r3, #8]
-	cmp	r2, #1
-	beq	3f
-	mov	r0, r3
-	mov	r1, oop_address_tmp
-	mov	r2, oop_value_tmp
-	ldr	r3, [r3, #0]
-	ldr	pc, [r3, #52]
-3:
-	ldr	r3, [r3, #76]
-	mov	r2, #0
-	strb	r2, [r3, oop_address_tmp, lsr #9]
-	mov	pc, lr
 
 build_frame:
 	mov	r3, r0
@@ -1093,13 +619,6 @@ asm_generate_method_entry:
 	add	r1, r1, ip
 	add	r1, r1, r2		@ r1->dispatch
 
-#ifndef USE_COMPILER
-	ldr	r2, [r1, #UseCompiler_Address-XXX]
-	ldrb	r2, [r2]
-	cmp	r2, #0
-	bne	1f
-#endif
-
 	ldr	r2, [r1, #can_post_interpreter_events-XXX]
 	ldrb	r2, [r2]
 	cmp	r2, #0
@@ -1119,26 +638,33 @@ asm_generate_method_entry:
 asm_method_table:
 	.word	normal_entry
 	.word	normal_entry_synchronized
-#ifdef NATIVE_ENTRY
 	.word	native_entry
-#else
-	.word	0
-#endif
-	.word	0			@ cppInterpreter can handle native_entry_synchronized
+	.word	native_entry_synchronized
 	.word	empty_entry
 	.word	accessor_entry
-	.word	normal_entry
-	.word	normal_entry
-	.word	normal_entry
-	.word	normal_entry
-	.word	normal_entry
-	.word	normal_entry
-	.word	normal_entry
-	.word	normal_entry
+	.word	normal_entry		@ abstract entry
+	.word	normal_entry		@ java_lang_math_sin
+	.word	normal_entry		@ java_lang_math_cos
+	.word	normal_entry		@ java_lang_math_tan
+	.word	normal_entry		@ java_lang_math_abs
+	.word	normal_entry		@ java_lang_math_sqrt
+	.word	normal_entry		@ java_lang_math_log
+	.word	normal_entry		@ java_lang_math_log10
 
 	ALIGN_CODE
-	.global	empty_entry
+native_entry_synchronized:
+	b	fast_native_entry_synchronized
+
+	ALIGN_CODE
+fast_native_entry_synchronized:
+	b	_ZN14CppInterpreter12native_entryEP13methodOopDesciP6Thread
+
+	ALIGN_CODE
 empty_entry:
+	b	fast_empty_entry
+
+	ALIGN_CODE
+fast_empty_entry:
 	ldr	r3, .L1359
 	ldr	r1, .L1359+4
 .LPIC19:
@@ -1160,22 +686,22 @@ empty_entry:
 
 @ ---- START execute.s ---------------------------------------------------------------------
 
+	.global	asm_check_null_ptr
+asm_check_null_ptr:
+
 #ifdef HW_NULL_PTR_CHECK
 
 #define uc_mcontext		20
 #define arm_registers_offset	12
 #define arm_cpsr_offset		16*4
 
-	.global	asm_check_null_ptr
-asm_check_null_ptr:
 	add	r0, r0, #uc_mcontext + arm_registers_offset
 	ldr	r1, [r0, #15*4]
 	adr	ip, abort_table
 abort_loop:
 	ldr	r2, [ip], #8
 	cmp	r2, #0
-	moveq	r0, #0
-	bxeq	lr
+	beq	2f
 	cmp	r2, r1
 	bne	abort_loop
 
@@ -1193,6 +719,16 @@ abort_loop:
 do_setcontext:
 	mov	r0, #1
 	bx	lr
+#endif // HW_NULL_PTR_CHECK
+2:
+#ifdef THUMB2EE
+	b	Thumb2_Check_Null
+#else
+	mov	r0, #0
+	bx	lr
+#endif
+
+#ifdef HW_NULL_PTR_CHECK
 abort_table:
 			.word	.abortentry5, 1
 			.word	.abortentry6, 1
@@ -1240,19 +776,6 @@ abort_table:
 		FBC	.word	.abortentry59, 2
 		FBC	.word	.abortentry60, 2
 
-	NSP	FBC	.word	.abortentry61, 0
-	NSP	FBC	.word	.abortentry62, 0
-	NSP	FBC	.word	.abortentry63, 0
-	NSP	FBC	.word	.abortentry64, 0
-	NSP	FBC	.word	.abortentry65, 0
-	NSP	FBC	.word	.abortentry66, 0
-	NSP	FBC	.word	.abortentry67, 0
-	NSP	FBC	.word	.abortentry68, 0
-	NSP	FBC	.word	.abortentry69, 0
-	NSP	FBC	.word	.abortentry70, 0
-	NSP	FBC	.word	.abortentry71, 0
-	NSP	FBC	.word	.abortentry72, 0
-
 		FBC	.word	.abortentry73, 1
 		FBC	.word	.abortentry74, 1
 		FBC	.word	.abortentry75, 1
@@ -1274,18 +797,6 @@ abort_table:
 	    FBC	   	.word	.abortentry89, 5
 	    FBC	     	.word	.abortentry90, 4
 	    FBC	     	.word	.abortentry91, 4
-	NSP FBC	     	.word	.abortentry92, 3
-	NSP FBC	     	.word	.abortentry93, 3
-	NSP FBC	     	.word	.abortentry94, 3
-	NSP FBC	     	.word	.abortentry95, 3
-	NSP FBC	     	.word	.abortentry96, 3
-	NSP FBC	     	.word	.abortentry97, 3
-	NSP FBC	     	.word	.abortentry98, 3
-	NSP FBC	     	.word	.abortentry99, 3
-	NSP FBC	     	.word	.abortentry100, 3
-	NSP FBC	     	.word	.abortentry101, 3
-	NSP FBC	     	.word	.abortentry102, 3
-	NSP FBC	     	.word	.abortentry103, 3
 	    FBC		.word	.abortentry104, 0
 		FBC	.word	.abortentry105, 1
 		FBC	.word	.abortentry106, 1
@@ -1299,28 +810,27 @@ abort_table:
 
 		FBC	.word	.abortentry113, 0
 			.word	.abortentry114, 1
-			.word	.abortentry115, 0
-			.word	.abortentry116, abstractmethod_exception
 		FBC	.word	.abortentry117, 0
 			.word	.abortentry118, 0
-			.word	.abortentry119, return_throw_illegal_monitor_state
-		FBC	.word	.abortentry120, 0
 	.word	0
-
-#else
-	.global	asm_check_null_ptr
-asm_check_null_ptr:
-	mov	r0, #0
-	bx	lr
 
 #endif
 
-#ifdef NATIVE_ENTRY
+
+	ALIGN_CODE
+native_entry:
+	stmfd	arm_sp!, {regset, lr}
+	bl	fast_native_entry
+	ldmia	sp!, {regset, pc}
+
 	ALIGN_CODE
 fast_native_entry:
-	mov	r2, tmp1
-	mov	r11, tmp2
-fast_native_entry_with_args:
+	adrl	ip, dispatch_init_adcon
+	mov	r11, r0
+	ldm	ip, {dispatch, r7}
+	stmdb	sp!, {fast_regset, lr}
+	add	dispatch, dispatch, ip
+	add	dispatch, dispatch, r7
 	ldrh	r1, [r11, #METHOD_SIZEOFPARAMETERS]
 	ldr	r4, [r2, #THREAD_JAVA_SP]
 	ldr	r3, [r2, #THREAD_TOP_ZERO_FRAME]
@@ -1477,24 +987,6 @@ fast_native_entry_with_args:
 	ldr	ip, [r11, #METHOD_NATIVEHANDLER]
 	ldrh	r11, [r11, #METHOD_SIZEOFPARAMETERS]
 
-#ifdef CODETRACE
-	ldr	r1, [dispatch, #CodeTrace_Idx-XXX]
-	cmp	r1, #CODETRACE_BUFFER_SIZE
-	moveq	r1, #0
-	sub	r2, dispatch, #XXX-CodeTrace_Buffer_Base
-	mov	r3, #0x4e << 24		@ 'NATV' -> r3
-	orr	r3, r3, #0x4a << 16
-	orr	r3, r3, #0x54 << 8
-	orr	r3, r3, #0x56
-	str	r3, [r2, r1]
-	add	r1, r1, #4
-	cmp	r1, #CODETRACE_BUFFER_SIZE
-	moveq	r1, #0
-	str	ip, [r2, r1]
-	add	r1, r1, #4
-	str	r1, [dispatch, #CodeTrace_Idx-XXX]
-#endif
-
 	ldmia	arm_sp!, {r0, r1, r2, r3}
 	blx	ip
 
@@ -1557,50 +1049,40 @@ fast_native_entry_with_args:
 	str	lr, [r9, #THREAD_TOP_ZERO_FRAME]
 	str	tmp1, [ip, #JNIHANDLEBLOCK_TOP]
 	str	r1, [r5, #4]
-	cmp	istate, #0
 	str	r5, [r9, #THREAD_JAVA_SP]
-	bne	.fast_native_return
-	ldmfd	arm_sp!, {r3, r4, r5, r6, r7, r8, r9, r10, r11, pc}
+	ldmfd	arm_sp!, {fast_regset, pc}
 .fast_native_return_byte:
 	mov	r0, r0, lsl #24
 	str	lr, [r9, #THREAD_TOP_ZERO_FRAME]
 	mov	r0, r0, asr #24
 	str	tmp1, [ip, #JNIHANDLEBLOCK_TOP]
 	str	r0, [r5, #-4]!
-	cmp	istate, #0
 	str	r5, [r9, #THREAD_JAVA_SP]
-	bne	.fast_native_return
-	ldmfd	arm_sp!, {r3, r4, r5, r6, r7, r8, r9, r10, r11, pc}
+	ldmfd	arm_sp!, {fast_regset, pc}
 .fast_native_return_char:
 	mov	r0, r0, lsl #16
 	str	lr, [r9, #THREAD_TOP_ZERO_FRAME]
 	mov	r0, r0, lsr #16
 	str	tmp1, [ip, #JNIHANDLEBLOCK_TOP]
 	str	r0, [r5, #-4]!
-	cmp	istate, #0
 	str	r5, [r9, #THREAD_JAVA_SP]
-	bne	.fast_native_return
-	ldmfd	arm_sp!, {r3, r4, r5, r6, r7, r8, r9, r10, r11, pc}
+	ldmfd	arm_sp!, {fast_regset, pc}
 .fast_native_return_bool:
 	ands	r0, r0, #255
 	str	lr, [r9, #THREAD_TOP_ZERO_FRAME]
 	movne	r0, #1
 	str	tmp1, [ip, #JNIHANDLEBLOCK_TOP]
 	str	r0, [r5, #-4]!
-	cmp	istate, #0
 	str	r5, [r9, #THREAD_JAVA_SP]
-	bne	.fast_native_return
-	ldmfd	arm_sp!, {r3, r4, r5, r6, r7, r8, r9, r10, r11, pc}
+	ldmfd	arm_sp!, {fast_regset, pc}
 .fast_native_return_obj:
 	cmp	r0, #0
 	ldrne	r0, [r0]
 	str	r0, [r5, #-4]!
 	str	lr, [r9, #THREAD_TOP_ZERO_FRAME]
 	str	tmp1, [ip, #JNIHANDLEBLOCK_TOP]
-	cmp	istate, #0
 	str	r5, [r9, #THREAD_JAVA_SP]
-	bne	.fast_native_return
-	ldmfd	arm_sp!, {r3, r4, r5, r6, r7, r8, r9, r10, r11, pc}
+	ldmfd	arm_sp!, {fast_regset, pc}
 .fast_native_return_short:
 	mov	r0, r0, lsl #16
 	mov	r0, r0, asr #16
@@ -1610,32 +1092,8 @@ fast_native_entry_with_args:
 	str	lr, [r9, #THREAD_TOP_ZERO_FRAME]
 	str	tmp1, [ip, #JNIHANDLEBLOCK_TOP]
 .fast_native_exit:
-	cmp	istate, #0
 	str	r5, [r9, #THREAD_JAVA_SP]
-	ldmeqfd	arm_sp!, {r3, r4, r5, r6, r7, r8, r9, r10, r11, pc}
-.fast_native_return:
-	ldr	r2, [istate, #ISTATE_STACK_LIMIT]
-	sub	r5, r5, #4
-	str	r5, [istate, #ISTATE_STACK]
-
-	ldr	r1, [r9, #THREAD_TOP_ZERO_FRAME]
-	add	r2, r2, #4
-	str	r2, [r9, #THREAD_JAVA_SP]
-	str	r1, [r9, #THREAD_LAST_JAVA_SP]
-	ldr	r0, [istate, #ISTATE_THREAD]
-	CACHE_STACK
-	CACHE_JPC
-	ldr	r3, [r0, #THREAD_PENDING_EXC]
-	DISPATCH_START	3
-	DISPATCH_NEXT
-	CACHE_CP
-	DISPATCH_NEXT
-	cmp	r3, #0
-	DISPATCH_NEXT
-	bne	invokenative_exception
-	DISPATCH_NEXT
-	CACHE_LOCALS
-	DISPATCH_FINISH
+	ldmfd	arm_sp!, {fast_regset, pc}
 
 .fast_native_entry_throw_stack_overflow:
 	str	r0, [r9, #THREAD_LAST_JAVA_SP]
@@ -1659,958 +1117,46 @@ fast_native_entry_with_args:
 	bl	_ZN10JavaThread40check_special_condition_for_native_transEPS_
 	ldmia	arm_sp!, {r0, r1}
 	b	.fast_native_entry_do_return
-#endif // NATIVE_ENTRY
 
 #include "bytecodes_arm.s"
 
 	Opcode	idiv
 
-	POP	tmp2, tmp1
-	DISPATCH_START	1
-int_div:
-	cmp	tmp2, #0x20
-	DISPATCH_NEXT
-	adr	r3, .div_table
-	DISPATCH_NEXT
-	ldrcc	pc, [r3, tmp2, lsl #2]
+	POP	r1
+	POP	r0
+	cmp	r1, #0
+	beq	divide_by_zero_exception
+	bl	__aeabi_idiv
+	PUSH	r0
+	DISPATCH 1
 
-        ands    a4, tmp2, #0x80000000
-        rsbmi   tmp2, tmp2, #0
-        eors    lr, a4, tmp1, ASR #32
-        rsbcs   tmp1, tmp1, #0
-	movs	a3, tmp2
-.s_loop:
-        cmp     a3, tmp1, LSR #8
-        movls   a3, a3, LSL #8
-        blo     .s_loop
-        cmp     a3, tmp1, LSR #1
-        bhi     .s_jump7
-        cmp     a3, tmp1, LSR #2
-        bhi     .s_jump6
-        cmp     a3, tmp1, LSR #3
-        bhi     .s_jump5
-        cmp     a3, tmp1, LSR #4
-        bhi     .s_jump4
-        cmp     a3, tmp1, LSR #5
-        bhi     .s_jump3
-        cmp     a3, tmp1, LSR #6
-        bhi     .s_jump2
-        cmp     a3, tmp1, LSR #7
-        bhi     .s_jump1
-.s_loop2:
-@ not executed when falling into .s_loop2
-        movhi   a3, a3, LSR #8
-        cmp     tmp1, a3, LSL #7
-        adc     a4, a4, a4
-        subcs   tmp1, tmp1, a3, LSL #7
-        cmp     tmp1, a3, LSL #6
-.s_jump1:
-        adc     a4, a4, a4
-        subcs   tmp1, tmp1, a3, LSL #6
-        cmp     tmp1, a3, LSL #5
-.s_jump2:
-        adc     a4, a4, a4
-        subcs   tmp1, tmp1, a3, LSL #5
-        cmp     tmp1, a3, LSL #4
-.s_jump3:
-        adc     a4, a4, a4
-        subcs   tmp1, tmp1, a3, LSL #4
-        cmp     tmp1, a3, LSL #3
-.s_jump4:
-        adc     a4, a4, a4
-        subcs   tmp1, tmp1, a3, LSL #3
-        cmp     tmp1, a3, LSL #2
-.s_jump5:
-        adc     a4, a4, a4
-        subcs   tmp1, tmp1, a3, LSL #2
-        cmp     tmp1, a3, LSL #1
-.s_jump6:
-        adc     a4, a4, a4
-        subcs   tmp1, tmp1, a3, LSL #1
-.s_jump7:
-        cmp     tmp1, a3
-        adc     a4, a4, a4
-        subcs   tmp1, tmp1, a3
-        cmp     a3, tmp2
-        bne     .s_loop2
-        movs    lr, lr, lsl #1
-	rsbcs	a4, a4, #0
-	DISPATCH_NEXT
-	DISPATCH_NEXT
-	PUSH	a4
-	DISPATCH_FINISH
+	Opcode	idiv_clz
 
-.div_table:
-	.word	div_zero_jpc_1
-	.word	.divc_1
-	.word	.divc_2
-	.word	.divc_3
-	.word	.divc_4
-	.word	.divc_5
-	.word	.divc_6
-	.word	.divc_7
-	.word	.divc_8
-	.word	.divc_9
-	.word	.divc_10
-	.word	.divc_11
-	.word	.divc_12
-	.word	.divc_13
-	.word	.divc_14
-	.word	.divc_15
-	.word	.divc_16
-	.word	.divc_17
-	.word	.divc_18
-	.word	.divc_19
-	.word	.divc_20
-	.word	.divc_21
-	.word	.divc_22
-	.word	.divc_23
-	.word	.divc_24
-	.word	.divc_25
-	.word	.divc_26
-	.word	.divc_27
-	.word	.divc_28
-	.word	.divc_29
-	.word	.divc_30
-	.word	.divc_31
-
-.divc_1:
-	DISPATCH_STATE	3
-	DISPATCH_NEXT
-	DISPATCH_NEXT
-	PUSH	tmp1
-	DISPATCH_FINISH
-.divc_2:
-	DISPATCH_STATE	3
-	DISPATCH_NEXT
-        add     tmp1, tmp1, tmp1, lsr #31
-        mov     tmp2, tmp1, asr #1
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_3:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_3
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        sub	tmp2, a4, tmp1, asr #31
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_4:
-	DISPATCH_STATE	3
-	movs	a4, tmp1
-	DISPATCH_NEXT
-        addmi	a4, a4, #3
-        mov	tmp2, a4, asr #2
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_5:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_5
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #1
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_6:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_6
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        sub	tmp2, a4, tmp1, asr #31
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_7:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_7
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	tmp2, tmp1, asr #31
-        add	lr, tmp1, a4
-        rsb	tmp2, tmp2, lr, asr #2
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_8:
-	DISPATCH_STATE	3
-	movs	lr, tmp1
-	DISPATCH_NEXT
-        addmi	lr, lr, #7
-        mov	tmp2, lr, asr #3
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_9:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_9
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #1
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_10:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_10
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #2
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_11:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_11
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #1
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_12:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_12
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #1
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_13:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_13
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #2
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_14:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_14
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	tmp2, tmp1, asr #31
-        add	lr, tmp1, a4
-        rsb	tmp2, tmp2, lr, asr #3
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_15:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_15
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	tmp2, tmp1, asr #31
-        add	lr, tmp1, a4
-        rsb	tmp2, tmp2, lr, asr #3
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_16:
-	DISPATCH_STATE	3
-	movs	lr, tmp1
-	DISPATCH_NEXT
-        addmi	lr, lr, #15
-        mov	tmp2, lr, asr #4
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_17:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_17
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #3
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_18:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_18
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #2
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_19:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_19
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #3
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_20:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_20
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #3
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_21:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_21
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #2
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_22:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_22
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #2
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_23:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_23
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	tmp2, tmp1, asr #31
-        add	lr, tmp1, a4
-        rsb	tmp2, tmp2, lr, asr #4
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_24:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_24
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #2
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_25:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_25
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #3
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_26:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_26
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #3
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_27:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_27
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #3
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_28:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_28
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	tmp2, tmp1, asr #31
-        add	lr, tmp1, a4
-        rsb	tmp2, tmp2, lr, asr #4
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_29:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_29
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	tmp2, tmp1, asr #31
-        add	lr, tmp1, a4
-        rsb	tmp2, tmp2, lr, asr #4
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_30:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_30
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	tmp2, tmp1, asr #31
-        add	lr, tmp1, a4
-        rsb	tmp2, tmp2, lr, asr #4
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.divc_31:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_31
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	tmp2, tmp1, asr #31
-        add	lr, tmp1, a4
-        rsb	tmp2, tmp2, lr, asr #4
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.dc_7:
-.dc_14:
-	.word     0x92492493
-.dc_15:
-.dc_30:
-	.word     0x88888889
-.dc_23:
-	.word     0xb21642c9
-.dc_28:
-	.word     0x92492493
-.dc_29:
-	.word     0x8d3dcb09
-.dc_31:
-	.word     0x84210843
-.dc_6:
-.dc_12:
-.dc_24:
-	.word     0x2aaaaaab
-.dc_19:
-	.word     0x6bca1af3
-.dc_5:
-.dc_10:
-.dc_20:
-	.word     0x66666667
-.dc_21:
-	.word     0x30c30c31
-.dc_11:
-.dc_22:
-	.word     0x2e8ba2e9
-.dc_26:
-.dc_13:
-	.word     0x4ec4ec4f
-.dc_25:
-	.word     0x51eb851f
-.dc_27:
-	.word     0x4bda12f7
-.dc_3:
-	.word     0x55555556
-.dc_17:
-	.word     0x78787879
-.dc_9:
-.dc_18:
-	.word     0x38e38e39
-
+	POP	r1
+	POP	r0
+	bl	int_div
+idiv_clz_ret:
+	PUSH	r0
+	DISPATCH 1
 
 	Opcode	irem
 
-	POP	tmp2, tmp1
-	DISPATCH_START	1
-int_rem:
-	cmp	tmp2, #0x20
-	DISPATCH_NEXT
-	adr	r3, .rem_table
-	DISPATCH_NEXT
-	ldrcc	pc, [r3, tmp2, lsl #2]
+	POP	r1
+	POP	r0
+	cmp	r1, #0
+	beq	divide_by_zero_exception
+	bl	__aeabi_idivmod
+	PUSH	r1
+	DISPATCH 1
 
-        ands    a4, tmp2, #0x80000000
-        rsbmi   tmp2, tmp2, #0
-        eors    lr, a4, tmp1, ASR #32
-        rsbcs   tmp1, tmp1, #0
-	movs	a3, tmp2
-.r_loop:
-        cmp     a3, tmp1, LSR #8
-        movls   a3, a3, LSL #8
-        blo     .r_loop
-        cmp     a3, tmp1, LSR #1
-        bhi     .r_jump7
-        cmp     a3, tmp1, LSR #2
-        bhi     .r_jump6
-        cmp     a3, tmp1, LSR #3
-        bhi     .r_jump5
-        cmp     a3, tmp1, LSR #4
-        bhi     .r_jump4
-        cmp     a3, tmp1, LSR #5
-        bhi     .r_jump3
-        cmp     a3, tmp1, LSR #6
-        bhi     .r_jump2
-        cmp     a3, tmp1, LSR #7
-        bhi     .r_jump1
-.r_loop2:
-@ not executed when falling into .r_loop2
-        movhi   a3, a3, LSR #8
-        cmp     tmp1, a3, LSL #7
-        adc     a4, a4, a4
-        subcs   tmp1, tmp1, a3, LSL #7
-        cmp     tmp1, a3, LSL #6
-.r_jump1:
-        adc     a4, a4, a4
-        subcs   tmp1, tmp1, a3, LSL #6
-        cmp     tmp1, a3, LSL #5
-.r_jump2:
-        adc     a4, a4, a4
-        subcs   tmp1, tmp1, a3, LSL #5
-        cmp     tmp1, a3, LSL #4
-.r_jump3:
-        adc     a4, a4, a4
-        subcs   tmp1, tmp1, a3, LSL #4
-        cmp     tmp1, a3, LSL #3
-.r_jump4:
-        adc     a4, a4, a4
-        subcs   tmp1, tmp1, a3, LSL #3
-        cmp     tmp1, a3, LSL #2
-.r_jump5:
-        adc     a4, a4, a4
-        subcs   tmp1, tmp1, a3, LSL #2
-        cmp     tmp1, a3, LSL #1
-.r_jump6:
-        adc     a4, a4, a4
-        subcs   tmp1, tmp1, a3, LSL #1
-.r_jump7:
-        cmp     tmp1, a3
-        adc     a4, a4, a4
-        subcs   tmp1, tmp1, a3
-        cmp     a3, tmp2
-        bne     .r_loop2
-        movs    lr, lr, lsl #1
-	DISPATCH_NEXT
-	rsbmi	tmp1, tmp1, #0
-	DISPATCH_NEXT
-	PUSH	tmp1
-	DISPATCH_FINISH
+	Opcode	irem_clz
 
-.rem_table:
-	.word	div_zero_jpc_1
-	.word	.remc_1
-	.word	.remc_2
-	.word	.remc_3
-	.word	.remc_4
-	.word	.remc_5
-	.word	.remc_6
-	.word	.remc_7
-	.word	.remc_8
-	.word	.remc_9
-	.word	.remc_10
-	.word	.remc_11
-	.word	.remc_12
-	.word	.remc_13
-	.word	.remc_14
-	.word	.remc_15
-	.word	.remc_16
-	.word	.remc_17
-	.word	.remc_18
-	.word	.remc_19
-	.word	.remc_20
-	.word	.remc_21
-	.word	.remc_22
-	.word	.remc_23
-	.word	.remc_24
-	.word	.remc_25
-	.word	.remc_26
-	.word	.remc_27
-	.word	.remc_28
-	.word	.remc_29
-	.word	.remc_30
-	.word	.remc_31
-
-.remc_1:
-	DISPATCH_STATE	3
-	DISPATCH_NEXT
-	mov	tmp2, #0
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_2:
-	DISPATCH_STATE	3
-	add	lr, tmp1, tmp1, lsr #31
-        mov	tmp2, lr, asr #1
-	DISPATCH_NEXT
-	sub	tmp2, tmp1, tmp2, lsl #1
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_3:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_3
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        sub	tmp2, a4, tmp1, asr #31
-	add	lr, tmp2, tmp2, lsl #1
-	sub	tmp2, tmp1, lr
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_4:
-	DISPATCH_STATE	3
-	movs	lr, tmp1
-	DISPATCH_NEXT
-        addmi	lr, lr, #3
-        mov	tmp2, lr, asr #2
-	sub	tmp2, tmp1, tmp2, lsl #2
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_5:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_5
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #1
-	add	lr, tmp2, tmp2, lsl #2
-	sub	tmp2, tmp1, lr
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_6:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_6
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        sub	tmp2, a4, tmp1, asr #31
-	add	lr, tmp2, tmp2, lsl #1
-	sub	tmp2, tmp1, lr, lsl #1
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_7:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_7
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	tmp2, tmp1, asr #31
-        add	lr, tmp1, a4
-        rsb	tmp2, tmp2, lr, asr #2
-	rsb	lr, tmp2, tmp2, lsl #3
-	sub	tmp2, tmp1, lr
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_8:
-	DISPATCH_STATE	3
-	movs	lr, tmp1
-	DISPATCH_NEXT
-        addmi	lr, lr, #7
-        mov	tmp2, lr, asr #3
-	sub	tmp2, tmp1, tmp2, lsl #3
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_9:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_9
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #1
-	add	lr, tmp2, tmp2, lsl #3
-	sub	tmp2, tmp1, lr
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_10:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_10
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #2
-	add	lr, tmp2, tmp2, lsl #2
-	sub	tmp2, tmp1, lr, lsl #1
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_11:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_11
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #1
-	add	lr, tmp2, tmp2, lsl #2
-	add	lr, tmp2, lr, lsl #1
-	sub	tmp2, tmp1, lr
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_12:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_12
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #1
-	add	lr, tmp2, tmp2, lsl #1
-	sub	tmp2, tmp1, lr, lsl #2
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_13:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_13
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #2
-	add	lr, tmp2, tmp2, lsl #1
-	add	lr, tmp2, lr, lsl #2
-	sub	tmp2, tmp1, lr
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_14:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_14
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	tmp2, tmp1, asr #31
-        add	lr, tmp1, a4
-        rsb	tmp2, tmp2, lr, asr #3
-	rsb	lr, tmp2, tmp2, lsl #3
-	sub	tmp2, tmp1, lr, lsl #1
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_15:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_15
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	tmp2, tmp1, asr #31
-        add	lr, tmp1, a4
-        rsb	tmp2, tmp2, lr, asr #3
-	rsb	lr, tmp2, tmp2, lsl #4
-	sub	tmp2, tmp1, lr
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_16:
-	DISPATCH_STATE	3
-	movs	lr, tmp1
-	DISPATCH_NEXT
-        addmi	lr, lr, #15
-        mov	tmp2, lr, asr #4
-	sub	tmp2, tmp1, tmp2, lsl #4
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_17:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_17
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #3
-	add	lr, tmp2, tmp2, lsl #4
-	sub	tmp2, tmp1, lr
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_18:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_18
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #2
-	add	lr, tmp2, tmp2, lsl #3
-	sub	tmp2, tmp1, lr, lsl #1
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_19:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_19
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #3
-	add	lr, tmp2, tmp2, lsl #3
-	add	lr, tmp2, lr, lsl #1
-	sub	tmp2, tmp1, lr
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_20:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_20
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #3
-	add	lr, tmp2, tmp2, lsl #2
-	sub	tmp2, tmp1, lr, lsl #2
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_21:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_21
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #2
-	add	lr, tmp2, tmp2, lsl #1
-	rsb	lr, lr, lr, lsl #3
-	sub	tmp2, tmp1, lr
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_22:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_22
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #2
-	add	lr, tmp2, tmp2, lsl #2
-	add	lr, tmp2, lr, lsl #1
-	sub	tmp2, tmp1, lr, lsl #1
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_23:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_23
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	tmp2, tmp1, asr #31
-        add	lr, tmp1, a4
-        rsb	tmp2, tmp2, lr, asr #4
-	add	lr, tmp2, tmp2, lsl #1
-	rsb	lr, tmp2, lr, lsl #3
-	sub	tmp2, tmp1, lr
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_24:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_24
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #2
-	add	lr, tmp2, tmp2, lsl #1
-	sub	tmp2, tmp1, lr, lsl #3
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_25:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_25
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #3
-	add	lr, tmp2, tmp2, lsl #2
-	add	lr, lr, lr, lsl #2
-	sub	tmp2, tmp1, lr
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_26:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_26
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #3
-	add	lr, tmp2, tmp2, lsl #1
-	add	lr, tmp2, lr, lsl #2
-	sub	tmp2, tmp1, lr, lsl #1
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_27:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_27
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	lr, tmp1, asr #31
-        rsb	tmp2, lr, a4, asr #3
-	add	lr, tmp2, tmp2, lsl #1
-	add	lr, lr, lr, lsl #3
-	sub	tmp2, tmp1, lr
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_28:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_28
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	tmp2, tmp1, asr #31
-        add	lr, tmp1, a4
-        rsb	tmp2, tmp2, lr, asr #4
-	rsb	lr, tmp2, tmp2, lsl #3
-	sub	tmp2, tmp1, lr, lsl #2
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_29:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_29
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	tmp2, tmp1, asr #31
-        add	lr, tmp1, a4
-        rsb	tmp2, tmp2, lr, asr #4
-	rsb	lr, tmp2, tmp2, lsl #3
-	add	lr, tmp2, lr, lsl #2
-	sub	tmp2, tmp1, lr
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_30:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_30
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	tmp2, tmp1, asr #31
-        add	lr, tmp1, a4
-        rsb	tmp2, tmp2, lr, asr #4
-	rsb	lr, tmp2, tmp2, lsl #4
-	sub	tmp2, tmp1, lr, lsl #1
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
-.remc_31:
-	DISPATCH_STATE	3
-	ldr	tmp2, .dc_31
-	DISPATCH_NEXT
-        smull	lr, a4, tmp1, tmp2
-        mov	tmp2, tmp1, asr #31
-        add	lr, tmp1, a4
-        rsb	tmp2, tmp2, lr, asr #4
-	rsb	lr, tmp2, tmp2, lsl #5
-	sub	tmp2, tmp1, lr
-	DISPATCH_NEXT
-	PUSH	tmp2
-	DISPATCH_FINISH
+	POP	r1
+	POP	r0
+	bl	int_rem
+irem_clz_ret:
+	PUSH	r0
+	DISPATCH 1
 
 	Opcode	goto
         ldrsb   r1, [jpc, #1]
@@ -2622,6 +1168,46 @@ branch_taken:
 	ble	do_backedge
 	DISPATCH_FINISH
 
+branch_taken_unsafe:
+	mov	r2, r2, lsl #24
+	orr	tmp1, r1, r2, asr #16
+        DISPATCH_START_REG	tmp1
+  USEC	cmp	tmp1, #0
+  USEC	ble	do_backedge
+	DISPATCH_FINISH
+
+branch_taken_unsafe_1:
+	add	jpc, jpc, #1
+	orr	tmp1, ip, r1, lsl #8
+        DISPATCH_START_REG	tmp1
+  USEC	cmp	tmp1, #0
+  USEC	ble	do_backedge
+	DISPATCH_FINISH
+
+branch_taken_unsafe_2:
+	add	jpc, jpc, #2
+	orr	tmp1, ip, r1, lsl #8
+        DISPATCH_START_REG	tmp1
+  USEC	cmp	tmp1, #0
+  USEC	ble	do_backedge
+	DISPATCH_FINISH
+
+branch_taken_unsafe_3:
+	add	jpc, jpc, #3
+	orr	tmp1, ip, r1, lsl #8
+        DISPATCH_START_REG	tmp1
+  USEC	cmp	tmp1, #0
+  USEC	ble	do_backedge
+	DISPATCH_FINISH
+
+branch_taken_unsafe_4:
+	add	jpc, jpc, #4
+	orr	tmp1, ip, r1, lsl #8
+        DISPATCH_START_REG	tmp1
+  USEC	cmp	tmp1, #0
+  USEC	ble	do_backedge
+	DISPATCH_FINISH
+
 do_backedge:
   USEC	ldr	tmp2, [istate, #ISTATE_METHOD]
   OSR	ldr	lr, [dispatch, #InterpreterInvocationLimit_Address-XXX]
@@ -2631,7 +1217,11 @@ do_backedge:
   OSR	ldr	lr, [lr]
   USEC	add	ip, ip, #INVOCATIONCOUNTER_COUNTINCREMENT
   USEC	str	r1, [tmp2, #METHOD_BACKEDGECOUNTER]
+#ifdef THUMB2EE
+  OSR	cmp	r1, lr
+#else
   OSR	cmp	r1, lr, lsl #2
+#endif
   USEC	str	ip, [tmp2, #METHOD_INVOCATIONCOUNTER]
   OSR	bcs	do_osr
 
@@ -2645,23 +1235,37 @@ osr_continue:
 
 
 do_synchronize:
-	add	r0, istate, #ISTATE_THREAD
-	bl	HandleMarkCleanerD
-	ldr	r0, [istate, #ISTATE_THREAD]
 	DECACHE_JPC
 	DECACHE_STACK
-	bl	_ZN20SafepointSynchronize5blockEP10JavaThread
-	ASSERT_STACK_CACHED
-	ASSERT_LOCALS_CACHED
 	ldr	r0, [istate, #ISTATE_THREAD]
+	bl	Helper_SafePoint
 	CACHE_CP
-	ldr	r3, [r0, #THREAD_PENDING_EXC]
 	CACHE_JPC
-	cmp	r3, #0
+	cmp	r0, #0
 	bne	handle_exception
 	DISPATCH	0
 
 #ifdef ON_STACK_REPLACEMENT
+
+#ifdef THUMB2EE
+do_osr:
+	ldr	r3, [tmp2, #METHOD_CONSTMETHOD]
+	DECACHE_JPC
+	DECACHE_STACK
+	ldr	r0, [istate, #ISTATE_THREAD]
+	sub	r1, jpc, r3
+	sub	r1, r1, #CONSTMETHOD_CODEOFFSET
+	bl	FREQ_COUNT_OVERFLOW
+1:
+	cmp	r0, #0
+	bne	call_thumb2
+	CACHE_CP
+	CACHE_JPC
+	DISPATCH_START	0
+	b	osr_continue
+
+#else
+
 do_osr:
 	ldr	ip, [dispatch, #UseOnStackReplacement_Address-XXX]
 	ldrb	ip, [ip]
@@ -2680,15 +1284,13 @@ do_osr:
 	mov	r3, #1
 	ldr	r5, [tmp2]
 	str	r3, [tmp2]
-	bl	_ZN18InterpreterRuntime26frequency_counter_overflowEP10JavaThreadPh
+	bl	FREQ_COUNT_OVERFLOW
 	str	r5, [tmp2]
 	b	2f
 1:
-	bl	_ZN18InterpreterRuntime26frequency_counter_overflowEP10JavaThreadPh
+	bl	FREQ_COUNT_OVERFLOW
 2:
 	ldr	r3, [istate, #ISTATE_THREAD]
-	ASSERT_LOCALS_CACHED
-	ASSERT_STACK_CACHED
 	CACHE_CP
 	ldr	r1, [r3, #THREAD_PENDING_EXC]
 	CACHE_JPC
@@ -2702,13 +1304,9 @@ do_osr:
 1:
 	DISPATCH_START	0
 	b	osr_continue
-#endif
 
-#ifdef ON_STACK_REPLACEMENT
 osr_migrate:
 	ldr	tmp1, [r0, #128]	@ osr_method->osr_entry()
-	ldr	tmp2, [istate, #ISTATE_ADVANCE_PC]
-@	ldr	istate, [istate, #ISTATE_NEXT_FRAME]
 	mov	r0, r3
 	bl	_ZN13SharedRuntime19OSR_migration_beginEP10JavaThread
 	mov	r1, r0
@@ -2730,32 +1328,11 @@ osr_migrate:
 	mov	lr, pc
 	ldr	pc, [tmp1]
 
-	cmp	tmp2, #0
-	ldmeqfd	arm_sp!, {regset, pc}
+	ldmfd	arm_sp!, {fast_regset, pc}
 
-	ldr	istate, [istate, #ISTATE_NEXT_FRAME]
-        ldr	lr, [istate, #-ISTATE_NEXT_FRAME+ISTATE_THREAD]!
-        CACHE_JPC
-        ldr     stack, [lr, #THREAD_JAVA_SP]
-        ldr     r2, [istate, #ISTATE_STACK_LIMIT]
-        sub     stack, stack, #4
+#endif // THUMB2EE
 
-        ldr     r1, [lr, #THREAD_TOP_ZERO_FRAME]
-        add     r2, r2, #4
-        str     r2, [lr, #THREAD_JAVA_SP]
-        str     r1, [lr, #THREAD_LAST_JAVA_SP]
-        ldr     r3, [lr, #THREAD_PENDING_EXC]
-        DISPATCH_START_REG tmp2
-        CACHE_LOCALS
-	DISPATCH_NEXT
-	DISPATCH_NEXT
-        cmp     r3, #0
-        DISPATCH_NEXT
-        bne     return_exception
-	DISPATCH_NEXT
-        CACHE_CP
-	DISPATCH_FINISH
-#endif
+#endif // ON_STACK_REPLACEMENT
 
 	Opcode	ifeq
 	Opcode	ifnull
@@ -2867,18 +1444,12 @@ osr_migrate:
 	ldr	r1, [r3]
 	cmp	r1, #1
 	bne	handle_return
-	add	r0, istate, #ISTATE_THREAD
-	bl	HandleMarkCleanerD
-	ldr	r0, [istate, #ISTATE_THREAD]
 	DECACHE_JPC
 	DECACHE_STACK
-	bl	_ZN20SafepointSynchronize5blockEP10JavaThread
 	ldr	r0, [istate, #ISTATE_THREAD]
-	ASSERT_STACK_CACHED
-	ldr	r3, [r0, #THREAD_PENDING_EXC]
+	bl	Helper_SafePoint
 	CACHE_JPC
-@ CACHE_LOCALS & CACHE_CP not require for handle_retuen / handle_exception
-	cmp	r3, #0
+	cmp	r0, #0
 	beq	handle_return
 	b	handle_exception
 
@@ -2889,8 +1460,6 @@ resolve_get_put:
 	DECACHE_JPC
         DECACHE_STACK
        	bl      _ZN18InterpreterRuntime15resolve_get_putEP10JavaThreadN9Bytecodes4CodeE
-        ASSERT_STACK_CACHED
-        ASSERT_LOCALS_CACHED
         ldr     r0, [istate, #ISTATE_THREAD]
 	CACHE_JPC
         ldr     r3, [r0, #THREAD_PENDING_EXC]
@@ -3057,19 +1626,12 @@ putfield_dw:
 	stm	tmp2, {r2, r3}
 	DISPATCH 3
 putfield_a:
-	GET_STACK	1, r0
-	add	oop_address_tmp, r0, tmp2
-	POP	oop_value_tmp
-	cmp	r0, #0
+	POP	r2, r3
+	cmp	r3, #0
 	beq	null_ptr_exception
-	bl	oop_store
-    	ldr r3, [dispatch, #Universe_collectedHeap_Address-XXX]
-        POP     r2
-	ldr r3, [r3, #0]
-	ldr r3, [r3, #12]
-	ldr r3, [r3, #76]
-        mov     tmp2, #0
-        strb    tmp2, [r3, r2, lsr #9]
+	str	r2, [r3, tmp2]
+	mov	r0, r3
+	bl	Helper_aputfield
 	DISPATCH 3
 #endif
 
@@ -3134,21 +1696,11 @@ putstatic_dw:
 	stm	r2, {r3, tmp2}
 	DISPATCH_FINISH
 putstatic_a:
-	POP	oop_value_tmp
-	add	oop_address_tmp, r3, r2
-	PUSH	r3
-       	bl      oop_store
-    ldr	r3, [dispatch, #Universe_collectedHeap_Address-XXX]
-	DISPATCH_START	3
-	POP	r2
-    ldr	r3, [r3]
-	DISPATCH_NEXT
-    ldr	r3, [r3, #12]
-	DISPATCH_NEXT
-        mov     tmp2, #0
-    ldr	r3, [r3, #76]
-        strb    tmp2, [r3, r2, lsr #9]
-	DISPATCH_FINISH
+	POP	tmp2
+	str	tmp2, [r3, r2]
+	mov	r0, r3
+	bl	Helper_aputfield
+	DISPATCH 3
 
 resolve_invokeinterface:
 	mov	r1, #opc_invokeinterface
@@ -3167,8 +1719,6 @@ resolve_invoke:
 	DECACHE_JPC
 	DECACHE_STACK
 	bl	_ZN18InterpreterRuntime14resolve_invokeEP10JavaThreadN9Bytecodes4CodeE
-	ASSERT_STACK_CACHED
-	ASSERT_LOCALS_CACHED
 	ldr	r0, [istate, #ISTATE_THREAD]
 	CACHE_JPC
 	ldr	r3, [r0, #4]
@@ -3185,109 +1735,17 @@ resolve_invoke:
 # r1 = [jpc, #2]
 	Opcode	new
 	ldrb	r1, [jpc, #2]
-#define k_entry		tmp2
-#define new_result	r7
-#define top_addr	r7
-#define uch		r7
-#define obj_size	tmp1
-	ldr	r3, [istate, #ISTATE_METHOD]
-	orr	r2, r1, r2, lsl #8
-	ldr	lr, [r3, #METHOD_CONSTANTS]
-	ldr	r1, [lr, #CONSTANTPOOL_TAGS]
-	add	r1, r1, #12
-	ldrb	r3, [r1, r2]
-	cmp	r3, #JVM_CONSTANT_UnresolvedClassInError
-	cmpne	r3, #JVM_CONSTANT_UnresolvedClass
-	beq	.new_slow_case
-
-	add	r3, lr, #CONSTANTPOOL_BASE
-	ldr	k_entry, [r3, r2, lsl #2]
-
-	add	r1, k_entry, #KLASS_PART
-	ldr	r3, [r1, #INSTANCEKLASS_INITSTATE]
-	cmp	r3, #class_fully_initialized
-	bne	.new_slow_case
-	ldr	r3, [r1, #4]
-	tst	r3, #1
-	bne	.new_slow_case
-
-	mov	obj_size, r3, asr #2
-.new_retry:
-	ldr	r0, [dispatch, #Universe_collectedHeap_Address-XXX]
-	ldr	r0, [r0]
-	bl	CollectedHeap_top_addr
-	mov	top_addr, r0
-	ldr	r0, [dispatch, #Universe_collectedHeap_Address-XXX]
-	ldr	r0, [r0]
-	bl	CollectedHeap_end_addr
-	mov	r1, top_addr
-	ldr	new_result, [top_addr, #0]
-	add	ip, new_result, obj_size, lsl #2
-	ldr	r3, [r0, #0]
-	cmp	ip, r3
-	bhi	.new_slow_case
-	mov	r2, new_result
-	add	r0, new_result, obj_size, lsl #2
-	bl	cmpxchg_ptr
-	cmp	r0, new_result
-	bne	.new_retry
-	subs	r2, obj_size, #2
-@ ECN: sub optimimal memset
-	tst	r2, #1
-	add	r0, new_result, #8
-	mov	r1, #0
-	mov	ip, #0
-	strne	r1, [r0], #4
-	tst	r2, #2
-	mov	r3, #0
-	mov	lr, #0
-	stmneia	r0!, {r1, r3}
-	bics	r2, r2, #3
-	beq	.new_zero_done
-1:
-	subs	r2, r2, #4
-	stmia	r0!, {r1, r3, ip, lr}
-	bne	1b
-.new_zero_done:
-	ldr	r3, [dispatch, #always_do_update_barrier_Address-XXX]
-	mov	r2, #1
-	ldrb	r1, [r3]	@ zero_extendqisi2
-	str	r2, [new_result, #0]
-	cmp	r1, #0
-	bne	.new_do_update_barrier
-	str	k_entry, [new_result, #4]
-.new_exit:
-	str	new_result, [stack], #-4
-	CACHE_LOCALS
-	DISPATCH	3
-.new_do_update_barrier:
-	add	oop_address_tmp, new_result, #4
-@	mov	oop_value_tmp, k_entry		@ oop_value_tmp == k_entry
-	adr	lr, .new_exit
-	b	oop_store
-.new_slow_case:
-	ldrb	r2, [jpc, #1]
-	ldrb	r1, [jpc, #2]
-	ldr	r3, [istate, #ISTATE_METHOD]
 	DECACHE_JPC
 	DECACHE_STACK
-	orr	r2, r1, r2, lsl #8
-	ldr	r0, [istate, #ISTATE_THREAD]
-	ldr	r1, [r3, #METHOD_CONSTANTS]
-	bl	_ZN18InterpreterRuntime4_newEP10JavaThreadP19constantPoolOopDesci
-	ldr	r0, [istate, #ISTATE_THREAD]
-	ASSERT_STACK_CACHED
-	ldr	ip, [r0, #THREAD_PENDING_EXC]
+	orr	r1, r1, r2, lsl #8
+	mov	r0, r8
+	bl	Helper_new
 	CACHE_JPC
 	CACHE_CP
-	cmp	ip, #0
-	CACHE_LOCALS
-	bne	handle_exception
-	ldr	r2, [r0, #THREAD_VM_RESULT]
-	str	r2, [stack], #-4
-	ldr	r3, [istate, #ISTATE_THREAD]
-	str	ip, [r3, #THREAD_VM_RESULT]
-	DISPATCH	3
+	cmp	r0, #0
+	beq	handle_exception
+	PUSH	r0
+	DISPATCH 3
 
 bytecode_interpreter_str:
 	.ascii  "[Bytecode Interpreter]\000"
@@ -3300,8 +1758,6 @@ bytecode_interpreter_str:
 	DECACHE_JPC
 	DECACHE_STACK
 	bl	_ZN18InterpreterRuntime8newarrayEP10JavaThread9BasicTypei
-	ASSERT_LOCALS_CACHED
-	ASSERT_STACK_CACHED
 	ldr	r0, [istate, #ISTATE_THREAD]
 	CACHE_JPC
 	ldr	ip, [r0, #THREAD_PENDING_EXC]
@@ -3324,8 +1780,6 @@ bytecode_interpreter_str:
 	ldr	r1, [lr, #METHOD_CONSTANTS]
 	ldr	r0, [istate, #ISTATE_THREAD]
 	bl	_ZN18InterpreterRuntime9anewarrayEP10JavaThreadP19constantPoolOopDescii
-	ASSERT_STACK_CACHED
-	ASSERT_LOCALS_CACHED
 	ldr	r0, [istate, #ISTATE_THREAD]
 	CACHE_JPC
 	ldr	ip, [r0, #THREAD_PENDING_EXC]
@@ -3370,174 +1824,34 @@ bytecode_interpreter_str:
 # r1 = [jpc, #2]
 	Opcode	checkcast
 	ldrb	r1, [jpc, #2]
-	ldr	r3, [istate, #ISTATE_METHOD]
-	ldr	r0, [stack, #4]
-	ldr	r3, [r3, #METHOD_CONSTANTS]		@ R3 = METHOD->constants()
-	cmp	r0, #0
-	ldr	ip, [r3, #CONSTANTPOOL_TAGS]
-	beq	.checkcast_exit
-	add	ip, ip, #12
-	orr	tmp2, r1, r2, lsl #8
-	ldrb	r2, [ip, tmp2]	@ zero_extendqisi2
-	cmp	r2, #JVM_CONSTANT_UnresolvedClassInError
-	cmpne	r2, #JVM_CONSTANT_UnresolvedClass
-	beq	3f
-
-4:
-	ldr	r0, [r0, #4]
-	add	r3, r3, tmp2, lsl #2
-	ldr	tmp1, [r3, #CONSTANTPOOL_BASE]
-	cmp	tmp1, r0
-	beq	.checkcast_exit
-
-	ldr	r2, [tmp1, #16]
-	add	tmp2, r0, #8
-	add	ip, tmp2, r2
-	ldr	ip, [ip, #-8]
-	cmp	ip, tmp1
-	beq	.checkcast_exit
-
-	cmp	r2, #secondary_super_cache_offset_in_bytes
-	bne	2f
-
-	mov	r0, tmp2
-	mov	r1, tmp1
-
-	bl	_ZNK5Klass23search_secondary_supersEP12klassOopDesc
-	cmp	r0, #0
-	beq	2f
-.checkcast_exit:
-	DISPATCH	3
-
-3:
-	ldr	r0, [istate, #ISTATE_THREAD]
 	DECACHE_JPC
 	DECACHE_STACK
-	bl	_ZN18InterpreterRuntime13quicken_io_ccEP10JavaThread
-	ASSERT_STACK_CACHED
-	ASSERT_LOCALS_CACHED
-	ldr	r0, [istate, #ISTATE_THREAD]
+	orr	r1, r1, r2, lsl #8
+	mov	r0, r8
+	GET_STACK	0, r2
+	bl	Helper_checkcast
 	CACHE_JPC
-	ldr	r3, [r0, #THREAD_PENDING_EXC]
 	CACHE_CP
-	cmp	r3, #0
-	ldr	r3, [istate, #ISTATE_METHOD]
+	cmp	r0, #0
 	bne	handle_exception
-	ldr	r0, [stack, #4]
-	ldr	r3, [r3, #METHOD_CONSTANTS]		@ METHOD->constanst() might have moved
-	b	4b
-
-2:
-	DECACHE_JPC
-	DECACHE_STACK
-	mov	r0, tmp2
-	ldr	r3, [istate, #ISTATE_THREAD]
-	ldr	tmp2, [r3, #THREAD_RESOURCEAREA]
-
-	ldr	tmp_chunk, [tmp2, #RESOURCEAREA_CHUNK]
-	ldr	tmp_hwm, [tmp2, #RESOURCEAREA_HWM]
-	ldr	tmp_max, [tmp2, #RESOURCEAREA_MAX]
-
-	bl	_ZNK5Klass13external_nameEv
-	mov	ip, r0
-	add	r0, tmp1, #8
-	mov	tmp1, ip
-	bl	_ZNK5Klass13external_nameEv
-	mov	r1, r0
-	mov	r0, tmp1
-	bl	SharedRuntime_generate_class_cast_message
-	str	r0, [arm_sp, #0]
-	ldr	r0, [istate, #ISTATE_THREAD]
-	adrl	r1, bytecode_interpreter_str
-	mov	r2, #99
-	mov	r3, #_thread_in_vm
-	str	r3, [r0, #THREAD_STATE]
-	ldr	r3, [dispatch, #VmSymbols_symbols_Address-XXX]
-	ldr	r3, [r3, #VMSYMBOLS_ClassCastException * 4]
-	bl	_ZN10Exceptions10_throw_msgEP6ThreadPKciP13symbolOopDescS3_
-	add	r0, istate, #ISTATE_THREAD
-	bl	ThreadInVMfromJavaD
-	mov	r0, tmp_chunk
-	ldr	r3, [r0, #0]
-	CACHE_JPC
-	cmp	r3, #0
-	beq	1f
-	bl	_ZN5Chunk9next_chopEv
-1:
-	str	tmp_hwm, [tmp2, #RESOURCEAREA_HWM]
-	str	tmp_max, [tmp2, #RESOURCEAREA_MAX]
-	str	tmp_chunk, [tmp2, #RESOURCEAREA_CHUNK]
-	b	handle_exception
+	DISPATCH 3
 
 # r2 = [jpc, #1]
 # r1 = [jpc, #2]
 	Opcode	instanceof
 	ldrb	r1, [jpc, #2]
-	ldr	r3, [istate, #ISTATE_METHOD]
-	ldr	r0, [stack, #4]
-	ldr	r3, [r3, #METHOD_CONSTANTS]
-	cmp	r0, #0
-	ldr	ip, [r3, #CONSTANTPOOL_TAGS]
-	beq	.instanceof_not_instance
-	add	ip, ip, #BASE_OFFSET_BYTE
-	orr	tmp2, r1, r2, lsl #8
-	ldrb	r2, [ip, tmp2]
-	cmp	r2, #JVM_CONSTANT_UnresolvedClassInError
-	cmpne	r2, #JVM_CONSTANT_UnresolvedClass
-	beq	2f
-
-1:
-	ldr	r0, [r0, #4]
-	add	r3, r3, tmp2, lsl #2
-	ldr	tmp1, [r3, #CONSTANTPOOL_BASE]
-	cmp	tmp1, r0
-	beq	.instanceof_is_instance
-
-	ldr	r2, [tmp1, #16]
-	add	tmp2, r0, #8
-	add	ip, tmp2, r2
-	ldr	ip, [ip, #-8]
-	cmp	ip, tmp1
-	beq	.instanceof_is_instance
-
-	mov	r0, #0
-	cmp	r2, #secondary_super_cache_offset_in_bytes
-	bne	.instanceof_not_instance
-
-	mov	r0, tmp2
-	mov	r1, tmp1
-
-	bl	_ZNK5Klass23search_secondary_supersEP12klassOopDesc
-	cmp	r0, #0
-	beq	.instanceof_not_instance
-
-.instanceof_is_instance:
-	mov	r0, #1
-	str	r0, [stack, #4]
-	DISPATCH	3
-.instanceof_not_instance:
-	mov	r0, #0
-	str	r0, [stack, #4]
-	DISPATCH	3
-
-2:
-	ldr	r0, [istate, #ISTATE_THREAD]
 	DECACHE_JPC
 	DECACHE_STACK
-	bl	_ZN18InterpreterRuntime13quicken_io_ccEP10JavaThread
-	ASSERT_STACK_CACHED
-	ASSERT_LOCALS_CACHED
-	ldr	r0, [istate, #ISTATE_THREAD]
+	orr	r1, r1, r2, lsl #8
+	mov	r0, r8
+	POP	r2
+	bl	Helper_instanceof
 	CACHE_JPC
-	ldr	r3, [r0, #THREAD_PENDING_EXC]
 	CACHE_CP
-	cmp	r3, #0
-	bne	handle_exception
-
-	ldr	r3, [istate, #ISTATE_METHOD]
-	ldr	r0, [stack, #4]
-	ldr	r3, [r3, #METHOD_CONSTANTS]		@ METHOD->constanst() might have moved
-	b	1b
+	cmp	r0, #-1
+	beq	handle_exception
+	PUSH	r0
+	DISPATCH 3
 
 	Opcode	monitorenter
 	ldr	r1, [stack, #4]
@@ -3583,8 +1897,6 @@ bytecode_interpreter_str:
 	DECACHE_STACK
 	ldr	r0, [istate, #ISTATE_THREAD]
 	bl	_ZN18InterpreterRuntime12monitorenterEP10JavaThreadP15BasicObjectLock
-	ASSERT_STACK_CACHED
-	ASSERT_LOCALS_CACHED
 	ldr	r0, [istate, #ISTATE_THREAD]
 	CACHE_JPC
 	ldr	r3, [r0, #THREAD_PENDING_EXC]
@@ -3640,7 +1952,6 @@ bytecode_interpreter_str:
 	ldr	sl, [istate, #ISTATE_STACK_BASE]
 	ldr	r3, [stack, #4]
 	CACHE_JPC
-	ASSERT_LOCALS_CACHED
 	mov	r1, r3
 	str	r3, [sl, #4]
 	ldr	r2, [r3, #0]
@@ -3663,8 +1974,6 @@ bytecode_interpreter_str:
 	DECACHE_JPC
 	DECACHE_STACK
 	bl	_ZN18InterpreterRuntime12monitorenterEP10JavaThreadP15BasicObjectLock
-	ASSERT_STACK_CACHED
-	ASSERT_LOCALS_CACHED
 	ldr	r0, [istate, #ISTATE_THREAD]
 	CACHE_JPC
 	ldr	r3, [r0, #THREAD_PENDING_EXC]
@@ -3710,8 +2019,6 @@ bytecode_interpreter_str:
 	ldr	r0, [istate, #ISTATE_THREAD]
 	bl	_ZN18InterpreterRuntime11monitorexitEP10JavaThreadP15BasicObjectLock
 	ldr	r0, [istate, #ISTATE_THREAD]
-	ASSERT_STACK_CACHED
-	ASSERT_LOCALS_CACHED
 	ldr	r3, [r0, #THREAD_PENDING_EXC]
 	CACHE_JPC
 	cmp	r3, #0
@@ -3740,39 +2047,16 @@ vm_fatal_error:
 	ALIGN_WORD
 
 	Opcode	aastore
-	ldr	tmp1, [stack, #12]	@ arrObj
-	ldr	tmp_vvv, [stack, #8]
-	SW_NPC	cmp	tmp1, #0
-	ldr	sl, [stack, #4]
-	SW_NPC	beq	null_ptr_exception
-.abortentry115:
-	ldr	r3, [tmp1, #8]
-	cmp	tmp_vvv, r3
-	bcs	array_bounds_exception
-	cmp	sl, #0
-	beq	.aastore_exit
-	ldr	r3, [tmp1, #4]		@ arrObj->klass()
-	ldr	r0, [sl, #4]
-	ldr	r1, [r3, #KLASS_PART+OBJARRAYKLASS_ELEMENTKLASS]
-	cmp	r0, r1
-	beq	.aastore_exit
-	add	r0, r0, #8
-	bl	is_subtype_of
-	cmp	r0, #0
-	moveq	r0, #VMSYMBOLS_ArrayStoreException
-	beq	raise_exception
-.aastore_exit:
-    ldr r2, [dispatch, #Universe_collectedHeap_Address-XXX]
-	add	r1, tmp1, #BASE_OFFSET_WORD
-	str	sl, [r1, tmp_vvv, asl #2]!
-    ldr	r3, [r2]
-	mov	lr, #0
-    ldr	r3, [r3, #12]
-	add	stack, stack, #12
-    ldr	r3, [r3, #76]
-	strb	lr, [r3, r1, lsr #9]
+	DECACHE_JPC
+	DECACHE_STACK
+	mov	r0, r8
+	POP	r1, r2, r3
+	bl	Helper_aastore
+	CACHE_JPC
 	CACHE_CP
-	DISPATCH	1
+	cmp	r0, #0
+	bne	handle_exception
+	DISPATCH 1
 
 	Opcode	wide
 	ldrb	r2, [jpc, #1]
@@ -3862,8 +2146,6 @@ do_wide_iinc:
 	DECACHE_JPC
 	DECACHE_STACK
 	bl	_ZN18InterpreterRuntime14multianewarrayEP10JavaThreadPi
-	ASSERT_STACK_CACHED
-	ASSERT_LOCALS_CACHED
 	ldr	r0, [istate, #ISTATE_THREAD]
 	CACHE_JPC
 	ldr	r1, [r0, #THREAD_PENDING_EXC]
@@ -3901,19 +2183,13 @@ do_wide_iinc:
 	ldr	r1, [r3]
 	cmp	r1, #1
 	bne	1f
-	add	r0, istate, #ISTATE_THREAD
-	bl	HandleMarkCleanerD
-	ldr	r0, [istate, #ISTATE_THREAD]
 	DECACHE_JPC
 	DECACHE_STACK
-	bl	_ZN20SafepointSynchronize5blockEP10JavaThread
-	ASSERT_STACK_CACHED
-	ASSERT_LOCALS_CACHED
 	ldr	r0, [istate, #ISTATE_THREAD]
+	bl	Helper_SafePoint
 	CACHE_JPC
-	ldr	r3, [r0, #THREAD_PENDING_EXC]
 	CACHE_CP
-	cmp	r3, #0
+	cmp	r0, #0
 	bne	handle_exception
 1:
 	DISPATCH	0
@@ -3933,8 +2209,6 @@ do_wide_iinc:
 	ldr	r2, [istate, #ISTATE_BCP]
 	ldr	r1, [istate, #ISTATE_METHOD]
 	bl	_ZN18InterpreterRuntime11_breakpointEP10JavaThreadP13methodOopDescPh
-	ASSERT_STACK_CACHED
-	ASSERT_LOCALS_CACHED
 	ldr	r0, [istate, #ISTATE_THREAD]
 	CACHE_JPC
 	ldr	r3, [r0, #THREAD_PENDING_EXC]
@@ -3986,7 +2260,7 @@ do_wide_iinc:
 	ldrcc	ip, [r2, r3, asl #2]
 	adr	r2, unimplemented_opcode_msg
 	mov	r1, #99
-	str	ip, [arm_sp, #0]
+	str	ip, [arm_sp, #-8]!
 	bl	_Z19report_fatal_varargPKciS0_z
 	b	breakpoint
 unimplemented_opcode_msg:
@@ -4005,7 +2279,6 @@ unknown_bytecode:
 	DECACHE_STACK
 	ldr	r0, [istate, #ISTATE_THREAD]
 	bl	_ZN18InterpreterRuntime18register_finalizerEP10JavaThreadP7oopDesc
-	ASSERT_STACK_CACHED
 	ldr	r0, [istate, #ISTATE_THREAD]
 	CACHE_JPC
 	ldr	r3, [r0, #THREAD_PENDING_EXC]
@@ -4014,11 +2287,16 @@ unknown_bytecode:
 	beq	handle_return
 	b	handle_exception
 
-@ ECN: normal_entry_synchronized doesn't really mean synchronized. It means
-@ may or may not be synchronized. So we still have to check the synchronized
-@ flag in the synchronized path, otherwise we may get an IllegalMonitor.
+	ALIGN_CODE
 normal_entry_synchronized:
 	stmfd	arm_sp!, {regset, lr}
+	bl	fast_normal_entry_synchronized
+	ldmfd	arm_sp!, {regset, pc}
+
+	ALIGN_CODE
+fast_normal_entry_synchronized:
+	stmfd	arm_sp!, {fast_regset, lr}
+
 	mov	sl, r0
 	mov	tmp1, r2
 
@@ -4027,7 +2305,7 @@ normal_entry_synchronized:
 	rsb	r3, r0, r3
 	rsb	r3, r3, arm_sp
 	cmp	r3, #32768
-	blt	stack_overflow_no_frame
+	blt	stack_overflow_before_frame
 
 	ldrh	r2, [sl, #METHOD_MAXLOCALS]
 	ldrh	r3, [sl, #METHOD_SIZEOFPARAMETERS]
@@ -4041,7 +2319,7 @@ normal_entry_synchronized:
 	sub	r5, r5, #FRAME_SIZE+4
 	sub	r5, r5, r0, lsl #2
 	cmp	r3, r5
-	bcs	stack_overflow_no_frame
+	bcs	stack_overflow_before_frame
 
 	cmp	r8, #0
 	ble	.normal_entry_synchronized_no_locals
@@ -4067,61 +2345,17 @@ normal_entry_synchronized:
 	ldm	ip, {r0, r1}
 	add	r0, r0, ip
 	str	tmp_vvv, [tmp1, #THREAD_TOP_ZERO_FRAME]
-	CACHE_JPC
+@	CACHE_JPC
 	str	tmp_vvv, [tmp1, #THREAD_LAST_JAVA_SP]
 	add	dispatch, r1, r0
 	ldr	r0, [istate, #ISTATE_METHOD]
+	ldr	r3, [r0, #METHOD_ACCESSFLAGS]
+	tst	r3, #JVM_ACC_SYNCHRONIZED
+	beq	1f
+
+@ Do Synchronisation
 	CACHE_STACK
-  USEC	ldr	r2, [r0, #METHOD_INVOCATIONCOUNTER]
-  USEC	ldr	lr, [dispatch, #InterpreterInvocationLimit_Address-XXX]
-  USEC	add	r2, r2, #INVOCATIONCOUNTER_COUNTINCREMENT
-  USEC	ldr	lr, [lr]
-  USEC	str	r2, [r0, #METHOD_INVOCATIONCOUNTER]
-  USEC	cmp	r2, lr
-	ldr	r3, [r0, #METHOD_ACCESSFLAGS]
-  USEC	bcs	sync_method_entry_freq_count_overflow
 	CACHE_LOCALS
-	tst	r3, #JVM_ACC_SYNCHRONIZED
-	CACHE_CP
-	bne	normal_do_synchronization
-	DISPATCH	0
-
-#ifdef USE_COMPILER
-sync_method_entry_freq_count_overflow:
-        ldr     r3, [r0, #METHOD_CONSTMETHOD]
-        ldrh    r3, [r3, #CONSTMETHOD_CODESIZE]
-	mov	r1, #0
-	mov	r0, tmp1
-        cmp     r3, #MAX_FG_METHOD_SIZE
-        bcc     1f
-        ldr     tmp2, [dispatch, #BackgroundCompilation_Address-XXX]
-        mov     r3, #1
-        ldr     r5, [tmp2]
-        str     r3, [tmp2]
-        bl      _ZN18InterpreterRuntime26frequency_counter_overflowEP10JavaThreadPh
-        str     r5, [tmp2]
-        b       2f
-1:
-	bl	_ZN18InterpreterRuntime26frequency_counter_overflowEP10JavaThreadPh
-2:
-	ldr	r0, [istate, #ISTATE_METHOD]
-	CACHE_JPC
-	ldr	r3, [r0, #METHOD_ACCESSFLAGS]
-	CACHE_LOCALS
-	tst	r3, #JVM_ACC_SYNCHRONIZED
-	CACHE_CP
-	bne	normal_do_synchronization
-	DISPATCH	0
-#endif
-
-do_execute_java_bytecodes_restore_locals_and_jpc:
-	CACHE_JPC
-do_execute_java_bytecodes_restore_locals:
-	CACHE_LOCALS
-	CACHE_CP
-	DISPATCH	0
-
-normal_do_synchronization:
 	tst	r3, #JVM_ACC_STATIC
 	ldrne	r3, [r0, #METHOD_CONSTANTS]
 	ldreq	sl, [locals, #0]
@@ -4143,9 +2377,8 @@ normal_do_synchronization:
 	blx	r3
 	cmp	r0, #0
 	bne	.normal_do_synchronisation_2
+	b	1f
 .normal_do_synchronisation_3:
-	cmp	tmp_xxx, tmp_vvv
-	beq	do_execute_java_bytecodes_restore_locals
 	ldr	r0, [istate, #ISTATE_THREAD]
 	bic	r1, tmp_xxx, #3
 	bl	JavaThread_is_lock_owned
@@ -4153,19 +2386,56 @@ normal_do_synchronization:
 	beq	.normal_do_synchronisation_4
 	mov	r3, #0
 	str	r3, [tmp1]
-	b	do_execute_java_bytecodes_restore_locals
+	b	1f
 .normal_do_synchronisation_4:
 	mov	r1, tmp1
 	DECACHE_STACK
 	ldr	r0, [istate, #ISTATE_THREAD]
 	bl	_ZN18InterpreterRuntime12monitorenterEP10JavaThreadP15BasicObjectLock
 	ldr	r0, [istate, #ISTATE_THREAD]
-	ASSERT_STACK_CACHED
 	ldr	r3, [r0, #THREAD_PENDING_EXC]
 	cmp	r3, #0
 	mov	r2, r0
-	beq	do_execute_java_bytecodes_restore_locals_and_jpc
-	b	handle_exception_do_not_unlock
+	bne	handle_exception_do_not_unlock
+1:
+  USEC ldr	r0, [istate, #ISTATE_METHOD]
+  USEC	ldr	r2, [r0, #METHOD_INVOCATIONCOUNTER]
+  USEC	ldr	lr, [dispatch, #InterpreterInvocationLimit_Address-XXX]
+  USEC	add	r2, r2, #INVOCATIONCOUNTER_COUNTINCREMENT
+  USEC	ldr	lr, [lr]
+  USEC	str	r2, [r0, #METHOD_INVOCATIONCOUNTER]
+  USEC	cmp	r2, lr
+  USEC	bcs	sync_method_entry_freq_count_overflow
+	CACHE_JPC
+	CACHE_LOCALS
+	CACHE_CP
+	DISPATCH	0
+
+#ifdef USE_COMPILER
+sync_method_entry_freq_count_overflow:
+        ldr     r3, [r0, #METHOD_CONSTMETHOD]
+        ldrh    r3, [r3, #CONSTMETHOD_CODESIZE]
+	mov	r1, #0
+	ldr	r0, [istate, #ISTATE_THREAD]
+        cmp     r3, #MAX_FG_METHOD_SIZE
+        bcc     1f
+        ldr     tmp2, [dispatch, #BackgroundCompilation_Address-XXX]
+        mov     r3, #1
+        ldr     r5, [tmp2]
+        str     r3, [tmp2]
+        bl      FREQ_COUNT_OVERFLOW
+        str     r5, [tmp2]
+        b       2f
+1:
+	bl	FREQ_COUNT_OVERFLOW
+2:
+  T2	cmp	r0, #0
+	CACHE_LOCALS
+  T2	bne	call_thumb2
+	CACHE_JPC
+	CACHE_CP
+	DISPATCH	0
+#endif
 
 # r2 = [jpc, #1]
 # r1 = [jpc, #2]
@@ -4213,12 +2483,11 @@ normal_do_synchronization:
 	ldr	r2, [r1, #-4]
 	add	r3, tmp2, r3, lsl #2
 	ldr	tmp2, [r3, r2]
-	SW_NPC	cmp	tmp2, #0
-	SW_NPC	beq	abstractmethod_exception
+	cmp	tmp2, #0
+	beq	abstractmethod_exception
 .invokeinterface_invoke:
 	ldr	tmp1, [istate, #ISTATE_THREAD]
 @	str	tmp2, [istate, #ISTATE_CALLEE]
-.abortentry116:
 	ldr	ip, [tmp2, #METHOD_FROM_INTERPRETED]
 	mov	r1, #0
 	str	ip, [istate, #36]
@@ -4229,20 +2498,20 @@ normal_do_synchronization:
 
 	ldr	r3, [ip]
 
-	mov	tmp_invoke_len, #5
-
-#ifdef FASTPATH_ENTRY
-	adr	r0, normal_entry
-	cmp	r3, r0
-	beq	fast_normal_entry_with_len
-#endif
-
 	mov	r0, tmp2
 	mov	r1, ip
+#ifndef SHARK
+	add	r3, r3, #CODE_ALIGN_SIZE
+#endif
 	mov	r2, tmp1
 	blx	r3
 
-	ASSERT_LOCALS_CACHED
+	adrl	ip, dispatch_init_adcon
+	ldm	ip, {r0, r1}
+	add	r0, r0, ip
+	add	dispatch, r1, r0
+
+	CACHE_LOCALS
 
 	ldr	ip, [istate, #ISTATE_THREAD]
 	CACHE_JPC
@@ -4304,19 +2573,6 @@ normal_do_synchronization:
 	str	stack, [tmp1, #THREAD_JAVA_SP]
 
 	ldr	r3, [ip, #0]
-#ifdef FASTPATH_ENTRY
-	adr	r0, normal_entry
-	cmp	r3, r0
-	beq	fast_normal_entry
-#ifdef NATIVE_ENTRY
-	adrl	r0, native_entry
-	cmp	r3, r0
-	beq	fast_native_entry
-#endif
-	adr	r0, accessor_entry
-	cmp	r3, r0
-	beq	fast_accessor_entry
-#endif
 	b	normal_dispatch_and_return
 #endif // FAST_BYTECODES
 
@@ -4389,28 +2645,22 @@ normal_do_synchronization:
         str     stack, [tmp1, #THREAD_JAVA_SP]
 
         ldr     r3, [ip, #0]
-#ifdef FASTPATH_ENTRY
-        adr     r0, normal_entry
-        cmp     r3, r0
-        beq     fast_normal_entry
-#ifdef NATIVE_ENTRY
-        adr     r0, native_entry
-        cmp     r3, r0
-        beq     fast_native_entry
-#endif
-        adr     r0, accessor_entry
-        cmp     r3, r0
-        beq     fast_accessor_entry
-#endif
 
 normal_dispatch_and_return:
 	mov	r0, tmp2
 	mov	r1, ip
+#ifndef SHARK
+	add	r3, r3, #CODE_ALIGN_SIZE
+#endif
 	mov	r2, tmp1
-	ldr	r2, [istate, #ISTATE_THREAD]
 	blx	r3
 
-	ASSERT_LOCALS_CACHED
+	adrl	ip, dispatch_init_adcon
+	ldm	ip, {r0, r1}
+	add	r0, r0, ip
+	add	dispatch, r1, r0
+
+	CACHE_LOCALS
 
 	ldr	ip, [istate, #ISTATE_THREAD]
 	CACHE_JPC
@@ -4464,48 +2714,8 @@ normal_dispatch_and_return:
 
 	ldr	ip, [istate, #36]
 	ldr	r3, [ip, #0]
-#ifdef FASTPATH_ENTRY
-	adr	r0, normal_entry
-	cmp	r3, r0
-	beq	fast_normal_entry
-#ifdef NATIVE_ENTRY
-	adr	r0, native_entry
-	cmp	r3, r0
-	beq	fast_native_entry
-#endif
-	adr	r0, accessor_entry
-	cmp	r3, r0
-	beq	fast_accessor_entry
-#endif
 	b	normal_dispatch_and_return
 
-	ALIGN_CODE
-normal_entry:
-	adrl	ip, dispatch_init_adcon
-	stmfd	arm_sp!, {regset, lr}
-	mov	tmp2, r0
-	ldm	ip, {r0, r1}
-
-	mov	tmp_invoke_len, #0
-	mov	tmp1, r2
-
-	add	r0, r0, ip
-	add	dispatch, r1, r0
-
-  USEC  ldr     r2, [r10, #METHOD_INVOCATIONCOUNTER]
-
-	ldr	stack, [tmp1, #THREAD_JAVA_SP]
-
-	ldr	r0, [tmp1, #THREAD_STACK_SIZE]
-  USEC  add     r2, r2, #INVOCATIONCOUNTER_COUNTINCREMENT * 4
-	ldr	r3, [tmp1, #THREAD_STACK_BASE]
-	rsb	r3, r0, r3
-	rsb	r3, r3, arm_sp
-  USEC  str     r2, [tmp2, #METHOD_INVOCATIONCOUNTER]
-	cmp	r3, #32768
-	bge	fast_normal_entry_with_len
-
-	b	stack_overflow_before_frame
 
 	Opcode	invokespecial
      	ldrb	r1, [jpc, #2]
@@ -4546,81 +2756,35 @@ normal_entry:
 	str	stack, [tmp1, #THREAD_JAVA_SP]
 
 	ldr	r3, [ip, #0]
-#ifdef FASTPATH_ENTRY
-	adr	r0, normal_entry
-	cmp	r3, r0
-	beq	fast_normal_entry
-#ifdef NATIVE_ENTRY
-	adr	r0, native_entry
-	cmp	r3, r0
-	beq	fast_native_entry
-#endif
-	adr	r0, accessor_entry
-	cmp	r3, r0
-	beq	fast_accessor_entry
-#endif
 	b	normal_dispatch_and_return
 
 	ALIGN_CODE
-accessor_entry:
-	adrl	ip, dispatch_init_adcon
-	ldr	r3, [ip]
-	add	r3, r3, ip
-	ldr	ip, [ip, #12]
-	ldr	ip, [r3, ip]
-	ldr	r1, [r0, #8]
-	ldr	ip, [ip, #0]
-	ldrb	r3, [r1, #50]
-	ldrb	r1, [r1, #51]
-	cmp	ip, #0
-	ldr	ip, [r0, #12]
-	bne	normal_entry
-	ldr	ip, [ip, #12]
-	orr	r3, r3, r1, lsl #8		@ r3 = index
+normal_entry:
+	stmfd	arm_sp!, {regset, lr}
 
-	add	r1, ip, #16
-	ldr	r3, [r1, r3, lsl #4]!		@ r1 = cache, r3 = flags
-	ldr	ip, [r2, #THREAD_JAVA_SP]			@ ip == stack
-	and	r3, r3, #0x00ff0000
-	cmp	r3, #opc_getfield << 16
-	ldr	r3, [ip, #0]
-	bne	normal_entry
+	ldr	r7, [r2, #THREAD_STACK_SIZE]
+	ldr	r3, [r2, #THREAD_STACK_BASE]
+	rsb	r3, r7, r3
+	rsb	r3, r3, arm_sp
+	cmp	r3, #32768
+	blt	stack_overflow_no_frame
 
-	cmp	r3, #0
-	beq	normal_entry
+	bl	fast_normal_entry
 
-	ldr	r0, [r1, #12]
-	ldr	r1, [r1, #8]
-	movs	r0, r0, lsr #29
-	bls	accessor_non_w
+	ldmfd	arm_sp!, {regset, pc}
 
-	ldr	r0, [r3, r1]
-	str	r0, [ip, #0]
-	bx	lr
-
-#ifdef NATIVE_ENTRY
-	ALIGN_CODE
-native_entry:
-	adrl	ip, dispatch_init_adcon
-	stmfd	arm_sp!, {r3, r4, r5, r6, r7, r8, r9, r10, r11, lr}
-
-	ldm	ip, {dispatch, r7}
-	mov	r11, r0
-	add	dispatch, dispatch, ip
-	add	dispatch, dispatch, r7
-
-	mov	istate, #0
-
-	b	fast_native_entry_with_args
-#endif
-
-@ tmp1 = thread
-@ tmp2 == method
-@ stack == THREAD_JAVA_SP (=> FULL stack)
 	ALIGN_CODE
 fast_normal_entry:
-	mov	tmp_invoke_len, #3
-fast_normal_entry_with_len:
+	adrl	ip, dispatch_init_adcon
+	mov	tmp2, r0
+	ldm	ip, {r0, r1}
+	mov	tmp1, r2
+	add	r0, r0, ip
+	ldr	stack, [tmp1, #THREAD_JAVA_SP]
+	add	dispatch, r1, r0
+
+	stmdb	arm_sp!, {fast_regset, lr}
+
 	ldrh	r0, [tmp2, #METHOD_MAXLOCALS]
 	mov	r1, #0
 	ldrh	r3, [tmp2, #METHOD_SIZEOFPARAMETERS]
@@ -4646,9 +2810,10 @@ fast_normal_entry_with_len:
         bcs     1b
 3:
 	ldr	r3, [tmp1, #THREAD_TOP_ZERO_FRAME]
+	mov	lr, #0
         sub     istate, stack, #FRAME_SIZE
         sub     r2, istate, r2, lsl #2
-        str     tmp_invoke_len, [istate, #ISTATE_ADVANCE_PC]
+        str     lr, [istate, #ISTATE_MSG]
 	str	r2, [tmp1, #THREAD_JAVA_SP]
         sub     r5, r2, #4                      @ stack limit = istate - stackwords - 4
 	str	r3, [istate, #ISTATE_NEXT_FRAME]
@@ -4664,7 +2829,7 @@ fast_normal_entry_with_len:
         ldr     jpc, [tmp2, #METHOD_CONSTMETHOD]
         ldr     constpool, [tmp2, #METHOD_CONSTANTS]
         add     ip, istate, #ISTATE_NEXT_FRAME
-	DISPATCH_START	48
+	DISPATCH_START	CONSTMETHOD_CODEOFFSET
         ldr     constpool, [constpool, #CONSTANTPOOL_CACHE]
         str     ip, [tmp1, #THREAD_TOP_ZERO_FRAME]
   USEC	ldr	r3, [r10, #METHOD_INVOCATIONCOUNTER]
@@ -4701,22 +2866,35 @@ method_entry_freq_count_overflow:
         mov     r3, #1
         ldr     r5, [tmp2]
         str     r3, [tmp2]
-        bl      _ZN18InterpreterRuntime26frequency_counter_overflowEP10JavaThreadPh
+        bl      FREQ_COUNT_OVERFLOW
         str     r5, [tmp2]
         b       2f
 1:
-	bl	_ZN18InterpreterRuntime26frequency_counter_overflowEP10JavaThreadPh
+	bl	FREQ_COUNT_OVERFLOW
 2:
+ T2	cmp	r0, #0
+ T2	bne	call_thumb2
 	CACHE_JPC
 	CACHE_CP
 	DISPATCH	0
-#endif
 
+#ifdef THUMB2EE
+call_thumb2:
+	mov	ip, r1
+	mov	r1, locals
+	ldr	r2, [istate, #ISTATE_THREAD]
+	add	stack, stack, #4
+	bx	ip
+#endif // THUMB2EE
+
+#endif // USE_COMPILER
+	.global	Thumb2_Install
+Thumb2_Install:
+@	ldr	r0, [r0]
+	str	r1, [r0, #METHOD_FROM_INTERPRETED]
+	bx	lr
 
 handle_return:
-@	CHECK_CONSTPOOL
-@	CHECK_BACKTRACE
-
 	ldr	tmp2, [istate, #ISTATE_MONITOR_BASE]	@ tmp2 = base
 
 	ldr	tmp1, [istate, #ISTATE_STACK_BASE]	@ tmp1 = end
@@ -4724,9 +2902,6 @@ handle_return:
 
 	cmp	tmp1, tmp2
 	blcc	return_check_monitors
-
-@	CHECK_CONSTPOOL
-@	CHECK_BACKTRACE
 
 	mov	r3, #0
 	ldrb	lr, [jpc, #0]
@@ -4738,9 +2913,6 @@ handle_return:
 	ldrh	r0, [r0, #40]
 	add	r1, r2, #4
 	str	r3, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
-
-	ldr	ip, [istate, #ISTATE_ADVANCE_PC]
-	ldr	istate, [istate, #ISTATE_NEXT_FRAME]
 
 	add	r1, r1, r0, lsl #2
 
@@ -4756,152 +2928,27 @@ handle_return:
 
 	str	r1, [tmp_xxx, #THREAD_JAVA_SP]
 
-	cmp	ip, #0
-
-	ldmeqfd	arm_sp!, {regset, pc}
-
-        ldr	lr, [istate, #-ISTATE_NEXT_FRAME+ISTATE_THREAD]!
-        CACHE_JPC
-        ldr     stack, [lr, #THREAD_JAVA_SP]
-        ldr     r2, [istate, #ISTATE_STACK_LIMIT]
-        sub     stack, stack, #4
-
-        ldr     r1, [lr, #THREAD_TOP_ZERO_FRAME]
-        add     r2, r2, #4
-        str     r2, [lr, #THREAD_JAVA_SP]
-        str     r1, [lr, #THREAD_LAST_JAVA_SP]
-        ldr     r3, [lr, #THREAD_PENDING_EXC]
-        DISPATCH_START_REG ip
-        CACHE_LOCALS
-        DISPATCH_NEXT
-        DISPATCH_NEXT
-        cmp     r3, #0
-        DISPATCH_NEXT
-        bne     return_exception
-	DISPATCH_NEXT
-        CACHE_CP
-        DISPATCH_FINISH
-
-@ ip = PC ADVANCE
-fast_handle_return:
-        ldr	lr, [istate, #-ISTATE_NEXT_FRAME+ISTATE_THREAD]!
-        CACHE_JPC
-        ldr     stack, [lr, #THREAD_JAVA_SP]
-        ldr     r2, [istate, #ISTATE_STACK_LIMIT]
-        sub     stack, stack, #4
-
-        ldr     r1, [lr, #THREAD_TOP_ZERO_FRAME]
-        add     r2, r2, #4
-        str     r2, [lr, #THREAD_JAVA_SP]
-        str     r1, [lr, #THREAD_LAST_JAVA_SP]
-        ldr     r3, [lr, #THREAD_PENDING_EXC]
-        DISPATCH_START_REG ip
-        CACHE_LOCALS
-        DISPATCH_NEXT
-        DISPATCH_NEXT
-        cmp     r3, #0
-        DISPATCH_NEXT
-        bne     return_exception
-	DISPATCH_NEXT
-        CACHE_CP
-        DISPATCH_FINISH
-
-normal_return:
-        str   stack, [tmp_xxx, #THREAD_JAVA_SP]
-        ldmfd arm_sp!, {regset, pc}
-
-return_check_monitors:
-	ldr	r2, [istate, #ISTATE_METHOD]
-	ldr	r0, [r2, #24]
-	tst	r0, #1<<5
-	subne	tmp2, tmp2, #8
-	cmp	tmp1, tmp2
-	bcs	.return_unlock
-1:
-	ldr	r3, [tmp1, #4]
-	cmp	r3, #0
-	bne	return_throw_illegal_monitor_state
-	add	tmp1, tmp1, #8
-	cmp	tmp1, tmp2
-	bcc	1b
-
-#define RETURN_STACKSIZE	SIZEOF_HANDLEMARK
-
-.return_unlock:
-	tst	r0, #1<<5
-	bxeq	lr
-
-	ldr	tmp1, [tmp2, #4]		@ base->obj == NULL
-	SW_NPC	cmp	tmp1, #0
-	SW_NPC	beq	return_throw_illegal_monitor_state
-.abortentry119:
-	HW_NPC	ldr	ip, [tmp1]		@ Only to provoke abort
-
-	ldr	r0, [tmp2, #0]			@ r0 = header
-	mov	r3, #0
-	cmp	r0, #0
-	str	r3, [tmp2, #4]			@ base->obj = NULL
-	bxeq	lr
-
-	mov	tmp_vvv, lr
-	mov	r1, tmp1
-	mov	r2, tmp2
-	bl	cmpxchg_ptr
-	cmp	tmp2, r0
-	bxeq	tmp_vvv
-
-	str	tmp1, [tmp2, #4]
-	sub	arm_sp, arm_sp, #RETURN_STACKSIZE
-	mov	r0, arm_sp
-	mov	r1, tmp_xxx
-	bl	_ZN10HandleMark10initializeEP6Thread
-	mov	r1, tmp2
-	mov	r0, tmp_xxx
-	DECACHE_JPC
-	DECACHE_STACK
-	bl	_ZN18InterpreterRuntime11monitorexitEP10JavaThreadP15BasicObjectLock
-	ASSERT_STACK_CACHED
-	CACHE_JPC
-	mov	r0, arm_sp
-	bl	_ZN10HandleMarkD1Ev
-	add	arm_sp, arm_sp, #RETURN_STACKSIZE
-	ldr	r3, [tmp_xxx, #THREAD_PENDING_EXC]
-	cmp	r3, #0
-	bne	handle_exception
-	mov	lr, tmp_vvv
-	bx	lr
-
-return_throw_illegal_monitor_state:
-	sub	arm_sp, arm_sp, #RETURN_STACKSIZE
-	mov	r0, arm_sp
-	mov	r1, tmp_xxx
-	bl	_ZN10HandleMark10initializeEP6Thread
-	DECACHE_JPC
-	DECACHE_STACK
-	mov	r0, tmp_xxx
-	bl	_ZN18InterpreterRuntime37throw_illegal_monitor_state_exceptionEP10JavaThread
-	mov	r0, arm_sp
-	bl	_ZN10HandleMarkD1Ev
-	add	arm_sp, arm_sp, #RETURN_STACKSIZE
-	b	handle_exception_with_bcp
+	ldmfd	arm_sp!, {fast_regset, pc}
 
 @ ----------------------------------------------------------------------------------------
 stack_overflow_no_frame:
-	mov	tmp_invoke_len, #0
+	mov	r0, tmp1
+	ldr	ip, [r0, #THREAD_TOP_ZERO_FRAME]
+	str	ip, [r0, #THREAD_LAST_JAVA_SP]
+	bl	_ZN18InterpreterRuntime24throw_StackOverflowErrorEP10JavaThread
+	ldmfd	arm_sp!, {regset, pc}
+
 stack_overflow_before_frame:
 	mov	r0, tmp1
 	ldr	ip, [r0, #THREAD_TOP_ZERO_FRAME]
 	str	ip, [r0, #THREAD_LAST_JAVA_SP]
-	mov	tmp1, tmp_invoke_len
 	bl	_ZN18InterpreterRuntime24throw_StackOverflowErrorEP10JavaThread
-	cmp	tmp1, #0
-	bne	handle_exception_with_bcp
-	ldmfd	arm_sp!, {regset, pc}
+	ldmfd	arm_sp!, {fast_regset, pc}
 
 handle_exception_do_not_unlock:
 	mov	r3, #1
 	strb	r3, [r2, #THREAD_DO_NOT_UNLOCK]
-	b	handle_exception
+	b	handle_exception_with_bcp
 
 abstractmethod_exception:
 	mov	r0, #VMSYMBOLS_AbstractMethodError
@@ -4911,38 +2958,20 @@ incompatibleclass_exception:
 raise_exception:
 	adr	r1, null_str
 raise_exception_with_msg:
-	str	r1, [arm_sp]
-	ldr	r3, [dispatch, #VmSymbols_symbols_Address-XXX]
-	ldr	r3, [r3, r0, lsl #2]
-        ldr     r0, [istate, #ISTATE_THREAD]
+	stmdb	sp!, {r0, r1}
+	bl	load_dispatch
+	ldmia	sp!, {r0, r1}
 	DECACHE_JPC
         DECACHE_STACK
-        mov     ip, #_thread_in_vm
-        str     ip, [r0, #THREAD_STATE]
-        mov     r2, #99
-        adrl    r1, bytecode_interpreter_str
-       	bl      _ZN10Exceptions10_throw_msgEP6ThreadPKciP13symbolOopDescS3_
-	add	r0, istate, #ISTATE_THREAD
-       	bl      ThreadInVMfromJavaD
+	mov	r2, r1
+	ldr	r1, [dispatch, #VmSymbols_symbols_Address-XXX]
+	ldr	r1, [r1, r0, lsl #2]
+        ldr     r0, [istate, #ISTATE_THREAD]
+	bl	Helper_Raise
         b       handle_exception_with_bcp
 null_str:
 	.byte	0
 	ALIGN_WORD
-
-#define EXCEPTION_HANDLEMARK		0
-#define EXCEPTION_THREAD		EXCEPTION_HANDLEMARK + SIZEOF_HANDLEMARK
-#define EXCEPTION_EXCEPTION		EXCEPTION_THREAD + 4
-#define EXCEPTION_EXCEPTION2		EXCEPTION_EXCEPTION + 4
-#define EXCEPTION_MONITORBASE		EXCEPTION_EXCEPTION2 + 4
-#define EXCEPTION_TMP1			EXCEPTION_MONITORBASE + 4
-#define EXCEPTION_HANDLEMARK2		EXCEPTION_TMP1 + 4
-#define EXCEPTION_HANDLE		EXCEPTION_HANDLEMARK2 + SIZEOF_HANDLEMARK
-#define EXCEPTION_HANDLE2		EXCEPTION_HANDLE + 4
-#define EXCEPTION_HANDLE3		EXCEPTION_HANDLE2 + 4
-
-#define EXCEPTION_STACKSIZE		EXCEPTION_HANDLE3 + 4
-
-#define except_sp	r13
 
 invokeinterface_exception_fix:
 	sub	jpc, jpc, #2
@@ -4960,432 +2989,157 @@ handle_exception:
 @ constpool = garbage
 	DECACHE_JPC
 handle_exception_with_bcp:
-	sub	except_sp, except_sp, #EXCEPTION_STACKSIZE
+	bl	load_dispatch
 	ldr	stack, [istate, #ISTATE_STACK_BASE]
 	sub	stack, stack, #4
 	DECACHE_STACK
-	ldr	r0, [istate, #ISTATE_THREAD]
-handle_exception_1:
-	ldr	sl, [r0, #4]
-	str	r0, [except_sp, #EXCEPTION_THREAD]
-	cmp	sl, #0
-	moveq	tmp_yyy, sl
-	beq	.handle_exception_3
-	ldr	r0, [r0, #THREAD_HANDLE_AREA]
-	ldr	r1, [r0, #8]
-	ldr	r3, [r0, #12]
-	add	r2, r1, #4
-	cmp	r2, r3
-	movls	r3, r1
-	strls	r2, [r0, #8]
-	bls	.handle_exception_2
-	mov	r1, #4
-	bl	_ZN5Arena4growEj
-	mov	r3, r0
-.handle_exception_2:
-	str	sl, [r3, #0]
-	mov	tmp_yyy, r3
-	ldr	r0, [istate, #ISTATE_THREAD]
-.handle_exception_3:
-	mov	r1, r0
-	add	r0, except_sp, #EXCEPTION_HANDLEMARK
-	bl	_ZN10HandleMark10initializeEP6Thread
-	ldr	r0, [istate, #ISTATE_THREAD]
-	bl	_ZN12ThreadShadow23clear_pending_exceptionEv
-	ldr	r1, [istate, #ISTATE_STACK_BASE]
-	ldr	r0, [istate, #ISTATE_THREAD]
-	cmp	tmp_yyy, #0
-	sub	stack, r1, #4
-	moveq	r1, tmp_yyy
-	DECACHE_STACK
-	ldrne	r1, [tmp_yyy, #0]
-	bl	_ZN18InterpreterRuntime31exception_handler_for_exceptionEP10JavaThreadP7oopDesc
-	ASSERT_STACK_CACHED
-	mov	sl, r0
-	ldr	r0, [istate, #ISTATE_THREAD]
-	ldr	r3, [r0, #THREAD_PENDING_EXC]
-	cmp	r3, #0
-	beq	.handle_exception_5
-	add	r0, except_sp, #EXCEPTION_HANDLEMARK
-	bl	_ZN10HandleMarkD1Ev
-	ldr	r1, [except_sp, #EXCEPTION_THREAD]
-	ldr	tmp_yyy, [r1, #THREAD_LAST_HANDLE_MARK]
-	ldr	r0, [tmp_yyy, #8]
-	ldr	sl, [tmp_yyy, #4]
-	ldr	r3, [r0, #0]
-	cmp	r3, #0
-	beq	.handle_exception_4
-	bl	_ZN5Chunk9next_chopEv
-	ldr	r0, [tmp_yyy, #8]
-.handle_exception_4:
-	str	r0, [sl, #4]
-	ldr	r3, [tmp_yyy, #12]
-	str	r3, [sl, #8]
-	ldr	r2, [tmp_yyy, #16]
-	str	r2, [sl, #12]
-	ldr	r0, [istate, #ISTATE_THREAD]
-	b	handle_exception_1
-.handle_exception_5:
-	ldr	tmp_yyy, [r0, #THREAD_VM_RESULT]
-	cmp	tmp_yyy, #0
-	moveq	r1, tmp_yyy
-	beq	.handle_exception_7
-	ldr	r3, [dispatch, #ThreadLocalStorage_thread_index-XXX]
-	ldr	r0, [r3]
-	bl	pthread_getspecific
-	ldr	r0, [r0, #THREAD_HANDLE_AREA]
-	ldr	r1, [r0, #8]
-	ldr	r3, [r0, #12]
-	add	r2, r1, #4
-	cmp	r2, r3
-	movls	r3, r1
-	strls	r2, [r0, #8]
-	bls	.handle_exception_6
-	mov	r1, #4
-	bl	_ZN5Arena4growEj
-	mov	r3, r0
-.handle_exception_6:
-	str	tmp_yyy, [r3, #0]
-	mov	r1, r3
-	ldr	r0, [istate, #ISTATE_THREAD]
-.handle_exception_7:
-	cmp	sl, #0
+
+	mov	r0, istate
+	ldr	r1, [istate, #ISTATE_THREAD]
+	bl	Helper_HandleException
+	cmp	r0, #0
+	beq	1f
+
+	mov	jpc, r0
+	CACHE_STACK
+	CACHE_LOCALS
+	CACHE_CP
+	DISPATCH 0
+1:
+	ldr	tmp2, [istate, #ISTATE_MONITOR_BASE]	@ tmp2 = base
+
+	ldr	tmp1, [istate, #ISTATE_STACK_BASE]	@ tmp1 = end
+	ldr	tmp_xxx, [istate, #ISTATE_THREAD]
+
 	mov	r3, #0
-	str	r3, [r0, #THREAD_VM_RESULT]
-	blt	.handle_exception_9
-	cmp	r1, r3
-	moveq	r0, r1
-	ldrne	r0, [r1, #0]
-	str	r0, [stack, #0]
-	sub	stack, stack, #4
-	ldr	r3, [istate, #ISTATE_METHOD]
-	add	r0, except_sp, #EXCEPTION_HANDLEMARK
-	ldr	r2, [r3, #8]
-	add	r2, r2, #48
-	add	ip, r2, sl
-	str	ip, [istate, #ISTATE_BCP]
-	bl	_ZN10HandleMarkD1Ev
-	ldr	r1, [except_sp, #EXCEPTION_THREAD]
-	ldr	tmp_yyy, [r1, #THREAD_LAST_HANDLE_MARK]
-	ldr	r0, [tmp_yyy, #8]
-	ldr	sl, [tmp_yyy, #4]
-	ldr	r3, [r0, #0]
-	cmp	r3, #0
-	beq	.handle_exception_8
-	bl	_ZN5Chunk9next_chopEv
-	ldr	r0, [tmp_yyy, #8]
-.handle_exception_8:
-	str	r0, [sl, #4]
-	ldr	r3, [tmp_yyy, #12]
-	str	r3, [sl, #8]
-	ldr	r2, [tmp_yyy, #16]
-	str	r2, [sl, #12]
-	add	except_sp, except_sp, #EXCEPTION_STACKSIZE
-	b	do_execute_java_bytecodes_restore_locals_and_jpc
-.handle_exception_9:
-	cmp	r1, #0
-	ldr	r0, [istate, #ISTATE_THREAD]
-	mov	r2, #0
-	ldrne	r1, [r1, #0]
-	mov	r3, r2
-	bl	_ZN12ThreadShadow21set_pending_exceptionEP7oopDescPKci
-	ldr	r0, [istate, #ISTATE_THREAD]
-	ldr	tmp_yyy, [r0, #4]
-	cmp	tmp_yyy, #0
-	streq	tmp_yyy, [except_sp, #EXCEPTION_EXCEPTION]
-	beq	.handle_exception_11
-	ldr	r0, [r0, #THREAD_HANDLE_AREA]
-	ldr	r1, [r0, #8]
-	ldr	r3, [r0, #12]
-	add	r2, r1, #4
-	cmp	r2, r3
-	movls	r3, r1
-	strls	r2, [r0, #8]
-	bls	.handle_exception_10
-	mov	r1, #4
-	bl	_ZN5Arena4growEj
-	mov	r3, r0
-.handle_exception_10:
-	str	tmp_yyy, [r3, #0]
-	ldr	r0, [istate, #ISTATE_THREAD]
-	str	r3, [except_sp, #EXCEPTION_EXCEPTION]
-.handle_exception_11:
-	bl	_ZN12ThreadShadow23clear_pending_exceptionEv
-	mov	r1, #0
-	ldr	r0, [istate, #ISTATE_THREAD]
-	str	r1, [except_sp, #EXCEPTION_EXCEPTION2]
-	ldrb	r3, [r0, #THREAD_DO_NOT_UNLOCK]	@ zero_extendqisi2
-	cmp	r3, r1
-	beq	.handle_exception_15
-	strb	r1, [r0, #THREAD_DO_NOT_UNLOCK]
-	ldr	r0, [istate, #ISTATE_THREAD]
-.handle_exception_12:
-	ldr	r1, [except_sp, #EXCEPTION_EXCEPTION]
-	cmp	r1, #0
-	movne	r2, r1
-	ldrne	r1, [r2, #0]
-.handle_exception_13:
-	mov	r2, #0
-	mov	r3, r2
-	bl	_ZN12ThreadShadow21set_pending_exceptionEP7oopDescPKci
+	ldrb	r0, [tmp_xxx, #THREAD_DO_NOT_UNLOCK]
+	strb	r3, [tmp_xxx, #THREAD_DO_NOT_UNLOCK]
+	cmp	r0, #0
+	bne	2f
+
+	cmp	tmp1, tmp2
+	blcc	return_check_monitors
+
+2:
 	mov	r3, #0
-	ldr	r2, [istate, #ISTATE_BCP]
-	ldrb	r2, [r2, #0]	@ zero_extendqisi2
-	DECACHE_STACK
-	str	r2, [istate, #ISTATE_CALLEE]
-	ldr	lr, [istate, #ISTATE_THREAD]
-	ldr	r1, [lr, #THREAD_TOP_ZERO_FRAME]
-	str	r3, [lr, #THREAD_LAST_JAVA_SP]
-	add	r2, r1, #4
-	str	r2, [lr, #THREAD_JAVA_SP]
-	ldr	r3, [r1, #0]
-	str	r3, [lr, #THREAD_TOP_ZERO_FRAME]
-	ldr	r1, [istate, #ISTATE_METHOD]
-	ldrh	r3, [r1, #40]
-	add	r0, except_sp, #EXCEPTION_HANDLEMARK
-	mov	r3, r3, asl #2
-	add	r2, r2, r3
-	str	r2, [lr, #THREAD_JAVA_SP]
-	bl	_ZN10HandleMarkD1Ev
-	ldr	r0, [except_sp, #EXCEPTION_THREAD]
-	ldr	tmp_yyy, [r0, #THREAD_LAST_HANDLE_MARK]
-	ldr	r0, [tmp_yyy, #8]
-	ldr	sl, [tmp_yyy, #4]
-	ldr	r3, [r0, #0]
-	cmp	r3, #0
-	beq	.handle_exception_14
-	bl	_ZN5Chunk9next_chopEv
-	ldr	r0, [tmp_yyy, #8]
-.handle_exception_14:
-	str	r0, [sl, #4]
-	ldr	r3, [tmp_yyy, #12]
-	str	r3, [sl, #8]
-	ldr	r2, [tmp_yyy, #16]
-	str	r2, [sl, #12]
-	add	except_sp, except_sp, #EXCEPTION_STACKSIZE
-	ldr	ip, [istate, #ISTATE_ADVANCE_PC]
-	ldr	istate, [istate, #ISTATE_NEXT_FRAME]
-	cmp	ip, #0
-	bne	fast_handle_return
-	ldmfd	arm_sp!, {regset, pc}
-.handle_exception_15:
-	ldr	ip, [istate, #ISTATE_MONITOR_BASE]
+
+	ldr	r2, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
+	str	r3, [tmp_xxx, #THREAD_LAST_JAVA_SP]
+	ldr	r0, [istate, #ISTATE_METHOD]
+	ldr	r3, [r2, #0]
+	ldrh	r0, [r0, #40]
+	add	r1, r2, #4
+	str	r3, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
+
+	add	r1, r1, r0, lsl #2
+
+	str	r1, [tmp_xxx, #THREAD_JAVA_SP]
+
+	ldmfd	arm_sp!, {fast_regset, pc}
+
+return_check_monitors:
+	stmdb	arm_sp!, {r4, lr}
+
 	ldr	r2, [istate, #ISTATE_METHOD]
-	str	ip, [except_sp, #EXCEPTION_MONITORBASE]
-	ldr	tmp_vvv, [istate, #ISTATE_STACK_BASE]
-	ldr	r3, [r2, #24]
-	mov	r3, r3, lsr #5
-	ands	r3, r3, #1
-	subne	ip, ip, #8
-	strne	ip, [except_sp, #EXCEPTION_MONITORBASE]
-	ldr	lr, [except_sp, #EXCEPTION_MONITORBASE]
-	str	r3, [except_sp, #EXCEPTION_TMP1]
-	cmp	tmp_vvv, lr
-	bcs	.handle_exception_21
-
-	.p2align 3
-.handle_exception_16:
-	ldr	tmp_yyy, [tmp_vvv, #4]
-	cmp	tmp_yyy, #0
-	beq	.handle_exception_20
-	ldr	fp, [tmp_vvv, #0]
-	mov	r2, #0
-	cmp	fp, r2
-	str	r2, [tmp_vvv, #4]
-	beq	.handle_exception_19
-	.p2align 3
-.handle_exception_17:
-	ldr	sl, [tmp_yyy, #0]
-	cmp	tmp_vvv, sl
-	bne	.handle_exception_18
-	mov	r0, tmp_vvv
-	mov	r1, fp
-	mov	r2, tmp_yyy
-	mov	r3, #0xffffffc0
-	bic	r3, r3, #0xf000
-	blx	r3
-	cmp	r0, #0
-	bne	.handle_exception_17
-.handle_exception_18:
-	cmp	tmp_vvv, sl
-	beq	.handle_exception_19
-	str	tmp_yyy, [tmp_vvv, #4]
-	add	r0, except_sp, #EXCEPTION_HANDLEMARK2
-	ldr	r1, [istate, #ISTATE_THREAD]
-	bl	_ZN10HandleMark10initializeEP6Thread
-	mov	r1, tmp_vvv
-	ldr	r0, [istate, #ISTATE_THREAD]
-	DECACHE_STACK
-	bl	_ZN18InterpreterRuntime11monitorexitEP10JavaThreadP15BasicObjectLock
-	ASSERT_STACK_CACHED
-	add	r0, except_sp, #EXCEPTION_HANDLEMARK2
-	bl	_ZN10HandleMarkD1Ev
-.handle_exception_19:
-	ldr	r1, [except_sp, #EXCEPTION_EXCEPTION2]
-	cmp	r1, #0
-	beq	.handle_exception_27
-	ldr	r3, [r1, #0]
+	ldr	r4, [r2, #METHOD_ACCESSFLAGS]
+	tst	r4, #1<<5
+	subne	tmp2, tmp2, #8
+	cmp	tmp1, tmp2
+	bcs	2f
+1:
+	ldr	r3, [tmp1, #4]
 	cmp	r3, #0
-	beq	.handle_exception_27
-.handle_exception_20:
-	ldr	r3, [except_sp, #EXCEPTION_MONITORBASE]
-	add	tmp_vvv, tmp_vvv, #8
-	cmp	tmp_vvv, r3
-	bcc	.handle_exception_16
-.handle_exception_21:
-	ldr	ip, [except_sp, #EXCEPTION_TMP1]
-	cmp	ip, #0
-	beq	.handle_exception_23
-	ldr	r0, [except_sp, #EXCEPTION_MONITORBASE]
-	ldr	sl, [r0, #4]
-	cmp	sl, #0
-	beq	.handle_exception_26
-	mov	ip, r0
-	ldr	r0, [r0, #0]
+	bne	3f
+	add	tmp1, tmp1, #8
+	cmp	tmp1, tmp2
+	bcc	1b
+
+2:
+	tst	r4, #1<<5
+
+	ldmeqia	arm_sp!, {r4, pc}
+
+	ldr	tmp1, [tmp2, #4]		@ base->obj == NULL
+	cmp	tmp1, #0
+	beq	4f
+
+	ldr	r0, [tmp2, #0]			@ r0 = header
 	mov	r3, #0
 	cmp	r0, #0
-	str	r3, [ip, #4]
-	beq	.handle_exception_23
-	mov	r1, sl
-	ldr	r2, [except_sp, #EXCEPTION_MONITORBASE]
+	str	r3, [tmp2, #4]			@ base->obj = NULL
+
+	ldmeqia	arm_sp!, {r4, pc}
+
+	mov	r1, tmp1
+	mov	r2, tmp2
 	bl	cmpxchg_ptr
-	ldr	r1, [except_sp, #EXCEPTION_MONITORBASE]
-	cmp	r1, r0
-	beq	.handle_exception_22
-	ldr	r3, [except_sp, #EXCEPTION_MONITORBASE]
-	add	tmp_yyy, except_sp, #EXCEPTION_HANDLEMARK2
-	mov	r0, tmp_yyy
-	str	sl, [r3, #4]
-	ldr	r1, [istate, #ISTATE_THREAD]
-	bl	_ZN10HandleMark10initializeEP6Thread
-	ldr	r1, [except_sp, #EXCEPTION_MONITORBASE]
-	ldr	r0, [istate, #ISTATE_THREAD]
-	DECACHE_STACK
-	bl	_ZN18InterpreterRuntime11monitorexitEP10JavaThreadP15BasicObjectLock
-	mov	r0, tmp_yyy
-	ASSERT_STACK_CACHED
-	bl	_ZN10HandleMarkD1Ev
-	ldr	r0, [istate, #ISTATE_THREAD]
-	ldr	r1, [r0, #4]
-	cmp	r1, #0
-	beq	.handle_exception_24
-	add	r0, except_sp, #EXCEPTION_HANDLE2
-	bl	HandleC
-	ldr	r1, [except_sp, #EXCEPTION_HANDLE2]
-	ldr	r0, [istate, #ISTATE_THREAD]
-	str	r1, [except_sp, #EXCEPTION_EXCEPTION2]
-	bl	_ZN12ThreadShadow23clear_pending_exceptionEv
-.handle_exception_22:
-	ldr	r0, [istate, #ISTATE_THREAD]
-	b	.handle_exception_24
-.handle_exception_23:
-	ldr	r0, [istate, #ISTATE_THREAD]
-.handle_exception_24:
-	ldr	r3, [except_sp, #EXCEPTION_EXCEPTION2]
-	cmp	r3, #0
-	beq	.handle_exception_12
-.handle_exception_25:
-	ldr	lr, [except_sp, #EXCEPTION_EXCEPTION2]
-	ldr	r1, [lr, #0]
-	cmp	r1, #0
-	bne	.handle_exception_13
-	b	.handle_exception_12
-.handle_exception_26:
-	ldr	r1, [except_sp, #EXCEPTION_EXCEPTION2]
-	cmp	r1, #0
-	beq	.handle_exception_29
-	ldr	r3, [r1, #0]
-	cmp	r3, #0
-	beq	.handle_exception_29
-	ldr	r0, [istate, #ISTATE_THREAD]
-	b	.handle_exception_25
+	cmp	tmp2, r0
 
-.handle_exception_27:
-	add	r0, except_sp, #EXCEPTION_HANDLEMARK2
-	ldr	r1, [istate, #ISTATE_THREAD]
-	bl	_ZN10HandleMark10initializeEP6Thread
-	ldr	r0, [istate, #ISTATE_THREAD]
-	DECACHE_STACK
-	bl	_ZN18InterpreterRuntime37throw_illegal_monitor_state_exceptionEP10JavaThread
-	add	r0, except_sp, #EXCEPTION_HANDLEMARK2
-	ASSERT_STACK_CACHED
-	bl	_ZN10HandleMarkD1Ev
-	add	r0, except_sp, #EXCEPTION_HANDLE
-	ldr	r3, [istate, #ISTATE_THREAD]
-	ldr	r1, [r3, #4]
-	bl	HandleC
-	ldr	r2, [except_sp, #EXCEPTION_HANDLE]
-	ldr	r0, [istate, #ISTATE_THREAD]
-	str	r2, [except_sp, #EXCEPTION_EXCEPTION2]
-	bl	_ZN12ThreadShadow23clear_pending_exceptionEv
-	b	.handle_exception_20
-.handle_exception_29:
-	add	tmp_yyy, except_sp, #EXCEPTION_HANDLEMARK2
-	mov	r0, tmp_yyy
-	ldr	r1, [istate, #ISTATE_THREAD]
-	bl	_ZN10HandleMark10initializeEP6Thread
-	ldr	r0, [istate, #ISTATE_THREAD]
-	DECACHE_STACK
-	bl	_ZN18InterpreterRuntime37throw_illegal_monitor_state_exceptionEP10JavaThread
-	mov	r0, tmp_yyy
-	ASSERT_STACK_CACHED
-	bl	_ZN10HandleMarkD1Ev
-	ldr	r3, [istate, #ISTATE_THREAD]
-	add	r0, except_sp, #EXCEPTION_HANDLE3
-	ldr	r1, [r3, #4]
-	bl	HandleC
-	ldr	r2, [except_sp, #EXCEPTION_HANDLE3]
-	ldr	r0, [istate, #ISTATE_THREAD]
-	str	r2, [except_sp, #EXCEPTION_EXCEPTION2]
-	bl	_ZN12ThreadShadow23clear_pending_exceptionEv
-	ldr	r0, [istate, #ISTATE_THREAD]
-	b	.handle_exception_24
+	ldmeqia	arm_sp!, {r4, pc}
 
-#ifdef FASTPATH_ENTRY
+	str	tmp1, [tmp2, #4]
+
+	mov	r1, tmp2
+	ldr	r0, [istate, #ISTATE_THREAD]
+	bl	Helper_synchronized_exit
+
+	ldmeqia	arm_sp!, {r4, pc}
+
+3:
+	ldr	r0, [istate, #ISTATE_THREAD]
+	bl	Helper_RaiseIllegalMonitorException
+	b	2b
+
+4:
+	ldr	r0, [istate, #ISTATE_THREAD]
+	bl	Helper_RaiseIllegalMonitorException
+	ldmia	arm_sp!, {r4, pc}
 
 	ALIGN_CODE
-fast_accessor_entry:
-	ldr	ip, [dispatch, #SafePointSynchronize_state_Address-XXX]
-	ldr	r3, [tmp2, #8]
-	ldr	ip, [ip, #0]
-	ldrb	r2, [r3, #50]
-	ldrb	r3, [r3, #51]
-	cmp	ip, #0
-	ldr	ip, [tmp2, #12]
-	bne	fast_normal_entry
-	ldr	ip, [ip, #12]
+accessor_entry:
+	b	slow_accessor_entry
 
-	DISPATCH_START	3
+	ALIGN_CODE
+slow_accessor_entry:
+  USEC	adrl	ip, dispatch_init_adcon
+  USEC	ldr	r3, [ip]
+  USEC	add	r3, r3, ip
+  USEC	ldr	ip, [ip, #invocationlimit_adcon-dispatch_init_adcon]
+  USEC	ldr	ip, [r3, ip]
 
-	orr	r2, r2, r3, lsl #8		@ r2 = index
-	add	r3, ip, #16
-	ldr	r2, [r3, r2, lsl #4]!		@ r3 = cache, r2 = flags
+  USEC	ldr	r3, [r0, #METHOD_INVOCATIONCOUNTER]
+  USEC	ldr	ip, [ip, #0]
+  USEC	add	r3, r3, #INVOCATIONCOUNTER_COUNTINCREMENT
+  USEC	str	r3, [r0, #METHOD_INVOCATIONCOUNTER]
+  USEC	cmp	r3, ip
+  USEC	bcs	normal_entry
 
-	DISPATCH_NEXT
+	ldr	r1, [r0, #METHOD_CONSTMETHOD]
+	ldrb	r3, [r1, #CONSTMETHOD_CODEOFFSET+2]
+	ldrb	r1, [r1, #CONSTMETHOD_CODEOFFSET+3]
+	ldr	ip, [r0, #METHOD_CONSTANTS]
+	ldr	ip, [ip, #CONSTANTPOOL_CACHE]
+	orr	r3, r3, r1, lsl #8		@ r3 = index
 
-	cmp	r2, #opc_getfield << 16
-	GET_STACK	0, r2
-	bne	fast_normal_entry
+	add	r1, ip, #CP_OFFSET
+	ldr	r3, [r1, r3, lsl #4]!		@ r1 = cache, r3 = flags
+	ldr	ip, [r2, #THREAD_JAVA_SP]			@ ip == stack
+	and	r3, r3, #0x00ff0000
+	cmp	r3, #opc_getfield << 16
+	ldr	r3, [ip, #0]
+	bne	normal_entry
 
-	cmp	r2, #0
-	beq	fast_normal_entry
+	cmp	r3, #0
+	beq	normal_entry
 
+	ldr	r0, [r1, #12]
+	ldr	r1, [r1, #8]
+	movs	r0, r0, lsr #29
+	bls	accessor_non_w
 
-	ldr	lr, [r3, #12]
-	ldr	r3, [r3, #8]
-	movs	lr, lr, lsr #29
-	bls	.fast_accessor_non_w
-
-	DISPATCH_NEXT
-
-	ldr	tmp1, [r2, r3]
-
-	DISPATCH_NEXT
-	DISPATCH_NEXT
-
-	PUT_STACK	0, tmp1
-
-	DISPATCH_FINISH
+	ldr	r0, [r3, r1]
+	str	r0, [ip, #0]
+	bx	lr
 
 .fast_accessor_non_w:
 	bcs	.fast_accessor_h
@@ -5427,10 +3181,8 @@ fast_accessor_entry:
 	PUSH	tmp2
 	DISPATCH_FINISH
 
-#endif // FASTPATH_ENTRY
-
 div_zero_jpc_1:
-	sub	jpc, jpc, #1			@ Point to idiv
+	sub	jpc, jpc, #1
 .lrem_0:
 .ldiv_0:
 divide_by_zero_exception:
@@ -5465,30 +3217,12 @@ array_bound_exception_jpc_1:
 	sub	jpc, jpc, #1
 array_bound_exception_jpc_0:
 array_bounds_exception:
-	adr	r1, percent_d_str
-	sub	arm_sp, arm_sp, #16
-	add	r0, arm_sp, #4
-	bl	sprintf
-	add	r1, arm_sp, #4
-	mov	r0, #VMSYMBOLS_ArrayIndexOutOfBounds
-	str	r1, [arm_sp]
-	ldr	r3, [dispatch, #VmSymbols_symbols_Address-XXX]
-	ldr	r3, [r3, r0, lsl #2]
-        ldr     r0, [istate, #ISTATE_THREAD]
 	DECACHE_JPC
         DECACHE_STACK
-        mov     ip, #_thread_in_vm
-        str     ip, [r0, #THREAD_STATE]
-        mov     r2, #99
-        adrl    r1, bytecode_interpreter_str
-       	bl      _ZN10Exceptions10_throw_msgEP6ThreadPKciP13symbolOopDescS3_
-	add	r0, istate, #ISTATE_THREAD
-       	bl      ThreadInVMfromJavaD
-	add	arm_sp, arm_sp, #16
+	mov	r1, r2
+        ldr     r0, [istate, #ISTATE_THREAD]
+	bl	Helper_RaiseArrayBoundException
         b       handle_exception_with_bcp
-percent_d_str:
-	.ascii	"%d\000"
-	ALIGN_WORD
 
 #ifndef HW_NULL_PTR_CHECK
 null_ptr_exception_jpc_5:
@@ -5780,8 +3514,6 @@ null_ptr_exception:
 	bpl	.dadd_exit
 	b	.return_double_NaN
 
-@ ECN: load 1st arg off stack and do a reverse subtract
-@ ECN: We want TOSM1 - TOS, but args end up in wrong order so do rsb
 @ --- do_dsub_itos -------------------------------------------------
 	Opcode	dsub
 	POP	al, ah, bl, bh
@@ -6189,7 +3921,6 @@ null_ptr_exception:
         orr     ah, ah, al, LSR ul     @ put in high end of low word
         mov     al, tl
 
-@ ECN: Reload tmp
 	mov	tmp, #0x7f00000
 	orr	tmp, tmp, #0x00f0000
 
@@ -6228,7 +3959,6 @@ null_ptr_exception:
         orr     bh, bh, bl, LSR ul     @ put in high end of low word
         mov     bl, tl
 
-@ ECN: Reload tmp
 	mov	tmp, #0x7f00000
 	orr	tmp, tmp, #0x00f0000
 
@@ -6293,9 +4023,9 @@ _ZN14CppInterpreter17ignore_safepointsEv:
 	strb	r3, [r2, #0]
 	adrl	r3, main_dispatch_table
 #ifdef HW_FP
-	ldr	r0, [ip, #VFP_Flag-XXX]
-	cmp	r0, #0
-	bne	2f
+	ldr	r0, [ip, #CPUInfo-XXX]
+	tst	r0, #ARCH_VFP
+	beq	2f
 #endif
 	mov	r2, #256
 1:
@@ -6303,7 +4033,8 @@ _ZN14CppInterpreter17ignore_safepointsEv:
 	str	r1, [ip], #4
 	subs	r2, r2, #1
 	bne	1b
-	bx	lr
+	sub	ip, ip, #4 * 256
+	b	4f
 
 @ No HW FP - must update the table from a combination main_dispatch_table and
 @ vfp_table. Previously this updated from main_dispatch_table first, and then
@@ -6327,9 +4058,23 @@ _ZN14CppInterpreter17ignore_safepointsEv:
 	add	r2, r2, #1
 	cmp	r2, #256
 	bcc	3b
+	sub	ip, ip, #4 * 256
 	ldmia	arm_sp!, {r4, lr}
 #endif // HW_FP
+
+4:
+	ldr	r0, [ip, #CPUInfo-XXX]
+	tst	r0, #ARCH_CLZ
+	beq	5f
+
+	adrl	r0, do_idiv_clz
+	str	r0, [ip, #opc_idiv * 4]
+	adrl	r0, do_irem_clz
+	str	r0, [ip, #opc_irem * 4]
+
+5:
 #endif // NOTICE_SAFEPOINTS
+
 	bx	lr
 
 @ --- notice_safepoints ---------------------------------------------------------------------------
@@ -6384,6 +4129,9 @@ bci_init:
 	subs	r1, r1, #1
 	bne	2b
 
+	bl	hwcap
+	str	r0, [r4, #CPUInfo-XXX]
+
 #ifdef USE_COMPILER
 
 #define NPROCESSORS_CONF        83
@@ -6403,51 +4151,18 @@ bci_init:
         ldr     r1, [r4, #CompileThreshold_Address-XXX]
         str     r0, [r1]
 
-
 #endif // USE_COMPILER
 
-        ldmfd   sp!, {r4, lr}
+#ifdef THUMB2EE
+	ldr	r1, [r4, #CPUInfo-XXX]
+	tst	r1, #ARCH_THUMBEE
+	blne	Thumb2_Initialize
+#endif
 
 #ifdef HW_FP
-vfp_init:
-	stmfd	sp!, {r4, r5, lr}
-	sub	sp, sp, #132
-	mov	r4, #0
-	adr	r0, proc_self_auxv
-	mov	r1, #0
-	bl	open
-	subs	r5, r0, #0
-	blt	.exit_vfp_init
-.vfp_init_read_loop:
-	mov	r2, #128
-	mov	r0, r5
-	mov	r1, sp
-	bl	read
-	mov	r2, sp
-	mov	r3, r0, lsr #3
-	b	.vfp_init_1
-.vfp_init_vec_loop:
-	ldmia	r2!, {r1, ip}
-	cmp	r1, #0
-	beq	.fini_vfp_init
-	cmp	r1, #16
-	bne	.vfp_init_1
-	tst	ip, #64
-	movne	r4, #1
-	bne	.fini_vfp_init
-.vfp_init_1:
-	subs	r3, r3, #1
-	bpl	.vfp_init_vec_loop
-	cmp	r0, #128
-	beq	.vfp_init_read_loop
-.fini_vfp_init:
-	mov	r0, r5
-	bl	close
-.exit_vfp_init:
-	movs	r0, r4
-	add	sp, sp, #132
-	ldmfd	sp!, {r4, r5, lr}
-	bxne	lr		@ We have HW FP - just exit
+	ldr	r0, [r4, #CPUInfo-XXX]
+	tst	r0, #ARCH_VFP
+	bne	4f
 
 @ No HW FP - replace the HW FP entries with SW entries
 update_vfp_table:
@@ -6456,17 +4171,26 @@ update_vfp_table:
 	ldm	ip, {r2, r3}
 	add	r2, r2, ip
 	add	ip, r3, r2
-	mov	r1, #1
-	str	r1, [ip, #VFP_Flag-XXX]
 .update_vfp_loop:
 	ldr	r1, [r0], #4
 	cmp	r1, #0
 	ldrne	r2, [r0], #4
 	strne	r2, [ip, r1, lsl #2]
 	bne	.update_vfp_loop
+4:
 #endif // HW_FP
 
-	bx	lr
+	ldr	r0, [r4, #CPUInfo-XXX]
+	tst	r0, #ARCH_CLZ
+	beq	5f
+
+	adrl	r0, do_idiv_clz
+	str	r0, [r4, #opc_idiv * 4]
+	adrl	r0, do_irem_clz
+	str	r0, [r4, #opc_irem * 4]
+
+5:
+	ldmia	sp!, {r4, pc}
 
 #ifdef HW_FP
 vfp_table:
@@ -6483,12 +4207,14 @@ vfp_table:
 	.word	opc_dcmpl,	do_dcmpl
 	.word	opc_dcmpg,	do_dcmpg
 	.word	0
-
-proc_self_auxv:
-	.ascii	"/proc/self/auxv\000"
-	.align	2
-
 #endif // HW_FP
+
+load_dispatch:
+	adrl	ip, dispatch_init_adcon
+	ldm	ip, {r0, r1}
+	add	r0, r0, ip
+	add	dispatch, r1, r0
+	mov	pc, lr
 
 	ALIGN_DATA
 dispatch_init_adcon:
@@ -6506,6 +4232,7 @@ adcon_init_table:
 	.word	PrintCommandLineFlags(GOT)
 	.word	_ZN11JvmtiExport28_can_post_interpreter_eventsE(GOT)
 	.word	UseCompiler(GOT)
+invocationlimit_adcon:
 	.word	_ZN17InvocationCounter26InterpreterInvocationLimitE(GOT)
         .word   CompileThreshold(GOT)
         .word   BackgroundCompilation(GOT)
@@ -6516,8 +4243,6 @@ adcon_init_table:
 main_dispatch_table:
 	MAIN_DISPATCH_TABLE
 
-@ ECN: Strange logic here! We don't need the safe_dispatch_table if NOTICE_SAFEPOINTS is
-@      disabled because in this case the main_dispatch_table must be safepoint safe.
 #ifdef NOTICE_SAFEPOINTS
 safe_dispatch_table:
 	.word	do_nop
@@ -6780,19 +4505,1717 @@ safe_dispatch_table:
 
 	SUB_DISPATCH_TABLES
 
+	.arch	armv7-a
+
+	ALIGN_CODE
+	.global	Thumb2_stubs
+Thumb2_stubs:
+	.global	Thumb2_idiv_stub
+Thumb2_idiv_stub:
+int_div:
+	cmp     r1, #0x21
+	adr	r3, 1f
+	eor     r12, r0, r1
+	ldrcc	pc, [r3, r1, lsl #2]
+	rsblt   r1, r1, #0
+	subs    r2, r1, #1
+	beq     2f
+	movs    r3, r0
+	rsbmi   r3, r0, #0
+	cmp     r3, r1
+	bls     3f
+	tst     r1, r2
+	beq     4f
+	clz     r2, r3
+	clz     r0, r1
+	sub     r2, r0, r2
+	rsbs    r2, r2, #31
+	add     r2, r2, r2, lsl #1
+	mov     r0, #0
+	add     pc, pc, r2, lsl #2
+	mov	r0, #0
+	cmp     r3, r1, lsl #31
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #31
+	cmp     r3, r1, lsl #30
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #30
+	cmp     r3, r1, lsl #29
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #29
+	cmp     r3, r1, lsl #28
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #28
+	cmp     r3, r1, lsl #27
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #27
+	cmp     r3, r1, lsl #26
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #26
+	cmp     r3, r1, lsl #25
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #25
+	cmp     r3, r1, lsl #24
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #24
+	cmp     r3, r1, lsl #23
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #23
+	cmp     r3, r1, lsl #22
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #22
+	cmp     r3, r1, lsl #21
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #21
+	cmp     r3, r1, lsl #20
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #20
+	cmp     r3, r1, lsl #19
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #19
+	cmp     r3, r1, lsl #18
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #18
+	cmp     r3, r1, lsl #17
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #17
+	cmp     r3, r1, lsl #16
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #16
+	cmp     r3, r1, lsl #15
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #15
+	cmp     r3, r1, lsl #14
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #14
+	cmp     r3, r1, lsl #13
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #13
+	cmp     r3, r1, lsl #12
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #12
+	cmp     r3, r1, lsl #11
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #11
+	cmp     r3, r1, lsl #10
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #10
+	cmp     r3, r1, lsl #9
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #9
+	cmp     r3, r1, lsl #8
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #8
+	cmp     r3, r1, lsl #7
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #7
+	cmp     r3, r1, lsl #6
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #6
+	cmp     r3, r1, lsl #5
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #5
+	cmp     r3, r1, lsl #4
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #4
+	cmp     r3, r1, lsl #3
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #3
+	cmp     r3, r1, lsl #2
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #2
+	cmp     r3, r1, lsl #1
+	adc     r0, r0, r0
+	subcs   r3, r3, r1, lsl #1
+	cmp     r3, r1
+	adc     r0, r0, r0
+	subcs   r3, r3, r1
+	cmp     r12, #0
+	rsbmi   r0, r0, #0
+	bx      lr
+2:
+	teq     r12, r0
+	rsbmi   r0, r0, #0
+	bx      lr
+3:
+	movcc   r0, #0
+	asreq   r0, r12, #31
+	orreq   r0, r0, #1
+	bx      lr
+4:
+	clz     r2, r1
+	rsb     r2, r2, #31
+	cmp     r12, #0
+	lsr     r0, r3, r2
+	rsbmi   r0, r0, #0
+	bx      lr
+1:
+	.word	Thumb2_DivZero_Handler
+	.word	jdiv_1
+	.word	jdiv_2
+	.word	jdiv_3
+	.word	jdiv_4
+	.word	jdiv_5
+	.word	jdiv_6
+	.word	jdiv_7
+	.word	jdiv_8
+	.word	jdiv_9
+	.word	jdiv_10
+	.word	jdiv_11
+	.word	jdiv_12
+	.word	jdiv_13
+	.word	jdiv_14
+	.word	jdiv_15
+	.word	jdiv_16
+	.word	jdiv_17
+	.word	jdiv_18
+	.word	jdiv_19
+	.word	jdiv_20
+	.word	jdiv_21
+	.word	jdiv_22
+	.word	jdiv_23
+	.word	jdiv_24
+	.word	jdiv_25
+	.word	jdiv_26
+	.word	jdiv_27
+	.word	jdiv_28
+	.word	jdiv_29
+	.word	jdiv_30
+	.word	jdiv_31
+	.word	jdiv_32
+	ALIGN_CODE
+	.global	Thumb2_irem_stub
+Thumb2_irem_stub:
+int_rem:
+	cmp     r1, #0x21
+	adr	r3, 1f
+	ldrcc	pc, [r3, r1, lsl #2]
+	rsblt   r1, r1, #0
+	subs    r2, r1, #1
+	beq     2f
+	movs    r12, r0
+	rsbmi   r0, r0, #0
+	cmp     r0, r1
+	bls     3f
+	tst     r1, r2
+	beq     4f
+	clz     r2, r0
+	clz     r3, r1
+	sub     r2, r3, r2
+	rsbs    r2, r2, #31
+	add     pc, pc, r2, lsl #3
+	mov	r3, #0
+	cmp     r0, r1, lsl #31
+	subcs   r0, r0, r1, lsl #31
+	cmp     r0, r1, lsl #30
+	subcs   r0, r0, r1, lsl #30
+	cmp     r0, r1, lsl #29
+	subcs   r0, r0, r1, lsl #29
+	cmp     r0, r1, lsl #28
+	subcs   r0, r0, r1, lsl #28
+	cmp     r0, r1, lsl #27
+	subcs   r0, r0, r1, lsl #27
+	cmp     r0, r1, lsl #26
+	subcs   r0, r0, r1, lsl #26
+	cmp     r0, r1, lsl #25
+	subcs   r0, r0, r1, lsl #25
+	cmp     r0, r1, lsl #24
+	subcs   r0, r0, r1, lsl #24
+	cmp     r0, r1, lsl #23
+	subcs   r0, r0, r1, lsl #23
+	cmp     r0, r1, lsl #22
+	subcs   r0, r0, r1, lsl #22
+	cmp     r0, r1, lsl #21
+	subcs   r0, r0, r1, lsl #21
+	cmp     r0, r1, lsl #20
+	subcs   r0, r0, r1, lsl #20
+	cmp     r0, r1, lsl #19
+	subcs   r0, r0, r1, lsl #19
+	cmp     r0, r1, lsl #18
+	subcs   r0, r0, r1, lsl #18
+	cmp     r0, r1, lsl #17
+	subcs   r0, r0, r1, lsl #17
+	cmp     r0, r1, lsl #16
+	subcs   r0, r0, r1, lsl #16
+	cmp     r0, r1, lsl #15
+	subcs   r0, r0, r1, lsl #15
+	cmp     r0, r1, lsl #14
+	subcs   r0, r0, r1, lsl #14
+	cmp     r0, r1, lsl #13
+	subcs   r0, r0, r1, lsl #13
+	cmp     r0, r1, lsl #12
+	subcs   r0, r0, r1, lsl #12
+	cmp     r0, r1, lsl #11
+	subcs   r0, r0, r1, lsl #11
+	cmp     r0, r1, lsl #10
+	subcs   r0, r0, r1, lsl #10
+	cmp     r0, r1, lsl #9
+	subcs   r0, r0, r1, lsl #9
+	cmp     r0, r1, lsl #8
+	subcs   r0, r0, r1, lsl #8
+	cmp     r0, r1, lsl #7
+	subcs   r0, r0, r1, lsl #7
+	cmp     r0, r1, lsl #6
+	subcs   r0, r0, r1, lsl #6
+	cmp     r0, r1, lsl #5
+	subcs   r0, r0, r1, lsl #5
+	cmp     r0, r1, lsl #4
+	subcs   r0, r0, r1, lsl #4
+	cmp     r0, r1, lsl #3
+	subcs   r0, r0, r1, lsl #3
+	cmp     r0, r1, lsl #2
+	subcs   r0, r0, r1, lsl #2
+	cmp     r0, r1, lsl #1
+	subcs   r0, r0, r1, lsl #1
+	cmp     r0, r1
+	subcs   r0, r0, r1
+	cmp     r12, #0
+	rsbmi   r0, r0, #0
+	bx      lr
+2:
+	mov	r0, #0
+	bx      lr
+3:
+	moveq	r0, #0
+	cmp	r12, #0
+	rsbmi	r0, r0, #0
+	bx	lr
+4:
+	and	r0, r0, r2
+	cmp	r12, #0
+	rsbmi	r0, r0, #0
+	bx      lr
+1:
+	.word	Thumb2_DivZero_Handler
+	.word	jrem_1
+	.word	jrem_2
+	.word	jrem_3
+	.word	jrem_4
+	.word	jrem_5
+	.word	jrem_6
+	.word	jrem_7
+	.word	jrem_8
+	.word	jrem_9
+	.word	jrem_10
+	.word	jrem_11
+	.word	jrem_12
+	.word	jrem_13
+	.word	jrem_14
+	.word	jrem_15
+	.word	jrem_16
+	.word	jrem_17
+	.word	jrem_18
+	.word	jrem_19
+	.word	jrem_20
+	.word	jrem_21
+	.word	jrem_22
+	.word	jrem_23
+	.word	jrem_24
+	.word	jrem_25
+	.word	jrem_26
+	.word	jrem_27
+	.word	jrem_28
+	.word	jrem_29
+	.word	jrem_30
+	.word	jrem_31
+	.word	jrem_32
+
+#ifdef THUMB2EE
+@ R0 = BCI
+@ R1 = index
+#define Rthread	r9
+	.global	Thumb2_invokeinterface_stub
+Thumb2_invokeinterface_stub:
+	stmdb	sp!, {ip, lr}
+	ldr	ip, [istate, #ISTATE_METHOD]
+	sub	stack, stack, #4
+	ldr	r2, [istate, #ISTATE_CONSTANTS]
+	ldr	ip, [ip, #METHOD_CONSTMETHOD]
+	DECACHE_STACK
+	add	jpc, ip, r0
+
+        add     r0, r2, r1, lsl #4
+	DECACHE_JPC
+
+        ldr     r2, [r0, #CP_OFFSET]
+        and     r2, r2, #0x00ff0000
+        cmp     r2, #opc_invokeinterface << 16
+        bne     istub_resolve
+2:
+	ldr	r3, [r0, #CP_OFFSET+12]
+	and	r2, r3, #255
+	ldr	r2, [stack, r2, lsl #2]
+	cmp	r2, #0
+	beq	istub_null_ptr_exception
+	ldr	tmp2, [r2, #4]				@ rcvr->klass()
+	tst	r3, #flag_methodInterface
+	bne	istub_methodInterface
+
+	ldr	lr, [r0, #CP_OFFSET+4]			@ lr = iclass
+
+	add	r1, tmp2, #INSTANCEKLASS_VTABLE_OFFSET
+	ldr	r2, [tmp2, #KLASS_PART+INSTANCEKLASS_VTABLE_LEN]
+	ldr	ip, [tmp2, #KLASS_PART+INSTANCEKLASS_ITABLE_LEN]
+	add	r2, r2, #1
+	bic	r2, r2, #1
+
+	add	r1, r1, r2, lsl #2
+
+	mov	r2, #0
+1:
+	cmp	r2, ip
+	beq	istub_incompatibleclass_exception
+	ldr	r3, [r1], #8
+	add	r2, r2, #1
+	cmp	lr, r3
+	bne	1b
+
+	ldr	r3, [r0, #CP_OFFSET+8]
+	ldr	r2, [r1, #-4]
+	add	r3, tmp2, r3, lsl #2
+	ldr	tmp2, [r3, r2]
+	cmp	tmp2, #0
+	beq	istub_abstractmethod_exception
+istub_invoke:
+	ldr	ip, [tmp2, #METHOD_FROM_INTERPRETED]
+	mov	r1, #0
+	str	ip, [istate, #36]
+	str	r1, [Rthread, #THREAD_LAST_JAVA_SP]
+
+	add	stack, stack, #4
+	str	stack, [Rthread, #THREAD_JAVA_SP]
+
+	ldr	r3, [ip]
+
+	mov	r0, tmp2
+	mov	r1, ip
+#ifndef SHARK
+	add	r3, r3, #CODE_ALIGN_SIZE
+#endif
+	mov	r2, Rthread
+	blx	r3
+
+	ldr	Rthread, [istate, #ISTATE_THREAD]
+
+	ldr	stack, [Rthread, #THREAD_JAVA_SP]
+	ldr	r2, [istate, #ISTATE_STACK_LIMIT]
+
+	ldr	r1, [Rthread, #THREAD_TOP_ZERO_FRAME]
+	add	r2, r2, #4
+	str	r2, [Rthread, #THREAD_JAVA_SP]
+	str	r1, [Rthread, #THREAD_LAST_JAVA_SP]
+	ldr	r3, [Rthread, #4]
+	cmp	r3, #0
+	bne	istub_exception
+	ldmia	sp!, {ip, pc}
+
+istub_methodInterface:
+	tst	r3, #flag_vfinalMethod
+	ldrne	tmp2, [r0, #CP_OFFSET+8]
+	bne	istub_invoke
+	ldr	r1, [r0, #CP_OFFSET+8]
+	add	r3, tmp2, r1, lsl #2
+	ldr	tmp2, [r3, #INSTANCEKLASS_VTABLE_OFFSET]
+	b	istub_invoke
+
+istub_resolve:
+	mov	tmp2, r1
+	mov	r1, #opc_invokeinterface
+	ldr	r0, [istate, #ISTATE_THREAD]
+	ldr	ip, resolve_invoke_adcon
+	blx	ip
+	ldr	r3, [Rthread, #4]
+	ldr	r2, [istate, #ISTATE_CONSTANTS]
+	cmp	r3, #0
+	bne	istub_exception
+	add	r0, r2, tmp2, lsl #4	@ r1 = cache
+	b	2b
+
+istub_exception:
+	ldmia	sp!, {ip, lr}
+	ldr	ip, handle_exception_adcon
+	bx	ip
+
+istub_null_ptr_exception:
+	mov	r0, #VMSYMBOLS_NullPointerException
+	b	3f
+istub_abstractmethod_exception:
+	mov	r0, #VMSYMBOLS_AbstractMethodError
+	b	3f
+istub_incompatibleclass_exception:
+	mov	r0, #VMSYMBOLS_IncompatibleClassChangeError
+3:
+	CACHE_JPC
+	ldmia	sp!, {ip, lr}
+	ldr	ip, raise_exception_adcon
+	bx	ip
+
+resolve_invoke_adcon:
+	.word	_ZN18InterpreterRuntime14resolve_invokeEP10JavaThreadN9Bytecodes4CodeE
+resolve_get_put_adcon:
+       	.word   _ZN18InterpreterRuntime15resolve_get_putEP10JavaThreadN9Bytecodes4CodeE
+handle_exception_adcon:
+	.word	handle_exception_with_bcp
+raise_exception_adcon:
+	.word	raise_exception
+helper_aputfield_adcon:
+	.word	Helper_aputfield
+
+@ R0 = BCI
+@ R1 = index
+	.global	Thumb2_invokevirtual_stub
+Thumb2_invokevirtual_stub:
+	stmdb	sp!, {ip, lr}
+        ldr     ip, [istate, #ISTATE_METHOD]
+        sub     stack, stack, #4
+        ldr     r2, [istate, #ISTATE_CONSTANTS]
+        ldr     ip, [ip, #METHOD_CONSTMETHOD]
+        DECACHE_STACK
+        add     jpc, ip, r0
+
+        add     r0, r2, r1, lsl #4
+        DECACHE_JPC
+
+        ldr     r2, [r0, #CP_OFFSET]
+        and     r2, r2, #0xff000000
+        cmp     r2, #opc_invokevirtual << 24
+        bne     ivstub_resolve
+2:
+
+	ldr	r3, [r0, #CP_OFFSET+12]
+        and     r2, r3, #255
+        ldr     r2, [stack, r2, asl #2]
+        cmp     r2, #0
+        beq     istub_null_ptr_exception
+
+        ldr     tmp2, [r0, #CP_OFFSET+8]
+        tst     r3, #flag_vfinalMethod
+        bne     1f
+
+        ldr     r3, [r2, #4]
+        add     r3, r3, tmp2, lsl #2
+        ldr     tmp2, [r3, #INSTANCEKLASS_VTABLE_OFFSET]
+1:
+	mov	r1, #0
+        ldr     ip, [tmp2, #METHOD_FROM_INTERPRETED]
+        str     r1, [Rthread, #THREAD_LAST_JAVA_SP]
+        str     ip, [istate, #36]
+
+        add     stack, stack, #4
+        str     stack, [Rthread, #THREAD_JAVA_SP]
+
+        ldr     r3, [ip, #0]
+
+	mov	r0, tmp2
+	mov	r1, ip
+#ifndef SHARK
+	add	r3, r3, #CODE_ALIGN_SIZE
+#endif
+	mov	r2, Rthread
+	blx	r3
+
+        ldr     Rthread, [istate, #ISTATE_THREAD]
+
+	ldr	stack, [Rthread, #THREAD_JAVA_SP]
+	ldr	r2, [istate, #ISTATE_STACK_LIMIT]
+
+	ldr	r1, [Rthread, #THREAD_TOP_ZERO_FRAME]
+	add	r2, r2, #4
+	str	r2, [Rthread, #THREAD_JAVA_SP]
+	str	r1, [Rthread, #THREAD_LAST_JAVA_SP]
+	ldr	r3, [Rthread, #4]
+	cmp	r3, #0
+	bne	istub_exception
+	ldmia	sp!, {ip, pc}
+
+ivstub_resolve:
+	mov	tmp2, r1
+	mov	r1, #opc_invokevirtual
+	ldr	r0, [istate, #ISTATE_THREAD]
+	ldr	ip, resolve_invoke_adcon
+	blx	ip
+	ldr	r3, [Rthread, #4]
+	ldr	r2, [istate, #ISTATE_CONSTANTS]
+	cmp	r3, #0
+	bne	istub_exception
+	add	r0, r2, tmp2, lsl #4	@ r1 = cache
+	b	2b
+
+@ R0 = BCI
+@ R1 = index
+	.global	Thumb2_invokestatic_stub
+Thumb2_invokestatic_stub:
+        stmdb   sp!, {ip, lr}
+        ldr     ip, [istate, #ISTATE_METHOD]
+        sub     stack, stack, #4
+        ldr     r2, [istate, #ISTATE_CONSTANTS]
+        ldr     ip, [ip, #METHOD_CONSTMETHOD]
+        DECACHE_STACK
+        add     jpc, ip, r0
+
+        add     r0, r2, r1, lsl #4
+        DECACHE_JPC
+
+        ldr     r2, [r0, #CP_OFFSET]
+	and	r2, r2, #0x00ff0000
+	cmp	r2, #opc_invokestatic << 16
+	bne	isstub_resolve
+2:
+	ldr	tmp2, [r0, #CP_OFFSET+4]
+	mov	r1, #0
+	ldr	ip, [tmp2, #METHOD_FROM_INTERPRETED]
+	str	r1, [Rthread, #THREAD_LAST_JAVA_SP]
+	str	ip, [istate, #36]
+
+	add	stack, stack, #4
+	str	stack, [Rthread, #THREAD_JAVA_SP]
+
+	ldr	r3, [ip, #0]
+
+        mov     r0, tmp2
+        mov     r1, ip
+#ifndef SHARK
+        add     r3, r3, #CODE_ALIGN_SIZE
+#endif
+        mov     r2, Rthread
+        blx     r3
+
+        ldr     Rthread, [istate, #ISTATE_THREAD]
+
+        ldr     stack, [Rthread, #THREAD_JAVA_SP]
+        ldr     r2, [istate, #ISTATE_STACK_LIMIT]
+
+        ldr     r1, [Rthread, #THREAD_TOP_ZERO_FRAME]
+        add     r2, r2, #4
+        str     r2, [Rthread, #THREAD_JAVA_SP]
+        str     r1, [Rthread, #THREAD_LAST_JAVA_SP]
+        ldr     r3, [Rthread, #4]
+        cmp     r3, #0
+        bne     istub_exception
+        ldmia   sp!, {ip, pc}
+
+isstub_resolve:
+        mov     tmp2, r1
+        mov     r1, #opc_invokestatic
+        ldr     r0, [istate, #ISTATE_THREAD]
+        ldr     ip, resolve_invoke_adcon
+        blx     ip
+        ldr     r3, [Rthread, #4]
+        ldr     r2, [istate, #ISTATE_CONSTANTS]
+        cmp     r3, #0
+        bne     istub_exception
+        add     r0, r2, tmp2, lsl #4    @ r1 = cache
+        b       2b
+
+@ R0 = BCI
+@ R1 = index
+	.global	Thumb2_invokespecial_stub
+Thumb2_invokespecial_stub:
+        stmdb   sp!, {ip, lr}
+        ldr     ip, [istate, #ISTATE_METHOD]
+        sub     stack, stack, #4
+        ldr     r2, [istate, #ISTATE_CONSTANTS]
+        ldr     ip, [ip, #METHOD_CONSTMETHOD]
+        DECACHE_STACK
+        add     jpc, ip, r0
+
+        add     r0, r2, r1, lsl #4
+        DECACHE_JPC
+
+        ldr     r2, [r0, #CP_OFFSET]
+	and	r2, r2, #0x00ff0000
+	cmp	r2, #opc_invokespecial << 16
+	bne	ispstub_resolve
+2:
+        ldr     r3, [r0, #CP_OFFSET+12]
+        and     r3, r3, #255
+        ldr     r2, [stack, r3, asl #2]
+	cmp	r2, #0
+	beq	istub_null_ptr_exception
+
+	ldr	tmp2, [r0, #CP_OFFSET+4]
+	mov	r1, #0
+	ldr	ip, [tmp2, #METHOD_FROM_INTERPRETED]
+	str	r1, [Rthread, #THREAD_LAST_JAVA_SP]
+	str	ip, [istate, #36]
+
+	add	stack, stack, #4
+	str	stack, [Rthread, #THREAD_JAVA_SP]
+
+	ldr	r3, [ip, #0]
+
+        mov     r0, tmp2
+        mov     r1, ip
+#ifndef SHARK
+        add     r3, r3, #CODE_ALIGN_SIZE
+#endif
+        mov     r2, Rthread
+        blx     r3
+
+        ldr     Rthread, [istate, #ISTATE_THREAD]
+
+        ldr     stack, [Rthread, #THREAD_JAVA_SP]
+        ldr     r2, [istate, #ISTATE_STACK_LIMIT]
+
+        ldr     r1, [Rthread, #THREAD_TOP_ZERO_FRAME]
+        add     r2, r2, #4
+        str     r2, [Rthread, #THREAD_JAVA_SP]
+        str     r1, [Rthread, #THREAD_LAST_JAVA_SP]
+        ldr     r3, [Rthread, #4]
+        cmp     r3, #0
+        bne     istub_exception
+        ldmia   sp!, {ip, pc}
+
+ispstub_resolve:
+        mov     tmp2, r1
+        mov     r1, #opc_invokespecial
+        ldr     r0, [istate, #ISTATE_THREAD]
+        ldr     ip, resolve_invoke_adcon
+        blx     ip
+        ldr     r3, [Rthread, #4]
+        ldr     r2, [istate, #ISTATE_CONSTANTS]
+        cmp     r3, #0
+        bne     istub_exception
+        add     r0, r2, tmp2, lsl #4    @ r1 = cache
+        b       2b
+
+@ R0 = BCI
+@ R1 = index
+	.global	Thumb2_getfield_word_stub
+Thumb2_getfield_word_stub:
+	ldr	r2, [istate, #ISTATE_CONSTANTS]
+	add	r2, r2, r1, lsl #4
+	ldr	r3, [r2, #CP_OFFSET]
+	and	r3, r3, #0x00ff0000
+	cmp	r3, #opc_getfield << 16
+	bne	1f
+2:
+	ldr	r3, [stack], #4		@ POP r3
+	ldr	ip, [r2, #CP_OFFSET+8]
+	cmp	r3, #0
+	beq	field_null_ptr_exception
+
+	ldr	r3, [r3, ip]
+	str	r3, [stack, #-4]!	@ PUSH r3
+	bx	lr
+1:
+	mov	ip, lr
+	bl	getfield_stub_unresolved
+	mov	lr, ip
+	b	2b
+
+@ R0 = BCI
+@ R1 = index
+	.global	Thumb2_getfield_sh_stub
+Thumb2_getfield_sh_stub:
+	ldr	r2, [istate, #ISTATE_CONSTANTS]
+	add	r2, r2, r1, lsl #4
+	ldr	r3, [r2, #CP_OFFSET]
+	and	r3, r3, #0x00ff0000
+	cmp	r3, #opc_getfield << 16
+	bne	1f
+2:
+	ldr	r3, [stack], #4		@ POP r3
+	ldr	ip, [r2, #CP_OFFSET+8]
+	cmp	r3, #0
+	beq	field_null_ptr_exception
+
+	ldrsh	r3, [r3, ip]
+	str	r3, [stack, #-4]!	@ PUSH r3
+	bx	lr
+1:
+	mov	ip, lr
+	bl	getfield_stub_unresolved
+	mov	lr, ip
+	b	2b
+
+@ R0 = BCI
+@ R1 = index
+	.global	Thumb2_getfield_h_stub
+Thumb2_getfield_h_stub:
+	ldr	r2, [istate, #ISTATE_CONSTANTS]
+	add	r2, r2, r1, lsl #4
+	ldr	r3, [r2, #CP_OFFSET]
+	and	r3, r3, #0x00ff0000
+	cmp	r3, #opc_getfield << 16
+	bne	1f
+2:
+	ldr	r3, [stack], #4		@ POP r3
+	ldr	ip, [r2, #CP_OFFSET+8]
+	cmp	r3, #0
+	beq	field_null_ptr_exception
+
+	ldrh	r3, [r3, ip]
+	str	r3, [stack, #-4]!	@ PUSH r3
+	bx	lr
+1:
+	mov	ip, lr
+	bl	getfield_stub_unresolved
+	mov	lr, ip
+	b	2b
+
+@ R0 = BCI
+@ R1 = index
+	.global	Thumb2_getfield_sb_stub
+Thumb2_getfield_sb_stub:
+	ldr	r2, [istate, #ISTATE_CONSTANTS]
+	add	r2, r2, r1, lsl #4
+	ldr	r3, [r2, #CP_OFFSET]
+	and	r3, r3, #0x00ff0000
+	cmp	r3, #opc_getfield << 16
+	bne	1f
+2:
+	ldr	r3, [stack], #4		@ POP r3
+	ldr	ip, [r2, #CP_OFFSET+8]
+	cmp	r3, #0
+	beq	field_null_ptr_exception
+
+	ldrsb	r3, [r3, ip]
+	str	r3, [stack, #-4]!	@ PUSH r3
+	bx	lr
+1:
+	mov	ip, lr
+	bl	getfield_stub_unresolved
+	mov	lr, ip
+	b	2b
+
+@ R0 = BCI
+@ R1 = index
+	.global	Thumb2_getfield_dw_stub
+Thumb2_getfield_dw_stub:
+	ldr	r2, [istate, #ISTATE_CONSTANTS]
+	add	r2, r2, r1, lsl #4
+	ldr	r3, [r2, #CP_OFFSET]
+	and	r3, r3, #0x00ff0000
+	cmp	r3, #opc_getfield << 16
+	bne	1f
+2:
+	ldr	r3, [stack], #4		@ POP r3
+	ldr	ip, [r2, #CP_OFFSET+8]
+	cmp	r3, #0
+	beq	field_null_ptr_exception
+
+	ldrd	r2, r3, [r3, ip]
+	stmdb	stack!, {r2, r3}	@ PUSH r2, r3
+	bx	lr
+1:
+	mov	ip, lr
+	bl	getfield_stub_unresolved
+	mov	lr, ip
+	b	2b
+
+@ R0 = BCI
+@ R1 = index
+putstatic_stub_unresolved:
+	mov	r2, #opc_putstatic
+	b	field_stub_unresolved
+getstatic_stub_unresolved:
+	mov	r2, #opc_getstatic
+	b	field_stub_unresolved
+putfield_stub_unresolved:
+	mov	r2, #opc_putfield
+	b	field_stub_unresolved
+getfield_stub_unresolved:
+	mov	r2, #opc_getfield
+field_stub_unresolved:
+	stmdb	sp!, {r0, r1, ip, lr}
+        ldr     ip, [istate, #ISTATE_METHOD]
+	sub	r3, stack, #4
+	ldr	ip, [ip, #METHOD_CONSTMETHOD]
+	str	r3, [istate, #ISTATE_STACK]	@ DECACHE_STACK
+	add	r3, ip, r0
+	str	r3, [istate, #ISTATE_BCP]	@ DECACHE_JPC
+	ldr	ip, resolve_get_put_adcon
+	mov	r1, r2
+	ldr	r0, [istate, #ISTATE_THREAD]
+	blx	ip
+	ldmia	sp!, {r0, r1, ip, lr}
+	ldr	r3, [Rthread, #4]
+	ldr	r2, [istate, #ISTATE_CONSTANTS]
+	cmp	r3, #0
+	bne	field_exception
+	add	r2, r2, r1, lsl #4
+	bx	lr
+
+field_null_ptr_exception:
+        ldr     ip, [istate, #ISTATE_METHOD]
+        ldr     ip, [ip, #METHOD_CONSTMETHOD]
+        add     jpc, ip, r0
+	mov	r0, #VMSYMBOLS_NullPointerException
+	ldr	ip, raise_exception_adcon
+	bx	ip
+
+field_exception:
+	ldr	ip, handle_exception_adcon
+	bx	ip
+
+@ R0 = BCI
+@ R1 = index
+	.global	Thumb2_putfield_word_stub
+Thumb2_putfield_word_stub:
+	ldr	r2, [istate, #ISTATE_CONSTANTS]
+	add	r2, r2, r1, lsl #4
+	ldr	r3, [r2, #CP_OFFSET]
+	and	r3, r3, #0xff000000
+	cmp	r3, #opc_putfield << 24
+	bne	1f
+2:
+	ldr	ip, [r2, #CP_OFFSET+8]
+	ldmia	stack!, {r2, r3}	@ r2 = value, r3 = obj
+	cmp	r3, #0
+	beq	field_null_ptr_exception
+
+	str	r2, [r3, ip]
+	bx	lr
+1:
+	mov	ip, lr
+	bl	putfield_stub_unresolved
+	mov	lr, ip
+	b	2b
+
+	.global	Thumb2_putfield_h_stub
+Thumb2_putfield_h_stub:
+	ldr	r2, [istate, #ISTATE_CONSTANTS]
+	add	r2, r2, r1, lsl #4
+	ldr	r3, [r2, #CP_OFFSET]
+	and	r3, r3, #0xff000000
+	cmp	r3, #opc_putfield << 24
+	bne	1f
+2:
+	ldr	ip, [r2, #CP_OFFSET+8]
+	ldmia	stack!, {r2, r3}	@ r2 = value, r3 = obj
+	cmp	r3, #0
+	beq	field_null_ptr_exception
+
+	strh	r2, [r3, ip]
+	bx	lr
+1:
+	mov	ip, lr
+	bl	putfield_stub_unresolved
+	mov	lr, ip
+	b	2b
+
+	.global	Thumb2_putfield_b_stub
+Thumb2_putfield_b_stub:
+	ldr	r2, [istate, #ISTATE_CONSTANTS]
+	add	r2, r2, r1, lsl #4
+	ldr	r3, [r2, #CP_OFFSET]
+	and	r3, r3, #0xff000000
+	cmp	r3, #opc_putfield << 24
+	bne	1f
+2:
+	ldr	ip, [r2, #CP_OFFSET+8]
+	ldmia	stack!, {r2, r3}	@ r2 = value, r3 = obj
+	cmp	r3, #0
+	beq	field_null_ptr_exception
+
+	strb	r2, [r3, ip]
+	bx	lr
+1:
+	mov	ip, lr
+	bl	putfield_stub_unresolved
+	mov	lr, ip
+	b	2b
+
+	.global	Thumb2_putfield_a_stub
+Thumb2_putfield_a_stub:
+	ldr	r2, [istate, #ISTATE_CONSTANTS]
+	add	r2, r2, r1, lsl #4
+	ldr	r3, [r2, #CP_OFFSET]
+	and	r3, r3, #0xff000000
+	cmp	r3, #opc_putfield << 24
+	bne	1f
+2:
+	ldr	ip, [r2, #CP_OFFSET+8]
+	ldmia	stack!, {r2, r3}	@ r2 = value, r3 = obj
+	cmp	r3, #0
+	beq	field_null_ptr_exception
+
+	str	r2, [r3, ip]
+	ldr	ip, helper_aputfield_adcon
+	mov	r0, r3
+	bx	ip
+1:
+	mov	ip, lr
+	bl	putfield_stub_unresolved
+	mov	lr, ip
+	b	2b
+
+	.global	Thumb2_putfield_dw_stub
+Thumb2_putfield_dw_stub:
+	ldr	r2, [istate, #ISTATE_CONSTANTS]
+	add	r2, r2, r1, lsl #4
+	ldr	r3, [r2, #CP_OFFSET]
+	and	r3, r3, #0xff000000
+	cmp	r3, #opc_putfield << 24
+	bne	1f
+2:
+	ldr	r1, [r2, #CP_OFFSET+8]
+	ldmia	stack!, {r2, r3, ip}	@ r2,r3 = value, ip = obj
+	cmp	ip, #0
+	beq	field_null_ptr_exception
+
+	strd	r2,r3, [ip, r1]
+	bx	lr
+1:
+	mov	ip, lr
+	bl	putfield_stub_unresolved
+	mov	lr, ip
+	b	2b
+
+@ R0 = BCI
+@ R1 = index
+	.global	Thumb2_getstatic_word_stub
+Thumb2_getstatic_word_stub:
+	ldr	r2, [istate, #ISTATE_CONSTANTS]
+	add	r2, r2, r1, lsl #4
+	ldr	r3, [r2, #CP_OFFSET]
+	and	r3, r3, #0x00ff0000
+	cmp	r3, #opc_getstatic << 16
+	bne	1f
+2:
+	ldr	r3, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+
+	ldr	r3, [r3, ip]
+	str	r3, [stack, #-4]!	@ PUSH r3
+	bx	lr
+1:
+	mov	ip, lr
+	bl	getstatic_stub_unresolved
+	mov	lr, ip
+	b	2b
+
+	.global	Thumb2_getstatic_h_stub
+Thumb2_getstatic_h_stub:
+	ldr	r2, [istate, #ISTATE_CONSTANTS]
+	add	r2, r2, r1, lsl #4
+	ldr	r3, [r2, #CP_OFFSET]
+	and	r3, r3, #0x00ff0000
+	cmp	r3, #opc_getstatic << 16
+	bne	1f
+2:
+	ldr	r3, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+
+	ldrh	r3, [r3, ip]
+	str	r3, [stack, #-4]!	@ PUSH r3
+	bx	lr
+1:
+	mov	ip, lr
+	bl	getstatic_stub_unresolved
+	mov	lr, ip
+	b	2b
+
+	.global	Thumb2_getstatic_sh_stub
+Thumb2_getstatic_sh_stub:
+	ldr	r2, [istate, #ISTATE_CONSTANTS]
+	add	r2, r2, r1, lsl #4
+	ldr	r3, [r2, #CP_OFFSET]
+	and	r3, r3, #0x00ff0000
+	cmp	r3, #opc_getstatic << 16
+	bne	1f
+2:
+	ldr	r3, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+
+	ldrsh	r3, [r3, ip]
+	str	r3, [stack, #-4]!	@ PUSH r3
+	bx	lr
+1:
+	mov	ip, lr
+	bl	getstatic_stub_unresolved
+	mov	lr, ip
+	b	2b
+
+	.global	Thumb2_getstatic_sb_stub
+Thumb2_getstatic_sb_stub:
+	ldr	r2, [istate, #ISTATE_CONSTANTS]
+	add	r2, r2, r1, lsl #4
+	ldr	r3, [r2, #CP_OFFSET]
+	and	r3, r3, #0x00ff0000
+	cmp	r3, #opc_getstatic << 16
+	bne	1f
+2:
+	ldr	r3, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+
+	ldrsb	r3, [r3, ip]
+	str	r3, [stack, #-4]!	@ PUSH r3
+	bx	lr
+1:
+	mov	ip, lr
+	bl	getstatic_stub_unresolved
+	mov	lr, ip
+	b	2b
+
+	.global	Thumb2_getstatic_dw_stub
+Thumb2_getstatic_dw_stub:
+	ldr	r2, [istate, #ISTATE_CONSTANTS]
+	add	r2, r2, r1, lsl #4
+	ldr	r3, [r2, #CP_OFFSET]
+	and	r3, r3, #0x00ff0000
+	cmp	r3, #opc_getstatic << 16
+	bne	1f
+2:
+	ldr	r3, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+
+	ldrd	r2, r3, [r3, ip]
+	stmdb	stack!, {r2, r3}	@ PUSH r2, r3
+	bx	lr
+1:
+	mov	ip, lr
+	bl	getstatic_stub_unresolved
+	mov	lr, ip
+	b	2b
+
+@ R0 = BCI
+@ R1 = index
+	.global	Thumb2_putstatic_word_stub
+Thumb2_putstatic_word_stub:
+	ldr	r2, [istate, #ISTATE_CONSTANTS]
+	add	r2, r2, r1, lsl #4
+	ldr	r3, [r2, #CP_OFFSET]
+	and	r3, r3, #0xff000000
+	cmp	r3, #opc_putstatic << 24
+	bne	1f
+2:
+	ldr	r3, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+	ldr	r2, [stack], #4		@ POP r2
+
+	str	r2, [r3, ip]
+	bx	lr
+1:
+	mov	ip, lr
+	bl	putstatic_stub_unresolved
+	mov	lr, ip
+	b	2b
+
+@ R0 = BCI
+@ R1 = index
+	.global	Thumb2_putstatic_h_stub
+Thumb2_putstatic_h_stub:
+	ldr	r2, [istate, #ISTATE_CONSTANTS]
+	add	r2, r2, r1, lsl #4
+	ldr	r3, [r2, #CP_OFFSET]
+	and	r3, r3, #0xff000000
+	cmp	r3, #opc_putstatic << 24
+	bne	1f
+2:
+	ldr	r3, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+	ldr	r2, [stack], #4		@ POP r2
+
+	strh	r2, [r3, ip]
+	bx	lr
+1:
+	mov	ip, lr
+	bl	putstatic_stub_unresolved
+	mov	lr, ip
+	b	2b
+
+@ R0 = BCI
+@ R1 = index
+	.global	Thumb2_putstatic_b_stub
+Thumb2_putstatic_b_stub:
+	ldr	r2, [istate, #ISTATE_CONSTANTS]
+	add	r2, r2, r1, lsl #4
+	ldr	r3, [r2, #CP_OFFSET]
+	and	r3, r3, #0xff000000
+	cmp	r3, #opc_putstatic << 24
+	bne	1f
+2:
+	ldr	r3, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+	ldr	r2, [stack], #4		@ POP r2
+
+	strb	r2, [r3, ip]
+	bx	lr
+1:
+	mov	ip, lr
+	bl	putstatic_stub_unresolved
+	mov	lr, ip
+	b	2b
+
+@ R0 = BCI
+@ R1 = index
+	.global	Thumb2_putstatic_dw_stub
+Thumb2_putstatic_dw_stub:
+	ldr	r2, [istate, #ISTATE_CONSTANTS]
+	add	r2, r2, r1, lsl #4
+	ldr	r3, [r2, #CP_OFFSET]
+	and	r3, r3, #0xff000000
+	cmp	r3, #opc_putstatic << 24
+	bne	1f
+2:
+	ldr	r1, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+	ldmia	stack!, {r2, r3}
+
+	strd	r2,r3, [r1, ip]
+	bx	lr
+1:
+	mov	ip, lr
+	bl	putstatic_stub_unresolved
+	mov	lr, ip
+	b	2b
+
+@ R0 = BCI
+@ R1 = index
+	.global	Thumb2_putstatic_a_stub
+Thumb2_putstatic_a_stub:
+	ldr	r2, [istate, #ISTATE_CONSTANTS]
+	add	r2, r2, r1, lsl #4
+	ldr	r3, [r2, #CP_OFFSET]
+	and	r3, r3, #0xff000000
+	cmp	r3, #opc_putstatic << 24
+	bne	1f
+2:
+	ldr	r3, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+	ldr	r2, [stack], #4		@ POP r2
+
+	str	r2, [r3, ip]
+	ldr	ip, helper_aputfield_adcon
+	mov	r0, r3
+	bx	ip
+1:
+	mov	ip, lr
+	bl	putstatic_stub_unresolved
+	mov	lr, ip
+	b	2b
+
+#endif // THUMB2EE
+
+	.global	Thumb2_stubs_end
+Thumb2_stubs_end:
+
+	ALIGN_CODE
+jdiv_1:
+	bx	lr
+jdiv_2:
+        add     r0, r0, r0, lsr #31
+        mov     r0, r0, asr #1
+	bx	lr
+jdiv_24:
+        add     r0, r0, r0, lsr #31
+        mov     r0, r0, asr #1
+jdiv_12:
+        add     r0, r0, r0, lsr #31
+        mov     r0, r0, asr #1
+jdiv_6:
+        add     r0, r0, r0, lsr #31
+        mov     r0, r0, asr #1
+jdiv_3:
+	ldr	r1, dc_3
+        smull	r3, r2, r0, r1
+        sub	r0, r2, r0, asr #31
+	bx	lr
+jdiv_4:
+	mov	r1, r0, asr #31
+	add	r0, r0, r1, lsr #30
+	mov	r0, r0, asr #2
+	bx	lr
+jdiv_20:
+        add     r0, r0, r0, lsr #31
+        mov     r0, r0, asr #1
+jdiv_10:
+        add     r0, r0, r0, lsr #31
+        mov     r0, r0, asr #1
+jdiv_5:
+	ldr	r1, dc_5
+        smull	r3, r2, r0, r1
+        mov	r3, r0, asr #31
+        rsb	r0, r3, r2, asr #1
+	bx	lr
+jdiv_28:
+        add     r0, r0, r0, lsr #31
+        mov     r0, r0, asr #1
+jdiv_14:
+        add     r0, r0, r0, lsr #31
+        mov     r0, r0, asr #1
+jdiv_7:
+	ldr	r1, dc_7
+        smull	r3, r2, r0, r1
+        mov	r1, r0, asr #31
+        add	r3, r0, r2
+        rsb	r0, r1, r3, asr #2
+	bx	lr
+jdiv_8:
+	mov	r1, r0, asr #31
+	add	r0, r0, r1, lsr #29
+	mov	r0, r0, asr #3
+	bx	lr
+jdiv_18:
+        add     r0, r0, r0, lsr #31
+        mov     r0, r0, asr #1
+jdiv_9:
+	ldr	r1, dc_9
+        smull	r3, r2, r0, r1
+        mov	r3, r0, asr #31
+        rsb	r0, r3, r2, asr #1
+	bx	lr
+jdiv_22:
+        add     r0, r0, r0, lsr #31
+        mov     r0, r0, asr #1
+jdiv_11:
+	ldr	r1, dc_11
+        smull	r3, r2, r0, r1
+        mov	r3, r0, asr #31
+        rsb	r0, r3, r2, asr #1
+	bx	lr
+jdiv_26:
+        add     r0, r0, r0, lsr #31
+        mov     r0, r0, asr #1
+jdiv_13:
+	ldr	r1, dc_13
+        smull	r3, r2, r0, r1
+        mov	r3, r0, asr #31
+        rsb	r0, r3, r2, asr #2
+	bx	lr
+jdiv_30:
+        add     r0, r0, r0, lsr #31
+        mov     r0, r0, asr #1
+jdiv_15:
+	ldr	r1, dc_15
+        smull	r3, r2, r0, r1
+        mov	r1, r0, asr #31
+        add	r3, r0, r2
+        rsb	r0, r1, r3, asr #3
+	bx	lr
+jdiv_16:
+	mov	r1, r0, asr #31
+	add	r0, r0, r1, lsr #28
+	mov	r0, r0, asr #4
+	bx	lr
+jdiv_17:
+	ldr	r1, dc_17
+        smull	r3, r2, r0, r1
+        mov	r3, r0, asr #31
+        rsb	r0, r3, r2, asr #3
+	bx	lr
+jdiv_19:
+	ldr	r1, dc_19
+        smull	r3, r2, r0, r1
+        mov	r3, r0, asr #31
+        rsb	r0, r3, r2, asr #3
+	bx	lr
+jdiv_21:
+	ldr	r1, dc_21
+        smull	r3, r2, r0, r1
+        mov	r3, r0, asr #31
+        rsb	r0, r3, r2, asr #2
+	bx	lr
+jdiv_23:
+	ldr	r1, dc_23
+        smull	r3, r2, r0, r1
+        mov	r1, r0, asr #31
+        add	r3, r0, r2
+        rsb	r0, r1, r3, asr #4
+	bx	lr
+jdiv_25:
+	ldr	r1, dc_25
+        smull	r3, r2, r0, r1
+        mov	r3, r0, asr #31
+        rsb	r0, r3, r2, asr #3
+	bx	lr
+jdiv_27:
+	ldr	r1, dc_27
+        smull	r3, r2, r0, r1
+        mov	r3, r0, asr #31
+        rsb	r0, r3, r2, asr #3
+	bx	lr
+jdiv_29:
+	ldr	r1, dc_29
+        smull	r3, r2, r0, r1
+        mov	r1, r0, asr #31
+        add	r3, r0, r2
+        rsb	r0, r1, r3, asr #4
+	bx	lr
+jdiv_31:
+	ldr	r1, dc_31
+        smull	r3, r2, r0, r1
+        mov	r1, r0, asr #31
+        add	r3, r0, r2
+        rsb	r0, r1, r3, asr #4
+	bx	lr
+jdiv_32:
+	mov	r1, r0, asr #31
+	add	r0, r0, r1, lsr #27
+	mov	r0, r0, asr #5
+	bx	lr
+jrem_1:
+	mov	r0, #0
+	bx	lr
+jrem_2:
+	add	r3, r0, r0, lsr #31
+        mov	r1, r3, asr #1
+	sub	r0, r0, r1, lsl #1
+	bx	lr
+jrem_3:
+	ldr	r1, dc_3
+        smull	r3, r2, r0, r1
+        sub	r1, r2, r0, asr #31
+	add	r3, r1, r1, lsl #1
+	sub	r0, r0, r3
+	bx	lr
+jrem_4:
+	movs	r3, r0
+        addmi	r3, r3, #3
+        mov	r1, r3, asr #2
+	sub	r0, r0, r1, lsl #2
+	bx	lr
+jrem_5:
+	ldr	r1, dc_5
+        smull	r3, r2, r0, r1
+        mov	r3, r0, asr #31
+        rsb	r1, r3, r2, asr #1
+	add	r3, r1, r1, lsl #2
+	sub	r0, r0, r3
+	bx	lr
+jrem_6:
+	ldr	r1, dc_6
+        smull	r3, r2, r0, r1
+        sub	r1, r2, r0, asr #31
+	add	r3, r1, r1, lsl #1
+	sub	r0, r0, r3, lsl #1
+	bx	lr
+jrem_7:
+	ldr	r1, dc_7
+        smull	r3, r2, r0, r1
+        mov	r1, r0, asr #31
+        add	r3, r0, r2
+        rsb	r1, r1, r3, asr #2
+	rsb	r3, r1, r1, lsl #3
+	sub	r0, r0, r3
+	bx	lr
+jrem_8:
+	movs	r3, r0
+        addmi	r3, r3, #7
+        mov	r1, r3, asr #3
+	sub	r0, r0, r1, lsl #3
+	bx	lr
+jrem_9:
+	ldr	r1, dc_9
+        smull	r3, r2, r0, r1
+        mov	r3, r0, asr #31
+        rsb	r1, r3, r2, asr #1
+	add	r3, r1, r1, lsl #3
+	sub	r0, r0, r3
+	bx	lr
+jrem_10:
+	ldr	r1, dc_10
+        smull	r3, r2, r0, r1
+        mov	r3, r0, asr #31
+        rsb	r1, r3, r2, asr #2
+	add	r3, r1, r1, lsl #2
+	sub	r0, r0, r3, lsl #1
+	bx	lr
+jrem_11:
+	ldr	r1, dc_11
+        smull	r3, r2, r0, r1
+        mov	r3, r0, asr #31
+        rsb	r1, r3, r2, asr #1
+	add	r3, r1, r1, lsl #2
+	add	r3, r1, r3, lsl #1
+	sub	r0, r0, r3
+	bx	lr
+jrem_12:
+	ldr	r1, dc_12
+        smull	r3, r2, r0, r1
+        mov	r3, r0, asr #31
+        rsb	r1, r3, r2, asr #1
+	add	r3, r1, r1, lsl #1
+	sub	r0, r0, r3, lsl #2
+	bx	lr
+jrem_13:
+	ldr	r1, dc_13
+        smull	r3, r2, r0, r1
+        mov	r3, r0, asr #31
+        rsb	r1, r3, r2, asr #2
+	add	r3, r1, r1, lsl #1
+	add	r3, r1, r3, lsl #2
+	sub	r0, r0, r3
+	bx	lr
+jrem_14:
+	ldr	r1, dc_14
+        smull	r3, r2, r0, r1
+        mov	r1, r0, asr #31
+        add	r3, r0, r2
+        rsb	r1, r1, r3, asr #3
+	rsb	r3, r1, r1, lsl #3
+	sub	r0, r0, r3, lsl #1
+	bx	lr
+jrem_15:
+	ldr	r1, dc_15
+        smull	r3, r2, r0, r1
+        mov	r1, r0, asr #31
+        add	r3, r0, r2
+        rsb	r1, r1, r3, asr #3
+	rsb	r3, r1, r1, lsl #4
+	sub	r0, r0, r3
+	bx	lr
+jrem_16:
+	movs	r3, r0
+        addmi	r3, r3, #15
+        mov	r1, r3, asr #4
+	sub	r0, r0, r1, lsl #4
+	bx	lr
+jrem_17:
+	ldr	r1, dc_17
+        smull	r3, r2, r0, r1
+        mov	r3, r0, asr #31
+        rsb	r1, r3, r2, asr #3
+	add	r3, r1, r1, lsl #4
+	sub	r0, r0, r3
+	bx	lr
+jrem_18:
+	ldr	r1, dc_18
+        smull	r3, r2, r0, r1
+        mov	r3, r0, asr #31
+        rsb	r1, r3, r2, asr #2
+	add	r3, r1, r1, lsl #3
+	sub	r0, r0, r3, lsl #1
+	bx	lr
+jrem_19:
+	ldr	r1, dc_19
+        smull	r3, r2, r0, r1
+        mov	r3, r0, asr #31
+        rsb	r1, r3, r2, asr #3
+	add	r3, r1, r1, lsl #3
+	add	r3, r1, r3, lsl #1
+	sub	r0, r0, r3
+	bx	lr
+jrem_20:
+	ldr	r1, dc_20
+        smull	r3, r2, r0, r1
+        mov	r3, r0, asr #31
+        rsb	r1, r3, r2, asr #3
+	add	r3, r1, r1, lsl #2
+	sub	r0, r0, r3, lsl #2
+	bx	lr
+jrem_21:
+	ldr	r1, dc_21
+        smull	r3, r2, r0, r1
+        mov	r3, r0, asr #31
+        rsb	r1, r3, r2, asr #2
+	add	r3, r1, r1, lsl #1
+	rsb	r3, r3, r3, lsl #3
+	sub	r0, r0, r3
+	bx	lr
+jrem_22:
+	ldr	r1, dc_22
+        smull	r3, r2, r0, r1
+        mov	r3, r0, asr #31
+        rsb	r1, r3, r2, asr #2
+	add	r3, r1, r1, lsl #2
+	add	r3, r1, r3, lsl #1
+	sub	r0, r0, r3, lsl #1
+	bx	lr
+jrem_23:
+	ldr	r1, dc_23
+        smull	r3, r2, r0, r1
+        mov	r1, r0, asr #31
+        add	r3, r0, r2
+        rsb	r1, r1, r3, asr #4
+	add	r3, r1, r1, lsl #1
+	rsb	r3, r1, r3, lsl #3
+	sub	r0, r0, r3
+	bx	lr
+jrem_24:
+	ldr	r1, dc_24
+        smull	r3, r2, r0, r1
+        mov	r3, r0, asr #31
+        rsb	r1, r3, r2, asr #2
+	add	r3, r1, r1, lsl #1
+	sub	r0, r0, r3, lsl #3
+	bx	lr
+jrem_25:
+	ldr	r1, dc_25
+        smull	r3, r2, r0, r1
+        mov	r3, r0, asr #31
+        rsb	r1, r3, r2, asr #3
+	add	r3, r1, r1, lsl #2
+	add	r3, r3, r3, lsl #2
+	sub	r0, r0, r3
+	bx	lr
+jrem_26:
+	ldr	r1, dc_26
+        smull	r3, r2, r0, r1
+        mov	r3, r0, asr #31
+        rsb	r1, r3, r2, asr #3
+	add	r3, r1, r1, lsl #1
+	add	r3, r1, r3, lsl #2
+	sub	r0, r0, r3, lsl #1
+	bx	lr
+jrem_27:
+	ldr	r1, dc_27
+        smull	r3, r2, r0, r1
+        mov	r3, r0, asr #31
+        rsb	r1, r3, r2, asr #3
+	add	r3, r1, r1, lsl #1
+	add	r3, r3, r3, lsl #3
+	sub	r0, r0, r3
+	bx	lr
+jrem_28:
+	ldr	r1, dc_28
+        smull	r3, r2, r0, r1
+        mov	r1, r0, asr #31
+        add	r3, r0, r2
+        rsb	r1, r1, r3, asr #4
+	rsb	r3, r1, r1, lsl #3
+	sub	r0, r0, r3, lsl #2
+	bx	lr
+jrem_29:
+	ldr	r1, dc_29
+        smull	r3, r2, r0, r1
+        mov	r1, r0, asr #31
+        add	r3, r0, r2
+        rsb	r1, r1, r3, asr #4
+	rsb	r3, r1, r1, lsl #3
+	add	r3, r1, r3, lsl #2
+	sub	r0, r0, r3
+	bx	lr
+jrem_30:
+	ldr	r1, dc_30
+        smull	r3, r2, r0, r1
+        mov	r1, r0, asr #31
+        add	r3, r0, r2
+        rsb	r1, r1, r3, asr #4
+	rsb	r3, r1, r1, lsl #4
+	sub	r0, r0, r3, lsl #1
+	bx	lr
+jrem_31:
+	ldr	r1, dc_31
+        smull	r3, r2, r0, r1
+        mov	r1, r0, asr #31
+        add	r3, r0, r2
+        rsb	r1, r1, r3, asr #4
+	rsb	r3, r1, r1, lsl #5
+	sub	r0, r0, r3
+	bx	lr
+jrem_32:
+	movs	r3, r0
+        addmi	r3, r3, #31
+        mov	r1, r3, asr #5
+	sub	r0, r0, r1, lsl #5
+	bx	lr
+	ALIGN_DATA
+dc_7:
+dc_14:
+	.word     0x92492493
+dc_15:
+dc_30:
+	.word     0x88888889
+dc_23:
+	.word     0xb21642c9
+dc_28:
+	.word     0x92492493
+dc_29:
+	.word     0x8d3dcb09
+dc_31:
+	.word     0x84210843
+dc_6:
+dc_12:
+dc_24:
+	.word     0x2aaaaaab
+dc_19:
+	.word     0x6bca1af3
+dc_5:
+dc_10:
+dc_20:
+	.word     0x66666667
+dc_21:
+	.word     0x30c30c31
+dc_11:
+dc_22:
+	.word     0x2e8ba2e9
+dc_26:
+dc_13:
+	.word     0x4ec4ec4f
+dc_25:
+	.word     0x51eb851f
+dc_27:
+	.word     0x4bda12f7
+dc_3:
+	.word     0x55555556
+dc_17:
+	.word     0x78787879
+dc_9:
+dc_18:
+	.word     0x38e38e39
+
+	.global	Thumb2_DivZero_Handler
+Thumb2_DivZero_Handler:
+	adrl	r0, idiv_clz_ret
+	cmp	r0, lr
+	addne	r0, r0, #irem_clz_ret - idiv_clz_ret
+	cmpne	r0, lr
+	beq	divide_by_zero_exception
+	ldr	r0, [istate, #ISTATE_METHOD]
+        ldr     jpc, [r0, #METHOD_CONSTMETHOD]
+	add	jpc, jpc, #CONSTMETHOD_CODEOFFSET
+	bl	load_dispatch
+	b	divide_by_zero_exception
+
+#ifdef THUMB2EE
+
+	.global	Thumb2_Handle_Exception
+	.global	Thumb2_ArrayBounds_Handler
+	.global	Thumb2_NullPtr_Handler
+Thumb2_ArrayBounds_Handler:
+	ldr	r0, [istate, #ISTATE_METHOD]
+        ldr     jpc, [r0, #METHOD_CONSTMETHOD]
+	add	jpc, jpc, #CONSTMETHOD_CODEOFFSET
+	bl	load_dispatch
+	mov	r0, #VMSYMBOLS_ArrayIndexOutOfBounds
+	b	raise_exception
+Thumb2_Handle_Exception:
+	ldr	r0, [istate, #ISTATE_METHOD]
+        ldr     jpc, [r0, #METHOD_CONSTMETHOD]
+	add	jpc, jpc, #CONSTMETHOD_CODEOFFSET
+	bl	load_dispatch
+	b	handle_exception
+
+	.global	Thumb2_Exit_To_Interpreter
+Thumb2_Exit_To_Interpreter:
+	bl	load_dispatch
+	sub	stack, stack, #4
+	CACHE_CP
+	CACHE_LOCALS
+	DISPATCH	0
+
+Thumb2_NullPtr_Handler:
+	ldr	r0, [istate, #ISTATE_METHOD]
+        ldr     jpc, [r0, #METHOD_CONSTMETHOD]
+	add	jpc, jpc, #CONSTMETHOD_CODEOFFSET
+	bl	load_dispatch
+	b	null_ptr_exception
+
+	.global	Thumb2_Clear_Cache
+Thumb2_Clear_Cache:
+	stmdb	sp!, {r7}
+	mov	r2, #0
+	mov	r7, #2
+	orr	r7, r7, #0xf0000
+	svc	0
+	ldmia	sp!, {r7}
+	bx	lr
+
+#endif // THUMB2EE
+
 	.section	.init_array,"aw",%init_array
 	.word	bci_init(target1)
 
 	.data
+	.global	CPUInfo
 	ALIGN_DATA
-#ifdef CODETRACE
-CodeTrace_Buffer_Base:
-	.space	CODETRACE_BUFFER_SIZE
-#endif
         .word   0, 0, 0, 0, 0, 0, 0, 0
         .word   0, 0, 0, 0, 0
 DispatchBreakPoint:					.word	0
-VFP_Flag:						.word	0
+CPUInfo:						.word	0
 CodeTrace_Idx:						.word	0
 UseOnStackReplacement_Address:                          .word   0
 BackgroundCompilation_Address:                          .word   0
