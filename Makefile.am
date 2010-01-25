@@ -1513,8 +1513,9 @@ $(NPPLUGIN_DIR)/IcedTeaNPPlugin.so: $(addprefix $(NPPLUGIN_DIR)/,$(NPPLUGIN_OBJE
 	  $(MOZILLA_LIBS)\
 	  -shared -o $@
 
-stamps/icedtea-npplugin: $(NPPLUGIN_DIR)/IcedTeaNPPlugin.so
-	touch stamps/icedtea-npplugin
+stamps/icedtea-npplugin.stamp: $(NPPLUGIN_DIR)/IcedTeaNPPlugin.so
+	mkdir -p stamps
+	touch stamps/icedtea-npplugin.stamp
 
 clean-IcedTeaNPPlugin:
 	cd $(NPPLUGIN_DIR);\
@@ -1540,6 +1541,10 @@ IcedTeaPlugin.so: IcedTeaPlugin.o
 	  $(GTK_LIBS) \
 	  $(MOZILLA_LIBS) \
 	  -shared -o $@
+
+stamps/icedtea-plugin.stamp: IcedTeaPlugin.so
+	mkdir -p stamps
+	touch stamps/icedtea-plugin.stamp
 
 clean-IcedTeaPlugin:
 	rm -f IcedTeaPlugin.o
@@ -2221,3 +2226,11 @@ hotspot-ports: stamps/ports.stamp
 clean: distclean-local
 
 jtreg: stamps/jtreg.stamp
+
+if ENABLE_NPPLUGIN
+plugin: stamps/icedtea-npplugin.stamp
+else
+if ENABLE_PLUGIN
+plugin: stamps/icedtea-plugin.stamp
+endif
+endif
