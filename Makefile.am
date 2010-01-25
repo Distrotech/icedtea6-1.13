@@ -384,9 +384,15 @@ endif
 JDK_UPDATE_VERSION = $(shell echo $(OPENJDK_VERSION) | sed -e "s/^b//")
 COMBINED_VERSION = $(JDK_UPDATE_VERSION)-$(OPENJDK_VERSION)
 
+ICEDTEA_NAME="IcedTea6"
 if HAS_ICEDTEA_REVISION
 ICEDTEA_REV="+${ICEDTEA_REVISION}"
 endif
+if HAS_PKGVERSION
+ICEDTEA_PKG="(${PKGVERSION})"
+endif
+
+PLUGIN_VERSION=$(ICEDTEA_NAME) $(PACKAGE_VERSION)$(ICEDTEA_REV) $(ICEDTEA_PKG)
 
 ICEDTEA_ENV = \
 	IMPORT_BINARY_PLUGS=true \
@@ -429,7 +435,7 @@ ICEDTEA_ENV = \
 	JDK_HOME="" \
 	RHINO_JAR="$(RHINO_JAR)" \
 	DISTRIBUTION_ID="$(DIST_ID)" \
-	DERIVATIVE_ID="IcedTea6 $(PACKAGE_VERSION)$(ICEDTEA_REV)" \
+	DERIVATIVE_ID="$(ICEDTEA_NAME) $(PACKAGE_VERSION)$(ICEDTEA_REV)" \
 	DEBUG_CLASSFILES="true" \
 	DEBUG_BINARIES="true"
 
@@ -515,7 +521,7 @@ ICEDTEA_ENV_ECJ = \
 	JAR_KNOWS_J_OPTIONS="$(JAR_KNOWS_J_OPTIONS)" \
 	JAR_ACCEPTS_STDIN_LIST="$(JAR_ACCEPTS_STDIN_LIST)" \
 	DISTRIBUTION_ID="$(DIST_ID)" \
-	DERIVATIVE_ID="IcedTea6 $(PACKAGE_VERSION)$(ICEDTEA_REV)" \
+	DERIVATIVE_ID="$(ICEDTEA_NAME) $(PACKAGE_VERSION)$(ICEDTEA_REV)" \
 	DEBUG_CLASSFILES="true" \
 	DEBUG_BINARIES="true"
 
@@ -961,10 +967,10 @@ stamps/patch.stamp: stamps/patch-fsg.stamp
 	if ! test "x$(WITH_CACAO)" = "xno"; then \
 	  echo "JDK_DERIVATIVE_NAME=$${icedtea_version}" \
 	    >>openjdk/jdk/make/common/shared/Defs.gmk ; \
-	  echo "PRODUCT_NAME=IcedTea6" \
+	  echo "PRODUCT_NAME=$(ICEDTEA_NAME)" \
 	    >>openjdk/jdk/make/common/shared/Defs.gmk ; \
 	else \
-	  echo "JDK_DERIVATIVE_NAME=IcedTea6 $${icedtea_version}" \
+	  echo "JDK_DERIVATIVE_NAME=$(ICEDTEA_NAME) $${icedtea_version}" \
 	    >>openjdk/jdk/make/common/shared/Defs.gmk ; \
 	fi ; 
 
@@ -972,11 +978,11 @@ if HAS_JDK_REVISION
 	echo "JDK_REVID=$(JDK_REVISION)" >>openjdk/jdk/make/common/shared/Defs.gmk ;
 endif
 
-	echo "DISTRO_NAME=$(DIST_NAME)" >>openjdk/jdk/make/common/shared/Defs.gmk ; \
-	if [ -n "$(PKGVERSION)" ]; then \
+	echo "DISTRO_NAME=$(DIST_NAME)" >>openjdk/jdk/make/common/shared/Defs.gmk ;
+if HAS_PKGVERSION
 	  echo "DISTRO_PACKAGE_VERSION=$(PKGVERSION)" \
-	    >>openjdk/jdk/make/common/shared/Defs.gmk ; \
-	fi
+	    >>openjdk/jdk/make/common/shared/Defs.gmk ;
+endif
 
 #FIXME (plugin): Don't do this copying
 if ENABLE_NPPLUGIN
@@ -1489,8 +1495,7 @@ NPPLUGIN_OBJECTS=IcedTeaNPPlugin.o IcedTeaScriptablePluginObject.o \
 $(addprefix $(NPPLUGIN_DIR)/,$(NPPLUGIN_OBJECTS)): $(addprefix $(NPPLUGIN_DIR)/,$(NPPLUGIN_SRC))
 	cd $(NPPLUGIN_DIR) && \
 	$(CXX) $(CXXFLAGS) \
-	  -DPACKAGE_VERSION="\"$(PACKAGE_VERSION)\"" \
-	  -DPLUGIN_VERSION="\"$(PACKAGE_VERSION)$(ICEDTEA_REV)\"" \
+	  -DPLUGIN_VERSION="\"$(PLUGIN_VERSION)\"" \
 	  -DMOZILLA_VERSION_COLLAPSED="$(MOZILLA_VERSION_COLLAPSED)" \
 	  $(GLIB_CFLAGS) \
 	  $(GTK_CFLAGS) \
@@ -1521,14 +1526,8 @@ if ENABLE_PLUGIN
 # is listed before -l options.  See:
 # http://developer.mozilla.org/en/docs/XPCOM_Glue
 IcedTeaPlugin.o: IcedTeaPlugin.cc
-	if [ -e $(abs_top_srcdir)/.hg ] && which $(HG) >/dev/null; then \
-	  revision="-r`(cd $(abs_top_srcdir); $(HG) tip --template '{rev}')`" ; \
-	fi ; \
-	if [ -n "$(PKGVERSION)" ]; then plugin_version=" ($(PKGVERSION))"; fi; \
-	plugin_version=" $(PACKAGE_VERSION)$$revision$$plugin_version"; \
 	$(CXX) $(CXXFLAGS) \
-	  -DPACKAGE_VERSION="\"$(PACKAGE_VERSION)\"" \
-	  -DPLUGIN_VERSION="\"$$plugin_version\"" \
+	  -DPLUGIN_VERSION="\"$(PLUGIN_VERSION)\"" \
 	  -DMOZILLA_VERSION_COLLAPSED="$(MOZILLA_VERSION_COLLAPSED)" \
 	  $(GTK_CFLAGS) \
 	  $(XULRUNNER_CFLAGS) \

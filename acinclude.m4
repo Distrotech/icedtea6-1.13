@@ -1146,15 +1146,33 @@ AC_MSG_RESULT(${PARALLEL_JOBS})
 AC_SUBST(PARALLEL_JOBS)
 ])
 
-AC_DEFUN([IT_GET_LSB_DATA],
+AC_DEFUN_ONCE([IT_GET_PKGVERSION],
 [
+AC_MSG_CHECKING([for distribution package version])
+AC_ARG_WITH([pkgversion],
+        [AS_HELP_STRING([--with-pkgversion=PKG],
+                        [Use PKG in the version string in addition to "IcedTea"])],
+        [case "$withval" in
+          yes) AC_MSG_ERROR([package version not specified]) ;;
+          no)  PKGVERSION=none ;;
+          *)   PKGVERSION="$withval" ;;
+         esac],
+        [PKGVERSION=none])
+AC_MSG_RESULT([${PKGVERSION}])
+AM_CONDITIONAL(HAS_PKGVERSION, test "x${PKGVERSION}" != "xnone") 
+AC_SUBST(PKGVERSION)
+])
+
+AC_DEFUN_ONCE([IT_GET_LSB_DATA],
+[
+AC_REQUIRE([IT_GET_PKGVERSION])
 AC_MSG_CHECKING([build identification])
 if test -n "$LSB_RELEASE"; then
   lsb_info="$($LSB_RELEASE -ds | sed 's/^"//;s/"$//')"
-  if test -n "$PKGVERSION"; then
-    DIST_ID="$lsb_info, package $PKGVERSION"
-  else
+  if test "x$PKGVERSION" = "xnone"; then
     DIST_ID="Built on $lsb_info ($(date))"
+  else
+    DIST_ID="$lsb_info, package $PKGVERSION"
   fi
   DIST_NAME="$($LSB_RELEASE -is | sed 's/^"//;s/"$//')"
 else
@@ -1204,4 +1222,3 @@ AC_DEFUN_ONCE([IT_OBTAIN_HG_REVISIONS],
   AM_CONDITIONAL([HAS_JDK_REVISION], test "x${JDK_REVISION}" != xnone)
   AM_CONDITIONAL([HAS_HOTSPOT_REVISION], test "x${HOTSPOT_REVISION}" != xnone)
 ])
-
