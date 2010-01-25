@@ -1493,7 +1493,7 @@ NPPLUGIN_OBJECTS=IcedTeaNPPlugin.o IcedTeaScriptablePluginObject.o \
         IcedTeaJavaRequestProcessor.o IcedTeaPluginRequestProcessor.o \
 		IcedTeaPluginUtils.o
 
-$(addprefix $(NPPLUGIN_DIR)/,$(NPPLUGIN_OBJECTS)): $(addprefix $(NPPLUGIN_SRCDIR)/,$(NPPLUGIN_SRC))
+$(NPPLUGIN_DIR)/%.o: $(NPPLUGIN_SRCDIR)/%.cc
 	mkdir -p $(NPPLUGIN_DIR) && \
 	cd $(NPPLUGIN_DIR) && \
 	$(CXX) $(CXXFLAGS) \
@@ -1502,7 +1502,7 @@ $(addprefix $(NPPLUGIN_DIR)/,$(NPPLUGIN_OBJECTS)): $(addprefix $(NPPLUGIN_SRCDIR
 	  $(GLIB_CFLAGS) \
 	  $(GTK_CFLAGS) \
 	  $(MOZILLA_CFLAGS) \
-	  -fPIC -c $(addprefix $(NPPLUGIN_SRCDIR)/,$(NPPLUGIN_SRC))
+	  -fPIC -o $@ -c $<
 
 $(NPPLUGIN_DIR)/IcedTeaNPPlugin.so: $(addprefix $(NPPLUGIN_DIR)/,$(NPPLUGIN_OBJECTS))
 	cd $(NPPLUGIN_DIR) && \
