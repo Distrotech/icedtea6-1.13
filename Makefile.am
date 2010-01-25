@@ -118,7 +118,7 @@ PLUGIN_PATCH = patches/icedtea-liveconnect.patch
 LIVECONNECT_DIR = -C lib/rt netscape
 NPPLUGIN_DIR=$(abs_top_builddir)/plugin/icedteanp
 NPPLUGIN_SRCDIR=$(abs_top_srcdir)/plugin/icedteanp
-LIVECONNECT_SRCS = $(NPPLUGIN_DIR)/java
+LIVECONNECT_SRCS = $(NPPLUGIN_SRCDIR)/java
 else
 if ENABLE_PLUGIN
 ICEDTEAPLUGIN_CLEAN = clean-IcedTeaPlugin
