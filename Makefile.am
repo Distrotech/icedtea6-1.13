@@ -113,7 +113,7 @@ endif
 # FIXME (plugin): NPPLUGIN_DIR becomes PLUGIN_DIR
 if ENABLE_NPPLUGIN
 ICEDTEAPLUGIN_CLEAN = clean-IcedTeaNPPlugin
-ICEDTEAPLUGIN_TARGET = stamps/icedtea-npplugin
+ICEDTEAPLUGIN_TARGET = stamps/icedtea-npplugin.stamp
 PLUGIN_PATCH = patches/icedtea-liveconnect.patch
 LIVECONNECT_DIR = -C lib/rt netscape
 NPPLUGIN_DIR=$(abs_top_builddir)/plugin/icedteanp
@@ -122,7 +122,7 @@ LIVECONNECT_SRCS = $(NPPLUGIN_SRCDIR)/java
 else
 if ENABLE_PLUGIN
 ICEDTEAPLUGIN_CLEAN = clean-IcedTeaPlugin
-ICEDTEAPLUGIN_TARGET = IcedTeaPlugin.so
+ICEDTEAPLUGIN_TARGET = stamps/icedtea-plugin.stamp
 PLUGIN_PATCH = patches/icedtea-liveconnect.patch
 LIVECONNECT_DIR = -C lib/rt netscape
 NPPLUGIN_DIR = 
@@ -1212,7 +1212,7 @@ clean-bootstrap-directory-symlink:
 stamps/icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
 	stamps/hotspot-tools.stamp stamps/plugs.stamp \
 	stamps/ports.stamp stamps/patch.stamp stamps/overlay.stamp \
-	$(ICEDTEAPLUGIN_TARGET) $(ICEDTEANPPLUGIN_TARGET) \
+	$(ICEDTEAPLUGIN_TARGET) \
 	extra-lib/about.jar stamps/cacao.stamp stamps/visualvm.stamp \
 	stamps/pulse-java.stamp
 	$(ARCH_PREFIX) $(MAKE) \
@@ -1311,7 +1311,7 @@ endif
 stamps/icedtea-debug.stamp: stamps/bootstrap-directory-symlink.stamp \
 	stamps/hotspot-tools.stamp stamps/plugs.stamp \
 	stamps/ports.stamp stamps/patch.stamp stamps/overlay.stamp \
-	$(ICEDTEAPLUGIN_TARGET) $(ICEDTEANPPLUGIN_TARGET) \
+	$(ICEDTEAPLUGIN_TARGET) \
 	extra-lib/about.jar stamps/cacao.stamp stamps/visualvm.stamp \
 	stamps/pulse-java.stamp
 	$(ARCH_PREFIX) $(MAKE) \
@@ -2227,10 +2227,4 @@ clean: distclean-local
 
 jtreg: stamps/jtreg.stamp
 
-if ENABLE_NPPLUGIN
-plugin: stamps/icedtea-npplugin.stamp
-else
-if ENABLE_PLUGIN
-plugin: stamps/icedtea-plugin.stamp
-endif
-endif
+plugin: $(ICEDTEAPLUGIN_TARGET)
