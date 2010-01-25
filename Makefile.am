@@ -116,7 +116,8 @@ ICEDTEAPLUGIN_CLEAN = clean-IcedTeaNPPlugin
 ICEDTEAPLUGIN_TARGET = stamps/icedtea-npplugin
 PLUGIN_PATCH = patches/icedtea-liveconnect.patch
 LIVECONNECT_DIR = -C lib/rt netscape
-NPPLUGIN_DIR=$(abs_top_srcdir)/plugin/icedteanp
+NPPLUGIN_DIR=$(abs_top_builddir)/plugin/icedteanp
+NPPLUGIN_SRCDIR=$(abs_top_srcdir)/plugin/icedteanp
 LIVECONNECT_SRCS = $(NPPLUGIN_DIR)/java
 else
 if ENABLE_PLUGIN
@@ -1492,7 +1493,8 @@ NPPLUGIN_OBJECTS=IcedTeaNPPlugin.o IcedTeaScriptablePluginObject.o \
         IcedTeaJavaRequestProcessor.o IcedTeaPluginRequestProcessor.o \
 		IcedTeaPluginUtils.o
 
-$(addprefix $(NPPLUGIN_DIR)/,$(NPPLUGIN_OBJECTS)): $(addprefix $(NPPLUGIN_DIR)/,$(NPPLUGIN_SRC))
+$(addprefix $(NPPLUGIN_DIR)/,$(NPPLUGIN_OBJECTS)): $(addprefix $(NPPLUGIN_SRCDIR)/,$(NPPLUGIN_SRC))
+	mkdir -p $(NPPLUGIN_DIR) && \
 	cd $(NPPLUGIN_DIR) && \
 	$(CXX) $(CXXFLAGS) \
 	  -DPLUGIN_VERSION="\"$(PLUGIN_VERSION)\"" \
@@ -1500,7 +1502,7 @@ $(addprefix $(NPPLUGIN_DIR)/,$(NPPLUGIN_OBJECTS)): $(addprefix $(NPPLUGIN_DIR)/,
 	  $(GLIB_CFLAGS) \
 	  $(GTK_CFLAGS) \
 	  $(MOZILLA_CFLAGS) \
-	  -fPIC -c $(NPPLUGIN_SRC)
+	  -fPIC -c $(addprefix $(NPPLUGIN_SRCDIR)/,$(NPPLUGIN_SRC))
 
 $(NPPLUGIN_DIR)/IcedTeaNPPlugin.so: $(addprefix $(NPPLUGIN_DIR)/,$(NPPLUGIN_OBJECTS))
 	cd $(NPPLUGIN_DIR) && \
