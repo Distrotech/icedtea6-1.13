@@ -418,7 +418,7 @@ dnl Check for plugin support headers and libraries.
 dnl FIXME: use unstable
 if test "x${enable_plugin}" = "xyes"
   then
-    PKG_CHECK_MODULES(XULRUNNER, \
+    PKG_CHECK_MODULES(MOZILLA, \
       nspr mozilla-js mozilla-plugin libxul-unstable >= 1.9)
     PKG_CHECK_MODULES(GTK, gtk+-2.0)
     PKG_CHECK_MODULES(GLIB, glib-2.0)
@@ -434,7 +434,7 @@ if test "x${enable_plugin}" = "xyes"
 if test "x${enable_npplugin}" = "xyes"
   then
     PKG_CHECK_MODULES(MOZILLA, \
-      mozilla-plugin libxul)
+      mozilla-plugin libxul libxul-unstable)
     PKG_CHECK_MODULES(GTK, gtk+-2.0)
     PKG_CHECK_MODULES(GLIB, glib-2.0)
 
@@ -450,7 +450,7 @@ if test "x${enable_plugin}" = "xyes" -o "x${enable_npplugin}" = "xyes"
 then
   AC_LANG_PUSH([C++])
   OLDCPPFLAGS="$CPPFLAGS"
-  CPPFLAGS="$CPPFLAGS $XULRUNNER_CFLAGS"
+  CPPFLAGS="$CPPFLAGS $MOZILLA_CFLAGS"
 
   AC_CACHE_CHECK([for xulrunner version], [xulrunner_cv_collapsed_version],
       [AC_RUN_IFELSE(

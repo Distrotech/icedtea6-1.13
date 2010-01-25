@@ -1530,13 +1530,13 @@ IcedTeaPlugin.o: IcedTeaPlugin.cc
 	  -DPLUGIN_VERSION="\"$(PLUGIN_VERSION)\"" \
 	  -DMOZILLA_VERSION_COLLAPSED="$(MOZILLA_VERSION_COLLAPSED)" \
 	  $(GTK_CFLAGS) \
-	  $(XULRUNNER_CFLAGS) \
+	  $(MOZILLA_CFLAGS) \
 	  -fPIC -c -o $@ $<
 IcedTeaPlugin.so: IcedTeaPlugin.o
 	$(CXX) $(CXXFLAGS) \
 	  $< \
 	  $(GTK_LIBS) \
-	  $(XULRUNNER_LIBS) \
+	  $(MOZILLA_LIBS) \
 	  -shared -o $@
 
 clean-IcedTeaPlugin:
