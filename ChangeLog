@@ -1,5 +1,23 @@
 2010-01-25 Andrew John Hughes  <ahughes@redhat.com>
 
+	* acinclude.m4:
+	(IT_CHECK_OLD_PLUGIN): New macro for
+	--enable/disable-plugin.
+	(IT_CHECK_NEW_PLUGIN): Likewise for
+	--enable/disable-npplugin.
+	(IT_CHECK_PLUGIN_DEPENDENCIES): New macro
+	to run pkg-config checks.  Enables the new
+	plugin if xulrunner 1.9.2 or above is
+	detected.
+	(IT_CHECK_XULRUNNER_VERSION): Obtain the
+	XULrunner vgersion for MOZILLA_VERSION_COLLAPSED.
+	* configure.ac:
+	Replace old plugin stuff with a single call
+	to IT_CHECK_XULRUNNER_VERSION (which depends
+	on the other macros).
+
+2010-01-25 Andrew John Hughes  <ahughes@redhat.com>
+
 	* Makefile.am:
 	Build NPPlugin source files separately.
 	
