@@ -572,7 +572,7 @@ EXTRA_DIST = rt generated \
 	test/jtreg \
 	IcedTeaPlugin.cc \
 	HACKING pulseaudio fsg.sh \
-	plugin \
+	$(abs_top_srcdir)/plugin \
 	hotspot.map \
 	autogen.sh \
 	tapset/hotspot.stp.in \
