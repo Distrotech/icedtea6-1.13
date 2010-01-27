@@ -1,20 +1,23 @@
 New in release 1.8 (XXXX-XX-XX):
 
 
-New in release 1.7 (XXXX-XX-XX):
+New in release 1.7 (2010-01-27):
 
 - Updated to OpenJDK6 b17.
 - Alpha version of the new IcedTea NPRuntime based plugin with support for 
   Firefox >= 3.5, Chromium, and other browsers that support NPRuntime 
-  (use --enable-npplugin to build it).
+  (use --enable-npplugin to build it).  For xulrunner >= 1.9.2 (used
+  by Firefox >= 3.6), the new plugin is required and the build will
+  automatically enable it if the old plugin is requested.
 - Support added for building with HotSpot 16 using
-  --with-hotspot-build=hs16.
+  --with-hotspot-build=hs16.  This is the same as was released
+  in the proprietary JDK6 update 18.
 - Zero port updated to match the version submitted to OpenJDK
   as closely as possible.
-- libjpeg7 and libXext >= 1.1.0 supported.
+- libjpeg7, libjpeg8, libpng 1.4 and libXext >= 1.1.0 supported.
 - Added JNI call tracing using systemtap version 1.0+ when
   configuring with --enable-systemtap. See tapset/hotspot_jni.stp.
-- Add support for zero build on Hitachi SH.
+- Add support for building the Zero assembler port on Hitachi SH.
 
 New in release 1.6.2 (2009-11-09)
 - Latest security updates:
