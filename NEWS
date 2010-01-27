@@ -14,6 +14,9 @@ New in release 1.7 (XXXX-XX-XX):
 - libjpeg7 and libXext >= 1.1.0 supported.
 - Added JNI call tracing using systemtap version 1.0+ when
   configuring with --enable-systemtap. See tapset/hotspot_jni.stp.
+- Add support for zero build on Hitachi SH.
+
+New in release 1.6.2 (2009-11-09)
 - Latest security updates:
   - (CVE-2009-3728) ICC_Profile file existence detection information leak (6631533)
   - (CVE-2009-3885) BMP parsing DoS with UNC ICC links (6632445)
@@ -30,11 +33,50 @@ New in release 1.7 (XXXX-XX-XX):
   - (CVE-2009-3869) JRE AWT setDifflCM stack overflow (6872357)
   - (CVE-2009-3874) ImageI/O JPEG heap overflow (6874643
   - (CVE-2009-3871) JRE AWT setBytePixels heap overflow (6872358)
-- Add support for zero build on Hitachi SH.
+
+New in release 1.5.3 (2009-11-09)
+- Latest security updates:
+  - (CVE-2009-3728) ICC_Profile file existence detection information leak (6631533)
+  - (CVE-2009-3885) BMP parsing DoS with UNC ICC links (6632445)
+  - (CVE-2009-3881) resurrected classloaders can still have children (6636650) 
+  - (CVE-2009-3882) Numerous static security flaws in Swing (findbugs) (6657026)
+  - (CVE-2009-3883) Mutable statics in Windows PL&F (findbugs) (6657138)
+  - (CVE-2009-3880) UI logging information leakage (6664512)
+  - (CVE-2009-3879) GraphicsConfiguration information leak (6822057)
+  - (CVE-2009-3884) zoneinfo file existence information leak (6824265)
+  - (CVE-2009-2409) deprecate MD2 in SSL cert validation (Kaminsky) (6861062)
+  - (CVE-2009-3873) JPEG Image Writer quantization problem (6862968)
+  - (CVE-2009-3875) MessageDigest.isEqual introduces timing attack vulnerabilities (6863503)
+  - (CVE-2009-3876, CVE-2009-3877) OpenJDK ASN.1/DER input stream parser denial of service (6864911)
+  - (CVE-2009-3869) JRE AWT setDifflCM stack overflow (6872357)
+  - (CVE-2009-3874) ImageI/O JPEG heap overflow (6874643
+  - (CVE-2009-3871) JRE AWT setBytePixels heap overflow (6872358)
+
+New in release 1.6.1 (2009-09-14):
+
+- Fix tarball error in 1.6
+- Improve jar performance,
+  http://hg.openjdk.java.net/jdk6/jdk6/jdk/rev/b35f1e5075a4
 
 New in release 1.6 (2009-09-10):
 
 - Added java method tracing using systemtap version 0.9.9+.
+- FAST interpreter for ARM
+- Timezone fix: http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=377
+- Stackoverflow error fix: 
+http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=381
+- Backport regression (NPE) fix for AccessControlContext fix
+- Bump to hs14b16
+- The plugin has been updated to improve stability and cookie support.
+  Support for certificates with mismatched CNs has been added as well.
+
+New in release 1.5.2 (2009-09-04)
+- Timezone fix: http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=377
+- Stackoverflow error fix: http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=381
+- Backport regression (NPE) fix for AccessControlContext fix
+- Bump to hs14b16
+
+New in release 1.5.1 (2009-08-07)
 - Security fixes for:
   CVE-2009-2670 - OpenJDK Untrusted applet System properties access
   CVE-2009-2671 CVE-2009-2672 - OpenJDK Proxy mechanism information leaks
@@ -46,14 +88,7 @@ New in release 1.6 (2009-09-10):
   CVE-2009-2476 - OpenJDK OpenType checks can be bypassed
   CVE-2009-2689 - OpenJDK JDK13Services grants unnecessary privileges
   CVE-2009-2690 - OpenJDK private variable information disclosure
-- FAST interpreter for ARM
-- Timezone fix: http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=377
-- Stackoverflow error fix: 
-http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=381
-- Backport regression (NPE) fix for AccessControlContext fix
-- Bump to hs14b16
-- The plugin has been updated to improve stability and cookie support.
-  Support for certificates with mismatched CNs has been added as well.
+- Plugin/Netx security fix.
 
 New in release 1.5 (2009-05-20)
 
