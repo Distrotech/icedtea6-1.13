@@ -65,6 +65,9 @@
 #define HW_FP
 #endif
 
+#define LEAF_STACK_SIZE	200
+#define STACK_SPARE	40
+
 #define stack		r4
 #define	jpc		r5
 #define dispatch	r6
@@ -504,6 +507,7 @@ do_\label:
 
 	.text
 
+	.global	cmpxchg_ptr
 cmpxchg_ptr:
 	stmfd	sp!, {r4, r5, r6, r7, r8, lr}
 	mov	r6, #0xffffffc0
@@ -2316,7 +2320,7 @@ fast_normal_entry_synchronized:
 	ldr	r3, [tmp1, #THREAD_JAVA_STACK_BASE]
 
 	sub	r5, r1, r8, lsl #2
-	sub	r5, r5, #FRAME_SIZE+4
+	sub	r5, r5, #FRAME_SIZE+STACK_SPARE+LEAF_STACK_SIZE
 	sub	r5, r5, r0, lsl #2
 	cmp	r3, r5
 	bcs	stack_overflow_before_frame
@@ -2794,7 +2798,7 @@ fast_normal_entry:
 
 	ldr	r3, [tmp1, #THREAD_JAVA_STACK_BASE]
 	sub	r5, stack, r7, lsl #2
-	sub	r5, r5, #FRAME_SIZE+4
+	sub	r5, r5, #FRAME_SIZE+STACK_SPARE+LEAF_STACK_SIZE
 	sub	r5, r5, r2, lsl #2
 	cmp	r3, r5
 	bcs	stack_overflow_before_frame
@@ -2879,10 +2883,12 @@ method_entry_freq_count_overflow:
 	DISPATCH	0
 
 #ifdef THUMB2EE
+#define THUMB2_MAXLOCALS 1000
 call_thumb2:
 	mov	ip, r1
-	mov	r1, locals
+	sub	r1, locals, #THUMB2_MAXLOCALS * 4
 	ldr	r2, [istate, #ISTATE_THREAD]
+	sub	r3, locals, #31 * 4
 	add	stack, stack, #4
 	bx	ip
 #endif // THUMB2EE
@@ -4154,9 +4160,7 @@ bci_init:
 #endif // USE_COMPILER
 
 #ifdef THUMB2EE
-	ldr	r1, [r4, #CPUInfo-XXX]
-	tst	r1, #ARCH_THUMBEE
-	blne	Thumb2_Initialize
+	bl	Thumb2_Initialize
 #endif
 
 #ifdef HW_FP
@@ -6165,6 +6169,7 @@ Thumb2_DivZero_Handler:
 	.global	Thumb2_Handle_Exception
 	.global	Thumb2_ArrayBounds_Handler
 	.global	Thumb2_NullPtr_Handler
+	.global Thumb2_Stack_Overflow
 Thumb2_ArrayBounds_Handler:
 	ldr	r0, [istate, #ISTATE_METHOD]
         ldr     jpc, [r0, #METHOD_CONSTMETHOD]
@@ -6178,6 +6183,12 @@ Thumb2_Handle_Exception:
 	add	jpc, jpc, #CONSTMETHOD_CODEOFFSET
 	bl	load_dispatch
 	b	handle_exception
+Thumb2_Stack_Overflow:
+	mov	r0, r2
+	ldr	ip, [r0, #THREAD_TOP_ZERO_FRAME]
+	str	ip, [r0, #THREAD_LAST_JAVA_SP]
+	bl	_ZN18InterpreterRuntime24throw_StackOverflowErrorEP10JavaThread
+	ldmfd	arm_sp!, {fast_regset, pc}
 
 	.global	Thumb2_Exit_To_Interpreter
 Thumb2_Exit_To_Interpreter:

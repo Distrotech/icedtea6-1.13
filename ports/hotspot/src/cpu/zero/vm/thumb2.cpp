@@ -22,6 +22,9 @@ static char *t2ee_print_regusage;
 #endif
 
 #define THUMB2_CODEBUF_SIZE (8 * 1024 * 1024)
+#define THUMB2_MAX_BYTECODE_SIZE 10000
+#define THUMB2_MAX_T2CODE_SIZE 65000
+#define THUMB2_MAXLOCALS 1000
 
 #include <sys/mman.h>
 
@@ -358,10 +361,36 @@ static char *t2ee_print_regusage;
 #define H_PUTSTATIC_A			57
 #define H_PUTSTATIC_DW			58
 
-unsigned handlers[59];
+#define H_STACK_OVERFLOW		59
+
+unsigned handlers[60];
+
+#define LEAF_STACK_SIZE			200
+#define STACK_SPARE			40
+
+#define COMPILER_RESULT_FAILED	1	// Failed to compiled this method
+#define COMPILER_RESULT_FATAL	2	// Fatal - dont try compile anything ever again
+
+#include <setjmp.h>
+
+static jmp_buf compiler_error_env;
+
+#ifdef PRODUCT
+
+#define JASSERT(cond, msg)					\
+	do {							\
+	  if (!(cond))						\
+	    longjmp(compiler_error_env, COMPILER_RESULT_FATAL);	\
+	} while (0)
+
+#define J_Unimplemented() longjmp(compiler_error_env, COMPILER_RESULT_FATAL)
+
+#else
 
 #define JASSERT(cond, msg)	do { if (!(cond)) fatal(msg); } while (0)
 #define J_Unimplemented()       { report_unimplemented(__FILE__, __LINE__); BREAKPOINT; }
+
+#endif // PRODUCT
 
 #define GET_NATIVE_U2(p)	(*(unsigned short *)(p))
 
@@ -381,14 +410,14 @@ typedef struct Thumb2_CodeBuf {
 
 Thumb2_CodeBuf *thumb2_codebuf;
 
-unsigned bc_stackinfo[8000];
+unsigned bc_stackinfo[THUMB2_MAX_BYTECODE_SIZE];
 unsigned locals_info[1000];
 unsigned stack[1000];
 unsigned r_local[1000];
 
 #ifdef T2EE_PRINT_DISASS
-short start_bci[65000];
-short end_bci[65000];
+short start_bci[THUMB2_MAX_T2CODE_SIZE];
+short end_bci[THUMB2_MAX_T2CODE_SIZE];
 #endif
 
 // XXX hardwired constants!
@@ -472,11 +501,13 @@ typedef unsigned	Reg;
 #define VFP_D6		70
 #define VFP_D7		71
 
-#define JAZ_V1	ARM_R6
-#define JAZ_V2	ARM_R5
+#define PREGS	5
+
+#define JAZ_V1	ARM_R5
+#define JAZ_V2	ARM_R6
 #define JAZ_V3	ARM_R7
-#define JAZ_V4	ARM_R11
-#define JAZ_V5	ARM_R10
+#define JAZ_V4	ARM_R10
+#define JAZ_V5	ARM_R11
 
 #define Rstack		ARM_R4
 #define Rlocals		ARM_R7
@@ -507,9 +538,56 @@ unsigned binary_log2(unsigned n)
   return r;
 }
 
+typedef struct Compiled_Method {
+    // All entry points aligned on a cache line boundary
+    //		.align	CODE_ALIGN
+    // slow_entry:				@ callee save interface
+    // 		push	{r4, r5, r6, r7, r9, r10, r11, lr}
+    // 		bl	fast_entry
+    // 		pop	{r4, r5, r6, r7, r9, r10, r11, pc}
+    unsigned slow_entry[3];
+    // osr_tablep:				@ pointer to the osr table
+    // 		.word	osr_table
+    unsigned *osr_table;
+    Compiled_Method *next;
+    // OSR Entry point:
+    // 	R0 = entry point within compiled method
+    // 	R1 = locals
+    // 	R2 = thread
+    // osr_entry:
+    // 		@ Load each local into it register allocated register
+    // 		ldr	<reg>, [R1, #-<local> * 4]
+    // 		...
+    // 		mov	Rthread, R2
+    // 		bx	R0
+    // 		.align	CODE_ALIGN
+    unsigned osr_entry[1];
+    // fast_entry:
+    // 		push	{r8, lr}
+    // 		...	@ The compiled code
+    // 		pop	{r8, pc}
+    // 		.align	WORD_ALIGN
+    // code_handle:				@ from interpreted entry
+    // 		.word	slow_entry		@ bottom bit must be set!
+    // osr_table:
+    // 		.word	<no. of entries>
+    // @@@ For bytecode 0 and for each backwards branch target
+    // 		.short	<bytecode index>
+    // 		.short	<code offset>		@ offset in halfwords from slow_entry
+} Compiled_Method;
+
+Compiled_Method *compiled_method_list = 0;
+Compiled_Method **compiled_method_list_tail_ptr = &compiled_method_list;
+
+typedef struct Thumb2_Entrypoint {
+  unsigned compiled_entrypoint;
+  unsigned osr_entry;
+} Thumb2_Entrypoint;
+
 typedef struct CodeBuf {
     unsigned short *codebuf;
     unsigned idx;
+    unsigned limit;
 } CodeBuf;
 
 typedef struct Thumb2_Stack {
@@ -521,6 +599,9 @@ typedef struct Thumb2_Stack {
 
 typedef struct Thumb2_Registers {
     unsigned *r_local;
+    unsigned npregs;
+    unsigned pregs[PREGS];
+    int mapping[PREGS];
 } Thumb2_Registers;
 
 typedef struct Thumb2_Info {
@@ -535,6 +616,7 @@ typedef struct Thumb2_Info {
     Thumb2_Registers *jregs;
     unsigned compiled_return;
     unsigned zombie_bytes;
+    unsigned is_leaf;
 } Thumb2_Info;
 
 #define IS_INT_SIZE_BASE_TYPE(c) (c=='B' || c=='C' || c=='F' || c=='I' || c=='S' || c=='Z')
@@ -1238,10 +1320,12 @@ void Thumb2_pass1(Thumb2_Info *jinfo, unsigned bci)
       case opc_invokevirtual:
       case opc_invokespecial:
       case opc_invokestatic:
+	jinfo->is_leaf = 0;
 	bci += 3;
 	break;
 
       case opc_invokeinterface:
+	jinfo->is_leaf = 0;
 	bci += 5;
 	break;
 
@@ -1393,7 +1477,7 @@ int Thumb2_is_zombie(Thumb2_Info *jinfo, unsigned bci)
 }
 #endif // ZOMBIT_DETECTION
 
-void Thumb2_RegAlloc(Thumb2_Info *jinfo, unsigned *pregs, unsigned npregs)
+void Thumb2_RegAlloc(Thumb2_Info *jinfo)
 {
   unsigned *locals_info = jinfo->locals_info;
   unsigned i, j;
@@ -1401,7 +1485,10 @@ void Thumb2_RegAlloc(Thumb2_Info *jinfo, unsigned *pregs, unsigned npregs)
   unsigned score, max_score;
   unsigned local;
   unsigned nlocals = jinfo->method->max_locals();
+  unsigned *pregs = jinfo->jregs->pregs;
+  unsigned npregs = jinfo->jregs->npregs;
 
+  for (i = 0; i < npregs; i++) jinfo->jregs->mapping[i] = -1;
   for (i = 0; i < npregs; i++) {
     max_score = 0;
     for (j = 0; j < nlocals; j++) {
@@ -1417,6 +1504,7 @@ void Thumb2_RegAlloc(Thumb2_Info *jinfo, unsigned *pregs, unsigned npregs)
     if (max_score < 2) break;
     locals_info[local] |= 1<<LOCAL_ALLOCATED;
     jinfo->jregs->r_local[local] = pregs[i];
+    jinfo->jregs->mapping[i] = local;
   }
 #ifdef T2EE_PRINT_REGUSAGE
   if (t2ee_print_regusage) {
@@ -1842,6 +1930,8 @@ static const unsigned t_vop_ops[] = {
 
 //------------------------------------------------------------------------------------
 
+#define TBIT 1
+
 #define E_STR_IMM6(src, imm6)		(0xce00 | ((imm6)<<3) | (src))
 #define E_LDR_IMM6(dst, imm6)		(0xcc00 | ((imm6)<<3) | (dst))
 #define E_LDR_IMM5(dst, imm5)		(0xcb00 | ((imm5)<<3) | (dst))
@@ -2019,6 +2109,8 @@ static const unsigned t_vop_ops[] = {
 
 int out_16(CodeBuf *codebuf, u32 s)
 {
+  if (codebuf->idx >= codebuf->limit)
+	longjmp(compiler_error_env, COMPILER_RESULT_FATAL);
   codebuf->codebuf[codebuf->idx++] = s;
   return 0;
 }
@@ -2034,6 +2126,8 @@ int out_16x2(CodeBuf *codebuf, u32 sx2)
 
 int out_32(CodeBuf *codebuf, u32 w)
 {
+  if (codebuf->idx + 2 > codebuf->limit)
+	longjmp(compiler_error_env, COMPILER_RESULT_FATAL);
   *(u32 *)&(codebuf->codebuf[codebuf->idx]) = w;
   codebuf->idx += 2;
   return 0;
@@ -4388,7 +4482,9 @@ int Thumb2_Accessor(Thumb2_Info *jinfo)
   loc = forward_32(jinfo->codebuf);
   out_32(jinfo->codebuf, 0);
   out_32(jinfo->codebuf, 0);
-  out_32(jinfo->codebuf, 0);
+
+  out_32(jinfo->codebuf, 0);	// pointer to osr table
+  out_32(jinfo->codebuf, 0);	// next compiled method
 
   // OSR entry point
   mov_reg(jinfo->codebuf, ARM_PC, ARM_R0);
@@ -4401,7 +4497,7 @@ int Thumb2_Accessor(Thumb2_Info *jinfo)
   ldr_imm(jinfo->codebuf, ARM_R1, ARM_R2, THREAD_JAVA_SP, 1, 0);
   ldr_imm(jinfo->codebuf, ARM_R0, ARM_R1, 0, 1, 0);
   if (tos_type == btos)
-    ldrb_imm(jinfo->codebuf, ARM_R0, ARM_R0, field_offset, 1, 0);
+    ldrsb_imm(jinfo->codebuf, ARM_R0, ARM_R0, field_offset, 1, 0);
   else if (tos_type == ctos)
     ldrh_imm(jinfo->codebuf, ARM_R0, ARM_R0, field_offset, 1, 0);
   else if (tos_type == stos)
@@ -4428,19 +4524,24 @@ void Thumb2_Enter(Thumb2_Info *jinfo)
   bl(jinfo->codebuf, out_pos(jinfo->codebuf) + CODE_ALIGN - 4);
   ldm(jinfo->codebuf, I_REGSET + (1<<ARM_PC), ARM_SP, POP_FD, 1);
 
-  out_32(jinfo->codebuf, 0);
+  out_32(jinfo->codebuf, 0);	// Space for osr_table point
+  out_32(jinfo->codebuf, 0);	// Pointer to next method
 
   // OSR entry point == Slow entry + 16 - caller save
   // R0 = entry point within compiled method
-  // R1 = locals
+  // R1 = locals - THUMB2_MAXLOCALS * 4
   // R2 = thread
+  // R3 = locals - 31 * 4
   {
     int nlocals = jinfo->method->max_locals();
 
     for (i = 0; i < nlocals; i++) {
       Reg r = jinfo->jregs->r_local[i];
       if (r) {
-	ldr_imm(jinfo->codebuf, r, ARM_R1, -i * 4, 1, 0);
+	ldr_imm(jinfo->codebuf, r,
+		(i < 32) ? ARM_R3 : ARM_R1,
+		(i < 32) ? (31 - i) * 4 : (THUMB2_MAXLOCALS - i) * 4,
+	  	1, 0);
       }
     }
     mov_reg(jinfo->codebuf, Rthread, ARM_R2);
@@ -4456,6 +4557,19 @@ void Thumb2_Enter(Thumb2_Info *jinfo)
 //  enter_leave(jinfo->codebuf, 1);
   ldr_imm(jinfo->codebuf, Rstack, ARM_R2, THREAD_JAVA_SP, 1, 0);
   Thumb2_Debug(jinfo, H_DEBUG_METHODENTRY);
+  {
+    unsigned stacksize;
+
+    stacksize = (extra_locals + jinfo->method->max_stack()) * sizeof(int);
+    stacksize += FRAME_SIZE + STACK_SPARE;
+    if (!jinfo->is_leaf || stacksize > LEAF_STACK_SIZE) {
+      ldr_imm(jinfo->codebuf, ARM_R3, ARM_R2, THREAD_JAVA_STACK_BASE, 1, 0);
+      sub_imm(jinfo->codebuf, ARM_R1, Rstack, stacksize + LEAF_STACK_SIZE);
+      cmp_reg(jinfo->codebuf, ARM_R3, ARM_R1);
+      it(jinfo->codebuf, COND_CS, IT_MASK_T);
+      bl(jinfo->codebuf, handlers[H_STACK_OVERFLOW]);
+    }
+  }
   mov_imm(jinfo->codebuf, ARM_R1, 0);
 
   if (extra_locals > 0) {
@@ -4610,6 +4724,8 @@ unsigned opcode2handler[] = {
 
 #define OPCODE2HANDLER(opc) (handlers[opcode2handler[(opc)-opc_idiv]])
 
+extern "C" void _ZN18InterpreterRuntime18register_finalizerEP10JavaThreadP7oopDesc(void);
+
 void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 {
   unsigned code_size = jinfo->code_size;
@@ -4636,7 +4752,7 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
     stackdepth = stackinfo & ~BC_FLAGS_MASK;
     bc_stackinfo[bci] = (stackinfo & BC_FLAGS_MASK) | (codebuf->idx * 2) | BC_COMPILED;
 
-    if (opcode > OPC_LAST_JAVA_OP) {
+    if (opcode > OPC_LAST_JAVA_OP && opcode != opc_return_register_finalizer) {
       if (Bytecodes::is_defined((Bytecodes::Code)opcode))
 	opcode = (unsigned)Bytecodes::java_code((Bytecodes::Code)opcode);
     }
@@ -5951,6 +6067,41 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
 	if (!jinfo->compiled_return) jinfo->compiled_return = bci;
 	break;
 
+      case opc_return_register_finalizer: {
+	Thumb2_Stack *jstack = jinfo->jstack;
+	Reg r, r_tmp;
+	unsigned loc_eq;
+
+	Thumb2_Flush(jinfo);
+	Thumb2_Load(jinfo, 0, stackdepth);
+	r = POP(jstack);
+	r_tmp = Thumb2_Tmp(jinfo, (1<<r));
+	ldr_imm(jinfo->codebuf, r_tmp, r, 4, 1, 0);
+	ldr_imm(jinfo->codebuf, r_tmp, r_tmp, KLASS_PART+KLASS_ACCESSFLAGS, 1, 0);
+	tst_imm(jinfo->codebuf, r_tmp, JVM_ACC_HAS_FINALIZER);
+	loc_eq = forward_16(jinfo->codebuf);
+	Thumb2_save_locals(jinfo, stackdepth);
+	mov_reg(jinfo->codebuf, ARM_R1, r);
+	ldr_imm(jinfo->codebuf, ARM_R0, Ristate, ISTATE_METHOD, 1, 0);
+	ldr_imm(jinfo->codebuf, ARM_R0, ARM_R0, METHOD_CONSTMETHOD, 1, 0);
+	add_imm(jinfo->codebuf, ARM_R0, ARM_R0, bci+CONSTMETHOD_CODEOFFSET);
+	str_imm(jinfo->codebuf, ARM_R0, Ristate, ISTATE_BCP, 1, 0);
+	sub_imm(jinfo->codebuf, ARM_R0, Rstack, 4);
+	str_imm(jinfo->codebuf, ARM_R0, Ristate, ISTATE_STACK, 1, 0);
+
+	mov_reg(jinfo->codebuf, ARM_R0, Rthread);
+	mov_imm(jinfo->codebuf, ARM_R3, (u32)_ZN18InterpreterRuntime18register_finalizerEP10JavaThreadP7oopDesc);
+	blx_reg(jinfo->codebuf, ARM_R3);
+
+	ldr_imm(jinfo->codebuf, ARM_R3, Rthread, THREAD_PENDING_EXC, 1, 0);
+	cmp_imm(jinfo->codebuf, ARM_R3, 0);
+	it(jinfo->codebuf, COND_NE, IT_MASK_T);
+	bl(jinfo->codebuf, handlers[H_HANDLE_EXCEPTION]);
+	bcc_patch(jinfo->codebuf, COND_EQ, loc_eq);
+	Thumb2_Return(jinfo, opc_return);
+	break;
+      }
+
       case opc_new: {
 	unsigned loc;
 
@@ -6246,7 +6397,9 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
 	  } else {
 	    JASSERT((dest & 1) == 0 && (table_loc & 1) == 0, "unaligned code");
 	    offset = (dest >> 1) - (table_loc >> 1);
-	    JASSERT(offset < 65536, "offset too big in tableswitch");
+	    if (offset >= 65536) {
+	      longjmp(compiler_error_env, COMPILER_RESULT_FAILED);
+	    }
 	    out_16(jinfo->codebuf, offset);
 	  }
 	}
@@ -6316,8 +6469,10 @@ void Thumb2_tablegen(Thumb2_Info *jinfo)
   unsigned bci;
   unsigned *count_pos = (unsigned *)out_pos(jinfo->codebuf);
   unsigned count = 0;
+  unsigned i;
+  CodeBuf *codebuf = jinfo->codebuf;
 
-  out_32(jinfo->codebuf, 0);
+  out_32(codebuf, 0);
   bc_stackinfo[0] |= BC_BACK_TARGET;
   for (bci = 0; bci < code_size;) {
     unsigned stackinfo = bc_stackinfo[bci];
@@ -6327,8 +6482,11 @@ void Thumb2_tablegen(Thumb2_Info *jinfo)
     if (stackinfo & BC_BACK_TARGET) {
       unsigned code_offset = (stackinfo & ~BC_FLAGS_MASK) >> 1;
       JASSERT(stackinfo & BC_COMPILED, "back branch target not compiled???");
-      JASSERT(code_offset < (1<<16), "oops, codesize too big");
-      out_32(jinfo->codebuf, (bci << 16) | code_offset);
+      if (code_offset >= 65536) {
+	longjmp(compiler_error_env, COMPILER_RESULT_FAILED);
+      }
+//      JASSERT(code_offset < (1<<16), "oops, codesize too big");
+      out_32(codebuf, (bci << 16) | code_offset);
       count++;
     }
 
@@ -6346,14 +6504,16 @@ void Thumb2_tablegen(Thumb2_Info *jinfo)
   *count_pos = count;
 }
 
-unsigned Thumb2_osr_from_bci(unsigned slow_entry, unsigned bci)
+extern "C" void Thumb2_Clear_Cache(char *base, char *limit);
+#define IS_COMPILED(e, cb) ((e) >= (unsigned)(cb) && (e) < (unsigned)(cb) + (cb)->size)
+
+unsigned Thumb2_osr_from_bci(Compiled_Method *cmethod, unsigned bci)
 {
   unsigned *osr_table;
   unsigned count;
   unsigned i;
 
-  slow_entry &= ~1;
-  osr_table = *(unsigned **)(slow_entry+12);
+  osr_table = cmethod->osr_table;
   if (!osr_table) return 0;
   count = *osr_table++;
   for (i = 0; i < count; i++) {
@@ -6462,9 +6622,10 @@ extern "C" void Thumb2_Install(methodOop mh, u32 entry);
 
 #define IS_COMPILED(e, cb) ((e) >= (unsigned)(cb) && (e) < (unsigned)(cb) + (cb)->size)
 
-static unsigned compiling;
+extern "C" unsigned cmpxchg_ptr(unsigned new_value, volatile unsigned *ptr, unsigned cmp_value);
+static volatile unsigned compiling;
 static unsigned CompileCount = 0;
-static unsigned MaxCompile = 75;
+static unsigned MaxCompile = 35;
 
 #define COMPILE_ONLY	0
 #define COMPILE_COUNT	0
@@ -6473,7 +6634,6 @@ static unsigned MaxCompile = 75;
 
 #ifdef COMPILE_LIST
 static const char *compile_list[] = {
-	"java.util.concurrent.ConcurrentHashMap.<init>(IFI)V",
 	0
 };
 #endif
@@ -6487,12 +6647,12 @@ static unsigned total_zombie_bytes = 0;
 static clock_t total_compile_time = 0;
 #endif
 
-extern "C" void Thumb2_Clear_Cache(char *base, char *limit);
-
 extern unsigned CPUInfo;
+static int DisableCompiler = 0;
 
 extern "C" unsigned long long Thumb2_Compile(JavaThread *thread, unsigned branch_pc)
 {
+  HandleMark __hm(thread);
   frame fr = thread->last_frame();
   methodOop method = fr.interpreter_frame_method();
   symbolOop name = method->name();
@@ -6509,21 +6669,28 @@ extern "C" unsigned long long Thumb2_Compile(JavaThread *thread, unsigned branch
   Thumb2_Registers jregs_str;
   int idx;
   u32 code_handle, slow_entry;
-  u32 osr_entry;
   Thumb2_CodeBuf *cb = thumb2_codebuf;
+  int rc;
+  char *saved_hp;
+  Compiled_Method *cmethod;
+  u32 compiled_offset;
+  Thumb2_Entrypoint thumb_entry;
   int compiled_accessor;
 
-  if (!(CPUInfo & ARCH_THUMBEE)) {
-	ic->decay();
-	bc->decay();
+  if (DisableCompiler || method->is_not_compilable()) {
+	ic->set(ic->state(), 1);
+	bc->set(ic->state(), 1);
 	return 0;
   }
 
   slow_entry = *(unsigned *)method->from_interpreted_entry();
   if (IS_COMPILED(slow_entry, cb)) {
-    osr_entry = Thumb2_osr_from_bci(slow_entry, branch_pc);
-    if (osr_entry == 0) return 0;
-    return ((unsigned long long)(slow_entry + 16)) << 32 | (slow_entry+osr_entry);
+    cmethod = (Compiled_Method *)(slow_entry & ~TBIT);
+    compiled_offset = Thumb2_osr_from_bci(cmethod, branch_pc);
+    if (compiled_offset == 0) return 0;
+    thumb_entry.compiled_entrypoint = slow_entry + compiled_offset;
+    thumb_entry.osr_entry = (unsigned)cmethod->osr_entry | TBIT;
+    return *(unsigned long long *)&thumb_entry;
   }
 
   ic->decay();
@@ -6531,20 +6698,20 @@ extern "C" unsigned long long Thumb2_Compile(JavaThread *thread, unsigned branch
 
   // Dont compile anything with code size >= 32K.
   // We rely on the bytecode index fitting in 16 bits
-  if (code_size >= 8000)
-	return 0;
-
+  //
   // Dont compile anything with max stack + maxlocal > 1K
   // The range of an LDR in T2 is -4092..4092
   // Othersize we have difficulty access the locals from the stack pointer
-  if ((method->max_locals() + method->max_stack()) >= 1000)
+  //
+  if (code_size > THUMB2_MAX_BYTECODE_SIZE ||
+		(method->max_locals() + method->max_stack()) >= 1000 ||
+		method->has_monitor_bytecodes() ||
+		method->has_exception_handler()) {
+        method->set_not_compilable();
 	return 0;
+  }
 
   if (COMPILE_COUNT && compiled_methods == COMPILE_COUNT) return 0;
-
-  if (method->has_monitor_bytecodes()) return 0;
-
-  if (method->has_exception_handler()) return 0;
 
   if (COMPILE_ONLY) {
     if (strcmp(name->as_C_string(), COMPILE_ONLY) != 0) return 0;
@@ -6562,8 +6729,18 @@ extern "C" unsigned long long Thumb2_Compile(JavaThread *thread, unsigned branch
   }
 #endif
 
-  if (compiling) return 0;
-  compiling = 1;
+  saved_hp = cb->hp;
+  if (rc = setjmp(compiler_error_env)) {
+    cb->hp = saved_hp;
+    if (rc == COMPILER_RESULT_FAILED)
+        method->set_not_compilable();
+    if (rc == COMPILER_RESULT_FATAL)
+	DisableCompiler = 1;
+    compiling = 0;
+    return 0;
+  }
+
+  if (cmpxchg_ptr(1, &compiling, 0)) return 0;
 
 #ifdef T2EE_PRINT_STATISTICS
   clock_t compile_time = clock();
@@ -6591,6 +6768,7 @@ extern "C" unsigned long long Thumb2_Compile(JavaThread *thread, unsigned branch
   jinfo_str.locals_info = locals_info;
   jinfo_str.compiled_return = 0;
   jinfo_str.zombie_bytes = 0;
+  jinfo_str.is_leaf = 1;
 
   Thumb2_local_info_from_sig(&jinfo_str, method, base);
 
@@ -6599,6 +6777,7 @@ extern "C" unsigned long long Thumb2_Compile(JavaThread *thread, unsigned branch
 
   codebuf_str.codebuf = (unsigned short *)cb->hp;
   codebuf_str.idx = 0;
+  codebuf_str.limit = (unsigned short *)cb->sp - (unsigned short *)cb->hp;
 
   jstack_str.stack = stack;
   jstack_str.depth = 0;
@@ -6611,39 +6790,33 @@ extern "C" unsigned long long Thumb2_Compile(JavaThread *thread, unsigned branch
   jinfo_str.jstack = &jstack_str;
   jinfo_str.jregs = &jregs_str;
 
-#ifdef USE_RLOCAL
-  {
-    Reg pregs[4];
-    pregs[0] = JAZ_V1;
-    pregs[1] = JAZ_V2;
-    pregs[2] = JAZ_V4;
-    pregs[3] = JAZ_V5;
-    Thumb2_RegAlloc(&jinfo_str, pregs, 4);
-  }
-#else
-  {
-    Reg pregs[5];
-    pregs[0] = JAZ_V1;
-    pregs[1] = JAZ_V2;
-    pregs[2] = JAZ_V3;
-    pregs[3] = JAZ_V4;
-    pregs[4] = JAZ_V5;
-    Thumb2_RegAlloc(&jinfo_str, pregs, 5);
-  }
+  jregs_str.pregs[0] = JAZ_V1;
+  jregs_str.pregs[1] = JAZ_V2;
+  jregs_str.pregs[2] = JAZ_V3;
+  jregs_str.pregs[3] = JAZ_V4;
+
+#ifndef USE_RLOCAL
+  jregs_str.pregs[4] = JAZ_V5;
 #endif
 
+  jregs_str.npregs = PREGS;
+
+  Thumb2_RegAlloc(&jinfo_str);
+
   slow_entry = out_align(&codebuf_str, CODE_ALIGN);
+  cmethod = (Compiled_Method *)slow_entry;
+  slow_entry |= TBIT;
 
   cb->hp += codebuf_str.idx * 2;
   codebuf_str.codebuf = (unsigned short *)cb->hp;
   codebuf_str.idx = 0;
+  codebuf_str.limit = (unsigned short *)cb->sp - (unsigned short *)cb->hp;
 
-  compiled_accessor = 0;
-  if (method->is_accessor() && Thumb2_Accessor(&jinfo_str)) {
-    compiled_accessor = 1;
-  } else {
+  compiled_accessor = 1;
+  if (!method->is_accessor() || !Thumb2_Accessor(&jinfo_str)) {
     Thumb2_Enter(&jinfo_str);
     Thumb2_codegen(&jinfo_str, 0);
+    compiled_accessor = 0;
   }
 
 #ifdef T2EE_PRINT_DISASS
@@ -6671,17 +6844,20 @@ extern "C" unsigned long long Thumb2_Compile(JavaThread *thread, unsigned branch
 
   code_handle = out_align(&codebuf_str, sizeof(address));
 
-  out_32(&codebuf_str, slow_entry + 1);
+  out_32(&codebuf_str, slow_entry);
 
   if (!compiled_accessor) {
     unsigned osr_entry_table = out_pos(jinfo_str.codebuf);
 
     Thumb2_tablegen(&jinfo_str);
 
-    *(unsigned *)(slow_entry + 12) = osr_entry_table;
+    cmethod->osr_table = (unsigned *)osr_entry_table;
   }
 
   cb->hp += codebuf_str.idx * 2;
+
+  *compiled_method_list_tail_ptr = cmethod;
+  compiled_method_list_tail_ptr = &(cmethod->next);
 
   Thumb2_Install(method, code_handle);
 
@@ -6689,17 +6865,18 @@ extern "C" unsigned long long Thumb2_Compile(JavaThread *thread, unsigned branch
 
   compiling = 0;
 
-  osr_entry = Thumb2_osr_from_bci(slow_entry, branch_pc);
-
-  if (osr_entry == 0) return 0;
-
-  return ((unsigned long long)(slow_entry + 16 + 1)) << 32 | (slow_entry+osr_entry+1);
+  compiled_offset = Thumb2_osr_from_bci(cmethod, branch_pc);
+  if (compiled_offset == 0) return 0;
+  thumb_entry.compiled_entrypoint = slow_entry + compiled_offset;
+  thumb_entry.osr_entry = (unsigned)cmethod->osr_entry | TBIT;
+  return *(unsigned long long *)&thumb_entry;
 }
 
 extern "C" void Thumb2_DivZero_Handler(void);
 extern "C" void Thumb2_ArrayBounds_Handler(void);
 extern "C" void Thumb2_Handle_Exception(void);
 extern "C" void Thumb2_Exit_To_Interpreter(void);
+extern "C" void Thumb2_Stack_Overflow(void);
 
 extern "C" void __divsi3(void);
 extern "C" void __aeabi_ldivmod(void);
@@ -6804,6 +6981,12 @@ extern "C" void Thumb2_Initialize(void)
   Thumb2_CodeBuf *cb;
   u32 h_divzero;
   u32 loc_irem, loc_idiv, loc_ldiv;
+  int rc;
+
+  if (!(CPUInfo & ARCH_THUMBEE)) {
+    DisableCompiler = 1;
+    return;
+  }
 
 #ifdef T2EE_PRINT_COMPILATION
   t2ee_print_compilation = getenv("T2EE_PRINT_COMPILATION");
@@ -6820,7 +7003,7 @@ extern "C" void Thumb2_Initialize(void)
 
   cb = (Thumb2_CodeBuf *)mmap(0, THUMB2_CODEBUF_SIZE, PROT_EXEC|PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, 0, 0);
   if (cb == MAP_FAILED) {
-    UseCompiler = 0;
+    DisableCompiler = 1;
     return;
   }
 
@@ -6830,6 +7013,12 @@ extern "C" void Thumb2_Initialize(void)
 
   codebuf.codebuf = (unsigned short *)cb->hp;
   codebuf.idx = 0;
+  codebuf.limit = (unsigned short *)cb->sp - (unsigned short *)cb->hp;
+
+  if (rc = setjmp(compiler_error_env)) {
+    DisableCompiler = 1;
+    return;
+  }
 
 #if 1
   memcpy(cb->hp, Thumb2_stubs, STUBS_SIZE);
@@ -6883,6 +7072,10 @@ extern "C" void Thumb2_Initialize(void)
 
   handlers[H_HANDLE_EXCEPTION] = out_pos(&codebuf);
   mov_imm(&codebuf, ARM_R3, (u32)Thumb2_Handle_Exception);
+  mov_reg(&codebuf, ARM_PC, ARM_R3);
+
+  handlers[H_STACK_OVERFLOW] = out_pos(&codebuf);
+  mov_imm(&codebuf, ARM_R3, (u32)Thumb2_Stack_Overflow);
   mov_reg(&codebuf, ARM_PC, ARM_R3);
 
   handlers[H_DREM] = out_pos(&codebuf);
