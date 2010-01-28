@@ -94,22 +94,6 @@ AC_ARG_ENABLE([visualvm],
 AM_CONDITIONAL(WITH_VISUALVM, test "x${enable_visualvm}" = "xyes")
 AC_MSG_RESULT(${enable_visualvm})
 
-AC_MSG_CHECKING([whether to build the browser plugin])
-AC_ARG_ENABLE([plugin],
-              [AS_HELP_STRING([--disable-plugin],
-                              [Disable compilation of browser plugin])],
-              [enable_plugin="${enableval}"], [enable_plugin="yes"])
-AM_CONDITIONAL(ENABLE_PLUGIN, test "x${enable_plugin}" = "xyes")
-AC_MSG_RESULT(${enable_plugin})
-
-AC_MSG_CHECKING([whether to build the new experimental browser plugin based on npruntime])
-AC_ARG_ENABLE([npplugin],
-              [AS_HELP_STRING([--enable-npplugin],
-                              [Enable compilation of browser plugin (automatically disables default plugin)])],
-              [enable_npplugin="${enableval}"], [enable_npplugin="no"])
-AM_CONDITIONAL(ENABLE_NPPLUGIN, test "x${enable_npplugin}" = "xyes")
-AC_MSG_RESULT(${enable_npplugin})
-
 AC_MSG_CHECKING([whether to include PulseAudio support])
 AC_ARG_ENABLE([pulse-java],
               [AS_HELP_STRING([--enable-pulse-java],
@@ -167,17 +151,7 @@ AC_ARG_ENABLE([nss],
 AM_CONDITIONAL([ENABLE_NSS], [test x$ENABLE_NSS = xyes])
 AC_MSG_RESULT(${ENABLE_NSS})
 
-AC_ARG_WITH([pkgversion],
-        [AS_HELP_STRING([--with-pkgversion=PKG],
-                        [Use PKG in the version string in addition to "IcedTea"])],
-        [case "$withval" in
-          yes) AC_MSG_ERROR([package version not specified]) ;;
-          no)  PKGVERSION= ;;
-          *)   PKGVERSION="$withval" ;;
-         esac],
-        [PKGVERSION=])
-AC_SUBST(PKGVERSION)
-
+IT_GET_PKGVERSION
 IT_GET_LSB_DATA
 
 SET_ARCH_DIRS
@@ -229,8 +203,8 @@ IT_CHECK_ADDITIONAL_VMS
 ENABLE_HG
 AC_CHECK_WITH_HG_REVISION
 AC_CHECK_WITH_TZDATA_DIR
-
 IT_CHECK_FOR_CLASS([SUN_AWT_TOOLKIT], [sun.awt.SunToolkit])
+IT_CHECK_XULRUNNER_VERSION
 
 if test "x${enable_visualvm}" = "xyes"
 then
@@ -430,89 +404,6 @@ then
   fi
   AC_SUBST(LIBPULSE_CFLAGS)
   AC_SUBST(LIBPULSE_LIBS)
-fi
-
-dnl Check for plugin support headers and libraries.
-dnl FIXME: use unstable
-if test "x${enable_plugin}" = "xyes"
-  then
-    PKG_CHECK_MODULES(XULRUNNER, \
-      nspr mozilla-js mozilla-plugin libxul-unstable >= 1.9)
-    PKG_CHECK_MODULES(GTK, gtk+-2.0)
-    PKG_CHECK_MODULES(GLIB, glib-2.0)
-
-    AC_SUBST(MOZILLA_CFLAGS)
-    AC_SUBST(MOZILLA_LIBS)
-    AC_SUBST(GLIB_CFLAGS)
-    AC_SUBST(GLIB_LIBS)
-    AC_SUBST(GTK_CFLAGS)
-    AC_SUBST(GTK_LIBS)
-  fi
-
-if test "x${enable_npplugin}" = "xyes"
-  then
-    PKG_CHECK_MODULES(MOZILLA, \
-      mozilla-plugin libxul)
-    PKG_CHECK_MODULES(GTK, gtk+-2.0)
-    PKG_CHECK_MODULES(GLIB, glib-2.0)
-
-    AC_SUBST(MOZILLA_CFLAGS)
-    AC_SUBST(MOZILLA_LIBS)
-    AC_SUBST(GLIB_CFLAGS)
-    AC_SUBST(GLIB_LIBS)
-    AC_SUBST(GTK_CFLAGS)
-    AC_SUBST(GTK_LIBS)
-  fi
-
-if test "x${enable_plugin}" = "xyes" -o "x${enable_npplugin}" = "xyes"
-then
-  AC_LANG_PUSH([C++])
-  OLDCPPFLAGS="$CPPFLAGS"
-  CPPFLAGS="$CPPFLAGS $XULRUNNER_CFLAGS"
-
-  AC_CACHE_CHECK([for xulrunner version], [xulrunner_cv_collapsed_version],
-      [AC_RUN_IFELSE(
-        [AC_LANG_PROGRAM([[
-#include <mozilla-config.h>
-#include <math.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-]],[[
-int version = 0;
-const char* token = NULL;
-int power=6;
-FILE *datafile;
-
-datafile = fopen ("conftest.vdata", "w");
-if (!datafile) return 1;
-
-// 32 chars is more than enough to hold version
-char* mozilla_version = (char*) malloc(32*sizeof(char));
-snprintf(mozilla_version, 32, "%s", MOZILLA_VERSION);
-
-token = strtok(mozilla_version, ".");
-while (token)
-{
-    version += atoi(token)*(pow(10, power));
-    power -=2;
-    token = strtok(NULL, ".");
-}
-
-fprintf (datafile, "%d\n", version);
-free(mozilla_version);
-if (fclose(datafile)) return 1;
-
-return EXIT_SUCCESS;
-]])],
-    [xulrunner_cv_collapsed_version="$(cat conftest.vdata)"],
-    [AC_MSG_FAILURE([cannot determine xulrunner version])])],
-  [xulrunner_cv_collapsed_version="190000"])
-
-  CPPFLAGS="$OLDCPPFLAGS"
-  AC_LANG_POP([C++])
-
-  AC_SUBST(MOZILLA_VERSION_COLLAPSED, $xulrunner_cv_collapsed_version)
 fi
 
 if test "x${ENABLE_NSS}" = "xyes"

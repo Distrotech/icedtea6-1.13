@@ -1,3 +1,167 @@
+2010-01-27 Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am: Reference plugin
+	directory by absolute path in EXTRA_DIST
+	to avoid confusion with build rule.
+	
+2010-01-27 Andrew John Hughes  <ahughes@redhat.com>
+
+	* NEWS: Updated for 1.7 release.
+	
+2010-01-27 Andrew John Hughes  <ahughes@redhat.com>
+	
+	* HACKING: Document new patch.
+	* Makefile.am: Add new patch.
+	* patches/libpng.patch:
+	Patch splashscreen code so that
+	it will build against libpng 1.4
+	(png_check_sig --> png_sig_cmp)
+
+2010-01-27 Andrew John Hughes  <ahughes@redhat.com>
+
+	* NEWS:
+	Add missing items for 1.5.1, 1.5.2,
+	1.5.3, 1.6.1 and 1.6.2.
+	
+2010-01-27  Edward Nevill   <ed@camswl.com>
+
+	* ports/hotspot/src/cpu/zero/vm/thumb2.cpp
+	Forgot to do hg add on this file in my last commit
+
+2010-01-26  Deepak Bhole <dbhole@redhat.com>
+
+	* NEWS: Added message about alpha release for the new NPR based plugin.
+
+2010-01-27  Matthias Klose  <doko@ubuntu.com>
+	
+	* Makefile.am: Remove quoting from ICEDTEA_NAME ICEDTEA_REV
+	ICEDTEA_PKG.
+
+2010-01-26 Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(stamps/plugin-tests.stamp): Add
+	a target for building the plugin tests.
+	(plugin-tests): Alias for the above.
+
+2010-01-25 Andrew John Hughes  <ahughes@redhat.com>
+
+	* acinclude.m4:
+	(IT_CHECK_OLD_PLUGIN): New macro for
+	--enable/disable-plugin.
+	(IT_CHECK_NEW_PLUGIN): Likewise for
+	--enable/disable-npplugin.
+	(IT_CHECK_PLUGIN_DEPENDENCIES): New macro
+	to run pkg-config checks.  Enables the new
+	plugin if xulrunner 1.9.2 or above is
+	detected.
+	(IT_CHECK_XULRUNNER_VERSION): Obtain the
+	XULrunner vgersion for MOZILLA_VERSION_COLLAPSED.
+	* configure.ac:
+	Replace old plugin stuff with a single call
+	to IT_CHECK_XULRUNNER_VERSION (which depends
+	on the other macros).
+
+2010-01-25 Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Build NPPlugin source files separately.
+	
+2010-01-25 Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Fix ICEDTEAPLUGIN_TARGET to use new
+	stamp targets and remove redundant
+	ICEDTEANPPPLUGIN_TARGET.
+	
+2010-01-25 Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Use NPPLUGIN_SRCDIR for Java plugin sources.
+	
+2010-01-25 Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Provide stamp targets for both npplugin
+	and the old plugin so 'make plugin' builds
+	the one configured.
+	
+2010-01-25 Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Remove trailing space after IcedTea version
+	in plugin version information when package
+	version is not set.
+	
+2010-01-25 Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Build NPPlugin in the build directory,
+	not the source tree.
+	
+2010-01-22  Deepak Bhole <dbhole@redhat.com>
+
+	* Makefile.am:
+	Use MOZILLA_CFLAGS/LIBS rather than
+	XULRUNNER.
+	* configure.ac:
+	Check for Mozilla not XULrunner.
+	Bring in libxul-unstable as well.
+	* plugin/icedteanp/IcedTeaNPPlugin.cc:
+	Use PRInt32 rather than PRInt32_t for port.
+
+2010-01-25 Andrew John Hughes  <ahughes@redhat.com>
+
+	* IcedTeaPlugin.cc:
+	Standardise plugin versioning.
+	* Makefile.am:
+	Set ICEDTEA_NAME and use in place of literal
+	"IcedTea6".  Use HAS_PKGVERSION to set ICEDTEA_PKG
+	and output DISTRO_PACKAGE_VERSION rather than
+	running test.  Set PLUGIN_VERSION and use for
+	both plugins.
+	* acinclude.m4:
+	(IT_GET_PKGVERSION): Moved from configure.ac and
+	changed to a macro with output.
+	(IT_GET_LSB_DATA): Depend on IT_GET_PKGVERSION.
+	* configure.ac:
+	Invoke new IT_GET_PKGVERSION macro.
+	* plugin/icedteanp/IcedTeaNPPlugin.cc:
+	Standardise plugin versioning.
+
+2010-01-25 Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/icedtea-libraries.patch:
+	Make all dlopen choices at build-time,
+	not just one.  Support libjpeg8 as well.
+	
+2010-01-21  Andrew John Hughes  <ahughes@redhat.com>
+
+	PR icedtea/433
+	* Makefile.am:
+	Add set -e to tarball extractions so
+	that they fail immediately.
+
+2010-01-21  Edward Nevill   <ed@camswl.com>
+
+	* zeroshark.make, asm_helper.cpp, bytecodes_arm.def,
+	cppInterpreter_arm.S, thumb2.cpp (new file)
+	Added Thumb2 JIT (not build as default - yet)
+	Removal of, more, hard coded constants
+	Move 'complex' bytecodes from cppInterpreter_arm.S to asm_helper.cpp
+	General tidying up of cppInterpreter_arm.S
+
+2010-01-21  Matthias Klose  <doko@ubuntu.com>
+
+	* Makefile.am: Don't hide errors in statement sequences building
+	the NPPlugin. Use ICEDTEA_REV to defined PLUGIN_VERSION.
+
+2010-01-21  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Fix paths to patches and IcedTeaNPPlugin.cc
+	for make dist.
+	
 2010-01-20  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:
@@ -22,6 +186,23 @@
 	* Makefile.am:
 	Create a link from client to server after CACAO install
 	to make openjdk find the expected client dir on 32bit systems.
+
+2010-01-08  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Calculate JDK and HotSpot Mercurial revisions
+	if available and pass to build.  Also pass
+	DIST_NAME to build.
+	* acinclude.m4:
+	(IT_GET_LSB_DATA): Moved from configure.ac
+	and extended to also obtain the name of
+	the distribution from either lsb_release -is
+	or $build_os.
+	* configure.ac:
+	Invoke IT_GET_LSB_DATA macro.
+	* patches/icedtea-version.patch:
+	Updated to use distribution name and JDK and
+	HotSpot Mercurial revision IDs.
 
 2010-01-19 Man Lung Wong  <mwong@redhat.com>
 

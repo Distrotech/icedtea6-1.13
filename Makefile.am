@@ -123,15 +123,16 @@ endif
 # FIXME (plugin): NPPLUGIN_DIR becomes PLUGIN_DIR
 if ENABLE_NPPLUGIN
 ICEDTEAPLUGIN_CLEAN = clean-IcedTeaNPPlugin
-ICEDTEAPLUGIN_TARGET = stamps/icedtea-npplugin
+ICEDTEAPLUGIN_TARGET = stamps/icedtea-npplugin.stamp
 PLUGIN_PATCH = patches/icedtea-liveconnect.patch
 LIVECONNECT_DIR = -C lib/rt netscape -C lib/rt sun/applet
-NPPLUGIN_DIR=$(abs_top_srcdir)/plugin/icedteanp
-LIVECONNECT_SRCS = $(NPPLUGIN_DIR)/java
+NPPLUGIN_DIR=$(abs_top_builddir)/plugin/icedteanp
+NPPLUGIN_SRCDIR=$(abs_top_srcdir)/plugin/icedteanp
+LIVECONNECT_SRCS = $(NPPLUGIN_SRCDIR)/java
 else
 if ENABLE_PLUGIN
 ICEDTEAPLUGIN_CLEAN = clean-IcedTeaPlugin
-ICEDTEAPLUGIN_TARGET = IcedTeaPlugin.so
+ICEDTEAPLUGIN_TARGET = stamps/icedtea-plugin.stamp
 PLUGIN_PATCH = patches/icedtea-liveconnect.patch
 LIVECONNECT_DIR = -C lib/rt netscape -C lib/rt sun/applet
 NPPLUGIN_DIR = 
@@ -201,6 +202,10 @@ else
   SYSTEM_JDK_DIR = $(SYSTEM_GCJ_DIR)
   ICEDTEA_HOME = $(abs_top_builddir)/bootstrap/icedtea
 endif
+
+# Sources list
+
+PLUGIN_TEST_SRCS = $(abs_top_srcdir)/plugin/tests/LiveConnect/*.java
 
 # Patch list
 
@@ -293,7 +298,8 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-6897844-xshm.patch \
 	patches/icedtea-linux-separate-debuginfo.patch \
 	patches/icedtea-parisc.patch \
-	patches/icedtea-sh4-support.patch
+	patches/icedtea-sh4-support.patch \
+	patches/libpng.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -379,9 +385,15 @@ endif
 JDK_UPDATE_VERSION = $(shell echo $(OPENJDK_VERSION) | sed -e "s/^b//")
 COMBINED_VERSION = $(JDK_UPDATE_VERSION)-$(OPENJDK_VERSION)
 
+ICEDTEA_NAME = IcedTea6
 if HAS_ICEDTEA_REVISION
-ICEDTEA_REV="+${ICEDTEA_REVISION}"
+ICEDTEA_REV = +${ICEDTEA_REVISION}
 endif
+if HAS_PKGVERSION
+ICEDTEA_PKG = $(EMPTY) (${PKGVERSION})
+endif
+
+PLUGIN_VERSION = $(ICEDTEA_NAME) $(PACKAGE_VERSION)$(ICEDTEA_REV)$(ICEDTEA_PKG)
 
 ICEDTEA_ENV = \
 	IMPORT_BINARY_PLUGS=true \
@@ -423,7 +435,7 @@ ICEDTEA_ENV = \
 	JDK_HOME="" \
 	RHINO_JAR="$(RHINO_JAR)" \
 	DISTRIBUTION_ID="$(DIST_ID)" \
-	DERIVATIVE_ID="IcedTea6 $(PACKAGE_VERSION)$(ICEDTEA_REV)" \
+	DERIVATIVE_ID="$(ICEDTEA_NAME) $(PACKAGE_VERSION)$(ICEDTEA_REV)" \
 	DEBUG_CLASSFILES="true" \
 	DEBUG_BINARIES="true" \
 	ALT_DROPS_DIR="$(abs_top_builddir)/drops"
@@ -511,7 +523,7 @@ ICEDTEA_ENV_ECJ = \
 	JAR_KNOWS_J_OPTIONS="$(JAR_KNOWS_J_OPTIONS)" \
 	JAR_ACCEPTS_STDIN_LIST="$(JAR_ACCEPTS_STDIN_LIST)" \
 	DISTRIBUTION_ID="$(DIST_ID)" \
-	DERIVATIVE_ID="IcedTea6 $(PACKAGE_VERSION)$(ICEDTEA_REV)" \
+	DERIVATIVE_ID="$(ICEDTEA_NAME) $(PACKAGE_VERSION)$(ICEDTEA_REV)" \
 	DEBUG_CLASSFILES="true" \
 	DEBUG_BINARIES="true" \
 	DISABLE_NIMBUS="true" \
@@ -551,16 +563,15 @@ endif
 # FIXME (distclean): Add pulseaudio sources
 
 EXTRA_DIST = rt generated \
-	patches/* \
+	$(abs_top_srcdir)/patches/* \
 	tools-copy contrib ports \
 	extra overlays \
 	javaws.png javaws.desktop visualvm.desktop \
 	jconsole.desktop policytool.desktop \
 	test/jtreg \
 	IcedTeaPlugin.cc \
-	IcedTeaNPPlugin.cc \
 	HACKING pulseaudio fsg.sh \
-	plugin \
+	$(abs_top_srcdir)/plugin \
 	hotspot.map \
 	autogen.sh \
 	tapset/hotspot.stp.in \
@@ -863,6 +874,7 @@ stamps/extract.stamp: stamps/download.stamp
 if OPENJDK_SRC_DIR_FOUND
 	cp -a $(OPENJDK_SRC_DIR) openjdk
 else
+	set -e ; \
 	if ! test -d openjdk ; \
 	then \
 	  mkdir openjdk ; \
@@ -874,12 +886,14 @@ endif
 if BUILD_CACAO
 if !USE_SYSTEM_CACAO
 if USE_ALT_CACAO_SRC_DIR
+	set -e ; \
 	if ! test -d cacao ; \
 	then \
 	  mkdir -p cacao/cacao ; \
 	  cp -r $(ALT_CACAO_SRC_DIR)/* cacao/cacao/ ; \
 	fi
 else
+	set -e ; \
 	if ! test -d cacao ; \
 	then \
 	  mkdir cacao ; \
@@ -891,17 +905,20 @@ endif
 endif
 endif
 if WITH_VISUALVM
+	set -e ; \
 	if ! test -d netbeans ; \
 	then \
 	  mkdir netbeans ; \
 	  $(TAR) xf $(NETBEANS_PROFILER_SRC_ZIP) -C netbeans ; \
 	fi
 
+	set -e ; \
 	if ! test -d visualvm ; \
 	then \
 	  $(TAR) xf $(VISUALVM_SRC_ZIP) ; \
 	fi
 endif
+	set -e ; \
 	if [ ! -e $(abs_top_builddir)/generated ]; then \
 	  cp -a $(abs_top_srcdir)/generated $(abs_top_builddir); \
 	  find $(abs_top_builddir)/generated -type f -exec chmod 640 '{}' ';' \
@@ -1043,10 +1060,10 @@ stamps/patch.stamp: stamps/patch-fsg.stamp
 	if ! test "x$(WITH_CACAO)" = "xno"; then \
 	  echo "JDK_DERIVATIVE_NAME=$${icedtea_version}" \
 	    >>openjdk/jdk/make/common/shared/Defs.gmk ; \
-	  echo "PRODUCT_NAME=IcedTea6" \
+	  echo "PRODUCT_NAME=$(ICEDTEA_NAME)" \
 	    >>openjdk/jdk/make/common/shared/Defs.gmk ; \
 	else \
-	  echo "JDK_DERIVATIVE_NAME=IcedTea6 $${icedtea_version}" \
+	  echo "JDK_DERIVATIVE_NAME=$(ICEDTEA_NAME) $${icedtea_version}" \
 	    >>openjdk/jdk/make/common/shared/Defs.gmk ; \
 	fi ; 
 
@@ -1054,11 +1071,11 @@ if HAS_JDK_REVISION
 	echo "JDK_REVID=$(JDK_REVISION)" >>openjdk/jdk/make/common/shared/Defs.gmk ;
 endif
 
-	echo "DISTRO_NAME=$(DIST_NAME)" >>openjdk/jdk/make/common/shared/Defs.gmk ; \
-	if [ -n "$(PKGVERSION)" ]; then \
+	echo "DISTRO_NAME=$(DIST_NAME)" >>openjdk/jdk/make/common/shared/Defs.gmk ;
+if HAS_PKGVERSION
 	  echo "DISTRO_PACKAGE_VERSION=$(PKGVERSION)" \
-	    >>openjdk/jdk/make/common/shared/Defs.gmk ; \
-	fi
+	    >>openjdk/jdk/make/common/shared/Defs.gmk ;
+endif
 
 #FIXME (plugin): Don't do this copying
 if ENABLE_NPPLUGIN
@@ -1283,7 +1300,7 @@ clean-bootstrap-directory-symlink:
 stamps/icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
 	stamps/hotspot-tools.stamp stamps/plugs.stamp \
 	stamps/ports.stamp stamps/patch.stamp stamps/overlay.stamp \
-	$(ICEDTEAPLUGIN_TARGET) $(ICEDTEANPPLUGIN_TARGET) \
+	$(ICEDTEAPLUGIN_TARGET) \
 	extra-lib/about.jar stamps/cacao.stamp stamps/visualvm.stamp \
 	stamps/pulse-java.stamp
 	$(ARCH_PREFIX) $(MAKE) \
@@ -1386,7 +1403,7 @@ endif
 stamps/icedtea-debug.stamp: stamps/bootstrap-directory-symlink.stamp \
 	stamps/hotspot-tools.stamp stamps/plugs.stamp \
 	stamps/ports.stamp stamps/patch.stamp stamps/overlay.stamp \
-	$(ICEDTEAPLUGIN_TARGET) $(ICEDTEANPPLUGIN_TARGET) \
+	$(ICEDTEAPLUGIN_TARGET) \
 	extra-lib/about.jar stamps/cacao.stamp stamps/visualvm.stamp \
 	stamps/pulse-java.stamp
 	$(ARCH_PREFIX) $(MAKE) \
@@ -1572,35 +1589,29 @@ NPPLUGIN_OBJECTS=IcedTeaNPPlugin.o IcedTeaScriptablePluginObject.o \
         IcedTeaJavaRequestProcessor.o IcedTeaPluginRequestProcessor.o \
 		IcedTeaPluginUtils.o
 
-$(addprefix $(NPPLUGIN_DIR)/,$(NPPLUGIN_OBJECTS)): $(addprefix $(NPPLUGIN_DIR)/,$(NPPLUGIN_SRC))
-	cd $(NPPLUGIN_DIR); \
-	if [ -e $(abs_top_srcdir)/.hg ] && which $(HG) >/dev/null; then \
-	  revision="-r`(cd $(abs_top_srcdir); $(HG) tip --template '{rev}')`" ; \
-	fi ; \
-	if [ -n "$(PKGVERSION)" ]; then plugin_version=" ($(PKGVERSION))"; fi; \
-	plugin_version=" $(PACKAGE_VERSION)$$revision$$plugin_version"; \
+$(NPPLUGIN_DIR)/%.o: $(NPPLUGIN_SRCDIR)/%.cc
+	mkdir -p $(NPPLUGIN_DIR) && \
+	cd $(NPPLUGIN_DIR) && \
 	$(CXX) $(CXXFLAGS) \
-	  -DPACKAGE_VERSION="\"$(PACKAGE_VERSION)\"" \
-	  -DPLUGIN_VERSION="\"$$plugin_version\"" \
+	  -DPLUGIN_VERSION="\"$(PLUGIN_VERSION)\"" \
 	  -DMOZILLA_VERSION_COLLAPSED="$(MOZILLA_VERSION_COLLAPSED)" \
 	  $(GLIB_CFLAGS) \
 	  $(GTK_CFLAGS) \
 	  $(MOZILLA_CFLAGS) \
-	  -fPIC -c $(NPPLUGIN_SRC); \
-	cd ../
+	  -fPIC -o $@ -c $<
 
 $(NPPLUGIN_DIR)/IcedTeaNPPlugin.so: $(addprefix $(NPPLUGIN_DIR)/,$(NPPLUGIN_OBJECTS))
-	cd $(NPPLUGIN_DIR); \
+	cd $(NPPLUGIN_DIR) && \
 	$(CXX) $(CXXFLAGS) \
 	  $(NPPLUGIN_OBJECTS) \
 	  $(GLIB_LIBS) \
 	  $(GTK_LIBS) \
 	  $(MOZILLA_LIBS)\
-	  -shared -o $@; \
-	cd ../
+	  -shared -o $@
 
-stamps/icedtea-npplugin: $(NPPLUGIN_DIR)/IcedTeaNPPlugin.so
-	touch stamps/icedtea-npplugin
+stamps/icedtea-npplugin.stamp: $(NPPLUGIN_DIR)/IcedTeaNPPlugin.so
+	mkdir -p stamps
+	touch stamps/icedtea-npplugin.stamp
 
 clean-IcedTeaNPPlugin:
 	cd $(NPPLUGIN_DIR);\
@@ -1614,24 +1625,22 @@ if ENABLE_PLUGIN
 # is listed before -l options.  See:
 # http://developer.mozilla.org/en/docs/XPCOM_Glue
 IcedTeaPlugin.o: IcedTeaPlugin.cc
-	if [ -e $(abs_top_srcdir)/.hg ] && which $(HG) >/dev/null; then \
-	  revision="-r`(cd $(abs_top_srcdir); $(HG) tip --template '{rev}')`" ; \
-	fi ; \
-	if [ -n "$(PKGVERSION)" ]; then plugin_version=" ($(PKGVERSION))"; fi; \
-	plugin_version=" $(PACKAGE_VERSION)$$revision$$plugin_version"; \
 	$(CXX) $(CXXFLAGS) \
-	  -DPACKAGE_VERSION="\"$(PACKAGE_VERSION)\"" \
-	  -DPLUGIN_VERSION="\"$$plugin_version\"" \
+	  -DPLUGIN_VERSION="\"$(PLUGIN_VERSION)\"" \
 	  -DMOZILLA_VERSION_COLLAPSED="$(MOZILLA_VERSION_COLLAPSED)" \
 	  $(GTK_CFLAGS) \
-	  $(XULRUNNER_CFLAGS) \
+	  $(MOZILLA_CFLAGS) \
 	  -fPIC -c -o $@ $<
 IcedTeaPlugin.so: IcedTeaPlugin.o
 	$(CXX) $(CXXFLAGS) \
 	  $< \
 	  $(GTK_LIBS) \
-	  $(XULRUNNER_LIBS) \
+	  $(MOZILLA_LIBS) \
 	  -shared -o $@
+
+stamps/icedtea-plugin.stamp: IcedTeaPlugin.so
+	mkdir -p stamps
+	touch stamps/icedtea-plugin.stamp
 
 clean-IcedTeaPlugin:
 	rm -f IcedTeaPlugin.o
@@ -1981,6 +1990,33 @@ endif
 
 # end additional VMs
 
+# plugin tests
+
+stamps/plugin-tests.stamp: $(PLUGIN_TEST_SRCS) \
+ bootstrap/jdk1.7.0/jre/lib/rt-closed.jar
+	mkdir -p plugin/tests/LiveConnect
+	if test -d lib/rt/netscape ; then \
+	  set -e ; \
+	  if ! test -d $(ICEDTEA_BOOT_DIR) ; then \
+	    $(JAVAC) $(MEMORY_LIMIT) -g -d plugin/tests/LiveConnect \
+	      -classpath bootstrap/jdk1.7.0/jre/lib/rt-closed.jar \
+              -source 1.5 $(PLUGIN_TEST_SRCS) ; \
+	    $(JAR) cf plugin/tests/LiveConnect/PluginTest.jar \
+	      plugin/tests/LiveConnect/*.class ; \
+	  else \
+	    $(ICEDTEA_BOOT_DIR)/bin/javac $(MEMORY_LIMIT) -g \
+	      -d plugin/tests/LiveConnect \
+	      -classpath bootstrap/jdk1.7.0/jre/lib/rt-closed.jar \
+	      -source 1.5 $(PLUGIN_TEST_SRCS) ; \
+	    $(ICEDTEA_BOOT_DIR)/bin/jar cf plugin/tests/LiveConnect/PluginTest.jar \
+	      plugin/tests/LiveConnect/*.class ; \
+	  fi ; \
+	  cp -a $(abs_top_srcdir)/plugin/tests/LiveConnect/*.{js,html} plugin/tests/LiveConnect ; \
+	  echo "Done. Now launch \"firefox file://`pwd`/index.html\"" ; \
+	fi
+	mkdir -p stamps
+	touch stamps/plugin-tests.stamp
+
 # jtreg
 
 stamps/jtreg.stamp: stamps/icedtea.stamp
@@ -2305,3 +2341,7 @@ hotspot-ports: stamps/ports.stamp
 clean: distclean-local
 
 jtreg: stamps/jtreg.stamp
+
+plugin: $(ICEDTEAPLUGIN_TARGET)
+
+plugin-tests: stamps/plugin-tests.stamp

@@ -1,0 +1,12 @@
+diff -r 93c580ce5e88 jdk/src/share/native/sun/awt/splashscreen/splashscreen_png.c
+--- openjdk.orig/jdk/src/share/native/sun/awt/splashscreen/splashscreen_png.c	Fri Jan 15 08:41:51 2010 -0800
++++ openjdk/jdk/src/share/native/sun/awt/splashscreen/splashscreen_png.c	Wed Jan 27 16:52:44 2010 +0000
+@@ -182,7 +182,7 @@
+     int success = 0;
+ 
+     stream->read(stream, sig, SIG_BYTES);
+-    if (!png_check_sig(sig, SIG_BYTES)) {
++    if (png_sig_cmp(sig, 0, SIG_BYTES)) {
+         goto done;
+     }
+     success = SplashDecodePng(splash, my_png_read_stream, stream);
