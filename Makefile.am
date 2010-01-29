@@ -23,9 +23,9 @@ JAXWS_DROP_ZIP = jdk6-jaxws-2009_10_27.zip
 JAXWS_DROP_SHA256SUM = 155ff3be83c980e197621a2fbf7ee34e8e0f536489351a5865cf0e52206245e2
 JAF_DROP_ZIP = jdk6-jaf-2009_10_27.zip
 JAF_DROP_SHA256SUM = fdc51476fc6bcc69ea1f099f33e84601a126bfa8b11c8fa11c25dc574345aa9f
-JAXP_DROP_URL = http://kenai.com/projects/jdk6-drops/downloads/download
-JAXP_DROP_ZIP = jdk6-jaxp-2009_10_27.zip
-JAXP_DROP_SHA256SUM = c027858c5a6195c8b06cdb5f5fb289054e65845594b0f0414f2514abcfca7422
+JAXP_DROP_URL = https://jaxp.dev.java.net/files/documents/913/147329
+JAXP_DROP_ZIP = jdk6-jaxp-2009_10_13.zip
+JAXP_DROP_SHA256SUM = 8714d55de18db48ca9da0ee986202005082f44cf4c215da8683342b70e61792b
 
 OPENJDK_HG_URL = http://hg.openjdk.java.net/jdk6/jdk6
 
@@ -281,7 +281,6 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-demo-swingapplet.patch \
 	patches/icedtea-awt-window-size.patch \
 	patches/icedtea-java2d-dasher.patch \
-	patches/icedtea-xml-encodinginfo.patch \
 	patches/icedtea-jtreg-6592792.patch \
 	patches/icedtea-s390-noinline.patch \
 	patches/icedtea-jtreg-dnd.patch \
@@ -299,10 +298,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-linux-separate-debuginfo.patch \
 	patches/icedtea-parisc.patch \
 	patches/icedtea-sh4-support.patch \
-	patches/libpng.patch \
-	patches/icedtea-6920143-using-with-mouse.patch \
-        patches/icedtea-6920172-location-relative-to-test.patch \
-        patches/icedtea-6920172-turkish.patch
+	patches/libpng.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
