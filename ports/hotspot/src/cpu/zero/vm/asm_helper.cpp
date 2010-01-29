@@ -303,6 +303,7 @@ extern "C" void Helper_Raise(JavaThread *thread, symbolOopDesc *name, char const
 extern "C" void Helper_RaiseIllegalMonitorException(JavaThread *thread)
 {
     HandleMark __hm(thread);
+    thread->clear_pending_exception();
     InterpreterRuntime::throw_illegal_monitor_state_exception(thread);
 }
 

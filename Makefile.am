@@ -307,7 +307,10 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-linux-separate-debuginfo.patch \
 	patches/icedtea-parisc.patch \
 	patches/icedtea-sh4-support.patch \
-	patches/libpng.patch
+	patches/libpng.patch \
+	patches/icedtea-6920143-using-with-mouse.patch \
+        patches/icedtea-6920172-location-relative-to-test.patch \
+        patches/icedtea-6920172-turkish.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
