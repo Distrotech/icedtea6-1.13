@@ -112,8 +112,8 @@ endif
 # FIXME (plugin): LIVECONNECT_DIR becomes sun/applet netscape
 # FIXME (plugin): NPPLUGIN_DIR becomes PLUGIN_DIR
 if ENABLE_NPPLUGIN
-ICEDTEAPLUGIN_CLEAN = clean-IcedTeaNPPlugin
-ICEDTEAPLUGIN_TARGET = stamps/icedtea-npplugin.stamp
+ICEDTEANPPLUGIN_CLEAN = clean-IcedTeaNPPlugin
+ICEDTEANPPLUGIN_TARGET = $(NPPLUGIN_DIR)/IcedTeaNPPlugin.so
 PLUGIN_PATCH = patches/icedtea-liveconnect.patch
 LIVECONNECT_DIR = -C lib/rt netscape
 NPPLUGIN_DIR=$(abs_top_builddir)/plugin/icedteanp
@@ -122,7 +122,7 @@ LIVECONNECT_SRCS = $(NPPLUGIN_SRCDIR)/java
 else
 if ENABLE_PLUGIN
 ICEDTEAPLUGIN_CLEAN = clean-IcedTeaPlugin
-ICEDTEAPLUGIN_TARGET = stamps/icedtea-plugin.stamp
+ICEDTEAPLUGIN_TARGET = IcedTeaPlugin.so
 PLUGIN_PATCH = patches/icedtea-liveconnect.patch
 LIVECONNECT_DIR = -C lib/rt netscape
 NPPLUGIN_DIR = 
@@ -1518,10 +1518,6 @@ $(NPPLUGIN_DIR)/IcedTeaNPPlugin.so: $(addprefix $(NPPLUGIN_DIR)/,$(NPPLUGIN_OBJE
 	  $(MOZILLA_LIBS)\
 	  -shared -o $@
 
-stamps/icedtea-npplugin.stamp: $(NPPLUGIN_DIR)/IcedTeaNPPlugin.so
-	mkdir -p stamps
-	touch stamps/icedtea-npplugin.stamp
-
 clean-IcedTeaNPPlugin:
 	cd $(NPPLUGIN_DIR);\
 	rm -f *.o; \
@@ -1547,18 +1543,19 @@ IcedTeaPlugin.so: IcedTeaPlugin.o
 	  $(MOZILLA_LIBS) \
 	  -shared -o $@
 
-stamps/icedtea-plugin.stamp: IcedTeaPlugin.so
-	mkdir -p stamps
-	touch stamps/icedtea-plugin.stamp
-
 clean-IcedTeaPlugin:
 	rm -f IcedTeaPlugin.o
 	rm -f IcedTeaPlugin.so
 endif
 endif
 
-#FIXME (plugin): Missing plugin.stamp
-#FIXME (clean): Missing clean-plugin
+stamps/plugin.stamp: $(ICEDTEAPLUGIN_TARGET) $(ICEDTEANPPLUGIN_TARGET)
+	mkdir -p stamps
+	touch stamps/icedtea-plugin.stamp
+
+clean-plugin: $(ICEDTEAPLUGIN_CLEAN) $(ICEDTEANPPLUGIN_CLEAN)
+	rm -f stamps/plugin.stamp
+
 #FIXME (plugin): Missing liveconnect-source-files.txt
 #FIXME (plugin): Missing liveconnect.stamp
 #FIXME (plugin): Missing liveconnect-dist.stamp
@@ -2259,6 +2256,6 @@ clean: distclean-local
 
 jtreg: stamps/jtreg.stamp
 
-plugin: $(ICEDTEAPLUGIN_TARGET)
+plugin: stamps/plugin.stamp
 
 plugin-tests: stamps/plugin-tests.stamp
