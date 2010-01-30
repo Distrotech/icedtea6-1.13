@@ -184,11 +184,13 @@ endif
 
 # FIXME (bootstrap): Assumption is WITH_OPENJDK == no bootstrap
 if WITH_OPENJDK
-  BOOTSTRAP_DIRECTORY_STAMP =
+  BOOTSTRAP_DIRECTORY_STAMP = 
   ICEDTEA_HOME = $(SYSTEM_OPENJDK_DIR)
+  INITIAL_BOOTSTRAP_LINK_STAMP = stamps/bootstrap-directory-symlink.stamp
 else
   BOOTSTRAP_DIRECTORY_STAMP = stamps/bootstrap-directory.stamp
   ICEDTEA_HOME = $(abs_top_builddir)/bootstrap/icedtea
+  INITIAL_BOOTSTRAP_LINK_STAMP = stamps/bootstrap-directory-symlink-ecj.stamp
 endif
 
 # Sources list
@@ -1572,21 +1574,14 @@ clean-plugin: $(ICEDTEAPLUGIN_CLEAN) $(ICEDTEANPPLUGIN_CLEAN)
 extra-source-files.txt:
 	find $(abs_top_srcdir)/extra -name '*.java' | sort > $@
 
-stamps/extra-class-files.stamp: extra-source-files.txt \
+stamps/extra-class-files.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) \
+  extra-source-files.txt \
 	bootstrap/jdk1.7.0/jre/lib/rt-closed.jar
 	mkdir -p extra-lib
-	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
-	then \
-	  $(JAVAC) $(MEMORY_LIMIT) -g -d extra-lib \
-	    -source 1.5 \
-	    -sourcepath extra -cp bootstrap/jdk1.7.0/jre/lib/rt-closed.jar \
-	    -bootclasspath \'\' @extra-source-files.txt ; \
-	else \
-	  $(ICEDTEA_BOOT_DIR)/bin/javac $(MEMORY_LIMIT) -g -d extra-lib \
-            -source 1.5 \
-            -sourcepath extra -cp bootstrap/jdk1.7.0/jre/lib/rt-closed.jar \
-            -bootclasspath \'\' @extra-source-files.txt ; \
-	fi
+	$(ICEDTEA_BOOT_DIR)/bin/javac $(MEMORY_LIMIT) -g -d extra-lib \
+          -source 1.5 \
+          -sourcepath extra -cp bootstrap/jdk1.7.0/jre/lib/rt-closed.jar \
+          -bootclasspath \'\' @extra-source-files.txt ;
 	cp -r $(abs_top_srcdir)/extra/net/sourceforge/jnlp/about/resources \
 	  extra-lib/net/sourceforge/jnlp/about
 	mkdir -p stamps
@@ -1636,26 +1631,15 @@ endif
 	mkdir -p stamps
 	touch stamps/pulse-java-jar.stamp
 
-stamps/pulse-java-class.stamp: 
+stamps/pulse-java-class.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP)
 if ENABLE_PULSE_JAVA
 	mkdir -p $(PULSE_JAVA_CLASS_DIR)
-	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
-	then \
-		(cd $(PULSE_JAVA_JAVA_SRCDIR); \
-		 $(JAVAC) -g -d $(PULSE_JAVA_CLASS_DIR) \
-		-bootclasspath  \
-	        '$(OPENJDK_SOURCEPATH_DIRS):$(abs_top_builddir)/generated' \
-		org/classpath/icedtea/pulseaudio/*.java\
-		) \
-        else \
-		(cd $(PULSE_JAVA_JAVA_SRCDIR); \
-		$(ICEDTEA_BOOT_DIR)/bin/javac -g -d $(PULSE_JAVA_CLASS_DIR)\
-		-bootclasspath \
-	        '$(ICEDTEA_BOOT_DIR)/jre/lib/rt.jar' \
-		org/classpath/icedtea/pulseaudio/*.java\
-		) \
-        fi
-	cp  -r $(PULSE_JAVA_JAVA_SRCDIR)/META-INF $(PULSE_JAVA_CLASS_DIR)
+	(cd $(PULSE_JAVA_JAVA_SRCDIR); \
+	 $(ICEDTEA_BOOT_DIR)/bin/javac -g -d $(PULSE_JAVA_CLASS_DIR)\
+	  -bootclasspath '$(ICEDTEA_BOOT_DIR)/jre/lib/rt.jar' \
+	  org/classpath/icedtea/pulseaudio/*.java\
+	)
+	cp -r $(PULSE_JAVA_JAVA_SRCDIR)/META-INF $(PULSE_JAVA_CLASS_DIR)
 	chmod -R ug+w $(PULSE_JAVA_CLASS_DIR)/META-INF
 endif
 	mkdir -p stamps
@@ -1696,8 +1680,7 @@ endif
 
 # VisualVM
 
-stamps/nbplatform.stamp: $(BOOTSTRAP_DIRECTORY_STAMP) stamps/replace-hotspot.stamp \
-	stamps/download.stamp
+stamps/nbplatform.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) stamps/extract.stamp
 if WITH_VISUALVM
 	cd netbeans ; \
         rm nbbuild/external/binaries-list ; \
@@ -1902,25 +1885,17 @@ endif
 
 # plugin tests
 
-stamps/plugin-tests.stamp: $(PLUGIN_TEST_SRCS) \
+stamps/plugin-tests.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) $(PLUGIN_TEST_SRCS) \
  bootstrap/jdk1.7.0/jre/lib/rt-closed.jar
 	mkdir -p plugin/tests/LiveConnect
 	if test -d lib/rt/netscape ; then \
 	  set -e ; \
-	  if ! test -d $(ICEDTEA_BOOT_DIR) ; then \
-	    $(JAVAC) $(MEMORY_LIMIT) -g -d plugin/tests/LiveConnect \
-	      -classpath bootstrap/jdk1.7.0/jre/lib/rt-closed.jar \
-              -source 1.5 $(PLUGIN_TEST_SRCS) ; \
-	    $(JAR) cf plugin/tests/LiveConnect/PluginTest.jar \
-	      plugin/tests/LiveConnect/*.class ; \
-	  else \
-	    $(ICEDTEA_BOOT_DIR)/bin/javac $(MEMORY_LIMIT) -g \
-	      -d plugin/tests/LiveConnect \
-	      -classpath bootstrap/jdk1.7.0/jre/lib/rt-closed.jar \
-	      -source 1.5 $(PLUGIN_TEST_SRCS) ; \
-	    $(ICEDTEA_BOOT_DIR)/bin/jar cf plugin/tests/LiveConnect/PluginTest.jar \
-	      plugin/tests/LiveConnect/*.class ; \
-	  fi ; \
+	  $(ICEDTEA_BOOT_DIR)/bin/javac $(MEMORY_LIMIT) -g \
+	   -d plugin/tests/LiveConnect \
+	    -classpath bootstrap/jdk1.7.0/jre/lib/rt-closed.jar \
+	    -source 1.5 $(PLUGIN_TEST_SRCS) ; \
+	  $(ICEDTEA_BOOT_DIR)/bin/jar cf plugin/tests/LiveConnect/PluginTest.jar \
+	    plugin/tests/LiveConnect/*.class ; \
 	  cp -a $(abs_top_srcdir)/plugin/tests/LiveConnect/*.{js,html} plugin/tests/LiveConnect ; \
 	  echo "Done. Now launch \"firefox file://`pwd`/index.html\"" ; \
 	fi
@@ -2065,22 +2040,14 @@ hotspot-tools-source-files.txt: stamps/replace-hotspot.stamp \
 	mkdir -p lib/hotspot-tools
 
 # FIXME (plugs): Remove this
-stamps/hotspot-tools-class-files.stamp: hotspot-tools-source-files.txt
-	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
-	then \
-	  $(JAVAC) $(MEMORY_LIMIT) -g -d lib/hotspot-tools \
-            -source 1.5 \
-            -sourcepath \
-	      'hotspot-tools:$(OPENJDK_SOURCEPATH_DIRS):$(ABS_SOURCE_DIRS)' \
-            -classpath \'\' -bootclasspath \'\' @$< ; \
-	else \
-	  $(ICEDTEA_BOOT_DIR)/bin/javac $(MEMORY_LIMIT) -g \
-	    -d lib/hotspot-tools \
-	    -source 1.5 \
-	    -sourcepath \
-	      'hotspot-tools:$(OPENJDK_SOURCEPATH_DIRS):$(ABS_SOURCE_DIRS)' \
-	    -classpath \'\' -bootclasspath \'\' @$< ; \
-	fi
+stamps/hotspot-tools-class-files.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) \
+  hotspot-tools-source-files.txt
+	$(ICEDTEA_BOOT_DIR)/bin/javac $(MEMORY_LIMIT) -g \
+	  -d lib/hotspot-tools \
+	  -source 1.5 \
+	  -sourcepath \
+	    'hotspot-tools:$(OPENJDK_SOURCEPATH_DIRS):$(ABS_SOURCE_DIRS)' \
+	  -classpath \'\' -bootclasspath \'\' @hotspot-tools-source-files.txt ;
 	mkdir -p stamps
 	touch stamps/hotspot-tools-class-files.stamp
 
@@ -2120,22 +2087,13 @@ rt-source-files.txt: stamps/replace-hotspot.stamp stamps/copy-source-files.stamp
 	find $(abs_top_srcdir)/rt $(abs_top_builddir)/rt $(LIVECONNECT_SRCS) -name '*.java' \
 	  | sort -u > $@
 
-stamps/rt-class-files.stamp: rt-source-files.txt
+stamps/rt-class-files.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) rt-source-files.txt
 	mkdir -p lib/rt
-	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
-	then \
-	  $(JAVAC) $(MEMORY_LIMIT) -g -d lib/rt \
-	    -source 1.5 \
-	    -sourcepath \
-	      '$(OPENJDK_SOURCEPATH_DIRS):$(abs_top_builddir)/generated' \
-	    -classpath \'\' -bootclasspath \'\' @$< ; \
-	else \
-	  $(ICEDTEA_BOOT_DIR)/bin/javac $(MEMORY_LIMIT) -g -d lib/rt \
-            -source 1.5 \
-            -sourcepath \
-	      '$(OPENJDK_SOURCEPATH_DIRS):$(abs_top_builddir)/generated' \
-            -classpath \'\' -bootclasspath \'\' @$< ; \
-	fi
+	$(ICEDTEA_BOOT_DIR)/bin/javac $(MEMORY_LIMIT) -g -d lib/rt \
+          -source 1.5 \
+          -sourcepath \
+	    '$(OPENJDK_SOURCEPATH_DIRS):$(abs_top_builddir)/generated' \
+          -classpath \'\' -bootclasspath \'\' @rt-source-files.txt ;
 	cp -r $(abs_top_srcdir)/rt/net/sourceforge/jnlp/resources \
 	  lib/rt/net/sourceforge/jnlp/
 	mkdir -p stamps
@@ -2147,19 +2105,13 @@ clean-rt:
 	rm -f rt-source-files.txt
 
 # tools.jar
-bootstrap/jdk1.7.0/jre/lib/tools.jar: stamps/hotspot-tools-class-files.stamp
+bootstrap/jdk1.7.0/jre/lib/tools.jar: $(INITIAL_BOOTSTRAP_LINK_STAMP) \
+  stamps/hotspot-tools-class-files.stamp
 	mkdir -p bootstrap/jdk1.7.0/jre/lib/
-	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
-	then \
-	  $(JAR) cf $@ -C lib/hotspot-tools com -C lib/hotspot-tools sun \
-            -C lib/hotspot-tools org -C lib/hotspot-tools java \
-            -C lib/hotspot-tools javax ; \
-	else \
-	  $(ICEDTEA_BOOT_DIR)/bin/jar cf $@ -C lib/hotspot-tools com \
-	    -C lib/hotspot-tools sun \
-            -C lib/hotspot-tools org -C lib/hotspot-tools java \
-            -C lib/hotspot-tools javax ; \
-	fi
+	$(ICEDTEA_BOOT_DIR)/bin/jar cf $@ -C lib/hotspot-tools com \
+	  -C lib/hotspot-tools sun \
+          -C lib/hotspot-tools org -C lib/hotspot-tools java \
+          -C lib/hotspot-tools javax ;
 	if test -d bootstrap/ecj ; \
 	then \
 	  mkdir -p bootstrap/ecj/lib/; \
@@ -2175,14 +2127,8 @@ clean-tools-jar: clean-hotspot-tools
 # rt-closed.jar.
 bootstrap/jdk1.7.0/jre/lib/rt-closed.jar: stamps/rt-class-files.stamp
 	mkdir -p bootstrap/jdk1.7.0/jre/lib
-	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
-	then \
-	  $(JAR) cf $@ -C lib/rt com -C lib/rt java \
-	    -C lib/rt javax $(LIVECONNECT_DIR) -C lib/rt net -C lib/rt sun ; \
-	else \
-	  $(ICEDTEA_BOOT_DIR)/bin/jar cf $@ -C lib/rt com -C lib/rt java \
-	    -C lib/rt javax $(LIVECONNECT_DIR) -C lib/rt net -C lib/rt sun ; \
-	fi
+	$(ICEDTEA_BOOT_DIR)/bin/jar cf $@ -C lib/rt com -C lib/rt java \
+	  -C lib/rt javax $(LIVECONNECT_DIR) -C lib/rt net -C lib/rt sun ;
 	if test -d bootstrap/ecj/jre/lib ; \
 	then \
 	  cp bootstrap/jdk1.7.0/jre/lib/rt-closed.jar \
