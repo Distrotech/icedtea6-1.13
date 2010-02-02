@@ -1,4 +1,4 @@
-@ Copyright 2009 Edward Nevill
+@ Copyright 2009, 2010 Edward Nevill
 @ DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 @
 @ This code is free software; you can redistribute it and/or modify it
@@ -2996,9 +2996,12 @@ handle_exception:
 	DECACHE_JPC
 handle_exception_with_bcp:
 	bl	load_dispatch
+	CACHE_JPC
 	ldr	stack, [istate, #ISTATE_STACK_BASE]
 	sub	stack, stack, #4
 	DECACHE_STACK
+	cmp	jpc, #0
+	beq	1f
 
 	mov	r0, istate
 	ldr	r1, [istate, #ISTATE_THREAD]
@@ -6151,38 +6154,108 @@ dc_9:
 dc_18:
 	.word     0x38e38e39
 
+#define TBIT 1
+
 	.global	Thumb2_DivZero_Handler
 Thumb2_DivZero_Handler:
+#ifdef THUMB2EE
+
+#define JAZ_V1	r5
+#define JAZ_V2	r6
+#define JAZ_V3	r7
+#define	JAZ_V4	r10
+#define	JAZ_V5	r11
+
+#define JAZ_REGSET	JAZ_V1,JAZ_V2,JAZ_V3,JAZ_V4,JAZ_V5,ip
+#define JAZ_REGSET_LEN	6
+
 	adrl	r0, idiv_clz_ret
 	cmp	r0, lr
 	addne	r0, r0, #irem_clz_ret - idiv_clz_ret
 	cmpne	r0, lr
 	beq	divide_by_zero_exception
-	ldr	r0, [istate, #ISTATE_METHOD]
-        ldr     jpc, [r0, #METHOD_CONSTMETHOD]
+	stmdb	sp!, {JAZ_REGSET}
+	bic	r0, lr, #TBIT
+	ldr	r1, [istate, #ISTATE_METHOD]
+        ldr     jpc, [r1, #METHOD_CONSTMETHOD]
 	add	jpc, jpc, #CONSTMETHOD_CODEOFFSET
+	mov	r2, sp
+	ldr	r3, [istate, #ISTATE_LOCALS]
+	bl	Thumb2_lr_to_bci
+	add	sp, sp, #JAZ_REGSET_LEN * 4
+	cmp	r0, #-1
+	moveq	jpc, #0
+	addne	jpc, jpc, r0
 	bl	load_dispatch
+#endif // THUMB2EE
 	b	divide_by_zero_exception
 
 #ifdef THUMB2EE
 
 	.global	Thumb2_Handle_Exception
+	.global	Thumb2_Handle_Exception_NoRegs
 	.global	Thumb2_ArrayBounds_Handler
 	.global	Thumb2_NullPtr_Handler
 	.global Thumb2_Stack_Overflow
 Thumb2_ArrayBounds_Handler:
-	ldr	r0, [istate, #ISTATE_METHOD]
-        ldr     jpc, [r0, #METHOD_CONSTMETHOD]
+	stmdb	sp!, {JAZ_REGSET}
+	bic	r0, lr, #TBIT
+	ldr	r1, [istate, #ISTATE_METHOD]
+        ldr     jpc, [r1, #METHOD_CONSTMETHOD]
 	add	jpc, jpc, #CONSTMETHOD_CODEOFFSET
+	mov	r2, sp
+	ldr	r3, [istate, #ISTATE_LOCALS]
+	bl	Thumb2_lr_to_bci
+	add	sp, sp, #JAZ_REGSET_LEN * 4
+	cmp	r0, #-1
+	moveq	jpc, #0
+	addne	jpc, jpc, r0
 	bl	load_dispatch
 	mov	r0, #VMSYMBOLS_ArrayIndexOutOfBounds
 	b	raise_exception
 Thumb2_Handle_Exception:
-	ldr	r0, [istate, #ISTATE_METHOD]
-        ldr     jpc, [r0, #METHOD_CONSTMETHOD]
+	stmdb	sp!, {JAZ_REGSET}
+	bic	r0, lr, #TBIT
+	ldr	r1, [istate, #ISTATE_METHOD]
+        ldr     jpc, [r1, #METHOD_CONSTMETHOD]
 	add	jpc, jpc, #CONSTMETHOD_CODEOFFSET
+	mov	r2, sp
+	ldr	r3, [istate, #ISTATE_LOCALS]
+	bl	Thumb2_lr_to_bci
+	add	sp, sp, #JAZ_REGSET_LEN * 4
+	cmp	r0, #-1
+	moveq	jpc, #0
+	addne	jpc, jpc, r0
 	bl	load_dispatch
 	b	handle_exception
+Thumb2_Handle_Exception_NoRegs:
+	bic	r0, lr, #TBIT
+	ldr	r1, [istate, #ISTATE_METHOD]
+        ldr     jpc, [r1, #METHOD_CONSTMETHOD]
+	add	jpc, jpc, #CONSTMETHOD_CODEOFFSET
+	mov	r2, #0
+	bl	Thumb2_lr_to_bci
+	cmp	r0, #-1
+	moveq	jpc, #0
+	addne	jpc, jpc, r0
+	bl	load_dispatch
+	b	handle_exception
+Thumb2_NullPtr_Handler:
+	stmdb	sp!, {JAZ_REGSET}
+	bic	r0, lr, #TBIT
+	ldr	r1, [istate, #ISTATE_METHOD]
+        ldr     jpc, [r1, #METHOD_CONSTMETHOD]
+	add	jpc, jpc, #CONSTMETHOD_CODEOFFSET
+	mov	r2, sp
+	ldr	r3, [istate, #ISTATE_LOCALS]
+	bl	Thumb2_lr_to_bci
+	add	sp, sp, #JAZ_REGSET_LEN * 4
+	cmp	r0, #-1
+	moveq	jpc, #0
+	addne	jpc, jpc, r0
+	bl	load_dispatch
+	b	null_ptr_exception
+
 Thumb2_Stack_Overflow:
 	mov	r0, r2
 	ldr	ip, [r0, #THREAD_TOP_ZERO_FRAME]
@@ -6197,13 +6270,6 @@ Thumb2_Exit_To_Interpreter:
 	CACHE_CP
 	CACHE_LOCALS
 	DISPATCH	0
-
-Thumb2_NullPtr_Handler:
-	ldr	r0, [istate, #ISTATE_METHOD]
-        ldr     jpc, [r0, #METHOD_CONSTMETHOD]
-	add	jpc, jpc, #CONSTMETHOD_CODEOFFSET
-	bl	load_dispatch
-	b	null_ptr_exception
 
 	.global	Thumb2_Clear_Cache
 Thumb2_Clear_Cache:
