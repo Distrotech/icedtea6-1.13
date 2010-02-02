@@ -1,0 +1,14 @@
+6912628: test/java/util/jar/JarFile/TurkCert.java cannot be run in samevm mode
+Summary: Added tag to run this test in othervm
+Reviewed-by: chegar
+
+--- openjdk.orig/jdk/test/java/util/jar/JarFile/TurkCert.java	2010-02-02 12:02:47.216585000 +0100
++++ openjdk/jdk/test/java/util/jar/JarFile/TurkCert.java	2010-02-02 12:02:46.933586000 +0100
+@@ -26,6 +26,7 @@
+  * @bug 4624534
+  * @summary Make sure jar certificates work for Turkish locale
+  * @author kladko
++ * @run main/othervm TurkCert
+  */
+ 
+ import java.util.*;

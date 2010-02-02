@@ -312,7 +312,8 @@ ICEDTEA_PATCHES = \
 	patches/libpng.patch \
 	patches/icedtea-6920143-using-with-mouse.patch \
         patches/icedtea-6920172-location-relative-to-test.patch \
-        patches/icedtea-6920172-turkish.patch
+        patches/icedtea-6920172-turkish.patch \
+        patches/icedtea-6912628-turkcert.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \

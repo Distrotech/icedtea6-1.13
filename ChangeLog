@@ -1,3 +1,11 @@
+2010-02-02 Pavel Tisnovsky <ptisnovs@redhat.com>
+
+	* Makefile.am: Add new patches.
+	* patches/icedtea-6912628-turkcert.patch:
+	Fix for Sun bug: 6912628: test case correction
+	test/java/util/jar/JarFile/TurkCert.java cannot be run in
+	samevm mode. Added tag to run this test in othervm
+
 2010-02-02  Edward Nevill <ed@camswl.com>
 
 	* asm_helper.cpp, cppInterpreter_arm.S, thumb2.cpp, bytecodes_arm.def
