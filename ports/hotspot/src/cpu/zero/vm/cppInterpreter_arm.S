@@ -15,6 +15,11 @@
 @ 2 along with this work; if not, write to the Free Software Foundation,
 @ Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 
+#undef THUMB2EE
+#if !defined(DISABLE_THUMB2) && defined(HOTSPOT_ASM) && !defined(SHARK)
+#define THUMB2EE
+#endif
+
 #ifdef HOTSPOT_ASM
 
 #define ARMv4

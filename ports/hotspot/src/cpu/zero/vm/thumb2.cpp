@@ -16,6 +16,11 @@
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#undef THUMB2EE
+#if !defined(DISABLE_THUMB2) && defined(HOTSPOT_ASM) && !defined(SHARK)
+#define THUMB2EE
+#endif
+
 #ifdef THUMB2EE
 
 #define T2EE_PRINT_COMPILATION
