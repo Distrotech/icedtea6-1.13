@@ -1,3 +1,26 @@
+/*
+ * Copyright 2009, 2010 Edward Nevill
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
+#undef THUMB2EE
+#if !defined(DISABLE_THUMB2) && defined(HOTSPOT_ASM) && !defined(SHARK)
+#define THUMB2EE
+#endif
+
 #ifdef THUMB2EE
 
 #define T2EE_PRINT_COMPILATION
@@ -363,7 +386,9 @@ static char *t2ee_print_regusage;
 
 #define H_STACK_OVERFLOW		59
 
-unsigned handlers[60];
+#define H_HANDLE_EXCEPTION_NO_REGS	60
+
+unsigned handlers[61];
 
 #define LEAF_STACK_SIZE			200
 #define STACK_SPARE			40
@@ -377,12 +402,7 @@ static jmp_buf compiler_error_env;
 
 #ifdef PRODUCT
 
-#define JASSERT(cond, msg)					\
-	do {							\
-	  if (!(cond))						\
-	    longjmp(compiler_error_env, COMPILER_RESULT_FATAL);	\
-	} while (0)
-
+#define JASSERT(cond, msg)	0
 #define J_Unimplemented() longjmp(compiler_error_env, COMPILER_RESULT_FATAL)
 
 #else
@@ -546,17 +566,22 @@ typedef struct Compiled_Method {
     // 		bl	fast_entry
     // 		pop	{r4, r5, r6, r7, r9, r10, r11, pc}
     unsigned slow_entry[3];
-    // osr_tablep:				@ pointer to the osr table
-    // 		.word	osr_table
-    unsigned *osr_table;
+    unsigned *osr_table;			// pointer to the osr table
+    unsigned *exception_table;
     Compiled_Method *next;
+    // The next 6 halfword give the register mapping for JAZ_V1 to JAZ_v5
+    // This is used when receovering from an exception so we can push
+    // the register back into the local variables pool.
+    short regusage[6];
     // OSR Entry point:
     // 	R0 = entry point within compiled method
-    // 	R1 = locals
+    // 	R1 = locals - 4000 * 4
     // 	R2 = thread
+    // 	R3 = locals - 31 * 4
     // osr_entry:
     // 		@ Load each local into it register allocated register
-    // 		ldr	<reg>, [R1, #-<local> * 4]
+    // 		ldr	<reg>, [R1, #(4000-<local>) * 4]
+    //    or	ldr	<reg>, [R3, #(31-<local>) * 4]
     // 		...
     // 		mov	Rthread, R2
     // 		bx	R0
@@ -4484,7 +4509,12 @@ int Thumb2_Accessor(Thumb2_Info *jinfo)
   out_32(jinfo->codebuf, 0);
 
   out_32(jinfo->codebuf, 0);	// pointer to osr table
+  out_32(jinfo->codebuf, 0);	// Space for exception_table pointer
   out_32(jinfo->codebuf, 0);	// next compiled method
+
+  out_32(jinfo->codebuf, 0);    // regusage
+  out_32(jinfo->codebuf, 0);
+  out_32(jinfo->codebuf, 0);
 
   // OSR entry point
   mov_reg(jinfo->codebuf, ARM_PC, ARM_R0);
@@ -4524,8 +4554,13 @@ void Thumb2_Enter(Thumb2_Info *jinfo)
   bl(jinfo->codebuf, out_pos(jinfo->codebuf) + CODE_ALIGN - 4);
   ldm(jinfo->codebuf, I_REGSET + (1<<ARM_PC), ARM_SP, POP_FD, 1);
 
-  out_32(jinfo->codebuf, 0);	// Space for osr_table point
+  out_32(jinfo->codebuf, 0);	// Space for osr_table pointer
+  out_32(jinfo->codebuf, 0);	// Space for exception_table pointer
   out_32(jinfo->codebuf, 0);	// Pointer to next method
+
+  out_32(jinfo->codebuf, 0);    // regusage
+  out_32(jinfo->codebuf, 0);
+  out_32(jinfo->codebuf, 0);
 
   // OSR entry point == Slow entry + 16 - caller save
   // R0 = entry point within compiled method
@@ -4577,7 +4612,7 @@ void Thumb2_Enter(Thumb2_Info *jinfo)
 
     for (i = 0; i < extra_locals; i++) {
       unsigned linfo = locals_info[parms+i];
-      if (linfo & (1<< LOCAL_REF))
+      if (linfo & (1<< LOCAL_REF) || ((linfo >> LOCAL_INT) & 0x1f) == 0)
 	str_imm(jinfo->codebuf, ARM_R1, Rstack, (extra_locals-1 - i) * 4, 1, 0);
     }
   }
@@ -4671,7 +4706,7 @@ void Thumb2_Enter(Thumb2_Info *jinfo)
     mov_imm(jinfo->codebuf, ARM_R0, 0+CONSTMETHOD_CODEOFFSET);
     bl(jinfo->codebuf, handlers[H_SYNCHRONIZED_ENTER]);
     loc_exception = forward_16(jinfo->codebuf);
-    bl(jinfo->codebuf, handlers[H_HANDLE_EXCEPTION]);
+    bl(jinfo->codebuf, handlers[H_HANDLE_EXCEPTION_NO_REGS]);
     cbz_patch(jinfo->codebuf, ARM_R0, loc_exception);
     cbz_patch(jinfo->codebuf, ARM_R0, loc_success);
 //    mov_imm(jinfo->codebuf, ARM_R0, 0+CONSTMETHOD_CODEOFFSET);
@@ -4776,6 +4811,8 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 
 	if (stackinfo & BC_BRANCH_TARGET) break;
 	if (!(IS_DEAD(stackinfo) || IS_ZOMBIE(stackinfo))) break;
+
+	bc_stackinfo[bci] = (stackinfo & BC_FLAGS_MASK) | (codebuf->idx * 2);
 
 	if (opcode > OPC_LAST_JAVA_OP) {
 	  if (Bytecodes::is_defined((Bytecodes::Code)opcode))
@@ -5824,7 +5861,7 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
 	str_imm(jinfo->codebuf, ARM_R1, Rthread, THREAD_LAST_JAVA_SP, 1, 0);
 	cmp_imm(jinfo->codebuf, ARM_R3, 0);
 	it(jinfo->codebuf, COND_NE, IT_MASK_T);
-	bl(jinfo->codebuf, handlers[H_HANDLE_EXCEPTION]);
+	bl(jinfo->codebuf, handlers[H_HANDLE_EXCEPTION_NO_REGS]);
 	break;
       }
 
@@ -5941,7 +5978,7 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
 	  str_imm(jinfo->codebuf, ARM_R1, Rthread, THREAD_LAST_JAVA_SP, 1, 0);
 	cmp_imm(jinfo->codebuf, ARM_R3, 0);
 	it(jinfo->codebuf, COND_NE, IT_MASK_T);
-	bl(jinfo->codebuf, handlers[H_HANDLE_EXCEPTION]);
+	bl(jinfo->codebuf, handlers[H_HANDLE_EXCEPTION_NO_REGS]);
 	  break;
 	} else {
   ldr_imm(jinfo->codebuf, ARM_R2, Ristate, ISTATE_METHOD, 1, 0);
@@ -5980,7 +6017,7 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
 	  str_imm(jinfo->codebuf, ARM_R1, Rthread, THREAD_LAST_JAVA_SP, 1, 0);
 	cmp_imm(jinfo->codebuf, ARM_R3, 0);
 	it(jinfo->codebuf, COND_NE, IT_MASK_T);
-	bl(jinfo->codebuf, handlers[H_HANDLE_EXCEPTION]);
+	bl(jinfo->codebuf, handlers[H_HANDLE_EXCEPTION_NO_REGS]);
 	}
 	break;
       }
@@ -6447,7 +6484,6 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
       }
 
       default:
-	printf("unknown bytecode = %d\n", opcode);
 	JASSERT(0, "unknown bytecode");
 	break;
     }
@@ -6461,17 +6497,95 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
   }
 }
 
-void Thumb2_tablegen(Thumb2_Info *jinfo)
+#define BEG_BCI_OFFSET		0
+#define END_BCI_OFFSET		1
+#define HANDLER_BCI_OFFSET	2
+#define KLASS_INDEX_OFFSET	3
+#define ENTRY_SIZE		4
+
+extern "C" int Thumb2_lr_to_bci(unsigned lr, methodOop method, Reg *regs, unsigned *locals)
+{
+  Compiled_Method *cmethod = compiled_method_list;
+  typeArrayOop table = method->exception_table();
+  constantPoolOop pool = method->constants();
+  int length = table->length();
+
+  while (cmethod) {
+    unsigned *exception_table = cmethod->exception_table;
+    if (exception_table) {
+      unsigned code_base = (unsigned)cmethod;
+      if (code_base <= lr && lr <= (unsigned)exception_table) {
+	int exception_index = -1;
+	unsigned exception_found = 0;
+
+	for (int i = 0; i < length; i += ENTRY_SIZE) {
+	  unsigned offsets = *exception_table++;
+	  unsigned exc_beg = code_base + ((offsets >> 16) << 1);
+	  unsigned exc_end = code_base + ((offsets & 0xffff) << 1);
+
+	  if (exc_beg <= lr && lr <= exc_end) {
+	    if (exc_beg > exception_found) {
+	      // With nested try catch blocks, choose the most deeply nested
+	      exception_found = exc_beg;
+	      exception_index = i;
+	    }	    
+	  }
+	  if (exception_index >= 0) {
+	    if (regs) {
+	      for (unsigned i = 0; i < PREGS; i++) {
+		int local = cmethod->regusage[i];
+		if (local >= 0) {
+		  locals[-local] = regs[i];
+		}
+	      }
+	    }
+	    return table->int_at(exception_index + BEG_BCI_OFFSET);
+	  }
+	}
+      }
+    }
+    cmethod = cmethod->next;
+  }
+  return -1;
+}
+
+void Thumb2_generate_exception_table(Compiled_Method *cmethod, Thumb2_Info *jinfo)
+{
+  methodOop method = jinfo->method;
+  typeArrayOop table = method->exception_table();
+  constantPoolOop pool = method->constants();
+  int length = table->length();
+  unsigned *bc_stackinfo = jinfo->bc_stackinfo;
+
+  cmethod->exception_table = (unsigned *)out_pos(jinfo->codebuf);
+  for (int i = 0; i < length; i += ENTRY_SIZE) {
+    int beg_bci = table->int_at(i + BEG_BCI_OFFSET);
+    int end_bci = table->int_at(i + END_BCI_OFFSET);
+    unsigned stackinfo;
+    unsigned beg_offset, end_offset;
+
+    stackinfo = bc_stackinfo[beg_bci];
+    beg_offset = (stackinfo & ~BC_FLAGS_MASK) >> 1;
+    stackinfo = bc_stackinfo[end_bci];
+    end_offset = (stackinfo & ~BC_FLAGS_MASK) >> 1;
+    if (!(beg_offset != 0 && end_offset >= beg_offset && end_offset < 65536)) {
+	longjmp(compiler_error_env, COMPILER_RESULT_FAILED);
+    }
+    out_32(jinfo->codebuf, (beg_offset << 16) | (end_offset));
+  }
+}
+
+void Thumb2_tablegen(Compiled_Method *cmethod, Thumb2_Info *jinfo)
 {
   unsigned code_size = jinfo->code_size;
   jubyte *code_base = jinfo->code_base;
   unsigned *bc_stackinfo = jinfo->bc_stackinfo;
   unsigned bci;
-  unsigned *count_pos = (unsigned *)out_pos(jinfo->codebuf);
   unsigned count = 0;
   unsigned i;
   CodeBuf *codebuf = jinfo->codebuf;
 
+  cmethod->osr_table = (unsigned *)out_pos(jinfo->codebuf);
   out_32(codebuf, 0);
   bc_stackinfo[0] |= BC_BACK_TARGET;
   for (bci = 0; bci < code_size;) {
@@ -6501,7 +6615,9 @@ void Thumb2_tablegen(Thumb2_Info *jinfo)
       bci += len;
     }
   }
-  *count_pos = count;
+  *cmethod->osr_table = count;
+  if (jinfo->method->has_exception_handler())
+    Thumb2_generate_exception_table(cmethod, jinfo);
 }
 
 extern "C" void Thumb2_Clear_Cache(char *base, char *limit);
@@ -6625,7 +6741,7 @@ extern "C" void Thumb2_Install(methodOop mh, u32 entry);
 extern "C" unsigned cmpxchg_ptr(unsigned new_value, volatile unsigned *ptr, unsigned cmp_value);
 static volatile unsigned compiling;
 static unsigned CompileCount = 0;
-static unsigned MaxCompile = 35;
+static unsigned MaxCompile = 130;
 
 #define COMPILE_ONLY	0
 #define COMPILE_COUNT	0
@@ -6705,8 +6821,7 @@ extern "C" unsigned long long Thumb2_Compile(JavaThread *thread, unsigned branch
   //
   if (code_size > THUMB2_MAX_BYTECODE_SIZE ||
 		(method->max_locals() + method->max_stack()) >= 1000 ||
-		method->has_monitor_bytecodes() ||
-		method->has_exception_handler()) {
+		method->has_monitor_bytecodes()) {
         method->set_not_compilable();
 	return 0;
   }
@@ -6748,8 +6863,11 @@ extern "C" unsigned long long Thumb2_Compile(JavaThread *thread, unsigned branch
 
 #ifdef T2EE_PRINT_COMPILATION
   if (t2ee_print_compilation) {
-    tty->print("Compiling (%d) ", compiled_methods);
-    tty->print_cr("%s", method->name_and_sig_as_C_string());
+    fprintf(stderr, "Compiling %d %c%c %s\n",
+	compiled_methods,
+	method->is_synchronized() ? 'S' : ' ',
+	method->has_exception_handler() ? 'E' : ' ',
+	method->name_and_sig_as_C_string());
   }
 #endif
 
@@ -6825,6 +6943,9 @@ extern "C" unsigned long long Thumb2_Compile(JavaThread *thread, unsigned branch
 	Thumb2_disass(&jinfo_str);
 #endif
 
+  for (int i = 0; i < PREGS; i++)
+    cmethod->regusage[i] = jregs_str.mapping[i];
+
   Thumb2_Clear_Cache(cb->hp, cb->hp + codebuf_str.idx * 2);
 
 #ifdef T2EE_PRINT_STATISTICS
@@ -6836,7 +6957,7 @@ extern "C" unsigned long long Thumb2_Compile(JavaThread *thread, unsigned branch
     bytecodes_compiled += code_size;
     arm_code_generated += codegen;
     total_zombie_bytes += jinfo_str.zombie_bytes;
-    tty->print("%d bytecodes => %d bytes code in %.2f sec, totals: %d => %d in %.2f sec\n",
+    fprintf(stderr, "%d bytecodes => %d bytes code in %.2f sec, totals: %d => %d in %.2f sec\n",
       code_size, codegen, (double)compile_time/(double)CLOCKS_PER_SEC,
     bytecodes_compiled, arm_code_generated, (double)total_compile_time/(double)CLOCKS_PER_SEC);
   }
@@ -6846,13 +6967,8 @@ extern "C" unsigned long long Thumb2_Compile(JavaThread *thread, unsigned branch
 
   out_32(&codebuf_str, slow_entry);
 
-  if (!compiled_accessor) {
-    unsigned osr_entry_table = out_pos(jinfo_str.codebuf);
-
-    Thumb2_tablegen(&jinfo_str);
-
-    cmethod->osr_table = (unsigned *)osr_entry_table;
-  }
+  if (!compiled_accessor)
+    Thumb2_tablegen(cmethod, &jinfo_str);
 
   cb->hp += codebuf_str.idx * 2;
 
@@ -6875,6 +6991,7 @@ extern "C" unsigned long long Thumb2_Compile(JavaThread *thread, unsigned branch
 extern "C" void Thumb2_DivZero_Handler(void);
 extern "C" void Thumb2_ArrayBounds_Handler(void);
 extern "C" void Thumb2_Handle_Exception(void);
+extern "C" void Thumb2_Handle_Exception_NoRegs(void);
 extern "C" void Thumb2_Exit_To_Interpreter(void);
 extern "C" void Thumb2_Stack_Overflow(void);
 
@@ -6968,6 +7085,7 @@ extern "C" int Thumb2_Check_Null(unsigned *regs, unsigned pc)
   Thumb2_CodeBuf *cb = thumb2_codebuf;
   if (!(CPUInfo & ARCH_THUMBEE)) return 0;
   if (IS_COMPILED(pc, cb)) {
+    regs[ARM_LR] = pc;
     regs[ARM_PC] = (unsigned)Thumb2_NullPtr_Handler;
     regs[ARM_CPSR] &= ~CPSR_THUMB_BIT;
     return 1;
@@ -7072,6 +7190,10 @@ extern "C" void Thumb2_Initialize(void)
 
   handlers[H_HANDLE_EXCEPTION] = out_pos(&codebuf);
   mov_imm(&codebuf, ARM_R3, (u32)Thumb2_Handle_Exception);
+  mov_reg(&codebuf, ARM_PC, ARM_R3);
+
+  handlers[H_HANDLE_EXCEPTION_NO_REGS] = out_pos(&codebuf);
+  mov_imm(&codebuf, ARM_R3, (u32)Thumb2_Handle_Exception_NoRegs);
   mov_reg(&codebuf, ARM_PC, ARM_R3);
 
   handlers[H_STACK_OVERFLOW] = out_pos(&codebuf);

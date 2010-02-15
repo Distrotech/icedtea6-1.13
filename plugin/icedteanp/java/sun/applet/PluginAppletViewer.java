@@ -91,6 +91,7 @@ import java.net.SocketPermission;
 import java.net.URI;
 import java.net.URL;
 import java.security.AccessController;
+import java.security.AllPermission;
 import java.security.PrivilegedAction;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -114,18 +115,199 @@ import com.sun.jndi.toolkit.url.UrlUtil;
   * Lets us construct one using unix-style one shot behaviors
   */
  
- class PluginAppletViewerFactory
+ class PluginAppletPanelFactory
  {
-     public PluginAppletViewer createAppletViewer(int identifier,
-                                                  long handle, int x, int y,
- 						 URL doc, Hashtable atts) {
-         PluginAppletViewer pluginappletviewer = new PluginAppletViewer(identifier, handle, x, y, doc, atts, System.out, this);
-         return pluginappletviewer;
+
+     public AppletPanel createPanel(PluginStreamHandler streamhandler, 
+                                    int identifier,
+                                    long handle, int x, int y,
+                                    final URL doc, final Hashtable atts) {
+
+         AppletViewerPanel panel = (AppletViewerPanel) AccessController.doPrivileged(new PrivilegedAction() {
+             public Object run() {
+                    try {
+                        AppletPanel panel = new NetxPanel(doc, atts, false);
+                        AppletViewerPanel.debug("Using NetX panel");
+                        PluginDebug.debug(atts.toString());
+                        return panel;
+                    } catch (Exception ex) {
+                        AppletViewerPanel.debug("Unable to start NetX applet - defaulting to Sun applet", ex);
+                        return new AppletViewerPanel(doc, atts);
+                    }
+             }
+         });
+
+         double heightFactor = 1.0;
+         double widthFactor = 1.0;
+
+         if (atts.get("heightPercentage") != null) {
+             heightFactor = (Integer) atts.get("heightPercentage")/100.0;
+         }
+         
+         if (atts.get("widthPercentage") != null) {
+             widthFactor = (Integer) atts.get("widthPercentage")/100.0;
+         }
+         
+
+         // put inside initial 0 handle frame
+         PluginAppletViewer.reFrame(null, identifier, System.out, 
+                 heightFactor, widthFactor, 0, panel);
+         
+         panel.init();
+
+         // Start the applet
+         initEventQueue(panel);
+
+         // Applet initialized. Find out it's classloader and add it to the list
+         String portComponent = doc.getPort() != -1 ? ":" + doc.getPort() : "";
+         String codeBase = doc.getProtocol() + "://" + doc.getHost() + portComponent;
+
+         if (atts.get("codebase") != null) {
+             try {
+                 URL appletSrcURL = new URL(codeBase + (String) atts.get("codebase"));
+                 codeBase = appletSrcURL.getProtocol() + "://" + appletSrcURL.getHost();
+             } catch (MalformedURLException mfue) {
+                 // do nothing
+             }
+         }
+
+
+         // Wait for the panel to initialize
+         // (happens in a separate thread)
+         Applet a;
+         
+         // Wait for panel to come alive
+         int maxWait = 5000; // wait 5 seconds max for panel to come alive
+         int wait = 0;
+         while ((panel == null) || (!((NetxPanel) panel).isAlive() && wait < maxWait)) {
+              try {
+                  Thread.sleep(50);
+                  wait += 50;
+              } catch (InterruptedException ie) {
+                  ie.printStackTrace();
+              }
+         }
+         
+         // Wait for the panel to initialize
+         // (happens in a separate thread)
+         while (panel.getApplet() == null &&
+                ((NetxPanel) panel).isAlive()) {
+             try {
+                 Thread.sleep(50);
+                 PluginDebug.debug("Waiting for applet to initialize...");
+             } catch (InterruptedException ie) {
+                 ie.printStackTrace();
+             }
+         }
+
+         a = panel.getApplet();
+
+         // Still null?
+         if (panel.getApplet() == null) {
+             streamhandler.write("instance " + identifier + " reference " + -1 + " fatalError " + "Initialization failed");
+             return null;
+         }
+
+         PluginDebug.debug("Applet " + a.getClass() + " initialized");
+         streamhandler.write("instance " + identifier + " initialized");
+         
+         AppletSecurityContextManager.getSecurityContext(0).associateSrc(((NetxPanel) panel).getAppletClassLoader(), doc);
+         AppletSecurityContextManager.getSecurityContext(0).associateInstance(identifier, ((NetxPanel) panel).getAppletClassLoader());
+         
+         return panel;
      }
  
      public boolean isStandalone()
      {
          return false;
+     }
+     
+     /**
+      * Send the initial set of events to the appletviewer event queue.
+      * On start-up the current behaviour is to load the applet and call
+      * Applet.init() and Applet.start().
+      */
+     private void initEventQueue(AppletPanel panel) {
+         // appletviewer.send.event is an undocumented and unsupported system
+         // property which is used exclusively for testing purposes.
+         PrivilegedAction pa = new PrivilegedAction() {
+             public Object run() {
+                 return System.getProperty("appletviewer.send.event");
+             }
+         };
+         String eventList = (String) AccessController.doPrivileged(pa); 
+
+         if (eventList == null) {
+             // Add the standard events onto the event queue.
+             panel.sendEvent(AppletPanel.APPLET_LOAD);
+             panel.sendEvent(AppletPanel.APPLET_INIT);
+             panel.sendEvent(AppletPanel.APPLET_START);
+         } else {
+             // We're testing AppletViewer.  Force the specified set of events
+             // onto the event queue, wait for the events to be processed, and
+             // exit.
+
+             // The list of events that will be executed is provided as a
+             // ","-separated list.  No error-checking will be done on the list.
+             String [] events = splitSeparator(",", eventList);
+
+             for (int i = 0; i < events.length; i++) {
+                 PluginDebug.debug("Adding event to queue: " + events[i]);
+                 if (events[i].equals("dispose"))
+                     panel.sendEvent(AppletPanel.APPLET_DISPOSE);
+                 else if (events[i].equals("load"))
+                     panel.sendEvent(AppletPanel.APPLET_LOAD);
+                 else if (events[i].equals("init"))
+                     panel.sendEvent(AppletPanel.APPLET_INIT);
+                 else if (events[i].equals("start"))
+                     panel.sendEvent(AppletPanel.APPLET_START);
+                 else if (events[i].equals("stop"))
+                     panel.sendEvent(AppletPanel.APPLET_STOP);
+                 else if (events[i].equals("destroy"))
+                     panel.sendEvent(AppletPanel.APPLET_DESTROY);
+                 else if (events[i].equals("quit"))
+                     panel.sendEvent(AppletPanel.APPLET_QUIT);
+                 else if (events[i].equals("error"))
+                     panel.sendEvent(AppletPanel.APPLET_ERROR);
+                 else
+                     // non-fatal error if we get an unrecognized event
+                     PluginDebug.debug("Unrecognized event name: " + events[i]);
+             }
+
+             while (!panel.emptyEventQueue()) ;
+         }
+     }
+     
+     
+     /**
+      * Split a string based on the presence of a specified separator.  Returns
+      * an array of arbitrary length.  The end of each element in the array is
+      * indicated by the separator of the end of the string.  If there is a
+      * separator immediately before the end of the string, the final element
+      * will be empty.  None of the strings will contain the separator.  Useful
+      * when separating strings such as "foo/bar/bas" using separator "/".
+      *
+      * @param sep  The separator.
+      * @param s    The string to split.
+      * @return     An array of strings.  Each string in the array is determined
+      *             by the location of the provided sep in the original string,
+      *             s.  Whitespace not stripped.
+      */
+     private String [] splitSeparator(String sep, String s) {
+         Vector v = new Vector();
+         int tokenStart = 0;
+         int tokenEnd   = 0;
+
+         while ((tokenEnd = s.indexOf(sep, tokenStart)) != -1) {
+             v.addElement(s.substring(tokenStart, tokenEnd));
+             tokenStart = tokenEnd+1;
+         }
+         // Add the final element.
+         v.addElement(s.substring(tokenStart));
+
+         String [] retVal = new String[v.size()];
+         v.copyInto(retVal);
+         return retVal;
      }
  }
  
@@ -146,7 +328,7 @@ import com.sun.jndi.toolkit.url.UrlUtil;
       */
      private static String defaultSaveFile = "Applet.ser";
      
-     private static enum PAV_INIT_STATUS {PRE_INIT, ACTIVE, INACTIVE};
+     private static enum PAV_INIT_STATUS {PRE_INIT, IN_INIT, INIT_COMPLETE, INACTIVE};
 
      /**
       * The panel in which the applet is being displayed.
@@ -163,11 +345,6 @@ import com.sun.jndi.toolkit.url.UrlUtil;
       */
  
      PrintStream statusMsgStream;
- 
-     /**
-      * For cloning
-      */
-     PluginAppletViewerFactory factory;
  
      int identifier;
  
@@ -187,204 +364,153 @@ import com.sun.jndi.toolkit.url.UrlUtil;
 
      private double proposedHeightFactor;
      private double proposedWidthFactor;
+     
+     private long handle = 0;
+     private WindowListener windowEventListener = null;
+     private AppletEventListener appletEventListener = null;
 
      /**
       * Null constructor to allow instantiation via newInstance()
       */
      public PluginAppletViewer() {
      }
-     
-     /**
-      * Create the applet viewer
-      */
-     public PluginAppletViewer(final int identifier, long handle, int x, int y, final URL doc,
-                               final Hashtable atts, PrintStream statusMsgStream,
-                               PluginAppletViewerFactory factory) {
-         super(handle, true);
-    	this.factory = factory;
- 	this.statusMsgStream = statusMsgStream;
-         this.identifier = identifier;
-         // FIXME: when/where do we remove this?
-         PluginDebug.debug ("PARSING: PUTTING " + identifier + " " + this);
-         applets.put(identifier, this);
-         
-         
-         // we intercept height and width specifications here because 
-         proposedHeightFactor = 1.0;
-         proposedWidthFactor = 1.0;
 
-         if (atts.get("heightPercentage") != null) {
-        	 proposedHeightFactor = (Integer) atts.get("heightPercentage")/100.0;
+     public static void reFrame(PluginAppletViewer oldFrame, 
+                         int identifier, PrintStream statusMsgStream, 
+                         double heightFactor, double widthFactor, long handle,
+                         AppletViewerPanel panel) {
+
+         PluginDebug.debug("Reframing " + panel);
+         
+         // SecurityManager MUST be set, and only privileged code may call reFrame()
+         System.getSecurityManager().checkPermission(new AllPermission());
+
+         // Same handle => nothing to do
+         if (oldFrame != null && handle == oldFrame.handle)
+             return;
+
+         PluginAppletViewer newFrame = new PluginAppletViewer(handle, identifier, statusMsgStream, heightFactor, widthFactor);
+         newFrame.panel = panel;
+
+         if (oldFrame != null) {
+             applets.remove(oldFrame.identifier);
+             oldFrame.removeWindowListener(oldFrame.windowEventListener);
+             panel.removeAppletListener(oldFrame.appletEventListener);
+             oldFrame.remove(panel);
+             oldFrame.dispose();
+         }
+
+         newFrame.add("Center", panel);
+         newFrame.pack();
+
+         newFrame.appletEventListener = new AppletEventListener(newFrame, newFrame);
+         panel.addAppletListener(newFrame.appletEventListener);
+
+         applets.put(identifier, newFrame);
+
+         // dispose oldframe if necessary
+         if (oldFrame != null) {
+             oldFrame.dispose();
          }
          
-         if (atts.get("widthPercentage") != null) {
-        	 proposedWidthFactor = (Integer) atts.get("widthPercentage")/100.0;
-         }
- 
-         AccessController.doPrivileged(new PrivilegedAction() {
-             public Object run() {
-            	 	try {
-            	 		panel = new NetxPanel(doc, atts, false);
-            	 		AppletViewerPanel.debug("Using NetX panel");
-            	 		PluginDebug.debug(atts.toString());
-            	 	} catch (Exception ex) {
-            	 		AppletViewerPanel.debug("Unable to start NetX applet - defaulting to Sun applet", ex);
-            	 		panel = new AppletViewerPanel(doc, atts);
-            	 	}
-                 return null;
-             }
-         });  
-
- 	add("Center", panel);
- 	panel.init();
- 	appletPanels.addElement(panel);
- 
- 	pack();
- 	
- 	// 0 handle implies 0x0 plugin, don't show it else it creates an entry in the window list
- 	if (handle != 0) 
- 	    setVisible(true);
- 
- 	WindowListener windowEventListener = new WindowAdapter() {
- 
- 	    public void windowClosing(WindowEvent evt) {
- 		appletClose();
- 	    }
- 
- 	    public void windowIconified(WindowEvent evt) {
- 		appletStop();
- 	    }
- 
- 	    public void windowDeiconified(WindowEvent evt) {
- 		appletStart();
- 	    }
- 	};
- 
- 	class AppletEventListener implements AppletListener  
- 	{
- 	    final Frame frame;
- 
- 	    public AppletEventListener(Frame frame)
- 	    {
- 		this.frame = frame;
- 	    }
- 
- 	    public void appletStateChanged(AppletEvent evt) 
- 	    {
- 		AppletPanel src = (AppletPanel)evt.getSource();
- 
- 		switch (evt.getID()) {
-                     case AppletPanel.APPLET_RESIZE: {
- 			if(src != null) {
- 			    resize(preferredSize());
- 			    validate();
-                         }
- 			break;
- 		    }
- 		    case AppletPanel.APPLET_LOADING_COMPLETED: {
- 			Applet a = src.getApplet(); // sun.applet.AppletPanel
- 			
- 			// Fixed #4754451: Applet can have methods running on main
- 			// thread event queue. 
- 			// 
- 			// The cause of this bug is that the frame of the applet 
- 			// is created in main thread group. Thus, when certain 
- 			// AWT/Swing events are generated, the events will be
- 			// dispatched through the wrong event dispatch thread.
- 			//
- 			// To fix this, we rearrange the AppContext with the frame,
- 			// so the proper event queue will be looked up.
- 			//
- 			// Swing also maintains a Frame list for the AppContext,
- 			// so we will have to rearrange it as well.
- 			//
- 			if (a != null)
- 			    AppletPanel.changeFrameAppContext(frame, SunToolkit.targetToAppContext(a));
- 			else
- 			    AppletPanel.changeFrameAppContext(frame, AppContext.getAppContext());
- 
- 			break;
- 		    }
- 		}
- 	    }
- 	};
- 
- 	addWindowListener(windowEventListener);
- 	panel.addAppletListener(new AppletEventListener(this));
- 
- 	// Start the applet
-    showStatus(amh.getMessage("status.start"));
- 	initEventQueue();
- 	
- 	// Wait for the panel to initialize
-    // (happens in a separate thread)
- 	Applet a;
- 	
- 	// Wait for panel to come alive
- 	int maxWait = 5000; // wait 5 seconds max for panel to come alive
- 	int wait = 0;
- 	while ((panel == null) || (!((NetxPanel) panel).isAlive() && wait < maxWait)) {
-         try {
-             Thread.sleep(50);
-             wait += 50;
-         } catch (InterruptedException ie) {
-             ie.printStackTrace();
-         }
-    }
- 	
-    // Wait for the panel to initialize
-    // (happens in a separate thread)
-    while (panel.getApplet() == null &&
-           ((NetxPanel) panel).isAlive()) {
-        try {
-            Thread.sleep(50);
-            PluginDebug.debug("Waiting for applet to initialize...");
-        } catch (InterruptedException ie) {
-            ie.printStackTrace();
-        }
-    }
- 	
-    a = panel.getApplet();
-
-    // Still null?
-    if (panel.getApplet() == null) {
-    	this.streamhandler.write("instance " + identifier + " reference " + -1 + " fatalError " + "Initialization failed");
-    	return;
-    }
-
-    PluginDebug.debug("Applet " + a.getClass() + " initialized");
-
-    // Applet initialized. Find out it's classloader and add it to the list
-    String portComponent = doc.getPort() != -1 ? ":" + doc.getPort() : "";
-    String codeBase = doc.getProtocol() + "://" + doc.getHost() + portComponent;
-
-    if (atts.get("codebase") != null) {
-    	try {
-    		URL appletSrcURL = new URL(codeBase + (String) atts.get("codebase"));
-    		codeBase = appletSrcURL.getProtocol() + "://" + appletSrcURL.getHost();
-    	} catch (MalformedURLException mfue) {
-    		// do nothing
-    	}
-    }
-
-    AppletSecurityContextManager.getSecurityContext(0).associateSrc(((NetxPanel) panel).getAppletClassLoader(), doc);
-    AppletSecurityContextManager.getSecurityContext(0).associateInstance(identifier, ((NetxPanel) panel).getAppletClassLoader());
-    
- 	try {
- 	    write("initialized");
- 	} catch (IOException ioe) {
- 		ioe.printStackTrace();
- 	}
- 	
+         PluginDebug.debug(panel + " reframed");
      }
 
- 	public static void setStreamhandler(PluginStreamHandler sh) {
-		streamhandler = sh;
-	}
+     /**
+      * Create new plugin appletviewer frame
+      */
+     private PluginAppletViewer(long handle, final int identifier, 
+                         PrintStream statusMsgStream, double heightFactor, 
+                         double widthFactor) {
+         
+         super(handle, true);
+         this.statusMsgStream = statusMsgStream;
+         this.identifier = identifier;
+         this.proposedHeightFactor = heightFactor;
+         this.proposedWidthFactor = widthFactor;
 
- 	public static void setPluginCallRequestFactory(PluginCallRequestFactory rf) {
-		requestFactory = rf;
-	}
+         if (!appletPanels.contains(panel))
+             appletPanels.addElement(panel);
+
+         windowEventListener = new WindowAdapter() {
+
+             public void windowClosing(WindowEvent evt) {
+                 appletClose();
+             }
+
+             public void windowIconified(WindowEvent evt) {
+                 appletStop();
+             }
+
+             public void windowDeiconified(WindowEvent evt) {
+                 appletStart();
+             }
+         };
+
+         addWindowListener(windowEventListener);
+
+     }
+
+     private static class AppletEventListener implements AppletListener  
+     {
+         final Frame frame;
+         final PluginAppletViewer appletViewer;
+  
+         public AppletEventListener(Frame frame, PluginAppletViewer appletViewer)
+         {
+         this.frame = frame;
+         this.appletViewer = appletViewer;
+         }
+  
+         public void appletStateChanged(AppletEvent evt) 
+         {
+         AppletPanel src = (AppletPanel)evt.getSource();
+  
+         switch (evt.getID()) {
+                      case AppletPanel.APPLET_RESIZE: {
+             if(src != null) {
+                 appletViewer.resize(appletViewer.preferredSize());
+                 appletViewer.validate();
+                          }
+             break;
+             }
+             case AppletPanel.APPLET_LOADING_COMPLETED: {
+             Applet a = src.getApplet(); // sun.applet.AppletPanel
+             
+             // Fixed #4754451: Applet can have methods running on main
+             // thread event queue. 
+             // 
+             // The cause of this bug is that the frame of the applet 
+             // is created in main thread group. Thus, when certain 
+             // AWT/Swing events are generated, the events will be
+             // dispatched through the wrong event dispatch thread.
+             //
+             // To fix this, we rearrange the AppContext with the frame,
+             // so the proper event queue will be looked up.
+             //
+             // Swing also maintains a Frame list for the AppContext,
+             // so we will have to rearrange it as well.
+             //
+             if (a != null)
+                 AppletPanel.changeFrameAppContext(frame, SunToolkit.targetToAppContext(a));
+             else
+                 AppletPanel.changeFrameAppContext(frame, AppContext.getAppContext());
+  
+             status.put(appletViewer.identifier, PAV_INIT_STATUS.INIT_COMPLETE);
+             
+             break;
+             }
+         }
+         }
+     }
+     
+    public static void setStreamhandler(PluginStreamHandler sh) {
+        streamhandler = sh;
+    }
+
+    public static void setPluginCallRequestFactory(PluginCallRequestFactory rf) {
+        requestFactory = rf;
+    }
 
      /**
       * Handle an incoming message from the plugin.
@@ -392,16 +518,16 @@ import com.sun.jndi.toolkit.url.UrlUtil;
      public static void handleMessage(int identifier, int reference, String message)
      {
 
-		 PluginDebug.debug("PAV handling: " + message);
-		 
+         PluginDebug.debug("PAV handling: " + message);
+         
          try {
-        	 if (message.startsWith("tag")) {
-        		 
-        		 // tag and handle must both be set before parsing, so we need
-        		 // synchronization here, as the setting of these variables
-        		 // may happen in independent threads
-        		 
-        		 synchronized(requests) {
+             if (message.startsWith("tag")) {
+                 
+                 // tag and handle must both be set before parsing, so we need
+                 // synchronization here, as the setting of these variables
+                 // may happen in independent threads
+                 
+                 synchronized(requests) {
 
                      // Check if we should proceed with init 
                      // (=> no if destroy was called after tag, but before 
@@ -415,84 +541,37 @@ import com.sun.jndi.toolkit.url.UrlUtil;
 
                      }
 
-        		     status.put(identifier, PAV_INIT_STATUS.PRE_INIT);
-        		     
-        			 PluginParseRequest request = requests.get(identifier);
-        			 if (request == null) {
-        				 request = new PluginParseRequest();
-        				 requests.put(identifier, request);
-        			 }
-        			 int index = message.indexOf(' ', "tag".length() + 1);
-        			 request.documentbase =
-        				 UrlUtil.decode(message.substring("tag".length() + 1, index));
-        			 request.tag = message.substring(index + 1);
-        			 PluginDebug.debug ("REQUEST TAG: " + request.tag + " " +
-        					 Thread.currentThread());
+                     status.put(identifier, PAV_INIT_STATUS.PRE_INIT);
+                     
+                     PluginParseRequest request = requests.get(identifier);
+                     if (request == null) {
+                         request = new PluginParseRequest();
+                         requests.put(identifier, request);
+                     }
+                     int index = message.indexOf(' ', "tag".length() + 1);
+                     request.documentbase =
+                         UrlUtil.decode(message.substring("tag".length() + 1, index));
+                     request.tag = message.substring(index + 1);
+                     PluginDebug.debug ("REQUEST TAG: " + request.tag + " " +
+                             Thread.currentThread());
 
-        			 if (request.handle != 0) {
-        				 PluginDebug.debug ("REQUEST TAG, PARSING " +
-        						 Thread.currentThread());
-        				 PluginAppletViewer.parse
-        				 (identifier, request.handle,
-        						 new StringReader(request.tag),
-        						 new URL(request.documentbase));
-        				 requests.remove(identifier);
+                         PluginDebug.debug ("REQUEST TAG, PARSING " +
+                                 Thread.currentThread());
+                         PluginAppletViewer.parse
+                         (identifier, request.handle,
+                                 new StringReader(request.tag),
+                                 new URL(request.documentbase));
+                         requests.remove(identifier);
 
-        				 // Panel initialization cannot be aborted mid-way. 
-        				 // Once it is initialized, double check to see if this 
-        				 // panel needs to stay around..
-        				 if (status.get(identifier).equals(PAV_INIT_STATUS.INACTIVE)) {
-        				     PluginDebug.debug("Inactive flag set. Destroying applet instance " + identifier);
-        				     applets.get(identifier).handleMessage(-1, "destroy");
-        				 } else {
-        				     status.put(identifier, PAV_INIT_STATUS.ACTIVE);
-        				 }
-
-        			 } else {
-        				 PluginDebug.debug ("REQUEST HANDLE NOT SET: " + request.handle + ". BYPASSING");
-        			 }
-        		 }
-        		 
-             } else if (message.startsWith("handle")) {
-            	 synchronized(requests) {
-            	     
-            	     // Check if we should proceed with init 
-            	     // (=> no if destroy was called after handle, but before 
-            	     // tag)
-            	     if (status.containsKey(identifier) &&
-                         status.get(identifier).equals(PAV_INIT_STATUS.INACTIVE)) {
-
-            	         PluginDebug.debug("Inactive flag set. Refusing to initialize instance " + identifier);
-            	         requests.remove(identifier);
-            	         return;
-
-            	     }
-
-            	     status.put(identifier, PAV_INIT_STATUS.PRE_INIT);
-
-            		 PluginParseRequest request = requests.get(identifier);
-            		 if (request == null) {
-            			 request = new PluginParseRequest();
-            			 requests.put(identifier, request);
-            		 }
-            		 request.handle = Long.parseLong
-            		 (message.substring("handle".length() + 1));
-            		 PluginDebug.debug ("REQUEST HANDLE: " + request.handle);
-            		 if (request.tag != null) {
-            			 PluginDebug.debug ("REQUEST HANDLE, PARSING " +
-            					 Thread.currentThread());
-            			 PluginAppletViewer.parse
-            			 (identifier, request.handle,
-            					 new StringReader(request.tag),
-            					 new URL(request.documentbase));
-            			 requests.remove(identifier);
-            			 PluginDebug.debug ("REQUEST HANDLE, DONE PARSING " +
-            					 Thread.currentThread());
-
-            		 } else {
-            			 PluginDebug.debug ("REQUEST TAG NOT SET: " + request.tag + ". BYPASSING");
-            		 }
-            	 }
+                         // Panel initialization cannot be aborted mid-way. 
+                         // Once it is initialized, double check to see if this 
+                         // panel needs to stay around..
+                         if (status.get(identifier).equals(PAV_INIT_STATUS.INACTIVE)) {
+                             PluginDebug.debug("Inactive flag set. Destroying applet instance " + identifier);
+                             applets.get(identifier).handleMessage(-1, "destroy");
+                         }
+                 }
+                 
              } else {
                  PluginDebug.debug ("Handling message: " + message + " instance " + identifier + " " + Thread.currentThread());
 
@@ -534,7 +613,37 @@ import com.sun.jndi.toolkit.url.UrlUtil;
                  if (status.get(identifier).equals(PAV_INIT_STATUS.INACTIVE))
                      return;
 
-                 applets.get(identifier).handleMessage(reference, message);
+                 if (message.startsWith("handle")) {
+
+                     PluginDebug.debug("handle command waiting for applet to complete loading.");
+                     int maxWait = 10000; // wait 10 seconds max for applet to fully load
+                     int wait = 0;
+                     while (!status.get(identifier).equals(PAV_INIT_STATUS.INIT_COMPLETE) &&
+                             (wait < maxWait)) {
+
+                          try {
+                              Thread.sleep(50);
+                              wait += 50;
+                          } catch (InterruptedException ie) {
+                              ie.printStackTrace();
+                          }
+                     }
+
+                     if (!status.get(identifier).equals(PAV_INIT_STATUS.INIT_COMPLETE))
+                         throw new Exception("Applet initialization timeout");
+
+                     PluginDebug.debug("Applet loading complete. Proceeding to reframe.");
+                     long handle = Long.parseLong
+                     (message.substring("handle".length() + 1));
+
+                     PluginAppletViewer oldFrame = applets.get(identifier);
+                     reFrame(oldFrame, oldFrame.identifier, oldFrame.statusMsgStream, 
+                             oldFrame.proposedHeightFactor, oldFrame.proposedWidthFactor, 
+                             handle, oldFrame.panel);
+                     
+                 } else {
+                     applets.get(identifier).handleMessage(reference, message);
+                 }
              }
          } catch (Exception e) {
 
@@ -553,45 +662,58 @@ import com.sun.jndi.toolkit.url.UrlUtil;
      {
          if (message.startsWith("width")) {
 
-        	 // 0 => width, 1=> width_value, 2 => height, 3=> height_value
-        	 String[] dimMsg = message.split(" ");
-        	 
-        	 final int height = (int) (proposedHeightFactor*Integer.parseInt(dimMsg[3]));
-        	 final int width = (int) (proposedWidthFactor*Integer.parseInt(dimMsg[1]));
+             // Wait for panel to come alive
+             int maxWait = 5000; // wait 5 seconds max for panel to come alive
+             int wait = 0;
+             while (!status.get(identifier).equals(PAV_INIT_STATUS.INIT_COMPLETE) && wait < maxWait) {
+                  try {
+                      Thread.sleep(50);
+                      wait += 50;
+                  } catch (InterruptedException ie) {
+                      ie.printStackTrace();
+                  }
+             }
+             
+             // 0 => width, 1=> width_value, 2 => height, 3=> height_value
+             String[] dimMsg = message.split(" ");
+             
+             final int height = (int) (proposedHeightFactor*Integer.parseInt(dimMsg[3]));
+             final int width = (int) (proposedWidthFactor*Integer.parseInt(dimMsg[1]));
 
-        	 if (panel instanceof NetxPanel)
-        		 ((NetxPanel) panel).updateSizeInAtts(height, width);
+             if (panel instanceof NetxPanel)
+                 ((NetxPanel) panel).updateSizeInAtts(height, width);
 
-        	 try {
-				SwingUtilities.invokeAndWait(new Runnable() {
-					 public void run() {
+             try {
+                SwingUtilities.invokeAndWait(new Runnable() {
+                     public void run() {
 
-			        	 setSize(width, height);
-						 
-						 // There is a rather odd drawing bug whereby resizing 
-						 // the panel makes no difference on initial call 
-						 // because the panel thinks that it is already the 
-						 // right size. Validation has no effect there either. 
-						 // So we work around by setting size to 1, validating, 
-						 // and then setting to the right size and validating 
-						 // again. This is not very efficient, and there is 
-						 // probably a better way -- but resizing happens 
-						 // quite infrequently, so for now this is how we do it
+                         setSize(width, height);
+                         
+                         // There is a rather odd drawing bug whereby resizing 
+                         // the panel makes no difference on initial call 
+                         // because the panel thinks that it is already the 
+                         // right size. Validation has no effect there either. 
+                         // So we work around by setting size to 1, validating, 
+                         // and then setting to the right size and validating 
+                         // again. This is not very efficient, and there is 
+                         // probably a better way -- but resizing happens 
+                         // quite infrequently, so for now this is how we do it
 
-			        	 panel.setSize(1,1);
-			        	 panel.validate();
+                         panel.setSize(1,1);
+                         panel.validate();
 
-			        	 panel.setSize(width, height);
-			        	 panel.validate();
-					 }
-				 });
-			} catch (InterruptedException e) {
-				// do nothing
-				e.printStackTrace();
-			} catch (InvocationTargetException e) {
-				// do nothing
-				e.printStackTrace();
-			}
+                         panel.setSize(width, height);
+                         panel.validate();
+                     }
+                 });
+            } catch (InterruptedException e) {
+                // do nothing
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                // do nothing
+                e.printStackTrace();
+            }
+
          } else if (message.startsWith("destroy")) {
              dispose();
              status.put(identifier, PAV_INIT_STATUS.INACTIVE);
@@ -646,97 +768,9 @@ import com.sun.jndi.toolkit.url.UrlUtil;
 
      // FIXME: Kind of hackish way to ensure synchronized re-drawing 
      private synchronized void forceredraw() {
-    	 doLayout();
+         doLayout();
      }
-     
-     /**
-      * Send the initial set of events to the appletviewer event queue.
-      * On start-up the current behaviour is to load the applet and call
-      * Applet.init() and Applet.start().
-      */
-     private void initEventQueue() {
- 	// appletviewer.send.event is an undocumented and unsupported system
- 	// property which is used exclusively for testing purposes.
-    	 PrivilegedAction pa = new PrivilegedAction() {
-    		 public Object run() {
-    			 return System.getProperty("appletviewer.send.event");
-    		 }
-    	 };
- 	String eventList = (String) AccessController.doPrivileged(pa); 
- 
- 	if (eventList == null) {
- 	    // Add the standard events onto the event queue.
- 	    panel.sendEvent(AppletPanel.APPLET_LOAD);
- 	    panel.sendEvent(AppletPanel.APPLET_INIT);
- 	    panel.sendEvent(AppletPanel.APPLET_START);
- 	} else {
- 	    // We're testing AppletViewer.  Force the specified set of events
- 	    // onto the event queue, wait for the events to be processed, and
- 	    // exit.
- 
- 	    // The list of events that will be executed is provided as a
- 	    // ","-separated list.  No error-checking will be done on the list.
-   	    String [] events = splitSeparator(",", eventList);
- 
-  	    for (int i = 0; i < events.length; i++) {
-  	    PluginDebug.debug("Adding event to queue: " + events[i]);
-  		if (events[i].equals("dispose"))
-  		    panel.sendEvent(AppletPanel.APPLET_DISPOSE);
-  		else if (events[i].equals("load"))
-  		    panel.sendEvent(AppletPanel.APPLET_LOAD);
-  		else if (events[i].equals("init"))
-  		    panel.sendEvent(AppletPanel.APPLET_INIT);
-  		else if (events[i].equals("start"))
-  		    panel.sendEvent(AppletPanel.APPLET_START);
-  		else if (events[i].equals("stop"))
-  		    panel.sendEvent(AppletPanel.APPLET_STOP);
-  		else if (events[i].equals("destroy"))
-  		    panel.sendEvent(AppletPanel.APPLET_DESTROY);
-  		else if (events[i].equals("quit"))
-  		    panel.sendEvent(AppletPanel.APPLET_QUIT);
-  		else if (events[i].equals("error"))
-  		    panel.sendEvent(AppletPanel.APPLET_ERROR);
-  		else
- 		    // non-fatal error if we get an unrecognized event
-  		    PluginDebug.debug("Unrecognized event name: " + events[i]);
-  	    }
- 
-   	    while (!panel.emptyEventQueue()) ;
-  	    appletSystemExit();
- 	}
-     }
- 
-     /**
-      * Split a string based on the presence of a specified separator.  Returns
-      * an array of arbitrary length.  The end of each element in the array is
-      * indicated by the separator of the end of the string.  If there is a
-      * separator immediately before the end of the string, the final element
-      * will be empty.  None of the strings will contain the separator.  Useful
-      * when separating strings such as "foo/bar/bas" using separator "/".
-      *
-      * @param sep  The separator.
-      * @param s    The string to split.
-      * @return     An array of strings.  Each string in the array is determined
-      *             by the location of the provided sep in the original string,
-      *             s.  Whitespace not stripped.
-      */
-     private String [] splitSeparator(String sep, String s) {
-  	Vector v = new Vector();
- 	int tokenStart = 0;
- 	int tokenEnd   = 0;
- 
- 	while ((tokenEnd = s.indexOf(sep, tokenStart)) != -1) {
- 	    v.addElement(s.substring(tokenStart, tokenEnd));
- 	    tokenStart = tokenEnd+1;
- 	}
- 	// Add the final element.
- 	v.addElement(s.substring(tokenStart));
- 
- 	String [] retVal = new String[v.size()];
- 	v.copyInto(retVal);
-  	return retVal;
-     }
- 
+
      /*
       * Methods for java.applet.AppletContext
       */
@@ -747,14 +781,14 @@ import com.sun.jndi.toolkit.url.UrlUtil;
       * Get an audio clip.
       */
      public AudioClip getAudioClip(URL url) {
- 	checkConnect(url);
- 	synchronized (audioClips) {
- 	    AudioClip clip = (AudioClip)audioClips.get(url);
- 	    if (clip == null) {
- 		audioClips.put(url, clip = new AppletAudioClip(url));
- 	    }
- 	    return clip;
- 	}
+    checkConnect(url);
+    synchronized (audioClips) {
+        AudioClip clip = (AudioClip)audioClips.get(url);
+        if (clip == null) {
+        audioClips.put(url, clip = new AppletAudioClip(url));
+        }
+        return clip;
+    }
      }
  
      private static Map imageRefs = new HashMap();
@@ -763,12 +797,12 @@ import com.sun.jndi.toolkit.url.UrlUtil;
       * Get an image.
       */
      public Image getImage(URL url) {
- 	return getCachedImage(url);
+    return getCachedImage(url);
      }
  
      private Image getCachedImage(URL url) {
- 	// System.getSecurityManager().checkConnection(url.getHost(), url.getPort());
- 	return (Image)getCachedImageRef(url).get();
+    // System.getSecurityManager().checkConnection(url.getHost(), url.getPort());
+    return (Image)getCachedImageRef(url).get();
      }
  
      /**
@@ -823,7 +857,7 @@ import com.sun.jndi.toolkit.url.UrlUtil;
       * Flush the image cache.
       */
      static void flushImageCache() {
- 	imageRefs.clear();
+    imageRefs.clear();
      }
  
      static Vector appletPanels = new Vector();
@@ -832,27 +866,27 @@ import com.sun.jndi.toolkit.url.UrlUtil;
       * Get an applet by name.
       */
      public Applet getApplet(String name) {
- 	name = name.toLowerCase();
- 	SocketPermission panelSp =
- 	    new SocketPermission(panel.getCodeBase().getHost(), "connect");
- 	for (Enumeration e = appletPanels.elements() ; e.hasMoreElements() ;) {
- 	    AppletPanel p = (AppletPanel)e.nextElement();
- 	    String param = p.getParameter("name");
- 	    if (param != null) {
- 		param = param.toLowerCase();
- 	    }
- 	    if (name.equals(param) &&
- 		p.getDocumentBase().equals(panel.getDocumentBase())) {
+    name = name.toLowerCase();
+    SocketPermission panelSp =
+        new SocketPermission(panel.getCodeBase().getHost(), "connect");
+    for (Enumeration e = appletPanels.elements() ; e.hasMoreElements() ;) {
+        AppletPanel p = (AppletPanel)e.nextElement();
+        String param = p.getParameter("name");
+        if (param != null) {
+        param = param.toLowerCase();
+        }
+        if (name.equals(param) &&
+        p.getDocumentBase().equals(panel.getDocumentBase())) {
  
- 		SocketPermission sp =
- 		    new SocketPermission(p.getCodeBase().getHost(), "connect");
+        SocketPermission sp =
+            new SocketPermission(p.getCodeBase().getHost(), "connect");
  
- 		if (panelSp.implies(sp)) {
- 		    return p.applet;
- 		}
- 	    }
- 	}
- 	return null;
+        if (panelSp.implies(sp)) {
+            return p.applet;
+        }
+        }
+    }
+    return null;
      }
  
      /**
@@ -860,98 +894,98 @@ import com.sun.jndi.toolkit.url.UrlUtil;
       * applets on this page.
       */
      public Enumeration getApplets() {
- 	Vector v = new Vector();
- 	SocketPermission panelSp =
- 	    new SocketPermission(panel.getCodeBase().getHost(), "connect");
+    Vector v = new Vector();
+    SocketPermission panelSp =
+        new SocketPermission(panel.getCodeBase().getHost(), "connect");
  
- 	for (Enumeration e = appletPanels.elements() ; e.hasMoreElements() ;) {
- 	    AppletPanel p = (AppletPanel)e.nextElement();
- 	    if (p.getDocumentBase().equals(panel.getDocumentBase())) {
+    for (Enumeration e = appletPanels.elements() ; e.hasMoreElements() ;) {
+        AppletPanel p = (AppletPanel)e.nextElement();
+        if (p.getDocumentBase().equals(panel.getDocumentBase())) {
  
- 		SocketPermission sp =
- 		    new SocketPermission(p.getCodeBase().getHost(), "connect");
- 		if (panelSp.implies(sp)) {
- 		    v.addElement(p.applet);
- 		}
- 	    }
- 	}
- 	return v.elements();
+        SocketPermission sp =
+            new SocketPermission(p.getCodeBase().getHost(), "connect");
+        if (panelSp.implies(sp)) {
+            v.addElement(p.applet);
+        }
+        }
+    }
+    return v.elements();
      }
  
      /**
       * Ignore.
       */
      public void showDocument(URL url) {
-    	 PluginDebug.debug("Showing document...");
- 	showDocument(url, "_self");
+         PluginDebug.debug("Showing document...");
+    showDocument(url, "_self");
      }
  
      /**
       * Ignore.
       */
      public void showDocument(URL url, String target) {
- 	try {
+    try {
              // FIXME: change to postCallRequest
- 	    write("url " + UrlUtil.encode(url.toString(), "UTF-8") + " " + target);
- 	} catch (IOException exception) {
- 	    // Deliberately ignore IOException.  showDocument may be
- 	    // called from threads other than the main thread after
- 	    // streamhandler.pluginOutputStream has been closed.
- 	}
+        write("url " + UrlUtil.encode(url.toString(), "UTF-8") + " " + target);
+    } catch (IOException exception) {
+        // Deliberately ignore IOException.  showDocument may be
+        // called from threads other than the main thread after
+        // streamhandler.pluginOutputStream has been closed.
+    }
      }
  
      /**
       * Show status.
       */
      public void showStatus(String status) {
- 	try {
+    try {
              // FIXME: change to postCallRequest
- 		// For statuses, we cannot have a newline
-  	    status = status.replace("\n", " ");
- 	    write("status " + status);
- 	} catch (IOException exception) {
- 	    // Deliberately ignore IOException.  showStatus may be
- 	    // called from threads other than the main thread after
- 	    // streamhandler.pluginOutputStream has been closed.
- 	}
+        // For statuses, we cannot have a newline
+        status = status.replace("\n", " ");
+        write("status " + status);
+    } catch (IOException exception) {
+        // Deliberately ignore IOException.  showStatus may be
+        // called from threads other than the main thread after
+        // streamhandler.pluginOutputStream has been closed.
+    }
      }
      
      public long getWindow() {
-    	 PluginDebug.debug ("STARTING getWindow");
-    	 PluginCallRequest request = requestFactory.getPluginCallRequest("window",
-    			 							"instance " + identifier + " " + "GetWindow", 
-    			 							"JavaScriptGetWindow");
-    	 PluginDebug.debug ("STARTING postCallRequest");
-		 streamhandler.postCallRequest(request);
-    	 PluginDebug.debug ("STARTING postCallRequest done");
-    	 streamhandler.write(request.getMessage());
-    	 try {
-    		 PluginDebug.debug ("wait request 1");
-    		 synchronized(request) {
-    			 PluginDebug.debug ("wait request 2");
-    			 while ((Long) request.getObject() == 0)
-    				 request.wait();
-    			 PluginDebug.debug ("wait request 3");
-    		 }
-    	 } catch (InterruptedException e) {
-    		 throw new RuntimeException("Interrupted waiting for call request.",
-    				 e);
-    	 }
+         PluginDebug.debug ("STARTING getWindow");
+         PluginCallRequest request = requestFactory.getPluginCallRequest("window",
+                                            "instance " + identifier + " " + "GetWindow", 
+                                            "JavaScriptGetWindow");
+         PluginDebug.debug ("STARTING postCallRequest");
+         streamhandler.postCallRequest(request);
+         PluginDebug.debug ("STARTING postCallRequest done");
+         streamhandler.write(request.getMessage());
+         try {
+             PluginDebug.debug ("wait request 1");
+             synchronized(request) {
+                 PluginDebug.debug ("wait request 2");
+                 while ((Long) request.getObject() == 0)
+                     request.wait();
+                 PluginDebug.debug ("wait request 3");
+             }
+         } catch (InterruptedException e) {
+             throw new RuntimeException("Interrupted waiting for call request.",
+                     e);
+         }
 
-    	 PluginDebug.debug ("STARTING getWindow DONE");
-    	 return (Long) request.getObject();
+         PluginDebug.debug ("STARTING getWindow DONE");
+         return (Long) request.getObject();
      }
  
      // FIXME: make private, access via reflection.
      public static Object getMember(long internal, String name)
      {
-    	 AppletSecurityContextManager.getSecurityContext(0).store(name);
+         AppletSecurityContextManager.getSecurityContext(0).store(name);
          int nameID = AppletSecurityContextManager.getSecurityContext(0).getIdentifier(name);
  
          // Prefix with dummy instance for convenience.
          PluginCallRequest request = requestFactory.getPluginCallRequest("member", 
-        		 							"instance " + 0 + " GetMember " + internal + " " + nameID, 
-        		 							"JavaScriptGetMember");
+                                            "instance " + 0 + " GetMember " + internal + " " + nameID, 
+                                            "JavaScriptGetMember");
          streamhandler.postCallRequest(request);
          streamhandler.write(request.getMessage());
          try {
@@ -972,7 +1006,7 @@ import com.sun.jndi.toolkit.url.UrlUtil;
  
      public static void setMember(long internal, String name, Object value) {
          System.err.println("Setting to class " + value.getClass() + ":" + value.getClass().isPrimitive());
-    	 AppletSecurityContextManager.getSecurityContext(0).store(name);
+         AppletSecurityContextManager.getSecurityContext(0).store(name);
          int nameID = AppletSecurityContextManager.getSecurityContext(0).getIdentifier(name);
 
          // work on a copy of value, as we don't want to be manipulating 
@@ -1005,8 +1039,8 @@ import com.sun.jndi.toolkit.url.UrlUtil;
  
          // Prefix with dummy instance for convenience.
          PluginCallRequest request = requestFactory.getPluginCallRequest("void",
-        		 							"instance " + 0 + " SetMember " + internal + " " + nameID + " " + valueToSetTo, 
-        		 							"JavaScriptSetMember");
+                                            "instance " + 0 + " SetMember " + internal + " " + nameID + " " + valueToSetTo, 
+                                            "JavaScriptSetMember");
          streamhandler.postCallRequest(request);
          streamhandler.write(request.getMessage());
          try {
@@ -1027,8 +1061,8 @@ import com.sun.jndi.toolkit.url.UrlUtil;
  
      // FIXME: handle long index as well.
      public static void setSlot(long internal, int index, Object value) {
-    	 AppletSecurityContextManager.getSecurityContext(0).store(value);
-    	 
+         AppletSecurityContextManager.getSecurityContext(0).store(value);
+         
          // work on a copy of value, as we don't want to be manipulating 
          // complex objects
          String valueToSetTo;
@@ -1059,8 +1093,8 @@ import com.sun.jndi.toolkit.url.UrlUtil;
  
          // Prefix with dummy instance for convenience.
          PluginCallRequest request = requestFactory.getPluginCallRequest("void",
-        		 						"instance " + 0 + " SetSlot " + internal + " " + index + " " + valueToSetTo, 
-        		 						"JavaScriptSetSlot");
+                                        "instance " + 0 + " SetSlot " + internal + " " + index + " " + valueToSetTo, 
+                                        "JavaScriptSetSlot");
          streamhandler.postCallRequest(request);
          streamhandler.write(request.getMessage());
          try {
@@ -1082,8 +1116,8 @@ import com.sun.jndi.toolkit.url.UrlUtil;
      {
          // Prefix with dummy instance for convenience.
          PluginCallRequest request = requestFactory.getPluginCallRequest("member", 
-        		 								"instance " + 0 + " GetSlot " + internal + " " + index, 
-        		 								"JavaScriptGetSlot");
+                                                "instance " + 0 + " GetSlot " + internal + " " + index, 
+                                                "JavaScriptGetSlot");
          streamhandler.postCallRequest(request);
          streamhandler.write(request.getMessage());
          try {
@@ -1104,13 +1138,13 @@ import com.sun.jndi.toolkit.url.UrlUtil;
  
      public static Object eval(long internal, String s)
      {
-    	 AppletSecurityContextManager.getSecurityContext(0).store(s);
+         AppletSecurityContextManager.getSecurityContext(0).store(s);
          int stringID = AppletSecurityContextManager.getSecurityContext(0).getIdentifier(s);
          // Prefix with dummy instance for convenience.
          // FIXME: rename GetMemberPluginCallRequest ObjectPluginCallRequest.
-         PluginCallRequest request = requestFactory.getPluginCallRequest("member",	
-        		 								"instance " + 0 + " Eval " + internal + " " + stringID, 
-        		 								"JavaScriptEval");
+         PluginCallRequest request = requestFactory.getPluginCallRequest("member",  
+                                                "instance " + 0 + " Eval " + internal + " " + stringID, 
+                                                "JavaScriptEval");
          streamhandler.postCallRequest(request);
          streamhandler.write(request.getMessage());
          try {
@@ -1130,13 +1164,13 @@ import com.sun.jndi.toolkit.url.UrlUtil;
      }
  
      public static void removeMember (long internal, String name) {
-    	 AppletSecurityContextManager.getSecurityContext(0).store(name);
+         AppletSecurityContextManager.getSecurityContext(0).store(name);
          int nameID = AppletSecurityContextManager.getSecurityContext(0).getIdentifier(name);
  
          // Prefix with dummy instance for convenience.
          PluginCallRequest request = requestFactory.getPluginCallRequest("void",
-        		 						"instance " + 0 + " RemoveMember " + internal + " " + nameID, 
-        		 						"JavaScriptRemoveMember");
+                                        "instance " + 0 + " RemoveMember " + internal + " " + nameID, 
+                                        "JavaScriptRemoveMember");
          streamhandler.postCallRequest(request);
          streamhandler.write(request.getMessage());
          try {
@@ -1159,7 +1193,7 @@ import com.sun.jndi.toolkit.url.UrlUtil;
          // FIXME: when is this removed from the object store?
          // FIXME: reference should return the ID.
          // FIXME: convenience method for this long line.
-    	 AppletSecurityContextManager.getSecurityContext(0).store(name);
+         AppletSecurityContextManager.getSecurityContext(0).store(name);
          int nameID = AppletSecurityContextManager.getSecurityContext(0).getIdentifier(name);
          
          String argIDs = "";
@@ -1172,8 +1206,8 @@ import com.sun.jndi.toolkit.url.UrlUtil;
  
          // Prefix with dummy instance for convenience.
          PluginCallRequest request = requestFactory.getPluginCallRequest("member",
-        		 							"instance " + 0 + " Call " + internal + " " + nameID + " " + argIDs, 
-        		 							"JavaScriptCall");
+                                            "instance " + 0 + " Call " + internal + " " + nameID + " " + argIDs, 
+                                            "JavaScriptCall");
          streamhandler.postCallRequest(request);
          streamhandler.write(request.getMessage());
          try {
@@ -1273,8 +1307,8 @@ import com.sun.jndi.toolkit.url.UrlUtil;
      {
          // Prefix with dummy instance for convenience.
          PluginCallRequest request = requestFactory.getPluginCallRequest("void",
-        		 						"instance " + 0 + " Finalize " + internal, 
-        		 						"JavaScriptFinalize");
+                                        "instance " + 0 + " Finalize " + internal, 
+                                        "JavaScriptFinalize");
          streamhandler.postCallRequest(request);
          streamhandler.write(request.getMessage());
          try {
@@ -1296,8 +1330,8 @@ import com.sun.jndi.toolkit.url.UrlUtil;
      {
          // Prefix with dummy instance for convenience.
          PluginCallRequest request = requestFactory.getPluginCallRequest("member",
-        		 								"instance " + 0 + " ToString " + internal, 
-        		 								"JavaScriptToString");
+                                                "instance " + 0 + " ToString " + internal, 
+                                                "JavaScriptToString");
          streamhandler.postCallRequest(request);
          streamhandler.write(request.getMessage());
          try {
@@ -1325,17 +1359,17 @@ import com.sun.jndi.toolkit.url.UrlUtil;
      }
 
      public void setStream(String key, InputStream stream)throws IOException{
- 	// We do nothing.
+    // We do nothing.
      }
  
      public InputStream getStream(String key){
- 	// We do nothing.
- 	return null;
+    // We do nothing.
+    return null;
      }
  
      public Iterator getStreamKeys(){
- 	// We do nothing.
- 	return null;
+    // We do nothing.
+    return null;
      }
  
      /**
@@ -1344,113 +1378,113 @@ import com.sun.jndi.toolkit.url.UrlUtil;
      static Hashtable systemParam = new Hashtable();
  
      static {
- 	systemParam.put("codebase", "codebase");
- 	systemParam.put("code", "code");
- 	systemParam.put("alt", "alt");
- 	systemParam.put("width", "width");
- 	systemParam.put("height", "height");
- 	systemParam.put("align", "align");
- 	systemParam.put("vspace", "vspace");
- 	systemParam.put("hspace", "hspace");
+    systemParam.put("codebase", "codebase");
+    systemParam.put("code", "code");
+    systemParam.put("alt", "alt");
+    systemParam.put("width", "width");
+    systemParam.put("height", "height");
+    systemParam.put("align", "align");
+    systemParam.put("vspace", "vspace");
+    systemParam.put("hspace", "hspace");
      }
  
      /**
       * Print the HTML tag.
       */
      public static void printTag(PrintStream out, Hashtable atts) {
- 	out.print("<applet");
+    out.print("<applet");
  
- 	String v = (String)atts.get("codebase");
- 	if (v != null) {
- 	    out.print(" codebase=\"" + v + "\"");
- 	}
+    String v = (String)atts.get("codebase");
+    if (v != null) {
+        out.print(" codebase=\"" + v + "\"");
+    }
  
- 	v = (String)atts.get("code");
- 	if (v == null) {
- 	    v = "applet.class";
- 	}
- 	out.print(" code=\"" + v + "\"");
- 	v = (String)atts.get("width");
- 	if (v == null) {
- 	    v = "150";
- 	}
- 	out.print(" width=" + v);
+    v = (String)atts.get("code");
+    if (v == null) {
+        v = "applet.class";
+    }
+    out.print(" code=\"" + v + "\"");
+    v = (String)atts.get("width");
+    if (v == null) {
+        v = "150";
+    }
+    out.print(" width=" + v);
  
- 	v = (String)atts.get("height");
- 	if (v == null) {
- 	    v = "100";
- 	}
- 	out.print(" height=" + v);
+    v = (String)atts.get("height");
+    if (v == null) {
+        v = "100";
+    }
+    out.print(" height=" + v);
  
- 	v = (String)atts.get("name");
- 	if (v != null) {
- 	    out.print(" name=\"" + v + "\"");
- 	}
- 	out.println(">");
+    v = (String)atts.get("name");
+    if (v != null) {
+        out.print(" name=\"" + v + "\"");
+    }
+    out.println(">");
  
- 	// A very slow sorting algorithm
- 	int len = atts.size();
- 	String params[] = new String[len];
- 	len = 0;
- 	for (Enumeration e = atts.keys() ; e.hasMoreElements() ;) {
- 	    String param = (String)e.nextElement();
- 	    int i = 0;
- 	    for (; i < len ; i++) {
- 		if (params[i].compareTo(param) >= 0) {
- 		    break;
- 		}
- 	    }
- 	    System.arraycopy(params, i, params, i + 1, len - i);
- 	    params[i] = param;
- 	    len++;
- 	}
+    // A very slow sorting algorithm
+    int len = atts.size();
+    String params[] = new String[len];
+    len = 0;
+    for (Enumeration e = atts.keys() ; e.hasMoreElements() ;) {
+        String param = (String)e.nextElement();
+        int i = 0;
+        for (; i < len ; i++) {
+        if (params[i].compareTo(param) >= 0) {
+            break;
+        }
+        }
+        System.arraycopy(params, i, params, i + 1, len - i);
+        params[i] = param;
+        len++;
+    }
  
- 	for (int i = 0 ; i < len ; i++) {
- 	    String param = params[i];
- 	    if (systemParam.get(param) == null) {
- 		out.println("<param name=" + param +
- 			    " value=\"" + atts.get(param) + "\">");
- 	    }
- 	}
- 	out.println("</applet>");
+    for (int i = 0 ; i < len ; i++) {
+        String param = params[i];
+        if (systemParam.get(param) == null) {
+        out.println("<param name=" + param +
+                " value=\"" + atts.get(param) + "\">");
+        }
+    }
+    out.println("</applet>");
      }
  
      /**
       * Make sure the atrributes are uptodate.
       */
      public void updateAtts() {
- 	Dimension d = panel.size();
- 	Insets in = panel.insets();
- 	panel.atts.put("width",
- 		       new Integer(d.width - (in.left + in.right)).toString());
- 	panel.atts.put("height",
- 		       new Integer(d.height - (in.top + in.bottom)).toString());
+    Dimension d = panel.size();
+    Insets in = panel.insets();
+    panel.atts.put("width",
+               new Integer(d.width - (in.left + in.right)).toString());
+    panel.atts.put("height",
+               new Integer(d.height - (in.top + in.bottom)).toString());
      }
  
      /**
       * Restart the applet.
       */
      void appletRestart() {
- 	panel.sendEvent(AppletPanel.APPLET_STOP);
- 	panel.sendEvent(AppletPanel.APPLET_DESTROY);
- 	panel.sendEvent(AppletPanel.APPLET_INIT);
- 	panel.sendEvent(AppletPanel.APPLET_START);
+    panel.sendEvent(AppletPanel.APPLET_STOP);
+    panel.sendEvent(AppletPanel.APPLET_DESTROY);
+    panel.sendEvent(AppletPanel.APPLET_INIT);
+    panel.sendEvent(AppletPanel.APPLET_START);
      }
  
      /**
       * Reload the applet.
       */
      void appletReload() {
- 	panel.sendEvent(AppletPanel.APPLET_STOP);
- 	panel.sendEvent(AppletPanel.APPLET_DESTROY);
- 	panel.sendEvent(AppletPanel.APPLET_DISPOSE);
+    panel.sendEvent(AppletPanel.APPLET_STOP);
+    panel.sendEvent(AppletPanel.APPLET_DESTROY);
+    panel.sendEvent(AppletPanel.APPLET_DISPOSE);
  
- 	/**
- 	 * Fixed #4501142: Classlaoder sharing policy doesn't 
- 	 * take "archive" into account. This will be overridden
- 	 * by Java Plug-in.			[stanleyh]
- 	 */
- 	AppletPanel.flushClassLoader(panel.getClassLoaderCacheKey());
+    /**
+     * Fixed #4501142: Classlaoder sharing policy doesn't 
+     * take "archive" into account. This will be overridden
+     * by Java Plug-in.         [stanleyh]
+     */
+    AppletPanel.flushClassLoader(panel.getClassLoaderCacheKey());
  
          /*
           * Make sure we don't have two threads running through the event queue
@@ -1458,21 +1492,21 @@ import com.sun.jndi.toolkit.url.UrlUtil;
           */
          try {
              panel.joinAppletThread();
- 	    panel.release();
+        panel.release();
          } catch (InterruptedException e) {
              return;   // abort the reload
          }
  
          AccessController.doPrivileged(new PrivilegedAction() {
              public Object run() {
-            	 panel.createAppletThread();
+                 panel.createAppletThread();
                  return null;
              }
          });     
     
- 	panel.sendEvent(AppletPanel.APPLET_LOAD);
- 	panel.sendEvent(AppletPanel.APPLET_INIT);
- 	panel.sendEvent(AppletPanel.APPLET_START);
+    panel.sendEvent(AppletPanel.APPLET_LOAD);
+    panel.sendEvent(AppletPanel.APPLET_INIT);
+    panel.sendEvent(AppletPanel.APPLET_START);
      }
  
      public int print(Graphics graphics, PageFormat pf, int pageIndex) {
@@ -1483,14 +1517,14 @@ import com.sun.jndi.toolkit.url.UrlUtil;
       * Start the applet.
       */
      void appletStart() {
- 	panel.sendEvent(AppletPanel.APPLET_START);
+    panel.sendEvent(AppletPanel.APPLET_START);
      }
  
      /**
       * Stop the applet.
       */
      void appletStop() {
- 	panel.sendEvent(AppletPanel.APPLET_STOP);
+    panel.sendEvent(AppletPanel.APPLET_STOP);
      }
  
      /**
@@ -1498,10 +1532,10 @@ import com.sun.jndi.toolkit.url.UrlUtil;
       * Stop, Destroy, Dispose and Quit a viewer
       */
      private void appletShutdown(AppletPanel p) {
- 	p.sendEvent(AppletPanel.APPLET_STOP);
- 	p.sendEvent(AppletPanel.APPLET_DESTROY);
- 	p.sendEvent(AppletPanel.APPLET_DISPOSE);
- 	p.sendEvent(AppletPanel.APPLET_QUIT);
+    p.sendEvent(AppletPanel.APPLET_STOP);
+    p.sendEvent(AppletPanel.APPLET_DESTROY);
+    p.sendEvent(AppletPanel.APPLET_DISPOSE);
+    p.sendEvent(AppletPanel.APPLET_QUIT);
      }
  
      /**
@@ -1540,8 +1574,8 @@ import com.sun.jndi.toolkit.url.UrlUtil;
       * Exit from the program (if not stand alone) - do no clean-up
       */
      private void appletSystemExit() {
- 	if (factory.isStandalone())
- 	    System.exit(0);
+         // Do nothing. Exit is handled by another 
+         // block of code, called when _all_ applets are gone
      }
  
      /**
@@ -1549,7 +1583,7 @@ import com.sun.jndi.toolkit.url.UrlUtil;
       */
  
      public static int countApplets() {
- 	return appletPanels.size();
+    return appletPanels.size();
      }
  
  
@@ -1563,18 +1597,18 @@ import com.sun.jndi.toolkit.url.UrlUtil;
       */
      public static void skipSpace(Reader in) throws IOException {
          while ((c >= 0) &&
- 	       ((c == ' ') || (c == '\t') || (c == '\n') || (c == '\r'))) {
- 	    c = in.read();
- 	}
+           ((c == ' ') || (c == '\t') || (c == '\n') || (c == '\r'))) {
+        c = in.read();
+    }
      }
  
      /**
       * Scan identifier
       */
      public static String scanIdentifier(Reader in) throws IOException {
- 	StringBuffer buf = new StringBuffer();
- 	
- 	if (c == '!') {
+    StringBuffer buf = new StringBuffer();
+    
+    if (c == '!') {
         // Technically, we should be scanning for '!--' but we are reading 
         // from a stream, and there is no way to peek ahead. That said, 
         // a ! at this point can only mean comment here afaik, so we 
@@ -1582,17 +1616,17 @@ import com.sun.jndi.toolkit.url.UrlUtil;
         skipComment(in);
         return "";
     }
- 	
- 	while (true) {
- 	    if (((c >= 'a') && (c <= 'z')) ||
- 		((c >= 'A') && (c <= 'Z')) ||
- 		((c >= '0') && (c <= '9')) || (c == '_')) {
- 		buf.append((char)c);
- 		c = in.read();
- 	    } else {
- 		return buf.toString();
- 	    }
- 	}
+    
+    while (true) {
+        if (((c >= 'a') && (c <= 'z')) ||
+        ((c >= 'A') && (c <= 'Z')) ||
+        ((c >= '0') && (c <= '9')) || (c == '_')) {
+        buf.append((char)c);
+        c = in.read();
+        } else {
+        return buf.toString();
+        }
+    }
      }
 
      public static void skipComment(Reader in) throws IOException {
@@ -1634,41 +1668,41 @@ import com.sun.jndi.toolkit.url.UrlUtil;
       * Scan tag
       */
      public static Hashtable scanTag(Reader in) throws IOException {
- 	Hashtable atts = new Hashtable();
- 	skipSpace(in);
+    Hashtable atts = new Hashtable();
+    skipSpace(in);
          while (c >= 0 && c != '>') {
- 	    String att = scanIdentifier(in);
- 	    String val = "";
- 	    skipSpace(in);
- 	    if (c == '=') {
- 		int quote = -1;
- 		c = in.read();
- 		skipSpace(in);
- 		if ((c == '\'') || (c == '\"')) {
- 		    quote = c;
- 		    c = in.read();
- 		}
- 		StringBuffer buf = new StringBuffer();
+        String att = scanIdentifier(in);
+        String val = "";
+        skipSpace(in);
+        if (c == '=') {
+        int quote = -1;
+        c = in.read();
+        skipSpace(in);
+        if ((c == '\'') || (c == '\"')) {
+            quote = c;
+            c = in.read();
+        }
+        StringBuffer buf = new StringBuffer();
                  while ((c > 0) &&
- 		       (((quote < 0) && (c != ' ') && (c != '\t') &&
+               (((quote < 0) && (c != ' ') && (c != '\t') &&
                           (c != '\n') && (c != '\r') && (c != '>'))
- 			|| ((quote >= 0) && (c != quote)))) {
- 		    buf.append((char)c);
- 		    c = in.read();
- 		}
- 		if (c == quote) {
- 		    c = in.read();
- 		}
- 		skipSpace(in);
- 		val = buf.toString();
- 	    }
+            || ((quote >= 0) && (c != quote)))) {
+            buf.append((char)c);
+            c = in.read();
+        }
+        if (c == quote) {
+            c = in.read();
+        }
+        skipSpace(in);
+        val = buf.toString();
+        }
 
         att = att.replace("&gt;", ">");
         att = att.replace("&lt;", "<");
         att = att.replace("&amp;", "&");
         att = att.replace("&#10;", "\n");
         att = att.replace("&#13;", "\r");
- 	    
+        
         val = val.replace("&gt;", ">");
         val = val.replace("&lt;", "<");
         val = val.replace("&amp;", "&");
@@ -1687,8 +1721,8 @@ import com.sun.jndi.toolkit.url.UrlUtil;
                  c = in.read();
              }
              //skipSpace(in);
- 	}
- 	return atts;
+    }
+    return atts;
      }
      
      // private static final == inline
@@ -1714,14 +1748,14 @@ import com.sun.jndi.toolkit.url.UrlUtil;
      static String encoding = null;
  
      static private Reader makeReader(InputStream is) {
- 	if (encoding != null) {
- 	    try {
- 		return new BufferedReader(new InputStreamReader(is, encoding));
- 	    } catch (IOException x) { }
- 	}
- 	InputStreamReader r = new InputStreamReader(is);
- 	encoding = r.getEncoding();
- 	return new BufferedReader(r);
+    if (encoding != null) {
+        try {
+        return new BufferedReader(new InputStreamReader(is, encoding));
+        } catch (IOException x) { }
+    }
+    InputStreamReader r = new InputStreamReader(is);
+    encoding = r.getEncoding();
+    return new BufferedReader(r);
      }
  
      /**
@@ -1730,152 +1764,156 @@ import com.sun.jndi.toolkit.url.UrlUtil;
      public static void parse(int identifier, long handle, Reader in, URL url, String enc)
          throws IOException {
          encoding = enc;
-         parse(identifier, handle, in, url, System.out, new PluginAppletViewerFactory());
+         parse(identifier, handle, in, url, System.out, new PluginAppletPanelFactory());
      }
  
      public static void parse(int identifier, long handle, Reader in, URL url)
          throws IOException {
          
-    	 final int fIdentifier = identifier;
-    	 final long fHandle = handle;
-    	 final Reader fIn = in;
-    	 final URL fUrl = url;
-    	 PrivilegedAction pa = new PrivilegedAction() {
-    		 public Object run() {
-    			 try {
-    				 parse(fIdentifier, fHandle, fIn, fUrl, System.out, new PluginAppletViewerFactory());
-    			 } catch (IOException ioe) {
-    				 return ioe;
-    			 }
-    	         
-    			 return null;
-    		 }
-    	 };
+         final int fIdentifier = identifier;
+         final long fHandle = handle;
+         final Reader fIn = in;
+         final URL fUrl = url;
+         PrivilegedAction pa = new PrivilegedAction() {
+             public Object run() {
+                 try {
+                     parse(fIdentifier, fHandle, fIn, fUrl, System.out, new PluginAppletPanelFactory());
+                 } catch (IOException ioe) {
+                     return ioe;
+                 }
+                 
+                 return null;
+             }
+         };
 
-    	 Object ret = AccessController.doPrivileged(pa);
-    	 if (ret instanceof IOException) {
-    		 throw (IOException) ret;
-    	 }
+         Object ret = AccessController.doPrivileged(pa);
+         if (ret instanceof IOException) {
+             throw (IOException) ret;
+         }
      }
  
      public static void parse(int identifier, long handle, Reader in, URL url,
                               PrintStream statusMsgStream,
-                              PluginAppletViewerFactory factory)
+                              PluginAppletPanelFactory factory)
          throws IOException
      {
-    	 // <OBJECT> <EMBED> tag flags
-    	 boolean isAppletTag = false;
-    	 boolean isObjectTag = false;
-    	 boolean isEmbedTag = false;
-    	 boolean objectTagAlreadyParsed = false;
+         // <OBJECT> <EMBED> tag flags
+         boolean isAppletTag = false;
+         boolean isObjectTag = false;
+         boolean isEmbedTag = false;
+         boolean objectTagAlreadyParsed = false;
 
-    	 // warning messages
-    	 String requiresNameWarning = amh.getMessage("parse.warning.requiresname");
-    	 String paramOutsideWarning = amh.getMessage("parse.warning.paramoutside");
-    	 String appletRequiresCodeWarning = amh.getMessage("parse.warning.applet.requirescode");
-    	 String appletRequiresHeightWarning = amh.getMessage("parse.warning.applet.requiresheight");
-    	 String appletRequiresWidthWarning = amh.getMessage("parse.warning.applet.requireswidth");
-    	 String objectRequiresCodeWarning = amh.getMessage("parse.warning.object.requirescode");
-    	 String objectRequiresHeightWarning = amh.getMessage("parse.warning.object.requiresheight");
-    	 String objectRequiresWidthWarning = amh.getMessage("parse.warning.object.requireswidth");
-    	 String embedRequiresCodeWarning = amh.getMessage("parse.warning.embed.requirescode");
-    	 String embedRequiresHeightWarning = amh.getMessage("parse.warning.embed.requiresheight");
-    	 String embedRequiresWidthWarning = amh.getMessage("parse.warning.embed.requireswidth");
-    	 String appNotLongerSupportedWarning = amh.getMessage("parse.warning.appnotLongersupported");
+         // warning messages
+         String requiresNameWarning = amh.getMessage("parse.warning.requiresname");
+         String paramOutsideWarning = amh.getMessage("parse.warning.paramoutside");
+         String appletRequiresCodeWarning = amh.getMessage("parse.warning.applet.requirescode");
+         String appletRequiresHeightWarning = amh.getMessage("parse.warning.applet.requiresheight");
+         String appletRequiresWidthWarning = amh.getMessage("parse.warning.applet.requireswidth");
+         String objectRequiresCodeWarning = amh.getMessage("parse.warning.object.requirescode");
+         String objectRequiresHeightWarning = amh.getMessage("parse.warning.object.requiresheight");
+         String objectRequiresWidthWarning = amh.getMessage("parse.warning.object.requireswidth");
+         String embedRequiresCodeWarning = amh.getMessage("parse.warning.embed.requirescode");
+         String embedRequiresHeightWarning = amh.getMessage("parse.warning.embed.requiresheight");
+         String embedRequiresWidthWarning = amh.getMessage("parse.warning.embed.requireswidth");
+         String appNotLongerSupportedWarning = amh.getMessage("parse.warning.appnotLongersupported");
 
-    	 java.net.URLConnection conn = url.openConnection();
-    	 /* The original URL may have been redirected - this
-    	  * sets it to whatever URL/codebase we ended up getting
-    	  */
-    	 url = conn.getURL();
+         java.net.URLConnection conn = url.openConnection();
+         /* The original URL may have been redirected - this
+          * sets it to whatever URL/codebase we ended up getting
+          */
+         url = conn.getURL();
 
-    	 int ydisp = 1;
-    	 Hashtable atts = null;
+         int ydisp = 1;
+         Hashtable atts = null;
 
-    	 while(true) {
-    		 c = in.read();
-    		 if (c == -1)
-    			 break;
+         while(true) {
+             c = in.read();
+             if (c == -1)
+                 break;
 
-    		 if (c == '<') {
-    			 c = in.read();
-    			 if (c == '/') {
-    				 c = in.read();
-    				 String nm = scanIdentifier(in);
-    				 if (nm.equalsIgnoreCase("applet") ||
-    						 nm.equalsIgnoreCase("object") ||
-    						 nm.equalsIgnoreCase("embed")) {
+             if (c == '<') {
+                 c = in.read();
+                 if (c == '/') {
+                     c = in.read();
+                     String nm = scanIdentifier(in);
+                     if (nm.equalsIgnoreCase("applet") ||
+                             nm.equalsIgnoreCase("object") ||
+                             nm.equalsIgnoreCase("embed")) {
 
-    					 // We can't test for a code tag until </OBJECT>
-    					 // because it is a parameter, not an attribute.
-    					 if(isObjectTag) {
-    						 if (atts.get("code") == null && atts.get("object") == null) {
-    							 statusMsgStream.println(objectRequiresCodeWarning);
-    							 atts = null;
-    						 }
-    					 }
+                         // We can't test for a code tag until </OBJECT>
+                         // because it is a parameter, not an attribute.
+                         if(isObjectTag) {
+                             if (atts.get("code") == null && atts.get("object") == null) {
+                                 statusMsgStream.println(objectRequiresCodeWarning);
+                                 atts = null;
+                             }
+                         }
 
-    					 if (atts != null) {
-    						 // XXX 5/18 In general this code just simply
-    						 // shouldn't be part of parsing.  It's presence
-    						 // causes things to be a little too much of a
-    						 // hack.
-    						 factory.createAppletViewer(identifier, handle, x, y, url, atts);
-    						 x += XDELTA;
-    						 y += YDELTA;
-    						 // make sure we don't go too far!
-    						 Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
-    						 if ((x > d.width - 300) || (y > d.height - 300)) {
-    							 x = 0;
-    							 y = 2 * ydisp * YDELTA;
-    							 ydisp++;
-    						 }
-    					 }
-    					 atts = null;
-    					 isAppletTag = false;
-    					 isObjectTag = false;
-    					 isEmbedTag = false;
-    				 }
-    			 }
-    			 else {
-    				 String nm = scanIdentifier(in);
-    				 if (nm.equalsIgnoreCase("param")) {
-    					 Hashtable t = scanTag(in);
-    					 String att = (String)t.get("name");
+                         if (atts != null) {
+                             // XXX 5/18 In general this code just simply
+                             // shouldn't be part of parsing.  It's presence
+                             // causes things to be a little too much of a
+                             // hack.
+                             
+                             // Let user know we are starting up
+                             streamhandler.write("instance " + identifier + " status " + amh.getMessage("status.start"));
+                             factory.createPanel(streamhandler, identifier, handle, x, y, url, atts);
+                             
+                             x += XDELTA;
+                             y += YDELTA;
+                             // make sure we don't go too far!
+                             Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
+                             if ((x > d.width - 300) || (y > d.height - 300)) {
+                                 x = 0;
+                                 y = 2 * ydisp * YDELTA;
+                                 ydisp++;
+                             }
+                         }
+                         atts = null;
+                         isAppletTag = false;
+                         isObjectTag = false;
+                         isEmbedTag = false;
+                     }
+                 }
+                 else {
+                     String nm = scanIdentifier(in);
+                     if (nm.equalsIgnoreCase("param")) {
+                         Hashtable t = scanTag(in);
+                         String att = (String)t.get("name");
 
-    					 if (atts.containsKey(att))
-    					     continue;
+                         if (atts.containsKey(att))
+                             continue;
 
-    					 if (att == null) {
-    						 statusMsgStream.println(requiresNameWarning);
-    					 } else {
-    						 String val = (String)t.get("value");
-    						 if (val == null) {
-    							 statusMsgStream.println(requiresNameWarning);
-    						 } else if (atts != null) {
-    							 att = att.replace("&gt;", ">");
-    							 att = att.replace("&lt;", "<");
-    							 att = att.replace("&amp;", "&");
-    							 att = att.replace("&#10;", "\n");
-    							 att = att.replace("&#13;", "\r");
-    							 att = att.replace("&quot;", "\"");
+                         if (att == null) {
+                             statusMsgStream.println(requiresNameWarning);
+                         } else {
+                             String val = (String)t.get("value");
+                             if (val == null) {
+                                 statusMsgStream.println(requiresNameWarning);
+                             } else if (atts != null) {
+                                 att = att.replace("&gt;", ">");
+                                 att = att.replace("&lt;", "<");
+                                 att = att.replace("&amp;", "&");
+                                 att = att.replace("&#10;", "\n");
+                                 att = att.replace("&#13;", "\r");
+                                 att = att.replace("&quot;", "\"");
 
-    							 val = val.replace("&gt;", ">");
-    							 val = val.replace("&lt;", "<");
-    							 val = val.replace("&amp;", "&");
-    							 val = val.replace("&#10;", "\n");
-    							 val = val.replace("&#13;", "\r");
-    							 val = val.replace("&quot;", "\"");
-    							 PluginDebug.debug("PUT " + att + " = " + val);
-   							     atts.put(att.toLowerCase(), val);
-    						 } else {
-    							 statusMsgStream.println(paramOutsideWarning);
-    						 }
-    					 }
-    				 }
-    				 else if (nm.equalsIgnoreCase("applet")) {
-    					 isAppletTag = true;
-    					 atts = scanTag(in);
+                                 val = val.replace("&gt;", ">");
+                                 val = val.replace("&lt;", "<");
+                                 val = val.replace("&amp;", "&");
+                                 val = val.replace("&#10;", "\n");
+                                 val = val.replace("&#13;", "\r");
+                                 val = val.replace("&quot;", "\"");
+                                 PluginDebug.debug("PUT " + att + " = " + val);
+                                 atts.put(att.toLowerCase(), val);
+                             } else {
+                                 statusMsgStream.println(paramOutsideWarning);
+                             }
+                         }
+                     }
+                     else if (nm.equalsIgnoreCase("applet")) {
+                         isAppletTag = true;
+                         atts = scanTag(in);
 
                          // If there is a classid and no code tag present, transform it to code tag
                          if (atts.get("code") == null && atts.get("classid") != null && !((String) atts.get("classid")).startsWith("clsid:")) {
@@ -1887,40 +1925,40 @@ import com.sun.jndi.toolkit.url.UrlUtil;
                              atts.put("code", ((String) atts.get("code")).substring(5));
                          }
 
-    					 if (atts.get("code") == null && atts.get("object") == null) {
-    						 statusMsgStream.println(appletRequiresCodeWarning);
-    						 atts = null;
-    					 }
+                         if (atts.get("code") == null && atts.get("object") == null) {
+                             statusMsgStream.println(appletRequiresCodeWarning);
+                             atts = null;
+                         }
 
-    					 if (atts.get("width") == null || !isInt(atts.get("width"))) {
-    						 atts.put("width", "1000");
-    						 atts.put("widthPercentage", 100);
-    					 } else if (((String) atts.get("width")).endsWith("%")) {
-    						 String w = (String) atts.get("width");
-    						 atts.put("width", "100");
-    						 atts.put("widthPercentage", Integer.parseInt((w.substring(0,  w.length() -1))));
-    					  }
+                         if (atts.get("width") == null || !isInt(atts.get("width"))) {
+                             atts.put("width", "1000");
+                             atts.put("widthPercentage", 100);
+                         } else if (((String) atts.get("width")).endsWith("%")) {
+                             String w = (String) atts.get("width");
+                             atts.put("width", "100");
+                             atts.put("widthPercentage", Integer.parseInt((w.substring(0,  w.length() -1))));
+                          }
 
-    					 if (atts.get("height") == null || !isInt(atts.get("height"))) {
-    						 atts.put("height", "1000");
-    						 atts.put("heightPercentage", 100);
-    					 } else if (((String) atts.get("height")).endsWith("%")) {
-    						 String h = (String) atts.get("height");
-    						 atts.put("height", "100");
-    						 atts.put("heightPercentage", Integer.parseInt(h.substring(0,  h.length() -1)));
-    					 }
-    				 }
-    				 else if (nm.equalsIgnoreCase("object")) {
-    					 isObjectTag = true;
+                         if (atts.get("height") == null || !isInt(atts.get("height"))) {
+                             atts.put("height", "1000");
+                             atts.put("heightPercentage", 100);
+                         } else if (((String) atts.get("height")).endsWith("%")) {
+                             String h = (String) atts.get("height");
+                             atts.put("height", "100");
+                             atts.put("heightPercentage", Integer.parseInt(h.substring(0,  h.length() -1)));
+                         }
+                     }
+                     else if (nm.equalsIgnoreCase("object")) {
+                         isObjectTag = true;
 
-    				     // Once code is set, additional nested objects are ignored
-    				     if (!objectTagAlreadyParsed) {
-    				         objectTagAlreadyParsed = true;
-    					 atts = scanTag(in);
-    				     }
+                         // Once code is set, additional nested objects are ignored
+                         if (!objectTagAlreadyParsed) {
+                             objectTagAlreadyParsed = true;
+                         atts = scanTag(in);
+                         }
 
-    					 // If there is a classid and no code tag present, transform it to code tag
-    				     if (atts.get("code") == null && atts.get("classid") != null && !((String) atts.get("classid")).startsWith("clsid:")) {
+                         // If there is a classid and no code tag present, transform it to code tag
+                         if (atts.get("code") == null && atts.get("classid") != null && !((String) atts.get("classid")).startsWith("clsid:")) {
                              atts.put("code", atts.get("classid"));
                          }
                          
@@ -1955,27 +1993,27 @@ import com.sun.jndi.toolkit.url.UrlUtil;
                              atts.put("type", ((String) atts.get("java_type")));
                          }
 
-    					 if (atts.get("width") == null || !isInt(atts.get("width"))) {
-    						 atts.put("width", "1000");
-    						 atts.put("widthPercentage", 100);
-    					 } else if (((String) atts.get("width")).endsWith("%")) {
-    						 String w = (String) atts.get("width");
-    						 atts.put("width", "100");
-    						 atts.put("widthPercentage", Integer.parseInt(w.substring(0,  w.length() -1)));
-    					 }
+                         if (atts.get("width") == null || !isInt(atts.get("width"))) {
+                             atts.put("width", "1000");
+                             atts.put("widthPercentage", 100);
+                         } else if (((String) atts.get("width")).endsWith("%")) {
+                             String w = (String) atts.get("width");
+                             atts.put("width", "100");
+                             atts.put("widthPercentage", Integer.parseInt(w.substring(0,  w.length() -1)));
+                         }
 
-    					 if (atts.get("height") == null || !isInt(atts.get("height"))) {
-    						 atts.put("height", "1000");
-    						 atts.put("heightPercentage", 100);
-    					 } else if (((String) atts.get("height")).endsWith("%")) {
-    						 String h = (String) atts.get("height");
-    						 atts.put("height", "100");
-    						 atts.put("heightPercentage", Integer.parseInt(h.substring(0,  h.length() -1)));
-    					 }
-    				 }
-    				 else if (nm.equalsIgnoreCase("embed")) {
-    					 isEmbedTag = true;
-    					 atts = scanTag(in);
+                         if (atts.get("height") == null || !isInt(atts.get("height"))) {
+                             atts.put("height", "1000");
+                             atts.put("heightPercentage", 100);
+                         } else if (((String) atts.get("height")).endsWith("%")) {
+                             String h = (String) atts.get("height");
+                             atts.put("height", "100");
+                             atts.put("heightPercentage", Integer.parseInt(h.substring(0,  h.length() -1)));
+                         }
+                     }
+                     else if (nm.equalsIgnoreCase("embed")) {
+                         isEmbedTag = true;
+                         atts = scanTag(in);
 
                          // If there is a classid and no code tag present, transform it to code tag
                          if (atts.get("code") == null && atts.get("classid") != null && !((String) atts.get("classid")).startsWith("clsid:")) {
@@ -1986,13 +2024,13 @@ import com.sun.jndi.toolkit.url.UrlUtil;
                          if (atts.get("code") != null && ((String) atts.get("code")).startsWith("java:")) {
                              atts.put("code", ((String) atts.get("code")).substring(5));
                          }
-    					 
-    					 // java_* aliases override older names:
-    					 // http://java.sun.com/j2se/1.4.2/docs/guide/plugin/developer_guide/using_tags.html#in-nav
-    					 if (atts.get("java_code") != null) {
-    					     atts.put("code", ((String) atts.get("java_code")));
-    					 }
-    					 
+                         
+                         // java_* aliases override older names:
+                         // http://java.sun.com/j2se/1.4.2/docs/guide/plugin/developer_guide/using_tags.html#in-nav
+                         if (atts.get("java_code") != null) {
+                             atts.put("code", ((String) atts.get("java_code")));
+                         }
+                         
                          if (atts.get("java_codebase") != null) {
                              atts.put("codebase", ((String) atts.get("java_codebase")));
                          }
@@ -2004,72 +2042,72 @@ import com.sun.jndi.toolkit.url.UrlUtil;
                          if (atts.get("java_object") != null) {
                              atts.put("object", ((String) atts.get("java_object")));
                          }
-    					 
+                         
                          if (atts.get("java_type") != null) {
                              atts.put("type", ((String) atts.get("java_type")));
                          }
 
-    					 if (atts.get("code") == null && atts.get("object") == null) {
-    						 statusMsgStream.println(embedRequiresCodeWarning);
-    						 atts = null;
-    					 }
-    					 
-    					 if (atts.get("width") == null || !isInt(atts.get("width"))) {
-    						 atts.put("width", "1000");
-    						 atts.put("widthPercentage", 100);
-    					 } else if (((String) atts.get("width")).endsWith("%")) {
-    						 String w = (String) atts.get("width");
-    						 atts.put("width", "100");
-    						 atts.put("widthPercentage", Integer.parseInt(w.substring(0,  w.length() -1)));
-    					 }
+                         if (atts.get("code") == null && atts.get("object") == null) {
+                             statusMsgStream.println(embedRequiresCodeWarning);
+                             atts = null;
+                         }
+                         
+                         if (atts.get("width") == null || !isInt(atts.get("width"))) {
+                             atts.put("width", "1000");
+                             atts.put("widthPercentage", 100);
+                         } else if (((String) atts.get("width")).endsWith("%")) {
+                             String w = (String) atts.get("width");
+                             atts.put("width", "100");
+                             atts.put("widthPercentage", Integer.parseInt(w.substring(0,  w.length() -1)));
+                         }
 
-    					 if (atts.get("height") == null || !isInt(atts.get("height"))) {
-    						 atts.put("height", "1000");
-    						 atts.put("heightPercentage", 100);
-    					 } else if (((String) atts.get("height")).endsWith("%")) {
-    						 String h = (String) atts.get("height");
-    						 atts.put("height", "100");
-    						 atts.put("heightPercentage", Integer.parseInt(h.substring(0,  h.length() -1)));
-    					 }
-    				 }
-    				 else if (nm.equalsIgnoreCase("app")) {
-    					 statusMsgStream.println(appNotLongerSupportedWarning);
-    					 Hashtable atts2 = scanTag(in);
-    					 nm = (String)atts2.get("class");
-    					 if (nm != null) {
-    						 atts2.remove("class");
-    						 atts2.put("code", nm + ".class");
-    					 }
-    					 nm = (String)atts2.get("src");
-    					 if (nm != null) {
-    						 atts2.remove("src");
-    						 atts2.put("codebase", nm);
-    					 }
-    					 if (atts2.get("width") == null || !isInt(atts2.get("width"))) {
-    						 atts2.put("width", "1000");
-    						 atts2.put("widthPercentage", 100);
-    					 } else if (((String) atts.get("width")).endsWith("%")) {
-    						 String w = (String) atts.get("width");
-    						 atts2.put("width", "100");
-    						 atts2.put("widthPercentage", Integer.parseInt(w.substring(0,  w.length() -1)));
-    					 }
+                         if (atts.get("height") == null || !isInt(atts.get("height"))) {
+                             atts.put("height", "1000");
+                             atts.put("heightPercentage", 100);
+                         } else if (((String) atts.get("height")).endsWith("%")) {
+                             String h = (String) atts.get("height");
+                             atts.put("height", "100");
+                             atts.put("heightPercentage", Integer.parseInt(h.substring(0,  h.length() -1)));
+                         }
+                     }
+                     else if (nm.equalsIgnoreCase("app")) {
+                         statusMsgStream.println(appNotLongerSupportedWarning);
+                         Hashtable atts2 = scanTag(in);
+                         nm = (String)atts2.get("class");
+                         if (nm != null) {
+                             atts2.remove("class");
+                             atts2.put("code", nm + ".class");
+                         }
+                         nm = (String)atts2.get("src");
+                         if (nm != null) {
+                             atts2.remove("src");
+                             atts2.put("codebase", nm);
+                         }
+                         if (atts2.get("width") == null || !isInt(atts2.get("width"))) {
+                             atts2.put("width", "1000");
+                             atts2.put("widthPercentage", 100);
+                         } else if (((String) atts.get("width")).endsWith("%")) {
+                             String w = (String) atts.get("width");
+                             atts2.put("width", "100");
+                             atts2.put("widthPercentage", Integer.parseInt(w.substring(0,  w.length() -1)));
+                         }
 
-    					 if (atts2.get("height") == null || !isInt(atts2.get("height"))) {
-    						 atts2.put("height", "1000");
-    						 atts2.put("heightPercentage", 100);
-    					 } else if (((String) atts.get("height")).endsWith("%")) {
-    						 String h = (String) atts.get("height");
-    						 atts2.put("height", "100");
-    						 atts2.put("heightPercentage", Integer.parseInt(h.substring(0,  h.length() -1)));
-    					 }
+                         if (atts2.get("height") == null || !isInt(atts2.get("height"))) {
+                             atts2.put("height", "1000");
+                             atts2.put("heightPercentage", 100);
+                         } else if (((String) atts.get("height")).endsWith("%")) {
+                             String h = (String) atts.get("height");
+                             atts2.put("height", "100");
+                             atts2.put("heightPercentage", Integer.parseInt(h.substring(0,  h.length() -1)));
+                         }
 
-    					 printTag(statusMsgStream, atts2);
-    					 statusMsgStream.println();
-    				 }
-    			 }
-    		 }
-    	 }
-    	 in.close();
+                         printTag(statusMsgStream, atts2);
+                         statusMsgStream.println();
+                     }
+                 }
+             }
+         }
+         in.close();
      }
  
 
@@ -2077,18 +2115,18 @@ import com.sun.jndi.toolkit.url.UrlUtil;
  
      private static void checkConnect(URL url)
      {
- 	SecurityManager security = System.getSecurityManager();
- 	if (security != null) {
- 	    try {
- 		java.security.Permission perm =
- 		    url.openConnection().getPermission();
- 		if (perm != null)
- 		    security.checkPermission(perm);
- 		else
- 		    security.checkConnect(url.getHost(), url.getPort());
- 	    } catch (java.io.IOException ioe) {
- 		    security.checkConnect(url.getHost(), url.getPort());
- 	    }
- 	}
+    SecurityManager security = System.getSecurityManager();
+    if (security != null) {
+        try {
+        java.security.Permission perm =
+            url.openConnection().getPermission();
+        if (perm != null)
+            security.checkPermission(perm);
+        else
+            security.checkConnect(url.getHost(), url.getPort());
+        } catch (java.io.IOException ioe) {
+            security.checkConnect(url.getHost(), url.getPort());
+        }
+    }
      }
  }

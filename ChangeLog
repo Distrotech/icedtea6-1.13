@@ -1,3 +1,87 @@
+2010-02-15 Andrew John Hughes  <ahughes@redhat.com>
+
+	* rewriter/agpl-3.0.txt,
+	* rewriter/com/redhat/rewriter/ClassRewriter.java:
+	Add class rewriter for fixing Rhino classes
+	to use the com.sun.org.mozilla namespace,
+	along with corresponding license.
+
+2010-02-15  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/src/cpu/zero/vm/cppInterpreter_zero.hpp
+	(CppInterpreter::result_type_of): New method.
+	* ports/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp
+	(CppInterpreter::result_type_of): Likewise.
+	(CppInterpreter::main_loop): Use the above.
+	(CppInterpreter::native_entry): Likewise.
+	* ports/hotspot/src/os_cpu/linux_zero/vm/os_linux_zero.cpp
+	(os::is_allocatable): s/AMD64/_LP64/.
+
+2010-02-12  Gary Benson  <gbenson@redhat.com>
+
+	* configure.ac: Strip stupid options that llvm-config supplies.
+
+2010-02-09  Edward Nevill <ed@camswl.com>
+
+	* cppInterpreter_arm.S / thumb2.cpp
+	Make Thumb2 JIT the default build
+
+2010-02-03  Deepak Bhole <dbhole@redhat.com>
+
+	* plugin/icedteanp/IcedTeaNPPlugin.cc 
+	(plugin_create_applet_tag): Encode new lines, carriage returns, and other
+	special characters before sending them to Java side (de-coding code is
+	already in effect on Java side).
+
+2010-02-03 Pavel Tisnovsky <ptisnovs@redhat.com>
+
+	* Makefile.am: Add new patch.
+	* patches/icedtea-6829636-loggingdeadlock2.patch
+	Fix for Sun bug: 6829636: test case correction
+	test/java/util/logging/loggingdeadlock2.java
+
+2010-02-02  Deepak Bhole <dbhole@redhat.com>
+
+	* plugin/tests/LiveConnect/PluginTest.java
+	(jjsEvalTest): New function. Calls JSObject.eval() with given string.
+	* plugin/tests/LiveConnect/common.js: Added eval test suite as one of the
+	run options.
+	* plugin/tests/LiveConnect/index.html: Same.
+	* plugin/tests/LiveConnect/jjs_eval_test.js: Eval tests.
+
+2010-02-02  Deepak Bhole <dbhole@redhat.com>
+
+	* plugin/icedteanp/java/sun/applet/PluginAppletViewer.java: Re-designed frame
+	embedding code so that the applet is dynamically packed into given handle.
+
+2010-02-02 Pavel Tisnovsky <ptisnovs@redhat.com>
+
+	* Makefile.am: Add new patches.
+	* patches/icedtea-6912628-turkcert.patch:
+	Fix for Sun bug: 6912628: test case correction
+	test/java/util/jar/JarFile/TurkCert.java cannot be run in
+	samevm mode. Added tag to run this test in othervm
+
+2010-02-02  Edward Nevill <ed@camswl.com>
+
+	* asm_helper.cpp, cppInterpreter_arm.S, thumb2.cpp, bytecodes_arm.def
+	Several bug fixes to compiled exection handling methods.
+	Copyright notices updated to 2010 and added to thumb2.cpp
+	Assertions turned off in PRODUCT build
+	Compilation summary and stats to stderr instead of stdout
+
+2010-02-01  Xerxes Rånby  <xerxes@zafena.se>
+
+	* ports/hotspot/src/share/vm/shark/sharkCompiler.cpp
+	(SharkCompiler::SharkCompiler): Use sharkContext::module
+	instead of sharkContext::module_provider when using LLVM 2.7
+	to handle LLVM r94686 API change.
+	* ports/hotspot/src/share/vm/shark/sharkContext.hpp
+	(sharkContext::module): Made public when using LLVM 2.7.
+	(sharkContext::module_provider): Undefine when using LLVM 2.7.
+	* ports/hotspot/src/share/vm/shark/llvmHeaders.hpp
+	(llvm/ModuleProvider.h): Undefine when using LLVM 2.7.
+
 2010-01-29 Andrew John Hughes  <ahughes@redhat.com>
 
 	* patches/icedtea-6920143-using-with-mouse.patch,
@@ -6,6 +90,17 @@
 	* patches/icedtea-xml-encodinginfo.patch:
 	Dropped, already in OpenJDK6 hg.
 	* Makefile.am: Remove above patches.
+
+2010-01-29 Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am: Add INITIAL_BOOTSTRAP_LINK_STAMP
+	to avoid the need to check for bootstrap/jdk1.6.0
+	on each javac or jar invocation.
+
+2010-01-29 Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am: Add ICEDTEANPPLUGIN_TARGET
+	back as a dependency of icedtea and icedtea-debug.
 
 2010-01-28 Pavel Tisnovsky <ptisnovs@redhat.com>
 
@@ -20,6 +115,13 @@
 	* patches/icedtea-6920172-turkish.patch:
 	Added othervm flag to ensure that this test will run
 	in isolation
+
+2010-01-27 Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am: Use one general
+	stamps/plugin.stamp to mark plugin
+	installation as in IcedTea7.  Add
+	matching clean-plugin target.
 
 2010-01-28  Edward Nevill   <ed@camswl.com>
 
