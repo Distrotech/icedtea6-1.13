@@ -310,11 +310,11 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-parisc.patch \
 	patches/icedtea-sh4-support.patch \
 	patches/libpng.patch \
-	patches/icedtea-6920143-using-with-mouse.patch \
-        patches/icedtea-6920172-location-relative-to-test.patch \
-        patches/icedtea-6920172-turkish.patch \
-        patches/icedtea-6912628-turkcert.patch \
-        patches/icedtea-6829636-loggingdeadlock2.patch
+	patches/openjdk/6920143-using-with-mouse.patch \
+        patches/openjdk/6920172-location-relative-to-test.patch \
+        patches/openjdk/6917663-turkish.patch \
+        patches/openjdk/6912628-turkcert.patch \
+        patches/openjdk/6716076-loggingdeadlock2.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \

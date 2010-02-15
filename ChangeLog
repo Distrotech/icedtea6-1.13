@@ -1,5 +1,22 @@
 2010-02-15 Andrew John Hughes  <ahughes@redhat.com>
 
+	* patches/icedtea-6829636-loggingdeadlock2.patch,
+	* patches/icedtea-6912628-turkcert.patch,
+	* patches/icedtea-6920143-using-with-mouse.patch,
+	* patches/icedtea-6920172-location-relative-to-test.patch,
+	* patches/icedtea-6920172-turkish.patch:
+	Moved.
+	* Makefile.am: Use new patch paths.
+	* patches/openjdk/6716076-loggingdeadlock2.patch,
+	* patches/openjdk/6912628-turkcert.patch,
+	* patches/openjdk/6917663-turkish.patch,
+	* patches/openjdk/6920143-using-with-mouse.patch,
+	* patches/openjdk/6920172-location-relative-to-test.patch:
+	Move OpenJDK patches to appropriate directory and use
+	correct bug IDs for loggingdeadlock2 and turkish.
+
+2010-02-15 Andrew John Hughes  <ahughes@redhat.com>
+
 	* rewriter/agpl-3.0.txt,
 	* rewriter/com/redhat/rewriter/ClassRewriter.java:
 	Add class rewriter for fixing Rhino classes
