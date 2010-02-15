@@ -1,3 +1,14 @@
+2010-02-15  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/src/cpu/zero/vm/cppInterpreter_zero.hpp
+	(CppInterpreter::result_type_of): New method.
+	* ports/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp
+	(CppInterpreter::result_type_of): Likewise.
+	(CppInterpreter::main_loop): Use the above.
+	(CppInterpreter::native_entry): Likewise.
+	* ports/hotspot/src/os_cpu/linux_zero/vm/os_linux_zero.cpp
+	(os::is_allocatable): s/AMD64/_LP64/.
+
 2010-02-12  Gary Benson  <gbenson@redhat.com>
 
 	* configure.ac: Strip stupid options that llvm-config supplies.
