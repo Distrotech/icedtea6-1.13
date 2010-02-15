@@ -299,8 +299,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-linux-separate-debuginfo.patch \
 	patches/icedtea-parisc.patch \
 	patches/icedtea-sh4-support.patch \
-	patches/libpng.patch \
-        patches/icedtea-6829636-loggingdeadlock2.patch
+	patches/libpng.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
