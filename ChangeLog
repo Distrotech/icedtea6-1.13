@@ -38,6 +38,15 @@
 	    (doubles and longs):
 	http://java.sun.com/docs/books/jvms/second_edition/html/ClassFile.doc.html#16628
 
+2010-02-15 Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/openjdk/6716076-loggingdeadlock2.patch,
+	* patches/openjdk/6912628-turkcert.patch,
+	* patches/openjdk/6917663-turkish.patch,
+	* patches/openjdk/6920143-using-with-mouse.patch,
+	* patches/openjdk/6920172-location-relative-to-test.patch:
+	Remove backported patches.
+
 2010-02-17  Xerxes Rånby  <xerxes@zafena.se>
 
 	* ports/hotspot/src/share/vm/shark/sharkCompiler.cpp
@@ -51,6 +60,12 @@
 2010-02-16  Gary Benson  <gbenson@redhat.com>
 
 	* contrib/jck/compile-native-code.sh: Add s390.
+
+2010-02-15 Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/icedtea-6829636-loggingdeadlock2.patch:
+	Dropped; OpenJDK hg backport.
+	* Makefile.am: Remove above patch.
 
 2010-02-15 Andrew John Hughes  <ahughes@redhat.com>
 
@@ -68,6 +83,12 @@
 	* patches/openjdk/6920172-location-relative-to-test.patch:
 	Move OpenJDK patches to appropriate directory and use
 	correct bug IDs for loggingdeadlock2 and turkish.
+
+2010-02-15 Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/icedtea-6897844-xshm.patch:
+	Dropped, applied upstream.
+	* Makefile.am: Remove above patch.
 
 2010-02-15 Andrew John Hughes  <ahughes@redhat.com>
 
@@ -152,6 +173,15 @@
 	(sharkContext::module_provider): Undefine when using LLVM 2.7.
 	* ports/hotspot/src/share/vm/shark/llvmHeaders.hpp
 	(llvm/ModuleProvider.h): Undefine when using LLVM 2.7.
+
+2010-01-29 Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/icedtea-6920143-using-with-mouse.patch,
+	* patches/icedtea-6920172-location-relative-to-test.patch,
+	* patches/icedtea-6920172-turkish.patch,
+	* patches/icedtea-xml-encodinginfo.patch:
+	Dropped, already in OpenJDK6 hg.
+	* Makefile.am: Remove above patches.
 
 2010-01-29 Andrew John Hughes  <ahughes@redhat.com>
 
@@ -429,6 +459,23 @@
 	to determine names of tarballs rather than
 	hardcoding openjdk.tar.gz and hotspot.tar.gz
 
+2010-01-17 Andrew John Hughes  <ahughes@redhat.com>
+
+	* acinclude.m4:
+	Re-add missing bracket removed by merge.
+
+2010-01-16 Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/icedtea-liveconnect.patch:
+	Don't quote JAVA_ARGS twice.
+	(6888709: Change use of -DX=\""Y\"" to
+	-DX='"Y"', consistently for all platforms)
+	http://hg.openjdk.java.net/jdk6/jdk6/jdk/rev/93c580ce5e88
+	* patches/icedtea-override.patch:
+	Remove @Override on interface methods
+	in OCSPResponse.java
+	http://hg.openjdk.java.net/jdk6/jdk6/jdk/rev/c33ca6c539bf
+
 2010-01-17  Matthias Klose  <doko@ubuntu.com>
 
 	* patches/icedtea-sparc-trapsfix.patch: Merged sparc headers
@@ -597,7 +644,7 @@
 
 2010-01-11  Nobuhiro Iwamatsu <iwamatsu@nigauri.org>
 	    Matthias Klose  <doko@ubuntu.com>
-
+	
 	* patches/icedtea-sh4-support.patch: Add zero support for Hitachi SH.
 	* Makefile.am (ICEDTEA_PATCHES): Apply the above.
 	* NEWS: Mention SH support.
@@ -609,10 +656,41 @@
 	* Makefile.am (ICEDTEA_PATCHES): Added the above.
 	* contrib/checkopts/checkopts: Updated for the above.
 
+2010-01-08  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Calculate JDK and HotSpot Mercurial revisions
+	if available and pass to build.  Also pass
+	DIST_NAME to build.
+	* acinclude.m4:
+	(IT_GET_LSB_DATA): Moved from configure.ac
+	and extended to also obtain the name of
+	the distribution from either lsb_release -is
+	or $build_os.
+	* configure.ac:
+	Invoke IT_GET_LSB_DATA macro.
+	* patches/icedtea-version.patch:
+	Updated to use distribution name and JDK and
+	HotSpot Mercurial revision IDs.
+
+2010-01-08  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/icedtea-jdk-docs-target.patch:
+	Dropped, refined version applied upstream.
+	* Makefile.am:
+	Remove above patch.
+
 2010-01-06  Deepak Bhole <dbhole@redhat.com>
 
 	* plugin/icedteanp/IcedTeaNPPlugin.h: Remove debug specific line from 
 	code.
+
+2010-01-05  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Store path to rt-closed.jar in ICEDTEA_PLUGS
+	variable and reference on the classpath when
+	building extra-class-files.stamp.
 
 2010-01-05  Deepak Bhole <dbhole@redhat.com>
 
@@ -629,6 +707,21 @@
 	* patches/zero/6909153.patch: New file.
 	* patches/zero/6913869.patch: Likewise.
 	* Makefile.am (ICEDTEA_PATCHES): Added the above.
+
+2010-01-04  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Drop redundant (and broken in some cases)
+	symbolic link.
+	
+2009-12-27  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/ecj/icedtea-jaxp-dependency.patch:
+	Recreated against current hg.
+	* patches/ecj/icedtea.patch:
+	Remove patches to jaxp and jaxws Makefiles
+	and use the existing jdk.home instead of
+	boot.java.home in their build.xml files.
 
 2009-12-24  Deepak Bhole <dbhole@redhat.com>
 
@@ -655,12 +748,107 @@
 
 2009-12-24  Andrew John Hughes  <ahughes@redhat.com>
 
+	* Makefile.am:
+	Remove native2ascii workaround, fixed
+	properly in b18.
+	
+2009-12-24  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(rt.stamp): Make zip updating dependent
+	on LACKS_SUN_AWT_TOOLKIT.
+	* acinclude.m4:
+	(IT_CHECK_FOR_CLASS): Generic macro to check for
+	any class.  Takes as arguments the define and
+	the name of the class.
+	* configure.ac:
+	Check for sun.awt.SunToolkit using the
+	new IT_CHECK_FOR_CLASS macro.
+
+2009-12-24  Andrew John Hughes  <ahughes@redhat.com>
+
 	* configure.ac: Bump version to 1.8pre.
 	* NEWS: Mention X11 fix.
 
 2009-12-22  Deepak Bhole <dbhole@redhat.com>
 
 	* Makefile.am: Set JDK_UPDATE_VERSION based on upstream drop version
+
+2009-12-22  Andrew John Hughes  <ahughes@redhat.com>
+
+	Support b18.  Add --with-tzdata-dir option,
+	use updated system rt.jar rather than a fresh
+	one to avoid the need for JAXP sources, remove
+	unnecessary copying.
+	* overlays/openjdk/jdk/test/java/util/SimpleTimeZone/EndOfDay.java,
+	* patches/icedtea-jtreg-hatrun.patch,
+	* patches/openjdk/6432567-debugger-socket-overflow.patch,
+	* patches/security/icedtea-6631533.patch,
+	* patches/security/icedtea-6632445.patch,
+	* patches/security/icedtea-6636650.patch,
+	* patches/security/icedtea-6657026.patch,
+	* patches/security/icedtea-6657138.patch,
+	* patches/security/icedtea-6664512.patch,
+	* patches/security/icedtea-6822057.patch,
+	* patches/security/icedtea-6824265.patch,
+	* patches/security/icedtea-6861062.patch,
+	* patches/security/icedtea-6862968.patch,
+	* patches/security/icedtea-6863503.patch,
+	* patches/security/icedtea-6864911.patch,
+	* patches/security/icedtea-6872357.patch,
+	* patches/security/icedtea-6872358.patch,
+	* patches/security/icedtea-6874643.patch:
+	Removed.
+	* Makefile.am:
+	Bump to b18.  Change ICEDTEA_RT to point to
+	rt.jar rather than rt-closed.jar.  Rename
+	ICEDTEA_COPY_DIRS to ICEDTEA_BOOTSTRAP_DIRS
+	and prefix with full path.  Add sun/applet to
+	$(LIVECONNECT_DIR).  Set SYSTEM_JDK_DIR to
+	either SYSTEM_GCJ_DIR or SYSTEM_OPENJDK_DIR
+	depending on configuration.  Remove dead patches,
+	add new @Override patch and jaxp dependency and bootver
+	ecj patches. Set JAVA_TOOLS_DIR to point to
+	ICEDTEA_BOOT_DIR/bin.  Set DISABLE_NIMBUS, NO_DOCS
+	and ALT_DROPS_DIR for ecj build.  Remove dead
+	clean-shared-objects reference.  Use SYSTEM_JDK_DIR
+	in place of SYSTEM_GCJ_DIR and SYSTEM_OPENJDK_DIR.
+	Copy and extend system rt.jar rather than using
+	both.  Copy tz.properties when TZDATA_DIR is specified.
+	(hotspot-tools-copy-source-files.stamp): Don't copy
+	from jaxws -- no longer exists.
+	(hotspot-tools-class-files.stamp): Specify system rt.jar
+	as classpath.
+	(copy-source-files.stamp): Removed.
+	(clean-copy): Likewise.
+	(rt-source-files.txt): Use BOOTSTRAP_DIRS directly.
+	(rt-class-files.stamp): Specify system rt.jar as classpath.
+	(rt.stamp): Update rt.jar with class files compiled by
+	rt-class-files.stamp.
+	(plugs.stamp): Create rt-closed.jar from class files in lib/rt.
+	(clean-plugs): Revert to system rt.jar.
+	* acinclude.m4:
+	(CHECK_WITH_TZDATA_DIR): Allow a directory containing timezone
+	data to be specified.  Defaults to /usr/share/javazi.
+	* configure.ac: Call CHECK_WITH_TZDATA_DIR.
+	* javac.in: Use local rt.jar as bootclasspath.
+	* patches/ecj/bootver.patch: Set REQUIRED_BOOT_VER to 1.5
+	if Nimbus is disabled.
+	* patches/ecj/icedtea-jaxp-dependency.patch:
+	Add JAXP classes to classpath when building JAXWS.
+	* patches/ecj/icedtea.patch: Recreated.
+	* patches/icedtea-alpha-fixes.patch: Dropped.
+	* patches/icedtea-override.patch: New
+	patch to remove @Override from interfaces.
+	* patches/icedtea-use-system-tzdata.patch:
+	New version which uses configurable datadir.
+	As in IcedTea7.
+	* patches/icedtea-xjc.patch:
+	Changed to apply as a patch in the JAXWS build.
+	* patches/icedtea-xml-encodinginfo.patch:
+	Likewise, but for JAXP.
+	* tz.properties.in:
+	Input file for tzdata directory setting.
 
 2009-12-22  Gary Benson  <gbenson@redhat.com>
 
@@ -956,6 +1144,29 @@
 	(parse): Handle nested objected tags, don't allow parameter value
 	overwrite.
 
+2009-12-02  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am: Add support
+	for new JAXP and JAXWS drop zips.
+	(download-jaxp-drop.stamp): New target.
+	(download-jaf-drop.stamp): Likewise.
+	(download-jaxp-drop.stamp): Likewise.
+	(download-drops.stamp): Likewise.
+	(clean-drops): Likewise.
+	(clean-download-jaf-drop): Likewise.
+	(clean-download-jaxp-drop): Likewise.
+	(clean-download-jaxws-drop): Likewise.
+	(download-jaxp-drop): New alias.
+	(download-jaxws-drop): Likewise.
+	(download-jaf-drop): Likewise.
+	* acinclude.m4:
+	(WITH_JAXP_DROP_ZIP): New options --with-jaxp-drop-zip
+	to specify location of the JAXP drop.
+	(WITH_JAF_DROP_ZIP): Likewise for JAF.
+	(WITH_JAXWS_DROP_ZIP): And JAXWS.
+	* configure.ac: Run new macros for drop zips and
+	find the sha256sum tool for checking the drop zips.
+
 2009-11-27  Deepak Bhole <dbhole@redhat.com>
 
 	* plugin/icedtea/sun/applet/PluginAppletViewer.java
@@ -972,6 +1183,13 @@
 	(ZeroEntry::entry_point): Removed explicit inline.
 	(ZeroEntry::invoke): Likewise.
 	(ZeroEntry::invoke_osr): Likewise.
+
+2009-11-23  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Reorganise to match IcedTea7 layout.
+	Add FIXMEs for targets which still need
+	to be moved across.
 
 2009-11-23  Gary Benson  <gbenson@redhat.com>
 	

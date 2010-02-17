@@ -18,6 +18,15 @@ VISUALVM_MD5SUM = a289739f4a5bcdb9a2c642cfcc1e83fe
 VISUALVM_URL = https://visualvm.dev.java.net/files/documents/7163/127170/
 VISUALVM_SRC_ZIP = visualvm-111-src.tar.gz
 
+JAXWS_DROP_URL = http://kenai.com/projects/jdk6-drops/downloads/download
+JAXWS_DROP_ZIP = jdk6-jaxws-2009_10_27.zip
+JAXWS_DROP_SHA256SUM = 155ff3be83c980e197621a2fbf7ee34e8e0f536489351a5865cf0e52206245e2
+JAF_DROP_ZIP = jdk6-jaf-2009_10_27.zip
+JAF_DROP_SHA256SUM = fdc51476fc6bcc69ea1f099f33e84601a126bfa8b11c8fa11c25dc574345aa9f
+JAXP_DROP_URL = https://jaxp.dev.java.net/files/documents/913/147329
+JAXP_DROP_ZIP = jdk6-jaxp-2009_10_13.zip
+JAXP_DROP_SHA256SUM = 8714d55de18db48ca9da0ee986202005082f44cf4c215da8683342b70e61792b
+
 OPENJDK_HG_URL = http://hg.openjdk.java.net/jdk6/jdk6
 
 # Build directories
@@ -27,14 +36,14 @@ BUILD_OUTPUT_DIR = openjdk/build/$(OS_DIR)
 ECJ_BUILD_OUTPUT_DIR = openjdk-ecj/build/$(OS_DIR)
 ICEDTEA_BUILD_DIR = \
 	$(abs_top_builddir)/$(BUILD_OUTPUT_DIR)
-# The Binary plugs directory is called jdk1.7.0 for historical reasons. The
-# name is completely irrelevant; only contains the plugs to build IcedTea.
-ICEDTEA_RT = \
-	$(abs_top_builddir)/bootstrap/jdk1.7.0/jre/lib/rt-closed.jar
 ICEDTEA_CLS_DIR = \
 	$(abs_top_builddir)/$(BUILD_OUTPUT_DIR)/classes
 ICEDTEA_BOOT_DIR= \
 	$(abs_top_builddir)/bootstrap/jdk1.6.0
+ICEDTEA_RT = \
+	$(ICEDTEA_BOOT_DIR)/jre/lib/rt.jar
+ICEDTEA_PLUGS = \
+	$(abs_top_builddir)/bootstrap/jdk1.7.0/jre/lib/rt-closed.jar
 ICEDTEA_ENDORSED_DIR = \
 	$(ICEDTEA_BOOT_DIR)/lib/endorsed
 ICEDTEA_BUILD_DIR_ECJ = \
@@ -62,20 +71,21 @@ OPENJDK_SOURCEPATH_DIRS = \
 ABS_SOURCE_DIRS = $(abs_top_builddir)/generated:$(abs_top_builddir)/rt:$(abs_top_srcdir)/rt:$(LIVECONNECT_SRCS)
 
 # Sources copied from OpenJDK.
-ICEDTEA_COPY_DIRS = \
-	com/sun/jdi \
-	com/sun/jdi/connect \
-	com/sun/jdi/connect/spi \
-	com/sun/jdi/event \
-	com/sun/jdi/request \
-	com/sun/jmx/snmp/agent \
-	com/sun/tools/jdi \
-	java/io \
-	java/util \
-	java/rmi \
-	sun/awt/ \
-	javax/net/ssl \
-	javax/script
+ICEDTEA_BOOTSTRAP_DIRS = \
+	$(SHARE)/com/sun/jdi \
+	$(SHARE)/com/sun/jmx/snmp/agent \
+	$(SHARE)/com/sun/net/httpserver \
+	$(SHARE)/com/sun/tools/jdi \
+	$(SHARE)/java/io \
+	$(SHARE)/java/security/cert \
+	$(SHARE)/java/util \
+	$(SHARE)/java/rmi \
+	$(SHARE)/sun/awt/ \
+	$(SHARE)/sun/nio/cs \
+	$(SHARE)/javax/net/ssl \
+	$(SHARE)/javax/script \
+	$(SHARE)/javax/security/auth/kerberos \
+	$(SHARE)/javax/security/sasl
 
 # FIXME (javac): Settings for javac go here
 
@@ -115,7 +125,7 @@ if ENABLE_NPPLUGIN
 ICEDTEANPPLUGIN_CLEAN = clean-IcedTeaNPPlugin
 ICEDTEANPPLUGIN_TARGET = $(NPPLUGIN_DIR)/IcedTeaNPPlugin.so
 PLUGIN_PATCH = patches/icedtea-liveconnect.patch
-LIVECONNECT_DIR = -C lib/rt netscape
+LIVECONNECT_DIR = -C lib/rt netscape -C lib/rt sun/applet
 NPPLUGIN_DIR=$(abs_top_builddir)/plugin/icedteanp
 NPPLUGIN_SRCDIR=$(abs_top_srcdir)/plugin/icedteanp
 LIVECONNECT_SRCS = $(NPPLUGIN_SRCDIR)/java
@@ -124,7 +134,7 @@ if ENABLE_PLUGIN
 ICEDTEAPLUGIN_CLEAN = clean-IcedTeaPlugin
 ICEDTEAPLUGIN_TARGET = IcedTeaPlugin.so
 PLUGIN_PATCH = patches/icedtea-liveconnect.patch
-LIVECONNECT_DIR = -C lib/rt netscape
+LIVECONNECT_DIR = -C lib/rt netscape -C lib/rt sun/applet
 NPPLUGIN_DIR = 
 LIVECONNECT_SRCS = $(abs_top_srcdir)/plugin/icedtea
 else
@@ -184,11 +194,13 @@ endif
 
 # FIXME (bootstrap): Assumption is WITH_OPENJDK == no bootstrap
 if WITH_OPENJDK
-  BOOTSTRAP_DIRECTORY_STAMP = 
-  ICEDTEA_HOME = $(SYSTEM_OPENJDK_DIR)
+  BOOTSTRAP_DIRECTORY_STAMP =
+  SYSTEM_JDK_DIR = $(SYSTEM_OPENJDK_DIR)
+  ICEDTEA_HOME = $(SYSTEM_JDK_DIR)
   INITIAL_BOOTSTRAP_LINK_STAMP = stamps/bootstrap-directory-symlink.stamp
 else
   BOOTSTRAP_DIRECTORY_STAMP = stamps/bootstrap-directory.stamp
+  SYSTEM_JDK_DIR = $(SYSTEM_GCJ_DIR)
   ICEDTEA_HOME = $(abs_top_builddir)/bootstrap/icedtea
   INITIAL_BOOTSTRAP_LINK_STAMP = stamps/bootstrap-directory-symlink-ecj.stamp
 endif
@@ -224,8 +236,6 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-webstart-umask.patch \
 	patches/icedtea-rmi_amd64.patch \
 	patches/icedtea-tools.patch \
-	patches/icedtea-timezone.patch \
-	patches/icedtea-timezone-default-permission.patch \
 	patches/icedtea-use-system-tzdata.patch \
 	patches/icedtea-headers.patch \
 	patches/icedtea-headers-hotspot.patch \
@@ -246,7 +256,6 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-fonts.patch \
 	patches/icedtea-shark-build.patch \
 	patches/icedtea-shark-build-hotspot.patch \
-	patches/icedtea-jdk-docs-target.patch \
 	patches/icedtea-nomotif-6706121.patch \
 	patches/icedtea-nomotif.patch \
 	patches/icedtea-alpha-fixes.patch \
@@ -273,28 +282,11 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-sparc64-linux.patch \
 	patches/icedtea-sparc-ptracefix.patch \
 	patches/icedtea-sparc-trapsfix.patch \
-	patches/security/icedtea-6862968.patch \
-	patches/security/icedtea-6863503.patch \
-	patches/security/icedtea-6864911.patch \
-	patches/security/icedtea-6872357.patch \
-	patches/security/icedtea-6874643.patch \
-	patches/security/icedtea-6631533.patch \
-	patches/security/icedtea-6632445.patch \
-	patches/security/icedtea-6636650.patch \
-	patches/security/icedtea-6657026.patch \
-	patches/security/icedtea-6657138.patch \
-	patches/security/icedtea-6822057.patch \
-	patches/security/icedtea-6824265.patch \
-	patches/security/icedtea-6861062.patch \
-	patches/security/icedtea-6872358.patch \
-	patches/security/icedtea-6664512.patch \
 	patches/icedtea-demo-swingapplet.patch \
 	patches/icedtea-awt-window-size.patch \
 	patches/icedtea-java2d-dasher.patch \
-	patches/icedtea-xml-encodinginfo.patch \
 	patches/icedtea-jtreg-6592792.patch \
 	patches/icedtea-s390-noinline.patch \
-	patches/icedtea-jtreg-hatrun.patch \
 	patches/icedtea-jtreg-dnd.patch \
 	patches/icedtea-jtreg-jrunscript.patch \
 	patches/icedtea-network-unreachable.patch \
@@ -303,20 +295,13 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-java2d-stroker-internal-close-joint.patch \
 	patches/icedtea-disable-cc-incompatible-sanity-checks.patch \
 	patches/icedtea-explicit-target-arch.patch \
-	patches/openjdk/6432567-debugger-socket-overflow.patch \
 	patches/icedtea-gcc-stack-markings.patch \
 	patches/openjdk/6879689-hotspot_warning_fix.patch \
 	patches/icedtea-no-precompiled.patch \
-	patches/icedtea-6897844-xshm.patch \
 	patches/icedtea-linux-separate-debuginfo.patch \
 	patches/icedtea-parisc.patch \
 	patches/icedtea-sh4-support.patch \
-	patches/libpng.patch \
-	patches/openjdk/6920143-using-with-mouse.patch \
-        patches/openjdk/6920172-location-relative-to-test.patch \
-        patches/openjdk/6917663-turkish.patch \
-        patches/openjdk/6912628-turkcert.patch \
-        patches/openjdk/6716076-loggingdeadlock2.patch
+	patches/libpng.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -374,15 +359,18 @@ ICEDTEA_PATCHES += patches/hotspot/original/icedtea-6778662-lib64.patch \
 	patches/hotspot/original/icedtea-6793825-includedb.patch
 endif
 
+ICEDTEA_PATCHES += patches/icedtea-override.patch
+
 ICEDTEA_PATCHES += $(DISTRIBUTION_PATCHES)
 
 # Bootstrapping patches
 
-ICEDTEA_ECJ_PATCHES = patches/ecj/icedtea-ant.patch \
-	patches/ecj/icedtea.patch \
+ICEDTEA_ECJ_PATCHES = patches/ecj/icedtea.patch \
 	patches/ecj/icedtea-hotspot.patch \
 	patches/ecj/icedtea-spp.patch \
-	patches/ecj/icedtea-jopt.patch
+	patches/ecj/icedtea-jopt.patch \
+	patches/ecj/icedtea-jaxp-dependency.patch \
+	patches/ecj/bootver.patch
 
 # OpenJDK build environment.
 if ZERO_BUILD
@@ -422,7 +410,6 @@ ICEDTEA_ENV = \
 	ALT_BOOTDIR="$(ICEDTEA_BOOT_DIR)" \
 	ALT_BINARY_PLUGS_PATH="$(abs_top_builddir)/bootstrap/jdk1.7.0" \
 	BUILD_ARCH_DIR="$(BUILD_ARCH_DIR)" \
-	ICEDTEA_RT="$(ICEDTEA_RT)" \
 	ICEDTEA_BUILD_DIR="$(ICEDTEA_BUILD_DIR)" \
 	ICEDTEA_CLS_DIR="$(ICEDTEA_CLS_DIR)" \
 	ICEDTEA_ENDORSED_DIR="$(ICEDTEA_ENDORSED_DIR)" \
@@ -451,7 +438,8 @@ ICEDTEA_ENV = \
 	DISTRIBUTION_ID="$(DIST_ID)" \
 	DERIVATIVE_ID="$(ICEDTEA_NAME) $(PACKAGE_VERSION)$(ICEDTEA_REV)" \
 	DEBUG_CLASSFILES="true" \
-	DEBUG_BINARIES="true"
+	DEBUG_BINARIES="true" \
+	ALT_DROPS_DIR="$(abs_top_builddir)/drops"
 
 if WITH_CACAO
 ICEDTEA_ENV += \
@@ -500,10 +488,11 @@ ICEDTEA_ENV_ECJ = \
 	JDK_UPDATE_VERSION="$(JDK_UPDATE_VERSION)" \
         JRE_RELEASE_VERSION="1.6.0_$(COMBINED_VERSION)" \
 	MILESTONE="fcs" \
-	LANG=C"" \
+	JAVA_TOOLS_DIR="$(ICEDTEA_BOOT_DIR)/bin" \
+	LANG="C" \
 	PATH="$(abs_top_builddir)/bootstrap/jdk1.6.0/bin:$(OS_PATH):$$PATH" \
-	ALT_BOOTDIR="$(ICEDTEA_BOOT_DIR)" \
 	ALT_BINARY_PLUGS_PATH="$(abs_top_builddir)/bootstrap/jdk1.7.0" \
+	ALT_BOOTDIR="$(ICEDTEA_BOOT_DIR)" \
 	BUILD_ARCH_DIR="$(BUILD_ARCH_DIR)" \
 	ICEDTEA_RT="$(ICEDTEA_RT)" \
 	ICEDTEA_BUILD_DIR="$(ICEDTEA_BUILD_DIR_ECJ)" \
@@ -512,7 +501,7 @@ ICEDTEA_ENV_ECJ = \
 	ENDORSED="-Djava.endorsed.dirs=$(ICEDTEA_ENDORSED_DIR)" \
 	BOOTCLASSPATH_CLS_RT="-bootclasspath $(ICEDTEA_CLS_DIR_ECJ):$(ICEDTEA_RT)" \
 	BOOTCLASSPATH_CLS="-bootclasspath $(ICEDTEA_CLS_DIR_ECJ)" \
-	BOOTCLASSPATH_RT_LIBGCJ="-bootclasspath $(ICEDTEA_RT):$(SYSTEM_GCJ_DIR)/jre/lib/rt.jar" \
+	BOOTCLASSPATH_RT_LIBGCJ="-bootclasspath $(ICEDTEA_RT)" \
 	CLASSPATH="" \
 	LD_LIBRARY_PATH="" \
 	GENSRCDIR="$(abs_top_builddir)/generated" \
@@ -541,7 +530,10 @@ ICEDTEA_ENV_ECJ = \
 	DISTRIBUTION_ID="$(DIST_ID)" \
 	DERIVATIVE_ID="$(ICEDTEA_NAME) $(PACKAGE_VERSION)$(ICEDTEA_REV)" \
 	DEBUG_CLASSFILES="true" \
-	DEBUG_BINARIES="true"
+	DEBUG_BINARIES="true" \
+	DISABLE_NIMBUS="true" \
+	NO_DOCS="true" \
+	ALT_DROPS_DIR="$(abs_top_builddir)/drops"
 
 if WITH_CACAO
 ICEDTEA_ENV_ECJ += \
@@ -647,7 +639,7 @@ install:
 	clean-bootstrap-directory-symlink clean-bootstrap-directory-ecj \
 	clean-bootstrap-directory-symlink-ecj icedtea icedtea-debug \
 	clean-icedtea icedtea-against-icedtea clean-icedtea-ecj clean-plugs \
-	clean-tools-jar clean-shared-objects clean-visualvm clean-nbplatform \
+	clean-tools-jar clean-visualvm clean-nbplatform \
 	clean-copy clean-hotspot-tools clean-rt $(ICEDTEAPLUGIN_CLEAN) \
 	$(ICEDTEANPPLUGIN_CLEAN) hotspot hotspot-helper clean-extra clean-jtreg \
 	clean-jtreg-reports 
@@ -699,7 +691,95 @@ clean-hgforest:
 
 #FIXME (meta): Split into multiple targets
 #FIXME (missing): Download drops targets
-stamps/download.stamp: stamps/hgforest.stamp
+
+stamps/download-jaxp-drop.stamp:
+	mkdir -p drops
+if USE_ALT_JAXP_DROP_ZIP
+	ln -sf $(ALT_JAXP_DROP_ZIP) drops/$(JAXP_DROP_ZIP)
+endif
+	if ! echo "$(JAXP_DROP_SHA256SUM)  drops/$(JAXP_DROP_ZIP)" \
+	  | $(SHA256SUM) --check ; \
+	then \
+	  if [ -f drops/$(JAXP_DROP_ZIP) ] ; \
+	  then \
+	    mv drops/$(JAXP_DROP_ZIP) drops/$(JAXP_DROP_ZIP).old ; \
+	  fi ; \
+	  $(WGET) $(JAXP_DROP_URL)/$(JAXP_DROP_ZIP) -O drops/$(JAXP_DROP_ZIP); \
+	  if ! echo "$(JAXP_DROP_SHA256SUM)  drops/$(JAXP_DROP_ZIP)" \
+	    | $(SHA256SUM) --check ; \
+	  then echo "ERROR: Bad download of jaxp drop zip"; false; \
+	  fi; \
+	fi ;
+	mkdir -p stamps
+	touch $@
+
+clean-download-jaxp-drop:
+	rm -f drops/$(JAXP_DROP_ZIP)
+	rm -f stamps/download-jaxp-drop.stamp
+
+stamps/download-jaf-drop.stamp:
+	mkdir -p drops
+if USE_ALT_JAF_DROP_ZIP
+	ln -sf $(ALT_JAF_DROP_ZIP) drops/$(JAF_DROP_ZIP)
+endif
+	if ! echo "$(JAF_DROP_SHA256SUM)  drops/$(JAF_DROP_ZIP)" \
+	  | $(SHA256SUM) --check ; \
+	then \
+	  if [ -f drops/$(JAF_DROP_ZIP) ] ; \
+	  then \
+	    mv drops/$(JAF_DROP_ZIP) drops/$(JAF_DROP_ZIP).old ; \
+	  fi ; \
+	  $(WGET) $(JAXWS_DROP_URL)/$(JAF_DROP_ZIP) -O drops/$(JAF_DROP_ZIP); \
+	  if ! echo "$(JAF_DROP_SHA256SUM)  drops/$(JAF_DROP_ZIP)" \
+	    | $(SHA256SUM) --check ; \
+	  then echo "ERROR: Bad download of jaf drop zip"; false; \
+	  fi; \
+	fi ;
+	mkdir -p stamps
+	touch $@
+
+clean-download-jaf-drop:
+	rm -f drops/$(JAF_DROP_ZIP)
+	rm -f stamps/download-jaf-drop.stamp
+
+stamps/download-jaxws-drop.stamp:
+	mkdir -p drops
+if USE_ALT_JAXWS_DROP_ZIP
+	ln -sf $(ALT_JAXWS_DROP_ZIP) drops/$(JAXWS_DROP_ZIP)
+endif
+	if ! echo "$(JAXWS_DROP_SHA256SUM)  drops/$(JAXWS_DROP_ZIP)" \
+	  | $(SHA256SUM) --check ; \
+	then \
+	  if [ -f drops/$(JAXWS_DROP_ZIP) ] ; \
+	  then \
+	    mv drops/$(JAXWS_DROP_ZIP) drops/$(JAXWS_DROP_ZIP).old ; \
+	  fi ; \
+	  $(WGET) $(JAXWS_DROP_URL)/$(JAXWS_DROP_ZIP) -O drops/$(JAXWS_DROP_ZIP); \
+	  if ! echo "$(JAXWS_DROP_SHA256SUM)  drops/$(JAXWS_DROP_ZIP)" \
+	    | $(SHA256SUM) --check ; \
+	  then echo "ERROR: Bad download of jaxws drop zip"; false; \
+	  fi; \
+	fi ;
+	mkdir -p stamps
+	touch $@
+
+clean-download-jaxws-drop:
+	rm -f drops/$(JAXWS_DROP_ZIP)
+	rm -f stamps/download-jaxws-drop.stamp
+
+stamps/download-drops.stamp: stamps/download-jaxp-drop.stamp \
+ stamps/download-jaxws-drop.stamp stamps/download-jaf-drop.stamp
+	mkdir -p stamps
+	touch $@
+
+clean-drops: clean-download-jaxp-drop clean-download-jaf-drop \
+ clean-download-jaxws-drop
+	if [ -e drops ] ; then \
+	  rmdir drops ; \
+	fi
+	rm -f stamps/download-drops.stamp
+
+stamps/download.stamp: stamps/hgforest.stamp stamps/download-drops.stamp
 if OPENJDK_SRC_DIR_FOUND
 else
 if USE_ALT_OPENJDK_SRC_ZIP
@@ -787,7 +867,7 @@ endif
 	touch stamps/download.stamp
 
 #FIXME (meta): split into multiple targets
-clean-download:
+clean-download: clean-drops
 	rm -f stamps/download.stamp
 	rm -f $(OPENJDK_SRC_ZIP)
 if BUILD_CACAO
@@ -1149,7 +1229,7 @@ stamps/bootstrap-directory-ecj.stamp: stamps/native-ecj.stamp
 	  bootstrap/ecj/lib/endorsed/xalan-j2-serializer.jar
 	ln -sf $(XERCES2_JAR) bootstrap/ecj/lib/endorsed/xerces-j2.jar
 	mkdir -p bootstrap/ecj/jre/lib; \
-	ln -sf $(SYSTEM_GCJ_DIR)/jre/lib/$(JRE_ARCH_DIR) \
+	ln -sf $(SYSTEM_JDK_DIR)/jre/lib/$(JRE_ARCH_DIR) \
 	  bootstrap/ecj/jre/lib/; \
 	if ! test -d bootstrap/ecj/jre/lib/$(INSTALL_ARCH_DIR); \
 	  then \
@@ -1157,11 +1237,11 @@ stamps/bootstrap-directory-ecj.stamp: stamps/native-ecj.stamp
 	    bootstrap/ecj/jre/lib/$(INSTALL_ARCH_DIR); \
 	fi; \
 	mkdir -p bootstrap/ecj/include; \
-	for i in $(SYSTEM_GCJ_DIR)/include/*; do \
+	for i in $(SYSTEM_JDK_DIR)/include/*; do \
 	  test -r $$i | continue; \
 	  i=`basename $$i`; \
 	  rm -f bootstrap/ecj/include/$$i; \
-	  ln -s $(SYSTEM_GCJ_DIR)/include/$$i bootstrap/ecj/include/$$i; \
+	  ln -s $(SYSTEM_JDK_DIR)/include/$$i bootstrap/ecj/include/$$i; \
 	done; \
 	if test -f $(abs_top_builddir)/bootstrap/jdk1.7.0/jre/lib/tools.jar ; \
 	then \
@@ -1169,12 +1249,8 @@ stamps/bootstrap-directory-ecj.stamp: stamps/native-ecj.stamp
 	  ln -sf $(abs_top_builddir)/bootstrap/jdk1.7.0/jre/lib/tools.jar \
 	    $(abs_top_builddir)/bootstrap/ecj/lib/tools.jar ; \
 	fi
-	if test -f \
-	  $(abs_top_builddir)/bootstrap/jdk1.7.0/jre/lib/rt-closed.jar ; \
-	then \
-	  cp $(abs_top_builddir)/bootstrap/jdk1.7.0/jre/lib/rt-closed.jar \
-	    $(abs_top_builddir)/bootstrap/ecj/jre/lib/rt.jar ; \
-	fi
+	cp $(SYSTEM_JDK_DIR)/jre/lib/rt.jar \
+	  $(abs_top_builddir)/bootstrap/ecj/jre/lib/rt.jar;
 	mkdir -p stamps
 	touch stamps/bootstrap-directory-ecj.stamp
 
@@ -1328,6 +1404,10 @@ if ENABLE_NSS
 	cp $(abs_top_builddir)/nss.cfg \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security;
 endif
+if WITH_TZDATA_DIR
+	cp $(abs_top_builddir)/tz.properties \
+	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib;
+endif
 	@echo "IcedTea is served:" $(BUILD_OUTPUT_DIR)
 	mkdir -p stamps
 	touch stamps/icedtea.stamp
@@ -1426,6 +1506,10 @@ endif
 if ENABLE_NSS
 	cp $(abs_top_builddir)/nss.cfg \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security;
+endif
+if WITH_TZDATA_DIR
+	cp $(abs_top_builddir)/tz.properties \
+	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib;
 endif
 	@echo "IcedTea (debug build) is served:" \
 	  $(BUILD_OUTPUT_DIR)-debug
@@ -1589,12 +1673,11 @@ extra-source-files.txt:
 	find $(abs_top_srcdir)/extra -name '*.java' | sort > $@
 
 stamps/extra-class-files.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) \
-  extra-source-files.txt \
-	bootstrap/jdk1.7.0/jre/lib/rt-closed.jar
+  extra-source-files.txt stamps/plugs.stamp
 	mkdir -p extra-lib
 	$(ICEDTEA_BOOT_DIR)/bin/javac $(MEMORY_LIMIT) -g -d extra-lib \
           -source 1.5 \
-          -sourcepath extra -cp bootstrap/jdk1.7.0/jre/lib/rt-closed.jar \
+          -sourcepath extra -cp $(ICEDTEA_RT):$(ICEDTEA_PLUGS) \
           -bootclasspath \'\' @extra-source-files.txt ;
 	cp -r $(abs_top_srcdir)/extra/net/sourceforge/jnlp/about/resources \
 	  extra-lib/net/sourceforge/jnlp/about
@@ -1989,8 +2072,6 @@ check-langtools: stamps/jtreg.stamp
 	    | tee test/$@.log
 
 check-jdk: stamps/jtreg.stamp
-	chmod a-w $(abs_top_builddir)/openjdk/jdk/test/sun/tools/native2ascii/test2
-	chmod a-w $(abs_top_builddir)/openjdk/jdk/test/sun/tools/native2ascii/test3
 	mkdir -p test/jdk/JTwork test/jdk/JTreport
 	$(ICEDTEA_BOOT_DIR)/bin/java -jar test/jtreg.jar -v1 -a -ignore:quiet \
 		-w:test/jdk/JTwork -r:test/jdk/JTreport \
@@ -2069,14 +2150,6 @@ stamps/hotspot-tools-copy-source-files.stamp: stamps/overlay.stamp
 	    hotspot-tools/$$copy_dir ; \
 	done
 
-	for copy_dir in \
-	  `cat $(abs_top_srcdir)/tools-copy/tools-jaxws-copy-files.txt` ; \
-	do \
-	  mkdir -p hotspot-tools/$$copy_dir ; \
-	  cp -pPRf openjdk/jaxws/src/share/classes/$$copy_dir/* \
-	    hotspot-tools/$$copy_dir ; \
-	done
-
 	mkdir -p stamps
 	touch stamps/hotspot-tools-copy-source-files.stamp
 
@@ -2094,7 +2167,8 @@ stamps/hotspot-tools-class-files.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) \
 	  -source 1.5 \
 	  -sourcepath \
 	    'hotspot-tools:$(OPENJDK_SOURCEPATH_DIRS):$(ABS_SOURCE_DIRS)' \
-	  -classpath \'\' -bootclasspath \'\' @hotspot-tools-source-files.txt ;
+	  -classpath $(SYSTEM_JDK_DIR)/jre/lib/rt.jar \
+	  -bootclasspath \'\' @hotspot-tools-source-files.txt ;
 	mkdir -p stamps
 	touch stamps/hotspot-tools-class-files.stamp
 
@@ -2110,29 +2184,14 @@ stamps/hotspot-tools.stamp: bootstrap/jdk1.7.0/jre/lib/tools.jar
 	mkdir -p stamps
 	touch stamps/hotspot-tools.stamp
 
-#FIXME (plugs): Remove this
-stamps/copy-source-files.stamp: stamps/overlay.stamp
-	for copy_dir in $(ICEDTEA_COPY_DIRS) ; \
-	do \
-	  mkdir -p rt/$$copy_dir ; \
-	  cp -pPRf openjdk/jdk/src/share/classes/$$copy_dir/*.java \
-	    rt/$$copy_dir ; \
-	done
-	mkdir -p stamps
-	touch stamps/copy-source-files.stamp
-
-#FIXME (plugs): Remove this
-clean-copy:
-	rm -f stamps/copy-source-files.stamp
-	for copy_dir in $(ICEDTEA_COPY_DIRS) ; \
-	do \
-	  rm -rf rt/$$copy_dir ; \
-	done
-
-# rt-closed.jar class files.
-rt-source-files.txt: stamps/replace-hotspot.stamp stamps/copy-source-files.stamp
+# rt.jar additional class files.
+rt-source-files.txt: stamps/replace-hotspot.stamp 
 	find $(abs_top_srcdir)/rt $(abs_top_builddir)/rt $(LIVECONNECT_SRCS) -name '*.java' \
 	  | sort -u > $@
+	for dir in $(ICEDTEA_BOOTSTRAP_DIRS) ; \
+	do \
+	  $(FIND) $(abs_top_builddir)/$$dir -name '*.java' >> $@; \
+	done
 
 stamps/rt-class-files.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) rt-source-files.txt
 	mkdir -p lib/rt
@@ -2140,7 +2199,8 @@ stamps/rt-class-files.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) rt-source-files.txt
           -source 1.5 \
           -sourcepath \
 	    '$(OPENJDK_SOURCEPATH_DIRS):$(abs_top_builddir)/generated' \
-          -classpath \'\' -bootclasspath \'\' @rt-source-files.txt ;
+          -classpath $(SYSTEM_JDK_DIR)/jre/lib/rt.jar \
+	  -bootclasspath \'\' @rt-source-files.txt ;
 	cp -r $(abs_top_srcdir)/rt/net/sourceforge/jnlp/resources \
 	  lib/rt/net/sourceforge/jnlp/
 	mkdir -p stamps
@@ -2149,6 +2209,7 @@ stamps/rt-class-files.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) rt-source-files.txt
 clean-rt:
 	rm -rf lib/rt
 	rm -f stamps/rt-class-files.stamp
+	rm -f stamps/rt.stamp
 	rm -f rt-source-files.txt
 
 # tools.jar
@@ -2157,8 +2218,7 @@ bootstrap/jdk1.7.0/jre/lib/tools.jar: $(INITIAL_BOOTSTRAP_LINK_STAMP) \
 	mkdir -p bootstrap/jdk1.7.0/jre/lib/
 	$(ICEDTEA_BOOT_DIR)/bin/jar cf $@ -C lib/hotspot-tools com \
 	  -C lib/hotspot-tools sun \
-          -C lib/hotspot-tools org -C lib/hotspot-tools java \
-          -C lib/hotspot-tools javax ;
+          -C lib/hotspot-tools org -C lib/hotspot-tools java ;
 	if test -d bootstrap/ecj ; \
 	then \
 	  mkdir -p bootstrap/ecj/lib/; \
@@ -2171,25 +2231,33 @@ clean-tools-jar: clean-hotspot-tools
 	rm -rf tools/
 	rm -f bootstrap/jdk1.7.0/jre/lib/tools.jar
 
-# rt-closed.jar.
-bootstrap/jdk1.7.0/jre/lib/rt-closed.jar: stamps/rt-class-files.stamp
-	mkdir -p bootstrap/jdk1.7.0/jre/lib
-	$(ICEDTEA_BOOT_DIR)/bin/jar cf $@ -C lib/rt com -C lib/rt java \
-	  -C lib/rt javax $(LIVECONNECT_DIR) -C lib/rt net -C lib/rt sun ;
-	if test -d bootstrap/ecj/jre/lib ; \
+stamps/rt.stamp: stamps/rt-class-files.stamp \
+ stamps/bootstrap-directory-ecj.stamp
+	mkdir -p stamps
+if LACKS_SUN_AWT_TOOLKIT
+	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
 	then \
-	  cp bootstrap/jdk1.7.0/jre/lib/rt-closed.jar \
-	    bootstrap/ecj/jre/lib/rt.jar; \
+	  $(JAR) uf $(ICEDTEA_RT) -C lib/rt com -C lib/rt java \
+	    -C lib/rt javax $(LIVECONNECT_DIR) -C lib/rt net -C lib/rt sun ; \
+	else \
+	  $(ICEDTEA_BOOT_DIR)/bin/jar uf $(ICEDTEA_RT) -C lib/rt com -C lib/rt java \
+	    -C lib/rt javax $(LIVECONNECT_DIR) -C lib/rt net -C lib/rt sun ; \
 	fi
+endif
+	touch stamps/rt.stamp
 
-stamps/plugs.stamp: bootstrap/jdk1.7.0/jre/lib/rt-closed.jar
+stamps/plugs.stamp: stamps/rt.stamp
+	mkdir -p bootstrap/jdk1.7.0/jre/lib
+	$(ICEDTEA_BOOT_DIR)/bin/jar cf $(ICEDTEA_PLUGS) \
+	  -C lib/rt com/sun/jmx/snmp $(LIVECONNECT_DIR) \
+	  -C lib/rt net -C lib/rt javax/jnlp ;
 	mkdir -p stamps
 	touch stamps/plugs.stamp
 
-clean-plugs: clean-plugs clean-shared-objects \
-	clean-copy clean-rt
+clean-plugs: clean-plugs clean-copy clean-rt
+	rm -f $(ICEDTEA_PLUGS)
+	cp $(SYSTEM_JDK_DIR)/jre/lib/rt.jar $(ICEDTEA_RT)
 	rm -f stamps/plugs.stamp
-	rm -f bootstrap/jdk1.7.0/jre/lib/rt-closed.jar
 
 # Target Aliases
 # ===============
@@ -2208,9 +2276,15 @@ visualvm: stamps/visualvm.stamp
 
 nbplatform: stamps/nbplatform.stamp
 
-copy-source-files: stamps/copy-source-files.stamp
-
 download: stamps/download.stamp
+
+download-drops: stamps/download-drops.stamp
+
+download-jaf-drop: stamps/download-jaf-drop.stamp
+
+download-jaxp-drop: stamps/download-jaxp-drop.stamp
+
+download-jaxws-drop: stamps/download-jaxws-drop.stamp
 
 extract: stamps/extract.stamp
 
@@ -2239,6 +2313,8 @@ rewriter: stamps/rewriter.stamp
 rewrite-rhino: stamps/rewrite-rhino.stamp
 
 plugs: stamps/plugs.stamp
+
+rt-jar: stamps/rt.stamp
 
 rt-class-files: stamps/rt-class-files.stamp
 

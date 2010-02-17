@@ -938,6 +938,57 @@ AC_DEFUN([WITH_HOTSPOT_SRC_ZIP],
   AC_SUBST(ALT_HOTSPOT_SRC_ZIP)
 ])
 
+AC_DEFUN([WITH_JAXP_DROP_ZIP],
+[
+  AC_MSG_CHECKING(for a JAXP drop zip)
+  AC_ARG_WITH([jaxp-drop-zip],
+              [AS_HELP_STRING(--with-jaxp-drop-zip,specify the location of the JAXP drop zip)],
+  [
+    ALT_JAXP_DROP_ZIP=${withval}
+    AM_CONDITIONAL(USE_ALT_JAXP_DROP_ZIP, test x = x)
+  ],
+  [ 
+    ALT_JAXP_DROP_ZIP="not specified"
+    AM_CONDITIONAL(USE_ALT_JAXP_DROP_ZIP, test x != x)
+  ])
+  AC_MSG_RESULT(${ALT_JAXP_DROP_ZIP})
+  AC_SUBST(ALT_JAXP_DROP_ZIP)
+])
+
+AC_DEFUN([WITH_JAF_DROP_ZIP],
+[
+  AC_MSG_CHECKING(for a JAF drop zip)
+  AC_ARG_WITH([jaf-drop-zip],
+              [AS_HELP_STRING(--with-jaf-drop-zip,specify the location of the JAF drop zip)],
+  [
+    ALT_JAF_DROP_ZIP=${withval}
+    AM_CONDITIONAL(USE_ALT_JAF_DROP_ZIP, test x = x)
+  ],
+  [ 
+    ALT_JAF_DROP_ZIP="not specified"
+    AM_CONDITIONAL(USE_ALT_JAF_DROP_ZIP, test x != x)
+  ])
+  AC_MSG_RESULT(${ALT_JAF_DROP_ZIP})
+  AC_SUBST(ALT_JAF_DROP_ZIP)
+])
+
+AC_DEFUN([WITH_JAXWS_DROP_ZIP],
+[
+  AC_MSG_CHECKING(for a JAXWS drop zip)
+  AC_ARG_WITH([jaxws-drop-zip],
+              [AS_HELP_STRING(--with-jaxws-drop-zip,specify the location of the JAXWS drop zip)],
+  [
+    ALT_JAXWS_DROP_ZIP=${withval}
+    AM_CONDITIONAL(USE_ALT_JAXWS_DROP_ZIP, test x = x)
+  ],
+  [ 
+    ALT_JAXWS_DROP_ZIP="not specified"
+    AM_CONDITIONAL(USE_ALT_JAXWS_DROP_ZIP, test x != x)
+  ])
+  AC_MSG_RESULT(${ALT_JAXWS_DROP_ZIP})
+  AC_SUBST(ALT_JAXWS_DROP_ZIP)
+])
+
 AC_DEFUN([ENABLE_HG],
 [
   AC_MSG_CHECKING(whether to retrieve the source code from Mercurial)
@@ -1059,6 +1110,37 @@ AC_DEFUN([AC_CHECK_FOR_OPENJDK],
   AC_SUBST(with_openjdk)
 ])
 
+AC_DEFUN([AC_CHECK_WITH_TZDATA_DIR],
+[
+  DEFAULT="/usr/share/javazi"
+  AC_MSG_CHECKING([which Java timezone data directory to use])
+  AC_ARG_WITH([tzdata-dir],
+	      [AS_HELP_STRING(--with-tzdata-dir,set the Java timezone data directory [[default=${DEFAULT}]])],
+  [
+    if test "x${withval}" = x || test "x${withval}" = xyes; then
+      TZDATA_DIR_SET=yes
+      TZDATA_DIR="${DEFAULT}"
+    else
+      if test "x${withval}" = xno; then
+        TZDATA_DIR_SET=no
+        AC_MSG_RESULT([no])
+      else
+        TZDATA_DIR_SET=yes
+        TZDATA_DIR="${withval}"
+      fi
+    fi
+  ],
+  [ 
+    TZDATA_DIR="${DEFAULT}"
+  ])
+  if test "x${TZDATA_DIR}" != "x"; then
+    AC_MSG_RESULT([${TZDATA_DIR}])
+  fi
+  AC_SUBST([TZDATA_DIR])
+  AM_CONDITIONAL(WITH_TZDATA_DIR, test "x${TZDATA_DIR}" != "x")
+  AC_CONFIG_FILES([tz.properties])
+])
+
 AC_DEFUN([IT_CHECK_ADDITIONAL_VMS],
 [
 AC_MSG_CHECKING([for additional virtual machines to build])
@@ -1103,6 +1185,46 @@ fi
 if test "x${ADD_ZERO_BUILD_TRUE}" = x && test "x${abs_top_builddir}" = "x${abs_top_srcdir}"; then
   AC_MSG_ERROR([build of additional zero/shark VM requires build with srcdir != builddir])
 fi
+])
+
+dnl Generic macro to check for a Java class
+dnl Takes two arguments: the name of the macro
+dnl and the name of the class.  The macro name
+dnl is usually the name of the class with '.'
+dnl replaced by '_' and all letters capitalised.
+dnl e.g. IT_CHECK_FOR_CLASS([JAVA_UTIL_SCANNER],[java.util.Scanner])
+AC_DEFUN([IT_CHECK_FOR_CLASS],[
+AC_CACHE_CHECK([if $2 is missing], it_cv_$1, [
+CLASS=Test.java
+BYTECODE=$(echo $CLASS|sed 's#\.java##')
+mkdir tmp.$$
+cd tmp.$$
+cat << \EOF > $CLASS
+[/* [#]line __oline__ "configure" */
+public class Test
+{
+  public static void main(String[] args)
+  {
+    $2.class.toString();
+  }
+}
+]
+EOF
+if $JAVAC -cp . $JAVACFLAGS -nowarn $CLASS >&AS_MESSAGE_LOG_FD 2>&1; then
+  if $JAVA -classpath . $BYTECODE >&AS_MESSAGE_LOG_FD 2>&1; then
+      it_cv_$1=no;
+  else
+      it_cv_$1=yes;
+  fi
+else
+  it_cv_$1=yes;
+fi
+])
+rm -f $CLASS *.class
+cd ..
+rmdir tmp.$$
+AM_CONDITIONAL([LACKS_$1], test x"${it_cv_$1}" = "xyes")
+AC_PROVIDE([$0])dnl
 ])
 
 # Finds number of available processors using sysconf
