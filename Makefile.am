@@ -271,7 +271,6 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-renderer-crossing.patch \
 	patches/icedtea-stroker-finish.patch \
 	patches/icedtea-linker-libs-order.patch \
-	patches/icedtea-6761856-freetypescaler.patch \
 	patches/icedtea-testenv.patch \
 	patches/icedtea-samejvm-safe.patch \
 	patches/icedtea-pr261.patch \
