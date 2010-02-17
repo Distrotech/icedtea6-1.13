@@ -44,7 +44,7 @@
  	$(CP) $(RT_JAR) $(JRE_IMAGE_DIR)/lib/rt.jar
  	$(CP) $(RESOURCES_JAR) $(JRE_IMAGE_DIR)/lib/resources.jar
  	$(CP) $(JSSE_JAR) $(JRE_IMAGE_DIR)/lib/jsse.jar
-+	$(LN) -sf $(RHINO_JAR) $(JRE_IMAGE_DIR)/lib/rhino.jar
++	$(CP) $(RHINO_JAR) $(JRE_IMAGE_DIR)/lib/rhino.jar
  	@# Generate meta-index to make boot and extension class loaders lazier
  	$(CD) $(JRE_IMAGE_DIR)/lib && \
  	    $(BOOT_JAVA_CMD) -jar $(BUILDMETAINDEX_JARFILE) \
@@ -55,7 +55,7 @@
  package com.sun.script.javascript;
  
 -import sun.org.mozilla.javascript.internal.*;
-+import org.mozilla.javascript.*;
++import sun.org.mozilla.javascript.*;
  import javax.script.*;
  
  /**
@@ -66,7 +66,7 @@
  import javax.script.*;
  import java.util.*;
 -import sun.org.mozilla.javascript.internal.*;
-+import org.mozilla.javascript.*;
++import sun.org.mozilla.javascript.*;
  import com.sun.script.util.*;
  
  /**
@@ -77,7 +77,7 @@
  
  package com.sun.script.javascript;
 -import sun.org.mozilla.javascript.internal.*;
-+import org.mozilla.javascript.*;
++import sun.org.mozilla.javascript.*;
  import javax.script.*;
  import java.util.*;
  
@@ -88,7 +88,7 @@
  import com.sun.script.util.*;
  import javax.script.*;
 -import sun.org.mozilla.javascript.internal.*;
-+import org.mozilla.javascript.*;
++import sun.org.mozilla.javascript.*;
  import java.lang.reflect.Method;
  import java.io.*;
  import java.util.*;
@@ -99,7 +99,7 @@
  
  import java.util.*;
 -import sun.org.mozilla.javascript.internal.*;
-+import org.mozilla.javascript.*;
++import sun.org.mozilla.javascript.*;
  
  /**
   * This class prevents script access to certain sensitive classes.
@@ -110,7 +110,7 @@
  
  import javax.script.Invocable;
 -import sun.org.mozilla.javascript.internal.*;
-+import org.mozilla.javascript.*;
++import sun.org.mozilla.javascript.*;
  
  /**
   * This class implements Rhino-like JavaAdapter to help implement a Java
@@ -121,7 +121,7 @@
  package com.sun.script.javascript;
  
 -import sun.org.mozilla.javascript.internal.*;
-+import org.mozilla.javascript.*;
++import sun.org.mozilla.javascript.*;
  import java.util.*;
  
  /**
@@ -132,7 +132,7 @@
  import java.lang.reflect.*;
  import static sun.security.util.SecurityConstants.*;
 -import sun.org.mozilla.javascript.internal.*;
-+import org.mozilla.javascript.*;
++import sun.org.mozilla.javascript.*;
  
  /**
   * This wrap factory is used for security reasons. JSR 223 script
@@ -143,7 +143,7 @@
  package com.sun.script.javascript;
  import javax.script.*;
 -import sun.org.mozilla.javascript.internal.*;
-+import org.mozilla.javascript.*;
++import sun.org.mozilla.javascript.*;
  
  /**
   * Represents compiled JavaScript code.

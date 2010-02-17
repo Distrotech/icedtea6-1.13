@@ -197,6 +197,8 @@ endif
 
 PLUGIN_TEST_SRCS = $(abs_top_srcdir)/plugin/tests/LiveConnect/*.java
 
+REWRITER_SRCS = $(abs_top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.java
+
 # Patch list
 
 ICEDTEA_FSG_PATCHES =
@@ -446,7 +448,6 @@ ICEDTEA_ENV = \
 	JAVAC="" \
 	JAVA_HOME="" \
 	JDK_HOME="" \
-	RHINO_JAR="$(RHINO_JAR)" \
 	DISTRIBUTION_ID="$(DIST_ID)" \
 	DERIVATIVE_ID="$(ICEDTEA_NAME) $(PACKAGE_VERSION)$(ICEDTEA_REV)" \
 	DEBUG_CLASSFILES="true" \
@@ -482,6 +483,11 @@ endif
 if HAS_HOTSPOT_REVISION
 ICEDTEA_ENV += \
 	HOTSPOT_BUILD_VERSION="$(HOTSPOT_REVISION)" 
+endif
+
+if WITH_RHINO
+ICEDTEA_ENV += \
+	RHINO_JAR="$(abs_top_builddir)/rhino/rhino.jar"
 endif
 
 # OpenJDK ecj build environment.
@@ -529,7 +535,6 @@ ICEDTEA_ENV_ECJ = \
 	JAVAC="" \
 	JAVA_HOME="" \
 	JDK_HOME="" \
-	RHINO_JAR="$(RHINO_JAR)" \
 	JAR_KNOWS_ATFILE="$(JAR_KNOWS_ATFILE)" \
 	JAR_KNOWS_J_OPTIONS="$(JAR_KNOWS_J_OPTIONS)" \
 	JAR_ACCEPTS_STDIN_LIST="$(JAR_ACCEPTS_STDIN_LIST)" \
@@ -565,6 +570,11 @@ ICEDTEA_ENV_ECJ += \
 	HOTSPOT_BUILD_VERSION="$(HOTSPOT_REVISION)"
 endif
 
+if WITH_RHINO
+ICEDTEA_ENV_ECJ += \
+	RHINO_JAR="$(abs_top_builddir)/rhino/rhino.jar"
+endif
+
 # Source files
 # FIXME (distclean): Add generated file list
 # FIXME (distclean): Add jtreg sources
@@ -585,7 +595,9 @@ EXTRA_DIST = rt generated \
 	tapset/hotspot.stp.in \
 	tapset/hotspot_jni.stp.in \
 	scripts/jni_create_stap.c \
-	scripts/jni_desc
+	scripts/jni_desc \
+	rewriter/agpl-3.0.txt \
+	$(REWRITER_SRCS)
 
 # Top-Level Targets
 # =================
@@ -1226,7 +1238,7 @@ stamps/icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
 	stamps/ports.stamp stamps/patch.stamp stamps/overlay.stamp \
 	$(ICEDTEAPLUGIN_TARGET) $(ICEDTEANPPLUGIN_TARGET) \
 	extra-lib/about.jar stamps/cacao.stamp stamps/visualvm.stamp \
-	stamps/pulse-java.stamp
+	stamps/pulse-java.stamp stamps/rewrite-rhino.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV) \
 	  -C openjdk \
@@ -1325,7 +1337,7 @@ stamps/icedtea-debug.stamp: stamps/bootstrap-directory-symlink.stamp \
 	stamps/ports.stamp stamps/patch.stamp stamps/overlay.stamp \
 	$(ICEDTEAPLUGIN_TARGET) $(ICEDTEANPPLUGIN_TARGET) \
 	extra-lib/about.jar stamps/cacao.stamp stamps/visualvm.stamp \
-	stamps/pulse-java.stamp
+	stamps/pulse-java.stamp stamps/rewrite-rhino.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV) \
 	  -C openjdk \
@@ -1447,7 +1459,7 @@ icedtea-debug-against-icedtea: \
 
 stamps/icedtea-ecj.stamp: stamps/bootstrap-directory-symlink-ecj.stamp \
 	stamps/hotspot-tools.stamp stamps/plugs.stamp \
-	stamps/patch-ecj.stamp stamps/cacao.stamp
+	stamps/patch-ecj.stamp stamps/cacao.stamp stamps/rewrite-rhino.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV_ECJ) \
 	  -C openjdk-ecj/ \
@@ -1679,6 +1691,39 @@ if ENABLE_PULSE_JAVA
 endif
 
 # end of pulse-java
+
+# Rhino support
+
+stamps/rewriter.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP)
+if WITH_RHINO
+	(cd $(abs_top_srcdir)/rewriter ; \
+	 $(ICEDTEA_BOOT_DIR)/bin/javac -g \
+	 -d $(abs_top_builddir)/rewriter $(REWRITER_SRCS) \
+	)
+endif
+	mkdir -p stamps
+	touch stamps/rewriter.stamp
+
+stamps/rewrite-rhino.stamp: stamps/rewriter.stamp $(RHINO_JAR)
+if WITH_RHINO
+	mkdir -p rhino/rhino.{old,new}
+	(cd rhino/rhino.old ; jar xf $(RHINO_JAR))
+	$(ICEDTEA_BOOT_DIR)/bin/java -cp $(abs_top_builddir)/rewriter \
+	  com.redhat.rewriter.ClassRewriter \
+	  $(abs_top_builddir)/rhino/rhino.old $(abs_top_builddir)/rhino/rhino.new \
+	  org.mozilla sun.org.mozilla
+	(cd rhino/rhino.old ; \
+	 for files in `find -type f -not -name '*.class'` ; do \
+	   new_file=../rhino.new/`echo $$files|sed -e 's#org#sun/org#'` ; \
+	   mkdir -p `dirname $$new_file` ; \
+	   cp -v $$files $$new_file ; \
+	   sed -ie 's#org\.mozilla#sun.org.mozilla#g' $$new_file ; \
+	 done \
+	)
+	(cd rhino/rhino.new ; jar cfm ../rhino.jar META-INF/MANIFEST.MF sun )
+endif
+	mkdir -p stamps
+	touch stamps/rewrite-rhino.stamp
 
 # VisualVM
 
@@ -2188,6 +2233,10 @@ patch: stamps/patch.stamp
 patch-fsg: stamps/patch-fsg.stamp
 
 overlay: stamps/overlay.stamp
+
+rewriter: stamps/rewriter.stamp
+
+rewrite-rhino: stamps/rewrite-rhino.stamp
 
 plugs: stamps/plugs.stamp
 

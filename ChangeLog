@@ -1,3 +1,38 @@
+2010-02-17 Andrew John Hughes  <ahughes@redhat.com>
+
+	PR icedtea/179
+	* ChangeLog: Remove rogue whitespace highlighted
+	by emacs.
+	* Makefile.am:
+	(REWRITER_SRCS): Sources for class file rewriter.
+	Only set RHINO_JAR when WITH_RHINO is set.  Point
+	to rewritten JAR file in build directory.  Add
+	rewriter and license to EXTRA_DIST.  Make icedtea,
+	icedtea-debug and icedtea-ecj depend on rewrite-rhino.stamp.
+	(stamps/rewriter.stamp): Build the class file rewriter.
+	(stamps/rewrite-rhino.stamp): Rewrite the system Rhino JAR
+	file to use the sun.org.mozilla namespace to avoid conflicts.
+	(rewriter): New alias for stamps/rewriter.stamp.
+	(rewrite-rhino): Likewise for stamps/rewrite-rhino.stamp.
+	* patches/icedtea-rhino.patch:
+	Copy rather than symlink the JAR file.  Only drop the
+	internal suffix on the javascript package names.
+	* rewriter/com/redhat/rewriter/ClassRewriter.java:
+	(executor): Use a single threaded executor when
+	debugging is enabled.
+	(tasks): Store the Futures returned by the executor
+	for later checking.
+	(main(String[])): Log what happens when processFile
+	returns and handle any exceptions using Futures.
+	(call()): Ensure srcDir/destDir replacement always
+	matches with a trailing slash to avoid odd rewrites.
+	Loop directory creation to avoid possible race issues.
+	Increase logging and fix a number of issues with the rewrite:
+	  * Fix off-by-one loop bug so final entry is inspected.
+	  * Handle double entries which occur with 8-byte entries
+	    (doubles and longs):
+	http://java.sun.com/docs/books/jvms/second_edition/html/ClassFile.doc.html#16628
+
 2010-02-17  Xerxes Rånby  <xerxes@zafena.se>
 
 	* ports/hotspot/src/share/vm/shark/sharkCompiler.cpp
@@ -9,7 +44,7 @@
 	Allways define llvm/Support/CommandLine.h.
 
 2010-02-16  Gary Benson  <gbenson@redhat.com>
-	
+
 	* contrib/jck/compile-native-code.sh: Add s390.
 
 2010-02-15 Andrew John Hughes  <ahughes@redhat.com>
@@ -177,7 +212,7 @@
 	* NEWS:
 	Add missing items for 1.5.1, 1.5.2,
 	1.5.3, 1.6.1 and 1.6.2.
-	
+
 2010-01-27  Edward Nevill   <ed@camswl.com>
 
 	* ports/hotspot/src/cpu/zero/vm/thumb2.cpp
@@ -188,7 +223,7 @@
 	* NEWS: Added message about alpha release for the new NPR based plugin.
 
 2010-01-27  Matthias Klose  <doko@ubuntu.com>
-	
+
 	* Makefile.am: Remove quoting from ICEDTEA_NAME ICEDTEA_REV
 	ICEDTEA_PKG.
 
@@ -221,39 +256,39 @@
 
 	* Makefile.am:
 	Build NPPlugin source files separately.
-	
+
 2010-01-25 Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:
 	Fix ICEDTEAPLUGIN_TARGET to use new
 	stamp targets and remove redundant
 	ICEDTEANPPPLUGIN_TARGET.
-	
+
 2010-01-25 Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:
 	Use NPPLUGIN_SRCDIR for Java plugin sources.
-	
+
 2010-01-25 Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:
 	Provide stamp targets for both npplugin
 	and the old plugin so 'make plugin' builds
 	the one configured.
-	
+
 2010-01-25 Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:
 	Remove trailing space after IcedTea version
 	in plugin version information when package
 	version is not set.
-	
+
 2010-01-25 Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:
 	Build NPPlugin in the build directory,
 	not the source tree.
-	
+
 2010-01-22  Deepak Bhole <dbhole@redhat.com>
 
 	* Makefile.am:
@@ -289,7 +324,7 @@
 	* patches/icedtea-libraries.patch:
 	Make all dlopen choices at build-time,
 	not just one.  Support libjpeg8 as well.
-	
+
 2010-01-21  Andrew John Hughes  <ahughes@redhat.com>
 
 	PR icedtea/433
@@ -316,7 +351,7 @@
 	* Makefile.am:
 	Fix paths to patches and IcedTeaNPPlugin.cc
 	for make dist.
-	
+
 2010-01-20  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:
@@ -380,7 +415,7 @@
 	* configure.ac:
 	Use AC_LANG_PUSH and AC_LANG_POP instead
 	of deprecated SAVE and RESTORE macros.
-	
+
 2010-01-18 Andrew John Hughes  <ahughes@redhat.com>
 
 	PR icedtea/416:
@@ -388,7 +423,7 @@
 	Use $(OPENJDK_SRC_ZIP) and $(HOTSPOT_SRC_ZIP)
 	to determine names of tarballs rather than
 	hardcoding openjdk.tar.gz and hotspot.tar.gz
-	
+
 2010-01-17  Matthias Klose  <doko@ubuntu.com>
 
 	* patches/icedtea-sparc-trapsfix.patch: Merged sparc headers
@@ -406,13 +441,13 @@
 	(IT_FIND_NUMBER_OF_PROCESSORS):
 	Dependency of above.  Uses getconf to
 	obtain the number of available processors.
-	
+
 2010-01-16 Andrew John Hughes  <ahughes@redhat.com>
 
 	* acinclude.m4:
 	Send output to AS_MESSAGE_LOG_FD rather
 	than /dev/null so we have a record of errors.
-	
+
 2010-01-16 Andrew John Hughes  <ahughes@redhat.com>
 
 	configure output and option cleanup
@@ -523,7 +558,7 @@
 
 	* patches/hotspot/hs16/memory-limits.patch:
 	Add HotSpot 16 version of memory limits patch.
-	
+
 2010-01-11 Andrew John Hughes  <ahughes@redhat.com>
 
 	Bump to latest HotSpot 16 (b13).
@@ -601,14 +636,14 @@
 	using any Mozilla code) in IcedTeaPluginUtils.
 	(get_scriptable_object): Initialize handle to 0 if not already set.
 	(GCJ_SetWindow): Set proper instance id when manipulating height.
-	* plugin/icedteanp/IcedTeaPluginRequestProcessor.cc: Add temporary 
+	* plugin/icedteanp/IcedTeaPluginRequestProcessor.cc: Add temporary
 	workaround for chromium which seems to free on calls to
 	NPN_PluginThreadAsyncCall.
 	* plugin/icedteanp/IcedTeaPluginUtils.cc
 	(decodeURL): New function. Decodes an encoded URL.
 	* plugin/icedteanp/IcedTeaPluginUtils.h: Added helper macros for
 	decodeURL.
-	* plugin/icedteanp/java/sun/applet/PluginAppletViewer.java: Make panel 
+	* plugin/icedteanp/java/sun/applet/PluginAppletViewer.java: Make panel
 	visible only if handle is non-zero.
 	(parse): Fix regression introduced when fix for Bug# 406 was ported over.
 	Normalized default width and height.
@@ -617,7 +652,7 @@
 
 	* configure.ac: Bump version to 1.8pre.
 	* NEWS: Mention X11 fix.
-	
+
 2009-12-22  Deepak Bhole <dbhole@redhat.com>
 
 	* Makefile.am: Set JDK_UPDATE_VERSION based on upstream drop version
@@ -645,7 +680,7 @@
 2009-12-14  Man Lung Wong  <mwong@redhat.com>
 
 	* rt/net/sourceforge/jnlp/Launcher.java
-	(launch): File is not launched if offline-allowed tag not present and 
+	(launch): File is not launched if offline-allowed tag not present and
 	system offline.
 
 2009-12-13  Mark Wielaard  <mjw@redhat.com>
