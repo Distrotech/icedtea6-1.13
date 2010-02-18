@@ -66,7 +66,7 @@ JAXWS = openjdk/jaxws/src/share/classes
 # FIXME (netx): NetX source directories go here
 
 OPENJDK_SOURCEPATH_DIRS = \
-        $(SHARE):$(SOLARIS):$(LANGTOOLS):$(JAXP):$(CORBA):$(JAXWS)
+        $(SHARE):$(SOLARIS):$(LANGTOOLS):$(CORBA)
 
 ABS_SOURCE_DIRS = $(abs_top_builddir)/generated:$(abs_top_builddir)/rt:$(abs_top_srcdir)/rt:$(LIVECONNECT_SRCS)
 
@@ -86,6 +86,9 @@ ICEDTEA_BOOTSTRAP_DIRS = \
 	$(SHARE)/javax/script \
 	$(SHARE)/javax/security/auth/kerberos \
 	$(SHARE)/javax/security/sasl
+
+ICEDTEA_BOOTSTRAP_CLASSES = \
+	$(SHARE)/sun/misc/Unsafe.java
 
 # FIXME (javac): Settings for javac go here
 
@@ -2191,6 +2194,10 @@ rt-source-files.txt: stamps/replace-hotspot.stamp
 	for dir in $(ICEDTEA_BOOTSTRAP_DIRS) ; \
 	do \
 	  $(FIND) $(abs_top_builddir)/$$dir -name '*.java' >> $@; \
+	done
+	for files in $(ICEDTEA_BOOTSTRAP_CLASSES) ; \
+	do \
+	  echo $$files >> $@ ; \
 	done
 
 stamps/rt-class-files.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) rt-source-files.txt
