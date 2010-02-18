@@ -1,5 +1,48 @@
 2010-02-17 Andrew John Hughes  <ahughes@redhat.com>
 
+	Drop hotspot-tools targets to simplify
+	bootstrapping OpenJDK.
+	* Makefile.am:
+	Add additional OPENJDK_BOOTSTRAP_DIRS
+	to compensate for the removal of the
+	hotspot-tools classes.  Add OPENJDK_TREE
+	variable as a pseudo-target for targets
+	that require a patched OpenJDK tree with
+	Zero, Shark and any overlays.  Remove hotspot-tools
+	aliases.  Remove tools-copy from EXTRA_DIST.
+	(distclean-local): No more need to remove hotspot-tools
+	and hotspot-tools-source-files.txt.
+	(extract-ecj.stamp): Depend on OPENJDK_TREE.
+	(bootstrap-directory-ecj.stamp): Always create
+	the ecj tools.jar as a symlink to rt.jar to
+	appease the HotSpot build.
+	(icedtea.stamp): Use OPENJDK_TREE in place of
+	patch, overlay and ports (it implies all three).
+	(icedtea-debug.stamp): Likewise.
+	(icedtea-ecj.stamp): Likewise.
+	(hotspot-helper): Drop hotspot-tools dependency.
+	(rewriter.stamp): Explicitly create destination
+	directory as Sun's javac doesn't.
+	(cacao.stamp): Depend on OPENJDK_TREE.
+	(hotspot-tools-copy-source-files.stamp): Removed.
+	(hotspot-tools-source-files.txt): Removed.
+	(hotspot-tools-class-files.stamp): Removed.
+	(clean-hotspot-tools): Removed.
+	(hotspot-tools.stamp): Removed.
+	(rt-source-files.txt): Depend on OPENJDK_TREE.
+	(rt.stamp): Simplify use of jar.
+	(bootstrap/jdk1.7.0/jre/lib/tools.jar): Create symlink
+	rather than a separate jar file.
+	(clean-tools-jar): Remove hotspot-tools stuff.
+	(plugs.stamp): Depend on tools.jar
+	* tools-copy/tools-corba-copy-files.txt,
+	* tools-copy/tools-jaxws-copy-files.txt,
+	* tools-copy/tools-jdk-copy-files.txt,
+	* tools-copy/tools-langtools-copy-files.txt:
+	Removed.
+
+2010-02-17 Andrew John Hughes  <ahughes@redhat.com>
+
 	* Makefile.am:
 	Remove dead JAXWS and JAXP sourcepaths.
 	Add sun.misc.Unsafe explicitly to ensure
