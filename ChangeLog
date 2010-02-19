@@ -5,6 +5,13 @@
 	if it still contains "no" at the end of the
 	macro.
 
+2010-02-19  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/src/cpu/zero/vm/globals_zero.hpp:
+	Increase StackShadowPages from 3 to 5 on 32-bit platforms.
+	* ports/hotspot/src/os_cpu/linux_zero/vm/os_linux_zero.hpp
+	(os::atomic_copy64): Added s390 specific implementation.
+
 2010-02-19 Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:
