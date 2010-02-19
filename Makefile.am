@@ -92,6 +92,7 @@ ICEDTEA_BOOTSTRAP_DIRS = \
 	$(LANGTOOLS)/com/sun/tools/apt
 
 ICEDTEA_BOOTSTRAP_CLASSES = \
+	$(SHARE)/java/nio/StringCharBuffer.java \
 	$(SHARE)/sun/misc/Unsafe.java
 
 # FIXME (javac): Settings for javac go here
