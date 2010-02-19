@@ -1943,9 +1943,12 @@ ADD_ZERO_CONFIGURE_ARGS += \
 			'--with-openjdk '--with-openjdk=% , \
 		$(CONFIGURE_ARGS)) \
 	$(if $(findstring --with-openjdk-src-zip=, $(CONFIGURE_ARGS)),, \
-	  --with-openjdk-src-zip=$(abs_top_builddir)/$(OPENJDK_SRC_ZIP)) \
+	  --with-openjdk-src-zip=$(abs_top_builddir)/$(OPENJDK_SRC_ZIP))
+if WITH_ALT_HSBUILD
+ADD_ZERO_CONFIGURE_ARGS += \
 	$(if $(findstring --with-hotspot-src-zip=, $(CONFIGURE_ARGS)),, \
 	  --with-hotspot-src-zip=$(abs_top_builddir)/$(HOTSPOT_SRC_ZIP))
+endif
 
 ADD_ZERO_EXTRA_BUILD_ENV = \
 	BUILD_LANGTOOLS=false ALT_LANGTOOLS_DIST=$(ICEDTEA_BUILD_DIR)/langtools/dist \
