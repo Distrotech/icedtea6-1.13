@@ -1318,8 +1318,8 @@ clean-bootstrap-directory-symlink:
 # If you change anything here in the icedtea target, please make sure
 # you change it in the icedtea-debug target as well.
 stamps/icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
-	stamps/plugs.stamp $(OPENJDK_TREE) $(ICEDTEAPLUGIN_TARGET) \
-	$(ICEDTEANPPLUGIN_TARGET) extra-lib/about.jar stamps/cacao.stamp \
+	stamps/plugs.stamp $(OPENJDK_TREE) stamps/plugin.stamp \
+	extra-lib/about.jar stamps/cacao.stamp \
 	stamps/visualvm.stamp stamps/pulse-java.stamp stamps/rewrite-rhino.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV) \
@@ -1419,8 +1419,8 @@ endif
 	touch stamps/icedtea.stamp
 
 stamps/icedtea-debug.stamp: stamps/bootstrap-directory-symlink.stamp \
-	stamps/plugs.stamp $(OPENJDK_TREE) $(ICEDTEAPLUGIN_TARGET) \
-	$(ICEDTEANPPLUGIN_TARGET) extra-lib/about.jar stamps/cacao.stamp \
+	stamps/plugs.stamp $(OPENJDK_TREE) stamps/plugin.stamp \
+	extra-lib/about.jar stamps/cacao.stamp \
 	stamps/visualvm.stamp stamps/pulse-java.stamp stamps/rewrite-rhino.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV) \
@@ -2041,7 +2041,7 @@ stamps/plugin-tests.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) $(PLUGIN_TEST_SRCS) \
 
 # jtreg
 
-stamps/jtreg.stamp: stamps/icedtea.stamp
+stamps/jtreg.stamp: stamps/icedtea.stamp stamps/add-zero.stamp stamps/add-cacao.stamp
 	rm -rf test/jtreg/classes
 	mkdir -p test/jtreg/classes
 	$(ICEDTEA_BOOT_DIR)/bin/javac -g -d test/jtreg/classes -source 1.5 \
@@ -2232,11 +2232,11 @@ extract: stamps/extract.stamp
 
 extract-ecj: stamps/extract-ecj.stamp
 
-icedtea: stamps/icedtea.stamp
+icedtea: stamps/icedtea.stamp stamps/add-cacao.stamp stamps/add-zero.stamp
 
 icedtea-against-ecj: stamps/icedtea-against-ecj.stamp
 
-icedtea-debug: stamps/icedtea-debug.stamp
+icedtea-debug: stamps/icedtea-debug.stamp stamps/add-cacao-debug.stamp stamps/add-zero-debug.stamp
 
 icedtea-ecj: stamps/icedtea-ecj.stamp
 

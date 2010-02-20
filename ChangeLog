@@ -1,3 +1,12 @@
+2010-02-20  Matthias Klose  <doko@ubuntu.com>
+
+	* Makefile.am (stamps/icedtea.stamp, stamps/icedtea-debug.stamp):
+	Depend on stamps/plugin.stamp instead of $(ICEDTEAPLUGIN_TARGET)
+	and $(ICEDTEANPPLUGIN_TARGET).
+	(icedtea): Depend on stamps/add-zero.stamp and stamps/add-cacao.stamp
+	(icedtea-debug): Depend on stamps/add-cacao-debug.stamp and
+	stamps/add-zero-debug.stamp.
+
 2010-02-19  Matthias Klose  <doko@ubuntu.com>
 
 	* Makefile.am (ADD_ZERO_CONFIGURE_ARGS): Only pass
