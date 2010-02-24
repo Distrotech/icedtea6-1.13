@@ -1707,7 +1707,7 @@ if ENABLE_PULSE_JAVA
 $(PULSE_JAVA_NATIVE_BUILDDIR)/%.o: $(PULSE_JAVA_NATIVE_SRCDIR)/%.c stamps/pulse-java-headers.stamp
 	mkdir -p $(PULSE_JAVA_NATIVE_BUILDDIR)
 	$(CC) $(CFLAGS) -fPIC -I$(ICEDTEA_BOOT_DIR)/include/linux -I$(ICEDTEA_BOOT_DIR)/include \
-	 -o $@ -c $<
+	 -I$(PULSE_JAVA_NATIVE_BUILDDIR) -o $@ -c $<
 
 $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so: $(PULSE_JAVA_NATIVE_OBJECTS)
 	$(CC) $(LDFLAGS) -shared $(PULSE_JAVA_NATIVE_OBJECTS) $(LIBPULSE_LIBS) \
@@ -2199,7 +2199,7 @@ bootstrap-directory-symlink: stamps/bootstrap-directory-symlink.stamp
 
 cacao: stamps/cacao.stamp
 
-visualvm: stamps/visualvm.stamp
+clean: distclean-local
 
 nbplatform: stamps/nbplatform.stamp
 
@@ -2217,6 +2217,8 @@ extract: stamps/extract.stamp
 
 extract-ecj: stamps/extract-ecj.stamp
 
+hotspot-ports: stamps/ports.stamp
+
 icedtea: stamps/icedtea.stamp stamps/add-cacao.stamp stamps/add-zero.stamp
 
 icedtea-against-ecj: stamps/icedtea-against-ecj.stamp
@@ -2225,34 +2227,34 @@ icedtea-debug: stamps/icedtea-debug.stamp stamps/add-cacao-debug.stamp stamps/ad
 
 icedtea-ecj: stamps/icedtea-ecj.stamp
 
+jtreg: stamps/jtreg.stamp
+
 native-ecj: stamps/native-ecj.stamp
 
-patch-ecj: stamps/patch-ecj.stamp
+overlay: stamps/overlay.stamp
 
 patch: stamps/patch.stamp
 
+patch-ecj: stamps/patch-ecj.stamp
+
 patch-fsg: stamps/patch-fsg.stamp
 
-overlay: stamps/overlay.stamp
+plugin: stamps/plugin.stamp
+
+plugin-tests: stamps/plugin-tests.stamp
+
+plugs: stamps/plugs.stamp
+
+pulse-java: stamps/pulse-java.stamp
 
 rewriter: stamps/rewriter.stamp
 
 rewrite-rhino: stamps/rewrite-rhino.stamp
 
-plugs: stamps/plugs.stamp
+replace-hotspot: stamps/replace-hotspot.stamp
 
 rt-jar: stamps/rt.stamp
 
 rt-class-files: stamps/rt-class-files.stamp
 
-replace-hotspot: stamps/replace-hotspot.stamp
-
-hotspot-ports: stamps/ports.stamp
-
-clean: distclean-local
-
-jtreg: stamps/jtreg.stamp
-
-plugin: stamps/plugin.stamp
-
-plugin-tests: stamps/plugin-tests.stamp
+visualvm: stamps/visualvm.stamp
