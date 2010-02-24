@@ -167,17 +167,14 @@ if ENABLE_PULSE_JAVA
 # include the makefile in pulseaudio subdir
 PULSE_JAVA_DIR = $(abs_top_srcdir)/pulseaudio
 PULSE_JAVA_NATIVE_SRCDIR = $(PULSE_JAVA_DIR)/src/native
+PULSE_JAVA_NATIVE_SRCS = $(wildcard $(PULSE_JAVA_NATIVE_SRCDIR)/*.c)
 PULSE_JAVA_BUILDDIR = $(abs_top_builddir)/pulseaudio
 PULSE_JAVA_NATIVE_BUILDDIR = $(PULSE_JAVA_BUILDDIR)/native
+PULSE_JAVA_NATIVE_OBJECTS = \
+	$(subst $(PULSE_JAVA_NATIVE_SRCDIR),$(PULSE_JAVA_NATIVE_BUILDDIR),$(patsubst %.c,%.o,$(PULSE_JAVA_NATIVE_SRCS)))
 PULSE_JAVA_JAVA_SRCDIR = $(PULSE_JAVA_DIR)/src/java
 PULSE_JAVA_CLASS_DIR = $(PULSE_JAVA_BUILDDIR)/classes
-else 
-PULSE_JAVA_DIR =
-PULSE_JAVA_NATIVE_SRCDIR =
-PULSE_JAVA_BUILDDIR =
-PULSE_JAVA_NATIVE_BUILDDIR =
-PULSE_JAVA_JAVA_SRCDIR =
-PULSE_JAVA_CLASS_DIR =
+PULSE_JAVA_TARGET = stamps/pulse-java.stamp
 endif
 
 # FIXME (HotSpot): no longer needed
@@ -1320,7 +1317,7 @@ clean-bootstrap-directory-symlink:
 stamps/icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
 	stamps/plugs.stamp $(OPENJDK_TREE) stamps/plugin.stamp \
 	extra-lib/about.jar stamps/cacao.stamp \
-	stamps/visualvm.stamp stamps/pulse-java.stamp stamps/rewrite-rhino.stamp
+	stamps/visualvm.stamp $(PULSE_JAVA_TARGET) stamps/rewrite-rhino.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV) \
 	  -C openjdk \
@@ -1421,7 +1418,7 @@ endif
 stamps/icedtea-debug.stamp: stamps/bootstrap-directory-symlink.stamp \
 	stamps/plugs.stamp $(OPENJDK_TREE) stamps/plugin.stamp \
 	extra-lib/about.jar stamps/cacao.stamp \
-	stamps/visualvm.stamp stamps/pulse-java.stamp stamps/rewrite-rhino.stamp
+	stamps/visualvm.stamp $(PULSE_JAVA_TARGET) stamps/rewrite-rhino.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV) \
 	  -C openjdk \
@@ -1705,21 +1702,21 @@ extra-lib/about.jar: stamps/extra-class-files.stamp
 
 #FIXME (meta): Need pulse-java meta target
 
-stamps/pulse-java.stamp: stamps/pulse-java-jar.stamp stamps/pulse-java-headers.stamp
 if ENABLE_PULSE_JAVA
+$(PULSE_JAVA_NATIVE_BUILDDIR)/%.o: $(PULSE_JAVA_NATIVE_SRCDIR)/%.c stamps/pulse-java-headers.stamp
 	mkdir -p $(PULSE_JAVA_NATIVE_BUILDDIR)
-	$(CC) $(CFLAGS) -fPIC -c -I$(ICEDTEA_BOOT_DIR)/include/linux -I$(ICEDTEA_BOOT_DIR)/include $(PULSE_JAVA_NATIVE_SRCDIR)/jni-common.c -o $(PULSE_JAVA_NATIVE_BUILDDIR)/jni-common.o
-	$(CC) $(LIBPULSE_CFLAGS) $(CFLAGS) -fPIC -c -I$(ICEDTEA_BOOT_DIR)/include/linux -I$(ICEDTEA_BOOT_DIR)/include -I$(PULSE_JAVA_NATIVE_BUILDDIR) $(PULSE_JAVA_NATIVE_SRCDIR)/org_classpath_icedtea_pulseaudio_EventLoop.c -o $(PULSE_JAVA_NATIVE_BUILDDIR)/org_classpath_icedtea_pulseaudio_EventLoop.o
-	$(CC) $(LIBPULSE_CFLAGS) $(CFLAGS) -fPIC -c -I$(ICEDTEA_BOOT_DIR)/include/linux -I$(ICEDTEA_BOOT_DIR)/include -I$(PULSE_JAVA_NATIVE_BUILDDIR) $(PULSE_JAVA_NATIVE_SRCDIR)/org_classpath_icedtea_pulseaudio_Operation.c -o $(PULSE_JAVA_NATIVE_BUILDDIR)/org_classpath_icedtea_pulseaudio_Operation.o
-	$(CC) $(LIBPULSE_CFLAGS) $(CFLAGS) -fPIC -c -I$(ICEDTEA_BOOT_DIR)/include/linux -I$(ICEDTEA_BOOT_DIR)/include -I$(PULSE_JAVA_NATIVE_BUILDDIR) $(PULSE_JAVA_NATIVE_SRCDIR)/org_classpath_icedtea_pulseaudio_Stream.c -o $(PULSE_JAVA_NATIVE_BUILDDIR)/org_classpath_icedtea_pulseaudio_Stream.o
-	$(CC) $(LIBPULSE_CFLAGS) $(CFLAGS) -fPIC -c -I$(ICEDTEA_BOOT_DIR)/include/linux -I$(ICEDTEA_BOOT_DIR)/include -I$(PULSE_JAVA_NATIVE_BUILDDIR) $(PULSE_JAVA_NATIVE_SRCDIR)/org_classpath_icedtea_pulseaudio_PulseAudioTargetPort.c -o $(PULSE_JAVA_NATIVE_BUILDDIR)/org_classpath_icedtea_pulseaudio_PulseAudioTargetPort.o
-	$(CC) $(LDFLAGS) -shared $(PULSE_JAVA_NATIVE_BUILDDIR)/org_*pulseaudio*.o $(PULSE_JAVA_NATIVE_BUILDDIR)/jni-common.o $(LIBPULSE_LIBS) -o libpulse-java.so
-endif
+	$(CC) $(CFLAGS) -fPIC -I$(ICEDTEA_BOOT_DIR)/include/linux -I$(ICEDTEA_BOOT_DIR)/include \
+	 -o $@ -c $<
+
+$(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so: $(PULSE_JAVA_NATIVE_OBJECTS)
+	$(CC) $(LDFLAGS) -shared $(PULSE_JAVA_NATIVE_OBJECTS) $(LIBPULSE_LIBS) \
+	 -o $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so
+
+stamps/pulse-java.stamp: stamps/pulse-java-jar.stamp $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so
 	mkdir -p stamps
 	touch stamps/pulse-java.stamp
 
 stamps/pulse-java-jar.stamp: stamps/pulse-java-class.stamp
-if ENABLE_PULSE_JAVA
 	mkdir -p $(PULSE_JAVA_CLASS_DIR);
 	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
 	then \
@@ -1727,48 +1724,36 @@ if ENABLE_PULSE_JAVA
 	else \
 	  $(ICEDTEA_BOOT_DIR)/bin/jar cf pulse-java.jar -C $(PULSE_JAVA_CLASS_DIR) .; \
 	fi
-endif
 	mkdir -p stamps
 	touch stamps/pulse-java-jar.stamp
 
 stamps/pulse-java-class.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP)
-if ENABLE_PULSE_JAVA
 	mkdir -p $(PULSE_JAVA_CLASS_DIR)
 	(cd $(PULSE_JAVA_JAVA_SRCDIR); \
-	 $(ICEDTEA_BOOT_DIR)/bin/javac -g -d $(PULSE_JAVA_CLASS_DIR)\
+	 $(ICEDTEA_BOOT_DIR)/bin/javac -g -d $(PULSE_JAVA_CLASS_DIR) \
 	  -bootclasspath '$(ICEDTEA_BOOT_DIR)/jre/lib/rt.jar' \
-	  org/classpath/icedtea/pulseaudio/*.java\
+	  org/classpath/icedtea/pulseaudio/*.java \
 	)
 	cp -r $(PULSE_JAVA_JAVA_SRCDIR)/META-INF $(PULSE_JAVA_CLASS_DIR)
 	chmod -R ug+w $(PULSE_JAVA_CLASS_DIR)/META-INF
-endif
 	mkdir -p stamps
 	touch stamps/pulse-java-class.stamp
 
-
 stamps/pulse-java-headers.stamp: stamps/pulse-java-class.stamp
-if ENABLE_PULSE_JAVA
-	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
-	then \
-	  $(JAVAH) -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) org.classpath.icedtea.pulseaudio.EventLoop ; \
-	  $(JAVAH) -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) org.classpath.icedtea.pulseaudio.Stream ; \
-	  $(JAVAH) -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) org.classpath.icedtea.pulseaudio.Operation; \
-	  $(JAVAH) -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) org.classpath.icedtea.pulseaudio.PulseAudioSourcePort ; \
-	  $(JAVAH) -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) org.classpath.icedtea.pulseaudio.PulseAudioTargetPort ; \
-	else \
-	  $(ICEDTEA_BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) org.classpath.icedtea.pulseaudio.EventLoop ; \
-	  $(ICEDTEA_BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) org.classpath.icedtea.pulseaudio.Stream ; \
-	  $(ICEDTEA_BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) org.classpath.icedtea.pulseaudio.Operation; \
-	  $(ICEDTEA_BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) org.classpath.icedtea.pulseaudio.PulseAudioSourcePort ; \
-	  $(ICEDTEA_BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) org.classpath.icedtea.pulseaudio.PulseAudioTargetPort ; \
-	fi
-endif
+	$(ICEDTEA_BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) \
+	  org.classpath.icedtea.pulseaudio.EventLoop ; \
+	$(ICEDTEA_BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) \
+	  org.classpath.icedtea.pulseaudio.Stream ; \
+	$(ICEDTEA_BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) \
+	  org.classpath.icedtea.pulseaudio.Operation; \
+	$(ICEDTEA_BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) \
+	  org.classpath.icedtea.pulseaudio.PulseAudioSourcePort ; \
+	$(ICEDTEA_BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) \
+	  org.classpath.icedtea.pulseaudio.PulseAudioTargetPort ; \
 	mkdir -p stamps
 	touch stamps/pulse-java-headers.stamp
 
-
 clean-pulse-java:
-if ENABLE_PULSE_JAVA
 	[ -z "$(PULSE_JAVA_NATIVE_BUILDDIR)" ] || rm -rf $(PULSE_JAVA_NATIVE_BUILDDIR)
 	[ -z "$(PULSE_JAVA_CLASS_DIR)" ] || rm -rf $(PULSE_JAVA_CLASS_DIR)
 	rm -f stamps/pulse-java*.stamp
