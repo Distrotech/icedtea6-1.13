@@ -1340,9 +1340,9 @@ if ENABLE_PLUGIN
 endif
 endif
 if ENABLE_PULSE_JAVA
-	cp -pPRf libpulse-java.so \
+	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
-	cp -pPRf libpulse-java.so \
+	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
 	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
 	cp -pPRf pulse-java.jar \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/ext
@@ -1441,9 +1441,9 @@ if ENABLE_PLUGIN
 endif
 endif
 if ENABLE_PULSE_JAVA
-	cp -pPRf libpulse-java.so \
+	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
 	  $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
-	cp -pPRf libpulse-java.so \
+	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
 	  $(BUILD_OUTPUT_DIR)-debug/j2re-image/lib/$(INSTALL_ARCH_DIR)
 	cp -pPRf pulse-java.jar \
 	  $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/ext
@@ -1759,7 +1759,6 @@ clean-pulse-java:
 	[ -z "$(PULSE_JAVA_CLASS_DIR)" ] || rm -rf $(PULSE_JAVA_CLASS_DIR)
 	rm -f stamps/pulse-java*.stamp
 	rm -f pulse-java.jar
-	rm -f libpulse-java.so
 endif
 
 # end of pulse-java
