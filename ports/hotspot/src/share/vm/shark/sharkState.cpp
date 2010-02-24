@@ -28,8 +28,7 @@
 
 using namespace llvm;
 
-void SharkState::initialize(const SharkState *state)
-{
+void SharkState::initialize(const SharkState *state) {
   _locals = NEW_RESOURCE_ARRAY(SharkValue*, max_locals());
   _stack  = NEW_RESOURCE_ARRAY(SharkValue*, max_stack());
 
@@ -51,13 +50,12 @@ void SharkState::initialize(const SharkState *state)
         value = value->clone();
       push(value);
     }
-  } 
+  }
 
   set_num_monitors(state ? state->num_monitors() : 0);
 }
 
-bool SharkState::equal_to(SharkState *other)
-{
+bool SharkState::equal_to(SharkState *other) {
   if (target() != other->target())
     return false;
 
@@ -120,8 +118,7 @@ bool SharkState::equal_to(SharkState *other)
 
 void SharkState::merge(SharkState* other,
                        BasicBlock* other_block,
-                       BasicBlock* this_block)
-{
+                       BasicBlock* this_block) {
   // Method
   Value *this_method = this->method();
   Value *other_method = other->method();
@@ -178,8 +175,7 @@ void SharkState::merge(SharkState* other,
   set_has_safepointed(this->has_safepointed() && other->has_safepointed());
 }
 
-void SharkState::replace_all(SharkValue* old_value, SharkValue* new_value)
-{
+void SharkState::replace_all(SharkValue* old_value, SharkValue* new_value) {
   // Local variables
   for (int i = 0; i < max_locals(); i++) {
     if (local(i) == old_value)
@@ -195,8 +191,7 @@ void SharkState::replace_all(SharkValue* old_value, SharkValue* new_value)
 
 SharkNormalEntryState::SharkNormalEntryState(SharkTopLevelBlock* block,
                                              Value*              method)
-  : SharkState(block)
-{
+  : SharkState(block) {
   assert(!block->stack_depth_at_entry(), "entry block shouldn't have stack");
 
   // Local variables
@@ -216,11 +211,11 @@ SharkNormalEntryState::SharkNormalEntryState(SharkTopLevelBlock* block,
       }
       value = SharkValue::create_generic(type, NULL, i == 0 && !is_static());
       break;
-    
+
     case ciTypeFlow::StateVector::T_NULL:
       value = SharkValue::null();
       break;
-      
+
     case ciTypeFlow::StateVector::T_BOTTOM:
       break;
 
@@ -233,14 +228,13 @@ SharkNormalEntryState::SharkNormalEntryState(SharkTopLevelBlock* block,
     }
     set_local(i, value);
   }
-  SharkNormalEntryCacher(block->function(), method).scan(this);  
+  SharkNormalEntryCacher(block->function(), method).scan(this);
 }
 
 SharkOSREntryState::SharkOSREntryState(SharkTopLevelBlock* block,
                                        Value*              method,
                                        Value*              osr_buf)
-  : SharkState(block)
-{
+  : SharkState(block) {
   assert(!block->stack_depth_at_entry(), "entry block shouldn't have stack");
   set_num_monitors(block->ciblock()->monitor_count());
 
@@ -258,7 +252,7 @@ SharkOSREntryState::SharkOSREntryState(SharkTopLevelBlock* block,
     case T_ARRAY:
       value = SharkValue::create_generic(type, NULL, false);
       break;
-    
+
     case ciTypeFlow::StateVector::T_NULL:
       value = SharkValue::null();
       break;
@@ -279,8 +273,7 @@ SharkOSREntryState::SharkOSREntryState(SharkTopLevelBlock* block,
 }
 
 SharkPHIState::SharkPHIState(SharkTopLevelBlock* block)
-  : SharkState(block), _block(block)
-{
+  : SharkState(block), _block(block) {
   BasicBlock *saved_insert_point = builder()->GetInsertBlock();
   builder()->SetInsertPoint(block->entry_block());
   char name[18];
@@ -364,13 +357,12 @@ SharkPHIState::SharkPHIState(SharkTopLevelBlock* block)
   // Monitors
   set_num_monitors(block->ciblock()->monitor_count());
 
-  builder()->SetInsertPoint(saved_insert_point);    
+  builder()->SetInsertPoint(saved_insert_point);
 }
 
-void SharkPHIState::add_incoming(SharkState* incoming_state)
-{
+void SharkPHIState::add_incoming(SharkState* incoming_state) {
   BasicBlock *predecessor = builder()->GetInsertBlock();
-    
+
   // Method
   ((PHINode *) method())->addIncoming(incoming_state->method(), predecessor);
 
@@ -387,11 +379,11 @@ void SharkPHIState::add_incoming(SharkState* incoming_state)
     assert((stack(i) == NULL) == (incoming_state->stack(i) == NULL), "oops");
     if (stack(i))
       stack(i)->addIncoming(incoming_state->stack(i), predecessor);
-  }    
+  }
 
   // Monitors
   assert(num_monitors() == incoming_state->num_monitors(), "should be");
 
   // Temporary oop slot
-  assert(oop_tmp() == incoming_state->oop_tmp(), "should be");  
+  assert(oop_tmp() == incoming_state->oop_tmp(), "should be");
 }

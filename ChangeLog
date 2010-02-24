@@ -26,6 +26,116 @@
 	BOOT_DIR conditional (pulse-java-class.stamp now depends on
 	the appropriate bootstrap target).
 
+2010-02-23  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/make/linux/makefiles/shark.make: Whitespace fixes.
+	* ports/hotspot/src/cpu/zero/vm/shark_globals_zero.hpp: Likewise.
+	* ports/hotspot/src/share/vm/includeDB_shark: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkBlock.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkBlock.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkBuilder.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkBuilder.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkCacheDecache.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkCacheDecache.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkCompiler.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkContext.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkContext.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkFunction.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkFunction.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkInliner.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkInliner.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkIntrinsics.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkInvariants.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkMemoryManager.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkNativeWrapper.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkNativeWrapper.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkRuntime.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkRuntime.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkStack.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkStack.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkState.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkState.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkStateScanner.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkStateScanner.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkTopLevelBlock.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkTopLevelBlock.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkValue.hpp: Likewise.
+
+2010-02-23  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/src/share/vm/shark/sharkBlock.cpp: Reformatted
+	with trailing opening braces to match upstream HotSpot.
+	* ports/hotspot/src/share/vm/shark/sharkBlock.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkBuilder.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkBuilder.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkCacheDecache.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkCacheDecache.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkCodeBuffer.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkCompiler.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkCompiler.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkConstant.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkConstant.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkContext.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkContext.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkEntry.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkFunction.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkFunction.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkInliner.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkIntrinsics.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkIntrinsics.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkInvariants.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkInvariants.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkMemoryManager.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkMemoryManager.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkNativeWrapper.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkNativeWrapper.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkRuntime.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkRuntime.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkStack.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkStack.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkState.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkState.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkStateScanner.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkStateScanner.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkTopLevelBlock.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkTopLevelBlock.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkType.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkValue.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkValue.hpp: Likewise.
+
+2010-02-23  Deepak Bhole <dbhole@redhat.com>
+
+	* Makefile.am: Provide JDK_UPDATE_VERSION when compiling the plugin
+	* plugin/icedteanp/IcedTeaNPPlugin.cc: Use JDK_UPDATE_VERSION to set the
+	jpi version.
+
+2010-02-23  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/make/linux/makefiles/shark.make: Update copyright.
+	* ports/hotspot/src/cpu/zero/vm/shark_globals_zero.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkCompiler.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkContext.hpp: Likewise.
+
+2010-02-23  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/make/linux/makefiles/shark.make: Comment fix.
+
+2010-02-22  Deepak Bhole <dbhole@redhat.com>
+
+	* plugin/icedteanp/java/sun/applet/PluginAppletViewer.java: Centralized
+	and increased timeouts to give slow-loading applets enough time to load.
+
+2010-02-21  Xerxes Rånby  <xerxes@zafena.se>
+
+	* ports/hotspot/src/share/vm/shark/sharkCompiler.cpp
+	(MCPU): Explicitly defined for use by LLVM command line parser.
+	(MAttrs): Likewise.
+	(SharkCompiler::SharkCompiler): Create the JIT using LLVM EngineBuilder
+	in order to explicitly set MCPU and MAttrs when using LLVM 2.7.
+	* ports/hotspot/src/share/vm/shark/llvmHeaders.hpp:
+	Include llvm/ExecutionEngine/JIT.h for LLVM 2.7 to make sure the
+	JIT are linked in.
+
 2010-02-21 Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:

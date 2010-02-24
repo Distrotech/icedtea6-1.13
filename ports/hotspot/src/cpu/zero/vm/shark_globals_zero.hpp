@@ -1,6 +1,6 @@
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
- * Copyright 2008 Red Hat, Inc.
+ * Copyright 2008, 2009, 2010 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,13 +20,11 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *  
+ *
  */
 
-//
-// Sets the default values for platform dependent flags used by the
-// Shark compiler.
-//
+// Set the default values for platform dependent flags used by the
+// Shark compiler.  See globals.hpp for details of what they do.
 
 define_pd_global(bool,  BackgroundCompilation,        true );
 define_pd_global(bool,  UseTLAB,                      true );
@@ -52,7 +50,7 @@ define_pd_global(intx,  FreqInlineSize,               325  );
 define_pd_global(intx,  NewRatio,                     12   );
 define_pd_global(intx,  NewSizeThreadIncrease,        4*K  );
 define_pd_global(intx,  InitialCodeCacheSize,         160*K);
-define_pd_global(intx,  ReservedCodeCacheSize,        32*M ); 
+define_pd_global(intx,  ReservedCodeCacheSize,        32*M );
 define_pd_global(bool,  ProfileInterpreter,           false);
 define_pd_global(intx,  CodeCacheExpansionSize,       32*K );
 define_pd_global(uintx, CodeCacheMinBlockLength,      1    );

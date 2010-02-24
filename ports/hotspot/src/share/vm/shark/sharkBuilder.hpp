@@ -34,8 +34,7 @@ class SharkBuilder : public llvm::IRBuilder<> {
   SharkCodeBuffer* _code_buffer;
 
  protected:
-  SharkCodeBuffer* code_buffer() const
-  {
+  SharkCodeBuffer* code_buffer() const {
     return _code_buffer;
   }
 
@@ -150,7 +149,7 @@ class SharkBuilder : public llvm::IRBuilder<> {
   llvm::Value* memset();
   llvm::Value* unimplemented();
   llvm::Value* should_not_reach_here();
-  llvm::Value* dump();  
+  llvm::Value* dump();
 
   // Public interface to low-level non-VM calls.
  public:
@@ -165,10 +164,10 @@ class SharkBuilder : public llvm::IRBuilder<> {
                                llvm::Value* value,
                                llvm::Value* len,
                                llvm::Value* align);
-  llvm::CallInst* CreateUnimplemented(const char* file, int line);  
-  llvm::CallInst* CreateShouldNotReachHere(const char* file, int line);  
+  llvm::CallInst* CreateUnimplemented(const char* file, int line);
+  llvm::CallInst* CreateShouldNotReachHere(const char* file, int line);
   NOT_PRODUCT(llvm::CallInst* CreateDump(llvm::Value* value));
-  
+
   // Flags for CreateMemoryBarrier.
  public:
   enum BarrierFlags {
@@ -186,8 +185,7 @@ class SharkBuilder : public llvm::IRBuilder<> {
  public:
   llvm::Value* code_buffer_address(int offset);
   llvm::Value* CreateInlineOop(jobject object, const char* name = "");
-  llvm::Value* CreateInlineOop(ciObject* object, const char* name = "")
-  {
+  llvm::Value* CreateInlineOop(ciObject* object, const char* name = "") {
     return CreateInlineOop(object->encoding(), name);
   }
 

@@ -1,6 +1,6 @@
 #
 # Copyright 1999-2005 Sun Microsystems, Inc.  All Rights Reserved.
-# Copyright 2008 Red Hat, Inc.
+# Copyright 2008, 2010 Red Hat, Inc.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -20,10 +20,10 @@
 # Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
 # CA 95054 USA or visit www.sun.com if you need additional information or
 # have any questions.
-#  
+#
 #
 
-# Sets make macros for making shark version of VM
+# Sets make macros for making Shark version of VM
 
 TYPE = SHARK
 
