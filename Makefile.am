@@ -1705,7 +1705,6 @@ extra-lib/about.jar: stamps/extra-class-files.stamp
 
 if ENABLE_PULSE_JAVA
 $(PULSE_JAVA_NATIVE_BUILDDIR)/%.o: $(PULSE_JAVA_NATIVE_SRCDIR)/%.c stamps/pulse-java-headers.stamp
-	mkdir -p $(PULSE_JAVA_NATIVE_BUILDDIR)
 	$(CC) $(CFLAGS) -fPIC -I$(ICEDTEA_BOOT_DIR)/include/linux -I$(ICEDTEA_BOOT_DIR)/include \
 	 -I$(PULSE_JAVA_NATIVE_BUILDDIR) -o $@ -c $<
 
@@ -1741,6 +1740,7 @@ stamps/pulse-java-class.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP)
 	touch stamps/pulse-java-class.stamp
 
 stamps/pulse-java-headers.stamp: stamps/pulse-java-class.stamp
+	mkdir -p $(PULSE_JAVA_NATIVE_BUILDDIR)
 	$(ICEDTEA_BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) \
 	  org.classpath.icedtea.pulseaudio.EventLoop ; \
 	$(ICEDTEA_BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) \
@@ -1792,7 +1792,8 @@ if WITH_RHINO
 	   sed -ie 's#org\.mozilla#sun.org.mozilla#g' $$new_file ; \
 	 done \
 	)
-	(cd rhino/rhino.new ; jar cfm ../rhino.jar META-INF/MANIFEST.MF sun )
+	(cd rhino/rhino.new ; \
+	$(ICEDTEA_BOOT_DIR)/bin/jar cfm ../rhino.jar META-INF/MANIFEST.MF sun )
 endif
 	mkdir -p stamps
 	touch stamps/rewrite-rhino.stamp
