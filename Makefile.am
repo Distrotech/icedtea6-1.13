@@ -242,7 +242,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-gcc-suffix.patch \
 	patches/icedtea-gcc-suffix-hotspot.patch \
 	patches/icedtea-bytebuffer-compact.patch \
-	patches/hotspot/$(HSBUILD)/memory-limits.patch \
+	patches/memory-limits.patch \
 	patches/icedtea-sunsrc.patch \
 	patches/icedtea-libraries.patch \
 	patches/icedtea-javafiles.patch \
@@ -262,7 +262,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-alt-jar.patch \
 	patches/icedtea-jdk-use-ssize_t.patch \
 	patches/icedtea-use-idx_t.patch \
-	patches/hotspot/$(HSBUILD)/icedtea-params-cast-size_t.patch \
+	patches/icedtea-params-cast-size_t.patch \
 	patches/icedtea-clean-crypto.patch \
 	patches/icedtea-shark.patch \
 	patches/icedtea-arch.patch \
@@ -300,7 +300,9 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-linux-separate-debuginfo.patch \
 	patches/icedtea-parisc.patch \
 	patches/icedtea-sh4-support.patch \
-	patches/libpng.patch
+	patches/libpng.patch \
+	patches/zero.patch \
+	patches/shark.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -343,19 +345,7 @@ ICEDTEA_PATCHES += patches/icedtea-systemtap.patch
 endif
 
 if ENABLE_NSS
-ICEDTEA_PATCHES += patches/icedtea-nss-config.patch \
-		   patches/icedtea-nss-6763530.patch
-endif
-
-if WITH_ALT_HSBUILD
-ICEDTEA_PATCHES += patches/hotspot/$(HSBUILD)/openjdk-6886353-ignore_deoptimizealot.patch \
-	patches/hotspot/$(HSBUILD)/zero.patch \
-	patches/hotspot/$(HSBUILD)/shark.patch
-else
-ICEDTEA_PATCHES += patches/hotspot/original/icedtea-6778662-lib64.patch \
-	patches/hotspot/original/icedtea-6778657-f2i-overflow.patch \
-	patches/hotspot/original/icedtea-6791168.patch \
-	patches/hotspot/original/icedtea-6793825-includedb.patch
+ICEDTEA_PATCHES += patches/icedtea-nss-config.patch
 endif
 
 ICEDTEA_PATCHES += patches/icedtea-override.patch
