@@ -66,7 +66,7 @@ JAXWS = openjdk/jaxws/src/share/classes
 # FIXME (netx): NetX source directories go here
 
 OPENJDK_SOURCEPATH_DIRS = \
-        $(SHARE):$(SOLARIS):$(LANGTOOLS):$(JAXP):$(CORBA):$(JAXWS)
+        $(SHARE):$(SOLARIS):$(LANGTOOLS):$(CORBA)
 
 ABS_SOURCE_DIRS = $(abs_top_builddir)/generated:$(abs_top_builddir)/rt:$(abs_top_srcdir)/rt:$(LIVECONNECT_SRCS)
 
@@ -82,10 +82,18 @@ ICEDTEA_BOOTSTRAP_DIRS = \
 	$(SHARE)/java/rmi \
 	$(SHARE)/sun/awt/ \
 	$(SHARE)/sun/nio/cs \
+	$(SHARE)/sun/rmi/rmic \
+	$(SHARE)/sun/tools/java \
 	$(SHARE)/javax/net/ssl \
 	$(SHARE)/javax/script \
 	$(SHARE)/javax/security/auth/kerberos \
-	$(SHARE)/javax/security/sasl
+	$(SHARE)/javax/security/sasl \
+	$(LANGTOOLS)/com/sun/mirror \
+	$(LANGTOOLS)/com/sun/tools/apt
+
+ICEDTEA_BOOTSTRAP_CLASSES = \
+	$(SHARE)/java/nio/StringCharBuffer.java \
+	$(SHARE)/sun/misc/Unsafe.java
 
 # FIXME (javac): Settings for javac go here
 
@@ -159,17 +167,15 @@ if ENABLE_PULSE_JAVA
 # include the makefile in pulseaudio subdir
 PULSE_JAVA_DIR = $(abs_top_srcdir)/pulseaudio
 PULSE_JAVA_NATIVE_SRCDIR = $(PULSE_JAVA_DIR)/src/native
+PULSE_JAVA_NATIVE_SRCS = $(wildcard $(PULSE_JAVA_NATIVE_SRCDIR)/*.c)
 PULSE_JAVA_BUILDDIR = $(abs_top_builddir)/pulseaudio
 PULSE_JAVA_NATIVE_BUILDDIR = $(PULSE_JAVA_BUILDDIR)/native
+PULSE_JAVA_NATIVE_OBJECTS = \
+	$(subst $(PULSE_JAVA_NATIVE_SRCDIR),$(PULSE_JAVA_NATIVE_BUILDDIR),$(patsubst %.c,%.o,$(PULSE_JAVA_NATIVE_SRCS)))
 PULSE_JAVA_JAVA_SRCDIR = $(PULSE_JAVA_DIR)/src/java
 PULSE_JAVA_CLASS_DIR = $(PULSE_JAVA_BUILDDIR)/classes
-else 
-PULSE_JAVA_DIR =
-PULSE_JAVA_NATIVE_SRCDIR =
-PULSE_JAVA_BUILDDIR =
-PULSE_JAVA_NATIVE_BUILDDIR =
-PULSE_JAVA_JAVA_SRCDIR =
-PULSE_JAVA_CLASS_DIR =
+PULSE_JAVA_TARGET = stamps/pulse-java.stamp
+PULSE_JAVA_CLEAN_TARGET = clean-pulse-java
 endif
 
 # FIXME (HotSpot): no longer needed
@@ -204,6 +210,10 @@ else
   ICEDTEA_HOME = $(abs_top_builddir)/bootstrap/icedtea
   INITIAL_BOOTSTRAP_LINK_STAMP = stamps/bootstrap-directory-symlink-ecj.stamp
 endif
+
+# Target to ensure a patched OpenJDK tree containing Zero & Shark
+# and any overlays is available in $(abs_top_builddir)/openjdk
+OPENJDK_TREE = stamps/overlay.stamp
 
 # Sources list
 
@@ -563,7 +573,7 @@ endif
 
 EXTRA_DIST = rt generated \
 	$(abs_top_srcdir)/patches/* \
-	tools-copy contrib ports \
+	contrib ports \
 	extra overlays \
 	javaws.png javaws.desktop visualvm.desktop \
 	jconsole.desktop policytool.desktop \
@@ -578,7 +588,8 @@ EXTRA_DIST = rt generated \
 	scripts/jni_create_stap.c \
 	scripts/jni_desc \
 	rewriter/agpl-3.0.txt \
-	$(REWRITER_SRCS)
+	$(REWRITER_SRCS) \
+	THANKYOU
 
 # Top-Level Targets
 # =================
@@ -588,17 +599,15 @@ all-local: icedtea-against-icedtea
 check-local: jtregcheck
 
 #FIXME (clean): Should become clean-local.
-distclean-local: clean-copy clean-jtreg clean-jtreg-reports clean-pulse-java 
+distclean-local: clean-copy clean-jtreg clean-jtreg-reports $(PULSE_JAVA_CLEAN_TARGET)
 	rm -rf stamps
 	rm -f rt-source-files.txt \
-	  hotspot-tools-source-files.txt \
 	  extra-source-files.txt
 	rm -rf bootstrap
 	rm -rf lib
 	rm -rf extra-lib
 	rm -rf openjdk-ecj
 	rm -rf openjdk
-	rm -rf hotspot-tools
 	rm -rf rt/netscape
 	rm -rf visualvm
 	rm -rf netbeans
@@ -629,7 +638,7 @@ install:
 	clean-bootstrap-directory-symlink-ecj icedtea icedtea-debug \
 	clean-icedtea icedtea-against-icedtea clean-icedtea-ecj clean-plugs \
 	clean-tools-jar clean-visualvm clean-nbplatform \
-	clean-copy clean-hotspot-tools clean-rt $(ICEDTEAPLUGIN_CLEAN) \
+	clean-copy clean-rt $(ICEDTEAPLUGIN_CLEAN) \
 	$(ICEDTEANPPLUGIN_CLEAN) hotspot hotspot-helper clean-extra clean-jtreg \
 	clean-jtreg-reports 
 
@@ -1127,7 +1136,7 @@ endif
 
 # Copy over OpenJDK sources for ecj.
 # FIXME (missing): Rename to clone-ecj.
-stamps/extract-ecj.stamp: stamps/overlay.stamp
+stamps/extract-ecj.stamp: $(OPENJDK_TREE)
 	if ! test -d openjdk-ecj ; then \
 	    cp -pPRl openjdk openjdk-ecj ; \
 	fi
@@ -1232,14 +1241,12 @@ stamps/bootstrap-directory-ecj.stamp: stamps/native-ecj.stamp
 	  rm -f bootstrap/ecj/include/$$i; \
 	  ln -s $(SYSTEM_JDK_DIR)/include/$$i bootstrap/ecj/include/$$i; \
 	done; \
-	if test -f $(abs_top_builddir)/bootstrap/jdk1.7.0/jre/lib/tools.jar ; \
-	then \
-	  mkdir -p $(abs_top_builddir)/bootstrap/ecj/lib ; \
-	  ln -sf $(abs_top_builddir)/bootstrap/jdk1.7.0/jre/lib/tools.jar \
-	    $(abs_top_builddir)/bootstrap/ecj/lib/tools.jar ; \
-	fi
 	cp $(SYSTEM_JDK_DIR)/jre/lib/rt.jar \
 	  $(abs_top_builddir)/bootstrap/ecj/jre/lib/rt.jar;
+# For HotSpot
+	mkdir -p $(abs_top_builddir)/bootstrap/ecj/lib ; \
+	ln -sf $(abs_top_builddir)/bootstrap/ecj/jre/lib/rt.jar \
+	  $(abs_top_builddir)/bootstrap/ecj/lib/tools.jar ; \
 	mkdir -p stamps
 	touch stamps/bootstrap-directory-ecj.stamp
 
@@ -1299,11 +1306,9 @@ clean-bootstrap-directory-symlink:
 # If you change anything here in the icedtea target, please make sure
 # you change it in the icedtea-debug target as well.
 stamps/icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
-	stamps/hotspot-tools.stamp stamps/plugs.stamp \
-	stamps/ports.stamp stamps/patch.stamp stamps/overlay.stamp \
-	$(ICEDTEAPLUGIN_TARGET) $(ICEDTEANPPLUGIN_TARGET) \
-	extra-lib/about.jar stamps/cacao.stamp stamps/visualvm.stamp \
-	stamps/pulse-java.stamp stamps/rewrite-rhino.stamp
+	stamps/plugs.stamp $(OPENJDK_TREE) stamps/plugin.stamp \
+	extra-lib/about.jar stamps/cacao.stamp \
+	stamps/visualvm.stamp $(PULSE_JAVA_TARGET) stamps/rewrite-rhino.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV) \
 	  -C openjdk \
@@ -1326,9 +1331,9 @@ if ENABLE_PLUGIN
 endif
 endif
 if ENABLE_PULSE_JAVA
-	cp -pPRf libpulse-java.so \
+	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
-	cp -pPRf libpulse-java.so \
+	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
 	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
 	cp -pPRf pulse-java.jar \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/ext
@@ -1402,11 +1407,9 @@ endif
 	touch stamps/icedtea.stamp
 
 stamps/icedtea-debug.stamp: stamps/bootstrap-directory-symlink.stamp \
-	stamps/hotspot-tools.stamp stamps/plugs.stamp \
-	stamps/ports.stamp stamps/patch.stamp stamps/overlay.stamp \
-	$(ICEDTEAPLUGIN_TARGET) $(ICEDTEANPPLUGIN_TARGET) \
-	extra-lib/about.jar stamps/cacao.stamp stamps/visualvm.stamp \
-	stamps/pulse-java.stamp stamps/rewrite-rhino.stamp
+	stamps/plugs.stamp $(OPENJDK_TREE) stamps/plugin.stamp \
+	extra-lib/about.jar stamps/cacao.stamp \
+	stamps/visualvm.stamp $(PULSE_JAVA_TARGET) stamps/rewrite-rhino.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV) \
 	  -C openjdk \
@@ -1429,9 +1432,9 @@ if ENABLE_PLUGIN
 endif
 endif
 if ENABLE_PULSE_JAVA
-	cp -pPRf libpulse-java.so \
+	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
 	  $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
-	cp -pPRf libpulse-java.so \
+	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
 	  $(BUILD_OUTPUT_DIR)-debug/j2re-image/lib/$(INSTALL_ARCH_DIR)
 	cp -pPRf pulse-java.jar \
 	  $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/ext
@@ -1474,31 +1477,31 @@ if WITH_CACAO
 	printf -- '-cacao ALIASED_TO -server\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
 endif
 if ENABLE_SYSTEMTAP
-	mkdir -p $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset ; \
+	mkdir -p $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/tapset ; \
 	grep "client IGNORE" $(BUILD_JRE_ARCH_DIR)/jvm.cfg; \
 	if test $$? -eq 0; then \
 	  sed -e '/\/client\/libjvm.so/d' \
 	    < $(abs_top_builddir)/tapset/hotspot.stp \
-	    > $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
+	    > $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/tapset/hotspot.stp; \
 	  sed -e '/\/client\/libjvm.so/d' \
 	    < $(abs_top_builddir)/tapset/hotspot_jni.stp \
-	    > $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_jni.stp; \
+	    > $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/tapset/hotspot_jni.stp; \
 	else \
 	  cp $(abs_top_builddir)/tapset/hotspot.stp \
-	    $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
+	    $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/tapset/hotspot.stp; \
 	  cp $(abs_top_builddir)/tapset/hotspot_jni.stp \
-	    $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_jni.stp; \
+	    $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/tapset/hotspot_jni.stp; \
 	fi; \
 	cp $(abs_top_builddir)/tapset/jstack.stp \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/jstack.stp
+	  $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/tapset/jstack.stp
 endif
 if ENABLE_NSS
 	cp $(abs_top_builddir)/nss.cfg \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security;
+	  $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/security;
 endif
 if WITH_TZDATA_DIR
 	cp $(abs_top_builddir)/tz.properties \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib;
+	  $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib;
 endif
 	@echo "IcedTea (debug build) is served:" \
 	  $(BUILD_OUTPUT_DIR)-debug
@@ -1531,8 +1534,8 @@ icedtea-debug-against-icedtea: \
 # ===================
 
 stamps/icedtea-ecj.stamp: stamps/bootstrap-directory-symlink-ecj.stamp \
-	stamps/hotspot-tools.stamp stamps/plugs.stamp \
-	stamps/patch-ecj.stamp stamps/cacao.stamp stamps/rewrite-rhino.stamp
+	stamps/plugs.stamp stamps/patch-ecj.stamp stamps/cacao.stamp \
+	stamps/rewrite-rhino.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV_ECJ) \
 	  -C openjdk-ecj/ \
@@ -1554,8 +1557,7 @@ hotspot:
 	@echo "Hotspot is served:" $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image
 
 hotspot-helper: stamps/bootstrap-directory-symlink-ecj.stamp \
-	stamps/hotspot-tools.stamp stamps/plugs.stamp \
-	stamps/patch-ecj.stamp
+	stamps/plugs.stamp stamps/patch-ecj.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV_ECJ) \
 	  -C openjdk-ecj/ hotspot
@@ -1594,6 +1596,7 @@ $(NPPLUGIN_DIR)/%.o: $(NPPLUGIN_SRCDIR)/%.cc
 	mkdir -p $(NPPLUGIN_DIR) && \
 	cd $(NPPLUGIN_DIR) && \
 	$(CXX) $(CXXFLAGS) \
+	  -DJDK_UPDATE_VERSION="\"$(JDK_UPDATE_VERSION)\"" \
 	  -DPLUGIN_VERSION="\"$(PLUGIN_VERSION)\"" \
 	  -DMOZILLA_VERSION_COLLAPSED="$(MOZILLA_VERSION_COLLAPSED)" \
 	  $(GLIB_CFLAGS) \
@@ -1691,21 +1694,20 @@ extra-lib/about.jar: stamps/extra-class-files.stamp
 
 #FIXME (meta): Need pulse-java meta target
 
-stamps/pulse-java.stamp: stamps/pulse-java-jar.stamp stamps/pulse-java-headers.stamp
 if ENABLE_PULSE_JAVA
-	mkdir -p $(PULSE_JAVA_NATIVE_BUILDDIR)
-	$(CC) $(CFLAGS) -fPIC -c -I$(ICEDTEA_BOOT_DIR)/include/linux -I$(ICEDTEA_BOOT_DIR)/include $(PULSE_JAVA_NATIVE_SRCDIR)/jni-common.c -o $(PULSE_JAVA_NATIVE_BUILDDIR)/jni-common.o
-	$(CC) $(LIBPULSE_CFLAGS) $(CFLAGS) -fPIC -c -I$(ICEDTEA_BOOT_DIR)/include/linux -I$(ICEDTEA_BOOT_DIR)/include -I$(PULSE_JAVA_NATIVE_BUILDDIR) $(PULSE_JAVA_NATIVE_SRCDIR)/org_classpath_icedtea_pulseaudio_EventLoop.c -o $(PULSE_JAVA_NATIVE_BUILDDIR)/org_classpath_icedtea_pulseaudio_EventLoop.o
-	$(CC) $(LIBPULSE_CFLAGS) $(CFLAGS) -fPIC -c -I$(ICEDTEA_BOOT_DIR)/include/linux -I$(ICEDTEA_BOOT_DIR)/include -I$(PULSE_JAVA_NATIVE_BUILDDIR) $(PULSE_JAVA_NATIVE_SRCDIR)/org_classpath_icedtea_pulseaudio_Operation.c -o $(PULSE_JAVA_NATIVE_BUILDDIR)/org_classpath_icedtea_pulseaudio_Operation.o
-	$(CC) $(LIBPULSE_CFLAGS) $(CFLAGS) -fPIC -c -I$(ICEDTEA_BOOT_DIR)/include/linux -I$(ICEDTEA_BOOT_DIR)/include -I$(PULSE_JAVA_NATIVE_BUILDDIR) $(PULSE_JAVA_NATIVE_SRCDIR)/org_classpath_icedtea_pulseaudio_Stream.c -o $(PULSE_JAVA_NATIVE_BUILDDIR)/org_classpath_icedtea_pulseaudio_Stream.o
-	$(CC) $(LIBPULSE_CFLAGS) $(CFLAGS) -fPIC -c -I$(ICEDTEA_BOOT_DIR)/include/linux -I$(ICEDTEA_BOOT_DIR)/include -I$(PULSE_JAVA_NATIVE_BUILDDIR) $(PULSE_JAVA_NATIVE_SRCDIR)/org_classpath_icedtea_pulseaudio_PulseAudioTargetPort.c -o $(PULSE_JAVA_NATIVE_BUILDDIR)/org_classpath_icedtea_pulseaudio_PulseAudioTargetPort.o
-	$(CC) $(LDFLAGS) -shared $(PULSE_JAVA_NATIVE_BUILDDIR)/org_*pulseaudio*.o $(PULSE_JAVA_NATIVE_BUILDDIR)/jni-common.o $(LIBPULSE_LIBS) -o libpulse-java.so
-endif
+$(PULSE_JAVA_NATIVE_BUILDDIR)/%.o: $(PULSE_JAVA_NATIVE_SRCDIR)/%.c stamps/pulse-java-headers.stamp
+	$(CC) $(CFLAGS) -fPIC -I$(ICEDTEA_BOOT_DIR)/include/linux -I$(ICEDTEA_BOOT_DIR)/include \
+	 -I$(PULSE_JAVA_NATIVE_BUILDDIR) -o $@ -c $<
+
+$(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so: $(PULSE_JAVA_NATIVE_OBJECTS)
+	$(CC) $(LDFLAGS) -shared $(PULSE_JAVA_NATIVE_OBJECTS) $(LIBPULSE_LIBS) \
+	 -o $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so
+
+stamps/pulse-java.stamp: stamps/pulse-java-jar.stamp $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so
 	mkdir -p stamps
 	touch stamps/pulse-java.stamp
 
 stamps/pulse-java-jar.stamp: stamps/pulse-java-class.stamp
-if ENABLE_PULSE_JAVA
 	mkdir -p $(PULSE_JAVA_CLASS_DIR);
 	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
 	then \
@@ -1713,53 +1715,41 @@ if ENABLE_PULSE_JAVA
 	else \
 	  $(ICEDTEA_BOOT_DIR)/bin/jar cf pulse-java.jar -C $(PULSE_JAVA_CLASS_DIR) .; \
 	fi
-endif
 	mkdir -p stamps
 	touch stamps/pulse-java-jar.stamp
 
 stamps/pulse-java-class.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP)
-if ENABLE_PULSE_JAVA
 	mkdir -p $(PULSE_JAVA_CLASS_DIR)
 	(cd $(PULSE_JAVA_JAVA_SRCDIR); \
-	 $(ICEDTEA_BOOT_DIR)/bin/javac -g -d $(PULSE_JAVA_CLASS_DIR)\
+	 $(ICEDTEA_BOOT_DIR)/bin/javac -g -d $(PULSE_JAVA_CLASS_DIR) \
 	  -bootclasspath '$(ICEDTEA_BOOT_DIR)/jre/lib/rt.jar' \
-	  org/classpath/icedtea/pulseaudio/*.java\
+	  org/classpath/icedtea/pulseaudio/*.java \
 	)
 	cp -r $(PULSE_JAVA_JAVA_SRCDIR)/META-INF $(PULSE_JAVA_CLASS_DIR)
 	chmod -R ug+w $(PULSE_JAVA_CLASS_DIR)/META-INF
-endif
 	mkdir -p stamps
 	touch stamps/pulse-java-class.stamp
 
-
 stamps/pulse-java-headers.stamp: stamps/pulse-java-class.stamp
-if ENABLE_PULSE_JAVA
-	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
-	then \
-	  $(JAVAH) -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) org.classpath.icedtea.pulseaudio.EventLoop ; \
-	  $(JAVAH) -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) org.classpath.icedtea.pulseaudio.Stream ; \
-	  $(JAVAH) -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) org.classpath.icedtea.pulseaudio.Operation; \
-	  $(JAVAH) -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) org.classpath.icedtea.pulseaudio.PulseAudioSourcePort ; \
-	  $(JAVAH) -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) org.classpath.icedtea.pulseaudio.PulseAudioTargetPort ; \
-	else \
-	  $(ICEDTEA_BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) org.classpath.icedtea.pulseaudio.EventLoop ; \
-	  $(ICEDTEA_BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) org.classpath.icedtea.pulseaudio.Stream ; \
-	  $(ICEDTEA_BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) org.classpath.icedtea.pulseaudio.Operation; \
-	  $(ICEDTEA_BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) org.classpath.icedtea.pulseaudio.PulseAudioSourcePort ; \
-	  $(ICEDTEA_BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) org.classpath.icedtea.pulseaudio.PulseAudioTargetPort ; \
-	fi
-endif
+	mkdir -p $(PULSE_JAVA_NATIVE_BUILDDIR)
+	$(ICEDTEA_BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) \
+	  org.classpath.icedtea.pulseaudio.EventLoop ; \
+	$(ICEDTEA_BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) \
+	  org.classpath.icedtea.pulseaudio.Stream ; \
+	$(ICEDTEA_BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) \
+	  org.classpath.icedtea.pulseaudio.Operation; \
+	$(ICEDTEA_BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) \
+	  org.classpath.icedtea.pulseaudio.PulseAudioSourcePort ; \
+	$(ICEDTEA_BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) \
+	  org.classpath.icedtea.pulseaudio.PulseAudioTargetPort ; \
 	mkdir -p stamps
 	touch stamps/pulse-java-headers.stamp
 
-
 clean-pulse-java:
-if ENABLE_PULSE_JAVA
 	[ -z "$(PULSE_JAVA_NATIVE_BUILDDIR)" ] || rm -rf $(PULSE_JAVA_NATIVE_BUILDDIR)
 	[ -z "$(PULSE_JAVA_CLASS_DIR)" ] || rm -rf $(PULSE_JAVA_CLASS_DIR)
 	rm -f stamps/pulse-java*.stamp
 	rm -f pulse-java.jar
-	rm -f libpulse-java.so
 endif
 
 # end of pulse-java
@@ -1768,6 +1758,7 @@ endif
 
 stamps/rewriter.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP)
 if WITH_RHINO
+	mkdir -p $(abs_top_builddir)/rewriter
 	(cd $(abs_top_srcdir)/rewriter ; \
 	 $(ICEDTEA_BOOT_DIR)/bin/javac -g \
 	 -d $(abs_top_builddir)/rewriter $(REWRITER_SRCS) \
@@ -1792,7 +1783,8 @@ if WITH_RHINO
 	   sed -ie 's#org\.mozilla#sun.org.mozilla#g' $$new_file ; \
 	 done \
 	)
-	(cd rhino/rhino.new ; jar cfm ../rhino.jar META-INF/MANIFEST.MF sun )
+	(cd rhino/rhino.new ; \
+	$(ICEDTEA_BOOT_DIR)/bin/jar cfm ../rhino.jar META-INF/MANIFEST.MF sun )
 endif
 	mkdir -p stamps
 	touch stamps/rewrite-rhino.stamp
@@ -1851,7 +1843,7 @@ clean-visualvm:
 
 # CACAO
 
-stamps/cacao.stamp: stamps/replace-hotspot.stamp stamps/rt-class-files.stamp
+stamps/cacao.stamp: $(OPENJDK_TREE) stamps/rt-class-files.stamp
 if BUILD_CACAO
 if !USE_SYSTEM_CACAO
 	cd cacao/cacao && \
@@ -1928,9 +1920,12 @@ ADD_ZERO_CONFIGURE_ARGS += \
 			'--with-openjdk '--with-openjdk=% , \
 		$(CONFIGURE_ARGS)) \
 	$(if $(findstring --with-openjdk-src-zip=, $(CONFIGURE_ARGS)),, \
-	  --with-openjdk-src-zip=$(abs_top_builddir)/$(OPENJDK_SRC_ZIP)) \
+	  --with-openjdk-src-zip=$(abs_top_builddir)/$(OPENJDK_SRC_ZIP))
+if WITH_ALT_HSBUILD
+ADD_ZERO_CONFIGURE_ARGS += \
 	$(if $(findstring --with-hotspot-src-zip=, $(CONFIGURE_ARGS)),, \
 	  --with-hotspot-src-zip=$(abs_top_builddir)/$(HOTSPOT_SRC_ZIP))
+endif
 
 ADD_ZERO_EXTRA_BUILD_ENV = \
 	BUILD_LANGTOOLS=false ALT_LANGTOOLS_DIST=$(ICEDTEA_BUILD_DIR)/langtools/dist \
@@ -2023,7 +2018,7 @@ stamps/plugin-tests.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) $(PLUGIN_TEST_SRCS) \
 
 # jtreg
 
-stamps/jtreg.stamp: stamps/icedtea.stamp
+stamps/jtreg.stamp: stamps/icedtea.stamp stamps/add-zero.stamp stamps/add-cacao.stamp
 	rm -rf test/jtreg/classes
 	mkdir -p test/jtreg/classes
 	$(ICEDTEA_BOOT_DIR)/bin/javac -g -d test/jtreg/classes -source 1.5 \
@@ -2112,74 +2107,17 @@ jtregcheck: jtreg check-hotspot check-langtools check-jdk
 
 # Support classes for non-OpenJDK bootstraps
 
-# FIXME (plugs): Remove this
-# tools.jar class files.
-stamps/hotspot-tools-copy-source-files.stamp: stamps/overlay.stamp
-	for copy_dir in \
-	  `cat $(abs_top_srcdir)/tools-copy/tools-jdk-copy-files.txt` ; \
-	do \
-	  mkdir -p hotspot-tools/$$copy_dir ; \
-	  cp -pPRf openjdk/jdk/src/share/classes/$$copy_dir/* \
-	    hotspot-tools/$$copy_dir ; \
-	done
-
-	for copy_dir in \
-	  `cat $(abs_top_srcdir)/tools-copy/tools-langtools-copy-files.txt` ; \
-	do \
-	  mkdir -p hotspot-tools/$$copy_dir ; \
-	  cp -pPRf openjdk/langtools/src/share/classes/$$copy_dir/* \
-	    hotspot-tools/$$copy_dir ; \
-	done
-
-	for copy_dir in \
-	  `cat $(abs_top_srcdir)/tools-copy/tools-corba-copy-files.txt` ; \
-	do \
-	  mkdir -p hotspot-tools/$$copy_dir ; \
-	  cp -pPRf openjdk/corba/src/share/classes/$$copy_dir/* \
-	    hotspot-tools/$$copy_dir ; \
-	done
-
-	mkdir -p stamps
-	touch stamps/hotspot-tools-copy-source-files.stamp
-
-# FIXME (plugs): Remove this
-hotspot-tools-source-files.txt: stamps/replace-hotspot.stamp \
-	stamps/hotspot-tools-copy-source-files.stamp
-	find hotspot-tools -name '*.java' | sort > $@
-	mkdir -p lib/hotspot-tools
-
-# FIXME (plugs): Remove this
-stamps/hotspot-tools-class-files.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) \
-  hotspot-tools-source-files.txt
-	$(ICEDTEA_BOOT_DIR)/bin/javac $(MEMORY_LIMIT) -g \
-	  -d lib/hotspot-tools \
-	  -source 1.5 \
-	  -sourcepath \
-	    'hotspot-tools:$(OPENJDK_SOURCEPATH_DIRS):$(ABS_SOURCE_DIRS)' \
-	  -classpath $(SYSTEM_JDK_DIR)/jre/lib/rt.jar \
-	  -bootclasspath \'\' @hotspot-tools-source-files.txt ;
-	mkdir -p stamps
-	touch stamps/hotspot-tools-class-files.stamp
-
-# FIXME (plugs): Remove this
-clean-hotspot-tools:
-	rm -rf lib/hotspot-tools
-	rm -f stamps/hotspot-tools-class-files.stamp
-	rm -f hotspot-tools-source-files.txt
-	rm -f stamps/hotspot-tools-copy-source-files.stamp
-
-# FIXME (plugs): Remove this
-stamps/hotspot-tools.stamp: bootstrap/jdk1.7.0/jre/lib/tools.jar
-	mkdir -p stamps
-	touch stamps/hotspot-tools.stamp
-
 # rt.jar additional class files.
-rt-source-files.txt: stamps/replace-hotspot.stamp 
+rt-source-files.txt: $(OPENJDK_TREE)
 	find $(abs_top_srcdir)/rt $(abs_top_builddir)/rt $(LIVECONNECT_SRCS) -name '*.java' \
 	  | sort -u > $@
 	for dir in $(ICEDTEA_BOOTSTRAP_DIRS) ; \
 	do \
 	  $(FIND) $(abs_top_builddir)/$$dir -name '*.java' >> $@; \
+	done
+	for files in $(ICEDTEA_BOOTSTRAP_CLASSES) ; \
+	do \
+	  echo $$files >> $@ ; \
 	done
 
 stamps/rt-class-files.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) rt-source-files.txt
@@ -2201,13 +2139,19 @@ clean-rt:
 	rm -f stamps/rt.stamp
 	rm -f rt-source-files.txt
 
+stamps/rt.stamp: stamps/rt-class-files.stamp \
+ stamps/bootstrap-directory-ecj.stamp
+	mkdir -p stamps
+if LACKS_SUN_AWT_TOOLKIT
+	$(ICEDTEA_BOOT_DIR)/bin/jar uf $(ICEDTEA_RT) -C lib/rt com -C lib/rt java \
+	  -C lib/rt javax $(LIVECONNECT_DIR) -C lib/rt net -C lib/rt sun ;
+endif
+	touch stamps/rt.stamp
+
 # tools.jar
-bootstrap/jdk1.7.0/jre/lib/tools.jar: $(INITIAL_BOOTSTRAP_LINK_STAMP) \
-  stamps/hotspot-tools-class-files.stamp
+bootstrap/jdk1.7.0/jre/lib/tools.jar: 
 	mkdir -p bootstrap/jdk1.7.0/jre/lib/
-	$(ICEDTEA_BOOT_DIR)/bin/jar cf $@ -C lib/hotspot-tools com \
-	  -C lib/hotspot-tools sun \
-          -C lib/hotspot-tools org -C lib/hotspot-tools java ;
+	ln -sf $(ICEDTEA_RT) $(abs_top_builddir)/bootstrap/jdk1.7.0/jre/lib/tools.jar
 	if test -d bootstrap/ecj ; \
 	then \
 	  mkdir -p bootstrap/ecj/lib/; \
@@ -2215,28 +2159,14 @@ bootstrap/jdk1.7.0/jre/lib/tools.jar: $(INITIAL_BOOTSTRAP_LINK_STAMP) \
 	    $(abs_top_builddir)/bootstrap/ecj/lib/tools.jar; \
 	fi
 
-clean-tools-jar: clean-hotspot-tools
-	rm -f stamps/hotspot-tools.stamp
-	rm -rf tools/
+clean-tools-jar: 
 	rm -f bootstrap/jdk1.7.0/jre/lib/tools.jar
-
-stamps/rt.stamp: stamps/rt-class-files.stamp \
- stamps/bootstrap-directory-ecj.stamp
-	mkdir -p stamps
-if LACKS_SUN_AWT_TOOLKIT
-	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
-	then \
-	  $(JAR) uf $(ICEDTEA_RT) -C lib/rt com -C lib/rt java \
-	    -C lib/rt javax $(LIVECONNECT_DIR) -C lib/rt net -C lib/rt sun ; \
-	else \
-	  $(ICEDTEA_BOOT_DIR)/bin/jar uf $(ICEDTEA_RT) -C lib/rt com -C lib/rt java \
-	    -C lib/rt javax $(LIVECONNECT_DIR) -C lib/rt net -C lib/rt sun ; \
+	if test -d bootstrap/ecj/lib ; then \
+	  rm -f $(abs_top_builddir)/bootstrap/ecj/lib/tools.jar; \
 	fi
-endif
-	touch stamps/rt.stamp
 
-stamps/plugs.stamp: stamps/rt.stamp
-	mkdir -p bootstrap/jdk1.7.0/jre/lib
+# rt-closed.jar
+stamps/plugs.stamp: stamps/rt.stamp bootstrap/jdk1.7.0/jre/lib/tools.jar
 	$(ICEDTEA_BOOT_DIR)/bin/jar cf $(ICEDTEA_PLUGS) \
 	  -C lib/rt com/sun/jmx/snmp $(LIVECONNECT_DIR) \
 	  -C lib/rt net -C lib/rt javax/jnlp ;
@@ -2261,7 +2191,7 @@ bootstrap-directory-symlink: stamps/bootstrap-directory-symlink.stamp
 
 cacao: stamps/cacao.stamp
 
-visualvm: stamps/visualvm.stamp
+clean: distclean-local
 
 nbplatform: stamps/nbplatform.stamp
 
@@ -2279,48 +2209,44 @@ extract: stamps/extract.stamp
 
 extract-ecj: stamps/extract-ecj.stamp
 
-icedtea: stamps/icedtea.stamp
+hotspot-ports: stamps/ports.stamp
+
+icedtea: stamps/icedtea.stamp stamps/add-cacao.stamp stamps/add-zero.stamp
 
 icedtea-against-ecj: stamps/icedtea-against-ecj.stamp
 
-icedtea-debug: stamps/icedtea-debug.stamp
+icedtea-debug: stamps/icedtea-debug.stamp stamps/add-cacao-debug.stamp stamps/add-zero-debug.stamp
 
 icedtea-ecj: stamps/icedtea-ecj.stamp
 
+jtreg: stamps/jtreg.stamp
+
 native-ecj: stamps/native-ecj.stamp
 
-patch-ecj: stamps/patch-ecj.stamp
+overlay: stamps/overlay.stamp
 
 patch: stamps/patch.stamp
 
+patch-ecj: stamps/patch-ecj.stamp
+
 patch-fsg: stamps/patch-fsg.stamp
 
-overlay: stamps/overlay.stamp
+plugin: stamps/plugin.stamp
+
+plugin-tests: stamps/plugin-tests.stamp
+
+plugs: stamps/plugs.stamp
+
+pulse-java: stamps/pulse-java.stamp
 
 rewriter: stamps/rewriter.stamp
 
 rewrite-rhino: stamps/rewrite-rhino.stamp
 
-plugs: stamps/plugs.stamp
+replace-hotspot: stamps/replace-hotspot.stamp
 
 rt-jar: stamps/rt.stamp
 
 rt-class-files: stamps/rt-class-files.stamp
 
-replace-hotspot: stamps/replace-hotspot.stamp
-
-hotspot-tools-class-files: stamps/hotspot-tools-class-files.stamp
-
-hotspot-tools-copy-source-files: stamps/hotspot-tools-copy-source-files.stamp
-
-hotspot-tools: stamps/hotspot-tools.stamp
-
-hotspot-ports: stamps/ports.stamp
-
-clean: distclean-local
-
-jtreg: stamps/jtreg.stamp
-
-plugin: stamps/plugin.stamp
-
-plugin-tests: stamps/plugin-tests.stamp
+visualvm: stamps/visualvm.stamp

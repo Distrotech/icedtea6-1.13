@@ -26,10 +26,295 @@
 	* patches/zero.patch:
 	Moved from hotspot/hs16.
 
+2010-02-24 Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am: Add PULSE_JAVA_CLEAN_TARGET
+	to handle optionally defined clean-pulse-java
+	target.
+
+2010-02-24 Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am: Add THANKYOU to
+	EXTRA_DIST.
+	* pulseaudio/AUTHORS: Removed; duplicates
+	top-level file.
+
+2010-02-24  Deepak Bhole <dbhole@redhat.com>
+
+	* plugin/icedteanp/java/sun/applet/PluginMain.java: Add some javaplugin.*
+	properties that some applets expect.
+	* rt/net/sourceforge/jnlp/runtime/JNLPSecurityManager.java: Implement
+	allowed property get/set based on specifications.
+
+2010-02-24 Andrew John Hughes  <ahughes@redhat.com>
+
+	* .hgignore: Severely trim the list
+	especially the use of regular expressions
+	which are matching unwanted files.
+
+2010-02-24 Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(rewrite-rhino.stamp): Use full path to
+	jar application to avoid relying on the one
+	on the path.
+
+2010-02-24 Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Add missing pulse-java alias and reorganise
+	existing aliases alphabetically.
+	($(PULSE_JAVA_NATIVE_BUILDDIR)/%.o): Add include
+	directive for build directory to pick up generated
+	headers.
+
+2010-02-24 Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(icedtea.stamp): Prefix libpulse-java.so with
+	build directory path.
+	(icedtea-debug.stamp): Likewise.
+	(clean-pulse-java): No need to delete libpulse-java.so
+	as no longer at top-level.
+
+2010-02-24 Andrew John Hughes  <ahughes@redhat.com>
+
+	* pulseaudio/src/native/org_classpath_icedtea_pulseaudio_PulseAudioStreamVolumeControl.c:
+	Removed, never built and no corresponding
+	Java source file.
+	* Makefile.am:
+	(PULSE_JAVA_NATIVE_SRCS): List of PulseAudio source
+	files.
+	(PULSE_JAVA_NATIVE_OBJECTS): List of PulseAudio object
+	files.
+	(PULSE_JAVA_TARGET): Optional PulseAudio target.
+	(icedtea.stamp): Replace explicit pulse-java.stamp
+	with PULSE_JAVA_TARGET.
+	(icedtea-debug.stamp): Likewise.
+	(pulse-java.stamp): Depend on compiled library rather than
+	headers target.
+	($(PULSE_JAVA_NATIVE_BUILDDIR)/%.o): New target to compile
+	object files from source files using make substitution.
+	($(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so): New target
+	to build the shared library.
+	(pulse-java-jar.stamp): Make ENABLE_PULSE_JAVA conditional
+	encompass all PulseAudio targets.
+	(pulse-java-class.stamp): Likewise.
+	(clean-pulse-java): Likewise.
+	(pulse-java-headers.stamp): Likewise, and remove unneeded
+	BOOT_DIR conditional (pulse-java-class.stamp now depends on
+	the appropriate bootstrap target).
+
+2010-02-23  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/make/linux/makefiles/shark.make: Whitespace fixes.
+	* ports/hotspot/src/cpu/zero/vm/shark_globals_zero.hpp: Likewise.
+	* ports/hotspot/src/share/vm/includeDB_shark: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkBlock.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkBlock.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkBuilder.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkBuilder.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkCacheDecache.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkCacheDecache.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkCompiler.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkContext.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkContext.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkFunction.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkFunction.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkInliner.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkInliner.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkIntrinsics.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkInvariants.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkMemoryManager.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkNativeWrapper.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkNativeWrapper.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkRuntime.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkRuntime.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkStack.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkStack.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkState.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkState.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkStateScanner.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkStateScanner.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkTopLevelBlock.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkTopLevelBlock.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkValue.hpp: Likewise.
+
+2010-02-23  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/src/share/vm/shark/sharkBlock.cpp: Reformatted
+	with trailing opening braces to match upstream HotSpot.
+	* ports/hotspot/src/share/vm/shark/sharkBlock.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkBuilder.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkBuilder.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkCacheDecache.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkCacheDecache.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkCodeBuffer.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkCompiler.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkCompiler.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkConstant.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkConstant.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkContext.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkContext.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkEntry.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkFunction.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkFunction.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkInliner.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkIntrinsics.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkIntrinsics.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkInvariants.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkInvariants.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkMemoryManager.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkMemoryManager.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkNativeWrapper.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkNativeWrapper.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkRuntime.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkRuntime.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkStack.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkStack.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkState.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkState.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkStateScanner.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkStateScanner.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkTopLevelBlock.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkTopLevelBlock.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkType.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkValue.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkValue.hpp: Likewise.
+
+2010-02-23  Deepak Bhole <dbhole@redhat.com>
+
+	* Makefile.am: Provide JDK_UPDATE_VERSION when compiling the plugin
+	* plugin/icedteanp/IcedTeaNPPlugin.cc: Use JDK_UPDATE_VERSION to set the
+	jpi version.
+
+2010-02-23  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/make/linux/makefiles/shark.make: Update copyright.
+	* ports/hotspot/src/cpu/zero/vm/shark_globals_zero.hpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkCompiler.cpp: Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkContext.hpp: Likewise.
+
+2010-02-23  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/make/linux/makefiles/shark.make: Comment fix.
+
+2010-02-22  Deepak Bhole <dbhole@redhat.com>
+
+	* plugin/icedteanp/java/sun/applet/PluginAppletViewer.java: Centralized
+	and increased timeouts to give slow-loading applets enough time to load.
+
+2010-02-21  Xerxes Rånby  <xerxes@zafena.se>
+
+	* ports/hotspot/src/share/vm/shark/sharkCompiler.cpp
+	(MCPU): Explicitly defined for use by LLVM command line parser.
+	(MAttrs): Likewise.
+	(SharkCompiler::SharkCompiler): Create the JIT using LLVM EngineBuilder
+	in order to explicitly set MCPU and MAttrs when using LLVM 2.7.
+	* ports/hotspot/src/share/vm/shark/llvmHeaders.hpp:
+	Include llvm/ExecutionEngine/JIT.h for LLVM 2.7 to make sure the
+	JIT are linked in.
+
+2010-02-21 Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(icedtea-debug.stamp): Add missing -debug on
+	end of $(BUILD_OUTPUT_DIR).
+
+2010-02-20  Matthias Klose  <doko@ubuntu.com>
+
+	* Makefile.am (stamps/icedtea.stamp, stamps/icedtea-debug.stamp):
+	Depend on stamps/plugin.stamp instead of $(ICEDTEAPLUGIN_TARGET)
+	and $(ICEDTEANPPLUGIN_TARGET).
+	(icedtea): Depend on stamps/add-zero.stamp and stamps/add-cacao.stamp
+	(icedtea-debug): Depend on stamps/add-cacao-debug.stamp and
+	stamps/add-zero-debug.stamp.
+
+2010-02-19  Matthias Klose  <doko@ubuntu.com>
+
+	* Makefile.am (ADD_ZERO_CONFIGURE_ARGS): Only pass
+	--with-hotspot-src-zip if configured for alternate hotspot.
+
+2010-02-19 Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/icedtea-cacao-ignore-jdi-tests.patch:
+	Updated for b18.
+
+2010-02-19 Andrew John Hughes  <ahughes@redhat.com>
+
+	* acinclude.m4:
+	(FIND_RHINO_JAR): Clear RHINO_JAR variable
+	if it still contains "no" at the end of the
+	macro.
+
+2010-02-19  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/src/cpu/zero/vm/globals_zero.hpp:
+	Increase StackShadowPages from 3 to 5 on 32-bit platforms.
+	* ports/hotspot/src/os_cpu/linux_zero/vm/os_linux_zero.hpp
+	(os::atomic_copy64): Added s390 specific implementation.
+
+2010-02-19 Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Add java/nio/StringCharBuffer.java to
+	OPENJDK_BOOTSTRAP_CLASSES.  Some versions
+	of ecj seem not to build it automatically.
+
+2010-02-18 Andrew John Hughes  <ahughes@redhat.com>
+
+	Drop hotspot-tools targets to simplify
+	bootstrapping OpenJDK.
+	* Makefile.am:
+	Add additional OPENJDK_BOOTSTRAP_DIRS
+	to compensate for the removal of the
+	hotspot-tools classes.  Add OPENJDK_TREE
+	variable as a pseudo-target for targets
+	that require a patched OpenJDK tree with
+	Zero, Shark and any overlays.  Remove hotspot-tools
+	aliases.  Remove tools-copy from EXTRA_DIST.
+	(distclean-local): No more need to remove hotspot-tools
+	and hotspot-tools-source-files.txt.
+	(extract-ecj.stamp): Depend on OPENJDK_TREE.
+	(bootstrap-directory-ecj.stamp): Always create
+	the ecj tools.jar as a symlink to rt.jar to
+	appease the HotSpot build.
+	(icedtea.stamp): Use OPENJDK_TREE in place of
+	patch, overlay and ports (it implies all three).
+	(icedtea-debug.stamp): Likewise.
+	(icedtea-ecj.stamp): Likewise.
+	(hotspot-helper): Drop hotspot-tools dependency.
+	(rewriter.stamp): Explicitly create destination
+	directory as Sun's javac doesn't.
+	(cacao.stamp): Depend on OPENJDK_TREE.
+	(hotspot-tools-copy-source-files.stamp): Removed.
+	(hotspot-tools-source-files.txt): Removed.
+	(hotspot-tools-class-files.stamp): Removed.
+	(clean-hotspot-tools): Removed.
+	(hotspot-tools.stamp): Removed.
+	(rt-source-files.txt): Depend on OPENJDK_TREE.
+	(rt.stamp): Simplify use of jar.
+	(bootstrap/jdk1.7.0/jre/lib/tools.jar): Create symlink
+	rather than a separate jar file.
+	(clean-tools-jar): Remove hotspot-tools stuff.
+	(plugs.stamp): Depend on tools.jar
+	* tools-copy/tools-corba-copy-files.txt,
+	* tools-copy/tools-jaxws-copy-files.txt,
+	* tools-copy/tools-jdk-copy-files.txt,
+	* tools-copy/tools-langtools-copy-files.txt:
+	Removed.
+
 2010-02-17 Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:
 	Update JAXP tarball.
+
+2010-02-17 Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Remove dead JAXWS and JAXP sourcepaths.
+	Add sun.misc.Unsafe explicitly to ensure
+	it is compiled as a bootstrap class.
 
 2010-02-17 Andrew John Hughes  <ahughes@redhat.com>
 
@@ -752,7 +1037,7 @@
 	* Makefile.am:
 	Drop redundant (and broken in some cases)
 	symbolic link.
-	
+
 2009-12-27  Andrew John Hughes  <ahughes@redhat.com>
 
 	* patches/ecj/icedtea-jaxp-dependency.patch:

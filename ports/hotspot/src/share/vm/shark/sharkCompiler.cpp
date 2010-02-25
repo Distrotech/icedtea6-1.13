@@ -1,6 +1,6 @@
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
- * Copyright 2008, 2009 Red Hat, Inc.
+ * Copyright 2008, 2009, 2010 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,15 +30,25 @@
 
 using namespace llvm;
 
+#if SHARK_LLVM_VERSION >= 27
+namespace {
+  cl::opt<std::string>
+  MCPU("mcpu");
+
+  cl::list<std::string>
+  MAttrs("mattr",
+         cl::CommaSeparated);
+}
+#endif
+
 SharkCompiler::SharkCompiler()
-  : AbstractCompiler()
-{
+  : AbstractCompiler() {
   // Create the lock to protect the memory manager and execution engine
   _execution_engine_lock = new Monitor(Mutex::leaf, "SharkExecutionEngineLock");
   MutexLocker locker(execution_engine_lock());
 
   // Make LLVM safe for multithreading
-  if (!llvm_start_multithreaded()) 
+  if (!llvm_start_multithreaded())
     fatal("llvm_start_multithreaded() failed");
 
   // Initialize the native target
@@ -77,9 +87,24 @@ SharkCompiler::SharkCompiler()
   cl::ParseCommandLineOptions(args.size() - 1, (char **) &args[0]);
 
   // Create the JIT
-  _execution_engine = ExecutionEngine::createJIT(
-    _normal_context->module(),
-    NULL, memory_manager(), CodeGenOpt::Default);
+  std::string ErrorMsg;
+
+  EngineBuilder builder(_normal_context->module());
+  builder.setMCPU(MCPU);
+  builder.setMAttrs(MAttrs);
+  builder.setJITMemoryManager(memory_manager());
+  builder.setEngineKind(EngineKind::JIT);
+  builder.setErrorStr(&ErrorMsg);
+  _execution_engine = builder.create();
+
+  if (!execution_engine()) {
+    if (!ErrorMsg.empty())
+      printf("Error while creating Shark JIT: %s\n",ErrorMsg.c_str());
+    else
+      printf("Unknown error while creating Shark JIT\n");
+    exit(1);
+  }
+
   execution_engine()->addModule(
     _native_context->module());
 #else
@@ -94,13 +119,13 @@ SharkCompiler::SharkCompiler()
   mark_initialized();
 }
 
-void SharkCompiler::initialize()
-{
+void SharkCompiler::initialize() {
   ShouldNotCallThis();
 }
 
-void SharkCompiler::compile_method(ciEnv* env, ciMethod* target, int entry_bci)
-{
+void SharkCompiler::compile_method(ciEnv*    env,
+                                   ciMethod* target,
+                                   int       entry_bci) {
   assert(is_initialized(), "should be");
   ResourceMark rm;
   const char *name = methodname(
@@ -136,7 +161,7 @@ void SharkCompiler::compile_method(ciEnv* env, ciMethod* target, int entry_bci)
 
   // Emit the entry point
   SharkEntry *entry = (SharkEntry *) cb.malloc(sizeof(SharkEntry));
-  
+
   // Build the LLVM IR for the method
   Function *function = SharkFunction::build(env, &builder, flow, name);
 
@@ -157,7 +182,7 @@ void SharkCompiler::compile_method(ciEnv* env, ciMethod* target, int entry_bci)
 
   ExceptionHandlerTable handler_table;
   ImplicitExceptionTable inc_table;
-  
+
   env->register_method(target,
                        entry_bci,
                        &offsets,
@@ -176,8 +201,7 @@ void SharkCompiler::compile_method(ciEnv* env, ciMethod* target, int entry_bci)
 nmethod* SharkCompiler::generate_native_wrapper(MacroAssembler* masm,
                                                 methodHandle    target,
                                                 BasicType*      arg_types,
-                                                BasicType       return_type)
-{
+                                                BasicType       return_type) {
   assert(is_initialized(), "should be");
   ResourceMark rm;
   const char *name = methodname(
@@ -210,8 +234,7 @@ nmethod* SharkCompiler::generate_native_wrapper(MacroAssembler* masm,
 
 void SharkCompiler::generate_native_code(SharkEntry* entry,
                                          Function*   function,
-                                         const char* name)
-{
+                                         const char* name) {
   // Print the LLVM bitcode, if requested
   if (SharkPrintBitcodeOf != NULL) {
     if (!fnmatch(SharkPrintBitcodeOf, name, 0))
@@ -232,7 +255,7 @@ void SharkCompiler::generate_native_code(SharkEntry* entry,
         llvm::DebugFlag = true;
       }
       else {
-        llvm::SetCurrentDebugType(""); 
+        llvm::SetCurrentDebugType("");
         llvm::DebugFlag = false;
       }
 #else
@@ -268,8 +291,7 @@ void SharkCompiler::generate_native_code(SharkEntry* entry,
   }
 }
 
-void SharkCompiler::free_compiled_method(address code)
-{
+void SharkCompiler::free_compiled_method(address code) {
   // This method may only be called when the VM is at a safepoint.
   // All _thread_in_vm threads will be waiting for the safepoint to
   // finish with the exception of the VM thread, so we can consider
@@ -282,8 +304,7 @@ void SharkCompiler::free_compiled_method(address code)
   entry->context()->push_to_free_queue(entry->function());
 }
 
-void SharkCompiler::free_queued_methods()
-{
+void SharkCompiler::free_queued_methods() {
   // The free queue is protected by the execution engine lock
   assert(execution_engine_lock()->owned_by_self(), "should be");
 
@@ -293,12 +314,11 @@ void SharkCompiler::free_queued_methods()
       break;
 
     execution_engine()->freeMachineCodeForFunction(function);
-    function->eraseFromParent();  
+    function->eraseFromParent();
   }
 }
 
-const char* SharkCompiler::methodname(const char* klass, const char* method)
-{
+const char* SharkCompiler::methodname(const char* klass, const char* method) {
   char *buf = NEW_RESOURCE_ARRAY(char, strlen(klass) + 2 + strlen(method) + 1);
 
   char *dst = buf;

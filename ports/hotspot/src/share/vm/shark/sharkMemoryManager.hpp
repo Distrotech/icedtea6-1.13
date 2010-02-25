@@ -36,8 +36,7 @@ class SharkMemoryManager : public llvm::JITMemoryManager {
   llvm::JITMemoryManager* _mm;
 
  private:
-  llvm::JITMemoryManager* mm() const
-  {
+  llvm::JITMemoryManager* mm() const {
     return _mm;
   }
 
@@ -45,12 +44,11 @@ class SharkMemoryManager : public llvm::JITMemoryManager {
   std::map<const llvm::Function*, SharkEntry*> _entry_map;
 
  public:
-  void set_entry_for_function(const llvm::Function* function, SharkEntry* entry)
-  {
+  void set_entry_for_function(const llvm::Function* function,
+                              SharkEntry*           entry) {
     _entry_map[function] = entry;
   }
-  SharkEntry* get_entry_for_function(const llvm::Function* function)
-  {
+  SharkEntry* get_entry_for_function(const llvm::Function* function) {
     return _entry_map[function];
   }
 
@@ -86,5 +84,5 @@ class SharkMemoryManager : public llvm::JITMemoryManager {
   void deallocateMemForFunction(const llvm::Function* F);
 #endif
   unsigned char *allocateSpace(intptr_t Size,
-			       unsigned int Alignment);
+                               unsigned int Alignment);
 };
