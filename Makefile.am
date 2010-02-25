@@ -175,6 +175,7 @@ PULSE_JAVA_NATIVE_OBJECTS = \
 PULSE_JAVA_JAVA_SRCDIR = $(PULSE_JAVA_DIR)/src/java
 PULSE_JAVA_CLASS_DIR = $(PULSE_JAVA_BUILDDIR)/classes
 PULSE_JAVA_TARGET = stamps/pulse-java.stamp
+PULSE_JAVA_CLEAN_TARGET = clean-pulse-java
 endif
 
 # FIXME (HotSpot): no longer needed
@@ -609,7 +610,7 @@ all-local: icedtea-against-icedtea
 check-local: jtregcheck
 
 #FIXME (clean): Should become clean-local.
-distclean-local: clean-copy clean-jtreg clean-jtreg-reports clean-pulse-java 
+distclean-local: clean-copy clean-jtreg clean-jtreg-reports $(PULSE_JAVA_CLEAN_TARGET)
 	rm -rf stamps
 	rm -f rt-source-files.txt \
 	  extra-source-files.txt
