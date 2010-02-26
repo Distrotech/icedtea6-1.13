@@ -307,6 +307,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-explicit-target-arch.patch \
 	patches/icedtea-gcc-stack-markings.patch \
 	patches/openjdk/6879689-hotspot_warning_fix.patch \
+	patches/openjdk/6928623-verbose-langtools.patch \
 	patches/icedtea-no-precompiled.patch \
 	patches/icedtea-linux-separate-debuginfo.patch \
 	patches/icedtea-parisc.patch \
@@ -449,7 +450,8 @@ ICEDTEA_ENV = \
 	DERIVATIVE_ID="$(ICEDTEA_NAME) $(PACKAGE_VERSION)$(ICEDTEA_REV)" \
 	DEBUG_CLASSFILES="true" \
 	DEBUG_BINARIES="true" \
-	ALT_DROPS_DIR="$(abs_top_builddir)/drops"
+	ALT_DROPS_DIR="$(abs_top_builddir)/drops" \
+	VERBOSE="$(VERBOSE)"
 
 if WITH_CACAO
 ICEDTEA_ENV += \
@@ -543,7 +545,8 @@ ICEDTEA_ENV_ECJ = \
 	DEBUG_BINARIES="true" \
 	DISABLE_NIMBUS="true" \
 	NO_DOCS="true" \
-	ALT_DROPS_DIR="$(abs_top_builddir)/drops"
+	ALT_DROPS_DIR="$(abs_top_builddir)/drops" \
+	VERBOSE="$(VERBOSE)"
 
 if WITH_CACAO
 ICEDTEA_ENV_ECJ += \
