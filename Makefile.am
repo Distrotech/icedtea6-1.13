@@ -1666,7 +1666,7 @@ endif
 
 stamps/plugin.stamp: $(ICEDTEAPLUGIN_TARGET) $(ICEDTEANPPLUGIN_TARGET)
 	mkdir -p stamps
-	touch stamps/icedtea-plugin.stamp
+	touch stamps/plugin.stamp
 
 clean-plugin: $(ICEDTEAPLUGIN_CLEAN) $(ICEDTEANPPLUGIN_CLEAN)
 	rm -f stamps/plugin.stamp
