@@ -1,6 +1,27 @@
 2010-03-01  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:
+	(icedtea-against-icedtea): Convert to stamp
+	and provide this as an alias.
+	(icedtea-debug-against-icedtea): Likewise.
+	(stamps/jtreg.stamp): Depend on
+	stamps/icedtea-against-icedtea.stamp
+	(stamps/tools.stamp): Converted from
+	target relying on
+	bootstrap/jdk1.7.0/jre/lib/tools.jar to
+	a stamp target.
+	(clean-tools-jar): Remove the stamp.
+	(stamps/plugs.stamp): Depend on tools.stamp
+	not the jar file itself.
+	(icedtea): Match icedtea.stamp without bringing in
+	additional dependencies.  icedtea-against-icedtea
+	is equivalent to the old version.
+	(icedtea-debug): Likewise.
+	(tools-jar): New alias for tools.stamp
+
+2010-03-01  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
 	Patch should be added to ICEDTEA_ECJ_PATCHES
 	not ICEDTEA_ENV_ECJ.
 
