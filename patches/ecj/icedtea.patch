@@ -902,7 +902,7 @@ diff -Nru openjdk-ecj.orig/langtools/make/build.xml openjdk-ecj/langtools/make/b
                         includeAntRuntime="no"
                         source="@{javac.source}"
                         target="@{javac.target}">
-+		    <compilerarg line="-bootclasspath @{classes.dir}:../../generated:${boot.java.home}/lib/tools.jar:${boot.java.home}/jre/lib/rt.jar"/>
++		    <compilerarg line="-bootclasspath @{classes.dir}:${boot.java.home}/lib/tools.jar:${boot.java.home}/jre/lib/rt.jar"/>
                      <compilerarg value="-J-Xbootclasspath/p:@{javac.bootclasspath}"/>
                      <compilerarg line="${javac.version.opt}"/>
                      <compilerarg line="-Xlint"/>
@@ -910,7 +910,7 @@ diff -Nru openjdk-ecj.orig/langtools/make/build.xml openjdk-ecj/langtools/make/b
                         target="@{javac.target}"
                         debug="${javac.debug}"
                         debuglevel="${javac.debuglevel}">
-+		    <compilerarg line="-bootclasspath @{classes.dir}:../../generated:${boot.java.home}/lib/tools.jar:${boot.java.home}/jre/lib/rt.jar"/>
++		    <compilerarg line="-bootclasspath @{classes.dir}:${boot.java.home}/lib/tools.jar:${boot.java.home}/jre/lib/rt.jar"/>
                      <compilerarg value="-J-Xbootclasspath/p:@{javac.bootclasspath}"/>
                      <compilerarg value="-Xbootclasspath/p:@{classes.dir}"/>
                      <compilerarg line="${javac.no.jdk.warnings}"/>
