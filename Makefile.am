@@ -382,6 +382,11 @@ ICEDTEA_ECJ_PATCHES = patches/ecj/icedtea.patch \
 	patches/ecj/icedtea-jaxp-dependency.patch \
 	patches/ecj/bootver.patch
 
+if DTDTYPE_QNAME
+ICEDTEA_ECJ_PATCHES += \
+	patches/ecj/icedtea-jaxws-getdtdtype.patch
+endif
+
 # OpenJDK build environment.
 if ZERO_BUILD
   ICEDTEA_ZERO_BUILD = true
@@ -577,11 +582,6 @@ endif
 if WITH_RHINO
 ICEDTEA_ENV_ECJ += \
 	RHINO_JAR="$(abs_top_builddir)/rhino/rhino.jar"
-endif
-
-if DTDTYPE_QNAME
-ICEDTEA_ENV_ECJ += \
-	patches/ecj/icedtea-jaxws-getdtdtype.patch
 endif
 
 # Source files
