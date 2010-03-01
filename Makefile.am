@@ -898,7 +898,7 @@ if WITH_VISUALVM
 endif
 
 #FIXME (meta): Split into multiple targets
-stamps/extract.stamp: stamps/extract-openjdk.stamp \
+stamps/extract.stamp: stamps/extract-openjdk.stamp
 	mkdir -p stamps
 	touch $@
 
