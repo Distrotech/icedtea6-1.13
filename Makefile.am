@@ -61,9 +61,12 @@ SOLARIS = openjdk/jdk/src/solaris/classes
 LANGTOOLS = openjdk/langtools/src/share/classes
 JAXP = openjdk/jaxp/src/share/classes
 CORBA = openjdk/corba/src/share/classes
-JAXWS = openjdk/jaxws/src/share/classes
 
 # FIXME (netx): NetX source directories go here
+
+if DTDTYPE_QNAME
+NEED_JAXWS_SRC = true
+endif
 
 OPENJDK_SOURCEPATH_DIRS = \
         $(SHARE):$(SOLARIS):$(LANGTOOLS):$(CORBA)
@@ -382,6 +385,10 @@ ICEDTEA_ECJ_PATCHES = patches/ecj/icedtea.patch \
 	patches/ecj/icedtea-jopt.patch \
 	patches/ecj/icedtea-jaxp-dependency.patch \
 	patches/ecj/bootver.patch
+
+# Patches for JAXWS
+
+JAXWS_PATCHES = patches/ecj/icedtea-jaxws-getdtdtype.patch
 
 # OpenJDK build environment.
 if ZERO_BUILD
@@ -894,7 +901,15 @@ if WITH_VISUALVM
 endif
 
 #FIXME (meta): Split into multiple targets
-stamps/extract.stamp: stamps/download.stamp
+stamps/extract.stamp: stamps/extract-openjdk.stamp \
+ stamps/extract-jaxws.stamp
+	mkdir -p stamps
+	touch $@
+
+clean-extract: clean-extract-jaxws
+	rm -f stamps/extract.stamp
+
+stamps/extract-openjdk.stamp: stamps/download.stamp
 if OPENJDK_SRC_DIR_FOUND
 	cp -a $(OPENJDK_SRC_DIR) openjdk
 else
@@ -949,10 +964,58 @@ endif
 	    -o -type d -exec chmod 750 '{}' ';'; \
 	fi
 	mkdir -p stamps
-	touch stamps/extract.stamp
+	touch stamps/extract-openjdk.stamp
 
-clean-extract:
-	rm -f stamps/extract.stamp
+
+stamps/extract-jaxws.stamp: stamps/extract-openjdk.stamp \
+  stamps/download-jaxws-drop.stamp stamps/download-jaf-drop.stamp
+	if test "x$(NEED_JAXWS_SRC)" = "xtrue"; then \
+	  (cd openjdk/jaxws ; \
+	   $(ANT) -Ddrops.dir=$(abs_top_builddir)/drops \
+	   -Doutput.dir=$(BUILD_OUTPUT_DIR)/jaxws \
+	   source ; \
+	   cd $(abs_top_builddir)) ; \
+	fi
+if DTDTYPE_QNAME
+	(cd $(BUILD_OUTPUT_DIR)/jaxws; \
+	 all_patches_ok=yes; \
+	 for p in $(JAXWS_PATCHES) ; \
+	 do \
+	   if test x$${all_patches_ok} = "xyes" \
+	     && echo Checking $$p \
+	     && $(PATCH) -l -p0 --dry-run -s -t -f \
+	       -F 0 < $(abs_top_srcdir)/$$p ; \
+	   then \
+	    echo Applying $$p ; \
+	    $(PATCH) -l -p0 < $(abs_top_srcdir)/$$p ; \
+	    if ! grep "^\* $$(basename $$p)" $(abs_top_srcdir)/HACKING \
+	      >> stamps/extract-jaxws.stamp.tmp ; \
+	    then \
+	      echo "* $$(basename $$p): UNDOCUMENTED" \
+	        >> stamps/extract-jaxws.stamp.tmp ; \
+	    fi ; \
+	   else \
+	     test x$${all_patches_ok} = "xyes" && all_patches_ok=$$p ; \
+	   fi ; \
+	 done ; \
+	 if ! test x$${all_patches_ok} = "xyes"; then \
+	   echo ERROR patch $${all_patches_ok} FAILED! ; \
+	   echo WARNING make clean-extract-jaxws before retrying a fix ; \
+	   exit 2; \
+	 fi ; \
+	 cd $(abs_top_builddir)) ;
+endif
+	mkdir -p stamps
+	touch $@
+
+clean-extract-jaxws:
+	if [ -d $(BUILD_OUTPUT_DIR)/jaxws ] ; then \
+	  (cd openjdk/jaxws ; \
+	   $(ANT) -Doutput.dir=$(BUILD_OUTPUT_DIR)/jaxws clobber ; \
+	   cd ../../); \
+        fi
+	mkdir -p stamps
+	rm -f stamps/extract-jaxws.stamp
 
 stamps/replace-hotspot.stamp: stamps/extract.stamp
 if WITH_ALT_HSBUILD

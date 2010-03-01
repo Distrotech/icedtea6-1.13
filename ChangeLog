@@ -1,5 +1,31 @@
 2010-03-01  Andrew John Hughes  <ahughes@redhat.com>
 
+	* Makefile.am:
+	(stamps/extract.stamp): Add meta extract target
+	to pull in both extract-openjdk and extract-jaxws.
+	(stamps/extract-openjdk.stamp): Rename stamp file
+	to extract-openjdk.stamp.
+	(clean-extract-jaxws): Remove jaxws sources.
+
+2009-11-17  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Make use of JAXWS dependent on absence of
+	getDTDType() bug.  Add new JAXWS patch.
+	(extract-jaxws.stamp): Apply getDTDType() patch
+	if bug found.
+	* acinclude.m4:
+	(IT_GETDTDTYPE_CHECK): Check for old versions of
+	gcj/Classpath which have
+	javax.xml.stream.events.Attribute.getDTDType()
+	with a return type of QName not String.
+	* configure.ac:
+	Invoke new IT_GETDTDTYPE_CHECK macro.
+	* patches/icedtea-jaxws-getdtdtype.patch:
+	New patch to work around the getDTDType() bug.
+
+2010-03-01  Andrew John Hughes  <ahughes@redhat.com>
+
 	* patches/ecj/icedtea.patch: Don't add tools.jar
 	to bootclasspath; now just a symlink to rt.jar.
 
