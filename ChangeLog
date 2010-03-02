@@ -1,3 +1,124 @@
+2010-03-01  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(stamps/cacao.stamp): Depend on rt.stamp
+	and use updated rt.jar to build against rather
+	than the contents of lib/rt, so that --with-openjdk
+	builds work.
+
+2010-03-01  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(stamps/plugin.stamp): Create stamp with the
+	right filename.
+
+2010-03-01  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(icedtea-against-icedtea): Convert to stamp
+	and provide this as an alias.
+	(icedtea-debug-against-icedtea): Likewise.
+	(stamps/jtreg.stamp): Depend on
+	stamps/icedtea-against-icedtea.stamp
+	(stamps/tools.stamp): Converted from
+	target relying on
+	bootstrap/jdk1.7.0/jre/lib/tools.jar to
+	a stamp target.
+	(clean-tools-jar): Remove the stamp.
+	(stamps/plugs.stamp): Depend on tools.stamp
+	not the jar file itself.
+	(icedtea): Match icedtea.stamp without bringing in
+	additional dependencies.  icedtea-against-icedtea
+	is equivalent to the old version.
+	(icedtea-debug): Likewise.
+	(tools-jar): New alias for tools.stamp
+
+2010-03-01  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Patch should be added to ICEDTEA_ECJ_PATCHES
+	not ICEDTEA_ENV_ECJ.
+
+2010-03-01  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Remove errant backslash.
+
+2010-03-01  Andrew John Hughes  <ahughes@redhat.com>
+
+	Simply JAXWS patching for OpenJDK6.
+	* Makefile.am,
+	(NEED_JAXWS_SRC): Removed.
+	(JAXWS_PATCHES): Removed.
+	(ICEDTEA_ENV_ECJ): Add getdtdtype patch.
+	(extract.stamp): Remove extract-jaxws dependency.
+	(clean-extract): Remove clean-extract-jaxws dependency.
+	(extract-jaxws.stamp): Removed.
+	(clean-extract-jaxws): Removed.
+	* patches/ecj/icedtea-jaxws-getdtdtype.patch:
+	Updated to apply to JAXWS tree as a patch.
+
+2009-11-17  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/ecj/icedtea-jaxws-getdtdtype.patch:
+	Replace getDTDType method, don't add another.
+
+2009-11-17  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/ecj/icedtea-jaxws-getdtdtype.patch:
+	Add additional fix for AttributeBase.java
+
+2010-03-01  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(stamps/extract.stamp): Add meta extract target
+	to pull in both extract-openjdk and extract-jaxws.
+	(stamps/extract-openjdk.stamp): Rename stamp file
+	to extract-openjdk.stamp.
+	(clean-extract-jaxws): Remove jaxws sources.
+
+2009-11-17  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Make use of JAXWS dependent on absence of
+	getDTDType() bug.  Add new JAXWS patch.
+	(extract-jaxws.stamp): Apply getDTDType() patch
+	if bug found.
+	* acinclude.m4:
+	(IT_GETDTDTYPE_CHECK): Check for old versions of
+	gcj/Classpath which have
+	javax.xml.stream.events.Attribute.getDTDType()
+	with a return type of QName not String.
+	* configure.ac:
+	Invoke new IT_GETDTDTYPE_CHECK macro.
+	* patches/icedtea-jaxws-getdtdtype.patch:
+	New patch to work around the getDTDType() bug.
+
+2010-03-01  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/ecj/icedtea.patch: Don't add tools.jar
+	to bootclasspath; now just a symlink to rt.jar.
+
+2010-03-01  Mark Wielaard  <mark@klomp.org>
+
+	* patches/ecj/icedtea.patch: Don't add generated dir to
+	bootclasspath in langtools/make/build.xml.
+
+2010-02-26  Mark Wielaard  <mark@klomp.org>
+
+	* patches/openjdk/6928623-verbose-langtools.patch: New patch.
+	* Makefile.am (ICEDTEA_PATCHES): Add new patch.
+
+2010-02-26  Pavel Tisnovsky <ptisnovs@redhat.com>
+
+	* removed two unnecessary timezone patches
+
+2010-02-26  Xerxes Rånby  <xerxes@zafena.se>
+
+	* ports/hotspot/src/share/vm/shark/sharkCompiler.cpp
+	(SharkCompiler::generate_native_code): Undefine debug code for
+	NDEBUG builds
+
 2010-02-25 Andrew John Hughes  <ahughes@redhat.com>
 
 	* patches/hotspot/hs16/icedtea-params-cast-size_t.patch,

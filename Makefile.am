@@ -61,7 +61,6 @@ SOLARIS = openjdk/jdk/src/solaris/classes
 LANGTOOLS = openjdk/langtools/src/share/classes
 JAXP = openjdk/jaxp/src/share/classes
 CORBA = openjdk/corba/src/share/classes
-JAXWS = openjdk/jaxws/src/share/classes
 
 # FIXME (netx): NetX source directories go here
 
@@ -306,6 +305,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-explicit-target-arch.patch \
 	patches/icedtea-gcc-stack-markings.patch \
 	patches/openjdk/6879689-hotspot_warning_fix.patch \
+	patches/openjdk/6928623-verbose-langtools.patch \
 	patches/icedtea-no-precompiled.patch \
 	patches/icedtea-linux-separate-debuginfo.patch \
 	patches/icedtea-parisc.patch \
@@ -370,6 +370,11 @@ ICEDTEA_ECJ_PATCHES = patches/ecj/icedtea.patch \
 	patches/ecj/icedtea-jopt.patch \
 	patches/ecj/icedtea-jaxp-dependency.patch \
 	patches/ecj/bootver.patch
+
+if DTDTYPE_QNAME
+ICEDTEA_ECJ_PATCHES += \
+	patches/ecj/icedtea-jaxws-getdtdtype.patch
+endif
 
 # OpenJDK build environment.
 if ZERO_BUILD
@@ -438,7 +443,8 @@ ICEDTEA_ENV = \
 	DERIVATIVE_ID="$(ICEDTEA_NAME) $(PACKAGE_VERSION)$(ICEDTEA_REV)" \
 	DEBUG_CLASSFILES="true" \
 	DEBUG_BINARIES="true" \
-	ALT_DROPS_DIR="$(abs_top_builddir)/drops"
+	ALT_DROPS_DIR="$(abs_top_builddir)/drops" \
+	VERBOSE="$(VERBOSE)"
 
 if WITH_CACAO
 ICEDTEA_ENV += \
@@ -532,7 +538,8 @@ ICEDTEA_ENV_ECJ = \
 	DEBUG_BINARIES="true" \
 	DISABLE_NIMBUS="true" \
 	NO_DOCS="true" \
-	ALT_DROPS_DIR="$(abs_top_builddir)/drops"
+	ALT_DROPS_DIR="$(abs_top_builddir)/drops" \
+	VERBOSE="$(VERBOSE)"
 
 if WITH_CACAO
 ICEDTEA_ENV_ECJ += \
@@ -880,7 +887,14 @@ if WITH_VISUALVM
 endif
 
 #FIXME (meta): Split into multiple targets
-stamps/extract.stamp: stamps/download.stamp
+stamps/extract.stamp: stamps/extract-openjdk.stamp
+	mkdir -p stamps
+	touch $@
+
+clean-extract: 
+	rm -f stamps/extract.stamp
+
+stamps/extract-openjdk.stamp: stamps/download.stamp
 if OPENJDK_SRC_DIR_FOUND
 	cp -a $(OPENJDK_SRC_DIR) openjdk
 else
@@ -935,10 +949,7 @@ endif
 	    -o -type d -exec chmod 750 '{}' ';'; \
 	fi
 	mkdir -p stamps
-	touch stamps/extract.stamp
-
-clean-extract:
-	rm -f stamps/extract.stamp
+	touch stamps/extract-openjdk.stamp
 
 stamps/replace-hotspot.stamp: stamps/extract.stamp
 if WITH_ALT_HSBUILD
@@ -1514,19 +1525,17 @@ clean-icedtea: stamps/extract.stamp
 	  -C openjdk clobber
 	rm -f stamps/icedtea.stamp stamps/icedtea-debug.stamp
 
-icedtea-against-icedtea: \
-	stamps/bootstrap-directory-symlink.stamp \
-	stamps/icedtea.stamp \
-	stamps/add-cacao.stamp \
-	stamps/add-zero.stamp
+stamps/icedtea-against-icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
+ stamps/icedtea.stamp stamps/add-cacao.stamp stamps/add-zero.stamp
+	mkdir -p stamps
+	touch stamps/icedtea-against-icedtea.stamp
 
 #FIXME (clean): Missing clean-icedtea-against-icedtea
 
-icedtea-debug-against-icedtea: \
-	stamps/bootstrap-directory-symlink.stamp \
-	stamps/icedtea-debug.stamp \
-	stamps/add-cacao-debug.stamp \
-	stamps/add-zero-debug.stamp
+stamps/icedtea-debug-against-icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
+ stamps/icedtea-debug.stamp stamps/add-cacao-debug.stamp stamps/add-zero-debug.stamp
+	mkdir -p stamps
+	touch stamps/icedtea-debug-against-icedtea.stamp
 
 #FIXME (clean): Missing clean-icedtea-debug-against-icedtea
 
@@ -1646,7 +1655,7 @@ endif
 
 stamps/plugin.stamp: $(ICEDTEAPLUGIN_TARGET) $(ICEDTEANPPLUGIN_TARGET)
 	mkdir -p stamps
-	touch stamps/icedtea-plugin.stamp
+	touch stamps/plugin.stamp
 
 clean-plugin: $(ICEDTEAPLUGIN_CLEAN) $(ICEDTEANPPLUGIN_CLEAN)
 	rm -f stamps/plugin.stamp
@@ -1843,7 +1852,7 @@ clean-visualvm:
 
 # CACAO
 
-stamps/cacao.stamp: $(OPENJDK_TREE) stamps/rt-class-files.stamp
+stamps/cacao.stamp: $(OPENJDK_TREE) stamps/rt.stamp
 if BUILD_CACAO
 if !USE_SYSTEM_CACAO
 	cd cacao/cacao && \
@@ -1854,7 +1863,7 @@ if !USE_SYSTEM_CACAO
 	  --prefix=$(abs_top_builddir)/cacao/install \
 	  --with-java-runtime-library=openjdk \
 	  --with-java-runtime-library-prefix=$(abs_top_builddir)/openjdk \
-	  --with-java-runtime-library-classes=$(abs_top_builddir)/lib/rt \
+	  --with-java-runtime-library-classes=$(ICEDTEA_RT) \
 	  --enable-jre-layout $(CACAO_CONFIGURE_ARGS); \
 	$(ARCH_PREFIX) $(MAKE) install
 	ln -s server $(abs_top_builddir)/cacao/install/jre/lib/$(INSTALL_ARCH_DIR)/client
@@ -2018,7 +2027,7 @@ stamps/plugin-tests.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) $(PLUGIN_TEST_SRCS) \
 
 # jtreg
 
-stamps/jtreg.stamp: stamps/icedtea.stamp stamps/add-zero.stamp stamps/add-cacao.stamp
+stamps/jtreg.stamp: stamps/icedtea-against-icedtea.stamp
 	rm -rf test/jtreg/classes
 	mkdir -p test/jtreg/classes
 	$(ICEDTEA_BOOT_DIR)/bin/javac -g -d test/jtreg/classes -source 1.5 \
@@ -2149,7 +2158,7 @@ endif
 	touch stamps/rt.stamp
 
 # tools.jar
-bootstrap/jdk1.7.0/jre/lib/tools.jar: 
+stamps/tools.stamp:
 	mkdir -p bootstrap/jdk1.7.0/jre/lib/
 	ln -sf $(ICEDTEA_RT) $(abs_top_builddir)/bootstrap/jdk1.7.0/jre/lib/tools.jar
 	if test -d bootstrap/ecj ; \
@@ -2158,15 +2167,18 @@ bootstrap/jdk1.7.0/jre/lib/tools.jar:
 	  ln -sf $(abs_top_builddir)/bootstrap/jdk1.7.0/jre/lib/tools.jar \
 	    $(abs_top_builddir)/bootstrap/ecj/lib/tools.jar; \
 	fi
+	mkdir -p stamps
+	touch stamps/tools.stamp
 
 clean-tools-jar: 
 	rm -f bootstrap/jdk1.7.0/jre/lib/tools.jar
 	if test -d bootstrap/ecj/lib ; then \
 	  rm -f $(abs_top_builddir)/bootstrap/ecj/lib/tools.jar; \
 	fi
+	rm -f stamps/tools.stamp
 
 # rt-closed.jar
-stamps/plugs.stamp: stamps/rt.stamp bootstrap/jdk1.7.0/jre/lib/tools.jar
+stamps/plugs.stamp: stamps/rt.stamp stamps/tools.stamp
 	$(ICEDTEA_BOOT_DIR)/bin/jar cf $(ICEDTEA_PLUGS) \
 	  -C lib/rt com/sun/jmx/snmp $(LIVECONNECT_DIR) \
 	  -C lib/rt net -C lib/rt javax/jnlp ;
@@ -2211,11 +2223,15 @@ extract-ecj: stamps/extract-ecj.stamp
 
 hotspot-ports: stamps/ports.stamp
 
-icedtea: stamps/icedtea.stamp stamps/add-cacao.stamp stamps/add-zero.stamp
+icedtea: stamps/icedtea.stamp
+
+icedtea-against-icedtea: stamps/icedtea-against-icedtea.stamp
 
 icedtea-against-ecj: stamps/icedtea-against-ecj.stamp
 
-icedtea-debug: stamps/icedtea-debug.stamp stamps/add-cacao-debug.stamp stamps/add-zero-debug.stamp
+icedtea-debug: stamps/icedtea-debug.stamp
+
+icedtea-debug-against-icedtea: stamps/icedtea-debug-against-icedtea.stamp
 
 icedtea-ecj: stamps/icedtea-ecj.stamp
 
@@ -2248,5 +2264,7 @@ replace-hotspot: stamps/replace-hotspot.stamp
 rt-jar: stamps/rt.stamp
 
 rt-class-files: stamps/rt-class-files.stamp
+
+tools-jar: stamps/tools.stamp
 
 visualvm: stamps/visualvm.stamp
