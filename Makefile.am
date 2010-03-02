@@ -305,7 +305,6 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-explicit-target-arch.patch \
 	patches/icedtea-gcc-stack-markings.patch \
 	patches/openjdk/6879689-hotspot_warning_fix.patch \
-	patches/openjdk/6928623-verbose-langtools.patch \
 	patches/icedtea-no-precompiled.patch \
 	patches/icedtea-linux-separate-debuginfo.patch \
 	patches/icedtea-parisc.patch \
