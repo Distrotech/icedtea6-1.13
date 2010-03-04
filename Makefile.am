@@ -193,7 +193,6 @@ if WITH_CACAO
   ICEDTEA_BUILD_TARGET=j2se_only
   ICEDTEA_DEBUG_BUILD_TARGET=j2se_fastdebug_only
 else
-  ICEDTEA_BUILD_TARGET=
   ICEDTEA_DEBUG_BUILD_TARGET=debug_build
 endif
 
@@ -1566,21 +1565,25 @@ stamps/icedtea-ecj.stamp: stamps/bootstrap-directory-symlink-ecj.stamp \
 	touch stamps/icedtea-ecj.stamp
 
 hotspot:
-	rm -f stamps/bootstrap-directory-symlink-ecj.stamp
+if WITH_OPENJDK
+	rm -f stamps/icedtea.stamp
+	rm -f stamps/icedtea-against-icedtea.stamp
+	$(ARCH_PREFIX) $(MAKE) ICEDTEA_BUILD_TARGET=hotspot icedtea-against-icedtea
+	mkdir -p \
+	   $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/server
+	cp $(BUILD_OUTPUT_DIR)/$(SERVER_DIR)/libjvm.so \
+	   $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/server
+	@echo "Hotspot is served:" $(BUILD_OUTPUT_DIR)/j2sdk-image
+else
 	rm -f stamps/icedtea-ecj.stamp
 	rm -f stamps/icedtea-against-ecj.stamp
-	$(ARCH_PREFIX) $(MAKE) hotspot-helper
+	$(ARCH_PREFIX) $(MAKE) ICEDTEA_BUILD_TARGET=hotspot icedtea-against-ecj
 	mkdir -p \
 	   $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/server
 	cp $(ECJ_BUILD_OUTPUT_DIR)/$(SERVER_DIR)/libjvm.so \
 	   $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/server
 	@echo "Hotspot is served:" $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image
-
-hotspot-helper: stamps/bootstrap-directory-symlink-ecj.stamp \
-	stamps/plugs.stamp stamps/patch-ecj.stamp
-	$(ARCH_PREFIX) $(MAKE) \
-	  $(ICEDTEA_ENV_ECJ) \
-	  -C openjdk-ecj/ hotspot
+endif
 
 clean-icedtea-ecj: stamps/extract-ecj.stamp
 	rm -f stamps/icedtea-ecj.stamp
