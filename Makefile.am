@@ -1164,7 +1164,7 @@ endif
 # FIXME (missing): Rename to clone-ecj.
 stamps/extract-ecj.stamp: $(OPENJDK_TREE)
 	if ! test -d openjdk-ecj ; then \
-	    cp -a openjdk openjdk-ecj ; \
+	    cp -pPRl openjdk openjdk-ecj ; \
 	fi
 	mkdir -p stamps
 	touch stamps/extract-ecj.stamp

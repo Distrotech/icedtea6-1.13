@@ -1,6 +1,12 @@
 2010-03-08  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:
+	(stamps/extract-ecj.stamp): Revert previous change
+	to copying.  Patch will break hard links.
+
+2010-03-08  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
 	(SHARE): Use openjdk-ecj for building bootstrap classes.
 	(SOLARIS): Likewise.
 	(LANGTOOLS): Likewise.
