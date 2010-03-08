@@ -391,6 +391,8 @@ ICEDTEA_ECJ_PATCHES += \
 	patches/ecj/icedtea-jaxws-getdtdtype.patch
 endif
 
+ICEDTEA_ECJ_PATCHES += $(DISTRIBUTION_ECJ_PATCHES)
+
 # OpenJDK build environment.
 if ZERO_BUILD
   ICEDTEA_ZERO_BUILD = true
