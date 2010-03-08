@@ -1,3 +1,18 @@
+2010-03-08  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(SHARE): Use openjdk-ecj for building bootstrap classes.
+	(SOLARIS): Likewise.
+	(LANGTOOLS): Likewise.
+	(CORBA): Likewise.
+	(JAXP): Likewise.
+	(OPENJDK_ECJ_TREE): Target for obtaining a patched OpenJDK-ecj tree.
+	(stamps/extract-ecj.stamp): Copy, don't link.
+	(stamps/icedtea-boot.stamp): Use OPENJDK_ECJ_TREE rather than
+	patch-ecj.stamp.
+	(rt-source-files.txt): Depend on $(OPENJDK_ECJ_TREE) ensuring
+	ecj patched versions are used.
+
 2010-03-04  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:

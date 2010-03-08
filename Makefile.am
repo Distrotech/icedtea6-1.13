@@ -56,11 +56,11 @@ BUILD_DEBUG_JRE_ARCH_DIR = $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/$(INSTA
 
 # Source directories
 
-SHARE = openjdk/jdk/src/share/classes
-SOLARIS = openjdk/jdk/src/solaris/classes
-LANGTOOLS = openjdk/langtools/src/share/classes
-JAXP = openjdk/jaxp/src/share/classes
-CORBA = openjdk/corba/src/share/classes
+SHARE = openjdk-ecj/jdk/src/share/classes
+SOLARIS = openjdk-ecj/jdk/src/solaris/classes
+LANGTOOLS = openjdk-ecj/langtools/src/share/classes
+JAXP = openjdk-ecj/jaxp/src/share/classes
+CORBA = openjdk-ecj/corba/src/share/classes
 
 # FIXME (netx): NetX source directories go here
 
@@ -212,6 +212,11 @@ endif
 # Target to ensure a patched OpenJDK tree containing Zero & Shark
 # and any overlays is available in $(abs_top_builddir)/openjdk
 OPENJDK_TREE = stamps/overlay.stamp
+
+# Target to ensure a patched OpenJDK bootstrap tree containing
+# Zero & Shark, any other overlays and the bootstrapping patches
+# is available in $(abs_top_builddir)/openjdk-ecj
+OPENJDK_ECJ_TREE = stamps/patch-ecj.stamp
 
 # Sources list
 
@@ -1159,7 +1164,7 @@ endif
 # FIXME (missing): Rename to clone-ecj.
 stamps/extract-ecj.stamp: $(OPENJDK_TREE)
 	if ! test -d openjdk-ecj ; then \
-	    cp -pPRl openjdk openjdk-ecj ; \
+	    cp -a openjdk openjdk-ecj ; \
 	fi
 	mkdir -p stamps
 	touch stamps/extract-ecj.stamp
@@ -1553,7 +1558,7 @@ stamps/icedtea-debug-against-icedtea.stamp: stamps/bootstrap-directory-symlink.s
 # ===================
 
 stamps/icedtea-ecj.stamp: stamps/bootstrap-directory-symlink-ecj.stamp \
-	stamps/plugs.stamp stamps/patch-ecj.stamp stamps/cacao.stamp \
+	stamps/plugs.stamp $(OPENJDK_ECJ_TREE) stamps/cacao.stamp \
 	stamps/rewrite-rhino.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV_ECJ) \
@@ -2131,7 +2136,7 @@ jtregcheck: jtreg check-hotspot check-langtools check-jdk
 # Support classes for non-OpenJDK bootstraps
 
 # rt.jar additional class files.
-rt-source-files.txt: $(OPENJDK_TREE)
+rt-source-files.txt: $(OPENJDK_ECJ_TREE)
 	find $(abs_top_srcdir)/rt $(abs_top_builddir)/rt $(LIVECONNECT_SRCS) -name '*.java' \
 	  | sort -u > $@
 	for dir in $(ICEDTEA_BOOTSTRAP_DIRS) ; \
