@@ -96,6 +96,9 @@ ICEDTEA_BOOTSTRAP_CLASSES = \
 
 # FIXME (javac): Settings for javac go here
 
+# Flags
+IT_CFLAGS=$(CFLAGS) $(ARCHFLAG)
+
 # Conditional defintions
 
 if USE_ALT_OPENJDK_SRC_ZIP
@@ -443,7 +446,7 @@ ICEDTEA_ENV = \
 	ARCH_DATA_MODEL="$(ZERO_BITSPERWORD)" \
 	ZERO_ENDIANNESS="$(ZERO_ENDIANNESS)" \
 	ZERO_ARCHDEF="$(ZERO_ARCHDEF)" \
-	ZERO_ARCHFLAG="$(ZERO_ARCHFLAG)" \
+	ZERO_ARCHFLAG="$(ARCHFLAG)" \
 	LIBFFI_CFLAGS="$(LIBFFI_CFLAGS)" \
 	LIBFFI_LIBS="$(LIBFFI_LIBS)" \
 	LLVM_CFLAGS="$(LLVM_CFLAGS)" \
@@ -533,7 +536,7 @@ ICEDTEA_ENV_ECJ = \
 	ARCH_DATA_MODEL="$(ZERO_BITSPERWORD)" \
 	ZERO_ENDIANNESS="$(ZERO_ENDIANNESS)" \
 	ZERO_ARCHDEF="$(ZERO_ARCHDEF)" \
-	ZERO_ARCHFLAG="$(ZERO_ARCHFLAG)" \
+	ZERO_ARCHFLAG="$(ARCHFLAG)" \
 	LIBFFI_CFLAGS="$(LIBFFI_CFLAGS)" \
 	LIBFFI_LIBS="$(LIBFFI_LIBS)" \
 	LLVM_CFLAGS="$(LLVM_CFLAGS)" \
@@ -1232,8 +1235,8 @@ clean-patch-ecj:
 
 stamps/native-ecj.stamp: 
 	mkdir -p stamps ; \
-	if test "x${GCJ}" != "xno"; then \
-	  ${GCJ} ${CFLAGS} -Wl,-Bsymbolic -findirect-dispatch -o native-ecj \
+	if test "x$(GCJ)" != "xno"; then \
+	  $(GCJ) $(IT_CFLAGS) -Wl,-Bsymbolic -findirect-dispatch -o native-ecj \
 	    --main=org.eclipse.jdt.internal.compiler.batch.Main ${ECJ_JAR} ; \
 	fi ; \
 	touch stamps/native-ecj.stamp
@@ -1726,7 +1729,7 @@ extra-lib/about.jar: stamps/extra-class-files.stamp
 
 if ENABLE_PULSE_JAVA
 $(PULSE_JAVA_NATIVE_BUILDDIR)/%.o: $(PULSE_JAVA_NATIVE_SRCDIR)/%.c stamps/pulse-java-headers.stamp
-	$(CC) $(CFLAGS) -fPIC -I$(ICEDTEA_BOOT_DIR)/include/linux -I$(ICEDTEA_BOOT_DIR)/include \
+	$(CC) $(IT_CFLAGS) -fPIC -I$(ICEDTEA_BOOT_DIR)/include/linux -I$(ICEDTEA_BOOT_DIR)/include \
 	 -I$(PULSE_JAVA_NATIVE_BUILDDIR) -o $@ -c $<
 
 $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so: $(PULSE_JAVA_NATIVE_OBJECTS)
