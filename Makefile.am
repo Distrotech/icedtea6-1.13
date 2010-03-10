@@ -367,7 +367,8 @@ else
 ICEDTEA_PATCHES += patches/hotspot/original/icedtea-6778662-lib64.patch \
 	patches/hotspot/original/icedtea-6778657-f2i-overflow.patch \
 	patches/hotspot/original/icedtea-6791168.patch \
-	patches/hotspot/original/icedtea-6793825-includedb.patch
+	patches/hotspot/original/icedtea-6793825-includedb.patch \
+	patches/openjdk/6822370-reentrantreadwritelock.patch
 endif
 
 ICEDTEA_PATCHES += patches/icedtea-override.patch

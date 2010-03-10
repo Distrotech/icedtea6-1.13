@@ -1,4 +1,13 @@
-2010-03-08  Andrew John Hughes  <ahughes@redhat.com>
+2010-03-10  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Add new patch.
+	* patches/openjdk/6822370-reentrantreadwritelock.patch:
+	Backported patch from HotSpot 16 to fix bug S6822370;
+	threads blocked when the ReentrantReadWriteLock is
+	not held.
+
+2010-03-10  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:
 	(JAXP): Removed, redundant.
