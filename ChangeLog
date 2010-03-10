@@ -1,3 +1,12 @@
+2010-03-08  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(JAXP): Removed, redundant.
+	(ABS_SOURCE_DIRS): No source code in $(abs_top_srcdir)/rt.
+	(ICEDTEA_BOOTSTRAP_CLASSES): Unneeded.
+	(HOTSPOT_MAKE_DIR): Redundant since switch to hs14.
+	(stamps/ports.stamp): Remove use of HOTSPOT_MAKE_DIR.
+
 2010-03-10  Hideki Yamane <henrich@debian.or.jp>
 
 	* patches/icedtea-fonts.patch: Use Sazanami instead of Kochi for
@@ -20,7 +29,7 @@
 	(setMember): Same. Also, move responding code from _setMember to setMember
 	for consistency and to solve a rather bad race condition that affected
 	reliability.
-	(sendMember): Account for the new reference field and send it back 
+	(sendMember): Account for the new reference field and send it back
 	with the response.
 	(queue_processor): Move array index slots based on new positions with
 	reference ids.
@@ -32,7 +41,7 @@
 	(serviceable): Removed method. serviceable() is now implemented in the
 	parent class and uses unique reference identifiers.
 	* plugin/icedteanp/java/sun/applet/GetWindowPluginCallRequest.java
-	(GetWindowPluginCallRequest): Change method signature to receive a 
+	(GetWindowPluginCallRequest): Change method signature to receive a
 	reference identifier.
 	(serviceable): Removed method. serviceable() is now implemented in the
 	parent class and uses unique reference identifiers.
@@ -40,7 +49,7 @@
 	statis private requestIdentityCounter variable that provides unique
 	reference numbers.
 	(createPanel): Send a dummy (0) reference number with initialization msg.
-	(getRequestIdentifier): New method. Returns a unique reference number 
+	(getRequestIdentifier): New method. Returns a unique reference number
 	and then increments requestIdentityCounter in a thread-safe manner.
 	(getWindow): Send reference id to getPluginCallRequest.
 	(getMember): Same.

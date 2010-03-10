@@ -59,7 +59,6 @@ BUILD_DEBUG_JRE_ARCH_DIR = $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/$(INSTA
 SHARE = openjdk-ecj/jdk/src/share/classes
 SOLARIS = openjdk-ecj/jdk/src/solaris/classes
 LANGTOOLS = openjdk-ecj/langtools/src/share/classes
-JAXP = openjdk-ecj/jaxp/src/share/classes
 CORBA = openjdk-ecj/corba/src/share/classes
 
 # FIXME (netx): NetX source directories go here
@@ -67,9 +66,9 @@ CORBA = openjdk-ecj/corba/src/share/classes
 OPENJDK_SOURCEPATH_DIRS = \
         $(SHARE):$(SOLARIS):$(LANGTOOLS):$(CORBA)
 
-ABS_SOURCE_DIRS = $(abs_top_builddir)/generated:$(abs_top_builddir)/rt:$(abs_top_srcdir)/rt:$(LIVECONNECT_SRCS)
+ABS_SOURCE_DIRS = $(abs_top_builddir)/generated:$(abs_top_srcdir)/rt:$(LIVECONNECT_SRCS)
 
-# Sources copied from OpenJDK.
+# Sources used from OpenJDK.
 ICEDTEA_BOOTSTRAP_DIRS = \
 	$(SHARE)/com/sun/jdi \
 	$(SHARE)/com/sun/jmx/snmp/agent \
@@ -89,10 +88,6 @@ ICEDTEA_BOOTSTRAP_DIRS = \
 	$(SHARE)/javax/security/sasl \
 	$(LANGTOOLS)/com/sun/mirror \
 	$(LANGTOOLS)/com/sun/tools/apt
-
-ICEDTEA_BOOTSTRAP_CLASSES = \
-	$(SHARE)/java/nio/StringCharBuffer.java \
-	$(SHARE)/sun/misc/Unsafe.java
 
 # FIXME (javac): Settings for javac go here
 
@@ -179,9 +174,6 @@ PULSE_JAVA_CLASS_DIR = $(PULSE_JAVA_BUILDDIR)/classes
 PULSE_JAVA_TARGET = stamps/pulse-java.stamp
 PULSE_JAVA_CLEAN_TARGET = clean-pulse-java
 endif
-
-# FIXME (HotSpot): no longer needed
-HOTSPOT_MAKE_DIR = make
 
 # FIXME: This should not depend on bootstrapping
 # but on whether MEMORY_LIMIT is accepted
@@ -347,6 +339,8 @@ ICEDTEA_PATCHES += \
 endif
 
 if ENABLE_XRENDER
+# match against $(abs_top_srcdir) and then remove it again,
+# because stamps/patch.stamp target will also add it
 XRENDER_PATCHES = patches/xrender/icedtea-???.patch
 XRENDER_PATCH_FILES = $(sort $(wildcard $(abs_top_srcdir)/$(XRENDER_PATCHES)))
 ICEDTEA_PATCHES += $(sort $(subst $(abs_top_srcdir)/,,$(XRENDER_PATCH_FILES)))
@@ -996,7 +990,7 @@ stamps/ports.stamp: stamps/replace-hotspot.stamp
 		      $(abs_top_srcdir)/ports/hotspot/tools \
 		      $(abs_top_srcdir)/ports/hotspot/src/*cpu/* \
 		      $(abs_top_srcdir)/ports/hotspot/src/share/vm/*; do \
-	  link=$$(dirname $$target | sed 's/^.*ports/openjdk/'|sed "s#hotspot/build#hotspot/$(HOTSPOT_MAKE_DIR)#"); \
+	  link=$$(dirname $$target | sed 's/^.*ports/openjdk/'); \
 	  cp -rv $$target $$link; \
 	done
 	if ! test "x$(WITH_CACAO)" = "xno" ; then \
