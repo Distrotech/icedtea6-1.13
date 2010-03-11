@@ -1,5 +1,11 @@
 2010-03-11  Gary Benson  <gbenson@redhat.com>
 
+	* ports/hotspot/src/os_cpu/linux_zero/vm/globals_linux_zero.hpp
+	(ThreadStackSize): Increased by 512kb on 32-bit platforms so as
+	to work on systems with 64kb page sizes.
+
+2010-03-11  Gary Benson  <gbenson@redhat.com>
+
 	* ports/hotspot/src/cpu/zero/vm/shark_globals_zero.hpp:
 	Whitespace changes.
 
