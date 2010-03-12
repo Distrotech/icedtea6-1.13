@@ -262,7 +262,6 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-jpegclasses.patch \
 	patches/icedtea-uname.patch \
 	patches/icedtea-freetypeversion.patch \
-	patches/icedtea-fonts.patch \
 	patches/icedtea-shark-build.patch \
 	patches/icedtea-shark-build-hotspot.patch \
 	patches/icedtea-nomotif-6706121.patch \
