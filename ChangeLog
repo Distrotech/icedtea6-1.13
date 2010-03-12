@@ -5,6 +5,192 @@
 	http://hg.openjdk.java.net/jdk6/jdk6/jdk/rev/178f954e1fd1
 	* Makefile.am: Drop above patch.
 
+2010-03-11  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/src/share/vm/shark/sharkCompiler.cpp
+	(SharkCompiler::compile_method): Catch typeflow failures more
+	generally.
+	* ports/hotspot/src/share/vm/shark/sharkTopLevelBlock.cpp
+	(SharkTopLevelBlock::scan_for_traps): New trap.
+	(SharkTopLevelBlock::do_call): Add assertion to check the above.
+	(SharkTopLevelBlock::static_subtype_check): Deal with unloaded
+	object_klass.
+
+2010-03-11  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/src/os_cpu/linux_zero/vm/globals_linux_zero.hpp
+	(ThreadStackSize): Increased by 512kb on 32-bit platforms so as
+	to work on systems with 64kb page sizes.
+
+2010-03-11  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/src/cpu/zero/vm/shark_globals_zero.hpp:
+	Whitespace changes.
+
+2010-03-10  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Add new patch.
+	* patches/openjdk/6822370-reentrantreadwritelock.patch:
+	Backported patch from HotSpot 16 to fix bug S6822370;
+	threads blocked when the ReentrantReadWriteLock is
+	not held.
+
+2010-03-10  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(JAXP): Removed, redundant.
+	(ABS_SOURCE_DIRS): No source code in $(abs_top_srcdir)/rt.
+	(ICEDTEA_BOOTSTRAP_CLASSES): Unneeded.
+	(HOTSPOT_MAKE_DIR): Redundant since switch to hs14.
+	(stamps/ports.stamp): Remove use of HOTSPOT_MAKE_DIR.
+
+2010-03-10  Hideki Yamane <henrich@debian.or.jp>
+
+	* patches/icedtea-fonts.patch: Use Sazanami instead of Kochi for
+	Japanese font on Debian/Ubuntu.
+
+2010-03-09  Deepak Bhole <dbhole@redhat.com>
+
+	* plugin/icedteanp/IcedTeaNPPlugin.cc
+	(consume_message): Handle the new reference field and send it back when
+	sending proxy and cookie info.
+	(get_proxy_info): Update response format for proxy information to make it
+	consistent with new Gecko API.
+	* plugin/icedteanp/IcedTeaPluginRequestProcessor.cc
+	(newMessageOnBus): Account for the new reference field and send it back
+	with the response.
+	(sendWindow): Same.
+	(eval): Same.
+	(call): Same.
+	(sendString): Same.
+	(setMember): Same. Also, move responding code from _setMember to setMember
+	for consistency and to solve a rather bad race condition that affected
+	reliability.
+	(sendMember): Account for the new reference field and send it back
+	with the response.
+	(queue_processor): Move array index slots based on new positions with
+	reference ids.
+	(_setMember): Move response code back to setMember.
+	* plugin/icedteanp/java/sun/applet/GetMemberPluginCallRequest.java
+	(GetMemberPluginCallRequest): Change method signature to receive a
+	reference identifier.
+	(parse): Update to handle new reference identifiers.
+	(serviceable): Removed method. serviceable() is now implemented in the
+	parent class and uses unique reference identifiers.
+	* plugin/icedteanp/java/sun/applet/GetWindowPluginCallRequest.java
+	(GetWindowPluginCallRequest): Change method signature to receive a
+	reference identifier.
+	(serviceable): Removed method. serviceable() is now implemented in the
+	parent class and uses unique reference identifiers.
+	* plugin/icedteanp/java/sun/applet/PluginAppletViewer.java: Added new
+	statis private requestIdentityCounter variable that provides unique
+	reference numbers.
+	(createPanel): Send a dummy (0) reference number with initialization msg.
+	(getRequestIdentifier): New method. Returns a unique reference number
+	and then increments requestIdentityCounter in a thread-safe manner.
+	(getWindow): Send reference id to getPluginCallRequest.
+	(getMember): Same.
+	(setMember): Same.
+	(setSlot): Same.
+	(getSlot): Same.
+	(eval): Same.
+	(removeMember): Same.
+	(call): Same.
+	(requestPluginCookieInfo): Same.
+	(requestPluginProxyInfo): Same.
+	(JavaScriptFinalize): Same.
+	(javascriptToString): Same.
+	* plugin/icedteanp/java/sun/applet/PluginCallRequest.java: Track reference
+	numbers instead of the 'return string' marker.
+	(serviceable): Change from abstract to implemented method, returns weather
+	or not the given message is servicable by this request based on unique
+	reference numbers.
+	* plugin/icedteanp/java/sun/applet/PluginCallRequestFactory.java
+	(getPluginCallRequest): Pass reference numbers to concrete class
+	constructors.
+	* plugin/icedteanp/java/sun/applet/PluginCookieInfoRequest.java
+	(PluginCookieInfoRequest): Receive new reference number and pass it to
+	parent.
+	(parseString): Update to handle new reference numbers in message.
+	(serviceable): Removed method. serviceable() is now implemented in the
+	parent class and uses unique reference identifiers.
+	* plugin/icedteanp/java/sun/applet/PluginProxyInfoRequest.java
+	(PluginProxyInfoRequest): Receive new reference number and pass it to
+	parent.
+	(parseReturn): Update to handle new reference numbers in message. Also,
+	parse based on new format returned by the C++ side.
+	(serviceable): Removed method. serviceable() is now implemented in the
+	parent class and uses unique reference identifiers.
+	* plugin/icedteanp/java/sun/applet/PluginStreamHandler.java
+	(handleMessage): Pass reference to finishCallRequest().
+	* plugin/icedteanp/java/sun/applet/VoidPluginCallRequest.java
+	(VoidPluginCallRequest): Update to handle new reference numbers in
+	message.
+	* plugin/tests/LiveConnect/common.js
+	(testAll): Check eval tests checkbox before calling doTest();
+
+2010-03-08  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(IT_CFLAGS): General CFLAGS for all IcedTea
+	C builds, which includes ARCHFLAG.
+	(ICEDTEA_ENV): Set ZERO_ARCHFLAG from ARCHFLAG.
+	(ICEDTEA_ECJ_ENV): Likewise.
+	(stamps/native-ecj.stamp): Use IT_CFLAGS.
+	($(PULSE_JAVA_NATIVE_BUILDDIR)/%.o): Use IT_CFLAGS.
+	* acinclude.m4:
+	(IT_SET_ARCH_SETTINGS): Renamed from SET_ARCH_DIRS.
+	Use host_cpu rather than host.  Add sections for
+	sparc and s390x.  Set ARCHFLAG to m64 for x86_64,
+	sparc64, powerpc64 and s390x, m31 for s390 and m32
+	for i?86, powerpc and sparc.
+	(ENABLE_ZERO_BUILD): Remove setting of ZERO_ARCHFLAG,
+	generalised to ARCHFLAG.
+	* configure.ac: Call renamed IT_SET_ARCH_SETTINGS.
+
+2010-03-08  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(stamps/extract-ecj.stamp): Revert previous change
+	to copying.  Patch will break hard links.
+
+2010-03-08  Matthias Klose  <doko@ubuntu.com>
+
+	* Makefile.am (ICEDTEA_ECJ_PATCHES): Add DISTRIBUTION_ECJ_PATCHES.
+
+2010-03-08  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(SHARE): Use openjdk-ecj for building bootstrap classes.
+	(SOLARIS): Likewise.
+	(LANGTOOLS): Likewise.
+	(CORBA): Likewise.
+	(JAXP): Likewise.
+	(OPENJDK_ECJ_TREE): Target for obtaining a patched OpenJDK-ecj tree.
+	(stamps/extract-ecj.stamp): Copy, don't link.
+	(stamps/icedtea-boot.stamp): Use OPENJDK_ECJ_TREE rather than
+	patch-ecj.stamp.
+	(rt-source-files.txt): Depend on $(OPENJDK_ECJ_TREE) ensuring
+	ecj patched versions are used.
+
+2010-03-04  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Don't unset ICEDTEA_BUILD_TARGET if unused.
+	(hotspot): Support the WITH_OPENJDK configuration.
+	Pass ICEDTEA_BUILD_TARGET=hotspot to make rather
+	than having an additional hotspot-helper target.
+	Don't remove bootstrap-directory-symlink-ecj.stamp
+	as this just forces the bootstrap classes to be rebuilt.
+	(hotspot-helper): Removed.
+
+2010-03-04  Xerxes Rånby  <xerxes@zafena.se>
+
+	* ports/hotspot/src/share/vm/shark/sharkCompiler.cpp
+	(sharkCompiler::sharkCompiler): Move mattr define to make its memory
+	valid in the scope where it are used by the args vector.
+
 2010-03-02  Andrew John Hughes  <ahughes@redhat.com>
 
 	* patches/openjdk/6928623-verbose-langtools.patch:

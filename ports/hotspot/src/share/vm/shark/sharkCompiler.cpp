@@ -71,8 +71,8 @@ SharkCompiler::SharkCompiler()
   args.push_back(""); // program name
   args.push_back(cpu.c_str());
 
+  std::string mattr("-mattr=");
   if(gotCpuFeatures){
-    std::string mattr("-mattr=");
     for(StringMap<bool>::iterator I = Features.begin(),
       E = Features.end(); I != E; ++I){
       if(I->second){
@@ -137,7 +137,7 @@ void SharkCompiler::compile_method(ciEnv*    env,
     flow = target->get_flow_analysis();
   else
     flow = target->get_osr_flow_analysis(entry_bci);
-  if (env->failing())
+  if (flow->failing())
     return;
   if (SharkPrintTypeflowOf != NULL) {
     if (!fnmatch(SharkPrintTypeflowOf, name, 0))
@@ -259,7 +259,7 @@ void SharkCompiler::generate_native_code(SharkEntry* entry,
         llvm::SetCurrentDebugType("");
         llvm::DebugFlag = false;
       }
-#endif
+#endif // !NDEBUG
 #else
       // NB you need to patch LLVM with http://tinyurl.com/yf3baln for this
       std::vector<const char*> args;

@@ -56,20 +56,19 @@ BUILD_DEBUG_JRE_ARCH_DIR = $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/$(INSTA
 
 # Source directories
 
-SHARE = openjdk/jdk/src/share/classes
-SOLARIS = openjdk/jdk/src/solaris/classes
-LANGTOOLS = openjdk/langtools/src/share/classes
-JAXP = openjdk/jaxp/src/share/classes
-CORBA = openjdk/corba/src/share/classes
+SHARE = openjdk-ecj/jdk/src/share/classes
+SOLARIS = openjdk-ecj/jdk/src/solaris/classes
+LANGTOOLS = openjdk-ecj/langtools/src/share/classes
+CORBA = openjdk-ecj/corba/src/share/classes
 
 # FIXME (netx): NetX source directories go here
 
 OPENJDK_SOURCEPATH_DIRS = \
         $(SHARE):$(SOLARIS):$(LANGTOOLS):$(CORBA)
 
-ABS_SOURCE_DIRS = $(abs_top_builddir)/generated:$(abs_top_builddir)/rt:$(abs_top_srcdir)/rt:$(LIVECONNECT_SRCS)
+ABS_SOURCE_DIRS = $(abs_top_builddir)/generated:$(abs_top_srcdir)/rt:$(LIVECONNECT_SRCS)
 
-# Sources copied from OpenJDK.
+# Sources used from OpenJDK.
 ICEDTEA_BOOTSTRAP_DIRS = \
 	$(SHARE)/com/sun/jdi \
 	$(SHARE)/com/sun/jmx/snmp/agent \
@@ -90,11 +89,10 @@ ICEDTEA_BOOTSTRAP_DIRS = \
 	$(LANGTOOLS)/com/sun/mirror \
 	$(LANGTOOLS)/com/sun/tools/apt
 
-ICEDTEA_BOOTSTRAP_CLASSES = \
-	$(SHARE)/java/nio/StringCharBuffer.java \
-	$(SHARE)/sun/misc/Unsafe.java
-
 # FIXME (javac): Settings for javac go here
+
+# Flags
+IT_CFLAGS=$(CFLAGS) $(ARCHFLAG)
 
 # Conditional defintions
 
@@ -177,9 +175,6 @@ PULSE_JAVA_TARGET = stamps/pulse-java.stamp
 PULSE_JAVA_CLEAN_TARGET = clean-pulse-java
 endif
 
-# FIXME (HotSpot): no longer needed
-HOTSPOT_MAKE_DIR = make
-
 # FIXME: This should not depend on bootstrapping
 # but on whether MEMORY_LIMIT is accepted
 # as an argument to javac
@@ -193,7 +188,6 @@ if WITH_CACAO
   ICEDTEA_BUILD_TARGET=j2se_only
   ICEDTEA_DEBUG_BUILD_TARGET=j2se_fastdebug_only
 else
-  ICEDTEA_BUILD_TARGET=
   ICEDTEA_DEBUG_BUILD_TARGET=debug_build
 endif
 
@@ -213,6 +207,11 @@ endif
 # Target to ensure a patched OpenJDK tree containing Zero & Shark
 # and any overlays is available in $(abs_top_builddir)/openjdk
 OPENJDK_TREE = stamps/overlay.stamp
+
+# Target to ensure a patched OpenJDK bootstrap tree containing
+# Zero & Shark, any other overlays and the bootstrapping patches
+# is available in $(abs_top_builddir)/openjdk-ecj
+OPENJDK_ECJ_TREE = stamps/patch-ecj.stamp
 
 # Sources list
 
@@ -339,6 +338,8 @@ ICEDTEA_PATCHES += \
 endif
 
 if ENABLE_XRENDER
+# match against $(abs_top_srcdir) and then remove it again,
+# because stamps/patch.stamp target will also add it
 XRENDER_PATCHES = patches/xrender/icedtea-???.patch
 XRENDER_PATCH_FILES = $(sort $(wildcard $(abs_top_srcdir)/$(XRENDER_PATCHES)))
 ICEDTEA_PATCHES += $(sort $(subst $(abs_top_srcdir)/,,$(XRENDER_PATCH_FILES)))
@@ -373,6 +374,8 @@ if DTDTYPE_QNAME
 ICEDTEA_ECJ_PATCHES += \
 	patches/ecj/icedtea-jaxws-getdtdtype.patch
 endif
+
+ICEDTEA_ECJ_PATCHES += $(DISTRIBUTION_ECJ_PATCHES)
 
 # OpenJDK build environment.
 if ZERO_BUILD
@@ -424,7 +427,7 @@ ICEDTEA_ENV = \
 	ARCH_DATA_MODEL="$(ZERO_BITSPERWORD)" \
 	ZERO_ENDIANNESS="$(ZERO_ENDIANNESS)" \
 	ZERO_ARCHDEF="$(ZERO_ARCHDEF)" \
-	ZERO_ARCHFLAG="$(ZERO_ARCHFLAG)" \
+	ZERO_ARCHFLAG="$(ARCHFLAG)" \
 	LIBFFI_CFLAGS="$(LIBFFI_CFLAGS)" \
 	LIBFFI_LIBS="$(LIBFFI_LIBS)" \
 	LLVM_CFLAGS="$(LLVM_CFLAGS)" \
@@ -514,7 +517,7 @@ ICEDTEA_ENV_ECJ = \
 	ARCH_DATA_MODEL="$(ZERO_BITSPERWORD)" \
 	ZERO_ENDIANNESS="$(ZERO_ENDIANNESS)" \
 	ZERO_ARCHDEF="$(ZERO_ARCHDEF)" \
-	ZERO_ARCHFLAG="$(ZERO_ARCHFLAG)" \
+	ZERO_ARCHFLAG="$(ARCHFLAG)" \
 	LIBFFI_CFLAGS="$(LIBFFI_CFLAGS)" \
 	LIBFFI_LIBS="$(LIBFFI_LIBS)" \
 	LLVM_CFLAGS="$(LLVM_CFLAGS)" \
@@ -974,7 +977,7 @@ stamps/ports.stamp: stamps/replace-hotspot.stamp
 		      $(abs_top_srcdir)/ports/hotspot/tools \
 		      $(abs_top_srcdir)/ports/hotspot/src/*cpu/* \
 		      $(abs_top_srcdir)/ports/hotspot/src/share/vm/*; do \
-	  link=$$(dirname $$target | sed 's/^.*ports/openjdk/'|sed "s#hotspot/build#hotspot/$(HOTSPOT_MAKE_DIR)#"); \
+	  link=$$(dirname $$target | sed 's/^.*ports/openjdk/'); \
 	  cp -rv $$target $$link; \
 	done
 	if ! test "x$(WITH_CACAO)" = "xno" ; then \
@@ -1213,8 +1216,8 @@ clean-patch-ecj:
 
 stamps/native-ecj.stamp: 
 	mkdir -p stamps ; \
-	if test "x${GCJ}" != "xno"; then \
-	  ${GCJ} ${CFLAGS} -Wl,-Bsymbolic -findirect-dispatch -o native-ecj \
+	if test "x$(GCJ)" != "xno"; then \
+	  $(GCJ) $(IT_CFLAGS) -Wl,-Bsymbolic -findirect-dispatch -o native-ecj \
 	    --main=org.eclipse.jdt.internal.compiler.batch.Main ${ECJ_JAR} ; \
 	fi ; \
 	touch stamps/native-ecj.stamp
@@ -1541,7 +1544,7 @@ stamps/icedtea-debug-against-icedtea.stamp: stamps/bootstrap-directory-symlink.s
 # ===================
 
 stamps/icedtea-ecj.stamp: stamps/bootstrap-directory-symlink-ecj.stamp \
-	stamps/plugs.stamp stamps/patch-ecj.stamp stamps/cacao.stamp \
+	stamps/plugs.stamp $(OPENJDK_ECJ_TREE) stamps/cacao.stamp \
 	stamps/rewrite-rhino.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV_ECJ) \
@@ -1553,21 +1556,25 @@ stamps/icedtea-ecj.stamp: stamps/bootstrap-directory-symlink-ecj.stamp \
 	touch stamps/icedtea-ecj.stamp
 
 hotspot:
-	rm -f stamps/bootstrap-directory-symlink-ecj.stamp
+if WITH_OPENJDK
+	rm -f stamps/icedtea.stamp
+	rm -f stamps/icedtea-against-icedtea.stamp
+	$(ARCH_PREFIX) $(MAKE) ICEDTEA_BUILD_TARGET=hotspot icedtea-against-icedtea
+	mkdir -p \
+	   $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/server
+	cp $(BUILD_OUTPUT_DIR)/$(SERVER_DIR)/libjvm.so \
+	   $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/server
+	@echo "Hotspot is served:" $(BUILD_OUTPUT_DIR)/j2sdk-image
+else
 	rm -f stamps/icedtea-ecj.stamp
 	rm -f stamps/icedtea-against-ecj.stamp
-	$(ARCH_PREFIX) $(MAKE) hotspot-helper
+	$(ARCH_PREFIX) $(MAKE) ICEDTEA_BUILD_TARGET=hotspot icedtea-against-ecj
 	mkdir -p \
 	   $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/server
 	cp $(ECJ_BUILD_OUTPUT_DIR)/$(SERVER_DIR)/libjvm.so \
 	   $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/server
 	@echo "Hotspot is served:" $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image
-
-hotspot-helper: stamps/bootstrap-directory-symlink-ecj.stamp \
-	stamps/plugs.stamp stamps/patch-ecj.stamp
-	$(ARCH_PREFIX) $(MAKE) \
-	  $(ICEDTEA_ENV_ECJ) \
-	  -C openjdk-ecj/ hotspot
+endif
 
 clean-icedtea-ecj: stamps/extract-ecj.stamp
 	rm -f stamps/icedtea-ecj.stamp
@@ -1703,7 +1710,7 @@ extra-lib/about.jar: stamps/extra-class-files.stamp
 
 if ENABLE_PULSE_JAVA
 $(PULSE_JAVA_NATIVE_BUILDDIR)/%.o: $(PULSE_JAVA_NATIVE_SRCDIR)/%.c stamps/pulse-java-headers.stamp
-	$(CC) $(CFLAGS) -fPIC -I$(ICEDTEA_BOOT_DIR)/include/linux -I$(ICEDTEA_BOOT_DIR)/include \
+	$(CC) $(IT_CFLAGS) -fPIC -I$(ICEDTEA_BOOT_DIR)/include/linux -I$(ICEDTEA_BOOT_DIR)/include \
 	 -I$(PULSE_JAVA_NATIVE_BUILDDIR) -o $@ -c $<
 
 $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so: $(PULSE_JAVA_NATIVE_OBJECTS)
@@ -2115,7 +2122,7 @@ jtregcheck: jtreg check-hotspot check-langtools check-jdk
 # Support classes for non-OpenJDK bootstraps
 
 # rt.jar additional class files.
-rt-source-files.txt: $(OPENJDK_TREE)
+rt-source-files.txt: $(OPENJDK_ECJ_TREE)
 	find $(abs_top_srcdir)/rt $(abs_top_builddir)/rt $(LIVECONNECT_SRCS) -name '*.java' \
 	  | sort -u > $@
 	for dir in $(ICEDTEA_BOOTSTRAP_DIRS) ; \
