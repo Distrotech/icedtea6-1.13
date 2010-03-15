@@ -1,3 +1,50 @@
+2010-03-15  Andrew John Hughes  <ahughes@redhat.com>
+
+	NetX/plugin build sync (2/3):
+	Have the OpenJDK build extract the
+	built plugin and NetX code as imports,
+	not binary plugs.  File patches that
+	extend OpenJDK (NetX, plugin, Zero/Shark)
+	under a new subdirectory, extensions.
+	* patches/icedtea-liveconnect.patch:
+	Moved to extensions subdirectory and
+	recreated after application of netx.patch.
+	* patches/icedtea-plugin.patch:
+	Removed, unused.
+	* patches/icedtea-webstart-umask.patch,
+	* patches/icedtea-webstart.patch:
+	Moved to extensions subdirectory.
+	* Makefile.am:
+	(ICEDTEANPPLUGIN_TARGET): Add liveconnect-dist.stamp.
+	(ICEDTEAPLUGIN_TARGET): Likewise.
+	(PLUGIN_PATCH): Removed.
+	(ICEDTEA_PATCHES): Add conditional plugin patches in
+	same manner as all other conditional patches.  Fix
+	paths of NetX patches and add new netx-dist patch.
+	Add liveconnect-dist.patch.
+	(ICEDTEA_ENV): Add ALT_NETX_DIST and ALT_LIVECONNECT_DIST
+	to specify locations of NetX and plugin jar files.
+	(ICEDTEA_ECJ_ENV): Likewise.
+	(stamps/patch.stamp): Remove copying of plugin source files.
+	(stamps/icedtea.stamp): Depend on netx-dist.stamp.
+	(stamps/icedtea-debug.stamp): Likewise.
+	(stamps/icedtea-ecj.stamp): Depend on netx-dist.stamp and
+	plugin.stamp.
+	(stamps/plugin-tests.stamp): Depend on stamps/plugin.stamp,
+	not rt-closed.jar.  Surround by ENABLE_PLUGIN rather than
+	using a (now broken) test on lib/rt/netscape.
+	* patches/extensions/liveconnect-dist.patch:
+	Make the OpenJDK build import the plugin code in the same
+	manner as langtools, CORBA, JAXP and JAXWS.
+	* patches/extensions/liveconnect.patch:
+	Was patches/icedtea-liveconnect.patch.
+	* patches/extensions/netx-dist.patch:
+	Same as liveconnect-dist, but for NetX.
+	* patches/extensions/netx-umask.patch:
+	Renamed from patches/icedtea-webstart-umask.patch.
+	* patches/extensions/netx.patch:
+	Renamed from patches/icedtea-webstart.patch.
+
 2010-03-13  Deepak Bhole <dbhole@redhat.com>
 
 	* plugin/icedteanp/java/sun/applet/PluginAppletViewer.java

@@ -135,8 +135,8 @@ endif
 # FIXME (plugin): NPPLUGIN_DIR becomes PLUGIN_DIR
 if ENABLE_NPPLUGIN
 ICEDTEANPPLUGIN_CLEAN = clean-IcedTeaNPPlugin
-ICEDTEANPPLUGIN_TARGET = $(NPPLUGIN_DIR)/IcedTeaNPPlugin.so
-PLUGIN_PATCH = patches/icedtea-liveconnect.patch
+ICEDTEANPPLUGIN_TARGET = $(NPPLUGIN_DIR)/IcedTeaNPPlugin.so \
+	stamps/liveconnect-dist.stamp
 LIVECONNECT_DIR = -C liveconnect netscape -C liveconnect sun/applet
 NPPLUGIN_DIR=$(abs_top_builddir)/plugin/icedteanp
 NPPLUGIN_SRCDIR=$(abs_top_srcdir)/plugin/icedteanp
@@ -144,15 +144,13 @@ LIVECONNECT_SRCS = $(NPPLUGIN_SRCDIR)/java
 else
 if ENABLE_PLUGIN
 ICEDTEAPLUGIN_CLEAN = clean-IcedTeaPlugin
-ICEDTEAPLUGIN_TARGET = IcedTeaPlugin.so
-PLUGIN_PATCH = patches/icedtea-liveconnect.patch
+ICEDTEAPLUGIN_TARGET = IcedTeaPlugin.so stamps/liveconnect-dist.stamp
 LIVECONNECT_DIR = -C liveconnect netscape -C liveconnect sun/applet
 NPPLUGIN_DIR = 
 LIVECONNECT_SRCS = $(abs_top_srcdir)/plugin/icedtea
 else
 ICEDTEAPLUGIN_CLEAN =
 ICEDTEAPLUGIN_TARGET =
-PLUGIN_PATCH = 
 LIVECONNECT_DIR =
 NPPLUGIN_DIR =
 LIVECONNECT_SRCS =
@@ -246,9 +244,6 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-copy-plugs.patch \
 	patches/icedtea-text-relocations.patch \
 	patches/icedtea-ssl.patch \
-	$(PLUGIN_PATCH) \
-	patches/icedtea-webstart.patch \
-	patches/icedtea-webstart-umask.patch \
 	patches/icedtea-rmi_amd64.patch \
 	patches/icedtea-tools.patch \
 	patches/icedtea-use-system-tzdata.patch \
@@ -317,11 +312,20 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-linux-separate-debuginfo.patch \
 	patches/icedtea-parisc.patch \
 	patches/icedtea-sh4-support.patch \
-	patches/libpng.patch
+	patches/libpng.patch \
+	patches/extensions/netx.patch \
+	patches/extensions/netx-dist.patch \
+	patches/extensions/netx-umask.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
 	patches/icedtea-rhino.patch
+endif
+
+if ENABLE_PLUGIN
+ICEDTEA_PATCHES += \
+	patches/extensions/liveconnect.patch \
+	patches/extensions/liveconnect-dist.patch
 endif
 
 if BUILD_CACAO
@@ -334,6 +338,7 @@ if ENABLE_NIO2
 ICEDTEA_PATCHES += patches/cacao/nio2.patch
 endif
 endif
+
 if WITH_CACAO
 ICEDTEA_PATCHES += \
 	patches/icedtea-cacao-ignore-jdi-tests.patch \
@@ -466,7 +471,9 @@ ICEDTEA_ENV = \
 	DEBUG_CLASSFILES="true" \
 	DEBUG_BINARIES="true" \
 	ALT_DROPS_DIR="$(abs_top_builddir)/drops" \
-	VERBOSE="$(VERBOSE)"
+	VERBOSE="$(VERBOSE)" \
+	ALT_NETX_DIST="$(abs_top_builddir)/netx.build" \
+	ALT_LIVECONNECT_DIST="$(abs_top_builddir)/liveconnect"
 
 if WITH_CACAO
 ICEDTEA_ENV += \
@@ -561,7 +568,9 @@ ICEDTEA_ENV_ECJ = \
 	DISABLE_NIMBUS="true" \
 	NO_DOCS="true" \
 	ALT_DROPS_DIR="$(abs_top_builddir)/drops" \
-	VERBOSE="$(VERBOSE)"
+	VERBOSE="$(VERBOSE)" \
+	ALT_NETX_DIST="$(abs_top_builddir)/netx.build" \
+	ALT_LIVECONNECT_DIST="$(abs_top_builddir)/liveconnect"
 
 if WITH_CACAO
 ICEDTEA_ENV_ECJ += \
@@ -1114,15 +1123,6 @@ if HAS_PKGVERSION
 	    >>openjdk/jdk/make/common/shared/Defs.gmk ;
 endif
 
-#FIXME (plugin): Don't do this copying
-if ENABLE_NPPLUGIN
-	cp -a $(abs_top_srcdir)/plugin/icedteanp/java/sun/applet/*java openjdk/jdk/src/share/classes/sun/applet/
-else
-if ENABLE_PLUGIN
-	cp -a $(abs_top_srcdir)/plugin/icedtea/sun/applet/*java openjdk/jdk/src/share/classes/sun/applet/
-endif
-endif
-
 clean-patch:
 	rm -f stamps/patch.stamp
 	all_patches_ok=yes; \
@@ -1333,7 +1333,7 @@ clean-bootstrap-directory-symlink:
 # If you change anything here in the icedtea target, please make sure
 # you change it in the icedtea-debug target as well.
 stamps/icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
-	stamps/plugs.stamp $(OPENJDK_TREE) stamps/plugin.stamp \
+	stamps/netx-dist.stamp stamps/plugs.stamp $(OPENJDK_TREE) stamps/plugin.stamp \
 	extra-lib/about.jar stamps/cacao.stamp \
 	stamps/visualvm.stamp $(PULSE_JAVA_TARGET) stamps/rewrite-rhino.stamp
 	$(ARCH_PREFIX) $(MAKE) \
@@ -1432,7 +1432,7 @@ endif
 	touch stamps/icedtea.stamp
 
 stamps/icedtea-debug.stamp: stamps/bootstrap-directory-symlink.stamp \
-	stamps/plugs.stamp $(OPENJDK_TREE) stamps/plugin.stamp \
+	stamps/netx-dist.stamp stamps/plugs.stamp $(OPENJDK_TREE) stamps/plugin.stamp \
 	extra-lib/about.jar stamps/cacao.stamp \
 	stamps/visualvm.stamp $(PULSE_JAVA_TARGET) stamps/rewrite-rhino.stamp
 	$(ARCH_PREFIX) $(MAKE) \
@@ -1555,8 +1555,8 @@ stamps/icedtea-debug-against-icedtea.stamp: stamps/bootstrap-directory-symlink.s
 # ===================
 
 stamps/icedtea-ecj.stamp: stamps/bootstrap-directory-symlink-ecj.stamp \
-	stamps/plugs.stamp $(OPENJDK_ECJ_TREE) stamps/cacao.stamp \
-	stamps/rewrite-rhino.stamp
+	stamps/netx-dist.stamp stamps/plugs.stamp $(OPENJDK_ECJ_TREE) stamps/cacao.stamp \
+	stamps/rewrite-rhino.stamp stamps/plugin.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV_ECJ) \
 	  -C openjdk-ecj/ \
@@ -2090,22 +2090,21 @@ endif
 
 # plugin tests
 
+if ENABLE_PLUGIN
 stamps/plugin-tests.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) $(PLUGIN_TEST_SRCS) \
- bootstrap/jdk1.7.0/jre/lib/rt-closed.jar
+ stamps/plugin.stamp
 	mkdir -p plugin/tests/LiveConnect
-	if test -d lib/rt/netscape ; then \
-	  set -e ; \
-	  $(ICEDTEA_BOOT_DIR)/bin/javac $(MEMORY_LIMIT) -g \
-	   -d plugin/tests/LiveConnect \
-	    -classpath bootstrap/jdk1.7.0/jre/lib/rt-closed.jar \
-	    -source 1.5 $(PLUGIN_TEST_SRCS) ; \
-	  $(ICEDTEA_BOOT_DIR)/bin/jar cf plugin/tests/LiveConnect/PluginTest.jar \
-	    plugin/tests/LiveConnect/*.class ; \
-	  cp -a $(abs_top_srcdir)/plugin/tests/LiveConnect/*.{js,html} plugin/tests/LiveConnect ; \
-	  echo "Done. Now launch \"firefox file://`pwd`/index.html\"" ; \
-	fi
+	$(ICEDTEA_BOOT_DIR)/bin/javac $(MEMORY_LIMIT) -g \
+	 -d plugin/tests/LiveConnect \
+	 -classpath liveconnect/lib/classes.jar \
+	 -source 1.5 $(PLUGIN_TEST_SRCS) ;
+	$(ICEDTEA_BOOT_DIR)/bin/jar cf plugin/tests/LiveConnect/PluginTest.jar \
+	  plugin/tests/LiveConnect/*.class ;
+	cp -a $(abs_top_srcdir)/plugin/tests/LiveConnect/*.{js,html} plugin/tests/LiveConnect ;
+	echo "Done. Now launch \"firefox file://`pwd`/index.html\"" ; \
 	mkdir -p stamps
 	touch stamps/plugin-tests.stamp
+endif
 
 # jtreg
 
