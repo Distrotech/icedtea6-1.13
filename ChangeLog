@@ -1,3 +1,58 @@
+2010-03-16  Andrew John Hughes  <ahughes@redhat.com>
+
+	NetX/plugin build sync (3/3):
+	* patches/icedtea-copy-plugs.patch:
+	Remove plug-related segments and move
+	remainder to patches/ecj/getannotation-cast.patch
+	* rt/com/sun/jmx/snmp/SnmpDataTypeEnums.java,
+	* rt/com/sun/jmx/snmp/SnmpDefinitions.java,
+	* rt/com/sun/jmx/snmp/SnmpOid.java,
+	* rt/com/sun/jmx/snmp/SnmpOidRecord.java,
+	* rt/com/sun/jmx/snmp/SnmpOidTable.java,
+	* rt/com/sun/jmx/snmp/SnmpOidTableSupport.java,
+	* rt/com/sun/jmx/snmp/SnmpParameters.java,
+	* rt/com/sun/jmx/snmp/SnmpPduPacket.java,
+	* rt/com/sun/jmx/snmp/SnmpPeer.java,
+	* rt/com/sun/jmx/snmp/SnmpSession.java,
+	* rt/com/sun/jmx/snmp/SnmpTimeticks.java,
+	* rt/com/sun/jmx/snmp/SnmpVarBind.java,
+	* rt/com/sun/jmx/snmp/SnmpVarBindList.java,
+	* rt/com/sun/jmx/snmp/daemon/SnmpInformRequest.java,
+	* rt/com/sun/jmx/snmp/daemon/SnmpSession.java,
+	* rt/com/sun/media/sound/AbstractPlayer.java,
+	* rt/com/sun/media/sound/HeadspaceMixer.java,
+	* rt/com/sun/media/sound/HeadspaceSoundbank.java,
+	* rt/com/sun/media/sound/MixerClip.java,
+	* rt/com/sun/media/sound/MixerMidiChannel.java,
+	* rt/com/sun/media/sound/MixerSequencer.java,
+	* rt/com/sun/media/sound/MixerSourceLine.java,
+	* rt/com/sun/media/sound/MixerSynth.java,
+	* rt/com/sun/media/sound/MixerThread.java,
+	* rt/com/sun/media/sound/SimpleInputDevice.java,
+	* rt/com/sun/media/sound/SimpleInputDeviceProvider.java:
+	Remove old plug stubs.
+	* Makefile.am:
+	(ICEDTEA_PLUGS): Removed.
+	(ICEDTEA_BOOTSTRAP_DIRS): Drop com/sun/jmx/snmp/agent.
+	(ICEDTEA_BOOTSTRAP_CLASSES): Add javax/management/StandardMBean.java.
+	(ICEDTEA_PATCHES): Remove copy-plugs.patch.
+	(ICEDTEA_ECJ_PATCHES): Add getannotation-cast.patch.
+	(ICEDTEA_ENV): Drop IMPORT_BINARY_PLUGS.
+	(ICEDTEA_ENV_ECJ): Likewise.
+	(icedtea.stamp): Don't depend on plugs.stamp.
+	(icedtea-debug.stamp): Likewise.
+	(icedtea-ecj.stamp): Likewise.
+	(extra-class-files.stamp): Depend on netx.stamp and
+	use netx.build rather than plugs.
+	(rt-source-files.txt): Don't search $(abs_top_srcdir)/rt.
+	(clean-rt): Revert to system rt.jar.
+	(plugs.stamp): Removed.
+	(clean-plugs): Removed.
+	* patches/ecj/getannotation-cast.patch:
+	Remaining part of copy-plugs.patch which
+	provides a cast for getAnnotation for older versions
+	of GNU Classpath.
+
 2010-03-16  Deepak Bhole <dbhole@redhat.com>
 
 	* plugin/icedteanp/IcedTeaPluginRequestProcessor.cc

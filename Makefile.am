@@ -42,8 +42,6 @@ ICEDTEA_BOOT_DIR= \
 	$(abs_top_builddir)/bootstrap/jdk1.6.0
 ICEDTEA_RT = \
 	$(ICEDTEA_BOOT_DIR)/jre/lib/rt.jar
-ICEDTEA_PLUGS = \
-	$(abs_top_builddir)/bootstrap/jdk1.7.0/jre/lib/rt-closed.jar
 ICEDTEA_ENDORSED_DIR = \
 	$(ICEDTEA_BOOT_DIR)/lib/endorsed
 ICEDTEA_BUILD_DIR_ECJ = \
@@ -73,7 +71,6 @@ SOURCEPATH_DIRS = $(abs_top_builddir)/generated:$(OPENJDK_SOURCEPATH_DIRS)
 # Sources used from OpenJDK.
 ICEDTEA_BOOTSTRAP_DIRS = \
 	$(SHARE)/com/sun/jdi \
-	$(SHARE)/com/sun/jmx/snmp/agent \
 	$(SHARE)/com/sun/net/httpserver \
 	$(SHARE)/com/sun/tools/jdi \
 	$(SHARE)/java/io \
@@ -91,8 +88,11 @@ ICEDTEA_BOOTSTRAP_DIRS = \
 	$(LANGTOOLS)/com/sun/mirror \
 	$(LANGTOOLS)/com/sun/tools/apt
 
+# PR42003 - javax.swing.plaf.basic.BasicDirectoryModel
+# PR43389 - javax.management.StandardMBean
 ICEDTEA_BOOTSTRAP_CLASSES = \
-	$(SHARE)/javax/swing/plaf/basic/BasicDirectoryModel.java
+	$(SHARE)/javax/swing/plaf/basic/BasicDirectoryModel.java \
+	$(SHARE)/javax/management/StandardMBean.java
 
 # FIXME (javac): Settings for javac go here
 
@@ -241,7 +241,6 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-lucene-crash.patch \
 	patches/icedtea-version.patch \
 	patches/icedtea-version-hotspot.patch \
-	patches/icedtea-copy-plugs.patch \
 	patches/icedtea-text-relocations.patch \
 	patches/icedtea-ssl.patch \
 	patches/icedtea-rmi_amd64.patch \
@@ -394,7 +393,8 @@ ICEDTEA_ECJ_PATCHES = patches/ecj/icedtea.patch \
 	patches/ecj/icedtea-spp.patch \
 	patches/ecj/icedtea-jopt.patch \
 	patches/ecj/icedtea-jaxp-dependency.patch \
-	patches/ecj/bootver.patch
+	patches/ecj/bootver.patch \
+	patches/ecj/getannotation-cast.patch
 
 if DTDTYPE_QNAME
 ICEDTEA_ECJ_PATCHES += \
@@ -429,7 +429,6 @@ endif
 PLUGIN_VERSION = $(ICEDTEA_NAME) $(PACKAGE_VERSION)$(ICEDTEA_REV)$(ICEDTEA_PKG)
 
 ICEDTEA_ENV = \
-	IMPORT_BINARY_PLUGS=true \
 	ALT_JDK_IMPORT_PATH="$(ICEDTEA_BOOT_DIR)" \
 	ANT="$(ANT)" \
         BUILD_NUMBER="$(OPENJDK_VERSION)" \
@@ -515,7 +514,6 @@ endif
 # OpenJDK ecj build environment.
 # FIXME (bootstrap): Remove duplication
 ICEDTEA_ENV_ECJ = \
-	IMPORT_BINARY_PLUGS=true \
 	ALT_JDK_IMPORT_PATH="$(ICEDTEA_BOOT_DIR)" \
 	ANT="$(ANT)" \
 	BUILD_NUMBER="$(OPENJDK_VERSION)" \
@@ -1333,7 +1331,7 @@ clean-bootstrap-directory-symlink:
 # If you change anything here in the icedtea target, please make sure
 # you change it in the icedtea-debug target as well.
 stamps/icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
-	stamps/netx-dist.stamp stamps/plugs.stamp $(OPENJDK_TREE) stamps/plugin.stamp \
+	stamps/netx-dist.stamp $(OPENJDK_TREE) stamps/plugin.stamp \
 	extra-lib/about.jar stamps/cacao.stamp \
 	stamps/visualvm.stamp $(PULSE_JAVA_TARGET) stamps/rewrite-rhino.stamp
 	$(ARCH_PREFIX) $(MAKE) \
@@ -1432,7 +1430,7 @@ endif
 	touch stamps/icedtea.stamp
 
 stamps/icedtea-debug.stamp: stamps/bootstrap-directory-symlink.stamp \
-	stamps/netx-dist.stamp stamps/plugs.stamp $(OPENJDK_TREE) stamps/plugin.stamp \
+	stamps/netx-dist.stamp $(OPENJDK_TREE) stamps/plugin.stamp \
 	extra-lib/about.jar stamps/cacao.stamp \
 	stamps/visualvm.stamp $(PULSE_JAVA_TARGET) stamps/rewrite-rhino.stamp
 	$(ARCH_PREFIX) $(MAKE) \
@@ -1555,7 +1553,7 @@ stamps/icedtea-debug-against-icedtea.stamp: stamps/bootstrap-directory-symlink.s
 # ===================
 
 stamps/icedtea-ecj.stamp: stamps/bootstrap-directory-symlink-ecj.stamp \
-	stamps/netx-dist.stamp stamps/plugs.stamp $(OPENJDK_ECJ_TREE) stamps/cacao.stamp \
+	stamps/netx-dist.stamp $(OPENJDK_ECJ_TREE) stamps/cacao.stamp \
 	stamps/rewrite-rhino.stamp stamps/plugin.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV_ECJ) \
@@ -1757,11 +1755,11 @@ extra-source-files.txt:
 	find $(abs_top_srcdir)/extra -name '*.java' | sort > $@
 
 stamps/extra-class-files.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) \
-  extra-source-files.txt stamps/plugs.stamp
+  extra-source-files.txt stamps/netx.stamp
 	mkdir -p extra-lib
 	$(ICEDTEA_BOOT_DIR)/bin/javac $(MEMORY_LIMIT) -g -d extra-lib \
           -source 1.5 \
-          -sourcepath extra -cp $(ICEDTEA_RT):$(ICEDTEA_PLUGS) \
+          -sourcepath extra -cp netx.build:$(ICEDTEA_RT) \
           -bootclasspath \'\' @extra-source-files.txt
 	cp -r $(NETX_EXTRA_DIR) extra-lib/net/sourceforge/jnlp/about
 	mkdir -p stamps
@@ -2199,8 +2197,6 @@ jtregcheck: jtreg check-hotspot check-langtools check-jdk
 
 # rt.jar additional class files.
 rt-source-files.txt: $(OPENJDK_ECJ_TREE)
-	find $(abs_top_srcdir)/rt -name '*.java' \
-	  | sort -u > $@
 	for dir in $(ICEDTEA_BOOTSTRAP_DIRS) ; \
 	do \
 	  $(FIND) $(abs_top_builddir)/$$dir -name '*.java' >> $@; \
@@ -2225,6 +2221,7 @@ clean-rt:
 	rm -f stamps/rt-class-files.stamp
 	rm -f stamps/rt.stamp
 	rm -f rt-source-files.txt
+	cp $(SYSTEM_JDK_DIR)/jre/lib/rt.jar $(ICEDTEA_RT)
 
 stamps/rt.stamp: stamps/rt-class-files.stamp stamps/bootstrap-directory-ecj.stamp \
  stamps/liveconnect.stamp
@@ -2254,20 +2251,6 @@ clean-tools-jar:
 	  rm -f $(abs_top_builddir)/bootstrap/ecj/lib/tools.jar; \
 	fi
 	rm -f stamps/tools.stamp
-
-# rt-closed.jar
-stamps/plugs.stamp: stamps/rt.stamp stamps/tools.stamp stamps/netx.stamp \
- stamps/liveconnect.stamp
-	$(ICEDTEA_BOOT_DIR)/bin/jar cf $(ICEDTEA_PLUGS) \
-	  -C lib/rt com/sun/jmx/snmp $(LIVECONNECT_DIR) \
-	  -C netx.build net -C netx.build javax/jnlp ;
-	mkdir -p stamps
-	touch stamps/plugs.stamp
-
-clean-plugs: clean-plugs clean-copy clean-rt
-	rm -f $(ICEDTEA_PLUGS)
-	cp $(SYSTEM_JDK_DIR)/jre/lib/rt.jar $(ICEDTEA_RT)
-	rm -f stamps/plugs.stamp
 
 # Target Aliases
 # ===============
