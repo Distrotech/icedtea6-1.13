@@ -1,6 +1,6 @@
 diff -Nru openjdk.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthComboBoxUI.java openjdk/jdk/src/share/classes/javax/swing/plaf/synth/SynthComboBoxUI.java
---- openjdk.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthComboBoxUI.java	2009-12-15 00:04:14.000000000 +0000
-+++ openjdk/jdk/src/share/classes/javax/swing/plaf/synth/SynthComboBoxUI.java	2009-12-15 00:09:04.000000000 +0000
+--- openjdk-ecj.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthComboBoxUI.java	2009-12-15 00:04:14.000000000 +0000
++++ openjdk-ecj/jdk/src/share/classes/javax/swing/plaf/synth/SynthComboBoxUI.java	2009-12-15 00:09:04.000000000 +0000
 @@ -200,7 +200,6 @@
          super.uninstallListeners();
      }
@@ -122,8 +122,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthComboBo
      }
  
 diff -Nru openjdk.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthLookAndFeel.java openjdk/jdk/src/share/classes/javax/swing/plaf/synth/SynthLookAndFeel.java
---- openjdk.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthLookAndFeel.java	2009-12-09 16:38:59.000000000 +0000
-+++ openjdk/jdk/src/share/classes/javax/swing/plaf/synth/SynthLookAndFeel.java	2009-12-09 16:38:39.000000000 +0000
+--- openjdk-ecj.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthLookAndFeel.java	2009-12-09 16:38:59.000000000 +0000
++++ openjdk-ecj/jdk/src/share/classes/javax/swing/plaf/synth/SynthLookAndFeel.java	2009-12-09 16:38:39.000000000 +0000
 @@ -832,7 +832,6 @@
              tk.addPropertyChangeListener(key, this);
          }
@@ -149,8 +149,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthLookAnd
              String propertyName = evt.getPropertyName();
              Object newValue = evt.getNewValue();
 diff -Nru openjdk.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthTreeUI.java openjdk/jdk/src/share/classes/javax/swing/plaf/synth/SynthTreeUI.java
---- openjdk.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthTreeUI.java	2009-12-15 00:31:41.000000000 +0000
-+++ openjdk/jdk/src/share/classes/javax/swing/plaf/synth/SynthTreeUI.java	2009-12-15 00:32:03.000000000 +0000
+--- openjdk-ecj.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthTreeUI.java	2009-12-15 00:31:41.000000000 +0000
++++ openjdk-ecj/jdk/src/share/classes/javax/swing/plaf/synth/SynthTreeUI.java	2009-12-15 00:32:03.000000000 +0000
 @@ -154,7 +154,6 @@
          tree.addPropertyChangeListener(this);
      }
@@ -160,8 +160,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthTreeUI.
          return getContext(c, getComponentState(c));
      }
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java openjdk/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java
---- openjdk.orig/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java	2009-12-15 00:44:58.000000000 +0000
-+++ openjdk/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java	2009-12-15 00:45:15.000000000 +0000
+--- openjdk-ecj.orig/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java	2009-12-15 00:44:58.000000000 +0000
++++ openjdk-ecj/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java	2009-12-15 00:45:15.000000000 +0000
 @@ -701,7 +701,6 @@
              this.delegate = delegate;
          }
@@ -171,8 +171,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChoos
              Component c = delegate.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
  
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/provider/certpath/OCSPResponse.java openjdk/jdk/src/share/classes/sun/security/provider/certpath/OCSPResponse.java
---- openjdk.orig/jdk/src/share/classes/sun/security/provider/certpath/OCSPResponse.java	2010-01-16 03:11:22.000000000 +0000
-+++ openjdk/jdk/src/share/classes/sun/security/provider/certpath/OCSPResponse.java	2010-01-16 03:11:57.000000000 +0000
+--- openjdk-ecj.orig/jdk/src/share/classes/sun/security/provider/certpath/OCSPResponse.java	2010-01-16 03:11:22.000000000 +0000
++++ openjdk-ecj/jdk/src/share/classes/sun/security/provider/certpath/OCSPResponse.java	2010-01-16 03:11:57.000000000 +0000
 @@ -572,7 +572,7 @@
          /*
           * Return the certificate's revocation status code

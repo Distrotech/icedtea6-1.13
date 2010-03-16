@@ -382,8 +382,6 @@ ICEDTEA_PATCHES += patches/hotspot/original/icedtea-6778662-lib64.patch \
 	patches/openjdk/6822370-reentrantreadwritelock.patch
 endif
 
-ICEDTEA_PATCHES += patches/icedtea-override.patch
-
 ICEDTEA_PATCHES += $(DISTRIBUTION_PATCHES)
 
 # Bootstrapping patches
@@ -394,7 +392,8 @@ ICEDTEA_ECJ_PATCHES = patches/ecj/icedtea.patch \
 	patches/ecj/icedtea-jopt.patch \
 	patches/ecj/icedtea-jaxp-dependency.patch \
 	patches/ecj/bootver.patch \
-	patches/ecj/getannotation-cast.patch
+	patches/ecj/getannotation-cast.patch \
+	patches/ecj/override.patch
 
 if DTDTYPE_QNAME
 ICEDTEA_ECJ_PATCHES += \

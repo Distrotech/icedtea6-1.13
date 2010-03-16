@@ -1,5 +1,16 @@
 2010-03-16  Andrew John Hughes  <ahughes@redhat.com>
 
+	* patches/icedtea-override.patch:
+	Moved to ecj subdirectory.
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Remove override patch.
+	(ICEDTEA_ECJ_PATCHES): Add override patch in ecj
+	directory.
+	* patches/ecj/override.patch:
+	Apply to ecj tree only.
+
+2010-03-16  Andrew John Hughes  <ahughes@redhat.com>
+
 	NetX/plugin build sync (3/3):
 	* patches/icedtea-copy-plugs.patch:
 	Remove plug-related segments and move
