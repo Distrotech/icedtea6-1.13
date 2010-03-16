@@ -64,7 +64,7 @@ exception statement from your version. */
 #include <npruntime.h>
 #endif
 
-#include "IcedTeaNPPlugin.h"
+#include "IcedTeaPlugin.h"
 
 #define PLUGIN_DEBUG_0ARG(str) \
   do                                        \

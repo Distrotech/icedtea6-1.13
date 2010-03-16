@@ -47,7 +47,7 @@ exception statement from your version. */
 #endif
 
 #include "IcedTeaJavaRequestProcessor.h"
-#include "IcedTeaNPPlugin.h"
+#include "IcedTeaPlugin.h"
 
 /**
  * IcedTeaScriptablePluginObject, an extended NPObject that implements

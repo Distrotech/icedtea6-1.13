@@ -1,4 +1,4 @@
-/* IcedTeaNPPlugin.cc -- web browser plugin to execute Java applets
+/* IcedTeaPlugin.cc -- web browser plugin to execute Java applets
    Copyright (C) 2003, 2004, 2006, 2007  Free Software Foundation, Inc.
    Copyright (C) 2009 Red Hat
 
@@ -49,7 +49,7 @@ exception statement from your version. */
 
 // Liveconnect extension
 #include "IcedTeaScriptablePluginObject.h"
-#include "IcedTeaNPPlugin.h"
+#include "IcedTeaPlugin.h"
 
 #if MOZILLA_VERSION_COLLAPSED < 1090100
 // Documentbase retrieval includes.

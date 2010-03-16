@@ -39,7 +39,7 @@ exception statement from your version. */
 #include <typeinfo>
 
 #include "IcedTeaScriptablePluginObject.h"
-#include "IcedTeaNPPlugin.h"
+#include "IcedTeaPlugin.h"
 #include "IcedTeaPluginRequestProcessor.h"
 
 /*

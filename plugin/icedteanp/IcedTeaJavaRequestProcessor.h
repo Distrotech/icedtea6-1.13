@@ -43,7 +43,7 @@ exception statement from your version. */
 #include <stdlib.h>
 #include <vector>
 
-#include "IcedTeaNPPlugin.h"
+#include "IcedTeaPlugin.h"
 #include "IcedTeaPluginUtils.h"
 
 #define REQUESTTIMEOUT 120

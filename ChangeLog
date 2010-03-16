@@ -1,5 +1,85 @@
 2010-03-16  Andrew John Hughes  <ahughes@redhat.com>
 
+	* IcedTeaPlugin.cc,
+	* plugin/icedtea/netscape/javascript/JSException.java,
+	* plugin/icedtea/netscape/javascript/JSObject.java,
+	* plugin/icedtea/netscape/javascript/JSObjectCreatePermission.java,
+	* plugin/icedtea/netscape/javascript/JSProxy.java,
+	* plugin/icedtea/netscape/javascript/JSRunnable.java,
+	* plugin/icedtea/netscape/javascript/JSUtil.java,
+	* plugin/icedtea/sun/applet/AppletSecurityContextManager.java,
+	* plugin/icedtea/sun/applet/GetMemberPluginCallRequest.java,
+	* plugin/icedtea/sun/applet/GetWindowPluginCallRequest.java,
+	* plugin/icedtea/sun/applet/JavaConsole.java,
+	* plugin/icedtea/sun/applet/PasswordAuthenticationDialog.java,
+	* plugin/icedtea/sun/applet/PluginAppletSecurityContext.java,
+	* plugin/icedtea/sun/applet/PluginAppletViewer.java,
+	* plugin/icedtea/sun/applet/PluginCallRequest.java,
+	* plugin/icedtea/sun/applet/PluginCallRequestFactory.java,
+	* plugin/icedtea/sun/applet/PluginClassLoader.java,
+	* plugin/icedtea/sun/applet/PluginCookieInfoRequest.java,
+	* plugin/icedtea/sun/applet/PluginCookieManager.java,
+	* plugin/icedtea/sun/applet/PluginDebug.java,
+	* plugin/icedtea/sun/applet/PluginException.java,
+	* plugin/icedtea/sun/applet/PluginMain.java,
+	* plugin/icedtea/sun/applet/PluginMessageConsumer.java,
+	* plugin/icedtea/sun/applet/PluginMessageHandlerWorker.java,
+	* plugin/icedtea/sun/applet/PluginObjectStore.java,
+	* plugin/icedtea/sun/applet/PluginProxyInfoRequest.java,
+	* plugin/icedtea/sun/applet/PluginProxySelector.java,
+	* plugin/icedtea/sun/applet/PluginStreamHandler.java,
+	* plugin/icedtea/sun/applet/RequestQueue.java,
+	* plugin/icedtea/sun/applet/TestEnv.java,
+	* plugin/icedtea/sun/applet/VoidPluginCallRequest.java:
+	Remove old plugin code.
+	* Makefile.am:
+	Drop ENABLE_PLUGIN blocks.  Rename ENABLE_NPPLUGIN
+	to ENABLE_PLUGIN and IcedTeaNPPlugin to IcedTeaPlugin.
+	(LIVECONNECT_DIR): Use just names of directories.
+	(EXTRA_DIST): Drop IcedTeaPlugin.cc.
+	(.PHONY): Drop clean-plugs, ICEDTEANPPLUGIN_CLEAN.
+	(clean-patch): Drop old commands to revert plugin code
+	copying.
+	(icedtea.stamp): Remove old plugin references.  Change NPPlugin
+	references to reference Plugin.
+	(icedtea-debug.stamp): Likewise.
+	(PLUGIN_SRC): Renamed from NPPLUGIN_SRC.
+	(PLUGIN_OBJECTS): Renamed from NPPLUGIN_OBJECTS.
+	($(PLUGIN_DIR)/%.o): Change from NPPLUGIN to PLUGIN.
+	($(PLUGIN_DIR)/IcedTeaPlugin.so): Changed from
+	IcedTeaNPPlugin.
+	(clean-IcedTeaPlugin): Moved from clean-IcedTeaNPPlugin.
+	(IcedTeaPlugin.o): Removed.
+	(IcedTeaPlugin.so): Removed.
+	(clean-IcedTeaPlugin): Removed.
+	(plugin.stamp): Remove old plugin dependency.
+	(clean-plugin): Likewise.
+	(liveconnect.stamp): Use LIVECONNECT_DIR rather than
+	hardcoding directory names.
+	(rt.stamp): Drop LIVECONNECT_DIR.
+	(plugs): Drop dead alias.
+	* acinclude.m4:
+	(IT_CHECK_PLUGIN): Renamed from IT_CHECK_OLD_PLUGIN.
+	(IT_CHECK_NEW_PLUGIN): Removed.
+	(IT_CHECK_PLUGIN_DEPENDENCIES): No longer require
+	IT_CHECK_OLD_PLUGIN and IT_CHECK_NEW_PLUGIN.  Require
+	IT_CHECK_PLUGIN.  Remove enable_npplugin tests as now
+	assumed, being the only plugin.
+	(IT_CHECK_XULRUNNER_VERSION): Drop enable_npplugin test.
+	* plugin/icedteanp/IcedTeaJavaRequestProcessor.h:
+	Fix references to IcedTeaNPPlugin.h.
+	* plugin/icedteanp/IcedTeaPlugin.cc: Renamed from
+	IcedTeaNPPlugin.cc.
+	* plugin/icedteanp/IcedTeaPlugin.h: Renamed from
+	IcedTeaNPPlugin.h.
+	* plugin/icedteanp/IcedTeaPluginRequestProcessor.cc,
+	* plugin/icedteanp/IcedTeaPluginUtils.cc,
+	* plugin/icedteanp/IcedTeaPluginUtils.h,
+	* plugin/icedteanp/IcedTeaScriptablePluginObject.h:
+	Fix references to IcedTeaNPPlugin.h.
+
+2010-03-16  Andrew John Hughes  <ahughes@redhat.com>
+
 	* patches/icedtea-override.patch:
 	Moved to ecj subdirectory.
 	* Makefile.am:

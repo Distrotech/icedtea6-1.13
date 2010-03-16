@@ -131,30 +131,14 @@ endif
 
 # FIXME (HotSpot): HotSpot changeset logic goes here
 
-# FIXME (plugin): LIVECONNECT_DIR becomes sun/applet netscape
-# FIXME (plugin): NPPLUGIN_DIR becomes PLUGIN_DIR
-if ENABLE_NPPLUGIN
-ICEDTEANPPLUGIN_CLEAN = clean-IcedTeaNPPlugin
-ICEDTEANPPLUGIN_TARGET = $(NPPLUGIN_DIR)/IcedTeaNPPlugin.so \
-	stamps/liveconnect-dist.stamp
-LIVECONNECT_DIR = -C liveconnect netscape -C liveconnect sun/applet
-NPPLUGIN_DIR=$(abs_top_builddir)/plugin/icedteanp
-NPPLUGIN_SRCDIR=$(abs_top_srcdir)/plugin/icedteanp
-LIVECONNECT_SRCS = $(NPPLUGIN_SRCDIR)/java
-else
 if ENABLE_PLUGIN
 ICEDTEAPLUGIN_CLEAN = clean-IcedTeaPlugin
-ICEDTEAPLUGIN_TARGET = IcedTeaPlugin.so stamps/liveconnect-dist.stamp
-LIVECONNECT_DIR = -C liveconnect netscape -C liveconnect sun/applet
-NPPLUGIN_DIR = 
-LIVECONNECT_SRCS = $(abs_top_srcdir)/plugin/icedtea
-else
-ICEDTEAPLUGIN_CLEAN =
-ICEDTEAPLUGIN_TARGET =
-LIVECONNECT_DIR =
-NPPLUGIN_DIR =
-LIVECONNECT_SRCS =
-endif
+LIVECONNECT_DIR = netscape sun/applet
+PLUGIN_DIR=$(abs_top_builddir)/plugin/icedteanp
+PLUGIN_SRCDIR=$(abs_top_srcdir)/plugin/icedteanp
+LIVECONNECT_SRCS = $(PLUGIN_SRCDIR)/java
+ICEDTEAPLUGIN_TARGET = $(PLUGIN_DIR)/IcedTeaPlugin.so \
+	stamps/liveconnect-dist.stamp
 endif
 
 if WITH_VISUALVM
@@ -613,7 +597,6 @@ EXTRA_DIST = rt generated \
 	javaws.png javaws.desktop visualvm.desktop \
 	jconsole.desktop policytool.desktop \
 	test/jtreg \
-	IcedTeaPlugin.cc \
 	HACKING pulseaudio fsg.sh \
 	$(abs_top_srcdir)/plugin \
 	hotspot.map \
@@ -665,11 +648,10 @@ install:
 	clean-clone-ecj clean-patch-ecj clean-bootstrap-directory \
 	clean-bootstrap-directory-symlink clean-bootstrap-directory-ecj \
 	clean-bootstrap-directory-symlink-ecj icedtea icedtea-debug \
-	clean-icedtea icedtea-against-icedtea clean-icedtea-ecj clean-plugs \
+	clean-icedtea icedtea-against-icedtea clean-icedtea-ecj \
 	clean-tools-jar clean-visualvm clean-nbplatform \
-	clean-copy clean-rt $(ICEDTEAPLUGIN_CLEAN) \
-	$(ICEDTEANPPLUGIN_CLEAN) hotspot hotspot-helper clean-extra clean-jtreg \
-	clean-jtreg-reports 
+	clean-copy clean-rt $(ICEDTEAPLUGIN_CLEAN) hotspot \
+	hotspot-helper clean-extra clean-jtreg clean-jtreg-reports 
 
 env:
 	@echo 'unset JAVA_HOME'
@@ -1137,11 +1119,6 @@ clean-patch:
 	if ! test x$${all_patches_ok} = "xyes" ; then \
 	  echo "WARNING Not all patches reverted cleanly" ; \
 	fi
-	rm -rf rt/netscape
-	for file in plugin/icedtea/sun/applet/*java ; \
-	do \
-		rm -f openjdk/jdk/src/share/classes/sun/applet/`basename $file` ; \
-	done ;
 
 #FIXME (missing): versioning.stamp
 #FIXME (clean): Missing clean-versioning
@@ -1341,18 +1318,11 @@ stamps/icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
 	mkdir -p $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
 	mkdir -p $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/ext
 	mkdir -p $(BUILD_OUTPUT_DIR)/j2re-image/lib/ext
-if ENABLE_NPPLUGIN
-	cp -pPRf $(NPPLUGIN_DIR)/IcedTeaNPPlugin.so \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
-	cp -pPRf $(NPPLUGIN_DIR)/IcedTeaNPPlugin.so \
-	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
-else
 if ENABLE_PLUGIN
-	cp -pPRf IcedTeaPlugin.so \
+	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
-	cp -pPRf IcedTeaPlugin.so \
+	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
 	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
-endif
 endif
 if ENABLE_PULSE_JAVA
 	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
@@ -1440,18 +1410,11 @@ stamps/icedtea-debug.stamp: stamps/bootstrap-directory-symlink.stamp \
 	mkdir -p $(BUILD_OUTPUT_DIR)-debug/j2re-image/lib/$(INSTALL_ARCH_DIR)
 	mkdir -p $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/ext
 	mkdir -p $(BUILD_OUTPUT_DIR)-debug/j2re-image/lib/ext
-if ENABLE_NPPLUGIN
-	cp -pPRf $(NPPLUGIN_DIR)/IcedTeaNPPlugin.so \
-	  $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
-	cp -pPRf $(NPPLUGIN_DIR)/IcedTeaNPPlugin.so \
-	  $(BUILD_OUTPUT_DIR)-debug/j2re-image/lib/$(INSTALL_ARCH_DIR)
-else
 if ENABLE_PLUGIN
-	cp -pPRf IcedTeaPlugin.so \
+	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
 	  $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
-	cp -pPRf IcedTeaPlugin.so \
+	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
 	  $(BUILD_OUTPUT_DIR)-debug/j2re-image/lib/$(INSTALL_ARCH_DIR)
-endif
 endif
 if ENABLE_PULSE_JAVA
 	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
@@ -1600,23 +1563,23 @@ stamps/icedtea-against-ecj.stamp: \
 
 # Plugin
 
-if ENABLE_NPPLUGIN
-# IcedTeaNPPlugin.so.
+if ENABLE_PLUGIN
+# IcedTeaPlugin.so.
 # Separate compile and link invocations to ensure intermediate object
 # is listed before -l options.  See:
 # http://developer.mozilla.org/en/docs/XPCOM_Glue
 
-NPPLUGIN_SRC=IcedTeaNPPlugin.cc IcedTeaScriptablePluginObject.cc \
+PLUGIN_SRC=IcedTeaPlugin.cc IcedTeaScriptablePluginObject.cc \
         IcedTeaJavaRequestProcessor.cc IcedTeaPluginRequestProcessor.cc \
 		IcedTeaPluginUtils.cc
 
-NPPLUGIN_OBJECTS=IcedTeaNPPlugin.o IcedTeaScriptablePluginObject.o \
+PLUGIN_OBJECTS=IcedTeaPlugin.o IcedTeaScriptablePluginObject.o \
         IcedTeaJavaRequestProcessor.o IcedTeaPluginRequestProcessor.o \
 		IcedTeaPluginUtils.o
 
-$(NPPLUGIN_DIR)/%.o: $(NPPLUGIN_SRCDIR)/%.cc
-	mkdir -p $(NPPLUGIN_DIR) && \
-	cd $(NPPLUGIN_DIR) && \
+$(PLUGIN_DIR)/%.o: $(PLUGIN_SRCDIR)/%.cc
+	mkdir -p $(PLUGIN_DIR) && \
+	cd $(PLUGIN_DIR) && \
 	$(CXX) $(CXXFLAGS) \
 	  -DJDK_UPDATE_VERSION="\"$(JDK_UPDATE_VERSION)\"" \
 	  -DPLUGIN_VERSION="\"$(PLUGIN_VERSION)\"" \
@@ -1626,51 +1589,25 @@ $(NPPLUGIN_DIR)/%.o: $(NPPLUGIN_SRCDIR)/%.cc
 	  $(MOZILLA_CFLAGS) \
 	  -fPIC -o $@ -c $<
 
-$(NPPLUGIN_DIR)/IcedTeaNPPlugin.so: $(addprefix $(NPPLUGIN_DIR)/,$(NPPLUGIN_OBJECTS))
-	cd $(NPPLUGIN_DIR) && \
+$(PLUGIN_DIR)/IcedTeaPlugin.so: $(addprefix $(PLUGIN_DIR)/,$(PLUGIN_OBJECTS))
+	cd $(PLUGIN_DIR) && \
 	$(CXX) $(CXXFLAGS) \
-	  $(NPPLUGIN_OBJECTS) \
+	  $(PLUGIN_OBJECTS) \
 	  $(GLIB_LIBS) \
 	  $(GTK_LIBS) \
 	  $(MOZILLA_LIBS)\
 	  -shared -o $@
 
-clean-IcedTeaNPPlugin:
-	cd $(NPPLUGIN_DIR);\
-	rm -f *.o; \
-	rm -f IcedTeaNPPlugin.so; \
-	cd ../
-else
-if ENABLE_PLUGIN
-# IcedTeaPlugin.so.
-# Separate compile and link invocations to ensure intermediate object
-# is listed before -l options.  See:
-# http://developer.mozilla.org/en/docs/XPCOM_Glue
-IcedTeaPlugin.o: IcedTeaPlugin.cc
-	$(CXX) $(CXXFLAGS) \
-	  -DPLUGIN_VERSION="\"$(PLUGIN_VERSION)\"" \
-	  -DMOZILLA_VERSION_COLLAPSED="$(MOZILLA_VERSION_COLLAPSED)" \
-	  $(GTK_CFLAGS) \
-	  $(MOZILLA_CFLAGS) \
-	  -fPIC -c -o $@ $<
-IcedTeaPlugin.so: IcedTeaPlugin.o
-	$(CXX) $(CXXFLAGS) \
-	  $< \
-	  $(GTK_LIBS) \
-	  $(MOZILLA_LIBS) \
-	  -shared -o $@
-
 clean-IcedTeaPlugin:
-	rm -f IcedTeaPlugin.o
-	rm -f IcedTeaPlugin.so
-endif
+	rm -f $(PLUGIN_DIR)/*.o
+	rm -f $(PLUGIN_DIR)/IcedTeaPlugin.so
 endif
 
-stamps/plugin.stamp: $(ICEDTEAPLUGIN_TARGET) $(ICEDTEANPPLUGIN_TARGET)
+stamps/plugin.stamp: $(ICEDTEAPLUGIN_TARGET)
 	mkdir -p stamps
 	touch stamps/plugin.stamp
 
-clean-plugin: $(ICEDTEAPLUGIN_CLEAN) $(ICEDTEANPPLUGIN_CLEAN)
+clean-plugin: $(ICEDTEAPLUGIN_CLEAN)
 	rm -f stamps/plugin.stamp
 
 liveconnect-source-files.txt:
@@ -1696,11 +1633,11 @@ stamps/liveconnect-dist.stamp: stamps/liveconnect.stamp
 	if test "x${LIVECONNECT_DIR}" != x; then \
 	  (cd $(abs_top_builddir)/liveconnect ; \
 	   mkdir -p lib ; \
-	   $(ICEDTEA_BOOT_DIR)/bin/jar cf lib/classes.jar sun/applet netscape ; \
+	   $(ICEDTEA_BOOT_DIR)/bin/jar cf lib/classes.jar $(LIVECONNECT_DIR) ; \
 	   cp -a $(LIVECONNECT_SRCS) src; \
 	   find src -type f -exec chmod 640 '{}' ';' -o -type d -exec chmod 750 '{}' ';'; \
 	   cd src ; \
-	   $(ZIP) -qr $(abs_top_builddir)/liveconnect/lib/src.zip sun/applet netscape ) ; \
+	   $(ZIP) -qr $(abs_top_builddir)/liveconnect/lib/src.zip $(LIVECONNECT_DIR) ) ; \
 	fi
 	mkdir -p stamps
 	touch $@
@@ -2227,7 +2164,7 @@ stamps/rt.stamp: stamps/rt-class-files.stamp stamps/bootstrap-directory-ecj.stam
 	mkdir -p stamps
 if LACKS_SUN_AWT_TOOLKIT
 	$(ICEDTEA_BOOT_DIR)/bin/jar uf $(ICEDTEA_RT) -C lib/rt com -C lib/rt java \
-	  -C lib/rt javax $(LIVECONNECT_DIR) -C lib/rt sun ;
+	  -C lib/rt javax -C lib/rt sun ;
 endif
 	touch stamps/rt.stamp
 
@@ -2319,8 +2256,6 @@ patch-fsg: stamps/patch-fsg.stamp
 plugin: stamps/plugin.stamp
 
 plugin-tests: stamps/plugin-tests.stamp
-
-plugs: stamps/plugs.stamp
 
 pulse-java: stamps/pulse-java.stamp
 

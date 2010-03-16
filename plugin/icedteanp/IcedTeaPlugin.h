@@ -1,4 +1,4 @@
-/* IcedTeaNPPlugin.h
+/* IcedTeaPlugin.h
 
    Copyright (C) 2009  Red Hat
 
