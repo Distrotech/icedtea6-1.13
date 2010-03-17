@@ -85,6 +85,12 @@ AC_DEFUN([IT_SET_ARCH_SETTINGS],
       CROSS_TARGET_ARCH=s390x
       ARCHFLAG="-m64"
        ;;
+    sh*-*-*)
+      BUILD_ARCH_DIR=sh
+      INSTALL_ARCH_DIR=sh
+      JRE_ARCH_DIR=sh
+      CROSS_TARGET_ARCH=sh
+      ;;
     *)
       BUILD_ARCH_DIR=`uname -m`
       INSTALL_ARCH_DIR=$BUILD_ARCH_DIR

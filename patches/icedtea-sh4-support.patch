@@ -61,3 +61,124 @@
      endif
    endif
  
+--- openjdk/corba/make/common/shared/Platform.gmk	2010-01-18 22:27:21.000000000 +0900
++++ openjdk/corba/make/common/shared/Platform.gmk	2010-01-18 22:28:50.000000000 +0900
+@@ -205,6 +205,9 @@
+                 arm*) \
+                     echo arm \
+                     ;; \
++                sh*) \
++                    echo sh \
++                    ;; \
+                 *) \
+                     echo $(mach) \
+                     ;; \
+--- openjdk/jdk/make/common/shared/Platform.gmk	2010-01-18 22:39:35.000000000 +0900
++++ openjdk/jdk/make/common/shared/Platform.gmk	2010-01-19 09:39:26.000000000 +0900
+@@ -214,6 +214,9 @@
+                 arm*) \
+                     echo arm \
+                     ;; \
++                sh*) \
++                    echo sh \
++                    ;; \
+                 *) \
+                     echo $(mach) \
+                     ;; \
+@@ -272,6 +275,9 @@
+       ifeq ($(ARCH), s390x)
+         ARCH_DATA_MODEL=64
+       endif
++      ifeq ($(ARCH), sh)
++        ARCH_DATA_MODEL=32
++      endif
+     endif
+   endif
+ 
+--- openjdk/jdk/make/jdk_generic_profile.sh	2010-01-19 09:49:57.000000000 +0900
++++ openjdk/jdk/make/jdk_generic_profile.sh	2010-01-19 21:43:22.000000000 +0900
+@@ -350,13 +350,14 @@
+     i?86)    ZERO_LIBARCH=i386      ;;
+     sparc64) ZERO_LIBARCH=sparcv9   ;;
+     arm*)    ZERO_LIBARCH=arm       ;;
++    sh*)     ZERO_LIBARCH=sh       ;;
+     *)       ZERO_LIBARCH="$(arch)"
+   esac
+   export ZERO_LIBARCH
+ 
+   # ARCH_DATA_MODEL is the number of bits in a pointer
+   case "${ZERO_LIBARCH}" in
+-    i386|ppc|s390|sparc|arm)
++    i386|ppc|s390|sparc|arm|sh)
+       ARCH_DATA_MODEL=32
+       ;;
+     amd64|ppc64|s390x|sparcv9|ia64|alpha)
+--- openjdk/jdk/make/jdk_generic_profile.sh	2010-01-19 09:49:57.000000000 +0900
++++ openjdk/jdk/make/jdk_generic_profile.sh	2010-01-19 21:44:30.000000000 +0900
+@@ -350,13 +350,14 @@
+     i?86)    ZERO_LIBARCH=i386      ;;
+     sparc64) ZERO_LIBARCH=sparcv9   ;;
+     arm*)    ZERO_LIBARCH=arm       ;;
++    sh*)     ZERO_LIBARCH=sh        ;;
+     *)       ZERO_LIBARCH="$(arch)"
+   esac
+   export ZERO_LIBARCH
+ 
+   # ARCH_DATA_MODEL is the number of bits in a pointer
+   case "${ZERO_LIBARCH}" in
+-    i386|ppc|s390|sparc|arm)
++    i386|ppc|s390|sparc|arm|sh)
+       ARCH_DATA_MODEL=32
+       ;;
+     amd64|ppc64|s390x|sparcv9|ia64|alpha)
+--- openjdk/jdk/make/javax/sound/SoundDefs.gmk	2010-01-19 22:35:25.000000000 +0900
++++ openjdk/jdk/make/javax/sound/SoundDefs.gmk	2010-01-20 11:42:28.000000000 +0900
+@@ -113,6 +113,10 @@
+   ifeq ($(ARCH), sparcv9)
+     CPPFLAGS += -DX_ARCH=X_SPARCV9
+   endif # ARCH sparcv9
++
++  ifeq ($(ARCH), sh)
++    CPPFLAGS += -DX_ARCH=X_SH
++  endif # ARCH Renesas SuperH(sh)
+ endif
+ 
+ 
+--- openjdk/jdk/make/common/Defs-linux.gmk	2010-01-21 13:27:43.000000000 +0900
++++ openjdk/jdk/make/common/Defs-linux.gmk	2010-01-21 13:28:50.000000000 +0900
+@@ -119,6 +119,7 @@
+ LDFLAGS_COMMON_sparcv9  += -m64 -mcpu=v9
+ CFLAGS_REQUIRED_sparc   += -m32 -mcpu=v9
+ LDFLAGS_COMMON_sparc    += -m32 -mcpu=v9
++CFLAGS_REQUIRED_sh   += -mieee
+ ifeq ($(ZERO_BUILD), true)
+   CFLAGS_REQUIRED       =  $(ZERO_ARCHFLAG)
+   ifeq ($(ZERO_ENDIANNESS), little)
+@@ -202,7 +203,7 @@
+   CXXFLAGS_DBG	+= $(CC_LOWER_OPT)
+ endif
+ 
+-CPPFLAGS_COMMON = -D_$(ARCH)_ $(if $(filter $(ARCH),alpha),,-D$(ARCH)) \
++CPPFLAGS_COMMON = -D_$(ARCH)_ $(if $(filter $(ARCH),alpha sh),,-D$(ARCH)) \
+ 		  -DARCH='"$(ARCH)"' -DLINUX $(VERSION_DEFINES) \
+ 		  -D_LARGEFILE64_SOURCE -D_GNU_SOURCE -D_REENTRANT
+ 
+--- openjdk/corba/make/common/Defs-linux.gmk	2010-01-21 13:29:49.000000000 +0900
++++ openjdk/corba/make/common/Defs-linux.gmk	2010-01-21 13:30:58.000000000 +0900
+@@ -109,6 +109,7 @@
+ LDFLAGS_COMMON_sparcv9  += -m64 -mcpu=v9
+ CFLAGS_REQUIRED_sparc   += -m32 -mcpu=v9
+ LDFLAGS_COMMON_sparc    += -m32 -mcpu=v9
++CFLAGS_REQUIRED_sh   += -mieee
+ ifeq ($(ZERO_BUILD), true)
+   CFLAGS_REQUIRED       =  $(ZERO_ARCHFLAG)
+   ifeq ($(ZERO_ENDIANNESS), little)
+@@ -186,7 +187,7 @@
+   CXXFLAGS_DBG	+= $(CC_LOWER_OPT)
+ endif
+ 
+-CPPFLAGS_COMMON = -D_$(ARCH)_ $(if $(filter $(ARCH),alpha),,-D$(ARCH)) \
++CPPFLAGS_COMMON = -D_$(ARCH)_ $(if $(filter $(ARCH),alpha sh),,-D$(ARCH)) \
+ 		  -DARCH='"$(ARCH)"' -DLINUX $(VERSION_DEFINES) \
+ 		  -D_LARGEFILE64_SOURCE -D_GNU_SOURCE -D_REENTRANT
+ 
