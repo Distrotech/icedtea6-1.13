@@ -298,7 +298,8 @@ ICEDTEA_PATCHES = \
 	patches/libpng.patch \
 	patches/extensions/netx.patch \
 	patches/extensions/netx-dist.patch \
-	patches/extensions/netx-umask.patch
+	patches/extensions/netx-umask.patch \
+	patches/icedtea-jtreg-httpTest.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
