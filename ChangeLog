@@ -1,3 +1,10 @@
+2010-03-18  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp
+	(CppInterpreter::native_entry): Remove unnecessary calls to
+	JavaThread::set_do_not_unlock and JavaThread::clr_do_not_unlock,
+	fixing an issue that caused asynchronous exceptions to be lost.
+
 2010-03-17  Nobuhiro Iwamatsu <iwamatsu@nigauri.org>
 
 	* acinclude.m4 (IT_SET_ARCH_SETTINGS): Define architecture as sh
