@@ -1,6 +1,6 @@
 /* IcedTeaPluginUtils.cc
 
-   Copyright (C) 2009  Red Hat
+   Copyright (C) 2009, 2010  Red Hat
 
 This file is part of IcedTea.
 
@@ -36,7 +36,7 @@ this exception to your version of the library, but you are not
 obligated to do so.  If you do not wish to do so, delete this
 exception statement from your version. */
 
-#include "IcedTeaPlugin.h"
+#include "IcedTeaNPPlugin.h"
 #include "IcedTeaScriptablePluginObject.h"
 #include "IcedTeaPluginUtils.h"
 

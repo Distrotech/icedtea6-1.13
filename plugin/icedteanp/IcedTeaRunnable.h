@@ -1,6 +1,6 @@
 /* IcedTeaRunnable.h
 
-   Copyright (C) 2009  Red Hat
+   Copyright (C) 2009, 2010  Red Hat
 
 This file is part of IcedTea.
 
