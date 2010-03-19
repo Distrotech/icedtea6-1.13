@@ -1570,7 +1570,7 @@ if ENABLE_PLUGIN
 # is listed before -l options.  See:
 # http://developer.mozilla.org/en/docs/XPCOM_Glue
 
-PLUGIN_SRC=IcedTeaPlugin.cc IcedTeaScriptablePluginObject.cc \
+PLUGIN_SRC=IcedTeaNPPlugin.cc IcedTeaScriptablePluginObject.cc \
         IcedTeaJavaRequestProcessor.cc IcedTeaPluginRequestProcessor.cc \
 		IcedTeaPluginUtils.cc
 

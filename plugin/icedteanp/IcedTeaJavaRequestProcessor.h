@@ -1,6 +1,6 @@
 /* IcedTeaJavaRequestProcessor.h
 
-   Copyright (C) 2009  Red Hat
+   Copyright (C) 2009, 2010  Red Hat
 
 This file is part of IcedTea.
 
@@ -43,7 +43,7 @@ exception statement from your version. */
 #include <stdlib.h>
 #include <vector>
 
-#include "IcedTeaPlugin.h"
+#include "IcedTeaNPPlugin.h"
 #include "IcedTeaPluginUtils.h"
 
 #define REQUESTTIMEOUT 120

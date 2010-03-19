@@ -1,6 +1,6 @@
 /* IcedTeaPlugin.cc -- web browser plugin to execute Java applets
    Copyright (C) 2003, 2004, 2006, 2007  Free Software Foundation, Inc.
-   Copyright (C) 2009 Red Hat
+   Copyright (C) 2009, 2010 Red Hat
 
 This file is part of GNU Classpath.
 
@@ -49,7 +49,7 @@ exception statement from your version. */
 
 // Liveconnect extension
 #include "IcedTeaScriptablePluginObject.h"
-#include "IcedTeaPlugin.h"
+#include "IcedTeaNPPlugin.h"
 
 #if MOZILLA_VERSION_COLLAPSED < 1090100
 // Documentbase retrieval includes.
