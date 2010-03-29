@@ -422,7 +422,6 @@ ICEDTEA_ENV = \
 	LANG="C" \
 	PATH="$(abs_top_builddir)/bootstrap/jdk1.6.0/bin:$(OS_PATH):$$PATH" \
 	ALT_BOOTDIR="$(ICEDTEA_BOOT_DIR)" \
-	ALT_BINARY_PLUGS_PATH="$(abs_top_builddir)/bootstrap/jdk1.7.0" \
 	BUILD_ARCH_DIR="$(BUILD_ARCH_DIR)" \
 	ICEDTEA_BUILD_DIR="$(ICEDTEA_BUILD_DIR)" \
 	ICEDTEA_CLS_DIR="$(ICEDTEA_CLS_DIR)" \
@@ -2093,26 +2092,6 @@ if LACKS_SUN_AWT_TOOLKIT
 	  -C lib/rt javax -C lib/rt sun ;
 endif
 	touch stamps/rt.stamp
-
-# tools.jar
-stamps/tools.stamp:
-	mkdir -p bootstrap/jdk1.7.0/jre/lib/
-	ln -sf $(ICEDTEA_RT) $(abs_top_builddir)/bootstrap/jdk1.7.0/jre/lib/tools.jar
-	if test -d bootstrap/ecj ; \
-	then \
-	  mkdir -p bootstrap/ecj/lib/; \
-	  ln -sf $(abs_top_builddir)/bootstrap/jdk1.7.0/jre/lib/tools.jar \
-	    $(abs_top_builddir)/bootstrap/ecj/lib/tools.jar; \
-	fi
-	mkdir -p stamps
-	touch stamps/tools.stamp
-
-clean-tools-jar: 
-	rm -f bootstrap/jdk1.7.0/jre/lib/tools.jar
-	if test -d bootstrap/ecj/lib ; then \
-	  rm -f $(abs_top_builddir)/bootstrap/ecj/lib/tools.jar; \
-	fi
-	rm -f stamps/tools.stamp
 
 # Target Aliases
 # ===============
