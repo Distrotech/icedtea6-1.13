@@ -4,12 +4,694 @@
 	Remove @Override on interface method
 	in sun/net/www/protocol/https/HttpsClient.java
 
+2010-03-25  Matthias Klose  <doko@ubuntu.com>
+
+	* configure.ac: Bump version to 1.9pre.
+
+2010-03-22  Deepak Bhole <dbhole@redhat.com>
+
+	* plugin/icedteanp/IcedTeaNPPlugin.cc
+	(start_jvm_if_needed): Change pipe file name format.
+	(NP_Initialize): Put FIFO pipe in a separate per-user directory.
+
+2010-03-19  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_ENV_ECJ): Include ICEDTEA_ENV.
+	Remove duplication between ICEDTEA_ENV
+	and ICEDTEA_ENV_ECJ.
+
+2010-03-19  Deepak Bhole <dbhole@redhat.com>
+
+	* Makefile.am: Change IcedTeaPlugin.o -> IcedTeaNPPlugin.o
+
+2010-03-19  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/src/cpu/zero/vm/disassembler_zero.hpp
+	(Disassembler::pd_instruction_alignment): Return a usable default.
+	(Disassembler::pd_cpu_opts): Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkBlock.cpp
+	(SharkBlock::do_field_access): Indentation fixes.
+	* ports/hotspot/src/share/vm/shark/sharkBuilder.hpp
+	(SharkBuilder::throw_ArithmeticException): New method.
+	(SharkBuilder::throw_ClassCastException): Likewise.
+	(SharkBuilder::frame_address): Likewise.
+	(SharkBuilder::CreateGetFrameAddress): Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkBuilder.cpp
+	(SharkBuilder::throw_ArithmeticException): New method.
+	(SharkBuilder::throw_ClassCastException): Likewise.
+	(SharkBuilder::frame_address): Likewise.
+	(SharkBuilder::CreateGetFrameAddress): Likewise.
+	(SharkBuilder::CreateMemoryBarrier): Actually do something on x86.
+	* ports/hotspot/src/share/vm/shark/sharkNativeWrapper.cpp
+	(SharkNativeWrapper::initialize): Implemented UseMembar code.
+	* ports/hotspot/src/share/vm/shark/sharkRuntime.hpp
+	(SharkRuntime::throw_ArithmeticException): New method.
+	(SharkRuntime::throw_ClassCastException): Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkRuntime.cpp
+	(SharkRuntime::throw_ArithmeticException): New method.
+	(SharkRuntime::throw_ClassCastException): Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkStack.hpp
+	(SharkStack::initialize): Added setup_sp_and_method parameter.
+	(SharkStack::CreateStackOverflowCheck): New method.
+	(SharkStack::CreateCheckStack): Likewise.
+	(SharkStack::interpreter_entry_point): Likewise.
+	(SharkStackWithNormalFrame::interpreter_entry_point): Likewise.
+	(SharkStackWithNativeFrame::interpreter_entry_point): Likewise.
+	(SharkStack::CreateHardStackOverflowCheck): Removed.
+	(SharkStack::CreateSoftStackOverflowCheck): Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkStack.cpp
+	(SharkStack::initialize): Added setup_sp_and_method parameter,
+	and changed to use new stack overflow detection code.
+	(SharkStack::CreateStackOverflowCheck): New method.
+	(SharkStack::CreateCheckStack): Likewise.
+	(SharkStack::CreateHardStackOverflowCheck): Removed.
+	(SharkStack::CreateSoftStackOverflowCheck): Likewise.
+	(SharkStackWithNormalFrame::interpreter_entry_point): Likewise.
+	(SharkStackWithNativeFrame::interpreter_entry_point): Likewise.
+	(SharkStackWithNormalFrame::SharkStackWithNormalFrame): Updated.
+	(SharkStackWithNativeFrame::SharkStackWithNativeFrame): Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkTopLevelBlock.hpp
+	(SharkTopLevelBlock::static_field_ok_in_clinit): New method.
+	* ports/hotspot/src/share/vm/shark/sharkTopLevelBlock.cpp
+	(SharkTopLevelBlock::scan_for_traps): New trap.
+	(SharkTopLevelBlock::static_field_ok_in_clinit): New method.
+	(SharkTopLevelBlock::zero_check_value): Throw arithmetic exception
+	for divide by zero.
+	(SharkTopLevelBlock::do_full_instance_check): Throw class cast
+	exception.
+	(SharkTopLevelBlock::do_monitorexit): Do not handle exceptions.
+	* ports/hotspot/src/share/vm/shark/shark_globals.hpp:
+	Make debugging options available in product builds.
+
+2010-03-19  Deepak Bhole <dbhole@redhat.com>
+
+	* plugin/icedteanp/IcedTeaNPPlugin.cc
+	(start_jvm_if_needed): Create pipes in a temporary dir instead of users
+	home directory.
+	(plugin_start_appletviewer): Pass pipe names to PluginMain when initializing Java.
+	* plugin/icedteanp/java/sun/applet/PluginMain.java: Receive pipe names
+	during initialization.
+
+2010-03-19  Deepak Bhole <dbhole@redhat.com>
+
+	* Makefile.am: Updated to use the renamed IcedTeaNPPlugin.cc file.
+	* plugin/icedteanp/IcedTeaJavaRequestProcessor.cc: Updated copyright.
+	* plugin/icedteanp/IcedTeaJavaRequestProcessor.h: Update to include
+	IcedTeaNPPlugin.h instead of IcedTeaPlugin.h. Updated copyright.
+	* plugin/icedteanp/IcedTeaNPPlugin.cc: Renamed from IcedTeaPlugin.cc.
+	Updated copyright.
+	* plugin/icedteanp/IcedTeaNPPlugin.h: Renamed from IcedTeaPlugin.h.
+	Updated copyright.
+	* plugin/icedteanp/IcedTeaPluginRequestProcessor.cc: Updated copyright.
+	* plugin/icedteanp/IcedTeaPluginRequestProcessor.h: Update to include
+	IcedTeaNPPlugin.h instead of IcedTeaPlugin.h. Updated copyright.
+	* plugin/icedteanp/IcedTeaPluginUtils.cc: Updated copyright.
+	* plugin/icedteanp/IcedTeaPluginUtils.h: Update to include
+	IcedTeaNPPlugin.h instead of IcedTeaPlugin.h. Updated copyright.
+	* plugin/icedteanp/IcedTeaRunnable.cc: Updated copyright.
+	* plugin/icedteanp/IcedTeaRunnable.h: Update to include
+	IcedTeaNPPlugin.h instead of IcedTeaPlugin.h. Updated copyright.
+	* plugin/icedteanp/IcedTeaScriptablePluginObject.cc: Updated copyright.
+	* plugin/icedteanp/IcedTeaScriptablePluginObject.h: Update to include
+	IcedTeaNPPlugin.h instead of IcedTeaPlugin.h. Updated copyright.
+
+2010-03-19  Pavel Tisnovsky <ptisnovs@redhat.com>
+
+	* patches/icedtea-sh4-support.patch: removed duplicated
+	lines causing warning message when this patch is applied
+
+2010-03-18  Andrew John Hughes  <ahughes@redhat.com>
+
+	* NEWS:
+	Update for 1.8.  List OpenJDK6 b18 features
+	and add further details of plugin/NetX build
+	changes.
+
+2010-03-18  Pavel Tisnovsky <ptisnovs@redhat.com>
+
+	* patches/icedtea-jtreg-httpTest.patch: new regression test
+	to check if the cacerts keytool database is configured and
+	created properly and if SSL is really working.
+
+2010-03-18  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp
+	(CppInterpreter::native_entry): Remove unnecessary calls to
+	JavaThread::set_do_not_unlock and JavaThread::clr_do_not_unlock,
+	fixing an issue that caused asynchronous exceptions to be lost.
+
+2010-03-17  Nobuhiro Iwamatsu <iwamatsu@nigauri.org>
+
+	* acinclude.m4 (IT_SET_ARCH_SETTINGS): Define architecture as sh
+	for all sh* variants.
+	* patches/icedtea-sh4-support.patch: Likewise.
+
+2010-03-17  Matthias Klose  <doko@ubuntu.com>
+
+	* NEWS: Add 1.7.1, update for 1.8.
+
+2010-03-16  Andrew John Hughes  <ahughes@redhat.com>
+
+	* IcedTeaPlugin.cc,
+	* plugin/icedtea/netscape/javascript/JSException.java,
+	* plugin/icedtea/netscape/javascript/JSObject.java,
+	* plugin/icedtea/netscape/javascript/JSObjectCreatePermission.java,
+	* plugin/icedtea/netscape/javascript/JSProxy.java,
+	* plugin/icedtea/netscape/javascript/JSRunnable.java,
+	* plugin/icedtea/netscape/javascript/JSUtil.java,
+	* plugin/icedtea/sun/applet/AppletSecurityContextManager.java,
+	* plugin/icedtea/sun/applet/GetMemberPluginCallRequest.java,
+	* plugin/icedtea/sun/applet/GetWindowPluginCallRequest.java,
+	* plugin/icedtea/sun/applet/JavaConsole.java,
+	* plugin/icedtea/sun/applet/PasswordAuthenticationDialog.java,
+	* plugin/icedtea/sun/applet/PluginAppletSecurityContext.java,
+	* plugin/icedtea/sun/applet/PluginAppletViewer.java,
+	* plugin/icedtea/sun/applet/PluginCallRequest.java,
+	* plugin/icedtea/sun/applet/PluginCallRequestFactory.java,
+	* plugin/icedtea/sun/applet/PluginClassLoader.java,
+	* plugin/icedtea/sun/applet/PluginCookieInfoRequest.java,
+	* plugin/icedtea/sun/applet/PluginCookieManager.java,
+	* plugin/icedtea/sun/applet/PluginDebug.java,
+	* plugin/icedtea/sun/applet/PluginException.java,
+	* plugin/icedtea/sun/applet/PluginMain.java,
+	* plugin/icedtea/sun/applet/PluginMessageConsumer.java,
+	* plugin/icedtea/sun/applet/PluginMessageHandlerWorker.java,
+	* plugin/icedtea/sun/applet/PluginObjectStore.java,
+	* plugin/icedtea/sun/applet/PluginProxyInfoRequest.java,
+	* plugin/icedtea/sun/applet/PluginProxySelector.java,
+	* plugin/icedtea/sun/applet/PluginStreamHandler.java,
+	* plugin/icedtea/sun/applet/RequestQueue.java,
+	* plugin/icedtea/sun/applet/TestEnv.java,
+	* plugin/icedtea/sun/applet/VoidPluginCallRequest.java:
+	Remove old plugin code.
+	* Makefile.am:
+	Drop ENABLE_PLUGIN blocks.  Rename ENABLE_NPPLUGIN
+	to ENABLE_PLUGIN and IcedTeaNPPlugin to IcedTeaPlugin.
+	(LIVECONNECT_DIR): Use just names of directories.
+	(EXTRA_DIST): Drop IcedTeaPlugin.cc.
+	(.PHONY): Drop clean-plugs, ICEDTEANPPLUGIN_CLEAN.
+	(clean-patch): Drop old commands to revert plugin code
+	copying.
+	(icedtea.stamp): Remove old plugin references.  Change NPPlugin
+	references to reference Plugin.
+	(icedtea-debug.stamp): Likewise.
+	(PLUGIN_SRC): Renamed from NPPLUGIN_SRC.
+	(PLUGIN_OBJECTS): Renamed from NPPLUGIN_OBJECTS.
+	($(PLUGIN_DIR)/%.o): Change from NPPLUGIN to PLUGIN.
+	($(PLUGIN_DIR)/IcedTeaPlugin.so): Changed from
+	IcedTeaNPPlugin.
+	(clean-IcedTeaPlugin): Moved from clean-IcedTeaNPPlugin.
+	(IcedTeaPlugin.o): Removed.
+	(IcedTeaPlugin.so): Removed.
+	(clean-IcedTeaPlugin): Removed.
+	(plugin.stamp): Remove old plugin dependency.
+	(clean-plugin): Likewise.
+	(liveconnect.stamp): Use LIVECONNECT_DIR rather than
+	hardcoding directory names.
+	(rt.stamp): Drop LIVECONNECT_DIR.
+	(plugs): Drop dead alias.
+	* acinclude.m4:
+	(IT_CHECK_PLUGIN): Renamed from IT_CHECK_OLD_PLUGIN.
+	(IT_CHECK_NEW_PLUGIN): Removed.
+	(IT_CHECK_PLUGIN_DEPENDENCIES): No longer require
+	IT_CHECK_OLD_PLUGIN and IT_CHECK_NEW_PLUGIN.  Require
+	IT_CHECK_PLUGIN.  Remove enable_npplugin tests as now
+	assumed, being the only plugin.
+	(IT_CHECK_XULRUNNER_VERSION): Drop enable_npplugin test.
+	* plugin/icedteanp/IcedTeaJavaRequestProcessor.h:
+	Fix references to IcedTeaNPPlugin.h.
+	* plugin/icedteanp/IcedTeaPlugin.cc: Renamed from
+	IcedTeaNPPlugin.cc.
+	* plugin/icedteanp/IcedTeaPlugin.h: Renamed from
+	IcedTeaNPPlugin.h.
+	* plugin/icedteanp/IcedTeaPluginRequestProcessor.cc,
+	* plugin/icedteanp/IcedTeaPluginUtils.cc,
+	* plugin/icedteanp/IcedTeaPluginUtils.h,
+	* plugin/icedteanp/IcedTeaScriptablePluginObject.h:
+	Fix references to IcedTeaNPPlugin.h.
+
+2010-03-16  Andrew John Hughes  <ahughes@redhat.com>
+	* patches/icedtea-override.patch:
+	Moved to ecj subdirectory.
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Remove override patch.
+	(ICEDTEA_ECJ_PATCHES): Add override patch in ecj
+	directory.
+	* patches/ecj/override.patch:
+	Apply to ecj tree only.
+
+2010-03-16  Andrew John Hughes  <ahughes@redhat.com>
+
+	NetX/plugin build sync (3/3):
+	* patches/icedtea-copy-plugs.patch:
+	Remove plug-related segments and move
+	remainder to patches/ecj/getannotation-cast.patch
+	* rt/com/sun/jmx/snmp/SnmpDataTypeEnums.java,
+	* rt/com/sun/jmx/snmp/SnmpDefinitions.java,
+	* rt/com/sun/jmx/snmp/SnmpOid.java,
+	* rt/com/sun/jmx/snmp/SnmpOidRecord.java,
+	* rt/com/sun/jmx/snmp/SnmpOidTable.java,
+	* rt/com/sun/jmx/snmp/SnmpOidTableSupport.java,
+	* rt/com/sun/jmx/snmp/SnmpParameters.java,
+	* rt/com/sun/jmx/snmp/SnmpPduPacket.java,
+	* rt/com/sun/jmx/snmp/SnmpPeer.java,
+	* rt/com/sun/jmx/snmp/SnmpSession.java,
+	* rt/com/sun/jmx/snmp/SnmpTimeticks.java,
+	* rt/com/sun/jmx/snmp/SnmpVarBind.java,
+	* rt/com/sun/jmx/snmp/SnmpVarBindList.java,
+	* rt/com/sun/jmx/snmp/daemon/SnmpInformRequest.java,
+	* rt/com/sun/jmx/snmp/daemon/SnmpSession.java,
+	* rt/com/sun/media/sound/AbstractPlayer.java,
+	* rt/com/sun/media/sound/HeadspaceMixer.java,
+	* rt/com/sun/media/sound/HeadspaceSoundbank.java,
+	* rt/com/sun/media/sound/MixerClip.java,
+	* rt/com/sun/media/sound/MixerMidiChannel.java,
+	* rt/com/sun/media/sound/MixerSequencer.java,
+	* rt/com/sun/media/sound/MixerSourceLine.java,
+	* rt/com/sun/media/sound/MixerSynth.java,
+	* rt/com/sun/media/sound/MixerThread.java,
+	* rt/com/sun/media/sound/SimpleInputDevice.java,
+	* rt/com/sun/media/sound/SimpleInputDeviceProvider.java:
+	Remove old plug stubs.
+	* Makefile.am:
+	(ICEDTEA_PLUGS): Removed.
+	(ICEDTEA_BOOTSTRAP_DIRS): Drop com/sun/jmx/snmp/agent.
+	(ICEDTEA_BOOTSTRAP_CLASSES): Add javax/management/StandardMBean.java.
+	(ICEDTEA_PATCHES): Remove copy-plugs.patch.
+	(ICEDTEA_ECJ_PATCHES): Add getannotation-cast.patch.
+	(ICEDTEA_ENV): Drop IMPORT_BINARY_PLUGS.
+	(ICEDTEA_ENV_ECJ): Likewise.
+	(icedtea.stamp): Don't depend on plugs.stamp.
+	(icedtea-debug.stamp): Likewise.
+	(icedtea-ecj.stamp): Likewise.
+	(extra-class-files.stamp): Depend on netx.stamp and
+	use netx.build rather than plugs.
+	(rt-source-files.txt): Don't search $(abs_top_srcdir)/rt.
+	(clean-rt): Revert to system rt.jar.
+	(plugs.stamp): Removed.
+	(clean-plugs): Removed.
+	* patches/ecj/getannotation-cast.patch:
+	Remaining part of copy-plugs.patch which
+	provides a cast for getAnnotation for older versions
+	of GNU Classpath.
+
+2010-03-16  Deepak Bhole <dbhole@redhat.com>
+
+	* plugin/icedteanp/IcedTeaPluginRequestProcessor.cc
+	(newMessageOnBus): Added support for finalize.
+	(finalize): New function. Decrements object reference count by one.
+	(queue_processor): Added support for finalize.
+	* plugin/icedteanp/IcedTeaPluginRequestProcessor.h: Removed unused
+	function declerations. Added decleration for finalize.
+
+2010-03-15  Andrew John Hughes  <ahughes@redhat.com>
+
+	NetX/plugin build sync (2/3):
+	Have the OpenJDK build extract the
+	built plugin and NetX code as imports,
+	not binary plugs.  File patches that
+	extend OpenJDK (NetX, plugin, Zero/Shark)
+	under a new subdirectory, extensions.
+	* patches/icedtea-liveconnect.patch:
+	Moved to extensions subdirectory and
+	recreated after application of netx.patch.
+	* patches/icedtea-plugin.patch:
+	Removed, unused.
+	* patches/icedtea-webstart-umask.patch,
+	* patches/icedtea-webstart.patch:
+	Moved to extensions subdirectory.
+	* Makefile.am:
+	(ICEDTEANPPLUGIN_TARGET): Add liveconnect-dist.stamp.
+	(ICEDTEAPLUGIN_TARGET): Likewise.
+	(PLUGIN_PATCH): Removed.
+	(ICEDTEA_PATCHES): Add conditional plugin patches in
+	same manner as all other conditional patches.  Fix
+	paths of NetX patches and add new netx-dist patch.
+	Add liveconnect-dist.patch.
+	(ICEDTEA_ENV): Add ALT_NETX_DIST and ALT_LIVECONNECT_DIST
+	to specify locations of NetX and plugin jar files.
+	(ICEDTEA_ECJ_ENV): Likewise.
+	(stamps/patch.stamp): Remove copying of plugin source files.
+	(stamps/icedtea.stamp): Depend on netx-dist.stamp.
+	(stamps/icedtea-debug.stamp): Likewise.
+	(stamps/icedtea-ecj.stamp): Depend on netx-dist.stamp and
+	plugin.stamp.
+	(stamps/plugin-tests.stamp): Depend on stamps/plugin.stamp,
+	not rt-closed.jar.  Surround by ENABLE_PLUGIN rather than
+	using a (now broken) test on lib/rt/netscape.
+	* patches/extensions/liveconnect-dist.patch:
+	Make the OpenJDK build import the plugin code in the same
+	manner as langtools, CORBA, JAXP and JAXWS.
+	* patches/extensions/liveconnect.patch:
+	Was patches/icedtea-liveconnect.patch.
+	* patches/extensions/netx-dist.patch:
+	Same as liveconnect-dist, but for NetX.
+	* patches/extensions/netx-umask.patch:
+	Renamed from patches/icedtea-webstart-umask.patch.
+	* patches/extensions/netx.patch:
+	Renamed from patches/icedtea-webstart.patch.
+
+2010-03-13  Deepak Bhole <dbhole@redhat.com>
+
+	* plugin/icedteanp/java/sun/applet/PluginAppletViewer.java
+	(requestPluginCookieInfo): Register cookie info as a priority message.
+	(requestPluginProxyInfo): Register proxy info as a priority message.
+	* plugin/icedteanp/java/sun/applet/PluginMessageConsumer.java: Re-designed
+	message consumption to implement priority queuing and parallel
+	initialization limits so that an arbitrary number of applets can load
+	without blocking one another, all in a thread-safe manner.
+	(registerPriorityWait): New method. Registers a string that is
+	considered a "priority" string, which gets delegated to dedicated worker
+	threads.
+	(unRegisterPriorityWait): Unregisters a string so that it is no longer
+	a priority.
+	(PluginMessageConsumer): Do not create any workers when starting.
+	(consume): Remove method. Consumption is now done in a separate dedicated
+	thread to prevent blocking.
+	(getPriorityStrIfPriority):	New method. If the given message is priority,
+	return why (i.e the 'priority string'it matched).
+	(isInInit): New method. Returns if the plugin is currently initializing an
+	applet.
+	(addToInitWorkers): New method. Adds given worker to list of workers
+	currently initializting applets.
+	(okayToProcess): New method. Returns whether or not it is okay to process
+	the given applet.
+	(notifyWorkerIsFree): New method. Notifies this class that a worker has
+	just become free.
+	(queue): Queues the given message for consumption.
+	(ConsumerThread): New protected inner (thread) class. Responsible for
+	consuming messages in the queue, and regueuing them if consumption if not
+	possible.
+	(getFreeWorker): Changed to be non-blocking, and return either a priority
+	worker or a normal worker depending on what is requested.
+	* plugin/icedteanp/java/sun/applet/PluginMessageHandlerWorker.java
+	(PluginMessageHandlerWorker): Set new priority and consumer variables.
+	(busy): Make thread-safe by waiting on same property that free() waits on.
+	(free): Make thread-safe by waiting on same property that busy() waits on.
+	(isPriority): New method. Returns of worker is a priority worker.
+	(isFree): Made thread-safe, and accounts for priority.
+	* plugin/icedteanp/java/sun/applet/PluginStreamHandler.java
+	(startProcessing): Call consumer.queue() instead of consumer.consume().
+	(postMessage): Remove unused method.
+
 2010-03-12  Andrew John Hughes  <ahughes@redhat.com>
 
 	* patches/icedtea-fonts.patch:
 	Removed, applied upstream as S6934327.
 	http://hg.openjdk.java.net/jdk6/jdk6/jdk/rev/178f954e1fd1
 	* Makefile.am: Drop above patch.
+
+2010-03-12  Andrew John Hughes  <ahughes@redhat.com>
+
+	NetX/plugin build sync (1/3):
+	Build NetX and plugin sources separately.
+	* rt/javax/jnlp/BasicService.java,
+	* rt/javax/jnlp/ClipboardService.java,
+	* rt/javax/jnlp/DownloadService.java,
+	* rt/javax/jnlp/DownloadServiceListener.java,
+	* rt/javax/jnlp/ExtendedService.java,
+	* rt/javax/jnlp/ExtensionInstallerService.java,
+	* rt/javax/jnlp/FileContents.java,
+	* rt/javax/jnlp/FileOpenService.java,
+	* rt/javax/jnlp/FileSaveService.java,
+	* rt/javax/jnlp/JNLPRandomAccessFile.java,
+	* rt/javax/jnlp/PersistenceService.java,
+	* rt/javax/jnlp/PrintService.java,
+	* rt/javax/jnlp/ServiceManager.java,
+	* rt/javax/jnlp/ServiceManagerStub.java,
+	* rt/javax/jnlp/SingleInstanceListener.java,
+	* rt/javax/jnlp/SingleInstanceService.java,
+	* rt/javax/jnlp/UnavailableServiceException.java,
+	* rt/net/sourceforge/jnlp/AppletDesc.java,
+	* rt/net/sourceforge/jnlp/ApplicationDesc.java,
+	* rt/net/sourceforge/jnlp/AssociationDesc.java,
+	* rt/net/sourceforge/jnlp/ComponentDesc.java,
+	* rt/net/sourceforge/jnlp/DefaultLaunchHandler.java,
+	* rt/net/sourceforge/jnlp/ExtensionDesc.java,
+	* rt/net/sourceforge/jnlp/IconDesc.java,
+	* rt/net/sourceforge/jnlp/InformationDesc.java,
+	* rt/net/sourceforge/jnlp/InstallerDesc.java,
+	* rt/net/sourceforge/jnlp/JARDesc.java,
+	* rt/net/sourceforge/jnlp/JNLPFile.java,
+	* rt/net/sourceforge/jnlp/JNLPSplashScreen.java,
+	* rt/net/sourceforge/jnlp/JREDesc.java,
+	* rt/net/sourceforge/jnlp/LaunchException.java,
+	* rt/net/sourceforge/jnlp/LaunchHandler.java,
+	* rt/net/sourceforge/jnlp/Launcher.java,
+	* rt/net/sourceforge/jnlp/MenuDesc.java,
+	* rt/net/sourceforge/jnlp/NetxPanel.java,
+	* rt/net/sourceforge/jnlp/Node.java,
+	* rt/net/sourceforge/jnlp/PackageDesc.java,
+	* rt/net/sourceforge/jnlp/ParseException.java,
+	* rt/net/sourceforge/jnlp/Parser.java,
+	* rt/net/sourceforge/jnlp/PluginBridge.java,
+	* rt/net/sourceforge/jnlp/PropertyDesc.java,
+	* rt/net/sourceforge/jnlp/RelatedContentDesc.java,
+	* rt/net/sourceforge/jnlp/ResourcesDesc.java,
+	* rt/net/sourceforge/jnlp/SecurityDesc.java,
+	* rt/net/sourceforge/jnlp/ShortcutDesc.java,
+	* rt/net/sourceforge/jnlp/StreamEater.java,
+	* rt/net/sourceforge/jnlp/Version.java,
+	* rt/net/sourceforge/jnlp/cache/CacheEntry.java,
+	* rt/net/sourceforge/jnlp/cache/CacheUtil.java,
+	* rt/net/sourceforge/jnlp/cache/DefaultDownloadIndicator.java,
+	* rt/net/sourceforge/jnlp/cache/DownloadIndicator.java,
+	* rt/net/sourceforge/jnlp/cache/Resource.java,
+	* rt/net/sourceforge/jnlp/cache/ResourceTracker.java,
+	* rt/net/sourceforge/jnlp/cache/UpdatePolicy.java,
+	* rt/net/sourceforge/jnlp/cache/package.html,
+	* rt/net/sourceforge/jnlp/event/ApplicationEvent.java,
+	* rt/net/sourceforge/jnlp/event/ApplicationListener.java,
+	* rt/net/sourceforge/jnlp/event/DownloadEvent.java,
+	* rt/net/sourceforge/jnlp/event/DownloadListener.java,
+	* rt/net/sourceforge/jnlp/event/package.html,
+	* rt/net/sourceforge/jnlp/package.html,
+	* rt/net/sourceforge/jnlp/resources/Manifest.mf,
+	* rt/net/sourceforge/jnlp/resources/Messages.properties,
+	* rt/net/sourceforge/jnlp/resources/about.jnlp,
+	* rt/net/sourceforge/jnlp/resources/default.jnlp,
+	* rt/net/sourceforge/jnlp/runtime/AppThreadGroup.java,
+	* rt/net/sourceforge/jnlp/runtime/AppletAudioClip.java,
+	* rt/net/sourceforge/jnlp/runtime/AppletEnvironment.java,
+	* rt/net/sourceforge/jnlp/runtime/AppletInstance.java,
+	* rt/net/sourceforge/jnlp/runtime/ApplicationInstance.java,
+	* rt/net/sourceforge/jnlp/runtime/Boot.java,
+	* rt/net/sourceforge/jnlp/runtime/Boot13.java,
+	* rt/net/sourceforge/jnlp/runtime/JNLPClassLoader.java,
+	* rt/net/sourceforge/jnlp/runtime/JNLPPolicy.java,
+	* rt/net/sourceforge/jnlp/runtime/JNLPRuntime.java,
+	* rt/net/sourceforge/jnlp/runtime/JNLPSecurityManager.java,
+	* rt/net/sourceforge/jnlp/runtime/package.html,
+	* rt/net/sourceforge/jnlp/security/AccessWarningPane.java,
+	* rt/net/sourceforge/jnlp/security/AppletWarningPane.java,
+	* rt/net/sourceforge/jnlp/security/CertVerifier.java,
+	* rt/net/sourceforge/jnlp/security/CertWarningPane.java,
+	* rt/net/sourceforge/jnlp/security/CertsInfoPane.java,
+	* rt/net/sourceforge/jnlp/security/HttpsCertVerifier.java,
+	* rt/net/sourceforge/jnlp/security/MoreInfoPane.java,
+	* rt/net/sourceforge/jnlp/security/SecurityDialogUI.java,
+	* rt/net/sourceforge/jnlp/security/SecurityUtil.java,
+	* rt/net/sourceforge/jnlp/security/SecurityWarningDialog.java,
+	* rt/net/sourceforge/jnlp/security/SingleCertInfoPane.java,
+	* rt/net/sourceforge/jnlp/security/VariableX509TrustManager.java,
+	* rt/net/sourceforge/jnlp/security/viewer/CertificatePane.java,
+	* rt/net/sourceforge/jnlp/security/viewer/CertificateViewer.java,
+	* rt/net/sourceforge/jnlp/services/ExtendedSingleInstanceService.java,
+	* rt/net/sourceforge/jnlp/services/InstanceExistsException.java,
+	* rt/net/sourceforge/jnlp/services/ServiceUtil.java,
+	* rt/net/sourceforge/jnlp/services/SingleInstanceLock.java,
+	* rt/net/sourceforge/jnlp/services/XBasicService.java,
+	* rt/net/sourceforge/jnlp/services/XClipboardService.java,
+	* rt/net/sourceforge/jnlp/services/XDownloadService.java,
+	* rt/net/sourceforge/jnlp/services/XExtendedService.java,
+	* rt/net/sourceforge/jnlp/services/XExtensionInstallerService.java,
+	* rt/net/sourceforge/jnlp/services/XFileContents.java,
+	* rt/net/sourceforge/jnlp/services/XFileOpenService.java,
+	* rt/net/sourceforge/jnlp/services/XFileSaveService.java,
+	* rt/net/sourceforge/jnlp/services/XJNLPRandomAccessFile.java,
+	* rt/net/sourceforge/jnlp/services/XPersistenceService.java,
+	* rt/net/sourceforge/jnlp/services/XPrintService.java,
+	* rt/net/sourceforge/jnlp/services/XServiceManagerStub.java,
+	* rt/net/sourceforge/jnlp/services/XSingleInstanceService.java,
+	* rt/net/sourceforge/jnlp/services/package.html,
+	* rt/net/sourceforge/jnlp/tools/CharacterEncoder.java,
+	* rt/net/sourceforge/jnlp/tools/HexDumpEncoder.java,
+	* rt/net/sourceforge/jnlp/tools/JarRunner.java,
+	* rt/net/sourceforge/jnlp/tools/JarSigner.java,
+	* rt/net/sourceforge/jnlp/tools/JarSignerResources.java,
+	* rt/net/sourceforge/jnlp/tools/KeyStoreUtil.java,
+	* rt/net/sourceforge/jnlp/tools/KeyTool.java,
+	* rt/net/sourceforge/jnlp/util/FileUtils.java,
+	* rt/net/sourceforge/jnlp/util/PropertiesFile.java,
+	* rt/net/sourceforge/jnlp/util/Reflect.java,
+	* rt/net/sourceforge/jnlp/util/WeakList.java,
+	* rt/net/sourceforge/jnlp/util/XDesktopEntry.java,
+	* rt/net/sourceforge/nanoxml/XMLElement.java,
+	* rt/net/sourceforge/nanoxml/XMLParseException.java:
+	Move NetX sources to netx subdirectory.
+	* Makefile.am:
+	(NETX_SRCDIR): Source directory containing NetX sources.
+	(NETX_RESOURCE_DIR): Path to NetX resource files.
+	(NETX_EXTRA_DIR): Path to extra NetX resource files.
+	(SOURCEPATH_DIRS): Renamed from ABS_SOURCE_DIRS. Drop
+	rt source directory (now plugs only) and plugin sources
+	so it only includes OpenJDK sources.
+	(ICEDTEA_BOOTSTRAP_CLASSES): Explicitly compile BasicDirectoryModel
+	due to http://gcc.gnu.org/bugzilla/show_bug.cgi?id=42003
+	(LIVECONNECT_DIR): Use liveconnect build directory not rt.
+	(distclean-local): Call clean-netx, clean-plugin and clean-liveconnect
+	targets.  Remove duplicate plugin cleanup.
+	(stamps/icedtea.stamp): Use NETX_RESOURCE_DIR for about.jnlp.
+	(stamps/icedtea-debug.stamp): Likewise.
+	(liveconnect-source-files.txt): Compile list of plugin sources.
+	(stamps/liveconnect.stamp): Build the plugin Java source code.
+	(stamps/liveconnect-dist.stamp): Create classes.jar and src.zip
+	for plugin (unused at present).
+	(clean-liveconnect): Remove build of Java plugin code.
+	(netx-source-files.txt): Compile list of NetX sources.
+	(stamps/netx.stamp): Build the NetX source code and copy the
+	resources to the build directory..
+	(stamps/netx-dist.stamp): Create classes.jar and src.zip
+	for NetX (unused at present).
+	(clean-netx): Remove build of NetX code.
+	(stamps/extra-class-files.stamp): Use NETX_EXTRA_DIR.
+	(rt-source-files.txt): Don't search rt directory in build tree
+	or plugin sources.
+	(stamps/rt.stamp): Use SOURCEPATH_DIRS.  Don't copy NetX resources;
+	now part of the NetX build.
+	(stamps/rt.stamp): Depend on liveconnect.stamp as plugin classes
+	are currently included in rt.jar.
+	(stamps/plugs.stamp): Depend on liveconnect.stamp and netx.stamp as
+	plugin and NetX classes are currently included in rt-closed.jar.
+	(liveconnect): New alias.
+	(liveconncet-dist): Likewise.
+	(netx): Likewise.
+	(netx-dist): Likewise.
+	* netx/javax/jnlp/BasicService.java,
+	* netx/javax/jnlp/ClipboardService.java,
+	* netx/javax/jnlp/DownloadService.java,
+	* netx/javax/jnlp/DownloadServiceListener.java,
+	* netx/javax/jnlp/ExtendedService.java,
+	* netx/javax/jnlp/ExtensionInstallerService.java,
+	* netx/javax/jnlp/FileContents.java,
+	* netx/javax/jnlp/FileOpenService.java,
+	* netx/javax/jnlp/FileSaveService.java,
+	* netx/javax/jnlp/JNLPRandomAccessFile.java,
+	* netx/javax/jnlp/PersistenceService.java,
+	* netx/javax/jnlp/PrintService.java,
+	* netx/javax/jnlp/ServiceManager.java,
+	* netx/javax/jnlp/ServiceManagerStub.java,
+	* netx/javax/jnlp/SingleInstanceListener.java,
+	* netx/javax/jnlp/SingleInstanceService.java,
+	* netx/javax/jnlp/UnavailableServiceException.java,
+	* netx/net/sourceforge/jnlp/AppletDesc.java,
+	* netx/net/sourceforge/jnlp/ApplicationDesc.java,
+	* netx/net/sourceforge/jnlp/AssociationDesc.java,
+	* netx/net/sourceforge/jnlp/ComponentDesc.java,
+	* netx/net/sourceforge/jnlp/DefaultLaunchHandler.java,
+	* netx/net/sourceforge/jnlp/ExtensionDesc.java,
+	* netx/net/sourceforge/jnlp/IconDesc.java,
+	* netx/net/sourceforge/jnlp/InformationDesc.java,
+	* netx/net/sourceforge/jnlp/InstallerDesc.java,
+	* netx/net/sourceforge/jnlp/JARDesc.java,
+	* netx/net/sourceforge/jnlp/JNLPFile.java,
+	* netx/net/sourceforge/jnlp/JNLPSplashScreen.java,
+	* netx/net/sourceforge/jnlp/JREDesc.java,
+	* netx/net/sourceforge/jnlp/LaunchException.java,
+	* netx/net/sourceforge/jnlp/LaunchHandler.java,
+	* netx/net/sourceforge/jnlp/Launcher.java,
+	* netx/net/sourceforge/jnlp/MenuDesc.java,
+	* netx/net/sourceforge/jnlp/NetxPanel.java,
+	* netx/net/sourceforge/jnlp/Node.java,
+	* netx/net/sourceforge/jnlp/PackageDesc.java,
+	* netx/net/sourceforge/jnlp/ParseException.java,
+	* netx/net/sourceforge/jnlp/Parser.java,
+	* netx/net/sourceforge/jnlp/PluginBridge.java,
+	* netx/net/sourceforge/jnlp/PropertyDesc.java,
+	* netx/net/sourceforge/jnlp/RelatedContentDesc.java,
+	* netx/net/sourceforge/jnlp/ResourcesDesc.java,
+	* netx/net/sourceforge/jnlp/SecurityDesc.java,
+	* netx/net/sourceforge/jnlp/ShortcutDesc.java,
+	* netx/net/sourceforge/jnlp/StreamEater.java,
+	* netx/net/sourceforge/jnlp/Version.java,
+	* netx/net/sourceforge/jnlp/cache/CacheEntry.java,
+	* netx/net/sourceforge/jnlp/cache/CacheUtil.java,
+	* netx/net/sourceforge/jnlp/cache/DefaultDownloadIndicator.java,
+	* netx/net/sourceforge/jnlp/cache/DownloadIndicator.java,
+	* netx/net/sourceforge/jnlp/cache/Resource.java,
+	* netx/net/sourceforge/jnlp/cache/ResourceTracker.java,
+	* netx/net/sourceforge/jnlp/cache/UpdatePolicy.java,
+	* netx/net/sourceforge/jnlp/cache/package.html,
+	* netx/net/sourceforge/jnlp/event/ApplicationEvent.java,
+	* netx/net/sourceforge/jnlp/event/ApplicationListener.java,
+	* netx/net/sourceforge/jnlp/event/DownloadEvent.java,
+	* netx/net/sourceforge/jnlp/event/DownloadListener.java,
+	* netx/net/sourceforge/jnlp/event/package.html,
+	* netx/net/sourceforge/jnlp/package.html,
+	* netx/net/sourceforge/jnlp/resources/Manifest.mf,
+	* netx/net/sourceforge/jnlp/resources/Messages.properties,
+	* netx/net/sourceforge/jnlp/resources/about.jnlp,
+	* netx/net/sourceforge/jnlp/resources/default.jnlp,
+	* netx/net/sourceforge/jnlp/runtime/AppThreadGroup.java,
+	* netx/net/sourceforge/jnlp/runtime/AppletAudioClip.java,
+	* netx/net/sourceforge/jnlp/runtime/AppletEnvironment.java,
+	* netx/net/sourceforge/jnlp/runtime/AppletInstance.java,
+	* netx/net/sourceforge/jnlp/runtime/ApplicationInstance.java,
+	* netx/net/sourceforge/jnlp/runtime/Boot.java,
+	* netx/net/sourceforge/jnlp/runtime/Boot13.java,
+	* netx/net/sourceforge/jnlp/runtime/JNLPClassLoader.java,
+	* netx/net/sourceforge/jnlp/runtime/JNLPPolicy.java,
+	* netx/net/sourceforge/jnlp/runtime/JNLPRuntime.java,
+	* netx/net/sourceforge/jnlp/runtime/JNLPSecurityManager.java,
+	* netx/net/sourceforge/jnlp/runtime/package.html,
+	* netx/net/sourceforge/jnlp/security/AccessWarningPane.java,
+	* netx/net/sourceforge/jnlp/security/AppletWarningPane.java,
+	* netx/net/sourceforge/jnlp/security/CertVerifier.java,
+	* netx/net/sourceforge/jnlp/security/CertWarningPane.java,
+	* netx/net/sourceforge/jnlp/security/CertsInfoPane.java,
+	* netx/net/sourceforge/jnlp/security/HttpsCertVerifier.java,
+	* netx/net/sourceforge/jnlp/security/MoreInfoPane.java,
+	* netx/net/sourceforge/jnlp/security/SecurityDialogUI.java,
+	* netx/net/sourceforge/jnlp/security/SecurityUtil.java,
+	* netx/net/sourceforge/jnlp/security/SecurityWarningDialog.java,
+	* netx/net/sourceforge/jnlp/security/SingleCertInfoPane.java,
+	* netx/net/sourceforge/jnlp/security/VariableX509TrustManager.java,
+	* netx/net/sourceforge/jnlp/security/viewer/CertificatePane.java,
+	* netx/net/sourceforge/jnlp/security/viewer/CertificateViewer.java,
+	* netx/net/sourceforge/jnlp/services/ExtendedSingleInstanceService.java,
+	* netx/net/sourceforge/jnlp/services/InstanceExistsException.java,
+	* netx/net/sourceforge/jnlp/services/ServiceUtil.java,
+	* netx/net/sourceforge/jnlp/services/SingleInstanceLock.java,
+	* netx/net/sourceforge/jnlp/services/XBasicService.java,
+	* netx/net/sourceforge/jnlp/services/XClipboardService.java,
+	* netx/net/sourceforge/jnlp/services/XDownloadService.java,
+	* netx/net/sourceforge/jnlp/services/XExtendedService.java,
+	* netx/net/sourceforge/jnlp/services/XExtensionInstallerService.java,
+	* netx/net/sourceforge/jnlp/services/XFileContents.java,
+	* netx/net/sourceforge/jnlp/services/XFileOpenService.java,
+	* netx/net/sourceforge/jnlp/services/XFileSaveService.java,
+	* netx/net/sourceforge/jnlp/services/XJNLPRandomAccessFile.java,
+	* netx/net/sourceforge/jnlp/services/XPersistenceService.java,
+	* netx/net/sourceforge/jnlp/services/XPrintService.java,
+	* netx/net/sourceforge/jnlp/services/XServiceManagerStub.java,
+	* netx/net/sourceforge/jnlp/services/XSingleInstanceService.java,
+	* netx/net/sourceforge/jnlp/services/package.html,
+	* netx/net/sourceforge/jnlp/tools/CharacterEncoder.java,
+	* netx/net/sourceforge/jnlp/tools/HexDumpEncoder.java,
+	* netx/net/sourceforge/jnlp/tools/JarRunner.java,
+	* netx/net/sourceforge/jnlp/tools/JarSigner.java,
+	* netx/net/sourceforge/jnlp/tools/JarSignerResources.java,
+	* netx/net/sourceforge/jnlp/tools/KeyStoreUtil.java,
+	* netx/net/sourceforge/jnlp/tools/KeyTool.java,
+	* netx/net/sourceforge/jnlp/util/FileUtils.java,
+	* netx/net/sourceforge/jnlp/util/PropertiesFile.java,
+	* netx/net/sourceforge/jnlp/util/Reflect.java,
+	* netx/net/sourceforge/jnlp/util/WeakList.java,
+	* netx/net/sourceforge/jnlp/util/XDesktopEntry.java,
+	* netx/net/sourceforge/nanoxml/XMLElement.java,
+	* netx/net/sourceforge/nanoxml/XMLParseException.java:
+	New location of NetX sources.
 
 2010-03-11  Gary Benson  <gbenson@redhat.com>
 
