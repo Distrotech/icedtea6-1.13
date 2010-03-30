@@ -1,41 +1,54 @@
-#!/bin/sh
+#!/usr/bin/perl -w
+use strict;
+use constant NO_DUP_ARGS => qw(-source -target -d -encoding);
+use constant STRIP_ARGS => qw(-Werror -implicit:none);
 
-case "$*" in
-  *-bootclasspath*) ;;
-  *) bcoption="-bootclasspath @abs_top_builddir@/bootstrap/jdk1.6.0/jre/lib/rt.jar"
-esac
+my $ECJ_WARNINGS="-nowarn";
+
+my @bcoption;
+push @bcoption, '-bootclasspath', glob '@abs_top_builddir@/bootstrap/jdk1.6.0/jre/lib/rt.jar'
+    unless grep {$_ eq '-bootclasspath'} @ARGV;
+my @ecj_parms = ($ECJ_WARNINGS, @bcoption);
 
 # Work around ecj's inability to handle duplicate command-line
-# options.
+# options and unknown javac options.
+sub gen_ecj_opts
+{
+    my @new_args = @{$_[0]};
 
-NEW_ARGS="$@"
+    for my $opt (NO_DUP_ARGS) 
+    {
+	my @indices = reverse grep {$new_args[$_] eq $opt} 0..$#new_args;
+	if (@indices > 1) {
+	    shift @indices;    # keep last instance only
+	    splice @new_args, $_, 2 for @indices;
+	}
+    }
 
-if echo "$@" | grep -q '\-source\ .*\-source\ '
-then
-  NEW_ARGS=`echo $NEW_ARGS | sed -e 's/-source\ *1\.[3456]//1'`
-fi
+    for my $opt (STRIP_ARGS) 
+    {
+	my @indices = reverse grep {$new_args[$_] eq $opt} 0..$#new_args;
+	splice @new_args, $_, 1 for @indices;
+    }
 
-if echo "$@" | grep -q '\-d\ .*\-d\ '
-then
-  NEW_ARGS=`echo $NEW_ARGS | sed -e 's/-d\ *[^\ ]*//1'`
-fi
+    return @new_args;
+}
 
-if echo "$@" | grep -q '\-encoding\ .*\-encoding\ '
-then
-  NEW_ARGS=`echo $NEW_ARGS | sed -e 's/-encoding\ *[^\ ]*//1'`
-fi
-
-if echo "$@" | grep -q '\-Werror'
-then
-  NEW_ARGS=`echo $NEW_ARGS | sed -e 's/-Werror//1'`
-fi
-
-if [ -e @abs_top_builddir@/native-ecj ] ; then
-    @abs_top_builddir@/native-ecj -1.5 -nowarn $bcoption $NEW_ARGS ;
-elif [ ! -z "@ECJ@" ] ; then
-    @ECJ@ -1.5 -nowarn $bcoption $NEW_ARGS
+if ( -e "@abs_top_builddir@/native-ecj" )
+{
+    my @ecj_args = gen_ecj_opts( \@ARGV );
+    exec '@abs_top_builddir@/native-ecj', @ecj_parms, @ecj_args ;
+}
+elsif ( -e "@ECJ_JAR@" )
+{
+    my @ecj_args = gen_ecj_opts( \@ARGV );
+    my @CLASSPATH = ('@ECJ_JAR@');
+    push @CLASSPATH, split /:/, $ENV{"CLASSPATH"} if exists $ENV{"CLASSPATH"};
+    $ENV{"CLASSPATH"} = join ':', @CLASSPATH;
+    exec '@JAVA@', 'org.eclipse.jdt.internal.compiler.batch.Main', @ecj_parms, @ecj_args;
+}
 else
-    CLASSPATH=@ECJ_JAR@${CLASSPATH:+:}$CLASSPATH \
-     @JAVA@ org.eclipse.jdt.internal.compiler.batch.Main -1.5 -nowarn $bcoption $NEW_ARGS
-fi
-
+{
+    my @ecj_args = gen_ecj_opts( \@ARGV );
+    exec '@ECJ@', @ecj_parms, @ecj_args ;
+}
