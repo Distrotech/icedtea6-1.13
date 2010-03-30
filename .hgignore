@@ -7,7 +7,6 @@ autom4te.cache
 cacao
 netbeans
 visualvm
-openjdk
 bootstrap
 debian
 lib
@@ -38,13 +37,16 @@ test/langtools
 test/jtreg.jar
 test/jtreg/classes
 test/jtreg-summary.log
-test/check-.*log
+test/check-*.log
 generated/sun/awt/X11/generator/sizer.32.orig
 pulseaudio/bin
-pulseaudio/.*\.o
+pulseaudio/*.o
 pulseaudio/src/native/org_.*.h
-pulseaudio/.*jar
+pulseaudio/*.jar
 pulse-java.jar
 hotspot.tar.gz
 ports/hotspot/src/cpu/zero/vm/bytecodes_arm.s
 plugin/tests/LiveConnect/*jar
+
+syntax: regexp
+^openjdk

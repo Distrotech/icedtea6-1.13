@@ -1,6 +1,6 @@
 diff -Nru openjdk-ecj.orig/hotspot/make/linux/Makefile openjdk-ecj/hotspot/make/linux/Makefile
---- openjdk-ecj.orig/hotspot/make/linux/Makefile	2008-10-24 10:16:06.000000000 +0100
-+++ openjdk-ecj/hotspot/make/linux/Makefile	2008-10-24 13:32:48.000000000 +0100
+--- openjdk-ecj.orig/hotspot/make/linux/Makefile	2010-03-29 21:34:14.000000000 +0100
++++ openjdk-ecj/hotspot/make/linux/Makefile	2010-03-29 21:40:39.000000000 +0100
 @@ -287,42 +287,36 @@
  
  $(TARGETS_C2):  $(SUBDIRS_C2)
@@ -45,18 +45,16 @@ diff -Nru openjdk-ecj.orig/hotspot/make/linux/Makefile openjdk-ecj/hotspot/make/
  	cd $(OSNAME)_$(VARIANTARCH)_shark/$(patsubst %shark,%,$@) && $(MAKE) $(MFLAGS) install
  endif
 diff -Nru openjdk-ecj.orig/hotspot/make/linux/makefiles/sa.make openjdk-ecj/hotspot/make/linux/makefiles/sa.make
---- openjdk-ecj.orig/hotspot/make/linux/makefiles/sa.make	2008-10-24 10:16:06.000000000 +0100
-+++ openjdk-ecj/hotspot/make/linux/makefiles/sa.make	2008-10-24 13:32:48.000000000 +0100
+--- openjdk-ecj.orig/hotspot/make/linux/makefiles/sa.make	2010-03-29 21:34:15.000000000 +0100
++++ openjdk-ecj/hotspot/make/linux/makefiles/sa.make	2010-03-29 21:41:28.000000000 +0100
 @@ -74,8 +74,8 @@
  	  mkdir -p $(SA_CLASSDIR);        \
  	fi
  
--	$(QUIETLY) $(REMOTE) $(COMPILE.JAVAC) -source 1.4 -classpath $(SA_CLASSPATH) -sourcepath $(AGENT_SRC_DIR) -g -d $(SA_CLASSDIR) $(AGENT_FILES1)
--	$(QUIETLY) $(REMOTE) $(COMPILE.JAVAC) -source 1.4 -classpath $(SA_CLASSPATH) -sourcepath $(AGENT_SRC_DIR) -g -d $(SA_CLASSDIR) $(AGENT_FILES2)
-+	$(QUIETLY) $(REMOTE) $(COMPILE.JAVAC) -source 1.4 -classpath $(SA_CLASSPATH):$(BOOT_JAVA_HOME)/jre/lib/rt.jar -sourcepath $(AGENT_SRC_DIR) -g -d $(SA_CLASSDIR) $(AGENT_FILES1)
-+	$(QUIETLY) $(REMOTE) $(COMPILE.JAVAC) -source 1.4 -classpath $(SA_CLASSPATH):$(BOOT_JAVA_HOME)/jre/lib/rt.jar -sourcepath $(AGENT_SRC_DIR) -g -d $(SA_CLASSDIR) $(AGENT_FILES2)
+-	$(QUIETLY) $(REMOTE) $(COMPILE.JAVAC) -source 1.4 -target 1.4 -classpath $(SA_CLASSPATH) -sourcepath $(AGENT_SRC_DIR) -d $(SA_CLASSDIR) $(AGENT_FILES1)
+-	$(QUIETLY) $(REMOTE) $(COMPILE.JAVAC) -source 1.4 -target 1.4 -classpath $(SA_CLASSPATH) -sourcepath $(AGENT_SRC_DIR) -d $(SA_CLASSDIR) $(AGENT_FILES2)
++	$(QUIETLY) $(REMOTE) $(COMPILE.JAVAC) -source 1.4 -target 1.4 -classpath $(SA_CLASSPATH):$(BOOT_JAVA_HOME)/jre/lib/rt.jar -sourcepath $(AGENT_SRC_DIR) -d $(SA_CLASSDIR) $(AGENT_FILES1)
++	$(QUIETLY) $(REMOTE) $(COMPILE.JAVAC) -source 1.4 -target 1.4 -classpath $(SA_CLASSPATH):$(BOOT_JAVA_HOME)/jre/lib/rt.jar -sourcepath $(AGENT_SRC_DIR) -d $(SA_CLASSDIR) $(AGENT_FILES2)
  
  	$(QUIETLY) $(REMOTE) $(COMPILE.RMIC)  -classpath $(SA_CLASSDIR) -d $(SA_CLASSDIR) sun.jvm.hotspot.debugger.remote.RemoteDebuggerServer
  	$(QUIETLY) echo "$(SA_BUILD_VERSION_PROP)" > $(SA_PROPERTIES)
-
-

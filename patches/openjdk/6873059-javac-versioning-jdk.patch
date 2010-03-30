@@ -1,0 +1,15 @@
+diff -Nru openjdk.orig/jdk/make/common/shared/Defs-java.gmk openjdk/jdk/make/common/shared/Defs-java.gmk
+--- openjdk.orig/jdk/make/common/shared/Defs-java.gmk	2010-03-29 23:19:08.000000000 +0100
++++ openjdk/jdk/make/common/shared/Defs-java.gmk	2010-03-29 23:22:38.000000000 +0100
+@@ -186,7 +186,10 @@
+ ifeq ($(COMPILER_WARNINGS_FATAL), true)
+   BOOT_JAVACFLAGS  += -Werror
+ endif
+-BOOT_JAVACFLAGS  += -encoding ascii
++
++BOOT_SOURCE_LANGUAGE_VERSION = 6
++BOOT_TARGET_CLASS_VERSION = 6
++BOOT_JAVACFLAGS  += -encoding ascii -source $(BOOT_SOURCE_LANGUAGE_VERSION) -target $(BOOT_TARGET_CLASS_VERSION)
+ 
+ BOOT_JAVACFLAGS  += $(NO_PROPRIETARY_API_WARNINGS)
+ 

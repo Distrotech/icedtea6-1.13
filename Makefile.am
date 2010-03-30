@@ -88,18 +88,29 @@ ICEDTEA_BOOTSTRAP_DIRS = \
 	$(LANGTOOLS)/com/sun/mirror \
 	$(LANGTOOLS)/com/sun/tools/apt
 
+# PR43578 - java.security.CodeSource.getCodeSigners() missing
+# PR43582 - Missing javax.swing.JTable.setFillsViewportHeight
+# PR43585 - java.security.KeyStore.TrustedCertificateEntry class missing
+NETX_BOOTSTRAP_CLASSES = \
+	$(SHARE)/java/security/CodeSource.java \
+	$(SHARE)/javax/swing/JTable.java \
+	$(SHARE)/java/security/KeyStore.java
+
 # PR42003 - javax.swing.plaf.basic.BasicDirectoryModel
 # PR43389 - javax.management.StandardMBean
 ICEDTEA_BOOTSTRAP_CLASSES = \
 	$(SHARE)/javax/swing/plaf/basic/BasicDirectoryModel.java \
-	$(SHARE)/javax/management/StandardMBean.java
+	$(SHARE)/javax/management/StandardMBean.java \
+	$(NETX_BOOTSTRAP_CLASSES)
 
 # FIXME (javac): Settings for javac go here
 
 # Flags
 IT_CFLAGS=$(CFLAGS) $(ARCHFLAG)
 IT_JAVAC_SETTINGS=-g -encoding utf-8 $(JAVACFLAGS) $(MEMORY_LIMIT) $(PREFER_SOURCE)
-IT_JAVACFLAGS=$(IT_JAVAC_SETTINGS)
+IT_LANGUAGE_SOURCE_VERSION=6
+IT_CLASS_TARGET_VERSION=6
+IT_JAVACFLAGS=$(IT_JAVAC_SETTINGS) -source $(IT_LANGUAGE_SOURCE_VERSION) -target $(IT_CLASS_TARGET_VERSION)
 
 # Conditional defintions
 
@@ -299,7 +310,10 @@ ICEDTEA_PATCHES = \
 	patches/extensions/netx.patch \
 	patches/extensions/netx-dist.patch \
 	patches/extensions/netx-umask.patch \
-	patches/icedtea-jtreg-httpTest.patch
+	patches/icedtea-jtreg-httpTest.patch \
+	patches/openjdk/6873059-javac-versioning-corba.patch \
+	patches/openjdk/6873059-javac-versioning-hotspot.patch \
+	patches/openjdk/6873059-javac-versioning-jdk.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -379,7 +393,6 @@ ICEDTEA_ECJ_PATCHES = patches/ecj/icedtea.patch \
 	patches/ecj/bootver.patch \
 	patches/ecj/getannotation-cast.patch \
 	patches/ecj/override.patch
-
 if DTDTYPE_QNAME
 ICEDTEA_ECJ_PATCHES += \
 	patches/ecj/icedtea-jaxws-getdtdtype.patch
@@ -1546,7 +1559,7 @@ stamps/liveconnect.stamp: liveconnect-source-files.txt stamps/netx.stamp
 	  mkdir -p $(abs_top_builddir)/liveconnect && \
 	  $(ICEDTEA_BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) \
 	      -d $(abs_top_builddir)/liveconnect \
-	      -classpath $(abs_top_builddir)/lib/rt:$(abs_top_builddir)/netx.build:$(SYSTEM_JDK_DIR)/jre/lib/rt.jar \
+	      -classpath $(abs_top_builddir)/netx.build:$(ICEDTEA_RT) \
 	      -sourcepath $(SOURCEPATH_DIRS) \
 	      -bootclasspath \'\' \
 	      @liveconnect-source-files.txt ; \
@@ -1584,9 +1597,8 @@ stamps/netx.stamp: netx-source-files.txt stamps/rt-class-files.stamp
 	mkdir -p $(abs_top_builddir)/netx.build
 	$(ICEDTEA_BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) \
 	    -d $(abs_top_builddir)/netx.build \
-	    -classpath $(abs_top_builddir)/lib/rt:$(SYSTEM_JDK_DIR)/jre/lib/rt.jar \
 	    -sourcepath $(NETX_SRCDIR):$(SOURCEPATH_DIRS) \
-	    -bootclasspath \'\' \
+	    -classpath $(ICEDTEA_RT) -bootclasspath \'\' \
 	    @netx-source-files.txt
 	cp -r $(NETX_RESOURCE_DIR) $(abs_top_builddir)/netx.build/net/sourceforge/jnlp
 	mkdir -p stamps
@@ -1618,10 +1630,9 @@ extra-source-files.txt:
 stamps/extra-class-files.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) \
   extra-source-files.txt stamps/netx.stamp
 	mkdir -p extra-lib
-	$(ICEDTEA_BOOT_DIR)/bin/javac $(MEMORY_LIMIT) -g -d extra-lib \
-          -source 1.5 \
-          -sourcepath extra -cp netx.build:$(ICEDTEA_RT) \
-          -bootclasspath \'\' @extra-source-files.txt
+	$(ICEDTEA_BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) -d extra-lib \
+          -sourcepath extra -cp netx.build \
+          -bootclasspath $(ICEDTEA_RT) @extra-source-files.txt
 	cp -r $(NETX_EXTRA_DIR) extra-lib/net/sourceforge/jnlp/about
 	mkdir -p stamps
 	touch $@
@@ -1659,20 +1670,15 @@ stamps/pulse-java.stamp: stamps/pulse-java-jar.stamp $(PULSE_JAVA_NATIVE_BUILDDI
 
 stamps/pulse-java-jar.stamp: stamps/pulse-java-class.stamp
 	mkdir -p $(PULSE_JAVA_CLASS_DIR);
-	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
-	then \
-	  $(JAR) cf pulse-java.jar -C $(PULSE_JAVA_CLASS_DIR) .; \
-	else \
-	  $(ICEDTEA_BOOT_DIR)/bin/jar cf pulse-java.jar -C $(PULSE_JAVA_CLASS_DIR) .; \
-	fi
+	$(ICEDTEA_BOOT_DIR)/bin/jar cf pulse-java.jar -C $(PULSE_JAVA_CLASS_DIR) .;
 	mkdir -p stamps
 	touch stamps/pulse-java-jar.stamp
 
 stamps/pulse-java-class.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP)
 	mkdir -p $(PULSE_JAVA_CLASS_DIR)
 	(cd $(PULSE_JAVA_JAVA_SRCDIR); \
-	 $(ICEDTEA_BOOT_DIR)/bin/javac -g -d $(PULSE_JAVA_CLASS_DIR) \
-	  -bootclasspath '$(ICEDTEA_BOOT_DIR)/jre/lib/rt.jar' \
+	 $(ICEDTEA_BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) -d $(PULSE_JAVA_CLASS_DIR) \
+	  -bootclasspath $(ICEDTEA_RT) \
 	  org/classpath/icedtea/pulseaudio/*.java \
 	)
 	cp -r $(PULSE_JAVA_JAVA_SRCDIR)/META-INF $(PULSE_JAVA_CLASS_DIR)
@@ -1710,7 +1716,7 @@ stamps/rewriter.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP)
 if WITH_RHINO
 	mkdir -p $(abs_top_builddir)/rewriter
 	(cd $(abs_top_srcdir)/rewriter ; \
-	 $(ICEDTEA_BOOT_DIR)/bin/javac -g \
+	 $(ICEDTEA_BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) \
 	 -d $(abs_top_builddir)/rewriter $(REWRITER_SRCS) \
 	)
 endif
@@ -1953,10 +1959,10 @@ if ENABLE_PLUGIN
 stamps/plugin-tests.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) $(PLUGIN_TEST_SRCS) \
  stamps/plugin.stamp
 	mkdir -p plugin/tests/LiveConnect
-	$(ICEDTEA_BOOT_DIR)/bin/javac $(MEMORY_LIMIT) -g \
+	$(ICEDTEA_BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) \
 	 -d plugin/tests/LiveConnect \
 	 -classpath liveconnect/lib/classes.jar \
-	 -source 1.5 $(PLUGIN_TEST_SRCS) ;
+	 $(PLUGIN_TEST_SRCS) ;
 	$(ICEDTEA_BOOT_DIR)/bin/jar cf plugin/tests/LiveConnect/PluginTest.jar \
 	  plugin/tests/LiveConnect/*.class ;
 	cp -a $(abs_top_srcdir)/plugin/tests/LiveConnect/*.{js,html} plugin/tests/LiveConnect ;
@@ -1970,7 +1976,7 @@ endif
 stamps/jtreg.stamp: stamps/icedtea-against-icedtea.stamp
 	rm -rf test/jtreg/classes
 	mkdir -p test/jtreg/classes
-	$(ICEDTEA_BOOT_DIR)/bin/javac -g -d test/jtreg/classes -source 1.5 \
+	$(ICEDTEA_BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) -d test/jtreg/classes \
 	   -encoding iso-8859-1 `find $(abs_top_srcdir)/test/jtreg/com -name '*.java'`
 	(cd $(abs_top_srcdir)/test/jtreg; \
 	 $(ICEDTEA_BOOT_DIR)/bin/jar cfm $(abs_top_builddir)/test/jtreg.jar \
@@ -2069,11 +2075,10 @@ rt-source-files.txt: $(OPENJDK_ECJ_TREE)
 
 stamps/rt-class-files.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) rt-source-files.txt
 	mkdir -p lib/rt
-	$(ICEDTEA_BOOT_DIR)/bin/javac $(MEMORY_LIMIT) -g -d lib/rt \
-          -source 1.5 \
-          -sourcepath $(SOURCEPATH_DIRS) \
+	$(ICEDTEA_BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) -d lib/rt \
+          -sourcepath $(SOURCEPATH_DIRS) -bootclasspath \'\' \
           -classpath $(SYSTEM_JDK_DIR)/jre/lib/rt.jar \
-	  -bootclasspath \'\' @rt-source-files.txt ;
+	  @rt-source-files.txt ;
 	mkdir -p stamps
 	touch stamps/rt-class-files.stamp
 
@@ -2089,7 +2094,12 @@ stamps/rt.stamp: stamps/rt-class-files.stamp stamps/bootstrap-directory-ecj.stam
 	mkdir -p stamps
 if LACKS_SUN_AWT_TOOLKIT
 	$(ICEDTEA_BOOT_DIR)/bin/jar uf $(ICEDTEA_RT) -C lib/rt com -C lib/rt java \
-	  -C lib/rt javax -C lib/rt sun ;
+	  -C lib/rt javax -C lib/rt sun 
+if ENABLE_NIO2
+	if [ -e lib/rt/org/classpath ] ; then \
+	    $(ICEDTEA_BOOT_DIR)/bin/jar uf $(ICEDTEA_RT) -C lib/rt org/classpath ; \
+	fi
+endif
 endif
 	touch stamps/rt.stamp
 

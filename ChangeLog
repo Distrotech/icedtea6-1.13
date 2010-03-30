@@ -1,3 +1,69 @@
+2010-03-29  Andrew John Hughes  <ahughes@redhat.com>
+
+	* .hgignore:
+	Use a regular expression to match openjdk
+	to avoid matching patches/openjdk.
+	* Makefile.am:
+	(NETX_BOOTSTRAP_CLASSES): Classes required to
+	bootstrap NetX (only partial so far).
+	(ICEDTEA_BOOTSTRAP_CLASSES): Include
+	NETX_BOOTSTRAP_CLASSES.
+	(IT_LANGUAGE_SOURCE_VERSION): Source version to compile as.
+	(IT_CLASS_TARGET_VERSION): Class file version to target.
+	(IT_JAVACFLAGS): Add above flags to javac compilation.
+	(ICEDTEA_PATCHES): Add 6873059 source/target fixes from OpenJDK7.
+	(liveconnect.stamp): Use ICEDTEA_RT on classpath instead of system rt.jar and lib/rt.
+	(netx.stamp): Likewise.
+	(extra-class-files.stamp): Use ICEDTEA_RT as bootclasspath.
+	Use standard IT_JAVACFLAGS options.
+	(pulse-java-jar.stamp): Remove unneeded conditional.
+	(pulse-java-class.stamp): Use IT_JAVACFLAGS and ICEDTEA_RT on bootclasspath.
+	(rewriter.stamp): Use IT_JAVACFLAGS.
+	(plugin-tests.stamp): Likewise.
+	(jtreg.stamp): Likewise.
+	(rt-class-files.stamp): Likewise.
+	(rt.stamp): Include org.classpath classes in rt.jar if NIO2 is enabled.
+	* generated/org/classpath/icedtea/java/nio/channels/AcceptPendingException.java,
+	* generated/org/classpath/icedtea/java/nio/channels/IllegalChannelGroupException.java,
+	* generated/org/classpath/icedtea/java/nio/channels/InterruptedByTimeoutException.java,
+	* generated/org/classpath/icedtea/java/nio/channels/ReadPendingException.java,
+	* generated/org/classpath/icedtea/java/nio/channels/ShutdownChannelGroupException.java,
+	* generated/org/classpath/icedtea/java/nio/channels/WritePendingException.java,
+	* generated/sun/nio/fs/UnixConstants.java:
+	Add generated files needed for NIO2.
+	* javac.in: Move to OpenJDK7 Perl version so that flag duplication avoidance
+	works correctly.
+	* patches/ecj/icedtea-hotspot.patch: Regenerated.
+	* patches/openjdk/6873059-javac-versioning-corba.patch,
+	* patches/openjdk/6873059-javac-versioning-hotspot.patch,
+	* patches/openjdk/6873059-javac-versioning-jdk.patch:
+	Backported from OpenJDK7.
+	* THANKYOU: Add C. K. Jester-Young who created
+	the initial Perl version of javac.in.
+
+2009-08-21  Andrew John Hughes  <ahughes@redhat.com>
+
+	* javac.in:
+	Remove 1.7 setting.  Add ecj_parms so same
+	parameters are used for all ecj invocations.
+
+2009-07-21  Andrew John Hughes  <ahughes@redhat.com>
+
+	* javac.in:
+	Move ecj opt generation to a subroutine so it is only
+	performed when needed.
+
+2008-11-10  Andrew John Hughes  <ahughes@redhat.com>
+
+	* javac.in:
+	Update with native ecj changes.
+
+2008-09-18  C. K. Jester-Young  <cky944@gmail.com>
+
+	* javac.in:
+	Convert to Perl script to avoid
+	quoting errors.
+
 2010-03-25  Matthias Klose  <doko@ubuntu.com>
 
 	* configure.ac: Bump version to 1.9pre.
