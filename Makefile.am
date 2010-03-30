@@ -213,9 +213,6 @@ REWRITER_SRCS = $(abs_top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.jav
 ICEDTEA_FSG_PATCHES =
 
 ICEDTEA_PATCHES = \
-	patches/zero/6890308.patch \
-	patches/zero/6891677.patch \
-	patches/zero/6896043.patch \
 	patches/zero/6903453.patch \
 	patches/zero/6909153.patch \
 	patches/zero/6913869.patch \
@@ -267,8 +264,6 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-samejvm-safe.patch \
 	patches/icedtea-pr261.patch \
 	patches/icedtea-doc-headers.patch \
-	patches/openjdk/bidi-tests.patch \
-	patches/openjdk/annotation-tests.patch \
 	patches/icedtea-sparc-buildfixes.patch \
 	patches/icedtea-sparc64-linux.patch \
 	patches/icedtea-sparc-ptracefix.patch \
