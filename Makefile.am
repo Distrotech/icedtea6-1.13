@@ -313,7 +313,7 @@ ICEDTEA_PATCHES = \
 	patches/extensions/netx-umask.patch \
 	patches/icedtea-jtreg-httpTest.patch \
 	patches/openjdk/6873059-javac-versioning-corba.patch \
-	patches/openjdk/6873059-javac-versioning-hotspot.patch \
+	patches/hotspot/$(HSBUILD)/6873059-javac-versioning-hotspot.patch \
 	patches/openjdk/6873059-javac-versioning-jdk.patch
 
 if WITH_RHINO
