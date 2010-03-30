@@ -1,0 +1,15 @@
+Index: openjdk/hotspot/src/share/vm/interpreter/bytecodeInterpreter.cpp
+===================================================================
+--- openjdk.orig/hotspot/src/share/vm/interpreter/bytecodeInterpreter.cpp	2010-03-19 10:35:14.000000000 +0100
++++ openjdk/hotspot/src/share/vm/interpreter/bytecodeInterpreter.cpp	2010-03-19 10:39:01.000000000 +0100
+@@ -2328,6 +2328,10 @@
+       }
+ 
+       DEFAULT:
++         if (Bytecodes::is_defined((Bytecodes::Code)opcode)) {
++           opcode = (jubyte)Bytecodes::java_code((Bytecodes::Code)opcode);
++           goto opcode_switch;
++         }
+           fatal2("\t*** Unimplemented opcode: %d = %s\n",
+                  opcode, Bytecodes::name((Bytecodes::Code)opcode));
+           goto finish;
