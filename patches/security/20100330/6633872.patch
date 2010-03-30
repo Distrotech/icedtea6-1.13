@@ -1,0 +1,443 @@
+--- openjdk.orig/jdk/src/share/classes/java/security/ProtectionDomain.java	Mon Mar 15 10:28:30 2010
++++ openjdk/jdk/src/share/classes/java/security/ProtectionDomain.java	Mon Mar 15 10:28:30 2010
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
++ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -25,9 +25,15 @@
+ 
+ package java.security;
+ 
++import java.util.ArrayList;
++import java.util.Collections;
+ import java.util.Enumeration;
+ import java.util.List;
+-import java.util.ArrayList;
++import java.util.Map;
++import java.util.WeakHashMap;
++import sun.misc.JavaSecurityProtectionDomainAccess;
++import static sun.misc.JavaSecurityProtectionDomainAccess.ProtectionDomainCache;
++import sun.misc.SharedSecrets;
+ import sun.security.util.Debug;
+ import sun.security.util.SecurityConstants;
+ 
+@@ -72,6 +78,11 @@
+        or dynamic (via a policy refresh) */
+     private boolean staticPermissions;
+ 
++    /*
++     * An object used as a key when the ProtectionDomain is stored in a Map.
++     */
++    final Key key = new Key();
++
+     private static final Debug debug = Debug.getInstance("domain");
+ 
+     /**
+@@ -238,7 +249,7 @@
+     /**
+      * Convert a ProtectionDomain to a String.
+      */
+-    public String toString() {
++    @Override public String toString() {
+         String pals = "<no principals>";
+         if (principals != null && principals.length > 0) {
+             StringBuilder palBuf = new StringBuilder("(principals ");
+@@ -396,4 +407,29 @@
+ 
+         return mergedPerms;
+     }
++
++    /**
++     * Used for storing ProtectionDomains as keys in a Map.
++     */
++    final class Key {}
++
++    static {
++        SharedSecrets.setJavaSecurityProtectionDomainAccess(
++            new JavaSecurityProtectionDomainAccess() {
++                public ProtectionDomainCache getProtectionDomainCache() {
++                    return new ProtectionDomainCache() {
++                        private final Map<Key, PermissionCollection> map =
++                            Collections.synchronizedMap
++                                (new WeakHashMap<Key, PermissionCollection>());
++                        public void put(ProtectionDomain pd,
++                            PermissionCollection pc) {
++                            map.put((pd == null ? null : pd.key), pc);
++                        }
++                        public PermissionCollection get(ProtectionDomain pd) {
++                            return pd == null ? map.get(null) : map.get(pd.key);
++                        }
++                    };
++                }
++            });
++    }
+ }
+--- openjdk.orig/jdk/src/share/classes/java/security/Policy.java	Mon Mar 15 10:28:30 2010
++++ openjdk/jdk/src/share/classes/java/security/Policy.java	Mon Mar 15 10:28:30 2010
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
++ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -28,22 +28,19 @@
+ 
+ import java.io.*;
+ import java.lang.RuntimePermission;
++import java.lang.reflect.*;
+ import java.net.MalformedURLException;
+ import java.net.URL;
+ import java.util.Enumeration;
+ import java.util.Hashtable;
+-import java.util.Vector;
+-import java.util.StringTokenizer;
+ import java.util.PropertyPermission;
+-
+-import java.lang.reflect.*;
+-
++import java.util.StringTokenizer;
++import java.util.Vector;
+ import java.util.WeakHashMap;
+-import sun.security.util.Debug;
+ import sun.security.jca.GetInstance;
++import sun.security.util.Debug;
+ import sun.security.util.SecurityConstants;
+ 
+-
+ /**
+  * A Policy object is responsible for determining whether code executing
+  * in the Java runtime environment has permission to perform a
+@@ -113,8 +110,8 @@
+ 
+     private static final Debug debug = Debug.getInstance("policy");
+ 
+-    // Cache mapping  ProtectionDomain to PermissionCollection
+-    private WeakHashMap<ProtectionDomain, PermissionCollection> pdMapping;
++    // Cache mapping ProtectionDomain.Key to PermissionCollection
++    private WeakHashMap<ProtectionDomain.Key, PermissionCollection> pdMapping;
+ 
+     /** package private for AccessControlContext */
+     static boolean isSet()
+@@ -307,7 +304,7 @@
+         synchronized (p) {
+             if (p.pdMapping == null) {
+                 p.pdMapping =
+-                    new WeakHashMap<ProtectionDomain, PermissionCollection>();
++                    new WeakHashMap<ProtectionDomain.Key, PermissionCollection>();
+            }
+         }
+ 
+@@ -323,7 +320,7 @@
+ 
+             synchronized (p.pdMapping) {
+                 // cache of pd to permissions
+-                p.pdMapping.put(policyDomain, policyPerms);
++                p.pdMapping.put(policyDomain.key, policyPerms);
+             }
+         }
+         return;
+@@ -638,7 +635,7 @@
+         }
+ 
+         synchronized (pdMapping) {
+-            pc = pdMapping.get(domain);
++            pc = pdMapping.get(domain.key);
+         }
+ 
+         if (pc != null) {
+@@ -697,7 +694,7 @@
+         }
+ 
+         synchronized (pdMapping) {
+-            pc = pdMapping.get(domain);
++            pc = pdMapping.get(domain.key);
+         }
+ 
+         if (pc != null) {
+@@ -711,7 +708,7 @@
+ 
+         synchronized (pdMapping) {
+             // cache it
+-            pdMapping.put(domain, pc);
++            pdMapping.put(domain.key, pc);
+         }
+ 
+         return pc.implies(permission);
+@@ -747,21 +744,25 @@
+             this.params = params;
+         }
+ 
+-        public String getType() { return type; }
++        @Override public String getType() { return type; }
+ 
+-        public Policy.Parameters getParameters() { return params; }
++        @Override public Policy.Parameters getParameters() { return params; }
+ 
+-        public Provider getProvider() { return p; }
++        @Override public Provider getProvider() { return p; }
+ 
++        @Override
+         public PermissionCollection getPermissions(CodeSource codesource) {
+             return spi.engineGetPermissions(codesource);
+         }
++        @Override
+         public PermissionCollection getPermissions(ProtectionDomain domain) {
+             return spi.engineGetPermissions(domain);
+         }
++        @Override
+         public boolean implies(ProtectionDomain domain, Permission perm) {
+             return spi.engineImplies(domain, perm);
+         }
++        @Override
+         public void refresh() {
+             spi.engineRefresh();
+         }
+@@ -803,7 +804,7 @@
+          * @exception SecurityException - if this PermissionCollection object
+          *                                has been marked readonly
+          */
+-        public void add(Permission permission) {
++        @Override public void add(Permission permission) {
+             perms.add(permission);
+         }
+ 
+@@ -816,7 +817,7 @@
+          * @return true if "permission" is implied by the  permissions in
+          * the collection, false if not.
+          */
+-        public boolean implies(Permission permission) {
++        @Override public boolean implies(Permission permission) {
+             return perms.implies(permission);
+         }
+ 
+@@ -826,7 +827,7 @@
+          *
+          * @return an enumeration of all the Permissions.
+          */
+-        public Enumeration<Permission> elements() {
++        @Override public Enumeration<Permission> elements() {
+             return perms.elements();
+         }
+     }
+--- openjdk.orig/jdk/src/share/classes/sun/misc/SharedSecrets.java	Mon Mar 15 10:28:31 2010
++++ openjdk/jdk/src/share/classes/sun/misc/SharedSecrets.java	Mon Mar 15 10:28:30 2010
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
++ * Copyright 2002-2009 Sun Microsystems, Inc.  All Rights Reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -47,6 +47,7 @@
+     private static JavaIODeleteOnExitAccess javaIODeleteOnExitAccess;
+     private static JavaNetAccess javaNetAccess;
+     private static JavaIOFileDescriptorAccess javaIOFileDescriptorAccess;
++    private static JavaSecurityProtectionDomainAccess javaSecurityProtectionDomainAccess;
+ 
+     public static JavaUtilJarAccess javaUtilJarAccess() {
+         if (javaUtilJarAccess == null) {
+@@ -110,4 +111,16 @@
+         return javaIOFileDescriptorAccess;
+     }
+ 
++    public static void setJavaSecurityProtectionDomainAccess
++        (JavaSecurityProtectionDomainAccess jspda) {
++            javaSecurityProtectionDomainAccess = jspda;
++    }
++
++    public static JavaSecurityProtectionDomainAccess
++        getJavaSecurityProtectionDomainAccess() {
++        if (javaSecurityProtectionDomainAccess == null)
++            unsafe.ensureClassInitialized(java.security.ProtectionDomain.class);
++
++        return javaSecurityProtectionDomainAccess;
++    }
+ }
+--- /dev/null	Mon Mar 15 10:28:31 2010
++++ openjdk/jdk/src/share/classes/sun/misc/JavaSecurityProtectionDomainAccess.java	Mon Mar 15 10:28:31 2010
+@@ -0,0 +1,40 @@
++/*
++ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.  Sun designates this
++ * particular file as subject to the "Classpath" exception as provided
++ * by Sun in the LICENSE file that accompanied this code.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++package sun.misc;
++
++import java.security.PermissionCollection;
++import java.security.ProtectionDomain;
++
++public interface JavaSecurityProtectionDomainAccess {
++    interface ProtectionDomainCache {
++        void put(ProtectionDomain pd, PermissionCollection pc);
++        PermissionCollection get(ProtectionDomain pd);
++    }
++    /**
++     * Returns the ProtectionDomainCache.
++     */
++    ProtectionDomainCache getProtectionDomainCache();
++}
+--- openjdk.orig/jdk/src/share/classes/sun/security/provider/PolicyFile.java	Mon Mar 15 10:28:31 2010
++++ openjdk/jdk/src/share/classes/sun/security/provider/PolicyFile.java	Mon Mar 15 10:28:31 2010
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
++ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -66,6 +66,9 @@
+ import javax.sound.sampled.AudioPermission;
+ import javax.net.ssl.SSLPermission;
+ */
++import sun.misc.JavaSecurityProtectionDomainAccess;
++import static sun.misc.JavaSecurityProtectionDomainAccess.ProtectionDomainCache;
++import sun.misc.SharedSecrets;
+ import sun.security.util.Password;
+ import sun.security.util.PolicyUtil;
+ import sun.security.util.PropertyExpander;
+@@ -1108,7 +1111,7 @@
+     /**
+      * Refreshes the policy object by re-reading all the policy files.
+      */
+-    public void refresh() {
++    @Override public void refresh() {
+         init(url);
+     }
+ 
+@@ -1125,9 +1128,10 @@
+      *
+      * @see java.security.ProtectionDomain
+      */
++    @Override
+     public boolean implies(ProtectionDomain pd, Permission p) {
+         PolicyInfo pi = policyInfo.get();
+-        Map<ProtectionDomain, PermissionCollection> pdMap = pi.getPdMapping();
++        ProtectionDomainCache pdMap = pi.getPdMapping();
+ 
+         PermissionCollection pc = pdMap.get(pd);
+ 
+@@ -1173,6 +1177,7 @@
+      * @return the Permissions granted to the provided
+      *          <code>ProtectionDomain</code>.
+      */
++    @Override
+     public PermissionCollection getPermissions(ProtectionDomain domain) {
+         Permissions perms = new Permissions();
+ 
+@@ -1208,6 +1213,7 @@
+      *
+      * @return the set of permissions according to the policy.
+      */
++    @Override
+     public PermissionCollection getPermissions(CodeSource codesource) {
+         return getPermissions(new Permissions(), codesource);
+     }
+@@ -2200,7 +2206,7 @@
+             return codesource;
+         }
+ 
+-        public String toString(){
++        @Override public String toString(){
+             StringBuilder sb = new StringBuilder();
+             sb.append(ResourcesMgr.getString("("));
+             sb.append(getCodeSource());
+@@ -2336,7 +2342,7 @@
+          *
+          * @return false.
+          */
+-        public boolean implies(Permission p) {
++        @Override public boolean implies(Permission p) {
+             return false;
+         }
+ 
+@@ -2353,7 +2359,7 @@
+          * type (class) name, permission name, actions, and
+          * certificates as this object.
+          */
+-        public boolean equals(Object obj) {
++        @Override public boolean equals(Object obj) {
+             if (obj == this)
+                 return true;
+ 
+@@ -2401,7 +2407,7 @@
+          *
+          * @return a hash code value for this object.
+          */
+-        public int hashCode() {
++        @Override public int hashCode() {
+             int hash = type.hashCode();
+             if (name != null)
+                 hash ^= name.hashCode();
+@@ -2420,7 +2426,7 @@
+          *
+          * @return the empty string "".
+          */
+-        public String getActions() {
++        @Override public String getActions() {
+             return "";
+         }
+ 
+@@ -2447,7 +2453,7 @@
+          *
+          * @return information about this SelfPermission.
+          */
+-        public String toString() {
++        @Override public String toString() {
+             return "(SelfPermission " + type + " " + name + " " + actions + ")";
+         }
+     }
+@@ -2469,7 +2475,7 @@
+         final Map aliasMapping;
+ 
+         // Maps ProtectionDomain to PermissionCollection
+-        private final Map<ProtectionDomain, PermissionCollection>[] pdMapping;
++        private final ProtectionDomainCache[] pdMapping;
+         private java.util.Random random;
+ 
+         PolicyInfo(int numCaches) {
+@@ -2478,16 +2484,17 @@
+                 Collections.synchronizedList(new ArrayList<PolicyEntry>(2));
+             aliasMapping = Collections.synchronizedMap(new HashMap(11));
+ 
+-            pdMapping = new Map[numCaches];
++            pdMapping = new ProtectionDomainCache[numCaches];
++            JavaSecurityProtectionDomainAccess jspda
++                = SharedSecrets.getJavaSecurityProtectionDomainAccess();
+             for (int i = 0; i < numCaches; i++) {
+-                pdMapping[i] = Collections.synchronizedMap
+-                    (new WeakHashMap<ProtectionDomain, PermissionCollection>());
++                pdMapping[i] = jspda.getProtectionDomainCache();
+             }
+             if (numCaches > 1) {
+                 random = new java.util.Random();
+             }
+         }
+-        Map<ProtectionDomain, PermissionCollection> getPdMapping() {
++        ProtectionDomainCache getPdMapping() {
+             if (pdMapping.length == 1) {
+                 return pdMapping[0];
+             } else {

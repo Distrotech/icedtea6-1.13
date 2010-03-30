@@ -315,6 +315,27 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6873059-javac-versioning-corba.patch \
 	patches/hotspot/$(HSBUILD)/6873059-javac-versioning-hotspot.patch \
 	patches/openjdk/6873059-javac-versioning-jdk.patch
+	patches/security/20100330/6626217.patch \
+	patches/security/20100330/6633872.patch \
+	patches/security/20100330/6639665.patch \
+	patches/security/20100330/6736390.patch \
+	patches/security/20100330/6745393.patch \
+	patches/security/20100330/6887703.patch \
+	patches/security/20100330/6888149.patch \
+	patches/security/20100330/6892265.patch \
+	patches/security/20100330/6893947.patch \
+	patches/security/20100330/6893954.patch \
+	patches/security/20100330/hotspot/$(HSBUILD)/6894807.patch \
+	patches/security/20100330/6898622.patch \
+	patches/security/20100330/6898739.patch \
+	patches/security/20100330/6899653.patch \
+	patches/security/20100330/6902299.patch \
+	patches/security/20100330/6904691.patch \
+	patches/security/20100330/6909597.patch \
+	patches/security/20100330/6910590.patch \
+	patches/security/20100330/6914823.patch \
+	patches/security/20100330/6914866.patch \
+	patches/security/20100330/6932480.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \

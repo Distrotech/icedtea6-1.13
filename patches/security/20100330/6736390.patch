@@ -1,0 +1,18 @@
+--- openjdk.orig/jdk/src/share/classes/java/io/File.java	Mon Mar 15 18:39:19 2010
++++ openjdk/jdk/src/share/classes/java/io/File.java	Mon Mar 15 18:39:18 2010
+@@ -1936,11 +1936,12 @@
+     private synchronized void readObject(java.io.ObjectInputStream s)
+          throws IOException, ClassNotFoundException
+     {
+-        s.defaultReadObject();
++        ObjectInputStream.GetField fields = s.readFields();
++        String pathField = (String)fields.get("path", null);
+         char sep = s.readChar(); // read the previous separator char
+         if (sep != separatorChar)
+-            this.path = this.path.replace(sep, separatorChar);
+-        this.path = fs.normalize(this.path);
++            pathField = pathField.replace(sep, separatorChar);
++        this.path = fs.normalize(pathField);
+         this.prefixLength = fs.prefixLength(this.path);
+     }
+ 

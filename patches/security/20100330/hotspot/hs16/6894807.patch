@@ -1,0 +1,115 @@
+# HG changeset patch
+# User kvn
+# Date 1265943511 28800
+# Node ID 9d4986fcac2a07806ffed8a33184da149f76719b
+# Parent  209a7a8a8f966dc4d6b45333cf4f3fa6648a6ecb
+6894807: No ClassCastException for HashAttributeSet constructors if run with -Xcomp
+Summary: Return interface klass type if it is exact.
+Reviewed-by: never
+
+diff --git openjdk.orig/hotspot/src/share/vm/opto/cfgnode.cpp openjdk/hotspot/src/share/vm/opto/cfgnode.cpp
+--- openjdk.orig/hotspot/src/share/vm/opto/cfgnode.cpp
++++ openjdk/hotspot/src/share/vm/opto/cfgnode.cpp
+@@ -797,9 +797,16 @@ const Type *PhiNode::Value( PhaseTransfo
+   // lattice, we must tread carefully around phis which implicitly
+   // convert the one to the other.
+   const TypeInstPtr* ttip = _type->isa_instptr();
++  const TypeKlassPtr* ttkp = _type->isa_klassptr();
++
+   bool is_intf = false;
+   if (ttip != NULL) {
+     ciKlass* k = ttip->klass();
++    if (k->is_loaded() && k->is_interface())
++      is_intf = true;
++  }
++  if (ttkp != NULL) {
++    ciKlass* k = ttkp->klass(); 
+     if (k->is_loaded() && k->is_interface())
+       is_intf = true;
+   }
+@@ -859,6 +866,8 @@ const Type *PhiNode::Value( PhaseTransfo
+     // uplift the type.
+     if( !t->empty() && ttip && ttip->is_loaded() && ttip->klass()->is_interface() )
+       { assert(ft == _type, ""); } // Uplift to interface
++    else if( !t->empty() && ttkp && ttkp->is_loaded() && ttkp->klass()->is_interface() )
++      { assert(ft == _type, ""); } // Uplift to interface
+     // Otherwise it's something stupid like non-overlapping int ranges
+     // found on dying counted loops.
+     else
+@@ -873,12 +882,23 @@ const Type *PhiNode::Value( PhaseTransfo
+     // join report an interface back out.  This isn't possible but happens
+     // because the type system doesn't interact well with interfaces.
+     const TypeInstPtr *jtip = jt->isa_instptr();
++    const TypeKlassPtr *jtkp = jt->isa_klassptr();
++
+     if( jtip && ttip ) {
+       if( jtip->is_loaded() &&  jtip->klass()->is_interface() && 
+           ttip->is_loaded() && !ttip->klass()->is_interface() )
+         // Happens in a CTW of rt.jar, 320-341, no extra flags
+         { assert(ft == ttip->cast_to_ptr_type(jtip->ptr()), ""); jt = ft; }
+     }
++    if( jtkp && ttkp ) {
++      if( jtkp->is_loaded() &&  jtkp->klass()->is_interface() &&
++          !jtkp->klass_is_exact() && // Keep exact interface klass (6894807)
++          ttkp->is_loaded() && !ttkp->klass()->is_interface() ) {
++        assert(ft == ttkp->cast_to_ptr_type(jtkp->ptr()), ""); 
++        jt = ft;
++      }
++    }
++
+     if (jt != ft && jt->base() == ft->base()) {
+       if (jt->isa_int() &&
+           jt->is_int()->_lo == ft->is_int()->_lo &&
+diff --git openjdk.orig/hotspot/src/share/vm/opto/type.cpp openjdk/hotspot/src/share/vm/opto/type.cpp
+--- openjdk.orig/hotspot/src/share/vm/opto/type.cpp
++++ openjdk/hotspot/src/share/vm/opto/type.cpp
+@@ -2357,6 +2357,8 @@ const Type *TypeOopPtr::filter( const Ty
+   const Type* ft = join(kills);
+   const TypeInstPtr* ftip = ft->isa_instptr();
+   const TypeInstPtr* ktip = kills->isa_instptr();
++  const TypeKlassPtr* ftkp = ft->isa_klassptr();
++  const TypeKlassPtr* ktkp = kills->isa_klassptr();
+ 
+   if (ft->empty()) {
+     // Check for evil case of 'this' being a class and 'kills' expecting an
+@@ -2369,6 +2371,8 @@ const Type *TypeOopPtr::filter( const Ty
+     // into a Phi which "knows" it's an Interface type we'll have to
+     // uplift the type.
+     if (!empty() && ktip != NULL && ktip->is_loaded() && ktip->klass()->is_interface())
++      return kills;             // Uplift to interface
++    if (!empty() && ktkp != NULL && ktkp->klass()->is_loaded() && ktkp->klass()->is_interface())
+       return kills;             // Uplift to interface
+ 
+     return Type::TOP;           // Canonical empty value
+@@ -2383,9 +2387,18 @@ const Type *TypeOopPtr::filter( const Ty
+       ftip->is_loaded() &&  ftip->klass()->is_interface() && 
+       ktip->is_loaded() && !ktip->klass()->is_interface()) {
+     // Happens in a CTW of rt.jar, 320-341, no extra flags
++    assert(!ftip->klass_is_exact(), "interface could not be exact");
+     return ktip->cast_to_ptr_type(ftip->ptr());
+   }
+-
++  // Interface klass type could be exact in opposite to interface type,
++  // return it here instead of incorrect Constant ptr J/L/Object (6894807).
++  if (ftkp != NULL && ktkp != NULL &&
++      ftkp->is_loaded() &&  ftkp->klass()->is_interface() &&
++      !ftkp->klass_is_exact() && // Keep exact interface klass
++      ktkp->is_loaded() && !ktkp->klass()->is_interface()) {
++    return ktkp->cast_to_ptr_type(ftkp->ptr());
++  }
++  
+   return ft;
+ }
+ 
+diff --git openjdk.orig/hotspot/src/share/vm/opto/type.hpp openjdk/hotspot/src/share/vm/opto/type.hpp
+--- openjdk.orig/hotspot/src/share/vm/opto/type.hpp
++++ openjdk/hotspot/src/share/vm/opto/type.hpp
+@@ -858,6 +858,8 @@ public:
+ public:
+   ciSymbol* name()  const { return _klass->name(); }
+ 
++  bool  is_loaded() const { return _klass->is_loaded(); }
++
+   // ptr to klass 'k'
+   static const TypeKlassPtr *make( ciKlass* k ) { return make( TypePtr::Constant, k, 0); }
+   // ptr to klass 'k' with offset
