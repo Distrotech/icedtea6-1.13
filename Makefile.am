@@ -314,8 +314,8 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-jtreg-httpTest.patch \
 	patches/openjdk/6873059-javac-versioning-corba.patch \
 	patches/hotspot/$(HSBUILD)/6873059-javac-versioning-hotspot.patch \
-	patches/openjdk/6873059-javac-versioning-jdk.patch
-	patches/security/20100330/6626217.patch \
+	patches/openjdk/6873059-javac-versioning-jdk.patch \
+	patches/security/20100330/hotspot/$(HSBUILD)/6626217.patch \
 	patches/security/20100330/6633872.patch \
 	patches/security/20100330/6639665.patch \
 	patches/security/20100330/6736390.patch \
@@ -325,7 +325,7 @@ ICEDTEA_PATCHES = \
 	patches/security/20100330/6892265.patch \
 	patches/security/20100330/6893947.patch \
 	patches/security/20100330/6893954.patch \
-	patches/security/20100330/hotspot/$(HSBUILD)/6894807.patch \
+	patches/security/20100330/6894807.patch \
 	patches/security/20100330/6898622.patch \
 	patches/security/20100330/6898739.patch \
 	patches/security/20100330/6899653.patch \
