@@ -602,4 +602,6 @@ int main(int argc, char **argv)
 	if (ferror(bci_f)) fatal("Error writing bci");
 	if (source_f != stdin) fclose(source_f);
 	if (bci_f != stdout) fclose(bci_f);
+
+	return 0;
 }
