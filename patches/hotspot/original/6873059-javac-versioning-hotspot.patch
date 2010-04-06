@@ -7,9 +7,9 @@
 Summary: The build fails if the bootstrap JDK defaults to <1.5
 Reviewed-by: jcoomes
 
-diff -Nru openjdk.orig/hotspot/make/linux/makefiles/jvmti.make openjdk/hotspot/make/linux/makefiles/jvmti.make
---- openjdk.orig/hotspot/make/linux/makefiles/jvmti.make	2010-03-29 21:25:49.000000000 +0100
-+++ openjdk/hotspot/make/linux/makefiles/jvmti.make	2010-03-29 21:30:06.000000000 +0100
+diff -r 682194ca1d8d -r 0fc81f0a8ca8 make/linux/makefiles/jvmti.make
+--- openjdk.orig/hotspot/make/linux/makefiles/jvmti.make	Thu Sep 10 09:04:41 2009 -0400
++++ openjdk/hotspot/make/linux/makefiles/jvmti.make	Sat Sep 12 12:50:07 2009 +0100
 @@ -70,10 +70,10 @@
  both = $(JvmtiGenClass) $(JvmtiSrcDir)/jvmti.xml $(JvmtiSrcDir)/jvmtiLib.xsl
  
@@ -23,9 +23,9 @@ diff -Nru openjdk.orig/hotspot/make/linux/makefiles/jvmti.make openjdk/hotspot/m
  
  $(JvmtiOutDir)/jvmtiEnter.cpp: $(both) $(JvmtiSrcDir)/jvmtiEnter.xsl
  	@echo Generating $@
-diff -Nru openjdk.orig/hotspot/make/linux/makefiles/rules.make openjdk/hotspot/make/linux/makefiles/rules.make
---- openjdk.orig/hotspot/make/linux/makefiles/rules.make	2010-03-29 21:25:49.000000000 +0100
-+++ openjdk/hotspot/make/linux/makefiles/rules.make	2010-03-29 21:30:06.000000000 +0100
+diff -r 682194ca1d8d -r 0fc81f0a8ca8 make/linux/makefiles/rules.make
+--- openjdk.orig/hotspot/make/linux/makefiles/rules.make	Thu Sep 10 09:04:41 2009 -0400
++++ openjdk/hotspot/make/linux/makefiles/rules.make	Sat Sep 12 12:50:07 2009 +0100
 @@ -122,12 +122,20 @@
  endif
  endif
@@ -47,9 +47,9 @@ diff -Nru openjdk.orig/hotspot/make/linux/makefiles/rules.make openjdk/hotspot/m
  # With parallel makes, print a message at the end of compilation.
  ifeq    ($(findstring j,$(MFLAGS)),j)
  COMPILE_DONE    = && { echo Done with $<; }
-diff -Nru openjdk.orig/hotspot/make/linux/makefiles/sa.make openjdk/hotspot/make/linux/makefiles/sa.make
---- openjdk.orig/hotspot/make/linux/makefiles/sa.make	2010-03-29 21:25:48.000000000 +0100
-+++ openjdk/hotspot/make/linux/makefiles/sa.make	2010-03-29 21:30:06.000000000 +0100
+diff -r 682194ca1d8d -r 0fc81f0a8ca8 make/linux/makefiles/sa.make
+--- openjdk.orig/hotspot/make/linux/makefiles/sa.make	Thu Sep 10 09:04:41 2009 -0400
++++ openjdk/hotspot/make/linux/makefiles/sa.make	Sat Sep 12 12:50:07 2009 +0100
 @@ -74,8 +74,8 @@
  	  mkdir -p $(SA_CLASSDIR);        \
  	fi
@@ -61,9 +61,9 @@ diff -Nru openjdk.orig/hotspot/make/linux/makefiles/sa.make openjdk/hotspot/make
  
  	$(QUIETLY) $(REMOTE) $(COMPILE.RMIC)  -classpath $(SA_CLASSDIR) -d $(SA_CLASSDIR) sun.jvm.hotspot.debugger.remote.RemoteDebuggerServer
  	$(QUIETLY) echo "$(SA_BUILD_VERSION_PROP)" > $(SA_PROPERTIES)
-diff -Nru openjdk.orig/hotspot/make/linux/makefiles/top.make openjdk/hotspot/make/linux/makefiles/top.make
---- openjdk.orig/hotspot/make/linux/makefiles/top.make	2010-03-29 21:25:49.000000000 +0100
-+++ openjdk/hotspot/make/linux/makefiles/top.make	2010-03-29 21:30:06.000000000 +0100
+diff -r 682194ca1d8d -r 0fc81f0a8ca8 make/linux/makefiles/top.make
+--- openjdk.orig/hotspot/make/linux/makefiles/top.make	Thu Sep 10 09:04:41 2009 -0400
++++ openjdk/hotspot/make/linux/makefiles/top.make	Sat Sep 12 12:50:07 2009 +0100
 @@ -24,7 +24,7 @@
  
  # top.make is included in the Makefile in the build directories.
@@ -73,7 +73,7 @@ diff -Nru openjdk.orig/hotspot/make/linux/makefiles/top.make openjdk/hotspot/mak
  # It also:
  #   -builds and runs adlc via adlc.make
  #   -generates JVMTI source and docs via jvmti.make (JSR-163)
-@@ -116,7 +116,7 @@
+@@ -114,7 +114,7 @@
  # make makeDeps: (and zap the cached db files to force a nonincremental run)
  
  $(GENERATED)/$(MakeDepsClass): $(MakeDepsSources)
@@ -82,9 +82,9 @@ diff -Nru openjdk.orig/hotspot/make/linux/makefiles/top.make openjdk/hotspot/mak
  	@echo Removing $(Incremental_Lists) to force regeneration.
  	@rm -f $(Incremental_Lists)
  	@$(CDG) echo >$(Cached_plat)
-diff -Nru openjdk.orig/hotspot/make/solaris/makefiles/jvmti.make openjdk/hotspot/make/solaris/makefiles/jvmti.make
---- openjdk.orig/hotspot/make/solaris/makefiles/jvmti.make	2010-02-17 03:11:04.000000000 +0000
-+++ openjdk/hotspot/make/solaris/makefiles/jvmti.make	2010-03-29 21:30:06.000000000 +0100
+diff -r 682194ca1d8d -r 0fc81f0a8ca8 make/solaris/makefiles/jvmti.make
+--- openjdk.orig/hotspot/make/solaris/makefiles/jvmti.make	Thu Sep 10 09:04:41 2009 -0400
++++ openjdk/hotspot/make/solaris/makefiles/jvmti.make	Sat Sep 12 12:50:07 2009 +0100
 @@ -69,10 +69,10 @@
  both = $(JvmtiGenClass) $(JvmtiSrcDir)/jvmti.xml $(JvmtiSrcDir)/jvmtiLib.xsl
  
@@ -98,9 +98,9 @@ diff -Nru openjdk.orig/hotspot/make/solaris/makefiles/jvmti.make openjdk/hotspot
  
  $(JvmtiOutDir)/jvmtiEnter.cpp: $(both) $(JvmtiSrcDir)/jvmtiEnter.xsl
  	@echo Generating $@
-diff -Nru openjdk.orig/hotspot/make/solaris/makefiles/rules.make openjdk/hotspot/make/solaris/makefiles/rules.make
---- openjdk.orig/hotspot/make/solaris/makefiles/rules.make	2010-03-29 21:25:49.000000000 +0100
-+++ openjdk/hotspot/make/solaris/makefiles/rules.make	2010-03-29 21:30:06.000000000 +0100
+diff -r 682194ca1d8d -r 0fc81f0a8ca8 make/solaris/makefiles/rules.make
+--- openjdk.orig/hotspot/make/solaris/makefiles/rules.make	Thu Sep 10 09:04:41 2009 -0400
++++ openjdk/hotspot/make/solaris/makefiles/rules.make	Sat Sep 12 12:50:07 2009 +0100
 @@ -122,12 +122,20 @@
  endif
  endif
@@ -122,9 +122,9 @@ diff -Nru openjdk.orig/hotspot/make/solaris/makefiles/rules.make openjdk/hotspot
  # With parallel makes, print a message at the end of compilation.
  ifeq    ($(findstring j,$(MFLAGS)),j)
  COMPILE_DONE    = && { echo Done with $<; }
-diff -Nru openjdk.orig/hotspot/make/solaris/makefiles/sa.make openjdk/hotspot/make/solaris/makefiles/sa.make
---- openjdk.orig/hotspot/make/solaris/makefiles/sa.make	2010-02-17 03:11:04.000000000 +0000
-+++ openjdk/hotspot/make/solaris/makefiles/sa.make	2010-03-29 21:30:06.000000000 +0100
+diff -r 682194ca1d8d -r 0fc81f0a8ca8 make/solaris/makefiles/sa.make
+--- openjdk.orig/hotspot/make/solaris/makefiles/sa.make	Thu Sep 10 09:04:41 2009 -0400
++++ openjdk/hotspot/make/solaris/makefiles/sa.make	Sat Sep 12 12:50:07 2009 +0100
 @@ -67,8 +67,8 @@
  	$(QUIETLY) if [ ! -d $(SA_CLASSDIR) ] ; then \
  	  mkdir -p $(SA_CLASSDIR);        \
@@ -136,9 +136,9 @@ diff -Nru openjdk.orig/hotspot/make/solaris/makefiles/sa.make openjdk/hotspot/ma
  	
  	$(QUIETLY) $(COMPILE.RMIC)  -classpath $(SA_CLASSDIR) -d $(SA_CLASSDIR) sun.jvm.hotspot.debugger.remote.RemoteDebuggerServer
  	$(QUIETLY) echo "$(SA_BUILD_VERSION_PROP)" > $(SA_PROPERTIES)
-diff -Nru openjdk.orig/hotspot/make/solaris/makefiles/top.make openjdk/hotspot/make/solaris/makefiles/top.make
---- openjdk.orig/hotspot/make/solaris/makefiles/top.make	2010-02-17 03:11:04.000000000 +0000
-+++ openjdk/hotspot/make/solaris/makefiles/top.make	2010-03-29 21:30:06.000000000 +0100
+diff -r 682194ca1d8d -r 0fc81f0a8ca8 make/solaris/makefiles/top.make
+--- openjdk.orig/hotspot/make/solaris/makefiles/top.make	Thu Sep 10 09:04:41 2009 -0400
++++ openjdk/hotspot/make/solaris/makefiles/top.make	Sat Sep 12 12:50:07 2009 +0100
 @@ -24,7 +24,7 @@
  
  # top.make is included in the Makefile in the build directories.
@@ -157,9 +157,9 @@ diff -Nru openjdk.orig/hotspot/make/solaris/makefiles/top.make openjdk/hotspot/m
  	@echo Removing $(Incremental_Lists) to force regeneration.
  	@rm -f $(Incremental_Lists)
  	@$(CDG) echo >$(Cached_plat)
-diff -Nru openjdk.orig/hotspot/make/windows/makefiles/generated.make openjdk/hotspot/make/windows/makefiles/generated.make
---- openjdk.orig/hotspot/make/windows/makefiles/generated.make	2010-02-17 03:11:04.000000000 +0000
-+++ openjdk/hotspot/make/windows/makefiles/generated.make	2010-03-29 21:30:06.000000000 +0100
+diff -r 682194ca1d8d -r 0fc81f0a8ca8 make/windows/makefiles/generated.make
+--- openjdk.orig/hotspot/make/windows/makefiles/generated.make	Thu Sep 10 09:04:41 2009 -0400
++++ openjdk/hotspot/make/windows/makefiles/generated.make	Sat Sep 12 12:50:07 2009 +0100
 @@ -91,7 +91,7 @@
  classes/MakeDeps.class: $(MakeDepsSources)
  	if exist classes rmdir /s /q classes
@@ -169,9 +169,9 @@ diff -Nru openjdk.orig/hotspot/make/windows/makefiles/generated.make openjdk/hot
  
  !if ("$(Variant)" == "compiler2") || ("$(Variant)" == "tiered")
  
-diff -Nru openjdk.orig/hotspot/make/windows/makefiles/jvmti.make openjdk/hotspot/make/windows/makefiles/jvmti.make
---- openjdk.orig/hotspot/make/windows/makefiles/jvmti.make	2010-02-17 03:11:04.000000000 +0000
-+++ openjdk/hotspot/make/windows/makefiles/jvmti.make	2010-03-29 21:30:06.000000000 +0100
+diff -r 682194ca1d8d -r 0fc81f0a8ca8 make/windows/makefiles/jvmti.make
+--- openjdk.orig/hotspot/make/windows/makefiles/jvmti.make	Thu Sep 10 09:04:41 2009 -0400
++++ openjdk/hotspot/make/windows/makefiles/jvmti.make	Sat Sep 12 12:50:07 2009 +0100
 @@ -68,10 +68,10 @@
          @if not exist $(JvmtiOutDir) mkdir $(JvmtiOutDir)
  
@@ -185,9 +185,9 @@ diff -Nru openjdk.orig/hotspot/make/windows/makefiles/jvmti.make openjdk/hotspot
  
  $(JvmtiOutDir)/jvmtiEnter.cpp: $(both) $(JvmtiSrcDir)/jvmtiEnter.xsl
  	@echo Generating $@
-diff -Nru openjdk.orig/hotspot/make/windows/makefiles/rules.make openjdk/hotspot/make/windows/makefiles/rules.make
---- openjdk.orig/hotspot/make/windows/makefiles/rules.make	2010-02-17 03:11:04.000000000 +0000
-+++ openjdk/hotspot/make/windows/makefiles/rules.make	2010-03-29 21:30:42.000000000 +0100
+diff -r 682194ca1d8d -r 0fc81f0a8ca8 make/windows/makefiles/rules.make
+--- openjdk.orig/hotspot/make/windows/makefiles/rules.make	Thu Sep 10 09:04:41 2009 -0400
++++ openjdk/hotspot/make/windows/makefiles/rules.make	Sat Sep 12 12:50:07 2009 +0100
 @@ -29,7 +29,7 @@
  RUN_JAVAP=$(BootStrapDir)\bin\javap
  RUN_JAVAH=$(BootStrapDir)\bin\javah
@@ -213,12 +213,12 @@ diff -Nru openjdk.orig/hotspot/make/windows/makefiles/rules.make openjdk/hotspot
 +JAVAC_FLAGS=-g -encoding ascii
 +BOOTSTRAP_JAVAC_FLAGS=$(JAVAC_FLAGS) -source $(BOOT_SOURCE_LANGUAGE_VERSION) -target $(BOOT_TARGET_CLASS_VERSION)
 +
+ ProjectFile=vm.vcproj
+ 
  !if "$(MSC_VER)" == "1200"
- VcVersion=VC6
- ProjectFile=vm.dsp
-diff -Nru openjdk.orig/hotspot/make/windows/makefiles/sa.make openjdk/hotspot/make/windows/makefiles/sa.make
---- openjdk.orig/hotspot/make/windows/makefiles/sa.make	2010-02-17 03:11:04.000000000 +0000
-+++ openjdk/hotspot/make/windows/makefiles/sa.make	2010-03-29 21:30:06.000000000 +0100
+diff -r 682194ca1d8d -r 0fc81f0a8ca8 make/windows/makefiles/sa.make
+--- openjdk.orig/hotspot/make/windows/makefiles/sa.make	Thu Sep 10 09:04:41 2009 -0400
++++ openjdk/hotspot/make/windows/makefiles/sa.make	Sat Sep 12 12:50:07 2009 +0100
 @@ -55,9 +55,9 @@
  $(GENERATED)\sa-jdi.jar: $(AGENT_FILES1:/=\) $(AGENT_FILES2:/=\)
  	@if not exist $(SA_CLASSDIR) mkdir $(SA_CLASSDIR)
@@ -232,9 +232,9 @@ diff -Nru openjdk.orig/hotspot/make/windows/makefiles/sa.make openjdk/hotspot/ma
  	$(COMPILE_RMIC) -classpath $(SA_CLASSDIR) -d $(SA_CLASSDIR) sun.jvm.hotspot.debugger.remote.RemoteDebuggerServer
  	$(QUIETLY) echo $(SA_BUILD_VERSION_PROP)> $(SA_PROPERTIES)
  	$(QUIETLY) rm -f $(SA_CLASSDIR)/sun/jvm/hotspot/utilities/soql/sa.js
-diff -Nru openjdk.orig/hotspot/make/windows/projectfiles/common/Makefile openjdk/hotspot/make/windows/projectfiles/common/Makefile
---- openjdk.orig/hotspot/make/windows/projectfiles/common/Makefile	2010-02-17 03:11:04.000000000 +0000
-+++ openjdk/hotspot/make/windows/projectfiles/common/Makefile	2010-03-29 21:30:06.000000000 +0100
+diff -r 682194ca1d8d -r 0fc81f0a8ca8 make/windows/projectfiles/common/Makefile
+--- openjdk.orig/hotspot/make/windows/projectfiles/common/Makefile	Thu Sep 10 09:04:41 2009 -0400
++++ openjdk/hotspot/make/windows/projectfiles/common/Makefile	Sat Sep 12 12:50:07 2009 +0100
 @@ -179,6 +179,6 @@
  $(HOTSPOTBUILDSPACE)/classes/MakeDeps.class: $(MakeDepsSources)
  	@if exist $(HOTSPOTBUILDSPACE)\classes rmdir /s /q $(HOTSPOTBUILDSPACE)\classes
