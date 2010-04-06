@@ -1,0 +1,10 @@
+--- openjdk.orig/jdk/src/share/classes/java/lang/ProcessBuilder.java	Tue Jan 12 12:31:35 2010
++++ openjdk/jdk/src/share/classes/java/lang/ProcessBuilder.java	Tue Jan 12 12:31:34 2010
+@@ -451,6 +451,7 @@
+         // Must convert to array first -- a malicious user-supplied
+         // list might try to circumvent the security check.
+         String[] cmdarray = command.toArray(new String[command.size()]);
++        cmdarray = cmdarray.clone();
+         for (String arg : cmdarray)
+             if (arg == null)
+                 throw new NullPointerException();

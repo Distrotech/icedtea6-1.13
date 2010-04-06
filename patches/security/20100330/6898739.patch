@@ -1,0 +1,437 @@
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/ssl/ClientHandshaker.java openjdk/jdk/src/share/classes/sun/security/ssl/ClientHandshaker.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/ssl/ClientHandshaker.java	2009-04-24 08:34:23.000000000 +0100
++++ openjdk/jdk/src/share/classes/sun/security/ssl/ClientHandshaker.java	2010-03-30 21:08:50.000000000 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 1996-2007 Sun Microsystems, Inc.  All Rights Reserved.
++ * Copyright 1996-2009 Sun Microsystems, Inc.  All Rights Reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -96,13 +96,17 @@
+      * Constructors
+      */
+     ClientHandshaker(SSLSocketImpl socket, SSLContextImpl context,
+-            ProtocolList enabledProtocols) {
++            ProtocolList enabledProtocols,
++            ProtocolVersion activeProtocolVersion) {
+         super(socket, context, enabledProtocols, true, true);
++        this.activeProtocolVersion = activeProtocolVersion;
+     }
+ 
+     ClientHandshaker(SSLEngineImpl engine, SSLContextImpl context,
+-            ProtocolList enabledProtocols) {
++            ProtocolList enabledProtocols,
++            ProtocolVersion activeProtocolVersion) {
+         super(engine, context, enabledProtocols, true, true);
++        this.activeProtocolVersion = activeProtocolVersion;
+     }
+ 
+     /*
+@@ -250,7 +254,42 @@
+         // sent the "client hello" but the server's not seen it.
+         //
+         if (state < HandshakeMessage.ht_client_hello) {
+-            kickstart();
++            if (!renegotiable) {    // renegotiation is not allowed.
++                if (activeProtocolVersion.v >= ProtocolVersion.TLS10.v) {
++                    // response with a no_negotiation warning,
++                    warningSE(Alerts.alert_no_negotiation);
++
++                    // invalidate the handshake so that the caller can
++                    // dispose this object.
++                    invalidated = true;
++
++                    // If there is still unread block in the handshake
++                    // input stream, it would be truncated with the disposal
++                    // and the next handshake message will become incomplete.
++                    //
++                    // However, according to SSL/TLS specifications, no more
++                    // handshake message could immediately follow ClientHello
++                    // or HelloRequest. But in case of any improper messages,
++                    // we'd better check to ensure there is no remaining bytes
++                    // in the handshake input stream.
++                    if (input.available() > 0) {
++                        fatalSE(Alerts.alert_unexpected_message,
++                            "HelloRequest followed by an unexpected  " +
++                            "handshake message");
++                    }
++
++                } else {
++                    // For SSLv3, send the handshake_failure fatal error.
++                    // Note that SSLv3 does not define a no_negotiation alert
++                    // like TLSv1. However we cannot ignore the message
++                    // simply, otherwise the other side was waiting for a
++                    // response that would never come.
++                    fatalSE(Alerts.alert_handshake_failure,
++                        "renegotiation is not allowed");
++                }
++            } else {
++                kickstart();
++            }
+         }
+     }
+ 
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/ssl/Handshaker.java openjdk/jdk/src/share/classes/sun/security/ssl/Handshaker.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/ssl/Handshaker.java	2010-03-30 21:05:58.000000000 +0100
++++ openjdk/jdk/src/share/classes/sun/security/ssl/Handshaker.java	2010-03-30 21:08:50.000000000 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 1996-2007 Sun Microsystems, Inc.  All Rights Reserved.
++ * Copyright 1996-2009 Sun Microsystems, Inc.  All Rights Reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -61,9 +61,12 @@
+  */
+ abstract class Handshaker {
+ 
+-    // current protocol version
++    // protocol version being established using this Handshaker
+     ProtocolVersion protocolVersion;
+ 
++    // the currently active protocol version during a renegotiation
++    ProtocolVersion     activeProtocolVersion;
++
+     // list of enabled protocols
+     ProtocolList enabledProtocols;
+ 
+@@ -125,6 +128,13 @@
+     /* Class and subclass dynamic debugging support */
+     static final Debug debug = Debug.getInstance("ssl");
+ 
++    // By default, disable the unsafe legacy session renegotiation
++    static final boolean renegotiable = Debug.getBooleanProperty(
++                    "sun.security.ssl.allowUnsafeRenegotiation", false);
++
++    // need to dispose the object when it is invalidated
++    boolean invalidated;
++
+     Handshaker(SSLSocketImpl c, SSLContextImpl context,
+             ProtocolList enabledProtocols, boolean needCertVerify,
+             boolean isClient) {
+@@ -145,6 +155,7 @@
+         this.sslContext = context;
+         this.isClient = isClient;
+         enableNewSession = true;
++        invalidated = false;
+ 
+         setCipherSuite(CipherSuite.C_NULL);
+ 
+@@ -490,7 +501,9 @@
+      */
+     void processLoop() throws IOException {
+ 
+-        while (input.available() > 0) {
++        // need to read off 4 bytes at least to get the handshake
++        // message type and length.
++        while (input.available() >= 4) {
+             byte messageType;
+             int messageLen;
+ 
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/ssl/ServerHandshaker.java openjdk/jdk/src/share/classes/sun/security/ssl/ServerHandshaker.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/ssl/ServerHandshaker.java	2009-04-24 08:34:24.000000000 +0100
++++ openjdk/jdk/src/share/classes/sun/security/ssl/ServerHandshaker.java	2010-03-30 21:08:50.000000000 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 1996-2007 Sun Microsystems, Inc.  All Rights Reserved.
++ * Copyright 1996-2009 Sun Microsystems, Inc.  All Rights Reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -74,6 +74,9 @@
+     // flag to check for clientCertificateVerify message
+     private boolean             needClientVerify = false;
+ 
++    // indicate a renegotiation handshaking
++    private boolean             isRenegotiation = false;
++
+     /*
+      * For exportable ciphersuites using non-exportable key sizes, we use
+      * ephemeral RSA keys. We could also do anonymous RSA in the same way
+@@ -101,20 +104,28 @@
+      * Constructor ... use the keys found in the auth context.
+      */
+     ServerHandshaker(SSLSocketImpl socket, SSLContextImpl context,
+-            ProtocolList enabledProtocols, byte clientAuth) {
++            ProtocolList enabledProtocols, byte clientAuth,
++            boolean isRenegotiation, ProtocolVersion activeProtocolVersion) {
++
+         super(socket, context, enabledProtocols,
+                         (clientAuth != SSLEngineImpl.clauth_none), false);
+         doClientAuth = clientAuth;
++        this.isRenegotiation = isRenegotiation;
++        this.activeProtocolVersion = activeProtocolVersion;
+     }
+ 
+     /*
+      * Constructor ... use the keys found in the auth context.
+      */
+     ServerHandshaker(SSLEngineImpl engine, SSLContextImpl context,
+-            ProtocolList enabledProtocols, byte clientAuth) {
++            ProtocolList enabledProtocols, byte clientAuth,
++            boolean isRenegotiation, ProtocolVersion activeProtocolVersion) {
++
+         super(engine, context, enabledProtocols,
+                         (clientAuth != SSLEngineImpl.clauth_none), false);
+         doClientAuth = clientAuth;
++        this.isRenegotiation = isRenegotiation;
++        this.activeProtocolVersion = activeProtocolVersion;
+     }
+ 
+     /*
+@@ -262,6 +273,45 @@
+         if (debug != null && Debug.isOn("handshake")) {
+             mesg.print(System.out);
+         }
++
++        // if it is a renegotiation request and renegotiation is not allowed
++        if (isRenegotiation && !renegotiable) {
++            if (activeProtocolVersion.v >= ProtocolVersion.TLS10.v) {
++                // response with a no_negotiation warning,
++                warningSE(Alerts.alert_no_negotiation);
++
++                // invalidate the handshake so that the caller can
++                // dispose this object.
++                invalidated = true;
++
++                // If there is still unread block in the handshake
++                // input stream, it would be truncated with the disposal
++                // and the next handshake message will become incomplete.
++                //
++                // However, according to SSL/TLS specifications, no more
++                // handshake message could immediately follow ClientHello
++                // or HelloRequest. But in case of any improper messages,
++                // we'd better check to ensure there is no remaining bytes
++                // in the handshake input stream.
++                if (input.available() > 0) {
++                    fatalSE(Alerts.alert_unexpected_message,
++                        "ClientHello followed by an unexpected  " +
++                        "handshake message");
++
++                }
++
++                return;
++            } else {
++                // For SSLv3, send the handshake_failure fatal error.
++                // Note that SSLv3 does not define a no_negotiation alert
++                // like TLSv1. However we cannot ignore the message
++                // simply, otherwise the other side was waiting for a
++                // response that would never come.
++                fatalSE(Alerts.alert_handshake_failure,
++                    "renegotiation is not allowed");
++            }
++        }
++
+         /*
+          * Always make sure this entire record has been digested before we
+          * start emitting output, to ensure correct digesting order.
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/ssl/SSLEngineImpl.java openjdk/jdk/src/share/classes/sun/security/ssl/SSLEngineImpl.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/ssl/SSLEngineImpl.java	2009-04-24 08:34:24.000000000 +0100
++++ openjdk/jdk/src/share/classes/sun/security/ssl/SSLEngineImpl.java	2010-03-30 21:08:50.000000000 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
++ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -433,11 +433,12 @@
+             connectionState = cs_RENEGOTIATE;
+         }
+         if (roleIsServer) {
+-            handshaker = new ServerHandshaker
+-                        (this, sslContext, enabledProtocols, doClientAuth);
++            handshaker = new ServerHandshaker(this, sslContext,
++                        enabledProtocols, doClientAuth,
++                        connectionState == cs_RENEGOTIATE, protocolVersion);
+         } else {
+-            handshaker = new ClientHandshaker
+-                        (this, sslContext, enabledProtocols);
++            handshaker = new ClientHandshaker(this, sslContext,
++                        enabledProtocols, protocolVersion);
+         }
+         handshaker.enabledCipherSuites = enabledCipherSuites;
+         handshaker.setEnableSessionCreation(enableSessionCreation);
+@@ -622,6 +623,10 @@
+             break;
+ 
+         case cs_DATA:
++            if (!Handshaker.renegotiable) {
++                throw new SSLHandshakeException("renegotiation is not allowed");
++            }
++
+             // initialize the handshaker, move to cs_RENEGOTIATE
+             initHandshaker();
+             break;
+@@ -949,7 +954,13 @@
+                     handshaker.process_record(inputRecord, expectingFinished);
+                     expectingFinished = false;
+ 
+-                    if (handshaker.isDone()) {
++                    if (handshaker.invalidated) {
++                        handshaker = null;
++                        // if state is cs_RENEGOTIATE, revert it to cs_DATA
++                        if (connectionState == cs_RENEGOTIATE) {
++                            connectionState = cs_DATA;
++                        }
++                    } else if (handshaker.isDone()) {
+                         sess = handshaker.getSession();
+                         if (!writer.hasOutboundData()) {
+                             hsStatus = HandshakeStatus.FINISHED;
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/ssl/SSLSocketImpl.java openjdk/jdk/src/share/classes/sun/security/ssl/SSLSocketImpl.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/ssl/SSLSocketImpl.java	2009-04-24 08:34:24.000000000 +0100
++++ openjdk/jdk/src/share/classes/sun/security/ssl/SSLSocketImpl.java	2010-03-30 21:09:09.000000000 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 1996-2008 Sun Microsystems, Inc.  All Rights Reserved.
++ * Copyright 1996-2009 Sun Microsystems, Inc.  All Rights Reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -904,7 +904,13 @@
+                     handshaker.process_record(r, expectingFinished);
+                     expectingFinished = false;
+ 
+-                    if (handshaker.isDone()) {
++                    if (handshaker.invalidated) {
++                        handshaker = null;
++                        // if state is cs_RENEGOTIATE, revert it to cs_DATA
++                        if (connectionState == cs_RENEGOTIATE) {
++                            connectionState = cs_DATA;
++                        }
++                    } else if (handshaker.isDone()) {
+                         sess = handshaker.getSession();
+                         handshaker = null;
+                         connectionState = cs_DATA;
+@@ -922,6 +928,7 @@
+                             t.start();
+                         }
+                     }
++
+                     if (needAppData || connectionState != cs_DATA) {
+                         continue;
+                     } else {
+@@ -1080,11 +1087,12 @@
+             connectionState = cs_RENEGOTIATE;
+         }
+         if (roleIsServer) {
+-            handshaker = new ServerHandshaker
+-                        (this, sslContext, enabledProtocols, doClientAuth);
++            handshaker = new ServerHandshaker(this, sslContext,
++                        enabledProtocols, doClientAuth,
++                        connectionState == cs_RENEGOTIATE, protocolVersion);
+         } else {
+-            handshaker = new ClientHandshaker
+-                        (this, sslContext, enabledProtocols);
++            handshaker = new ClientHandshaker(this, sslContext,
++                        enabledProtocols, protocolVersion);
+         }
+         handshaker.enabledCipherSuites = enabledCipherSuites;
+         handshaker.setEnableSessionCreation(enableSessionCreation);
+@@ -1189,6 +1197,10 @@
+             break;
+ 
+         case cs_DATA:
++            if (!Handshaker.renegotiable) {
++                throw new SSLHandshakeException("renegotiation is not allowed");
++            }
++
+             // initialize the handshaker, move to cs_RENEGOTIATE
+             initHandshaker();
+             break;
+diff -Nru openjdk.orig/jdk/test/sun/security/ssl/com/sun/net/ssl/internal/ssl/SSLSocketImpl/InvalidateServerSessionRenegotiate.java openjdk/jdk/test/sun/security/ssl/com/sun/net/ssl/internal/ssl/SSLSocketImpl/InvalidateServerSessionRenegotiate.java
+--- openjdk.orig/jdk/test/sun/security/ssl/com/sun/net/ssl/internal/ssl/SSLSocketImpl/InvalidateServerSessionRenegotiate.java	2009-04-24 08:34:50.000000000 +0100
++++ openjdk/jdk/test/sun/security/ssl/com/sun/net/ssl/internal/ssl/SSLSocketImpl/InvalidateServerSessionRenegotiate.java	2010-03-30 21:08:50.000000000 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2001-2003 Sun Microsystems, Inc.  All Rights Reserved.
++ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -25,6 +25,8 @@
+  * @test
+  * @bug 4403428
+  * @summary Invalidating JSSE session on server causes SSLProtocolException
++ * @ignore incompatible with disabled unsafe renegotiation (6898739), please
++ *         reenable when safe renegotiation is implemented.
+  * @author Brad Wetmore
+  */
+ 
+diff -Nru openjdk.orig/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/JSSERenegotiate.java openjdk/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/JSSERenegotiate.java
+--- openjdk.orig/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/JSSERenegotiate.java	2009-04-24 08:34:51.000000000 +0100
++++ openjdk/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/JSSERenegotiate.java	2010-03-30 21:08:51.000000000 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
++ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -26,6 +26,8 @@
+  * @bug 4280338
+  * @summary "Unsupported SSL message version" SSLProtocolException
+  *      w/SSL_RSA_WITH_NULL_MD5
++ * @ignore incompatible with disabled unsafe renegotiation (6898739), please
++ *         reenable when safe renegotiation is implemented.
+  *
+  * @author Ram Marti
+  * @author Brad Wetmore
+diff -Nru openjdk.orig/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/CheckStatus.java openjdk/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/CheckStatus.java
+--- openjdk.orig/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/CheckStatus.java	2009-04-24 08:34:51.000000000 +0100
++++ openjdk/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/CheckStatus.java	2010-03-30 21:08:51.000000000 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
++ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -25,6 +25,8 @@
+  * @test
+  * @bug 4948079
+  * @summary SSLEngineResult needs updating [none yet]
++ * @ignore incompatible with disabled unsafe renegotiation (6898739), please
++ *         reenable when safe renegotiation is implemented.
+  *
+  * This is a simple hack to test a bunch of conditions and check
+  * their return codes.
+diff -Nru openjdk.orig/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/ConnectionTest.java openjdk/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/ConnectionTest.java
+--- openjdk.orig/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/ConnectionTest.java	2009-04-24 08:34:51.000000000 +0100
++++ openjdk/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/ConnectionTest.java	2010-03-30 21:08:51.000000000 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
++ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -26,6 +26,8 @@
+  * @bug 4495742
+  * @summary Add non-blocking SSL/TLS functionality, usable with any
+  *      I/O abstraction
++ * @ignore incompatible with disabled unsafe renegotiation (6898739), please
++ *         reenable when safe renegotiation is implemented.
+  *
+  * This is a bit hacky, meant to test various conditions.  The main
+  * thing I wanted to do with this was to do buffer reads/writes
+diff -Nru openjdk.orig/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/NoAuthClientAuth.java openjdk/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/NoAuthClientAuth.java
+--- openjdk.orig/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/NoAuthClientAuth.java	2009-04-24 08:34:51.000000000 +0100
++++ openjdk/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/NoAuthClientAuth.java	2010-03-30 21:08:51.000000000 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
++ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -25,6 +25,8 @@
+  * @test
+  * @bug 4495742
+  * @summary Demonstrate SSLEngine switch from no client auth to client auth.
++ * @ignore incompatible with disabled unsafe renegotiation (6898739), please
++ *         reenable when safe renegotiation is implemented.
+  *
+  * @author Brad R. Wetmore
+  */

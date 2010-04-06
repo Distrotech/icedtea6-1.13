@@ -1,0 +1,28 @@
+--- openjdk.orig/jdk/src/share/classes/sun/awt/dnd/SunDropTargetContextPeer.java	Fri Mar  5 12:31:35 2010
++++ openjdk/jdk/src/share/classes/sun/awt/dnd/SunDropTargetContextPeer.java	Fri Mar  5 12:31:33 2010
+@@ -57,6 +57,7 @@
+ import sun.awt.SunToolkit;
+ import sun.awt.datatransfer.DataTransferer;
+ import sun.awt.datatransfer.ToolkitThreadBlockedHandler;
++import sun.security.util.SecurityConstants;
+ 
+ /**
+  * <p>
+@@ -216,6 +217,17 @@
+       throws UnsupportedFlavorException, IOException,
+         InvalidDnDOperationException
+     {
++        SecurityManager sm = System.getSecurityManager();
++        try {
++            if (!dropComplete && sm != null) {
++                sm.checkSystemClipboardAccess();
++            }
++        } catch (Exception e) {
++            Thread currentThread = Thread.currentThread();
++            currentThread.getUncaughtExceptionHandler().uncaughtException(currentThread, e);
++            return null;
++        }
++
+         Long lFormat = null;
+         Transferable localTransferable = local;
+ 

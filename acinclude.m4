@@ -85,7 +85,7 @@ AC_DEFUN([IT_SET_ARCH_SETTINGS],
       CROSS_TARGET_ARCH=s390x
       ARCHFLAG="-m64"
        ;;
-    sh*-*-*)
+    sh*)
       BUILD_ARCH_DIR=sh
       INSTALL_ARCH_DIR=sh
       JRE_ARCH_DIR=sh
@@ -726,6 +726,7 @@ AC_DEFUN([FIND_TOOL],
 
 AC_DEFUN([ENABLE_ZERO_BUILD],
 [
+  AC_REQUIRE([IT_SET_ARCH_SETTINGS])
   AC_MSG_CHECKING([whether to use the zero-assembler port])
   use_zero=no
   AC_ARG_ENABLE([zero],

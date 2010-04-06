@@ -1,0 +1,27 @@
+diff -Nru openjdk.orig/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio1.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio1.c
+--- openjdk.orig/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio1.c	2009-04-24 08:34:31.000000000 +0100
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio1.c	2010-03-30 21:21:47.000000000 +0100
+@@ -1433,6 +1433,9 @@
+ 
+     // If is in memory, the LUT is already there, so throw a copy
+     if (Icc -> TagPtrs[n]) {
++        if (!_cmsValidateLUT((LPLUT) Icc ->TagPtrs[n])) {
++            return NULL;
++        }
+ 
+         return cmsDupLUT((LPLUT) Icc ->TagPtrs[n]);
+     }
+diff -Nru openjdk.orig/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c
+--- openjdk.orig/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c	2010-03-30 21:18:36.000000000 +0100
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c	2010-03-30 21:21:13.000000000 +0100
+@@ -1982,6 +1982,10 @@
+           goto ErrorCleanup;
+ 	} 
+ 
++        if (Transforms[i] == NULL) {
++            cmsSignalError(LCMS_ERRC_ABORTED, "cmsCreateMultiprofileTransform: unable to create transform");
++            goto ErrorCleanup;
++        }
+         CurrentColorSpace = ColorSpaceOut;
+ 
+     }

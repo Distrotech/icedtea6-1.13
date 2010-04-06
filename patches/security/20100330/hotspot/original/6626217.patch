@@ -1,0 +1,180 @@
+# HG changeset patch
+# User acorn
+# Date 1261523209 18000
+# Node ID 209a7a8a8f966dc4d6b45333cf4f3fa6648a6ecb
+# Parent  75e095764f403b7425e30711b00cc038554a1ae9
+6626217: Fixed loader constraint array handling
+Summary: Loader constraints track array elements, not arrays themselves.
+Reviewed-by: dcubed, kevinw
+
+diff --git openjdk.orig/hotspot/src/share/vm/ci/ciEnv.cpp openjdk/hotspot/src/share/vm/ci/ciEnv.cpp
+--- openjdk.orig/hotspot/src/share/vm/ci/ciEnv.cpp
++++ openjdk/hotspot/src/share/vm/ci/ciEnv.cpp
+@@ -348,30 +348,6 @@ ciKlass* ciEnv::get_klass_by_name_impl(c
+   if (found_klass != NULL) {
+     // Found it.  Build a CI handle.
+     return get_object(found_klass)->as_klass();
+-  }
+-
+-  // If we fail to find an array klass, look again for its element type.
+-  // The element type may be available either locally or via constraints.
+-  // In either case, if we can find the element type in the system dictionary,
+-  // we must build an array type around it.  The CI requires array klasses
+-  // to be loaded if their element klasses are loaded, except when memory
+-  // is exhausted.
+-  if (sym->byte_at(0) == '[' &&
+-      (sym->byte_at(1) == '[' || sym->byte_at(1) == 'L')) {
+-    // We have an unloaded array.
+-    // Build it on the fly if the element class exists.
+-    symbolOop elem_sym = oopFactory::new_symbol(sym->as_utf8()+1, 
+-                                                sym->utf8_length()-1, 
+-                                                KILL_COMPILE_ON_FATAL_(fail_type));
+-    // Get element ciKlass recursively.
+-    ciKlass* elem_klass =
+-      get_klass_by_name_impl(accessing_klass,
+-                             get_object(elem_sym)->as_symbol(),
+-                             require_local);
+-    if (elem_klass != NULL && elem_klass->is_loaded()) {
+-      // Now make an array for it
+-      return ciObjArrayKlass::make_impl(elem_klass);
+-    }
+   }
+ 
+   if (require_local)  return NULL;
+diff --git openjdk.orig/hotspot/src/share/vm/classfile/loaderConstraints.cpp openjdk/hotspot/src/share/vm/classfile/loaderConstraints.cpp
+--- openjdk.orig/hotspot/src/share/vm/classfile/loaderConstraints.cpp
++++ openjdk/hotspot/src/share/vm/classfile/loaderConstraints.cpp
+@@ -338,32 +338,6 @@ klassOop LoaderConstraintTable::find_con
+ }
+ 
+ 
+-klassOop LoaderConstraintTable::find_constrained_elem_klass(symbolHandle name,
+-                                                            symbolHandle elem_name,
+-                                                            Handle loader,
+-                                                            TRAPS) {
+-  LoaderConstraintEntry *p = *(find_loader_constraint(name, loader));
+-  if (p != NULL) {
+-    assert(p->klass() == NULL, "Expecting null array klass");
+-
+-    // The array name has a constraint, but it will not have a class. Check
+-    // each loader for an associated elem
+-    for (int i = 0; i < p->num_loaders(); i++) {
+-      Handle no_protection_domain;
+-
+-      klassOop k = SystemDictionary::find(elem_name, p->loader(i), no_protection_domain, THREAD);
+-      if (k != NULL) {
+-        // Return the first elem klass found.
+-        return k;
+-      }
+-    }
+-  }
+-
+-  // No constraints, or else no klass loaded yet.
+-  return NULL;
+-}
+-
+-
+ void LoaderConstraintTable::ensure_loader_constraint_capacity(
+                                                      LoaderConstraintEntry *p,
+                                                     int nfree) {
+diff --git openjdk.orig/hotspot/src/share/vm/classfile/loaderConstraints.hpp openjdk/hotspot/src/share/vm/classfile/loaderConstraints.hpp
+--- openjdk.orig/hotspot/src/share/vm/classfile/loaderConstraints.hpp
++++ openjdk/hotspot/src/share/vm/classfile/loaderConstraints.hpp
+@@ -67,9 +67,6 @@ public:
+                                Handle loader2, bool is_method, TRAPS);
+ 
+   klassOop find_constrained_klass(symbolHandle name, Handle loader);
+-  klassOop find_constrained_elem_klass(symbolHandle name, symbolHandle elem_name,
+-                                       Handle loader, TRAPS);
+-
+ 
+   // Class loader constraints
+ 
+diff --git openjdk.orig/hotspot/src/share/vm/classfile/systemDictionary.cpp openjdk/hotspot/src/share/vm/classfile/systemDictionary.cpp
+--- openjdk.orig/hotspot/src/share/vm/classfile/systemDictionary.cpp
++++ openjdk/hotspot/src/share/vm/classfile/systemDictionary.cpp
+@@ -2113,9 +2113,8 @@ klassOop SystemDictionary::find_constrai
+   // a loader constraint that would require this loader to return the
+   // klass that is already loaded.
+   if (FieldType::is_array(class_name())) {
+-    // Array classes are hard because their klassOops are not kept in the
+-    // constraint table. The array klass may be constrained, but the elem class
+-    // may not be. 
++    // For array classes, their klassOops are not kept in the
++    // constraint table. The element klassOops are.
+     jint dimension;
+     symbolOop object_key;
+     BasicType t = FieldType::get_array_info(class_name(), &dimension,
+@@ -2125,8 +2124,9 @@ klassOop SystemDictionary::find_constrai
+     } else {
+       symbolHandle elem_name(THREAD, object_key);
+       MutexLocker mu(SystemDictionary_lock, THREAD);
+-      klass = constraints()->find_constrained_elem_klass(class_name, elem_name, class_loader, THREAD);
++      klass = constraints()->find_constrained_klass(elem_name, class_loader);
+     }
++    // If element class already loaded, allocate array klass
+     if (klass != NULL) {
+       klass = Klass::cast(klass)->array_klass_or_null(dimension);
+     }
+@@ -2142,24 +2142,40 @@ klassOop SystemDictionary::find_constrai
+ 
+ bool SystemDictionary::add_loader_constraint(symbolHandle class_name,
+                                              Handle class_loader1,
+-                                             Handle class_loader2, 
+-					     Thread* THREAD) {
+-  unsigned int d_hash1 = dictionary()->compute_hash(class_name, class_loader1);
++                                             Handle class_loader2,
++                                             Thread* THREAD) {
++  symbolHandle constraint_name;
++  if (!FieldType::is_array(class_name())) {
++    constraint_name = class_name;
++  } else {
++    // For array classes, their klassOops are not kept in the
++    // constraint table. The element classes are.
++    jint dimension;
++    symbolOop object_key;
++    BasicType t = FieldType::get_array_info(class_name(), &dimension,
++                                            &object_key, CHECK_(false));
++    // primitive types always pass
++    if (t != T_OBJECT) {
++      return true;
++    } else {
++      constraint_name = symbolHandle(THREAD, object_key);
++    }
++  }
++  unsigned int d_hash1 = dictionary()->compute_hash(constraint_name, class_loader1);
+   int d_index1 = dictionary()->hash_to_index(d_hash1);
+ 
+-  unsigned int d_hash2 = dictionary()->compute_hash(class_name, class_loader2);
++  unsigned int d_hash2 = dictionary()->compute_hash(constraint_name, class_loader2);
+   int d_index2 = dictionary()->hash_to_index(d_hash2);
++  {
++  MutexLocker mu_s(SystemDictionary_lock, THREAD);
+ 
+-  {
+-    MutexLocker mu_s(SystemDictionary_lock, THREAD);
++  // Better never do a GC while we're holding these oops
++  No_Safepoint_Verifier nosafepoint;
+ 
+-    // Better never do a GC while we're holding these oops
+-    No_Safepoint_Verifier nosafepoint;
+-
+-    klassOop klass1 = find_class(d_index1, d_hash1, class_name, class_loader1);
+-    klassOop klass2 = find_class(d_index2, d_hash2, class_name, class_loader2);
+-    return constraints()->add_entry(class_name, klass1, class_loader1,
+-				    klass2, class_loader2);
++  klassOop klass1 = find_class(d_index1, d_hash1, constraint_name, class_loader1);
++  klassOop klass2 = find_class(d_index2, d_hash2, constraint_name, class_loader2);
++  return constraints()->add_entry(constraint_name, klass1, class_loader1,
++                                  klass2, class_loader2);
+   }
+ }
+ 
+@@ -2191,6 +2207,7 @@ symbolOop SystemDictionary::find_resolut
+ // Returns the name of the type that failed a loader constraint check, or
+ // NULL if no constraint failed. The returned C string needs cleaning up
+ // with a ResourceMark in the caller
++// Arrays are not added to the loader constraint table, their elements are.
+ char* SystemDictionary::check_signature_loaders(symbolHandle signature,
+                                                Handle loader1, Handle loader2,
+                                                bool is_method, TRAPS)  {
