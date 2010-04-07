@@ -294,7 +294,6 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-disable-cc-incompatible-sanity-checks.patch \
 	patches/icedtea-explicit-target-arch.patch \
 	patches/icedtea-gcc-stack-markings.patch \
-	patches/openjdk/6879689-hotspot_warning_fix.patch \
 	patches/icedtea-no-precompiled.patch \
 	patches/icedtea-linux-separate-debuginfo.patch \
 	patches/icedtea-parisc.patch \
@@ -308,8 +307,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-jtreg-httpTest.patch \
 	patches/openjdk/6873059-javac-versioning-corba.patch \
 	patches/hotspot/$(HSBUILD)/6873059-javac-versioning-hotspot.patch \
-	patches/openjdk/6873059-javac-versioning-jdk.patch \
-	patches/security/20100330/6633872.patch
+	patches/openjdk/6873059-javac-versioning-jdk.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
