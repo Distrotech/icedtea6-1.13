@@ -550,7 +550,7 @@ ICEDTEA_ENV_ECJ = $(ICEDTEA_ENV) \
 # FIXME (distclean): Add jtreg sources
 # FIXME (distclean): Add pulseaudio sources
 
-EXTRA_DIST = rt generated \
+EXTRA_DIST = generated \
 	$(abs_top_srcdir)/patches/* \
 	contrib ports \
 	extra overlays \
@@ -587,7 +587,6 @@ distclean-local: clean-copy clean-jtreg clean-jtreg-reports $(PULSE_JAVA_CLEAN_T
 	rm -rf extra-lib
 	rm -rf openjdk-ecj
 	rm -rf openjdk
-	rm -rf rt/netscape
 	rm -rf visualvm
 	rm -rf netbeans
 
