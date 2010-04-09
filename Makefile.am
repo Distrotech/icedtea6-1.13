@@ -231,7 +231,7 @@ ICEDTEA_PATCHES = \
 	patches/zero/6909153.patch \
 	patches/zero/6913869.patch \
 	patches/zero/6914622.patch \
-	patches/zero/cppInterpreter-fast-bytecodes.patch \
+	patches/zero/6939845.patch \
 	patches/icedtea-notice-safepoints.patch \
 	patches/icedtea-parisc-opt.patch \
 	patches/icedtea-lucene-crash.patch \

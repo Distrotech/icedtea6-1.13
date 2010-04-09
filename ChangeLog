@@ -1,3 +1,12 @@
+2010-04-09  Xerxes Rånby  <xerxes@zafena.se>
+
+	* Makefile.am (ICEDTEA_PATCHES):
+	Replaced cppInterpreter-fast-bytecodes.patch with
+	6939845.patch from OpenJDK upstream.
+	The new patch are conditionalized for ZERO builds.
+	* patches/zero/6939845.patch: added from upstream.
+	* patches/zero/cppInterpreter-fast-bytecodes.patch: removed.
+
 2010-04-08  Andrew John Hughes  <ahughes@redhat.com>
 
 	* configure.ac: Move NSS detection to macros
