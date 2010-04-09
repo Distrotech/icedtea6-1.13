@@ -224,10 +224,6 @@ REWRITER_SRCS = $(abs_top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.jav
 ICEDTEA_FSG_PATCHES =
 
 ICEDTEA_PATCHES = \
-	patches/zero/6903453.patch \
-	patches/zero/6909153.patch \
-	patches/zero/6913869.patch \
-	patches/zero/6914622.patch \
 	patches/zero/cppInterpreter-fast-bytecodes.patch \
 	patches/icedtea-notice-safepoints.patch \
 	patches/icedtea-parisc-opt.patch \
@@ -305,9 +301,7 @@ ICEDTEA_PATCHES = \
 	patches/extensions/netx-dist.patch \
 	patches/extensions/netx-umask.patch \
 	patches/icedtea-jtreg-httpTest.patch \
-	patches/openjdk/6873059-javac-versioning-corba.patch \
-	patches/hotspot/$(HSBUILD)/6873059-javac-versioning-hotspot.patch \
-	patches/openjdk/6873059-javac-versioning-jdk.patch
+	patches/hotspot/$(HSBUILD)/6873059-javac-versioning-hotspot.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
