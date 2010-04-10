@@ -386,9 +386,11 @@ if ENABLE_SYSTEMTAP
 ICEDTEA_PATCHES += patches/icedtea-systemtap.patch
 endif
 
+ICEDTEA_PATCHES += patches/icedtea-nss-6763530.patch
 if ENABLE_NSS
-ICEDTEA_PATCHES += patches/icedtea-nss-config.patch \
-		   patches/icedtea-nss-6763530.patch
+ICEDTEA_PATCHES += patches/icedtea-nss-config.patch
+else
+ICEDTEA_PATCHES += patches/icedtea-nss-not-enabled-config.patch
 endif
 
 if WITH_ALT_HSBUILD
