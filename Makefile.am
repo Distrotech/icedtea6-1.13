@@ -258,7 +258,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-alt-jar.patch \
 	patches/icedtea-jdk-use-ssize_t.patch \
 	patches/icedtea-use-idx_t.patch \
-	patches/icedtea-params-cast-size_t.patch \
+	patches/hotspot/$(HSBUILD)/params-cast-size_t.patch \
 	patches/icedtea-clean-crypto.patch \
 	patches/icedtea-shark.patch \
 	patches/icedtea-arch.patch \
@@ -301,6 +301,11 @@ ICEDTEA_PATCHES = \
 	patches/extensions/netx-umask.patch \
 	patches/icedtea-jtreg-httpTest.patch \
 	patches/hotspot/$(HSBUILD)/6873059-javac-versioning-hotspot.patch
+
+if WITH_ALT_HSBUILD
+ICEDTEA_PATCHES += \
+	patches/openjdk/6896472-missing_libjsig.patch
+endif
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -348,7 +353,7 @@ ICEDTEA_PATCHES += patches/icedtea-nio2.patch
 endif
 
 if ENABLE_SYSTEMTAP
-ICEDTEA_PATCHES += patches/icedtea-systemtap.patch
+ICEDTEA_PATCHES += patches/hotspot/$(HSBUILD)/systemtap.patch
 endif
 
 if ENABLE_NSS

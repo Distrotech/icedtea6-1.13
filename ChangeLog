@@ -1,3 +1,26 @@
+2010-04-11  Andrew John Hughes  <ahughes@redhat.com>
+
+	Support hs17.
+	* patches/icedtea-params-cast-size_t.patch,
+	* patches/icedtea-systemtap.patch:
+	Split into original and hs17 versions.
+	* Makefile.am:
+	Make above patches $(HSBUILD) specific.
+	Add 6896472 fix for hs17.
+	* hotspot.map: Add hs17 b13, enabled using
+	--with-hotspot-build=hs17.
+	* patches/hotspot/hs17/6873059-javac-versioning-hotspot.patch,
+	* patches/hotspot/hs17/params-cast-size_t.patch,
+	* patches/hotspot/hs17/systemtap.patch:
+	New variants for hs17.
+	* patches/hotspot/original/params-cast-size_t.patch,
+	* patches/hotspot/original/systemtap.patch:
+	Moved from main patches directory.
+	* patches/icedtea-explicit-target-arch.patch:
+	Remove unneeded diff at top which breaks on hs17.
+	* patches/openjdk/6896472-missing_libjsig.patch:
+	Backport from OpenJDK7; needed for hs17.
+
 2010-04-09  Andrew John Hughes  <ahughes@redhat.com>
 
 	* patches/zero/6939845.patch,
