@@ -30,6 +30,15 @@
 	* patches/openjdk/6896472-missing_libjsig.patch:
 	Backport from OpenJDK7; needed for hs17.
 
+2010-04-10  Matthias Klose  <doko@ubuntu.com>
+
+	* Makefile.am (ICEDTEA_PATCHES): Always apply
+	icedtea-nss-6763530.patch. Apply icedtea-nss-not-enabled-config.patch
+	if the NSS-based security provider is disabled by default.
+	* configure.ac: Be verbose wether the NSS-based security provider
+	is enabled or disabled by default.
+	* patches/icedtea-nss-not-enabled-config.patch: New.
+
 2010-04-09  Andrew John Hughes  <ahughes@redhat.com>
 
 	* patches/zero/6939845.patch,
