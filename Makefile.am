@@ -299,12 +299,12 @@ ICEDTEA_PATCHES = \
 	patches/extensions/netx.patch \
 	patches/extensions/netx-dist.patch \
 	patches/extensions/netx-umask.patch \
-	patches/icedtea-jtreg-httpTest.patch \
-	patches/hotspot/$(HSBUILD)/6873059-javac-versioning-hotspot.patch
+	patches/icedtea-jtreg-httpTest.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
-	patches/openjdk/6896472-missing_libjsig.patch
+	patches/openjdk/6896472-missing_libjsig.patch \
+	patches/hotspot/$(HSBUILD)/6873059-javac-versioning-hotspot.patch
 endif
 
 if WITH_RHINO
