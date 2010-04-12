@@ -552,7 +552,7 @@ ICEDTEA_ENV_ECJ = $(ICEDTEA_ENV) \
 # FIXME (distclean): Add jtreg sources
 # FIXME (distclean): Add pulseaudio sources
 
-EXTRA_DIST = generated \
+EXTRA_DIST = generated $(NETX_SRCDIR) \
 	$(abs_top_srcdir)/patches/* \
 	contrib ports \
 	extra overlays \
