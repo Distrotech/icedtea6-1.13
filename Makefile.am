@@ -232,6 +232,7 @@ ICEDTEA_PATCHES = \
 	patches/zero/6913869.patch \
 	patches/zero/6914622.patch \
 	patches/zero/6939845.patch \
+	patches/zero/shark_do_nothing_on_stub_frame.patch \
 	patches/icedtea-notice-safepoints.patch \
 	patches/icedtea-parisc-opt.patch \
 	patches/icedtea-lucene-crash.patch \

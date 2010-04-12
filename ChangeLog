@@ -1,3 +1,14 @@
+2010-04-12  Xerxes Rånby  <xerxes@zafena.se>
+
+	PR icedtea/459:
+	* Makefile.am: (ICEDTEA_PATCHES):
+	Apply patches/zero/shark_do_nothing_on_stub_frame.patch.
+	* ports/hotspot/src/cpu/zero/vm/frame_zero.cpp
+	(frame::is_fake_stub_frame): New method.
+	* ports/hotspot/src/cpu/zero/vm/frame_zero.hpp
+	(frame::is_fake_stub_frame): Likewise.
+	* patches/zero/shark_do_nothing_on_stub_frame.patch: New.
+
 2010-04-12  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:
