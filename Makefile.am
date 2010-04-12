@@ -264,6 +264,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-shark-build-hotspot.patch \
 	patches/icedtea-nomotif-6706121.patch \
 	patches/icedtea-nomotif.patch \
+	patches/icedtea-nomotif-mtoolkit.patch \
 	patches/icedtea-alpha-fixes.patch \
 	patches/icedtea-alt-jar.patch \
 	patches/icedtea-jdk-use-ssize_t.patch \
