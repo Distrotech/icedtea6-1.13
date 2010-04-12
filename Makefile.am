@@ -335,7 +335,8 @@ ICEDTEA_PATCHES = \
 	patches/security/20100330/6910590.patch \
 	patches/security/20100330/6914823.patch \
 	patches/security/20100330/6914866.patch \
-	patches/security/20100330/6932480.patch
+	patches/security/20100330/6932480.patch \
+	patches/icedtea-nss-6763530.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -386,7 +387,6 @@ if ENABLE_SYSTEMTAP
 ICEDTEA_PATCHES += patches/icedtea-systemtap.patch
 endif
 
-ICEDTEA_PATCHES += patches/icedtea-nss-6763530.patch
 if ENABLE_NSS
 ICEDTEA_PATCHES += patches/icedtea-nss-config.patch
 else
