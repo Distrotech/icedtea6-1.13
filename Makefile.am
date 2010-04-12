@@ -337,7 +337,8 @@ ICEDTEA_PATCHES = \
 	patches/security/20100330/6914823.patch \
 	patches/security/20100330/6914866.patch \
 	patches/security/20100330/6932480.patch \
-	patches/icedtea-nss-6763530.patch
+	patches/icedtea-nss-6763530.patch \
+	patches/nss-debug.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
