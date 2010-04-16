@@ -224,6 +224,7 @@ REWRITER_SRCS = $(abs_top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.jav
 ICEDTEA_FSG_PATCHES =
 
 ICEDTEA_PATCHES = \
+	patches/zero/shark_do_nothing_on_stub_frame.patch \
 	patches/icedtea-notice-safepoints.patch \
 	patches/icedtea-parisc-opt.patch \
 	patches/icedtea-lucene-crash.patch \
@@ -254,6 +255,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-shark-build-hotspot.patch \
 	patches/icedtea-nomotif-6706121.patch \
 	patches/icedtea-nomotif.patch \
+	patches/icedtea-nomotif-mtoolkit.patch \
 	patches/icedtea-alpha-fixes.patch \
 	patches/icedtea-alt-jar.patch \
 	patches/icedtea-jdk-use-ssize_t.patch \
@@ -299,7 +301,8 @@ ICEDTEA_PATCHES = \
 	patches/extensions/netx.patch \
 	patches/extensions/netx-dist.patch \
 	patches/extensions/netx-umask.patch \
-	patches/icedtea-jtreg-httpTest.patch
+	patches/icedtea-jtreg-httpTest.patch \
+	patches/nss-debug.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
@@ -509,7 +512,7 @@ ICEDTEA_ENV_ECJ = $(ICEDTEA_ENV) \
 # FIXME (distclean): Add jtreg sources
 # FIXME (distclean): Add pulseaudio sources
 
-EXTRA_DIST = generated \
+EXTRA_DIST = generated $(NETX_SRCDIR) \
 	$(abs_top_srcdir)/patches/* \
 	contrib ports \
 	extra overlays \
