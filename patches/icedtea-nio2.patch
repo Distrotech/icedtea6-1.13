@@ -2778,3 +2778,20 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/nio/ch/FileDispatcher.java op
 +    static native void release0(FileDescriptor fd, long pos, long size)
 +        throws IOException;
  }
+diff -r e1d1417392db src/solaris/classes/sun/nio/ch/DefaultSelectorProvider.java
+--- openjdk.orig/jdk/src/solaris/classes/sun/nio/ch/DefaultSelectorProvider.java	Wed Apr 14 14:36:11 2010 -0700
++++ openjdk/jdk/src/solaris/classes/sun/nio/ch/DefaultSelectorProvider.java	Sun Apr 18 19:46:48 2010 +0100
+@@ -25,11 +25,12 @@
+ 
+ package sun.nio.ch;
+ 
+-import java.nio.channels.spi.SelectorProvider;
+ import java.security.AccessController;
+ import java.security.PrivilegedAction;
+ import sun.security.action.GetPropertyAction;
+ 
++import org.classpath.icedtea.java.nio.channels.spi.SelectorProvider;
++
+ /**
+  * Creates this platform's default SelectorProvider
+  */
