@@ -1,6 +1,6 @@
-diff -BbruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c
---- oldopenjdk6/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c	2009-04-24 03:34:31.000000000 -0400
-+++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c	2009-05-01 10:15:13.000000000 -0400
+diff -Nru openjdk.orig/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c
+--- openjdk.orig/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c	2010-04-06 11:57:21.000000000 +0100
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c	2010-04-06 17:35:02.000000000 +0100
 @@ -689,6 +689,9 @@
                  GrayTRC = cmsReadICCGamma(hProfile, icSigGrayTRCTag);
                  FromLstarToXYZ(GrayTRC, Shapes1);
@@ -39,15 +39,3 @@ diff -BbruN openjdkold/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c openj
  
          if (ColorSpace == CurrentColorSpace) {
  
-@@ -1969,6 +1977,11 @@
-                 goto ErrorCleanup;
-         }
- 
-+	if (Transforms[i] == NULL) {
-+          cmsSignalError(LCMS_ERRC_ABORTED, "cmsCreateMultiprofileTransform: Invalid profile");
-+          goto ErrorCleanup;
-+	} 
-+
-         CurrentColorSpace = ColorSpaceOut;
- 
-     }

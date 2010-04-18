@@ -1,8 +1,8 @@
 # Dependencies
 
-OPENJDK_DATE = 16_feb_2010
-OPENJDK_MD5SUM = 94db01691ab38f98b7d42b2ebf4d5c0b
-OPENJDK_VERSION = b18
+OPENJDK_DATE = 15_apr_2010
+OPENJDK_MD5SUM = 39bbf623a6c83ca63b92593062a28146
+OPENJDK_VERSION = b19
 OPENJDK_URL = http://download.java.net/openjdk/jdk6/promoted/$(OPENJDK_VERSION)/
 
 CACAO_VERSION = 0.99.4
@@ -23,9 +23,9 @@ JAXWS_DROP_ZIP = jdk6-jaxws-2009_10_27.zip
 JAXWS_DROP_SHA256SUM = 155ff3be83c980e197621a2fbf7ee34e8e0f536489351a5865cf0e52206245e2
 JAF_DROP_ZIP = jdk6-jaf-2009_10_27.zip
 JAF_DROP_SHA256SUM = fdc51476fc6bcc69ea1f099f33e84601a126bfa8b11c8fa11c25dc574345aa9f
-JAXP_DROP_URL = https://jaxp.dev.java.net/files/documents/913/147329
-JAXP_DROP_ZIP = jdk6-jaxp-2009_10_13.zip
-JAXP_DROP_SHA256SUM = 8714d55de18db48ca9da0ee986202005082f44cf4c215da8683342b70e61792b
+JAXP_DROP_URL = https://jaxp.dev.java.net/files/documents/913/147491
+JAXP_DROP_ZIP = jdk6-jaxp-2010_01_15.zip
+JAXP_DROP_SHA256SUM = 181615cfec1c3721a7d8f278fa25b392be4247a496c7774a10cb9df37684f94f
 
 OPENJDK_HG_URL = http://hg.openjdk.java.net/jdk6/jdk6
 
@@ -224,14 +224,6 @@ REWRITER_SRCS = $(abs_top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.jav
 ICEDTEA_FSG_PATCHES =
 
 ICEDTEA_PATCHES = \
-	patches/zero/6890308.patch \
-	patches/zero/6891677.patch \
-	patches/zero/6896043.patch \
-	patches/zero/6903453.patch \
-	patches/zero/6909153.patch \
-	patches/zero/6913869.patch \
-	patches/zero/6914622.patch \
-	patches/zero/6939845.patch \
 	patches/zero/shark_do_nothing_on_stub_frame.patch \
 	patches/icedtea-notice-safepoints.patch \
 	patches/icedtea-parisc-opt.patch \
@@ -248,7 +240,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-gcc-suffix.patch \
 	patches/icedtea-gcc-suffix-hotspot.patch \
 	patches/icedtea-bytebuffer-compact.patch \
-	patches/hotspot/$(HSBUILD)/memory-limits.patch \
+	patches/memory-limits.patch \
 	patches/icedtea-sunsrc.patch \
 	patches/icedtea-libraries.patch \
 	patches/icedtea-javafiles.patch \
@@ -259,7 +251,6 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-jpegclasses.patch \
 	patches/icedtea-uname.patch \
 	patches/icedtea-freetypeversion.patch \
-	patches/icedtea-fonts.patch \
 	patches/icedtea-shark-build.patch \
 	patches/icedtea-shark-build-hotspot.patch \
 	patches/icedtea-nomotif-6706121.patch \
@@ -269,7 +260,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-alt-jar.patch \
 	patches/icedtea-jdk-use-ssize_t.patch \
 	patches/icedtea-use-idx_t.patch \
-	patches/hotspot/$(HSBUILD)/icedtea-params-cast-size_t.patch \
+	patches/hotspot/$(HSBUILD)/params-cast-size_t.patch \
 	patches/icedtea-clean-crypto.patch \
 	patches/icedtea-shark.patch \
 	patches/icedtea-arch.patch \
@@ -278,13 +269,10 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-renderer-crossing.patch \
 	patches/icedtea-stroker-finish.patch \
 	patches/icedtea-linker-libs-order.patch \
-	patches/icedtea-6761856-freetypescaler.patch \
 	patches/icedtea-testenv.patch \
 	patches/icedtea-samejvm-safe.patch \
 	patches/icedtea-pr261.patch \
 	patches/icedtea-doc-headers.patch \
-	patches/openjdk/bidi-tests.patch \
-	patches/openjdk/annotation-tests.patch \
 	patches/icedtea-sparc-buildfixes.patch \
 	patches/icedtea-sparc64-linux.patch \
 	patches/icedtea-sparc-ptracefix.patch \
@@ -303,43 +291,24 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-disable-cc-incompatible-sanity-checks.patch \
 	patches/icedtea-explicit-target-arch.patch \
 	patches/icedtea-gcc-stack-markings.patch \
-	patches/openjdk/6879689-hotspot_warning_fix.patch \
-	patches/openjdk/6928623-verbose-langtools.patch \
 	patches/icedtea-no-precompiled.patch \
 	patches/icedtea-linux-separate-debuginfo.patch \
 	patches/icedtea-parisc.patch \
 	patches/icedtea-sh4-support.patch \
 	patches/libpng.patch \
+	patches/zero.patch \
+	patches/shark.patch \
 	patches/extensions/netx.patch \
 	patches/extensions/netx-dist.patch \
 	patches/extensions/netx-umask.patch \
 	patches/icedtea-jtreg-httpTest.patch \
-	patches/openjdk/6873059-javac-versioning-corba.patch \
-	patches/hotspot/$(HSBUILD)/6873059-javac-versioning-hotspot.patch \
-	patches/openjdk/6873059-javac-versioning-jdk.patch \
-	patches/security/20100330/hotspot/$(HSBUILD)/6626217.patch \
-	patches/security/20100330/6633872.patch \
-	patches/security/20100330/6639665.patch \
-	patches/security/20100330/6736390.patch \
-	patches/security/20100330/6745393.patch \
-	patches/security/20100330/6887703.patch \
-	patches/security/20100330/6888149.patch \
-	patches/security/20100330/6892265.patch \
-	patches/security/20100330/6893947.patch \
-	patches/security/20100330/6893954.patch \
-	patches/security/20100330/6894807.patch \
-	patches/security/20100330/6898622.patch \
-	patches/security/20100330/6898739.patch \
-	patches/security/20100330/6899653.patch \
-	patches/security/20100330/6902299.patch \
-	patches/security/20100330/6904691.patch \
-	patches/security/20100330/6909597.patch \
-	patches/security/20100330/6910590.patch \
-	patches/security/20100330/6914823.patch \
-	patches/security/20100330/6914866.patch \
-	patches/security/20100330/6932480.patch \
-	patches/icedtea-nss-6763530.patch \
 	patches/nss-debug.patch
+
+if WITH_ALT_HSBUILD
+ICEDTEA_PATCHES += \
+	patches/openjdk/6896472-missing_libjsig.patch \
+	patches/hotspot/$(HSBUILD)/6873059-javac-versioning-hotspot.patch
+endif
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -387,25 +356,13 @@ ICEDTEA_PATCHES += patches/icedtea-nio2.patch
 endif
 
 if ENABLE_SYSTEMTAP
-ICEDTEA_PATCHES += patches/icedtea-systemtap.patch
+ICEDTEA_PATCHES += patches/hotspot/$(HSBUILD)/systemtap.patch
 endif
 
 if ENABLE_NSS
 ICEDTEA_PATCHES += patches/icedtea-nss-config.patch
 else
 ICEDTEA_PATCHES += patches/icedtea-nss-not-enabled-config.patch
-endif
-
-if WITH_ALT_HSBUILD
-ICEDTEA_PATCHES += patches/hotspot/$(HSBUILD)/openjdk-6886353-ignore_deoptimizealot.patch \
-	patches/hotspot/$(HSBUILD)/zero.patch \
-	patches/hotspot/$(HSBUILD)/shark.patch
-else
-ICEDTEA_PATCHES += patches/hotspot/original/icedtea-6778662-lib64.patch \
-	patches/hotspot/original/icedtea-6778657-f2i-overflow.patch \
-	patches/hotspot/original/icedtea-6791168.patch \
-	patches/hotspot/original/icedtea-6793825-includedb.patch \
-	patches/openjdk/6822370-reentrantreadwritelock.patch
 endif
 
 ICEDTEA_PATCHES += $(DISTRIBUTION_PATCHES)

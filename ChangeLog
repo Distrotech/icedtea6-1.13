@@ -5,6 +5,10 @@
 	(AC_CHECK_WITH_HG_REVISION): Likewise.
 	(IT_CHECK_PLUGIN_DEPENDENCIES): Likewise.
 
+2010-04-16  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am: Bump to b19 tarball.
+
 2010-04-12  Andrew John Hughes  <ahughes@redhat.com>
 
 	PR icedtea/373
@@ -64,6 +68,38 @@
 
 	* configure.ac: Clarify result message of the NSS check.
 
+2010-04-11  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/hotspot/original/6873059-javac-versioning-hotspot.patch,
+	* patches/openjdk/6873059-javac-versioning-corba.patch,
+	* patches/openjdk/6873059-javac-versioning-jdk.patch:
+	Removed, upstreamed.
+	* Makefile.am:
+	Move 6873059 to hs17-specific block.
+
+2010-04-11  Andrew John Hughes  <ahughes@redhat.com>
+
+	Support hs17.
+	* patches/icedtea-params-cast-size_t.patch,
+	* patches/icedtea-systemtap.patch:
+	Split into original and hs17 versions.
+	* Makefile.am:
+	Make above patches $(HSBUILD) specific.
+	Add 6896472 fix for hs17.
+	* hotspot.map: Add hs17 b13, enabled using
+	--with-hotspot-build=hs17.
+	* patches/hotspot/hs17/6873059-javac-versioning-hotspot.patch,
+	* patches/hotspot/hs17/params-cast-size_t.patch,
+	* patches/hotspot/hs17/systemtap.patch:
+	New variants for hs17.
+	* patches/hotspot/original/params-cast-size_t.patch,
+	* patches/hotspot/original/systemtap.patch:
+	Moved from main patches directory.
+	* patches/icedtea-explicit-target-arch.patch:
+	Remove unneeded diff at top which breaks on hs17.
+	* patches/openjdk/6896472-missing_libjsig.patch:
+	Backport from OpenJDK7; needed for hs17.
+
 2010-04-10  Matthias Klose  <doko@ubuntu.com>
 
 	* Makefile.am (ICEDTEA_PATCHES): Always apply
@@ -73,6 +109,12 @@
 	is enabled or disabled by default.
 	* patches/icedtea-nss-not-enabled-config.patch: New.
 
+2010-04-09  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/zero/6939845.patch,
+	* Makefile.am:
+	Remove upstreamed Zero patch.
+
 2010-04-09  Xerxes Rånby  <xerxes@zafena.se>
 
 	* Makefile.am (ICEDTEA_PATCHES):
@@ -81,6 +123,15 @@
 	The new patch are conditionalized for ZERO builds.
 	* patches/zero/6939845.patch: added from upstream.
 	* patches/zero/cppInterpreter-fast-bytecodes.patch: removed.
+
+2010-04-09  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/zero/6903453.patch,
+	* patches/zero/6909153.patch,
+	* patches/zero/6913869.patch,
+	* patches/zero/6914622.patch,
+	* Makefile.am:
+	Remove patches applied upstream.
 
 2010-04-08  Andrew John Hughes  <ahughes@redhat.com>
 
@@ -104,6 +155,13 @@
 
 	* Makefile.am: Remove remaining references to
 	rt source directory.
+
+2010-04-07  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/openjdk/6879689-hotspot_warning_fix.patch,
+	* patches/security/20100330/6633872.patch,
+	* Makefile.am:
+	Remove upstreamed patches.
 
 2010-04-07  Deepak Bhole <dbhole@redhat.com>
 
@@ -161,6 +219,41 @@
 	(IcedTeaScriptableJavaObject::deAllocate): Same.
 	(IcedTeaScriptableJavaObject::invalidate): Same.
 
+2010-04-06  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/hotspot/hs16/6873059-javac-versioning-hotspot.patch:
+	Moved to hotspot/original.
+	* patches/openjdk/6822370-reentrantreadwritelock.patch,
+	* patches/security/20100330/6639665.patch,
+	* patches/security/20100330/6736390.patch,
+	* patches/security/20100330/6745393.patch,
+	* patches/security/20100330/6887703.patch,
+	* patches/security/20100330/6888149.patch,
+	* patches/security/20100330/6892265.patch,
+	* patches/security/20100330/6893947.patch,
+	* patches/security/20100330/6893954.patch,
+	* patches/security/20100330/6894807.patch,
+	* patches/security/20100330/6898622.patch,
+	* patches/security/20100330/6898739.patch,
+	* patches/security/20100330/6899653.patch,
+	* patches/security/20100330/6902299.patch,
+	* patches/security/20100330/6904691.patch,
+	* patches/security/20100330/6909597.patch,
+	* patches/security/20100330/6910590.patch,
+	* patches/security/20100330/6914823.patch,
+	* patches/security/20100330/6914866.patch,
+	* patches/security/20100330/6932480.patch,
+	* patches/security/20100330/hotspot/hs16/6626217.patch:
+	Drop patches available upstream.
+	* Makefile.am: Remove listed patches.
+	* patches/hotspot/original/6873059-javac-versioning-hotspot.patch:
+	Moved from hs16 directory.
+	* patches/icedtea-lcms.patch:
+	Recreated against new security patches (inverse of
+	before where 6899653 was adapted to our LCMS fix).
+	* patches/security/20100330/6633872.patch:
+	Keep just the fragment not in the Sun version which
+	fixes an NPE when running rmid.
 
 2010-04-04  Nobuhiro Iwamatsu <iwamatsu@nigauri.org>
 
@@ -229,6 +322,11 @@
 
 2010-03-30  Andrew John Hughes  <ahughes@redhat.com>
 
+	* patches/icedtea-override.patch:
+	Fix path on previous HttpsClient hunk.
+
+2010-03-30  Andrew John Hughes  <ahughes@redhat.com>
+
 	* patches/openjdk/6873059-javac-versioning-hotspot.patch:
 	Move to hotspot/original directory.
 	* Makefile.am: Make javac versioning patch for HotSpot
@@ -243,6 +341,18 @@
 
 	* bytecodeInterpreter.cpp
 	Fix to support fast bytecodes
+
+2010-03-30  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/openjdk/annotation-tests.patch:
+	Dropped, was applied upstream in a different
+	directory some time ago.
+	* patches/openjdk/bidi-tests.patch,
+	* patches/zero/6890308.patch,
+	* patches/zero/6891677.patch,
+	* patches/zero/6896043.patch:
+	Dropped, applied upstream.
+	* Makefile.am: Remove above.
 
 2010-03-29  Andrew John Hughes  <ahughes@redhat.com>
 
@@ -286,6 +396,12 @@
 	Backported from OpenJDK7.
 	* THANKYOU: Add C. K. Jester-Young who created
 	the initial Perl version of javac.in.
+
+2010-03-28  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/icedtea-override.patch:
+	Remove @Override on interface method
+	in sun/net/www/protocol/https/HttpsClient.java
 
 2009-08-21  Andrew John Hughes  <ahughes@redhat.com>
 
@@ -545,7 +661,6 @@
 	Fix references to IcedTeaNPPlugin.h.
 
 2010-03-16  Andrew John Hughes  <ahughes@redhat.com>
-
 	* patches/icedtea-override.patch:
 	Moved to ecj subdirectory.
 	* Makefile.am:
@@ -708,6 +823,13 @@
 	* plugin/icedteanp/java/sun/applet/PluginStreamHandler.java
 	(startProcessing): Call consumer.queue() instead of consumer.consume().
 	(postMessage): Remove unused method.
+
+2010-03-12  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/icedtea-fonts.patch:
+	Removed, applied upstream as S6934327.
+	http://hg.openjdk.java.net/jdk6/jdk6/jdk/rev/178f954e1fd1
+	* Makefile.am: Drop above patch.
 
 2010-03-12  Andrew John Hughes  <ahughes@redhat.com>
 
@@ -1186,6 +1308,12 @@
 	(sharkCompiler::sharkCompiler): Move mattr define to make its memory
 	valid in the scope where it are used by the args vector.
 
+2010-03-02  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/openjdk/6928623-verbose-langtools.patch:
+	Removed, applied upstream.
+	* Makefile.am: Drop above patch.
+
 2010-03-01  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:
@@ -1306,6 +1434,34 @@
 	* ports/hotspot/src/share/vm/shark/sharkCompiler.cpp
 	(SharkCompiler::generate_native_code): Undefine debug code for
 	NDEBUG builds
+
+2010-02-25 Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/hotspot/hs16/icedtea-params-cast-size_t.patch,
+	* patches/hotspot/hs16/memory-limits.patch:
+	Move to main patches directory.
+	* patches/hotspot/hs16/openjdk-6886353-ignore_deoptimizealot.patch:
+	Dropped, applied upstream.
+	* patches/hotspot/hs16/shark.patch,
+	* patches/hotspot/hs16/zero.patch:
+	Moved to main patches directory.
+	* patches/hotspot/original/icedtea-6778657-f2i-overflow.patch,
+	* patches/hotspot/original/icedtea-6778662-lib64.patch,
+	* patches/hotspot/original/icedtea-6791168.patch,
+	* patches/hotspot/original/icedtea-6793825-includedb.patch,
+	* patches/hotspot/original/icedtea-debuginfo.patch,
+	* patches/hotspot/original/icedtea-params-cast-size_t.patch,
+	* patches/hotspot/original/memory-limits.patch:
+	Obsoleted by move to hs16 upstream.
+	* patches/icedtea-nss-6763530.patch:
+	Applied upstream.
+	* Makefile.am: Update patch list.
+	* hotspot.map: Remove outdated hs16 build.
+	* patches/icedtea-params-cast-size_t.patch,
+	* patches/memory-limits.patch,
+	* patches/shark.patch,
+	* patches/zero.patch:
+	Moved from hotspot/hs16.
 
 2010-02-24 Andrew John Hughes  <ahughes@redhat.com>
 
@@ -1588,9 +1744,20 @@
 2010-02-17 Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:
+	Update JAXP tarball.
+
+2010-02-17 Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
 	Remove dead JAXWS and JAXP sourcepaths.
 	Add sun.misc.Unsafe explicitly to ensure
 	it is compiled as a bootstrap class.
+
+2010-02-17 Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/icedtea-6761856-freetypescaler.patch:
+	Dropped; applied upstream.
+	* Makefile.am: Remove above patch.
 
 2010-02-17 Andrew John Hughes  <ahughes@redhat.com>
 
