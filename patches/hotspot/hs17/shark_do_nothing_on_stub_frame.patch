@@ -1,0 +1,14 @@
+diff -Nru openjdk.orig/hotspot/src/share/vm/runtime/frame.cpp openjdk/hotspot/src/share/vm/runtime/frame.cpp
+--- openjdk.orig/hotspot/src/share/vm/runtime/frame.cpp	2010-04-17 02:15:34.000000000 +0100
++++ openjdk/hotspot/src/share/vm/runtime/frame.cpp	2010-04-18 17:37:54.000000000 +0100
+@@ -1212,6 +1212,10 @@
+     oops_entry_do(f, map);
+   } else if (CodeCache::contains(pc())) {
+     oops_code_blob_do(f, cf, map);
++#ifdef SHARK
++  } else if (is_fake_stub_frame()) {
++    // nothing to do
++#endif // SHARK
+   } else {
+     ShouldNotReachHere();
+   }

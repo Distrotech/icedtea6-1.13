@@ -224,7 +224,7 @@ REWRITER_SRCS = $(abs_top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.jav
 ICEDTEA_FSG_PATCHES =
 
 ICEDTEA_PATCHES = \
-	patches/zero/shark_do_nothing_on_stub_frame.patch \
+	patches/hotspot/$(HSBUILD)/shark_do_nothing_on_stub_frame.patch \
 	patches/icedtea-notice-safepoints.patch \
 	patches/icedtea-parisc-opt.patch \
 	patches/icedtea-lucene-crash.patch \
