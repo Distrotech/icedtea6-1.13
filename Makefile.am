@@ -10,13 +10,13 @@ CACAO_MD5SUM = c5e6525c5212ddbb6026e4a7cde37ca6
 CACAO_BASE_URL = http://www.complang.tuwien.ac.at
 CACAO_URL = $(CACAO_BASE_URL)/cacaojvm/download/cacao-$(CACAO_VERSION)/
 
-NETBEANS_PROFILER_MD5SUM = a6756a62291ebea5c0e2431389b31380
-NETBEANS_PROFILER_URL = http://icedtea.classpath.org/visualvm/
-NETBEANS_PROFILER_SRC_ZIP = netbeans-profiler-visualvm_release65_mod.tar.gz
+NETBEANS_PROFILER_MD5SUM = 40dd3183b345737ca22162d164c2d5a2
+NETBEANS_PROFILER_URL = https://visualvm.dev.java.net/files/documents/7163/149581/
+NETBEANS_PROFILER_SRC_ZIP = netbeans-profiler-visualvm_release68.tar.gz
 
-VISUALVM_MD5SUM = a289739f4a5bcdb9a2c642cfcc1e83fe
-VISUALVM_URL = https://visualvm.dev.java.net/files/documents/7163/127170/
-VISUALVM_SRC_ZIP = visualvm-111-src.tar.gz
+VISUALVM_MD5SUM = f1e2525ddcd5fdf97bcf891d715c08ff
+VISUALVM_URL = https://visualvm.dev.java.net/files/documents/7163/146746/
+VISUALVM_SRC_ZIP = visualvm_122-src.tar.gz
 
 JAXWS_DROP_URL = http://kenai.com/projects/jdk6-drops/downloads/download
 JAXWS_DROP_ZIP = jdk6-jaxws-2009_10_27.zip
@@ -154,10 +154,8 @@ endif
 
 if WITH_VISUALVM
 NB_PLATFORM= $(shell ls /usr/share/netbeans | grep platform | tail -n1)
-NB_APISUPPORT=$(shell ls /usr/share/netbeans | grep apisupport | tail -n1)
 else
 NB_PLATFORM=
-NB_APISUPPORT=
 endif
 
 if ENABLE_PULSE_JAVA
@@ -1732,16 +1730,15 @@ if WITH_VISUALVM
         rm nbbuild/external/binaries-list ; \
 	mkdir -p ./nbbuild/netbeans_visualvm/ ; \
 	ln -s $(SYSTEM_NETBEANS_DIR)/$(NB_PLATFORM)/ ./nbbuild/netbeans_visualvm/$(NB_PLATFORM) ; \
-	ln -s $(SYSTEM_NETBEANS_DIR)/$(NB_APISUPPORT)/ ./nbbuild/netbeans_visualvm/$(NB_APISUPPORT) ; \
 	ln -s $(SYSTEM_NETBEANS_DIR)/harness/ ./nbbuild/netbeans_visualvm/harness ; \
 	if ! (uname -a | grep x86_64) ; then \
 	  mkdir -p lib.profiler/release/lib/deployed/jdk15/linux ; \
 	  mkdir -p lib.profiler/release/lib/deployed/jdk16/linux ; \
-	  buildscript=./buildnative-linux-15.sh ; \
+	  buildscript=./buildnative-linux.sh ; \
 	else \
 	  mkdir -p lib.profiler/release/lib/deployed/jdk15/linux-amd64 ; \
 	  mkdir -p lib.profiler/release/lib/deployed/jdk16/linux-amd64 ; \
-	  buildscript=./buildnative-linux64-15.sh ; \
+	  buildscript=./buildnative-linux64.sh ; \
 	fi ; \
 	cd lib.profiler/native/build ; \
 	JAVA_HOME_15=$(ICEDTEA_HOME) JAVA_HOME_16=$(ICEDTEA_HOME) \
@@ -1749,9 +1746,9 @@ if WITH_VISUALVM
 	cd ../../.. ; \
         JAVA_HOME=$(ICEDTEA_HOME) $(ANT) -Dpermit.jdk6.builds=true \
             -f nbbuild/build.xml bootstrap ; \
-	for dir in lib.profiler lib.profiler.ui lib.profiler.common profiler ; do \
-	  JAVA_HOME=$(ICEDTEA_HOME) $(ANT) -Dpermit.jdk6.builds=true -Dbuildnumber=081204 \
-            -Dnetbeans.dest.dir=../nbbuild/netbeans_visualvm \
+	for dir in lib.profiler lib.profiler.charts lib.profiler.ui lib.profiler.common profiler profiler.oql ; do \
+	  JAVA_HOME=$(ICEDTEA_HOME) $(ANT) -Dpermit.jdk6.builds=true -Dbuildnumber=091221-4fc006d17cb1 \
+            -Dnetbeans.dest.dir=$(abs_top_builddir)/netbeans/nbbuild/netbeans_visualvm \
 	    -f $$dir/build.xml ; \
 	done 
 endif
