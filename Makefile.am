@@ -31,9 +31,8 @@ OPENJDK_HG_URL = http://hg.openjdk.java.net/jdk6/jdk6
 
 # Build directories
 
-OS_DIR = $(BUILD_OS_DIR)-$(BUILD_ARCH_DIR)
-BUILD_OUTPUT_DIR = openjdk/build/$(OS_DIR)
-ECJ_BUILD_OUTPUT_DIR = openjdk-ecj/build/$(OS_DIR)
+BUILD_OUTPUT_DIR = openjdk.build
+ECJ_BUILD_OUTPUT_DIR = openjdk-ecj.build
 ICEDTEA_BUILD_DIR = \
 	$(abs_top_builddir)/$(BUILD_OUTPUT_DIR)
 ICEDTEA_CLS_DIR = \
@@ -450,7 +449,8 @@ ICEDTEA_ENV = \
 	ALT_DROPS_DIR="$(abs_top_builddir)/drops" \
 	VERBOSE="$(VERBOSE)" \
 	ALT_NETX_DIST="$(abs_top_builddir)/netx.build" \
-	ALT_LIVECONNECT_DIST="$(abs_top_builddir)/liveconnect"
+	ALT_LIVECONNECT_DIST="$(abs_top_builddir)/liveconnect" \
+	ALT_OUTPUTDIR="$(ICEDTEA_BUILD_DIR)"
 
 if WITH_CACAO
 ICEDTEA_ENV += \
@@ -491,6 +491,7 @@ endif
 
 # OpenJDK ecj build environment.
 ICEDTEA_ENV_ECJ = $(ICEDTEA_ENV) \
+	ALT_OUTPUTDIR="$(ICEDTEA_BUILD_DIR_ECJ)" \
 	JAVA_TOOLS_DIR="$(ICEDTEA_BOOT_DIR)/bin" \
 	ICEDTEA_RT="$(ICEDTEA_RT)" \
 	ICEDTEA_BUILD_DIR="$(ICEDTEA_BUILD_DIR_ECJ)" \
@@ -546,7 +547,9 @@ distclean-local: clean-copy clean-jtreg clean-jtreg-reports $(PULSE_JAVA_CLEAN_T
 	rm -rf lib
 	rm -rf extra-lib
 	rm -rf openjdk-ecj
+	rm -rf $(ICEDTEA_BUILD_DIR_ECJ)
 	rm -rf openjdk
+	rm -rf $(ICEDTEA_BUILD_DIR)
 	rm -rf visualvm
 	rm -rf netbeans
 
@@ -819,7 +822,7 @@ clean-extract:
 
 stamps/extract-openjdk.stamp: stamps/download.stamp
 if OPENJDK_SRC_DIR_FOUND
-	cp -a $(OPENJDK_SRC_DIR) openjdk
+	cp -pPRl $(OPENJDK_SRC_DIR) openjdk
 else
 	set -e ; \
 	if ! test -d openjdk ; \
@@ -1549,7 +1552,7 @@ stamps/liveconnect-dist.stamp: stamps/liveconnect.stamp
 	  (cd $(abs_top_builddir)/liveconnect ; \
 	   mkdir -p lib ; \
 	   $(ICEDTEA_BOOT_DIR)/bin/jar cf lib/classes.jar $(LIVECONNECT_DIR) ; \
-	   cp -a $(LIVECONNECT_SRCS) src; \
+	   cp -pPRl $(LIVECONNECT_SRCS) src; \
 	   find src -type f -exec chmod 640 '{}' ';' -o -type d -exec chmod 750 '{}' ';'; \
 	   cd src ; \
 	   $(ZIP) -qr $(abs_top_builddir)/liveconnect/lib/src.zip $(LIVECONNECT_DIR) ) ; \
@@ -1585,7 +1588,7 @@ stamps/netx-dist.stamp: stamps/netx.stamp
 	(cd $(abs_top_builddir)/netx.build ; \
 	 mkdir -p lib ; \
 	 $(ICEDTEA_BOOT_DIR)/bin/jar cf lib/classes.jar javax/jnlp net ; \
-	 cp -a $(NETX_SRCDIR) src; \
+	 cp -pPRl $(NETX_SRCDIR) src; \
 	 find src -type f -exec chmod 640 '{}' ';' -o -type d -exec chmod 750 '{}' ';'; \
 	 cd src ; \
 	 $(ICEDTEA_BOOT_DIR)/bin/jar uf $(abs_top_builddir)/netx.build/lib/classes.jar \
@@ -1880,12 +1883,12 @@ if ADD_ZERO_BUILD
 
 if ZERO_BUILD
 	mkdir -p $(BUILD_JRE_ARCH_DIR)/shark
-	cp -a zerovm/openjdk/build/$(OS_DIR)/hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server/* \
+	cp -a zerovm/$(BUILD_OUTPUT_DIR)/hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server/* \
 		$(BUILD_JRE_ARCH_DIR)/shark/
 	printf -- '-shark KNOWN\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
 else
 	mkdir -p $(BUILD_JRE_ARCH_DIR)/zero
-	cp -a zerovm/openjdk/build/$(OS_DIR)/hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server/* \
+	cp -a zerovm/$(BUILD_OUTPUT_DIR)/hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server/* \
 		$(BUILD_JRE_ARCH_DIR)/zero/
 	printf -- '-zero KNOWN\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
 endif
@@ -1910,12 +1913,12 @@ if ADD_ZERO_BUILD
 
 if ZERO_BUILD
 	mkdir -p $(BUILD_DEBUG_JRE_ARCH_DIR)/shark
-	cp -a zerovm/openjdk/build/$(OS_DIR)/hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server/* \
+	cp -a zerovm/$(BUILD_OUTPUT_DIR)/hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server/* \
 		$(BUILD_DEBUG_JRE_ARCH_DIR)/shark/
 	printf -- '-shark KNOWN\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
 else
 	mkdir -p $(BUILD_DEBUG_JRE_ARCH_DIR)/zero
-	cp -a zerovm/openjdk/build/$(OS_DIR)/hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server/* \
+	cp -a zerovm/$(BUILD_OUTPUT_DIR)/hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server/* \
 		$(BUILD_DEBUG_JRE_ARCH_DIR)/zero/
 	printf -- '-zero KNOWN\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
 endif
@@ -1941,7 +1944,7 @@ stamps/plugin-tests.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) $(PLUGIN_TEST_SRCS) \
 	 $(PLUGIN_TEST_SRCS) ;
 	$(ICEDTEA_BOOT_DIR)/bin/jar cf plugin/tests/LiveConnect/PluginTest.jar \
 	  plugin/tests/LiveConnect/*.class ;
-	cp -a $(abs_top_srcdir)/plugin/tests/LiveConnect/*.{js,html} plugin/tests/LiveConnect ;
+	cp -pPRl $(abs_top_srcdir)/plugin/tests/LiveConnect/*.{js,html} plugin/tests/LiveConnect ;
 	echo "Done. Now launch \"firefox file://`pwd`/index.html\"" ; \
 	mkdir -p stamps
 	touch stamps/plugin-tests.stamp

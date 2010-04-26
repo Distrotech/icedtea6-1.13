@@ -1,3 +1,21 @@
+2010-04-26  Andrew John Hughes  <ahughes@redhat.com>
+
+	Use build directories outside the source
+	tree and link instead of copying external
+	source trees where possible.
+	* Makefile.am:
+	(OS_DIR): Removed.
+	(BUILD_OUTPUT_DIR): Set to openjdk.build.
+	(ECJ_BUILD_OUTPUT_DIR): Set to openjdk-ecj.build.
+	(ICEDTEA_ENV): Set output directory.
+	(ICEDTEA_ENV_ECJ): Likewise.
+	(distclean-local): Remove build directories.
+	(extract-openjdk.stamp): Link instead of copying
+	where possible.
+	(liveconnect-dist.stamp): Likewise.
+	(netx-dist.stamp): Likewise.
+	(plugin-tests.stamp): Likewise.
+
 2010-04-24  Matthias Klose  <doko@ubuntu.com>
 
 	* Makefile.am (check-langtools, check-jdk): Allow overwriting -samevm
