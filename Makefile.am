@@ -354,7 +354,8 @@ ICEDTEA_PATCHES += patches/icedtea-nio2.patch
 endif
 
 if ENABLE_SYSTEMTAP
-ICEDTEA_PATCHES += patches/hotspot/$(HSBUILD)/systemtap.patch
+ICEDTEA_PATCHES += patches/hotspot/$(HSBUILD)/systemtap.patch \
+	patches/systemtap-gcc-4.5.patch
 endif
 
 if ENABLE_NSS
