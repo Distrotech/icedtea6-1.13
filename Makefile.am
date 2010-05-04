@@ -301,7 +301,8 @@ ICEDTEA_PATCHES = \
 	patches/extensions/netx-umask.patch \
 	patches/icedtea-jtreg-httpTest.patch \
 	patches/nss-debug.patch \
-        patches/icedtea-6616792-fix.patch
+        patches/icedtea-6616792-fix.patch \
+        patches/icedtea-iso-8859-15-fix.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \

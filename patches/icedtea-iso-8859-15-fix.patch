@@ -1,0 +1,10 @@
+--- openjdk.orig/jdk/src/share/classes/sun/nio/cs/ISO_8859_15.java	2010-04-15 09:35:35.000000000 +0200
++++ openjdk/jdk/src/share/classes/sun/nio/cs/ISO_8859_15.java	2010-05-04 13:45:15.000000000 +0200
+@@ -49,7 +49,6 @@
+ 
+     public boolean contains(Charset cs) {
+         return ((cs instanceof US_ASCII)
+-                || (cs instanceof ISO_8859_1)
+                 || (cs instanceof ISO_8859_15));
+     }
+ 
