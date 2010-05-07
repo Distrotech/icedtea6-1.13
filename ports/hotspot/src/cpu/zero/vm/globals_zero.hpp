@@ -35,17 +35,8 @@ define_pd_global(bool,  ImplicitNullChecks,   true);
 define_pd_global(bool,  UncommonNullCast,     true);
 
 define_pd_global(intx,  CodeEntryAlignment,   32);
-define_pd_global(uintx, TLABSize,             0);
-#ifdef _LP64
-define_pd_global(uintx, NewSize,              ScaleForWordSize(2048 * K));
-#else
-define_pd_global(uintx, NewSize,              ScaleForWordSize(1024 * K));
-#endif // _LP64
+define_pd_global(intx,  OptoLoopAlignment,    16);
 define_pd_global(intx,  InlineFrequencyCount, 100);
-#ifdef SHARK
-// Only required for older HotSpot versions
-define_pd_global(intx,  InlineSmallCode,      1000);
-#endif // SHARK
 define_pd_global(intx,  PreInflateSpin,       10);
 
 define_pd_global(intx,  StackYellowPages,     2);

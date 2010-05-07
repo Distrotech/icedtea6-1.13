@@ -1,3 +1,53 @@
+2010-05-07  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/src/cpu/zero/vm/stack_zero.hpp
+	(ZeroStack::_shadow_pages_size): New field.
+	(ZeroStack::ZeroStack): Initialize the above.
+	(ZeroStack::shadow_pages_size): New method.
+	(ZeroStack::overflow_check): Likewise.
+	(ZeroStack::handle_overflow): Likewise.
+	* ports/hotspot/src/cpu/zero/vm/stack_zero.inline.hpp: New file.
+	* ports/hotspot/src/cpu/zero/vm/stack_zero.cpp: Likewise.
+	* ports/hotspot/src/cpu/zero/vm/cppInterpreter_zero.hpp
+	(CppInterpreter::stack_overflow_imminent): Removed.
+	* ports/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp
+	(CppInterpreter::stack_overflow_imminent): Likewise.
+	(CppInterpreter::normal_entry): Use new stack overflow code.
+	(CppInterpreter::main_loop): Likewise.
+	(CppInterpreter::native_entry): Likewise.
+	(InterpreterFrame::build): Likewise.
+	* ports/hotspot/src/cpu/zero/vm/entryFrame_zero.hpp
+	(EntryFrame::build): Likewise.
+	* ports/hotspot/src/cpu/zero/vm/fakeStubFrame_zero.hpp
+	(FakeStubFrame::build): Likewise.
+	* ports/hotspot/src/cpu/zero/vm/interpreterFrame_zero.hpp
+	(InterpreterFrame::build): Likewise.
+	* ports/hotspot/src/cpu/zero/vm/interpreterRT_zero.cpp
+	(InterpreterRuntime::slow_signature_handler): Likewise.
+	* ports/hotspot/src/cpu/zero/vm/stubGenerator_zero.cpp
+	(StubGenerator::call_stub): Likewise.
+	(EntryFrame::build): Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkRuntime.cpp
+	(SharkRuntime::uncommon_trap): Likewise.
+	(FakeStubFrame::build): Likewise.
+
+	* ports/hotspot/src/os_cpu/linux_zero/vm/thread_linux_zero.hpp
+	(JavaThread::set_last_Java_frame): Refactored.
+	(JavaThread::reset_last_Java_frame): Likewise.
+
+	* ports/hotspot/src/cpu/zero/vm/disassembler_zero.hpp
+	(Disassembler::pd_instruction_alignment): Implemented.
+	(Disassembler::pd_cpu_opts): Likewise.
+
+	* ports/hotspot/src/cpu/zero/vm/globals_zero.hpp: Updated.
+	* ports/hotspot/src/cpu/zero/vm/shark_globals_zero.hpp: Likewise.
+
+	* ports/hotspot/src/share/vm/includeDB_zero: Updated.
+	* ports/hotspot/src/share/vm/includeDB_shark: Likewise.
+
+	* ports/hotspot/src/share/vm/shark/sharkCacheDecache.cpp
+	(SharkDecacher::end_frame): Updated for newer HotSpot.
+
 2010-05-05  Gary Benson  <gbenson@redhat.com>
 
 	PR icedtea/481
