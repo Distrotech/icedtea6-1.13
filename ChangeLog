@@ -1,3 +1,83 @@
+2010-05-10  Gary Benson  <gbenson@redhat.com>
+
+	PR icedtea/323
+	* ports/hotspot/src/cpu/zero/vm/javaFrameAnchor_zero.hpp
+	(JavaFrameAnchor::_last_Java_fp): New field.
+	(JavaFrameAnchor::clear): Also clear the above.
+	(JavaFrameAnchor::set): New method.
+	(JavaFrameAnchor::copy): Use the above.
+	(JavaFrameAnchor::set_lat_Java_sp): Removed.
+	(JavaFrameAnchor::last_Java_fp): New method.
+	(JavaFrameAnchor::last_Java_fp_offset): Likewise.
+	* ports/hotspot/src/os_cpu/linux_zero/vm/thread_linux_zero.hpp
+	(JavaThread::last_Java_fp): Likewise.
+	(JavaThread::last_Java_fp_offset): Likewise.
+	(JavaThread::set_last_Java_frame): Use new new frame anchor code.
+	(JavaThread::reset_last_Java_frame): Likewise.
+	(JavaThread::pd_last_frame): Likewise.
+	* ports/hotspot/src/cpu/zero/vm/frame_zero.hpp
+	(frame::frame): Flipped arguments.
+	(frame::_fp): Replaced with...
+	(frame::_zeroframe): New field.
+	(frame::fp): Updated.
+	(frame::zeroframe): Likewise.
+	* ports/hotspot/src/cpu/zero/vm/frame_zero.inline.hpp
+	(frame::frame): Likewise.
+	(frame::sender_sp): Likewise.
+	(frame::id): Likewise.
+	* ports/hotspot/src/cpu/zero/vm/frame_zero.cpp
+	(frame::sender_for_entry_frame): Likewise.
+	(frame::sender_for_nonentry_frame): Likewise.
+	(frame::zero_print_on_error): Likewise.
+	* ports/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp
+	(AbstractInterpreter::layout_activation): Use new frame
+	anchor code.
+
+	* ports/hotspot/src/cpu/zero/vm/stack_zero.hpp
+	(ZeroStack::suggest_size): New method.
+	(ZeroStack::total_words): Likewise.
+	(ZeroStack::abi_stack_available): Likewise.
+	(ZeroStack::zap): Likewise.
+	* ports/hotspot/src/cpu/zero/vm/stack_zero.inline.hpp
+	(ZeroStack::abi_stack_available): New method.
+	(ZeroStack::overflow_check): Use the above.
+	* ports/hotspot/src/cpu/zero/vm/stack_zero.cpp
+	(ZeroStack::suggest_size): New method.
+	(ZeroStack::zap): Likewise.
+	(ZeroStack::handle_overflow): Use new frame anchor code.
+	* ports/hotspot/src/cpu/zero/vm/stubGenerator_zero.cpp
+	(StubGenerator::call_stub): Use ZeroStack::suggest_size.
+
+	* ports/hotspot/src/share/vm/shark/sharkBuilder.hpp
+	(SharkBuilder::throw_StackOverflowError): New method.
+	* ports/hotspot/src/share/vm/shark/sharkBuilder.cpp
+	(SharkBuilder::throw_StackOverflowError): Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkStack.hpp
+	(SharkStack::initialize): Removed argument.
+	(SharkStack::CreateStackOverflowCheck): Updated.
+	(SharkStack::CreateCheckStack): Removed method.
+	(SharkStack::frame_anchor_addr): Likewise.
+	(SharkStack::last_Java_sp_addr): New method.
+	(SharkStack::last_Java_fp_addr): New method.
+	(SharkStack::CreateSetLastJavaFrame): Use new frame anchor code.
+	(SharkStack::CreateResetLastJavaFrame): Likewise.
+	(SharkStack::CreateAssertLastJavaSPIsNull): New method.
+	* ports/hotspot/src/share/vm/shark/sharkStack.cpp
+	(SharkStack::initialize): Updated for new stack overflow code.
+	(SharkStack::CreateStackOverflowCheck): Likewise.
+	(SharkStack::CreateCheckStack): Removed.
+	(SharkStackWithNormalFrame::SharkStackWithNormalFrame): Updated
+	for new stack overflow code.
+	(SharkStackWithNativeFrame::SharkStackWithNativeFrame): Likewise.
+	(SharkStack::CreateAssertLastJavaSPIsNull): New method.
+	
+	* ports/hotspot/make/linux/makefiles/zeroshark.make
+	(CFLAGS): Remove -DHOTSPOT_ASM until the ARM interpreter
+	and JIT are updated to use the new frame anchor code.
+
+	* ports/hotspot/src/share/vm/shark/sharkNativeWrapper.cpp
+	(SharkNativeWrapper::initialize): Whitespace fix.
+
 2010-05-07  Deepak Bhole <dbhole@redhat.com>
 
 	* plugin/icedteanp/java/sun/applet/PluginAppletViewer.java

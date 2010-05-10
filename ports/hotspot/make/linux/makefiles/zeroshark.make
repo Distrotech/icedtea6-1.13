@@ -31,7 +31,8 @@ Obj_Files += asm_helper.o
 Obj_Files += cppInterpreter_arm.o
 Obj_Files += thumb2.o
 
-CFLAGS += -DHOTSPOT_ASM
+#XXX disabled until it has the updated frame anchor code
+#CFLAGS += -DHOTSPOT_ASM
 
 %.o: %.S
 	@echo Assembling $<
