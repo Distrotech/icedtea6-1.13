@@ -31,7 +31,8 @@ Obj_Files += asm_helper.o
 Obj_Files += cppInterpreter_arm.o
 Obj_Files += thumb2.o
 
-#XXX disabled until it has the updated frame anchor code
+#XXX disabled until it has the updated frame anchor code (PR icedtea/323)
+#XXX and the updated calling convention for deopt (PR icedtea/484)
 #CFLAGS += -DHOTSPOT_ASM
 
 %.o: %.S
