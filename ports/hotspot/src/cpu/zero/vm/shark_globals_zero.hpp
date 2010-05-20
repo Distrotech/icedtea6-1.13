@@ -47,6 +47,9 @@ define_pd_global(intx,     Tier4BackEdgeThreshold,       100000);
 
 define_pd_global(intx,     OnStackReplacePercentage,     933  );
 define_pd_global(intx,     FreqInlineSize,               325  );
+#ifdef SHARK
+define_pd_global(intx,     InlineSmallCode,              1000 );
+#endif // SHARK
 define_pd_global(intx,     NewRatio,                     12   );
 define_pd_global(intx,     NewSizeThreadIncrease,        4*K  );
 define_pd_global(intx,     InitialCodeCacheSize,         160*K);
