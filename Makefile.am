@@ -221,7 +221,7 @@ REWRITER_SRCS = $(abs_top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.jav
 ICEDTEA_FSG_PATCHES =
 
 ICEDTEA_PATCHES = \
-	patches/hotspot/$(HSBUILD)/shark_do_nothing_on_stub_frame.patch \
+	patches/shark_do_nothing_on_stub_frame.patch \
 	patches/icedtea-notice-safepoints.patch \
 	patches/icedtea-parisc-opt.patch \
 	patches/icedtea-lucene-crash.patch \
@@ -257,7 +257,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-alt-jar.patch \
 	patches/icedtea-jdk-use-ssize_t.patch \
 	patches/icedtea-use-idx_t.patch \
-	patches/hotspot/$(HSBUILD)/params-cast-size_t.patch \
+	patches/params-cast-size_t.patch \
 	patches/icedtea-clean-crypto.patch \
 	patches/icedtea-shark.patch \
 	patches/icedtea-arch.patch \
@@ -298,14 +298,7 @@ ICEDTEA_PATCHES = \
 	patches/extensions/netx.patch \
 	patches/extensions/netx-dist.patch \
 	patches/extensions/netx-umask.patch \
-	patches/icedtea-jtreg-httpTest.patch \
-	patches/nss-debug.patch
-
-if WITH_ALT_HSBUILD
-ICEDTEA_PATCHES += \
-	patches/openjdk/6896472-missing_libjsig.patch \
-	patches/hotspot/$(HSBUILD)/6873059-javac-versioning-hotspot.patch
-endif
+	patches/icedtea-jtreg-httpTest.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -353,7 +346,7 @@ ICEDTEA_PATCHES += patches/icedtea-nio2.patch
 endif
 
 if ENABLE_SYSTEMTAP
-ICEDTEA_PATCHES += patches/hotspot/$(HSBUILD)/systemtap.patch
+ICEDTEA_PATCHES += patches/systemtap.patch
 endif
 
 if ENABLE_NSS

@@ -1,3 +1,26 @@
+2010-05-20  Andrew John Hughes  <ahughes@redhat.com>
+
+	Remove hs17 build option as this is now the default.
+	* patches/hotspot/hs17/6873059-javac-versioning-hotspot.patch:
+	Dropped; applied upstream.
+	* patches/hotspot/hs17/params-cast-size_t.patch,
+	* patches/hotspot/hs17/shark_do_nothing_on_stub_frame.patch,
+	* patches/hotspot/hs17/systemtap.patch:
+	Moved to top-level.
+	* patches/hotspot/original/params-cast-size_t.patch,
+	* patches/hotspot/original/shark_do_nothing_on_stub_frame.patch,
+	* patches/hotspot/original/systemtap.patch:
+	Dropped; hs16 is dead.
+	* patches/openjdk/6896472-missing_libjsig.patch,
+	* Makefile.am:
+	Remove differentation between original and hs17 build patches
+	as only build is now the hs17 one in the OpenJDK repository.
+	* hotspot.map: Drop hs17.
+	* patches/params-cast-size_t.patch,
+	* patches/shark_do_nothing_on_stub_frame.patch,
+	* patches/systemtap.patch:
+	Moved from hs17 to top-level.
+
 2010-04-26  Andrew John Hughes  <ahughes@redhat.com>
 
 	Use build directories outside the source
