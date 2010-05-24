@@ -1,3 +1,11 @@
+2010-05-24  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	The --enable-hg option should take precedence
+	over any --with-openjdk-src-zip/dir options.
+	Using a live Mercurial checkout only makes
+	sense in this context.
+
 2010-05-20  Gary Benson  <gbenson@redhat.com>
 
 	* ports/hotspot/src/cpu/zero/vm/shark_globals_zero.hpp
