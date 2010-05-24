@@ -113,11 +113,11 @@ IT_JAVACFLAGS=$(IT_JAVAC_SETTINGS) -source $(IT_LANGUAGE_SOURCE_VERSION) -target
 
 # Conditional defintions
 
-if USE_ALT_OPENJDK_SRC_ZIP
-  OPENJDK_SRC_ZIP = $(ALT_OPENJDK_SRC_ZIP)
-else
 if USE_HG
   OPENJDK_SRC_ZIP = 
+else
+if USE_ALT_OPENJDK_SRC_ZIP
+  OPENJDK_SRC_ZIP = $(ALT_OPENJDK_SRC_ZIP)
 else
   OPENJDK_SRC_ZIP = openjdk-6-src-$(OPENJDK_VERSION)-$(OPENJDK_DATE).tar.gz
 endif
@@ -593,10 +593,6 @@ dist-openjdk-fsg: stamps/patch-fsg.stamp
 # Download OpenJDK sources.
 
 stamps/hgforest.stamp:
-if OPENJDK_SRC_DIR_FOUND
-else
-if USE_ALT_OPENJDK_SRC_ZIP
-else
 if !USE_HG
 else
 	if ! $(HG) fclone -h; \
@@ -605,8 +601,6 @@ else
             "http://selenic.com/mercurial/wiki/index.cgi/ForestExtension"; \
           exit 1; \
           fi;
-endif
-endif
 endif
 	mkdir -p stamps 
 	touch stamps/hgforest.stamp
@@ -705,16 +699,16 @@ clean-drops: clean-download-jaxp-drop clean-download-jaf-drop \
 	rm -f stamps/download-drops.stamp
 
 stamps/download.stamp: stamps/hgforest.stamp stamps/download-drops.stamp
-if OPENJDK_SRC_DIR_FOUND
-else
-if USE_ALT_OPENJDK_SRC_ZIP
-else
 if USE_HG
 if WITH_HGREV
 	$(HG) fclone -r $(HGREV) $(OPENJDK_HG_URL) openjdk;
 else
 	$(HG) fclone $(OPENJDK_HG_URL) openjdk;
 endif
+else
+if OPENJDK_SRC_DIR_FOUND
+else
+if USE_ALT_OPENJDK_SRC_ZIP
 else
 	if ! echo "$(OPENJDK_MD5SUM)  $(OPENJDK_SRC_ZIP)" \
 	  | $(MD5SUM) --check ; \
