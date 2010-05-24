@@ -319,13 +319,21 @@ Value* SharkBuilder::osr_migration_end() {
   return make_function((address) SharedRuntime::OSR_migration_end, "C", "v");
 }
 
-// Uncommon trap
+// Semi-VM calls
 
-Value* SharkBuilder::uncommon_trap() {
-  return make_function((address) SharkRuntime::uncommon_trap, "Ti", "v");
+Value* SharkBuilder::throw_StackOverflowError() {
+  return make_function((address) ZeroStack::handle_overflow, "T", "v");
 }
 
-// Native-Java transition.
+Value* SharkBuilder::uncommon_trap() {
+  return make_function((address) SharkRuntime::uncommon_trap, "Ti", "i");
+}
+
+Value* SharkBuilder::deoptimized_entry_point() {
+  return make_function((address) CppInterpreter::main_loop, "iT", "v");
+}
+
+// Native-Java transition
 
 Value* SharkBuilder::check_special_condition_for_native_trans() {
   return make_function(
@@ -535,6 +543,16 @@ Value* SharkBuilder::CreateInlineOop(jobject object, const char* name) {
     CreateIntToPtr(
       code_buffer_address(code_buffer()->inline_oop(object)),
       PointerType::getUnqual(SharkType::oop_type())),
+    name);
+}
+
+Value* SharkBuilder::CreateInlineData(void*       data,
+                                      size_t      size,
+                                      const Type* type, 
+                                      const char* name) {
+  return CreateIntToPtr(
+    code_buffer_address(code_buffer()->inline_data(data, size)),
+    type,
     name);
 }
 

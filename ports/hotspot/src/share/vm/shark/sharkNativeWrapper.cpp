@@ -99,7 +99,7 @@ void SharkNativeWrapper::initialize(const char *name) {
     builder()->CreateStore(
       builder()->CreateInlineOop(
         JNIHandles::make_local(
-        target()->method_holder()->klass_part()->java_mirror())),
+          target()->method_holder()->klass_part()->java_mirror())),
       oop_tmp_slot());
 
     param_types.push_back(box_type);
@@ -283,7 +283,7 @@ void SharkNativeWrapper::initialize(const char *name) {
   builder()->SetInsertPoint(exception);
   CreateResetHandleBlock();
   stack()->CreatePopFrame(0);
-  builder()->CreateRetVoid();
+  builder()->CreateRet(LLVMValue::jint_constant(0));
 
   builder()->SetInsertPoint(no_exception);
 
@@ -327,11 +327,11 @@ void SharkNativeWrapper::initialize(const char *name) {
       needs_cast = true;
       break;
 
-    case T_BYTE:
+    case T_CHAR:
       needs_cast = true;
       break;
 
-    case T_CHAR:
+    case T_BYTE:
     case T_SHORT:
       needs_cast = true;
       is_signed = true;
@@ -348,5 +348,5 @@ void SharkNativeWrapper::initialize(const char *name) {
         result_addr,
         PointerType::getUnqual(SharkType::to_stackType(result_type))));
   }
-  builder()->CreateRetVoid();
+  builder()->CreateRet(LLVMValue::jint_constant(0));
 }

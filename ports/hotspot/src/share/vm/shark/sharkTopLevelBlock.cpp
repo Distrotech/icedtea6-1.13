@@ -221,8 +221,11 @@ void SharkTopLevelBlock::enter(SharkTopLevelBlock* predecessor,
         successor(i)->enter(this, false);
       }
     }
+    compute_exceptions();
     for (int i = 0; i < num_exceptions(); i++) {
-      exception(i)->enter(this, true);
+      SharkTopLevelBlock *handler = exception(i);
+      if (handler)
+        handler->enter(this, true);
     }
   }
 }
@@ -438,73 +441,93 @@ void SharkTopLevelBlock::check_pending_exception(int action) {
   builder()->SetInsertPoint(no_exception);
 }
 
+void SharkTopLevelBlock::compute_exceptions() {
+  ciExceptionHandlerStream str(target(), start());
+
+  int exc_count = str.count();
+  _exc_handlers = new GrowableArray<ciExceptionHandler*>(exc_count);
+  _exceptions   = new GrowableArray<SharkTopLevelBlock*>(exc_count);
+
+  int index = 0;
+  for (; !str.is_done(); str.next()) {
+    ciExceptionHandler *handler = str.handler();
+    if (handler->handler_bci() == -1)
+      break;
+    _exc_handlers->append(handler);
+
+    // Try and get this exception's handler from typeflow.  We should
+    // do it this way always, really, except that typeflow sometimes
+    // doesn't record exceptions, even loaded ones, and sometimes it
+    // returns them with a different handler bci.  Why???
+    SharkTopLevelBlock *block = NULL;
+    ciInstanceKlass* klass;
+    if (handler->is_catch_all()) {
+      klass = java_lang_Throwable_klass();
+    }
+    else {
+      klass = handler->catch_klass();
+    }
+    for (int i = 0; i < ciblock()->exceptions()->length(); i++) {
+      if (klass == ciblock()->exc_klasses()->at(i)) {
+        block = function()->block(ciblock()->exceptions()->at(i)->pre_order());
+        if (block->start() == handler->handler_bci())
+          break;
+        else
+          block = NULL;
+      }
+    }
+
+    // If typeflow let us down then try and figure it out ourselves
+    if (block == NULL) {
+      for (int i = 0; i < function()->block_count(); i++) {
+        SharkTopLevelBlock *candidate = function()->block(i);
+        if (candidate->start() == handler->handler_bci()) {
+          if (block != NULL) {
+            NOT_PRODUCT(warning("there may be trouble ahead"));
+            block = NULL;
+            break;
+          }
+          block = candidate;
+        }
+      }
+    }
+    _exceptions->append(block);
+  }
+}
+
 void SharkTopLevelBlock::handle_exception(Value* exception, int action) {
   if (action & EAM_HANDLE && num_exceptions() != 0) {
-    // Clear the stack and push the exception onto it.
-    // We do this now to protect it across the VM call
-    // we may be about to make.
+    // Clear the stack and push the exception onto it
     while (xstack_depth())
       pop();
     push(SharkValue::create_jobject(exception, true));
 
-    int *indexes = NEW_RESOURCE_ARRAY(int, num_exceptions());
-    bool has_catch_all = false;
-
-    ciExceptionHandlerStream eh_iter(target(), bci());
-    for (int i = 0; i < num_exceptions(); i++, eh_iter.next()) {
-      ciExceptionHandler* handler = eh_iter.handler();
-
-      if (handler->is_catch_all()) {
-        assert(i == num_exceptions() - 1, "catch-all should be last");
-        has_catch_all = true;
-      }
-      else {
-        indexes[i] = handler->catch_klass_index();
-      }
-    }
-
+    // Work out how many options we have to check
+    bool has_catch_all = exc_handler(num_exceptions() - 1)->is_catch_all();
     int num_options = num_exceptions();
     if (has_catch_all)
       num_options--;
 
-    // Drop into the runtime if there are non-catch-all options
+    // Marshal any non-catch-all handlers
     if (num_options > 0) {
-      Value *options = builder()->CreateAlloca(
-        ArrayType::get(SharkType::jint_type(), num_options),
-        LLVMValue::jint_constant(1));
-
-      for (int i = 0; i < num_options; i++)
-        builder()->CreateStore(
-          LLVMValue::jint_constant(indexes[i]),
-          builder()->CreateStructGEP(options, i));
-
-      Value *index = call_vm(
-        builder()->find_exception_handler(),
-        builder()->CreateStructGEP(options, 0),
-        LLVMValue::jint_constant(num_options),
-        EX_CHECK_NO_CATCH);
-
-      // Jump to the exception handler, if found
-      BasicBlock *no_handler = function()->CreateBlock("no_handler");
-      SwitchInst *switchinst = builder()->CreateSwitch(
-        index, no_handler, num_options);
-
+      bool all_loaded = true;
       for (int i = 0; i < num_options; i++) {
-        SharkTopLevelBlock* handler = this->exception(i);
-
-        switchinst->addCase(
-          LLVMValue::jint_constant(i),
-          handler->entry_block());
-
-        handler->add_incoming(current_state());
+        if (!exc_handler(i)->catch_klass()->is_loaded()) {
+          all_loaded = false;
+          break;
+        }
       }
 
-      builder()->SetInsertPoint(no_handler);
+      if (all_loaded)
+        marshal_exception_fast(num_options);
+      else
+        marshal_exception_slow(num_options);
     }
 
-    // No specific handler exists, but maybe there's a catch-all
+    // Install the catch-all handler, if present
     if (has_catch_all) {
       SharkTopLevelBlock* handler = this->exception(num_options);
+      assert(handler != NULL, "catch-all handler cannot be unloaded");
 
       builder()->CreateBr(handler->entry_block());
       handler->add_incoming(current_state());
@@ -514,6 +537,78 @@ void SharkTopLevelBlock::handle_exception(Value* exception, int action) {
 
   // No exception handler was found; unwind and return
   handle_return(T_VOID, exception);
+}
+
+void SharkTopLevelBlock::marshal_exception_fast(int num_options) {
+  Value *exception_klass = builder()->CreateValueOfStructEntry(
+    xstack(0)->jobject_value(),
+    in_ByteSize(oopDesc::klass_offset_in_bytes()),
+    SharkType::oop_type(),
+    "exception_klass");
+
+  for (int i = 0; i < num_options; i++) {
+    Value *check_klass =
+      builder()->CreateInlineOop(exc_handler(i)->catch_klass());
+
+    BasicBlock *not_exact   = function()->CreateBlock("not_exact");
+    BasicBlock *not_subtype = function()->CreateBlock("not_subtype");
+
+    builder()->CreateCondBr(
+      builder()->CreateICmpEQ(check_klass, exception_klass),
+      handler_for_exception(i), not_exact);
+
+    builder()->SetInsertPoint(not_exact);
+    builder()->CreateCondBr(
+      builder()->CreateICmpNE(
+        builder()->CreateCall2(
+          builder()->is_subtype_of(), check_klass, exception_klass),
+        LLVMValue::jbyte_constant(0)),
+      handler_for_exception(i), not_subtype);
+
+    builder()->SetInsertPoint(not_subtype);
+  }
+}
+
+void SharkTopLevelBlock::marshal_exception_slow(int num_options) {
+  int *indexes = NEW_RESOURCE_ARRAY(int, num_options);
+  for (int i = 0; i < num_options; i++)
+    indexes[i] = exc_handler(i)->catch_klass_index();
+
+  Value *index = call_vm(
+    builder()->find_exception_handler(),
+    builder()->CreateInlineData(
+      indexes,
+      num_options * sizeof(int),
+      PointerType::getUnqual(SharkType::jint_type())),
+    LLVMValue::jint_constant(num_options),
+    EX_CHECK_NO_CATCH);
+
+  BasicBlock *no_handler = function()->CreateBlock("no_handler");
+  SwitchInst *switchinst = builder()->CreateSwitch(
+    index, no_handler, num_options);
+
+  for (int i = 0; i < num_options; i++) {
+    switchinst->addCase(
+      LLVMValue::jint_constant(i),
+      handler_for_exception(i));
+  }
+
+  builder()->SetInsertPoint(no_handler);
+}
+
+BasicBlock* SharkTopLevelBlock::handler_for_exception(int index) {
+  SharkTopLevelBlock *successor = this->exception(index);
+  if (successor) {
+    successor->add_incoming(current_state());
+    return successor->entry_block();
+  }
+  else {
+    return make_trap(
+      exc_handler(index)->handler_bci(),
+      Deoptimization::make_trap_request(
+        Deoptimization::Reason_unhandled,
+        Deoptimization::Action_reinterpret));
+  }
 }
 
 void SharkTopLevelBlock::maybe_add_safepoint() {
@@ -585,20 +680,37 @@ bool SharkTopLevelBlock::can_reach_helper(SharkTopLevelBlock* other) {
   }
 
   for (int i = 0; i < num_exceptions(); i++) {
-    if (exception(i)->can_reach_helper(other))
+    SharkTopLevelBlock *handler = exception(i);
+    if (handler && handler->can_reach_helper(other))
       return true;
   }
 
   return false;
 }
 
+BasicBlock* SharkTopLevelBlock::make_trap(int trap_bci, int trap_request) {
+  BasicBlock *trap_block = function()->CreateBlock("trap");
+  BasicBlock *orig_block = builder()->GetInsertBlock();
+  builder()->SetInsertPoint(trap_block);
+
+  int orig_bci = bci();
+  iter()->force_bci(trap_bci);
+
+  do_trap(trap_request);
+
+  builder()->SetInsertPoint(orig_block);
+  iter()->force_bci(orig_bci);
+
+  return trap_block;
+}
+
 void SharkTopLevelBlock::do_trap(int trap_request) {
   decache_for_trap();
-  builder()->CreateCall2(
-    builder()->uncommon_trap(),
-    thread(),
-    LLVMValue::jint_constant(trap_request));
-  builder()->CreateRetVoid();
+  builder()->CreateRet(
+    builder()->CreateCall2(
+      builder()->uncommon_trap(),
+      thread(),
+      LLVMValue::jint_constant(trap_request)));
 }
 
 void SharkTopLevelBlock::call_register_finalizer(Value *receiver) {
@@ -677,7 +789,7 @@ void SharkTopLevelBlock::handle_return(BasicType type, Value* exception) {
         PointerType::getUnqual(SharkType::to_stackType(type))));
   }
 
-  builder()->CreateRetVoid();
+  builder()->CreateRet(LLVMValue::jint_constant(0));
 }
 
 void SharkTopLevelBlock::do_arraylength() {
@@ -690,12 +802,6 @@ void SharkTopLevelBlock::do_arraylength() {
 void SharkTopLevelBlock::do_aload(BasicType basic_type) {
   SharkValue *index = pop();
   SharkValue *array = pop();
-
-  assert(array->type()->is_array_klass(), "should be");
-  ciType *element_type = ((ciArrayKlass *) array->type())->element_type();
-  assert((element_type->basic_type() == T_BOOLEAN && basic_type == T_BYTE) ||
-         (element_type->basic_type() == T_ARRAY && basic_type == T_OBJECT) ||
-         (element_type->basic_type() == basic_type), "type mismatch");
 
   check_null(array);
   check_bounds(array, index);
@@ -729,7 +835,21 @@ void SharkTopLevelBlock::do_aload(BasicType basic_type) {
     break;
 
   case T_OBJECT:
-    push(SharkValue::create_generic(element_type, value, false));
+    // You might expect that array->type()->is_array_klass() would
+    // always be true, but it isn't.  If ciTypeFlow detects that a
+    // value is always null then that value becomes an untyped null
+    // object.  Shark doesn't presently support this, so a generic
+    // T_OBJECT is created.  In this case we guess the type using
+    // the BasicType we were supplied.  In reality the generated
+    // code will never be used, as the null value will be caught
+    // by the above null pointer check.
+    // http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=324
+    push(
+      SharkValue::create_generic(
+        array->type()->is_array_klass() ?
+          ((ciArrayKlass *) array->type())->element_type() :
+          ciType::make(basic_type),
+        value, false));
     break;
 
   default:
@@ -742,12 +862,6 @@ void SharkTopLevelBlock::do_astore(BasicType basic_type) {
   SharkValue *svalue = pop();
   SharkValue *index  = pop();
   SharkValue *array  = pop();
-
-  assert(array->type()->is_array_klass(), "should be");
-  ciType *element_type = ((ciArrayKlass *) array->type())->element_type();
-  assert((element_type->basic_type() == T_BOOLEAN && basic_type == T_BYTE) ||
-         (element_type->basic_type() == T_ARRAY && basic_type == T_OBJECT) ||
-         (element_type->basic_type() == basic_type), "type mismatch");
 
   check_null(array);
   check_bounds(array, index);
@@ -792,7 +906,7 @@ void SharkTopLevelBlock::do_astore(BasicType basic_type) {
 
   builder()->CreateStore(value, addr);
 
-  if (!element_type->is_primitive_type())
+  if (basic_type == T_OBJECT) // XXX or T_ARRAY?
     builder()->CreateUpdateBarrierSet(oopDesc::bs(), addr);
 }
 
@@ -901,6 +1015,18 @@ ciMethod* SharkTopLevelBlock::improve_virtual_call(ciMethod*   caller,
       dest_method->holder() == java_lang_Object_klass())
     return dest_method;
 
+#ifdef SHARK_CAN_DEOPTIMIZE_ANYWHERE
+  // This code can replace a virtual call with a direct call if this
+  // class is the only one in the entire set of loaded classes that
+  // implements this method.  This makes the compiled code dependent
+  // on other classes that implement the method not being loaded, a
+  // condition which is enforced by the dependency tracker.  If the
+  // dependency tracker determines a method has become invalid it
+  // will mark it for recompilation, causing running copies to be
+  // deoptimized.  Shark currently can't deoptimize arbitrarily like
+  // that, so this optimization cannot be used.
+  // http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=481
+  
   // All other interesting cases are instance classes
   if (!receiver_type->is_instance_klass())
     return NULL;
@@ -955,6 +1081,8 @@ ciMethod* SharkTopLevelBlock::improve_virtual_call(ciMethod*   caller,
   // it can perform a further optimization to replace calls
   // with non-monomorphic targets if the receiver has an exact
   // type.  We don't mark types this way, so we can't do this.
+
+#endif // SHARK_CAN_DEOPTIMIZE_ANYWHERE
 
   return NULL;
 }
@@ -1187,7 +1315,25 @@ void SharkTopLevelBlock::do_call() {
 
   // Make the call
   decache_for_Java_call(call_method);
-  builder()->CreateCall3(entry_point, callee, base_pc, thread());
+  Value *deoptimized_frames = builder()->CreateCall3(
+    entry_point, callee, base_pc, thread());
+
+  // If the callee got deoptimized then reexecute in the interpreter
+  BasicBlock *reexecute      = function()->CreateBlock("reexecute");
+  BasicBlock *call_completed = function()->CreateBlock("call_completed");
+  builder()->CreateCondBr(
+    builder()->CreateICmpNE(deoptimized_frames, LLVMValue::jint_constant(0)),
+    reexecute, call_completed);
+
+  builder()->SetInsertPoint(reexecute);
+  builder()->CreateCall2(
+    builder()->deoptimized_entry_point(),
+    builder()->CreateSub(deoptimized_frames, LLVMValue::jint_constant(1)),
+    thread());
+  builder()->CreateBr(call_completed);
+
+  // Cache after the call
+  builder()->SetInsertPoint(call_completed);
   cache_after_Java_call(call_method);
 
   // Check for pending exceptions

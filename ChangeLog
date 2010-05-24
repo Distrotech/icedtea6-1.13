@@ -11,7 +11,8 @@
 	* patches/hotspot/original/shark_do_nothing_on_stub_frame.patch,
 	* patches/hotspot/original/systemtap.patch:
 	Dropped; hs16 is dead.
-	* patches/openjdk/6896472-missing_libjsig.patch,
+	* patches/openjdk/6896472-missing_libjsig.patch:
+	Dropped; applied upstream.
 	* Makefile.am:
 	Remove differentation between original and hs17 build patches
 	as only build is now the hs17 one in the OpenJDK repository.
@@ -20,6 +21,329 @@
 	* patches/shark_do_nothing_on_stub_frame.patch,
 	* patches/systemtap.patch:
 	Moved from hs17 to top-level.
+
+2010-05-20  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/src/cpu/zero/vm/shark_globals_zero.hpp
+	(InlineSmallCode): Moved from here...
+	* ports/hotspot/src/cpu/zero/vm/globals_zero.hpp
+	(InlineSmallCode): ...to here.
+
+2010-05-20  Gary Benson  <gbenson@redhat.com>
+
+	PR icedtea/494
+	* ports/hotspot/src/share/vm/shark/sharkInvariants.hpp
+	(SharkCompileInvariants::java_lang_Throwable_klass): New method.
+	* ports/hotspot/src/share/vm/shark/sharkTopLevelBlock.hpp
+	(SharkTopLevelBlock::_exc_handlers): New field.
+	(SharkTopLevelBlock::_exceptions): Likewise.
+	(SharkTopLevelBlock::compute_exceptions): New method.
+	(SharkTopLevelBlock::num_exceptions): Rewritten.
+	(SharkTopLevelBlock::exc_handler): New method.
+	(SharkTopLevelBlock::exception): Rewritten.
+	(SharkTopLevelBlock::marshal_exception_fast): New method.
+	(SharkTopLevelBlock::marshal_exception_slow): Likewise.
+	(SharkTopLevelBlock::handler_for_exception): Likewise.
+	(SharkTopLevelBlock::make_trap): Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkTopLevelBlock.cpp
+	(SharkTopLevelBlock::enter): Compute exceptions on entry,
+	and skip over any null handlers.
+	(SharkTopLevelBlock::compute_exceptions): New method.
+	(SharkTopLevelBlock::handle_exception): Rewritten.
+	(SharkTopLevelBlock::marshal_exception_fast): New method.
+	(SharkTopLevelBlock::marshal_exception_slow): Likewise.
+	(SharkTopLevelBlock::handler_for_exception): Likewise.
+	(SharkTopLevelBlock::make_trap): Likewise.
+	(SharkTopLevelBlock::can_reach_helper): Skip over null handlers.
+
+2010-05-20  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/src/cpu/zero/vm/shark_globals_zero.hpp
+	(InlineSmallCode): Reinstated, inside #ifdef SHARK.
+
+2010-05-19  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/src/cpu/zero/vm/shark_globals_zero.hpp
+	(InlineSmallCode): Removed.
+
+2010-05-14  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/src/share/vm/shark/sharkCodeBuffer.hpp
+	(SharkCodeBuffer::inline_data): New method.
+	* ports/hotspot/src/share/vm/shark/sharkBuilder.hpp
+	(SharkBuilder::CreateInlineData): Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkBuilder.cpp
+	(SharkBuilder::CreateInlineData): Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkTopLevelBlock.cpp
+	(SharkTopLevelBlock::handle_exception): Inline the exception
+	handler table in the code buffer rather than creating it on
+	the stack.
+
+2010-05-14  Gary Benson  <gbenson@redhat.com>
+
+	PR icedtea/484
+	* ports/hotspot/src/cpu/zero/vm/cppInterpreter_zero.hpp
+	(CppInterpreter::normal_entry): Return int instead of void.
+	(CppInterpreter::native_entry): Likewise.
+	(CppInterpreter::accessor_entry): Likewise.
+	(CppInterpreter::empty_entry): Likewise.
+	* ports/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp
+	(CppInterpreter::normal_entry): Return 0.
+	(CppInterpreter::native_entry): Likewise.
+	(CppInterpreter::accessor_entry): Likewise.
+	(CppInterpreter::empty_entry): Likewise.
+	* ports/hotspot/src/cpu/zero/vm/entry_zero.hpp
+	(ZeroEntry::NormalEntryFunc): Return int instead of void.
+	(ZeroEntry::OSREntryFunc): Likewise.
+	(ZeroEntry::invoke): Deoptimize where necessary.
+	(ZeroEntry::invoke_osr): Likewise.
+	(ZeroEntry::maybe_deoptimize): New method.
+	* ports/hotspot/src/share/vm/shark/sharkBuilder.hpp
+	(SharkBuilder::deoptimized_entry_point): New method.
+	* ports/hotspot/src/share/vm/shark/sharkBuilder.hpp
+	(SharkBuilder::uncommon_trap): Return int instead of void.
+	(SharkBuilder::deoptimized_entry_point): New method.
+	* ports/hotspot/src/share/vm/shark/sharkContext.cpp
+	(SharkContext::SharkContext): Updated entry point types.
+	* ports/hotspot/src/share/vm/shark/sharkNativeWrapper.cpp
+	(SharkNativeWrapper::initialize): Make generated wrappers
+	return 0 instead of void.
+	* ports/hotspot/src/share/vm/shark/sharkRuntime.cpp
+	(SharkRuntime::uncommon_trap): Return int instead of void.
+	* ports/hotspot/src/share/vm/shark/sharkRuntime.cpp
+	(SharkRuntime::uncommon_trap): Don't enter the interpreter,
+	just return the number of frames that have been deoptimized.
+	* ports/hotspot/src/share/vm/shark/sharkTopLevelBlock.cpp
+	(SharkTopLevelBlock::do_trap): Return the number of deoptimized
+	frames instead of void.
+	(SharkTopLevelBlock::handle_return): Return 0 instead of void.
+	(SharkTopLevelBlock::do_call): Deoptimize where necessary.
+
+	* ports/hotspot/make/linux/makefiles/zeroshark.make:
+	Note that ARM interpreter needs updating for this change too.
+
+2010-05-14  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp
+	(AbstractInterpreter::layout_activation): Add missing semicolon.
+
+2010-05-13  Gary Benson  <gbenson@redhat.com>
+
+	PR icedtea/483
+	* ports/hotspot/src/share/vm/shark/sharkNativeWrapper.cpp
+	(SharkNativeWrapper::initialize): Fix signedness of T_BYTE
+	and T_CHAR results.
+
+2010-05-11  Gary Benson  <gbenson@redhat.com>
+
+	PR icedtea/323
+	* patches/icedtea-shark.patch
+	(Deoptimization::create_vframeArray): Remove a now-unnecessary hack.
+
+2010-05-10  Gary Benson  <gbenson@redhat.com>
+
+	PR icedtea/323
+	* ports/hotspot/src/cpu/zero/vm/javaFrameAnchor_zero.hpp
+	(JavaFrameAnchor::_last_Java_fp): New field.
+	(JavaFrameAnchor::clear): Also clear the above.
+	(JavaFrameAnchor::set): New method.
+	(JavaFrameAnchor::copy): Use the above.
+	(JavaFrameAnchor::set_lat_Java_sp): Removed.
+	(JavaFrameAnchor::last_Java_fp): New method.
+	(JavaFrameAnchor::last_Java_fp_offset): Likewise.
+	* ports/hotspot/src/os_cpu/linux_zero/vm/thread_linux_zero.hpp
+	(JavaThread::last_Java_fp): Likewise.
+	(JavaThread::last_Java_fp_offset): Likewise.
+	(JavaThread::set_last_Java_frame): Use new new frame anchor code.
+	(JavaThread::reset_last_Java_frame): Likewise.
+	(JavaThread::pd_last_frame): Likewise.
+	* ports/hotspot/src/cpu/zero/vm/frame_zero.hpp
+	(frame::frame): Flipped arguments.
+	(frame::_fp): Replaced with...
+	(frame::_zeroframe): New field.
+	(frame::fp): Updated.
+	(frame::zeroframe): Likewise.
+	* ports/hotspot/src/cpu/zero/vm/frame_zero.inline.hpp
+	(frame::frame): Likewise.
+	(frame::sender_sp): Likewise.
+	(frame::id): Likewise.
+	* ports/hotspot/src/cpu/zero/vm/frame_zero.cpp
+	(frame::sender_for_entry_frame): Likewise.
+	(frame::sender_for_nonentry_frame): Likewise.
+	(frame::zero_print_on_error): Likewise.
+	* ports/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp
+	(AbstractInterpreter::layout_activation): Use new frame
+	anchor code.
+
+	* ports/hotspot/src/cpu/zero/vm/stack_zero.hpp
+	(ZeroStack::suggest_size): New method.
+	(ZeroStack::total_words): Likewise.
+	(ZeroStack::abi_stack_available): Likewise.
+	(ZeroStack::zap): Likewise.
+	* ports/hotspot/src/cpu/zero/vm/stack_zero.inline.hpp
+	(ZeroStack::abi_stack_available): New method.
+	(ZeroStack::overflow_check): Use the above.
+	* ports/hotspot/src/cpu/zero/vm/stack_zero.cpp
+	(ZeroStack::suggest_size): New method.
+	(ZeroStack::zap): Likewise.
+	(ZeroStack::handle_overflow): Use new frame anchor code.
+	* ports/hotspot/src/cpu/zero/vm/stubGenerator_zero.cpp
+	(StubGenerator::call_stub): Use ZeroStack::suggest_size.
+
+	* ports/hotspot/src/share/vm/shark/sharkBuilder.hpp
+	(SharkBuilder::throw_StackOverflowError): New method.
+	* ports/hotspot/src/share/vm/shark/sharkBuilder.cpp
+	(SharkBuilder::throw_StackOverflowError): Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkStack.hpp
+	(SharkStack::initialize): Removed argument.
+	(SharkStack::CreateStackOverflowCheck): Updated.
+	(SharkStack::CreateCheckStack): Removed method.
+	(SharkStack::frame_anchor_addr): Likewise.
+	(SharkStack::last_Java_sp_addr): New method.
+	(SharkStack::last_Java_fp_addr): New method.
+	(SharkStack::CreateSetLastJavaFrame): Use new frame anchor code.
+	(SharkStack::CreateResetLastJavaFrame): Likewise.
+	(SharkStack::CreateAssertLastJavaSPIsNull): New method.
+	* ports/hotspot/src/share/vm/shark/sharkStack.cpp
+	(SharkStack::initialize): Updated for new stack overflow code.
+	(SharkStack::CreateStackOverflowCheck): Likewise.
+	(SharkStack::CreateCheckStack): Removed.
+	(SharkStackWithNormalFrame::SharkStackWithNormalFrame): Updated
+	for new stack overflow code.
+	(SharkStackWithNativeFrame::SharkStackWithNativeFrame): Likewise.
+	(SharkStack::CreateAssertLastJavaSPIsNull): New method.
+
+	* ports/hotspot/make/linux/makefiles/zeroshark.make
+	(CFLAGS): Remove -DHOTSPOT_ASM until the ARM interpreter
+	and JIT are updated to use the new frame anchor code.
+
+	* ports/hotspot/src/share/vm/shark/sharkNativeWrapper.cpp
+	(SharkNativeWrapper::initialize): Whitespace fix.
+
+2010-05-07  Deepak Bhole <dbhole@redhat.com>
+
+	* plugin/icedteanp/java/sun/applet/PluginAppletViewer.java
+	(handleMessage): Don't print stack trace on InterruptedException.
+	(appletClose): Kill misbehaving applets that don't shut down properly.
+
+2010-05-07  Deepak Bhole <dbhole@redhat.com>
+
+	* netx/net/sourceforge/jnlp/Launcher.java
+	(setContextClassLoaderForAllThreads): Change to set context CL only for
+	given threadgroup.
+	(launchApplication): Supply threadgroup to
+	setContextClassLoaderForAllThreads.
+	(createApplet): Same.
+
+2010-05-07  Gary Benson  <gbenson@redhat.com>
+
+	* netx/net/sourceforge/jnlp/runtime/JNLPSecurityManager.java:
+	Removed a stray semicolon.
+
+2010-05-07  Gary Benson  <gbenson@redhat.com>
+
+	* ports/hotspot/src/cpu/zero/vm/stack_zero.hpp
+	(ZeroStack::_shadow_pages_size): New field.
+	(ZeroStack::ZeroStack): Initialize the above.
+	(ZeroStack::shadow_pages_size): New method.
+	(ZeroStack::overflow_check): Likewise.
+	(ZeroStack::handle_overflow): Likewise.
+	* ports/hotspot/src/cpu/zero/vm/stack_zero.inline.hpp: New file.
+	* ports/hotspot/src/cpu/zero/vm/stack_zero.cpp: Likewise.
+	* ports/hotspot/src/cpu/zero/vm/cppInterpreter_zero.hpp
+	(CppInterpreter::stack_overflow_imminent): Removed.
+	* ports/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp
+	(CppInterpreter::stack_overflow_imminent): Likewise.
+	(CppInterpreter::normal_entry): Use new stack overflow code.
+	(CppInterpreter::main_loop): Likewise.
+	(CppInterpreter::native_entry): Likewise.
+	(InterpreterFrame::build): Likewise.
+	* ports/hotspot/src/cpu/zero/vm/entryFrame_zero.hpp
+	(EntryFrame::build): Likewise.
+	* ports/hotspot/src/cpu/zero/vm/fakeStubFrame_zero.hpp
+	(FakeStubFrame::build): Likewise.
+	* ports/hotspot/src/cpu/zero/vm/interpreterFrame_zero.hpp
+	(InterpreterFrame::build): Likewise.
+	* ports/hotspot/src/cpu/zero/vm/interpreterRT_zero.cpp
+	(InterpreterRuntime::slow_signature_handler): Likewise.
+	* ports/hotspot/src/cpu/zero/vm/stubGenerator_zero.cpp
+	(StubGenerator::call_stub): Likewise.
+	(EntryFrame::build): Likewise.
+	* ports/hotspot/src/share/vm/shark/sharkRuntime.cpp
+	(SharkRuntime::uncommon_trap): Likewise.
+	(FakeStubFrame::build): Likewise.
+
+	* ports/hotspot/src/os_cpu/linux_zero/vm/thread_linux_zero.hpp
+	(JavaThread::set_last_Java_frame): Refactored.
+	(JavaThread::reset_last_Java_frame): Likewise.
+
+	* ports/hotspot/src/cpu/zero/vm/globals_zero.hpp: Updated.
+	* ports/hotspot/src/cpu/zero/vm/shark_globals_zero.hpp: Likewise.
+
+	* ports/hotspot/src/share/vm/includeDB_zero: Updated.
+	* ports/hotspot/src/share/vm/includeDB_shark: Likewise.
+
+	* ports/hotspot/src/share/vm/shark/sharkCacheDecache.cpp
+	(SharkDecacher::end_frame): Updated for newer HotSpot.
+
+2010-05-06  Deepak Bhole <dbhole@redhat.com>
+
+	* netx/net/sourceforge/jnlp/runtime/JNLPSecurityManager.java
+	(checkPermission): Allow Runtime and Security permission (for
+	putProvider.SunJCE) if initiated for an https connection.
+	(inTrustedCallChain): New method. Returns if given class/method is
+	in the call chain, and everything upto there is trusted.
+
+2010-05-05  Gary Benson  <gbenson@redhat.com>
+
+	PR icedtea/481
+	* ports/hotspot/src/share/vm/shark/sharkTopLevelBlock.cpp
+	(SharkTopLevelBlock::improve_virtual_call): Disable an
+	optimization that cannot currently be supported.
+
+2010-05-04  Andrew John Hughes  <ahughes@redhat.com>
+
+	Move OpenJDK patches to appropriate subdirectory.
+	* patches/icedtea-6616792-fix.patch,
+	* patches/icedtea-iso-8859-15-fix.patch:
+	Moved to...
+	* Makefile.am: Fix paths to patches.
+	* patches/openjdk/6616792-focus-tests-fix.patch,
+	* patches/openjdk/6798572-iso-8859-15-fix.patch:
+	...here.
+
+2010-05-04  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* patches/icedtea-iso-8859-15-fix.patch:
+	fixed ISO-8859-1 and ISO-8859-15 charsets relationship
+
+2010-05-03  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* patches/icedtea-6616792-fix.patch:
+	fixed AWT focus regression tests
+
+2010-04-30  Gary Benson  <gbenson@redhat.com>
+
+	PR icedtea/324
+	* ports/hotspot/src/share/vm/shark/sharkTopLevelBlock.cpp
+	(SharkTopLevelBlock::do_aload): Cope with cases where
+	the array's type is unknown.
+	(SharkTopLevelBlock::do_astore): Likewise.
+
+2010-04-29  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* overlays/openjdk/jdk/test/com: Removed, correct
+	version of these tests are now available in OpenJDK
+	itself.
+
+2010-04-28  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Add patch when SystemTap is enabled to support
+	building with GCC 4.5.
+	* patches/systemtap-gcc-4.5.patch:
+	Add cast to NULL (doesn't apply to DTrace due
+	to differences between SystemTap and DTrace macros).
 
 2010-04-26  Andrew John Hughes  <ahughes@redhat.com>
 

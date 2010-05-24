@@ -346,7 +346,8 @@ ICEDTEA_PATCHES += patches/icedtea-nio2.patch
 endif
 
 if ENABLE_SYSTEMTAP
-ICEDTEA_PATCHES += patches/systemtap.patch
+ICEDTEA_PATCHES += patches/systemtap.patch \
+	patches/systemtap-gcc-4.5.patch
 endif
 
 if ENABLE_NSS
