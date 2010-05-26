@@ -1,6 +1,6 @@
-diff -uNr openjdk/jdk/test/sun/tools/jrunscript.orig/CheckEngine.java openjdk/jdk/test/sun/tools/jrunscript/CheckEngine.java
---- openjdk/jdk/test/sun/tools/jrunscript.orig/CheckEngine.java	2009-04-01 14:23:50.000000000 -0400
-+++ openjdk/jdk/test/sun/tools/jrunscript/CheckEngine.java	2009-04-01 16:23:26.000000000 -0400
+diff -Nru openjdk.orig/jdk/test/sun/tools/jrunscript/CheckEngine.java openjdk/jdk/test/sun/tools/jrunscript/CheckEngine.java
+--- openjdk.orig/jdk/test/sun/tools/jrunscript/CheckEngine.java	2010-05-26 09:33:18.000000000 +0100
++++ openjdk/jdk/test/sun/tools/jrunscript/CheckEngine.java	2010-05-26 14:08:25.000000000 +0100
 @@ -39,7 +39,8 @@
   * passed.
   */
@@ -24,14 +24,14 @@ diff -uNr openjdk/jdk/test/sun/tools/jrunscript.orig/CheckEngine.java openjdk/jd
          System.exit(exitCode);
      }
  }
-diff -uNr openjdk/jdk/test/sun/tools/jrunscript.orig/jrunscriptTest.sh openjdk/jdk/test/sun/tools/jrunscript/jrunscriptTest.sh
---- openjdk/jdk/test/sun/tools/jrunscript.orig/jrunscriptTest.sh	2009-04-01 14:23:50.000000000 -0400
-+++ openjdk/jdk/test/sun/tools/jrunscript/jrunscriptTest.sh	1969-12-31 19:00:00.000000000 -0500
+diff -Nru openjdk.orig/jdk/test/sun/tools/jrunscript/jrunscriptTest.sh openjdk/jdk/test/sun/tools/jrunscript/jrunscriptTest.sh
+--- openjdk.orig/jdk/test/sun/tools/jrunscript/jrunscriptTest.sh	2010-05-26 09:33:18.000000000 +0100
++++ openjdk/jdk/test/sun/tools/jrunscript/jrunscriptTest.sh	1970-01-01 01:00:00.000000000 +0100
 @@ -1,80 +0,0 @@
 -#!/bin/sh
 -
 -#
--# Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
+-# Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
 -# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 -#
 -# This code is free software; you can redistribute it and/or modify it
@@ -48,9 +48,9 @@ diff -uNr openjdk/jdk/test/sun/tools/jrunscript.orig/jrunscriptTest.sh openjdk/j
 -# 2 along with this work; if not, write to the Free Software Foundation,
 -# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 -#
--# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
--# CA 95054 USA or visit www.sun.com if you need additional information or
--# have any questions.
+-# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+-# or visit www.oracle.com if you need additional information or have any
+-# questions.
 -#
 -
 -
@@ -108,9 +108,9 @@ diff -uNr openjdk/jdk/test/sun/tools/jrunscript.orig/jrunscriptTest.sh openjdk/j
 -rm -f jrunscriptTest.out
 -echo "Passed"
 -exit 0
-diff -uNr openjdk/jdk/test/sun/tools/jrunscript.orig/Testjrunscript.java openjdk/jdk/test/sun/tools/jrunscript/Testjrunscript.java
---- openjdk/jdk/test/sun/tools/jrunscript.orig/Testjrunscript.java	1969-12-31 19:00:00.000000000 -0500
-+++ openjdk/jdk/test/sun/tools/jrunscript/Testjrunscript.java	2009-04-01 16:52:36.000000000 -0400
+diff -Nru openjdk.orig/jdk/test/sun/tools/jrunscript/Testjrunscript.java openjdk/jdk/test/sun/tools/jrunscript/Testjrunscript.java
+--- openjdk.orig/jdk/test/sun/tools/jrunscript/Testjrunscript.java	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/jdk/test/sun/tools/jrunscript/Testjrunscript.java	2010-05-26 14:08:25.000000000 +0100
 @@ -0,0 +1,239 @@
 +/*
 + * Copyright 2009 Red Hat, Inc. All Rights Reserved.

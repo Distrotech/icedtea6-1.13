@@ -1,6 +1,6 @@
-diff -r 4aebfff4f8a2 jdk/make/javax/crypto/Makefile
---- openjdk.orig/jdk/make/javax/crypto/Makefile	Mon Sep 15 11:38:34 2008 +0200
-+++ openjdk/jdk/make/javax/crypto/Makefile	Thu Sep 25 17:45:37 2008 +0200
+diff -Nru openjdk.orig/jdk/make/javax/crypto/Makefile openjdk/jdk/make/javax/crypto/Makefile
+--- openjdk.orig/jdk/make/javax/crypto/Makefile	2010-05-26 09:32:35.000000000 +0100
++++ openjdk/jdk/make/javax/crypto/Makefile	2010-05-26 13:53:03.000000000 +0100
 @@ -155,7 +155,8 @@
  #
  
@@ -11,9 +11,9 @@ diff -r 4aebfff4f8a2 jdk/make/javax/crypto/Makefile
  else  # OPENJDK
  ifeq ($(strip $(FILES_java)),)
  all:
-diff -r 4aebfff4f8a2 jdk/src/share/classes/javax/crypto/Cipher.java
---- openjdk.orig/jdk/src/share/classes/javax/crypto/Cipher.java	Mon Sep 15 11:38:34 2008 +0200
-+++ openjdk/jdk/src/share/classes/javax/crypto/Cipher.java	Thu Sep 25 17:45:37 2008 +0200
+diff -Nru openjdk.orig/jdk/src/share/classes/javax/crypto/Cipher.java openjdk/jdk/src/share/classes/javax/crypto/Cipher.java
+--- openjdk.orig/jdk/src/share/classes/javax/crypto/Cipher.java	2010-05-26 09:32:39.000000000 +0100
++++ openjdk/jdk/src/share/classes/javax/crypto/Cipher.java	2010-05-26 13:53:03.000000000 +0100
 @@ -144,12 +144,6 @@
      // The transformation
      private String transformation;
@@ -62,7 +62,7 @@ diff -r 4aebfff4f8a2 jdk/src/share/classes/javax/crypto/Cipher.java
              Transform tr = getTransform(s, transforms);
              if (tr == null) {
                  // should never happen
-@@ -570,26 +553,12 @@
+@@ -570,7 +553,6 @@
          }
          Exception failure = null;
          List transforms = getTransforms(transformation);
@@ -70,10 +70,10 @@ diff -r 4aebfff4f8a2 jdk/src/share/classes/javax/crypto/Cipher.java
          String paddingError = null;
          for (Iterator t = transforms.iterator(); t.hasNext();) {
              Transform tr = (Transform)t.next();
-             Service s = provider.getService("Cipher", tr.transform);
+@@ -578,19 +560,6 @@
              if (s == null) {
                  continue;
--            }
+             }
 -            if (providerChecked == false) {
 -                // for compatibility, first do the lookup and then verify
 -                // the provider. this makes the difference between a NSAE
@@ -86,9 +86,10 @@ diff -r 4aebfff4f8a2 jdk/src/share/classes/javax/crypto/Cipher.java
 -                    throw new SecurityException(msg, ve);
 -                }
 -                providerChecked = true;
-             }
+-            }
              if (tr.supportsMode(s) == S_NO) {
                  continue;
+             }
 @@ -603,7 +572,6 @@
                  tr.setModePadding(spi);
                  Cipher cipher = new Cipher(spi, transformation);
@@ -97,12 +98,10 @@ diff -r 4aebfff4f8a2 jdk/src/share/classes/javax/crypto/Cipher.java
                  return cipher;
              } catch (Exception e) {
                  failure = e;
-@@ -620,22 +588,6 @@
-         }
-         throw new NoSuchAlgorithmException
+@@ -622,22 +590,6 @@
                  ("No such algorithm: " + transformation, failure);
--    }
--
+     }
+ 
 -    // If the requested crypto service is export-controlled,
 -    // determine the maximum allowable keysize.
 -    private void initCryptoPermission() throws NoSuchAlgorithmException {
@@ -117,9 +116,11 @@ diff -r 4aebfff4f8a2 jdk/src/share/classes/javax/crypto/Cipher.java
 -        if (exmechName != null) {
 -            exmech = ExemptionMechanism.getInstance(exmechName);
 -        }
-     }
- 
+-    }
+-
      // max number of debug warnings to print from chooseFirstProvider()
+     private static int warnCount = 10;
+ 
 @@ -679,9 +631,6 @@
                      s = (Service)serviceIterator.next();
                      thisSpi = null;
@@ -334,19 +335,19 @@ diff -r 4aebfff4f8a2 jdk/src/share/classes/javax/crypto/Cipher.java
      }
  
      /**
-diff -r 4aebfff4f8a2 jdk/src/share/classes/javax/crypto/JarVerifier.java
---- openjdk/jdk/src/share/classes/javax/crypto/JarVerifier.java	Mon Sep 15 11:38:34 2008 +0200
-+++ /dev/null	Thu Jan 01 00:00:00 1970 +0000
+diff -Nru openjdk.orig/jdk/src/share/classes/javax/crypto/JarVerifier.java openjdk/jdk/src/share/classes/javax/crypto/JarVerifier.java
+--- openjdk.orig/jdk/src/share/classes/javax/crypto/JarVerifier.java	2010-05-26 09:32:39.000000000 +0100
++++ openjdk/jdk/src/share/classes/javax/crypto/JarVerifier.java	1970-01-01 01:00:00.000000000 +0100
 @@ -1,170 +0,0 @@
 -/*
-- * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
+- * Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
 - * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 - *
 - * This code is free software; you can redistribute it and/or modify it
 - * under the terms of the GNU General Public License version 2 only, as
-- * published by the Free Software Foundation.  Sun designates this
+- * published by the Free Software Foundation.  Oracle designates this
 - * particular file as subject to the "Classpath" exception as provided
-- * by Sun in the LICENSE file that accompanied this code.
+- * by Oracle in the LICENSE file that accompanied this code.
 - *
 - * This code is distributed in the hope that it will be useful, but WITHOUT
 - * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -358,9 +359,9 @@ diff -r 4aebfff4f8a2 jdk/src/share/classes/javax/crypto/JarVerifier.java
 - * 2 along with this work; if not, write to the Free Software Foundation,
 - * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 - *
-- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-- * CA 95054 USA or visit www.sun.com if you need additional information or
-- * have any questions.
+- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+- * or visit www.oracle.com if you need additional information or have any
+- * questions.
 - */
 -
 -package javax.crypto;
@@ -508,9 +509,9 @@ diff -r 4aebfff4f8a2 jdk/src/share/classes/javax/crypto/JarVerifier.java
 -        return appPerms;
 -    }
 -}
-diff -r 4aebfff4f8a2 jdk/src/share/classes/javax/crypto/JceSecurity.java
---- openjdk.orig/jdk/src/share/classes/javax/crypto/JceSecurity.java	Mon Sep 15 11:38:34 2008 +0200
-+++ openjdk/jdk/src/share/classes/javax/crypto/JceSecurity.java	Thu Sep 25 17:45:37 2008 +0200
+diff -Nru openjdk.orig/jdk/src/share/classes/javax/crypto/JceSecurity.java openjdk/jdk/src/share/classes/javax/crypto/JceSecurity.java
+--- openjdk.orig/jdk/src/share/classes/javax/crypto/JceSecurity.java	2010-05-26 09:32:39.000000000 +0100
++++ openjdk/jdk/src/share/classes/javax/crypto/JceSecurity.java	2010-05-26 13:53:03.000000000 +0100
 @@ -25,11 +25,7 @@
  
  package javax.crypto;
@@ -523,13 +524,13 @@ diff -r 4aebfff4f8a2 jdk/src/share/classes/javax/crypto/JceSecurity.java
  import java.security.*;
  
  import java.security.Provider.Service;
-@@ -48,23 +44,8 @@
+@@ -48,72 +44,25 @@
  
  final class JceSecurity {
  
 +    // Used in KeyGenerator, Cipher and KeyAgreement.
      static final SecureRandom RANDOM = new SecureRandom();
--
+ 
 -    // The defaultPolicy and exemptPolicy will be set up
 -    // in the static initializer.
 -    private static CryptoPermissions defaultPolicy = null;
@@ -545,10 +546,10 @@ diff -r 4aebfff4f8a2 jdk/src/share/classes/javax/crypto/JceSecurity.java
 -
 -    // Set the default value. May be changed in the static initializer.
 -    private static boolean isRestricted = true;
- 
+-
      /*
       * Don't let anyone instantiate this.
-@@ -72,48 +53,16 @@
+      */
      private JceSecurity() {
      }
  
@@ -816,19 +817,19 @@ diff -r 4aebfff4f8a2 jdk/src/share/classes/javax/crypto/JceSecurity.java
 +        return true;
      }
  }
-diff -r 4aebfff4f8a2 jdk/src/share/classes/javax/crypto/JceSecurityManager.java
---- openjdk/jdk/src/share/classes/javax/crypto/JceSecurityManager.java	Mon Sep 15 11:38:34 2008 +0200
-+++ /dev/null	Thu Jan 01 00:00:00 1970 +0000
+diff -Nru openjdk.orig/jdk/src/share/classes/javax/crypto/JceSecurityManager.java openjdk/jdk/src/share/classes/javax/crypto/JceSecurityManager.java
+--- openjdk.orig/jdk/src/share/classes/javax/crypto/JceSecurityManager.java	2010-05-26 09:32:39.000000000 +0100
++++ openjdk/jdk/src/share/classes/javax/crypto/JceSecurityManager.java	1970-01-01 01:00:00.000000000 +0100
 @@ -1,252 +0,0 @@
 -/*
-- * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
+- * Copyright (c) 1999, 2007, Oracle and/or its affiliates. All rights reserved.
 - * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 - *
 - * This code is free software; you can redistribute it and/or modify it
 - * under the terms of the GNU General Public License version 2 only, as
-- * published by the Free Software Foundation.  Sun designates this
+- * published by the Free Software Foundation.  Oracle designates this
 - * particular file as subject to the "Classpath" exception as provided
-- * by Sun in the LICENSE file that accompanied this code.
+- * by Oracle in the LICENSE file that accompanied this code.
 - *
 - * This code is distributed in the hope that it will be useful, but WITHOUT
 - * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -840,9 +841,9 @@ diff -r 4aebfff4f8a2 jdk/src/share/classes/javax/crypto/JceSecurityManager.java
 - * 2 along with this work; if not, write to the Free Software Foundation,
 - * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 - *
-- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-- * CA 95054 USA or visit www.sun.com if you need additional information or
-- * have any questions.
+- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+- * or visit www.oracle.com if you need additional information or have any
+- * questions.
 - */
 -
 -package javax.crypto;
@@ -1072,9 +1073,9 @@ diff -r 4aebfff4f8a2 jdk/src/share/classes/javax/crypto/JceSecurityManager.java
 -        return true;
 -    }
 -}
-diff -r 4aebfff4f8a2 jdk/test/com/sun/crypto/provider/Cipher/UTIL/TestUtil.java
---- openjdk.orig/jdk/test/com/sun/crypto/provider/Cipher/UTIL/TestUtil.java	Mon Sep 15 11:38:34 2008 +0200
-+++ openjdk/jdk/test/com/sun/crypto/provider/Cipher/UTIL/TestUtil.java	Thu Sep 25 17:45:37 2008 +0200
+diff -Nru openjdk.orig/jdk/test/com/sun/crypto/provider/Cipher/UTIL/TestUtil.java openjdk/jdk/test/com/sun/crypto/provider/Cipher/UTIL/TestUtil.java
+--- openjdk.orig/jdk/test/com/sun/crypto/provider/Cipher/UTIL/TestUtil.java	2010-05-26 09:32:56.000000000 +0100
++++ openjdk/jdk/test/com/sun/crypto/provider/Cipher/UTIL/TestUtil.java	2010-05-26 13:53:03.000000000 +0100
 @@ -44,18 +44,9 @@
          }
      }

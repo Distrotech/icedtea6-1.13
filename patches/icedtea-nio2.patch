@@ -1,6 +1,6 @@
 diff -Nru openjdk.orig/jdk/make/docs/CORE_PKGS.gmk openjdk/jdk/make/docs/CORE_PKGS.gmk
---- openjdk.orig/jdk/make/docs/CORE_PKGS.gmk	2009-01-07 21:17:37.000000000 +0000
-+++ openjdk/jdk/make/docs/CORE_PKGS.gmk	2009-01-09 21:21:59.000000000 +0000
+--- openjdk.orig/jdk/make/docs/CORE_PKGS.gmk	2010-05-26 09:32:35.000000000 +0100
++++ openjdk/jdk/make/docs/CORE_PKGS.gmk	2010-05-26 14:21:37.000000000 +0100
 @@ -36,6 +36,7 @@
    sunw.*                   \
    com.sun.*                \
@@ -10,9 +10,9 @@ diff -Nru openjdk.orig/jdk/make/docs/CORE_PKGS.gmk openjdk/jdk/make/docs/CORE_PK
    org.w3c.dom.css          \
    org.w3c.dom.html         \
 diff -Nru openjdk.orig/jdk/make/docs/Makefile openjdk/jdk/make/docs/Makefile
---- openjdk.orig/jdk/make/docs/Makefile	2009-02-03 16:20:38.000000000 +0000
-+++ openjdk/jdk/make/docs/Makefile	2009-02-03 19:40:10.000000000 +0000
-@@ -404,6 +404,29 @@
+--- openjdk.orig/jdk/make/docs/Makefile	2010-05-26 14:20:55.000000000 +0100
++++ openjdk/jdk/make/docs/Makefile	2010-05-26 14:21:37.000000000 +0100
+@@ -405,6 +405,29 @@
  # TREEAPI_PKGS is located in NON_CORE_PKGS.gmk
  
  #
@@ -42,7 +42,7 @@ diff -Nru openjdk.orig/jdk/make/docs/Makefile openjdk/jdk/make/docs/Makefile
  # Path where javadoc should find source files for release docs
  #
  RELEASEDOCS_SRCPATH = "$(SHARE_SRC)/classes$(CLASSPATH_SEPARATOR)$(PLATFORM_SRC)/classes$(CLASSPATH_SEPARATOR)$(GENSRCDIR)$(CLASSPATH_SEPARATOR)$(SHARE_SRC)/doc/stub$(CLASSPATH_SEPARATOR)$(CLOSED_SRC)/share/classes$(CLASSPATH_SEPARATOR)$(IMPORTSRCDIR)"
-@@ -429,7 +452,8 @@
+@@ -430,7 +453,8 @@
      httpserverdocs  \
      mgmtdocs \
      attachdocs \
@@ -52,7 +52,7 @@ diff -Nru openjdk.orig/jdk/make/docs/Makefile openjdk/jdk/make/docs/Makefile
  
  ifdef LANGTOOLS_DIST
      ALL_OTHER_TARGETS += \
-@@ -646,6 +670,14 @@
+@@ -647,6 +671,14 @@
  		   $(TREEAPI_LINKOPT)                  \
  		   $(TREEAPI_PKGS)
  
@@ -68,8 +68,8 @@ diff -Nru openjdk.orig/jdk/make/docs/Makefile openjdk/jdk/make/docs/Makefile
  # List the values defined in the makefile hierarchy, to make sure everything
  # is set properly, and to help identify values we can use instead of making new ones.
 diff -Nru openjdk.orig/jdk/make/docs/NON_CORE_PKGS.gmk openjdk/jdk/make/docs/NON_CORE_PKGS.gmk
---- openjdk.orig/jdk/make/docs/NON_CORE_PKGS.gmk	2009-01-07 21:27:46.000000000 +0000
-+++ openjdk/jdk/make/docs/NON_CORE_PKGS.gmk	2009-02-03 16:28:29.000000000 +0000
+--- openjdk.orig/jdk/make/docs/NON_CORE_PKGS.gmk	2010-05-26 14:20:57.000000000 +0100
++++ openjdk/jdk/make/docs/NON_CORE_PKGS.gmk	2010-05-26 14:21:37.000000000 +0100
 @@ -65,6 +65,16 @@
  HTTPSERVER_PKGS  = com.sun.net.httpserver       \
                     com.sun.net.httpserver.spi 
@@ -87,18 +87,18 @@ diff -Nru openjdk.orig/jdk/make/docs/NON_CORE_PKGS.gmk openjdk/jdk/make/docs/NON
  DOCLETAPI_PKGS   = com.sun.javadoc
  
  TAGLETAPI_FILE   = com/sun/tools/doclets/Taglet.java
-@@ -89,6 +99,7 @@
+@@ -91,6 +101,7 @@
                     $(MGMT_PKGS) \
                     $(JAAS_PKGS) \
                     $(JGSS_PKGS) \
 +		   $(NIO2_PKGS) \
                     $(OLD_JSSE_PKGS) \
                     $(HTTPSERVER_PKGS) \
-                    $(SMARTCARDIO_PKGS)
+                    $(SMARTCARDIO_PKGS) \
 diff -Nru openjdk.orig/jdk/make/java/java/FILES_java.gmk openjdk/jdk/make/java/java/FILES_java.gmk
---- openjdk.orig/jdk/make/java/java/FILES_java.gmk	2009-01-07 21:35:50.000000000 +0000
-+++ openjdk/jdk/make/java/java/FILES_java.gmk	2009-01-12 15:24:01.000000000 +0000
-@@ -516,6 +516,13 @@
+--- openjdk.orig/jdk/make/java/java/FILES_java.gmk	2010-05-26 14:20:55.000000000 +0100
++++ openjdk/jdk/make/java/java/FILES_java.gmk	2010-05-26 14:21:37.000000000 +0100
+@@ -517,6 +517,13 @@
      sun/misc/JavaLangAccess.java \
      sun/misc/JavaIOAccess.java \
      sun/misc/JavaIODeleteOnExitAccess.java \
@@ -114,8 +114,8 @@ diff -Nru openjdk.orig/jdk/make/java/java/FILES_java.gmk openjdk/jdk/make/java/j
  
  FILES_java = $(JAVA_JAVA_java)
 diff -Nru openjdk.orig/jdk/make/java/nio/FILES_java.gmk openjdk/jdk/make/java/nio/FILES_java.gmk
---- openjdk.orig/jdk/make/java/nio/FILES_java.gmk	2009-01-10 03:21:38.000000000 +0000
-+++ openjdk/jdk/make/java/nio/FILES_java.gmk	2009-01-19 19:13:49.000000000 +0000
+--- openjdk.orig/jdk/make/java/nio/FILES_java.gmk	2010-05-26 14:20:55.000000000 +0100
++++ openjdk/jdk/make/java/nio/FILES_java.gmk	2010-05-26 14:21:37.000000000 +0100
 @@ -75,12 +75,13 @@
          sun/nio/ch/DefaultSelectorProvider.java \
  	sun/nio/ch/DirectBuffer.java \
@@ -139,7 +139,7 @@ diff -Nru openjdk.orig/jdk/make/java/nio/FILES_java.gmk openjdk/jdk/make/java/ni
  	sun/nio/ch/SocketOpts.java \
  	sun/nio/ch/SocketOptsImpl.java \
          sun/nio/ch/SourceChannelImpl.java \
-@@ -144,7 +146,150 @@
+@@ -145,7 +147,150 @@
  	java/lang/StringCoding.java \
  	\
  	sun/misc/Cleaner.java \
@@ -291,7 +291,7 @@ diff -Nru openjdk.orig/jdk/make/java/nio/FILES_java.gmk openjdk/jdk/make/java/ni
  
  # Generated coder classes
  #
-@@ -263,10 +408,20 @@
+@@ -264,10 +409,20 @@
  	\
  	java/nio/charset/CharacterCodingException.java \
  	java/nio/charset/IllegalCharsetNameException.java \
@@ -315,8 +315,8 @@ diff -Nru openjdk.orig/jdk/make/java/nio/FILES_java.gmk openjdk/jdk/make/java/ni
  
  FILES_java = $(FILES_src) $(FILES_gen)
 diff -Nru openjdk.orig/jdk/make/java/nio/Makefile openjdk/jdk/make/java/nio/Makefile
---- openjdk.orig/jdk/make/java/nio/Makefile	2009-01-10 03:22:13.000000000 +0000
-+++ openjdk/jdk/make/java/nio/Makefile	2009-01-15 16:35:28.000000000 +0000
+--- openjdk.orig/jdk/make/java/nio/Makefile	2010-05-26 14:20:55.000000000 +0100
++++ openjdk/jdk/make/java/nio/Makefile	2010-05-26 14:21:37.000000000 +0100
 @@ -40,6 +40,11 @@
  SNIO_SRC = $(SHARE_SRC)/classes/sun/nio
  SNIO_GEN = $(GENSRCDIR)/sun/nio
@@ -663,8 +663,8 @@ diff -Nru openjdk.orig/jdk/make/java/nio/Makefile openjdk/jdk/make/java/nio/Make
 +
  .PHONY: sources
 diff -Nru openjdk.orig/jdk/make/java/nio/mapfile-linux openjdk/jdk/make/java/nio/mapfile-linux
---- openjdk.orig/jdk/make/java/nio/mapfile-linux	2009-01-07 22:08:47.000000000 +0000
-+++ openjdk/jdk/make/java/nio/mapfile-linux	2009-01-29 01:13:17.000000000 +0000
+--- openjdk.orig/jdk/make/java/nio/mapfile-linux	2010-04-06 17:51:43.000000000 +0100
++++ openjdk/jdk/make/java/nio/mapfile-linux	2010-05-26 14:21:37.000000000 +0100
 @@ -20,6 +20,14 @@
  		Java_sun_nio_ch_EPollArrayWrapper_interrupt;
  		Java_sun_nio_ch_EPollArrayWrapper_offsetofData;
@@ -781,8 +781,8 @@ diff -Nru openjdk.orig/jdk/make/java/nio/mapfile-linux openjdk/jdk/make/java/nio
  	local:
  		*;
 diff -Nru openjdk.orig/jdk/make/java/nio/mapfile-solaris openjdk/jdk/make/java/nio/mapfile-solaris
---- openjdk.orig/jdk/make/java/nio/mapfile-solaris	2009-01-07 22:08:47.000000000 +0000
-+++ openjdk/jdk/make/java/nio/mapfile-solaris	2009-01-07 22:18:51.000000000 +0000
+--- openjdk.orig/jdk/make/java/nio/mapfile-solaris	2010-04-06 17:51:43.000000000 +0100
++++ openjdk/jdk/make/java/nio/mapfile-solaris	2010-05-26 14:21:37.000000000 +0100
 @@ -73,6 +73,75 @@
  		Java_sun_nio_ch_ServerSocketChannelImpl_listen;
                  Java_sun_nio_ch_SocketChannelImpl_checkConnect;
@@ -860,8 +860,8 @@ diff -Nru openjdk.orig/jdk/make/java/nio/mapfile-solaris openjdk/jdk/make/java/n
  	local:
  		*;
 diff -Nru openjdk.orig/jdk/make/mkdemo/Makefile openjdk/jdk/make/mkdemo/Makefile
---- openjdk.orig/jdk/make/mkdemo/Makefile	2009-01-07 22:23:02.000000000 +0000
-+++ openjdk/jdk/make/mkdemo/Makefile	2009-01-07 22:23:48.000000000 +0000
+--- openjdk.orig/jdk/make/mkdemo/Makefile	2010-05-26 09:32:36.000000000 +0100
++++ openjdk/jdk/make/mkdemo/Makefile	2010-05-26 14:21:37.000000000 +0100
 @@ -31,7 +31,7 @@
  PRODUCT = demos
  include $(BUILDDIR)/common/Defs.gmk
@@ -872,8 +872,8 @@ diff -Nru openjdk.orig/jdk/make/mkdemo/Makefile openjdk/jdk/make/mkdemo/Makefile
  all build:: nbproject
  	$(SUBDIRS-loop)
 diff -Nru openjdk.orig/jdk/make/mksample/nio/Makefile openjdk/jdk/make/mksample/nio/Makefile
---- openjdk.orig/jdk/make/mksample/nio/Makefile	2009-01-07 22:23:19.000000000 +0000
-+++ openjdk/jdk/make/mksample/nio/Makefile	2009-01-07 22:24:06.000000000 +0000
+--- openjdk.orig/jdk/make/mksample/nio/Makefile	2010-05-26 09:32:36.000000000 +0100
++++ openjdk/jdk/make/mksample/nio/Makefile	2010-05-26 14:21:37.000000000 +0100
 @@ -31,7 +31,7 @@
  PRODUCT = java
  include $(BUILDDIR)/common/Defs.gmk
@@ -884,9 +884,9 @@ diff -Nru openjdk.orig/jdk/make/mksample/nio/Makefile openjdk/jdk/make/mksample/
  	$(SUBDIRS-loop)
  
 diff -Nru openjdk.orig/jdk/src/share/classes/java/io/File.java openjdk/jdk/src/share/classes/java/io/File.java
---- openjdk.orig/jdk/src/share/classes/java/io/File.java	2009-01-12 13:32:17.000000000 +0000
-+++ openjdk/jdk/src/share/classes/java/io/File.java	2009-01-12 13:35:18.000000000 +0000
-@@ -1957,6 +1957,13 @@
+--- openjdk.orig/jdk/src/share/classes/java/io/File.java	2010-05-26 09:32:38.000000000 +0100
++++ openjdk/jdk/src/share/classes/java/io/File.java	2010-05-26 14:21:37.000000000 +0100
+@@ -1958,6 +1958,13 @@
                  }
              }
          );
@@ -901,9 +901,9 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/io/File.java openjdk/jdk/src/s
  
  
 diff -Nru openjdk.orig/jdk/src/share/classes/java/net/NetworkInterface.java openjdk/jdk/src/share/classes/java/net/NetworkInterface.java
---- openjdk.orig/jdk/src/share/classes/java/net/NetworkInterface.java	2009-01-16 04:07:15.000000000 +0000
-+++ openjdk/jdk/src/share/classes/java/net/NetworkInterface.java	2009-01-19 19:12:21.000000000 +0000
-@@ -529,4 +529,15 @@
+--- openjdk.orig/jdk/src/share/classes/java/net/NetworkInterface.java	2010-05-26 09:32:38.000000000 +0100
++++ openjdk/jdk/src/share/classes/java/net/NetworkInterface.java	2010-05-26 14:21:37.000000000 +0100
+@@ -533,4 +533,15 @@
      }
      private static native void init();
  
@@ -920,8 +920,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/net/NetworkInterface.java open
 +
  }
 diff -Nru openjdk.orig/jdk/src/share/classes/java/util/concurrent/ThreadPoolExecutor.java openjdk/jdk/src/share/classes/java/util/concurrent/ThreadPoolExecutor.java
---- openjdk.orig/jdk/src/share/classes/java/util/concurrent/ThreadPoolExecutor.java	2009-01-13 23:54:13.000000000 +0000
-+++ openjdk/jdk/src/share/classes/java/util/concurrent/ThreadPoolExecutor.java	2009-01-15 01:21:36.000000000 +0000
+--- openjdk.orig/jdk/src/share/classes/java/util/concurrent/ThreadPoolExecutor.java	2010-05-26 09:32:39.000000000 +0100
++++ openjdk/jdk/src/share/classes/java/util/concurrent/ThreadPoolExecutor.java	2010-05-26 14:21:37.000000000 +0100
 @@ -2004,4 +2004,23 @@
              }
          }
@@ -947,8 +947,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/util/concurrent/ThreadPoolExec
 +
  }
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/misc/Unsafe.java openjdk/jdk/src/share/classes/sun/misc/Unsafe.java
---- openjdk.orig/jdk/src/share/classes/sun/misc/Unsafe.java	2009-01-19 15:44:19.000000000 +0000
-+++ openjdk/jdk/src/share/classes/sun/misc/Unsafe.java	2009-01-19 15:47:42.000000000 +0000
+--- openjdk.orig/jdk/src/share/classes/sun/misc/Unsafe.java	2010-05-26 09:32:41.000000000 +0100
++++ openjdk/jdk/src/share/classes/sun/misc/Unsafe.java	2010-05-26 14:21:37.000000000 +0100
 @@ -504,9 +504,33 @@
      /**
       * Sets all bytes in a given block of memory to a copy of another
@@ -996,8 +996,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/misc/Unsafe.java openjdk/jdk/sr
       * Report the scale factor for addressing elements in the storage
       * allocation of a given array class.  However, arrays of "narrow" types
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/nio/ch/DatagramChannelImpl.java openjdk/jdk/src/share/classes/sun/nio/ch/DatagramChannelImpl.java
---- openjdk.orig/jdk/src/share/classes/sun/nio/ch/DatagramChannelImpl.java	2009-01-16 03:10:17.000000000 +0000
-+++ openjdk/jdk/src/share/classes/sun/nio/ch/DatagramChannelImpl.java	2009-01-19 21:04:48.000000000 +0000
+--- openjdk.orig/jdk/src/share/classes/sun/nio/ch/DatagramChannelImpl.java	2010-05-26 09:32:41.000000000 +0100
++++ openjdk/jdk/src/share/classes/sun/nio/ch/DatagramChannelImpl.java	2010-05-26 14:21:37.000000000 +0100
 @@ -29,10 +29,28 @@
  import java.io.IOException;
  import java.net.*;
@@ -1459,8 +1459,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/nio/ch/DatagramChannelImpl.java
 +
  }
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/nio/ch/FileChannelImpl.java openjdk/jdk/src/share/classes/sun/nio/ch/FileChannelImpl.java
---- openjdk.orig/jdk/src/share/classes/sun/nio/ch/FileChannelImpl.java	2009-01-20 13:37:15.000000000 +0000
-+++ openjdk/jdk/src/share/classes/sun/nio/ch/FileChannelImpl.java	2009-01-27 02:33:08.000000000 +0000
+--- openjdk.orig/jdk/src/share/classes/sun/nio/ch/FileChannelImpl.java	2010-05-26 09:32:41.000000000 +0100
++++ openjdk/jdk/src/share/classes/sun/nio/ch/FileChannelImpl.java	2010-05-26 14:21:37.000000000 +0100
 @@ -32,8 +32,15 @@
  import java.io.IOException;
  import java.nio.ByteBuffer;
@@ -1510,8 +1510,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/nio/ch/FileChannelImpl.java ope
          ensureOpen();
          int rv = -1;
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/nio/ch/Net.java openjdk/jdk/src/share/classes/sun/nio/ch/Net.java
---- openjdk.orig/jdk/src/share/classes/sun/nio/ch/Net.java	2009-01-15 17:37:33.000000000 +0000
-+++ openjdk/jdk/src/share/classes/sun/nio/ch/Net.java	2009-02-01 00:35:31.000000000 +0000
+--- openjdk.orig/jdk/src/share/classes/sun/nio/ch/Net.java	2010-05-26 09:32:41.000000000 +0100
++++ openjdk/jdk/src/share/classes/sun/nio/ch/Net.java	2010-05-26 14:21:37.000000000 +0100
 @@ -30,6 +30,15 @@
  import java.net.*;
  import java.nio.channels.*;
@@ -1528,7 +1528,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/nio/ch/Net.java openjdk/jdk/src
  
  class Net {                                             // package-private
  
-@@ -108,16 +117,24 @@
+@@ -111,16 +120,24 @@
  
      // -- Socket operations --
  
@@ -1556,7 +1556,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/nio/ch/Net.java openjdk/jdk/src
  
      static native void bind(FileDescriptor fd, InetAddress addr, int port)
          throws IOException;
-@@ -179,4 +196,314 @@
+@@ -182,4 +199,314 @@
          initIDs();
      }
  
@@ -1872,12 +1872,12 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/nio/ch/Net.java openjdk/jdk/src
 +
  }
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/nio/ch/SelectorProviderImpl.java openjdk/jdk/src/share/classes/sun/nio/ch/SelectorProviderImpl.java
---- openjdk.orig/jdk/src/share/classes/sun/nio/ch/SelectorProviderImpl.java	2009-01-16 03:01:03.000000000 +0000
-+++ openjdk/jdk/src/share/classes/sun/nio/ch/SelectorProviderImpl.java	2009-01-16 03:56:55.000000000 +0000
+--- openjdk.orig/jdk/src/share/classes/sun/nio/ch/SelectorProviderImpl.java	2010-05-26 09:32:41.000000000 +0100
++++ openjdk/jdk/src/share/classes/sun/nio/ch/SelectorProviderImpl.java	2010-05-26 14:21:53.000000000 +0100
 @@ -1,5 +1,5 @@
  /*
-- * Copyright 2000-2001 Sun Microsystems, Inc.  All Rights Reserved.
-+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+- * Copyright (c) 2000, 2001, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2000, 2008, Oracle and/or its affiliates. All rights reserved.
   * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
   *
   * This code is free software; you can redistribute it and/or modify it
@@ -1920,8 +1920,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/nio/ch/SelectorProviderImpl.jav
 -
  }
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/util/SecurityConstants.java openjdk/jdk/src/share/classes/sun/security/util/SecurityConstants.java
---- openjdk.orig/jdk/src/share/classes/sun/security/util/SecurityConstants.java	2009-01-12 17:45:26.000000000 +0000
-+++ openjdk/jdk/src/share/classes/sun/security/util/SecurityConstants.java	2009-01-12 17:45:39.000000000 +0000
+--- openjdk.orig/jdk/src/share/classes/sun/security/util/SecurityConstants.java	2010-05-26 09:32:42.000000000 +0100
++++ openjdk/jdk/src/share/classes/sun/security/util/SecurityConstants.java	2010-05-26 14:21:37.000000000 +0100
 @@ -52,6 +52,7 @@
      public static final String FILE_EXECUTE_ACTION = "execute";
      public static final String FILE_READ_ACTION = "read";
@@ -1930,9 +1930,26 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/util/SecurityConstants
  
      public static final String SOCKET_RESOLVE_ACTION = "resolve";
      public static final String SOCKET_CONNECT_ACTION = "connect";
+diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/nio/ch/DefaultSelectorProvider.java openjdk/jdk/src/solaris/classes/sun/nio/ch/DefaultSelectorProvider.java
+--- openjdk.orig/jdk/src/solaris/classes/sun/nio/ch/DefaultSelectorProvider.java	2010-05-26 09:32:51.000000000 +0100
++++ openjdk/jdk/src/solaris/classes/sun/nio/ch/DefaultSelectorProvider.java	2010-05-26 14:21:37.000000000 +0100
+@@ -25,11 +25,12 @@
+ 
+ package sun.nio.ch;
+ 
+-import java.nio.channels.spi.SelectorProvider;
+ import java.security.AccessController;
+ import java.security.PrivilegedAction;
+ import sun.security.action.GetPropertyAction;
+ 
++import org.classpath.icedtea.java.nio.channels.spi.SelectorProvider;
++
+ /**
+  * Creates this platform's default SelectorProvider
+  */
 diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/nio/ch/FileDispatcher.java openjdk/jdk/src/solaris/classes/sun/nio/ch/FileDispatcher.java
---- openjdk.orig/jdk/src/solaris/classes/sun/nio/ch/FileDispatcher.java	2009-01-19 22:33:37.000000000 +0000
-+++ openjdk/jdk/src/solaris/classes/sun/nio/ch/FileDispatcher.java	2009-01-19 22:33:01.000000000 +0000
+--- openjdk.orig/jdk/src/solaris/classes/sun/nio/ch/FileDispatcher.java	2010-05-26 09:32:51.000000000 +0100
++++ openjdk/jdk/src/solaris/classes/sun/nio/ch/FileDispatcher.java	2010-05-26 14:21:37.000000000 +0100
 @@ -35,6 +35,11 @@
  class FileDispatcher extends NativeDispatcher
  {
@@ -1994,8 +2011,8 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/nio/ch/FileDispatcher.java op
 +
  }
 diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/nio/ch/InheritedChannel.java openjdk/jdk/src/solaris/classes/sun/nio/ch/InheritedChannel.java
---- openjdk.orig/jdk/src/solaris/classes/sun/nio/ch/InheritedChannel.java	2009-01-19 13:29:01.000000000 +0000
-+++ openjdk/jdk/src/solaris/classes/sun/nio/ch/InheritedChannel.java	2009-01-19 13:29:27.000000000 +0000
+--- openjdk.orig/jdk/src/solaris/classes/sun/nio/ch/InheritedChannel.java	2010-05-26 09:32:51.000000000 +0100
++++ openjdk/jdk/src/solaris/classes/sun/nio/ch/InheritedChannel.java	2010-05-26 14:21:37.000000000 +0100
 @@ -34,7 +34,8 @@
  import java.nio.channels.SocketChannel;
  import java.nio.channels.ServerSocketChannel;
@@ -2007,12 +2024,12 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/nio/ch/InheritedChannel.java 
  class InheritedChannel {
  
 diff -Nru openjdk.orig/jdk/src/solaris/native/sun/nio/ch/Net.c openjdk/jdk/src/solaris/native/sun/nio/ch/Net.c
---- openjdk.orig/jdk/src/solaris/native/sun/nio/ch/Net.c	2009-01-26 20:51:08.000000000 +0000
-+++ openjdk/jdk/src/solaris/native/sun/nio/ch/Net.c	2009-02-01 01:24:41.000000000 +0000
+--- openjdk.orig/jdk/src/solaris/native/sun/nio/ch/Net.c	2010-05-26 09:32:51.000000000 +0100
++++ openjdk/jdk/src/solaris/native/sun/nio/ch/Net.c	2010-05-26 14:22:06.000000000 +0100
 @@ -1,5 +1,5 @@
  /*
-- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
-+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
+- * Copyright (c) 2001, 2007, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2001, 2008, Oracle and/or its affiliates. All rights reserved.
   * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
   *
   * This code is free software; you can redistribute it and/or modify it
@@ -2691,12 +2708,12 @@ diff -Nru openjdk.orig/jdk/src/solaris/native/sun/nio/ch/Net.c openjdk/jdk/src/s
  /* Declared in nio_util.h */
  
 diff -Nru openjdk.orig/jdk/src/solaris/native/sun/nio/ch/nio_util.h openjdk/jdk/src/solaris/native/sun/nio/ch/nio_util.h
---- openjdk.orig/jdk/src/solaris/native/sun/nio/ch/nio_util.h	2009-01-26 22:44:30.000000000 +0000
-+++ openjdk/jdk/src/solaris/native/sun/nio/ch/nio_util.h	2009-01-26 22:44:22.000000000 +0000
+--- openjdk.orig/jdk/src/solaris/native/sun/nio/ch/nio_util.h	2010-05-26 09:32:51.000000000 +0100
++++ openjdk/jdk/src/solaris/native/sun/nio/ch/nio_util.h	2010-05-26 14:22:17.000000000 +0100
 @@ -1,5 +1,5 @@
  /*
-- * Copyright 2001-2002 Sun Microsystems, Inc.  All Rights Reserved.
-+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
+- * Copyright (c) 2001, 2002, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2001, 2008, Oracle and/or its affiliates. All rights reserved.
   * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
   *
   * This code is free software; you can redistribute it and/or modify it
@@ -2717,8 +2734,8 @@ diff -Nru openjdk.orig/jdk/src/solaris/native/sun/nio/ch/nio_util.h openjdk/jdk/
  /* NIO utility procedures */
  
 diff -Nru openjdk.orig/jdk/src/windows/classes/sun/nio/ch/FileDispatcher.java openjdk/jdk/src/windows/classes/sun/nio/ch/FileDispatcher.java
---- openjdk.orig/jdk/src/windows/classes/sun/nio/ch/FileDispatcher.java	2009-01-19 22:35:32.000000000 +0000
-+++ openjdk/jdk/src/windows/classes/sun/nio/ch/FileDispatcher.java	2009-01-19 22:37:37.000000000 +0000
+--- openjdk.orig/jdk/src/windows/classes/sun/nio/ch/FileDispatcher.java	2010-05-26 09:32:51.000000000 +0100
++++ openjdk/jdk/src/windows/classes/sun/nio/ch/FileDispatcher.java	2010-05-26 14:21:37.000000000 +0100
 @@ -36,6 +36,11 @@
  class FileDispatcher extends NativeDispatcher
  {
@@ -2778,20 +2795,3 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/nio/ch/FileDispatcher.java op
 +    static native void release0(FileDescriptor fd, long pos, long size)
 +        throws IOException;
  }
-diff -r e1d1417392db src/solaris/classes/sun/nio/ch/DefaultSelectorProvider.java
---- openjdk.orig/jdk/src/solaris/classes/sun/nio/ch/DefaultSelectorProvider.java	Wed Apr 14 14:36:11 2010 -0700
-+++ openjdk/jdk/src/solaris/classes/sun/nio/ch/DefaultSelectorProvider.java	Sun Apr 18 19:46:48 2010 +0100
-@@ -25,11 +25,12 @@
- 
- package sun.nio.ch;
- 
--import java.nio.channels.spi.SelectorProvider;
- import java.security.AccessController;
- import java.security.PrivilegedAction;
- import sun.security.action.GetPropertyAction;
- 
-+import org.classpath.icedtea.java.nio.channels.spi.SelectorProvider;
-+
- /**
-  * Creates this platform's default SelectorProvider
-  */
