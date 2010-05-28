@@ -1,6 +1,14 @@
 2010-05-28 Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:
+	(bootstrap-directory-ecj.stamp): Join dependent parts
+	using &&.
+	(rewriter.stamp): Likewise.
+	(rewrite-rhino.stamp): Likewise.
+
+2010-05-28 Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
 	(DEBUG_BUILD_OUTPUT_DIR): New variable to represent
 	debug build output directory.
 	(BUILD_DEBUG_JRE_ARCH_DIR): Use DEBUG_BUILD_OUTPUT_DIR.

@@ -1139,32 +1139,32 @@ stamps/bootstrap-directory-ecj.stamp: stamps/native-ecj.stamp
 	ln -sf $(JAR) bootstrap/ecj/bin/jar
 	ln -sf ../../../javac bootstrap/ecj/bin/javac
 	ln -sf ../../../javap bootstrap/ecj/bin/javap
-	mkdir -p bootstrap/ecj/lib/endorsed
-	ln -sf $(XALAN2_JAR) bootstrap/ecj/lib/endorsed/xalan-j2.jar
+	mkdir -p bootstrap/ecj/lib/endorsed && \
+	ln -sf $(XALAN2_JAR) bootstrap/ecj/lib/endorsed/xalan-j2.jar && \
 	ln -sf $(XALAN2_SERIALIZER_JAR) \
-	  bootstrap/ecj/lib/endorsed/xalan-j2-serializer.jar
+	  bootstrap/ecj/lib/endorsed/xalan-j2-serializer.jar && \
 	ln -sf $(XERCES2_JAR) bootstrap/ecj/lib/endorsed/xerces-j2.jar
-	mkdir -p bootstrap/ecj/jre/lib; \
+	mkdir -p bootstrap/ecj/jre/lib && \
+	cp $(SYSTEM_JDK_DIR)/jre/lib/rt.jar \
+	  $(abs_top_builddir)/bootstrap/ecj/jre/lib/rt.jar && \
 	ln -sf $(SYSTEM_JDK_DIR)/jre/lib/$(JRE_ARCH_DIR) \
-	  bootstrap/ecj/jre/lib/; \
+	  bootstrap/ecj/jre/lib/ && \
 	if ! test -d bootstrap/ecj/jre/lib/$(INSTALL_ARCH_DIR); \
 	  then \
 	  ln -sf ./$(JRE_ARCH_DIR) \
 	    bootstrap/ecj/jre/lib/$(INSTALL_ARCH_DIR); \
-	fi; \
-	mkdir -p bootstrap/ecj/include; \
+	fi;
+	mkdir -p bootstrap/ecj/include && \
 	for i in $(SYSTEM_JDK_DIR)/include/*; do \
 	  test -r $$i | continue; \
 	  i=`basename $$i`; \
 	  rm -f bootstrap/ecj/include/$$i; \
 	  ln -s $(SYSTEM_JDK_DIR)/include/$$i bootstrap/ecj/include/$$i; \
-	done; \
-	cp $(SYSTEM_JDK_DIR)/jre/lib/rt.jar \
-	  $(abs_top_builddir)/bootstrap/ecj/jre/lib/rt.jar;
+	done
 # For HotSpot
-	mkdir -p $(abs_top_builddir)/bootstrap/ecj/lib ; \
+	mkdir -p $(abs_top_builddir)/bootstrap/ecj/lib && \
 	ln -sf $(abs_top_builddir)/bootstrap/ecj/jre/lib/rt.jar \
-	  $(abs_top_builddir)/bootstrap/ecj/lib/tools.jar ; \
+	  $(abs_top_builddir)/bootstrap/ecj/lib/tools.jar
 	mkdir -p stamps
 	touch stamps/bootstrap-directory-ecj.stamp
 
@@ -1689,7 +1689,7 @@ endif
 
 stamps/rewriter.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP)
 if WITH_RHINO
-	mkdir -p $(abs_top_builddir)/rewriter
+	mkdir -p $(abs_top_builddir)/rewriter && \
 	(cd $(abs_top_srcdir)/rewriter ; \
 	 $(ICEDTEA_BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) \
 	 -d $(abs_top_builddir)/rewriter $(REWRITER_SRCS) \
@@ -1700,12 +1700,12 @@ endif
 
 stamps/rewrite-rhino.stamp: stamps/rewriter.stamp $(RHINO_JAR)
 if WITH_RHINO
-	mkdir -p rhino/rhino.{old,new}
-	(cd rhino/rhino.old ; jar xf $(RHINO_JAR))
+	mkdir -p rhino/rhino.{old,new} && \
+	(cd rhino/rhino.old ; jar xf $(RHINO_JAR)) && \
 	$(ICEDTEA_BOOT_DIR)/bin/java -cp $(abs_top_builddir)/rewriter \
 	  com.redhat.rewriter.ClassRewriter \
 	  $(abs_top_builddir)/rhino/rhino.old $(abs_top_builddir)/rhino/rhino.new \
-	  org.mozilla sun.org.mozilla
+	  org.mozilla sun.org.mozilla && \
 	(cd rhino/rhino.old ; \
 	 for files in `find -type f -not -name '*.class'` ; do \
 	   new_file=../rhino.new/`echo $$files|sed -e 's#org#sun/org#'` ; \
@@ -1713,8 +1713,8 @@ if WITH_RHINO
 	   cp -v $$files $$new_file ; \
 	   sed -ie 's#org\.mozilla#sun.org.mozilla#g' $$new_file ; \
 	 done \
-	)
-	(cd rhino/rhino.new ; \
+	) && \
+	(cd rhino/rhino.new && \
 	$(ICEDTEA_BOOT_DIR)/bin/jar cfm ../rhino.jar META-INF/MANIFEST.MF sun )
 endif
 	mkdir -p stamps
