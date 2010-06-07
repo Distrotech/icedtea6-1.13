@@ -1251,7 +1251,7 @@ if ENABLE_PULSE_JAVA
 	cp -pPRf pulse-java.jar \
 	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/ext
 	(cd $(PULSE_JAVA_JAVA_SRCDIR) && \
-	   $(ZIP) -qur $(BUILD_OUTPUT_DIR)/j2sdk-image/src.zip org )
+	   $(ZIP) -qur $(abs_top_builddir)/$(BUILD_OUTPUT_DIR)/j2sdk-image/src.zip org )
 endif
 if WITH_VISUALVM
 	mkdir -p $(BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm/etc ; \
