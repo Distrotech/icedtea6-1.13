@@ -1,3 +1,37 @@
+2010-06-07 Andrew John Hughes  <ahughes@redhat.com>
+
+	Make BUILD_OUTPUT_DIR and ECJ_BUILD_OUTPUT_DIR
+	absolute and dispense with ICEDTEA_BUILD_DIR and
+	ICEDTEA_BUILD_DIR_ECJ.
+	* Makefile.am:
+	(BUILD_OUTPUT_DIR): Make absolute.
+	(ICEDTEA_BUILD_DIR): Dropped.
+	(ECJ_BUILD_OUTPUT_DIR): Likewise.
+	(ICEDTEA_CLS_DIR): Make relative to BUILD_OUTPUT_DIR.
+	(ICEDTEA_CLS_DIR): Likewise for ECJ_BUILD_OUTPUT_DIR.
+	(ICEDTEA_BUILD_DIR_ECJ): Dropped.
+	(ICEDTEA_ENV): Don't pass ICEDTEA_BUILD_DIR.
+	(ICEDTEA_ENV_ECJ): Likewise.
+	(bootstrap-directory.stamp): Use ECJ_BUILD_OUTPUT_DIR
+	rather than ICEDTEA_BUILD_DIR_ECJ.  Remove unneeded
+	$(abs_top_builddir).
+	(icedtea.stamp): Drop unneeded use of $(abs_top_builddir)
+	from pulse java src.zip update.
+	(icedtea-debug.stamp): Add pulse java src.zip update.
+	(ADD_ZERO_CONFIGURE_ARGS): Drop unneeded $(abs_top_builddir).
+	(ADD_ZERO_EXTRA_BUILD_ENV): Replace ICEDTEA_BUILD_DIR
+	with BUILD_OUTPUT_DIR.
+	(check-hotspot): Replace unneeded use of pwd.
+	(check-jdk): Likewise.
+	(check-langtools): Likewise.
+	* patches/ecj/icedtea.patch: Use already defined
+	CLASSBINDIR instead of passing in ICEDTEA_BUILD_DIR.
+
+2010-06-07 Jon VanAlten  <jon.vanalten@redhat.com>
+
+	* Makefile.am
+	(stamps/icedtea.stamp): Use full path when adding PulseAudio sources to src.zip
+
 2010-06-06  Andrew John Hughes  <ahughes@redhat.com>
 
 	* patches/icedtea-alpha-fixes.patch:
