@@ -32,6 +32,7 @@ OPENJDK_HG_URL = http://hg.openjdk.java.net/jdk6/jdk6
 # Build directories
 
 BUILD_OUTPUT_DIR = openjdk.build
+DEBUG_BUILD_OUTPUT_DIR = $(BUILD_OUTPUT_DIR)-debug
 ECJ_BUILD_OUTPUT_DIR = openjdk-ecj.build
 ICEDTEA_BUILD_DIR = \
 	$(abs_top_builddir)/$(BUILD_OUTPUT_DIR)
@@ -49,7 +50,7 @@ ICEDTEA_CLS_DIR_ECJ = \
 	$(abs_top_builddir)/$(ECJ_BUILD_OUTPUT_DIR)/classes
 SERVER_DIR = hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server
 BUILD_JRE_ARCH_DIR = $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
-BUILD_DEBUG_JRE_ARCH_DIR = $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
+BUILD_DEBUG_JRE_ARCH_DIR = $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
 
 # Source directories
 
@@ -181,11 +182,12 @@ else
   MEMORY_LIMIT =
 endif
 
+ICEDTEA_DEBUG_BUILD_TARGET=ALT_OUTPUTDIR="$(ICEDTEA_DEBUG_BUILD_DIR)"
 if WITH_CACAO
   ICEDTEA_BUILD_TARGET=j2se_only
-  ICEDTEA_DEBUG_BUILD_TARGET=j2se_fastdebug_only
+  ICEDTEA_DEBUG_BUILD_TARGET += j2se_fastdebug_only
 else
-  ICEDTEA_DEBUG_BUILD_TARGET=debug_build
+  ICEDTEA_DEBUG_BUILD_TARGET += debug_build
 endif
 
 # FIXME (bootstrap): Assumption is WITH_OPENJDK == no bootstrap
@@ -1132,32 +1134,32 @@ stamps/bootstrap-directory-ecj.stamp: stamps/native-ecj.stamp
 	ln -sf $(JAR) bootstrap/ecj/bin/jar
 	ln -sf ../../../javac bootstrap/ecj/bin/javac
 	ln -sf ../../../javap bootstrap/ecj/bin/javap
-	mkdir -p bootstrap/ecj/lib/endorsed
-	ln -sf $(XALAN2_JAR) bootstrap/ecj/lib/endorsed/xalan-j2.jar
+	mkdir -p bootstrap/ecj/lib/endorsed && \
+	ln -sf $(XALAN2_JAR) bootstrap/ecj/lib/endorsed/xalan-j2.jar && \
 	ln -sf $(XALAN2_SERIALIZER_JAR) \
-	  bootstrap/ecj/lib/endorsed/xalan-j2-serializer.jar
+	  bootstrap/ecj/lib/endorsed/xalan-j2-serializer.jar && \
 	ln -sf $(XERCES2_JAR) bootstrap/ecj/lib/endorsed/xerces-j2.jar
-	mkdir -p bootstrap/ecj/jre/lib; \
+	mkdir -p bootstrap/ecj/jre/lib && \
+	cp $(SYSTEM_JDK_DIR)/jre/lib/rt.jar \
+	  $(abs_top_builddir)/bootstrap/ecj/jre/lib/rt.jar && \
 	ln -sf $(SYSTEM_JDK_DIR)/jre/lib/$(JRE_ARCH_DIR) \
-	  bootstrap/ecj/jre/lib/; \
+	  bootstrap/ecj/jre/lib/ && \
 	if ! test -d bootstrap/ecj/jre/lib/$(INSTALL_ARCH_DIR); \
 	  then \
 	  ln -sf ./$(JRE_ARCH_DIR) \
 	    bootstrap/ecj/jre/lib/$(INSTALL_ARCH_DIR); \
-	fi; \
-	mkdir -p bootstrap/ecj/include; \
+	fi;
+	mkdir -p bootstrap/ecj/include && \
 	for i in $(SYSTEM_JDK_DIR)/include/*; do \
 	  test -r $$i | continue; \
 	  i=`basename $$i`; \
 	  rm -f bootstrap/ecj/include/$$i; \
 	  ln -s $(SYSTEM_JDK_DIR)/include/$$i bootstrap/ecj/include/$$i; \
-	done; \
-	cp $(SYSTEM_JDK_DIR)/jre/lib/rt.jar \
-	  $(abs_top_builddir)/bootstrap/ecj/jre/lib/rt.jar;
+	done
 # For HotSpot
-	mkdir -p $(abs_top_builddir)/bootstrap/ecj/lib ; \
+	mkdir -p $(abs_top_builddir)/bootstrap/ecj/lib && \
 	ln -sf $(abs_top_builddir)/bootstrap/ecj/jre/lib/rt.jar \
-	  $(abs_top_builddir)/bootstrap/ecj/lib/tools.jar ; \
+	  $(abs_top_builddir)/bootstrap/ecj/lib/tools.jar
 	mkdir -p stamps
 	touch stamps/bootstrap-directory-ecj.stamp
 
@@ -1243,6 +1245,8 @@ if ENABLE_PULSE_JAVA
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/ext
 	cp -pPRf pulse-java.jar \
 	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/ext
+	(cd $(PULSE_JAVA_JAVA_SRCDIR) && \
+	   $(ZIP) -qur $(BUILD_OUTPUT_DIR)/j2sdk-image/src.zip org )
 endif
 if WITH_VISUALVM
 	mkdir -p $(BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm/etc ; \
@@ -1314,50 +1318,50 @@ stamps/icedtea-debug.stamp: stamps/bootstrap-directory-symlink.stamp \
 	  $(ICEDTEA_ENV) \
 	  -C openjdk \
 	  $(ICEDTEA_DEBUG_BUILD_TARGET)
-	mkdir -p $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
-	mkdir -p $(BUILD_OUTPUT_DIR)-debug/j2re-image/lib/$(INSTALL_ARCH_DIR)
-	mkdir -p $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/ext
-	mkdir -p $(BUILD_OUTPUT_DIR)-debug/j2re-image/lib/ext
+	mkdir -p $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
+	mkdir -p $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
+	mkdir -p $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/ext
+	mkdir -p $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/ext
 if ENABLE_PLUGIN
 	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
-	  $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
 	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
-	  $(BUILD_OUTPUT_DIR)-debug/j2re-image/lib/$(INSTALL_ARCH_DIR)
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
 endif
 if ENABLE_PULSE_JAVA
 	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
-	  $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
 	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
-	  $(BUILD_OUTPUT_DIR)-debug/j2re-image/lib/$(INSTALL_ARCH_DIR)
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
 	cp -pPRf pulse-java.jar \
-	  $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/ext
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/ext
 	cp -pPRf pulse-java.jar \
-	  $(BUILD_OUTPUT_DIR)-debug/j2re-image/lib/ext
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/ext
 endif
 if WITH_VISUALVM 
-	mkdir -p $(BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm/etc ; \
-	mkdir -p $(BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm/visualvm ; \
+	mkdir -p $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm/etc ; \
+	mkdir -p $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm/visualvm ; \
 	sed "s/APPNAME=\`basename.*\`/APPNAME=visualvm/" \
 	  visualvm/launcher/visualvm >> \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/bin/jvisualvm ; \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/bin/jvisualvm ; \
 	chmod a+x $(BUILD_OUTPUT_DIR)/j2sdk-image/bin/jvisualvm ; \
 	cp visualvm/launcher/visualvm.conf \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm/etc ; \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm/etc ; \
 	echo visualvm >> \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm/etc/visualvm.clusters ; \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm/etc/visualvm.clusters ; \
 	echo profiler3 >> \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm/etc/visualvm.clusters ; \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm/etc/visualvm.clusters ; \
 	cp -r visualvm/build/cluster/* \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm/visualvm ; \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm/visualvm ; \
 	cp -r netbeans/nbbuild/netbeans_visualvm/$(NB_PLATFORM) \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm ; \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm ; \
 	cp -r netbeans/nbbuild/netbeans_visualvm/profiler3 \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/lib/visualvm
 endif
 	cp $(NETX_RESOURCE_DIR)/default.jnlp extra-lib/about.jar \
-	  $(BUILD_OUTPUT_DIR)-debug/j2re-image/lib ; \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib ; \
 	cp $(NETX_RESOURCE_DIR)/default.jnlp extra-lib/about.jar \
-	  $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib
 if ZERO_BUILD
 	printf -- '-zero ALIASED_TO -server\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
 endif
@@ -1368,32 +1372,32 @@ if WITH_CACAO
 	printf -- '-cacao ALIASED_TO -server\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
 endif
 if ENABLE_SYSTEMTAP
-	mkdir -p $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/tapset ; \
+	mkdir -p $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset ; \
 	grep "client IGNORE" $(BUILD_JRE_ARCH_DIR)/jvm.cfg; \
 	if test $$? -eq 0; then \
 	  sed -e '/\/client\/libjvm.so/d' \
 	    < $(abs_top_builddir)/tapset/hotspot.stp \
-	    > $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/tapset/hotspot.stp; \
+	    > $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
 	  sed -e '/\/client\/libjvm.so/d' \
 	    < $(abs_top_builddir)/tapset/hotspot_jni.stp \
-	    > $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/tapset/hotspot_jni.stp; \
+	    > $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_jni.stp; \
 	else \
 	  cp $(abs_top_builddir)/tapset/hotspot.stp \
-	    $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/tapset/hotspot.stp; \
+	    $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
 	  cp $(abs_top_builddir)/tapset/hotspot_jni.stp \
-	    $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/tapset/hotspot_jni.stp; \
+	    $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_jni.stp; \
 	fi; \
 	cp $(abs_top_builddir)/tapset/jstack.stp \
-	  $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/tapset/jstack.stp
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/jstack.stp
 endif
 	cp $(abs_top_builddir)/nss.cfg \
-	  $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib/security;
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security;
 if WITH_TZDATA_DIR
 	cp $(abs_top_builddir)/tz.properties \
-	  $(BUILD_OUTPUT_DIR)-debug/j2sdk-image/jre/lib;
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib;
 endif
 	@echo "IcedTea (debug build) is served:" \
-	  $(BUILD_OUTPUT_DIR)-debug
+	  $(DEBUG_BUILD_OUTPUT_DIR)
 	mkdir -p stamps
 	touch stamps/icedtea-debug.stamp
 
@@ -1611,12 +1615,7 @@ clean-extra:
 	rm -f extra-source-files.txt
 
 extra-lib/about.jar: stamps/extra-class-files.stamp
-	if ! test -d $(ICEDTEA_BOOT_DIR) ; \
-	then \
-	  $(JAR) cf $@ -C extra-lib net ; \
-	else \
-	  $(ICEDTEA_BOOT_DIR)/bin/jar cf $@ -C extra-lib net ; \
-	fi
+	$(ICEDTEA_BOOT_DIR)/bin/jar cf $@ -C extra-lib net ;
 
 # PulseAudio based mixer
 # (pulse-java)
@@ -1682,7 +1681,7 @@ endif
 
 stamps/rewriter.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP)
 if WITH_RHINO
-	mkdir -p $(abs_top_builddir)/rewriter
+	mkdir -p $(abs_top_builddir)/rewriter && \
 	(cd $(abs_top_srcdir)/rewriter ; \
 	 $(ICEDTEA_BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) \
 	 -d $(abs_top_builddir)/rewriter $(REWRITER_SRCS) \
@@ -1693,12 +1692,12 @@ endif
 
 stamps/rewrite-rhino.stamp: stamps/rewriter.stamp $(RHINO_JAR)
 if WITH_RHINO
-	mkdir -p rhino/rhino.{old,new}
-	(cd rhino/rhino.old ; jar xf $(RHINO_JAR))
+	mkdir -p rhino/rhino.{old,new} && \
+	(cd rhino/rhino.old ; $(ICEDTEA_BOOT_DIR)/bin/jar xf $(RHINO_JAR)) && \
 	$(ICEDTEA_BOOT_DIR)/bin/java -cp $(abs_top_builddir)/rewriter \
 	  com.redhat.rewriter.ClassRewriter \
 	  $(abs_top_builddir)/rhino/rhino.old $(abs_top_builddir)/rhino/rhino.new \
-	  org.mozilla sun.org.mozilla
+	  org.mozilla sun.org.mozilla && \
 	(cd rhino/rhino.old ; \
 	 for files in `find -type f -not -name '*.class'` ; do \
 	   new_file=../rhino.new/`echo $$files|sed -e 's#org#sun/org#'` ; \
@@ -1706,8 +1705,8 @@ if WITH_RHINO
 	   cp -v $$files $$new_file ; \
 	   sed -ie 's#org\.mozilla#sun.org.mozilla#g' $$new_file ; \
 	 done \
-	)
-	(cd rhino/rhino.new ; \
+	) && \
+	(cd rhino/rhino.new && \
 	$(ICEDTEA_BOOT_DIR)/bin/jar cfm ../rhino.jar META-INF/MANIFEST.MF sun )
 endif
 	mkdir -p stamps
