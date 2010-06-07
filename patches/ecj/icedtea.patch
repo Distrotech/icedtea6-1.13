@@ -336,9 +336,9 @@ diff -Nru openjdk-ecj.orig/corba/make/common/Rules.gmk openjdk-ecj/corba/make/co
  	  $(ECHO) "# Running javac:"; \
 -	  $(ECHO) $(JAVAC_CMD) -sourcepath "$(SOURCEPATH)" -d $(CLASSDESTDIR) @$(JAVA_SOURCE_LIST); \
 -	  $(JAVAC_CMD) -sourcepath "$(SOURCEPATH)" -d $(CLASSDESTDIR) @$(JAVA_SOURCE_LIST); \
-+	  $(ECHO) $(JAVAC_CMD) -bootclasspath $(ICEDTEA_RT):$(ICEDTEA_BUILD_DIR)/corba/classes \
++	  $(ECHO) $(JAVAC_CMD) -bootclasspath $(ICEDTEA_RT):$(CLASSBINDIR) \
 +		 -sourcepath "$(SOURCEPATH)" -d $(CLASSDESTDIR) @$(JAVA_SOURCE_LIST); \
-+	  $(JAVAC_CMD) -bootclasspath $(ICEDTEA_RT):$(ICEDTEA_BUILD_DIR)/corba/classes \
++	  $(JAVAC_CMD) -bootclasspath $(ICEDTEA_RT):$(CLASSBINDIR) \
 +		 -sourcepath "$(SOURCEPATH)" -d $(CLASSDESTDIR) @$(JAVA_SOURCE_LIST); \
  	fi
  	@$(java-vm-cleanup)
