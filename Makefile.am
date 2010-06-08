@@ -439,7 +439,7 @@ ICEDTEA_ENV = \
 	VERBOSE="$(VERBOSE)" \
 	ALT_NETX_DIST="$(abs_top_builddir)/netx.build" \
 	ALT_LIVECONNECT_DIST="$(abs_top_builddir)/liveconnect" \
-	ALT_OUTPUTDIR="$(ICEDTEA_BUILD_DIR)"
+	ALT_OUTPUTDIR="$(BUILD_OUTPUT_DIR)"
 
 if WITH_CACAO
 ICEDTEA_ENV += \
@@ -480,7 +480,7 @@ endif
 
 # OpenJDK ecj build environment.
 ICEDTEA_ENV_ECJ = $(ICEDTEA_ENV) \
-	ALT_OUTPUTDIR="$(ICEDTEA_BUILD_DIR_ECJ)" \
+	ALT_OUTPUTDIR="$(ECJ_BUILD_OUTPUT_DIR)" \
 	JAVA_TOOLS_DIR="$(ICEDTEA_BOOT_DIR)/bin" \
 	ICEDTEA_RT="$(ICEDTEA_RT)" \
 	ICEDTEA_CLS_DIR="$(ICEDTEA_CLS_DIR_ECJ)" \
@@ -535,9 +535,9 @@ distclean-local: clean-copy clean-jtreg clean-jtreg-reports $(PULSE_JAVA_CLEAN_T
 	rm -rf lib
 	rm -rf extra-lib
 	rm -rf openjdk-ecj
-	rm -rf $(ICEDTEA_BUILD_DIR_ECJ)
+	rm -rf $(ECJ_BUILD_OUTPUT_DIR)
 	rm -rf openjdk
-	rm -rf $(ICEDTEA_BUILD_DIR)
+	rm -rf $(BUILD_OUTPUT_DIR)
 	rm -rf visualvm
 	rm -rf netbeans
 
@@ -804,7 +804,7 @@ clean-extract:
 
 stamps/extract-openjdk.stamp: stamps/download.stamp
 if OPENJDK_SRC_DIR_FOUND
-	cp -pPRl $(OPENJDK_SRC_DIR) openjdk
+	cp -pPR --reflink=auto $(OPENJDK_SRC_DIR) openjdk
 else
 	set -e ; \
 	if ! test -d openjdk ; \
@@ -1537,7 +1537,7 @@ stamps/liveconnect-dist.stamp: stamps/liveconnect.stamp
 	  (cd $(abs_top_builddir)/liveconnect ; \
 	   mkdir -p lib ; \
 	   $(ICEDTEA_BOOT_DIR)/bin/jar cf lib/classes.jar $(LIVECONNECT_DIR) ; \
-	   cp -pPRl $(LIVECONNECT_SRCS) src; \
+	   cp -pPR --reflink=auto $(LIVECONNECT_SRCS) src; \
 	   find src -type f -exec chmod 640 '{}' ';' -o -type d -exec chmod 750 '{}' ';'; \
 	   cd src ; \
 	   $(ZIP) -qr $(abs_top_builddir)/liveconnect/lib/src.zip $(LIVECONNECT_DIR) ) ; \
@@ -1573,7 +1573,7 @@ stamps/netx-dist.stamp: stamps/netx.stamp
 	(cd $(abs_top_builddir)/netx.build ; \
 	 mkdir -p lib ; \
 	 $(ICEDTEA_BOOT_DIR)/bin/jar cf lib/classes.jar javax/jnlp net ; \
-	 cp -pPRl $(NETX_SRCDIR) src; \
+	 cp -pPR --reflink=auto $(NETX_SRCDIR) src; \
 	 find src -type f -exec chmod 640 '{}' ';' -o -type d -exec chmod 750 '{}' ';'; \
 	 cd src ; \
 	 $(ICEDTEA_BOOT_DIR)/bin/jar uf $(abs_top_builddir)/netx.build/lib/classes.jar \
@@ -1924,8 +1924,9 @@ stamps/plugin-tests.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) $(PLUGIN_TEST_SRCS) \
 	 $(PLUGIN_TEST_SRCS) ;
 	$(ICEDTEA_BOOT_DIR)/bin/jar cf plugin/tests/LiveConnect/PluginTest.jar \
 	  plugin/tests/LiveConnect/*.class ;
-	cp -pPRl $(abs_top_srcdir)/plugin/tests/LiveConnect/*.{js,html} plugin/tests/LiveConnect ;
-	echo "Done. Now launch \"firefox file://`pwd`/index.html\"" ; \
+	cp -pPR --reflink=auto $(abs_top_srcdir)/plugin/tests/LiveConnect/*.{js,html} \
+	  plugin/tests/LiveConnect ;
+	echo "Done. Now launch \"firefox file://`pwd`/index.html\"" ;
 	mkdir -p stamps
 	touch stamps/plugin-tests.stamp
 endif

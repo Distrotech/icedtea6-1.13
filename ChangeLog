@@ -1,3 +1,19 @@
+2010-06-08 Andrew John Hughes  <ahughes@redhat.com>
+
+	Remove use of ICEDTEA_BUILD_DIR and ICEDTEA_BUILD_DIR_ECJ
+	made obsolete by previous merge.  Use --reflink=auto instead
+	of -l to avoid cross-device issues.
+	* Makefile.am:
+	(ICEDTEA_ENV): Fix use of ICEDTEA_BUILD_DIR.
+	(ICEDTEA_ENV_ECJ): Fix use of ICEDTEA_BUILD_DIR_ECJ.
+	(distclean-local): Fix use of ICEDTEA_BUILD_DIR
+	and ICEDTEA_BUILD_DIR_ECJ.
+	(extract-openjdk.stamp): Use --reflink=auto instead
+	of -l.
+	(liveconnect-dist.stamp): Likewise.
+	(netx-dist.stamp): Likewise.
+	(plugin-tests.stamp): Likewise.
+
 2010-06-07 Andrew John Hughes  <ahughes@redhat.com>
 
 	Make BUILD_OUTPUT_DIR and ECJ_BUILD_OUTPUT_DIR
