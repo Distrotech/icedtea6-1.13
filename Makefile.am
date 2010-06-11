@@ -2055,8 +2055,7 @@ clean-rt:
 	rm -f rt-source-files.txt
 	cp $(SYSTEM_JDK_DIR)/jre/lib/rt.jar $(ICEDTEA_RT)
 
-stamps/rt.stamp: stamps/rt-class-files.stamp stamps/bootstrap-directory-ecj.stamp \
- stamps/liveconnect.stamp
+stamps/rt.stamp: stamps/rt-class-files.stamp
 	mkdir -p stamps
 if LACKS_SUN_AWT_TOOLKIT
 	$(ICEDTEA_BOOT_DIR)/bin/jar uf $(ICEDTEA_RT) -C lib/rt com -C lib/rt java \
