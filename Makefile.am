@@ -18,14 +18,15 @@ VISUALVM_MD5SUM = f1e2525ddcd5fdf97bcf891d715c08ff
 VISUALVM_URL = https://visualvm.dev.java.net/files/documents/7163/146746/
 VISUALVM_SRC_ZIP = visualvm_122-src.tar.gz
 
-JAXWS_DROP_URL = http://kenai.com/projects/jdk6-drops/downloads/download
-JAXWS_DROP_ZIP = jdk6-jaxws-2009_10_27.zip
-JAXWS_DROP_SHA256SUM = 155ff3be83c980e197621a2fbf7ee34e8e0f536489351a5865cf0e52206245e2
-JAF_DROP_ZIP = jdk6-jaf-2009_10_27.zip
-JAF_DROP_SHA256SUM = fdc51476fc6bcc69ea1f099f33e84601a126bfa8b11c8fa11c25dc574345aa9f
-JAXP_DROP_URL = https://jaxp.dev.java.net/files/documents/913/147491
-JAXP_DROP_ZIP = jdk6-jaxp-2010_01_15.zip
-JAXP_DROP_SHA256SUM = 181615cfec1c3721a7d8f278fa25b392be4247a496c7774a10cb9df37684f94f
+JAXWS_DROP_URL = https://jax-ws.dev.java.net/files/documents/4202/150724
+JAXWS_DROP_ZIP = jdk6-jaxws-b20.zip
+JAXWS_DROP_SHA256SUM = 0c460583898b968a58bf88eb53f90a0e34369e2562d65fb3a143512dfcaeb3eb
+JAF_DROP_URL = https://jax-ws.dev.java.net/files/documents/4202/150725
+JAF_DROP_ZIP = jdk6-jaf-b20.zip
+JAF_DROP_SHA256SUM = 78c7b5c9d6271e88ee46abadd018a61f1e9645f8936cc8df1617e5f4f5074012
+JAXP_DROP_URL = https://jaxp.dev.java.net/files/documents/913/150648
+JAXP_DROP_ZIP = jdk6-jaxp-b20.zip
+JAXP_DROP_SHA256SUM = d097627d4059d488c5a09d4e33cec275a193d4d8bc0fea8ef4f1337170904156
 
 OPENJDK_HG_URL = http://hg.openjdk.java.net/jdk6/jdk6
 
@@ -265,14 +266,12 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-testenv.patch \
 	patches/icedtea-samejvm-safe.patch \
 	patches/icedtea-pr261.patch \
-	patches/icedtea-doc-headers.patch \
 	patches/icedtea-sparc-buildfixes.patch \
 	patches/icedtea-sparc64-linux.patch \
 	patches/icedtea-sparc-ptracefix.patch \
 	patches/icedtea-sparc-trapsfix.patch \
 	patches/icedtea-demo-swingapplet.patch \
 	patches/icedtea-awt-window-size.patch \
-	patches/icedtea-java2d-dasher.patch \
 	patches/icedtea-jtreg-6592792.patch \
 	patches/icedtea-s390-noinline.patch \
 	patches/icedtea-jtreg-dnd.patch \
@@ -642,7 +641,7 @@ endif
 	  then \
 	    mv drops/$(JAF_DROP_ZIP) drops/$(JAF_DROP_ZIP).old ; \
 	  fi ; \
-	  $(WGET) $(JAXWS_DROP_URL)/$(JAF_DROP_ZIP) -O drops/$(JAF_DROP_ZIP); \
+	  $(WGET) $(JAF_DROP_URL)/$(JAF_DROP_ZIP) -O drops/$(JAF_DROP_ZIP); \
 	  if ! echo "$(JAF_DROP_SHA256SUM)  drops/$(JAF_DROP_ZIP)" \
 	    | $(SHA256SUM) --check ; \
 	  then echo "ERROR: Bad download of jaf drop zip"; false; \

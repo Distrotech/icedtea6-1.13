@@ -1,3 +1,26 @@
+2010-06-10 Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/icedtea-doc-headers.patch:
+	Dropped, upstream file has completely changed.
+	May need to be recreated, may not.
+	* patches/icedtea-java2d-dasher.patch:
+	Upstreamed by Omair as 6793344.  Now in OpenJDK6.
+	* Makefile.am:
+	Remove above patches.
+	(JAXWS_DROP_URL): Updated.
+	(JAXWS_DROP_ZIP): Likewise.
+	(JAXWS_DROP_SHA256SUM): Likewise.
+	(JAF_DROP_URL): Added.
+	(JAF_DROP_ZIP): Updated.
+	(JAF_DROP_SHA256SUM): Likewise.
+	(JAXP_DROP_URL): Updated.
+	(JAXP_DROP_ZIP): Likewise.
+	(JAXP_DROP_SHA256SUM): Likewise.
+	(download-jaf-drop): Use specific JAF_DROP_URL,
+	not JAXWS_DROP_URL.
+	* patches/icedtea-nio2.patch: Converted to use
+	new doc generation makefile.
+
 2010-06-08 Andrew John Hughes  <ahughes@redhat.com>
 
 	Remove use of ICEDTEA_BUILD_DIR and ICEDTEA_BUILD_DIR_ECJ
