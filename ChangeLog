@@ -1,5 +1,15 @@
 2010-06-13 Andrew John Hughes  <ahughes@redhat.com>
 
+	* overlays/nio2/openjdk/jdk/src/windows/classes/sun/nio/ch/DefaultSelectorProvider.java:
+	Removed, provided upstream.
+	* Makefile.am: Add new nimbus-source-target.patch.
+	* patches/ecj/bootver.patch: Always set required version to 1.5,
+	don't bother checking DISABLE_NIMBUS.
+	* patches/nimbus-source-target.patch: Fix source/target options
+	for Nimbus sources to 6, due to presence of @Override on interfaces.
+
+2010-06-13 Andrew John Hughes  <ahughes@redhat.com>
+
 	* generated/com/sun/java/swing/plaf/nimbus/ArrowButtonPainter.java,
 	* generated/com/sun/java/swing/plaf/nimbus/ButtonPainter.java,
 	* generated/com/sun/java/swing/plaf/nimbus/CheckBoxMenuItemPainter.java,

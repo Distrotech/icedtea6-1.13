@@ -293,7 +293,8 @@ ICEDTEA_PATCHES = \
 	patches/extensions/netx.patch \
 	patches/extensions/netx-dist.patch \
 	patches/extensions/netx-umask.patch \
-	patches/icedtea-jtreg-httpTest.patch
+	patches/icedtea-jtreg-httpTest.patch \
+	patches/nimbus-source-target.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \

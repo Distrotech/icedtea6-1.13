@@ -1,18 +1,14 @@
-diff -r b202c79afde3 make/common/shared/Platform.gmk
---- openjdk-ecj.orig/jdk/make/common/shared/Platform.gmk	Thu Dec 10 13:04:13 2009 -0800
-+++ openjdk-ecj/jdk/make/common/shared/Platform.gmk	Tue Dec 15 16:19:38 2009 +0000
-@@ -89,8 +89,13 @@
+diff -r b6701047e287 make/common/shared/Platform.gmk
+--- openjdk-ecj.orig/jdk/make/common/shared/Platform.gmk	Sat Jun 12 00:15:32 2010 +0100
++++ openjdk-ecj/jdk/make/common/shared/Platform.gmk	Sun Jun 13 23:54:02 2010 +0100
+@@ -88,8 +88,8 @@
  
  SYSTEM_UNAME := $(shell uname)
  
 -# Normal boot jdk is previous release, but a hard requirement is a 1.6 boot
+-REQUIRED_BOOT_VER = 1.6
 +# Normal boot jdk is previous release, but a hard requirement is a 1.5 boot
-+# without Nimbus or a 1.6 boot with
-+ifdef DISABLE_NIMBUS
 +REQUIRED_BOOT_VER = 1.5
-+else
- REQUIRED_BOOT_VER = 1.6
-+endif
  
  # If we are using freetype, this is the required version
  REQUIRED_FREETYPE_VERSION=2.3.0
