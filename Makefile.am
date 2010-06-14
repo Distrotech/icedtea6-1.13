@@ -32,9 +32,10 @@ OPENJDK_HG_URL = http://hg.openjdk.java.net/jdk6/jdk6
 
 # Build directories
 
-BUILD_OUTPUT_DIR = $(abs_top_builddir)/openjdk.build
+BUILD_DIR = openjdk.build
+BUILD_OUTPUT_DIR = $(abs_top_builddir)/$(BUILD_DIR)
 DEBUG_BUILD_OUTPUT_DIR = $(BUILD_OUTPUT_DIR)-debug
-ECJ_BUILD_OUTPUT_DIR = $(abs_top_builddir)/openjdk-ecj.build
+ECJ_BUILD_OUTPUT_DIR = $(BUILD_OUTPUT_DIR)-ecj
 ICEDTEA_CLS_DIR = $(BUILD_OUTPUT_DIR)/classes
 ICEDTEA_CLS_DIR_ECJ = $(ECJ_BUILD_OUTPUT_DIR)/classes
 ICEDTEA_BOOT_DIR= \
@@ -1879,12 +1880,12 @@ if ADD_ZERO_BUILD
 
 if ZERO_BUILD
 	mkdir -p $(BUILD_JRE_ARCH_DIR)/shark
-	cp -a zerovm/$(BUILD_OUTPUT_DIR)/hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server/* \
+	cp -a zerovm/$(BUILD_DIR)/hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server/* \
 		$(BUILD_JRE_ARCH_DIR)/shark/
 	printf -- '-shark KNOWN\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
 else
 	mkdir -p $(BUILD_JRE_ARCH_DIR)/zero
-	cp -a zerovm/$(BUILD_OUTPUT_DIR)/hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server/* \
+	cp -a zerovm/$(BUILD_DIR)/hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server/* \
 		$(BUILD_JRE_ARCH_DIR)/zero/
 	printf -- '-zero KNOWN\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
 endif
@@ -1909,12 +1910,12 @@ if ADD_ZERO_BUILD
 
 if ZERO_BUILD
 	mkdir -p $(BUILD_DEBUG_JRE_ARCH_DIR)/shark
-	cp -a zerovm/$(BUILD_OUTPUT_DIR)/hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server/* \
+	cp -a zerovm/$(BUILD_DIR)/hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server/* \
 		$(BUILD_DEBUG_JRE_ARCH_DIR)/shark/
 	printf -- '-shark KNOWN\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
 else
 	mkdir -p $(BUILD_DEBUG_JRE_ARCH_DIR)/zero
-	cp -a zerovm/$(BUILD_OUTPUT_DIR)/hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server/* \
+	cp -a zerovm/$(BUILD_DIR)/hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server/* \
 		$(BUILD_DEBUG_JRE_ARCH_DIR)/zero/
 	printf -- '-zero KNOWN\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
 endif

@@ -1,5 +1,13 @@
 2010-06-14  Andrew John Hughes  <ahughes@redhat.com>
 
+	Make available BUILD_DIR for where a relative
+	path needs to be built.
+	(BUILD_DIR): Set to openjdk.build.
+	(BUILD_OUTPUT_DIR): Use BUILD_DIR.
+	(ECJ_BUILD_OUTPUT_DIR): Extend BUILD_OUTPUT_DIR with '-ecj'.
+
+2010-06-14  Andrew John Hughes  <ahughes@redhat.com>
+
 	* Makefile.am:
 	(SRC_DIR_LINK): Use reflink only if hard
 	linking is not possible.
