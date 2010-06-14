@@ -198,6 +198,10 @@ else
   INITIAL_BOOTSTRAP_LINK_STAMP = stamps/bootstrap-directory-symlink-ecj.stamp
 endif
 
+if CP_SUPPORTS_REFLINK
+  REFLINK="--reflink=auto"
+endif
+
 # Target to ensure a patched OpenJDK tree containing Zero & Shark
 # and any overlays is available in $(abs_top_builddir)/openjdk
 OPENJDK_TREE = stamps/overlay.stamp
@@ -804,7 +808,7 @@ clean-extract:
 
 stamps/extract-openjdk.stamp: stamps/download.stamp
 if OPENJDK_SRC_DIR_FOUND
-	cp -pPR --reflink=auto $(OPENJDK_SRC_DIR) openjdk
+	cp -pPR $(REFLINK) $(OPENJDK_SRC_DIR) openjdk
 else
 	set -e ; \
 	if ! test -d openjdk ; \
@@ -1537,7 +1541,7 @@ stamps/liveconnect-dist.stamp: stamps/liveconnect.stamp
 	  (cd $(abs_top_builddir)/liveconnect ; \
 	   mkdir -p lib ; \
 	   $(ICEDTEA_BOOT_DIR)/bin/jar cf lib/classes.jar $(LIVECONNECT_DIR) ; \
-	   cp -pPR --reflink=auto $(LIVECONNECT_SRCS) src; \
+	   cp -pPR $(REFLINK) $(LIVECONNECT_SRCS) src; \
 	   find src -type f -exec chmod 640 '{}' ';' -o -type d -exec chmod 750 '{}' ';'; \
 	   cd src ; \
 	   $(ZIP) -qr $(abs_top_builddir)/liveconnect/lib/src.zip $(LIVECONNECT_DIR) ) ; \
@@ -1573,7 +1577,7 @@ stamps/netx-dist.stamp: stamps/netx.stamp
 	(cd $(abs_top_builddir)/netx.build ; \
 	 mkdir -p lib ; \
 	 $(ICEDTEA_BOOT_DIR)/bin/jar cf lib/classes.jar javax/jnlp net ; \
-	 cp -pPR --reflink=auto $(NETX_SRCDIR) src; \
+	 cp -pPR $(REFLINK) $(NETX_SRCDIR) src; \
 	 find src -type f -exec chmod 640 '{}' ';' -o -type d -exec chmod 750 '{}' ';'; \
 	 cd src ; \
 	 $(ICEDTEA_BOOT_DIR)/bin/jar uf $(abs_top_builddir)/netx.build/lib/classes.jar \
@@ -1924,7 +1928,7 @@ stamps/plugin-tests.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) $(PLUGIN_TEST_SRCS) \
 	 $(PLUGIN_TEST_SRCS) ;
 	$(ICEDTEA_BOOT_DIR)/bin/jar cf plugin/tests/LiveConnect/PluginTest.jar \
 	  plugin/tests/LiveConnect/*.class ;
-	cp -pPR --reflink=auto $(abs_top_srcdir)/plugin/tests/LiveConnect/*.{js,html} \
+	cp -pPR $(REFLINK) $(abs_top_srcdir)/plugin/tests/LiveConnect/*.{js,html} \
 	  plugin/tests/LiveConnect ;
 	echo "Done. Now launch \"firefox file://`pwd`/index.html\"" ;
 	mkdir -p stamps
