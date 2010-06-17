@@ -305,13 +305,13 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-parisc.patch \
 	patches/icedtea-sh4-support.patch \
 	patches/libpng.patch \
-	patches/zero.patch \
 	patches/shark.patch \
 	patches/extensions/netx.patch \
 	patches/extensions/netx-dist.patch \
 	patches/extensions/netx-umask.patch \
 	patches/icedtea-jtreg-httpTest.patch \
-	patches/nimbus-source-target.patch
+	patches/arm.patch \
+	patches/shark-debug-option.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
