@@ -71,7 +71,7 @@ exception statement from your version. */
   {                                         \
     if (plugin_debug)                       \
     {                                       \
-      fprintf(stderr, "ICEDTEA NP PLUGIN: thread %p: ", pthread_self()); \
+      fprintf(stderr, "ICEDTEA NP PLUGIN: "); \
       fprintf(stderr, str);                \
     }                                       \
   } while (0)
@@ -81,7 +81,7 @@ exception statement from your version. */
   {                                         \
     if (plugin_debug)                       \
     {                                       \
-      fprintf(stderr, "ICEDTEA NP PLUGIN: thread %p: ", pthread_self()); \
+      fprintf(stderr, "ICEDTEA NP PLUGIN: "); \
       fprintf(stderr, str, arg1);          \
     }                                       \
   } while (0)
@@ -91,7 +91,7 @@ exception statement from your version. */
   {                                         \
     if (plugin_debug)                       \
     {                                       \
-      fprintf(stderr, "ICEDTEA NP PLUGIN: thread %p: ", pthread_self()); \
+      fprintf(stderr, "ICEDTEA NP PLUGIN: "); \
       fprintf(stderr, str, arg1, arg2);    \
     }                                       \
   } while (0)
@@ -101,7 +101,7 @@ exception statement from your version. */
   {                                            \
     if (plugin_debug)                          \
     {                                          \
-      fprintf(stderr, "ICEDTEA NP PLUGIN: thread %p: ", pthread_self()); \
+      fprintf(stderr, "ICEDTEA NP PLUGIN: "); \
       fprintf(stderr, str, arg1, arg2, arg3); \
     }                                          \
   } while (0)
@@ -111,7 +111,7 @@ exception statement from your version. */
   {                                                  \
     if (plugin_debug)                                \
     {                                                \
-      fprintf(stderr, "ICEDTEA NP PLUGIN: thread %p: ", pthread_self()); \
+      fprintf(stderr, "ICEDTEA NP PLUGIN: "); \
       fprintf(stderr, str, arg1, arg2, arg3, arg4); \
     }                                                \
   } while (0)
@@ -121,7 +121,7 @@ exception statement from your version. */
   {                                                  \
     if (plugin_debug)                                \
     {                                                \
-      fprintf(stderr, "ICEDTEA NP PLUGIN: thread %p: ", pthread_self()); \
+      fprintf(stderr, "ICEDTEA NP PLUGIN: "); \
       fprintf(stderr, str, arg1, arg2, arg3, arg4, arg5); \
     }                                                \
   } while (0)
@@ -137,8 +137,8 @@ exception statement from your version. */
 }
 
 #define HEX_TO_INT(c) \
-    ((*c >= 'A') ? *c - 'A' + 10 : \
-     (*c >= 'a') ? *c - 'a' + 10 : \
+    ((*c >= 'a') ? *c - 'a' + 10 : \
+     (*c >= 'A') ? *c - 'A' + 10 : \
      *c - '0')
 
 #define IS_VALID_HEX(c) \
