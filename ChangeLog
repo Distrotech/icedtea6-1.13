@@ -1,5 +1,12 @@
 2010-06-22  Andrew John Hughes  <ahughes@redhat.com>
 
+	* Makefile.am: Add new patch.
+	* patches/openjdk/6961732.patch:
+	Backport of 6961732: FontMetrics.getLeading()
+	may be negative in freetype-based OpenJDK builds
+
+2010-06-22  Andrew John Hughes  <ahughes@redhat.com>
+
 	* Makefile.am:
 	(ports.stamp): Remove unneeded linking of
 	platform_zero (no longer exists).

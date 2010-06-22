@@ -311,7 +311,8 @@ ICEDTEA_PATCHES = \
 	patches/extensions/netx-umask.patch \
 	patches/icedtea-jtreg-httpTest.patch \
 	patches/arm.patch \
-	patches/shark-debug-option.patch
+	patches/shark-debug-option.patch \
+	patches/openjdk/6961732.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
