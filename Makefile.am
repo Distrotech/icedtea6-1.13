@@ -5,10 +5,10 @@ OPENJDK_MD5SUM = 0b36adbf67e4f261e1b827ed4be4f447
 OPENJDK_VERSION = b20
 OPENJDK_URL = http://download.java.net/openjdk/jdk6/promoted/$(OPENJDK_VERSION)/
 
-CACAO_VERSION = 0.99.4
-CACAO_MD5SUM = c5e6525c5212ddbb6026e4a7cde37ca6
-CACAO_BASE_URL = http://www.complang.tuwien.ac.at
-CACAO_URL = $(CACAO_BASE_URL)/cacaojvm/download/cacao-$(CACAO_VERSION)/
+CACAO_VERSION = 8948a434c10d
+CACAO_SHA256SUM = e472e11621c3e1f00a5f49c990e68d18db09c6c12aea100950567b1577931412
+CACAO_BASE_URL = http://mips.complang.tuwien.ac.at/hg/cacao/archive/tip.tar.bz2
+CACAO_URL = $(CACAO_BASE_URL)/hg/cacao/archive/$(CACAO_VERSION).tar.bz2
 
 NETBEANS_PROFILER_MD5SUM = 40dd3183b345737ca22162d164c2d5a2
 NETBEANS_PROFILER_URL = https://visualvm.dev.java.net/files/documents/7163/149581/
@@ -180,8 +180,8 @@ endif
 
 ICEDTEA_DEBUG_BUILD_TARGET=ALT_OUTPUTDIR="$(DEBUG_BUILD_OUTPUT_DIR)"
 if WITH_CACAO
-  ICEDTEA_BUILD_TARGET=j2se_only
-  ICEDTEA_DEBUG_BUILD_TARGET += j2se_fastdebug_only
+  ICEDTEA_BUILD_TARGET=jdk_only
+  ICEDTEA_DEBUG_BUILD_TARGET += jdk_fastdebug_only
 else
   ICEDTEA_DEBUG_BUILD_TARGET += debug_build
 endif
@@ -327,10 +327,13 @@ endif
 
 if BUILD_CACAO
 ICEDTEA_PATCHES += \
-	patches/icedtea-cacao.patch \
-	patches/icedtea-cacao-no-mmap-first-page.patch \
-	patches/cacao/no-strict-aliasing.patch \
-	patches/cacao/arm-arch-defines.patch
+	patches/cacao/launcher.patch \
+	patches/cacao/version.patch \
+	patches/cacao/arm-arch-defines.patch \
+	patches/cacao/jsig.patch \
+	patches/cacao/6714758.patch \
+	patches/cacao/memory.patch \
+	patches/cacao/package-version.diff
 if ENABLE_NIO2
 ICEDTEA_PATCHES += patches/cacao/nio2.patch
 endif
@@ -1779,6 +1782,7 @@ stamps/cacao.stamp: $(OPENJDK_TREE) stamps/rt.stamp
 if BUILD_CACAO
 if !USE_SYSTEM_CACAO
 	cd cacao/cacao && \
+	./autogen.sh && \
 	$(ARCH_PREFIX) ./configure \
 	  --host=$(host_alias) \
 	  --build=$(build_alias) \

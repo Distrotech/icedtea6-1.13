@@ -1,0 +1,18 @@
+--- openjdk/langtools/make/build.xml~	2010-06-21 23:16:19.000000000 +0200
++++ openjdk/langtools/make/build.xml	2010-06-23 20:51:31.649822343 +0200
+@@ -524,6 +524,7 @@
+                        source="@{javac.source}"
+                        target="@{javac.target}">
+                     <compilerarg value="-J-Xbootclasspath/p:@{javac.bootclasspath}"/>
++                    <compilerarg value="-J-Xmx256M"/>
+                     <compilerarg line="${javac.version.opt}"/>
+                     <compilerarg line="-Xlint"/>
+                 </javac>
+@@ -541,6 +542,7 @@
+                        debuglevel="${javac.debuglevel}">
+                     <compilerarg value="-J-Xbootclasspath/p:@{javac.bootclasspath}"/>
+                     <compilerarg value="-Xbootclasspath/p:@{classes.dir}"/>
++                    <compilerarg value="-J-Xmx256M"/>
+                     <compilerarg line="${javac.no.jdk.warnings}"/>
+                     <compilerarg line="${javac.version.opt}"/>
+                     <compilerarg line="${javac.lint.opts}"/>

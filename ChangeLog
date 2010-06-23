@@ -1,3 +1,38 @@
+2010-06-24 Andrew John Hughes  <ahughes@redhat.com>
+	   Matthias Klose  <doko@ubuntu.com>
+
+	* patches/cacao/no-strict-aliasing.patch: Remove, applied upstream.
+	* patches/icedtea-cacao-no-mmap-first-page.patch: Likewise.
+	* patches/icedtea-cacao.patch: Remove, replaced by ...
+	* patches/cacao/launcher.patch: New.
+	* patches/cacao/memory.patch: Increase the memory used in the langtools
+	build when using CACAO.
+	* patches/cacao/arm-arch-defines.patch: Update.
+	* patches/cacao/6714758.patch: 	Add JVM_FindClassFromBootLoader
+	introduced by 6714758 and modified in 6864003.
+	http://server.complang.tuwien.ac.at/cgi-bin/bugzilla/show_bug.cgi?id=137
+	* patches/icedtea-cacao-ignore-tests.patch: Remove, replaced by ...
+	* patches/cacao/ignore-tests.patch: New.
+	* patches/cacao/jsig.patch: Update.
+	* patches/cacao/package-version.diff: Drop 'preX' from the cacao
+	package version.
+	* patches/cacao/version.patch: Update
+	* Makefile.am (ICEDTEA_PATCHES): Add/remove patches.
+	Use Mercurial snapshot of CACAO 1.1.0pre.
+
+2010-05-11 Andrew John Hughes  <ahughes@redhat.com>
+
+	Fix issues with the CACAO build so it at
+	least builds again (though it still fails to
+	bootstrap).
+	* Makefile.am: Add new patches.
+	* patches/cacao/6714758.patch:
+	Add JVM_FindClassFromBootLoader introduced by
+	6714758 and modified in 6864003.
+	http://server.complang.tuwien.ac.at/cgi-bin/bugzilla/show_bug.cgi?id=137
+	* patches/cacao/jsig.patch:
+	Place fake libjsig.so in correct location for HotSpot 17+.
+
 2010-06-22  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am: Add new patch.
