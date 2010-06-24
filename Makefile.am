@@ -1810,7 +1810,7 @@ if ADD_CACAO_BUILD
 	mkdir -p $(BUILD_JRE_ARCH_DIR)/cacao
 	install -m 644 cacao/install/lib/libjvm.so \
 		$(BUILD_JRE_ARCH_DIR)/cacao/
-	install -m 644 cacao/install/jre/lib/$(INSTALL_ARCH_DIR)/server/libjsig.so \
+	install -m 644 cacao/install/jre/lib/$(INSTALL_ARCH_DIR)/libjsig.so \
 		$(BUILD_JRE_ARCH_DIR)/cacao/
 	install -m 644 cacao/install/jre/lib/$(INSTALL_ARCH_DIR)/server/Xusage.txt \
 		$(BUILD_JRE_ARCH_DIR)/cacao/
@@ -1827,7 +1827,7 @@ if ADD_CACAO_BUILD
 	mkdir -p $(BUILD_DEBUG_JRE_ARCH_DIR)/cacao
 	install -m 644 cacao/install/lib/libjvm.so \
 		$(BUILD_DEBUG_JRE_ARCH_DIR)/cacao/
-	install -m 644 cacao/install/jre/lib/$(INSTALL_ARCH_DIR)/server/libjsig.so \
+	install -m 644 cacao/install/jre/lib/$(INSTALL_ARCH_DIR)/libjsig.so \
 		$(BUILD_DEBUG_JRE_ARCH_DIR)/cacao/
 	install -m 644 cacao/install/jre/lib/$(INSTALL_ARCH_DIR)/server/Xusage.txt \
 		$(BUILD_DEBUG_JRE_ARCH_DIR)/cacao/
