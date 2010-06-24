@@ -1,5 +1,17 @@
 2010-06-24 Andrew John Hughes  <ahughes@redhat.com>
 
+	* Makefile.am:
+	Add new patch and update:
+	(CACAO_VERSION): Bump to changeset which
+	increases optimisation to -O2 not -O0.
+	(CACAO_SHA256SUM): Updated for above.
+	* patches/cacao/version-parsing.patch:
+	Fix parsing of the minor version due to
+	the update from 1.1.0pre to 1.1.0pre1 in
+	the new changeset.
+
+2010-06-24 Andrew John Hughes  <ahughes@redhat.com>
+
 	* patches/cacao/6714758.patch:
 	Removed, 6714758 is not in OpenJDK6.
 	* patches/cacao/package-version.diff:

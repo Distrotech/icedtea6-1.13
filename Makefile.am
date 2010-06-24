@@ -5,8 +5,8 @@ OPENJDK_MD5SUM = 0b36adbf67e4f261e1b827ed4be4f447
 OPENJDK_VERSION = b20
 OPENJDK_URL = http://download.java.net/openjdk/jdk6/promoted/$(OPENJDK_VERSION)/
 
-CACAO_VERSION = 8948a434c10d
-CACAO_SHA256SUM = e472e11621c3e1f00a5f49c990e68d18db09c6c12aea100950567b1577931412
+CACAO_VERSION = dd4532afd08a
+CACAO_SHA256SUM = fc876403aeb46c6c16693cfc75ba0a2e581f7a98ddd02ac7f2bf4fc5c20765b4
 CACAO_BASE_URL = http://mips.complang.tuwien.ac.at
 CACAO_URL = $(CACAO_BASE_URL)/hg/cacao/archive/$(CACAO_VERSION).tar.bz2
 CACAO_SRC_ZIP = cacao-$(CACAO_VERSION).tar.bz2
@@ -321,7 +321,8 @@ ICEDTEA_PATCHES += \
 	patches/cacao/launcher.patch \
 	patches/cacao/arm-arch-defines.patch \
 	patches/cacao/jsig.patch \
-	patches/cacao/memory.patch
+	patches/cacao/memory.patch \
+	patches/cacao/version-parsing.patch
 endif
 
 if WITH_CACAO
