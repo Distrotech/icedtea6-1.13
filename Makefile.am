@@ -7,8 +7,9 @@ OPENJDK_URL = http://download.java.net/openjdk/jdk6/promoted/$(OPENJDK_VERSION)/
 
 CACAO_VERSION = 8948a434c10d
 CACAO_SHA256SUM = e472e11621c3e1f00a5f49c990e68d18db09c6c12aea100950567b1577931412
-CACAO_BASE_URL = http://mips.complang.tuwien.ac.at/hg/cacao/archive/tip.tar.bz2
+CACAO_BASE_URL = http://mips.complang.tuwien.ac.at
 CACAO_URL = $(CACAO_BASE_URL)/hg/cacao/archive/$(CACAO_VERSION).tar.bz2
+CACAO_SRC_ZIP = cacao-$(CACAO_VERSION).tar.bz2
 
 NETBEANS_PROFILER_MD5SUM = 40dd3183b345737ca22162d164c2d5a2
 NETBEANS_PROFILER_URL = https://visualvm.dev.java.net/files/documents/7163/149581/
@@ -124,16 +125,6 @@ if USE_ALT_HOTSPOT_SRC_ZIP
   HOTSPOT_SRC_ZIP = $(ALT_HOTSPOT_SRC_ZIP)
 else
   HOTSPOT_SRC_ZIP = hotspot.tar.gz
-endif
-
-if USE_ALT_CACAO_SRC_ZIP
-  CACAO_SRC_ZIP = $(ALT_CACAO_SRC_ZIP)
-else
-if USE_ALT_CACAO_SRC_DIR
-  CACAO_SRC_ZIP = "not needed"
-else
-  CACAO_SRC_ZIP = cacao-$(CACAO_VERSION).tar.gz
-endif
 endif
 
 # FIXME (HotSpot): HotSpot changeset logic goes here
@@ -328,21 +319,15 @@ endif
 if BUILD_CACAO
 ICEDTEA_PATCHES += \
 	patches/cacao/launcher.patch \
-	patches/cacao/version.patch \
 	patches/cacao/arm-arch-defines.patch \
 	patches/cacao/jsig.patch \
-	patches/cacao/6714758.patch \
-	patches/cacao/memory.patch \
-	patches/cacao/package-version.diff
-if ENABLE_NIO2
-ICEDTEA_PATCHES += patches/cacao/nio2.patch
-endif
+	patches/cacao/memory.patch
 endif
 
 if WITH_CACAO
 ICEDTEA_PATCHES += \
-	patches/icedtea-cacao-ignore-jdi-tests.patch \
-	patches/icedtea-cacao-ignore-tests.patch
+	patches/cacao/ignore-jdi-tests.patch \
+	patches/cacao/ignore-tests.patch
 endif
 
 if ENABLE_PULSE_JAVA
@@ -706,6 +691,36 @@ stamps/download-drops.stamp: stamps/download-jaxp-drop.stamp \
 	mkdir -p stamps
 	touch $@
 
+stamps/download-cacao.stamp:
+if BUILD_CACAO
+if !USE_SYSTEM_CACAO
+if !USE_ALT_CACAO_SRC_DIR
+if USE_ALT_CACAO_SRC_ZIP
+	ln -sf $(ALT_CACAO_SRC_ZIP) $(CACAO_SRC_ZIP)
+endif
+	if ! echo "$(CACAO_SHA256SUM)  $(CACAO_SRC_ZIP)" \
+	 | $(SHA256SUM) --check ; \
+	then \
+	 if [ $(CACAO_SRC_ZIP) ] ; \
+	 then \
+	   mv $(CACAO_SRC_ZIP) $(CACAO_SRC_ZIP).old ; \
+	 fi ; \
+	 $(WGET) $(CACAO_URL) -O $(CACAO_SRC_ZIP); \
+	 if ! echo "$(CACAO_SHA256SUM)  $(CACAO_SRC_ZIP)" \
+	   | $(SHA256SUM) --check ; \
+	 then echo "ERROR: Bad download of CACAO zip"; false; \
+	 fi; \
+	fi
+endif
+endif
+endif
+	mkdir -p stamps
+	touch $@
+
+clean-download-cacao:
+	rm -f $(CACAO_SRC_ZIP)
+	rm -f stamps/download-cacao.stamp
+
 clean-drops: clean-download-jaxp-drop clean-download-jaf-drop \
  clean-download-jaxws-drop
 	if [ -e drops ] ; then \
@@ -713,7 +728,8 @@ clean-drops: clean-download-jaxp-drop clean-download-jaf-drop \
 	fi
 	rm -f stamps/download-drops.stamp
 
-stamps/download.stamp: stamps/hgforest.stamp stamps/download-drops.stamp
+stamps/download.stamp: stamps/hgforest.stamp stamps/download-drops.stamp \
+ stamps/download-cacao.stamp
 if USE_HG
 if WITH_HGREV
 	$(HG) fclone -r $(HGREV) $(OPENJDK_HG_URL) openjdk;
@@ -755,25 +771,6 @@ else
 endif
 endif
 endif
-if BUILD_CACAO
-if !USE_SYSTEM_CACAO
-if USE_ALT_CACAO_SRC_ZIP
-else
-if USE_ALT_CACAO_SRC_DIR
-else
-	if ! echo "$(CACAO_MD5SUM)  $(CACAO_SRC_ZIP)" \
-	 | $(MD5SUM) --check ; \
-	then \
-	 if [ $(CACAO_SRC_ZIP) ] ; \
-	 then \
-	   mv $(CACAO_SRC_ZIP) $(CACAO_SRC_ZIP).old ; \
-	 fi ; \
-	 $(WGET) $(CACAO_URL)$(CACAO_SRC_ZIP) -O $(CACAO_SRC_ZIP); \
-	fi
-endif
-endif
-endif
-endif
 if WITH_VISUALVM
 	if ! echo "$(NETBEANS_PROFILER_MD5SUM)  $(NETBEANS_PROFILER_SRC_ZIP)" \
 	 | $(MD5SUM) --check ; \
@@ -801,15 +798,9 @@ endif
 	touch stamps/download.stamp
 
 #FIXME (meta): split into multiple targets
-clean-download: clean-drops
+clean-download: clean-drops clean-download-cacao
 	rm -f stamps/download.stamp
 	rm -f $(OPENJDK_SRC_ZIP)
-if BUILD_CACAO
-if USE_ALT_CACAO_SRC_DIR
-else
-	rm -f $(CACAO_SRC_ZIP)
-endif
-endif
 if WITH_VISUALVM
 	rm -f $(VISUALVM_SRC_ZIP)
 	rm -f $(NETBEANS_PROFILER_SRC_ZIP)

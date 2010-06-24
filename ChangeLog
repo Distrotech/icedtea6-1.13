@@ -1,3 +1,27 @@
+2010-06-24 Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/cacao/6714758.patch:
+	Removed, 6714758 is not in OpenJDK6.
+	* patches/cacao/package-version.diff:
+	Removed; we shouldn't be altering the CACAO
+	version and it builds without this fix.
+	* patches/cacao/version.patch:
+	Dropped; only needed for 7.
+	* patches/icedtea-cacao-ignore-jdi-tests.patch:
+	Moved to...
+	* Makefile.am:
+	Drop unneeded patches.  Remove non-existent nio2
+	reference.  Fix path to ignore-jdi-tests.patch.
+	(CACAO_BASE_URL): Shorten to just the base.
+	(CACAO_SRC_ZIP): Use version from IcedTea7.
+	(download-cacao): Added from IcedTea7.
+	(clean-download-cacao): Likewise.
+	(download): Depend on download-cacao.
+	Remove CACAO downloading.
+	(clean-download): Depend on clean-download-cacao.
+	Remove CACAO cleaning.
+	* patches/cacao/ignore-jdi-tests.patch: ...here.
+
 2010-06-24 Matthias Klose  <doko@ubuntu.com>
 
 	* Makefile.am (stamps/add-cacao.stamp, stamps/add-cacao-debug.stamp):
