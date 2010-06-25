@@ -114,7 +114,7 @@ SharkConstant::SharkConstant(ciConstant constant, ciType *type) {
     }
     object = klass->java_mirror();
   }
-  if (object->is_null_object() || !object->has_encoding()) {
+  if (object->is_null_object() || !object->can_be_constant()) {
     _is_loaded = false;
     return;
   }
