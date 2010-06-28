@@ -1,3 +1,35 @@
+2010-06-25 Andrew John Hughes  <ahughes@redhat.com>
+
+	Remove VisualVM support, now maintained at
+	http://icedtea.classpath.org/hg/visualvm
+	* Makefile.am:
+	Remove VisualVM targets, references and aliases.
+	(NETBEANS_PROFILER_URL): Removed.
+	(NETBEANS_PROFILER_SRC_ZIP): Likewise.
+	(NETBEANS_PROFILER_MD5SUM): Likewise.
+	(VISUALVM_URL): Likewise.
+	(VISUALVM_SRC_ZIP): Likewise.
+	(VISUALVM_MD5SUM): Likewise.
+	(EXTRA_DIST): Remove visualvm.desktop.
+	(distclean-local): Remove visualvm and netbeans deletion.
+	(.PHONY): Remove clean-visualvm and clean-nbplatform targets.
+	(download): Don't download VisualVM.
+	(clean-download): Don't remove the VisualVM and NetBeans zips.
+	(extract): Don't extract VisualVM and NetBeans.
+	(icedtea): Don't depend on visualvm.stamp and remove post-install
+	measures.
+	(icedtea-debug): Likewise.
+	(nbplatform): Removed.
+	(visualvm): Removed.
+	* acinclude.m4:
+	Remove VisualVM-related macros.
+	(FIND_NETBEANS): Removed.
+	* configure.ac:
+	Remove --with-netbeans-home and
+	--enable-visualvm options.  Don't invoke
+	VisualVM macros.
+	* visualvm.desktop: Removed.
+
 2010-06-25 Matthias Klose  <doko@ubuntu.com>
 
 	Fix shark build failures, update for latest HotSpot taken from

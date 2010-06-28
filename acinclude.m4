@@ -663,38 +663,6 @@ AC_DEFUN([FIND_XERCES2_JAR],
   AC_SUBST(XERCES2_JAR)
 ])
 
-AC_DEFUN([FIND_NETBEANS],
-[
-  AC_MSG_CHECKING([if the location of NetBeans is specified])
-  AC_ARG_WITH([netbeans],
-              [AS_HELP_STRING(--with-netbeans,specify location of netbeans)],
-  [
-    if test "x${withval}" = "xyes"; then
-      NETBEANS=no
-    else
-      NETBEANS="${withval}"
-    fi
-  ],
-  [
-    NETBEANS=no
-  ])
-  AC_MSG_RESULT(${NETBEANS})
-  if ! test -f "${NETBEANS}"; then
-    if test "x${NETBEANS}" = "xno"; then
-      NETBEANS=
-    else
-      AC_PATH_PROG(NETBEANS, "${NETBEANS}")
-    fi
-  fi
-  if test -z "${NETBEANS}"; then
-    AC_PATH_PROG(NETBEANS, "netbeans")
-  fi
-  if test -z "${NETBEANS}"; then
-    AC_MSG_ERROR("NetBeans was not found.")
-  fi
-  AC_SUBST(NETBEANS)
-])
-
 AC_DEFUN([FIND_RHINO_JAR],
 [
   AC_MSG_CHECKING([whether to include Javascript support via Rhino])
