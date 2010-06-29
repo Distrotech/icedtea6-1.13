@@ -155,12 +155,11 @@ else
   MEMORY_LIMIT =
 endif
 
-ICEDTEA_DEBUG_BUILD_TARGET=ALT_OUTPUTDIR="$(DEBUG_BUILD_OUTPUT_DIR)"
 if WITH_CACAO
   ICEDTEA_BUILD_TARGET=jdk_only
-  ICEDTEA_DEBUG_BUILD_TARGET += jdk_fastdebug_only
+  ICEDTEA_DEBUG_BUILD_TARGET = jdk_fastdebug_only
 else
-  ICEDTEA_DEBUG_BUILD_TARGET += debug_build
+  ICEDTEA_DEBUG_BUILD_TARGET = debug_build
 endif
 
 # FIXME (bootstrap): Assumption is WITH_OPENJDK == no bootstrap
@@ -289,7 +288,8 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-jtreg-httpTest.patch \
 	patches/arm.patch \
 	patches/shark-debug-option.patch \
-	patches/openjdk/6961732.patch
+	patches/openjdk/6961732.patch \
+	patches/debug-dir.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \

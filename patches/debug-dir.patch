@@ -1,0 +1,31 @@
+--- openjdk/Makefile.orig	2010-06-28 20:11:00.000000000 +0100
++++ openjdk/Makefile	2010-06-28 20:11:54.000000000 +0100
+@@ -138,7 +138,7 @@
+ # Location of fresh bootdir output
+ ABS_BOOTDIR_OUTPUTDIR=$(ABS_OUTPUTDIR)/bootjdk
+ FRESH_BOOTDIR=$(ABS_BOOTDIR_OUTPUTDIR)/j2sdk-image
+-FRESH_DEBUG_BOOTDIR=$(ABS_BOOTDIR_OUTPUTDIR)/../$(PLATFORM)-$(ARCH)-$(DEBUG_NAME)/j2sdk-image
++FRESH_DEBUG_BOOTDIR=$(ABS_BOOTDIR_OUTPUTDIR)-$(DEBUG_NAME)/j2sdk-image
+   
+ create_fresh_product_bootdir: FRC
+ 	@$(START_ECHO)
+@@ -210,7 +210,7 @@
+ generic_debug_build:
+ 	@$(START_ECHO)
+ 	$(MAKE) \
+-		ALT_OUTPUTDIR=$(ABS_OUTPUTDIR)/../$(PLATFORM)-$(ARCH)-$(DEBUG_NAME) \
++		ALT_OUTPUTDIR=$(ABS_OUTPUTDIR)-$(DEBUG_NAME) \
+ 	        DEBUG_NAME=$(DEBUG_NAME) \
+ 		GENERATE_DOCS=false \
+ 	        $(BOOT_CYCLE_DEBUG_SETTINGS) \
+@@ -230,8 +230,8 @@
+ 
+ clobber::
+ 	$(RM) -r $(OUTPUTDIR)/*
+-	$(RM) -r $(OUTPUTDIR)/../$(PLATFORM)-$(ARCH)-debug/*
+-	$(RM) -r $(OUTPUTDIR)/../$(PLATFORM)-$(ARCH)-fastdebug/*
++	$(RM) -r $(OUTPUTDIR)-debug/*
++	$(RM) -r $(OUTPUTDIR)-fastdebug/*
+ 	-($(RMDIR) -p $(OUTPUTDIR) > $(DEV_NULL) 2>&1; $(TRUE))
+ 
+ clean: clobber
