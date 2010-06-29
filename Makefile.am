@@ -289,7 +289,8 @@ ICEDTEA_PATCHES = \
 	patches/arm.patch \
 	patches/shark-debug-option.patch \
 	patches/openjdk/6961732.patch \
-	patches/debug-dir.patch
+	patches/debug-dir.patch \
+	patches/no-sync.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
