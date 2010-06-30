@@ -92,8 +92,6 @@ ICEDTEA_BOOTSTRAP_CLASSES = \
 	$(SHARE)/javax/management/StandardMBean.java \
 	$(NETX_BOOTSTRAP_CLASSES)
 
-# FIXME (javac): Settings for javac go here
-
 # Flags
 IT_CFLAGS=$(CFLAGS) $(ARCHFLAG)
 IT_JAVAC_SETTINGS=-g -encoding utf-8 $(JAVACFLAGS) $(MEMORY_LIMIT) $(PREFER_SOURCE)
@@ -155,12 +153,11 @@ else
   MEMORY_LIMIT =
 endif
 
-ICEDTEA_DEBUG_BUILD_TARGET=ALT_OUTPUTDIR="$(DEBUG_BUILD_OUTPUT_DIR)"
 if WITH_CACAO
   ICEDTEA_BUILD_TARGET=jdk_only
-  ICEDTEA_DEBUG_BUILD_TARGET += jdk_fastdebug_only
+  ICEDTEA_DEBUG_BUILD_TARGET = jdk_fastdebug_only
 else
-  ICEDTEA_DEBUG_BUILD_TARGET += debug_build
+  ICEDTEA_DEBUG_BUILD_TARGET = debug_build
 endif
 
 # FIXME (bootstrap): Assumption is WITH_OPENJDK == no bootstrap
@@ -289,7 +286,9 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-jtreg-httpTest.patch \
 	patches/arm.patch \
 	patches/shark-debug-option.patch \
-	patches/openjdk/6961732.patch
+	patches/openjdk/6961732.patch \
+	patches/debug-dir.patch \
+	patches/no-sync.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -518,27 +517,18 @@ all-local: icedtea-against-icedtea
 
 check-local: jtregcheck
 
-#FIXME (clean): Should become clean-local.
-distclean-local: clean-copy clean-jtreg clean-jtreg-reports $(PULSE_JAVA_CLEAN_TARGET) \
- clean-netx clean-plugin clean-liveconnect
-	rm -rf stamps
-	rm -f rt-source-files.txt \
-	  extra-source-files.txt
+clean-local: clean-jtreg clean-jtreg-reports $(PULSE_JAVA_CLEAN_TARGET) \
+ clean-netx clean-plugin clean-liveconnect clean-icedtea clean-icedtea-debug \
+ clean-icedtea-ecj clean-cacao clean-ports clean-overlay clean-native-ecj \
+ clean-icedtea-against-icedtea clean-icedtea-debug-against-icedtea \
+ clean-icedtea-against-ecj
+	rm -f rt-source-files.txt extra-source-files.txt
 	rm -rf bootstrap
 	rm -rf lib
 	rm -rf extra-lib
 	rm -rf openjdk-ecj
-	rm -rf $(ECJ_BUILD_OUTPUT_DIR)
 	rm -rf openjdk
-	rm -rf $(BUILD_OUTPUT_DIR)
-
-if BUILD_CACAO
-	rm -rf cacao
-endif
 	rm -f jni-common.o
-if ADD_ZERO_BUILD
-	rm -rf zerovm
-endif
 
 #FIXME (clean): Missing distclean-local for downloads only
 
@@ -551,7 +541,10 @@ install:
 	clean-bootstrap-directory-symlink-ecj icedtea icedtea-debug \
 	clean-icedtea icedtea-against-icedtea clean-icedtea-ecj \
 	clean-tools-jar clean-copy clean-rt $(ICEDTEAPLUGIN_CLEAN) hotspot \
-	hotspot-helper clean-extra clean-jtreg clean-jtreg-reports 
+	hotspot-helper clean-extra clean-jtreg clean-jtreg-reports \
+	clean-add-zero clean-add-zero-debug clean-icedtea clean-icedtea-debug
+	clean-icedtea-against-ecj clean-cacao clean-add-cacao clean-add-cacao-debug \
+	clean-ports clean-overlay
 
 env:
 	@echo 'unset JAVA_HOME'
@@ -853,7 +846,17 @@ stamps/ports.stamp: stamps/replace-hotspot.stamp
 	mkdir -p stamps
 	touch stamps/ports.stamp
 
-#FIXME (clean): Missing clean-ports
+clean-ports:
+	for target in $(abs_top_srcdir)/ports/hotspot/make/*/makefiles/* \
+		      $(abs_top_srcdir)/ports/hotspot/tools \
+		      $(abs_top_srcdir)/ports/hotspot/src/*cpu/* \
+		      $(abs_top_srcdir)/ports/hotspot/src/share/vm/*; do \
+	  link=$$(echo $$target | sed 's/^.*ports/openjdk/'); \
+	  rm -rf $$link; \
+	done
+	rm -f openjdk/jdk/src/solaris/bin/$(BUILD_ARCH_DIR)/jvm.cfg
+	rm -f openjdk/jdk/src/solaris/bin/ergo_$(BUILD_ARCH_DIR).c 
+	rm -f stamps/ports.stamp
 
 #FIXME (missing): Missing generated.stamp 
 
@@ -988,7 +991,8 @@ if ENABLE_NIO2
 endif
 	touch stamps/overlay.stamp
 
-#FIXME (clean): Missing clean-overlay
+clean-overlay:
+	rm -f stamps/overlay.stamp
 
 # OpenJDK ecj Source Preparation Targets
 # ======================================
@@ -1069,7 +1073,9 @@ stamps/native-ecj.stamp:
 	fi ; \
 	touch stamps/native-ecj.stamp
 
-# FIXME(clean): Missing clean-native-ecj
+clean-native-ecj:
+	rm -f native-ecj
+	rm -rf stamps/native-ecj.stamp
 
 # bootstrap/ecj.
 stamps/bootstrap-directory-ecj.stamp: stamps/native-ecj.stamp
@@ -1235,6 +1241,10 @@ endif
 	mkdir -p stamps
 	touch stamps/icedtea.stamp
 
+clean-icedtea:
+	rm -rf $(BUILD_OUTPUT_DIR)
+	rm -f stamps/icedtea.stamp
+
 stamps/icedtea-debug.stamp: stamps/bootstrap-directory-symlink.stamp \
 	stamps/netx-dist.stamp $(OPENJDK_TREE) stamps/plugin.stamp \
 	extra-lib/about.jar stamps/cacao.stamp $(PULSE_JAVA_TARGET) \
@@ -1308,25 +1318,25 @@ endif
 	mkdir -p stamps
 	touch stamps/icedtea-debug.stamp
 
-clean-icedtea: stamps/extract.stamp
-	$(ARCH_PREFIX) $(MAKE) \
-	  $(ICEDTEA_ENV) \
-	  -C openjdk clobber
-	rm -f stamps/icedtea.stamp stamps/icedtea-debug.stamp
+clean-icedtea-debug:
+	rm -rf $(DEBUG_BUILD_OUTPUT_DIR)
+	rm -f stamps/icedtea-debug.stamp
 
 stamps/icedtea-against-icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
  stamps/icedtea.stamp stamps/add-cacao.stamp stamps/add-zero.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-against-icedtea.stamp
 
-#FIXME (clean): Missing clean-icedtea-against-icedtea
+clean-icedtea-against-icedtea: clean-add-zero clean-add-cacao
+	rm -f stamps/icedtea-against-icedtea.stamp
 
 stamps/icedtea-debug-against-icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
  stamps/icedtea-debug.stamp stamps/add-cacao-debug.stamp stamps/add-zero-debug.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-debug-against-icedtea.stamp
 
-#FIXME (clean): Missing clean-icedtea-debug-against-icedtea
+clean-icedtea-debug-against-icedtea: clean-add-zero-debug clean-add-cacao-debug
+	rm -f stamps/icedtea-debug-against-icedtea.stamp
 
 # OpenJDK ecj Targets
 # ===================
@@ -1342,6 +1352,10 @@ stamps/icedtea-ecj.stamp: stamps/bootstrap-directory-symlink-ecj.stamp \
 	  $(ECJ_BUILD_OUTPUT_DIR)
 	mkdir -p stamps
 	touch stamps/icedtea-ecj.stamp
+
+clean-icedtea-ecj: stamps/extract-ecj.stamp
+	rm -rf $(ECJ_BUILD_OUTPUT_DIR)
+	rm -f stamps/icedtea-ecj.stamp
 
 hotspot:
 if WITH_OPENJDK
@@ -1364,19 +1378,14 @@ else
 	@echo "Hotspot is served:" $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image
 endif
 
-clean-icedtea-ecj: stamps/extract-ecj.stamp
-	rm -f stamps/icedtea-ecj.stamp
-	$(ARCH_PREFIX) $(MAKE) \
-	  $(ICEDTEA_ENV_ECJ) \
-	  -C openjdk-ecj/ clobber
-
 stamps/icedtea-against-ecj.stamp: \
 	stamps/bootstrap-directory-symlink-ecj.stamp \
 	stamps/icedtea-ecj.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-against-ecj.stamp
 
-#FIXME (clean): Missing clean-icedtea-against-ecj
+clean-icedtea-against-ecj:
+	rm -f stamps/icedtea-against-ecj.stamp
 
 # Plugin
 
@@ -1418,6 +1427,10 @@ $(PLUGIN_DIR)/IcedTeaPlugin.so: $(addprefix $(PLUGIN_DIR)/,$(PLUGIN_OBJECTS))
 clean-IcedTeaPlugin:
 	rm -f $(PLUGIN_DIR)/*.o
 	rm -f $(PLUGIN_DIR)/IcedTeaPlugin.so
+	if [ $(abs_top_srcdir) != $(abs_top_builddir) ]; then \
+	  rmdir $(abs_top_builddir)/plugin/icedteanp ; \
+	  rmdir $(abs_top_builddir)/plugin ; \
+	fi
 endif
 
 stamps/plugin.stamp: $(ICEDTEAPLUGIN_TARGET)
@@ -1580,6 +1593,9 @@ clean-pulse-java:
 	[ -z "$(PULSE_JAVA_CLASS_DIR)" ] || rm -rf $(PULSE_JAVA_CLASS_DIR)
 	rm -f stamps/pulse-java*.stamp
 	rm -f pulse-java.jar
+	if [ $(abs_top_srcdir) != $(abs_top_builddir) ]; then \
+	  rmdir $(abs_top_builddir)/pulseaudio ; \
+	fi
 endif
 
 # end of pulse-java
@@ -1663,7 +1679,10 @@ else
 endif
 	touch $@
 
-#FIXME (clean): Missing clean-add-cacao
+clean-add-cacao:
+	rm -rf $(BUILD_JRE_ARCH_DIR)/cacao
+	sed -i 's#-cacao KNOWN#-cacao ERROR#' jvm.cfg
+	rm -f stamps/add-cacao.stamp
 
 stamps/add-cacao-debug.stamp: stamps/icedtea-debug.stamp stamps/cacao.stamp
 if ADD_CACAO_BUILD
@@ -1680,7 +1699,10 @@ else
 endif
 	touch $@
 
-#FIXME (clean): Missing clean-add-cacao-debug
+clean-add-cacao-debug:
+	rm -rf $(BUILD_DEBUG_JRE_ARCH_DIR)/cacao
+	sed -i 's#-cacao KNOWN#-cacao ERROR#' jvm.cfg
+	rm -f stamps/add-cacao-debug.stamp
 
 # configure script arguments, quoted in single quotes
 CONFIGURE_ARGS = @CONFIGURE_ARGS@
@@ -1742,7 +1764,13 @@ else
 endif
 	touch $@
 
-#FIXME (clean): Missing clean-add-zero
+clean-add-zero:
+	rm -rf $(BUILD_JRE_ARCH_DIR)/zero
+	rm -rf $(BUILD_JRE_ARCH_DIR)/shark
+	rm -rf zerovm
+	sed -i 's#-zero KNOWN#-zero ERROR#' jvm.cfg
+	sed -i 's#-shark KNOWN#-shark ERROR#' jvm.cfg
+	rm -f stamps/add-zero.stamp
 
 stamps/add-zero-debug.stamp: stamps/icedtea-debug.stamp
 if ADD_ZERO_BUILD
@@ -1772,7 +1800,13 @@ else
 endif
 	touch $@
 
-#FIXME (clean): Missing clean-add-zero-debug
+clean-add-zero-debug:
+	rm -rf $(BUILD_DEBUG_JRE_ARCH_DIR)/zero
+	rm -rf $(BUILD_JRE_ARCH_DIR)/shark
+	rm -rf zerovm
+	sed -i 's#-zero KNOWN#-zero ERROR#' jvm.cfg
+	sed -i 's#-shark KNOWN#-shark ERROR#' jvm.cfg
+	rm -f stamps/add-zero-debug.stamp
 
 # end additional VMs
 
@@ -1940,8 +1974,6 @@ bootstrap-directory-symlink-ecj: stamps/bootstrap-directory-symlink-ecj.stamp
 bootstrap-directory-symlink: stamps/bootstrap-directory-symlink.stamp
 
 cacao: stamps/cacao.stamp
-
-clean: distclean-local
 
 nbplatform: stamps/nbplatform.stamp
 

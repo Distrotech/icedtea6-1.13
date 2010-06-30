@@ -1,0 +1,14 @@
+diff -r 388276965253 make/common/shared/Sanity.gmk
+--- openjdk.orig/jdk/make/common/shared/Sanity.gmk	Wed Jun 16 20:46:10 2010 +0200
++++ openjdk/jdk/make/common/shared/Sanity.gmk	Wed Jun 30 00:50:32 2010 +0100
+@@ -57,8 +57,8 @@
+ endif
+ 
+ ifeq ($(PLATFORM), linux)
+-  FREE_SPACE := $(shell $(DF) --sync -kP $(OUTPUTDIR) | $(TAIL) -1 | $(NAWK) '{print $$4;}')
+-  TEMP_FREE_SPACE := $(shell $(DF) --sync -kP $(TEMP_DISK) | $(TAIL) -1 | $(NAWK) '{print $$4;}')
++  FREE_SPACE := $(shell $(DF) -kP $(OUTPUTDIR) | $(TAIL) -1 | $(NAWK) '{print $$4;}')
++  TEMP_FREE_SPACE := $(shell $(DF) -kP $(TEMP_DISK) | $(TAIL) -1 | $(NAWK) '{print $$4;}')
+   ifeq ($(ARCH), amd64)
+     LINUX_VERSION := $(shell \
+         if [ -r "$(LINUX_VERSION_INFO)" ] ; then \
