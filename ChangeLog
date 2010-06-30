@@ -1,3 +1,29 @@
+2010-06-30  Andrew John Hughes  <ahughes@redhat.com>
+
+	PR icedtea/93
+	* Makefile.am: Fix cleanup process.
+	(clean-local): Renamed from distclean-local.
+	Add additional dependent clean targets.
+	Don't remove build directories and stamps;
+	should be done by dependents.
+	(.PHONY): Updated.
+	(clean-ports): Inverse of ports.stamp.
+	(clean-overlay): Inverse of overlay.stamp.
+	(clean-native-ecj): Inverse of native-ecj.stamp.
+	(clean-icedtea): Just delete the build directory and stamp.
+	(clean-icedtea-debug): Inverse of icedtea-debug.stamp.
+	(clean-icedtea-against-icedtea): Inverse of icedtea-against-icedtea.stamp
+	(clean-icedtea-debug-against-icedtea): Inverse of icedtea-debug-against-icedtea.stamp
+	(clean-icedtea-ecj): Just delete the build directory and stamp.
+	(clean-icedtea-against-ecj): Inverse of icedtea-against-ecj.stamp.
+	(clean-IcedTeaPlugin): Delete empty build directories if srcdir != builddir.
+	(clean-pulse-java): Likewise.
+	(clean-add-cacao): Inverse of add-cacao.stamp.
+	(clean-add-cacao-debug): Inverse of add-cacao-debug.stamp.
+	(clean-add-zero): Inverse of add-zero.stamp.
+	(clean-add-zero-debug): Inverse of add-zero-debug.stamp.
+	(clean): Removed; already provided by autoconf to point to clean-local.
+
 2010-06-29  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am: Add new patch.
