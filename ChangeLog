@@ -1,6 +1,13 @@
 2010-07-01  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:
+	(clean-IcedTeaPlugin): Check directory exists before
+	using rmdir.
+	(clean-pulse-java): Likewise.
+
+2010-07-01  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
 	(clean-local): Add clean-extract (in place
 	of clean-cacao, a dependent), clean-extract-ecj,
 	clean-generated and clean-replace-hotspot.

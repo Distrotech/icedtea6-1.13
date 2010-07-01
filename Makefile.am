@@ -1440,8 +1440,10 @@ clean-IcedTeaPlugin:
 	rm -f $(PLUGIN_DIR)/*.o
 	rm -f $(PLUGIN_DIR)/IcedTeaPlugin.so
 	if [ $(abs_top_srcdir) != $(abs_top_builddir) ]; then \
-	  rmdir $(abs_top_builddir)/plugin/icedteanp ; \
-	  rmdir $(abs_top_builddir)/plugin ; \
+	  if [ -e $(abs_top_builddir)/plugin/icedteanp ] ; then \
+	    rmdir $(abs_top_builddir)/plugin/icedteanp ; \
+	    rmdir $(abs_top_builddir)/plugin ; \
+	  fi ; \
 	fi
 endif
 
@@ -1606,7 +1608,9 @@ clean-pulse-java:
 	rm -f stamps/pulse-java*.stamp
 	rm -f pulse-java.jar
 	if [ $(abs_top_srcdir) != $(abs_top_builddir) ]; then \
-	  rmdir $(abs_top_builddir)/pulseaudio ; \
+	  if [ -e $(abs_top_builddir)/pulseaudio ] ; then \
+	    rmdir $(abs_top_builddir)/pulseaudio ; \
+	  fi ; \
 	fi
 endif
 
