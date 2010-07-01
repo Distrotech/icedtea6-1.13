@@ -1,6 +1,19 @@
 2010-07-01  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:
+	(distclean-local): Added.  Removes downloads
+	in addition to other cleaning targets.
+	(.PHONY): Updated.
+	(download-openjdk): Separate OpenJDK download
+	into separate target.
+	(clean-download-openjdk): Inversion of download-openjdk.
+	(download): Metatarget for all downloads.
+	(clean-download): Metatarget for all download cleaning.
+	(clean-cacao): Remove extraction stamp.
+
+2010-07-01  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
 	(clean-IcedTeaPlugin): Check directory exists before
 	using rmdir.
 	(clean-pulse-java): Likewise.

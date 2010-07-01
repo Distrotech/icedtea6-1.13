@@ -528,7 +528,7 @@ clean-local: clean-jtreg clean-jtreg-reports $(PULSE_JAVA_CLEAN_TARGET) \
 	rm -rf extra-lib
 	rm -f jni-common.o
 
-#FIXME (clean): Missing distclean-local for downloads only
+distclean-local: clean-download clean-hgforest
 
 install:
 
@@ -543,7 +543,7 @@ install:
 	clean-add-zero clean-add-zero-debug clean-icedtea clean-icedtea-debug
 	clean-icedtea-against-ecj clean-cacao clean-add-cacao clean-add-cacao-debug \
 	clean-ports clean-overlay clean-extract-ecj clean-extract clean-extract-openjdk \
-	clean-replace-hotspot clean-generated
+	clean-replace-hotspot clean-generated clean-download clean-hgforest clean-download-openjdk
 
 env:
 	@echo 'unset JAVA_HOME'
@@ -583,9 +583,6 @@ endif
 
 clean-hgforest:
 	rm -f stamps/hgforest.stamp
-
-#FIXME (meta): Split into multiple targets
-#FIXME (missing): Download drops targets
 
 stamps/download-jaxp-drop.stamp:
 	mkdir -p drops
@@ -704,8 +701,7 @@ clean-drops: clean-download-jaxp-drop clean-download-jaf-drop \
 	fi
 	rm -f stamps/download-drops.stamp
 
-stamps/download.stamp: stamps/hgforest.stamp stamps/download-drops.stamp \
- stamps/download-cacao.stamp
+stamps/download-openjdk.stamp: stamps/hgforest.stamp
 if USE_HG
 if WITH_HGREV
 	$(HG) fclone -r $(HGREV) $(OPENJDK_HG_URL) openjdk;
@@ -750,10 +746,16 @@ endif
 	mkdir -p stamps
 	touch stamps/download.stamp
 
-#FIXME (meta): split into multiple targets
-clean-download: clean-drops clean-download-cacao
-	rm -f stamps/download.stamp
+clean-download-openjdk:
 	rm -f $(OPENJDK_SRC_ZIP)
+	rm -f stamps/download-openjdk.stamp
+
+stamps/download.stamp: stamps/download-drops.stamp stamps/download-cacao.stamp \
+ stamps/download-openjdk.stamp
+	touch stamps/download.stamp
+
+clean-download: clean-drops clean-download-cacao clean-download-openjdk
+	rm -f stamps/download.stamp
 
 stamps/extract.stamp: stamps/extract-openjdk.stamp \
  stamps/extract-cacao.stamp
@@ -1677,6 +1679,7 @@ endif
 clean-cacao:
 	rm -rf cacao
 	rm -f stamps/cacao.stamp
+	rm -f stamps/extract-cacao.stamp
 
 # targets for additional VMs
 
