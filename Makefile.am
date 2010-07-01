@@ -519,15 +519,13 @@ check-local: jtregcheck
 
 clean-local: clean-jtreg clean-jtreg-reports $(PULSE_JAVA_CLEAN_TARGET) \
  clean-netx clean-plugin clean-liveconnect clean-icedtea clean-icedtea-debug \
- clean-icedtea-ecj clean-cacao clean-ports clean-overlay clean-native-ecj \
+ clean-icedtea-ecj clean-extract clean-ports clean-overlay clean-native-ecj \
  clean-icedtea-against-icedtea clean-icedtea-debug-against-icedtea \
- clean-icedtea-against-ecj
+ clean-icedtea-against-ecj clean-extract-ecj clean-generated clean-replace-hotspot
 	rm -f rt-source-files.txt extra-source-files.txt
 	rm -rf bootstrap
 	rm -rf lib
 	rm -rf extra-lib
-	rm -rf openjdk-ecj
-	rm -rf openjdk
 	rm -f jni-common.o
 
 #FIXME (clean): Missing distclean-local for downloads only
@@ -544,7 +542,8 @@ install:
 	hotspot-helper clean-extra clean-jtreg clean-jtreg-reports \
 	clean-add-zero clean-add-zero-debug clean-icedtea clean-icedtea-debug
 	clean-icedtea-against-ecj clean-cacao clean-add-cacao clean-add-cacao-debug \
-	clean-ports clean-overlay
+	clean-ports clean-overlay clean-extract-ecj clean-extract clean-extract-openjdk \
+	clean-replace-hotspot clean-generated
 
 env:
 	@echo 'unset JAVA_HOME'
@@ -756,12 +755,12 @@ clean-download: clean-drops clean-download-cacao
 	rm -f stamps/download.stamp
 	rm -f $(OPENJDK_SRC_ZIP)
 
-#FIXME (meta): Split into multiple targets
-stamps/extract.stamp: stamps/extract-openjdk.stamp
+stamps/extract.stamp: stamps/extract-openjdk.stamp \
+ stamps/extract-cacao.stamp
 	mkdir -p stamps
 	touch $@
 
-clean-extract: 
+clean-extract: clean-extract-openjdk clean-cacao 
 	rm -f stamps/extract.stamp
 
 stamps/extract-openjdk.stamp: stamps/download.stamp
@@ -777,6 +776,14 @@ else
 	  sh $(abs_top_srcdir)/fsg.sh ; \
 	fi
 endif
+	mkdir -p stamps
+	touch stamps/extract-openjdk.stamp
+
+clean-extract-openjdk:
+	rm -rf openjdk
+	rm -f stamps/extract-openjdk.stamp
+
+stamps/extract-cacao.stamp:
 if BUILD_CACAO
 if !USE_SYSTEM_CACAO
 if USE_ALT_CACAO_SRC_DIR
@@ -798,14 +805,8 @@ else
 endif
 endif
 endif
-	set -e ; \
-	if [ ! -e $(abs_top_builddir)/generated ]; then \
-	  cp -a $(abs_top_srcdir)/generated $(abs_top_builddir); \
-	  find $(abs_top_builddir)/generated -type f -exec chmod 640 '{}' ';' \
-	    -o -type d -exec chmod 750 '{}' ';'; \
-	fi
 	mkdir -p stamps
-	touch stamps/extract-openjdk.stamp
+	touch stamps/extract-cacao.stamp
 
 stamps/replace-hotspot.stamp: stamps/extract.stamp
 if WITH_ALT_HSBUILD
@@ -820,10 +821,11 @@ if WITH_ALT_HSBUILD
 	  fi ; \
 	fi ;
 endif
+	mkdir -p stamps
 	touch stamps/replace-hotspot.stamp
 
 clean-replace-hotspot:
-	rm -rf stamps/replace-hotspot.stamp
+	rm -f stamps/replace-hotspot.stamp
 
 # Copy ports sources into tree
 stamps/ports.stamp: stamps/replace-hotspot.stamp
@@ -858,11 +860,21 @@ clean-ports:
 	rm -f openjdk/jdk/src/solaris/bin/ergo_$(BUILD_ARCH_DIR).c 
 	rm -f stamps/ports.stamp
 
-#FIXME (missing): Missing generated.stamp 
+stamps/generated.stamp: stamps/ports.stamp
+	set -e ; \
+	if [ ! -e $(abs_top_builddir)/generated ]; then \
+	  cp -a $(abs_top_srcdir)/generated $(abs_top_builddir); \
+	  find $(abs_top_builddir)/generated -type f -exec chmod 640 '{}' ';' \
+	    -o -type d -exec chmod 750 '{}' ';'; \
+	fi
 
-#FIXME (clean): Missing clean-generated
+clean-generated:
+	if [ $(abs_top_srcdir) != $(abs_top_builddir) ]; then \
+	  rm -rf $(abs_top_builddir)/generated ; \
+	fi
+	rm -f stamps/generated.stamp
 
-stamps/patch-fsg.stamp: stamps/ports.stamp
+stamps/patch-fsg.stamp: stamps/generated.stamp
 	mkdir -p stamps ; \
 	rm -f stamps/patch-fsg.stamp.tmp ; \
 	touch stamps/patch-fsg.stamp.tmp ; \
@@ -1353,7 +1365,7 @@ stamps/icedtea-ecj.stamp: stamps/bootstrap-directory-symlink-ecj.stamp \
 	mkdir -p stamps
 	touch stamps/icedtea-ecj.stamp
 
-clean-icedtea-ecj: stamps/extract-ecj.stamp
+clean-icedtea-ecj:
 	rm -rf $(ECJ_BUILD_OUTPUT_DIR)
 	rm -f stamps/icedtea-ecj.stamp
 

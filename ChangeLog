@@ -1,3 +1,24 @@
+2010-07-01  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(clean-local): Add clean-extract (in place
+	of clean-cacao, a dependent), clean-extract-ecj,
+	clean-generated and clean-replace-hotspot.
+	Don't delete openjdk and openjdk-ecj here, now
+	done in dependents.
+	(extract): Depend on extract-cacao.stamp.
+	(clean-extract): Depend on clean-extract-openjdk
+	and clean-cacao.
+	(clean-extract-openjdk): Remove openjdk directory and stamp.
+	(extract-openjdk): Just extract OpenJDK, don't
+	extract cacao and create generated.
+	(replace-hotspot): Make sure stamps exists.
+	(clean-replace-hotspot): No need for recursive delete.
+	(generated): Copy generated directory from srcdir if needed.
+	(clean-generated): Remove generated directory if necessary.
+	(patch-fsg): Depend on generated rather than ports so it is included.
+	(clean-icedtea-ecj): Remove bogus dependency.
+
 2010-06-30  Omair Majid  <omajid@redhat.com>
 
 	* netx/net/sourceforge/jnlp/runtime/JNLPClassLoader.java
