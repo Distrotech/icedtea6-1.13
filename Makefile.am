@@ -869,6 +869,8 @@ stamps/generated.stamp: stamps/ports.stamp
 	  find $(abs_top_builddir)/generated -type f -exec chmod 640 '{}' ';' \
 	    -o -type d -exec chmod 750 '{}' ';'; \
 	fi
+	mkdir -p stamps
+	touch stamps/generated.stamp
 
 clean-generated:
 	if [ $(abs_top_srcdir) != $(abs_top_builddir) ]; then \
