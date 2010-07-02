@@ -743,7 +743,7 @@ endif
 endif
 endif
 	mkdir -p stamps
-	touch stamps/download.stamp
+	touch stamps/download-openjdk.stamp
 
 clean-download-openjdk:
 	rm -f $(OPENJDK_SRC_ZIP)
