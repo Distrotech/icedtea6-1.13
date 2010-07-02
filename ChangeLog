@@ -1,5 +1,11 @@
 2010-07-01  Andrew John Hughes  <ahughes@redhat.com>
 
+	* Makefile.am:
+	(distclean-local): Delete empty tapset
+	directory if srcdir != builddir.
+
+2010-07-01  Andrew John Hughes  <ahughes@redhat.com>
+
 	Don't delete alternate source zips.  Only
 	zips downloaded by the build should be deleted.
 	* Makefile.am:

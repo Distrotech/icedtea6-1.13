@@ -521,6 +521,11 @@ clean-local: clean-jtreg clean-jtreg-reports $(PULSE_JAVA_CLEAN_TARGET) \
 	rm -f jni-common.o
 
 distclean-local: clean-download clean-hgforest
+	if [ $(abs_top_srcdir) != $(abs_top_builddir) ]; then \
+	  if [ -e tapset ] ; then \
+	    rmdir tapset ; \
+	  fi ; \
+	fi
 
 install:
 
