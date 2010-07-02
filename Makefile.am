@@ -23,6 +23,8 @@ JAXP_DROP_SHA256SUM = d097627d4059d488c5a09d4e33cec275a193d4d8bc0fea8ef4f1337170
 
 OPENJDK_HG_URL = http://hg.openjdk.java.net/jdk6/jdk6
 
+HOTSPOT_SRC_ZIP = hotspot.tar.gz
+
 # Build directories
 
 BUILD_DIR = openjdk.build
@@ -104,17 +106,7 @@ IT_JAVACFLAGS=$(IT_JAVAC_SETTINGS) -source $(IT_LANGUAGE_SOURCE_VERSION) -target
 if USE_HG
   OPENJDK_SRC_ZIP = 
 else
-if USE_ALT_OPENJDK_SRC_ZIP
-  OPENJDK_SRC_ZIP = $(ALT_OPENJDK_SRC_ZIP)
-else
   OPENJDK_SRC_ZIP = openjdk-6-src-$(OPENJDK_VERSION)-$(OPENJDK_DATE).tar.gz
-endif
-endif
-
-if USE_ALT_HOTSPOT_SRC_ZIP
-  HOTSPOT_SRC_ZIP = $(ALT_HOTSPOT_SRC_ZIP)
-else
-  HOTSPOT_SRC_ZIP = hotspot.tar.gz
 endif
 
 # FIXME (HotSpot): HotSpot changeset logic goes here
@@ -712,6 +704,7 @@ else
 if OPENJDK_SRC_DIR_FOUND
 else
 if USE_ALT_OPENJDK_SRC_ZIP
+	ln -sf $(ALT_OPENJDK_SRC_ZIP) $(OPENJDK_SRC_ZIP)
 else
 	if ! echo "$(OPENJDK_MD5SUM)  $(OPENJDK_SRC_ZIP)" \
 	  | $(MD5SUM) --check ; \
@@ -726,6 +719,7 @@ endif
 endif
 if WITH_ALT_HSBUILD
 if USE_ALT_HOTSPOT_SRC_ZIP
+	ln -sf $(ALT_HOTSPOT_SRC_ZIP) $(HOTSPOT_SRC_ZIP)
 else
 	hotspot_md5sum="`$(AWK) 'version==$$1 {print $$4}' version=$(HSBUILD) \
 	  $(abs_top_srcdir)/hotspot.map`" ; \
@@ -748,6 +742,7 @@ endif
 
 clean-download-openjdk:
 	rm -f $(OPENJDK_SRC_ZIP)
+	rm -f $(HOTSPOT_SRC_ZIP)
 	rm -f stamps/download-openjdk.stamp
 
 stamps/download.stamp: stamps/download-drops.stamp stamps/download-cacao.stamp \

@@ -1,5 +1,21 @@
 2010-07-01  Andrew John Hughes  <ahughes@redhat.com>
 
+	Don't delete alternate source zips.  Only
+	zips downloaded by the build should be deleted.
+	* Makefile.am:
+	(HOTSPOT_SRC_ZIP): Set as a constant value
+	rather than setting to ALT_HOTSPOT_SRC_ZIP
+	when available.
+	(OPENJDK_SRC_ZIP): Likewise, though the value
+	is still empty when using hg.
+	(download-openjdk): Symlink the alternate
+	OpenJDK and HotSpot source zips to the
+	alternate versions.
+	(clean-download-openjdk): Remvoe
+	HOTSPOT_SRC_ZIP as well.
+
+2010-07-01  Andrew John Hughes  <ahughes@redhat.com>
+
 	* Makefile.am:
 	(distclean-local): Added.  Removes downloads
 	in addition to other cleaning targets.
