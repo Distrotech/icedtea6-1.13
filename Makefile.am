@@ -513,11 +513,19 @@ clean-local: clean-jtreg clean-jtreg-reports $(PULSE_JAVA_CLEAN_TARGET) \
  clean-netx clean-plugin clean-liveconnect clean-icedtea clean-icedtea-debug \
  clean-icedtea-ecj clean-extract clean-ports clean-overlay clean-native-ecj \
  clean-icedtea-against-icedtea clean-icedtea-debug-against-icedtea \
- clean-icedtea-against-ecj clean-extract-ecj clean-generated clean-replace-hotspot
-	rm -f rt-source-files.txt extra-source-files.txt
-	rm -rf bootstrap
-	rm -rf lib
-	rm -rf extra-lib
+ clean-icedtea-against-ecj clean-extract-ecj clean-generated clean-replace-hotspot \
+ clean-rewriter clean-rewrite-rhino clean-extra clean-rt clean-bootstrap-directory \
+ clean-bootstrap-directory-ecj clean-bootstrap-directory-symlink \
+ clean-bootstrap-directory-symlink-ecj
+	if [ -e bootstrap ]; then \
+	  rmdir bootstrap ; \
+	fi
+	if [ -e lib ]; then \
+	  rmdir lib ; \
+	fi
+	if [ -e stamps ]; then \
+	  rmdir stamps ; \
+	fi
 	rm -f jni-common.o
 
 distclean-local: clean-download clean-hgforest
@@ -540,7 +548,8 @@ install:
 	clean-add-zero clean-add-zero-debug clean-icedtea clean-icedtea-debug
 	clean-icedtea-against-ecj clean-cacao clean-add-cacao clean-add-cacao-debug \
 	clean-ports clean-overlay clean-extract-ecj clean-extract clean-extract-openjdk \
-	clean-replace-hotspot clean-generated clean-download clean-hgforest clean-download-openjdk
+	clean-replace-hotspot clean-generated clean-download clean-hgforest clean-download-openjdk \
+	clean-rewriter clean-rewrite-rhino
 
 env:
 	@echo 'unset JAVA_HOME'
@@ -781,7 +790,7 @@ endif
 	mkdir -p stamps
 	touch stamps/extract-openjdk.stamp
 
-clean-extract-openjdk:
+clean-extract-openjdk: clean-patch-fsg
 	rm -rf openjdk
 	rm -f stamps/extract-openjdk.stamp
 
@@ -909,7 +918,7 @@ stamps/patch-fsg.stamp: stamps/generated.stamp
 	  exit 2; \
 	fi ; 
 
-clean-patch-fsg:
+clean-patch-fsg: clean-patch
 	rm -f stamps/patch-fsg.stamp
 	all_patches_ok=yes; \
 	for p in $(ICEDTEA_FSG_PATCHES) ; \
@@ -1023,7 +1032,7 @@ stamps/extract-ecj.stamp: $(OPENJDK_TREE)
 	touch stamps/extract-ecj.stamp
 
 # FIXME (missing): Rename to clean-clone-ecj.
-clean-extract-ecj:
+clean-extract-ecj: clean-patch-ecj
 	rm -f stamps/extract-ecj.stamp
 	rm -rf openjdk-ecj
 
@@ -1624,20 +1633,24 @@ endif
 
 stamps/rewriter.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP)
 if WITH_RHINO
-	mkdir -p $(abs_top_builddir)/rewriter && \
+	mkdir -p $(abs_top_builddir)/rewriter.build && \
 	(cd $(abs_top_srcdir)/rewriter ; \
 	 $(ICEDTEA_BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) \
-	 -d $(abs_top_builddir)/rewriter $(REWRITER_SRCS) \
+	 -d $(abs_top_builddir)/rewriter.build $(REWRITER_SRCS) \
 	)
 endif
 	mkdir -p stamps
 	touch stamps/rewriter.stamp
 
+clean-rewriter:
+	rm -rf rewriter.build
+	rm -f stamps/rewriter.stamp
+
 stamps/rewrite-rhino.stamp: stamps/rewriter.stamp $(RHINO_JAR)
 if WITH_RHINO
 	mkdir -p rhino/rhino.{old,new} && \
 	(cd rhino/rhino.old ; $(ICEDTEA_BOOT_DIR)/bin/jar xf $(RHINO_JAR)) && \
-	$(ICEDTEA_BOOT_DIR)/bin/java -cp $(abs_top_builddir)/rewriter \
+	$(ICEDTEA_BOOT_DIR)/bin/java -cp $(abs_top_builddir)/rewriter.build \
 	  com.redhat.rewriter.ClassRewriter \
 	  $(abs_top_builddir)/rhino/rhino.old $(abs_top_builddir)/rhino/rhino.new \
 	  org.mozilla sun.org.mozilla && \
@@ -1654,6 +1667,15 @@ if WITH_RHINO
 endif
 	mkdir -p stamps
 	touch stamps/rewrite-rhino.stamp
+
+clean-rewrite-rhino:
+	rm -rf rhino/rhino.old
+	rm -rf rhino/rhino.new
+	rm -f rhino/rhino.jar
+	if [ -e rhino ] ; then \
+	  rmdir rhino ; \
+	fi
+	rm -f stamps/rewrite-rhino.stamp
 
 # CACAO
 
@@ -1968,7 +1990,9 @@ clean-rt:
 	rm -f stamps/rt-class-files.stamp
 	rm -f stamps/rt.stamp
 	rm -f rt-source-files.txt
-	cp $(SYSTEM_JDK_DIR)/jre/lib/rt.jar $(ICEDTEA_RT)
+	if [ -e $(ICEDTEA_BOOT_DIR) ] ; then \
+	  cp $(SYSTEM_JDK_DIR)/jre/lib/rt.jar $(ICEDTEA_RT) ; \
+	fi
 
 stamps/rt.stamp: stamps/rt-class-files.stamp
 	mkdir -p stamps

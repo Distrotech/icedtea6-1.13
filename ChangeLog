@@ -1,3 +1,21 @@
+2010-07-04  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(clean-local): Add missing dependencies.
+	Use rmdir to remove bootstrap and lib to make
+	sure they are empty.  Use rmdir to remove the
+	empty stamps directory.
+	(clean-extract-openjdk): Depend on clean-patch-fsg.
+	(clean-patch-fsg): Depend on clean-patch.
+	(clean-extract-ecj): Depend on clean-patch-ecj.
+	(rewriter): Give the build directory a different
+	name to the source directory (rewriter.build).
+	(clean-rewriter): New target to remove rewriter.
+	(rewrite-rhino): Fix build directory path.
+	(clean-rewrite-rhino): Inverse of rewrite-rhino.
+	(rt): Only replace rt.jar if the bootstrap tree
+	still exists.
+
 2010-07-01  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:
