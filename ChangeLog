@@ -1,5 +1,21 @@
 2010-07-05  Andrew John Hughes  <ahughes@redhat.com>
 
+	Revert rt.jar only for ecj tree.  Don't do
+	so (or build rt-class-files) for builds with
+	OpenJDK.  Make variable naming clearer.
+	* Makefile.am:
+	(BOOT_DIR): Renamed from ICEDTEA_BOOT_DIR.
+	(RUNTIME): Renamed from ICEDTEA_RT.
+	(ENDORSED_DIR): Renamed from ICEDTEA_ENDORSED_DIR.
+	(ECJ_BOOT_DIR): Shortcut for bootstrap/ecj.
+	(ICEDTEA_BOOT_DIR): Shortcut for bootstrap/icedtea.
+	(rt-class-files): Only build replacement runtime classes
+	when LACKS_SUN_AWT_TOOLKIT is set.
+	(clean-rt): Only replace rt.jar when LACKS_SUN_AWT_TOOLKIT
+	and overwrite in $(ECJ_BOOT_DIR) not $(BOOT_DIR).
+
+2010-07-05  Andrew John Hughes  <ahughes@redhat.com>
+
 	* Makefile.am:
 	(clean-local): Don't remove the stamps directory here.
 	(distclean-local): Remove it here.
