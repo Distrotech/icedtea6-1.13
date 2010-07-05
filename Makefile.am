@@ -523,9 +523,6 @@ clean-local: clean-jtreg clean-jtreg-reports $(PULSE_JAVA_CLEAN_TARGET) \
 	if [ -e lib ]; then \
 	  rmdir lib ; \
 	fi
-	if [ -e stamps ]; then \
-	  rmdir stamps ; \
-	fi
 	rm -f jni-common.o
 
 distclean-local: clean-download clean-hgforest
@@ -533,6 +530,9 @@ distclean-local: clean-download clean-hgforest
 	  if [ -e tapset ] ; then \
 	    rmdir tapset ; \
 	  fi ; \
+	fi
+	if [ -e stamps ]; then \
+	  rmdir stamps ; \
 	fi
 
 install:
