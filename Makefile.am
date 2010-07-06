@@ -125,7 +125,7 @@ if ENABLE_PULSE_JAVA
 PULSE_JAVA_DIR = $(abs_top_srcdir)/pulseaudio
 PULSE_JAVA_NATIVE_SRCDIR = $(PULSE_JAVA_DIR)/src/native
 PULSE_JAVA_NATIVE_SRCS = $(wildcard $(PULSE_JAVA_NATIVE_SRCDIR)/*.c)
-PULSE_JAVA_BUILDDIR = $(abs_top_builddir)/pulseaudio
+PULSE_JAVA_BUILDDIR = $(abs_top_builddir)/pulseaudio.build
 PULSE_JAVA_NATIVE_BUILDDIR = $(PULSE_JAVA_BUILDDIR)/native
 PULSE_JAVA_NATIVE_OBJECTS = \
 	$(subst $(PULSE_JAVA_NATIVE_SRCDIR),$(PULSE_JAVA_NATIVE_BUILDDIR),$(patsubst %.c,%.o,$(PULSE_JAVA_NATIVE_SRCS)))
@@ -522,7 +522,6 @@ clean-local: clean-jtreg clean-jtreg-reports $(PULSE_JAVA_CLEAN_TARGET) \
 	if [ -e lib ]; then \
 	  rmdir lib ; \
 	fi
-	rm -f jni-common.o
 
 distclean-local: clean-download clean-hgforest
 	if [ $(abs_top_srcdir) != $(abs_top_builddir) ]; then \
@@ -1214,9 +1213,9 @@ if ENABLE_PULSE_JAVA
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
 	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
 	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
-	cp -pPRf pulse-java.jar \
+	cp -pPRf $(PULSE_JAVA_BUILDDIR)/pulse-java.jar \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/ext
-	cp -pPRf pulse-java.jar \
+	cp -pPRf $(PULSE_JAVA_BUILDDIR)/pulse-java.jar \
 	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/ext
 	(cd $(PULSE_JAVA_JAVA_SRCDIR) && \
 	   $(ZIP) -qur $(BUILD_OUTPUT_DIR)/j2sdk-image/src.zip org )
@@ -1290,9 +1289,9 @@ if ENABLE_PULSE_JAVA
 	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
 	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
 	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
-	cp -pPRf pulse-java.jar \
+	cp -pPRf $(PULSE_JAVA_BUILDDIR)/pulse-java.jar \
 	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/ext
-	cp -pPRf pulse-java.jar \
+	cp -pPRf $(PULSE_JAVA_BUILDDIR)/pulse-java.jar \
 	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/ext
 	(cd $(PULSE_JAVA_JAVA_SRCDIR) && \
 	   $(ZIP) -qur $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/src.zip org )
@@ -1581,7 +1580,7 @@ stamps/pulse-java.stamp: stamps/pulse-java-jar.stamp $(PULSE_JAVA_NATIVE_BUILDDI
 
 stamps/pulse-java-jar.stamp: stamps/pulse-java-class.stamp
 	mkdir -p $(PULSE_JAVA_CLASS_DIR);
-	$(BOOT_DIR)/bin/jar cf pulse-java.jar -C $(PULSE_JAVA_CLASS_DIR) .;
+	$(BOOT_DIR)/bin/jar cf $(PULSE_JAVA_BUILDDIR)/pulse-java.jar -C $(PULSE_JAVA_CLASS_DIR) .;
 	mkdir -p stamps
 	touch stamps/pulse-java-jar.stamp
 
@@ -1613,15 +1612,11 @@ stamps/pulse-java-headers.stamp: stamps/pulse-java-class.stamp
 	touch stamps/pulse-java-headers.stamp
 
 clean-pulse-java:
-	[ -z "$(PULSE_JAVA_NATIVE_BUILDDIR)" ] || rm -rf $(PULSE_JAVA_NATIVE_BUILDDIR)
-	[ -z "$(PULSE_JAVA_CLASS_DIR)" ] || rm -rf $(PULSE_JAVA_CLASS_DIR)
+	rm -rf $(PULSE_JAVA_NATIVE_BUILDDIR)
+	rm -rf $(PULSE_JAVA_CLASS_DIR)
+	rm -f $(PULSE_JAVA_BUILDDIR)/pulse-java.jar
+	rmdir $(PULSE_JAVA_BUILDDIR)
 	rm -f stamps/pulse-java*.stamp
-	rm -f pulse-java.jar
-	if [ $(abs_top_srcdir) != $(abs_top_builddir) ]; then \
-	  if [ -e $(abs_top_builddir)/pulseaudio ] ; then \
-	    rmdir $(abs_top_builddir)/pulseaudio ; \
-	  fi ; \
-	fi
 endif
 
 # end of pulse-java

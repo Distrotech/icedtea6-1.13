@@ -1,3 +1,19 @@
+2010-07-06  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(PULSE_JAVA_BUILDDIR): Use a different name from
+	the source directory to avoid confusion.
+	(clean-local): jni-common.o is not in the top-level
+	directory.
+	(icedtea): Locate pulse-java.jar in build directory
+	not top-level directory.
+	(icedtea-debug): Likewise.
+	(pulse-java-jar): Likewise.
+	(clean-pulse-java): Likewise.  Given clean-pulse-java
+	only exists when PULSE_JAVA_NATIVE_BUILDDIR and
+	PULSE_JAVA_CLASS_DIR are set, there is no need to test
+	them.
+
 2010-07-05  Andrew John Hughes  <ahughes@redhat.com>
 
 	Revert rt.jar only for ecj tree.  Don't do
