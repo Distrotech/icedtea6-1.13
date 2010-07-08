@@ -788,9 +788,11 @@ endif
 	mkdir -p stamps
 	touch stamps/extract-openjdk.stamp
 
-clean-extract-openjdk: clean-patch-fsg
+clean-extract-openjdk:
 	rm -rf openjdk
 	rm -f stamps/extract-openjdk.stamp
+	rm -f stamps/patch-fsg.stamp
+	rm -f stamps/patch.stamp
 
 stamps/extract-cacao.stamp:
 if BUILD_CACAO
@@ -1030,9 +1032,10 @@ stamps/extract-ecj.stamp: $(OPENJDK_TREE)
 	touch stamps/extract-ecj.stamp
 
 # FIXME (missing): Rename to clean-clone-ecj.
-clean-extract-ecj: clean-patch-ecj
-	rm -f stamps/extract-ecj.stamp
+clean-extract-ecj:
 	rm -rf openjdk-ecj
+	rm -f stamps/extract-ecj.stamp
+	rm -f stamps/patch-ecj.stamp
 
 # Patch OpenJDK for ecj.
 
