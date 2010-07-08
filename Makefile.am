@@ -1381,6 +1381,21 @@ clean-icedtea-ecj:
 	rm -rf $(ECJ_BUILD_OUTPUT_DIR)
 	rm -f stamps/icedtea-ecj.stamp
 
+# Rebuild targets
+
+rebuild:
+if WITH_OPENJDK
+	rm -f stamps/icedtea.stamp
+	rm -f stamps/icedtea-against-icedtea.stamp
+	$(ARCH_PREFIX) $(MAKE) icedtea-against-icedtea
+	@echo "IcedTea is served (again):" $(BUILD_OUTPUT_DIR)/j2sdk-image
+else
+	rm -f stamps/icedtea-ecj.stamp
+	rm -f stamps/icedtea-against-ecj.stamp
+	$(ARCH_PREFIX) $(MAKE) icedtea-against-ecj
+	@echo "ecj-poured IcedTea is served (again):" $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image
+endif
+
 hotspot:
 if WITH_OPENJDK
 	rm -f stamps/icedtea.stamp

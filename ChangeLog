@@ -1,6 +1,13 @@
 2010-07-08  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:
+	(rebuild): Add new target to allow a quick
+	rebuild of OpenJDK in the manner of the existing
+	hotspot target.
+
+2010-07-08  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
 	(clean-extract-ecj): Don't depend on clean-patch-ecj,
 	just delete the stamp.
 	(clean-extract-openjdk): Likewise for clean-patch and
