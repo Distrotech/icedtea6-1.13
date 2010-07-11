@@ -787,9 +787,11 @@ endif
 	mkdir -p stamps
 	touch stamps/extract-openjdk.stamp
 
-clean-extract-openjdk: clean-patch-fsg
+clean-extract-openjdk:
 	rm -rf openjdk
 	rm -f stamps/extract-openjdk.stamp
+	rm -f stamps/patch-fsg.stamp
+	rm -f stamps/patch.stamp
 
 stamps/extract-cacao.stamp:
 if BUILD_CACAO
@@ -1029,9 +1031,10 @@ stamps/extract-ecj.stamp: $(OPENJDK_TREE)
 	touch stamps/extract-ecj.stamp
 
 # FIXME (missing): Rename to clean-clone-ecj.
-clean-extract-ecj: clean-patch-ecj
-	rm -f stamps/extract-ecj.stamp
+clean-extract-ecj:
 	rm -rf openjdk-ecj
+	rm -f stamps/extract-ecj.stamp
+	rm -f stamps/patch-ecj.stamp
 
 # Patch OpenJDK for ecj.
 
@@ -1376,6 +1379,21 @@ stamps/icedtea-ecj.stamp: stamps/bootstrap-directory-symlink-ecj.stamp \
 clean-icedtea-ecj:
 	rm -rf $(ECJ_BUILD_OUTPUT_DIR)
 	rm -f stamps/icedtea-ecj.stamp
+
+# Rebuild targets
+
+rebuild:
+if WITH_OPENJDK
+	rm -f stamps/icedtea.stamp
+	rm -f stamps/icedtea-against-icedtea.stamp
+	$(ARCH_PREFIX) $(MAKE) icedtea-against-icedtea
+	@echo "IcedTea is served (again):" $(BUILD_OUTPUT_DIR)/j2sdk-image
+else
+	rm -f stamps/icedtea-ecj.stamp
+	rm -f stamps/icedtea-against-ecj.stamp
+	$(ARCH_PREFIX) $(MAKE) icedtea-against-ecj
+	@echo "ecj-poured IcedTea is served (again):" $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image
+endif
 
 hotspot:
 if WITH_OPENJDK

@@ -1,3 +1,42 @@
+2010-07-08  Man Lung Wong  <mwong@redhat.com>
+
+    * netx/net/sourceforge/jnlp/Parser.java:
+	(getRootNode): Used BufferedInputStream instead of InputStream to
+	have mark and reset method available. Passed the encoding to the
+	constructor of InputStreamReader, such that the stream will now
+	be parsed with the encoding the jnlp file is in.
+	(getEncoding): A new method which checks the first four bytes of input
+	and determines what the files encoding is.
+
+2010-07-08  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(rebuild): Add new target to allow a quick
+	rebuild of OpenJDK in the manner of the existing
+	hotspot target.
+
+2010-07-08  Omair Majid  <omajid@redhat.com>
+
+	* plugin/icedteanp/java/sun/applet/PluginAppletViewer.java:
+	(reFrame): Pass the panel to the constructor, dont set it yourself.
+	(PluginAppletViewer): Set the panel to be the passed in object and only
+	then add it to the list of all panels.
+
+2010-07-08  Omair Majid  <omajid@redhat.com>
+
+	PR icedtea/460
+	* plugin/icedteanp/java/netscape/security/ForbiddenTargetException.java:
+	New file. Some applets, for legacy support, expect this class to be
+	present.
+
+2010-07-08  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(clean-extract-ecj): Don't depend on clean-patch-ecj,
+	just delete the stamp.
+	(clean-extract-openjdk): Likewise for clean-patch and
+	clean-patch-fsg.
+
 2010-07-07  Andrew John Hughes  <ahughes@redhat.com>
 
 	* patches/openjdk/6961732.patch:
