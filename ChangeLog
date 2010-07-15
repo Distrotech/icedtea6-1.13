@@ -1,3 +1,18 @@
+2010-07-14  Jon VanAlten  <jon.vanalten@redhat.com>
+	* patches/icedtea-override-redirect-metacity.patch: Produces the
+	"expected" behavior for full screen applications or other situations
+	where developers wish to present elements that would cover things like
+	panels.  We previously had a version of this patch since changeset 876
+	ebc064e8892d, but dropped it in changeset changeset 1731
+	83619682858e because upstream had rejected as a metacity bug[1].
+	Metacity maintains that this behavior does not break any spec and does
+	not appear likely to change either[2], so we must be the "good guys" and
+	provide the expected behavior.  See discussion[3].
+	[1] http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6514512
+	[2] https://bugzilla.gnome.org/show_bug.cgi?id=405269
+	[3] http://mail.openjdk.java.net/pipermail/distro-pkg-dev/2010-April/008862.html
+	* Makefile.am: Apply icedtea-override-redirect-metacity.patch.
+
 2010-07-14  Deepak Bhole <dbhole@redhat.com>
 
 	* plugin/icedteanp/java/sun/applet/PluginMessageConsumer.java: Add a new
