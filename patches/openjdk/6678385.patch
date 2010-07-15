@@ -1,0 +1,1241 @@
+# HG changeset patch
+# User art
+# Date 1242387635 -14400
+# Node ID f62f7fcc9965cd0b110f07b4cd42c419f77717c1
+# Parent  b28b073e72b625a4d8b6e71010a2968b5fc85124
+6678385: Random java.lang.StackOverflowError from various JDKs
+Reviewed-by: stayer
+
+IcedTea6 note: This patch (upstream bz#6678385) fixes rhbz# 551835.
+
+diff -uNr openjdk.orig/jdk/make/sun/xawt/mapfile-vers openjdk/jdk/make/sun/xawt/mapfile-vers
+--- openjdk.orig/jdk/make/sun/xawt/mapfile-vers	2010-07-15 10:28:21.755105655 -0400
++++ openjdk/jdk/make/sun/xawt/mapfile-vers	2010-07-15 10:28:42.630981569 -0400
+@@ -125,6 +125,7 @@
+         Java_sun_awt_X11_XlibWrapper_SetToolkitErrorHandler;
+         Java_sun_awt_X11_XlibWrapper_XSetErrorHandler;
+         Java_sun_awt_X11_XlibWrapper_CallErrorHandler;
++        Java_sun_awt_X11_XlibWrapper_PrintXErrorEvent;
+         Java_sun_awt_X11_XlibWrapper_XInternAtoms;
+         Java_sun_awt_X11_XlibWrapper_XChangeWindowAttributes;
+         Java_sun_awt_X11_XlibWrapper_XDeleteProperty;
+@@ -269,7 +270,6 @@
+         Java_sun_awt_X11_XToolkit_getDefaultXColormap;
+         Java_sun_awt_X11_XToolkit_getDefaultScreenData;
+         Java_sun_awt_X11_XToolkit_getEnv;
+-        Java_sun_awt_X11_XToolkit_setNoisyXErrorHandler;
+         Java_sun_awt_X11_XlibWrapper_XCreateBitmapFromData;
+         Java_sun_awt_X11_XlibWrapper_XFreePixmap;
+         Java_sun_awt_X11_XlibWrapper_XAllocColor;
+diff -uNr openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/MotifDnDConstants.java openjdk/jdk/src/solaris/classes/sun/awt/X11/MotifDnDConstants.java
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/MotifDnDConstants.java	2010-07-15 10:28:21.905105617 -0400
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/MotifDnDConstants.java	2010-07-15 10:28:42.631981678 -0400
+@@ -119,7 +119,7 @@
+                                                             false,
+                                                             XlibWrapper.AnyPropertyType);
+         try {
+-            int status = wpg.execute(XToolkit.IgnoreBadWindowHandler);
++            int status = wpg.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+ 
+             if (status == XlibWrapper.Success &&
+                 wpg.getData() != 0 &&
+@@ -189,7 +189,7 @@
+                 try {
+                     Native.putLong(data, motifWindow);
+ 
+-                    XToolkit.WITH_XERROR_HANDLER(XWM.VerifyChangePropertyHandler);
++                    XToolkit.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
+                     XlibWrapper.XChangeProperty(XToolkit.getDisplay(),
+                                                 defaultRootWindow,
+                                                 XA_MOTIF_DRAG_WINDOW.getAtom(),
+@@ -276,7 +276,7 @@
+                                                             false,
+                                                             XA_MOTIF_DRAG_TARGETS.getAtom());
+         try {
+-            int status = wpg.execute(XToolkit.IgnoreBadWindowHandler);
++            int status = wpg.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+ 
+             if (status != XlibWrapper.Success
+                 || wpg.getActualType() != XA_MOTIF_DRAG_TARGETS.getAtom()
+@@ -390,7 +390,7 @@
+                 }
+             }
+ 
+-            XToolkit.WITH_XERROR_HANDLER(XWM.VerifyChangePropertyHandler);
++            XToolkit.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
+             XlibWrapper.XChangeProperty(XToolkit.getDisplay(),
+                                         motifWindow,
+                                         XA_MOTIF_DRAG_TARGETS.getAtom(),
+@@ -406,7 +406,7 @@
+                 // Create a new motif window and retry.
+                 motifWindow = createMotifWindow();
+ 
+-                XToolkit.WITH_XERROR_HANDLER(XWM.VerifyChangePropertyHandler);
++                XToolkit.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
+                 XlibWrapper.XChangeProperty(XToolkit.getDisplay(),
+                                             motifWindow,
+                                             XA_MOTIF_DRAG_TARGETS.getAtom(),
+@@ -530,7 +530,7 @@
+             // CARD32 icc_handle
+             unsafe.putInt(structData + 4, (int)XA_MOTIF_ATOM_0.getAtom());
+ 
+-            XToolkit.WITH_XERROR_HANDLER(XWM.VerifyChangePropertyHandler);
++            XToolkit.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
+             XlibWrapper.XChangeProperty(XToolkit.getDisplay(), window,
+                                         XA_MOTIF_ATOM_0.getAtom(),
+                                         XA_MOTIF_DRAG_INITIATOR_INFO.getAtom(),
+@@ -563,7 +563,7 @@
+             unsafe.putShort(data + 10, (short)0); /* pad */
+             unsafe.putInt(data + 12, dataSize);
+ 
+-            XToolkit.WITH_XERROR_HANDLER(XWM.VerifyChangePropertyHandler);
++            XToolkit.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
+             XlibWrapper.XChangeProperty(XToolkit.getDisplay(), window,
+                                         XA_MOTIF_DRAG_RECEIVER_INFO.getAtom(),
+                                         XA_MOTIF_DRAG_RECEIVER_INFO.getAtom(),
+diff -uNr openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/MotifDnDDragSourceProtocol.java openjdk/jdk/src/solaris/classes/sun/awt/X11/MotifDnDDragSourceProtocol.java
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/MotifDnDDragSourceProtocol.java	2010-07-15 10:28:21.905105617 -0400
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/MotifDnDDragSourceProtocol.java	2010-07-15 10:28:42.633981353 -0400
+@@ -184,7 +184,7 @@
+                                      XlibWrapper.AnyPropertyType);
+ 
+         try {
+-            int status = wpg.execute(XToolkit.IgnoreBadWindowHandler);
++            int status = wpg.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+ 
+             /*
+              * DragICCI.h:
+diff -uNr openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/MotifDnDDropTargetProtocol.java openjdk/jdk/src/solaris/classes/sun/awt/X11/MotifDnDDropTargetProtocol.java
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/MotifDnDDropTargetProtocol.java	2010-07-15 10:28:21.904105558 -0400
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/MotifDnDDropTargetProtocol.java	2010-07-15 10:28:42.636014780 -0400
+@@ -102,7 +102,7 @@
+                                      XlibWrapper.AnyPropertyType);
+ 
+         try {
+-            status = wpg.execute(XToolkit.IgnoreBadWindowHandler);
++            status = wpg.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+ 
+             /*
+              * DragICCI.h:
+@@ -162,7 +162,7 @@
+                 unsafe.putInt(data + 12, dataSize);
+             }
+ 
+-            XToolkit.WITH_XERROR_HANDLER(XWM.VerifyChangePropertyHandler);
++            XToolkit.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
+             XlibWrapper.XChangeProperty(XToolkit.getDisplay(), embedder,
+                                         MotifDnDConstants.XA_MOTIF_DRAG_RECEIVER_INFO.getAtom(),
+                                         MotifDnDConstants.XA_MOTIF_DRAG_RECEIVER_INFO.getAtom(),
+@@ -204,7 +204,7 @@
+                                          XlibWrapper.AnyPropertyType);
+ 
+             try {
+-                status = wpg.execute(XToolkit.IgnoreBadWindowHandler);
++                status = wpg.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+ 
+                 /*
+                  * DragICCI.h:
+@@ -236,7 +236,7 @@
+ 
+                     unsafe.putInt(data + 4, tproxy);
+ 
+-                    XToolkit.WITH_XERROR_HANDLER(XWM.VerifyChangePropertyHandler);
++                    XToolkit.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
+                     XlibWrapper.XChangeProperty(XToolkit.getDisplay(), embedder,
+                                                 MotifDnDConstants.XA_MOTIF_DRAG_RECEIVER_INFO.getAtom(),
+                                                 MotifDnDConstants.XA_MOTIF_DRAG_RECEIVER_INFO.getAtom(),
+@@ -276,7 +276,7 @@
+                                      XlibWrapper.AnyPropertyType);
+ 
+         try {
+-            status = wpg.execute(XToolkit.IgnoreBadWindowHandler);
++            status = wpg.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+ 
+             /*
+              * DragICCI.h:
+@@ -325,7 +325,7 @@
+                                      XlibWrapper.AnyPropertyType);
+ 
+         try {
+-            int status = wpg.execute(XToolkit.IgnoreBadWindowHandler);
++            int status = wpg.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+ 
+             if (status == (int)XlibWrapper.Success && wpg.getData() != 0 &&
+                 wpg.getActualType() != 0 && wpg.getActualFormat() == 8 &&
+@@ -375,7 +375,7 @@
+                                          MotifDnDConstants.XA_MOTIF_DRAG_INITIATOR_INFO.getAtom());
+ 
+             try {
+-                int status = wpg.execute(XToolkit.IgnoreBadWindowHandler);
++                int status = wpg.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+ 
+                 if (status == XlibWrapper.Success && wpg.getData() != 0 &&
+                     wpg.getActualType() ==
+@@ -412,7 +412,7 @@
+          */
+         XWindowAttributes wattr = new XWindowAttributes();
+         try {
+-            XToolkit.WITH_XERROR_HANDLER(XToolkit.IgnoreBadWindowHandler);
++            XToolkit.WITH_XERROR_HANDLER(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+             int status = XlibWrapper.XGetWindowAttributes(XToolkit.getDisplay(),
+                                                           source_win, wattr.pData);
+ 
+@@ -429,7 +429,7 @@
+             wattr.dispose();
+         }
+ 
+-        XToolkit.WITH_XERROR_HANDLER(XToolkit.IgnoreBadWindowHandler);
++        XToolkit.WITH_XERROR_HANDLER(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+         XlibWrapper.XSelectInput(XToolkit.getDisplay(), source_win,
+                                  source_win_mask |
+                                  XlibWrapper.StructureNotifyMask);
+@@ -1020,7 +1020,7 @@
+         if (sourceWindow != 0) {
+             XToolkit.awtLock();
+             try {
+-                XToolkit.WITH_XERROR_HANDLER(XToolkit.IgnoreBadWindowHandler);
++                XToolkit.WITH_XERROR_HANDLER(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+                 XlibWrapper.XSelectInput(XToolkit.getDisplay(), sourceWindow,
+                                          sourceWindowMask);
+                 XToolkit.RESTORE_XERROR_HANDLER();
+diff -uNr openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/WindowPropertyGetter.java openjdk/jdk/src/solaris/classes/sun/awt/X11/WindowPropertyGetter.java
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/WindowPropertyGetter.java	2010-07-15 10:28:21.900105578 -0400
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/WindowPropertyGetter.java	2010-07-15 10:28:42.637046074 -0400
+@@ -75,7 +75,7 @@
+     public int execute() {
+         return execute(null);
+     }
+-    public int execute(XToolkit.XErrorHandler errorHandler) {
++    public int execute(XErrorHandler errorHandler) {
+ 
+         XToolkit.awtLock();
+         try {
+@@ -94,7 +94,7 @@
+ 
+             // Fix for performance problem - IgnodeBadWindowHandler is
+             // used too much without reason, just ignore it
+-            if (errorHandler == XToolkit.IgnoreBadWindowHandler) {
++            if (errorHandler instanceof XErrorHandler.IgnoreBadWindowHandler) {
+                 errorHandler = null;
+             }
+ 
+diff -uNr openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XAWTXSettings.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XAWTXSettings.java
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XAWTXSettings.java	2010-07-15 10:28:21.896105637 -0400
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XAWTXSettings.java	2010-07-15 10:28:42.637981716 -0400
+@@ -122,7 +122,7 @@
+                 new WindowPropertyGetter(owner, xSettingsPropertyAtom, 0, MAX_LENGTH,
+                         false, xSettingsPropertyAtom.getAtom() );
+             try {
+-                int status = getter.execute(XToolkit.IgnoreBadWindowHandler);
++                int status = getter.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+ 
+                 if (status != XlibWrapper.Success || getter.getData() == 0) {
+                     if (log.isLoggable(Level.FINE)) log.fine("OH OH : getter failed  status = " + status );
+diff -uNr openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XDecoratedPeer.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XDecoratedPeer.java
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XDecoratedPeer.java	2010-07-15 10:28:21.895105718 -0400
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XDecoratedPeer.java	2010-07-15 10:28:42.640232090 -0400
+@@ -1155,7 +1155,8 @@
+     }
+ 
+     boolean isOverrideRedirect() {
+-        return false;
++//        return false;
++        return ((XToolkit)Toolkit.getDefaultToolkit()).isOverrideRedirect((Window)target);
+     }
+ 
+     public boolean requestWindowFocus(long time, boolean timeProvided) {
+diff -uNr openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XDnDDragSourceProtocol.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XDnDDragSourceProtocol.java
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XDnDDragSourceProtocol.java	2010-07-15 10:28:21.906105640 -0400
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XDnDDragSourceProtocol.java	2010-07-15 10:28:42.642232277 -0400
+@@ -96,7 +96,7 @@
+                 action_count++;
+             }
+ 
+-            XToolkit.WITH_XERROR_HANDLER(XWM.VerifyChangePropertyHandler);
++            XToolkit.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
+             XDnDConstants.XA_XdndActionList.setAtomData(window,
+                                                         XAtom.XA_ATOM,
+                                                         data, action_count);
+@@ -117,7 +117,7 @@
+         try {
+             Native.put(data, formats);
+ 
+-            XToolkit.WITH_XERROR_HANDLER(XWM.VerifyChangePropertyHandler);
++            XToolkit.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
+             XDnDConstants.XA_XdndTypeList.setAtomData(window,
+                                                       XAtom.XA_ATOM,
+                                                       data, formats.length);
+@@ -195,7 +195,7 @@
+             new WindowPropertyGetter(window, XDnDConstants.XA_XdndAware, 0, 1,
+                                      false, XlibWrapper.AnyPropertyType);
+ 
+-        int status = wpg1.execute(XToolkit.IgnoreBadWindowHandler);
++        int status = wpg1.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+ 
+         if (status == XlibWrapper.Success &&
+             wpg1.getData() != 0 && wpg1.getActualType() == XAtom.XA_ATOM) {
+@@ -215,7 +215,7 @@
+                                              0, 1, false, XAtom.XA_WINDOW);
+ 
+                 try {
+-                    status = wpg2.execute(XToolkit.IgnoreBadWindowHandler);
++                    status = wpg2.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+ 
+                     if (status == XlibWrapper.Success &&
+                         wpg2.getData() != 0 &&
+@@ -233,7 +233,7 @@
+                                                  0, 1, false, XAtom.XA_WINDOW);
+ 
+                     try {
+-                        status = wpg3.execute(XToolkit.IgnoreBadWindowHandler);
++                        status = wpg3.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+ 
+                         if (status != XlibWrapper.Success ||
+                             wpg3.getData() == 0 ||
+@@ -249,7 +249,7 @@
+                                                          XlibWrapper.AnyPropertyType);
+ 
+                             try {
+-                                status = wpg4.execute(XToolkit.IgnoreBadWindowHandler);
++                                status = wpg4.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+ 
+                                 if (status != XlibWrapper.Success ||
+                                     wpg4.getData() == 0 ||
+diff -uNr openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XDnDDropTargetProtocol.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XDnDDropTargetProtocol.java
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XDnDDropTargetProtocol.java	2010-07-15 10:28:21.903105589 -0400
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XDnDDropTargetProtocol.java	2010-07-15 10:28:42.645236553 -0400
+@@ -88,7 +88,7 @@
+         try {
+             Native.putLong(data, 0, XDnDConstants.XDND_PROTOCOL_VERSION);
+ 
+-            XToolkit.WITH_XERROR_HANDLER(XWM.VerifyChangePropertyHandler);
++            XToolkit.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
+             XDnDConstants.XA_XdndAware.setAtomData(window, XAtom.XA_ATOM, data, 1);
+             XToolkit.RESTORE_XERROR_HANDLER();
+ 
+@@ -122,7 +122,7 @@
+                                      false, XlibWrapper.AnyPropertyType);
+ 
+         try {
+-            status = wpg1.execute(XToolkit.IgnoreBadWindowHandler);
++            status = wpg1.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+ 
+             if (status == XlibWrapper.Success &&
+                 wpg1.getData() != 0 && wpg1.getActualType() == XAtom.XA_ATOM) {
+@@ -141,7 +141,7 @@
+                                          0, 1, false, XAtom.XA_WINDOW);
+ 
+             try {
+-                status = wpg2.execute(XToolkit.IgnoreBadWindowHandler);
++                status = wpg2.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+ 
+                 if (status == XlibWrapper.Success &&
+                     wpg2.getData() != 0 &&
+@@ -159,7 +159,7 @@
+                                              0, 1, false, XAtom.XA_WINDOW);
+ 
+                 try {
+-                    status = wpg3.execute(XToolkit.IgnoreBadWindowHandler);
++                    status = wpg3.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+ 
+                     if (status != XlibWrapper.Success ||
+                         wpg3.getData() == 0 ||
+@@ -175,7 +175,7 @@
+                                                      XlibWrapper.AnyPropertyType);
+ 
+                         try {
+-                            status = wpg4.execute(XToolkit.IgnoreBadWindowHandler);
++                            status = wpg4.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+ 
+                             if (status != XlibWrapper.Success ||
+                                 wpg4.getData() == 0 ||
+@@ -205,7 +205,7 @@
+ 
+             /* The proxy window must have the XdndAware set, as XDnD protocol
+                prescribes to check the proxy window for XdndAware. */
+-            XToolkit.WITH_XERROR_HANDLER(XWM.VerifyChangePropertyHandler);
++            XToolkit.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
+             XDnDConstants.XA_XdndAware.setAtomData(newProxy, XAtom.XA_ATOM,
+                                                    data, 1);
+             XToolkit.RESTORE_XERROR_HANDLER();
+@@ -219,7 +219,7 @@
+             Native.putLong(data, 0, newProxy);
+ 
+             /* The proxy window must have the XdndProxy set to point to itself.*/
+-            XToolkit.WITH_XERROR_HANDLER(XWM.VerifyChangePropertyHandler);
++            XToolkit.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
+             XDnDConstants.XA_XdndProxy.setAtomData(newProxy, XAtom.XA_WINDOW,
+                                                    data, 1);
+             XToolkit.RESTORE_XERROR_HANDLER();
+@@ -232,7 +232,7 @@
+ 
+             Native.putLong(data, 0, XDnDConstants.XDND_PROTOCOL_VERSION);
+ 
+-            XToolkit.WITH_XERROR_HANDLER(XWM.VerifyChangePropertyHandler);
++            XToolkit.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
+             XDnDConstants.XA_XdndAware.setAtomData(embedder, XAtom.XA_ATOM,
+                                                    data, 1);
+             XToolkit.RESTORE_XERROR_HANDLER();
+@@ -245,7 +245,7 @@
+ 
+             Native.putLong(data, 0, newProxy);
+ 
+-            XToolkit.WITH_XERROR_HANDLER(XWM.VerifyChangePropertyHandler);
++            XToolkit.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
+             XDnDConstants.XA_XdndProxy.setAtomData(embedder, XAtom.XA_WINDOW,
+                                                    data, 1);
+             XToolkit.RESTORE_XERROR_HANDLER();
+@@ -278,7 +278,7 @@
+             try {
+                 Native.putLong(data, 0, entry.getVersion());
+ 
+-                XToolkit.WITH_XERROR_HANDLER(XWM.VerifyChangePropertyHandler);
++                XToolkit.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
+                 XDnDConstants.XA_XdndAware.setAtomData(embedder, XAtom.XA_ATOM,
+                                                        data, 1);
+                 XToolkit.RESTORE_XERROR_HANDLER();
+@@ -291,7 +291,7 @@
+ 
+                 Native.putLong(data, 0, (int)entry.getProxy());
+ 
+-                XToolkit.WITH_XERROR_HANDLER(XWM.VerifyChangePropertyHandler);
++                XToolkit.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
+                 XDnDConstants.XA_XdndProxy.setAtomData(embedder, XAtom.XA_WINDOW,
+                                                        data, 1);
+                 XToolkit.RESTORE_XERROR_HANDLER();
+@@ -329,7 +329,7 @@
+                                      false, XlibWrapper.AnyPropertyType);
+ 
+         try {
+-            status = wpg1.execute(XToolkit.IgnoreBadWindowHandler);
++            status = wpg1.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+ 
+             if (status == XlibWrapper.Success &&
+                 wpg1.getData() != 0 && wpg1.getActualType() == XAtom.XA_ATOM) {
+@@ -348,7 +348,7 @@
+                                          0, 1, false, XAtom.XA_WINDOW);
+ 
+             try {
+-                status = wpg2.execute(XToolkit.IgnoreBadWindowHandler);
++                status = wpg2.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+ 
+                 if (status == XlibWrapper.Success &&
+                     wpg2.getData() != 0 &&
+@@ -366,7 +366,7 @@
+                                              0, 1, false, XAtom.XA_WINDOW);
+ 
+                 try {
+-                    status = wpg3.execute(XToolkit.IgnoreBadWindowHandler);
++                    status = wpg3.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+ 
+                     if (status != XlibWrapper.Success ||
+                         wpg3.getData() == 0 ||
+@@ -382,7 +382,7 @@
+                                                      XlibWrapper.AnyPropertyType);
+ 
+                         try {
+-                            status = wpg4.execute(XToolkit.IgnoreBadWindowHandler);
++                            status = wpg4.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+ 
+                             if (status != XlibWrapper.Success ||
+                                 wpg4.getData() == 0 ||
+@@ -411,7 +411,7 @@
+                                      false, XlibWrapper.AnyPropertyType);
+ 
+         try {
+-            int status = wpg1.execute(XToolkit.IgnoreBadWindowHandler);
++            int status = wpg1.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+ 
+             if (status == XlibWrapper.Success &&
+                 wpg1.getData() != 0 && wpg1.getActualType() == XAtom.XA_ATOM) {
+@@ -473,7 +473,7 @@
+                                          0, 0xFFFF, false,
+                                          XAtom.XA_ATOM);
+             try {
+-                wpg.execute(XToolkit.IgnoreBadWindowHandler);
++                wpg.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+ 
+                 if (wpg.getActualType() == XAtom.XA_ATOM &&
+                     wpg.getActualFormat() == 32) {
+@@ -505,7 +505,7 @@
+                                          0, 0xFFFF, false,
+                                          XAtom.XA_ATOM);
+             try {
+-                wpg.execute(XToolkit.IgnoreBadWindowHandler);
++                wpg.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+ 
+                 if (wpg.getActualType() == XAtom.XA_ATOM &&
+                     wpg.getActualFormat() == 32) {
+@@ -541,7 +541,7 @@
+          */
+         XWindowAttributes wattr = new XWindowAttributes();
+         try {
+-            XToolkit.WITH_XERROR_HANDLER(XToolkit.IgnoreBadWindowHandler);
++            XToolkit.WITH_XERROR_HANDLER(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+             int status = XlibWrapper.XGetWindowAttributes(XToolkit.getDisplay(),
+                                                           source_win, wattr.pData);
+ 
+@@ -558,7 +558,7 @@
+             wattr.dispose();
+         }
+ 
+-        XToolkit.WITH_XERROR_HANDLER(XToolkit.IgnoreBadWindowHandler);
++        XToolkit.WITH_XERROR_HANDLER(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+         XlibWrapper.XSelectInput(XToolkit.getDisplay(), source_win,
+                                  source_win_mask |
+                                  XlibWrapper.StructureNotifyMask);
+@@ -963,7 +963,7 @@
+         if (sourceWindow != 0) {
+             XToolkit.awtLock();
+             try {
+-                XToolkit.WITH_XERROR_HANDLER(XToolkit.IgnoreBadWindowHandler);
++                XToolkit.WITH_XERROR_HANDLER(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+                 XlibWrapper.XSelectInput(XToolkit.getDisplay(), sourceWindow,
+                                          sourceWindowMask);
+                 XToolkit.RESTORE_XERROR_HANDLER();
+@@ -1104,14 +1104,14 @@
+                                                  0, 0xFFFF, false,
+                                                  XAtom.XA_ATOM);
+                     try {
+-                        wpg.execute(XToolkit.IgnoreBadWindowHandler);
++                        wpg.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+ 
+                         if (wpg.getActualType() == XAtom.XA_ATOM &&
+                             wpg.getActualFormat() == 32) {
+ 
+                             XToolkit.awtLock();
+                             try {
+-                                XToolkit.WITH_XERROR_HANDLER(XWM.VerifyChangePropertyHandler);
++                                XToolkit.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
+                                 XDnDConstants.XA_XdndTypeList.setAtomData(xclient.get_window(),
+                                                                           XAtom.XA_ATOM,
+                                                                           wpg.getData(),
+diff -uNr openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XDragSourceProtocol.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XDragSourceProtocol.java
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XDragSourceProtocol.java	2010-07-15 10:28:21.896105637 -0400
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XDragSourceProtocol.java	2010-07-15 10:28:42.646232066 -0400
+@@ -181,7 +181,7 @@
+                                    long time) {
+         XWindowAttributes wattr = new XWindowAttributes();
+         try {
+-            XToolkit.WITH_XERROR_HANDLER(XToolkit.IgnoreBadWindowHandler);
++            XToolkit.WITH_XERROR_HANDLER(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+             int status = XlibWrapper.XGetWindowAttributes(XToolkit.getDisplay(),
+                                                           targetWindow, wattr.pData);
+ 
+@@ -198,7 +198,7 @@
+             wattr.dispose();
+         }
+ 
+-        XToolkit.WITH_XERROR_HANDLER(XToolkit.IgnoreBadWindowHandler);
++        XToolkit.WITH_XERROR_HANDLER(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+         XlibWrapper.XSelectInput(XToolkit.getDisplay(), targetWindow,
+                                  targetWindowMask |
+                                  XlibWrapper.StructureNotifyMask);
+@@ -214,7 +214,7 @@
+     }
+ 
+     protected final void finalizeDrop() {
+-        XToolkit.WITH_XERROR_HANDLER(XToolkit.IgnoreBadWindowHandler);
++        XToolkit.WITH_XERROR_HANDLER(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+         XlibWrapper.XSelectInput(XToolkit.getDisplay(), targetWindow,
+                                  targetWindowMask);
+         XToolkit.RESTORE_XERROR_HANDLER();
+diff -uNr openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XDropTargetRegistry.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XDropTargetRegistry.java
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XDropTargetRegistry.java	2010-07-15 10:28:21.906105640 -0400
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XDropTargetRegistry.java	2010-07-15 10:28:42.648232198 -0400
+@@ -172,7 +172,7 @@
+                 if (dest_x >= 0 && dest_y >= 0) {
+                     XWindowAttributes wattr = new XWindowAttributes();
+                     try {
+-                        XToolkit.WITH_XERROR_HANDLER(XToolkit.IgnoreBadWindowHandler);
++                        XToolkit.WITH_XERROR_HANDLER(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+                         int status = XlibWrapper.XGetWindowAttributes(XToolkit.getDisplay(),
+                                                                       window, wattr.pData);
+                         XToolkit.RESTORE_XERROR_HANDLER();
+@@ -226,7 +226,7 @@
+             long event_mask = 0;
+             XWindowAttributes wattr = new XWindowAttributes();
+             try {
+-                XToolkit.WITH_XERROR_HANDLER(XToolkit.IgnoreBadWindowHandler);
++                XToolkit.WITH_XERROR_HANDLER(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+                 int status = XlibWrapper.XGetWindowAttributes(XToolkit.getDisplay(),
+                                                               embedder, wattr.pData);
+                 XToolkit.RESTORE_XERROR_HANDLER();
+@@ -244,7 +244,7 @@
+             }
+ 
+             if ((event_mask & XlibWrapper.PropertyChangeMask) == 0) {
+-                XToolkit.WITH_XERROR_HANDLER(XToolkit.IgnoreBadWindowHandler);
++                XToolkit.WITH_XERROR_HANDLER(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+                 XlibWrapper.XSelectInput(XToolkit.getDisplay(), embedder,
+                                          event_mask | XlibWrapper.PropertyChangeMask);
+                 XToolkit.RESTORE_XERROR_HANDLER();
+@@ -398,7 +398,7 @@
+ 
+             /* Restore the original event mask for the embedder. */
+             if ((event_mask & XlibWrapper.PropertyChangeMask) == 0) {
+-                XToolkit.WITH_XERROR_HANDLER(XToolkit.IgnoreBadWindowHandler);
++                XToolkit.WITH_XERROR_HANDLER(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+                 XlibWrapper.XSelectInput(XToolkit.getDisplay(), embedder,
+                                          event_mask);
+                 XToolkit.RESTORE_XERROR_HANDLER();
+diff -uNr openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XEmbedCanvasPeer.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XEmbedCanvasPeer.java
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XEmbedCanvasPeer.java	2010-07-15 10:28:21.897105547 -0400
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XEmbedCanvasPeer.java	2010-07-15 10:28:42.650232331 -0400
+@@ -301,7 +301,7 @@
+         try {
+             XWindowAttributes wattr = new XWindowAttributes();
+             try {
+-                XToolkit.WITH_XERROR_HANDLER(XToolkit.IgnoreBadWindowHandler);
++                XToolkit.WITH_XERROR_HANDLER(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+                 int status = XlibWrapper.XGetWindowAttributes(XToolkit.getDisplay(),
+                                                               xembed.handle, wattr.pData);
+ 
+diff -uNr openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XErrorHandler.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XErrorHandler.java
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XErrorHandler.java	1969-12-31 19:00:00.000000000 -0500
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XErrorHandler.java	2010-07-15 10:28:42.651989313 -0400
+@@ -0,0 +1,79 @@
++/*
++ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.  Sun designates this
++ * particular file as subject to the "Classpath" exception as provided
++ * by Sun in the LICENSE file that accompanied this code.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++package sun.awt.X11;
++
++public abstract class XErrorHandler {
++
++    /*
++     * Called under AWT lock
++     */
++    public abstract int handleError(long display, XErrorEvent err);
++
++    /*
++     * Forwards all the errors to saved error handler (which was
++     * set before XToolkit had been initialized).
++     */
++    public static class XBaseErrorHandler extends XErrorHandler {
++        @Override
++        public int handleError(long display, XErrorEvent err) {
++            return XToolkit.SAVED_ERROR_HANDLER(display, err);
++        }
++    }
++
++    /*
++     * Instead of validating window id, we simply call XGetWindowProperty,
++     * but temporary install this function as the error handler to ignore
++     * BadWindow error.
++     */
++    public static class IgnoreBadWindowHandler extends XBaseErrorHandler {
++        @Override
++        public int handleError(long display, XErrorEvent err) {
++            if (err.get_error_code() == XConstants.BadWindow) {
++                return 0;
++            }
++            return super.handleError(display, err);
++        }
++        // Shared instance
++        private static IgnoreBadWindowHandler theInstance = new IgnoreBadWindowHandler();
++        public static IgnoreBadWindowHandler getInstance() {
++            return theInstance;
++        }
++    }
++
++    public static class VerifyChangePropertyHandler extends XBaseErrorHandler {
++        @Override
++        public int handleError(long display, XErrorEvent err) {
++            if (err.get_request_code() == XProtocolConstants.X_ChangeProperty) {
++                return 0;
++            }
++            return super.handleError(display, err);
++        }
++        // Shared instance
++        private static IgnoreBadWindowHandler theInstance = new IgnoreBadWindowHandler();
++        public static IgnoreBadWindowHandler getInstance() {
++            return theInstance;
++        }
++    }
++}
+diff -uNr openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XlibUtil.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XlibUtil.java
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XlibUtil.java	2010-07-15 10:28:21.893105473 -0400
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XlibUtil.java	2010-07-15 10:28:42.651989313 -0400
+@@ -149,7 +149,7 @@
+                 new XTranslateCoordinates(src, dst, p.x, p.y);
+             try
+             {
+-                int status = xtc.execute(XToolkit.IgnoreBadWindowHandler);
++                int status = xtc.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+                 if ((status != 0) &&
+                     ((XToolkit.saved_error == null) ||
+                      (XToolkit.saved_error.get_error_code() == XlibWrapper.Success)))
+@@ -306,7 +306,7 @@
+                                          XWM.XA_WM_STATE);
+             try
+             {
+-                wpg.execute(XToolkit.IgnoreBadWindowHandler);
++                wpg.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+                 if (wpg.getActualType() == XWM.XA_WM_STATE.getAtom())
+                 {
+                     return true;
+@@ -345,7 +345,7 @@
+         XWindowAttributes wattr = new XWindowAttributes();
+         try
+         {
+-            XToolkit.WITH_XERROR_HANDLER(XToolkit.IgnoreBadWindowHandler);
++            XToolkit.WITH_XERROR_HANDLER(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+             int status = XlibWrapper.XGetWindowAttributes(XToolkit.getDisplay(),
+                                                           window, wattr.pData);
+             XToolkit.RESTORE_XERROR_HANDLER();
+diff -uNr openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XlibWrapper.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XlibWrapper.java
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XlibWrapper.java	2010-07-15 10:28:21.905105617 -0400
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XlibWrapper.java	2010-07-15 10:28:42.654187919 -0400
+@@ -613,4 +613,6 @@
+         String javaVersion = XToolkit.getSystemProperty("java.version");
+         return javaVersion != null && javaVersion.contains("internal");
+     }
++
++    static native void PrintXErrorEvent(long display, long event_ptr);
+ }
+diff -uNr openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XProtocol.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XProtocol.java
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XProtocol.java	2010-07-15 10:28:21.893105473 -0400
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XProtocol.java	2010-07-15 10:28:42.655357930 -0400
+@@ -35,20 +35,6 @@
+     private Map<XAtom, XAtomList> atomToList = new HashMap<XAtom, XAtomList>();
+     private Map<XAtom, Long> atomToAnchor = new HashMap<XAtom, Long>();
+ 
+-    /*
+-     * Temporary error handler that ensures that we know if
+-     * XChangeProperty succeeded or not.
+-     */
+-    static XToolkit.XErrorHandler VerifyChangePropertyHandler = new XToolkit.XErrorHandler() {
+-            public int handleError(long display, XErrorEvent err) {
+-                XToolkit.XERROR_SAVE(err);
+-                if (err.get_request_code() == XlibWrapper.X_ChangeProperty) {
+-                    return 0;
+-                } else {
+-                    return XToolkit.SAVED_ERROR_HANDLER(display, err);
+-                }
+-            }
+-        };
+     volatile boolean firstCheck = true;
+     /*
+      * Check that that the list of protocols specified by WM in property
+diff -uNr openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XQueryTree.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XQueryTree.java
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XQueryTree.java	2010-07-15 10:28:21.894105746 -0400
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XQueryTree.java	2010-07-15 10:28:42.662356819 -0400
+@@ -51,7 +51,7 @@
+         public int execute() {
+                 return execute(null);
+         }
+-        public int execute(XToolkit.XErrorHandler errorHandler) {
++        public int execute(XErrorHandler errorHandler) {
+                 XToolkit.awtLock();
+                 try {
+                     if (isDisposed()) {
+diff -uNr openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XToolkit.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XToolkit.java
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XToolkit.java	2010-07-15 10:28:21.896105637 -0400
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XToolkit.java	2010-07-15 10:30:45.039232001 -0400
+@@ -48,6 +48,7 @@
+ import sun.font.FontManager;
+ import sun.misc.PerformanceLogger;
+ import sun.print.PrintJob2D;
++import sun.security.action.GetBooleanAction;
+ import java.lang.reflect.*;
+ 
+ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
+@@ -120,62 +121,78 @@
+             setBackingStoreType();
+         }
+         m_removeSourceEvents = SunToolkit.getMethod(EventQueue.class, "removeSourceEvents", new Class[] {Object.class, Boolean.TYPE}) ;
++        noisyAwtHandler = AccessController.doPrivileged(new GetBooleanAction("sun.awt.noisyerrorhandler"));
++
+     }
+ 
+-    // Error handler stuff
+-    static XErrorEvent saved_error;
+-    static long saved_error_handler;
+-    static XErrorHandler curErrorHandler;
+-    // Should be called under LOCK, before releasing LOCK RESTORE_XERROR_HANDLER should be called
+-    static void WITH_XERROR_HANDLER(XErrorHandler handler) {
++    //---- ERROR HANDLER CODE ----//
++
++    /*
++     * Error handler at the moment of XToolkit initialization
++     */
++    private static long saved_error_handler;
++
++    /*
++     * XErrorEvent being handled
++     */
++    static volatile XErrorEvent saved_error;
++
++    /*
++     * Current error handler or null if no error handler is set
++     */
++    private static XErrorHandler current_error_handler;
++
++    /*
++     * Value of sun.awt.noisyerrorhandler system property
++     */
++    private static boolean noisyAwtHandler;
++
++    public static void WITH_XERROR_HANDLER(XErrorHandler handler) {
+         saved_error = null;
+-        curErrorHandler = handler;
+-        XSync();
+-        saved_error_handler = XlibWrapper.SetToolkitErrorHandler();
+-    }
+-    static void XERROR_SAVE(XErrorEvent event) {
+-        saved_error = event;
++        current_error_handler = handler;
+     }
+-    // Should be called under LOCK
+-    static void RESTORE_XERROR_HANDLER() {
+-       XSync();
+-        XlibWrapper.XSetErrorHandler(saved_error_handler);
+-        curErrorHandler = null;
++
++    public static void RESTORE_XERROR_HANDLER() {
++        current_error_handler = null;
+     }
++
+     // Should be called under LOCK
+-    static int SAVED_ERROR_HANDLER(long display, XErrorEvent error) {
+-        return XlibWrapper.CallErrorHandler(saved_error_handler, display, error.pData);
+-    }
+-    interface XErrorHandler {
+-        int handleError(long display, XErrorEvent err);
++    public static int SAVED_ERROR_HANDLER(long display, XErrorEvent error) {
++        if (saved_error_handler != 0) {
++            // Default XErrorHandler may just terminate the process. Don't call it.
++            // return XlibWrapper.CallErrorHandler(saved_error_handler, display, error.pData);
++        }
++        if (log.isLoggable(Level.FINE)) {
++            log.log(Level.FINE, "Unhandled XErrorEvent: " +
++                    "id=" + error.get_resourceid() + ", " +
++                    "serial=" + error.get_serial() + ", " +
++                    "ec=" + error.get_error_code() + ", " +
++                    "rc=" + error.get_request_code() + ", " +
++                    "mc=" + error.get_minor_code());
++        }
++        return 0;
+     }
+-    static int GlobalErrorHandler(long display, long event_ptr) {
++
++    // Called from the native code when an error occurs
++    private static int globalErrorHandler(long display, long event_ptr) {
++        if (noisyAwtHandler) {
++            XlibWrapper.PrintXErrorEvent(display, event_ptr);
++        }
+         XErrorEvent event = new XErrorEvent(event_ptr);
++        saved_error = event;
+         try {
+-            if (curErrorHandler != null) {
+-                return curErrorHandler.handleError(display, event);
++            if (current_error_handler != null) {
++                return current_error_handler.handleError(display, event);
+             } else {
+                 return SAVED_ERROR_HANDLER(display, event);
+             }
+-        } finally {
++        } catch (Throwable z) {
++            log.log(Level.FINE, "Error in GlobalErrorHandler", z);
+         }
++        return 0;
+     }
+ 
+-/*
+- * Instead of validating window id, we simply call XGetWindowProperty,
+- * but temporary install this function as the error handler to ignore
+- * BadWindow error.
+- */
+-    static XErrorHandler IgnoreBadWindowHandler = new XErrorHandler() {
+-            public int handleError(long display, XErrorEvent err) {
+-                XERROR_SAVE(err);
+-                if (err.get_error_code() == BadWindow) {
+-                    return 0;
+-                } else {
+-                    return SAVED_ERROR_HANDLER(display, err);
+-                }
+-            }
+-        };
++    //---- END OF ERROR HANDLER CODE ----//
+ 
+ 
+     private native static void initIDs();
+@@ -269,17 +286,27 @@
+ 
+             arrowCursor = XlibWrapper.XCreateFontCursor(XToolkit.getDisplay(),
+                 XCursorFontConstants.XC_arrow);
++
++            saved_error_handler = XlibWrapper.SetToolkitErrorHandler();
++
+         } finally {
+             awtUnlock();
+         }
+ 
+-        if (log.isLoggable(Level.FINE)) {
+-            Runtime.getRuntime().addShutdownHook(new Thread() {
+-                    public void run() {
++        Runtime.getRuntime().addShutdownHook(new Thread() {
++            public void run() {
++                if (log.isLoggable(Level.FINE)) {
+                         dumpPeers();
+-                    }
+-                });
+-        }
++                }
++
++                awtLock();
++                try {
++                        XlibWrapper.XSetErrorHandler(saved_error_handler);
++                } finally {
++                        awtUnlock();
++                }
++            }
++        });
+     }
+ 
+     static String getCorrectXIDString(String val) {
+@@ -2162,5 +2189,4 @@
+         return new XDesktopPeer();
+     }
+ 
+-    public static native void setNoisyXErrorHandler();
+ }
+diff -uNr openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XTranslateCoordinates.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XTranslateCoordinates.java
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XTranslateCoordinates.java	2010-07-15 10:28:21.900105578 -0400
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XTranslateCoordinates.java	2010-07-15 10:28:42.666356882 -0400
+@@ -57,7 +57,7 @@
+         public int execute() {
+                 return execute(null);
+         }
+-        public int execute(XToolkit.XErrorHandler errorHandler) {
++        public int execute(XErrorHandler errorHandler) {
+                 XToolkit.awtLock();
+                 try {
+                 if (isDisposed()) {
+diff -uNr openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWM.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XWM.java
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWM.java	2010-07-15 10:28:21.896105637 -0400
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XWM.java	2010-07-15 10:28:42.668356704 -0400
+@@ -273,7 +273,7 @@
+             winmgr_running = false;
+             substruct.set_event_mask(XlibWrapper.SubstructureRedirectMask);
+ 
+-            XToolkit.WITH_XERROR_HANDLER(DetectWMHandler);
++            XToolkit.WITH_XERROR_HANDLER(detectWMHandler);
+             XlibWrapper.XChangeWindowAttributes(XToolkit.getDisplay(),
+                                                 XToolkit.getDefaultRootWindow(),
+                                                 XlibWrapper.CWEventMask,
+@@ -318,7 +318,7 @@
+             new WindowPropertyGetter(window, XA_ENLIGHTENMENT_COMMS, 0, 14, false,
+                                      XAtom.XA_STRING);
+         try {
+-            int status = getter.execute(XToolkit.IgnoreBadWindowHandler);
++            int status = getter.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+             if (status != XlibWrapper.Success || getter.getData() == 0) {
+                 return 0;
+             }
+@@ -442,7 +442,7 @@
+                 new WindowPropertyGetter(wmwin, XA_DT_SM_STATE_INFO, 0, 1,
+                                          false, XA_DT_SM_STATE_INFO);
+             try {
+-                status = getter2.execute(XToolkit.IgnoreBadWindowHandler);
++                status = getter2.execute(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+ 
+ 
+                 if (status != XlibWrapper.Success || getter2.getData() == 0) {
+@@ -574,21 +574,6 @@
+     }
+ 
+     /*
+-     * Temporary error handler that ensures that we know if
+-     * XChangeProperty succeeded or not.
+-     */
+-    static XToolkit.XErrorHandler VerifyChangePropertyHandler = new XToolkit.XErrorHandler() {
+-            public int handleError(long display, XErrorEvent err) {
+-                XToolkit.XERROR_SAVE(err);
+-                if (err.get_request_code() == XlibWrapper.X_ChangeProperty) {
+-                    return 0;
+-                } else {
+-                    return XToolkit.SAVED_ERROR_HANDLER(display, err);
+-                }
+-            }
+-        };
+-
+-    /*
+      * Prepare IceWM check.
+      *
+      * The only way to detect IceWM, seems to be by setting
+@@ -623,7 +608,7 @@
+ 
+         XToolkit.awtLock();
+         try {
+-            XToolkit.WITH_XERROR_HANDLER(VerifyChangePropertyHandler);
++            XToolkit.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
+             XlibWrapper.XChangePropertyS(XToolkit.getDisplay(), XToolkit.getDefaultRootWindow(),
+                                          XA_ICEWM_WINOPTHINT.getAtom(),
+                                          XA_ICEWM_WINOPTHINT.getAtom(),
+@@ -691,20 +676,19 @@
+      * Temporary error handler that checks if selecting for
+      * SubstructureRedirect failed.
+      */
+-    static boolean winmgr_running = false;
+-    static XToolkit.XErrorHandler DetectWMHandler = new XToolkit.XErrorHandler() {
+-            public int handleError(long display, XErrorEvent err) {
+-                XToolkit.XERROR_SAVE(err);
+-                if (err.get_request_code() == XlibWrapper.X_ChangeWindowAttributes
+-                    && err.get_error_code() == XlibWrapper.BadAccess)
+-                {
+-                    winmgr_running = true;
+-                    return 0;
+-                } else {
+-                    return XToolkit.SAVED_ERROR_HANDLER(display, err);
+-                }
++    private static boolean winmgr_running = false;
++    private static XErrorHandler detectWMHandler = new XErrorHandler.XBaseErrorHandler() {
++        @Override
++        public int handleError(long display, XErrorEvent err) {
++            if ((err.get_request_code() == XProtocolConstants.X_ChangeWindowAttributes) &&
++                (err.get_error_code() == XConstants.BadAccess))
++            {
++                winmgr_running = true;
++                return 0;
+             }
+-        };
++            return super.handleError(display, err);
++        }
++    };
+ 
+     /*
+      * Make an educated guess about running window manager.
+diff -uNr openjdk.orig/jdk/src/solaris/native/sun/awt/awt_GraphicsEnv.c openjdk/jdk/src/solaris/native/sun/awt/awt_GraphicsEnv.c
+--- openjdk.orig/jdk/src/solaris/native/sun/awt/awt_GraphicsEnv.c	2010-07-15 10:28:21.866105645 -0400
++++ openjdk/jdk/src/solaris/native/sun/awt/awt_GraphicsEnv.c	2010-07-15 10:28:42.670355820 -0400
+@@ -175,42 +175,11 @@
+ }
+ 
+ #ifndef HEADLESS
++
+ /*
+- * error handlers
++ * XIOErrorHandler
+  */
+-
+-int
+-xerror_handler(Display * disp, XErrorEvent * err)
+-{
+-/* #ifdef DEBUG */
+-    char msg[128];
+-    char buf[128];
+-    char *ev = getenv("NOISY_AWT");
+-
+-    if (!ev || !ev[0])
+-        return 0;
+-    XGetErrorText(disp, err->error_code, msg, sizeof(msg));
+-    jio_fprintf(stderr, "Xerror %s, XID %x, ser# %d\n", msg, err->resourceid, err->serial);
+-    jio_snprintf(buf, sizeof(buf), "%d", err->request_code);
+-    XGetErrorDatabaseText(disp, "XRequest", buf, "Unknown", msg, sizeof(msg));
+-    jio_fprintf(stderr, "Major opcode %d (%s)\n", err->request_code, msg);
+-    if (err->request_code > 128) {
+-        jio_fprintf(stderr, "Minor opcode %d\n", err->minor_code);
+-    }
+-    if (awtLockInited) {
+-        /*SignalError(lockedee->lastpc, lockedee, "fp/ade/gui/GUIException", msg); */
+-    }
+-    if (strcasecmp(ev, "abort") == 0) {
+-        JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
+-
+-        (*env)->FatalError(env, "xerror_handler abort");
+-    }
+-/* #endif */
+-    return 0;
+-}
+-
+-static int
+-xioerror_handler(Display * disp)
++static int xioerror_handler(Display *disp)
+ {
+     if (awtLockInited) {
+         if (errno == EPIPE) {
+@@ -806,7 +775,6 @@
+         return NULL;
+     }
+ 
+-    XSetErrorHandler(xerror_handler);
+     XSetIOErrorHandler(xioerror_handler);
+ 
+     /* set awt_numScreens, and whether or not we're using Xinerama */
+diff -uNr openjdk.orig/jdk/src/solaris/native/sun/awt/awt_InputMethod.c openjdk/jdk/src/solaris/native/sun/awt/awt_InputMethod.c
+--- openjdk.orig/jdk/src/solaris/native/sun/awt/awt_InputMethod.c	2010-07-15 10:28:21.865105640 -0400
++++ openjdk/jdk/src/solaris/native/sun/awt/awt_InputMethod.c	2010-07-15 10:28:42.671355975 -0400
+@@ -1458,7 +1458,6 @@
+ }
+ 
+ static void OpenXIMCallback(Display *display, XPointer client_data, XPointer call_data) {
+-    extern int xerror_handler();
+     XIMCallback ximCallback;
+ 
+     X11im = XOpenIM(display, NULL, NULL, NULL);
+@@ -1469,13 +1468,6 @@
+     ximCallback.callback = (XIMProc)DestroyXIMCallback;
+     ximCallback.client_data = NULL;
+     XSetIMValues(X11im, XNDestroyCallback, &ximCallback, NULL);
+-
+-    /* Workaround for Solaris 2.6 bug 4097754. We're affected by this problem
+-     * because Motif also calls XOpenIM for us. Re-registering the error handler
+-     * that MToolkit has registered already after calling XOpenIM avoids the
+-     * problem.
+-     */
+-    XSetErrorHandler(xerror_handler);
+ }
+ 
+ static void DestroyXIMCallback(XIM im, XPointer client_data, XPointer call_data) {
+diff -uNr openjdk.orig/jdk/src/solaris/native/sun/awt/awt_MToolkit.c openjdk/jdk/src/solaris/native/sun/awt/awt_MToolkit.c
+--- openjdk.orig/jdk/src/solaris/native/sun/awt/awt_MToolkit.c	2010-07-15 10:28:21.867105700 -0400
++++ openjdk/jdk/src/solaris/native/sun/awt/awt_MToolkit.c	2010-07-15 10:28:42.673355929 -0400
+@@ -1926,26 +1926,6 @@
+               XtAppProcessEvent(awt_appContext, iMask & ~XtIMXEvent);
+             }
+ 
+-            /*
+-            ** Bug #4361799: Forte4J sometimes crashes on Solaris:
+-            ** There is an underlying bug in Selection.c in Xt lib.
+-            ** The routine HandleSelectionEvents, can call EndProtectedSection()
+-            ** more than  StartProtectedSection(), and then EndProtectedSection
+-            ** will restore the default XError handler.  As a result awt's
+-            ** XError handler gets removed and we later crash on an XError.
+-            **
+-            ** This happens when we call XtAppProcessEvent with event type 1e
+-            ** (SelectionRequest) when running two copies of Forte
+-            **
+-            ** XSetErrorHandler can safely be called repeatedly, so we are
+-            ** fixing this with the sledgehammer, and resetting our XError
+-            ** handler every time through the loop:
+-            */
+-            {
+-                extern int32_t xerror_handler();
+-                XSetErrorHandler(xerror_handler);
+-            }
+-
+ } /* processOneEvent() */
+ 
+ /*
+diff -uNr openjdk.orig/jdk/src/solaris/native/sun/xawt/XlibWrapper.c openjdk/jdk/src/solaris/native/sun/xawt/XlibWrapper.c
+--- openjdk.orig/jdk/src/solaris/native/sun/xawt/XlibWrapper.c	2010-07-15 10:28:21.882105738 -0400
++++ openjdk/jdk/src/solaris/native/sun/xawt/XlibWrapper.c	2010-07-15 10:28:42.675169363 -0400
+@@ -1097,7 +1097,7 @@
+ static int ToolkitErrorHandler(Display * dpy, XErrorEvent * event) {
+     if (jvm != NULL) {
+         JNIEnv * env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
+-        return JNU_CallStaticMethodByName(env, NULL, "sun/awt/X11/XToolkit", "GlobalErrorHandler", "(JJ)I",
++        return JNU_CallStaticMethodByName(env, NULL, "sun/awt/X11/XToolkit", "globalErrorHandler", "(JJ)I",
+                                           ptr_to_jlong(dpy), ptr_to_jlong(event)).i;
+     } else {
+         return 0;
+@@ -1140,6 +1140,28 @@
+     return (*(XErrorHandler)jlong_to_ptr(handler))((Display*) jlong_to_ptr(display), (XErrorEvent*) jlong_to_ptr(event_ptr));
+ }
+ 
++/*
++ * Class:     sun_awt_X11_XlibWrapper
++ * Method:    PrintXErrorEvent
++ * Signature: (JJ)V
++ */
++JNIEXPORT void JNICALL Java_sun_awt_X11_XlibWrapper_PrintXErrorEvent
++(JNIEnv *env, jclass clazz, jlong display, jlong event_ptr)
++{
++    char msg[128];
++    char buf[128];
++
++    XErrorEvent* err = (XErrorEvent *)jlong_to_ptr(event_ptr);
++
++    XGetErrorText((Display *)jlong_to_ptr(display), err->error_code, msg, sizeof(msg));
++    jio_fprintf(stderr, "Xerror %s, XID %x, ser# %d\n", msg, err->resourceid, err->serial);
++    jio_snprintf(buf, sizeof(buf), "%d", err->request_code);
++    XGetErrorDatabaseText((Display *)jlong_to_ptr(display), "XRequest", buf, "Unknown", msg, sizeof(msg));
++    jio_fprintf(stderr, "Major opcode %d (%s)\n", err->request_code, msg);
++    if (err->request_code > 128) {
++        jio_fprintf(stderr, "Minor opcode %d\n", err->minor_code);
++    }
++}
+ 
+ 
+ /*
+diff -uNr openjdk.orig/jdk/src/solaris/native/sun/xawt/XToolkit.c openjdk/jdk/src/solaris/native/sun/xawt/XToolkit.c
+--- openjdk.orig/jdk/src/solaris/native/sun/xawt/XToolkit.c	2010-07-15 10:28:21.883105599 -0400
++++ openjdk/jdk/src/solaris/native/sun/xawt/XToolkit.c	2010-07-15 10:28:42.676355933 -0400
+@@ -581,7 +581,6 @@
+         pollFds[1].revents = 0;
+     }
+ 
+-
+     AWT_NOFLUSH_UNLOCK();
+ 
+     /* ACTUALLY DO THE POLL() */
+@@ -690,8 +689,6 @@
+     return ret;
+ }
+ 
+-static XErrorHandler saved_error_handler = NULL;
+-
+ #ifdef __linux__
+ void print_stack(void)
+ {
+@@ -712,38 +709,6 @@
+ }
+ #endif
+ 
+-static int NoisyXErrorHandler(Display * dpy, XErrorEvent * event) {
+-    fprintf(stderr, "id=%x, serial=%x, ec=%d, rc=%d, mc=%d\n",
+-            event->resourceid, event->serial, event->error_code,
+-            event->request_code, event->minor_code);
+-    /*
+-    #ifdef __linux__
+-        print_stack();
+-    #endif
+-    */
+-    if (jvm != NULL) {
+-      JNIEnv * env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
+-      JNU_CallStaticMethodByName(env, NULL, "java/lang/Thread", "dumpStack", "()V");
+-    }
+-    if (!saved_error_handler) {
+-        return saved_error_handler(dpy, event);
+-    }
+-    return 0;
+-}
+-
+-/*
+- * Class:     sun_awt_X11_XToolkit
+- * Method:    setNoisyXErrorHandler
+- * Signature: ()V
+- */
+-JNIEXPORT void JNICALL Java_sun_awt_X11_XToolkit_setNoisyXErrorHandler
+-(JNIEnv *env , jclass clazz)
+-{
+-    (*env)->GetJavaVM(env, &jvm);
+-    saved_error_handler = XSetErrorHandler(NoisyXErrorHandler);
+-}
+-
+-
+ Window get_xawt_root_shell(JNIEnv *env) {
+   static jclass classXRootWindow = NULL;
+   static jmethodID methodGetXRootWindow = NULL;
