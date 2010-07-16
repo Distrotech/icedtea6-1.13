@@ -269,6 +269,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-linux-separate-debuginfo.patch \
 	patches/icedtea-parisc.patch \
 	patches/icedtea-sh4-support.patch \
+	patches/icedtea-policy-evaluation.patch \
 	patches/libpng.patch \
 	patches/shark.patch \
 	patches/extensions/netx.patch \
