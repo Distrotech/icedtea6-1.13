@@ -27,7 +27,7 @@ HOTSPOT_SRC_ZIP = hotspot.tar.gz
 
 # Build directories
 
-BUILD_DIR = openjdk.build
+BUILD_DIR = @OPENJDK_BUILD_DIR@
 BUILD_OUTPUT_DIR = $(abs_top_builddir)/$(BUILD_DIR)
 DEBUG_BUILD_OUTPUT_DIR = $(BUILD_OUTPUT_DIR)-debug
 ECJ_BUILD_OUTPUT_DIR = $(BUILD_OUTPUT_DIR)-ecj
