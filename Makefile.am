@@ -283,7 +283,8 @@ ICEDTEA_PATCHES = \
 	patches/debug-dir.patch \
 	patches/no-sync.patch \
 	patches/icedtea-override-redirect-metacity.patch \
-	patches/openjdk/6963870.patch
+	patches/openjdk/6963870.patch \
+	patches/openjdk/6668231-ssl_cert.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \

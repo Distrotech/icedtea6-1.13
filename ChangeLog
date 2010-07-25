@@ -1,3 +1,14 @@
+2010-07-25  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am: Add patch.
+	* patches/openjdk/6668231-ssl_cert.patch:
+	Backport SSL certificate fix 'Presence of a
+	critical subjectAltName causes JSSE's SunX509 to
+	fail trusted checks'.
+	* overlays/openjdk/jdk/test/sun/security/ssl/com/sun/net/ssl/internal/www/protocol/https/HttpsURLConnection/crisubn.jks,
+	* overlays/openjdk/jdk/test/sun/security/ssl/com/sun/net/ssl/internal/www/protocol/https/HttpsURLConnection/trusted.jks:
+	Keystores for the new test introduced by this patch.
+
 2010-07-23  Jon VanAlten  <jon.vanalten@redhat.com>
 
 	* patches/openjdk/6963870.patch: New file. Backpatched from jdk7 for
