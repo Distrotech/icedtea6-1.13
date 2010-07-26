@@ -18,6 +18,7 @@ patch
 sed
 tar
 md5sum
+sha256sum (from coreutils)
 wget
 alsa
 xalan
@@ -25,7 +26,7 @@ xerces
 firefox-devel 
 glib2-devel 
 gtk2-devel
-ant >= 1.6.5
+ant >= 1.6.5 with the regexp task from ant-nodeps
 libXinerama-devel
 giflib-devel
 libpng-devel
@@ -37,7 +38,6 @@ libffi (for --enable-zero or on archs other than x86/x86_64/sparc)
 pulseaudio-libs-devel >= 0.9.11 (for --enable-pulse-java)
 LLVM 2.5 or later (for --enable-shark)
 systemtap-sdl-devel >= 0.9.5 (for --enable-systemtap, Java method tracing requires systemtap >= 0.9.9)
-netbeans = 6.5 (for --enable-visualvm)
 
 See ./configure --help if you need to override the defaults.
 
@@ -68,9 +68,7 @@ in the order given above.
 Note that IcedTea7 can not be used to build IcedTea6.
 
 There is currently no install target.  IcedTea ends up in
-openjdk/build/<os>-<arch> when the build completes.  Example
-instantiations of <os>-<arch> include linux-i586, linux-amd64 and
-linux-ppc64.
+openjdk.build when the build completes.
 
 Most targets in IcedTea creat stamp files in the stamps directory to
 determine what and when dependencies were compiled.  Each target has a
@@ -96,7 +94,8 @@ to configure:
   copy of IcedTea6.  If a directory is not specified, a check against
   the list presented above is performed.
 * --with-parallel-jobs: Run the specified number of parallel jobs when
-  building HotSpot and the JDK.
+  building HotSpot and the JDK.  If this option is passed without an
+  argument, the number of online processors plus one is used.
 * --with-netbeans-home: The location of NetBeans for use in the VisualVM build,
   defaults to /usr/share/netbeans.
 * --with-ant-home: The location of Ant, defaults to /usr/share/ant.
@@ -141,6 +140,9 @@ to configure:
 * --with-openjdk-src-zip: Specify the location of the OpenJDK tarball to avoid downloading.
 * --with-hotspot-src-zip: Specify the location of the HotSpot tarball to avoid downloading.
 * --with-alt-jar: Use the specified jar binary in the second stage rather than the one just built.
+* --with-jaxp-drop-zip: Specify the location of the JAXP source drop zip file to avoid downloading.
+* --with-jaf-drop-zip: Specify the location of the JAF source drop zip file to avoid downloading.
+* --with-jaxws-drop-zip: Specify the location of the JAXWS source drop zip file to avoid downloading.
 * --with-cacao-home: Specify the location of an installed CACAO to use rather than downloading
   and building one.
 * --with-cacao-src-zip: Specify the location of a CACAO tarball to avoid downloading.
@@ -153,7 +155,6 @@ to configure:
 Other options may be supplied which enable or disable new features.
 These are documented fully in the relevant section below.
 
-* --enable-visualvm: Build VisualVM.
 * --enable-pulse-java: Build the PulseAudio sound provider.
 * --disable-xrender: Don't include the XRender pipeline.
 * --enable-nio2: Include the NIO2 backport.
@@ -177,15 +178,6 @@ OpenJDK, using the in-tree copy of JTReg.  Invoking 'make check' will
 cause the HotSpot, JDK and langtools test suites to be run.  The
 individual test suites may be run using the check-hotspot, check-jdk
 and check-langtools targets respectively.
-
-VisualVM
-========
-
-IcedTea6 supports the downloading and compilation of VisualVM 1.1.1
-via the --enable-visualvm option.  This requires NetBeans 6.5.  The
-build takes place following that of IcedTea, which is used to compile
-VisualVM, and the result is installed in the SDK image created by the
-OpenJDK build (i.e. openjdk/build/<os>-<arch>/j2sdk-image).
 
 The PulseAudio provider
 =======================
@@ -242,9 +234,10 @@ OpenJDK includes an NSS-based security provider in the form of
 sun.security.pkcs11.SunPKCS11.  However, as this needs to know the
 location of the NSS installation it should use, it is not enabled
 in normal OpenJDK builds.  As IcedTea can detect NSS using configure,
-it can simplify the process of enabling this provider.  If --enable-nss
-is specified, then a configuration file for the NSS provider will be
-generated and installed, and the provider turned on.
+it can simplify the process of enabling this provider by generating
+a configuration file for the NSS provider.  If --enable-nss is specified,
+this configuration will be turned on in lib/security/java.security.
+This can also be done manually at a later date.
 
 CACAO
 =====
@@ -279,12 +272,9 @@ development and builds are still likely to fail at present.
 The Browser Plugin
 ==================
 
-IcedTea6 currently includes two browser plugins; a new supported
-plugin based on NPRuntime and an older deprecated plugin used in
-previous releases.  By default, the first will be built and this
-is the recommended option.  Passing the option --disable-npplugin
-reverts to the old plugin, while --disable-plugin turns off the
-build of a browser plugin altogether.
+IcedTea6 contains a Free Software browser plugin based on NPRuntime
+called NPPlugin.  By default, this will be built, and it can be turned
+off using the -disable-plugin option.
 
 A test suite is supplied for the browser plugin.  It can be built
 using 'make plugin-tests' and run by loading the HTML page specified
@@ -328,14 +318,8 @@ can be specified using --with-hotspot-src-zip.  This skips the
 download stage and just verifies that the zip's MD5 sum matches that
 of the requested build.
 
-At present, two versions of HotSpot are officially supported.  These
-are HotSpot 14 ('original') which is provided by the upstream OpenJDK
-tarball, and 'hs16', which is used in hotspot.map to provide the
-latest version of HotSpot 16.  Thus, either --with-hotspot-build
-without an argument or --with-hotspot-build=hs16 provides the latest
-supported hs16, while no HotSpot build argument,
---without-hotspot-build or --with-hotspot-build=original uses the
-upstream HotSpot.
+At present, IcedTea6 only supports the 'original' HotSpot (hs17)
+provided as part of the upstream tarball.
 
 Javascript Support
 ==================
@@ -367,12 +351,17 @@ On architectures where hotspot is available, use
    --with-additional-vms=cacao,zero  (or shark instead of zero)
 on architectures where only zero (or shark) is available, use
    --with-additional-vms=cacao
-to build the additional VM's.  It's not possible to build cacao as the
+to build the additional VMs.  It's not possible to build cacao as the
 default VM, and zero as additional VM.
 To build zero as the default VM and shark as an additional VM, use
    --enable-zero --with-additional-vms=shark
 
-The additional VM's are available by calling the java with the option
+The additional VMs are available by calling the java with the option
 `-cacao', `-zero' or `-shark', or by calling the java tools with
 `-J-<vm name>'. If the build was configured with '--enable-shark',
 use `-Xint' to just use the zero VM.
+
+Please note that using this feature does not do as extensive testing
+of the VM as would enabling it in the default full bootstrap mode,
+which compiles IcedTea and then recompiles it using the just-built
+image.

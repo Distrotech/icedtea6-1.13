@@ -54,23 +54,16 @@ license header.  Instances are:
 Web Browser Plugin support
 ===========================
 
-IcedTea adds a browser plugin to OpenJDK.  IcedTea6 1.7 includes two
-versions.  The default, and currently supported, version is a rewrite
-called NPPlugin, developed to support recent Mozilla API changes.  It
-is based on the old gcjwebplugin and has LiveConnect support.
-
-The old plugin used by IcedTea6 1.6 and earlier is also included, but
-will not work with xulrunner 1.9.2 and up.  You are welcome to use the
-old plugin by supplying the --disable-npplugin option to configure,
-but please note that such a configuration is no longer supported and
-any bugs filed against it will be closed.
+IcedTea6 adds a browser plugin to OpenJDK.  The current version is a
+rewrite, developed to support recent Mozilla API changes. It can be
+enabled with the option --enable-plugin, and is based on gcjwebplugin.
 
 NetX
 ====
 
 NetX provides a drop-in replacement for javaws (Java Web Start). Since
 upstream NetX is dormant, we will be hosting and modifying the sources
-in the IcedTea repository, particularly in the rt/net/sourceforge/jnlp
+in the IcedTea repository, particularly in the netx/net/sourceforge/jnlp
 directory.
 
 The NetX sources are built into rt.jar using the same method as
@@ -104,9 +97,9 @@ The CACAO virtual machine (http://cacaovm.org) can be used as an
 alternative to the HotSpot virtual machine. One advantage of this is
 that it already provides a JIT for many platforms to which HotSpot has
 not yet been ported, including ppc, ppc64, arm and mips.  To use CACAO
-as the VM, use the --with-cacao option.  This will download version
-0.99.4 of CACAO during the build, which has been tested with this
-version of IcedTea6.
+as the VM, use the --with-cacao option.  This will download a snapshot
+of CACAO during the build, which has been tested with this version of
+IcedTea6.
 
 The environment variable CACAO_CONFIGURE_ARGS can be used to pass
 additional arguments to the cacao configure.
