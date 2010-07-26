@@ -1,5 +1,14 @@
+# HG changeset patch
+# User peterz
+# Date 1277808150 -14400
+# Node ID f1bafc4f249d2e5a4f0ff12af78e90b3109404e0
+# Parent  a05e047c5b98766ef05cac94e2edce7dc5764916
+6963870: NPE in CompoundBorder.getInsets()
+Reviewed-by: alexp
+Contributed-by: jon.vanalten@redhat.com
+
 diff -r a05e047c5b98 -r f1bafc4f249d src/share/classes/com/sun/java/swing/plaf/gtk/GTKPainter.java
---- openjdk.old/jdk/src/share/classes/com/sun/java/swing/plaf/gtk/GTKPainter.java	Tue Jun 22 20:36:55 2010 +0400
+--- openjdk.orig/jdk/src/share/classes/com/sun/java/swing/plaf/gtk/GTKPainter.java	Tue Jun 22 20:36:55 2010 +0400
 +++ openjdk/jdk/src/share/classes/com/sun/java/swing/plaf/gtk/GTKPainter.java	Tue Jun 29 14:42:30 2010 +0400
 @@ -1440,10 +1440,6 @@
              }

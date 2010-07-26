@@ -278,12 +278,12 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-jtreg-httpTest.patch \
 	patches/arm.patch \
 	patches/shark-debug-option.patch \
-	patches/openjdk/6678385.patch \
-	patches/openjdk/6961732.patch \
+	patches/openjdk/6678385-window_movement_crasher.patch \
+	patches/openjdk/6961732-negative_leading.patch \
 	patches/debug-dir.patch \
 	patches/no-sync.patch \
 	patches/icedtea-override-redirect-metacity.patch \
-	patches/openjdk/6963870.patch \
+	patches/openjdk/6963870-swing_npe.patch \
 	patches/openjdk/6668231-ssl_cert.patch
 
 if WITH_RHINO
