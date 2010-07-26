@@ -106,8 +106,8 @@ AC_MSG_RESULT(${ENABLE_XRENDER})
 
 AC_MSG_CHECKING([whether to include NIO2 support])
 AC_ARG_ENABLE([nio2],
-	      [AS_HELP_STRING([--disable-nio2],
-	      		      [Disable inclusion of backported NIO2])],
+	      [AS_HELP_STRING([--enable-nio2],
+	      		      [Enable inclusion of backported NIO2])],
 	      [ENABLE_NIO2="${enableval}"], [ENABLE_NIO2='no'])
 AM_CONDITIONAL([ENABLE_NIO2], [test x$ENABLE_NIO2 = xyes])
 AC_MSG_RESULT(${ENABLE_NIO2})

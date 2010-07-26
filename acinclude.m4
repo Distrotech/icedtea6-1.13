@@ -264,7 +264,7 @@ AC_DEFUN_ONCE([WITH_OPENJDK_SRC_DIR],
   DEFAULT_SRC_DIR=${abs_top_builddir}/openjdk
   AC_MSG_CHECKING([for an OpenJDK source directory])
   AC_ARG_WITH([openjdk-src-dir],
-              [AS_HELP_STRING(--with-openjdk-src-dir,specify the location of the openjdk sources)],
+              [AS_HELP_STRING(--with-openjdk-src-dir=DIR,specify the location of the openjdk sources)],
   [
     OPENJDK_SRC_DIR=${withval}
     with_external_src_dir=true
@@ -1111,7 +1111,7 @@ AC_DEFUN([AC_CHECK_FOR_OPENJDK],
 [
   AC_MSG_CHECKING([for an existing OpenJDK installation])
   AC_ARG_WITH([openjdk],
-              [AS_HELP_STRING([--with-openjdk],
+              [AS_HELP_STRING([--with-openjdk[=DIR]],
                               [perform a quick build with an installed copy of OpenJDK])],
               [
                 if test "x${withval}" = xno
@@ -1152,7 +1152,7 @@ AC_DEFUN([AC_CHECK_WITH_TZDATA_DIR],
   DEFAULT="/usr/share/javazi"
   AC_MSG_CHECKING([which Java timezone data directory to use])
   AC_ARG_WITH([tzdata-dir],
-	      [AS_HELP_STRING(--with-tzdata-dir,set the Java timezone data directory [[default=${DEFAULT}]])],
+	      [AS_HELP_STRING(--with-tzdata-dir,set the Java timezone data directory [[default=/usr/share/javazi]])],
   [
     if test "x${withval}" = x || test "x${withval}" = xyes; then
       TZDATA_DIR_SET=yes

@@ -1,5 +1,19 @@
 2010-07-21  Andrew John Hughes  <ahughes@redhat.com>
 
+	* INSTALL: Updated, with documentation
+	of new options and removal of outdated information.
+	* acinclude.m4:
+	(WITH_OPENJDK_SRC_DIR): Add '=DIR' to the configure help.
+	(AC_CHECK_FOR_OPENJDK): Add '[=DIR]' to the configure help.
+	(AC_CHECK_WITH_TZDATA_DIR): Remove broken expansion of ${DEFAULT}
+	in configure help, replacing it with the value used.
+	(IT_CHECK_NEW_PLUGIN): Remove 'experimental'.  Fix default in
+	configure help.
+	* configure.ac:
+	Fix default in configure help for NIO2.
+
+2010-07-21  Andrew John Hughes  <ahughes@redhat.com>
+
 	* README: Updated.
 
 2010-07-20  Andrew John Hughes  <ahughes@redhat.com>
