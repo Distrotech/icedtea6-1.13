@@ -1,4 +1,49 @@
-New in release 1.8 (2010-XX-XX):
+New in release 1.9 (2010-xx-xx):
+
+- Updated to OpenJDK6 b20.
+
+New in release 1.8.1 (2010-07-28):
+
+- OpenJDK:
+  - 6678385: Fixes jvm crashes when window is resized.
+  - Produces the "expected" behavior for full screen applications, when
+    running the Metacity window manager.
+- IcedTeaNPPlugin.
+  - RH524387: javax.net.ssl.SSLKeyException: RSA premaster secret error
+  - Set context classloader for all threads in an applet's threadgroup
+  - PR436: Close all applet threads on exit
+  - PR480: NPPlugin with NoScript extension.
+  - PR488: Question mark changing into underscore in URL.
+  - RH592553: Fix bug causing 100% CPU usage.
+  - Don't generate a random pointer from a pthread_t in the debug output.
+  - Add ForbiddenTargetException for legacy support.
+  - Use variadic macro for plugin debug message printing.
+  - Don't link the plugin with libxul libraries.
+  - Fix race conditions in plugin initialization code that were causing hangs.
+  - RH506730: BankID (Norwegian common online banking authentication system) applet fails to load.
+  - Fix policy evaluation to match the proprietary JDK.
+  - PR491: pass java_{code,codebase,archive} parameters to Java.
+  - Adds javawebstart.version property and give user permission to read that property.
+- NetX:
+  - Fix security flaw in NetX that allows arbitrary unsigned apps to set
+    any java property.
+  - Fix a flaw that allows unsigned code to access any file on the
+    machine (accessible to the user) and write to it.
+  - Make path sanitization consistent; use a blacklisting approach.
+  - Make the SingleInstanceServer thread a daemon thread.
+  - Handle JNLP files which use native libraries but do not indicate it
+  - Allow JNLP classloaders to share native libraries
+  - Added encoding support
+- PulseAudio:
+  - Eliminate spurious exception throwing.
+- Zero/Shark:
+  - PR shark/483: Fix miscompilation of sun.misc.Unsafe::getByte.
+  - PR PR icedtea/324, icedtea/481: Fix Shark VM crash.
+  - Fix Zero build on Hitachi SH.
+* SystemTap support:
+  - PR476: Enable building SystemTap support on GCC 4.5.
+
+New in release 1.8 (2010-04-13):
 
 - Updated to OpenJDK6 b18.
   - Nimbus Look 'n' Feel backported from OpenJDK7.
@@ -35,6 +80,8 @@ New in release 1.8 (2010-XX-XX):
 - Dependence on the binary plugs mechanism removed.  The plugin and NetX
   code is now imported into the JDK build in the same manner as langtools,
   CORBA, JAXP and JAXWS.
+- Fix for plugin buffer overflow: https://bugzilla.mozilla.org/show_bug.cgi?id=555342
+- Fix issue with ant -diagnostics on ant 1.8.0 due to changed exit code
 - Zero/Shark
   - Shark is now able to build itself.
   - For ARM, add Thumb2 JIT.
