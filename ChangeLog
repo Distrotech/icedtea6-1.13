@@ -1,6 +1,410 @@
+2010-07-26  Andrew John Hughes  <ahughes@redhat.com>
+
+	* README: Updated for HEAD using IcedTea7 version.
+	* INSTALL: Likewise.
+
+2010-07-21  Andrew John Hughes  <ahughes@redhat.com>
+
+	* INSTALL: Updated, with documentation
+	of new options and removal of outdated information.
+	* acinclude.m4:
+	(WITH_OPENJDK_SRC_DIR): Add '=DIR' to the configure help.
+	(AC_CHECK_FOR_OPENJDK): Add '[=DIR]' to the configure help.
+	(AC_CHECK_WITH_TZDATA_DIR): Remove broken expansion of ${DEFAULT}
+	in configure help, replacing it with the value used.
+	(IT_CHECK_NEW_PLUGIN): Remove 'experimental'.  Fix default in
+	configure help.
+	* configure.ac:
+	Fix default in configure help for NIO2.
+
+2010-07-21  Andrew John Hughes  <ahughes@redhat.com>
+
+	* README: Updated.
+
+2010-07-20  Andrew John Hughes  <ahughes@redhat.com>
+
+	* overlays/nio2/openjdk/jdk/src/solaris/native/sun/nio/fs/UnixNativeDispatcher.c:
+	Define _ATFILE_SOURCE to obtain fstatat64, regardless of architecture.
+
+2010-07-25  Andrew John Hughes  <ahughes@redhat.com>
+
+	Make purpose of OpenJDK patches clearer and
+	use original changeset for 6963870.
+	* patches/openjdk/6678385.patch,
+	* patches/openjdk/6961732.patch,
+	* patches/openjdk/6963870.patch: Renamed to...
+	* Makefile.am: Use new patch names.
+	* patches/openjdk/6678385-window_movement_crasher.patch,
+	* patches/openjdk/6961732-negative_leading.patch,
+	* patches/openjdk/6963870-swing_npe.patch: these.
+
+2010-07-25  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am: Add patch.
+	* patches/openjdk/6668231-ssl_cert.patch:
+	Backport SSL certificate fix 'Presence of a
+	critical subjectAltName causes JSSE's SunX509 to
+	fail trusted checks'.
+	* overlays/openjdk/jdk/test/sun/security/ssl/com/sun/net/ssl/internal/www/protocol/https/HttpsURLConnection/crisubn.jks,
+	* overlays/openjdk/jdk/test/sun/security/ssl/com/sun/net/ssl/internal/www/protocol/https/HttpsURLConnection/trusted.jks:
+	Keystores for the new test introduced by this patch.
+
+2010-07-23  Jon VanAlten  <jon.vanalten@redhat.com>
+
+	* patches/openjdk/6963870.patch: New file. Backpatched from jdk7 for
+	upstream bug#6963870. Fixes IcedTea Bug#477: NullPointerEx in swing
+	class CompoundBorder method getBorderInsets.
+	* Makefile.am: Include above patch.
+
+2010-07-23  Andrew John Hughes  <ahughes@redhat.com>
+
+	* netx/net/sourceforge/jnlp/security/AccessWarningPane.java:
+	(addComponents()): Fix call to getType().
+	* netx/net/sourceforge/jnlp/security/CertWarningPane.java: Likewise.
+	* netx/net/sourceforge/jnlp/security/SecurityWarningDialog.java:
+	(getType): Rename to getAccessType() to avoid conflict with
+	Window.getType() in OpenJDK7.
+
+2010-07-23 Andrew John Hughes  <ahughes@redhat.com>
+
+	* netx/javax/jnlp/BasicService.java,
+	* netx/javax/jnlp/ClipboardService.java,
+	* netx/javax/jnlp/DownloadService.java,
+	* netx/javax/jnlp/DownloadServiceListener.java,
+	* netx/javax/jnlp/ExtendedService.java,
+	* netx/javax/jnlp/ExtensionInstallerService.java,
+	* netx/javax/jnlp/FileContents.java,
+	* netx/javax/jnlp/FileOpenService.java,
+	* netx/javax/jnlp/FileSaveService.java,
+	* netx/javax/jnlp/JNLPRandomAccessFile.java,
+	* netx/javax/jnlp/PersistenceService.java,
+	* netx/javax/jnlp/PrintService.java,
+	* netx/javax/jnlp/ServiceManager.java,
+	* netx/javax/jnlp/ServiceManagerStub.java,
+	* netx/javax/jnlp/SingleInstanceListener.java,
+	* netx/javax/jnlp/SingleInstanceService.java,
+	* netx/javax/jnlp/UnavailableServiceException.java,
+	* netx/net/sourceforge/jnlp/AppletDesc.java,
+	* netx/net/sourceforge/jnlp/ApplicationDesc.java,
+	* netx/net/sourceforge/jnlp/AssociationDesc.java,
+	* netx/net/sourceforge/jnlp/ComponentDesc.java,
+	* netx/net/sourceforge/jnlp/DefaultLaunchHandler.java,
+	* netx/net/sourceforge/jnlp/ExtensionDesc.java,
+	* netx/net/sourceforge/jnlp/IconDesc.java,
+	* netx/net/sourceforge/jnlp/InformationDesc.java,
+	* netx/net/sourceforge/jnlp/InstallerDesc.java,
+	* netx/net/sourceforge/jnlp/JARDesc.java,
+	* netx/net/sourceforge/jnlp/JNLPFile.java,
+	* netx/net/sourceforge/jnlp/JNLPSplashScreen.java,
+	* netx/net/sourceforge/jnlp/JREDesc.java,
+	* netx/net/sourceforge/jnlp/LaunchException.java,
+	* netx/net/sourceforge/jnlp/LaunchHandler.java,
+	* netx/net/sourceforge/jnlp/Launcher.java,
+	* netx/net/sourceforge/jnlp/MenuDesc.java,
+	* netx/net/sourceforge/jnlp/NetxPanel.java,
+	* netx/net/sourceforge/jnlp/Node.java,
+	* netx/net/sourceforge/jnlp/PackageDesc.java,
+	* netx/net/sourceforge/jnlp/ParseException.java,
+	* netx/net/sourceforge/jnlp/Parser.java,
+	* netx/net/sourceforge/jnlp/PluginBridge.java,
+	* netx/net/sourceforge/jnlp/PropertyDesc.java,
+	* netx/net/sourceforge/jnlp/RelatedContentDesc.java,
+	* netx/net/sourceforge/jnlp/ResourcesDesc.java,
+	* netx/net/sourceforge/jnlp/SecurityDesc.java,
+	* netx/net/sourceforge/jnlp/ShortcutDesc.java,
+	* netx/net/sourceforge/jnlp/StreamEater.java,
+	* netx/net/sourceforge/jnlp/Version.java,
+	* netx/net/sourceforge/jnlp/cache/CacheEntry.java,
+	* netx/net/sourceforge/jnlp/cache/CacheUtil.java,
+	* netx/net/sourceforge/jnlp/cache/DefaultDownloadIndicator.java,
+	* netx/net/sourceforge/jnlp/cache/DownloadIndicator.java,
+	* netx/net/sourceforge/jnlp/cache/Resource.java,
+	* netx/net/sourceforge/jnlp/cache/ResourceTracker.java,
+	* netx/net/sourceforge/jnlp/cache/UpdatePolicy.java,
+	* netx/net/sourceforge/jnlp/event/ApplicationEvent.java,
+	* netx/net/sourceforge/jnlp/event/ApplicationListener.java,
+	* netx/net/sourceforge/jnlp/event/DownloadEvent.java,
+	* netx/net/sourceforge/jnlp/event/DownloadListener.java,
+	* netx/net/sourceforge/jnlp/runtime/AppThreadGroup.java,
+	* netx/net/sourceforge/jnlp/runtime/AppletAudioClip.java,
+	* netx/net/sourceforge/jnlp/runtime/AppletEnvironment.java,
+	* netx/net/sourceforge/jnlp/runtime/AppletInstance.java,
+	* netx/net/sourceforge/jnlp/runtime/ApplicationInstance.java,
+	* netx/net/sourceforge/jnlp/runtime/Boot.java,
+	* netx/net/sourceforge/jnlp/runtime/Boot13.java,
+	* netx/net/sourceforge/jnlp/runtime/JNLPClassLoader.java,
+	* netx/net/sourceforge/jnlp/runtime/JNLPPolicy.java,
+	* netx/net/sourceforge/jnlp/runtime/JNLPRuntime.java,
+	* netx/net/sourceforge/jnlp/runtime/JNLPSecurityManager.java,
+	* netx/net/sourceforge/jnlp/security/AccessWarningPane.java,
+	* netx/net/sourceforge/jnlp/security/AppletWarningPane.java,
+	* netx/net/sourceforge/jnlp/security/CertVerifier.java,
+	* netx/net/sourceforge/jnlp/security/CertWarningPane.java,
+	* netx/net/sourceforge/jnlp/security/CertsInfoPane.java,
+	* netx/net/sourceforge/jnlp/security/HttpsCertVerifier.java,
+	* netx/net/sourceforge/jnlp/security/MoreInfoPane.java,
+	* netx/net/sourceforge/jnlp/security/SecurityDialogPanel.java,
+	* netx/net/sourceforge/jnlp/security/SecurityUtil.java,
+	* netx/net/sourceforge/jnlp/security/SecurityWarningDialog.java,
+	* netx/net/sourceforge/jnlp/security/SingleCertInfoPane.java,
+	* netx/net/sourceforge/jnlp/security/VariableX509TrustManager.java,
+	* netx/net/sourceforge/jnlp/security/viewer/CertificatePane.java,
+	* netx/net/sourceforge/jnlp/security/viewer/CertificateViewer.java,
+	* netx/net/sourceforge/jnlp/services/ExtendedSingleInstanceService.java,
+	* netx/net/sourceforge/jnlp/services/InstanceExistsException.java,
+	* netx/net/sourceforge/jnlp/services/ServiceUtil.java,
+	* netx/net/sourceforge/jnlp/services/SingleInstanceLock.java,
+	* netx/net/sourceforge/jnlp/services/XBasicService.java,
+	* netx/net/sourceforge/jnlp/services/XClipboardService.java,
+	* netx/net/sourceforge/jnlp/services/XDownloadService.java,
+	* netx/net/sourceforge/jnlp/services/XExtendedService.java,
+	* netx/net/sourceforge/jnlp/services/XExtensionInstallerService.java,
+	* netx/net/sourceforge/jnlp/services/XFileContents.java,
+	* netx/net/sourceforge/jnlp/services/XFileSaveService.java,
+	* netx/net/sourceforge/jnlp/services/XJNLPRandomAccessFile.java,
+	* netx/net/sourceforge/jnlp/services/XPersistenceService.java,
+	* netx/net/sourceforge/jnlp/services/XPrintService.java,
+	* netx/net/sourceforge/jnlp/services/XServiceManagerStub.java,
+	* netx/net/sourceforge/jnlp/services/XSingleInstanceService.java,
+	* netx/net/sourceforge/jnlp/tools/JarRunner.java,
+	* netx/net/sourceforge/jnlp/tools/JarSigner.java,
+	* netx/net/sourceforge/jnlp/tools/KeyTool.java,
+	* netx/net/sourceforge/jnlp/util/FileUtils.java,
+	* netx/net/sourceforge/jnlp/util/PropertiesFile.java,
+	* netx/net/sourceforge/jnlp/util/Reflect.java,
+	* netx/net/sourceforge/jnlp/util/WeakList.java,
+	* netx/net/sourceforge/jnlp/util/XDesktopEntry.java,
+	* netx/net/sourceforge/nanoxml/XMLElement.java:
+	Normalise whitespace.
+
+2010-07-21  Deepak Bhole <dbhole@redhat.com>
+
+	* netx/net/sourceforge/jnlp/Parser.java: Undo changes from 98c88b32cdb4 to
+	Parser.java, since they could cause potential regressions.
+
+2010-07-20  Man Lung Wong  <mwong@redhat.com>
+
+	* netx/net/sourceforge/jnlp/SecurityDesc.java:
+	Add permission to read javawebstart.version
+	property as part of sandbox permission.
+	* netx/net/sourceforge/jnlp/runtime/JNLPRuntime.java (initialize):
+	Set the javawebstart.version property as part of System property
+	whenever a jnlp file is being launched (note: this now allows
+	the jnlp file in bug 486 to launch).
+
+2010-07-20  Mark Wielaard  <mjw@redhat.com>
+
+	* configure.ac (OPENJDK_BUILD_DIR): New AC_SUBST variable.
+	(with-abs-install-dir): Based on OPENJDK_BUILD_DIR when not given.
+	* Makefile.am (BUILD_DIR): Set to @OPENJDK_BUILD_DIR@.
+
+2010-07-20  Omair Majid  <omajid@redhat.com>
+
+	PR icedtea/491
+	* plugin/icedteanp/IcedTeaNPPlugin.cc
+	(plugin_create_applet_tag): Accept and pass on
+	java_{code,codebase,archive} tags to the java side of the plugin.
+
+2010-07-20  Omair Majid  <omajid@redhat.com>
+
+	* netx/net/sourceforge/jnlp/resources/Messages.properties:
+	Add LUnsignedJarWithSecurity LUnsignedJarWithSecurityInfo.
+	* netx/net/sourceforge/jnlp/runtime/JNLPClassLoader.java
+	(setSecurity): Can now throw a LaunchException if the JNLP file requests
+	permissions but the jars are unsigned.
+
+2010-07-19  Omair Majid  <omajid@redhat.com>
+
+	PR icedtea/372
+	* netx/net/sourceforge/jnlp/security/SecurityDialogUI.java: Renamed to..
+	* netx/net/sourceforge/jnlp/security/SecurityDialogPanel.java: New file.
+	Remove all usage of Look and Feel related functionality. Extend JPanel.
+	(createSetValueListener): New method.
+	(setVisible): New method.
+	(requestFocusOnDefaultButton): New method.
+	* netx/net/sourceforge/jnlp/security/AccessWarningPane.java
+	Extend SecurityDialogPanel instead of SecurityDialogUI
+	(AccessWarningPane): Take a SecurityWarningDialog instead of a JComponent
+	as a paramenter. Call addComponents.
+	(installComponents): Renamed to
+	(addComponents): New method.
+	(R): Moved to parent class.
+	(htmlWrap): Likewise.
+	* netx/net/sourceforge/jnlp/security/AppletWarningPane.java
+	Extend SecurityDialogPanel instead of SecurityDialogUI
+	(AppletWarningPane): Take a SecurityWarningDialog instead of a JComponent
+	as a paramter. Call addComponents.
+	(installComponents): Renamed to...
+	(addComponents): New method.
+	(htmlWrap): Moved to parent class.
+	* netx/net/sourceforge/jnlp/security/CertWarningPane.java
+	Extend SecurityDialogPanel instead of SecurityDialogUI
+	(CertWarningPane): Take a SecurityWarningDialog instead of a JComponent as
+	a parameter. Call addComponents.
+	(installComponents): Renamed to...
+	(addComponents): New method.
+	(R): Moved to parent class.
+	(htmlWrap): Likewise.
+	(CheckBoxListener): Add debug information.
+	* netx/net/sourceforge/jnlp/security/CertsInfoPane.java
+	Extend SecurityDialogPanel instead of SecurityDialogUI
+	(CertsInfoPane): Take a SecurityWarningDialog instead of a JComponent as a
+	parameter. Call addComponents.
+	(installComponents): Renamed to...
+	(addComponents): New method.
+	* netx/net/sourceforge/jnlp/security/MoreInfoPane.java
+	Extend SecurityDialogPanel instead of SecurityDialogUI
+	(MoreInfoPane): Take a SecurityWarningDialog instead of a JComponent as a
+	parameter. Call addComponents.
+	(installComponents): Renamed to...
+	(addComponents): New method.
+	(R): Moved to parent class.
+	(htmlWrap): Likewise.
+	* netx/net/sourceforge/jnlp/security/SecurityWarningDialog.java
+	Extend JDialog instead of JOptionPane. Add panel, value as new fields.
+	(SecurityWarningDialog): Call super and initDialog.
+	(showAccessWarningDialog): Modified to use the cleaned-up api.
+	(showCertWarningDialog): Likewise.
+	(showMoreInfoDialog): Likewise.
+	(showCertInfoDialog): Likewise.
+	(showSingleCertInfoDialog): Likewise.
+	(showAppletWarning): Likewise.
+	(createDialog): Renamed to...
+	(initDialog): New method. Clean up api and remove JOptionPane references.
+	(updateUI): Renamed to...
+	(installPanel): Switch from Look and Feel related setUI methods to simple
+	JComponents.
+	(selectDefaultButton): New method. Causes the default button to request
+	focus.
+	(setValue): New method. Set the return value of this dialog.
+	(getValue): New method. Get the return value of this dialog.
+	(setSystemLookAndFeel): New method. Set the Look and Feel to the System
+	look and feel.
+	* netx/net/sourceforge/jnlp/security/SingleCertInfoPane.java
+	(SingleCertInfoPane): Take a SecurityWarningDialog instead of a JComponent
+	as a parameter.
+	(buildTree): Use parant instead of optionPane.
+	(populateTable): Likewise.
+	* netx/net/sourceforge/jnlp/security/viewer/CertificatePane.java: Extend 
+	JPanel instead of SecurityDialogUI. Add two new fields: parent and
+	defaultFocusComponent.
+	(CertificatePane): Take a JDialog as the argument.
+	(installUI): Removed.
+	(setSystemLookAndFeel): Removed.
+	(installComponents): Renamed to ...
+	(addComponents): New method.
+	(focusOnDefaultButton): New method. Makes the defaultFocusComponent get
+	focus.
+	(CloseButtonListener): New class. Disposes the JDialog.
+	* netx/net/sourceforge/jnlp/security/viewer/CertificateViewer.java: Extend
+	JDialog instead of JOptionPane
+	(CertificateViewer): Initialize the JDialog, add the CertificatePanel and
+	set default focus.
+	(updateUI): Removed.
+	(centerDialog): Takes no arguments.
+	(createDialog): Removed.
+	(showCertificateViewer): Use the new cleaned up api for CertificateViewer.
+	(setSystemLookAndFeel): New method. Sets the LookAndFeel of the system.
+
+2010-07-19  Gary Benson  <gbenson@redhat.com>
+            Xerxes Rånby  <xerxes@zafena.se>
+
+	PR icedtea/498
+	* ports/hotspot/src/share/vm/shark/sharkTopLevelBlock.cpp
+	(SharkTopLevelBlock::handle_exception): Catch-all handler can be unloaded.
+
+2010-07-16  Deepak Bhole <dbhole@redhat.com>
+
+	* patches/icedtea-policy-evaluation.patch: New patch. Fixes policy
+	evaluation to match the proprietary JDK.
+
+2010-07-15  Deepak Bhole <dbhole@redhat.com>
+
+	* patches/openjdk/6678385.patch: New file. Backpatched from jdk7 for 
+	upstream bug#6678385. Fixes rhbz# 551835. Fixes jvm crashes when window is
+	resized.
+
+2010-07-14  Jon VanAlten  <jon.vanalten@redhat.com>
+	* patches/icedtea-override-redirect-metacity.patch: Produces the
+	"expected" behavior for full screen applications or other situations
+	where developers wish to present elements that would cover things like
+	panels.  We previously had a version of this patch since changeset 876
+	ebc064e8892d, but dropped it in changeset changeset 1731
+	83619682858e because upstream had rejected as a metacity bug[1].
+	Metacity maintains that this behavior does not break any spec and does
+	not appear likely to change either[2], so we must be the "good guys" and
+	provide the expected behavior.  See discussion[3].
+	[1] http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6514512
+	[2] https://bugzilla.gnome.org/show_bug.cgi?id=405269
+	[3] http://mail.openjdk.java.net/pipermail/distro-pkg-dev/2010-April/008862.html
+	* Makefile.am: Apply icedtea-override-redirect-metacity.patch.
+
+2010-07-14  Deepak Bhole <dbhole@redhat.com>
+
+	* plugin/icedteanp/java/sun/applet/PluginMessageConsumer.java: Add a new
+	processedIds list to track which instances have been instantiated.
+	(okToProcess): Register width as priority only after handle is acquired.
+	Process resize messages only after tag and handle are processed.
+	(notifyWorkerIsFree): Add instance id to processedIds list if the worked
+	being free'd is an init worker.
+	(getFreeWorker): Create new normal worked only if worker count is less
+	than MAX_WORKERS - PRIORITY_WORKERS.
+	(dumpWorkerStatus): New method. Useful when debugging -- prints status of
+	all workers.
+	* plugin/icedteanp/java/sun/applet/PluginMessageHandlerWorker.java
+	(toString): New method. Returns the string representation of the worker
+	instance at call time.
+
+2010-07-13  Matthias Klose  <doko@ubuntu.com>
+
+	* acinclude.m4 (IT_CHECK_PLUGIN_DEPENDENCIES): Don't require libxul
+	libraries.
+	(IT_CHECK_XULRUNNER_VERSION): Use pkgconfig --modversion as version.
+
+2010-07-13  Deepak Bhole <dbhole@redhat.com>
+
+	* plugin/icedteanp/IcedTeaJavaRequestProcessor.h: Set timeout to 120
+	seconds (previous commit mistakenly changed it to 10).
+	* plugin/icedteanp/IcedTeaPluginUtils.h: Print debug info only in debug
+	mode.
+
+2010-07-13  Mark Wielaard  <mjw@redhat.com>
+
+	Reported by William Cohen <wcohen@redhat.com>
+	* tapset/hotspot.stp.in (object_alloc): size is arg4, not arg3.
+
+2010-06-14  Deepak Bhole <dbhole@redhat.com>
+
+	* plugin/icedteanp/IcedTeaJavaRequestProcessor.cc: Use variadic macro
+	for debug message printing.
+	* plugin/icedteanp/IcedTeaJavaRequestProcessor.h: Same.
+	* plugin/icedteanp/IcedTeaNPPlugin.cc: Same.
+	* plugin/icedteanp/IcedTeaPluginRequestProcessor.cc: Same.
+	* plugin/icedteanp/IcedTeaPluginUtils.cc: Same.
+	* plugin/icedteanp/IcedTeaPluginUtils.h: Same.
+	* plugin/icedteanp/IcedTeaScriptablePluginObject.cc: Same.
+
+2010-07-12 Andrew John Hughes  <ahughes@redhat.com>
+
+	PR icedtea/521
+	* Makefile.am:
+	(SOURCEPATH_DIRS): The untainted srcdir
+	version of generated should be used.
+	* configure.ac:
+	Remove duplicate WITH_OPENJDK_SRC_DIR call.
+
+2010-07-12 Jon VanAlten <jon.vanalten@redhat.com>
+	* pulseaudio/src/java/org/classpath/icedtea/pulseaudio/PulseAudioDataLine.java
+	* pulseaudio/src/java/org/classpath/icedtea/pulseaudio/PulseAudioLine.java
+	* pulseaudio/src/java/org/classpath/icedtea/pulseaudio/PulseAudioSourceDataLine.java
+	* pulseaudio/src/java/org/classpath/icedtea/pulseaudio/PulseAudioTargetDataLine.java:
+	Eliminate spurious exception throwing from open, close, read, write,
+	drain, and flush calls on closed lines.
+	Use isOpen() API call instead of instance variable where appropriate.
+
 2010-07-08  Man Lung Wong  <mwong@redhat.com>
 
-    * netx/net/sourceforge/jnlp/Parser.java:
+	* netx/net/sourceforge/jnlp/Parser.java:
 	(getRootNode): Used BufferedInputStream instead of InputStream to
 	have mark and reset method available. Passed the encoding to the
 	constructor of InputStreamReader, such that the stream will now
@@ -4813,7 +5217,7 @@
 
 	* Makefile.am:
 	Update to b17 tarball.
-	
+
 2009-10-02  Andrew John Hughes  <ahughes@redhat.com>
 
 	Bump to b17 and use original HotSpot.

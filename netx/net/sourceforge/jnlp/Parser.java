@@ -1,16 +1,16 @@
 // Copyright (C) 2001-2003 Jon A. Maxwell (JAM)
 // Copyright (C) 2009 Red Hat, Inc.
-// 
+//
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or (at your option) any later version.
-// 
+//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
@@ -34,7 +34,7 @@ import net.sourceforge.nanoxml.*;
  * Implements JNLP specification version 1.0.
  *
  * @author <a href="mailto:jmaxwell@users.sourceforge.net">Jon A. Maxwell (JAM)</a> - initial author
- * @version $Revision: 1.13 $ 
+ * @version $Revision: 1.13 $
  */
 class Parser {
 
@@ -87,6 +87,9 @@ class Parser {
     /** the specification version */
     private Version spec;
 
+    /** the base URL that all hrefs are relative to */
+    private URL base;
+
     /** the codebase URL */
     private URL codebase;
 
@@ -110,7 +113,7 @@ class Parser {
      * constructor.
      *
      * @param file the (uninitialized) file reference
-     * @param base if codebase is not specified, a default base for relative URLs 
+     * @param base if codebase is not specified, a default base for relative URLs
      * @param root the root node
      * @param strict whether to enforce strict compliance with the JNLP spec
      * @param allowExtensions whether to allow extensions to the JNLP spec
@@ -129,8 +132,8 @@ class Parser {
         // JNLP tag information
         this.spec = getVersion(root, "spec", "1.0+");
         this.codebase = addSlash(getURL(root, "codebase", base));
-        
-        fileLocation = getURL(root, "href", codebase);
+        this.base = (codebase!=null) ? codebase : base; // if codebase not specified use default codebase
+        fileLocation = getURL(root, "href", this.base);
 
         // ensure version is supported
         if (!supportedVersions.matchesAny(spec))
@@ -147,37 +150,37 @@ class Parser {
         return supportedVersions;
     }
 
-    /** 
+    /**
      * Returns the file version.
      */
     public Version getFileVersion() {
         return getVersion(root, "version", null);
     }
 
-    /** 
+    /**
      * Returns the file location.
      */
     public URL getFileLocation() {
         return fileLocation;
     }
 
-    /** 
+    /**
      * Returns the codebase.
      */
     public URL getCodeBase() {
         return codebase;
     }
 
-    /** 
+    /**
      * Returns the specification version.
      */
     public Version getSpecVersion() {
         return spec;
     }
 
-    // 
+    //
     // This section loads the resources elements
-    // 
+    //
 
     /**
      * Returns all of the ResourcesDesc elements under the specified
@@ -213,9 +216,9 @@ class Parser {
         boolean mainFlag = false; // if found a main tag
 
         // create resources
-        ResourcesDesc resources = 
-            new ResourcesDesc(file, 
-                              getLocales(node), 
+        ResourcesDesc resources =
+            new ResourcesDesc(file,
+                              getLocales(node),
                               splitString(getAttribute(node, "os", null)),
                               splitString(getAttribute(node, "arch", null)));
 
@@ -224,7 +227,7 @@ class Parser {
         while (child != null) {
             String name = child.getNodeName();
 
-            // check for nativelib but no trusted environment 
+            // check for nativelib but no trusted environment
             if ("nativelib".equals(name))
                 if (!isTrustedEnvironment())
                     throw new ParseException(R("PUntrustedNative"));
@@ -256,7 +259,7 @@ class Parser {
             if ("extension".equals(name))
                 resources.addResource( getExtension(child) );
 
-            if ("property".equals(name)) 
+            if ("property".equals(name))
                 resources.addResource( getProperty(child) );
 
             if ("package".equals(name))
@@ -271,12 +274,12 @@ class Parser {
     /**
      * Returns the JRE element at the specified node.
      *
-     * @param node the j2se/java node 
+     * @param node the j2se/java node
      * @throws ParseException if the JNLP file is invalid
      */
     public JREDesc getJRE(Node node) throws ParseException {
         Version version = getVersion(node, "version", null);
-        URL location = getURL(node, "href", codebase);
+        URL location = getURL(node, "href", base);
         String vmArgs = getAttribute(node, "java-vm-args",null);
         try {
             checkVMArgs(vmArgs);
@@ -298,12 +301,12 @@ class Parser {
     /**
      * Returns the JAR element at the specified node.
      *
-     * @param node the jar or nativelib node 
+     * @param node the jar or nativelib node
      * @throws ParseException if the JNLP file is invalid
      */
     public JARDesc getJAR(Node node) throws ParseException {
         boolean nativeJar = "nativelib".equals(node.getNodeName());
-        URL location = getRequiredURL(node, "href", codebase);
+        URL location = getRequiredURL(node, "href", base);
         Version version = getVersion(node, "version", null);
         String part = getAttribute(node, "part", null);
         boolean main = "true".equals(getAttribute(node, "main", "false"));
@@ -311,7 +314,7 @@ class Parser {
         int size = Integer.parseInt(getAttribute(node, "size", "0"));
 
         if (nativeJar && main)
-            if (strict) 
+            if (strict)
                 throw new ParseException(R("PNativeHasMain"));
 
         return new JARDesc(location, version, part, lazy, main, nativeJar, true);
@@ -321,13 +324,13 @@ class Parser {
     /**
      * Returns the Extension element at the specified node.
      *
-     * @param node the extension node 
+     * @param node the extension node
      * @throws ParseException if the JNLP file is invalid
      */
     public ExtensionDesc getExtension(Node node) throws ParseException {
         String name = getAttribute(node, "name", null);
         Version version = getVersion(node, "version", null);
-        URL location = getRequiredURL(node, "href", codebase);
+        URL location = getRequiredURL(node, "href", base);
 
         ExtensionDesc ext = new ExtensionDesc(name, version, location);
 
@@ -346,7 +349,7 @@ class Parser {
     /**
      * Returns the Property element at the specified node.
      *
-     * @param node the property node 
+     * @param node the property node
      * @throws ParseException if the JNLP file is invalid
      */
     public PropertyDesc getProperty(Node node) throws ParseException {
@@ -359,7 +362,7 @@ class Parser {
     /**
      * Returns the Package element at the specified node.
      *
-     * @param node the package node 
+     * @param node the package node
      * @throws ParseException if the JNLP file is invalid
      */
     public PackageDesc getPackage(Node node) throws ParseException {
@@ -370,9 +373,9 @@ class Parser {
         return new PackageDesc(name, part, recursive);
     }
 
-    // 
+    //
     // This section loads the information elements
-    // 
+    //
 
     /**
      * Returns all of the information elements under the specified
@@ -430,7 +433,7 @@ class Parser {
                 addInfo(info, child, kind, getSpanText(child));
             }
             if ("homepage".equals(name))
-                addInfo(info, child, null, getRequiredURL(child, "href", codebase));
+                addInfo(info, child, null, getRequiredURL(child, "href", base));
             if ("icon".equals(name))
                 addInfo(info, child, getAttribute(child, "kind", "default"), getIcon(child));
             if ("offline-allowed".equals(name))
@@ -459,7 +462,7 @@ class Parser {
     /**
      * Adds a key,value pair to the information object.
      *
-     * @param info the information object 
+     * @param info the information object
      * @param node node name to be used as the key
      * @param mod key name appended with "-"+mod if not null
      * @param value the info object to add (icon or string)
@@ -484,15 +487,15 @@ class Parser {
         int height = Integer.parseInt(getAttribute(node, "height", "-1"));
         int size = Integer.parseInt(getAttribute(node, "size", "-1"));
         int depth = Integer.parseInt(getAttribute(node, "depth", "-1"));
-        URL location = getRequiredURL(node, "href", codebase);
-        Object kind = getAttribute(node, "kind", "default"); 
+        URL location = getRequiredURL(node, "href", base);
+        Object kind = getAttribute(node, "kind", "default");
 
         return new IconDesc(location, kind, width, height, depth, size);
     }
 
-    // 
+    //
     // This section loads the security descriptor element
-    // 
+    //
 
     /**
      * Returns the security descriptor element.  If no security
@@ -506,7 +509,7 @@ class Parser {
         Node nodes[] = getChildNodes(parent, "security");
 
         // test for too many security elements
-        if (nodes.length > 1) 
+        if (nodes.length > 1)
             if (strict)
                 throw new ParseException(R("PTwoSecurity"));
 
@@ -521,8 +524,8 @@ class Parser {
         else if (strict)
             throw new ParseException(R("PEmptySecurity"));
 
-        if (codebase != null)
-            return new SecurityDesc(file, type, codebase.getHost());
+        if (base != null)
+            return new SecurityDesc(file, type, base.getHost());
         else
             return new SecurityDesc(file, type, null);
     }
@@ -542,9 +545,9 @@ class Parser {
         return false;
     }
 
-    // 
+    //
     // This section loads the launch descriptor element
-    // 
+    //
 
     /**
      * Returns the launch descriptor element, either AppletDesc,
@@ -589,7 +592,7 @@ class Parser {
     public AppletDesc getApplet(Node node) throws ParseException {
         String name = getRequiredAttribute(node, "name", R("PUnknownApplet"));
         String main = getRequiredAttribute(node, "main-class", null);
-        URL docbase = getURL(node, "documentbase", codebase);
+        URL docbase = getURL(node, "documentbase", base);
         Map paramMap = new HashMap();
         int width = 0;
         int height = 0;
@@ -630,12 +633,12 @@ class Parser {
         Node args[] = getChildNodes(node, "argument");
         for (int i=0; i < args.length; i++) {
             //argsList.add( args[i].getNodeValue() );
-            
+
             //This approach was not finding the argument text
             argsList.add( getSpanText(args[i]) );
         }
 
-        String argStrings[] = 
+        String argStrings[] =
             (String[]) argsList.toArray( new String[argsList.size()] );
 
         return new ApplicationDesc(main, argStrings);
@@ -666,18 +669,18 @@ class Parser {
 
         return new AssociationDesc(mimeType, extensions);
     }
-    
+
     /**
      * Returns the shortcut descriptor.
      */
     public ShortcutDesc getShortcut(Node node) throws ParseException {
-        
+
         String online = getAttribute(node, "online", "true");
         boolean shortcutIsOnline = Boolean.valueOf(online);
-        
+
         boolean showOnDesktop = false;
         MenuDesc menu = null;
-        
+
         // step through the elements
         Node child = node.getFirstChild();
         while (child != null) {
@@ -694,44 +697,44 @@ class Parser {
                 }
                 menu = getMenu(child);
             }
-            
+
             child = child.getNextSibling();
         }
-        
+
         ShortcutDesc shortcut = new ShortcutDesc(shortcutIsOnline, showOnDesktop);
         if (menu != null) {
             shortcut.addMenu(menu);
         }
         return shortcut;
     }
-    
+
     /**
      * Returns the menu descriptor.
      */
     public MenuDesc getMenu(Node node) {
         String subMenu = getAttribute(node, "submenu", null);
-        
+
         return new MenuDesc(subMenu);
     }
 
-    
+
     /**
      * Returns the related-content descriptor.
      */
     public RelatedContentDesc getRelatedContent(Node node) throws ParseException {
-        
+
         getRequiredAttribute(node, "href", null);
-        URL location = getURL(node, "href", codebase);
-        
+        URL location = getURL(node, "href", base);
+
         String title = null;
         String description = null;
         IconDesc icon = null;
-        
+
         // step through the elements
         Node child = node.getFirstChild();
         while (child != null) {
             String name = child.getNodeName();
-            
+
             if ("title".equals(name)) {
                 if (title != null && strict) {
                     throw new ParseException(R("PTwoTitles"));
@@ -748,19 +751,19 @@ class Parser {
                 }
                 icon = getIcon(child);
             }
-            
+
             child = child.getNextSibling();
         }
-        
+
         RelatedContentDesc relatedContent = new RelatedContentDesc(location);
         relatedContent.setDescription(description);
         relatedContent.setIconDesc(icon);
         relatedContent.setTitle(title);
-        
+
         return relatedContent;
-        
+
     }
-    
+
     // other methods
 
     /**
@@ -787,7 +790,7 @@ class Parser {
                     part.setCharAt(part.length()-1, ' '); // join with the space
                 else
                     break; // bizarre while format gets \ at end of string right (no extra space added at end)
-            } 
+            }
 
             // delete \ quote chars
             for (int i = part.length(); i-- > 0;) // sweet syntax for reverse loop
@@ -807,7 +810,7 @@ class Parser {
      */
     public Locale[] getLocales(Node node) {
         List locales = new ArrayList();
-        String localeParts[] = 
+        String localeParts[] =
             splitString(getAttribute(node, "locale", ""));
 
         for (int i=0; i < localeParts.length; i++) {
@@ -906,8 +909,8 @@ class Parser {
             return null;
 
         if (!source.toString().endsWith("/")) {
-            try { 
-                source = new URL(source.toString()+"/"); 
+            try {
+                source = new URL(source.toString()+"/");
             }
             catch (MalformedURLException ex) {
             }
@@ -997,7 +1000,7 @@ class Parser {
         else
             return new Version(version);
     }
-    
+
     /**
      * Check that the VM args are valid and safe
      * @param vmArgs a string containing the args
@@ -1007,15 +1010,15 @@ class Parser {
         if (vmArgs == null) {
             return;
         }
-        
+
         List<String> validArguments = Arrays.asList(getValidVMArguments());
         List<String> validStartingArguments = Arrays.asList(getValidStartingVMArguments());
-        
+
         String[] arguments = vmArgs.split(" ");
         boolean argumentIsValid = false;
         for (String argument: arguments) {
             argumentIsValid = false;
-            
+
             if (validArguments.contains(argument)) {
                 argumentIsValid = true;
             } else {
@@ -1026,17 +1029,17 @@ class Parser {
                     }
                 }
             }
-            
+
             if (!argumentIsValid) {
                 throw new IllegalArgumentException(argument);
             }
         }
-        
+
     }
-    
+
     /**
      * Returns an array of valid (ie safe and supported) arguments for the JVM
-     * 
+     *
      * Based on http://java.sun.com/javase/6/docs/technotes/guides/javaws/developersguide/syntax.html
      */
     private String[] getValidVMArguments() {
@@ -1046,7 +1049,7 @@ class Parser {
         "-server",                          /* to select the server VM */
         "-verbose",                         /* enable verbose output */
         "-version",                         /* print product version and exit */
-        "-showversion",                     /* print product version and continue */                              
+        "-showversion",                     /* print product version and continue */
         "-help",                            /* print this help message */
         "-X",                               /* print help on non-standard options */
         "-ea",                              /* enable assertions */
@@ -1074,7 +1077,7 @@ class Parser {
     /**
      * Returns an array containing the starts of valid (ie safe and supported)
      * arguments for the JVM
-     * 
+     *
      * Based on http://java.sun.com/javase/6/docs/technotes/guides/javaws/developersguide/syntax.html
      */
     private String[] getValidStartingVMArguments() {
@@ -1139,7 +1142,7 @@ class Parser {
         // String result = ((Element) node).getAttribute(name);
         String result = node.getAttribute(name);
 
-        if (result == null || result.length()==0) 
+        if (result == null || result.length()==0)
             return defaultValue;
 
         return result;
@@ -1168,16 +1171,16 @@ class Parser {
             Node document = new Node(TinyParser.parseXML(input));
             Node jnlpNode = getChildNode(document, "jnlp"); // skip comments
             */
-            
-            //A BufferedInputStream is used to allow marking and reseting 
-            //of a stream.    
+
+            //A BufferedInputStream is used to allow marking and reseting
+            //of a stream.
             BufferedInputStream bs = new BufferedInputStream(input);
 
             /* NANO */
             final XMLElement xml = new XMLElement();
             final PipedInputStream pin = new PipedInputStream();
-            final PipedOutputStream pout = new PipedOutputStream(pin);   
-            final InputStreamReader isr = new InputStreamReader(bs, getEncoding(bs));    
+            final PipedOutputStream pout = new PipedOutputStream(pin);
+            final InputStreamReader isr = new InputStreamReader(bs, getEncoding(bs));
             // Clean the jnlp xml file of all comments before passing
             // it to the parser.
             new Thread(
@@ -1200,7 +1203,7 @@ class Parser {
             throw new ParseException(R("PBadXML"), ex);
         }
     }
-    
+
     /**
      * Returns the name of the encoding used in this InputStream.
      *
@@ -1208,22 +1211,22 @@ class Parser {
      * @return a String representation of encoding
      */
     private static String getEncoding(InputStream input) throws IOException{
-        //Fixme: This only recognizes UTF-8, UTF-16, and 
+        //Fixme: This only recognizes UTF-8, UTF-16, and
         //UTF-32, which is enough to parse the prolog portion of xml to
         //find out the exact encoding (if it exists). The reason being
         //there could be other encodings, such as ISO 8859 which is 8-bits
-        //but it supports latin characters.  
+        //but it supports latin characters.
         //So what needs to be done is to parse the prolog and retrieve
         //the exact encoding from it.
 
         int[] s = new int[4];
         String encoding = "UTF-8";
 
-        //Determine what the first four bytes are and store 
+        //Determine what the first four bytes are and store
         //them into an int array.
         input.mark(4);
         for (int i = 0; i < 4; i++) {
-            s[i] = input.read(); 
+            s[i] = input.read();
         }
         input.reset();
 
@@ -1238,31 +1241,30 @@ class Parser {
                     encoding = "X-UTF-32LE-BOM";
                 }
             }
-        } else if (s[0] == 254 && s[1] == 255 && (s[2] != 0 || 
+        } else if (s[0] == 254 && s[1] == 255 && (s[2] != 0 ||
           s[3] != 0)) {
             encoding = "UTF-16";
 
-        } else if (s[0] == 0 && s[1] == 0 && s[2] == 254 && 
+        } else if (s[0] == 0 && s[1] == 0 && s[2] == 254 &&
           s[3] == 255) {
             encoding = "X-UTF-32BE-BOM";
 
-        } else if (s[0] == 0 && s[1] == 0 && s[2] == 0 && 
+        } else if (s[0] == 0 && s[1] == 0 && s[2] == 0 &&
           s[3] == 60) {
             encoding = "UTF-32BE";
- 
-        } else if (s[0] == 60 && s[1] == 0 && s[2] == 0 && 
+
+        } else if (s[0] == 60 && s[1] == 0 && s[2] == 0 &&
           s[3] == 0) {
             encoding = "UTF-32LE";
 
-        } else if (s[0] == 0 && s[1] == 60 && s[2] == 0 && 
-          s[3] == 63) { 
-            encoding = "UTF-16BE"; 
+        } else if (s[0] == 0 && s[1] == 60 && s[2] == 0 &&
+          s[3] == 63) {
+            encoding = "UTF-16BE";
         } else if (s[0] == 60 && s[1] == 0 && s[2] == 63 &&
-          s[3] == 0) { 
+          s[3] == 0) {
             encoding = "UTF-16LE";
         }
 
         return encoding;
     }
 }
-

@@ -23,6 +23,13 @@
  * have any questions.
  */
 
+/**
+ * fstatat in glibc requires _ATFILE_SOURCE to be defined.
+ */
+#if defined(__linux__)
+#define _ATFILE_SOURCE
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -102,32 +109,6 @@ static futimesat_func* my_futimesat_func = NULL;
 static fdopendir_func* my_fdopendir_func = NULL;
 
 /**
- * fstatat missing from glibc on Linux. Temporary workaround
- * for x86/x64, will fail to compile on other architectures.
- */
-#if defined(__linux__) && defined(__i386)
-static int fstatat64_wrapper(int dfd, const char *path,
-                             struct stat64 *statbuf, int flag)
-{
-    #ifndef __NR_fstatat64
-    #define __NR_fstatat64  300
-    #endif
-    return syscall(__NR_fstatat64, dfd, path, statbuf, flag);
-}
-#endif
-
-#if defined(__linux__) && defined(__x86_64__)
-static int fstatat64_wrapper(int dfd, const char *path,
-                             struct stat64 *statbuf, int flag)
-{
-    #ifndef __NR_newfstatat
-    #define __NR_newfstatat  262
-    #endif
-    return syscall(__NR_newfstatat, dfd, path, statbuf, flag);
-}
-#endif
-
-/**
  * Call this to throw an internal UnixException when a system/library
  * call fails
  */
@@ -198,9 +179,9 @@ Java_sun_nio_fs_UnixNativeDispatcher_initIDs(JNIEnv* env, jclass this)
     my_fdopendir_func = (fdopendir_func*) dlsym(RTLD_DEFAULT, "fdopendir");
 
 #if defined(__linux__)
-    /* fstatat64 missing from glibc */
+    /* fstatat64 from glibc requires a define */
     if (my_fstatat64_func == NULL)
-        my_fstatat64_func = (fstatat64_func*)&fstatat64_wrapper;
+        my_fstatat64_func = (fstatat64_func*)&fstatat64;
 #endif
 }
 

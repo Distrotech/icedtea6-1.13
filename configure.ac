@@ -106,8 +106,8 @@ AC_MSG_RESULT(${ENABLE_XRENDER})
 
 AC_MSG_CHECKING([whether to include NIO2 support])
 AC_ARG_ENABLE([nio2],
-	      [AS_HELP_STRING([--disable-nio2],
-	      		      [Disable inclusion of backported NIO2])],
+	      [AS_HELP_STRING([--enable-nio2],
+	      		      [Enable inclusion of backported NIO2])],
 	      [ENABLE_NIO2="${enableval}"], [ENABLE_NIO2='no'])
 AM_CONDITIONAL([ENABLE_NIO2], [test x$ENABLE_NIO2 = xyes])
 AC_MSG_RESULT(${ENABLE_NIO2})
@@ -140,6 +140,8 @@ IT_GET_LSB_DATA
 
 IT_SET_ARCH_SETTINGS
 SET_OS_DIRS
+OPENJDK_BUILD_DIR=openjdk.build
+AC_SUBST(OPENJDK_BUILD_DIR)
 
 if test "${with_openjdk}" = true
 then
@@ -170,7 +172,6 @@ fi
 FIND_RHINO_JAR
 WITH_OPENJDK_SRC_ZIP
 WITH_HOTSPOT_SRC_ZIP
-WITH_OPENJDK_SRC_DIR
 WITH_ALT_JAR_BINARY
 WITH_JAXP_DROP_ZIP
 WITH_JAF_DROP_ZIP
@@ -312,10 +313,10 @@ public:
 	      [AS_HELP_STRING([--with-abs-install-dir], 
 			      [The absolute path where the j2sdk-image dir will be installed])],
 	      [if test "x${withval}" = x; then
-		 ABS_JAVA_HOME_DIR="`pwd`/openjdk/build/${BUILD_OS_DIR}-${BUILD_ARCH_DIR}/j2sdk-image"
+		 ABS_JAVA_HOME_DIR="${abs_top_builddir}/${OPENJDK_BUILD_DIR}/j2sdk-image"
 	       else
 		 ABS_JAVA_HOME_DIR="${withval}"
-	       fi], [ABS_JAVA_HOME_DIR="`pwd`/openjdk/build/${BUILD_OS_DIR}-${BUILD_ARCH_DIR}/j2sdk-image"])
+	       fi], [ABS_JAVA_HOME_DIR="${abs_top_builddir}/${OPENJDK_BUILD_DIR}/j2sdk-image"])
   AC_MSG_RESULT([${ABS_JAVA_HOME_DIR}])
   ABS_CLIENT_LIBJVM_SO="${ABS_JAVA_HOME_DIR}/jre/lib/${INSTALL_ARCH_DIR}/client/libjvm.so"
   ABS_SERVER_LIBJVM_SO="${ABS_JAVA_HOME_DIR}/jre/lib/${INSTALL_ARCH_DIR}/server/libjvm.so"

@@ -27,7 +27,7 @@ HOTSPOT_SRC_ZIP = hotspot.tar.gz
 
 # Build directories
 
-BUILD_DIR = openjdk.build
+BUILD_DIR = @OPENJDK_BUILD_DIR@
 BUILD_OUTPUT_DIR = $(abs_top_builddir)/$(BUILD_DIR)
 DEBUG_BUILD_OUTPUT_DIR = $(BUILD_OUTPUT_DIR)-debug
 ECJ_BUILD_OUTPUT_DIR = $(BUILD_OUTPUT_DIR)-ecj
@@ -56,7 +56,7 @@ NETX_EXTRA_DIR=$(abs_top_srcdir)/extra/net/sourceforge/jnlp/about/resources
 OPENJDK_SOURCEPATH_DIRS = \
         $(SHARE):$(SOLARIS):$(LANGTOOLS):$(CORBA)
 
-SOURCEPATH_DIRS = $(abs_top_builddir)/generated:$(OPENJDK_SOURCEPATH_DIRS)
+SOURCEPATH_DIRS = $(abs_top_srcdir)/generated:$(OPENJDK_SOURCEPATH_DIRS)
 
 # Sources used from OpenJDK.
 ICEDTEA_BOOTSTRAP_DIRS = \
@@ -269,6 +269,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-linux-separate-debuginfo.patch \
 	patches/icedtea-parisc.patch \
 	patches/icedtea-sh4-support.patch \
+	patches/icedtea-policy-evaluation.patch \
 	patches/libpng.patch \
 	patches/shark.patch \
 	patches/extensions/netx.patch \
@@ -277,8 +278,12 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-jtreg-httpTest.patch \
 	patches/arm.patch \
 	patches/shark-debug-option.patch \
+	patches/openjdk/6678385-window_movement_crasher.patch \
 	patches/debug-dir.patch \
-	patches/no-sync.patch
+	patches/no-sync.patch \
+	patches/icedtea-override-redirect-metacity.patch \
+	patches/openjdk/6963870-swing_npe.patch \
+	patches/openjdk/6668231-ssl_cert.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
