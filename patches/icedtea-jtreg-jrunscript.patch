@@ -1,6 +1,6 @@
 diff -Nru openjdk.orig/jdk/test/sun/tools/jrunscript/CheckEngine.java openjdk/jdk/test/sun/tools/jrunscript/CheckEngine.java
 --- openjdk.orig/jdk/test/sun/tools/jrunscript/CheckEngine.java	2010-05-26 09:33:18.000000000 +0100
-+++ openjdk/jdk/test/sun/tools/jrunscript/CheckEngine.java	2010-05-26 14:08:25.000000000 +0100
++++ openjdk/jdk/test/sun/tools/jrunscript/CheckEngine.java	2010-07-28 12:43:18.282489286 +0100
 @@ -39,7 +39,8 @@
   * passed.
   */
@@ -25,13 +25,13 @@ diff -Nru openjdk.orig/jdk/test/sun/tools/jrunscript/CheckEngine.java openjdk/jd
      }
  }
 diff -Nru openjdk.orig/jdk/test/sun/tools/jrunscript/jrunscriptTest.sh openjdk/jdk/test/sun/tools/jrunscript/jrunscriptTest.sh
---- openjdk.orig/jdk/test/sun/tools/jrunscript/jrunscriptTest.sh	2010-05-26 09:33:18.000000000 +0100
+--- openjdk.orig/jdk/test/sun/tools/jrunscript/jrunscriptTest.sh	2010-07-28 11:14:05.000000000 +0100
 +++ openjdk/jdk/test/sun/tools/jrunscript/jrunscriptTest.sh	1970-01-01 01:00:00.000000000 +0100
 @@ -1,80 +0,0 @@
 -#!/bin/sh
 -
 -#
--# Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+-# Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
 -# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 -#
 -# This code is free software; you can redistribute it and/or modify it
@@ -79,7 +79,7 @@ diff -Nru openjdk.orig/jdk/test/sun/tools/jrunscript/jrunscriptTest.sh openjdk/j
 -new java.lang.Runnable() { run: function() { println('I am runnable'); }}.run();
 -EOF
 -
--diff jrunscriptTest.out ${TESTSRC}/repl.out
+-$golden_diff jrunscriptTest.out ${TESTSRC}/repl.out
 -if [ $? != 0 ]
 -then
 -  echo "Output of jrunscript session differ from expected output. Failed."
@@ -97,7 +97,7 @@ diff -Nru openjdk.orig/jdk/test/sun/tools/jrunscript/jrunscriptTest.sh openjdk/j
 -new java.lang.Runnable() { run: function() { println('I am runnable'); }}.run();
 -EOF
 -
--diff jrunscriptTest.out ${TESTSRC}/repl.out
+-$golden_diff jrunscriptTest.out ${TESTSRC}/repl.out
 -if [ $? != 0 ]
 -then
 -  echo "Output of jrunscript -l js differ from expected output. Failed."
@@ -110,7 +110,7 @@ diff -Nru openjdk.orig/jdk/test/sun/tools/jrunscript/jrunscriptTest.sh openjdk/j
 -exit 0
 diff -Nru openjdk.orig/jdk/test/sun/tools/jrunscript/Testjrunscript.java openjdk/jdk/test/sun/tools/jrunscript/Testjrunscript.java
 --- openjdk.orig/jdk/test/sun/tools/jrunscript/Testjrunscript.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/test/sun/tools/jrunscript/Testjrunscript.java	2010-05-26 14:08:25.000000000 +0100
++++ openjdk/jdk/test/sun/tools/jrunscript/Testjrunscript.java	2010-07-28 12:43:18.282489286 +0100
 @@ -0,0 +1,239 @@
 +/*
 + * Copyright 2009 Red Hat, Inc. All Rights Reserved.
