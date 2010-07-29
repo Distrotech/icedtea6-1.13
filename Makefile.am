@@ -331,7 +331,8 @@ endif
 
 if ENABLE_SYSTEMTAP
 ICEDTEA_PATCHES += patches/systemtap.patch \
-	patches/systemtap-gcc-4.5.patch
+	patches/systemtap-gcc-4.5.patch \
+	patches/systemtap-alloc-size-workaround.patch
 endif
 
 if ENABLE_NSS
@@ -358,6 +359,16 @@ ICEDTEA_ECJ_PATCHES += \
 endif
 
 ICEDTEA_ECJ_PATCHES += $(DISTRIBUTION_ECJ_PATCHES)
+
+# Patches for JAXWS
+
+if DTDTYPE_QNAME
+JAXWS_PATCHES = patches/icedtea-jaxws-getdtdtype.patch
+else
+JAXWS_PATCHES = 
+endif
+
+ICEDTEA_ECJ_PATCHES += $(JAXWS_PATCHES)
 
 # OpenJDK build environment.
 if ZERO_BUILD
