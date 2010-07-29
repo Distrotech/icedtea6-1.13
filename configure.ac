@@ -169,6 +169,9 @@ else
   AC_CONFIG_FILES([javac], [chmod +x javac])
   AC_CONFIG_FILES([javap], [chmod +x javap])
 fi
+
+IT_GETDTDTYPE_CHECK
+
 FIND_RHINO_JAR
 WITH_OPENJDK_SRC_ZIP
 WITH_HOTSPOT_SRC_ZIP
