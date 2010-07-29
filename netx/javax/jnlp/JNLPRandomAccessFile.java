@@ -1,8 +1,8 @@
 
 
 package javax.jnlp;
+public interface JNLPRandomAccessFile extends java.io.DataInput, java.io.DataOutput {
 
-public interface JNLPRandomAccessFile {
 
   public void close() throws java.io.IOException;
   public long length() throws java.io.IOException;
