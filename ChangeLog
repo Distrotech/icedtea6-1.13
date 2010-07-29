@@ -1,3 +1,10 @@
+2010-07-29  Mark Wielaard  <mjw@redhat.com>
+
+	* patches/systemtap-alloc-size-workaround.patch: New patch.
+	* Makefile.am (ICEDTEA_PATCHES): Add new patch for ENABLE_SYSTEMTAP.
+	* tapset/hotspot.stp.in (object_alloc): Calculate size from
+	$arg4 and $HeapWordSize.
+
 2010-07-29  Gary Benson  <gbenson@redhat.com>
 
 	PR icedtea/525:
