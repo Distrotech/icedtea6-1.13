@@ -1,3 +1,12 @@
+2010-07-29  Jon VanAlten  <jon.vanalten@redhat.com>
+
+	* patches/openjdk/6967533-pre_epoch.patch: New file.  Backpatched from
+	jdk7 for upstream bug#6967533.  Fixes IcedTea Bug#394:
+	java.lang.ExceptionInInitializerError on systems with
+	time set before January 1, 1970
+	* Makefile.am: include above patch.
+	* NEWS: Add 6967533 backport.
+
 2010-07-29  Andrew John Hughes  <ahughes@redhat.com>
 
 	* NEWS: Add 6961732 backport.

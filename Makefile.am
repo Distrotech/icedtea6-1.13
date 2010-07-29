@@ -284,7 +284,8 @@ ICEDTEA_PATCHES = \
 	patches/no-sync.patch \
 	patches/icedtea-override-redirect-metacity.patch \
 	patches/openjdk/6963870-swing_npe.patch \
-	patches/openjdk/6668231-ssl_cert.patch
+	patches/openjdk/6668231-ssl_cert.patch \
+	patches/openjdk/6967533-pre_epoch.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
