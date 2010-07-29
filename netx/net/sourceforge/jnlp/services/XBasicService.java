@@ -176,7 +176,7 @@ class XBasicService implements BasicService {
                 // this is bogus because the command may require options;
                 // should use a StreamTokenizer or similar to get tokens
                 // outside of quotes.
-                Runtime.getRuntime().exec(command + url.toString());
+                Runtime.getRuntime().exec(command + " " + url.toString());
                 //Runtime.getRuntime().exec(new String[]{command,url.toString()});
 
                 return true;
