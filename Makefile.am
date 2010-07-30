@@ -361,16 +361,6 @@ endif
 
 ICEDTEA_ECJ_PATCHES += $(DISTRIBUTION_ECJ_PATCHES)
 
-# Patches for JAXWS
-
-if DTDTYPE_QNAME
-JAXWS_PATCHES = patches/icedtea-jaxws-getdtdtype.patch
-else
-JAXWS_PATCHES = 
-endif
-
-ICEDTEA_ECJ_PATCHES += $(JAXWS_PATCHES)
-
 # OpenJDK build environment.
 if ZERO_BUILD
   ICEDTEA_ZERO_BUILD = true
