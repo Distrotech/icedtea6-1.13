@@ -42,6 +42,8 @@ import net.sourceforge.jnlp.services.InstanceExistsException;
 import net.sourceforge.jnlp.services.ServiceUtil;
 import net.sourceforge.jnlp.util.Reflect;
 
+import javax.swing.SwingUtilities;
+
 /**
  * Launches JNLPFiles either in the foreground or background.<p>
  *
@@ -441,6 +443,11 @@ public class Launcher {
 
             Method main = mainClass.getDeclaredMethod("main", new Class[] {String[].class} );
             String args[] = file.getApplication().getArguments();
+            
+            SwingUtilities.invokeAndWait(new Runnable() {
+                // dummy method to force Event Dispatch Thread creation
+                public void run(){}
+            });
 
             setContextClassLoaderForAllThreads(app.getThreadGroup(), app.getClassLoader());
 

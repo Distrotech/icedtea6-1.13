@@ -104,42 +104,8 @@ class JNLPSecurityManager extends SecurityManager {
     /** weak reference to most app who's windows was most recently activated */
     private WeakReference activeApplication = null;
 
-    /** listener installs the app's classloader on the event dispatch thread */
-    private ContextUpdater contextListener = new ContextUpdater();
-
     /** Sets whether or not exit is allowed (in the context of the plugin, this is always false) */
     private boolean exitAllowed = true;
-
-    private class ContextUpdater extends WindowAdapter implements PrivilegedAction {
-        private ApplicationInstance app = null;
-
-        public void windowActivated(WindowEvent e) {
-            app = getApplication(e.getWindow());
-            AccessController.doPrivileged(this);
-            app = null;
-        }
-
-        public Object run() {
-            if (app != null) {
-                Thread.currentThread().setContextClassLoader(app.getClassLoader());
-                activeApplication = new WeakReference(app);
-            }
-            else
-                Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-
-            return null;
-        }
-
-        public void windowDeactivated(WindowEvent e) {
-            activeApplication = null;
-        }
-
-        public void windowClosing(WindowEvent e) {
-                System.err.println("Disposing window");
-                e.getWindow().dispose();
-        }
-    };
-
 
     /**
      * Creates a JNLP SecurityManager.
@@ -461,8 +427,6 @@ class JNLPSecurityManager extends SecurityManager {
 
             weakWindows.add(window); // for mapping window -> app
             weakApplications.add(app);
-
-            w.addWindowListener(contextListener); // for dynamic context classloader
 
             app.addWindow(w);
         }
