@@ -286,7 +286,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6963870-swing_npe.patch \
 	patches/openjdk/6668231-ssl_cert.patch \
 	patches/openjdk/6967533-pre_epoch.patch \
-	patches/fonts-rhel.patch
+	patches/fonts-rhel.patch \
+	patches/fonts-gentoo.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
