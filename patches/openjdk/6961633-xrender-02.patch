@@ -1,0 +1,44 @@
+# HG changeset patch
+# User prr
+# Date 1276884014 25200
+# Node ID 83c7768292d783709a1cdb7ddd3d68df65e23148
+# Parent  8b55669c7b7a5982860dfcf6ccfe6c26e311da30
+6961633: gui applications cause a jvm crash on windows
+Reviewed-by: ceisserer, bae
+
+diff -r 8b55669c7b7a -r 83c7768292d7 make/sun/pisces/Makefile
+--- openjdk.orig/jdk/make/sun/pisces/Makefile	Wed Jun 16 20:46:10 2010 +0200
++++ openjdk/jdk/make/sun/pisces/Makefile	Fri Jun 18 11:00:14 2010 -0700
+@@ -52,5 +52,11 @@
+ 
+ copy-files: $(FILES_copy)
+ 
+-$(SERVICEDIR)/%: $(SHARE_SRC)/classes/sun/java2d/pisces/META-INF/services/%
++ifneq ($(PLATFORM), windows)
++ SERVICE_SRC = $(PLATFORM_SRC)
++else
++ SERVICE_SRC = $(SHARE_SRC)
++endif
++
++$(SERVICEDIR)/%: $(SERVICE_SRC)/classes/sun/java2d/pisces/META-INF/services/%
+ 	$(install-file)
+diff -r 8b55669c7b7a -r 83c7768292d7 src/share/classes/sun/java2d/pisces/META-INF/services/sun.java2d.pipe.RenderingEngine
+--- openjdk.orig/jdk/src/share/classes/sun/java2d/pisces/META-INF/services/sun.java2d.pipe.RenderingEngine	Wed Jun 16 20:46:10 2010 +0200
++++ openjdk/jdk/src/share/classes/sun/java2d/pisces/META-INF/services/sun.java2d.pipe.RenderingEngine	Fri Jun 18 11:00:14 2010 -0700
+@@ -1,5 +1,2 @@
+-# Jules Rendering Engine module
+-sun.java2d.jules.JulesRenderingEngine
+-
+ #  Pisces Rendering Engine module
+-sun.java2d.pisces.PiscesRenderingEngine
+\ No newline at end of file
++sun.java2d.pisces.PiscesRenderingEngine
+diff -r 8b55669c7b7a -r 83c7768292d7 src/solaris/classes/sun/java2d/pisces/META-INF/services/sun.java2d.pipe.RenderingEngine
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/src/solaris/classes/sun/java2d/pisces/META-INF/services/sun.java2d.pipe.RenderingEngine	Fri Jun 18 11:00:14 2010 -0700
+@@ -0,0 +1,5 @@
++# Jules Rendering Engine module
++sun.java2d.jules.JulesRenderingEngine
++
++#  Pisces Rendering Engine module
++sun.java2d.pisces.PiscesRenderingEngine

@@ -1,0 +1,24 @@
+diff -Nru openjdk-ecj.orig/jdk/make/sun/awt/Makefile openjdk-ecj/jdk/make/sun/awt/Makefile
+--- openjdk-ecj.orig/jdk/make/sun/awt/Makefile	2010-08-03 23:52:42.084667732 +0100
++++ openjdk-ecj/jdk/make/sun/awt/Makefile	2010-08-03 23:53:10.308917593 +0100
+@@ -34,6 +34,8 @@
+ VIS_NEEDED=true
+ 
+ include $(BUILDDIR)/common/Defs.gmk
++LANGUAGE_VERSION = -source 6
++CLASS_VERSION = -target 6
+ 
+ #
+ # Use highest optimization level
+diff -Nru openjdk-ecj.orig/jdk/make/sun/xawt/Makefile openjdk-ecj/jdk/make/sun/xawt/Makefile
+--- openjdk-ecj.orig/jdk/make/sun/xawt/Makefile	2010-08-03 23:52:56.420668143 +0100
++++ openjdk-ecj/jdk/make/sun/xawt/Makefile	2010-08-03 23:53:18.494167931 +0100
+@@ -31,6 +31,8 @@
+ PRODUCT = sun
+ 
+ include $(BUILDDIR)/common/Defs.gmk
++LANGUAGE_VERSION = -source 6
++CLASS_VERSION = -target 6
+ 
+ GEN_DIR=$(GENSRCDIR)/sun/awt/X11
+ 

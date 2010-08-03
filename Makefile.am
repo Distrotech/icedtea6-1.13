@@ -321,11 +321,9 @@ ICEDTEA_PATCHES += \
 endif
 
 if ENABLE_XRENDER
-# match against $(abs_top_srcdir) and then remove it again,
-# because stamps/patch.stamp target will also add it
-XRENDER_PATCHES = patches/xrender/icedtea-???.patch
-XRENDER_PATCH_FILES = $(sort $(wildcard $(abs_top_srcdir)/$(XRENDER_PATCHES)))
-ICEDTEA_PATCHES += $(sort $(subst $(abs_top_srcdir)/,,$(XRENDER_PATCH_FILES)))
+ICEDTEA_PATCHES += patches/openjdk/6725214-direct3d-01.patch \
+	patches/openjdk/6307603-xrender-01.patch \
+	patches/openjdk/6961633-xrender-02.patch
 endif
 
 if ENABLE_NIO2
@@ -359,6 +357,11 @@ ICEDTEA_ECJ_PATCHES = patches/ecj/icedtea.patch \
 if DTDTYPE_QNAME
 ICEDTEA_ECJ_PATCHES += \
 	patches/ecj/icedtea-jaxws-getdtdtype.patch
+endif
+if ENABLE_XRENDER
+ICEDTEA_ECJ_PATCHES += \
+	patches/ecj/needs-6.patch \
+	patches/ecj/javah.patch
 endif
 
 ICEDTEA_ECJ_PATCHES += $(DISTRIBUTION_ECJ_PATCHES)

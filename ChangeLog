@@ -1,3 +1,34 @@
+2010-08-03  Andrew John Hughes  <ahughes@redhat.com>
+
+	Backport latest XRender pipeline.
+	* patches/xrender/icedtea-000.patch,
+	* patches/xrender/icedtea-001.patch,
+	* patches/xrender/icedtea-002.patch,
+	* patches/xrender/icedtea-003.patch,
+	* patches/xrender/icedtea-004.patch,
+	* patches/xrender/icedtea-005.patch,
+	* patches/xrender/icedtea-006.patch,
+	* patches/xrender/icedtea-007.patch,
+	* patches/xrender/icedtea-008.patch,
+	* patches/xrender/icedtea-009.patch:
+	Removed.
+	* Makefile.am: Add new patches.
+	* patches/ecj/javah.patch:
+	Backported from IcedTea7 to handle issues
+	with gjavah's generation of headers for the
+	OpenGL pipeline.
+	* patches/ecj/needs-6.patch:
+	Sets source & target to 6 for awt and xawt
+	during the bootstrap build as these now
+	have classes containing @Override.  See
+	OpenJDK6 b20 fix for javax.swing & Nimbus.
+	* patches/openjdk/6307603-xrender-01.patch,
+	* patches/openjdk/6725214-direct3d-01.patch,
+	* patches/openjdk/6961633-xrender-02.patch:
+	Backports from OpenJDK7.  The XRender fixes
+	build heavily on changes made by 6725214 for
+	the Direct3D pipeline.
+
 2010-08-02  Andrew John Hughes  <ahughes@redhat.com>
 
 	* NEWS: Updated with font fixes.
