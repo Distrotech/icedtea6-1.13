@@ -288,7 +288,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6967533-pre_epoch.patch \
 	patches/fonts-rhel.patch \
 	patches/fonts-gentoo.patch \
-	patches/ipv4-mapped-ipv6-addresses.patch
+	patches/ipv4-mapped-ipv6-addresses.patch \
+	patches/openjdk/6795060-icu_crash.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \

@@ -1,9 +1,17 @@
+2010-08-05  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am: Add new patch.
+	* NEWS: Updated.
+	* patches/openjdk/6795060-icu_crash.patch:
+	Fixes VM crash on Linux in ICU layout library
+	when processing \u0DDD (Sinhalese)
+
 2010-08-05  Omair Majid  <omajid@redhat.com>
 
 	* NEWS: Update with netx bugfix.
 	* netx/net/sourceforge/jnlp/Launcher.java
-	(launchApplication): Replace use of getDeclaredMethod with 
-	getMethod. Fixes applications that have a main-class that 
+	(launchApplication): Replace use of getDeclaredMethod with
+	getMethod. Fixes applications that have a main-class that
 	inherits main(String[]).
 
 2010-08-05  Andrew John Hughes  <ahughes@redhat.com>
