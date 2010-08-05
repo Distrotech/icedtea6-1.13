@@ -1,3 +1,11 @@
+2010-08-05  Omair Majid  <omajid@redhat.com>
+
+	* NEWS: Update with netx bugfix.
+	* netx/net/sourceforge/jnlp/Launcher.java
+	(launchApplication): Replace use of getDeclaredMethod with 
+	getMethod. Fixes applications that have a main-class that 
+	inherits main(String[]).
+
 2010-08-05  Andrew John Hughes  <ahughes@redhat.com>
 
 	http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=560056

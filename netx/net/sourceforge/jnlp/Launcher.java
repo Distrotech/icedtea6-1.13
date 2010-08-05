@@ -441,7 +441,7 @@ public class Launcher {
 
             Class mainClass = app.getClassLoader().loadClass(mainName);
 
-            Method main = mainClass.getDeclaredMethod("main", new Class[] {String[].class} );
+            Method main = mainClass.getMethod("main", new Class[] {String[].class} );
             String args[] = file.getApplication().getArguments();
             
             SwingUtilities.invokeAndWait(new Runnable() {
