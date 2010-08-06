@@ -1,3 +1,24 @@
+2010-08-06  Andrew John Hughes  <ahughes@redhat.com>
+
+	Fix build on PAX-enabled kernels.
+	https://bugs.gentoo.org/244901
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add test_gamma patch
+	if PAX is enabled.
+	(ICEDTEA_ECJ_PATCHES): Add test_gamma patch
+	if PAX not enabled (and thus not already patched).
+	* NEWS: Mention new bug fix.
+	* acinclude.m4:
+	(IT_CHECK_FOR_PAX): Check for a PaX-enabled kernel.
+	* configure.ac: Call above macro.
+	* patches/ecj/icedtea-hotspot.patch: Remove
+	test_gamma segment into separate patch.
+	* patches/ecj/no-test_gamma.patch: test_gamma
+	patch for non-PaX-enabled kernels (i.e. bootstrap
+	build only).
+	* patches/no-test_gamma.patch: test_gamma patch
+	for PaX-enabled kernels.
+
 2010-08-05  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am: Add new patch.

@@ -344,6 +344,10 @@ else
 ICEDTEA_PATCHES += patches/icedtea-nss-not-enabled-config.patch
 endif
 
+if HAS_PAX
+ICEDTEA_PATCHES += patches/no-test_gamma.patch
+endif
+
 ICEDTEA_PATCHES += $(DISTRIBUTION_PATCHES)
 
 # Bootstrapping patches
@@ -356,14 +360,20 @@ ICEDTEA_ECJ_PATCHES = patches/ecj/icedtea.patch \
 	patches/ecj/bootver.patch \
 	patches/ecj/getannotation-cast.patch \
 	patches/ecj/override.patch
+
 if DTDTYPE_QNAME
 ICEDTEA_ECJ_PATCHES += \
 	patches/ecj/icedtea-jaxws-getdtdtype.patch
 endif
+
 if ENABLE_XRENDER
 ICEDTEA_ECJ_PATCHES += \
 	patches/ecj/needs-6.patch \
 	patches/ecj/javah.patch
+endif
+
+if !HAS_PAX
+ICEDTEA_ECJ_PATCHES += patches/ecj/no-test_gamma.patch
 endif
 
 ICEDTEA_ECJ_PATCHES += $(DISTRIBUTION_ECJ_PATCHES)
