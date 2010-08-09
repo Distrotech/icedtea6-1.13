@@ -1,3 +1,46 @@
+2010-08-09  Deepak Bhole <dbhole@redhat.com>
+
+	* Makefile.am:
+	(icedtea):Add update-bootclasspath.patch.
+	dependencies and copying. Add icedtea-update-bootclasspath.patch.
+	* patches/update-bootclasspath.patch: New patch. Adds netx, 
+	rhino and plugin jars to the bootclasspath.
+
+2010-08-09  Andrew John Hughes  <ahughes@redhat.com>
+
+	Produce separate JAR files for NetX and the
+	plugin (netx.jar and plugin.jar) rather than
+	integrating their code into rt.jar.
+	* patches/extensions/liveconnect-dist.patch,
+	* patches/extensions/netx-dist.patch:
+	Remove unneeded patches to OpenJDK build to
+	integrate NetX and the plugin's Java code.
+	* Makefile.am:
+	(ICEDTEA_ENV): Drop ALT_NETX_DIST and
+	ALT_LIVECONNECT_DIST.
+	(.PHONY): Add new clean targets.
+	(icedtea): Remove unneeded NetX and plugin
+	dependencies and copying.
+	(icedtea-debug): Likewise.
+	(icedtea-against-icedtea): Depend on add-plugin
+	and add-netx.
+	(clean-icedtea-against-icedtea): Depend on clean-add-netx
+	and clean-add-plugin.
+	(icedtea-debug-against-icedtea): Depend on add-plugin-debug
+	and add-netx-debug.
+	(clean-icedtea-debug-against-icedtea): Depend on clean-add-netx-debug
+	and clean-add-plugin-debug.
+	(add-plugin): Copy the plugin library and jar file into the jdk images.
+	(clean-add-plugin): Revert add-plugin.
+	(add-plugin-debug): Equivalent of add-plugin for the debug build.
+	(clean-add-plugin-debug): Revert add-plugin-debug.
+	(add-netx): Copy the NetX jar file, about.jnlp and about.jar into the
+	jdk images.
+	(clean-add-netx): Revert add-netx.
+	(add-netx-debug): Equivalent of add-netx for the debug build.
+	(clean-add-netx-debug): Revert add-netx-debug.
+	(icedtea-ecj): Remove plugin and NetX dependencies.
+
 2010-08-09  Omair Majid  <omajid@redhat.com>
 
 	* NEWS: Update with support for JNLP spec 1.6
