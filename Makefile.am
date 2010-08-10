@@ -138,10 +138,10 @@ endif
 # FIXME: This should not depend on bootstrapping
 # but on whether MEMORY_LIMIT is accepted
 # as an argument to javac
-if WITH_OPENJDK
-  MEMORY_LIMIT = -J-Xmx1024m
-else
+if BOOTSTRAPPING
   MEMORY_LIMIT =
+else
+  MEMORY_LIMIT = -J-Xmx1024m
 endif
 
 if WITH_CACAO
@@ -151,17 +151,14 @@ else
   ICEDTEA_DEBUG_BUILD_TARGET = debug_build
 endif
 
-# FIXME (bootstrap): Assumption is WITH_OPENJDK == no bootstrap
-if WITH_OPENJDK
-  BOOTSTRAP_DIRECTORY_STAMP =
-  SYSTEM_JDK_DIR = $(SYSTEM_OPENJDK_DIR)
-  ICEDTEA_HOME = $(SYSTEM_JDK_DIR)
-  INITIAL_BOOTSTRAP_LINK_STAMP = stamps/bootstrap-directory-symlink.stamp
-else
+if BOOTSTRAPPING
   BOOTSTRAP_DIRECTORY_STAMP = stamps/bootstrap-directory.stamp
-  SYSTEM_JDK_DIR = $(SYSTEM_GCJ_DIR)
   ICEDTEA_HOME = $(ICEDTEA_BOOT_DIR)
   INITIAL_BOOTSTRAP_LINK_STAMP = stamps/bootstrap-directory-symlink-ecj.stamp
+else
+  BOOTSTRAP_DIRECTORY_STAMP =
+  ICEDTEA_HOME = $(SYSTEM_JDK_DIR)
+  INITIAL_BOOTSTRAP_LINK_STAMP = stamps/bootstrap-directory-symlink.stamp
 endif
 
 if CP_SUPPORTS_REFLINK
@@ -491,6 +488,8 @@ ICEDTEA_ENV_ECJ = $(ICEDTEA_ENV) \
 	BOOTCLASSPATH_CLS_RT="-bootclasspath $(ICEDTEA_CLS_DIR_ECJ):$(RUNTIME)" \
 	BOOTCLASSPATH_CLS="-bootclasspath $(ICEDTEA_CLS_DIR_ECJ)" \
 	BOOTCLASSPATH_RT_LIBGCJ="-bootclasspath $(RUNTIME)" \
+	CLASSPATH="" \
+	LD_LIBRARY_PATH="" \
 	GENSRCDIR="$(abs_top_builddir)/generated" \
 	JAR_KNOWS_ATFILE="$(JAR_KNOWS_ATFILE)" \
 	JAR_KNOWS_J_OPTIONS="$(JAR_KNOWS_J_OPTIONS)" \
@@ -1464,29 +1463,20 @@ clean-icedtea-ecj:
 # Rebuild targets
 
 rebuild:
-if WITH_OPENJDK
-	rm -f stamps/icedtea.stamp
-	rm -f stamps/icedtea-against-icedtea.stamp
-	$(ARCH_PREFIX) $(MAKE) icedtea-against-icedtea
-	@echo "IcedTea is served (again):" $(BUILD_OUTPUT_DIR)/j2sdk-image
-else
+if BOOTSTRAPPING
 	rm -f stamps/icedtea-ecj.stamp
 	rm -f stamps/icedtea-against-ecj.stamp
 	$(ARCH_PREFIX) $(MAKE) icedtea-against-ecj
 	@echo "ecj-poured IcedTea is served (again):" $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image
+else
+	rm -f stamps/icedtea.stamp
+	rm -f stamps/icedtea-against-icedtea.stamp
+	$(ARCH_PREFIX) $(MAKE) icedtea-against-icedtea
+	@echo "IcedTea is served (again):" $(BUILD_OUTPUT_DIR)/j2sdk-image
 endif
 
 hotspot:
-if WITH_OPENJDK
-	rm -f stamps/icedtea.stamp
-	rm -f stamps/icedtea-against-icedtea.stamp
-	$(ARCH_PREFIX) $(MAKE) ICEDTEA_BUILD_TARGET=hotspot icedtea-against-icedtea
-	mkdir -p \
-	   $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/server
-	cp $(BUILD_OUTPUT_DIR)/$(SERVER_DIR)/libjvm.so \
-	   $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/server
-	@echo "Hotspot is served:" $(BUILD_OUTPUT_DIR)/j2sdk-image
-else
+if BOOTSTRAPPING
 	rm -f stamps/icedtea-ecj.stamp
 	rm -f stamps/icedtea-against-ecj.stamp
 	$(ARCH_PREFIX) $(MAKE) ICEDTEA_BUILD_TARGET=hotspot icedtea-against-ecj
@@ -1495,6 +1485,15 @@ else
 	cp $(ECJ_BUILD_OUTPUT_DIR)/$(SERVER_DIR)/libjvm.so \
 	   $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/server
 	@echo "Hotspot is served:" $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image
+else
+	rm -f stamps/icedtea.stamp
+	rm -f stamps/icedtea-against-icedtea.stamp
+	$(ARCH_PREFIX) $(MAKE) ICEDTEA_BUILD_TARGET=hotspot icedtea-against-icedtea
+	mkdir -p \
+	   $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/server
+	cp $(BUILD_OUTPUT_DIR)/$(SERVER_DIR)/libjvm.so \
+	   $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/server
+	@echo "Hotspot is served:" $(BUILD_OUTPUT_DIR)/j2sdk-image
 endif
 
 stamps/icedtea-against-ecj.stamp: \
@@ -1840,7 +1839,7 @@ clean-add-cacao-debug:
 # configure script arguments, quoted in single quotes
 CONFIGURE_ARGS = @CONFIGURE_ARGS@
 ADD_ZERO_CONFIGURE_ARGS = \
-	--with-openjdk=$(BUILD_OUTPUT_DIR)/j2sdk-image \
+	--with-jdk-home=$(BUILD_OUTPUT_DIR)/j2sdk-image \
 	--enable-zero
 if ADD_SHARK_BUILD
 ADD_ZERO_CONFIGURE_ARGS += \
