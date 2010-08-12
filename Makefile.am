@@ -278,7 +278,6 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-jtreg-httpTest.patch \
 	patches/arm.patch \
 	patches/shark-debug-option.patch \
-	patches/openjdk/6678385-window_movement_crasher.patch \
 	patches/debug-dir.patch \
 	patches/no-sync.patch \
 	patches/icedtea-override-redirect-metacity.patch \
