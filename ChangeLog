@@ -5,6 +5,359 @@
 	* Makefile.am:
 	Remove above patch.
 
+2010-08-09  Omair Majid  <omajid@redhat.com>
+
+	* NEWS: Update with OpenType support.
+	* Makefile.am: Apply the two new patches.
+	* patches/openjdk/4356282-opentype.patch: Adds OpenType font support.
+	* patches/openjdk/6954424-opentype_javadoc.patch: Fixes javadocs to
+	mention OpenType font support.
+
+2009-07-17  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Remove use of WITH_OPENJDK and SYSTEM_GCJ_DIR
+	replacing with BOOTSTRAPPING and SYSTEM_JDK_DIR
+	as appropriate.
+	* acinclude.m4:
+	(FIND_JAVAC): Search for generic 'javac' first.
+	(IT_FIND_ECJ): Only use ecj as javac if JAVA is unset.
+	(IT_CHECK_ECJ): Add configure output.
+	(IT_FIND_JAVAC): Likewise.
+	(IT_CHECK_JAVAC): Likewise.
+	(FIND_JAVA): Try java in SYSTEM_JDK_DIR before searching.
+	(FIND_JAVAH): Likewise for javah.
+	(FIND_JAR): Likewise for jar.
+	(FIND_RMIC): Likewise for rmic.
+	(IT_CHECK_IF_BOOTSTRAPPING): Allow bootstrapping to be disabled.
+	Makes explicit the side-effect of --with-openjdk.
+	(IT_CHECK_FOR_JDK): Find JDK to use.  Replaces --with-gcj-jdk,
+	and --with-openjdk.  At present, only checks for gcj jdks if
+	not bootstrapping.
+	(AC_CHECK_FOR_OPENJDK): Removed.
+	(AC_CHECK_FOR_GCJ_JDK): Removed.
+	* configure.ac:
+	Remove --with-openjdk.  Always check for a JDK and then allow
+	individual binaries to be overridden by --with-x.
+
+2010-08-09  Deepak Bhole <dbhole@redhat.com>
+
+	* Makefile.am:
+	(icedtea):Add update-bootclasspath.patch.
+	dependencies and copying. Add icedtea-update-bootclasspath.patch.
+	* patches/update-bootclasspath.patch: New patch. Adds netx,
+	rhino and plugin jars to the bootclasspath.
+
+2010-08-09  Andrew John Hughes  <ahughes@redhat.com>
+
+	Produce separate JAR files for NetX and the
+	plugin (netx.jar and plugin.jar) rather than
+	integrating their code into rt.jar.
+	* patches/extensions/liveconnect-dist.patch,
+	* patches/extensions/netx-dist.patch:
+	Remove unneeded patches to OpenJDK build to
+	integrate NetX and the plugin's Java code.
+	* Makefile.am:
+	(ICEDTEA_ENV): Drop ALT_NETX_DIST and
+	ALT_LIVECONNECT_DIST.
+	(.PHONY): Add new clean targets.
+	(icedtea): Remove unneeded NetX and plugin
+	dependencies and copying.
+	(icedtea-debug): Likewise.
+	(icedtea-against-icedtea): Depend on add-plugin
+	and add-netx.
+	(clean-icedtea-against-icedtea): Depend on clean-add-netx
+	and clean-add-plugin.
+	(icedtea-debug-against-icedtea): Depend on add-plugin-debug
+	and add-netx-debug.
+	(clean-icedtea-debug-against-icedtea): Depend on clean-add-netx-debug
+	and clean-add-plugin-debug.
+	(add-plugin): Copy the plugin library and jar file into the jdk images.
+	(clean-add-plugin): Revert add-plugin.
+	(add-plugin-debug): Equivalent of add-plugin for the debug build.
+	(clean-add-plugin-debug): Revert add-plugin-debug.
+	(add-netx): Copy the NetX jar file, about.jnlp and about.jar into the
+	jdk images.
+	(clean-add-netx): Revert add-netx.
+	(add-netx-debug): Equivalent of add-netx for the debug build.
+	(clean-add-netx-debug): Revert add-netx-debug.
+	(icedtea-ecj): Remove plugin and NetX dependencies.
+
+2010-08-09  Omair Majid  <omajid@redhat.com>
+
+	* NEWS: Update with support for JNLP spec 1.6
+	* net/sourceforge/jnlp/Parser.java: Add 1.6 to supportedVersions.
+
+2010-08-06  Andrew John Hughes  <ahughes@redhat.com>
+
+	* configure.ac: Bump to 1.10.
+	* NEWS: Add 1.10 section.
+
+2010-08-06  Andrew John Hughes  <ahughes@redhat.com>
+
+	Fix build on PAX-enabled kernels.
+	https://bugs.gentoo.org/244901
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add test_gamma patch
+	if PAX is enabled.
+	(ICEDTEA_ECJ_PATCHES): Add test_gamma patch
+	if PAX not enabled (and thus not already patched).
+	* NEWS: Mention new bug fix.
+	* acinclude.m4:
+	(IT_CHECK_FOR_PAX): Check for a PaX-enabled kernel.
+	* configure.ac: Call above macro.
+	* patches/ecj/icedtea-hotspot.patch: Remove
+	test_gamma segment into separate patch.
+	* patches/ecj/no-test_gamma.patch: test_gamma
+	patch for non-PaX-enabled kernels (i.e. bootstrap
+	build only).
+	* patches/no-test_gamma.patch: test_gamma patch
+	for PaX-enabled kernels.
+
+2010-08-05  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am: Add new patch.
+	* NEWS: Updated.
+	* patches/openjdk/6795060-icu_crash.patch:
+	Fixes VM crash on Linux in ICU layout library
+	when processing \u0DDD (Sinhalese)
+
+2010-08-05  Omair Majid  <omajid@redhat.com>
+
+	* NEWS: Update with netx bugfix.
+	* netx/net/sourceforge/jnlp/Launcher.java
+	(launchApplication): Replace use of getDeclaredMethod with
+	getMethod. Fixes applications that have a main-class that
+	inherits main(String[]).
+
+2010-08-05  Andrew John Hughes  <ahughes@redhat.com>
+
+	http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=560056
+	* Makefile.am: Add new patch.
+	* NEWS: Add bug fix and key for bug URLs.
+	* patches/ipv4-mapped-ipv6-addresses.patch:
+	New patch and test case from Torsten Werner
+	<mail.twerner@googlemail.com>.
+	* THANKYOU: Updated.
+
+2010-08-05  Gary Benson  <gbenson@redhat.com>
+
+	* NEWS: Updated with LLVM 2.7 non-product fixes.
+	* ports/hotspot/src/share/vm/shark/llvmHeaders.hpp:
+	Prevent LLVM headers to define DEBUG.
+	* ports/hotspot/src/share/vm/shark/sharkBuilder.cpp
+	(SharkBuilder::CreateDump): Make non-product debug code
+	LLVM 2.7 API compatible.
+
+2010-08-03  Andrew John Hughes  <ahughes@redhat.com>
+
+	Backport latest XRender pipeline.
+	* patches/xrender/icedtea-000.patch,
+	* patches/xrender/icedtea-001.patch,
+	* patches/xrender/icedtea-002.patch,
+	* patches/xrender/icedtea-003.patch,
+	* patches/xrender/icedtea-004.patch,
+	* patches/xrender/icedtea-005.patch,
+	* patches/xrender/icedtea-006.patch,
+	* patches/xrender/icedtea-007.patch,
+	* patches/xrender/icedtea-008.patch,
+	* patches/xrender/icedtea-009.patch:
+	Removed.
+	* Makefile.am: Add new patches.
+	* patches/ecj/javah.patch:
+	Backported from IcedTea7 to handle issues
+	with gjavah's generation of headers for the
+	OpenGL pipeline.
+	* patches/ecj/needs-6.patch:
+	Sets source & target to 6 for awt and xawt
+	during the bootstrap build as these now
+	have classes containing @Override.  See
+	OpenJDK6 b20 fix for javax.swing & Nimbus.
+	* patches/openjdk/6307603-xrender-01.patch,
+	* patches/openjdk/6725214-direct3d-01.patch,
+	* patches/openjdk/6961633-xrender-02.patch:
+	Backports from OpenJDK7.  The XRender fixes
+	build heavily on changes made by 6725214 for
+	the Direct3D pipeline.
+
+2010-08-02  Andrew John Hughes  <ahughes@redhat.com>
+
+	* NEWS: Updated with font fixes.
+
+2010-08-02  Andrew John Hughes  <ahughes@redhat.com>
+
+	http://bugs.gentoo.org/show_bug.cgi?id=266295:
+	* Makefile.am: Add patch below.
+	* patches/fonts-gentoo.patch:
+	Add a font configuration for Gentoo
+	(currently a copy of Fedora's).
+
+2010-07-30  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am: Add patch below.
+	* patches/fonts-rhel.patch:
+	Add a font configuration for RHEL6
+	(currently a copy of Fedora's).
+
+2010-07-30  Man Lung Wong  <mwong@redhat.com>
+
+	* netx/net/sourceforge/jnlp/Launcher.java
+	(launchApplication): Make sure an Event Dispatch Thread
+	is created before contextclassloader gets set.
+	* netx/net/sourceforge/jnlp/runtime/JNLPSecurityManager.java
+	(ContextUpdater): Removed it as it is no longer useful after
+	the above change.
+	(checkTopLevelWindow): Removed the line that adds
+	ContextUpdater as it no longer exists.
+	* NEWS: This fixes one of the problems launching the link
+	mentioned in icedtea bug 486.
+
+2010-07-29  Omair Majid  <omajid@redhat.com>
+
+	* NEWS: Add this fix.
+	* netx/net/sourceforge/jnlp/services/XBasicService.java
+	(showDocument): Fix missing space in browser command.
+
+2010-07-29  Omair Majid  <omajid@redhat.com>
+
+	* NEWS: Add this fix.
+	* netx/javax/jnlp/JNLPRandomAccessFile.java: Extend java.io.DataInput and
+	java.io.DataOutput.
+	* netx/net/sourceforge/jnlp/services/XJNLPRandomAccessFile.java
+	(XJNLPRandomAccessFile): Throw IOException on failure.
+
+2010-07-29  Jon VanAlten  <jon.vanalten@redhat.com>
+
+	* patches/openjdk/6967533-pre_epoch.patch: New file.  Backpatched from
+	jdk7 for upstream bug#6967533.  Fixes IcedTea Bug#394:
+	java.lang.ExceptionInInitializerError on systems with
+	time set before January 1, 1970
+	* Makefile.am: include above patch.
+	* NEWS: Add 6967533 backport.
+
+2010-07-29  Andrew John Hughes  <ahughes@redhat.com>
+
+	* NEWS: Add 6961732 backport.
+
+2010-07-29  Andrew John Hughes  <ahughes@redhat.com>
+
+	* NEWS: Update with contents of b19 & b20,
+	and fixes to NetX, Zero and Shark not on
+	the 1.8 branch.
+
+2010-07-29  Mark Wielaard  <mjw@redhat.com>
+
+	* patches/systemtap-alloc-size-workaround.patch: New patch.
+	* Makefile.am (ICEDTEA_PATCHES): Add new patch for ENABLE_SYSTEMTAP.
+	* tapset/hotspot.stp.in (object_alloc): Calculate size from
+	$arg4 and $HeapWordSize.
+
+2010-07-29  Gary Benson  <gbenson@redhat.com>
+
+	PR icedtea/525:
+	* NEWS: Updated.
+	* ports/hotspot/src/share/vm/shark/sharkCacheDecache.cpp
+	(SharkDecacher::end_frame): Add missing fields.
+
+2010-07-28  Andrew John Hughes  <ahughes@redhat.com>
+
+	* NEWS: Add 1.7.2, 1.7.3, 1.7.4 and 1.6.3
+	releases.
+
+2010-07-28  Deepak Bhole <dbhole@redhat.com>
+
+	* netx/net/sourceforge/jnlp/security/NotAllSignedWarningPane.java
+	(addComponents): Fix erroneous line that got added when backporting.
+
+2010-07-28  Deepak Bhole <dbhole@redhat.com>
+
+	* netx/net/sourceforge/jnlp/runtime/JNLPClassLoader.java: Added a new
+	HashMap to map source locations to security descriptors for that
+	location.
+	(getInstance): Use the new merge() method to merge loader data.
+	(initializeResources): Add map entries to the new
+	jarLocationSecurityMap.
+	(getPermissions): Decide permissions based on security descriptor
+	associated with the calling code, rather than with the jnlp file.
+	(getCodeSourceSecurity): New method. Returns the security descriptor
+	associated with the given code source URL.
+	(merge): New method. Merges loader classpaths, native dir paths, and
+	security descriptor mappings.
+
+2010-07-28  Deepak Bhole <dbhole@redhat.com>
+
+	* netx/net/sourceforge/jnlp/runtime/JNLPClassLoader.java (activateJars):
+	Add security descriptor mapping for nested jars.
+
+2010-07-28  Deepak Bhole <dbhole@redhat.com>
+
+	* netx/net/sourceforge/jnlp/SecurityDesc.java (getPermissions): Clean
+	up method, and make sure sandbox permissions are always a subset of
+	what is returned.
+
+2010-07-28  Deepak Bhole <dbhole@redhat.com>
+
+	* netx/net/sourceforge/jnlp/tools/JarSigner.java: Add new verifyResult
+	enum to track verification status.
+	(verifyJars): Mark jar unverified only if it has no signature.
+	(verifyJar): Use new verifyResult enum to return status based on if jar
+	is unsigned, signed but with errors, or signed and ok.
+
+2010-07-28  Deepak Bhole <dbhole@redhat.com>
+
+	* netx/net/sourceforge/jnlp/runtime/JNLPClassLoader.java (getInstance):
+	Collapse new loader paths into base loader.
+	* netx/net/sourceforge/jnlp/services/ServiceUtil.java (checkAccess):
+	Check if calling code is trusted all the way to the end. If it isn't,
+	prompt user.
+
+2010-07-28  Deepak Bhole <dbhole@redhat.com>
+
+	* netx/net/sourceforge/jnlp/resources/Messages.properties: Add new
+	strings.
+	* netx/net/sourceforge/jnlp/runtime/JNLPClassLoader.java (getInstance):
+	Prompt user if the main app code is signed, but the extentions aren't.
+	(initializeResources): Prompt user if there are any unsigned jars mixed
+	with signed jars.
+	* netx/net/sourceforge/jnlp/security/NotAllSignedWarningPane.java: New
+	file. Dialog shown to user if the main app code is signed but the
+	extentions aren't.
+	* netx/net/sourceforge/jnlp/security/SecurityDialogUI.java
+	(SecurityDialogUI): Add a constructor that doesn't take a CertVerifier
+	object.
+	* netx/net/sourceforge/jnlp/security/SecurityWarningDialog.java: Added
+	dialog and accesstype enum elements for a 'Not all jars signed' case.
+	(showNotAllSignedWarningDialog): New function. Prompts the user if the
+	main app code is signed but the extentions aren't.
+	(createDialog): Wire in the 'Not all jars signed' case.
+	(updateUI): Same.
+	* netx/net/sourceforge/jnlp/tools/JarSigner.java (allJarsSigned): New
+	function. Returns if there are any unsigned jars.
+
+2010-07-28  Deepak Bhole <dbhole@redhat.com>
+
+	* netx/net/sourceforge/jnlp/runtime/JNLPClassLoader.java (getInstance):
+	Collapse extention loaders into baseloader rather than vice-verse.
+
+2010-07-28  Deepak Bhole <dbhole@redhat.com>
+
+	* netx/net/sourceforge/jnlp/SecurityDesc.java: Converge all property
+	permission settings info a single class.
+	(getPermissions): Do not give read/write permissions to anything other
+	than what is allowed by spec.
+	(getSandBoxPermissions): Same.
+	* netx/net/sourceforge/jnlp/runtime/ApplicationInstance.java: Remove
+	blanket imports.
+	(installEnvironment): Write properties in a restricted
+	AccessControlContext based on app specific permissions only.
+	* netx/net/sourceforge/jnlp/runtime/JNLPSecurityManager.java
+	(checkPermission): Remove all property permission decision making code
+	and collapse it all into SecurityDesc.java.
+
+2010-07-28  Matthias Klose  <doko@ubuntu.com>
+
+	* NEWS: Add 1.8.1 entry.
+
 2010-07-26  Andrew John Hughes  <ahughes@redhat.com>
 
 	* patches/icedtea-jtreg-jrunscript.patch:
@@ -192,8 +545,8 @@
 
 2010-07-21  Deepak Bhole <dbhole@redhat.com>
 
-	* netx/net/sourceforge/jnlp/Parser.java: Undo changes from 98c88b32cdb4 to
-	Parser.java, since they could cause potential regressions.
+	* netx/net/sourceforge/jnlp/Parser.java: Undo changes from 98c88b32cdb4
+	to Parser.java, since they could cause potential regressions.
 
 2010-07-20  Man Lung Wong  <mwong@redhat.com>
 
@@ -223,8 +576,8 @@
 	* netx/net/sourceforge/jnlp/resources/Messages.properties:
 	Add LUnsignedJarWithSecurity LUnsignedJarWithSecurityInfo.
 	* netx/net/sourceforge/jnlp/runtime/JNLPClassLoader.java
-	(setSecurity): Can now throw a LaunchException if the JNLP file requests
-	permissions but the jars are unsigned.
+	(setSecurity): Can now throw a LaunchException if the JNLP file
+	requests permissions but the jars are unsigned.
 
 2010-07-19  Omair Majid  <omajid@redhat.com>
 
@@ -237,23 +590,23 @@
 	(requestFocusOnDefaultButton): New method.
 	* netx/net/sourceforge/jnlp/security/AccessWarningPane.java
 	Extend SecurityDialogPanel instead of SecurityDialogUI
-	(AccessWarningPane): Take a SecurityWarningDialog instead of a JComponent
-	as a paramenter. Call addComponents.
+	(AccessWarningPane): Take a SecurityWarningDialog instead of a
+	JComponent as a paramenter. Call addComponents.
 	(installComponents): Renamed to
 	(addComponents): New method.
 	(R): Moved to parent class.
 	(htmlWrap): Likewise.
-	* netx/net/sourceforge/jnlp/security/AppletWarningPane.java
-	Extend SecurityDialogPanel instead of SecurityDialogUI
-	(AppletWarningPane): Take a SecurityWarningDialog instead of a JComponent
-	as a paramter. Call addComponents.
+	* netx/net/sourceforge/jnlp/security/AppletWarningPane.java:
+	Extend SecurityDialogPanel instead of SecurityDialogUI.
+	(AppletWarningPane): Take a SecurityWarningDialog instead of a
+	JComponent as a paramter. Call addComponents.
 	(installComponents): Renamed to...
 	(addComponents): New method.
 	(htmlWrap): Moved to parent class.
 	* netx/net/sourceforge/jnlp/security/CertWarningPane.java
 	Extend SecurityDialogPanel instead of SecurityDialogUI
-	(CertWarningPane): Take a SecurityWarningDialog instead of a JComponent as
-	a parameter. Call addComponents.
+	(CertWarningPane): Take a SecurityWarningDialog instead of a JComponent
+	as a parameter. Call addComponents.
 	(installComponents): Renamed to...
 	(addComponents): New method.
 	(R): Moved to parent class.
@@ -261,14 +614,14 @@
 	(CheckBoxListener): Add debug information.
 	* netx/net/sourceforge/jnlp/security/CertsInfoPane.java
 	Extend SecurityDialogPanel instead of SecurityDialogUI
-	(CertsInfoPane): Take a SecurityWarningDialog instead of a JComponent as a
-	parameter. Call addComponents.
+	(CertsInfoPane): Take a SecurityWarningDialog instead of a JComponent
+	as a parameter. Call addComponents.
 	(installComponents): Renamed to...
 	(addComponents): New method.
 	* netx/net/sourceforge/jnlp/security/MoreInfoPane.java
 	Extend SecurityDialogPanel instead of SecurityDialogUI
-	(MoreInfoPane): Take a SecurityWarningDialog instead of a JComponent as a
-	parameter. Call addComponents.
+	(MoreInfoPane): Take a SecurityWarningDialog instead of a JComponent
+	as a parameter. Call addComponents.
 	(installComponents): Renamed to...
 	(addComponents): New method.
 	(R): Moved to parent class.
@@ -283,10 +636,11 @@
 	(showSingleCertInfoDialog): Likewise.
 	(showAppletWarning): Likewise.
 	(createDialog): Renamed to...
-	(initDialog): New method. Clean up api and remove JOptionPane references.
+	(initDialog): New method. Clean up api and remove JOptionPane
+	references.
 	(updateUI): Renamed to...
-	(installPanel): Switch from Look and Feel related setUI methods to simple
-	JComponents.
+	(installPanel): Switch from Look and Feel related setUI methods to
+	simple JComponents.
 	(selectDefaultButton): New method. Causes the default button to request
 	focus.
 	(setValue): New method. Set the return value of this dialog.
@@ -294,13 +648,13 @@
 	(setSystemLookAndFeel): New method. Set the Look and Feel to the System
 	look and feel.
 	* netx/net/sourceforge/jnlp/security/SingleCertInfoPane.java
-	(SingleCertInfoPane): Take a SecurityWarningDialog instead of a JComponent
-	as a parameter.
+	(SingleCertInfoPane): Take a SecurityWarningDialog instead of a
+	JComponent as a parameter.
 	(buildTree): Use parant instead of optionPane.
 	(populateTable): Likewise.
-	* netx/net/sourceforge/jnlp/security/viewer/CertificatePane.java: Extend 
-	JPanel instead of SecurityDialogUI. Add two new fields: parent and
-	defaultFocusComponent.
+	* netx/net/sourceforge/jnlp/security/viewer/CertificatePane.java:
+	Extend JPanel instead of SecurityDialogUI.
+	Add two new fields: parent and defaultFocusComponent.
 	(CertificatePane): Take a JDialog as the argument.
 	(installUI): Removed.
 	(setSystemLookAndFeel): Removed.
@@ -309,14 +663,15 @@
 	(focusOnDefaultButton): New method. Makes the defaultFocusComponent get
 	focus.
 	(CloseButtonListener): New class. Disposes the JDialog.
-	* netx/net/sourceforge/jnlp/security/viewer/CertificateViewer.java: Extend
-	JDialog instead of JOptionPane
-	(CertificateViewer): Initialize the JDialog, add the CertificatePanel and
-	set default focus.
+	* netx/net/sourceforge/jnlp/security/viewer/CertificateViewer.java:
+	Extend JDialog instead of JOptionPane
+	(CertificateViewer): Initialize the JDialog, add the CertificatePanel
+	and set default focus.
 	(updateUI): Removed.
 	(centerDialog): Takes no arguments.
 	(createDialog): Removed.
-	(showCertificateViewer): Use the new cleaned up api for CertificateViewer.
+	(showCertificateViewer): Use the new cleaned up api for
+	CertificateViewer.
 	(setSystemLookAndFeel): New method. Sets the LookAndFeel of the system.
 
 2010-07-19  Gary Benson  <gbenson@redhat.com>
@@ -324,7 +679,8 @@
 
 	PR icedtea/498
 	* ports/hotspot/src/share/vm/shark/sharkTopLevelBlock.cpp
-	(SharkTopLevelBlock::handle_exception): Catch-all handler can be unloaded.
+	(SharkTopLevelBlock::handle_exception): Catch-all handler can be
+	unloaded.
 
 2010-07-16  Deepak Bhole <dbhole@redhat.com>
 
@@ -334,10 +690,11 @@
 2010-07-15  Deepak Bhole <dbhole@redhat.com>
 
 	* patches/openjdk/6678385.patch: New file. Backpatched from jdk7 for 
-	upstream bug#6678385. Fixes rhbz# 551835. Fixes jvm crashes when window is
-	resized.
+	upstream bug#6678385. Fixes rhbz# 551835. Fixes jvm crashes when window
+	is resized.
 
 2010-07-14  Jon VanAlten  <jon.vanalten@redhat.com>
+
 	* patches/icedtea-override-redirect-metacity.patch: Produces the
 	"expected" behavior for full screen applications or other situations
 	where developers wish to present elements that would cover things like
@@ -362,8 +719,8 @@
 	being free'd is an init worker.
 	(getFreeWorker): Create new normal worked only if worker count is less
 	than MAX_WORKERS - PRIORITY_WORKERS.
-	(dumpWorkerStatus): New method. Useful when debugging -- prints status of
-	all workers.
+	(dumpWorkerStatus): New method. Useful when debugging -- prints status
+	of all workers.
 	* plugin/icedteanp/java/sun/applet/PluginMessageHandlerWorker.java
 	(toString): New method. Returns the string representation of the worker
 	instance at call time.
@@ -407,6 +764,7 @@
 	Remove duplicate WITH_OPENJDK_SRC_DIR call.
 
 2010-07-12 Jon VanAlten <jon.vanalten@redhat.com>
+
 	* pulseaudio/src/java/org/classpath/icedtea/pulseaudio/PulseAudioDataLine.java
 	* pulseaudio/src/java/org/classpath/icedtea/pulseaudio/PulseAudioLine.java
 	* pulseaudio/src/java/org/classpath/icedtea/pulseaudio/PulseAudioSourceDataLine.java
@@ -424,6 +782,7 @@
 	be parsed with the encoding the jnlp file is in.
 	(getEncoding): A new method which checks the first four bytes of input
 	and determines what the files encoding is.
+	* NEWS: Fixes icedtea bug 486.
 
 2010-07-08  Andrew John Hughes  <ahughes@redhat.com>
 
@@ -600,7 +959,8 @@
 	(getNativeDir): Add the new native directory to nativeDirectories.
 	(addNativeDirectory): New function.
 	(getNativeDirectories): New function.
-	(findLibrary): Look in all the native directories for the native library.
+	(findLibrary): Look in all the native directories for the native
+	library.
 
 2010-06-30  Omair Majid  <omajid@redhat.com>
 
@@ -615,8 +975,8 @@
 	(fixPath): Moved to...
 	* netx/net/sourceforge/jnlp/util/FileUtils.java
 	(sanitizePath): New function. Moved from CacheUtil.java
-	(sanitizeFileName): Use a blacklisting approach rather than a whitelisting
-	approach: should work better with non ascii filenames.
+	(sanitizeFileName): Use a blacklisting approach rather than a
+	whitelisting approach: should work better with non ascii filenames.
 
 2010-06-30  Andrew John Hughes  <ahughes@redhat.com>
 
@@ -632,11 +992,14 @@
 	(clean-native-ecj): Inverse of native-ecj.stamp.
 	(clean-icedtea): Just delete the build directory and stamp.
 	(clean-icedtea-debug): Inverse of icedtea-debug.stamp.
-	(clean-icedtea-against-icedtea): Inverse of icedtea-against-icedtea.stamp
-	(clean-icedtea-debug-against-icedtea): Inverse of icedtea-debug-against-icedtea.stamp
+	(clean-icedtea-against-icedtea): Inverse of
+	icedtea-against-icedtea.stamp.
+	(clean-icedtea-debug-against-icedtea): Inverse of
+	icedtea-debug-against-icedtea.stamp.
 	(clean-icedtea-ecj): Just delete the build directory and stamp.
 	(clean-icedtea-against-ecj): Inverse of icedtea-against-ecj.stamp.
-	(clean-IcedTeaPlugin): Delete empty build directories if srcdir != builddir.
+	(clean-IcedTeaPlugin): Delete empty build directories
+	if srcdir != builddir.
 	(clean-pulse-java): Likewise.
 	(clean-add-cacao): Inverse of add-cacao.stamp.
 	(clean-add-cacao-debug): Inverse of add-cacao-debug.stamp.
@@ -980,8 +1343,8 @@
 
 2010-06-14  Omair Majid <omajid@redhat.com>
 
-	* plugin/icedteanp/IcedTeaNPPlugin.cc: Use getproperty NPAPI call instead
-	of evaluate, to get page URL.
+	* plugin/icedteanp/IcedTeaNPPlugin.cc: Use getproperty NPAPI call
+	instead of evaluate, to get page URL.
 
 2010-06-14  Andrew John Hughes  <ahughes@redhat.com>
 
@@ -1176,8 +1539,8 @@
 
 2010-06-07 Jon VanAlten  <jon.vanalten@redhat.com>
 
-	* Makefile.am
-	(stamps/icedtea.stamp): Use full path when adding PulseAudio sources to src.zip
+	* Makefile.am (stamps/icedtea.stamp): Use full path when adding
+	PulseAudio sources to src.zip
 
 2010-06-06  Andrew John Hughes  <ahughes@redhat.com>
 
@@ -1861,14 +2224,16 @@
 	(setMember): Same.
 	(sendMember): Same.
 	(finalize): Same.
-	(queue_processor): Same. Also, free message part memory after processing.
+	(queue_processor): Same. Also, free message part memory after
+	processing.
 	* plugin/icedteanp/IcedTeaPluginRequestProcessor.h: Change method
-	signatures to deal with string pointer vectors instead of string vectors.
+	signatures to deal with string pointer vectors instead of string
+	vectors.
 	* plugin/icedteanp/IcedTeaPluginUtils.cc
 	(stringToJSID): Added another signature that receives a string pointer.
 	(strSplit): Return string pointer vector instead of string vector.
-	(getUTF8String): Change signature to receive string pointer vector instead
-	of string vector. Update function accordingly.
+	(getUTF8String): Change signature to receive string pointer vector
+	instead of string vector. Update function accordingly.
 	(getUTF16LEString): Same. 
 	(subscribe): Make subscription atomic.
 	(unSubscribe): Make unsubscription atomic, bound to same lock as
@@ -2033,12 +2398,14 @@
 	(IT_CLASS_TARGET_VERSION): Class file version to target.
 	(IT_JAVACFLAGS): Add above flags to javac compilation.
 	(ICEDTEA_PATCHES): Add 6873059 source/target fixes from OpenJDK7.
-	(liveconnect.stamp): Use ICEDTEA_RT on classpath instead of system rt.jar and lib/rt.
+	(liveconnect.stamp): Use ICEDTEA_RT on classpath instead of system
+	rt.jar and lib/rt.
 	(netx.stamp): Likewise.
 	(extra-class-files.stamp): Use ICEDTEA_RT as bootclasspath.
 	Use standard IT_JAVACFLAGS options.
 	(pulse-java-jar.stamp): Remove unneeded conditional.
-	(pulse-java-class.stamp): Use IT_JAVACFLAGS and ICEDTEA_RT on bootclasspath.
+	(pulse-java-class.stamp): Use IT_JAVACFLAGS and ICEDTEA_RT on
+	bootclasspath.
 	(rewriter.stamp): Use IT_JAVACFLAGS.
 	(plugin-tests.stamp): Likewise.
 	(jtreg.stamp): Likewise.
@@ -2052,8 +2419,8 @@
 	* generated/org/classpath/icedtea/java/nio/channels/WritePendingException.java,
 	* generated/sun/nio/fs/UnixConstants.java:
 	Add generated files needed for NIO2.
-	* javac.in: Move to OpenJDK7 Perl version so that flag duplication avoidance
-	works correctly.
+	* javac.in: Move to OpenJDK7 Perl version so that flag duplication
+	avoidance works correctly.
 	* patches/ecj/icedtea-hotspot.patch: Regenerated.
 	* patches/openjdk/6873059-javac-versioning-corba.patch,
 	* patches/openjdk/6873059-javac-versioning-hotspot.patch,
@@ -2183,7 +2550,8 @@
 	* plugin/icedteanp/IcedTeaNPPlugin.cc
 	(start_jvm_if_needed): Create pipes in a temporary dir instead of users
 	home directory.
-	(plugin_start_appletviewer): Pass pipe names to PluginMain when initializing Java.
+	(plugin_start_appletviewer): Pass pipe names to PluginMain when
+	initializing Java.
 	* plugin/icedteanp/java/sun/applet/PluginMain.java: Receive pipe names
 	during initialization.
 
@@ -3080,6 +3448,40 @@
 	* patches/ecj/icedtea.patch: Don't add tools.jar
 	to bootclasspath; now just a symlink to rt.jar.
 
+2009-11-17  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/icedtea-jaxws-getdtdtype.patch:
+	Fix path.
+
+2009-11-17  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/icedtea-jaxws-getdtdtype.patch:
+	Add additional fix for AttributeBase.java
+	
+2009-11-17  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/icedtea-jaxws-getdtdtype.patch:
+	Replace getDTDType method, don't add another.
+	* HACKING: Document the patch.
+	
+2009-11-17  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Make use of JAXWS dependent on absence of
+	javax.annotation.Resource and/or getDTDType()
+	bug.  Add new JAXWS patch.
+	(extract-jaxws.stamp): Apply getDTDType() patch
+	if bug found.
+	* acinclude.m4:
+	(IT_GETDTDTYPE_CHECK): Check for old versions of
+	gcj/Classpath which have
+	javax.xml.stream.events.Attribute.getDTDType()
+	with a return type of QName not String.
+	* configure.ac:
+	Invoke new IT_GETDTDTYPE_CHECK macro.
+	* patches/icedtea-jaxws-getdtdtype.patch:
+	New patch to work around the getDTDType() bug.
+	
 2010-03-01  Mark Wielaard  <mark@klomp.org>
 
 	* patches/ecj/icedtea.patch: Don't add generated dir to

@@ -138,10 +138,10 @@ endif
 # FIXME: This should not depend on bootstrapping
 # but on whether MEMORY_LIMIT is accepted
 # as an argument to javac
-if WITH_OPENJDK
-  MEMORY_LIMIT = -J-Xmx1024m
-else
+if BOOTSTRAPPING
   MEMORY_LIMIT =
+else
+  MEMORY_LIMIT = -J-Xmx1024m
 endif
 
 if WITH_CACAO
@@ -151,17 +151,14 @@ else
   ICEDTEA_DEBUG_BUILD_TARGET = debug_build
 endif
 
-# FIXME (bootstrap): Assumption is WITH_OPENJDK == no bootstrap
-if WITH_OPENJDK
-  BOOTSTRAP_DIRECTORY_STAMP =
-  SYSTEM_JDK_DIR = $(SYSTEM_OPENJDK_DIR)
-  ICEDTEA_HOME = $(SYSTEM_JDK_DIR)
-  INITIAL_BOOTSTRAP_LINK_STAMP = stamps/bootstrap-directory-symlink.stamp
-else
+if BOOTSTRAPPING
   BOOTSTRAP_DIRECTORY_STAMP = stamps/bootstrap-directory.stamp
-  SYSTEM_JDK_DIR = $(SYSTEM_GCJ_DIR)
   ICEDTEA_HOME = $(ICEDTEA_BOOT_DIR)
   INITIAL_BOOTSTRAP_LINK_STAMP = stamps/bootstrap-directory-symlink-ecj.stamp
+else
+  BOOTSTRAP_DIRECTORY_STAMP =
+  ICEDTEA_HOME = $(SYSTEM_JDK_DIR)
+  INITIAL_BOOTSTRAP_LINK_STAMP = stamps/bootstrap-directory-symlink.stamp
 endif
 
 if CP_SUPPORTS_REFLINK
@@ -270,10 +267,10 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-parisc.patch \
 	patches/icedtea-sh4-support.patch \
 	patches/icedtea-policy-evaluation.patch \
+	patches/update-bootclasspath.patch \
 	patches/libpng.patch \
 	patches/shark.patch \
 	patches/extensions/netx.patch \
-	patches/extensions/netx-dist.patch \
 	patches/extensions/netx-umask.patch \
 	patches/icedtea-jtreg-httpTest.patch \
 	patches/arm.patch \
@@ -282,7 +279,14 @@ ICEDTEA_PATCHES = \
 	patches/no-sync.patch \
 	patches/icedtea-override-redirect-metacity.patch \
 	patches/openjdk/6963870-swing_npe.patch \
-	patches/openjdk/6668231-ssl_cert.patch
+	patches/openjdk/6668231-ssl_cert.patch \
+	patches/openjdk/6967533-pre_epoch.patch \
+	patches/fonts-rhel.patch \
+	patches/fonts-gentoo.patch \
+	patches/ipv4-mapped-ipv6-addresses.patch \
+	patches/openjdk/6795060-icu_crash.patch \
+	patches/openjdk/4356282-opentype.patch \
+	patches/openjdk/6954424-opentype_javadoc.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -291,8 +295,7 @@ endif
 
 if ENABLE_PLUGIN
 ICEDTEA_PATCHES += \
-	patches/extensions/liveconnect.patch \
-	patches/extensions/liveconnect-dist.patch
+	patches/extensions/liveconnect.patch
 endif
 
 if BUILD_CACAO
@@ -316,11 +319,9 @@ ICEDTEA_PATCHES += \
 endif
 
 if ENABLE_XRENDER
-# match against $(abs_top_srcdir) and then remove it again,
-# because stamps/patch.stamp target will also add it
-XRENDER_PATCHES = patches/xrender/icedtea-???.patch
-XRENDER_PATCH_FILES = $(sort $(wildcard $(abs_top_srcdir)/$(XRENDER_PATCHES)))
-ICEDTEA_PATCHES += $(sort $(subst $(abs_top_srcdir)/,,$(XRENDER_PATCH_FILES)))
+ICEDTEA_PATCHES += patches/openjdk/6725214-direct3d-01.patch \
+	patches/openjdk/6307603-xrender-01.patch \
+	patches/openjdk/6961633-xrender-02.patch
 endif
 
 if ENABLE_NIO2
@@ -329,13 +330,18 @@ endif
 
 if ENABLE_SYSTEMTAP
 ICEDTEA_PATCHES += patches/systemtap.patch \
-	patches/systemtap-gcc-4.5.patch
+	patches/systemtap-gcc-4.5.patch \
+	patches/systemtap-alloc-size-workaround.patch
 endif
 
 if ENABLE_NSS
 ICEDTEA_PATCHES += patches/icedtea-nss-config.patch
 else
 ICEDTEA_PATCHES += patches/icedtea-nss-not-enabled-config.patch
+endif
+
+if HAS_PAX
+ICEDTEA_PATCHES += patches/no-test_gamma.patch
 endif
 
 ICEDTEA_PATCHES += $(DISTRIBUTION_PATCHES)
@@ -350,9 +356,20 @@ ICEDTEA_ECJ_PATCHES = patches/ecj/icedtea.patch \
 	patches/ecj/bootver.patch \
 	patches/ecj/getannotation-cast.patch \
 	patches/ecj/override.patch
+
 if DTDTYPE_QNAME
 ICEDTEA_ECJ_PATCHES += \
 	patches/ecj/icedtea-jaxws-getdtdtype.patch
+endif
+
+if ENABLE_XRENDER
+ICEDTEA_ECJ_PATCHES += \
+	patches/ecj/needs-6.patch \
+	patches/ecj/javah.patch
+endif
+
+if !HAS_PAX
+ICEDTEA_ECJ_PATCHES += patches/ecj/no-test_gamma.patch
 endif
 
 ICEDTEA_ECJ_PATCHES += $(DISTRIBUTION_ECJ_PATCHES)
@@ -423,8 +440,6 @@ ICEDTEA_ENV = \
 	DEBUG_BINARIES="true" \
 	ALT_DROPS_DIR="$(abs_top_builddir)/drops" \
 	VERBOSE="$(VERBOSE)" \
-	ALT_NETX_DIST="$(abs_top_builddir)/netx.build" \
-	ALT_LIVECONNECT_DIST="$(abs_top_builddir)/liveconnect" \
 	ALT_OUTPUTDIR="$(BUILD_OUTPUT_DIR)"
 
 if WITH_CACAO
@@ -473,6 +488,8 @@ ICEDTEA_ENV_ECJ = $(ICEDTEA_ENV) \
 	BOOTCLASSPATH_CLS_RT="-bootclasspath $(ICEDTEA_CLS_DIR_ECJ):$(RUNTIME)" \
 	BOOTCLASSPATH_CLS="-bootclasspath $(ICEDTEA_CLS_DIR_ECJ)" \
 	BOOTCLASSPATH_RT_LIBGCJ="-bootclasspath $(RUNTIME)" \
+	CLASSPATH="" \
+	LD_LIBRARY_PATH="" \
 	GENSRCDIR="$(abs_top_builddir)/generated" \
 	JAR_KNOWS_ATFILE="$(JAR_KNOWS_ATFILE)" \
 	JAR_KNOWS_J_OPTIONS="$(JAR_KNOWS_J_OPTIONS)" \
@@ -550,7 +567,8 @@ install:
 	clean-icedtea-against-ecj clean-cacao clean-add-cacao clean-add-cacao-debug \
 	clean-ports clean-overlay clean-extract-ecj clean-extract clean-extract-openjdk \
 	clean-replace-hotspot clean-generated clean-download clean-hgforest clean-download-openjdk \
-	clean-rewriter clean-rewrite-rhino
+	clean-rewriter clean-rewrite-rhino clean-add-netx clean-add-netx-debug \
+	clean-add-plugin clean-add-plugin-debug
 
 env:
 	@echo 'unset JAVA_HOME'
@@ -1197,9 +1215,7 @@ clean-bootstrap-directory-symlink:
 # If you change anything here in the icedtea target, please make sure
 # you change it in the icedtea-debug target as well.
 stamps/icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
-	stamps/netx-dist.stamp $(OPENJDK_TREE) stamps/plugin.stamp \
-	extra-lib/about.jar stamps/cacao.stamp $(PULSE_JAVA_TARGET) \
-	stamps/rewrite-rhino.stamp
+ $(OPENJDK_TREE) stamps/cacao.stamp $(PULSE_JAVA_TARGET) stamps/rewrite-rhino.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV) \
 	  -C openjdk \
@@ -1208,12 +1224,6 @@ stamps/icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
 	mkdir -p $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
 	mkdir -p $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/ext
 	mkdir -p $(BUILD_OUTPUT_DIR)/j2re-image/lib/ext
-if ENABLE_PLUGIN
-	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
-	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
-	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
-endif
 if ENABLE_PULSE_JAVA
 	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
@@ -1226,10 +1236,6 @@ if ENABLE_PULSE_JAVA
 	(cd $(PULSE_JAVA_JAVA_SRCDIR) && \
 	   $(ZIP) -qur $(BUILD_OUTPUT_DIR)/j2sdk-image/src.zip org )
 endif
-	cp $(NETX_RESOURCE_DIR)/about.jnlp extra-lib/about.jar \
-	  $(BUILD_OUTPUT_DIR)/j2re-image/lib ; \
-	cp $(NETX_RESOURCE_DIR)/about.jnlp extra-lib/about.jar \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib
 if ZERO_BUILD
 	printf -- '-zero ALIASED_TO -server\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
 endif
@@ -1273,9 +1279,7 @@ clean-icedtea:
 	rm -f stamps/icedtea.stamp
 
 stamps/icedtea-debug.stamp: stamps/bootstrap-directory-symlink.stamp \
-	stamps/netx-dist.stamp $(OPENJDK_TREE) stamps/plugin.stamp \
-	extra-lib/about.jar stamps/cacao.stamp $(PULSE_JAVA_TARGET) \
-	stamps/rewrite-rhino.stamp
+ $(OPENJDK_TREE) stamps/cacao.stamp $(PULSE_JAVA_TARGET) stamps/rewrite-rhino.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV) \
 	  -C openjdk \
@@ -1284,12 +1288,6 @@ stamps/icedtea-debug.stamp: stamps/bootstrap-directory-symlink.stamp \
 	mkdir -p $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
 	mkdir -p $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/ext
 	mkdir -p $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/ext
-if ENABLE_PLUGIN
-	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
-	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
-endif
 if ENABLE_PULSE_JAVA
 	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
 	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
@@ -1302,10 +1300,6 @@ if ENABLE_PULSE_JAVA
 	(cd $(PULSE_JAVA_JAVA_SRCDIR) && \
 	   $(ZIP) -qur $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/src.zip org )
 endif
-	cp $(NETX_RESOURCE_DIR)/default.jnlp extra-lib/about.jar \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib ; \
-	cp $(NETX_RESOURCE_DIR)/default.jnlp extra-lib/about.jar \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib
 if ZERO_BUILD
 	printf -- '-zero ALIASED_TO -server\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
 endif
@@ -1350,27 +1344,109 @@ clean-icedtea-debug:
 	rm -f stamps/icedtea-debug.stamp
 
 stamps/icedtea-against-icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
- stamps/icedtea.stamp stamps/add-cacao.stamp stamps/add-zero.stamp
+ stamps/icedtea.stamp stamps/add-cacao.stamp stamps/add-zero.stamp stamps/add-plugin.stamp \
+ stamps/add-netx.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-against-icedtea.stamp
 
-clean-icedtea-against-icedtea: clean-add-zero clean-add-cacao
+clean-icedtea-against-icedtea: clean-add-zero clean-add-cacao clean-add-plugin clean-add-netx
 	rm -f stamps/icedtea-against-icedtea.stamp
 
 stamps/icedtea-debug-against-icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
- stamps/icedtea-debug.stamp stamps/add-cacao-debug.stamp stamps/add-zero-debug.stamp
+ stamps/icedtea-debug.stamp stamps/add-cacao-debug.stamp stamps/add-zero-debug.stamp \
+ stamps/add-plugin-debug.stamp stamps/add-netx-debug.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-debug-against-icedtea.stamp
 
-clean-icedtea-debug-against-icedtea: clean-add-zero-debug clean-add-cacao-debug
+clean-icedtea-debug-against-icedtea: clean-add-zero-debug clean-add-cacao-debug clean-add-plugin-debug \
+ clean-add-netx-debug
 	rm -f stamps/icedtea-debug-against-icedtea.stamp
+
+stamps/add-plugin.stamp: stamps/plugin.stamp
+if ENABLE_PLUGIN
+	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
+	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
+	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
+	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
+	cp -pPRf $(abs_top_builddir)/liveconnect/lib/classes.jar \
+	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/plugin.jar
+	cp -pPRf $(abs_top_builddir)/liveconnect/lib/classes.jar \
+	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/plugin.jar
+endif
+	touch stamps/add-plugin.stamp
+
+clean-add-plugin:
+	rm -f $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/IcedTeaPlugin.so
+	rm -f $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)/IcedTeaPlugin.so
+	rm -f $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/plugin.jar
+	rm -f $(BUILD_OUTPUT_DIR)/j2re-image/lib/plugin.jar
+	rm -f stamps/add-plugin.stamp
+
+stamps/add-plugin-debug.stamp: stamps/plugin.stamp
+if ENABLE_PLUGIN
+	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
+	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
+	cp -pPRf $(abs_top_builddir)/liveconnect/lib/classes.jar \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/plugin.jar
+	cp -pPRf $(abs_top_builddir)/liveconnect/lib/classes.jar \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/plugin.jar
+endif
+	touch stamps/add-plugin-debug.stamp
+
+clean-add-plugin-debug:
+	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/IcedTeaPlugin.so
+	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)/IcedTeaPlugin.so
+	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/plugin.jar
+	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/plugin.jar
+	rm -f stamps/add-plugin-debug.stamp
+
+stamps/add-netx.stamp: stamps/netx-dist.stamp extra-lib/about.jar
+	cp -pPRf $(abs_top_builddir)/netx.build/lib/classes.jar \
+	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/netx.jar
+	cp -pPRf $(abs_top_builddir)/netx.build/lib/classes.jar \
+	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/netx.jar
+	cp $(NETX_RESOURCE_DIR)/about.jnlp extra-lib/about.jar \
+	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib
+	cp $(NETX_RESOURCE_DIR)/about.jnlp extra-lib/about.jar \
+	  $(BUILD_OUTPUT_DIR)/j2re-image/lib
+	touch stamps/add-netx.stamp
+
+clean-add-netx:
+	rm -f $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/netx.jar
+	rm -f $(BUILD_OUTPUT_DIR)/j2re-image/lib/netx.jar
+	rm -f $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/about.jnlp
+	rm -f $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/about.jar
+	rm -f $(BUILD_OUTPUT_DIR)/j2re-image/lib/about.jnlp
+	rm -f $(BUILD_OUTPUT_DIR)/j2re-image/lib/about.jar
+	rm -f stamps/add-netx.stamp
+
+stamps/add-netx-debug.stamp: stamps/netx-dist.stamp extra-lib/about.jar
+	cp -pPRf $(abs_top_builddir)/netx.build/lib/classes.jar \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/netx.jar
+	cp -pPRf $(abs_top_builddir)/netx.build/lib/classes.jar \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/netx.jar
+	cp $(NETX_RESOURCE_DIR)/about.jnlp extra-lib/about.jar \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib
+	cp $(NETX_RESOURCE_DIR)/about.jnlp extra-lib/about.jar \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib
+	touch stamps/add-netx-debug.stamp
+
+clean-add-netx-debug:
+	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/netx.jar
+	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/netx.jar
+	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/about.jnlp
+	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/about.jar
+	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/about.jnlp
+	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/about.jar
+	rm -f stamps/add-netx-debug.stamp
 
 # OpenJDK ecj Targets
 # ===================
 
 stamps/icedtea-ecj.stamp: stamps/bootstrap-directory-symlink-ecj.stamp \
-	stamps/netx-dist.stamp $(OPENJDK_ECJ_TREE) stamps/cacao.stamp \
-	stamps/rewrite-rhino.stamp stamps/plugin.stamp
+	$(OPENJDK_ECJ_TREE) stamps/cacao.stamp stamps/rewrite-rhino.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV_ECJ) \
 	  -C openjdk-ecj/ \
@@ -1387,29 +1463,20 @@ clean-icedtea-ecj:
 # Rebuild targets
 
 rebuild:
-if WITH_OPENJDK
-	rm -f stamps/icedtea.stamp
-	rm -f stamps/icedtea-against-icedtea.stamp
-	$(ARCH_PREFIX) $(MAKE) icedtea-against-icedtea
-	@echo "IcedTea is served (again):" $(BUILD_OUTPUT_DIR)/j2sdk-image
-else
+if BOOTSTRAPPING
 	rm -f stamps/icedtea-ecj.stamp
 	rm -f stamps/icedtea-against-ecj.stamp
 	$(ARCH_PREFIX) $(MAKE) icedtea-against-ecj
 	@echo "ecj-poured IcedTea is served (again):" $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image
+else
+	rm -f stamps/icedtea.stamp
+	rm -f stamps/icedtea-against-icedtea.stamp
+	$(ARCH_PREFIX) $(MAKE) icedtea-against-icedtea
+	@echo "IcedTea is served (again):" $(BUILD_OUTPUT_DIR)/j2sdk-image
 endif
 
 hotspot:
-if WITH_OPENJDK
-	rm -f stamps/icedtea.stamp
-	rm -f stamps/icedtea-against-icedtea.stamp
-	$(ARCH_PREFIX) $(MAKE) ICEDTEA_BUILD_TARGET=hotspot icedtea-against-icedtea
-	mkdir -p \
-	   $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/server
-	cp $(BUILD_OUTPUT_DIR)/$(SERVER_DIR)/libjvm.so \
-	   $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/server
-	@echo "Hotspot is served:" $(BUILD_OUTPUT_DIR)/j2sdk-image
-else
+if BOOTSTRAPPING
 	rm -f stamps/icedtea-ecj.stamp
 	rm -f stamps/icedtea-against-ecj.stamp
 	$(ARCH_PREFIX) $(MAKE) ICEDTEA_BUILD_TARGET=hotspot icedtea-against-ecj
@@ -1418,6 +1485,15 @@ else
 	cp $(ECJ_BUILD_OUTPUT_DIR)/$(SERVER_DIR)/libjvm.so \
 	   $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/server
 	@echo "Hotspot is served:" $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image
+else
+	rm -f stamps/icedtea.stamp
+	rm -f stamps/icedtea-against-icedtea.stamp
+	$(ARCH_PREFIX) $(MAKE) ICEDTEA_BUILD_TARGET=hotspot icedtea-against-icedtea
+	mkdir -p \
+	   $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/server
+	cp $(BUILD_OUTPUT_DIR)/$(SERVER_DIR)/libjvm.so \
+	   $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/server
+	@echo "Hotspot is served:" $(BUILD_OUTPUT_DIR)/j2sdk-image
 endif
 
 stamps/icedtea-against-ecj.stamp: \
@@ -1763,7 +1839,7 @@ clean-add-cacao-debug:
 # configure script arguments, quoted in single quotes
 CONFIGURE_ARGS = @CONFIGURE_ARGS@
 ADD_ZERO_CONFIGURE_ARGS = \
-	--with-openjdk=$(BUILD_OUTPUT_DIR)/j2sdk-image \
+	--with-jdk-home=$(BUILD_OUTPUT_DIR)/j2sdk-image \
 	--enable-zero
 if ADD_SHARK_BUILD
 ADD_ZERO_CONFIGURE_ARGS += \

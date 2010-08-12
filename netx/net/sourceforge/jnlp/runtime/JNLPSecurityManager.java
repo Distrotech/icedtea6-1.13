@@ -104,42 +104,8 @@ class JNLPSecurityManager extends SecurityManager {
     /** weak reference to most app who's windows was most recently activated */
     private WeakReference activeApplication = null;
 
-    /** listener installs the app's classloader on the event dispatch thread */
-    private ContextUpdater contextListener = new ContextUpdater();
-
     /** Sets whether or not exit is allowed (in the context of the plugin, this is always false) */
     private boolean exitAllowed = true;
-
-    private class ContextUpdater extends WindowAdapter implements PrivilegedAction {
-        private ApplicationInstance app = null;
-
-        public void windowActivated(WindowEvent e) {
-            app = getApplication(e.getWindow());
-            AccessController.doPrivileged(this);
-            app = null;
-        }
-
-        public Object run() {
-            if (app != null) {
-                Thread.currentThread().setContextClassLoader(app.getClassLoader());
-                activeApplication = new WeakReference(app);
-            }
-            else
-                Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-
-            return null;
-        }
-
-        public void windowDeactivated(WindowEvent e) {
-            activeApplication = null;
-        }
-
-        public void windowClosing(WindowEvent e) {
-                System.err.println("Disposing window");
-                e.getWindow().dispose();
-        }
-    };
-
 
     /**
      * Creates a JNLP SecurityManager.
@@ -335,68 +301,6 @@ class JNLPSecurityManager extends SecurityManager {
                                                 }
                                         }
 
-                                } else if (perm instanceof PropertyPermission) {
-
-                                    if (JNLPRuntime.isDebug())
-                                        System.err.println("Requesting property: " + perm.toString());
-
-                                    // We go by the rules here:
-                                    // http://java.sun.com/docs/books/tutorial/deployment/doingMoreWithRIA/properties.html
-
-                                    // Since this is security sensitive, take a conservative approach:
-                                    // Allow only what is specifically allowed, and deny everything else
-
-                                    // First, allow what everyone is allowed to read
-                                    if (perm.getActions().equals("read")) {
-                                        if (    perm.getName().equals("java.class.version") ||
-                                                perm.getName().equals("java.vendor") ||
-                                                perm.getName().equals("java.vendor.url")  ||
-                                                perm.getName().equals("java.version") ||
-                                                perm.getName().equals("os.name") ||
-                                                perm.getName().equals("os.arch") ||
-                                                perm.getName().equals("os.version") ||
-                                                perm.getName().equals("file.separator") ||
-                                                perm.getName().equals("path.separator") ||
-                                                perm.getName().equals("line.separator") ||
-                                                perm.getName().startsWith("javaplugin.")
-                                            ) {
-                                            return;
-                                        }
-                                    }
-
-                                    // Next, allow what only JNLP apps can do
-                                    if (getApplication().getJNLPFile().isApplication()) {
-                                        if (    perm.getName().equals("awt.useSystemAAFontSettings") ||
-                                                perm.getName().equals("http.agent") ||
-                                                perm.getName().equals("http.keepAlive") ||
-                                                perm.getName().equals("java.awt.syncLWRequests") ||
-                                                perm.getName().equals("java.awt.Window.locationByPlatform") ||
-                                                perm.getName().equals("javaws.cfg.jauthenticator") ||
-                                                perm.getName().equals("javax.swing.defaultlf") ||
-                                                perm.getName().equals("sun.awt.noerasebackground") ||
-                                                perm.getName().equals("sun.awt.erasebackgroundonresize") ||
-                                                perm.getName().equals("sun.java2d.d3d") ||
-                                                perm.getName().equals("sun.java2d.dpiaware") ||
-                                                perm.getName().equals("sun.java2d.noddraw") ||
-                                                perm.getName().equals("sun.java2d.opengl") ||
-                                                perm.getName().equals("swing.boldMetal") ||
-                                                perm.getName().equals("swing.metalTheme") ||
-                                                perm.getName().equals("swing.noxp") ||
-                                                perm.getName().equals("swing.useSystemFontSettings")
-                                        ) {
-                                            return; // JNLP apps can read and write to these
-                                        }
-                                    }
-
-                                    // Next, allow access to customizable properties
-                                    if (perm.getName().startsWith("jnlp.") ||
-                                        perm.getName().startsWith("javaws.")) {
-                                        return;
-                                    }
-
-                                    // Everything else is denied
-                                    throw se;
-
                                 } else if (perm instanceof SecurityPermission) {
 
                                     // JCE's initialization requires putProviderProperty permission
@@ -523,8 +427,6 @@ class JNLPSecurityManager extends SecurityManager {
 
             weakWindows.add(window); // for mapping window -> app
             weakApplications.add(app);
-
-            w.addWindowListener(contextListener); // for dynamic context classloader
 
             app.addWindow(w);
         }

@@ -37,7 +37,6 @@ exception statement from your version.
 package net.sourceforge.jnlp.services;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
@@ -47,13 +46,9 @@ public class XJNLPRandomAccessFile implements JNLPRandomAccessFile {
 
         private RandomAccessFile raf;
 
-        public XJNLPRandomAccessFile(File file, String mode) {
-                try {
-                        raf = new RandomAccessFile(file, mode);
-                } catch (FileNotFoundException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                }
+        public XJNLPRandomAccessFile(File file, String mode) throws IOException {
+                raf = new RandomAccessFile(file, mode);
+
         }
 
         public void close() throws IOException {

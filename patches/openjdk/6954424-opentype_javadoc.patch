@@ -1,0 +1,23 @@
+
+# HG changeset patch
+# User prr
+# Date 1274975625 25200
+# Node ID acb763ebef9585000dda40e379d4e615be25c6b1
+# Parent 80a618f36d003b3e64fe8dd86f723d980db0d0bc
+6954424: Support OpenType/CFF fonts in JDK 7
+Reviewed-by: bae, igor
+
+--- openjdk.orig/jdk/src/share/classes/java/awt/Font.java	Wed Aug 04 00:07:49 2010 +0100
++++ openjdk/jdk/src/share/classes/java/awt/Font.java	Thu May 27 08:53:45 2010 -0700
+@@ -325,6 +325,10 @@ public class Font implements java.io.Ser
+      * Identify a font resource of type TRUETYPE.
+      * Used to specify a TrueType font resource to the
+      * {@link #createFont} method.
++     * The TrueType format was extended to become the OpenType
++     * format, which adds support for fonts with Postscript outlines,
++     * this tag therefore references these fonts, as well as those
++     * with TrueType outlines.
+      * @since 1.3
+      */
+ 
+

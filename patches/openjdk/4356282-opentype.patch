@@ -1,0 +1,227 @@
+
+# HG changeset patch
+# User igor
+# Date 1217861443 -14400
+# Node ID b577c70564b8053092bf35f012fa29efe22f56c9
+# Parent 2b1a7d4b9ac69c2366f38b5b0e9ebcf61f1e3277
+4356282: RFE: T2K should be used to rasterize CID/CFF fonts
+Reviewed-by: bae, prr
+
+--- openjdk.orig/jdk/src/share/classes/sun/font/FontManager.java	Fri Jun 25 11:53:15 2010 -0700
++++ openjdk/jdk/src/share/classes/sun/font/FontManager.java	Mon Aug 04 18:50:43 2008 +0400
+@@ -3269,7 +3269,7 @@ public final class FontManager {
+             int fontFormat = FONTFORMAT_NONE;
+             int fontRank = Font2D.UNKNOWN_RANK;
+ 
+-            if (ext.equals(".ttf") || isTTC) {
++            if (ext.equals(".ttf") || ext.equals(".otf") || isTTC) {
+                 fontFormat = FONTFORMAT_TRUETYPE;
+                 fontRank = Font2D.TTF_RANK;
+             } else if (ext.equals(".pfa") || ext.equals(".pfb")) {
+--- openjdk.orig/jdk/src/share/classes/sun/font/TrueTypeFont.java	Fri Jun 25 11:53:15 2010 -0700
++++ openjdk/jdk/src/share/classes/sun/font/TrueTypeFont.java	Mon Aug 04 18:50:43 2008 +0400
+@@ -90,6 +90,7 @@ public class TrueTypeFont extends FileFo
+     public static final int ttcfTag = 0x74746366; // 'ttcf' - TTC file
+     public static final int v1ttTag = 0x00010000; // 'v1tt' - Version 1 TT font
+     public static final int trueTag = 0x74727565; // 'true' - Version 2 TT font
++    public static final int ottoTag = 0x4f54544f; // 'otto' - OpenType font
+ 
+     /* -- ID's used in the 'name' table */
+     public static final int MS_PLATFORM_ID = 3;
+@@ -499,6 +500,7 @@ public class TrueTypeFont extends FileFo
+ 
+             case v1ttTag:
+             case trueTag:
++            case ottoTag:
+                 break;
+ 
+             default:
+--- openjdk.orig/jdk/src/share/classes/sun/java2d/SunGraphicsEnvironment.java	Fri Jun 25 11:53:15 2010 -0700
++++ openjdk/jdk/src/share/classes/sun/java2d/SunGraphicsEnvironment.java	Mon Aug 04 18:50:43 2008 +0400
+@@ -792,7 +792,9 @@ public abstract class SunGraphicsEnviron
+                 return(name.startsWith(".ttf", offset) ||
+                        name.startsWith(".TTF", offset) ||
+                        name.startsWith(".ttc", offset) ||
+-                       name.startsWith(".TTC", offset));
++                       name.startsWith(".TTC", offset) ||
++                       name.startsWith(".otf", offset) ||
++                       name.startsWith(".OTF", offset));
+             }
+         }
+     }
+@@ -815,31 +817,11 @@ public abstract class SunGraphicsEnviron
+         }
+     }
+ 
+-     public static class TTorT1Filter implements FilenameFilter {
+-        public boolean accept(File dir, String name) {
+-
+-            /* all conveniently have the same suffix length */
+-            int offset = name.length()-4;
+-            if (offset <= 0) { /* must be at least A.ttf or A.pfa */
+-                return false;
+-            } else {
+-                boolean isTT =
+-                    name.startsWith(".ttf", offset) ||
+-                    name.startsWith(".TTF", offset) ||
+-                    name.startsWith(".ttc", offset) ||
+-                    name.startsWith(".TTC", offset);
+-                if (isTT) {
+-                    return true;
+-                } else if (noType1Font) {
+-                    return false;
+-                } else {
+-                    return(name.startsWith(".pfa", offset) ||
+-                           name.startsWith(".pfb", offset) ||
+-                           name.startsWith(".PFA", offset) ||
+-                           name.startsWith(".PFB", offset));
+-                }
+-            }
+-        }
++    public static class TTorT1Filter implements FilenameFilter {
++         public boolean accept(File dir, String name) {
++             return SunGraphicsEnvironment.ttFilter.accept(dir, name) ||
++                 SunGraphicsEnvironment.t1Filter.accept(dir, name);
++         }
+     }
+ 
+     /* No need to keep consing up new instances - reuse a singleton.
+--- openjdk.orig/jdk/src/windows/native/sun/font/fontpath.c	Fri Jun 25 11:53:15 2010 -0700
++++ openjdk/jdk/src/windows/native/sun/font/fontpath.c	Mon Aug 04 18:50:43 2008 +0400
+@@ -153,7 +153,8 @@ static int CALLBACK EnumFontFacesInFamil
+     JNIEnv *env = fmi->env;
+     jstring fullname, fullnameLC;
+ 
+-    if (FontType != TRUETYPE_FONTTYPE) {
++    /* Both Vista and XP return DEVICE_FONTTYPE for OTF fonts */
++    if (FontType != TRUETYPE_FONTTYPE && FontType != DEVICE_FONTTYPE) {
+         return 1;
+     }
+ 
+@@ -227,7 +228,8 @@ static int CALLBACK EnumFontFacesInFamil
+     JNIEnv *env = fmi->env;
+     jstring fullname, fullnameLC;
+ 
+-    if (FontType != TRUETYPE_FONTTYPE) {
++    /* Both Vista and XP return DEVICE_FONTTYPE for OTF fonts */
++    if (FontType != TRUETYPE_FONTTYPE && FontType != DEVICE_FONTTYPE) {
+         return 1;
+     }
+ 
+@@ -274,7 +276,8 @@ static int CALLBACK EnumFamilyNamesA(
+     jstring familyLC;
+     LOGFONTA lfa;
+ 
+-    if (FontType != TRUETYPE_FONTTYPE) {
++    /* Both Vista and XP return DEVICE_FONTTYPE for OTF fonts */
++    if (FontType != TRUETYPE_FONTTYPE && FontType != DEVICE_FONTTYPE) {
+         return 1;
+     }
+ 
+@@ -323,7 +326,8 @@ static int CALLBACK EnumFamilyNamesW(
+     int slen;
+     LOGFONTW lfw;
+ 
+-    if (FontType != TRUETYPE_FONTTYPE) {
++    /* Both Vista and XP return DEVICE_FONTTYPE for OTF fonts */
++    if (FontType != TRUETYPE_FONTTYPE && FontType != DEVICE_FONTTYPE) {
+         return 1;
+     }
+ /*     wprintf(L"FAMILY=%s charset=%d FULL=%s\n", */
+@@ -383,15 +387,16 @@ static int CALLBACK EnumFamilyNamesW(
+  * Also if a Font has a name for this locale that name also
+  * exists in the registry using the appropriate platform encoding.
+  * What do we do then?
+- */
+-
+-/* static const wchar_t W_TTSUFFIX[] = L" (TrueType)"; */
+-/* static const char C_TTSUFFIX[] = " (TrueType)"; */
+-/* static int TTSLEN = 11;  hard-coded - be careful */
+-static BOOL RegistryToBaseTTNameA(LPCSTR name) {
++ *
++ * Note: OpenType fonts seems to have " (TrueType)" suffix on Vista
++ *   but " (OpenType)" on XP.
++ */
++
++static BOOL RegistryToBaseTTNameA(LPSTR name) {
+     static const char TTSUFFIX[] = " (TrueType)";
++    static const char OTSUFFIX[] = " (OpenType)";
+     int TTSLEN = strlen(TTSUFFIX);
+-    char *match;
++    char *suffix;
+ 
+     int len = strlen(name);
+     if (len == 0) {
+@@ -403,19 +408,21 @@ static BOOL RegistryToBaseTTNameA(LPCSTR
+     if (len <= TTSLEN) {
+         return FALSE;
+     }
+-    match = strstr(name, TTSUFFIX);
+-    if ((match != NULL) && (match == name+(len-TTSLEN))) {
+-        match[0] = '\0'; /* truncate name */
++
++    /* suffix length is the same for truetype and opentype fonts */
++    suffix = name + len - TTSLEN;
++    if (strcmp(suffix, TTSUFFIX) == 0 || strcmp(suffix, OTSUFFIX) == 0) {
++        suffix[0] = '\0'; /* truncate name */
+         return TRUE;
+-    } else {
+-        return FALSE;
+-    }
++    }
++    return FALSE;
+ }
+ 
+ static BOOL RegistryToBaseTTNameW(LPWSTR name) {
+     static const wchar_t TTSUFFIX[] = L" (TrueType)";
++    static const wchar_t OTSUFFIX[] = L" (OpenType)";
+     int TTSLEN = wcslen(TTSUFFIX);
+-    wchar_t *match;
++    wchar_t *suffix;
+ 
+     int len = wcslen(name);
+     if (len == 0) {
+@@ -427,13 +434,13 @@ static BOOL RegistryToBaseTTNameW(LPWSTR
+     if (len <= TTSLEN) {
+         return FALSE;
+     }
+-    match = wcsstr(name, TTSUFFIX);
+-    if ((match != NULL) && (match == name+(len-TTSLEN))) {
+-        match[0] = L'\0'; /* truncate name */
++    /* suffix length is the same for truetype and opentype fonts */
++    suffix = name + (len - TTSLEN);
++    if (wcscmp(suffix, TTSUFFIX) == 0 || wcscmp(suffix, OTSUFFIX) == 0) {
++        suffix[0] = L'\0'; /* truncate name */
+         return TRUE;
+-    } else {
+-        return FALSE;
+-    }
++    }
++    return FALSE;
+ }
+ 
+ static void registerFontA(GdiFontMapInfo *fmi, jobject fontToFileMap,
+@@ -675,18 +682,19 @@ Java_sun_font_FontManager_populateFontFi
+         }
+         if (IS_NT) {
+             if (!RegistryToBaseTTNameW((LPWSTR)wname) ) {
+-                /* If the filename ends with ".ttf" also accept it.
++                /* If the filename ends with ".ttf" or ".otf" also accept it.
+                  * Not expecting to need to do this for .ttc files.
+                  * Also note this code is not mirrored in the "A" (win9x) path.
+                  */
+                 LPWSTR dot = wcsrchr((LPWSTR)data, L'.');
+-                if (dot == NULL || (wcsicmp(dot, L".ttf") != 0)) {
++                if (dot == NULL || ((wcsicmp(dot, L".ttf") != 0)
++                                      && (wcsicmp(dot, L".otf") != 0))) {
+                     continue;  /* not a TT font... */
+                 }
+             }
+             registerFontW(&fmi, fontToFileMap, (LPWSTR)wname, (LPWSTR)data);
+         } else {
+-            if (!RegistryToBaseTTNameA(cname) ) {
++            if (!RegistryToBaseTTNameA((LPSTR)cname)) {
+                 continue; /* not a TT font... */
+             }
+             registerFontA(&fmi, fontToFileMap, cname, (LPCSTR)data);
+

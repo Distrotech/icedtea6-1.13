@@ -1,4 +1,892 @@
-New in release 1.8 (2010-XX-XX):
+Key:
+
+SX  - http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6969395
+PRX - http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=X
+RHX - https://bugzilla.redhat.com/show_bug.cgi?id=X
+DX  - http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=X
+GX  - http://bugs.gentoo.org/show_bug.cgi?id=X
+
+CVE-XXXX-YYYY: http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
+
+New in release 1.10 (2010-XX-XX):
+* Backports from OpenJDK6
+  - S4356282, RH525870: RFE: T2K should be used to rasterize CID/CFF fonts
+  - S6954424: Support OpenType/CFF fonts in JDK 7
+
+New in release 1.9 (2010-XX-XX):
+
+* Updated to OpenJDK6 b20 with HotSpot 17.
+  - S4360113: Evict nmethods when code cache gets full
+  - S4670071: loadClassInternal is too restrictive.
+  - S4766230: Hotspot vtable inconsistencies cause core dumps. 6579515. 6582242.
+  - S4957990: Perm heap bloat in JVM
+  - S4997835: RFE: crash dump will only be created when running w/ -XX:+ShowMessageBoxOnError
+  - S5057225: Remove useless I2L conversions
+  - S5057818: codecache full and compiler disabled in bigapps fastdebug run
+  - S6333993: NodeList.item() returns null in 1.5.0_02
+  - S6361589: Print out stack trace for target thread of GC crash
+  - S6378821: bitCount() should use POPC on SPARC processors and AMD+10h
+  - S6419370: 4/4 new jmethodID code has tiny holes in synchronization
+  - S6423256: GC stacks should use a better data structure
+  - S6442502: assert(bits,"Use TypePtr for NULL") on linux-x86
+  - S6449385: JCK test dup2_x200106m1 fails with Segmentation Fault on x86
+  - S6472982: javax.xml.namespace.NamespaceContext.getPrefix("") should not throw IllegalArgumentException
+  - S6484956: G1: improve evacuation pause efficiency
+  - S6484957: G1: parallel concurrent refinement
+  - S6484959: G1: introduce survivor spaces
+  - S6490395: G1: Tidy up command line flags.
+  - S6511613: javac unexpectedly doesn't fail in some cases if an annotation processor specified
+  - S6539464: Math.log() produces inconsistent results between successive runs.
+  - S6541756: Reduce executable C-heap
+  - S6543938: G1: remove the concept of popularity
+  - S6548436: Incorrect inconvertible types error
+  - S6567360: 3/4 SIGBUS in jvmti RawMonitor magic check for unaligned bad monitor pointer
+  - S6587322: dtrace probe object__alloc doesn't fire in some situations on amd64
+  - S6587560: OpenJDK problem handling bitmaps returned when LCD text is requested
+  - S6589834: deoptimization problem with -XX:+DeoptimizeALot
+  - S6603316: Improve instrumentation for classes loaded at startup
+  - S6604422: G1: re-use half-promoted regions
+  - S6614597: Performance variability in jvm2008 xml.validation
+  - S6614957: HttpsURLConnection not using the set SSLSocketFactory for creating all its Sockets
+  - S6616792: five AWT focus regression tests should be fixed
+  - S6626217: Fixed loader constraint array handling
+  - S6631166: CMS: better heuristics when combatting fragmentation
+  - S6632169: HttpClient and HttpsClient should not try to reverse lookup IP address of a proxy server
+  - S6633872: Policy/PolicyFile leak dynamic ProtectionDomains.
+  - S6634138: Source generated in last round not compiled
+  - S6636138: UseSuperWord enabled failure
+  - S6637203: Classunloading messages go to stdout rather than Xloggc file, causing hangs when stdout is closed
+  - S6639665: ThreadGroup finalizer allows creation of false root ThreadGroups
+  - S6655638: dynamic languages need method handles
+  - S6655646: dynamic languages need dynamically linked call sites
+  - S6663854: assert(n != __null,"Bad immediate dominator info.") in C2 with -Xcomp
+  - S6675332: sjsxp issue 49: Repairing XMLStreamWriter tries to use default namespace for attributes
+  - S6675856: Open charset tests
+  - S6676423: (prefs) Opensource unit/regression tests for java.util.prefs
+  - S6677708: G1: re-enable parallel RSet updating and scanning
+  - S6680135: A number of test/closed/java/awt/Focus/* tests should be opened
+  - S6683472: Incorrect handling of translation component of font transform.
+  - S6684007: PrintAssembly plugin not available for linux or windows
+  - S6686273: Some AWT reg. tests should be moved to open repository (for CRs 6444769, 6480547, and 6560348)
+  - S6687298: Reg testcase java/awt/Graphics2D/DrawString/RotTransText.java fails on windows
+  - S6689653: JMapPerm fails with UseConcMarkSweepIncGC and compressed oops off
+  - S6690928: Use spinning in combination with yields for workstealing termination.
+  - S6692899: CMS: many vm.parallel_class_loading tests fail with assert "missing Printezis mark"
+  - S6697721: OpenJDK: rotated text baseline different between TextLayout and drawString
+  - S6699669: Hotspot server leaves synchronized block with monitor in bad state
+  - S6700789: G1: Enable use of compressed oops with G1 heaps
+  - S6700941: G1: allocation spec missing for some G1 classes
+  - S6703377: freetype: glyph vector outline is not translated correctly
+  - S6709742: find_base_for_derived's use of Ideal NULL is unsafe causing crashes during register allocation
+  - S6711117: Assertion in 64bit server vm (flat != TypePtr::BOTTOM,"cannot alias-analyze an untyped ptr")
+  - S6718964: Swing border tests should be open source
+  - S6718965: Swing color chooser tests should be open source
+  - S6720309: G1: don't synchronously update RSet during evacuation pauses
+  - S6720334: G1: don't update RSets of collection set regions during an evacuation pause
+  - S6722084: JPRT make file doesn't create required symbolic link to libjvm.so
+  - S6724345: incorrect method resolution for enum classes entered as source files
+  - S6728161: Add SKIP_BOOT_CYCLE feature to create boot jdk and use it during build
+  - S6728271: G1: Cleanup G1CollectedHeap::get_gc_alloc_regions()
+  - S6736390: File TOCTOU deserialization vulnerability
+  - S6737700: api/javax_swing/table/DefaultTableCellRenderer/index.html#getset:DefaultTableCellRenderer
+  - S6741757: minor ctw improvements
+  - S6745393: Inflater/Deflater clone issue
+  - S6755988: G1: assert(new_obj != 0 || ... "should be forwarded")
+  - S6759521: Move Bidi test programs from closed to open.
+  - S6760309: G1: update remembered sets during Full GCs
+  - S6761600: Use sse 4.2 in intrinsics
+  - S6761856: OpenJDK: vertical text metrics may be significanly different from those returned by Sun JDK
+  - S6763530: Cannot decode PublicKey (Proider SunPKCS11, curve prime256v1)
+  - S6766775: X509 certificate hostname checking is broken in JDK1.6.0_10
+  - S6769124: various 64-bit fixes for c1
+  - S6771432: createSocket() - smpatch fails using 1.6.0_10 because of "Unconnected sockets not implemented"
+  - S6772368: REGRESSION:tomcat crashed twice with JDK 7
+  - S6772683: Thread.isInterrupted() fails to return true on multiprocessor PC
+  - S6778657: Casts in SharedRuntime::f2i, f2l, d2i and d2l rely on undefined C++ behaviour
+  - S6778662: fixes 64-bits libraries directory search paths on linux
+  - S6778669: Patch from Red Hat -- fixes compilation errors
+  - S6781583: Hotspot build fails on linux 64 bit platform with gcc 4.3.2
+  - S6782232: assert("CreateEx must be first instruction in block" )
+  - S6782260: Memory leak in CodeBuffer::create_patch_overflow
+  - S6782663: Data produced by PrintGCApplicationConcurrentTime and PrintGCApplicationStoppedTime is not accurate.
+  - S6783381: NUMA allocator: don't pretouch eden space with UseNUMA
+  - S6784930: server jvm fails with assert(!n->is_SpillCopy(),"")
+  - S6786346: intermittent Internal Error (src/share/vm/memory/cardTableModRefBS.cpp:226)
+  - S6786503: Overflow list performance can be improved
+  - S6786948: SA on core file fails on solaris-amd64 if vm started with -XX:+StartAttachListener
+  - S6787106: Hotspot 32 bit build fails on platforms having different definitions for intptr_t &amp; int32_t
+  - S6787254: Work queue capacity can be increased substantially on some platforms
+  - S6788347: C2Compiler crash 6u7
+  - S6788376: allow to ignore unrecognized VM options
+  - S6788527: Server vm intermittently fails with assertion "live value must not be garbage" with fastdebug bits
+  - S6788797: Fork HS14 to HS15 - renumber Major and build numbers of JVM
+  - S6790182: matcher.cpp:1375: assert(false,"bad AD file")
+  - S6790209: server VM fails with assert(will_link,"_new: typeflow responsibility")
+  - S6791132: bad control in autobox split code
+  - S6791168: Fix invalid code in bytecodeInterpreter that can cause gcc ICE
+  - S6791178: Specialize for zero as the compressed oop vm heap base
+  - S6791572: assert("duplicating node that's already been matched")
+  - S6791656: nsk defclass0 asserts handles.hpp
+  - S6791815: Fix for 6471657 can cause deadlock on non-Solaris platforms when initializing direct buffer support
+  - S6791852: assert(b->_nodes[insidx] == n,"got insidx set incorrectly")
+  - S6792161: assert("No dead instructions after post-alloc")
+  - S6792301: StackAlignmentInBytes not honored for compiled native methods
+  - S6792421: assert(_bitMap->isMarked(addr+size-1),inconsistent Printezis mark)
+  - S6792705: Add JAR file to bootclasspath when using AggressiveOpts
+  - S6793344: BasicStroke's first element dash pattern is not a dash
+  - S6793825: Missing include dependancies for GCC without predefined headers
+  - S6793828: G1: invariant: queues are empty when activated
+  - S6794939: assert(_base == OopPtr,"subclass must override cast_to_ptr_type")
+  - S6795362: 32bit server compiler leads to wrong results on solaris-x86
+  - S6795465: Crash in assembler_sparc.cpp with client compiler on solaris-sparc
+  - S6795913: A few remaining wrong casts need to be fixed for building hotspot successfully on Mac OS.
+  - S6796746: rename LoadC (char) opcode class to LoadUS (unsigned short)
+  - S6797305: Add LoadUB and LoadUI opcode class
+  - S6797754: G1: combined bugfix
+  - S6797870: Add -XX:+{HeapDump,PrintClassHistogram}{Before,After}FullGC
+  - S6798572: test/closed/java/nio/charset/Charset/Contains.java failing since jdk7-b43
+  - S6798785: Crash in OopFlow::build_oop_map: incorrect comparison of 64bit pointers
+  - S6798898: CMS: bugs related to class unloading
+  - S6799141: Build with --hash-style=both so that binaries can work on SuSE 10
+  - S6799452: HotSpot tests Makefile should take care of ALT_SLASH_JAVA
+  - S6799693: Server compiler leads to data corruption when expression throws an Exception
+  - S6800154: Add comments to long_by_long_mulhi() for better understandability
+  - S6800586: -XX:+PrintGCDateStamps is using mt-unsafe localtime function
+  - S6801625: CDS: HeapDump tests crash with internal error in compactingPermGenGen.cpp
+  - S6802413: G1: G1FixedSurvivorSpaceSize should be converted into regions in calculate_survivors_policy()
+  - S6802453: G1: hr()->is_in_reserved(from),"Precondition."
+  - S6802499: EA: assert(false,"unknown node on this path")
+  - S6803688: Integrate latest JAX-WS (2.1.6) in to JDK 6u14
+  - S6804746: G1: guarantee(variance() > -1.0,"variance should be >= 0") (due to evacuation failure)
+  - S6805427: adlc compiler may generate incorrect machnode emission code
+  - S6805522: Server VM fails with assertion (block1->start() != block2->start(),"successors have unique bcis")
+  - S6805724: ModLNode::Ideal() generates functionally incorrect graph when divisor is any (2^k-1) constant.
+  - S6805748: Assertion "don't reset to 0 -- could be mistaken for never-executed" in CompilationPolicy
+  - S6805950: Typos in andL_rReg_imm instructions in x86_64.ad
+  - S6806046: Hotspot build error when compiled from Visual Studio
+  - S6806226: Signed integer overflow in growable array code causes JVM crash
+  - S6807084: AutoBox elimination is broken with compressed oops
+  - S6807345: Bump HS15 build number to 02
+  - S6807963: need tool to make sense of LogCompilaton output
+  - S6808322: ParNew, CMS, G1: ParGCAllocBuffer overflow
+  - S6808589: Merge vm_version_x86_{32,64}.{cpp,hpp}
+  - S6809798: SafePointScalarObject node placed into incorrect block during GCM
+  - S6810474: par compact - crash in summary_phase with very full heap
+  - S6810653: Change String cache class used by Hotspot from String to StringValue
+  - S6810672: Comment typos
+  - S6810698: G1: two small bugs in the sparse remembered sets
+  - S6810845: Performance regression in mpegaudio on x64
+  - S6810855: KILL vs. TEMP ordering restrictions are too strong
+  - S6811267: Fix for 6809798 broke linux build
+  - S6811384: MacroAssembler::serialize_memory may touch next page on amd64
+  - S6812297: update project creation for Visual Studio 2005-2008
+  - S6812428: G1: Error: assert(ret || obj_in_cs(obj),"sanity")
+  - S6812587: Use auxv to determine SPARC hardware features on Solaris
+  - S6812678: macro assembler needs delayed binding of a few constants (for 6655638)
+  - S6812721: Block's frequency should not be NaN
+  - S6812831: factor duplicated assembly code for megamorphic invokeinterface (for 6655638)
+  - S6812971: SA: re-attaching to process fails
+  - S6813212: factor duplicated assembly code for general subclass check (for 6655638)
+  - S6814467: G1: small fixes related to concurrent marking verboseness
+  - S6814552: par compact - some compilers fail to optimize bitmap code
+  - S6814575: Update copyright year
+  - S6814659: separable cleanups and subroutines for 6655638
+  - S6814842: Load shortening optimizations
+  - S6815683: G1: SEGV during marking
+  - S6815692: method handle code needs some cleanup (post-6655638)
+  - S6815790: G1: Missing MemoryPoolMXBeans with -XX:+UseG1GC
+  - S6816154: G1: introduce flags to enable/disable RSet updating and scanning
+  - S6816308: Changes to allow builds with latest Windows SDK 6.1 on 64bit Windows 2003
+  - S6816433: Test G1 and ParOld in JPRT
+  - S6816970: Bump HS15 build number to 03
+  - S6817419: G1: Enable extensive verification for humongous regions
+  - S6818264: Heap dumper unexpectedly adds .hprof suffix
+  - S6818666: G1: Type lost in g1 pre-barrier
+  - S6819065: G1: eliminate high serial card table clearing time
+  - S6819077: G1: first GC thread coming late into the GC.
+  - S6819085: G1: use larger and/or user settable region size
+  - S6819098: G1: reduce RSet scanning times
+  - S6819213: revive sun.boot.library.path
+  - S6819853: VM does not detect JDK which supports parallel class loaders
+  - S6819891: ParNew: Fix work queue overflow code to deal correctly with +UseCompressedOops
+  - S6820167: GCALotAtAllSafepoints + FullGCALot(ScavengeALot) options crash JVM
+  - S6820321: G1: Error: guarantee(check_nums(total, n, parts), "all seq lengths should match")
+  - S6820510: assertion failure with unloaded class in subnode.cpp
+  - S6820514: meet not symmetric failure in ctw
+  - S6821003: Update hotspot windows os_win32 for windows 7
+  - S6821507: Alignment problem in GC taskqueue
+  - S6821693: 64-bit TaskQueue capacity still too small
+  - S6821700: tune VM flags for peak performance
+  - S6822110: Add AddressLiteral class on SPARC
+  - S6822204: volatile fences should prefer lock:addl to actual mfence instructions
+  - S6822263: G1: JVMTI heap iteration fails
+  - S6822333: _call_stub_compiled_return address handling in SA is broken causing jstack to hang occasionally
+  - S6822370: ReentrantReadWriteLock: threads hung when there are no threads holding onto the lock (Netra x4450)
+  - S6822407: heapOopSize lookup is incorrect in Serviceability Agent.
+  - S6823354: Add intrinsics for {Integer,Long}.{numberOfLeadingZeros,numberOfTrailingZeros}()
+  - S6823377: Bump HS15 build number to 04
+  - S6823453: DeoptimizeALot causes fastdebug server jvm to fail with assert(false,"unscheduable graph")
+  - S6823454: Oop-typed loadP yields invalid pointer (0x1) on SPECjbb2005 at OSRed method entry
+  - S6824463: deopt blob is testing wrong register on 64-bit x86
+  - S6824570: ParNew: Fix memory leak introduced in 6819891
+  - S6825642: nsk sajdi tests fail with NullPointerException
+  - S6825815: Bump HS15 build number to 05 and update copyright date of HOTSPOT_VM_COPYRIGHT
+  - S6826261: class file dumping from SA is broken
+  - S6826318: G1: remove traversal-based refinement code
+  - S6826736: CMS: core dump with -XX:+UseCompressedOops
+  - S6826960: C2 Sparc: assert(bb->_nodes(_bb_end)->is_Proj(),"skipping projections after expected call")
+  - S6827505: sizing logic for vtable and itable stubs needs self-check
+  - S6827605: new String intrinsics may prevent EA scalar replacement
+  - S6828024: verification of fixed interval usage is too weak
+  - S6828069: Change JDK_MINOR_VER to 6 for 6Update HS versions
+  - S6828076: Fork HS15 to HS16 - renumber Major and build numbers of JVM
+  - S6829013: G1: set the default value of G1VerifyConcMarkPrintRechable to false
+  - S6829021: tests for 6636138 use UseSuperword instead of UseSuperWord
+  - S6829127: Deoptimization Failure on Specjvm98 _227_mtrt with -XX:+DeoptimizeALot since Hs11 b01
+  - S6829187: compiler optimizations required for JSR 292
+  - S6829192: JSR 292 needs to support 64-bit x86
+  - S6829234: Refix 6822407 and 6812971
+  - S6829575: 100028: Debug information is incomplete or missing
+  - S6829659: Circle is rendered in C shape
+  - S6829673: ThinLineTest: A line < 1 pixel disappears.
+  - S6829678: StrokeShapeTest: createStrokedShape() behaves differently
+  - S6830069: UseLargePages is broken on Win64
+  - S6830542: Performance: JVM_DefineClass already verified.
+  - S6830815: jprt.config not setting proper compiler version for use in 6u14
+  - S6831225: Upgrade JPRT jobs to use newer Linux 2.6 (e.g. Fedora 9)
+  - S6831323: Use v8plus as minimum required hardware for current Hotspot sources
+  - S6831604: missing null check in guarantee
+  - S6832293: JIT compiler got wrong result in type checking with -server
+  - S6833129: specjvm98 fails with NullPointerException in the compiler with -XX:DeoptimizeALot
+  - S6833316: jprt.properties not setting values for 6u14 release flag
+  - S6833573: C2 sparc: assert(c < 64 && (c & 1) == 0,"bad double float register")
+  - S6833576: G1: assert illegal index, growableArray.hpp:186
+  - S6833879: Assigning positive zero is ignored when old value is negative zero
+  - S6833951: Extra ":" Causes Testcase in CR 6589834 "Parse Exception: Invalid tag: summary:"
+  - S6834142: method->print_codes(): Error: ShouldNotReachHere()
+  - S6834177: Running jsynprog on Solaris Nevada can cause JVM crash
+  - S6834202: Bump the HS16 build number to 02
+  - S6835796: Fedora 9 linux_i586-fastdebug-c2-runThese_Xcomp times out
+  - S6836054: java/util/Arrays/CopyMethods.java fails on solaris-sparc with IllegalArgumentException
+  - S6837011: SIGSEGV in PhaseIdealLoop in 32bit jvm
+  - S6837094: False positive for "meet not symmetric" failure
+  - S6837146: Should perform unswitch before maximally unroll in loop transformation
+  - S6837224: libsaproc.so on linux needs version of 6799141
+  - S6837472: com/sun/jdi/MonitorFrameInfo.java fails with AggressiveOpts in 6u14
+  - S6837906: compiler tests of 6636138 fail with IllegalAccessException
+  - S6838154: make/linux/makefiles/sa.make needs hash-style fix
+  - S6838819: Bump the HS16 build number to 03
+  - S6838842: NUMA allocator: Segfault during startup on Linux
+  - S6839126: Type error found by newer windows compiler
+  - S6839151: Add a JPRT default test of -Xshare:dump when new hotspot is built
+  - S6839599: JVM crash while profiling Tomcat and Liferay
+  - S6840196: NUMA allocator: crash in fastdebug during startup on Linux
+  - S6840305: Discrepancy in system memory details (when 4G or greater) reported by JVM and Windows OS
+  - S6840775: Multiple JVM crashes seen with 1.6.0_10 through 1.6.0_14
+  - S6841313: G1: dirty cards of survivor regions in parallel
+  - S6841800: Incorrect boundary values behavior for option -XX:MaxLabelRootDepth=0-6 leads to jvm crash
+  - S6841831: G1: assert(contains_reference(from),"We just added it!") fires
+  - S6842999: Update hotspot windows os_win32 for windows 2008 R2
+  - S6843041: Remove duplicate README files in repositories (make/README)
+  - S6843292: "Expect to be beyond new region unless impacting another region" assertion too strong
+  - S6843580: JavaThread.getStackBase throws sun.jvm.hotspot.WrongTypeException invoked by jstack
+  - S6843629: Make current hotspot build part of jdk5 control build
+  - S6843694: G1: assert(index < _vs.committed_size(),"bad index"), g1BlockOffsetTable.inline.hpp:55
+  - S6843752: missing code for an anti-dependent Phi in GCM
+  - S6843761: Update langtools tests to remove unncessary -source and -target options
+  - S6845368: large objects cause a crash or unexpected exception
+  - S6847305: solaris reorder mapfiles generate too many warnings
+  - S6847956: G1: crash in oopDesc*G1ParCopyHelper::copy_to_survivor_space(oopDesc*)
+  - S6848466: frame::frame_size() assertion failure with -XX:+DebugDeoptimization
+  - S6848641: CMSCollector::_roots_scanning_options should be initialized
+  - S6849122: G1: Typo introduced during implementation of the parallel refinement
+  - S6849574: VM crash using NonBlockingHashMap (high_scale_lib)
+  - S6849716: BitMap - performance regression introduced with G1
+  - S6849984: Value methods for platform dependent math functions constant fold incorrectly
+  - S6850551: Bump the HS16 build number to 04
+  - S6850846: G1: extend G1 marking verification
+  - S6850869: G1: RSet "scrubbing" scrubs too much
+  - S6850957: Honor -XX:OnOutOfMemoryError when array size exceeds VM limit
+  - S6851282: JIT miscompilation results in null entry in array when using CompressedOops
+  - S6851386: assert(b->find_node(def) < j,"uses must follow definitions")
+  - S6851742: (EA) allocation elimination doesn't work with UseG1GC
+  - S6851829: solaris build fails with 5.8 compilers
+  - S6851908: interpreter null check profiling broken causing extra compilation invalidation
+  - S6852078: HSX 14/16 in jdk 5.0: api/javax_management api/org_omg jck tests crashes or make tnameserv crash
+  - S6852873: Increase in delta between application stopped time and ParNew GC time over application lifetime
+  - S6854027: Precompiled headers are not being updated in Linux/GCC builds
+  - S6854812: 6.0_14-b08 crashes with a SIGSEGV
+  - S6855115: G1: Fix for 6850869 is incorrect
+  - S6855164: SIGSEGV during compilation of method involving loop over CharSequence.
+  - S6855215: Calculation error (NaN) after about 1500 calculations
+  - S6855236: Compiler Tree API TreePath class generates NullPointerException from Iterator
+  - S6855834: G1: minimize the output when -XX:+PrintHeapAtGC is set
+  - S6856025: assert(_base >= OopPtr && _base <= KlassPtr,"Not a Java pointer")
+  - S6856257: Bump the HS16 build number to 05
+  - S6857159: local schedule failed with checkcast of Thread.currentThread()
+  - S6857194: Add hotspot perf counters to aid class loading performance measurement
+  - S6857661: 64-bit server VM: assert(is_Initialize(),"invalid node class")
+  - S6857707: Add missing test case for CR 6855164 from its bug description.
+  - S6858164: invokedynamic code needs some cleanup (post-6655638)
+  - S6858208: jvm crash when specifying TypeProfileWidth=0 on jdk 6.0
+  - S6858886: G1: guarantee(_next_marked_bytes <= used(),"invariant") at heapRegion.hpp:359
+  - S6859338: amd64 native unverified entry point pushes values before implicit null check
+  - S6859411: Bump the HS16 build number to 06
+  - S6859911: G1: assert(Heap_lock->owner() = NULL, "Should be owned on this thread's behalf")
+  - S6860433: [Nimbus] Code to set a single slider's thumb background doesn't work as specified
+  - S6860438: [Nimbus] Code to globally set slider's thumb background doesn't work as specified
+  - S6860469: remix_address_expressions sets incorrect control causing crash in split_if_with_block_post
+  - S6860599: nodes limit could be reached during Output phase
+  - S6860920: serialize.cpp shouldn't use objArrayOopDesc::base_offset_in_bytes(T_BYTE)
+  - S6861513: correct copyright attribution in test for 6837094 and 6860469
+  - S6861557: G1: assert(top() == bottom() || zfs == Allocated,"Region must be empty, or ...")
+  - S6861660: OopMapBlock count/size confusion
+  - S6861984: solaris version of libsaproc.so should support SA_ALTROOT directly
+  - S6862387: tune concurrent refinement further
+  - S6862534: -XX:NewRatio completely ignored when combined with -XX:+UseConcMarkSweepG
+  - S6862576: vmIntrinsics needs cleanup in order to support JSR 292 intrinsics
+  - S6862661: G1: _gc_alloc_region_counts is not updated properly after 6604422
+  - S6862863: C2 compiler fails in elide_copy()
+  - S6862919: Update copyright year
+  - S6862945: 4/3 conversion of jmethodID to methodOop in JVMTI is too expensive
+  - S6862956: PhaseIdealLoop should have a CFG verification mode
+  - S6863023: need non-perm oops in code cache for JSR 292
+  - S6863155: Server compiler generates incorrect code (x86, long, bitshift, bitmask)
+  - S6863216: Clean up debugging debris inadvertently pushed with 6700789
+  - S6863312: Keep JAXP Secure Processing Feature consistent with Java Secure Mode
+  - S6863420: os::javaTimeNanos() go backward on Solaris x86
+  - S6864003: Modify JVM_FindClassFromBootLoader to return null if class not found
+  - S6864886: G1: rename -XX parameters related to update buffers
+  - S6864901: Bump the HS16 build number to 07
+  - S6864914: SPECjvm2008 produces invalid result with zero based Compressed Oops
+  - S6865031: Application gives bad result (throws bad exception) with compressed oops
+  - S6865583: Verbose CIPrintMethodCodes asserts when ldc an empty String
+  - S6865703: G1: Parallelize hot card cache cleanup
+  - S6866190: Remove SIMPLE_STACK code from TaskQueue
+  - S6866585: debug code in ciObjectFactory too slow for large objects
+  - S6866591: G1: print update buffer processing stats more often
+  - S6866651: Regression: simple int sum crashes jvm (build 1.6.0_14-b08 and 1.7.0-ea-b59)
+  - S6867645: java -Xshare:dump failed - read only space too small
+  - S6868051: (SA) FreeChunk support for compressed oops is broken
+  - S6868269: CompileTheWorld assertion failure introduced by the reexecute bit implementation
+  - S6868486: timouts and outOfMemory in regression tests
+  - S6868487: EnableInvokeDynamic and EnableMethodHandles should not be visible flags in JDK6 or JDK7
+  - S6868991: JPRT: elide GCBasher_G1 test on winx64 until 6867250 is resolved
+  - S6869822: assert(Universe::narrow_oop_shift() == 0,"use unscaled narrow oop")
+  - S6870843: G1: G1 GC memory leak
+  - S6871111: G1: remove the concurrent overhead tracker
+  - S6871765: Bump the HS16 build number to 08
+  - S6872000: G1: compilation fails on linux/older gcc
+  - S6872136: CMS: confusing message may be printed when a collector is switched off implicitly
+  - S6873059: Explicitly use -source 5 -target 5 when compiling with the boot jdk
+  - S6873059: Explicitly use -source 5 -target 5 when compiling with the boot jdk javac
+  - S6873059: Explicitly use -source 6 -target 6 when compiling with the boot jdk
+  - S6873116: Modify reexecute implementation to use pcDesc to record the reexecute bit
+  - S6873236: Fork HS16 to HS17 - renumber Major and build numbers of JVM
+  - S6873777: FPU control word optimization still performed with SSE
+  - S6873799: enable escape analysis by default
+  - S6873800: enable compressed oops by default
+  - S6875329: fix for 6795465 broke exception handler cloning
+  - S6875577: CTW fails with /hotspot/src/share/vm/opto/memnode.cpp
+  - S6875619: CTW fails with /hotspot/src/share/vm/opto/type.hpp
+  - S6875866: Intrinsic for String.indexOf() is broken on x86 with SSE4.2
+  - S6875959: CTW fails hotspot/src/share/vm/opto/reg_split.cpp:1087
+  - S6875967: CTW fails with./generated/adfiles/ad_sparc.cpp:6711
+  - S6876276: assert(!is_visited,"visit only once")
+  - S6876584: parameters order is incorrect for enc_String_Equals() in x86_32.ad
+  - S6876794: 4/4 sp07t002 hangs very intermittently
+  - S6877221: Endless deoptimizations in OSR nmethod
+  - S6877254: Server vm crashes with no branches off of store slice" when run with CMS and UseSuperWord(default)
+  - S6877961: langtools build should allow more options when running jtreg
+  - S6879058: Change default JPRT release target for 6Update series VMs
+  - S6879061: Bump the HS16 build number to 09
+  - S6879076: disable jprt sync after builds are done
+  - S6879362: assert(!klass_is_exact(),"only non-exact klass")
+  - S6879572: SA fails _is_marked_dependent not found
+  - S6879572: SA fails with "RuntimeException: field "_is_marked_dependent" not found
+  - S6879689: Fix warning about ignored return value when compiling with -O2
+  - S6879902: CTW failure jdk6_18/hotspot/src/cpu/sparc/vm/assembler_sparc.hpp:845
+  - S6879921: CTW failure jdk6_18/hotspot/src/share/vm/utilities/globalDefinitions.cpp:268
+  - S6879943: CTW failure jdk6_18/hotspot/src/share/vm/c1/c1_LIR.hpp:2029
+  - S6880029: JDK 1.6.0_u14p Application crashed very early
+  - S6880034: SIGBUS during deoptimisation at a safepoint on 64bit-SPARC
+  - S6880052: SIGSEGV in GraphKit::null_check_common()
+  - S6880053: assert(alloc_obj->as_CheckCastPP()->type() != TypeInstPtr::NOTNULL)
+  - S6880533: test/compiler/6865031/Test.java miss -XX:+IgnoreUnrecognizedVMOptions
+  - S6880574: C2 assert in escape.cpp:445 on linux-amd64
+  - S6880903: G1: G1 reports incorrect Runtime.maxMemory()
+  - S6882730: G1: parallel heap verification messes up region dump
+  - S6883468: C2 compiler enters infinite loop in PhaseIterGVN::transform
+  - S6884552: remove some unnecessary #ifdef's introduced in the fix for 4957990
+  - S6884624: Update copyright year
+  - S6884837: test/java/net/MulticastSocket/SetOutgoingIf.java should check if interfaces are up/support multicast
+  - S6885041: G1: inconsistent thread dump
+  - S6885169: merge of 4957990 and 6863023 causes conflict on do_nmethods
+  - S6885297: java -XX:RefDiscoveryPolicy=2 or -XX:TLABWasteTargetPercent=0 cause VM crash
+  - S6885584: A particular class structure causes large allocation spike for jit
+  - S6885900: Bump the HS17 build number to 02
+  - S6886024: G1: assert(recent_avg_pause_time_ratio() < 1.00,"All GC?")
+  - S6886353: For DeoptimizeALot, JTreg tests should "IgnoreUnrecognizedVMOptions on a product build
+  - S6887186: G1: Incorrect code generated for G1 pre-barrier by C1 on SPARC
+  - S6887292: memory leak in freetypeScaler.c
+  - S6887571: Increase default heap config sizes
+  - S6887703: Unsigned applet can retrieve the dragged information before drop action occur
+  - S6887914: Bump the HS16 build number to 10
+  - S6887948: test/gc/6845368/bigobj.java fails due to timeout
+  - S6888149: AtomicReferenceArray causes SIGSEGV -> SEGV_MAPERR error
+  - S6888316: G1: has_aborted() || _cm->region_stack_empty() fails
+  - S6888619: G1: too many guarantees in concurrent marking
+  - S6888847: TaskQueue needs release_store() for correctness on RMO machines
+  - S6888880: JKernel VM to inject the sun.jkernel.DownloadManager as a boot classloader hook
+  - S6888898: CMS: ReduceInitialCardMarks unsafe in the presence of cms precleaning
+  - S6889300: assert(i != k || is_new || i->outcnt()  > 0, "don't return dead nodes")
+  - S6889302: TraceExceptions output should include detail message
+  - S6889649: SAXException.toString() implementation considered harmful
+  - S6889654: SAXParseException should have a better toString method
+  - S6889656: assert(lo_lrg->lo_degree() || !lo_no_simplify,"Live range was lo-degree before coalesce
+  - S6889740: G1: OpenDS fails with "unhandled exception in compiled code"
+  - S6889757: G1: enable card mark elision for initializing writes from compiled code (ReduceInitialCardMarks)
+  - S6889869: assert(!Interpreter::bytecode_should_reexecute(code),"should not reexecute")
+  - S6890137: G1: revamp reachable object dump
+  - S6890293: Bump the HS17 build number to 03
+  - S6890308: integrate zero assembler hotspot changes
+  - S6890984: Comparison of 2 arrays could cause VM crash
+  - S6891677: java/build integrate zero assembler JDK changes
+  - S6891750: deopt blob kills values in O5
+  - S6892079: live value must not be garbage failure after fix for 6854812
+  - S6892186: SA does not dump debug info for scalar replaced objects
+  - S6892265: System.arraycopy unable to reference elements beyond Integer.MAX_VALUE bytes
+  - S6892485: Deadlock in SunGraphicsEnvironment / FontManager
+  - S6892658: C2 should optimize some stringbuilder patterns
+  - S6892749: assert(UseParNewGC || UseSerialGC || UseConcMarkSweepGC, "...") fails
+  - S6893081: method handle & invokedynamic code needs additional cleanup (post 6815692, 6858164)
+  - S6893095: G1: bulk G1 backports to hs16
+  - S6893268: additional dynamic language related optimizations in C2
+  - S6893483: DTrace probe return values for a couple JNI methods are wrong
+  - S6893504: LinkageError for bootstrap duplicate class definitions.
+  - S6893554: SPECjvm2008 mpegaudio fails with SecurityException
+  - S6893701: compiler/6877254/Test.java fails because it combines -XX:+UseConcMarkSweepGC with other GC
+  - S6893947: Deserialization of RMIConnectionImpl objects should enforce stricter checks [ZDI-CAN-588]
+  - S6893954: Subclasses of InetAddress may incorrectly interpret network addresses
+  - S6893995: Bump the HS16 build number to 11
+  - S6893996: change default JPRT release target to be 6u18
+  - S6894206: JVM needs a way to traverse method handle structures
+  - S6894779: Loop Predication for Loop Optimizer in C2
+  - S6894807: No ClassCastException for HashAttributeSet constructors if run with -Xcomp
+  - S6894844: Bump the HS17 build number to 04
+  - S6895168: JCK api/signaturetest/sigtest.basic.html#basic test fails for jdk 5.0 with HS 16 in nightly build
+  - S6895236: CMS: cmsOopClosures.inline.hpp:43 assert(..., "Should remember klasses in this context")
+  - S6895383: JCK test throws NPE for method compiled with Escape Analysis
+  - S6895788: G1: SATB and update buffer allocation code allocates too much space
+  - S6896043: first round of zero fixes
+  - S6896084: VM does not reserve protected page below heap for compressed oops implicit null checks
+  - S6896352: CTW fails hotspot/src/share/vm/opto/escape.cpp:1155
+  - S6896370: CTW fails share/vm/opto/matcher.cpp:1475 "duplicating node that's already been matched"
+  - S6896472: Missing libjsig.so causes jdk build failure
+  - S6896647: card marks can be deferred too long
+  - S6896727: nsk/logging/LoggingPermission/LoggingPermission/logperm002 fails with G1, EscapeAnalisys
+  - S6898160: Need serviceability support for new vm argument type 'uint64_t'
+  - S6898622: ObjectIdentifer.equals is not capable of detecting incorrectly encoded CommonName OIDs
+  - S6898707: Bump the HS17 build number to 05
+  - S6898739: TLS renegotiation issue
+  - S6898857: [Regression] -XX:NewRatio with -XX:+UseConcMarkSweepGC causes fatal error
+  - S6898948: G1: forensic instrumentation for out-of-bounds recent_avg_pause_time_ratio()
+  - S6899058: G1: Internal error in ptrQueue.cpp:201 in nightly tests
+  - S6899467: System property java.class.version out-of-sync with VM for jdk 5.0 with HS 16 in nightly build
+  - S6899653: Sun Java Runtime CMM readMabCurveData Buffer Overflow Vulnerability
+  - S6900249: Use StringBuilder instead of StringBuffer to avoid locking
+  - S6900341: jaxp/jaxws ant scripts using ant runtime in classpath, needs to be explicit
+  - S6900773: elide (unnecessary) catching of NumberFormatException in NodeCounter.setFormatting(...)
+  - S6900779: Use HashMap instead of Hashtable in CharInfo, Encodings, NamespaceMapping, XMLReaderManager
+  - S6900899: vm fails to start when -Xmx value is less than OldSize + NewSize
+  - S6900997: Bump the HS16 build number to 12
+  - S6901572: JVM 1.6.16 crash on loops: assert(has_node(i),"")
+  - S6902000: use ShouldNotReachHere() for btos/ctos/stos in TemplateInterpreterGenerator::set_short_entry_points
+  - S6902036: WorldWind asserts on escape.cpp:1153: assert(addr->is_AddP(),"AddP required")
+  - S6902115: G1:assert(ignore_max_completed||thread->is_Java_thread()||SafepointSynchronize::is_at_safepoint())
+  - S6902182: 4/4 Starting with jdwp agent should not incur performance penalty
+  - S6902299: Java JAR "unpack200" must verify input parameters
+  - S6902303: G1: ScavengeALot should cause an incremental, rather than a full, collection
+  - S6902701: G1: protect debugging code related to 6898948 with a debug flag
+  - S6903453: Zero build on ARM and IA-64
+  - S6904191: OptimizeStringConcat should be product instead of experimental
+  - S6904516: More object array barrier fixes, following up on 6906727
+  - S6904691: Java Applet Trusted Methods Chaining Privilege Escalation Vulnerability
+  - S6904967: G1: some CollectionUsageThreshold tests fail
+  - S6904996: Bump the HS16 build number to 13
+  - S6906565: G1: deal with compilation warning in g1MemoryPool.hpp
+  - S6906727: UseCompressedOops: some card-marking fixes related to object arrays
+  - S6908167: jbb2005, OptimizeStringConcat causes assert in EA
+  - S6908208: UseCompressedOops: array_size() returns incorrect size for MAX_INT object array following 6906727
+  - S6908215: G1: SEGV with G1PolicyVerbose=2 debug flag
+  - S6908267: Zero fails to unlock synchronized native methods on exception
+  - S6909153: Fix broken options on Zero
+  - S6909281: NPE is thrown when running rmid
+  - S6909462: Fix nbproject/private references in .hgignore
+  - S6909480: Disable Escape Analysis in jdk 6u18
+  - S6909597: Sun Java Runtime Environment JPEGImageReader stepX Integer Overflow Vulnerability
+  - S6909756: G1: guarantee(G1CollectedHeap::heap()->mark_in_progress(),"Precondition.")
+  - S6909759: using JDK 1.6.0_18-ea does not work with GlassFish v3
+  - S6909839: missing unsigned compare cases for some cmoves in sparc.ad
+  - S6910484: incorrect integer optimization (loosing and op-r in a given example)
+  - S6910590: Application can modify command array, in ProcessBuilder
+  - S6910605: C2: NullPointerException/ClassCaseException is thrown when C2 with DeoptimizeALot is used
+  - S6910618: C2: Error: assert(d->is_oop(),"JVM_ArrayCopy: dst not an oop")
+  - S6910664: C2: java/util/Arrays/Sorting.java fails with DeoptimizeALot flag
+  - S6911204: generated adapters with large signatures can fill up the code cache
+  - S6912018: CMS: guarantee(head() != 0,"The head of the list cannot be NULL")
+  - S6912062: disassembler plugin needs to produce symbolic information in product mode
+  - S6912063: inlining parameters need to be adjusted for some uses of the JVM
+  - S6912065: final fields in objects need to support inlining optimizations for JSR 292
+  - S6912517: JIT bug compiles out (and stops running) code that needs to be run. Causes NPE.
+  - S6912782: Bump the HS17 build number to 06
+  - S6913075: EA identifies escape state incorrectly after 6895383 fix
+  - S6913869: Zero assert fix
+  - S6914002: unsigned compare problem after 5057818
+  - S6914206: change way of permission checking for generated MethodHandle adapters
+  - S6914300: ciEnv should export all well known classes
+  - S6914402: G1: assert(!is_young_card(cached_ptr),"shouldn't get a card in young region")
+  - S6914622: Print values of all flags for product VM
+  - S6914823: Java AWT Library Invalid Index Vulnerability
+  - S6914866: Sun JRE ImagingLib arbitrary code execution vulnerability
+  - S6914986: Make sure openjdk doc generation not turned off with JDK_UPDATE_VERSION
+  - S6915005: G1: Hang in PtrQueueSet::completed_buffers_list_length with gcl001
+  - S6915110: IfNode::up_one_dom moves beyond RootNode bug in src/share/vm/opto/ifnode.cpp
+  - S6915365: 3/4 assert(false,"Unsupported VMGlobal Type") at management.cpp:1540
+  - S6915557: assert(_gvn.type(l)->higher_equal(type),"must constrain OSR typestate") with debug build
+  - S6916644: C2 compiler crash on x86
+  - S6916652: G1: remove +UseG1GC from under experimental options
+  - S6916986: handle spaces in langtools launcher path
+  - S6917454: sjsxp issue 53: StartDocument.encodingSet() returns false even when set
+  - S6917463: Bump the HS17 build number to 07
+  - S6917485: Corba doc warnings
+  - S6917698: os::is_allocatable Zero fix for 32-bit platforms
+  - S6917766: JSR 292 needs its own deopt handler
+  - S6917931: compiler/6895383/Test.java don't compile due missed imports
+  - S6918006: G1: spill space must be reserved on the stack for barrier calls on Windows x64
+  - S6918421: 1/1 in-process JVM now ignores preset Windows unhandled exception filter
+  - S6919437: Bump the HS17 build number to 08
+  - S6919629: Nimbus L&F Nimbus.Overrides option leaks significant amounts of memory
+  - S6919886: Sweep CodeCache more aggressively to reduce its usage for CompileTheWorld
+  - S6919980: G1: remove +UseG1GC from under experimental options (second attempt)
+  - S6920090: G1: Disable ReduceInitialCardMarks at least until 6920109 is fixed
+  - S6920293: OptimizeStringConcat causing core dumps
+  - S6920317: package-info.java file has to be specified on the javac cmdline, else it will not be avail.
+  - S6920346: G1: "must avoid base_memory and AliasIdxTop"
+  - S6920732: opensource test/java/nio/charset
+  - S6920970: Zero build fixes after 6849984 and 6911204
+  - S6920977: G1: guarantee(k == probe->klass(),"klass should be in dictionary") fails
+  - S6921339: backout 6917766
+  - S6921352: JSR 292 needs its own deopt handler
+  - S6921473: Bump the HS17 build number to 09
+  - S6921710: G1: assert(new_finger >= _finger && new_finger < _region_limit,"invariant")
+  - S6921799: JSR 292 call sites should not be fixed-up
+  - S6921922: fix for 6911204 breaks tagged stack interpreter
+  - S6921969: optimize 64 long multiply for case with high bits zero
+  - S6921992: failure in verify scheduling after 6792161
+  - S6923002: assert(false,"this call site should not be polymorphic")
+  - S6923043: failed nightly tests which use -XX:+PrintCompilation -Xcomp -XX:CompileOnly
+  - S6923123: Hotspot refuses to start when -Xmx4m or -Xms4m is specified
+  - S6923146: Upgrade to JAXP 1.4.3
+  - S6923976: TestProviderLeak.java is using too small of an initial heap under newer Hotspot (b79+)
+  - S6923991: G1: improve scalability of RSet scanning
+  - S6924097: assert((_type == Type::MEMORY) == (_adr_type != 0),"adr_type for memory phis only")
+  - S6925249: assert(last_sp < (intptr_t*) interpreter_frame_monitor_begin(),"bad tos")
+  - S6926048: Improve Zero performance
+  - S6926697: "optimized" VM build failed: The type "AdapterHandlerTableIterator" is incomplete
+  - S6926703: apt tests should run with assertions enabled
+  - S6926782: CodeBuffer size too small after 6921352
+  - S6927049: assert(is_Loop(),"invalid node class")
+  - S6927165: Zero S/390 fixes
+  - S6927797: langtools/test/tools/javac/EarlyAssert.java fails when run with assertions enabled (-ea)
+  - S6927886: Bump the HS17 build number to 10
+  - S6928059: G1: command line parameter renaming
+  - S6928065: G1: use existing command line parameters to set the young generation size
+  - S6928073: G1: use existing command line parameters for marking cycle initiation
+  - S6928081: G1: rename parameters common with CMS
+  - S6928623: Behaviour of VERBOSE=true on langtools build
+  - S6928700: Configure top repo for JPRT testing
+  - S6928717: HS17 fails to build with SS11 C++
+  - S6928839: JSR 292 typo in x86 _adapter_check_cast
+  - S6929005: Fix HS16 merge issues in OpenJDK 6
+  - S6930035: C2 type system incorrectly handles case j.l.Object->meet(constant AryPtr)
+  - S6930043: C2: SIGSEGV in javasoft.sqe.tests.lang.arr017.arr01702.arr01702.loop_forw(II)I
+  - S6930116: loop predication code does not handle If nodes with only one projection
+  - S6930398: fix for return address locals in OSR entries uses wrong test
+  - S6931465: Switch off by default optimization flags in HS17
+  - S6931763: sanity checks broken with latest cygwin, newer egrep -i option problems
+  - S6931871: Rebranding of javadoc generation in makefiles
+  - S6931882: Bump the HS17 build number to 11
+  - S6932473: (tz) javazic produces incorrect SimpleTimeZone parameters with Sun<=7
+  - S6932480: Crash in CompilerThread/Parser. Unloaded array klass?
+  - S6932524: NIMBUS: 3 constructors of JSplitPane creates new jsp with continuous layout - they should not.
+  - S6933032: (tz) Support tzdata2010e
+  - S6933402: RFE: Improve PrintSafepointStatistics output to track cleanup time
+  - S6933784: NIMBUS: ImageView getNoImageIcon and getLoadingImageIcon returns nulls instead of an icon
+  - S6933846: GCC 4.5 warning removals
+  - S6934089: Zero 32-bit/64kb page fix
+  - S6934327: Update linux fontconfigs for Ubuntu and Fedora.
+  - S6934615: Relative classpaths in jarfile manifests are handled inefficiently by rmic
+  - S6934758: Expose the break down of clean up task time during Safepoint
+  - S6935466: new CodeCache flushing code is not guarded by the flag
+  - S6935535: String.indexOf() returns incorrect result on x86 with SSE4.2
+  - S6935821: G1: threads created during marking do not active their SATB queues
+  - S6937160: G1: should observe GCTimeRatio
+  - S6937417: javac -Xprint returns IndexOutOfBoundsException
+  - S6938326: Use of "ant -diagnostics" a problem with ant 1.8.0, exit code 1 now
+  - S6938342: Bump the HS17 build number to 12
+  - S6939021: (tz) Support tzdata2010g
+  - S6939180: Zero locking fix
+  - S6939182: Zero JNI handles fix
+  - S6939646: Remove obsolete com.sun.corba.se.internal.io package
+  - S6939845: zero needs fallback path in C++ interpreter for platform dependent fast bytecodes
+  - S6940241: Change jaxp/jaxws so that the http downloads are not done by default
+  - S6940310: G1: MT-unsafe calls to CM::region_stack_push() / CM::region_stack_pop()
+  - S6940894: G1: assert(new_obj != 0 || ... "should be forwarded") for compaction tests
+  - S6941027: Gervill update, April 2010
+  - S6941224: Improved stack overflow handling for Zero
+  - S6941466: Oracle rebranding changes for Hotspot repositories
+  - S6942253: G1: replace G1ParallelGCAllocBufferSize with YoungPLABSize and OldPLABSize
+  - S6942317: Bump the HS17 build number to 13
+  - S6942771: SEGV in ParScanThreadState::take_from_overflow_stack
+  - S6943053: Gervill: failures on invalid ranges and 14-bit banks
+  - S6943119: Rebrand source copyright notices
+  - S6944312: Potential rebranding issues in openjdk/langtools repository sources
+  - S6944361: Missing CKR_ values in PKCS11Exception
+  - S6944473: 6941224 misses new files
+  - S6944503: Improved Zero crash dump
+  - S6944787: Bump the HS17 build number to 14
+  - S6945238: (tz) Support tzdata2010i
+  - S6945726: Change where hs17-b13 Mercurial tag is placed
+  - S6948251: need to quote args in langtools launcher script
+  - S6948602: Disable use of SSE4.2 in String.indexOf intrinsic until 6942326 is fixed
+  - S6948803: CertPath validation regression caused by SHA1 replacement root and MD2 disable feature
+  - S6948909: Jarsigner removes MANIFEST.MF info for badly packages jar's
+  - S6949118: jvm.dll shows the company name as Sun Microsystems
+  - S6949515: 3/3 VM crash when calling GetMethodDeclaringClass
+  - S6949590: exes(java.exe, javaws.exe) show Copyright Year as 2004, COMPANY as Sun
+  - S6950178: Zero stack improvements
+  - S6950617: Zero/Shark interface updates
+  - S6951293: control docs target does not work on windows
+  - S6951784: Zero deoptimizer changes
+  - S6951887: Wrong redirection useage in test sun/nio/cs/Test4200310.sh
+  - S6953058: G1: A bigapp crashes with SIGSEGV in compiled code
+  - S6953222: Revert change for 6909480 in OpenJDK 6
+  - S6953483: Typo related to ReduceInitialCardMarks leaves concurrent collectors vulnerable to heap corruption
+  - S6954507: Bump the HS17 build number to 15
+  - S6954519: change default JPRT release target to be 6u20
+  - S6954621: small error in 6948909 fix
+  - S6955292: Workaround ant 1.7.1 package-info.java issue in ant scripts
+  - S6955300: Missing files in the jaf source bundle
+  - S6955301: Update names and references to rebranded drop bundles (jaxp, jaxws, jaf)
+  - S6955707: Correct addNotices.sh logic in Makefiles
+  - S6955813: Fix incorrect Oracle rebranding headers from 6941466
+  - S6955873: CORBA resources bundles and javax.activity missing from b94
+  - S6956202: Fix a few missed rebranding issues, please contact lines etc.
+  - S6956930: Remove unused OS_VENDOR make variable
+  - S6957375: java/net/ResponseCache getResponseCode and ResponseCacheTest fail after rebranding
+  - S6958257: Add support for alpha
+  - S6958869: regression: PKIXValidator fails when multiple trust anchors have same dn
+  - S6959596: Windows fastdebug build broken
+  - S6960333: Add make level ALLOW_DOWNLOADS=true option
+  - S6960335: Add top level 'make test' rule that uses test/Makefile, runs all test batches
+  - S6960390: Bump the HS17 build number to 16
+  - S6960393: Fix misplaced b15 hg tag for hs17
+  - S6960407: Potential rebranding issues in openjdk/langtools repository sources
+  - S6960550: Missing semicolon in Zero
+  - S6960808: OpenJDK 6 Nimbus build failure
+  - S6960831: fix CORBA build warnings
+  - S6960853: Cleanup makefiles, remove unused vars etc.
+  - S6961536: Nimbus code using @Override breaks build with source/target 1.5
+  - S6961870: More rebranding fixes for templates/gpl-*-header files
+  - S6962193: Rebrand some Zero files
+* Bumped to CACAO 1.1.0 pre-release snapshot.
+* VisualVM support removed; now available in its own package at http://icedtea.classpath.org/hg/visualvm
+* Backports:
+  - S6961732: FontMetrics.getLeading() may be negative in freetype-based OpenJDK builds
+  - S6967533: ExceptionInInitializerError on systems with uninitialized clock
+  - S6795060: VM crash on Linux in ICU layout library when processing \u0DDD (Sinhalese)
+* Fixes:
+  - Provide font configuration for RHEL 6.
+  - G266295: Provide font configuration for Gentoo.
+  - D560056: Avoid failure when net.ipv6.bindv6only is set to 1.
+  - G244901: Skip test_gamma on hardened (PaX-enabled) kernels
+* Zero/Shark
+  - Update Shark for LLVM 2.8 API change r100304
+  - Shark calling static jni methods jclass argument fix.
+  - PR484: Shark jit code block "0xcdcdcdcd" zombie wipeout Sigsegv crash
+  - Backport new frame anchor and stack overflow code for Zero and Shark
+  - Fix stack leak in Shark
+  - PR494: Shark fails to catch Exception using catch (Throwable e)
+  - PR525: Shark made not entrant deopt sigsegv regression after bump to b20 and hs17.
+  - LLVM 2.7 non-product fixes.
+* NetX
+  - Do not use Look and Feel related methods for setting up security dialogs
+  - Minor fixes to JNLPRandomAccessFile
+  - Fix browser command in BasicService.showDocument(URL)
+  - Run programs that inherit main(String[]) in their main-class
+  - Run JNLP file that use spec version 1.6
+* Plugin and NetX classes have been moved from rt.jar into 2 jars, netx.jar and plugin.jar
+
+New in release 1.8.1 (2010-07-28):
+
+- OpenJDK:
+  - 6678385: Fixes jvm crashes when window is resized.
+  - Produces the "expected" behavior for full screen applications, when
+    running the Metacity window manager.
+- IcedTeaNPPlugin.
+  - RH524387: javax.net.ssl.SSLKeyException: RSA premaster secret error
+  - Set context classloader for all threads in an applet's threadgroup
+  - PR436: Close all applet threads on exit
+  - PR480: NPPlugin with NoScript extension.
+  - PR488: Question mark changing into underscore in URL.
+  - RH592553: Fix bug causing 100% CPU usage.
+  - Don't generate a random pointer from a pthread_t in the debug output.
+  - Add ForbiddenTargetException for legacy support.
+  - Use variadic macro for plugin debug message printing.
+  - Don't link the plugin with libxul libraries.
+  - Fix race conditions in plugin initialization code that were causing hangs.
+  - RH506730: BankID (Norwegian common online banking authentication system) applet fails to load.
+  - Fix policy evaluation to match the proprietary JDK.
+  - PR491: pass java_{code,codebase,archive} parameters to Java.
+  - Adds javawebstart.version property and give user permission to read that property.
+- NetX:
+  - Fix security flaw in NetX that allows arbitrary unsigned apps to set
+    any java property.
+  - Fix a flaw that allows unsigned code to access any file on the
+    machine (accessible to the user) and write to it.
+  - Make path sanitization consistent; use a blacklisting approach.
+  - Make the SingleInstanceServer thread a daemon thread.
+  - Handle JNLP files which use native libraries but do not indicate it
+  - Allow JNLP classloaders to share native libraries
+  - Added encoding support
+- PulseAudio:
+  - Eliminate spurious exception throwing.
+- Zero/Shark:
+  - PR shark/483: Fix miscompilation of sun.misc.Unsafe::getByte.
+  - PR icedtea/324, icedtea/481: Fix Shark VM crash.
+  - Fix Zero build on Hitachi SH.
+* SystemTap support:
+  - PR476: Enable building SystemTap support on GCC 4.5.
+
+New in release 1.7.4 (2010-07-28):
+
+* NetX security issues:
+  - (CVE-2010-2783, RH616895): IcedTea 'Extended JNLP Services' arbitrary file access
+  - (CVE-2010-2548, RH616893): IcedTea Incomplete property access check for unsigned applications
+* Backport --with-tzdata-dir support from IcedTea6 1.8 to ensure
+   that external timezone data works again.
+* Restore icedtea-override-metacity.patch to allow full screen apps and
+   other expected behavioral improvements.
+* S6678385, RH551835: Fixes JVM crashes when window is resized.
+* S6668231: Presence of a critical subjectAltName causes JSSE's SunX509 to fail trusted checks.
+* S6963870: Eliminate NullPointerEx in swing class CompoundBorder method getBorderInsets.
+* S4891262: API spec, javax/accessibility: few invalid javadoc tags.
+* S6737212: Fixed javadoc warning messages in RowSet classes.
+* S6875861: javadoc build warning on java.util.Properites from unconventional @see ordering.
+* S6909563: Javadoc build warnings in rmi, security, management.
+* S6879689: Fix warning about ignored return value when compiling with -O2
+* S6917485: Corba doc warnings.
+* S6921068: Remove javadoc build warnings from specdefault tag.
+* PR453, OJ100142: Fix policy evaluation to match the proprietary JDK.
+* Make the new plugin the default.  This is now the main supported
+  plugin.  Use --disable-npplugin to use the old one.
+* New plugin:
+  - Added support for JSObject.finalize()
+  - Liveconnect message processing design changes.
+  - Message protocol overhaul to fix race conditions
+  - PR166: Create FIFO pies in temp dir instead of ~/.icedteaplugin
+  - Profiled memory usage and implemented proper cleanup for C++ side.
+  - Update debug output string and function/structure names to
+    change 'GCJ' references to ITNP/IcedTea NP Plugin
+  - PR461: plugin working for NSS enabled builds with firefox including a private NSS copy
+  - Removed unncessary debug and trace output
+  - PR474: Patch from Paulo Cesar Pereira de Andrade, incrementing malloc size to account for NULL terminator.
+  - RH524387: javax.net.ssl.SSLKeyException: RSA premaster secret error
+  - Set context classloader for all threads in an applet's threadgroup
+  - PR436: Close all applet threads on exit
+  - PR480: NPPlugin with NoScript extension.
+  - PR488: Question mark changing into underscore in URL.
+  - RH592553: Fix bug causing 100% CPU usage.
+  - Don't generate a random pointer from a pthread_t in the debug output.
+  - Add ForbiddenTargetException for legacy support.
+  - Use variadic macro for plugin debug message printing.
+  - Don't link the plugin with libxul libraries.
+  - Fix race conditions in plugin initialization code that were causing hangs.
+  - RH506730: BankID (Norwegian common online banking authentication system) applet fails to load.
+  - PR491: pass java_{code,codebase,archive} parameters to Java.
+  - Adds javawebstart.version property and give user permission to read that property.
+* NetX:
+  - Make path sanitization consistent; use a blacklisting approach.
+  - Make the SingleInstanceServer thread a daemon thread.
+  - Handle JNLP files which use native libraries but do not indicate it
+  - Allow JNLP classloaders to share native libraries
+  - Added encoding support
+* PulseAudio provider:
+  - Eliminate spurious exception throwing.
+* SystemTap support:
+  - PR476: Enable building SystemTap support on GCC 4.5.
+  - Fix HotSpot tapset object_alloc size variable.
+* NIO2 support:
+  - Fix UnixNativeDispatcher to build on all systems, not just x86 and x86_64.
+
+New in release 1.6.3 (2010-07-26)
+
+- Enable debuginfo for saproc and jsig
+- Add missing mkbc.c
+- Increase ThreadStackSize by 512kb on 32-bit Zero platforms
+- Make the original HotSpot build work for normal builds and disable Zero/Shark builds with it
+- Latest security updates and hardening patches:
+  - (CVE-2010-0837): JAR "unpack200" must verify input parameters (6902299)
+  - (CVE-2010-0845): No ClassCastException for HashAttributeSet constructors if run with -Xcomp (6894807)
+  - (CVE-2010-0838): CMM readMabCurveData Buffer Overflow Vulnerability (6899653)
+  - (CVE-2010-0082): Loader-constraint table allows arrays instead of only the base-classes (6626217)
+  - (CVE-2010-0095): Subclasses of InetAddress may incorrectly interpret network addresses (6893954)
+  - (CVE-2010-0085): File TOCTOU deserialization vulnerability (6736390)
+  - (CVE-2010-0091): Unsigned applet can retrieve the dragged information before drop action occurs (6887703)
+  - (CVE-2010-0088): Inflater/Deflater clone issues (6745393)
+  - (CVE-2010-0084): Policy/PolicyFile leak dynamic ProtectionDomains. (6633872)
+  - (CVE-2010-0092): AtomicReferenceArray causes SIGSEGV -> SEGV_MAPERR error (6888149)
+  - (CVE-2010-0094): Deserialization of RMIConnectionImpl objects should enforce stricter checks (6893947)
+  - (CVE-2010-0093): System.arraycopy unable to reference elements beyond Integer.MAX_VALUE bytes (6892265)
+  - (CVE-2010-0840): Applet Trusted Methods Chaining Privilege Escalation Vulnerability (6904691)
+  - (CVE-2010-0848): AWT Library Invalid Index Vulnerability (6914823)
+  - (CVE-2010-0847): ImagingLib arbitrary code execution vulnerability (6914866)
+  - (CVE-2009-3555): TLS: MITM attacks via session renegotiation
+  - 6639665: ThreadGroup finalizer allows creation of false root ThreadGroups
+  - 6898622: ObjectIdentifer.equals is not capable of detecting incorrectly encoded CommonName OIDs
+  - 6910590: Application can modify command array in ProcessBuilder
+  - 6909597: JPEGImageReader stepX Integer Overflow Vulnerability
+  - 6932480: Crash in CompilerThread/Parser. Unloaded array klass?
+- Add stack markings to the x86 assembly so as not to use executable stack.
+- PR179: Rewrite Rhino class files to avoid bootclasspath issue
+- PR356: Support ECC via NSS
+- PR453, OJ100142: Fix policy evaluation to match the proprietary JDK.
+- Backport tzdata support from 1.8 (--with-tzdata-dir).
+- Fix issue with ant -diagnostics on ant 1.8.0 due to changed exit code
+- S6678385, RH551835: Fixes JVM crashes when window is resized.
+- S6668231: Presence of a critical subjectAltName causes JSSE's SunX509 to fail trusted checks.
+- S6963870: Eliminate NullPointerEx in swing class CompoundBorder method getBorderInsets.
+- S4891262: API spec, javax/accessibility: few invalid javadoc tags.
+- S6737212: Fixed javadoc warning messages in RowSet classes.
+- S6875861: javadoc build warning on java.util.Properites from unconventional @see ordering.
+- S6909563: Javadoc build warnings in rmi, security, management.
+- S6879689: Fix warning about ignored return value when compiling with -O2
+- S6917485: Corba doc warnings.
+- S6921068: Remove javadoc build warnings from specdefault tag.
+- S6822370: ReentrantReadWriteLock: threads hung when there are no threads holding onto the lock
+* SystemTap support:
+  - Enable SystemTap JNI tracing.
+  - Add SystemTap jstack support.
+  - PR476: Enable building SystemTap support on GCC 4.5.
+  - Fix HotSpot tapset object_alloc size variable.
+  - Fix JNI DEFINE_NEWSCALARARRAY usage of DT_RETURN_MARK_DECL_FOR.
+  - Add hotspot_jni tapset.
+  - tapsets/hotspot.stp.in (hotspot.gc_end): Match gc__end, not begin.
+* PulseAudio:
+  - Corrected Pulse Audio library build on PPC32 and PPC64
+
+New in release 1.8 (2010-04-13):
 
 - Updated to OpenJDK6 b18.
   - Nimbus Look 'n' Feel backported from OpenJDK7.
@@ -35,10 +923,46 @@ New in release 1.8 (2010-XX-XX):
 - Dependence on the binary plugs mechanism removed.  The plugin and NetX
   code is now imported into the JDK build in the same manner as langtools,
   CORBA, JAXP and JAXWS.
+- Fix for plugin buffer overflow: https://bugzilla.mozilla.org/show_bug.cgi?id=555342
+- Fix issue with ant -diagnostics on ant 1.8.0 due to changed exit code
 - Zero/Shark
   - Shark is now able to build itself.
   - For ARM, add Thumb2 JIT.
   - Fixed Shark sharkCompiler mattr memory corruption bug when using llvm 2.7.
+
+New in release 1.7.3 (2010-03-31):
+
+- Fix for plugin buffer overflow: https://bugzilla.mozilla.org/show_bug.cgi?id=555342
+- Fix issue with ant -diagnostics on ant 1.8.0 due to changed exit code
+
+New in release 1.7.2 (2010-03-31):
+
+- Latest security updates and hardening patches:
+  - (CVE-2010-0837): JAR "unpack200" must verify input parameters (6902299)
+  - (CVE-2010-0845): No ClassCastException for HashAttributeSet constructors if run with -Xcomp (6894807)
+  - (CVE-2010-0838): CMM readMabCurveData Buffer Overflow Vulnerability (6899653)
+  - (CVE-2010-0082): Loader-constraint table allows arrays instead of only the base-classes (6626217)
+  - (CVE-2010-0095): Subclasses of InetAddress may incorrectly interpret network addresses (6893954)
+  - (CVE-2010-0085): File TOCTOU deserialization vulnerability (6736390)
+  - (CVE-2010-0091): Unsigned applet can retrieve the dragged information before drop action occurs (6887703)
+  - (CVE-2010-0088): Inflater/Deflater clone issues (6745393)
+  - (CVE-2010-0084): Policy/PolicyFile leak dynamic ProtectionDomains. (6633872)
+  - (CVE-2010-0092): AtomicReferenceArray causes SIGSEGV -> SEGV_MAPERR error (6888149)
+  - (CVE-2010-0094): Deserialization of RMIConnectionImpl objects should enforce stricter checks (6893947)
+  - (CVE-2010-0093): System.arraycopy unable to reference elements beyond Integer.MAX_VALUE bytes (6892265)
+  - (CVE-2010-0840): Applet Trusted Methods Chaining Privilege Escalation Vulnerability (6904691)
+  - (CVE-2010-0848): AWT Library Invalid Index Vulnerability (6914823)
+  - (CVE-2010-0847): ImagingLib arbitrary code execution vulnerability (6914866)
+  - (CVE-2009-3555): TLS: MITM attacks via session renegotiation
+  - 6639665: ThreadGroup finalizer allows creation of false root ThreadGroups
+  - 6898622: ObjectIdentifer.equals is not capable of detecting incorrectly encoded CommonName OIDs
+  - 6910590: Application can modify command array in ProcessBuilder
+  - 6909597: JPEGImageReader stepX Integer Overflow Vulnerability
+  - 6932480: Crash in CompilerThread/Parser. Unloaded array klass?
+- Backport of 6822370:
+  ReentrantReadWriteLock: threads hung when there are no threads holding onto the lock
+- Increase ThreadStackSize by 512kb on 32-bit Zero platforms
+- Check cacerts database is valid
 
 New in release 1.7.1 (2010-02-26):
 

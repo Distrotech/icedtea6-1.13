@@ -1,4 +1,4 @@
-AC_INIT([icedtea6],[1.9pre],[distro-pkg-dev@openjdk.java.net])
+AC_INIT([icedtea6],[1.10pre],[distro-pkg-dev@openjdk.java.net])
 AM_INIT_AUTOMAKE([1.9 tar-pax foreign])
 AC_CONFIG_FILES([Makefile])
 
@@ -48,10 +48,10 @@ AC_CHECK_WITH_GCJ
 AC_CHECK_WITH_HOTSPOT_BUILD
 AC_PATH_TOOL([LINUX32],[linux32])
 AC_CHECK_GCC_VERSION
-AC_CHECK_FOR_OPENJDK
 IT_CHECK_NUMBER_OF_PARALLEL_JOBS
 IT_CP_SUPPORTS_REFLINK
 IT_CAN_HARDLINK_TO_SOURCE_TREE
+IT_CHECK_FOR_PAX
 
 AC_MSG_CHECKING([for an Ant home directory])
 AC_ARG_WITH([ant-home],
@@ -143,32 +143,22 @@ SET_OS_DIRS
 OPENJDK_BUILD_DIR=openjdk.build
 AC_SUBST(OPENJDK_BUILD_DIR)
 
-if test "${with_openjdk}" = true
-then
-  JAVA=$SYSTEM_OPENJDK_DIR/bin/java
-  AC_SUBST(JAVA)
-  JAVAC=${SYSTEM_OPENJDK_DIR}/bin/javac
-  AC_SUBST(JAVAC)
-  JAVAH=${SYSTEM_OPENJDK_DIR}/bin/javah
-  AC_SUBST(JAVAH)
-  JAR=${SYSTEM_OPENJDK_DIR}/bin/jar
-  AC_SUBST(JAR)
-  RMIC=${SYSTEM_OPENJDK_DIR}/bin/rmic
-  AC_SUBST(RMIC)
-else
-  AC_CHECK_FOR_GCJ_JDK
-  FIND_JAVA
-  FIND_JAVAC
-  FIND_JAVAH
-  FIND_JAR
-  FIND_RMIC
+IT_CHECK_IF_BOOTSTRAPPING
+IT_CHECK_FOR_JDK
+FIND_JAVA
+FIND_JAVAC
+FIND_JAVAH
+FIND_JAR
+FIND_RMIC
+if test "x$enable_bootstrap" = "xyes"; then
   FIND_ECJ_JAR
   FIND_XALAN2_JAR
   FIND_XALAN2_SERIALIZER_JAR
   FIND_XERCES2_JAR
-  AC_CONFIG_FILES([javac], [chmod +x javac])
-  AC_CONFIG_FILES([javap], [chmod +x javap])
 fi
+AC_CONFIG_FILES([javac], [chmod +x javac])
+AC_CONFIG_FILES([javap], [chmod +x javap])
+
 FIND_RHINO_JAR
 WITH_OPENJDK_SRC_ZIP
 WITH_HOTSPOT_SRC_ZIP
