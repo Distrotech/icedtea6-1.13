@@ -365,9 +365,10 @@ ICEDTEA_ECJ_PATCHES += \
 endif
 
 if ENABLE_XRENDER
-ICEDTEA_ECJ_PATCHES += \
-	patches/ecj/needs-6.patch \
-	patches/ecj/javah.patch
+ICEDTEA_ECJ_PATCHES += patches/ecj/needs-6.patch
+if CP40188_JAVAH
+ICEDTEA_ECJ_PATCHES += patches/ecj/cp40188-opengl.patch
+endif
 endif
 
 if !HAS_PAX

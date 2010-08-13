@@ -1,5 +1,36 @@
 2010-08-13  Andrew John Hughes  <ahughes@redhat.com>
 
+	* patches/ecj/javah.patch: Moved to...
+	* Makefile.am: Apply patch to OpenGL headers
+	only if javah exhibits Classpath bug 40188.
+	http://gcc.gnu.org/bugzilla/show_bug.cgi?id=40188
+	* patches/ecj/cp40188-opengl.patch: here.
+
+2009-05-19  Andrew John Hughes  <ahughes@redhat.com>
+
+	* acinclude.m4:
+	(IT_JAVAH): Renamed from IT_CP39408_JAVAH.
+	Add test for PR40188.
+	* configure.ac:
+	Make full bootstrap the default again.  Rename
+	IT_CP39408_JAVAH to IT_JAVAH.
+
+2009-03-18  Andrew John Hughes  <ahughes@redhat.com>
+
+	* acinclude.m4:
+	(IT_CP39408_JAVAH): Add classpath specification
+	to JAVAC invocation to handle buggy ecjs.
+
+2009-03-17  Andrew John Hughes  <ahughes@redhat.com>
+
+	* acinclude.m4:
+	(IT_CP39408_JAVAH): New test for Classpath
+	bug 39408.
+	* configure.ac: Enable new test.  Result
+	as yet unused.
+
+2010-08-13  Andrew John Hughes  <ahughes@redhat.com>
+
 	* Makefile.am:
 	Replace conditionals on LACKS_SUN_AWT_TOOLKIT
 	with ones on BOOTSTRAPPING.  If we are bootstrapping,
