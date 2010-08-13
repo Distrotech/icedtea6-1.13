@@ -2068,7 +2068,7 @@ rt-source-files.txt: $(OPENJDK_ECJ_TREE)
 	done
 
 stamps/rt-class-files.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) rt-source-files.txt
-if LACKS_SUN_AWT_TOOLKIT
+if BOOTSTRAPPING
 	mkdir -p lib/rt
 	$(BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) -d lib/rt \
           -sourcepath $(SOURCEPATH_DIRS) -bootclasspath \'\' \
@@ -2083,7 +2083,7 @@ clean-rt:
 	rm -f stamps/rt-class-files.stamp
 	rm -f stamps/rt.stamp
 	rm -f rt-source-files.txt
-if LACKS_SUN_AWT_TOOLKIT
+if BOOTSTRAPPING
 	if [ -e $(ECJ_BOOT_DIR) ] ; then \
 	  cp $(SYSTEM_JDK_DIR)/jre/lib/rt.jar $(ECJ_BOOT_DIR)/jre/lib/rt.jar ; \
 	fi
@@ -2091,7 +2091,7 @@ endif
 
 stamps/rt.stamp: stamps/rt-class-files.stamp
 	mkdir -p stamps
-if LACKS_SUN_AWT_TOOLKIT
+if BOOTSTRAPPING
 	$(BOOT_DIR)/bin/jar uf $(RUNTIME) -C lib/rt com -C lib/rt java \
 	  -C lib/rt javax -C lib/rt sun 
 if ENABLE_NIO2

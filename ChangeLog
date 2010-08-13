@@ -1,3 +1,14 @@
+2010-08-13  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Replace conditionals on LACKS_SUN_AWT_TOOLKIT
+	with ones on BOOTSTRAPPING.  If we are bootstrapping,
+	we don't trust the system JDK and update rt.jar
+	with newly built classes, regardless of whether it's
+	an Oracle-based JDK or not.
+	* configure.ac:
+	Remove check for sun.awt.Toolkit.
+
 2010-08-09  Omair Majid  <omajid@redhat.com>
 
 	* NEWS: Update with OpenType support.
