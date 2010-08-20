@@ -1,3 +1,17 @@
+2010-08-20  Omair Majid  <omajid@redhat.com>
+
+	* netx/net/sourceforge/jnlp/JNLPFile.java
+	(getUpdate): New method. Returns the parsed UpdateDesc.
+	(parse): Call parser.getUpdate.
+	* netx/net/sourceforge/jnlp/Parser.java
+	(getUpdate): New method. Parses a node to find <update> elements.
+	* netx/net/sourceforge/jnlp/UpdateDesc.java: New class.
+	(UpdateDesc): New method. Creates a new UpdateDesc.
+	(getPolicy): New method. Returns the policy attribute of this update.
+	(getCheck): New method. Returns the check attribute for this update.
+	* netx/net/sourceforge/jnlp/resources/Messages.properties:
+	Add PTwoUpdates error.
+
 2010-08-19  Omair Majid  <omajid@redhat.com>
 
 	Fixes rhbz601281
