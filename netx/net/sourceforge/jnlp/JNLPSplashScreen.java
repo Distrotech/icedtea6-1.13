@@ -44,6 +44,12 @@ public class JNLPSplashScreen extends JFrame {
         try {
             splashImage = ImageIO.read(resourceTracker
                     .getCacheFile(splashImageUrl));
+            if (splashImage == null) {
+                if (JNLPRuntime.isDebug()) {
+                    System.err.println("Error loading splash image: " + url);
+                }
+                return;
+            }
         } catch (IOException e) {
             if (JNLPRuntime.isDebug()) {
                 System.err.println("Error loading splash image: " + url);
