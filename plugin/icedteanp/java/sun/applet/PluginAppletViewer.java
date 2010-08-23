@@ -2124,40 +2124,6 @@ import com.sun.jndi.toolkit.url.UrlUtil;
                              atts.put("heightPercentage", Integer.parseInt(h.substring(0,  h.length() -1)));
                          }
                      }
-                     else if (nm.equalsIgnoreCase("app")) {
-                         statusMsgStream.println(appNotLongerSupportedWarning);
-                         Hashtable atts2 = scanTag(in);
-                         nm = (String)atts2.get("class");
-                         if (nm != null) {
-                             atts2.remove("class");
-                             atts2.put("code", nm + ".class");
-                         }
-                         nm = (String)atts2.get("src");
-                         if (nm != null) {
-                             atts2.remove("src");
-                             atts2.put("codebase", nm);
-                         }
-                         if (atts2.get("width") == null || !isInt(atts2.get("width"))) {
-                             atts2.put("width", "1000");
-                             atts2.put("widthPercentage", 100);
-                         } else if (((String) atts.get("width")).endsWith("%")) {
-                             String w = (String) atts.get("width");
-                             atts2.put("width", "100");
-                             atts2.put("widthPercentage", Integer.parseInt(w.substring(0,  w.length() -1)));
-                         }
-
-                         if (atts2.get("height") == null || !isInt(atts2.get("height"))) {
-                             atts2.put("height", "1000");
-                             atts2.put("heightPercentage", 100);
-                         } else if (((String) atts.get("height")).endsWith("%")) {
-                             String h = (String) atts.get("height");
-                             atts2.put("height", "100");
-                             atts2.put("heightPercentage", Integer.parseInt(h.substring(0,  h.length() -1)));
-                         }
-
-                         printTag(statusMsgStream, atts2);
-                         statusMsgStream.println();
-                     }
                  }
              }
          }
