@@ -91,6 +91,7 @@ NETX_BOOTSTRAP_CLASSES = \
 ICEDTEA_BOOTSTRAP_CLASSES = \
 	$(SHARE)/javax/swing/plaf/basic/BasicDirectoryModel.java \
 	$(SHARE)/javax/management/StandardMBean.java \
+	$(SHARE)/com/sun/java/swing/plaf/nimbus/NimbusLookAndFeel.java \
 	$(NETX_BOOTSTRAP_CLASSES)
 
 # Flags
