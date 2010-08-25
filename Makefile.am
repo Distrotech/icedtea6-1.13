@@ -289,7 +289,8 @@ ICEDTEA_PATCHES = \
 	patches/ipv4-mapped-ipv6-addresses.patch \
 	patches/openjdk/6795060-icu_crash.patch \
 	patches/openjdk/4356282-opentype.patch \
-	patches/openjdk/6954424-opentype_javadoc.patch
+	patches/openjdk/6954424-opentype_javadoc.patch \
+	patches/openjdk/6438179-systray_check.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
