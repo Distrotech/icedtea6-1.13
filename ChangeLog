@@ -1,3 +1,11 @@
+2010-08-16  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am:
+	* patches/opengl-jni-fix.patch:
+	Fixed missing JNI link to native function
+	OGLContext.getOGLIdString() which causes
+	many OpenGL-related regression tests to fail.
+
 2010-08-25  Omair Majid  <omajid@redhat.com>
 
 	Fixes RH569121, S6438179
