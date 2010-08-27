@@ -1,3 +1,10 @@
+2010-08-27  Deepak Bhole <dbhole@redhat.com>
+
+	Fixes rhbz#560193
+	* netx/net/sourceforge/jnlp/runtime/JNLPClassLoader.java
+	(activateJars): Process nested jar only if size > 0 bytes.
+	* plugin/icedteanp/IcedTeaNPPlugin.cc: Fixed file name in header. 
+
 2010-08-16  Pavel Tisnovsky  <ptisnovs@redhat.com>
 
 	* Makefile.am:
