@@ -292,7 +292,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6954424-opentype_javadoc.patch \
 	patches/openjdk/6438179-systray_check.patch \
 	patches/openjdk/6951319-sparc_build_fixes.patch \
-	patches/icedtea-too-many-args.diff
+	patches/icedtea-too-many-args.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
