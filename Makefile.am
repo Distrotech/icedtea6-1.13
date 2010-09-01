@@ -327,7 +327,8 @@ if ENABLE_XRENDER
 ICEDTEA_PATCHES += patches/openjdk/6725214-direct3d-01.patch \
 	patches/openjdk/6307603-xrender-01.patch \
 	patches/openjdk/6961633-xrender-02.patch \
-        patches/opengl-jni-fix.patch
+        patches/openjdk/6791612-opengl-jni-fix.patch \
+        patches/openjdk/6755274-glgetstring-crash.patch
 endif
 
 if ENABLE_NIO2

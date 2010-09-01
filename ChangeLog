@@ -1,3 +1,11 @@
+2010-09-01  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: Add two new patches, removed one unused patch.
+	* patches/openjdk/6755274-glgetstring-crash.patch:
+	* patches/openjdk/6791612-opengl-jni-fix.patch:
+	Backport of 6755274 and 6791612 patches to fix OpenGL-related failures
+	(improper OpenGL initialization and missing link to native functions)
+
 2010-08-27  Andrew John Hughes  <ahughes@redhat.com>
 
 	PR398, S6951319:
@@ -27,7 +35,7 @@
 	(activateJars): Process nested jar only if size > 0 bytes.
 	* plugin/icedteanp/IcedTeaNPPlugin.cc: Fixed file name in header. 
 
-2010-08-16  Pavel Tisnovsky  <ptisnovs@redhat.com>
+2010-08-26  Pavel Tisnovsky  <ptisnovs@redhat.com>
 
 	* Makefile.am:
 	* patches/opengl-jni-fix.patch:
