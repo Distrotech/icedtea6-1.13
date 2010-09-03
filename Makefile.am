@@ -293,7 +293,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6438179-systray_check.patch \
 	patches/openjdk/6951319-sparc_build_fixes.patch \
 	patches/icedtea-too-many-args.patch \
-        patches/icedtea-jtreg-OpenGLContextInit.patch
+	patches/icedtea-jtreg-OpenGLContextInit.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
