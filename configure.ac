@@ -178,9 +178,9 @@ IT_CHECK_ADDITIONAL_VMS
 ENABLE_HG
 AC_CHECK_WITH_HG_REVISION
 AC_CHECK_WITH_TZDATA_DIR
-IT_CHECK_FOR_CLASS([SUN_AWT_TOOLKIT], [sun.awt.SunToolkit])
 IT_GETDTDTYPE_CHECK
 IT_CHECK_XULRUNNER_VERSION
+IT_JAVAH
 
 dnl pkgconfig cannot be used to find these headers and libraries.
 AC_CHECK_HEADERS([cups/cups.h cups/ppd.h],[]

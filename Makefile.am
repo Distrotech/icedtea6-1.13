@@ -5,8 +5,8 @@ OPENJDK_MD5SUM = 0b36adbf67e4f261e1b827ed4be4f447
 OPENJDK_VERSION = b20
 OPENJDK_URL = http://download.java.net/openjdk/jdk6/promoted/$(OPENJDK_VERSION)/
 
-CACAO_VERSION = dd4532afd08a
-CACAO_SHA256SUM = fc876403aeb46c6c16693cfc75ba0a2e581f7a98ddd02ac7f2bf4fc5c20765b4
+CACAO_VERSION = e321b101a9ee
+CACAO_SHA256SUM = 46bc5b6212c199dc4a3dbebe6386fe15a8248625a5dffa17115aab394a298444
 CACAO_BASE_URL = http://mips.complang.tuwien.ac.at
 CACAO_URL = $(CACAO_BASE_URL)/hg/cacao/archive/$(CACAO_VERSION).tar.bz2
 CACAO_SRC_ZIP = cacao-$(CACAO_VERSION).tar.bz2
@@ -91,6 +91,7 @@ NETX_BOOTSTRAP_CLASSES = \
 ICEDTEA_BOOTSTRAP_CLASSES = \
 	$(SHARE)/javax/swing/plaf/basic/BasicDirectoryModel.java \
 	$(SHARE)/javax/management/StandardMBean.java \
+	$(SHARE)/com/sun/java/swing/plaf/nimbus/NimbusLookAndFeel.java \
 	$(NETX_BOOTSTRAP_CLASSES)
 
 # Flags
@@ -283,7 +284,14 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6967533-pre_epoch.patch \
 	patches/fonts-rhel.patch \
 	patches/fonts-gentoo.patch \
-	patches/ipv4-mapped-ipv6-addresses.patch
+	patches/ipv4-mapped-ipv6-addresses.patch \
+	patches/openjdk/6795060-icu_crash.patch \
+	patches/openjdk/4356282-opentype.patch \
+	patches/openjdk/6954424-opentype_javadoc.patch \
+	patches/openjdk/6438179-systray_check.patch \
+	patches/openjdk/6951319-sparc_build_fixes.patch \
+	patches/icedtea-too-many-args.patch \
+	patches/icedtea-jtreg-OpenGLContextInit.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -300,8 +308,7 @@ ICEDTEA_PATCHES += \
 	patches/cacao/launcher.patch \
 	patches/cacao/arm-arch-defines.patch \
 	patches/cacao/jsig.patch \
-	patches/cacao/memory.patch \
-	patches/cacao/version-parsing.patch
+	patches/cacao/memory.patch
 endif
 
 if WITH_CACAO
@@ -318,7 +325,9 @@ endif
 if ENABLE_XRENDER
 ICEDTEA_PATCHES += patches/openjdk/6725214-direct3d-01.patch \
 	patches/openjdk/6307603-xrender-01.patch \
-	patches/openjdk/6961633-xrender-02.patch
+	patches/openjdk/6961633-xrender-02.patch \
+        patches/openjdk/6791612-opengl-jni-fix.patch \
+        patches/openjdk/6755274-glgetstring-crash.patch
 endif
 
 if ENABLE_NIO2
@@ -360,9 +369,10 @@ ICEDTEA_ECJ_PATCHES += \
 endif
 
 if ENABLE_XRENDER
-ICEDTEA_ECJ_PATCHES += \
-	patches/ecj/needs-6.patch \
-	patches/ecj/javah.patch
+ICEDTEA_ECJ_PATCHES += patches/ecj/needs-6.patch
+if CP40188_JAVAH
+ICEDTEA_ECJ_PATCHES += patches/ecj/cp40188-opengl.patch
+endif
 endif
 
 if !HAS_PAX
@@ -2063,7 +2073,7 @@ rt-source-files.txt: $(OPENJDK_ECJ_TREE)
 	done
 
 stamps/rt-class-files.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) rt-source-files.txt
-if LACKS_SUN_AWT_TOOLKIT
+if BOOTSTRAPPING
 	mkdir -p lib/rt
 	$(BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) -d lib/rt \
           -sourcepath $(SOURCEPATH_DIRS) -bootclasspath \'\' \
@@ -2078,7 +2088,7 @@ clean-rt:
 	rm -f stamps/rt-class-files.stamp
 	rm -f stamps/rt.stamp
 	rm -f rt-source-files.txt
-if LACKS_SUN_AWT_TOOLKIT
+if BOOTSTRAPPING
 	if [ -e $(ECJ_BOOT_DIR) ] ; then \
 	  cp $(SYSTEM_JDK_DIR)/jre/lib/rt.jar $(ECJ_BOOT_DIR)/jre/lib/rt.jar ; \
 	fi
@@ -2086,7 +2096,7 @@ endif
 
 stamps/rt.stamp: stamps/rt-class-files.stamp
 	mkdir -p stamps
-if LACKS_SUN_AWT_TOOLKIT
+if BOOTSTRAPPING
 	$(BOOT_DIR)/bin/jar uf $(RUNTIME) -C lib/rt com -C lib/rt java \
 	  -C lib/rt javax -C lib/rt sun 
 if ENABLE_NIO2

@@ -83,6 +83,8 @@ public class JNLPFile {
     /** information */
     protected List info;
 
+    protected UpdateDesc update;
+
     /** resources */
     protected List resources;
 
@@ -345,6 +347,13 @@ public class JNLPFile {
     }
 
     /**
+     * Returns the update section of the JNLP file.
+     */
+    public UpdateDesc getUpdate() {
+        return update;
+    }
+
+    /**
      * Returns the security section of the JNLP file.
      */
     public SecurityDesc getSecurity() {
@@ -561,6 +570,7 @@ public class JNLPFile {
             codeBase = parser.getCodeBase();
             sourceLocation = parser.getFileLocation() != null ? parser.getFileLocation() : location;
             info = parser.getInfo(root);
+            update = parser.getUpdate(root);
             resources = parser.getResources(root, false); // false == not a j2se/java resources section
             launchType = parser.getLauncher(root);
             security = parser.getSecurity(root);

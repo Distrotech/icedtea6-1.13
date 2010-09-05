@@ -1,3 +1,140 @@
+2010-09-03  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: Fixed indentation, changes spaces to tab.
+
+2010-09-02  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: Add new patch.
+	* patches/icedtea-jtreg-OpenGLContextInit.patch:
+	New regression test added for checking if OpenGL context is properly initialized.
+
+2010-09-01  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: Add two new patches, removed one unused patch.
+	* patches/openjdk/6755274-glgetstring-crash.patch:
+	* patches/openjdk/6791612-opengl-jni-fix.patch:
+	Backport of 6755274 and 6791612 patches to fix OpenGL-related failures
+	(improper OpenGL initialization and missing link to native functions)
+
+2010-08-27  Andrew John Hughes  <ahughes@redhat.com>
+
+	PR398, S6951319:
+	* Makefile.am: Add new patch.
+	* patches/openjdk/6951319-sparc_build_fixes.patch:
+	Backport of 6951319 to fix build issues on GNU/Linux+SPARC.
+	* patches/systemtap.patch: Rerolled against 6951319.
+	* NEWS: Updated.
+
+2010-08-27  Matthias Klose  <doko@ubuntu.com>
+
+	* patches/icedtea-too-many-args.diff: Fix build failure with
+	small SC_ARG_MAX.
+	* Makefile.am (ICEDTEA_PATCHES): Apply the above.
+	* patches/ecj/icedtea-hotspot.patch: Update.
+
+2010-08-27  Matthias Klose  <doko@ubuntu.com>
+
+	* Makefile.am: Bump cacao version to changeset including build
+	fixes for ARM and S390.
+	* patches/cacao/version-parsing.patch: Remove, applied upstream.
+
+2010-08-27  Deepak Bhole <dbhole@redhat.com>
+
+	Fixes rhbz#560193
+	* netx/net/sourceforge/jnlp/runtime/JNLPClassLoader.java
+	(activateJars): Process nested jar only if size > 0 bytes.
+	* plugin/icedteanp/IcedTeaNPPlugin.cc: Fixed file name in header. 
+
+2010-08-26  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: Add patch.
+	* patches/opengl-jni-fix.patch:
+	Fixed missing JNI link to native function
+	OGLContext.getOGLIdString() which causes
+	many OpenGL-related regression tests to fail.
+
+2010-08-25  Omair Majid  <omajid@redhat.com>
+
+	Fixes RH569121, S6438179
+	* NEWS: Update with new backport.
+	* Makefile.am (ICEDTEA_PATCHES): Apply new patch.
+	* patches/openjdk/6438179-systray_check.patch: Backport of S6438179.
+
+2010-08-24  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am: Compile NimbusLookAndFeel as a
+	bootstrap class so the older version from
+	IcedTea6 1.8 is not used when bootstrapping
+	with it.
+
+2010-08-23  Andrew Su  <asu@redhat.com>
+
+	* plugin/icedteanp/java/sun/applet/PluginAppletViewer.java
+	(parse): Removed parsing for unknown <app> tag.
+
+2010-08-20  Omair Majid  <omajid@redhat.com>
+
+	* netx/net/sourceforge/jnlp/JNLPFile.java
+	(getUpdate): New method. Returns the parsed UpdateDesc.
+	(parse): Call parser.getUpdate.
+	* netx/net/sourceforge/jnlp/Parser.java
+	(getUpdate): New method. Parses a node to find <update> elements.
+	* netx/net/sourceforge/jnlp/UpdateDesc.java: New class.
+	(UpdateDesc): New method. Creates a new UpdateDesc.
+	(getPolicy): New method. Returns the policy attribute of this update.
+	(getCheck): New method. Returns the check attribute for this update.
+	* netx/net/sourceforge/jnlp/resources/Messages.properties:
+	Add PTwoUpdates error.
+
+2010-08-19  Omair Majid  <omajid@redhat.com>
+
+	Fixes rhbz601281
+	* NEWS: Update with this fix.
+	* netx/net/sourceforge/jnlp/JNLPSplashScreen.java
+	(setSplashImageURL): Check for possible null.
+
+2010-08-13  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/ecj/javah.patch: Moved to...
+	* Makefile.am: Apply patch to OpenGL headers
+	only if javah exhibits Classpath bug 40188.
+	http://gcc.gnu.org/bugzilla/show_bug.cgi?id=40188
+	* patches/ecj/cp40188-opengl.patch: here.
+
+2009-05-19  Andrew John Hughes  <ahughes@redhat.com>
+
+	* acinclude.m4:
+	(IT_JAVAH): Renamed from IT_CP39408_JAVAH.
+	Add test for PR40188.
+	* configure.ac:
+	Make full bootstrap the default again.  Rename
+	IT_CP39408_JAVAH to IT_JAVAH.
+
+2009-03-18  Andrew John Hughes  <ahughes@redhat.com>
+
+	* acinclude.m4:
+	(IT_CP39408_JAVAH): Add classpath specification
+	to JAVAC invocation to handle buggy ecjs.
+
+2009-03-17  Andrew John Hughes  <ahughes@redhat.com>
+
+	* acinclude.m4:
+	(IT_CP39408_JAVAH): New test for Classpath
+	bug 39408.
+	* configure.ac: Enable new test.  Result
+	as yet unused.
+
+2010-08-13  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Replace conditionals on LACKS_SUN_AWT_TOOLKIT
+	with ones on BOOTSTRAPPING.  If we are bootstrapping,
+	we don't trust the system JDK and update rt.jar
+	with newly built classes, regardless of whether it's
+	an Oracle-based JDK or not.
+	* configure.ac:
+	Remove check for sun.awt.Toolkit.
+
 2010-08-12  Andrew John Hughes  <ahughes@redhat.com>
 
 	* patches/openjdk/4356282-opentype.patch,

@@ -1,0 +1,27 @@
+# HG changeset patch
+# User tdv
+# Date 1235684318 28800
+# Node ID 0c856354b66924ad99e106ad0b99b1d263ef2eab
+# Parent  ff2afd0551c97282f5bc0939eda439166bfa71b4
+6791612: OGLBat tests are failed in jdk 7 b42
+Reviewed-by: tdv
+Contributed-by: ceisserer <linuxhippy@gmail.com>
+
+diff -r ff2afd0551c9 -r 0c856354b669 make/sun/xawt/mapfile-vers
+--- openjdk-old/jdk/make/sun/xawt/mapfile-vers	2010-08-16 16:54:21.000000000 +0200
++++ openjdk/jdk/make/sun/xawt/mapfile-vers	2010-08-16 16:54:21.000000000 +0200
+@@ -302,12 +302,14 @@
+         Java_java_awt_FileDialog_initIDs;
+         Java_sun_awt_X11_XWindow_initIDs;
+ 
++        Java_sun_java2d_opengl_OGLContext_getOGLIdString;
+         Java_sun_java2d_opengl_OGLMaskFill_maskFill;
+         Java_sun_java2d_opengl_OGLRenderer_drawPoly;
+         Java_sun_java2d_opengl_OGLRenderQueue_flushBuffer;
+         Java_sun_java2d_opengl_OGLSurfaceData_initTexture;
+         Java_sun_java2d_opengl_OGLSurfaceData_initFBObject;
+         Java_sun_java2d_opengl_OGLSurfaceData_initFlipBackbuffer;
++        Java_sun_java2d_opengl_OGLSurfaceData_getTextureID;
+         Java_sun_java2d_opengl_OGLSurfaceData_getTextureTarget;
+         Java_sun_java2d_opengl_OGLTextRenderer_drawGlyphList;
+         Java_sun_java2d_opengl_GLXGraphicsConfig_getGLXConfigInfo;

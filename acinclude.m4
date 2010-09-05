@@ -1515,3 +1515,62 @@ fi
 AM_CONDITIONAL([HAS_PAX], test x"${it_cv_pax}" = "xyes")
 AC_PROVIDE([$0])dnl
 ])
+
+AC_DEFUN([IT_JAVAH],[
+AC_CACHE_CHECK([if $JAVAH exhibits Classpath bug 39408], it_cv_cp39408_javah, [
+SUPERCLASS=Test.java
+SUBCLASS=TestImpl.java
+SUB=$(echo $SUBCLASS|sed 's#\.java##')
+SUBHEADER=$(echo $SUBCLASS|sed 's#\.java#.h#')
+mkdir tmp.$$
+cd tmp.$$
+cat << \EOF > $SUPERCLASS
+/* [#]line __oline__ "configure" */
+public class Test 
+{
+  public static final int POTATO = 0;
+  public static final int CABBAGE = 1;
+}
+EOF
+cat << \EOF > $SUBCLASS
+/* [#]line __oline__ "configure" */
+public class TestImpl
+  extends Test
+{
+  public native void doStuff();
+}
+EOF
+if $JAVAC -cp . $JAVACFLAGS $SUBCLASS >&AS_MESSAGE_LOG_FD 2>&1; then
+  if $JAVAH -classpath . $SUB >&AS_MESSAGE_LOG_FD 2>&1; then
+    if cat $SUBHEADER | grep POTATO >&AS_MESSAGE_LOG_FD 2>&1; then
+      it_cv_cp39408_javah=no;
+    else
+      it_cv_cp39408_javah=yes;
+    fi
+  else
+    AC_MSG_ERROR([The Java header generator $JAVAH failed])
+    echo "configure: failed program was:" >&AC_FD_CC
+    cat $SUBCLASS >&AC_FD_CC
+  fi
+else
+  AC_MSG_ERROR([The Java compiler $JAVAC failed])
+  echo "configure: failed program was:" >&AC_FD_CC
+  cat $SUBCLASS >&AC_FD_CC
+fi
+])
+AC_CACHE_CHECK([if $JAVAH exhibits Classpath bug 40188], it_cv_cp40188_javah, [
+  if test -e $SUBHEADER ; then
+    if cat $SUBHEADER | grep TestImpl_POTATO >&AS_MESSAGE_LOG_FD 2>&1; then
+      it_cv_cp40188_javah=no;
+    else
+      it_cv_cp40188_javah=yes;
+    fi
+  fi
+])
+rm -f $SUBCLASS $SUPERCLASS $SUBHEADER *.class
+cd ..
+rmdir tmp.$$
+AM_CONDITIONAL([CP39408_JAVAH], test x"${it_cv_cp39408_javah}" = "xyes")
+AM_CONDITIONAL([CP40188_JAVAH], test x"${it_cv_cp40188_javah}" = "xyes")
+AC_PROVIDE([$0])dnl
+])

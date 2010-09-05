@@ -1,4 +1,4 @@
-/* IcedTeaPlugin.cc -- web browser plugin to execute Java applets
+/* IcedTeaNPPlugin.cc -- web browser plugin to execute Java applets
    Copyright (C) 2003, 2004, 2006, 2007  Free Software Foundation, Inc.
    Copyright (C) 2009, 2010 Red Hat
 

@@ -638,13 +638,20 @@ public class JNLPClassLoader extends URLClassLoader {
 
                                     byte[] bytes = new byte[1024];
                                     int read = is.read(bytes);
+                                    int fileSize = read;
                                     while (read > 0) {
                                         extractedJar.write(bytes, 0, read);
                                         read = is.read(bytes);
+                                        fileSize += read;
                                     }
 
                                     is.close();
                                     extractedJar.close();
+                                    
+                                    // 0 byte file? skip
+                                    if (fileSize <= 0) {
+                                    	continue;
+                                    }
 
                                     JarSigner signer = new JarSigner();
                                     signer.verifyJar(extractedJarLocation);

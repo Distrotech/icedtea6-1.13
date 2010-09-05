@@ -25,6 +25,8 @@ import java.util.*;
 //import org.w3c.dom.*;       // class for using Tiny XML | NanoXML
 //import org.xml.sax.*;
 //import gd.xml.tiny.*;
+import net.sourceforge.jnlp.UpdateDesc.Check;
+import net.sourceforge.jnlp.UpdateDesc.Policy;
 import net.sourceforge.jnlp.runtime.JNLPRuntime;
 import net.sourceforge.nanoxml.*;
 
@@ -176,6 +178,53 @@ class Parser {
      */
     public Version getSpecVersion() {
         return spec;
+    }
+
+    public UpdateDesc getUpdate(Node parent) throws ParseException {
+        UpdateDesc updateDesc = null;
+        Node child = parent.getFirstChild();
+        while (child != null) {
+            if (child.getNodeName().equals("update")) {
+                if (strict && updateDesc != null) {
+                    throw new ParseException(R("PTwoUpdates"));
+                }
+
+                Node node = child;
+
+                Check check;
+                String checkValue = getAttribute(node, "check", "timeout");
+                if (checkValue.equals("always")) {
+                   check = Check.ALWAYS;
+                } else if (checkValue.equals("timeout")) {
+                    check = Check.TIMEOUT;
+                } else if (checkValue.equals("background")) {
+                    check = Check.BACKGROUND;
+                } else {
+                    check = Check.TIMEOUT;
+                }
+
+                String policyString = getAttribute(node, "policy", "always");
+                Policy policy;
+                if (policyString.equals("always")) {
+                    policy = Policy.ALWAYS;
+                } else if (policyString.equals("prompt-update")) {
+                    policy = Policy.PROMPT_UPDATE;
+                } else if (policyString.equals("prompt-run")) {
+                    policy = Policy.PROMPT_RUN;
+                } else {
+                    policy = Policy.ALWAYS;
+                }
+
+                updateDesc = new UpdateDesc(check, policy);
+            }
+
+            child = child.getNextSibling();
+        }
+
+        if (updateDesc == null) {
+            updateDesc = new UpdateDesc(Check.TIMEOUT, Policy.ALWAYS);
+        }
+        return updateDesc;
     }
 
     //
@@ -1267,4 +1316,5 @@ class Parser {
 
         return encoding;
     }
+
 }
