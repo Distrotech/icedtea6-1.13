@@ -270,30 +270,6 @@ diff -r 13f94cc87253 -r 379b95785a1f make/solaris/makefiles/vm.make
  
  DEST_JVM = $(JDK_LIBDIR)/$(VM_SUBDIR)/$(LIBJVM)
  
-diff -r 13f94cc87253 -r 379b95785a1f src/cpu/sparc/vm/assembler_sparc.hpp
---- openjdk.orig/hotspot/src/cpu/sparc/vm/assembler_sparc.hpp	Fri Jun 18 01:17:46 2010 -0700
---- openjdk/hotspot/src/cpu/sparc/vm/assembler_sparc.hpp	Fri Aug 27 20:12:31 2010 +0100
-@@ -2239,7 +2239,7 @@
-   AddressLiteral constant_oop_address(jobject obj);                          // find_index
-   inline void    set_oop             (jobject obj, Register d);              // uses allocate_oop_address
-   inline void    set_oop_constant    (jobject obj, Register d);              // uses constant_oop_address
--  inline void    set_oop             (AddressLiteral& obj_addr, Register d); // same as load_address
-+  inline void    set_oop             (const AddressLiteral& obj_addr, Register d); // same as load_address
- 
-   void set_narrow_oop( jobject obj, Register d );
- 
-diff -r 13f94cc87253 -r 379b95785a1f src/cpu/sparc/vm/assembler_sparc.inline.hpp
---- openjdk.orig/hotspot/src/cpu/sparc/vm/assembler_sparc.inline.hpp	Fri Jun 18 01:17:46 2010 -0700
---- openjdk/hotspot/src/cpu/sparc/vm/assembler_sparc.inline.hpp	Fri Aug 27 20:12:31 2010 +0100
-@@ -707,7 +707,7 @@
- }
- 
- 
--inline void MacroAssembler::set_oop(AddressLiteral& obj_addr, Register d) {
-+inline void MacroAssembler::set_oop(const AddressLiteral& obj_addr, Register d) {
-   assert(obj_addr.rspec().type() == relocInfo::oop_type, "must be an oop reloc");
-   set(obj_addr, d);
- }
 diff -r 13f94cc87253 -r 379b95785a1f src/os_cpu/solaris_x86/vm/atomic_solaris_x86.inline.hpp
 --- openjdk.orig/hotspot/src/os_cpu/solaris_x86/vm/atomic_solaris_x86.inline.hpp	Fri Jun 18 01:17:46 2010 -0700
 --- openjdk/hotspot/src/os_cpu/solaris_x86/vm/atomic_solaris_x86.inline.hpp	Fri Aug 27 20:12:31 2010 +0100

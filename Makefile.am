@@ -17,9 +17,9 @@ JAXWS_DROP_SHA256SUM = 0c460583898b968a58bf88eb53f90a0e34369e2562d65fb3a143512df
 JAF_DROP_URL = https://jax-ws.dev.java.net/files/documents/4202/150725
 JAF_DROP_ZIP = jdk6-jaf-b20.zip
 JAF_DROP_SHA256SUM = 78c7b5c9d6271e88ee46abadd018a61f1e9645f8936cc8df1617e5f4f5074012
-JAXP_DROP_URL = https://jaxp.dev.java.net/files/documents/913/150648
-JAXP_DROP_ZIP = jdk6-jaxp-b20.zip
-JAXP_DROP_SHA256SUM = d097627d4059d488c5a09d4e33cec275a193d4d8bc0fea8ef4f1337170904156
+JAXP_DROP_URL = https://jaxp.dev.java.net/files/documents/913/152561
+JAXP_DROP_ZIP = jaxp-1_4_4.zip
+JAXP_DROP_SHA256SUM = 10b203bec5b7d3dd8f515a9e098f80abc316faf977bcc220b56efe3dc6e9e5e9
 
 OPENJDK_HG_URL = http://hg.openjdk.java.net/jdk6/jdk6
 
@@ -285,10 +285,6 @@ ICEDTEA_PATCHES = \
 	patches/fonts-rhel.patch \
 	patches/fonts-gentoo.patch \
 	patches/ipv4-mapped-ipv6-addresses.patch \
-	patches/openjdk/6795060-icu_crash.patch \
-	patches/openjdk/4356282-opentype.patch \
-	patches/openjdk/6954424-opentype_javadoc.patch \
-	patches/openjdk/6438179-systray_check.patch \
 	patches/openjdk/6951319-sparc_build_fixes.patch \
 	patches/icedtea-too-many-args.patch \
 	patches/icedtea-jtreg-OpenGLContextInit.patch
