@@ -250,3 +250,25 @@ diff -Nru openjdk.orig/hotspot/src/share/vm/runtime/arguments.cpp openjdk/hotspo
            if (PrintGCDetails && Verbose) {
              // Too early to use gclog_or_tty
              tty->print_cr("Ergo set OldSize: " SIZE_FORMAT, OldSize);
+--- openjdk/hotspot/src/share/vm/gc_implementation/concurrentMarkSweep/compactibleFreeListSpace.cpp.orig	2010-06-21 23:12:18.000000000 +0200
++++ openjdk/hotspot/src/share/vm/gc_implementation/concurrentMarkSweep/compactibleFreeListSpace.cpp	2010-09-09 10:48:01.909691035 +0200
+@@ -2882,7 +2882,7 @@
+   if (ResizeOldPLAB && CMSOldPLABResizeQuicker) {
+     size_t multiple = _num_blocks[word_sz]/(CMSOldPLABToleranceFactor*CMSOldPLABNumRefills*n_blks);
+     n_blks +=  CMSOldPLABReactivityFactor*multiple*n_blks;
+-    n_blks = MIN2(n_blks, CMSOldPLABMax);
++    n_blks = MIN2(n_blks, (size_t)CMSOldPLABMax);
+   }
+   assert(n_blks > 0, "Error");
+   _cfls->par_get_chunk_of_blocks(word_sz, n_blks, fl);
+--- openjdk/hotspot/src/share/vm/gc_implementation/parNew/parNewGeneration.cpp.orig	2010-06-21 21:12:18.000000000 +0000
++++ openjdk/hotspot/src/share/vm/gc_implementation/parNew/parNewGeneration.cpp	2010-09-09 12:55:45.000000000 +0000
+@@ -160,7 +160,7 @@
+   const size_t num_overflow_elems = of_stack->size();
+   const size_t space_available = queue->max_elems() - queue->size();
+   const size_t num_take_elems = MIN3(space_available / 4,
+-                                     ParGCDesiredObjsFromOverflowList,
++                                     (size_t)ParGCDesiredObjsFromOverflowList,
+                                      num_overflow_elems);
+   // Transfer the most recent num_take_elems from the overflow
+   // stack to our work queue.
