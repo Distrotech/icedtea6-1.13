@@ -1,3 +1,16 @@
+2010-09-13  Omair Majid  <omajid@redhat.com>
+
+	Add a new man page for netx's javaws.
+	* NEWS: Updated to indicate the new man page for javaws.
+	* Makefile.am
+	(stamps/add-netx.stamp): Copy over the javaws man page into the build.
+	(clean-add-netx): Remove the javaws man pages on clean.
+	(stamps/add-netx-debug.stamp): Copy over the javaws man page.
+	(clean-add-netx-debug): Remove the javaws man page.
+	(add-netx): New target. Alias for stamps/add-netx.stamp.
+	(add-netx-debug): New target. Alias for stamps/add-netx-debug.stamp.
+	* netx/javaws.1: New man page for netx's javaws.
+
 2010-09-10  Matthias Klose  <doko@ubuntu.com>
 
 	* patches/params-cast-size_t.patch: Update, fix build failure on s390.
