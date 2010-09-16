@@ -68,7 +68,9 @@ exception statement from your version. */
 struct ITNPPluginData
 {
   // A unique identifier for this plugin window.
-  gchar* instance_string;
+  gchar* instance_id;
+  // The applet tag sent to Java side
+  gchar* applet_tag;
   // Mutex to protect appletviewer_alive.
   GMutex* appletviewer_mutex;
   // Back-pointer to the plugin instance to which this data belongs.

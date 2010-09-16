@@ -137,21 +137,10 @@ import com.sun.jndi.toolkit.url.UrlUtil;
              }
          });
 
-         double heightFactor = 1.0;
-         double widthFactor = 1.0;
-
-         if (atts.get("heightPercentage") != null) {
-             heightFactor = (Integer) atts.get("heightPercentage")/100.0;
-         }
-         
-         if (atts.get("widthPercentage") != null) {
-             widthFactor = (Integer) atts.get("widthPercentage")/100.0;
-         }
          
 
          // put inside initial 0 handle frame
-         PluginAppletViewer.reFrame(null, identifier, System.out, 
-                 heightFactor, widthFactor, 0, panel);
+         PluginAppletViewer.reFrame(null, identifier, System.out, 0, panel);
          
          panel.init();
 
@@ -362,14 +351,12 @@ import com.sun.jndi.toolkit.url.UrlUtil;
      private static HashMap<Integer, PAV_INIT_STATUS> status = 
          new HashMap<Integer,PAV_INIT_STATUS>();
 
-     private double proposedHeightFactor;
-     private double proposedWidthFactor;
      
      private long handle = 0;
      private WindowListener windowEventListener = null;
      private AppletEventListener appletEventListener = null;
      
-     public static final int APPLET_TIMEOUT = 60000;
+     public static final int APPLET_TIMEOUT = 180000;
 
      private static Long requestIdentityCounter = 0L;
      
@@ -381,8 +368,7 @@ import com.sun.jndi.toolkit.url.UrlUtil;
 
      public static void reFrame(PluginAppletViewer oldFrame, 
                          int identifier, PrintStream statusMsgStream, 
-                         double heightFactor, double widthFactor, long handle,
-                         AppletViewerPanel panel) {
+                         long handle, AppletViewerPanel panel) {
 
          PluginDebug.debug("Reframing " + panel);
          
@@ -393,7 +379,7 @@ import com.sun.jndi.toolkit.url.UrlUtil;
          if (oldFrame != null && handle == oldFrame.handle)
              return;
 
-         PluginAppletViewer newFrame = new PluginAppletViewer(handle, identifier, statusMsgStream, heightFactor, widthFactor, panel);
+         PluginAppletViewer newFrame = new PluginAppletViewer(handle, identifier, statusMsgStream, panel);
 
          if (oldFrame != null) {
              applets.remove(oldFrame.identifier);
@@ -423,14 +409,12 @@ import com.sun.jndi.toolkit.url.UrlUtil;
       * Create new plugin appletviewer frame
       */
      private PluginAppletViewer(long handle, final int identifier, 
-                         PrintStream statusMsgStream, double heightFactor, 
-                         double widthFactor, AppletViewerPanel appletPanel) {
+                         PrintStream statusMsgStream, 
+                         AppletViewerPanel appletPanel) {
          
          super(handle, true);
          this.statusMsgStream = statusMsgStream;
          this.identifier = identifier;
-         this.proposedHeightFactor = heightFactor;
-         this.proposedWidthFactor = widthFactor;
          this.panel = appletPanel;
 
          if (!appletPanels.contains(panel))
@@ -525,87 +509,63 @@ import com.sun.jndi.toolkit.url.UrlUtil;
          PluginDebug.debug("PAV handling: " + message);
          
          try {
-             if (message.startsWith("tag")) {
+             if (message.startsWith("handle")) {
                  
-                 // tag and handle must both be set before parsing, so we need
-                 // synchronization here, as the setting of these variables
-                 // may happen in independent threads
+            	 // Extract the information from the message
+            	 String[] msgParts = new String[4];
+            	 for (int i=0; i < 3; i++) {
+            		 int spaceLocation = message.indexOf(' ');
+            		 int nextSpaceLocation = message.indexOf(' ', spaceLocation+1);
+            		 msgParts[i] = message.substring(spaceLocation + 1, nextSpaceLocation);
+            		 message = message.substring(nextSpaceLocation + 1);
+            	 }
                  
-                 synchronized(requests) {
+            	 long handle = Long.parseLong(msgParts[0]);
+            	 String width = msgParts[1];
+            	 String height = msgParts[2];
 
-                     // Check if we should proceed with init 
-                     // (=> no if destroy was called after tag, but before 
-                     // handle)
-                     if (status.containsKey(identifier) &&
-                         status.get(identifier).equals(PAV_INIT_STATUS.INACTIVE)) {
+            	 int spaceLocation = message.indexOf(' ', "tag".length()+1); 
+            	 String documentBase = 
+                     UrlUtil.decode(message.substring("tag".length() + 1, spaceLocation));
+            	 String tag = message.substring(spaceLocation+1); 
 
-                         PluginDebug.debug("Inactive flag set. Refusing to initialize instance " + identifier);
-                         requests.remove(identifier);
-                         return;
-
-                     }
+            	 System.err.println("Handle = " + handle + "\n" +
+            	                    "Width = " + width + "\n" +
+            	                    "Height = " + height + "\n" +
+            	                    "DocumentBase = " + documentBase + "\n" +
+            	                    "Tag = " + tag);
 
                      status.put(identifier, PAV_INIT_STATUS.PRE_INIT);
+            	 PluginAppletViewer.parse
+                 			(identifier, handle, width, height,
+                 				new StringReader(tag),
+                 				new URL(documentBase));
                      
-                     PluginParseRequest request = requests.get(identifier);
-                     if (request == null) {
-                         request = new PluginParseRequest();
-                         requests.put(identifier, request);
-                     }
-                     int index = message.indexOf(' ', "tag".length() + 1);
-                     request.documentbase =
-                         UrlUtil.decode(message.substring("tag".length() + 1, index));
-                     request.tag = message.substring(index + 1);
-                     PluginDebug.debug ("REQUEST TAG: " + request.tag + " " +
-                             Thread.currentThread());
 
-                         PluginDebug.debug ("REQUEST TAG, PARSING " +
-                                 Thread.currentThread());
-                         PluginAppletViewer.parse
-                         (identifier, request.handle,
-                                 new StringReader(request.tag),
-                                 new URL(request.documentbase));
-                         requests.remove(identifier);
+                 int maxWait = APPLET_TIMEOUT; // wait for applet to fully load
+                 int wait = 0;
+                 while (!status.get(identifier).equals(PAV_INIT_STATUS.INIT_COMPLETE) &&
+                         (wait < maxWait)) {
 
-                         // Panel initialization cannot be aborted mid-way. 
-                         // Once it is initialized, double check to see if this 
-                         // panel needs to stay around..
-                         if (status.get(identifier).equals(PAV_INIT_STATUS.INACTIVE)) {
-                             PluginDebug.debug("Inactive flag set. Destroying applet instance " + identifier);
-                             applets.get(identifier).handleMessage(-1, "destroy");
-                         }
+                      try {
+                          Thread.sleep(50);
+                          wait += 50;
+                      } catch (InterruptedException ie) {
+                          // just wait
+                      }
                  }
+
+                 if (!status.get(identifier).equals(PAV_INIT_STATUS.INIT_COMPLETE))
+                     throw new Exception("Applet initialization timeout");
+
+                 PluginAppletViewer oldFrame = applets.get(identifier);
+                 reFrame(oldFrame, oldFrame.identifier, oldFrame.statusMsgStream, 
+                         handle, oldFrame.panel);
                  
              } else {
                  PluginDebug.debug ("Handling message: " + message + " instance " + identifier + " " + Thread.currentThread());
 
-                 // Destroy may be called while initialization is still going 
-                 // on. We therefore special case it.
-                 if (!applets.containsKey(identifier) && message.equals("destroy")) {
-
-                     // Set the status to inactive right away. Doesn't matter if it 
-                     // gets clobbered during init. due to a race. That is what the 
-                     // double check below is for.  
-                     PluginDebug.debug("Destroy called during initialization. Delaying destruction.");
-                     status.put(identifier, PAV_INIT_STATUS.INACTIVE);
-
-                     // We have set the flags. We now lock what stage 1 and 2 
-                     // lock on, and force a synchronous status check+action. 
-                     synchronized (requests) {
-                         // re-check (inside lock) if the applet is 
-                         // initialized at this point. 
-                         if (applets.containsKey(identifier)) {
-                             PluginDebug.debug("Init done. destroying normally.");
-                             applets.get(identifier).handleMessage(reference, message);
-                         } else {
-                         }
-                     } // unlock
-
-                     // we're done here
-                     return;
-                 }
-
-                 // For messages other than destroy, wait till initialization finishes
+                 // Wait till initialization finishes
                  while (!applets.containsKey(identifier) && 
                          (
                            !status.containsKey(identifier) || 
@@ -617,37 +577,7 @@ import com.sun.jndi.toolkit.url.UrlUtil;
                  if (status.get(identifier).equals(PAV_INIT_STATUS.INACTIVE))
                      return;
 
-                 if (message.startsWith("handle")) {
-
-                     PluginDebug.debug("handle command waiting for applet to complete loading.");
-                     int maxWait = APPLET_TIMEOUT; // wait for applet to fully load
-                     int wait = 0;
-                     while (!status.get(identifier).equals(PAV_INIT_STATUS.INIT_COMPLETE) &&
-                             (wait < maxWait)) {
-
-                          try {
-                              Thread.sleep(50);
-                              wait += 50;
-                          } catch (InterruptedException ie) {
-                              // just wait
-                          }
-                     }
-
-                     if (!status.get(identifier).equals(PAV_INIT_STATUS.INIT_COMPLETE))
-                         throw new Exception("Applet initialization timeout");
-
-                     PluginDebug.debug("Applet loading complete. Proceeding to reframe.");
-                     long handle = Long.parseLong
-                     (message.substring("handle".length() + 1));
-
-                     PluginAppletViewer oldFrame = applets.get(identifier);
-                     reFrame(oldFrame, oldFrame.identifier, oldFrame.statusMsgStream, 
-                             oldFrame.proposedHeightFactor, oldFrame.proposedWidthFactor, 
-                             handle, oldFrame.panel);
-                     
-                 } else {
-                     applets.get(identifier).handleMessage(reference, message);
-                 }
+                 applets.get(identifier).handleMessage(reference, message);
              }
          } catch (Exception e) {
 
@@ -668,21 +598,23 @@ import com.sun.jndi.toolkit.url.UrlUtil;
 
              // Wait for panel to come alive
              int maxWait = APPLET_TIMEOUT; // wait for panel to come alive
-             int wait = 0;
+                     int wait = 0;
              while (!status.get(identifier).equals(PAV_INIT_STATUS.INIT_COMPLETE) && wait < maxWait) {
-                  try {
-                      Thread.sleep(50);
-                      wait += 50;
-                  } catch (InterruptedException ie) {
-                      // just wait
-                  }
-             }
+
+                          try {
+                              Thread.sleep(50);
+                              wait += 50;
+                          } catch (InterruptedException ie) {
+                              // just wait
+                          }
+                     }
+
              
              // 0 => width, 1=> width_value, 2 => height, 3=> height_value
              String[] dimMsg = message.split(" ");
              
-             final int height = (int) (proposedHeightFactor*Integer.parseInt(dimMsg[3]));
-             final int width = (int) (proposedWidthFactor*Integer.parseInt(dimMsg[1]));
+             final int height = (int) (Integer.parseInt(dimMsg[3]));
+             final int width = (int) (Integer.parseInt(dimMsg[1]));
 
              if (panel instanceof NetxPanel)
                  ((NetxPanel) panel).updateSizeInAtts(height, width);
@@ -708,6 +640,9 @@ import com.sun.jndi.toolkit.url.UrlUtil;
 
                          panel.setSize(width, height);
                          panel.validate();
+
+                         panel.applet.resize(width, height);
+                         panel.applet.validate();
                      }
                  });
             } catch (InterruptedException e) {
@@ -1642,60 +1577,55 @@ import com.sun.jndi.toolkit.url.UrlUtil;
  
  
      /**
-      * The current character.
-      */
-     static int c;
- 
-     /**
       * Scan spaces.
       */
-     public static void skipSpace(Reader in) throws IOException {
-         while ((c >= 0) &&
-           ((c == ' ') || (c == '\t') || (c == '\n') || (c == '\r'))) {
-        c = in.read();
+     public static void skipSpace(int[] c, Reader in) throws IOException {
+         while ((c[0] >= 0) &&
+           ((c[0] == ' ') || (c[0] == '\t') || (c[0] == '\n') || (c[0] == '\r'))) {
+        	 c[0] = in.read();
     }
      }
  
      /**
       * Scan identifier
       */
-     public static String scanIdentifier(Reader in) throws IOException {
+     public static String scanIdentifier(int[] c, Reader in) throws IOException {
     StringBuffer buf = new StringBuffer();
     
-    if (c == '!') {
+    if (c[0] == '!') {
         // Technically, we should be scanning for '!--' but we are reading 
         // from a stream, and there is no way to peek ahead. That said, 
         // a ! at this point can only mean comment here afaik, so we 
         // should be okay
-        skipComment(in);
+        skipComment(c, in);
         return "";
     }
     
     while (true) {
-        if (((c >= 'a') && (c <= 'z')) ||
-        ((c >= 'A') && (c <= 'Z')) ||
-        ((c >= '0') && (c <= '9')) || (c == '_')) {
-        buf.append((char)c);
-        c = in.read();
+        if (((c[0] >= 'a') && (c[0] <= 'z')) ||
+        ((c[0] >= 'A') && (c[0] <= 'Z')) ||
+        ((c[0] >= '0') && (c[0] <= '9')) || (c[0] == '_')) {
+        buf.append((char)c[0]);
+        c[0] = in.read();
         } else {
         return buf.toString();
         }
     }
      }
 
-     public static void skipComment(Reader in) throws IOException {
+     public static void skipComment(int[] c, Reader in) throws IOException {
          StringBuffer buf = new StringBuffer();
          boolean commentHeaderPassed = false;
-         c = in.read();
-         buf.append((char)c);
+         c[0] = in.read();
+         buf.append((char)c[0]);
 
          while (true) {
-             if (c == '-' && (c = in.read()) == '-') {
-                 buf.append((char)c);
+             if (c[0] == '-' && (c[0] = in.read()) == '-') {
+                 buf.append((char)c[0]);
                  if (commentHeaderPassed) {
                      // -- encountered ... is > next?
-                     if ((c = in.read()) == '>') {
-                         buf.append((char)c);
+                     if ((c[0] = in.read()) == '>') {
+                         buf.append((char)c[0]);
 
                          PluginDebug.debug("Comment skipped: " + buf.toString());
 
@@ -1708,46 +1638,46 @@ import com.sun.jndi.toolkit.url.UrlUtil;
                  }
 
              } else if (commentHeaderPassed == false) {
-                 buf.append((char)c);
+                 buf.append((char)c[0]);
                  PluginDebug.debug("Warning: Attempted to skip comment, but this tag does not appear to be a comment: " + buf.toString());
                  return;
              }
 
-             c = in.read();
-             buf.append((char)c);
+             c[0] = in.read();
+             buf.append((char)c[0]);
          }
      }
  
      /**
       * Scan tag
       */
-     public static Hashtable scanTag(Reader in) throws IOException {
+     public static Hashtable scanTag(int[] c, Reader in) throws IOException {
     Hashtable atts = new Hashtable();
-    skipSpace(in);
-         while (c >= 0 && c != '>') {
-        String att = scanIdentifier(in);
+    skipSpace(c, in);
+         while (c[0] >= 0 && c[0] != '>') {
+        String att = scanIdentifier(c, in);
         String val = "";
-        skipSpace(in);
-        if (c == '=') {
+        skipSpace(c, in);
+        if (c[0] == '=') {
         int quote = -1;
-        c = in.read();
-        skipSpace(in);
-        if ((c == '\'') || (c == '\"')) {
-            quote = c;
-            c = in.read();
+        c[0] = in.read();
+        skipSpace(c, in);
+        if ((c[0] == '\'') || (c[0] == '\"')) {
+            quote = c[0];
+            c[0] = in.read();
         }
         StringBuffer buf = new StringBuffer();
-                 while ((c > 0) &&
-               (((quote < 0) && (c != ' ') && (c != '\t') &&
-                          (c != '\n') && (c != '\r') && (c != '>'))
-            || ((quote >= 0) && (c != quote)))) {
-            buf.append((char)c);
-            c = in.read();
+                 while ((c[0] > 0) &&
+               (((quote < 0) && (c[0] != ' ') && (c[0] != '\t') &&
+                          (c[0] != '\n') && (c[0] != '\r') && (c[0] != '>'))
+            || ((quote >= 0) && (c[0] != quote)))) {
+            buf.append((char)c[0]);
+            c[0] = in.read();
         }
-        if (c == quote) {
-            c = in.read();
+        if (c[0] == quote) {
+            c[0] = in.read();
         }
-        skipSpace(in);
+        skipSpace(c, in);
         val = buf.toString();
         }
 
@@ -1767,12 +1697,12 @@ import com.sun.jndi.toolkit.url.UrlUtil;
         atts.put(att.toLowerCase(java.util.Locale.ENGLISH), val);
 
              while (true) {
-                 if ((c == '>') || (c < 0) ||
-                     ((c >= 'a') && (c <= 'z')) ||
-                     ((c >= 'A') && (c <= 'Z')) ||
-                     ((c >= '0') && (c <= '9')) || (c == '_'))
+                 if ((c[0] == '>') || (c[0] < 0) ||
+                     ((c[0] >= 'a') && (c[0] <= 'z')) ||
+                     ((c[0] >= 'A') && (c[0] <= 'Z')) ||
+                     ((c[0] >= '0') && (c[0] <= '9')) || (c[0] == '_'))
                      break;
-                 c = in.read();
+                 c[0] = in.read();
              }
              //skipSpace(in);
     }
@@ -1815,23 +1745,25 @@ import com.sun.jndi.toolkit.url.UrlUtil;
      /**
       * Scan an html file for <applet> tags
       */
-     public static void parse(int identifier, long handle, Reader in, URL url, String enc)
+     public static void parse(int identifier, long handle, String width, String height, Reader in, URL url, String enc)
          throws IOException {
          encoding = enc;
-         parse(identifier, handle, in, url, System.out, new PluginAppletPanelFactory());
+         parse(identifier, handle, width, height, in, url, System.out, new PluginAppletPanelFactory());
      }
  
-     public static void parse(int identifier, long handle, Reader in, URL url)
+     public static void parse(int identifier, long handle, String width, String height, Reader in, URL url)
          throws IOException {
          
          final int fIdentifier = identifier;
          final long fHandle = handle;
+         final String fWidth = width;
+         final String fHeight = height;
          final Reader fIn = in;
          final URL fUrl = url;
          PrivilegedAction pa = new PrivilegedAction() {
              public Object run() {
                  try {
-                     parse(fIdentifier, fHandle, fIn, fUrl, System.out, new PluginAppletPanelFactory());
+                     parse(fIdentifier, fHandle, fWidth, fHeight, fIn, fUrl, System.out, new PluginAppletPanelFactory());
                  } catch (IOException ioe) {
                      return ioe;
                  }
@@ -1846,7 +1778,8 @@ import com.sun.jndi.toolkit.url.UrlUtil;
          }
      }
  
-     public static void parse(int identifier, long handle, Reader in, URL url,
+     public static void parse(int identifier, long handle, String width, 
+    		 String height, Reader in, URL url,
                               PrintStream statusMsgStream,
                               PluginAppletPanelFactory factory)
          throws IOException
@@ -1856,6 +1789,11 @@ import com.sun.jndi.toolkit.url.UrlUtil;
          boolean isObjectTag = false;
          boolean isEmbedTag = false;
          boolean objectTagAlreadyParsed = false;
+         // The current character
+         // FIXME: This is an evil hack to force pass-by-reference.. the 
+         // parsing code needs to be rewritten from scratch to prevent such 
+         //a need
+         int[] c = new int[1];
 
          // warning messages
          String requiresNameWarning = amh.getMessage("parse.warning.requiresname");
@@ -1881,15 +1819,15 @@ import com.sun.jndi.toolkit.url.UrlUtil;
          Hashtable atts = null;
 
          while(true) {
-             c = in.read();
-             if (c == -1)
+             c[0] = in.read();
+             if (c[0] == -1)
                  break;
 
-             if (c == '<') {
-                 c = in.read();
-                 if (c == '/') {
-                     c = in.read();
-                     String nm = scanIdentifier(in);
+             if (c[0] == '<') {
+                 c[0] = in.read();
+                 if (c[0] == '/') {
+                     c[0] = in.read();
+                     String nm = scanIdentifier(c, in);
                      if (nm.equalsIgnoreCase("applet") ||
                              nm.equalsIgnoreCase("object") ||
                              nm.equalsIgnoreCase("embed")) {
@@ -1930,9 +1868,9 @@ import com.sun.jndi.toolkit.url.UrlUtil;
                      }
                  }
                  else {
-                     String nm = scanIdentifier(in);
+                     String nm = scanIdentifier(c, in);
                      if (nm.equalsIgnoreCase("param")) {
-                         Hashtable t = scanTag(in);
+                         Hashtable t = scanTag(c, in);
                          String att = (String)t.get("name");
 
                          if (atts.containsKey(att))
@@ -1967,7 +1905,7 @@ import com.sun.jndi.toolkit.url.UrlUtil;
                      }
                      else if (nm.equalsIgnoreCase("applet")) {
                          isAppletTag = true;
-                         atts = scanTag(in);
+                         atts = scanTag(c, in);
 
                          // If there is a classid and no code tag present, transform it to code tag
                          if (atts.get("code") == null && atts.get("classid") != null && !((String) atts.get("classid")).startsWith("clsid:")) {
@@ -1985,21 +1923,11 @@ import com.sun.jndi.toolkit.url.UrlUtil;
                          }
 
                          if (atts.get("width") == null || !isInt(atts.get("width"))) {
-                             atts.put("width", "1000");
-                             atts.put("widthPercentage", 100);
-                         } else if (((String) atts.get("width")).endsWith("%")) {
-                             String w = (String) atts.get("width");
-                             atts.put("width", "100");
-                             atts.put("widthPercentage", Integer.parseInt((w.substring(0,  w.length() -1))));
+                             atts.put("width", width);
                           }
 
                          if (atts.get("height") == null || !isInt(atts.get("height"))) {
-                             atts.put("height", "1000");
-                             atts.put("heightPercentage", 100);
-                         } else if (((String) atts.get("height")).endsWith("%")) {
-                             String h = (String) atts.get("height");
-                             atts.put("height", "100");
-                             atts.put("heightPercentage", Integer.parseInt(h.substring(0,  h.length() -1)));
+                             atts.put("height", height);
                          }
                      }
                      else if (nm.equalsIgnoreCase("object")) {
@@ -2008,7 +1936,7 @@ import com.sun.jndi.toolkit.url.UrlUtil;
                          // Once code is set, additional nested objects are ignored
                          if (!objectTagAlreadyParsed) {
                              objectTagAlreadyParsed = true;
-                         atts = scanTag(in);
+                         atts = scanTag(c, in);
                          }
 
                          // If there is a classid and no code tag present, transform it to code tag
@@ -2048,26 +1976,16 @@ import com.sun.jndi.toolkit.url.UrlUtil;
                          }
 
                          if (atts.get("width") == null || !isInt(atts.get("width"))) {
-                             atts.put("width", "1000");
-                             atts.put("widthPercentage", 100);
-                         } else if (((String) atts.get("width")).endsWith("%")) {
-                             String w = (String) atts.get("width");
-                             atts.put("width", "100");
-                             atts.put("widthPercentage", Integer.parseInt(w.substring(0,  w.length() -1)));
+                             atts.put("width", width);
                          }
 
                          if (atts.get("height") == null || !isInt(atts.get("height"))) {
-                             atts.put("height", "1000");
-                             atts.put("heightPercentage", 100);
-                         } else if (((String) atts.get("height")).endsWith("%")) {
-                             String h = (String) atts.get("height");
-                             atts.put("height", "100");
-                             atts.put("heightPercentage", Integer.parseInt(h.substring(0,  h.length() -1)));
+                             atts.put("height", height);
                          }
                      }
                      else if (nm.equalsIgnoreCase("embed")) {
                          isEmbedTag = true;
-                         atts = scanTag(in);
+                         atts = scanTag(c, in);
 
                          // If there is a classid and no code tag present, transform it to code tag
                          if (atts.get("code") == null && atts.get("classid") != null && !((String) atts.get("classid")).startsWith("clsid:")) {
@@ -2107,21 +2025,11 @@ import com.sun.jndi.toolkit.url.UrlUtil;
                          }
                          
                          if (atts.get("width") == null || !isInt(atts.get("width"))) {
-                             atts.put("width", "1000");
-                             atts.put("widthPercentage", 100);
-                         } else if (((String) atts.get("width")).endsWith("%")) {
-                             String w = (String) atts.get("width");
-                             atts.put("width", "100");
-                             atts.put("widthPercentage", Integer.parseInt(w.substring(0,  w.length() -1)));
+                             atts.put("width", width);
                          }
 
                          if (atts.get("height") == null || !isInt(atts.get("height"))) {
-                             atts.put("height", "1000");
-                             atts.put("heightPercentage", 100);
-                         } else if (((String) atts.get("height")).endsWith("%")) {
-                             String h = (String) atts.get("height");
-                             atts.put("height", "100");
-                             atts.put("heightPercentage", Integer.parseInt(h.substring(0,  h.length() -1)));
+                             atts.put("height", height);
                          }
                      }
                  }

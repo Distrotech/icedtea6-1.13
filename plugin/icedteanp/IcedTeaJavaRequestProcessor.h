@@ -46,7 +46,7 @@ exception statement from your version. */
 #include "IcedTeaNPPlugin.h"
 #include "IcedTeaPluginUtils.h"
 
-#define REQUESTTIMEOUT 120
+#define REQUESTTIMEOUT 180
 
 /*
  * This struct holds data specific to a Java operation requested by the plugin

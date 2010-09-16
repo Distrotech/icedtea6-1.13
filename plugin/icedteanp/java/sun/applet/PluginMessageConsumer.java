@@ -50,7 +50,7 @@ class PluginMessageConsumer {
 	// Each initialization requires 5 responses (tag, handle, width, proxy, cookie) 
 	// before the message stack unlocks/collapses. This works out well because we 
 	// want to allow upto 5 parallel tasks anyway
-	private static int MAX_WORKERS = MAX_PARALLEL_INITS*5;
+	private static int MAX_WORKERS = MAX_PARALLEL_INITS*4;
 	private static int PRIORITY_WORKERS = MAX_PARALLEL_INITS*2;
 
 	private static Hashtable<Integer, PluginMessageHandlerWorker> initWorkers = new Hashtable<Integer, PluginMessageHandlerWorker>(2);
@@ -150,41 +150,6 @@ class PluginMessageConsumer {
         }
 	}
 
-	private boolean okayToProcess(String[] msgParts) {
-
-	    if (msgParts[2].equals("tag")) {
-
-	        Integer instanceNum = new Integer(msgParts[1]);
-
-	        synchronized(initWorkers) {
-	            if (initWorkers.size() >= MAX_PARALLEL_INITS) {
-	                return false;
-	            }
-	        }
-	        
-	        registerPriorityWait("instance " + instanceNum + " handle");
-
-	    } else if (msgParts[2].equals("handle")) {
-	            Integer instanceNum = new Integer(msgParts[1]);
-
-	            // If this instance is not in init, return false immediately. 
-	            // Handle messages should NEVER go before tag messages
-	            if (!isInInit(instanceNum))
-	                return false;
-
-		        registerPriorityWait("instance " + instanceNum + " width");
-	    } else if (msgParts[2].equals("width")) {
-	    	
-	    	// width messages cannot proceed until handle and tag have been resolved
-	    	Integer instanceNum = new Integer(msgParts[1]);
-
-	    	if (!processedIds.contains(instanceNum)) {
-                return false;
-            }
-	    }
-
-	    return true;
-	}
 
 	public void notifyWorkerIsFree(PluginMessageHandlerWorker worker) {
 	    synchronized (initWorkers) {
@@ -225,14 +190,6 @@ class PluginMessageConsumer {
 
 	                String[] msgParts = message.split(" ");
 
-	                // if it is no okay to process just yet, push it back and 
-	                if (!okayToProcess(msgParts)) {
-	                    synchronized(readQueue) {
-	                        readQueue.addLast(message);
-	                    }
-	                    
-	                    continue; // re-loop to try next msg
-	                }
 
 	                String priorityStr = getPriorityStrIfPriority(message);
 	                boolean isPriorityResponse = (priorityStr != null);

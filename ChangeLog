@@ -1,3 +1,44 @@
+2010-09-15  Deepak Bhole <dbhole@redhat.com>
+
+	PR556: Re-implement applet initialization to be serialialized, to fix 
+	current and	future possible race conditions.
+	* plugin/icedteanp/IcedTeaJavaRequestProcessor.h: Updated timeout to 3
+	minutes.
+	* plugin/icedteanp/IcedTeaNPPlugin.cc
+	(ITNP_New): Remove the tag_message string, don't send any data to Java
+	side and instead, populate the new ITNPPluginData.applet_tag field with
+	the tag info. Do cleanup accordingly.
+	(ITNP_SetWindow): Send all (handle, size and tag) initialization 
+	information to java in a single message. Cleanup accordingly for newly
+	added variables.
+	* plugin/icedteanp/IcedTeaPluginUtils.cc
+	(getReference): Use a negative decreasing reference count to prevent
+	clashes with references for Java-side requests.
+	* plugin/icedteanp/IcedTeaNPPlugin.h: Rename the instance_string field of
+	ITNPPluginData to instance_id, and add an applet_tag field.
+	* plugin/icedteanp/java/sun/applet/PluginAppletViewer.java
+	(PluginAppletPanelFactory.createPanel): Remove code that tried to account
+	for percent heights and widths. This is done by the browser now.
+	(reFrame): Same.
+	(PluginAppletViewer): Update constructor to not take height and width
+	factor information.
+	(handleMessage): Update function for new protocol that now passes all
+	information relevant to initialization in a single message.
+	(skipSpace): Accept a new int array that contains the character at the
+	current position in the stream. Use the value accordingly.
+	(scanIdentifier): Same.
+	(skipComment): Same.
+	(scanTag): Same.
+	(parse): Updated all function signatures to accept width and height info.
+	Initialize an int array (for fake pass-by-reference) that contains
+	position of current character in the stream. Inject width and height
+	information into the atts table.
+	* plugin/icedteanp/java/sun/applet/PluginMessageConsumer.java: Updated
+	thread count needed for initialization.
+	(okayToProcess): Remove function that is no longer needed with the
+	serialized initialization code.
+	(ConsumerThread.run): Remove call to okayToProcess().
+
 2010-09-13  Omair Majid  <omajid@redhat.com>
 
 	Add a new man page for netx's javaws.
