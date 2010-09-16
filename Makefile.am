@@ -295,7 +295,9 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-too-many-args.patch \
 	patches/icedtea-jtreg-OpenGLContextInit.patch \
 	patches/openjdk/6969395-net_bugs.patch \
-	patches/openjdk/6510892-httpserver_test.patch
+	patches/openjdk/6510892-httpserver_test.patch \
+	patches/openjdk/6638712-wildcard_types.patch \
+	patches/openjdk/6650759-missing_inference.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
