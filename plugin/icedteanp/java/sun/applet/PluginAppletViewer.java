@@ -529,7 +529,7 @@ import com.sun.jndi.toolkit.url.UrlUtil;
                      UrlUtil.decode(message.substring("tag".length() + 1, spaceLocation));
             	 String tag = message.substring(spaceLocation+1); 
 
-            	 System.err.println("Handle = " + handle + "\n" +
+            	 PluginDebug.debug ("Handle = " + handle + "\n" +
             	                    "Width = " + width + "\n" +
             	                    "Height = " + height + "\n" +
             	                    "DocumentBase = " + documentBase + "\n" +
