@@ -1,6 +1,15 @@
-diff -Nru openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/code/Type.java openjdk/langtools/src/share/classes/com/sun/tools/javac/code/Type.java
---- openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/code/Type.java	2010-06-21 22:16:20.000000000 +0100
-+++ openjdk/langtools/src/share/classes/com/sun/tools/javac/code/Type.java	2010-09-09 19:54:58.054019539 +0100
+# HG changeset patch
+# User mcimadamore
+# Date 1284137253 -3600
+# Node ID c5fe15e03287286fa8e668798409c4d7493ee834
+# Parent  27f03394a69d018c1c2badadee65ea39c7274606
+6638712: Inference with wildcard types causes selection of inapplicable method
+Summary: Added global sanity check in order to make sure that return type inference does not violate bounds constraints
+Reviewed-by: jjg
+
+diff -r 27f03394a69d -r c5fe15e03287 src/share/classes/com/sun/tools/javac/code/Type.java
+--- openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/code/Type.java	Wed Jun 23 16:44:15 2010 -0700
++++ openjdk/langtools/src/share/classes/com/sun/tools/javac/code/Type.java	Fri Sep 10 17:47:33 2010 +0100
 @@ -1061,6 +1061,21 @@
              return qtype.isErroneous();
          }
@@ -23,9 +32,9 @@ diff -Nru openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/code/Type
          public Type map(Mapping f) {
              return f.apply(qtype);
          }
-diff -Nru openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/code/Types.java openjdk/langtools/src/share/classes/com/sun/tools/javac/code/Types.java
---- openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/code/Types.java	2010-06-21 22:16:20.000000000 +0100
-+++ openjdk/langtools/src/share/classes/com/sun/tools/javac/code/Types.java	2010-09-09 19:54:58.054019539 +0100
+diff -r 27f03394a69d -r c5fe15e03287 src/share/classes/com/sun/tools/javac/code/Types.java
+--- openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/code/Types.java	Wed Jun 23 16:44:15 2010 -0700
++++ openjdk/langtools/src/share/classes/com/sun/tools/javac/code/Types.java	Fri Sep 10 17:47:33 2010 +0100
 @@ -331,6 +331,14 @@
          if (s.tag >= firstPartialTag)
              return isSuperType(s, t);
@@ -56,9 +65,9 @@ diff -Nru openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/code/Type
      public Type capture(Type t) {
          if (t.tag != CLASS)
              return t;
-diff -Nru openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/comp/Check.java openjdk/langtools/src/share/classes/com/sun/tools/javac/comp/Check.java
---- openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/comp/Check.java	2010-06-21 22:16:20.000000000 +0100
-+++ openjdk/langtools/src/share/classes/com/sun/tools/javac/comp/Check.java	2010-09-09 19:54:58.054019539 +0100
+diff -r 27f03394a69d -r c5fe15e03287 src/share/classes/com/sun/tools/javac/comp/Check.java
+--- openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/comp/Check.java	Wed Jun 23 16:44:15 2010 -0700
++++ openjdk/langtools/src/share/classes/com/sun/tools/javac/comp/Check.java	Fri Sep 10 17:47:33 2010 +0100
 @@ -383,6 +383,10 @@
                                       JCDiagnostic.fragment("incompatible.types" + (d!=null ? ".1" : ""), d),
                                       t, pt);
@@ -70,9 +79,9 @@ diff -Nru openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/comp/Chec
              }
          }
      }
-diff -Nru openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/comp/Infer.java openjdk/langtools/src/share/classes/com/sun/tools/javac/comp/Infer.java
---- openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/comp/Infer.java	2010-06-21 22:16:20.000000000 +0100
-+++ openjdk/langtools/src/share/classes/com/sun/tools/javac/comp/Infer.java	2010-09-09 20:00:32.891268438 +0100
+diff -r 27f03394a69d -r c5fe15e03287 src/share/classes/com/sun/tools/javac/comp/Infer.java
+--- openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/comp/Infer.java	Wed Jun 23 16:44:15 2010 -0700
++++ openjdk/langtools/src/share/classes/com/sun/tools/javac/comp/Infer.java	Fri Sep 10 17:47:33 2010 +0100
 @@ -29,6 +29,7 @@
  import com.sun.tools.javac.util.List;
  import com.sun.tools.javac.code.*;
@@ -108,11 +117,13 @@ diff -Nru openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/comp/Infe
 +        InferenceException() {
              this.diagnostic = null;
 -            this.isAmbiguous = isAmbiguous;
--        }
+         }
 -        NoInstanceException setMessage(String key) {
 -            this.diagnostic = JCDiagnostic.fragment(key);
--            return this;
--        }
++        InferenceException setMessage(String key, Object... args) {
++            this.diagnostic = JCDiagnostic.fragment(key, args);
+             return this;
+         }
 -        NoInstanceException setMessage(String key, Object arg1) {
 -            this.diagnostic = JCDiagnostic.fragment(key, arg1);
 -            return this;
@@ -120,13 +131,11 @@ diff -Nru openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/comp/Infe
 -        NoInstanceException setMessage(String key, Object arg1, Object arg2) {
 -            this.diagnostic = JCDiagnostic.fragment(key, arg1, arg2);
 -            return this;
-         }
+-        }
 -        NoInstanceException setMessage(String key, Object arg1, Object arg2, Object arg3) {
 -            this.diagnostic = JCDiagnostic.fragment(key, arg1, arg2, arg3);
-+        InferenceException setMessage(String key, Object... args) {
-+            this.diagnostic = JCDiagnostic.fragment(key, args);
-             return this;
-         }
+-            return this;
+-        }
 +
          public JCDiagnostic getDiagnostic() {
              return diagnostic;
@@ -300,7 +309,10 @@ diff -Nru openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/comp/Infe
 +                   return super.inst(inferred, types);
 +            }};
 +            return mt2;
-+        }
+         }
+-
+-        // return instantiated version of method type
+-        return types.subst(mt, tvars, insttypes.toList());
 +        else if (!rs.argumentsAcceptable(capturedArgs, mt.getParameterTypes(), allowBoxing, useVarargs, warn)) {
 +            // inferred method is not applicable
 +            throw invalidInstanceException.setMessage("inferred.do.not.conform.to.params", mt.getParameterTypes(), argtypes);
@@ -308,10 +320,7 @@ diff -Nru openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/comp/Infe
 +        else {
 +            // return instantiated version of method type
 +            return mt;
-         }
--
--        // return instantiated version of method type
--        return types.subst(mt, tvars, insttypes.toList());
++        }
      }
      //where
  
@@ -344,9 +353,9 @@ diff -Nru openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/comp/Infe
          }
      }
  }
-diff -Nru openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/comp/Resolve.java openjdk/langtools/src/share/classes/com/sun/tools/javac/comp/Resolve.java
---- openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/comp/Resolve.java	2010-06-21 22:16:20.000000000 +0100
-+++ openjdk/langtools/src/share/classes/com/sun/tools/javac/comp/Resolve.java	2010-09-09 19:54:58.058019555 +0100
+diff -r 27f03394a69d -r c5fe15e03287 src/share/classes/com/sun/tools/javac/comp/Resolve.java
+--- openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/comp/Resolve.java	Wed Jun 23 16:44:15 2010 -0700
++++ openjdk/langtools/src/share/classes/com/sun/tools/javac/comp/Resolve.java	Fri Sep 10 17:47:33 2010 +0100
 @@ -279,7 +279,7 @@
                          boolean allowBoxing,
                          boolean useVarargs,
@@ -374,9 +383,9 @@ diff -Nru openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/comp/Reso
              switch (bestSoFar.kind) {
              case ABSENT_MTH:
                  return wrongMethod.setWrongSym(sym, ex.getDiagnostic());
-diff -Nru openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/resources/compiler.properties openjdk/langtools/src/share/classes/com/sun/tools/javac/resources/compiler.properties
---- openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/resources/compiler.properties	2010-06-21 22:16:21.000000000 +0100
-+++ openjdk/langtools/src/share/classes/com/sun/tools/javac/resources/compiler.properties	2010-09-09 19:54:58.058019555 +0100
+diff -r 27f03394a69d -r c5fe15e03287 src/share/classes/com/sun/tools/javac/resources/compiler.properties
+--- openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/resources/compiler.properties	Wed Jun 23 16:44:15 2010 -0700
++++ openjdk/langtools/src/share/classes/com/sun/tools/javac/resources/compiler.properties	Fri Sep 10 17:47:33 2010 +0100
 @@ -454,6 +454,8 @@
      type parameters of {0} cannot be determined
  compiler.err.undetermined.type.1=\
@@ -401,9 +410,9 @@ diff -Nru openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/resources
  
  #####
  
-diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6302954/T6476073.java openjdk/langtools/test/tools/javac/generics/inference/6302954/T6476073.java
---- openjdk.orig/langtools/test/tools/javac/generics/inference/6302954/T6476073.java	2010-06-21 22:16:25.000000000 +0100
-+++ openjdk/langtools/test/tools/javac/generics/inference/6302954/T6476073.java	2010-09-09 19:54:58.058019555 +0100
+diff -r 27f03394a69d -r c5fe15e03287 test/tools/javac/generics/inference/6302954/T6476073.java
+--- openjdk.orig/langtools/test/tools/javac/generics/inference/6302954/T6476073.java	Wed Jun 23 16:44:15 2010 -0700
++++ openjdk/langtools/test/tools/javac/generics/inference/6302954/T6476073.java	Fri Sep 10 17:47:33 2010 +0100
 @@ -25,6 +25,7 @@
   * @test
   * @bug     6476073
@@ -412,35 +421,12 @@ diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6302954/T64
   * @compile T6476073.java
   */
  
-diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T6638712a.java openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712a.java
---- openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T6638712a.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712a.java	2010-09-09 19:54:58.062019572 +0100
-@@ -0,0 +1,41 @@
+diff -r 27f03394a69d -r c5fe15e03287 test/tools/javac/generics/inference/6638712/T6638712a.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712a.java	Fri Sep 10 17:47:33 2010 +0100
+@@ -0,0 +1,18 @@
 +/*
-+ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
-+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
-+ *
-+ * This code is free software; you can redistribute it and/or modify it
-+ * under the terms of the GNU General Public License version 2 only, as
-+ * published by the Free Software Foundation.
-+ *
-+ * This code is distributed in the hope that it will be useful, but WITHOUT
-+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-+ * version 2 for more details (a copy is included in the LICENSE file that
-+ * accompanied this code).
-+ *
-+ * You should have received a copy of the GNU General Public License version
-+ * 2 along with this work; if not, write to the Free Software Foundation,
-+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
-+ *
-+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-+ * CA 95054 USA or visit www.sun.com if you need additional information or
-+ * have any questions.
-+ */
-+
-+/*
-+ * @test
++ * @test /nodynamiccopyright/
 + * @bug     6638712
 + * @author  mcimadamore
 + * @summary Inference with wildcard types causes selection of inapplicable method
@@ -457,41 +443,18 @@ diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T66
 +        Comparator<String> c3 = compound(x);
 +    }
 +}
-diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T6638712a.out openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712a.out
---- openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T6638712a.out	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712a.out	2010-09-09 19:54:58.062019572 +0100
+diff -r 27f03394a69d -r c5fe15e03287 test/tools/javac/generics/inference/6638712/T6638712a.out
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712a.out	Fri Sep 10 17:47:33 2010 +0100
 @@ -0,0 +1,2 @@
-+T6638712a.java:39:41: compiler.err.invalid.inferred.types: T, (compiler.misc.inferred.do.not.conform.to.params: java.lang.Iterable<? extends java.util.Comparator<? super java.lang.String>>, java.util.List<java.util.Comparator<?>>)
++T6638712a.java:39:41: compiler.err.invalid.inferred.types: T, (- compiler.misc.inferred.do.not.conform.to.params: java.lang.Iterable<? extends java.util.Comparator<? super java.lang.String>>, java.util.List<java.util.Comparator<?>>)
 +1 error
-diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T6638712b.java openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712b.java
---- openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T6638712b.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712b.java	2010-09-09 19:54:58.066019583 +0100
-@@ -0,0 +1,39 @@
+diff -r 27f03394a69d -r c5fe15e03287 test/tools/javac/generics/inference/6638712/T6638712b.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712b.java	Fri Sep 10 17:47:33 2010 +0100
+@@ -0,0 +1,16 @@
 +/*
-+ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
-+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
-+ *
-+ * This code is free software; you can redistribute it and/or modify it
-+ * under the terms of the GNU General Public License version 2 only, as
-+ * published by the Free Software Foundation.
-+ *
-+ * This code is distributed in the hope that it will be useful, but WITHOUT
-+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-+ * version 2 for more details (a copy is included in the LICENSE file that
-+ * accompanied this code).
-+ *
-+ * You should have received a copy of the GNU General Public License version
-+ * 2 along with this work; if not, write to the Free Software Foundation,
-+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
-+ *
-+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-+ * CA 95054 USA or visit www.sun.com if you need additional information or
-+ * have any questions.
-+ */
-+
-+/*
-+ * @test
++ * @test /nodynamiccopyright/
 + * @bug     6638712
 + * @author  mcimadamore
 + * @summary Inference with wildcard types causes selection of inapplicable method
@@ -506,41 +469,18 @@ diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T66
 +        String i = m(x);
 +    }
 +}
-diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T6638712b.out openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712b.out
---- openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T6638712b.out	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712b.out	2010-09-09 19:54:58.066019583 +0100
+diff -r 27f03394a69d -r c5fe15e03287 test/tools/javac/generics/inference/6638712/T6638712b.out
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712b.out	Fri Sep 10 17:47:33 2010 +0100
 @@ -0,0 +1,2 @@
-+T6638712b.java:37:21: compiler.err.invalid.inferred.types: T, (compiler.misc.inferred.do.not.conform.to.bounds: T6638712b<java.lang.Integer>, T6638712b<java.lang.String>)
++T6638712b.java:37:21: compiler.err.prob.found.req: (- compiler.misc.incompatible.types.1: (- compiler.misc.no.conforming.instance.exists: T, T, java.lang.String)), <T>T, java.lang.String
 +1 error
-diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T6638712c.java openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712c.java
---- openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T6638712c.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712c.java	2010-09-09 19:54:58.066019583 +0100
-@@ -0,0 +1,41 @@
+diff -r 27f03394a69d -r c5fe15e03287 test/tools/javac/generics/inference/6638712/T6638712c.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712c.java	Fri Sep 10 17:47:33 2010 +0100
+@@ -0,0 +1,18 @@
 +/*
-+ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
-+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
-+ *
-+ * This code is free software; you can redistribute it and/or modify it
-+ * under the terms of the GNU General Public License version 2 only, as
-+ * published by the Free Software Foundation.
-+ *
-+ * This code is distributed in the hope that it will be useful, but WITHOUT
-+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-+ * version 2 for more details (a copy is included in the LICENSE file that
-+ * accompanied this code).
-+ *
-+ * You should have received a copy of the GNU General Public License version
-+ * 2 along with this work; if not, write to the Free Software Foundation,
-+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
-+ *
-+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-+ * CA 95054 USA or visit www.sun.com if you need additional information or
-+ * have any questions.
-+ */
-+
-+/*
-+ * @test
++ * @test /nodynamiccopyright/
 + * @bug     6638712 6707034
 + * @author  mcimadamore
 + * @summary Inference with wildcard types causes selection of inapplicable method
@@ -557,41 +497,18 @@ diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T66
 +        sort(e, comp);
 +    }
 +}
-diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T6638712c.out openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712c.out
---- openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T6638712c.out	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712c.out	2010-09-09 19:54:58.066019583 +0100
+diff -r 27f03394a69d -r c5fe15e03287 test/tools/javac/generics/inference/6638712/T6638712c.out
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712c.out	Fri Sep 10 17:47:33 2010 +0100
 @@ -0,0 +1,2 @@
-+T6638712c.java:39:9: compiler.err.cant.apply.symbol: kindname.method, sort, T[],java.util.Comparator<? super T>, java.lang.Enum[],java.util.Comparator<java.lang.Enum<?>>, kindname.class, T6638712c, null
++T6638712c.java:39:9: compiler.err.cant.apply.symbol: <T>sort(T[],java.util.Comparator<? super T>), T6638712c, , java.lang.Enum[],java.util.Comparator<java.lang.Enum<?>>, null
 +1 error
-diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T6638712d.java openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712d.java
---- openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T6638712d.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712d.java	2010-09-09 19:54:58.066019583 +0100
-@@ -0,0 +1,41 @@
+diff -r 27f03394a69d -r c5fe15e03287 test/tools/javac/generics/inference/6638712/T6638712d.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712d.java	Fri Sep 10 17:47:33 2010 +0100
+@@ -0,0 +1,18 @@
 +/*
-+ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
-+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
-+ *
-+ * This code is free software; you can redistribute it and/or modify it
-+ * under the terms of the GNU General Public License version 2 only, as
-+ * published by the Free Software Foundation.
-+ *
-+ * This code is distributed in the hope that it will be useful, but WITHOUT
-+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-+ * version 2 for more details (a copy is included in the LICENSE file that
-+ * accompanied this code).
-+ *
-+ * You should have received a copy of the GNU General Public License version
-+ * 2 along with this work; if not, write to the Free Software Foundation,
-+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
-+ *
-+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-+ * CA 95054 USA or visit www.sun.com if you need additional information or
-+ * have any questions.
-+ */
-+
-+/*
-+ * @test
++ * @test /nodynamiccopyright/
 + * @bug     6638712 6730468
 + * @author  mcimadamore
 + * @summary Inference with wildcard types causes selection of inapplicable method
@@ -608,41 +525,18 @@ diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T66
 +        m(1, lls);
 +    }
 +}
-diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T6638712d.out openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712d.out
---- openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T6638712d.out	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712d.out	2010-09-09 19:54:58.066019583 +0100
+diff -r 27f03394a69d -r c5fe15e03287 test/tools/javac/generics/inference/6638712/T6638712d.out
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712d.out	Fri Sep 10 17:47:33 2010 +0100
 @@ -0,0 +1,2 @@
-+T6638712d.java:39:9: compiler.err.cant.apply.symbol: kindname.method, m, U,java.util.List<java.util.List<U>>, int,java.util.List<java.util.List<java.lang.String>>, kindname.class, T6638712d, null
++T6638712d.java:39:9: compiler.err.cant.apply.symbol: <U>m(U,java.util.List<java.util.List<U>>), T6638712d, , int,java.util.List<java.util.List<java.lang.String>>, null
 +1 error
-diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T6638712e.java openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712e.java
---- openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T6638712e.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712e.java	2010-09-09 19:54:58.066019583 +0100
-@@ -0,0 +1,43 @@
+diff -r 27f03394a69d -r c5fe15e03287 test/tools/javac/generics/inference/6638712/T6638712e.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712e.java	Fri Sep 10 17:47:33 2010 +0100
+@@ -0,0 +1,20 @@
 +/*
-+ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
-+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
-+ *
-+ * This code is free software; you can redistribute it and/or modify it
-+ * under the terms of the GNU General Public License version 2 only, as
-+ * published by the Free Software Foundation.
-+ *
-+ * This code is distributed in the hope that it will be useful, but WITHOUT
-+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-+ * version 2 for more details (a copy is included in the LICENSE file that
-+ * accompanied this code).
-+ *
-+ * You should have received a copy of the GNU General Public License version
-+ * 2 along with this work; if not, write to the Free Software Foundation,
-+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
-+ *
-+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-+ * CA 95054 USA or visit www.sun.com if you need additional information or
-+ * have any questions.
-+ */
-+
-+/*
-+ * @test
++ * @test /nodynamiccopyright/
 + * @bug     6638712 6795689
 + * @author  mcimadamore
 + * @summary Inference with wildcard types causes selection of inapplicable method
@@ -661,9 +555,9 @@ diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T66
 +        }
 +    }
 +}
-diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T6638712e.out openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712e.out
---- openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T6638712e.out	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712e.out	2010-09-09 19:54:58.066019583 +0100
+diff -r 27f03394a69d -r c5fe15e03287 test/tools/javac/generics/inference/6638712/T6638712e.out
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712e.out	Fri Sep 10 17:47:33 2010 +0100
 @@ -0,0 +1,2 @@
-+T6638712e.java:40:27: compiler.err.invalid.inferred.types: X, (compiler.misc.inferred.do.not.conform.to.params: T6638712e.Foo<? super java.lang.Object,? extends java.lang.Boolean>, T6638712e.Foo<java.lang.Boolean,java.lang.Boolean>)
++T6638712e.java:40:27: compiler.err.prob.found.req: (- compiler.misc.incompatible.types.1: (- compiler.misc.no.conforming.instance.exists: X, T6638712e.Foo<X,java.lang.String>, T6638712e.Foo<java.lang.Object,java.lang.String>)), <X>T6638712e.Foo<X,java.lang.String>, T6638712e.Foo<java.lang.Object,java.lang.String>
 +1 error

@@ -181,20 +181,6 @@ diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6302954/T64
   * @compile T6476073.java
   */
  
-diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T6638712b.out openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712b.out
---- openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T6638712b.out	2010-09-09 20:03:34.000000000 +0100
-+++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712b.out	2010-09-09 20:26:25.205075284 +0100
-@@ -1,2 +1,2 @@
--T6638712b.java:37:21: compiler.err.invalid.inferred.types: T, (compiler.misc.inferred.do.not.conform.to.bounds: T6638712b<java.lang.Integer>, T6638712b<java.lang.String>)
-++T6638712b.java:37:21: compiler.err.prob.found.req: (compiler.misc.incompatible.types.1: (compiler.misc.no.conforming.instance.exists: T, T, java.lang.String)), <T>T, java.lang.String
- 1 error
-diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T6638712e.out openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712e.out
---- openjdk.orig/langtools/test/tools/javac/generics/inference/6638712/T6638712e.out	2010-09-09 20:03:34.000000000 +0100
-+++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712e.out	2010-09-09 20:27:14.405257916 +0100
-@@ -1,2 +1,2 @@
--T6638712e.java:40:27: compiler.err.invalid.inferred.types: X, (compiler.misc.inferred.do.not.conform.to.params: T6638712e.Foo<? super java.lang.Object,? extends java.lang.Boolean>, T6638712e.Foo<java.lang.Boolean,java.lang.Boolean>)
-+T6638712e.java:40:27: compiler.err.prob.found.req: (compiler.misc.incompatible.types.1: (compiler.misc.no.conforming.instance.exists: X, T6638712e.Foo<X,java.lang.String>, T6638712e.Foo<java.lang.Object,java.lang.String>)), <X>T6638712e.Foo<X,java.lang.String>, T6638712e.Foo<java.lang.Object,java.lang.String>
- 1 error
 diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759a.java openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759a.java
 --- openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759a.java	1970-01-01 01:00:00.000000000 +0100
 +++ openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759a.java	2010-09-09 20:24:56.248744934 +0100
