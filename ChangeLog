@@ -1,3 +1,11 @@
+2010-09-17  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Add new patch.
+	* patches/numa_on_early_glibc.patch,
+	Fallback to making a syscall if sched_getcpu
+	exists but the glibc used is too old to support it.
+
 2010-09-17  Omair Majid  <omajid@redhat.com>
 
 	* Makefile.am: Only create man pages for javaws if ENABLE_DOCS is set
