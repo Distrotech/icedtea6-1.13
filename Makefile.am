@@ -1424,10 +1424,16 @@ stamps/add-netx.stamp: stamps/netx-dist.stamp extra-lib/about.jar
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib
 	cp $(NETX_RESOURCE_DIR)/about.jnlp extra-lib/about.jar \
 	  $(BUILD_OUTPUT_DIR)/j2re-image/lib
-	cp $(NETX_SRCDIR)/javaws.1 \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/man/man1
-	cp $(NETX_SRCDIR)/javaws.1 \
-	  $(BUILD_OUTPUT_DIR)/j2re-image/man/man1
+if ENABLE_DOCS
+	if test -d $(BUILD_OUTPUT_DIR)/j2sdk-image/man/man1; then \
+	  cp $(NETX_SRCDIR)/javaws.1 \
+	    $(BUILD_OUTPUT_DIR)/j2sdk-image/man/man1; \
+	fi
+	if test -d $(BUILD_OUTPUT_DIR)/j2re-image/man/man1; then \
+	  cp $(NETX_SRCDIR)/javaws.1 \
+	    $(BUILD_OUTPUT_DIR)/j2re-image/man/man1; \
+	fi
+endif
 	touch stamps/add-netx.stamp
 
 clean-add-netx:
@@ -1437,8 +1443,14 @@ clean-add-netx:
 	rm -f $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/about.jar
 	rm -f $(BUILD_OUTPUT_DIR)/j2re-image/lib/about.jnlp
 	rm -f $(BUILD_OUTPUT_DIR)/j2re-image/lib/about.jar
-	rm -f $(BUILD_OUTPUT_DIR)/j2sdk-image/man/man1/javaws.1
-	rm -f $(BUILD_OUTPUT_DIR)/j2re-image/man/man1/javaws.1
+if ENABLE_DOCS
+	if test -d $(BUILD_OUTPUT_DIR)/j2sdk-image/man/man1; then \
+	  rm -f $(BUILD_OUTPUT_DIR)/j2sdk-image/man/man1/javaws.1; \
+	fi
+	if test -d $(BUILD_OUTPUT_DIR)/j2re-image/man/man1; then \
+	  rm -f $(BUILD_OUTPUT_DIR)/j2re-image/man/man1/javaws.1; \
+	fi
+endif
 	rm -f stamps/add-netx.stamp
 
 stamps/add-netx-debug.stamp: stamps/netx-dist.stamp extra-lib/about.jar
@@ -1450,10 +1462,16 @@ stamps/add-netx-debug.stamp: stamps/netx-dist.stamp extra-lib/about.jar
 	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib
 	cp $(NETX_RESOURCE_DIR)/about.jnlp extra-lib/about.jar \
 	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib
-	cp $(NETX_SRCDIR)/javaws.1 \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/man/man1
-	cp $(NETX_SRCDIR)/javaws.1 \
-	  $(BUILD_OUTPUT_DIR)/j2re-image/man/man1
+if ENABLE_DOCS
+	if test -d $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/man/man1; then \
+	  cp $(NETX_SRCDIR)/javaws.1 \
+	    $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/man/man1; \
+	fi
+	if test -d $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/man/man1; then \
+	  cp $(NETX_SRCDIR)/javaws.1 \
+	    $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/man/man1; \
+	fi
+endif
 	touch stamps/add-netx-debug.stamp
 
 clean-add-netx-debug:
@@ -1463,8 +1481,14 @@ clean-add-netx-debug:
 	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/about.jar
 	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/about.jnlp
 	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/about.jar
-	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/man/man1/javaws.1
-	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/man/man1/javaws.1
+if ENABLE_DOCS
+	if test -d $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/man/man1; then \
+	  rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/man/man1/javaws.1; \
+	fi
+	if test -d $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/man/man1; then \
+	  rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/man/man1/javaws.1; \
+	fi
+endif
 	rm -f stamps/add-netx-debug.stamp
 
 # OpenJDK ecj Targets
