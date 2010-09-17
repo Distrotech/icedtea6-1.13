@@ -1,3 +1,11 @@
+2010-09-17  Deepak Bhole <dbhole@redhat.com>
+
+	PR557: Applet opens in a separate window if tab is closed when the applet
+	loads
+	* plugin/icedteanp/IcedTeaNPPlugin.cc 
+	(ITNP_Destroy): Send a destroy message to let Java side know that the
+	applet needs to be destroyed.
+
 2010-09-17  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:

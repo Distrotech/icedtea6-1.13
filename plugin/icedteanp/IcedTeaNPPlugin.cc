@@ -634,13 +634,20 @@ ITNP_Destroy (NPP instance, NPSavedData** save)
 
   ITNPPluginData* data = (ITNPPluginData*) instance->pdata;
 
+  int id = get_id_from_instance(instance);
+
+  // Let Java know that this applet needs to be destroyed
+  gchar* msg = (gchar*) g_malloc(512*sizeof(gchar)); // 512 is more than enough. We need < 100
+  g_sprintf(msg, "instance %d destroy", id);
+  plugin_send_message_to_appletviewer(msg);
+  g_free(msg);
+  msg = NULL;
+
   if (data)
     {
       // Free plugin data.
       plugin_data_destroy (instance);
     }
-
-  int id = get_id_from_instance(instance);
 
   g_hash_table_remove(instance_to_id_map, instance);
   g_hash_table_remove(id_to_instance_map, GINT_TO_POINTER(id));
