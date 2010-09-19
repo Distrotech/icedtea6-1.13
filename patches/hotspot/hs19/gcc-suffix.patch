@@ -1,0 +1,31 @@
+diff -Nru openjdk.orig/hotspot/agent/src/os/linux/Makefile openjdk/hotspot/agent/src/os/linux/Makefile
+--- openjdk.orig/hotspot/agent/src/os/linux/Makefile	2010-09-01 01:23:45.000000000 +0100
++++ openjdk/hotspot/agent/src/os/linux/Makefile	2010-09-19 14:09:17.907131214 +0100
+@@ -23,7 +23,7 @@
+ #
+ 
+ ARCH := $(shell if ([ `uname -m` = "ia64" ])  ; then echo ia64 ; elif ([ `uname -m` = "x86_64" ]) ; then echo amd64; elif ([ `uname -m` = "sparc64" ]) ; then echo sparc; else echo i386 ; fi )
+-GCC      = gcc
++GCC      = gcc$(GCC_SUFFIX)
+ 
+ JAVAH    = ${JAVA_HOME}/bin/javah
+ 
+diff -Nru openjdk.orig/hotspot/make/linux/makefiles/gcc.make openjdk/hotspot/make/linux/makefiles/gcc.make
+--- openjdk.orig/hotspot/make/linux/makefiles/gcc.make	2010-09-19 14:07:15.000000000 +0100
++++ openjdk/hotspot/make/linux/makefiles/gcc.make	2010-09-19 14:09:58.015272246 +0100
+@@ -26,11 +26,11 @@
+ # CC, CPP & AS
+ 
+ ifdef ALT_COMPILER_PATH
+-CPP = $(ALT_COMPILER_PATH)/g++
+-CC  = $(ALT_COMPILER_PATH)/gcc
++CPP = $(ALT_COMPILER_PATH)/g++$(GCC_SUFFIX)
++CC  = $(ALT_COMPILER_PATH)/gcc$(GCC_SUFFIX)
+ else
+-CPP = g++
+-CC  = gcc
++CPP = g++$(GCC_SUFFIX)
++CC  = gcc$(GCC_SUFFIX)
+ endif
+ 
+ AS  = $(CC) -c

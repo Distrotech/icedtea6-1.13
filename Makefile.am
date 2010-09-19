@@ -198,7 +198,6 @@ REWRITER_SRCS = $(abs_top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.jav
 ICEDTEA_FSG_PATCHES =
 
 ICEDTEA_PATCHES = \
-	patches/shark_do_nothing_on_stub_frame.patch \
 	patches/icedtea-notice-safepoints.patch \
 	patches/icedtea-parisc-opt.patch \
 	patches/icedtea-lucene-crash.patch \
@@ -212,7 +211,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-headers.patch \
 	patches/icedtea-headers-hotspot.patch \
 	patches/icedtea-gcc-suffix.patch \
-	patches/icedtea-gcc-suffix-hotspot.patch \
+	patches/hotspot/$(HSBUILD)/gcc-suffix.patch \
 	patches/icedtea-bytebuffer-compact.patch \
 	patches/memory-limits.patch \
 	patches/icedtea-sunsrc.patch \
@@ -221,22 +220,19 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-jvmtiEnv.patch \
 	patches/icedtea-lcms.patch \
 	patches/icedtea-timerqueue.patch \
-	patches/icedtea-print-lsb-release.patch \
+	patches/hotspot/$(HSBUILD)/print_lsb_release.patch \
 	patches/icedtea-jpegclasses.patch \
 	patches/icedtea-uname.patch \
 	patches/icedtea-freetypeversion.patch \
-	patches/icedtea-shark-build.patch \
-	patches/icedtea-shark-build-hotspot.patch \
 	patches/icedtea-nomotif-6706121.patch \
 	patches/icedtea-nomotif.patch \
 	patches/icedtea-nomotif-mtoolkit.patch \
-	patches/icedtea-alpha-fixes.patch \
+	patches/hotspot/$(HSBUILD)/alpha-fixes.patch \
 	patches/icedtea-alt-jar.patch \
 	patches/icedtea-jdk-use-ssize_t.patch \
 	patches/icedtea-use-idx_t.patch \
-	patches/params-cast-size_t.patch \
+	patches/hotspot/$(HSBUILD)/params-cast-size_t.patch \
 	patches/icedtea-clean-crypto.patch \
-	patches/icedtea-shark.patch \
 	patches/icedtea-arch.patch \
 	patches/icedtea-lc_ctype.patch \
 	patches/icedtea-xjc.patch \
@@ -264,18 +260,15 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-explicit-target-arch.patch \
 	patches/icedtea-gcc-stack-markings.patch \
 	patches/icedtea-no-precompiled.patch \
-	patches/icedtea-linux-separate-debuginfo.patch \
 	patches/icedtea-parisc.patch \
 	patches/icedtea-sh4-support.patch \
 	patches/icedtea-policy-evaluation.patch \
-	patches/update-bootclasspath.patch \
+	patches/hotspot/$(HSBUILD)/update-bootclasspath.patch \
 	patches/libpng.patch \
-	patches/shark.patch \
 	patches/extensions/netx.patch \
 	patches/extensions/netx-umask.patch \
 	patches/icedtea-jtreg-httpTest.patch \
 	patches/arm.patch \
-	patches/shark-debug-option.patch \
 	patches/openjdk/6678385-window_movement_crasher.patch \
 	patches/openjdk/6961732-negative_leading.patch \
 	patches/debug-dir.patch \
@@ -291,7 +284,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/4356282-opentype.patch \
 	patches/openjdk/6954424-opentype_javadoc.patch \
 	patches/openjdk/6438179-systray_check.patch \
-	patches/openjdk/6951319-sparc_build_fixes.patch \
 	patches/icedtea-too-many-args.patch \
 	patches/icedtea-jtreg-OpenGLContextInit.patch \
 	patches/openjdk/6969395-net_bugs.patch \
@@ -299,6 +291,18 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6638712-wildcard_types.patch \
 	patches/openjdk/6650759-missing_inference.patch \
 	patches/numa_on_early_glibc.patch
+
+if !WITH_ALT_HSBUILD
+ICEDTEA_PATCHES += \
+	patches/shark_do_nothing_on_stub_frame.patch \
+	patches/icedtea-shark-build.patch \
+	patches/icedtea-shark-build-hotspot.patch \
+	patches/shark.patch \
+	patches/shark-debug-option.patch \
+	patches/icedtea-shark.patch \
+	patches/icedtea-linux-separate-debuginfo.patch \
+	patches/openjdk/6951319-sparc_build_fixes.patch
+endif
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \

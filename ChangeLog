@@ -1,3 +1,29 @@
+2010-09-19  Andrew John Hughes  <ahughes@redhat.com>
+
+	Support HotSpot 19.
+	* patches/icedtea-alpha-fixes.patch,
+	* patches/icedtea-gcc-suffix-hotspot.patch,
+	* patches/icedtea-print-lsb-release.patch,
+	* patches/params-cast-size_t.patch,
+	* patches/update-bootclasspath.patch:
+	Split into original and hs19 versions.
+	* Makefile.am: Apply some patches only when
+	hs17 is built.  Apply different variants of
+	above patches depending on HotSpot build used.
+	* hotspot.map: Add hs19.
+	* patches/hotspot/hs19/alpha-fixes.patch,
+	* patches/hotspot/hs19/gcc-suffix.patch,
+	* patches/hotspot/hs19/params-cast-size_t.patch,
+	* patches/hotspot/hs19/print_lsb_release.patch,
+	* patches/hotspot/hs19/update-bootclasspath.patch:
+	HotSpot 19 variants of patches moved above.
+	* patches/hotspot/original/alpha-fixes.patch,
+	* patches/hotspot/original/gcc-suffix.patch,
+	* patches/hotspot/original/params-cast-size_t.patch,
+	* patches/hotspot/original/print_lsb_release.patch,
+	* patches/hotspot/original/update-bootclasspath.patch:
+	HotSpot 17 patches moved from patches above.
+
 2010-09-17  Deepak Bhole <dbhole@redhat.com>
 
 	PR557: Applet opens in a separate window if tab is closed when the applet
