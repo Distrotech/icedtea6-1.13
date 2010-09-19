@@ -1508,8 +1508,7 @@ endif
 hotspot:
 if BOOTSTRAPPING
 	rm -f stamps/icedtea-ecj.stamp
-	rm -f stamps/icedtea-against-ecj.stamp
-	$(ARCH_PREFIX) $(MAKE) ICEDTEA_BUILD_TARGET=hotspot icedtea-against-ecj
+	$(ARCH_PREFIX) $(MAKE) ICEDTEA_BUILD_TARGET=hotspot icedtea-ecj
 	mkdir -p \
 	   $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/server
 	cp $(ECJ_BUILD_OUTPUT_DIR)/$(SERVER_DIR)/libjvm.so \
@@ -1517,8 +1516,7 @@ if BOOTSTRAPPING
 	@echo "Hotspot is served:" $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image
 else
 	rm -f stamps/icedtea.stamp
-	rm -f stamps/icedtea-against-icedtea.stamp
-	$(ARCH_PREFIX) $(MAKE) ICEDTEA_BUILD_TARGET=hotspot icedtea-against-icedtea
+	$(ARCH_PREFIX) $(MAKE) ICEDTEA_BUILD_TARGET=hotspot icedtea
 	mkdir -p \
 	   $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/server
 	cp $(BUILD_OUTPUT_DIR)/$(SERVER_DIR)/libjvm.so \

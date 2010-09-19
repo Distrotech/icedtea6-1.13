@@ -1,6 +1,14 @@
 2010-09-19  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:
+	(hotspot): Only remake the main icedtea
+	and icedtea-ecj targets (i.e. the OpenJDK
+	build) and not the additional targets from
+	icedtea-against-icedtea and icedtea-against-ecj.
+
+2010-09-19  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
 	Revert 2713dbdb914e changes to javaws.1
 	installation.
 
