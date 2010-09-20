@@ -290,12 +290,12 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6510892-httpserver_test.patch \
 	patches/openjdk/6638712-wildcard_types.patch \
 	patches/openjdk/6650759-missing_inference.patch \
-	patches/numa_on_early_glibc.patch
+	patches/numa_on_early_glibc.patch \
+	patches/icedtea-shark-build.patch
 
 if !WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
 	patches/shark_do_nothing_on_stub_frame.patch \
-	patches/icedtea-shark-build.patch \
 	patches/icedtea-shark-build-hotspot.patch \
 	patches/shark.patch \
 	patches/shark-debug-option.patch \
