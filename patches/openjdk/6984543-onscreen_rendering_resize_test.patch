@@ -1,0 +1,30 @@
+# HG changeset patch
+# User ptisnovs
+# Date 1284636320 -7200
+# Node ID 441e86ab3233112c3564210c7a669c295628a679
+# Parent  a248eb631aa22ab6f3a3487a679814940117dadc
+6984543: Test sun/java2d/DirectX/OnScreenRenderingResizeTest fails on GNOME
+Summary: Testcase correction.
+Reviewed-by: art
+
+diff -r a248eb631aa2 -r 441e86ab3233 test/sun/java2d/DirectX/OnScreenRenderingResizeTest/OnScreenRenderingResizeTest.java
+--- openjdk/jdk/test/sun/java2d/DirectX/OnScreenRenderingResizeTest/OnScreenRenderingResizeTest-old.java	2010-09-17 14:01:17.000000000 +0200
++++ openjdk/jdk/test/sun/java2d/DirectX/OnScreenRenderingResizeTest/OnScreenRenderingResizeTest.java	2010-09-17 13:20:00.000000000 +0200
+@@ -157,7 +157,7 @@
+             if (cnt == 90 && robot != null) {
+                 // area where we blitted to should be either white or green
+                 Point p = frame.getLocationOnScreen();
+-                p.move(in.left+10, in.top+10);
++                p.translate(in.left+10, in.top+10);
+                 BufferedImage bi =
+                     robot.createScreenCapture(
+                         new Rectangle(p.x, p.y, IMAGE_W/2, IMAGE_H/2));
+@@ -166,7 +166,7 @@
+ 
+                 // the are where we didn't render should stay white
+                 p = frame.getLocationOnScreen();
+-                p.move(in.left, in.top+IMAGE_H+5);
++                p.translate(in.left, in.top+IMAGE_H+5);
+                 bi = robot.createScreenCapture(
+                     new Rectangle(p.x, p.y,
+                                   frame.getWidth()-in.left-in.right,
