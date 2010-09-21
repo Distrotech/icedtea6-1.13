@@ -291,7 +291,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6638712-wildcard_types.patch \
 	patches/openjdk/6650759-missing_inference.patch \
 	patches/numa_on_early_glibc.patch \
-	patches/icedtea-shark-build.patch
+	patches/icedtea-shark-build.patch \
+	patches/openjdk/6985992-test_6933784.patch
 
 if !WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
