@@ -555,7 +555,7 @@ clean-local: clean-jtreg clean-jtreg-reports $(PULSE_JAVA_CLEAN_TARGET) \
  clean-icedtea-against-ecj clean-extract-ecj clean-generated clean-replace-hotspot \
  clean-rewriter clean-rewrite-rhino clean-extra clean-rt clean-bootstrap-directory \
  clean-bootstrap-directory-ecj clean-bootstrap-directory-symlink \
- clean-bootstrap-directory-symlink-ecj
+ clean-bootstrap-directory-symlink-ecj clean-add-systemtap clean-add-systemtap-debug
 	if [ -e bootstrap ]; then \
 	  rmdir bootstrap ; \
 	fi
@@ -588,7 +588,7 @@ install:
 	clean-ports clean-overlay clean-extract-ecj clean-extract clean-extract-openjdk \
 	clean-replace-hotspot clean-generated clean-download clean-hgforest clean-download-openjdk \
 	clean-rewriter clean-rewrite-rhino clean-add-netx clean-add-netx-debug \
-	clean-add-plugin clean-add-plugin-debug
+	clean-add-plugin clean-add-plugin-debug clean-add-systemtap clean-add-systemtap-debug
 
 env:
 	@echo 'unset JAVA_HOME'
@@ -1277,25 +1277,6 @@ endif
 if WITH_CACAO
 	printf -- '-cacao ALIASED_TO -server\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
 endif
-if ENABLE_SYSTEMTAP
-	mkdir -p $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset ; \
-	grep "client IGNORE" $(BUILD_JRE_ARCH_DIR)/jvm.cfg; \
-	if test $$? -eq 0; then \
-	  sed -e '/\/client\/libjvm.so/d' \
-	    < $(abs_top_builddir)/tapset/hotspot.stp \
-	    > $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
-	  sed -e '/\/client\/libjvm.so/d' \
-	    < $(abs_top_builddir)/tapset/hotspot_jni.stp \
-	    > $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_jni.stp; \
-	else \
-	  cp $(abs_top_builddir)/tapset/hotspot.stp \
-	    $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
-	  cp $(abs_top_builddir)/tapset/hotspot_jni.stp \
-	    $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_jni.stp; \
-	fi; \
-	cp $(abs_top_builddir)/tapset/jstack.stp \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/jstack.stp
-endif
 	cp $(abs_top_builddir)/nss.cfg \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security;
 if WITH_TZDATA_DIR
@@ -1341,25 +1322,6 @@ endif
 if WITH_CACAO
 	printf -- '-cacao ALIASED_TO -server\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
 endif
-if ENABLE_SYSTEMTAP
-	mkdir -p $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset ; \
-	grep "client IGNORE" $(BUILD_JRE_ARCH_DIR)/jvm.cfg; \
-	if test $$? -eq 0; then \
-	  sed -e '/\/client\/libjvm.so/d' \
-	    < $(abs_top_builddir)/tapset/hotspot.stp \
-	    > $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
-	  sed -e '/\/client\/libjvm.so/d' \
-	    < $(abs_top_builddir)/tapset/hotspot_jni.stp \
-	    > $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_jni.stp; \
-	else \
-	  cp $(abs_top_builddir)/tapset/hotspot.stp \
-	    $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
-	  cp $(abs_top_builddir)/tapset/hotspot_jni.stp \
-	    $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_jni.stp; \
-	fi; \
-	cp $(abs_top_builddir)/tapset/jstack.stp \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/jstack.stp
-endif
 	cp $(abs_top_builddir)/nss.cfg \
 	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security;
 if WITH_TZDATA_DIR
@@ -1377,7 +1339,7 @@ clean-icedtea-debug:
 
 stamps/icedtea-against-icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
  stamps/icedtea.stamp stamps/add-cacao.stamp stamps/add-zero.stamp stamps/add-plugin.stamp \
- stamps/add-netx.stamp
+ stamps/add-netx.stamp stamps/add-systemtap.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-against-icedtea.stamp
 
@@ -1386,7 +1348,7 @@ clean-icedtea-against-icedtea: clean-add-zero clean-add-cacao clean-add-plugin c
 
 stamps/icedtea-debug-against-icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
  stamps/icedtea-debug.stamp stamps/add-cacao-debug.stamp stamps/add-zero-debug.stamp \
- stamps/add-plugin-debug.stamp stamps/add-netx-debug.stamp
+ stamps/add-plugin-debug.stamp stamps/add-netx-debug.stamp stamps/add-systemtap-debug.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-debug-against-icedtea.stamp
 
@@ -1394,7 +1356,7 @@ clean-icedtea-debug-against-icedtea: clean-add-zero-debug clean-add-cacao-debug 
  clean-add-netx-debug
 	rm -f stamps/icedtea-debug-against-icedtea.stamp
 
-stamps/add-plugin.stamp: stamps/plugin.stamp
+stamps/add-plugin.stamp: stamps/plugin.stamp stamps/icedtea.stamp
 if ENABLE_PLUGIN
 	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
@@ -1414,7 +1376,7 @@ clean-add-plugin:
 	rm -f $(BUILD_OUTPUT_DIR)/j2re-image/lib/plugin.jar
 	rm -f stamps/add-plugin.stamp
 
-stamps/add-plugin-debug.stamp: stamps/plugin.stamp
+stamps/add-plugin-debug.stamp: stamps/plugin.stamp stamps/icedtea-debug.stamp
 if ENABLE_PLUGIN
 	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
 	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
@@ -1434,7 +1396,7 @@ clean-add-plugin-debug:
 	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/plugin.jar
 	rm -f stamps/add-plugin-debug.stamp
 
-stamps/add-netx.stamp: stamps/netx-dist.stamp extra-lib/about.jar
+stamps/add-netx.stamp: stamps/netx-dist.stamp extra-lib/about.jar stamps/icedtea.stamp
 	cp -pPRf $(abs_top_builddir)/netx.build/lib/classes.jar \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/netx.jar
 	cp -pPRf $(abs_top_builddir)/netx.build/lib/classes.jar \
@@ -1460,7 +1422,7 @@ clean-add-netx:
 	rm -f $(BUILD_OUTPUT_DIR)/j2re-image/man/man1/javaws.1
 	rm -f stamps/add-netx.stamp
 
-stamps/add-netx-debug.stamp: stamps/netx-dist.stamp extra-lib/about.jar
+stamps/add-netx-debug.stamp: stamps/netx-dist.stamp extra-lib/about.jar stamps/icedtea-debug.stamp
 	cp -pPRf $(abs_top_builddir)/netx.build/lib/classes.jar \
 	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/netx.jar
 	cp -pPRf $(abs_top_builddir)/netx.build/lib/classes.jar \
@@ -1485,6 +1447,58 @@ clean-add-netx-debug:
 	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/man/man1/javaws.1
 	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/man/man1/javaws.1
 	rm -f stamps/add-netx-debug.stamp
+
+stamps/add-systemtap.stamp: stamps/icedtea.stamp
+if ENABLE_SYSTEMTAP
+	mkdir -p $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset
+	grep "client IGNORE" $(BUILD_JRE_ARCH_DIR)/jvm.cfg; \
+	if test $$? -eq 0; then \
+	  sed -e '/\/client\/libjvm.so/d' \
+	    < $(abs_top_builddir)/tapset/hotspot.stp \
+	    > $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
+	  sed -e '/\/client\/libjvm.so/d' \
+	    < $(abs_top_builddir)/tapset/hotspot_jni.stp \
+	    > $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_jni.stp; \
+	else \
+	  cp $(abs_top_builddir)/tapset/hotspot.stp \
+	    $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
+	  cp $(abs_top_builddir)/tapset/hotspot_jni.stp \
+	    $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_jni.stp; \
+	fi
+	cp $(abs_top_builddir)/tapset/jstack.stp \
+	  $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/jstack.stp
+endif
+	touch stamps/add-systemtap.stamp
+
+clean-add-systemtap:
+	rm -rf $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset
+	rm -f stamps/add-systemtap.stamp
+
+stamps/add-systemtap-debug.stamp: stamps/icedtea.stamp
+if ENABLE_SYSTEMTAP
+	mkdir -p $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset
+	grep "client IGNORE" $(BUILD_JRE_ARCH_DIR)/jvm.cfg; \
+	if test $$? -eq 0; then \
+	  sed -e '/\/client\/libjvm.so/d' \
+	    < $(abs_top_builddir)/tapset/hotspot.stp \
+	    > $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
+	  sed -e '/\/client\/libjvm.so/d' \
+	    < $(abs_top_builddir)/tapset/hotspot_jni.stp \
+	    > $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_jni.stp; \
+	else \
+	  cp $(abs_top_builddir)/tapset/hotspot.stp \
+	    $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
+	  cp $(abs_top_builddir)/tapset/hotspot_jni.stp \
+	    $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_jni.stp; \
+	fi
+	cp $(abs_top_builddir)/tapset/jstack.stp \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/jstack.stp
+endif
+	touch stamps/add-systemtap-debug.stamp
+
+clean-add-systemtap-debug:
+	rm -rf $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset
+	rm -f stamps/add-systemtap-debug.stamp
 
 # OpenJDK ecj Targets
 # ===================

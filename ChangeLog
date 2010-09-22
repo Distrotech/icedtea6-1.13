@@ -1,5 +1,24 @@
 2010-09-22  Andrew John Hughes  <ahughes@redhat.com>
 
+	Move SystemTap support to a separate target.
+	* Makefile.am:
+	(.PHONY): Add clean-add-systemtap and
+	clean-add-systemtap-debug.
+	(icedtea): Remove systemtap support.
+	(icedtea-debug): Likewise.
+	(icedtea-against-icedtea): Depend on add-systemtap.
+	(icedtea-debug-against-icedtea): Depend on add-systemtap-debug.
+	(add-plugin): Depend on icedtea.stamp.
+	(add-plugin-debug): Depend on icedtea-debug.stamp.
+	(add-netx): Depend on icedtea.stamp.
+	(add-netx-debug): Depend on icedtea-debug.stamp.
+	(add-systemtap): New target to add SystemTap support to the build.
+	(add-systemtap-debug): Likewise for debug.
+	(clean-add-systemtap): Remove SystemTap support from the build.
+	(clean-add-systemtap-debug): Likewise for debug.
+
+2010-09-22  Andrew John Hughes  <ahughes@redhat.com>
+
 	* ports/hotspot/make/linux/makefiles/shark.make,
 	* ports/hotspot/src/cpu/zero/vm/asm_helper.cpp,
 	* ports/hotspot/src/cpu/zero/vm/bytecodes_arm.def,
