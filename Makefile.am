@@ -524,7 +524,7 @@ ICEDTEA_ENV_ECJ = $(ICEDTEA_ENV) \
 
 EXTRA_DIST = generated $(NETX_SRCDIR) \
 	$(abs_top_srcdir)/patches/* \
-	contrib ports \
+	contrib shark arm_port \
 	extra overlays \
 	javaws.png javaws.desktop \
 	jconsole.desktop policytool.desktop \
@@ -881,11 +881,11 @@ clean-replace-hotspot:
 
 # Copy ports sources into tree
 stamps/ports.stamp: stamps/replace-hotspot.stamp
-	for target in $(abs_top_srcdir)/ports/hotspot/make/*/makefiles/* \
-		      $(abs_top_srcdir)/ports/hotspot/tools \
-		      $(abs_top_srcdir)/ports/hotspot/src/*cpu/* \
-		      $(abs_top_srcdir)/ports/hotspot/src/share/vm/*; do \
-	  link=$$(dirname $$target | sed 's/^.*ports/openjdk/'); \
+if !WITH_ALT_HSBUILD
+	for target in $(abs_top_srcdir)/shark/hotspot/make/*/makefiles/* \
+		      $(abs_top_srcdir)/shark/hotspot/src/*cpu/* \
+		      $(abs_top_srcdir)/shark/hotspot/src/share/vm/*; do \
+	  link=$$(dirname $$target | sed 's/^.*shark/openjdk/'); \
 	  cp -rv $$target $$link; \
 	done
 	if ! test "x$(WITH_CACAO)" = "xno" ; then \
@@ -897,19 +897,31 @@ stamps/ports.stamp: stamps/replace-hotspot.stamp
 	  ln -sf $(abs_top_builddir)/ergo.c \
 	    openjdk/jdk/src/solaris/bin/ergo_$(BUILD_ARCH_DIR).c; \
 	fi
+endif
+	for target in $(abs_top_srcdir)/arm_port/hotspot/tools \
+		      $(abs_top_srcdir)/arm_port/hotspot/src/*cpu/* ; do \
+	  link=$$(dirname $$target | sed 's/^.*arm_port/openjdk/'); \
+	  cp -rv $$target $$link; \
+	done
 	mkdir -p stamps
 	touch stamps/ports.stamp
 
 clean-ports:
-	for target in $(abs_top_srcdir)/ports/hotspot/make/*/makefiles/* \
-		      $(abs_top_srcdir)/ports/hotspot/tools \
-		      $(abs_top_srcdir)/ports/hotspot/src/*cpu/* \
-		      $(abs_top_srcdir)/ports/hotspot/src/share/vm/*; do \
-	  link=$$(echo $$target | sed 's/^.*ports/openjdk/'); \
+if !WITH_ALT_HSBUILD
+	for target in $(abs_top_srcdir)/shark/hotspot/make/*/makefiles/* \
+		      $(abs_top_srcdir)/shark/hotspot/src/*cpu/* \
+		      $(abs_top_srcdir)/shark/hotspot/src/share/vm/*; do \
+	  link=$$(dirname $$target | sed 's/^.*shark/openjdk/'); \
 	  rm -rf $$link; \
 	done
 	rm -f openjdk/jdk/src/solaris/bin/$(BUILD_ARCH_DIR)/jvm.cfg
 	rm -f openjdk/jdk/src/solaris/bin/ergo_$(BUILD_ARCH_DIR).c 
+endif
+	for target in $(abs_top_srcdir)/arm_port/hotspot/tools \
+		      $(abs_top_srcdir)/arm_port/hotspot/src/*cpu/* ; do \
+	  link=$$(dirname $$target | sed 's/^.*arm_port/openjdk/'); \
+	  rm -rf $$link; \
+	done
 	rm -f stamps/ports.stamp
 
 stamps/generated.stamp: stamps/ports.stamp
