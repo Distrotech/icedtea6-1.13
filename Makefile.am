@@ -247,7 +247,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-sparc-ptracefix.patch \
 	patches/icedtea-sparc-trapsfix.patch \
 	patches/icedtea-demo-swingapplet.patch \
-	patches/icedtea-awt-window-size.patch \
+	patches/openjdk/6721088-awt_window_size.patch \
 	patches/icedtea-jtreg-6592792.patch \
 	patches/icedtea-s390-noinline.patch \
 	patches/icedtea-jtreg-dnd.patch \
