@@ -555,7 +555,8 @@ clean-local: clean-jtreg clean-jtreg-reports $(PULSE_JAVA_CLEAN_TARGET) \
  clean-icedtea-against-ecj clean-extract-ecj clean-generated clean-replace-hotspot \
  clean-rewriter clean-rewrite-rhino clean-extra clean-rt clean-bootstrap-directory \
  clean-bootstrap-directory-ecj clean-bootstrap-directory-symlink \
- clean-bootstrap-directory-symlink-ecj clean-add-systemtap clean-add-systemtap-debug
+ clean-bootstrap-directory-symlink-ecj clean-add-systemtap clean-add-systemtap-debug \
+ clean-add-pulseaudio clean-add-pulseaudio-debug
 	if [ -e bootstrap ]; then \
 	  rmdir bootstrap ; \
 	fi
@@ -588,8 +589,8 @@ install:
 	clean-ports clean-overlay clean-extract-ecj clean-extract clean-extract-openjdk \
 	clean-replace-hotspot clean-generated clean-download clean-hgforest clean-download-openjdk \
 	clean-rewriter clean-rewrite-rhino clean-add-netx clean-add-netx-debug \
-	clean-add-plugin clean-add-plugin-debug clean-add-systemtap clean-add-systemtap-debug
-
+	clean-add-plugin clean-add-plugin-debug clean-add-systemtap clean-add-systemtap-debug \
+	clean-add-pulseaudio clean-add-pulseaudio-debug
 env:
 	@echo 'unset JAVA_HOME'
 	@echo 'export $(ICEDTEA_ENV)'
@@ -1247,7 +1248,7 @@ clean-bootstrap-directory-symlink:
 # If you change anything here in the icedtea target, please make sure
 # you change it in the icedtea-debug target as well.
 stamps/icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
- $(OPENJDK_TREE) stamps/cacao.stamp $(PULSE_JAVA_TARGET) stamps/rewrite-rhino.stamp
+ $(OPENJDK_TREE) stamps/cacao.stamp stamps/rewrite-rhino.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV) \
 	  -C openjdk \
@@ -1256,18 +1257,6 @@ stamps/icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
 	mkdir -p $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
 	mkdir -p $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/ext
 	mkdir -p $(BUILD_OUTPUT_DIR)/j2re-image/lib/ext
-if ENABLE_PULSE_JAVA
-	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
-	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
-	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
-	cp -pPRf $(PULSE_JAVA_BUILDDIR)/pulse-java.jar \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/ext
-	cp -pPRf $(PULSE_JAVA_BUILDDIR)/pulse-java.jar \
-	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/ext
-	(cd $(PULSE_JAVA_JAVA_SRCDIR) && \
-	   $(ZIP) -qur $(BUILD_OUTPUT_DIR)/j2sdk-image/src.zip org )
-endif
 if ZERO_BUILD
 	printf -- '-zero ALIASED_TO -server\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
 endif
@@ -1292,7 +1281,7 @@ clean-icedtea:
 	rm -f stamps/icedtea.stamp
 
 stamps/icedtea-debug.stamp: stamps/bootstrap-directory-symlink.stamp \
- $(OPENJDK_TREE) stamps/cacao.stamp $(PULSE_JAVA_TARGET) stamps/rewrite-rhino.stamp
+ $(OPENJDK_TREE) stamps/cacao.stamp stamps/rewrite-rhino.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV) \
 	  -C openjdk \
@@ -1301,18 +1290,6 @@ stamps/icedtea-debug.stamp: stamps/bootstrap-directory-symlink.stamp \
 	mkdir -p $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
 	mkdir -p $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/ext
 	mkdir -p $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/ext
-if ENABLE_PULSE_JAVA
-	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
-	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
-	cp -pPRf $(PULSE_JAVA_BUILDDIR)/pulse-java.jar \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/ext
-	cp -pPRf $(PULSE_JAVA_BUILDDIR)/pulse-java.jar \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/ext
-	(cd $(PULSE_JAVA_JAVA_SRCDIR) && \
-	   $(ZIP) -qur $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/src.zip org )
-endif
 if ZERO_BUILD
 	printf -- '-zero ALIASED_TO -server\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
 endif
@@ -1339,7 +1316,7 @@ clean-icedtea-debug:
 
 stamps/icedtea-against-icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
  stamps/icedtea.stamp stamps/add-cacao.stamp stamps/add-zero.stamp stamps/add-plugin.stamp \
- stamps/add-netx.stamp stamps/add-systemtap.stamp
+ stamps/add-netx.stamp stamps/add-systemtap.stamp stamps/add-pulseaudio.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-against-icedtea.stamp
 
@@ -1348,7 +1325,8 @@ clean-icedtea-against-icedtea: clean-add-zero clean-add-cacao clean-add-plugin c
 
 stamps/icedtea-debug-against-icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
  stamps/icedtea-debug.stamp stamps/add-cacao-debug.stamp stamps/add-zero-debug.stamp \
- stamps/add-plugin-debug.stamp stamps/add-netx-debug.stamp stamps/add-systemtap-debug.stamp
+ stamps/add-plugin-debug.stamp stamps/add-netx-debug.stamp stamps/add-systemtap-debug.stamp \
+ stamps/add-pulseaudio-debug.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-debug-against-icedtea.stamp
 
@@ -1474,7 +1452,7 @@ clean-add-systemtap:
 	rm -rf $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset
 	rm -f stamps/add-systemtap.stamp
 
-stamps/add-systemtap-debug.stamp: stamps/icedtea.stamp
+stamps/add-systemtap-debug.stamp: stamps/icedtea-debug.stamp
 if ENABLE_SYSTEMTAP
 	mkdir -p $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset
 	grep "client IGNORE" $(BUILD_JRE_ARCH_DIR)/jvm.cfg; \
@@ -1499,6 +1477,52 @@ endif
 clean-add-systemtap-debug:
 	rm -rf $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset
 	rm -f stamps/add-systemtap-debug.stamp
+
+stamps/add-pulseaudio.stamp: stamps/icedtea.stamp $(PULSE_JAVA_TARGET)
+if ENABLE_PULSE_JAVA
+	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
+	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
+	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
+	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
+	cp -pPRf $(PULSE_JAVA_BUILDDIR)/pulse-java.jar \
+	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/ext
+	cp -pPRf $(PULSE_JAVA_BUILDDIR)/pulse-java.jar \
+	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/ext
+	(cd $(PULSE_JAVA_JAVA_SRCDIR) && \
+	   $(ZIP) -qur $(BUILD_OUTPUT_DIR)/j2sdk-image/src.zip org )
+endif
+	touch stamps/add-pulseaudio.stamp
+
+# Note: for simplicity, we don't revert the update of src.zip
+clean-add-pulseaudio:
+	rm -f $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/libpulse-java.so
+	rm -f $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)/libpulse-java.so
+	rm -f $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/ext/pulse-java.jar
+	rm -f $(BUILD_OUTPUT_DIR)/j2re-image/lib/ext/pulse-java.jar
+	rm -f stamps/add-pulseaudio.stamp
+
+stamps/add-pulseaudio-debug.stamp: stamps/icedtea-debug.stamp $(PULSE_JAVA_TARGET)
+if ENABLE_PULSE_JAVA
+	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
+	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
+	cp -pPRf $(PULSE_JAVA_BUILDDIR)/pulse-java.jar \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/ext
+	cp -pPRf $(PULSE_JAVA_BUILDDIR)/pulse-java.jar \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/ext
+	(cd $(PULSE_JAVA_JAVA_SRCDIR) && \
+	   $(ZIP) -qur $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/src.zip org )
+endif
+	touch stamps/add-pulseaudio-debug.stamp
+
+# Note: for simplicity, we don't revert the update of src.zip
+clean-add-pulseaudio-debug:
+	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/libpulse-java.so
+	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)/libpulse-java.so
+	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/ext/pulse-java.jar
+	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/ext/pulse-java.jar
+	rm -f stamps/add-pulseaudio-debug.stamp
 
 # OpenJDK ecj Targets
 # ===================

@@ -1,9 +1,26 @@
+2010-09-23  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(.PHONY): Add clean-add-pulseaudio and
+	clean-add-pulseaudio-debug.
+	(clean-local): Likewise.
+	(icedtea): Remove pulse-java support and dependency.
+	(icedtea-debug): Likewise.
+	(icedtea-against-icedtea): Depend on add-pulseaudio.
+	(icedtea-debug-against-icedtea): Depend on add-pulseaudio-debug.
+	(add-systemtap-debug): Dependency should be icedtea-debug.
+	(add-pulseaudio): New target to add PulseAudio support to the build.
+	(add-pulseaudio-debug): Likewise for debug.
+	(clean-add-pulseaudio): Remove PulseAudio support from the build.
+	(clean-add-pulseaudio-debug): Likewise for debug.
+
 2010-09-22  Andrew John Hughes  <ahughes@redhat.com>
 
 	Move SystemTap support to a separate target.
 	* Makefile.am:
 	(.PHONY): Add clean-add-systemtap and
 	clean-add-systemtap-debug.
+	(clean-local): Likewise.
 	(icedtea): Remove systemtap support.
 	(icedtea-debug): Likewise.
 	(icedtea-against-icedtea): Depend on add-systemtap.
