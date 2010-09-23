@@ -249,7 +249,7 @@ pthread_cond_t cond_message_available = PTHREAD_COND_INITIALIZER;
 
 // Creates a new icedtea np plugin instance.  This function creates a
 // ITNPPluginData* and stores it in instance->pdata.  The following
-// ITNPPluginData fiels are initialized: instance_string, in_pipe_name,
+// ITNPPluginData fiels are initialized: instance_id, in_pipe_name,
 // in_from_appletviewer, in_watch_source, out_pipe_name,
 // out_to_appletviewer, out_watch_source, appletviewer_mutex, owner,
 // appletviewer_alive.  In addition two pipe files are created.  All
@@ -284,7 +284,6 @@ ITNP_New (NPMIMEType pluginType, NPP instance, uint16_t mode,
   gchar* documentbase = NULL;
   gchar* read_message = NULL;
   gchar* applet_tag = NULL;
-  gchar* tag_message = NULL;
   gchar* cookie_info = NULL;
 
   NPObject* npPluginObj = NULL;
@@ -308,17 +307,17 @@ ITNP_New (NPMIMEType pluginType, NPP instance, uint16_t mode,
   // start the jvm if needed
   start_jvm_if_needed();
 
-  // Initialize data->instance_string.
+  // Initialize data->instance_id.
   //
-  // instance_string should be unique for this process so we use a
+  // instance_id should be unique for this process so we use a
   // combination of getpid and plugin_instance_counter.
   //
   // Critical region.  Reference and increment plugin_instance_counter
   // global.
   g_mutex_lock (plugin_instance_mutex);
 
-  // data->instance_string
-  data->instance_string = g_strdup_printf ("%d",
+  // data->instance_id
+  data->instance_id = g_strdup_printf ("%d",
                                            instance_counter);
 
   g_mutex_unlock (plugin_instance_mutex);
@@ -335,11 +334,8 @@ ITNP_New (NPMIMEType pluginType, NPP instance, uint16_t mode,
       // Send applet tag message to appletviewer.
       applet_tag = plugin_create_applet_tag (argc, argn, argv);
 
-      tag_message = (gchar*) malloc(strlen(applet_tag)*sizeof(gchar) + strlen(documentbase)*sizeof(gchar) + 32);
-      g_sprintf(tag_message, "instance %d tag %s %s", instance_counter, documentbase, applet_tag);
-
-      //plugin_send_message_to_appletviewer (data, data->instance_string);
-      plugin_send_message_to_appletviewer (tag_message);
+      data->applet_tag = (gchar*) malloc(strlen(applet_tag)*sizeof(gchar) + strlen(documentbase)*sizeof(gchar) + 32);
+      g_sprintf(data->applet_tag, "tag %s %s", documentbase, applet_tag);
 
       data->is_applet_instance = true;
     }
@@ -371,8 +367,12 @@ ITNP_New (NPMIMEType pluginType, NPP instance, uint16_t mode,
   data->appletviewer_mutex = NULL;
 
   // cleanup_instance_string:
-  g_free (data->instance_string);
-  data->instance_string = NULL;
+  g_free (data->instance_id);
+  data->instance_id = NULL;
+
+  // cleanup applet tag:
+  g_free (data->applet_tag);
+  data->applet_tag = NULL;
 
   // cleanup_data:
   // Eliminate back-pointer to plugin instance.
@@ -385,8 +385,6 @@ ITNP_New (NPMIMEType pluginType, NPP instance, uint16_t mode,
   instance->pdata = NULL;
 
  cleanup_done:
-  g_free (tag_message);
-  tag_message = NULL;
   g_free (applet_tag);
   applet_tag = NULL;
   g_free (read_message);
@@ -636,13 +634,20 @@ ITNP_Destroy (NPP instance, NPSavedData** save)
 
   ITNPPluginData* data = (ITNPPluginData*) instance->pdata;
 
+  int id = get_id_from_instance(instance);
+
+  // Let Java know that this applet needs to be destroyed
+  gchar* msg = (gchar*) g_malloc(512*sizeof(gchar)); // 512 is more than enough. We need < 100
+  g_sprintf(msg, "instance %d destroy", id);
+  plugin_send_message_to_appletviewer(msg);
+  g_free(msg);
+  msg = NULL;
+
   if (data)
     {
       // Free plugin data.
       plugin_data_destroy (instance);
     }
-
-  int id = get_id_from_instance(instance);
 
   g_hash_table_remove(instance_to_id_map, instance);
   g_hash_table_remove(id_to_instance_map, GINT_TO_POINTER(id));
@@ -750,28 +755,33 @@ ITNP_SetWindow (NPP instance, NPWindow* window)
     }
   else
     {
+	  // Else this is initialization
       PLUGIN_DEBUG ("ITNP_SetWindow: setting window.\n");
 
       // Critical region.  Send messages to appletviewer.
       g_mutex_lock (data->appletviewer_mutex);
 
-      gchar *window_message = g_strdup_printf ("instance %d handle %ld",
-                                               id, (gulong) window->window);
-      plugin_send_message_to_appletviewer (window_message);
-      g_free (window_message);
+      // Store the window handle and dimensions
+      data->window_handle = window->window;
+      data->window_width = window->width;
+      data->window_height = window->height;
 
-      window_message = g_strdup_printf ("instance %d width %d height %d",
-                        id,
-                        window->width,
-                        window->height);
-      plugin_send_message_to_appletviewer (window_message);
-      g_free (window_message);
-      window_message = NULL;
+      // Now we have everything. Send this data to the Java side
+
+      gchar* instance_msg =  g_strdup_printf ("instance %s handle %ld width %d height %d %s",
+											 data->instance_id,
+											 (gulong) data->window_handle,
+											 data->window_width,
+											 data->window_height,
+											 data->applet_tag);
+
+      plugin_send_message_to_appletviewer (instance_msg);
+
+      g_free(instance_msg);
+      instance_msg = NULL;
 
       g_mutex_unlock (data->appletviewer_mutex);
 
-      // Store the window handle.
-      data->window_handle = window->window;
     }
 
   PLUGIN_DEBUG ("ITNP_SetWindow return\n");
@@ -1921,8 +1931,12 @@ plugin_data_destroy (NPP instance)
   tofree->appletviewer_mutex = NULL;
 
   // cleanup_instance_string:
-  g_free (tofree->instance_string);
-  tofree->instance_string = NULL;
+  g_free (tofree->instance_id);
+  tofree->instance_id = NULL;
+
+  // cleanup applet tag
+  g_free (tofree->applet_tag);
+  tofree->applet_tag = NULL;
 
   g_free(tofree->source);
   tofree->source = NULL;

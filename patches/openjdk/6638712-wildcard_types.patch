@@ -1,0 +1,563 @@
+# HG changeset patch
+# User mcimadamore
+# Date 1284137253 -3600
+# Node ID c5fe15e03287286fa8e668798409c4d7493ee834
+# Parent  27f03394a69d018c1c2badadee65ea39c7274606
+6638712: Inference with wildcard types causes selection of inapplicable method
+Summary: Added global sanity check in order to make sure that return type inference does not violate bounds constraints
+Reviewed-by: jjg
+
+diff -r 27f03394a69d -r c5fe15e03287 src/share/classes/com/sun/tools/javac/code/Type.java
+--- openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/code/Type.java	Wed Jun 23 16:44:15 2010 -0700
++++ openjdk/langtools/src/share/classes/com/sun/tools/javac/code/Type.java	Fri Sep 10 17:47:33 2010 +0100
+@@ -1061,6 +1061,21 @@
+             return qtype.isErroneous();
+         }
+ 
++        /**
++         * Replaces this ForAll's typevars with a set of concrete Java types
++         * and returns the instantiated generic type. Subclasses might override
++         * in order to check that the list of types is a valid instantiation
++         * of the ForAll's typevars.
++         *
++         * @param actuals list of actual types
++         * @param types types instance
++         * @return qtype where all occurrences of tvars are replaced
++         * by types in actuals
++         */
++        public Type inst(List<Type> actuals, Types types) {
++            return types.subst(qtype, tvars, actuals);
++        }
++
+         public Type map(Mapping f) {
+             return f.apply(qtype);
+         }
+diff -r 27f03394a69d -r c5fe15e03287 src/share/classes/com/sun/tools/javac/code/Types.java
+--- openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/code/Types.java	Wed Jun 23 16:44:15 2010 -0700
++++ openjdk/langtools/src/share/classes/com/sun/tools/javac/code/Types.java	Fri Sep 10 17:47:33 2010 +0100
+@@ -331,6 +331,14 @@
+         if (s.tag >= firstPartialTag)
+             return isSuperType(s, t);
+ 
++        if (s.isCompound()) {
++            for (Type s2 : interfaces(s).prepend(supertype(s))) {
++                if (!isSubtype(t, s2, capture))
++                    return false;
++            }
++            return true;
++        }
++
+         Type lower = lowerBound(s);
+         if (s != lower)
+             return isSubtype(capture ? capture(t) : t, lower, false);
+@@ -2766,6 +2774,14 @@
+     /**
+      * Capture conversion as specified by JLS 3rd Ed.
+      */
++
++    public List<Type> capture(List<Type> ts) {
++        List<Type> buf = List.nil();
++        for (Type t : ts) {
++            buf = buf.prepend(capture(t));
++        }
++        return buf.reverse();
++    }
+     public Type capture(Type t) {
+         if (t.tag != CLASS)
+             return t;
+diff -r 27f03394a69d -r c5fe15e03287 src/share/classes/com/sun/tools/javac/comp/Check.java
+--- openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/comp/Check.java	Wed Jun 23 16:44:15 2010 -0700
++++ openjdk/langtools/src/share/classes/com/sun/tools/javac/comp/Check.java	Fri Sep 10 17:47:33 2010 +0100
+@@ -383,6 +383,10 @@
+                                      JCDiagnostic.fragment("incompatible.types" + (d!=null ? ".1" : ""), d),
+                                      t, pt);
+                 }
++            } catch (Infer.InvalidInstanceException ex) {
++                JCDiagnostic d = ex.getDiagnostic();
++                log.error(pos, "invalid.inferred.types", t.tvars, d);
++                return syms.errType;
+             }
+         }
+     }
+diff -r 27f03394a69d -r c5fe15e03287 src/share/classes/com/sun/tools/javac/comp/Infer.java
+--- openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/comp/Infer.java	Wed Jun 23 16:44:15 2010 -0700
++++ openjdk/langtools/src/share/classes/com/sun/tools/javac/comp/Infer.java	Fri Sep 10 17:47:33 2010 +0100
+@@ -29,6 +29,7 @@
+ import com.sun.tools.javac.util.List;
+ import com.sun.tools.javac.code.*;
+ import com.sun.tools.javac.code.Type.*;
++import com.sun.tools.javac.code.Symbol.*;
+ 
+ import static com.sun.tools.javac.code.Flags.*;
+ import static com.sun.tools.javac.code.Kinds.*;
+@@ -50,6 +51,7 @@
+ 
+     Symtab syms;
+     Types types;
++    Resolve rs;
+ 
+     public static Infer instance(Context context) {
+         Infer instance = context.get(inferKey);
+@@ -62,43 +64,51 @@
+         context.put(inferKey, this);
+         syms = Symtab.instance(context);
+         types = Types.instance(context);
++        rs = Resolve.instance(context);
+     }
+ 
+-    public static class NoInstanceException extends RuntimeException {
++    public static class InferenceException extends RuntimeException {
+         private static final long serialVersionUID = 0;
+ 
+-        boolean isAmbiguous; // exist several incomparable best instances?
+-
+         JCDiagnostic diagnostic;
+ 
+-        NoInstanceException(boolean isAmbiguous) {
++        InferenceException() {
+             this.diagnostic = null;
+-            this.isAmbiguous = isAmbiguous;
+         }
+-        NoInstanceException setMessage(String key) {
+-            this.diagnostic = JCDiagnostic.fragment(key);
++        InferenceException setMessage(String key, Object... args) {
++            this.diagnostic = JCDiagnostic.fragment(key, args);
+             return this;
+         }
+-        NoInstanceException setMessage(String key, Object arg1) {
+-            this.diagnostic = JCDiagnostic.fragment(key, arg1);
+-            return this;
+-        }
+-        NoInstanceException setMessage(String key, Object arg1, Object arg2) {
+-            this.diagnostic = JCDiagnostic.fragment(key, arg1, arg2);
+-            return this;
+-        }
+-        NoInstanceException setMessage(String key, Object arg1, Object arg2, Object arg3) {
+-            this.diagnostic = JCDiagnostic.fragment(key, arg1, arg2, arg3);
+-            return this;
+-        }
++
+         public JCDiagnostic getDiagnostic() {
+             return diagnostic;
+         }
+     }
++
++    public static class NoInstanceException extends InferenceException {
++        private static final long serialVersionUID = 1;
++
++        boolean isAmbiguous; // exist several incomparable best instances?
++
++        NoInstanceException(boolean isAmbiguous) {
++            super();
++            this.isAmbiguous = isAmbiguous;
++       }
++    }
++
++    public static class InvalidInstanceException extends InferenceException {
++        private static final long serialVersionUID = 2;
++
++        InvalidInstanceException() {
++            super();
++        }
++    }
++
+     private final NoInstanceException ambiguousNoInstanceException =
+         new NoInstanceException(true);
+     private final NoInstanceException unambiguousNoInstanceException =
+         new NoInstanceException(false);
++    private final InvalidInstanceException invalidInstanceException = new InvalidInstanceException();
+ 
+ /***************************************************************************
+  * Auxiliary type values and classes
+@@ -247,7 +257,7 @@
+      */
+     public Type instantiateExpr(ForAll that,
+                                 Type to,
+-                                Warner warn) throws NoInstanceException {
++                                Warner warn) throws InferenceException {
+         List<Type> undetvars = Type.map(that.tvars, fromTypeVarFun);
+         for (List<Type> l = undetvars; l.nonEmpty(); l = l.tail) {
+             UndetVar v = (UndetVar) l.head;
+@@ -273,8 +283,7 @@
+         List<Type> targs = Type.map(undetvars, getInstFun);
+         targs = types.subst(targs, that.tvars, targs);
+         checkWithinBounds(that.tvars, targs, warn);
+-
+-        return getInstFun.apply(qtype1);
++        return that.inst(targs, types);
+     }
+ 
+     /** Instantiate method type `mt' by finding instantiations of
+@@ -282,36 +291,42 @@
+      */
+     public Type instantiateMethod(List<Type> tvars,
+                                   MethodType mt,
+-                                  List<Type> argtypes,
+-                                  boolean allowBoxing,
+-                                  boolean useVarargs,
+-                                  Warner warn) throws NoInstanceException {
++                                  final List<Type> argtypes,
++                                  final boolean allowBoxing,
++                                  final boolean useVarargs,
++                                  final Warner warn) throws InferenceException {
+         //-System.err.println("instantiateMethod(" + tvars + ", " + mt + ", " + argtypes + ")"); //DEBUG
+         List<Type> undetvars = Type.map(tvars, fromTypeVarFun);
+         List<Type> formals = mt.argtypes;
+-
++        //need to capture exactly once - otherwise subsequent
++        //applicability checks might fail
++        final List<Type> capturedArgs = types.capture(argtypes);
++        List<Type> actuals = capturedArgs;
++        List<Type> actualsNoCapture = argtypes;
+         // instantiate all polymorphic argument types and
+         // set up lower bounds constraints for undetvars
+         Type varargsFormal = useVarargs ? formals.last() : null;
+-        while (argtypes.nonEmpty() && formals.head != varargsFormal) {
+-            Type ft = formals.head;
+-            Type at = argtypes.head.baseType();
+-            if (at.tag == FORALL)
+-                at = instantiateArg((ForAll) at, ft, tvars, warn);
+-            Type sft = types.subst(ft, tvars, undetvars);
++        while (actuals.nonEmpty() && formals.head != varargsFormal) {
++            Type formal = formals.head;
++            Type actual = actuals.head.baseType();
++            Type actualNoCapture = actualsNoCapture.head.baseType();
++            if (actual.tag == FORALL)
++                actual = instantiateArg((ForAll)actual, formal, tvars, warn);
++            Type undetFormal = types.subst(formal, tvars, undetvars);
+             boolean works = allowBoxing
+-                ? types.isConvertible(at, sft, warn)
+-                : types.isSubtypeUnchecked(at, sft, warn);
++                ? types.isConvertible(actual, undetFormal, warn)
++                : types.isSubtypeUnchecked(actual, undetFormal, warn);
+             if (!works) {
+                 throw unambiguousNoInstanceException
+                     .setMessage("no.conforming.assignment.exists",
+-                                tvars, at, ft);
++                                tvars, actualNoCapture, formal);
+             }
+             formals = formals.tail;
+-            argtypes = argtypes.tail;
++            actuals = actuals.tail;
++            actualsNoCapture = actualsNoCapture.tail;
+         }
+         if (formals.head != varargsFormal || // not enough args
+-            !useVarargs && argtypes.nonEmpty()) { // too many args
++            !useVarargs && actuals.nonEmpty()) { // too many args
+             // argument lists differ in length
+             throw unambiguousNoInstanceException
+                 .setMessage("arg.length.mismatch");
+@@ -319,20 +334,21 @@
+ 
+         // for varargs arguments as well
+         if (useVarargs) {
+-            Type elt = types.elemtype(varargsFormal);
+-            Type sft = types.subst(elt, tvars, undetvars);
+-            while (argtypes.nonEmpty()) {
+-                Type ft = sft;
+-                Type at = argtypes.head.baseType();
+-                if (at.tag == FORALL)
+-                    at = instantiateArg((ForAll) at, ft, tvars, warn);
+-                boolean works = types.isConvertible(at, sft, warn);
++            Type elemType = types.elemtype(varargsFormal);
++            Type elemUndet = types.subst(elemType, tvars, undetvars);
++            while (actuals.nonEmpty()) {
++                Type actual = actuals.head.baseType();
++                Type actualNoCapture = actualsNoCapture.head.baseType();
++                if (actual.tag == FORALL)
++                    actual = instantiateArg((ForAll)actual, elemType, tvars, warn);
++                boolean works = types.isConvertible(actual, elemUndet, warn);
+                 if (!works) {
+                     throw unambiguousNoInstanceException
+                         .setMessage("no.conforming.assignment.exists",
+-                                    tvars, at, ft);
++                                    tvars, actualNoCapture, elemType);
+                 }
+-                argtypes = argtypes.tail;
++                actuals = actuals.tail;
++                actualsNoCapture = actualsNoCapture.tail;
+             }
+         }
+ 
+@@ -363,16 +379,38 @@
+         }
+         checkWithinBounds(tvars, undettypes.toList(), warn);
+ 
++        mt = (MethodType)types.subst(mt, tvars, insttypes.toList());
++
+         if (!restvars.isEmpty()) {
+             // if there are uninstantiated variables,
+             // quantify result type with them
+-            mt = new MethodType(mt.argtypes,
+-                                new ForAll(restvars.toList(), mt.restype),
+-                                mt.thrown, syms.methodClass);
++            final List<Type> inferredTypes = insttypes.toList();
++            final List<Type> all_tvars = tvars; //this is the wrong tvars
++            final MethodType mt2 = new MethodType(mt.argtypes, null, mt.thrown, syms.methodClass);
++            mt2.restype = new ForAll(restvars.toList(), mt.restype) {
++                @Override
++                public Type inst(List<Type> inferred, Types types) throws NoInstanceException {
++                    List<Type> formals = types.subst(mt2.argtypes, tvars, inferred);
++                   if (!rs.argumentsAcceptable(capturedArgs, formals,
++                           allowBoxing, useVarargs, warn)) {
++                      // inferred method is not applicable
++                      throw invalidInstanceException.setMessage("inferred.do.not.conform.to.params", formals, argtypes);
++                   }
++                   // check that inferred bounds conform to their bounds
++                   checkWithinBounds(all_tvars,
++                           types.subst(inferredTypes, tvars, inferred), warn);
++                   return super.inst(inferred, types);
++            }};
++            return mt2;
+         }
+-
+-        // return instantiated version of method type
+-        return types.subst(mt, tvars, insttypes.toList());
++        else if (!rs.argumentsAcceptable(capturedArgs, mt.getParameterTypes(), allowBoxing, useVarargs, warn)) {
++            // inferred method is not applicable
++            throw invalidInstanceException.setMessage("inferred.do.not.conform.to.params", mt.getParameterTypes(), argtypes);
++        }
++        else {
++            // return instantiated version of method type
++            return mt;
++        }
+     }
+     //where
+ 
+@@ -384,7 +422,7 @@
+         private Type instantiateArg(ForAll that,
+                                     Type to,
+                                     List<Type> tvars,
+-                                    Warner warn) throws NoInstanceException {
++                                    Warner warn) throws InferenceException {
+             List<Type> targs;
+             try {
+                 return instantiateExpr(that, to, warn);
+@@ -401,16 +439,16 @@
+     private void checkWithinBounds(List<Type> tvars,
+                                    List<Type> arguments,
+                                    Warner warn)
+-        throws NoInstanceException {
++        throws InvalidInstanceException {
+         for (List<Type> tvs = tvars, args = arguments;
+              tvs.nonEmpty();
+              tvs = tvs.tail, args = args.tail) {
+             if (args.head instanceof UndetVar) continue;
+             List<Type> bounds = types.subst(types.getBounds((TypeVar)tvs.head), tvars, arguments);
+             if (!types.isSubtypeUnchecked(args.head, bounds, warn))
+-                throw unambiguousNoInstanceException
++                throw invalidInstanceException
+                     .setMessage("inferred.do.not.conform.to.bounds",
+-                                arguments, tvars);
++                                args.head, bounds);
+         }
+     }
+ }
+diff -r 27f03394a69d -r c5fe15e03287 src/share/classes/com/sun/tools/javac/comp/Resolve.java
+--- openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/comp/Resolve.java	Wed Jun 23 16:44:15 2010 -0700
++++ openjdk/langtools/src/share/classes/com/sun/tools/javac/comp/Resolve.java	Fri Sep 10 17:47:33 2010 +0100
+@@ -279,7 +279,7 @@
+                         boolean allowBoxing,
+                         boolean useVarargs,
+                         Warner warn)
+-        throws Infer.NoInstanceException {
++        throws Infer.InferenceException {
+         if (useVarargs && (m.flags() & VARARGS) == 0) return null;
+         Type mt = types.memberType(site, m);
+ 
+@@ -350,7 +350,7 @@
+         try {
+             return rawInstantiate(env, site, m, argtypes, typeargtypes,
+                                   allowBoxing, useVarargs, warn);
+-        } catch (Infer.NoInstanceException ex) {
++        } catch (Infer.InferenceException ex) {
+             return null;
+         }
+     }
+@@ -562,7 +562,7 @@
+                 default: return bestSoFar;
+                 }
+             }
+-        } catch (Infer.NoInstanceException ex) {
++        } catch (Infer.InferenceException ex) {
+             switch (bestSoFar.kind) {
+             case ABSENT_MTH:
+                 return wrongMethod.setWrongSym(sym, ex.getDiagnostic());
+diff -r 27f03394a69d -r c5fe15e03287 src/share/classes/com/sun/tools/javac/resources/compiler.properties
+--- openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/resources/compiler.properties	Wed Jun 23 16:44:15 2010 -0700
++++ openjdk/langtools/src/share/classes/com/sun/tools/javac/resources/compiler.properties	Fri Sep 10 17:47:33 2010 +0100
+@@ -454,6 +454,8 @@
+     type parameters of {0} cannot be determined
+ compiler.err.undetermined.type.1=\
+     type parameters of {0} cannot be determined; {1}
++compiler.err.invalid.inferred.types=\
++    invalid inferred types for {0}; {1}
+ compiler.err.unreachable.stmt=\
+     unreachable statement
+ compiler.err.initializer.must.be.able.to.complete.normally=\
+@@ -960,7 +962,13 @@
+ compiler.misc.arg.length.mismatch=\
+     cannot instantiate from arguments because actual and formal argument lists differ in length
+ compiler.misc.inferred.do.not.conform.to.bounds=\
+-    inferred type argument(s) {0} do not conform to bounds of type variable(s) {1}
++    inferred type does not conform to declared bound(s)\n\
++    inferred: {0}\n\
++    bound(s): {1}
++compiler.misc.inferred.do.not.conform.to.params=\
++    actual arguments do not conforms to inferred formal arguments\n\
++    required: {0}\n\
++    found: {1}
+ 
+ #####
+ 
+diff -r 27f03394a69d -r c5fe15e03287 test/tools/javac/generics/inference/6302954/T6476073.java
+--- openjdk.orig/langtools/test/tools/javac/generics/inference/6302954/T6476073.java	Wed Jun 23 16:44:15 2010 -0700
++++ openjdk/langtools/test/tools/javac/generics/inference/6302954/T6476073.java	Fri Sep 10 17:47:33 2010 +0100
+@@ -25,6 +25,7 @@
+  * @test
+  * @bug     6476073
+  * @summary Capture using super wildcard of type variables doesn't work
++ * @ignore awaiting for 6650759 (see bug report for a detailed evaluation)
+  * @compile T6476073.java
+  */
+ 
+diff -r 27f03394a69d -r c5fe15e03287 test/tools/javac/generics/inference/6638712/T6638712a.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712a.java	Fri Sep 10 17:47:33 2010 +0100
+@@ -0,0 +1,18 @@
++/*
++ * @test /nodynamiccopyright/
++ * @bug     6638712
++ * @author  mcimadamore
++ * @summary Inference with wildcard types causes selection of inapplicable method
++ * @compile/fail/ref=T6638712a.out -XDrawDiagnostics T6638712a.java
++ */
++
++import java.util.*;
++
++class T6638712a {
++
++    <T> Comparator<T> compound(Iterable<? extends Comparator<? super T>> it) {}
++
++    public void test(List<Comparator<?>> x) {
++        Comparator<String> c3 = compound(x);
++    }
++}
+diff -r 27f03394a69d -r c5fe15e03287 test/tools/javac/generics/inference/6638712/T6638712a.out
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712a.out	Fri Sep 10 17:47:33 2010 +0100
+@@ -0,0 +1,2 @@
++T6638712a.java:39:41: compiler.err.invalid.inferred.types: T, (- compiler.misc.inferred.do.not.conform.to.params: java.lang.Iterable<? extends java.util.Comparator<? super java.lang.String>>, java.util.List<java.util.Comparator<?>>)
++1 error
+diff -r 27f03394a69d -r c5fe15e03287 test/tools/javac/generics/inference/6638712/T6638712b.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712b.java	Fri Sep 10 17:47:33 2010 +0100
+@@ -0,0 +1,16 @@
++/*
++ * @test /nodynamiccopyright/
++ * @bug     6638712
++ * @author  mcimadamore
++ * @summary Inference with wildcard types causes selection of inapplicable method
++ * @compile/fail/ref=T6638712b.out -XDrawDiagnostics T6638712b.java
++ */
++
++class T6638712b<X> {
++
++    <I extends T6638712b<T>, T> T m(I test) { return null; }
++
++    void test(T6638712b<Integer> x) {
++        String i = m(x);
++    }
++}
+diff -r 27f03394a69d -r c5fe15e03287 test/tools/javac/generics/inference/6638712/T6638712b.out
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712b.out	Fri Sep 10 17:47:33 2010 +0100
+@@ -0,0 +1,2 @@
++T6638712b.java:37:21: compiler.err.prob.found.req: (- compiler.misc.incompatible.types.1: (- compiler.misc.no.conforming.instance.exists: T, T, java.lang.String)), <T>T, java.lang.String
++1 error
+diff -r 27f03394a69d -r c5fe15e03287 test/tools/javac/generics/inference/6638712/T6638712c.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712c.java	Fri Sep 10 17:47:33 2010 +0100
+@@ -0,0 +1,18 @@
++/*
++ * @test /nodynamiccopyright/
++ * @bug     6638712 6707034
++ * @author  mcimadamore
++ * @summary Inference with wildcard types causes selection of inapplicable method
++ * @compile/fail/ref=T6638712c.out -XDrawDiagnostics T6638712c.java
++ */
++
++import java.util.*;
++
++class T6638712c {
++
++    <T> T sort(T[] a, Comparator<? super T> c) { return null; }
++
++    void test(Enum[] e, Comparator<Enum<?>> comp) {
++        sort(e, comp);
++    }
++}
+diff -r 27f03394a69d -r c5fe15e03287 test/tools/javac/generics/inference/6638712/T6638712c.out
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712c.out	Fri Sep 10 17:47:33 2010 +0100
+@@ -0,0 +1,2 @@
++T6638712c.java:39:9: compiler.err.cant.apply.symbol: <T>sort(T[],java.util.Comparator<? super T>), T6638712c, , java.lang.Enum[],java.util.Comparator<java.lang.Enum<?>>, null
++1 error
+diff -r 27f03394a69d -r c5fe15e03287 test/tools/javac/generics/inference/6638712/T6638712d.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712d.java	Fri Sep 10 17:47:33 2010 +0100
+@@ -0,0 +1,18 @@
++/*
++ * @test /nodynamiccopyright/
++ * @bug     6638712 6730468
++ * @author  mcimadamore
++ * @summary Inference with wildcard types causes selection of inapplicable method
++ * @compile/fail/ref=T6638712d.out -XDrawDiagnostics T6638712d.java
++ */
++
++import java.util.*;
++
++public class T6638712d {
++
++    <U> U m(U u, List<List<U>> list) { return null; }
++
++    void test(List<List<String>> lls) {
++        m(1, lls);
++    }
++}
+diff -r 27f03394a69d -r c5fe15e03287 test/tools/javac/generics/inference/6638712/T6638712d.out
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712d.out	Fri Sep 10 17:47:33 2010 +0100
+@@ -0,0 +1,2 @@
++T6638712d.java:39:9: compiler.err.cant.apply.symbol: <U>m(U,java.util.List<java.util.List<U>>), T6638712d, , int,java.util.List<java.util.List<java.lang.String>>, null
++1 error
+diff -r 27f03394a69d -r c5fe15e03287 test/tools/javac/generics/inference/6638712/T6638712e.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712e.java	Fri Sep 10 17:47:33 2010 +0100
+@@ -0,0 +1,20 @@
++/*
++ * @test /nodynamiccopyright/
++ * @bug     6638712 6795689
++ * @author  mcimadamore
++ * @summary Inference with wildcard types causes selection of inapplicable method
++ * @compile/fail/ref=T6638712e.out -XDrawDiagnostics T6638712e.java
++ */
++
++class T6638712e {
++
++    static class Foo<A, B> {
++        <X> Foo<X, B> m(Foo<? super X, ? extends A> foo) { return null;}
++    }
++
++    static class Test {
++        Foo<Object, String> test(Foo<Boolean, String> foo1, Foo<Boolean, Boolean> foo2) {
++             return foo1.m(foo2);
++        }
++    }
++}
+diff -r 27f03394a69d -r c5fe15e03287 test/tools/javac/generics/inference/6638712/T6638712e.out
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/langtools/test/tools/javac/generics/inference/6638712/T6638712e.out	Fri Sep 10 17:47:33 2010 +0100
+@@ -0,0 +1,2 @@
++T6638712e.java:40:27: compiler.err.prob.found.req: (- compiler.misc.incompatible.types.1: (- compiler.misc.no.conforming.instance.exists: X, T6638712e.Foo<X,java.lang.String>, T6638712e.Foo<java.lang.Object,java.lang.String>)), <X>T6638712e.Foo<X,java.lang.String>, T6638712e.Foo<java.lang.Object,java.lang.String>
++1 error

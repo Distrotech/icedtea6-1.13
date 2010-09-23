@@ -49,7 +49,7 @@ exception statement from your version. */
 ************************************************/
 
 // Initialize static variables
-int IcedTeaPluginUtilities::reference = 0;
+int IcedTeaPluginUtilities::reference = -1;
 pthread_mutex_t IcedTeaPluginUtilities::reference_mutex = PTHREAD_MUTEX_INITIALIZER;
 std::map<void*, NPP>* IcedTeaPluginUtilities::instance_map = new std::map<void*, NPP>();
 std::map<std::string, NPObject*>* IcedTeaPluginUtilities::object_map = new std::map<std::string, NPObject*>();
@@ -224,11 +224,11 @@ IcedTeaPluginUtilities::getReference()
 	pthread_mutex_lock(&reference_mutex);
 
 	// If we are nearing the max, reset
-	if (reference > 0x7FFFFFFF - 10) {
-	    reference = 0;
+	if (reference < -0x7FFFFFFF + 10) {
+	    reference = -1;
 	}
 
-	reference++;
+	reference--;
 	pthread_mutex_unlock(&reference_mutex);
 
 	return reference;

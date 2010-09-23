@@ -1,3 +1,342 @@
+2010-09-23  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(.PHONY): Add clean-add-nss, clean-add-nss-debug,
+	clean-add-tzdata-support and clean-add-tzdata-support-debug.
+	(clean-local): Likewise.
+	(icedtea): Remove NSS and tzdata support.
+	(icedtea-debug): Likewise.
+	(icedtea-against-icedtea): Depend on add-nss and add-tzdata-support.
+	(icedtea-debug-against-icedtea): Depend on add-nss-debug and add-tzdata-support-debug.
+	(add-nss): New target to add NSS support to the build.
+	(add-nss-debug): Likewise for debug.
+	(clean-add-nss): Remove NSS support from the build.
+	(clean-add-nss-debug): Likewise for debug.
+	(add-tzdata-support): New target to add alternate timezone data support to the build.
+	(add-tzdata-support-debug): Likewise for debug.
+	(clean-add-tzdata-support): Remove alternate timezone data support from the build.
+	(clean-add-tzdata-support-debug): Likewise for debug.
+
+2010-09-23  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(.PHONY): Add clean-add-pulseaudio and
+	clean-add-pulseaudio-debug.
+	(clean-local): Likewise.
+	(icedtea): Remove pulse-java support and dependency.
+	(icedtea-debug): Likewise.
+	(icedtea-against-icedtea): Depend on add-pulseaudio.
+	(icedtea-debug-against-icedtea): Depend on add-pulseaudio-debug.
+	(add-systemtap-debug): Dependency should be icedtea-debug.
+	(add-pulseaudio): New target to add PulseAudio support to the build.
+	(add-pulseaudio-debug): Likewise for debug.
+	(clean-add-pulseaudio): Remove PulseAudio support from the build.
+	(clean-add-pulseaudio-debug): Likewise for debug.
+
+2010-09-22  Andrew John Hughes  <ahughes@redhat.com>
+
+	Move SystemTap support to a separate target.
+	* Makefile.am:
+	(.PHONY): Add clean-add-systemtap and
+	clean-add-systemtap-debug.
+	(clean-local): Likewise.
+	(icedtea): Remove systemtap support.
+	(icedtea-debug): Likewise.
+	(icedtea-against-icedtea): Depend on add-systemtap.
+	(icedtea-debug-against-icedtea): Depend on add-systemtap-debug.
+	(add-plugin): Depend on icedtea.stamp.
+	(add-plugin-debug): Depend on icedtea-debug.stamp.
+	(add-netx): Depend on icedtea.stamp.
+	(add-netx-debug): Depend on icedtea-debug.stamp.
+	(add-systemtap): New target to add SystemTap support to the build.
+	(add-systemtap-debug): Likewise for debug.
+	(clean-add-systemtap): Remove SystemTap support from the build.
+	(clean-add-systemtap-debug): Likewise for debug.
+
+2010-09-22  Andrew John Hughes  <ahughes@redhat.com>
+
+	* ports/hotspot/make/linux/makefiles/shark.make,
+	* ports/hotspot/src/cpu/zero/vm/asm_helper.cpp,
+	* ports/hotspot/src/cpu/zero/vm/bytecodes_arm.def,
+	* ports/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S,
+	* ports/hotspot/src/cpu/zero/vm/shark_globals_zero.hpp,
+	* ports/hotspot/src/cpu/zero/vm/thumb2.cpp,
+	* ports/hotspot/src/share/vm/includeDB_shark,
+	* ports/hotspot/src/share/vm/shark/llvmHeaders.hpp,
+	* ports/hotspot/src/share/vm/shark/llvmValue.hpp,
+	* ports/hotspot/src/share/vm/shark/sharkBlock.cpp,
+	* ports/hotspot/src/share/vm/shark/sharkBlock.hpp,
+	* ports/hotspot/src/share/vm/shark/sharkBuilder.cpp,
+	* ports/hotspot/src/share/vm/shark/sharkBuilder.hpp,
+	* ports/hotspot/src/share/vm/shark/sharkCacheDecache.cpp,
+	* ports/hotspot/src/share/vm/shark/sharkCacheDecache.hpp,
+	* ports/hotspot/src/share/vm/shark/sharkCodeBuffer.hpp,
+	* ports/hotspot/src/share/vm/shark/sharkCompiler.cpp,
+	* ports/hotspot/src/share/vm/shark/sharkCompiler.hpp,
+	* ports/hotspot/src/share/vm/shark/sharkConstant.cpp,
+	* ports/hotspot/src/share/vm/shark/sharkConstant.hpp,
+	* ports/hotspot/src/share/vm/shark/sharkContext.cpp,
+	* ports/hotspot/src/share/vm/shark/sharkContext.hpp,
+	* ports/hotspot/src/share/vm/shark/sharkEntry.hpp,
+	* ports/hotspot/src/share/vm/shark/sharkFunction.cpp,
+	* ports/hotspot/src/share/vm/shark/sharkFunction.hpp,
+	* ports/hotspot/src/share/vm/shark/sharkInliner.cpp,
+	* ports/hotspot/src/share/vm/shark/sharkInliner.hpp,
+	* ports/hotspot/src/share/vm/shark/sharkIntrinsics.cpp,
+	* ports/hotspot/src/share/vm/shark/sharkIntrinsics.hpp,
+	* ports/hotspot/src/share/vm/shark/sharkInvariants.cpp,
+	* ports/hotspot/src/share/vm/shark/sharkInvariants.hpp,
+	* ports/hotspot/src/share/vm/shark/sharkMemoryManager.cpp,
+	* ports/hotspot/src/share/vm/shark/sharkMemoryManager.hpp,
+	* ports/hotspot/src/share/vm/shark/sharkNativeWrapper.cpp,
+	* ports/hotspot/src/share/vm/shark/sharkNativeWrapper.hpp,
+	* ports/hotspot/src/share/vm/shark/sharkRuntime.cpp,
+	* ports/hotspot/src/share/vm/shark/sharkRuntime.hpp,
+	* ports/hotspot/src/share/vm/shark/sharkStack.cpp,
+	* ports/hotspot/src/share/vm/shark/sharkStack.hpp,
+	* ports/hotspot/src/share/vm/shark/sharkState.cpp,
+	* ports/hotspot/src/share/vm/shark/sharkState.hpp,
+	* ports/hotspot/src/share/vm/shark/sharkStateScanner.cpp,
+	* ports/hotspot/src/share/vm/shark/sharkStateScanner.hpp,
+	* ports/hotspot/src/share/vm/shark/sharkTopLevelBlock.cpp,
+	* ports/hotspot/src/share/vm/shark/sharkTopLevelBlock.hpp,
+	* ports/hotspot/src/share/vm/shark/sharkType.hpp,
+	* ports/hotspot/src/share/vm/shark/sharkValue.cpp,
+	* ports/hotspot/src/share/vm/shark/sharkValue.hpp,
+	* ports/hotspot/src/share/vm/shark/shark_globals.cpp,
+	* ports/hotspot/src/share/vm/shark/shark_globals.hpp,
+	* ports/hotspot/tools/mkbc.c:
+	Split into arm_port and shark directories.
+	* Makefile.am: Only copy Shark when hs17 is built.
+	hs19 includes Shark and the in-tree Shark fails to build with it.
+	* arm_port/hotspot/src/cpu/zero/vm/asm_helper.cpp,
+	* arm_port/hotspot/src/cpu/zero/vm/bytecodes_arm.def,
+	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S,
+	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp,
+	* arm_port/hotspot/tools/mkbc.c:
+	New location of arm assembler files.
+	* shark/hotspot/make/linux/makefiles/shark.make,
+	* shark/hotspot/src/cpu/zero/vm/shark_globals_zero.hpp,
+	* shark/hotspot/src/share/vm/includeDB_shark,
+	* shark/hotspot/src/share/vm/shark/llvmHeaders.hpp,
+	* shark/hotspot/src/share/vm/shark/llvmValue.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkBlock.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkBlock.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkBuilder.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkBuilder.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkCacheDecache.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkCacheDecache.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkCodeBuffer.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkCompiler.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkCompiler.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkConstant.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkConstant.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkContext.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkContext.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkEntry.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkFunction.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkFunction.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkInliner.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkInliner.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkIntrinsics.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkIntrinsics.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkInvariants.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkInvariants.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkMemoryManager.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkMemoryManager.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkNativeWrapper.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkNativeWrapper.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkRuntime.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkRuntime.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkStack.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkStack.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkState.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkState.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkStateScanner.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkStateScanner.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkTopLevelBlock.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkTopLevelBlock.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkType.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkValue.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkValue.hpp,
+	* shark/hotspot/src/share/vm/shark/shark_globals.cpp,
+	* shark/hotspot/src/share/vm/shark/shark_globals.hpp:
+	New location of Shark.
+
+2010-09-21  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am:
+	Add new patch.
+	* patches/openjdk/6985992-test_6933784.patch
+	Testcase correction.
+
+2010-09-21  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am:
+	Add new patch.
+	* patches/openjdk/6984543-onscreen_rendering_resize_test.patch:
+	Testcase correction.
+
+2010-09-20  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Enable icedtea-shark-build.patch on all builds
+	as it applies to the top-level makefiles and not
+	HotSpot.
+
+2010-09-19  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(hotspot): Only remake the main icedtea
+	and icedtea-ecj targets (i.e. the OpenJDK
+	build) and not the additional targets from
+	icedtea-against-icedtea and icedtea-against-ecj.
+
+2010-09-19  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Revert 2713dbdb914e changes to javaws.1
+	installation.
+
+2010-09-19  Andrew John Hughes  <ahughes@redhat.com>
+
+	Support HotSpot 19.
+	* patches/icedtea-alpha-fixes.patch,
+	* patches/icedtea-gcc-suffix-hotspot.patch,
+	* patches/icedtea-print-lsb-release.patch,
+	* patches/params-cast-size_t.patch,
+	* patches/update-bootclasspath.patch:
+	Split into original and hs19 versions.
+	* Makefile.am: Apply some patches only when
+	hs17 is built.  Apply different variants of
+	above patches depending on HotSpot build used.
+	* hotspot.map: Add hs19.
+	* patches/hotspot/hs19/alpha-fixes.patch,
+	* patches/hotspot/hs19/gcc-suffix.patch,
+	* patches/hotspot/hs19/params-cast-size_t.patch,
+	* patches/hotspot/hs19/print_lsb_release.patch,
+	* patches/hotspot/hs19/update-bootclasspath.patch:
+	HotSpot 19 variants of patches moved above.
+	* patches/hotspot/original/alpha-fixes.patch,
+	* patches/hotspot/original/gcc-suffix.patch,
+	* patches/hotspot/original/params-cast-size_t.patch,
+	* patches/hotspot/original/print_lsb_release.patch,
+	* patches/hotspot/original/update-bootclasspath.patch:
+	HotSpot 17 patches moved from patches above.
+
+2010-09-17  Deepak Bhole <dbhole@redhat.com>
+
+	PR557: Applet opens in a separate window if tab is closed when the applet
+	loads
+	* plugin/icedteanp/IcedTeaNPPlugin.cc 
+	(ITNP_Destroy): Send a destroy message to let Java side know that the
+	applet needs to be destroyed.
+
+2010-09-17  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Add new patch.
+	* patches/numa_on_early_glibc.patch,
+	Fallback to making a syscall if sched_getcpu
+	exists but the glibc used is too old to support it.
+
+2010-09-17  Omair Majid  <omajid@redhat.com>
+
+	* Makefile.am: Only create man pages for javaws if ENABLE_DOCS is set
+	and the man directory exists.
+
+2010-09-17  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/openjdk/6638712-wildcard_types.patch:
+	Fix copyrights (from 6875336) and test output.
+	* patches/openjdk/6650759-missing_inference.patch,
+	Remove test output changes already incorporated in
+	6875336.
+
+2010-09-09  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am: Add new patches.
+	* NEWS: Document new patches.  Fix key.
+	* patches/openjdk/6638712-wildcard_types.patch,
+	* patches/openjdk/6650759-missing_inference.patch:
+	Fix failure in javac compilation.
+
+2010-09-16  Deepak Bhole <dbhole@redhat.com>
+
+	* plugin/icedteanp/java/sun/applet/PluginAppletViewer.java
+	(handleMessage): Output initialization info only in debug mode.
+
+2010-09-15  Deepak Bhole <dbhole@redhat.com>
+
+	PR556: Re-implement applet initialization to be serialialized, to fix 
+	current and	future possible race conditions.
+	* plugin/icedteanp/IcedTeaJavaRequestProcessor.h: Updated timeout to 3
+	minutes.
+	* plugin/icedteanp/IcedTeaNPPlugin.cc
+	(ITNP_New): Remove the tag_message string, don't send any data to Java
+	side and instead, populate the new ITNPPluginData.applet_tag field with
+	the tag info. Do cleanup accordingly.
+	(ITNP_SetWindow): Send all (handle, size and tag) initialization 
+	information to java in a single message. Cleanup accordingly for newly
+	added variables.
+	* plugin/icedteanp/IcedTeaPluginUtils.cc
+	(getReference): Use a negative decreasing reference count to prevent
+	clashes with references for Java-side requests.
+	* plugin/icedteanp/IcedTeaNPPlugin.h: Rename the instance_string field of
+	ITNPPluginData to instance_id, and add an applet_tag field.
+	* plugin/icedteanp/java/sun/applet/PluginAppletViewer.java
+	(PluginAppletPanelFactory.createPanel): Remove code that tried to account
+	for percent heights and widths. This is done by the browser now.
+	(reFrame): Same.
+	(PluginAppletViewer): Update constructor to not take height and width
+	factor information.
+	(handleMessage): Update function for new protocol that now passes all
+	information relevant to initialization in a single message.
+	(skipSpace): Accept a new int array that contains the character at the
+	current position in the stream. Use the value accordingly.
+	(scanIdentifier): Same.
+	(skipComment): Same.
+	(scanTag): Same.
+	(parse): Updated all function signatures to accept width and height info.
+	Initialize an int array (for fake pass-by-reference) that contains
+	position of current character in the stream. Inject width and height
+	information into the atts table.
+	* plugin/icedteanp/java/sun/applet/PluginMessageConsumer.java: Updated
+	thread count needed for initialization.
+	(okayToProcess): Remove function that is no longer needed with the
+	serialized initialization code.
+	(ConsumerThread.run): Remove call to okayToProcess().
+
+2010-09-13  Omair Majid  <omajid@redhat.com>
+
+	Add a new man page for netx's javaws.
+	* NEWS: Updated to indicate the new man page for javaws.
+	* Makefile.am
+	(stamps/add-netx.stamp): Copy over the javaws man page into the build.
+	(clean-add-netx): Remove the javaws man pages on clean.
+	(stamps/add-netx-debug.stamp): Copy over the javaws man page.
+	(clean-add-netx-debug): Remove the javaws man page.
+	(add-netx): New target. Alias for stamps/add-netx.stamp.
+	(add-netx-debug): New target. Alias for stamps/add-netx-debug.stamp.
+	* netx/javaws.1: New man page for netx's javaws.
+
+2010-09-10  Matthias Klose  <doko@ubuntu.com>
+
+	* patches/params-cast-size_t.patch: Update, fix build failure on s390.
+
+2010-09-08  Andrew John Hughes  <ahughes@redhat.com>
+
+	* NEWS: Sync with 1.9 branch.
+
+2010-09-07  Andrew John Hughes  <ahughes@redhat.com>
+
+	S6510892, S6969395:
+	* Makefile.am: Add new patches.
+	* NEWS: Updated.
+	* patches/openjdk/6510892-httpserver_test.patch,
+	* patches/openjdk/6969395-net_bugs.patch:
+	Fix networking tests.
+
 2010-09-05  Andrew John Hughes  <ahughes@redhat.com>
 
 	* patches/openjdk/6438179-systray_check.patch:

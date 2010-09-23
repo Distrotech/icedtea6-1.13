@@ -1,0 +1,884 @@
+diff -Nru openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/code/Type.java openjdk/langtools/src/share/classes/com/sun/tools/javac/code/Type.java
+--- openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/code/Type.java	2010-09-09 20:03:34.000000000 +0100
++++ openjdk/langtools/src/share/classes/com/sun/tools/javac/code/Type.java	2010-09-09 20:24:56.236744893 +0100
+@@ -1063,7 +1063,7 @@
+ 
+         /**
+          * Replaces this ForAll's typevars with a set of concrete Java types
+-         * and returns the instantiated generic type. Subclasses might override
++         * and returns the instantiated generic type. Subclasses should override
+          * in order to check that the list of types is a valid instantiation
+          * of the ForAll's typevars.
+          *
+@@ -1076,6 +1076,42 @@
+             return types.subst(qtype, tvars, actuals);
+         }
+ 
++        /**
++         * Kind of type-constraint derived during type inference
++         */
++        public enum ConstraintKind {
++            /**
++             * upper bound constraint (a type variable must be instantiated
++             * with a type T, where T is a subtype of all the types specified by
++             * its EXTENDS constraints).
++             */
++            EXTENDS,
++            /**
++             * lower bound constraint (a type variable must be instantiated
++             * with a type T, where T is a supertype of all the types specified by
++             * its SUPER constraints).
++             */
++            SUPER,
++            /**
++             * equality constraint (a type variable must be instantiated to the type
++             * specified by its EQUAL constraint.
++             */
++            EQUAL;
++        }
++
++        /**
++         * Get the type-constraints of a given kind for a given type-variable of
++         * this ForAll type. Subclasses should override in order to return more
++         * accurate sets of constraints.
++         *
++         * @param tv the type-variable for which the constraint is to be retrieved
++         * @param ck the constraint kind to be retrieved
++         * @return the list of types specified by the selected constraint
++         */
++        public List<Type> getConstraints(TypeVar tv, ConstraintKind ck) {
++            return List.nil();
++        }
++
+         public Type map(Mapping f) {
+             return f.apply(qtype);
+         }
+diff -Nru openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/comp/Infer.java openjdk/langtools/src/share/classes/com/sun/tools/javac/comp/Infer.java
+--- openjdk.orig/langtools/src/share/classes/com/sun/tools/javac/comp/Infer.java	2010-09-09 20:03:34.000000000 +0100
++++ openjdk/langtools/src/share/classes/com/sun/tools/javac/comp/Infer.java	2010-09-09 20:25:15.752817376 +0100
+@@ -29,6 +29,7 @@
+ import com.sun.tools.javac.util.List;
+ import com.sun.tools.javac.code.*;
+ import com.sun.tools.javac.code.Type.*;
++import com.sun.tools.javac.code.Type.ForAll.ConstraintKind;
+ import com.sun.tools.javac.code.Symbol.*;
+ 
+ import static com.sun.tools.javac.code.Flags.*;
+@@ -51,6 +52,7 @@
+ 
+     Symtab syms;
+     Types types;
++    Check chk;
+     Resolve rs;
+ 
+     public static Infer instance(Context context) {
+@@ -65,6 +67,7 @@
+         syms = Symtab.instance(context);
+         types = Types.instance(context);
+         rs = Resolve.instance(context);
++        chk = Check.instance(context);
+     }
+ 
+     public static class InferenceException extends RuntimeException {
+@@ -260,14 +263,19 @@
+                                 Warner warn) throws InferenceException {
+         List<Type> undetvars = Type.map(that.tvars, fromTypeVarFun);
+         for (List<Type> l = undetvars; l.nonEmpty(); l = l.tail) {
+-            UndetVar v = (UndetVar) l.head;
++            UndetVar uv = (UndetVar) l.head;
++            TypeVar tv = (TypeVar)uv.qtype;
+             ListBuffer<Type> hibounds = new ListBuffer<Type>();
+-            for (List<Type> l1 = types.getBounds((TypeVar) v.qtype); l1.nonEmpty(); l1 = l1.tail) {
+-                if (!l1.head.containsSome(that.tvars)) {
+-                    hibounds.append(l1.head);
++            for (Type t : that.getConstraints(tv, ConstraintKind.EXTENDS).prependList(types.getBounds(tv))) {
++                if (!t.containsSome(that.tvars) && t.tag != BOT) {
++                    hibounds.append(t);
+                 }
+             }
+-            v.hibounds = hibounds.toList();
++            List<Type> inst = that.getConstraints(tv, ConstraintKind.EQUAL);
++            if (inst.nonEmpty() && inst.head.tag != BOT) {
++                uv.inst = inst.head;
++            }
++            uv.hibounds = hibounds.toList();
+         }
+         Type qtype1 = types.subst(that.qtype, that.tvars, undetvars);
+         if (!types.isSubtype(qtype1, to)) {
+@@ -283,7 +291,7 @@
+         List<Type> targs = Type.map(undetvars, getInstFun);
+         targs = types.subst(targs, that.tvars, targs);
+         checkWithinBounds(that.tvars, targs, warn);
+-        return that.inst(targs, types);
++        return chk.checkType(warn.pos(), that.inst(targs, types), to);
+     }
+ 
+     /** Instantiate method type `mt' by finding instantiations of
+@@ -359,6 +367,9 @@
+         /** Type variables instantiated to bottom */
+         ListBuffer<Type> restvars = new ListBuffer<Type>();
+ 
++        /** Undet vars instantiated to bottom */
++        final ListBuffer<Type> restundet = new ListBuffer<Type>();
++
+         /** Instantiated types or TypeVars if under-constrained */
+         ListBuffer<Type> insttypes = new ListBuffer<Type>();
+ 
+@@ -369,6 +380,7 @@
+             UndetVar uv = (UndetVar)t;
+             if (uv.inst.tag == BOT) {
+                 restvars.append(uv.qtype);
++                restundet.append(uv);
+                 insttypes.append(uv.qtype);
+                 undettypes.append(uv);
+                 uv.inst = null;
+@@ -389,17 +401,32 @@
+             final MethodType mt2 = new MethodType(mt.argtypes, null, mt.thrown, syms.methodClass);
+             mt2.restype = new ForAll(restvars.toList(), mt.restype) {
+                 @Override
++                public List<Type> getConstraints(TypeVar tv, ConstraintKind ck) {
++                    for (Type t : restundet.toList()) {
++                        UndetVar uv = (UndetVar)t;
++                        if (uv.qtype == tv) {
++                            switch (ck) {
++                                case EXTENDS: return uv.hibounds;
++                                case SUPER: return uv.lobounds;
++                                case EQUAL: return uv.inst != null ? List.of(uv.inst) : List.<Type>nil();
++                            }
++                        }
++                    }
++                    return List.nil();
++                }
++
++                @Override
+                 public Type inst(List<Type> inferred, Types types) throws NoInstanceException {
+                     List<Type> formals = types.subst(mt2.argtypes, tvars, inferred);
+-                   if (!rs.argumentsAcceptable(capturedArgs, formals,
++                    if (!rs.argumentsAcceptable(capturedArgs, formals,
+                            allowBoxing, useVarargs, warn)) {
+                       // inferred method is not applicable
+                       throw invalidInstanceException.setMessage("inferred.do.not.conform.to.params", formals, argtypes);
+-                   }
+-                   // check that inferred bounds conform to their bounds
+-                   checkWithinBounds(all_tvars,
++                    }
++                    // check that inferred bounds conform to their bounds
++                    checkWithinBounds(all_tvars,
+                            types.subst(inferredTypes, tvars, inferred), warn);
+-                   return super.inst(inferred, types);
++                    return super.inst(inferred, types);
+             }};
+             return mt2;
+         }
+diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6302954/T6476073.java openjdk/langtools/test/tools/javac/generics/inference/6302954/T6476073.java
+--- openjdk.orig/langtools/test/tools/javac/generics/inference/6302954/T6476073.java	2010-09-09 20:03:34.000000000 +0100
++++ openjdk/langtools/test/tools/javac/generics/inference/6302954/T6476073.java	2010-09-09 20:24:56.236744893 +0100
+@@ -25,7 +25,6 @@
+  * @test
+  * @bug     6476073
+  * @summary Capture using super wildcard of type variables doesn't work
+- * @ignore awaiting for 6650759 (see bug report for a detailed evaluation)
+  * @compile T6476073.java
+  */
+ 
+diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759a.java openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759a.java
+--- openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759a.java	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759a.java	2010-09-09 20:24:56.248744934 +0100
+@@ -0,0 +1,45 @@
++/*
++ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/*
++ * @test
++ * @bug     6650759
++ * @author  mcimadamore
++ * @summary Inference of formal type parameter (unused in formal parameters) is not performed
++ * @compile T6650759a.java
++ */
++
++class T6650759a {
++
++    public static interface Interface<T> { }
++    public static class IntegerInterface implements Interface<Integer> { }
++
++    <I extends Interface<T>, T> T getGenericValue(I test) { return null; }
++
++    void testSet(Integer test) { }
++
++    void test() {
++        Integer test = getGenericValue(new IntegerInterface());
++        testSet(getGenericValue(new IntegerInterface()));
++    }
++}
+\ No newline at end of file
+diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759b.java openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759b.java
+--- openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759b.java	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759b.java	2010-09-09 20:24:56.248744934 +0100
+@@ -0,0 +1,52 @@
++/*
++ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/*
++ * @test
++ * @bug     6650759
++ * @author  mcimadamore
++ * @summary Inference of formal type parameter (unused in formal parameters) is not performed
++ * @compile T6650759b.java
++ */
++
++public class T6650759b {
++
++    interface A<X extends A<X, Y>, Y extends B<X>> {}
++
++    static class B<X extends A<X, ?>> {}
++
++    interface C<X extends A<X, Y>, Y extends B<X>> {}
++
++    interface D<X extends A<X, Y>, Y extends B<X>> {}
++
++    static class E<X extends A<X, Y>, Y extends B<X>, W extends C<X, Y>> implements D<X, Y> {
++
++        static <X extends A<X, Y>, Y extends B<X>, W extends C<X, Y>> D<X, Y> of(W w) {
++            return null;
++        }
++    }
++
++    <X extends A<X, Y>, Y extends B<X>, W extends C<X, Y>, Z extends D<X, Y>> Z test(W w) {
++        return (Z) E.of(w);
++    }
++}
+diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759c.java openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759c.java
+--- openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759c.java	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759c.java	2010-09-09 20:24:56.248744934 +0100
+@@ -0,0 +1,49 @@
++/*
++ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/*
++ * @test
++ * @bug     6650759
++ * @summary Inference of formal type parameter (unused in formal parameters) is not performed
++ * @compile T6650759c.java
++ */
++
++import java.util.Collection;
++import java.util.Collections;
++
++public class T6650759c {
++
++  static interface A {}
++
++  static interface B<X extends A> {}
++
++  static interface C<X extends A, Y extends B<X>> {}
++
++  public static <T extends A, U extends B<T>> Collection<C<T,U>> get(U u) {
++    return null;
++  }
++
++  public <T extends A, U extends B<T>> Collection<C<T,U>> test(U u) {
++    return Collections.unmodifiableCollection(get(u));
++  }
++}
+diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759d.java openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759d.java
+--- openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759d.java	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759d.java	2010-09-09 20:24:56.248744934 +0100
+@@ -0,0 +1,51 @@
++/*
++ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/*
++ * @test
++ * @bug     6650759
++ * @summary Inference of formal type parameter (unused in formal parameters) is not performed
++ * @compile T6650759d.java
++ */
++
++public class T6650759d {
++
++    static abstract class A<X> {
++
++        static <T> A<T> m(Iterable<? extends T> elements) {
++            return null;
++        }
++    }
++
++    static abstract class B {}
++
++    static abstract class C<X extends B> {}
++
++    <U extends C<V>, V extends B> Iterable<V> get(U u) {
++        return null;
++    }
++
++    <U extends C<V>, V extends B> void m(U u) {
++        A<V> a = A.m(get(u));
++    }
++}
+diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759e.java openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759e.java
+--- openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759e.java	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759e.java	2010-09-09 20:24:56.248744934 +0100
+@@ -0,0 +1,52 @@
++/*
++ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/*
++ * @test
++ * @bug     6650759
++ * @summary Inference of formal type parameter (unused in formal parameters) is not performed
++ * @compile T6650759e.java
++ */
++
++import java.util.List;
++
++public class T6650759e {
++
++    static abstract class A<X extends B> {}
++
++    interface B<X extends A> extends D {}
++
++    static abstract class C<X extends D> {}
++
++    interface D {}
++
++    static abstract class E<X extends C<? extends B<?>>> {}
++
++    <U extends C<V>, V extends B<W>, W extends A<V>> W m1(E<U> e) {
++        return m2(e);
++    }
++
++    <U extends C<V>, V extends B<W>, W extends A<V>> W m2(E<U> e) {
++        return null;
++    }
++}
+diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759f.java openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759f.java
+--- openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759f.java	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759f.java	2010-09-09 20:24:56.248744934 +0100
+@@ -0,0 +1,50 @@
++/*
++ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/*
++ * @test
++ * @bug     6650759
++ * @summary Inference of formal type parameter (unused in formal parameters) is not performed
++ * @compile T6650759f.java
++ */
++
++import java.util.Collections;
++
++public class T6650759f {
++
++    interface A<X extends A> {}
++
++    static abstract class B<X extends B> implements A<X> {}
++
++    static abstract class C<X extends D> extends B<X> {}
++
++    static class D extends C<D> {}
++
++    <X extends B, Y extends B<X>> Iterable<X> m(Y node) {
++        return null;
++    }
++
++    public void test(D d) {
++        Iterable<D> ops = (true) ? Collections.singletonList(d) : m(d);
++    }
++}
+diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759g.java openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759g.java
+--- openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759g.java	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759g.java	2010-09-09 20:24:56.248744934 +0100
+@@ -0,0 +1,59 @@
++/*
++ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/*
++ * @test
++ * @bug     6650759
++ * @summary Inference of formal type parameter (unused in formal parameters) is not performed
++ * @compile T6650759g.java
++ */
++
++public class T6650759g {
++
++    static abstract class A<X extends A<X>> {}
++
++    static abstract class B<X extends A<X>> {}
++
++    interface C<X, Y> {}
++
++    static abstract class D<X extends A<X>, Y extends B<X>> implements C<X, Y> {}
++
++    static class E extends A<E> {}
++
++    static class F extends B<E> {}
++
++    static void test(Iterable<E> data) {
++        m3(m2(data, m1(F.class)));
++    }
++
++    static <X extends A<X>, Y extends B<X>> D<X, Y> m1(Class<Y> c) {
++        return null;
++    }
++
++    static <U, V> Iterable<V> m2(Iterable<U> x1, C<? super U, ? extends V> x2) {
++        return null;
++    }
++
++    static void m3(Iterable<F> data) {
++    }
++}
+diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759h.java openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759h.java
+--- openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759h.java	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759h.java	2010-09-09 20:24:56.248744934 +0100
+@@ -0,0 +1,39 @@
++/*
++ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/*
++ * @test
++ * @bug     6650759
++ * @summary Inference of formal type parameter (unused in formal parameters) is not performed
++ * @compile T6650759h.java
++ */
++class T6650759h<X, Y> {
++
++    <A> Object m(A a, T6650759h<?, ? super A> t) {
++        return null;
++    }
++
++    void test(T6650759h<?, Void> t) {
++        m(null, t);
++    }
++}
+diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759i.java openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759i.java
+--- openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759i.java	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759i.java	2010-09-09 20:24:56.248744934 +0100
+@@ -0,0 +1,54 @@
++/*
++ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/*
++ * @test
++ * @bug     6650759
++ * @summary Inference of formal type parameter (unused in formal parameters) is not performed
++ * @compile T6650759i.java
++ */
++public class T6650759i {
++
++    static class A<X extends A, Y extends B> {}
++
++    static class B<X extends B> {}
++
++    static class C<X extends A<X, Y>, Y extends B<Y>> {}
++
++    static <U extends A<U, V>, V extends B<V>> Class<U> m1(U x) {
++        return null;
++    }
++
++    static <U extends A<U, V>, V extends B<V>> U m2(Class<U> c) {
++        return null;
++    }
++
++    static <W, U extends A<U, V>, V extends B<V>> W m3(Class<W> c1, C<U, V> c2) {
++        return null;
++    }
++
++    static <U extends A<U, V>, V extends B<V>> void test(U u, C<U, V> c) {
++        m2(m1(u));
++        U res = m3(m1(u), c);
++    }
++}
+diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759j.java openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759j.java
+--- openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759j.java	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759j.java	2010-09-09 20:24:56.248744934 +0100
+@@ -0,0 +1,54 @@
++/*
++ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/*
++ * @test
++ * @bug     6650759
++ * @summary Inference of formal type parameter (unused in formal parameters) is not performed
++ * @compile T6650759j.java
++ */
++
++public class T6650759j {
++
++    static abstract class A<X extends A<X>> {}
++
++    static abstract class B<X extends B<X, Y>, Y> extends A<X> {}
++
++    static abstract class C<X extends C<X, Y>, Y> extends B<X, Y> {}
++
++    interface D {}
++
++    static class E extends C<E, D> {}
++
++    static abstract class F<X extends F<X, Y>, Y extends A<Y>> extends A<X> {}
++
++    static class G extends F<G, E> {}
++
++    static <X extends F<X, Y>, Y extends A<Y>> X m(Iterable<X> it) {
++        return null;
++    }
++
++    static G test(Iterable<G> c) {
++        return m(c);
++    }
++}
+diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759k.java openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759k.java
+--- openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759k.java	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759k.java	2010-09-09 20:24:56.248744935 +0100
+@@ -0,0 +1,44 @@
++/*
++ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/*
++ * @test
++ * @bug     6650759
++ * @summary Inference of formal type parameter (unused in formal parameters) is not performed
++ * @compile T6650759k.java
++ */
++
++public class T6650759k {
++
++    static class A<X extends A> {}
++
++    static class B<X extends B, Y extends A> {}
++
++    <U extends A<U>, V extends B<V, U>> Object m(Class<V> c) {
++        return null;
++    }
++
++    <U extends A<U>, V extends B<V, U>> void test(Class<V> c) {
++        m(c);
++    }
++}
+diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759l.java openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759l.java
+--- openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759l.java	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759l.java	2010-09-09 20:24:56.248744935 +0100
+@@ -0,0 +1,46 @@
++/*
++ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/*
++ * @test
++ * @bug     6650759
++ * @summary Inference of formal type parameter (unused in formal parameters) is not performed
++ * @compile T6650759l.java
++ */
++
++public class T6650759l {
++
++    public static interface A<X> {}
++
++    public static class B implements A<Integer> {}
++
++    public static <X extends A<Y>, Y> Y m1(X x) {
++        return null;
++    }
++
++    public static void m2(Integer i) {}
++
++    public static void test(B b) {
++        m2(m1(b));
++    }
++}
+diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759m.java openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759m.java
+--- openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759m.java	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759m.java	2010-09-09 20:24:56.248744935 +0100
+@@ -0,0 +1,47 @@
++/*
++ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/*
++ * @test
++ * @bug     6650759
++ * @summary Inference of formal type parameter (unused in formal parameters) is not performed
++ * @compile/fail/ref=T6650759m.out T6650759m.java -XDrawDiagnostics
++ */
++
++import java.util.*;
++
++class T6650759m {
++    <Z> List<? super Z> m(List<? extends List<? super Z>> ls) {
++        return ls.get(0);
++    }
++
++    void test() {
++        ArrayList<ArrayList<Integer>> lli = new ArrayList<ArrayList<Integer>>();
++        ArrayList<Integer> li = new ArrayList<Integer>();
++        li.add(2);
++        lli.add(li);
++        List<? super String> ls = m(lli); //here
++        ls.add("crash");
++        Integer i = li.get(1);
++    }
++}
+diff -Nru openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759m.out openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759m.out
+--- openjdk.orig/langtools/test/tools/javac/generics/inference/6650759/T6650759m.out	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/langtools/test/tools/javac/generics/inference/6650759/T6650759m.out	2010-09-09 20:24:56.248744935 +0100
+@@ -0,0 +1,2 @@
++T6650759m.java:43:36: compiler.err.prob.found.req: (compiler.misc.incompatible.types), java.util.List<? super java.lang.Integer>, java.util.List<? super java.lang.String>
++1 error

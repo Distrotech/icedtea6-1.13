@@ -1,7 +1,19 @@
+diff -Nru openjdk.orig/hotspot/src/share/vm/gc_implementation/concurrentMarkSweep/compactibleFreeListSpace.cpp openjdk/hotspot/src/share/vm/gc_implementation/concurrentMarkSweep/compactibleFreeListSpace.cpp
+--- openjdk.orig/hotspot/src/share/vm/gc_implementation/concurrentMarkSweep/compactibleFreeListSpace.cpp	2010-09-01 01:23:45.000000000 +0100
++++ openjdk/hotspot/src/share/vm/gc_implementation/concurrentMarkSweep/compactibleFreeListSpace.cpp	2010-09-19 16:07:14.939307365 +0100
+@@ -2619,7 +2619,7 @@
+   if (ResizeOldPLAB && CMSOldPLABResizeQuicker) {
+     size_t multiple = _num_blocks[word_sz]/(CMSOldPLABToleranceFactor*CMSOldPLABNumRefills*n_blks);
+     n_blks +=  CMSOldPLABReactivityFactor*multiple*n_blks;
+-    n_blks = MIN2(n_blks, CMSOldPLABMax);
++    n_blks = MIN2(n_blks, (size_t)CMSOldPLABMax);
+   }
+   assert(n_blks > 0, "Error");
+   _cfls->par_get_chunk_of_blocks(word_sz, n_blks, fl);
 diff -Nru openjdk.orig/hotspot/src/share/vm/gc_implementation/concurrentMarkSweep/concurrentMarkSweepGeneration.cpp openjdk/hotspot/src/share/vm/gc_implementation/concurrentMarkSweep/concurrentMarkSweepGeneration.cpp
---- openjdk.orig/hotspot/src/share/vm/gc_implementation/concurrentMarkSweep/concurrentMarkSweepGeneration.cpp	2010-04-09 00:03:58.000000000 +0100
-+++ openjdk/hotspot/src/share/vm/gc_implementation/concurrentMarkSweep/concurrentMarkSweepGeneration.cpp	2010-04-10 02:29:45.000000000 +0100
-@@ -963,7 +963,7 @@
+--- openjdk.orig/hotspot/src/share/vm/gc_implementation/concurrentMarkSweep/concurrentMarkSweepGeneration.cpp	2010-09-01 01:23:45.000000000 +0100
++++ openjdk/hotspot/src/share/vm/gc_implementation/concurrentMarkSweep/concurrentMarkSweepGeneration.cpp	2010-09-19 16:07:14.915307286 +0100
+@@ -967,7 +967,7 @@
    if (free_percentage < desired_free_percentage) {
      size_t desired_capacity = (size_t)(used() / ((double) 1 - desired_free_percentage));
      assert(desired_capacity >= capacity(), "invalid expansion size");
@@ -10,7 +22,7 @@ diff -Nru openjdk.orig/hotspot/src/share/vm/gc_implementation/concurrentMarkSwee
    }
    if (expand_bytes > 0) {
      if (PrintGCDetails && Verbose) {
-@@ -6150,7 +6150,7 @@
+@@ -6191,7 +6191,7 @@
      HeapWord* curAddr = _markBitMap.startWord();
      while (curAddr < _markBitMap.endWord()) {
        size_t remaining  = pointer_delta(_markBitMap.endWord(), curAddr);
@@ -19,7 +31,7 @@ diff -Nru openjdk.orig/hotspot/src/share/vm/gc_implementation/concurrentMarkSwee
        _markBitMap.clear_large_range(chunk);
        if (ConcurrentMarkSweepThread::should_yield() &&
            !foregroundGCIsActive() &&
-@@ -6438,7 +6438,7 @@
+@@ -6484,7 +6484,7 @@
      return;
    }
    // Double capacity if possible
@@ -29,8 +41,8 @@ diff -Nru openjdk.orig/hotspot/src/share/vm/gc_implementation/concurrentMarkSwee
    // get the double capacity that we desired.
    ReservedSpace rs(ReservedSpace::allocation_align_size_up(
 diff -Nru openjdk.orig/hotspot/src/share/vm/gc_implementation/g1/concurrentMark.cpp openjdk/hotspot/src/share/vm/gc_implementation/g1/concurrentMark.cpp
---- openjdk.orig/hotspot/src/share/vm/gc_implementation/g1/concurrentMark.cpp	2010-04-10 01:52:13.000000000 +0100
-+++ openjdk/hotspot/src/share/vm/gc_implementation/g1/concurrentMark.cpp	2010-04-10 02:28:51.000000000 +0100
+--- openjdk.orig/hotspot/src/share/vm/gc_implementation/g1/concurrentMark.cpp	2010-09-19 15:38:16.000000000 +0100
++++ openjdk/hotspot/src/share/vm/gc_implementation/g1/concurrentMark.cpp	2010-09-19 16:07:14.915307286 +0100
 @@ -452,7 +452,7 @@
    _regionStack(),
    // _finger set in set_non_marking_state
@@ -67,7 +79,7 @@ diff -Nru openjdk.orig/hotspot/src/share/vm/gc_implementation/g1/concurrentMark.
    for (int i = 0; i < size; i++) delete _par_cleanup_thread_state[i];
    FREE_C_HEAP_ARRAY(ParCleanupThreadState*,
                      _par_cleanup_thread_state);
-@@ -1778,7 +1778,7 @@
+@@ -1781,7 +1781,7 @@
    if (has_aborted()) return;
  
    int first = 0;
@@ -76,7 +88,7 @@ diff -Nru openjdk.orig/hotspot/src/share/vm/gc_implementation/g1/concurrentMark.
    for (int t = 0; t < last; t++) {
      UncleanRegionList* list = &_par_cleanup_thread_state[t]->list;
      assert(list->well_formed(), "Inv");
-@@ -3276,7 +3276,7 @@
+@@ -3281,7 +3281,7 @@
    // of things to do) or totally (at the very end).
    size_t target_size;
    if (partially)
@@ -86,9 +98,9 @@ diff -Nru openjdk.orig/hotspot/src/share/vm/gc_implementation/g1/concurrentMark.
      target_size = 0;
  
 diff -Nru openjdk.orig/hotspot/src/share/vm/gc_implementation/g1/heapRegionRemSet.cpp openjdk/hotspot/src/share/vm/gc_implementation/g1/heapRegionRemSet.cpp
---- openjdk.orig/hotspot/src/share/vm/gc_implementation/g1/heapRegionRemSet.cpp	2010-04-09 00:03:58.000000000 +0100
-+++ openjdk/hotspot/src/share/vm/gc_implementation/g1/heapRegionRemSet.cpp	2010-04-10 02:28:51.000000000 +0100
-@@ -1068,7 +1068,7 @@
+--- openjdk.orig/hotspot/src/share/vm/gc_implementation/g1/heapRegionRemSet.cpp	2010-09-01 01:23:45.000000000 +0100
++++ openjdk/hotspot/src/share/vm/gc_implementation/g1/heapRegionRemSet.cpp	2010-09-19 16:07:14.915307286 +0100
+@@ -1066,7 +1066,7 @@
  // This can be done by either mutator threads together with the
  // concurrent refinement threads or GC threads.
  int HeapRegionRemSet::num_par_rem_sets() {
@@ -98,9 +110,9 @@ diff -Nru openjdk.orig/hotspot/src/share/vm/gc_implementation/g1/heapRegionRemSe
  
  HeapRegionRemSet::HeapRegionRemSet(G1BlockOffsetSharedArray* bosa,
 diff -Nru openjdk.orig/hotspot/src/share/vm/gc_implementation/parallelScavenge/psParallelCompact.cpp openjdk/hotspot/src/share/vm/gc_implementation/parallelScavenge/psParallelCompact.cpp
---- openjdk.orig/hotspot/src/share/vm/gc_implementation/parallelScavenge/psParallelCompact.cpp	2010-04-09 00:03:58.000000000 +0100
-+++ openjdk/hotspot/src/share/vm/gc_implementation/parallelScavenge/psParallelCompact.cpp	2010-04-10 02:28:51.000000000 +0100
-@@ -863,8 +863,8 @@
+--- openjdk.orig/hotspot/src/share/vm/gc_implementation/parallelScavenge/psParallelCompact.cpp	2010-09-01 01:23:45.000000000 +0100
++++ openjdk/hotspot/src/share/vm/gc_implementation/parallelScavenge/psParallelCompact.cpp	2010-09-19 16:07:14.915307286 +0100
+@@ -864,8 +864,8 @@
  void PSParallelCompact::initialize_dead_wood_limiter()
  {
    const size_t max = 100;
@@ -112,8 +124,8 @@ diff -Nru openjdk.orig/hotspot/src/share/vm/gc_implementation/parallelScavenge/p
    DEBUG_ONLY(_dwl_initialized = true;)
    _dwl_adjustment = normal_distribution(1.0);
 diff -Nru openjdk.orig/hotspot/src/share/vm/gc_implementation/parallelScavenge/psPermGen.cpp openjdk/hotspot/src/share/vm/gc_implementation/parallelScavenge/psPermGen.cpp
---- openjdk.orig/hotspot/src/share/vm/gc_implementation/parallelScavenge/psPermGen.cpp	2010-04-09 00:03:58.000000000 +0100
-+++ openjdk/hotspot/src/share/vm/gc_implementation/parallelScavenge/psPermGen.cpp	2010-04-10 02:28:51.000000000 +0100
+--- openjdk.orig/hotspot/src/share/vm/gc_implementation/parallelScavenge/psPermGen.cpp	2010-09-01 01:23:45.000000000 +0100
++++ openjdk/hotspot/src/share/vm/gc_implementation/parallelScavenge/psPermGen.cpp	2010-09-19 16:07:14.915307286 +0100
 @@ -63,7 +63,7 @@
    _last_used = current_live;
  
@@ -124,9 +136,9 @@ diff -Nru openjdk.orig/hotspot/src/share/vm/gc_implementation/parallelScavenge/p
  
    // Compute the desired size:
 diff -Nru openjdk.orig/hotspot/src/share/vm/memory/collectorPolicy.cpp openjdk/hotspot/src/share/vm/memory/collectorPolicy.cpp
---- openjdk.orig/hotspot/src/share/vm/memory/collectorPolicy.cpp	2010-04-09 00:03:58.000000000 +0100
-+++ openjdk/hotspot/src/share/vm/memory/collectorPolicy.cpp	2010-04-10 02:28:51.000000000 +0100
-@@ -281,7 +281,7 @@
+--- openjdk.orig/hotspot/src/share/vm/memory/collectorPolicy.cpp	2010-09-01 01:23:45.000000000 +0100
++++ openjdk/hotspot/src/share/vm/memory/collectorPolicy.cpp	2010-09-19 16:07:14.939307365 +0100
+@@ -297,7 +297,7 @@
      // yield a size that is too small) and bound it by MaxNewSize above.
      // Ergonomics plays here by previously calculating the desired
      // NewSize and MaxNewSize.
@@ -135,7 +147,7 @@ diff -Nru openjdk.orig/hotspot/src/share/vm/memory/collectorPolicy.cpp openjdk/h
    }
    assert(max_new_size > 0, "All paths should set max_new_size");
  
-@@ -308,7 +308,7 @@
+@@ -324,7 +324,7 @@
        // generally small compared to the NewRatio calculation.
        _min_gen0_size = NewSize;
        desired_new_size = NewSize;
@@ -144,7 +156,7 @@ diff -Nru openjdk.orig/hotspot/src/share/vm/memory/collectorPolicy.cpp openjdk/h
      } else {
        // For the case where NewSize is the default, use NewRatio
        // to size the minimum and initial generation sizes.
-@@ -316,10 +316,10 @@
+@@ -332,10 +332,10 @@
        // NewRatio is overly large, the resulting sizes can be too
        // small.
        _min_gen0_size = MAX2(scale_by_NewRatio_aligned(min_heap_byte_size()),
@@ -157,7 +169,7 @@ diff -Nru openjdk.orig/hotspot/src/share/vm/memory/collectorPolicy.cpp openjdk/h
      }
  
      assert(_min_gen0_size > 0, "Sanity check");
-@@ -374,14 +374,14 @@
+@@ -390,14 +390,14 @@
        // Adjust gen0 down to accomodate OldSize
        *gen0_size_ptr = heap_size - min_gen0_size;
        *gen0_size_ptr =
@@ -174,7 +186,7 @@ diff -Nru openjdk.orig/hotspot/src/share/vm/memory/collectorPolicy.cpp openjdk/h
                         min_alignment());
      }
    }
-@@ -405,7 +405,7 @@
+@@ -421,7 +421,7 @@
    // for setting the gen1 maximum.
    _max_gen1_size = max_heap_byte_size() - _max_gen0_size;
    _max_gen1_size =
@@ -183,7 +195,7 @@ diff -Nru openjdk.orig/hotspot/src/share/vm/memory/collectorPolicy.cpp openjdk/h
           min_alignment());
    // If no explicit command line flag has been set for the
    // gen1 size, use what is left for gen1.
-@@ -419,11 +419,11 @@
+@@ -435,11 +435,11 @@
        "gen0 has an unexpected minimum size");
      set_min_gen1_size(min_heap_byte_size() - min_gen0_size());
      set_min_gen1_size(
@@ -198,8 +210,8 @@ diff -Nru openjdk.orig/hotspot/src/share/vm/memory/collectorPolicy.cpp openjdk/h
  
    } else {
 diff -Nru openjdk.orig/hotspot/src/share/vm/memory/threadLocalAllocBuffer.cpp openjdk/hotspot/src/share/vm/memory/threadLocalAllocBuffer.cpp
---- openjdk.orig/hotspot/src/share/vm/memory/threadLocalAllocBuffer.cpp	2010-04-09 00:03:58.000000000 +0100
-+++ openjdk/hotspot/src/share/vm/memory/threadLocalAllocBuffer.cpp	2010-04-10 02:28:51.000000000 +0100
+--- openjdk.orig/hotspot/src/share/vm/memory/threadLocalAllocBuffer.cpp	2010-09-01 01:23:45.000000000 +0100
++++ openjdk/hotspot/src/share/vm/memory/threadLocalAllocBuffer.cpp	2010-09-19 16:07:14.939307365 +0100
 @@ -221,7 +221,7 @@
    size_t init_sz;
  
@@ -210,9 +222,9 @@ diff -Nru openjdk.orig/hotspot/src/share/vm/memory/threadLocalAllocBuffer.cpp op
      // Startup issue - main thread initialized before heap initialized.
      init_sz = min_size();
 diff -Nru openjdk.orig/hotspot/src/share/vm/runtime/arguments.cpp openjdk/hotspot/src/share/vm/runtime/arguments.cpp
---- openjdk.orig/hotspot/src/share/vm/runtime/arguments.cpp	2010-04-10 01:52:10.000000000 +0100
-+++ openjdk/hotspot/src/share/vm/runtime/arguments.cpp	2010-04-10 02:28:51.000000000 +0100
-@@ -1071,7 +1071,7 @@
+--- openjdk.orig/hotspot/src/share/vm/runtime/arguments.cpp	2010-09-19 15:38:15.000000000 +0100
++++ openjdk/hotspot/src/share/vm/runtime/arguments.cpp	2010-09-19 16:07:14.939307365 +0100
+@@ -1073,7 +1073,7 @@
      // NewSize was set on the command line and it is larger than
      // preferred_max_new_size.
      if (!FLAG_IS_DEFAULT(NewSize)) {   // NewSize explicitly set at command-line
@@ -221,7 +233,7 @@ diff -Nru openjdk.orig/hotspot/src/share/vm/runtime/arguments.cpp openjdk/hotspo
      } else {
        FLAG_SET_ERGO(uintx, MaxNewSize, preferred_max_new_size);
      }
-@@ -1090,7 +1090,7 @@
+@@ -1092,7 +1092,7 @@
      // there was no obvious reason.  Also limit to the case where
      // MaxNewSize has not been set.
  
@@ -230,7 +242,7 @@ diff -Nru openjdk.orig/hotspot/src/share/vm/runtime/arguments.cpp openjdk/hotspo
  
      // Code along this path potentially sets NewSize and OldSize
  
-@@ -1132,8 +1132,8 @@
+@@ -1134,8 +1134,8 @@
        // Unless explicitly requested otherwise, make young gen
        // at least min_new, and at most preferred_max_new_size.
        if (FLAG_IS_DEFAULT(NewSize)) {
@@ -241,7 +253,7 @@ diff -Nru openjdk.orig/hotspot/src/share/vm/runtime/arguments.cpp openjdk/hotspo
          if (PrintGCDetails && Verbose) {
            // Too early to use gclog_or_tty
            tty->print_cr("Ergo set NewSize: " SIZE_FORMAT, NewSize);
-@@ -1144,7 +1144,7 @@
+@@ -1146,7 +1146,7 @@
        // later NewRatio will decide how it grows; see above.
        if (FLAG_IS_DEFAULT(OldSize)) {
          if (max_heap > NewSize) {

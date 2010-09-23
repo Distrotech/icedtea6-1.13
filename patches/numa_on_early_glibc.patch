@@ -1,0 +1,46 @@
+--- openjdk.orig/hotspot/src/os/linux/vm/os_linux.cpp	2010-09-14 15:30:59.000000000 +0100
++++ openjdk/hotspot/src/os/linux/vm/os_linux.cpp	2010-09-14 17:45:54.000000000 +0100
+@@ -54,6 +54,10 @@ 
+ # include <sys/shm.h>
+ # include <link.h>
+ 
++#if __x86_64__
++#include <asm/vsyscall.h>
++#endif
++
+ #define MAX_PATH    (2 * K)
+ 
+ // for timer info max values which include all bits
+@@ -2414,6 +2418,21 @@ 
+   return end;
+ }
+ 
++static int sched_getcpu_syscall(void) {
++  unsigned int cpu;
++  int retval = -1;
++
++#if __x86_64__
++  typedef long (*vgetcpu_t)(unsigned int *cpu, unsigned int *node, unsigned long *tcache);
++  vgetcpu_t vgetcpu = (vgetcpu_t)VSYSCALL_ADDR(__NR_vgetcpu);
++  retval = vgetcpu(&cpu, NULL, NULL);
++#elif __i386__
++  retval = syscall(SYS_getcpu, &cpu, NULL, NULL);
++#endif
++
++  return (retval == -1) ? retval : cpu;
++}
++
+ extern "C" void numa_warn(int number, char *where, ...) { }
+ extern "C" void numa_error(char *where) { }
+ 
+@@ -2422,6 +2441,10 @@ 
+   set_sched_getcpu(CAST_TO_FN_PTR(sched_getcpu_func_t,
+                                   dlsym(RTLD_DEFAULT, "sched_getcpu")));
+ 
++  // If it's not, try a direct syscall.
++  if (sched_getcpu() == -1)
++    set_sched_getcpu(CAST_TO_FN_PTR(sched_getcpu_func_t, (void*)&sched_getcpu_syscall));
++
+   if (sched_getcpu() != -1) { // Does it work?
+     void *handle = dlopen("libnuma.so.1", RTLD_LAZY);
+     if (handle != NULL) {
