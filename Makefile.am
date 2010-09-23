@@ -555,9 +555,7 @@ clean-local: clean-jtreg clean-jtreg-reports $(PULSE_JAVA_CLEAN_TARGET) \
  clean-icedtea-against-ecj clean-extract-ecj clean-generated clean-replace-hotspot \
  clean-rewriter clean-rewrite-rhino clean-extra clean-rt clean-bootstrap-directory \
  clean-bootstrap-directory-ecj clean-bootstrap-directory-symlink \
- clean-bootstrap-directory-symlink-ecj clean-add-systemtap clean-add-systemtap-debug \
- clean-add-pulseaudio clean-add-pulseaudio-debug clean-add-nss clean-add-nss-debug \
- clean-add-tzdata-support clean-add-tzdata-support-debug
+ clean-bootstrap-directory-symlink-ecj
 	if [ -e bootstrap ]; then \
 	  rmdir bootstrap ; \
 	fi
@@ -1312,7 +1310,8 @@ stamps/icedtea-against-icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
 	mkdir -p stamps
 	touch stamps/icedtea-against-icedtea.stamp
 
-clean-icedtea-against-icedtea: clean-add-zero clean-add-cacao clean-add-plugin clean-add-netx
+clean-icedtea-against-icedtea: clean-add-zero clean-add-cacao clean-add-plugin clean-add-netx \
+ clean-add-systemtap  clean-add-pulseaudio clean-add-nss clean-add-tzdata-support
 	rm -f stamps/icedtea-against-icedtea.stamp
 
 stamps/icedtea-debug-against-icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
@@ -1323,7 +1322,8 @@ stamps/icedtea-debug-against-icedtea.stamp: stamps/bootstrap-directory-symlink.s
 	touch stamps/icedtea-debug-against-icedtea.stamp
 
 clean-icedtea-debug-against-icedtea: clean-add-zero-debug clean-add-cacao-debug clean-add-plugin-debug \
- clean-add-netx-debug
+ clean-add-netx-debug clean-add-systemtap-debug clean-add-pulseaudio-debug clean-add-nss-debug \
+ clean-add-tzdata-support-debug
 	rm -f stamps/icedtea-debug-against-icedtea.stamp
 
 stamps/add-plugin.stamp: stamps/plugin.stamp stamps/icedtea.stamp
