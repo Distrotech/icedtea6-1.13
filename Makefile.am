@@ -556,7 +556,8 @@ clean-local: clean-jtreg clean-jtreg-reports $(PULSE_JAVA_CLEAN_TARGET) \
  clean-rewriter clean-rewrite-rhino clean-extra clean-rt clean-bootstrap-directory \
  clean-bootstrap-directory-ecj clean-bootstrap-directory-symlink \
  clean-bootstrap-directory-symlink-ecj clean-add-systemtap clean-add-systemtap-debug \
- clean-add-pulseaudio clean-add-pulseaudio-debug
+ clean-add-pulseaudio clean-add-pulseaudio-debug clean-add-nss clean-add-nss-debug \
+ clean-add-tzdata-support clean-add-tzdata-support-debug
 	if [ -e bootstrap ]; then \
 	  rmdir bootstrap ; \
 	fi
@@ -590,7 +591,9 @@ install:
 	clean-replace-hotspot clean-generated clean-download clean-hgforest clean-download-openjdk \
 	clean-rewriter clean-rewrite-rhino clean-add-netx clean-add-netx-debug \
 	clean-add-plugin clean-add-plugin-debug clean-add-systemtap clean-add-systemtap-debug \
-	clean-add-pulseaudio clean-add-pulseaudio-debug
+	clean-add-pulseaudio clean-add-pulseaudio-debug clean-add-nss clean-add-nss-debug \
+	clean-add-tzdata-support clean-add-tzdata-support-debug
+
 env:
 	@echo 'unset JAVA_HOME'
 	@echo 'export $(ICEDTEA_ENV)'
@@ -1266,12 +1269,6 @@ endif
 if WITH_CACAO
 	printf -- '-cacao ALIASED_TO -server\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
 endif
-	cp $(abs_top_builddir)/nss.cfg \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security;
-if WITH_TZDATA_DIR
-	cp $(abs_top_builddir)/tz.properties \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib;
-endif
 	@echo "IcedTea is served:" $(BUILD_OUTPUT_DIR)
 	mkdir -p stamps
 	touch stamps/icedtea.stamp
@@ -1299,12 +1296,6 @@ endif
 if WITH_CACAO
 	printf -- '-cacao ALIASED_TO -server\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
 endif
-	cp $(abs_top_builddir)/nss.cfg \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security;
-if WITH_TZDATA_DIR
-	cp $(abs_top_builddir)/tz.properties \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib;
-endif
 	@echo "IcedTea (debug build) is served:" \
 	  $(DEBUG_BUILD_OUTPUT_DIR)
 	mkdir -p stamps
@@ -1316,7 +1307,8 @@ clean-icedtea-debug:
 
 stamps/icedtea-against-icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
  stamps/icedtea.stamp stamps/add-cacao.stamp stamps/add-zero.stamp stamps/add-plugin.stamp \
- stamps/add-netx.stamp stamps/add-systemtap.stamp stamps/add-pulseaudio.stamp
+ stamps/add-netx.stamp stamps/add-systemtap.stamp stamps/add-pulseaudio.stamp stamps/add-nss.stamp \
+ stamps/add-tzdata-support.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-against-icedtea.stamp
 
@@ -1326,7 +1318,7 @@ clean-icedtea-against-icedtea: clean-add-zero clean-add-cacao clean-add-plugin c
 stamps/icedtea-debug-against-icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
  stamps/icedtea-debug.stamp stamps/add-cacao-debug.stamp stamps/add-zero-debug.stamp \
  stamps/add-plugin-debug.stamp stamps/add-netx-debug.stamp stamps/add-systemtap-debug.stamp \
- stamps/add-pulseaudio-debug.stamp
+ stamps/add-pulseaudio-debug.stamp stamps/add-nss-debug.stamp stamps/add/tzdata-support-debug.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-debug-against-icedtea.stamp
 
@@ -1523,6 +1515,46 @@ clean-add-pulseaudio-debug:
 	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/ext/pulse-java.jar
 	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/ext/pulse-java.jar
 	rm -f stamps/add-pulseaudio-debug.stamp
+
+stamps/add-nss.stamp: stamps/icedtea.stamp
+	cp $(abs_top_builddir)/nss.cfg \
+	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security
+	touch stamps/add-nss.stamp
+
+clean-add-nss:
+	rm -f $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/nss.cfg
+	rm -f stamps/add-nss.stamp
+
+stamps/add-nss-debug.stamp: stamps/icedtea-debug.stamp
+	cp $(abs_top_builddir)/nss.cfg \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security;
+	touch stamps/add-nss-debug.stamp
+
+clean-add-nss-debug:
+	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/nss.cfg
+	rm -f stamps/add-nss-debug.stamp
+
+stamps/add-tzdata-support.stamp: stamps/icedtea.stamp
+if WITH_TZDATA_DIR
+	cp $(abs_top_builddir)/tz.properties \
+	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib
+endif
+	touch stamps/add-tzdata-support.stamp
+
+clean-add-tzdata-support:
+	rm -f $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties
+	rm -f stamps/add-tzdata-support.stamp
+
+stamps/add-tzdata-support-debug.stamp: stamps/icedtea.stamp
+if WITH_TZDATA_DIR
+	cp $(abs_top_builddir)/tz.properties \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib;
+endif
+	touch stamps/add-tzdata-support-debug.stamp
+
+clean-add-tzdata-support-debug:
+	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties
+	rm -f stamps/add-tzdata-support-debug.stamp
 
 # OpenJDK ecj Targets
 # ===================
