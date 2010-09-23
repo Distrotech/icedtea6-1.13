@@ -744,6 +744,7 @@ clean-download-cacao:
 clean-drops: clean-download-jaxp-drop clean-download-jaf-drop \
  clean-download-jaxws-drop
 	if [ -e drops ] ; then \
+	  rm -f drops/*.old ; \
 	  rmdir drops ; \
 	fi
 	rm -f stamps/download-drops.stamp

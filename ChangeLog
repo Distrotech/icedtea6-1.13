@@ -1,6 +1,12 @@
 2010-09-24  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:
+	(distclean-local): Remove any old tarballs
+	before trying to remove the drops directory.
+
+2010-09-24  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
 	(clean-local): Remove add-x and add-x-debug clean targets.
 	(clean-icedtea-against-icedtea): Add clean-add-x targets.
 	(clean-icedtea-debug-against-icedtea): Add clean-add-x-debug targets.
