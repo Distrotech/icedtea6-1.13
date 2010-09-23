@@ -247,7 +247,6 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-sparc-ptracefix.patch \
 	patches/icedtea-sparc-trapsfix.patch \
 	patches/icedtea-demo-swingapplet.patch \
-	patches/icedtea-awt-window-size.patch \
 	patches/icedtea-jtreg-6592792.patch \
 	patches/icedtea-s390-noinline.patch \
 	patches/icedtea-jtreg-dnd.patch \
@@ -280,13 +279,11 @@ ICEDTEA_PATCHES = \
 	patches/ipv4-mapped-ipv6-addresses.patch \
 	patches/icedtea-too-many-args.patch \
 	patches/icedtea-jtreg-OpenGLContextInit.patch \
-	patches/openjdk/6969395-net_bugs.patch \
 	patches/openjdk/6510892-httpserver_test.patch \
 	patches/openjdk/6638712-wildcard_types.patch \
 	patches/openjdk/6650759-missing_inference.patch \
 	patches/numa_on_early_glibc.patch \
-	patches/icedtea-shark-build.patch \
-	patches/openjdk/6985992-test_6933784.patch
+	patches/icedtea-shark-build.patch
 
 if !WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
