@@ -797,7 +797,7 @@ ITNP_NewStream (NPP instance, NPMIMEType type, NPStream* stream,
 
   PLUGIN_DEBUG ("ITNP_NewStream return\n");
 
-  return NPERR_NO_ERROR;
+  return NPERR_GENERIC_ERROR;
 }
 
 void
