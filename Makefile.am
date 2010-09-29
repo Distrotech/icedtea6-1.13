@@ -1547,7 +1547,7 @@ clean-add-tzdata-support:
 	rm -f $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties
 	rm -f stamps/add-tzdata-support.stamp
 
-stamps/add-tzdata-support-debug.stamp: stamps/icedtea.stamp
+stamps/add-tzdata-support-debug.stamp: stamps/icedtea-debug.stamp
 if WITH_TZDATA_DIR
 	cp $(abs_top_builddir)/tz.properties \
 	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib;
@@ -1690,7 +1690,7 @@ clean-add-nss-ecj:
 	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/nss.cfg
 	rm -f stamps/add-nss-ecj.stamp
 
-stamps/add-tzdata-support-ecj.stamp: stamps/icedtea.stamp
+stamps/add-tzdata-support-ecj.stamp: stamps/icedtea-ecj.stamp
 if WITH_TZDATA_DIR
 	cp $(abs_top_builddir)/tz.properties \
 	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib;
