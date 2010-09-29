@@ -1,3 +1,54 @@
+2010-09-29  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(add-tzdata-support-debug): Depend on icedtea-debug, not icedtea.
+	(add-tzdata-support-ecj): Depend on icedtea-ecj, not icedtea.
+
+2010-09-24  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(.PHONY): Add new clean targets.
+	(icedtea-against-icedtea): Don't depend on
+	bootstrap-directory-symlink, icedtea already does.
+	(clean-icedtea-against-icedtea): Remove superfluous space.
+	(icedtea-debug-against-icedtea): Likewise.
+	(icedtea-ecj): Fix formatting.
+	(icedtea-against-ecj): Add new add-x-ecj targets.
+	(clean-icedtea-against-ecj): Add new clean-add-x-ecj targets.
+	(add-plugin-ecj): Add plugin support to the ecj build.
+	(clean-plugin-ecj): Remove plugin support from the ecj build.
+	(add-netx-ecj): Add NetX support to the ecj build.
+	(clean-netx-ecj): Remove NetX support from the ecj build.
+	(add-systemtap-ecj): Add SystemTap support to the ecj build.
+	(clean-add-systemtap-ecj): Remove SystemTap support from the ecj build.
+	(add-pulseaudio-ecj): New target to add PulseAudio support to the ecj build.
+	(clean-add-pulseaudio-ecj): Remove PulseAudio support from the ecj build.
+	(add-nss-ecj): New target to add NSS support to the ecj build.
+	(clean-add-nss-ecj): Remove NSS support from the ecj build.
+	(add-tzdata-support-ecj): New target to add alternate timezone data support to the ecj build.
+	(clean-add-tzdata-support-ecj): Remove alternate timezone data support from the ecj build.
+
+2010-09-24  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(distclean-local): Remove any old tarballs
+	before trying to remove the drops directory.
+
+2010-09-24  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(clean-local): Remove add-x and add-x-debug clean targets.
+	(clean-icedtea-against-icedtea): Add clean-add-x targets.
+	(clean-icedtea-debug-against-icedtea): Add clean-add-x-debug targets.
+
+2010-09-23  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/icedtea-awt-window-size.patch:
+	Moved to...
+	* Makefile.am: Fix path of above patch.
+	* patches/openjdk/6721088-awt_window_size.patch,
+	...here to reflect upstreaming.
+
 2010-09-23  Andrew John Hughes  <ahughes@redhat.com>
 
 	* patches/icedtea-awt-window-size.patch,

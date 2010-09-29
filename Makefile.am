@@ -546,9 +546,7 @@ clean-local: clean-jtreg clean-jtreg-reports $(PULSE_JAVA_CLEAN_TARGET) \
  clean-icedtea-against-ecj clean-extract-ecj clean-generated clean-replace-hotspot \
  clean-rewriter clean-rewrite-rhino clean-extra clean-rt clean-bootstrap-directory \
  clean-bootstrap-directory-ecj clean-bootstrap-directory-symlink \
- clean-bootstrap-directory-symlink-ecj clean-add-systemtap clean-add-systemtap-debug \
- clean-add-pulseaudio clean-add-pulseaudio-debug clean-add-nss clean-add-nss-debug \
- clean-add-tzdata-support clean-add-tzdata-support-debug
+ clean-bootstrap-directory-symlink-ecj
 	if [ -e bootstrap ]; then \
 	  rmdir bootstrap ; \
 	fi
@@ -583,7 +581,9 @@ install:
 	clean-rewriter clean-rewrite-rhino clean-add-netx clean-add-netx-debug \
 	clean-add-plugin clean-add-plugin-debug clean-add-systemtap clean-add-systemtap-debug \
 	clean-add-pulseaudio clean-add-pulseaudio-debug clean-add-nss clean-add-nss-debug \
-	clean-add-tzdata-support clean-add-tzdata-support-debug
+	clean-add-tzdata-support clean-add-tzdata-support-debug clean-add-plugin-ecj \
+	clean-add-netx-ecj clean-add-systemtap-ecj clean-add-pulseaudio-ecj clean-add-nss-ecj \
+	clean-add-tzdata-support-ecj
 
 env:
 	@echo 'unset JAVA_HOME'
@@ -737,6 +737,7 @@ clean-download-cacao:
 clean-drops: clean-download-jaxp-drop clean-download-jaf-drop \
  clean-download-jaxws-drop
 	if [ -e drops ] ; then \
+	  rm -f drops/*.old ; \
 	  rmdir drops ; \
 	fi
 	rm -f stamps/download-drops.stamp
@@ -1296,25 +1297,26 @@ clean-icedtea-debug:
 	rm -rf $(DEBUG_BUILD_OUTPUT_DIR)
 	rm -f stamps/icedtea-debug.stamp
 
-stamps/icedtea-against-icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
- stamps/icedtea.stamp stamps/add-cacao.stamp stamps/add-zero.stamp stamps/add-plugin.stamp \
- stamps/add-netx.stamp stamps/add-systemtap.stamp stamps/add-pulseaudio.stamp stamps/add-nss.stamp \
- stamps/add-tzdata-support.stamp
+stamps/icedtea-against-icedtea.stamp: stamps/icedtea.stamp stamps/add-cacao.stamp stamps/add-zero.stamp \
+ stamps/add-plugin.stamp stamps/add-netx.stamp stamps/add-systemtap.stamp stamps/add-pulseaudio.stamp \
+ stamps/add-nss.stamp stamps/add-tzdata-support.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-against-icedtea.stamp
 
-clean-icedtea-against-icedtea: clean-add-zero clean-add-cacao clean-add-plugin clean-add-netx
+clean-icedtea-against-icedtea: clean-add-zero clean-add-cacao clean-add-plugin clean-add-netx \
+ clean-add-systemtap clean-add-pulseaudio clean-add-nss clean-add-tzdata-support
 	rm -f stamps/icedtea-against-icedtea.stamp
 
-stamps/icedtea-debug-against-icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
- stamps/icedtea-debug.stamp stamps/add-cacao-debug.stamp stamps/add-zero-debug.stamp \
- stamps/add-plugin-debug.stamp stamps/add-netx-debug.stamp stamps/add-systemtap-debug.stamp \
- stamps/add-pulseaudio-debug.stamp stamps/add-nss-debug.stamp stamps/add/tzdata-support-debug.stamp
+stamps/icedtea-debug-against-icedtea.stamp: stamps/icedtea-debug.stamp stamps/add-cacao-debug.stamp \
+ stamps/add-zero-debug.stamp stamps/add-plugin-debug.stamp stamps/add-netx-debug.stamp \
+ stamps/add-systemtap-debug.stamp stamps/add-pulseaudio-debug.stamp stamps/add-nss-debug.stamp \
+ stamps/add/tzdata-support-debug.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-debug-against-icedtea.stamp
 
 clean-icedtea-debug-against-icedtea: clean-add-zero-debug clean-add-cacao-debug clean-add-plugin-debug \
- clean-add-netx-debug
+ clean-add-netx-debug clean-add-systemtap-debug clean-add-pulseaudio-debug clean-add-nss-debug \
+ clean-add-tzdata-support-debug
 	rm -f stamps/icedtea-debug-against-icedtea.stamp
 
 stamps/add-plugin.stamp: stamps/plugin.stamp stamps/icedtea.stamp
@@ -1536,7 +1538,7 @@ clean-add-tzdata-support:
 	rm -f $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties
 	rm -f stamps/add-tzdata-support.stamp
 
-stamps/add-tzdata-support-debug.stamp: stamps/icedtea.stamp
+stamps/add-tzdata-support-debug.stamp: stamps/icedtea-debug.stamp
 if WITH_TZDATA_DIR
 	cp $(abs_top_builddir)/tz.properties \
 	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib;
@@ -1551,7 +1553,7 @@ clean-add-tzdata-support-debug:
 # ===================
 
 stamps/icedtea-ecj.stamp: stamps/bootstrap-directory-symlink-ecj.stamp \
-	$(OPENJDK_ECJ_TREE) stamps/cacao.stamp stamps/rewrite-rhino.stamp
+ $(OPENJDK_ECJ_TREE) stamps/cacao.stamp stamps/rewrite-rhino.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV_ECJ) \
 	  -C openjdk-ecj/ \
@@ -1564,6 +1566,131 @@ stamps/icedtea-ecj.stamp: stamps/bootstrap-directory-symlink-ecj.stamp \
 clean-icedtea-ecj:
 	rm -rf $(ECJ_BUILD_OUTPUT_DIR)
 	rm -f stamps/icedtea-ecj.stamp
+
+stamps/icedtea-against-ecj.stamp: stamps/icedtea-ecj.stamp stamps/add-plugin-ecj.stamp \
+ stamps/add-netx-ecj.stamp stamps/add-systemtap-ecj.stamp stamps/add-pulseaudio-ecj.stamp \
+ stamps/add-nss-ecj.stamp stamps/add-tzdata-support-ecj.stamp
+	mkdir -p stamps
+	touch stamps/icedtea-against-ecj.stamp
+
+clean-icedtea-against-ecj: clean-add-plugin-ecj clean-add-netx-ecj clean-add-systemtap-ecj \
+ clean-add-pulseaudio-ecj clean-add-nss-ecj clean-add-tzdata-support-ecj
+	rm -f stamps/icedtea-against-ecj.stamp
+
+stamps/add-plugin-ecj.stamp: stamps/plugin.stamp stamps/icedtea-ecj.stamp
+if ENABLE_PLUGIN
+	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
+	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
+	cp -pPRf $(abs_top_builddir)/liveconnect/lib/classes.jar \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/plugin.jar
+	cp -pPRf $(abs_top_builddir)/liveconnect/lib/classes.jar \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/plugin.jar
+endif
+	touch stamps/add-plugin-ecj.stamp
+
+clean-add-plugin-ecj:
+	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/IcedTeaPlugin.so
+	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)/IcedTeaPlugin.so
+	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/plugin.jar
+	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/plugin.jar
+	rm -f stamps/add-plugin-ecj.stamp
+
+stamps/add-netx-ecj.stamp: stamps/netx-dist.stamp extra-lib/about.jar stamps/icedtea-ecj.stamp
+	cp -pPRf $(abs_top_builddir)/netx.build/lib/classes.jar \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/netx.jar
+	cp -pPRf $(abs_top_builddir)/netx.build/lib/classes.jar \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/netx.jar
+	cp $(NETX_RESOURCE_DIR)/about.jnlp extra-lib/about.jar \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib
+	cp $(NETX_RESOURCE_DIR)/about.jnlp extra-lib/about.jar \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib
+	cp $(NETX_SRCDIR)/javaws.1 \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/man/man1
+	cp $(NETX_SRCDIR)/javaws.1 \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/man/man1
+	touch stamps/add-netx-ecj.stamp
+
+clean-add-netx-ecj:
+	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/netx.jar
+	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/netx.jar
+	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/about.jnlp
+	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/about.jar
+	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/about.jnlp
+	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/about.jar
+	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/man/man1/javaws.1
+	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/man/man1/javaws.1
+	rm -f stamps/add-netx-ecj.stamp
+
+stamps/add-systemtap-ecj.stamp: stamps/icedtea-ecj.stamp
+if ENABLE_SYSTEMTAP
+	mkdir -p $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/tapset
+	grep "client IGNORE" $(BUILD_JRE_ARCH_DIR)/jvm.cfg; \
+	if test $$? -eq 0; then \
+	  sed -e '/\/client\/libjvm.so/d' \
+	    < $(abs_top_builddir)/tapset/hotspot.stp \
+	    > $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
+	  sed -e '/\/client\/libjvm.so/d' \
+	    < $(abs_top_builddir)/tapset/hotspot_jni.stp \
+	    > $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_jni.stp; \
+	else \
+	  cp $(abs_top_builddir)/tapset/hotspot.stp \
+	    $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
+	  cp $(abs_top_builddir)/tapset/hotspot_jni.stp \
+	    $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_jni.stp; \
+	fi
+	cp $(abs_top_builddir)/tapset/jstack.stp \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/jstack.stp
+endif
+	touch stamps/add-systemtap-ecj.stamp
+
+clean-add-systemtap-ecj:
+	rm -rf $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/tapset
+	rm -f stamps/add-systemtap-ecj.stamp
+
+stamps/add-pulseaudio-ecj.stamp: stamps/icedtea-ecj.stamp $(PULSE_JAVA_TARGET)
+if ENABLE_PULSE_JAVA
+	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
+	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
+	cp -pPRf $(PULSE_JAVA_BUILDDIR)/pulse-java.jar \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/ext
+	cp -pPRf $(PULSE_JAVA_BUILDDIR)/pulse-java.jar \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/ext
+	(cd $(PULSE_JAVA_JAVA_SRCDIR) && \
+	   $(ZIP) -qur $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/src.zip org )
+endif
+	touch stamps/add-pulseaudio-ecj.stamp
+
+# Note: for simplicity, we don't revert the update of src.zip
+clean-add-pulseaudio-ecj:
+	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/libpulse-java.so
+	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)/libpulse-java.so
+	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/ext/pulse-java.jar
+	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/ext/pulse-java.jar
+	rm -f stamps/add-pulseaudio-ecj.stamp
+
+stamps/add-nss-ecj.stamp: stamps/icedtea-ecj.stamp
+	cp $(abs_top_builddir)/nss.cfg \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security;
+	touch stamps/add-nss-ecj.stamp
+
+clean-add-nss-ecj:
+	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/nss.cfg
+	rm -f stamps/add-nss-ecj.stamp
+
+stamps/add-tzdata-support-ecj.stamp: stamps/icedtea-ecj.stamp
+if WITH_TZDATA_DIR
+	cp $(abs_top_builddir)/tz.properties \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib;
+endif
+	touch stamps/add-tzdata-support-ecj.stamp
+
+clean-add-tzdata-support-ecj:
+	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties
+	rm -f stamps/add-tzdata-support-ecj.stamp
 
 # Rebuild targets
 
@@ -1598,15 +1725,6 @@ else
 	   $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/server
 	@echo "Hotspot is served:" $(BUILD_OUTPUT_DIR)/j2sdk-image
 endif
-
-stamps/icedtea-against-ecj.stamp: \
-	stamps/bootstrap-directory-symlink-ecj.stamp \
-	stamps/icedtea-ecj.stamp
-	mkdir -p stamps
-	touch stamps/icedtea-against-ecj.stamp
-
-clean-icedtea-against-ecj:
-	rm -f stamps/icedtea-against-ecj.stamp
 
 # Plugin
 
