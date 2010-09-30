@@ -754,9 +754,9 @@ clean-drops: clean-download-jaxp-drop clean-download-jaf-drop \
 stamps/download-openjdk.stamp: stamps/hgforest.stamp
 if USE_HG
 if WITH_HGREV
-	$(HG) fclone -r $(HGREV) $(OPENJDK_HG_URL) openjdk;
+	$(HG) fclone -r $(HGREV) $(OPENJDK_HG_URL) openjdk.hg;
 else
-	$(HG) fclone $(OPENJDK_HG_URL) openjdk;
+	$(HG) fclone $(OPENJDK_HG_URL) openjdk.hg;
 endif
 else
 if OPENJDK_SRC_DIR_FOUND
@@ -801,6 +801,7 @@ endif
 clean-download-openjdk:
 	rm -f $(OPENJDK_SRC_ZIP)
 	rm -f $(HOTSPOT_SRC_ZIP)
+	rm -rf openjdk.hg
 	rm -f stamps/download-openjdk.stamp
 
 stamps/download.stamp: stamps/download-drops.stamp stamps/download-cacao.stamp \
@@ -820,7 +821,14 @@ clean-extract: clean-extract-openjdk clean-cacao
 
 stamps/extract-openjdk.stamp: stamps/download.stamp
 if OPENJDK_SRC_DIR_FOUND
-	cp -pPR $(OPENJDK_SRC_DIR_LINK) $(OPENJDK_SRC_DIR) openjdk
+	if ! test -d openjdk ; then \
+	  cp -pPR $(OPENJDK_SRC_DIR_LINK) $(OPENJDK_SRC_DIR) openjdk ; \
+	fi
+else
+if USE_HG
+	if ! test -d openjdk ; then \
+	  cp -pPRl openjdk.hg openjdk ; \
+	fi
 else
 	set -e ; \
 	if ! test -d openjdk ; \
