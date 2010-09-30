@@ -830,6 +830,7 @@ else
 	  sh $(abs_top_srcdir)/fsg.sh ; \
 	fi
 endif
+endif
 	mkdir -p stamps
 	touch stamps/extract-openjdk.stamp
 
