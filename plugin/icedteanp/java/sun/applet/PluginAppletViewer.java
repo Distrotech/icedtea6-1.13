@@ -139,8 +139,8 @@ import com.sun.jndi.toolkit.url.UrlUtil;
 
          
 
-         // put inside initial 0 handle frame
-         PluginAppletViewer.reFrame(null, identifier, System.out, 0, panel);
+         // create the frame.
+         PluginAppletViewer.reFrame(null, identifier, System.out, handle, panel);
          
          panel.init();
 
@@ -557,10 +557,6 @@ import com.sun.jndi.toolkit.url.UrlUtil;
 
                  if (!status.get(identifier).equals(PAV_INIT_STATUS.INIT_COMPLETE))
                      throw new Exception("Applet initialization timeout");
-
-                 PluginAppletViewer oldFrame = applets.get(identifier);
-                 reFrame(oldFrame, oldFrame.identifier, oldFrame.statusMsgStream, 
-                         handle, oldFrame.panel);
                  
              } else {
                  PluginDebug.debug ("Handling message: " + message + " instance " + identifier + " " + Thread.currentThread());
