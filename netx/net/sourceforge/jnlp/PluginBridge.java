@@ -35,8 +35,6 @@ import net.sourceforge.jnlp.runtime.JNLPRuntime;
 
 public class PluginBridge extends JNLPFile
 {
-    Version specVersion = new Version("1.0");
-    Version fileVersion = new Version("1.1");
 
     String name;
     String[] jars = new String[0];
@@ -48,6 +46,8 @@ public class PluginBridge extends JNLPFile
                         int width, int height, Hashtable atts)
     throws Exception
     {
+        specVersion = new Version("1.0");
+        fileVersion = new Version("1.1");
         this.codeBase = codebase;
         this.sourceLocation = documentBase;
 
