@@ -1,3 +1,15 @@
+2010-10-04  Omair Majid  <omajid@redhat.com>
+
+	* netx/net/sourceforge/jnlp/resources/Messages.properties:
+	Add AFileOnTheMachine, change SFileReadAccess and SFileWriteAccess.
+	* netx/net/sourceforge/jnlp/security/AccessWarningPane.java:
+	(addComponents): Add the filename to the message.
+	* netx/net/sourceforge/jnlp/services/XExtendedService.java:
+	(openFile): Pass along the filename to ServiceUtil.checkAccess.
+	* netx/net/sourceforge/jnlp/util/FileUtils.java:
+	(displayablePath): New method.
+	(displayablePath): Likewise.
+
 2010-10-01  Andrew Su  <asu@redhat.com>
 
 	* PluginAppletViewer.java:

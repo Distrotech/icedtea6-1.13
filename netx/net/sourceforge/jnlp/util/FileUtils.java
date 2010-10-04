@@ -68,4 +68,57 @@ public final class FileUtils {
         return filename;
     }
 
+    /**
+     * Returns a String that is suitable for using in GUI elements for
+     * displaying (long) paths to users.
+     *
+     * @param path a path that should be shortened
+     * @return a shortened path suitable for displaying to the user
+     */
+    public static String displayablePath(String path) {
+        final int DEFAULT_LENGTH = 40;
+        return displayablePath(path, DEFAULT_LENGTH);
+    }
+
+    /**
+     * Return a String that is suitable for using in GUI elements for displaying
+     * paths to users. If the path is longer than visibleChars, it is truncated
+     * in a display-friendly way
+     *
+     * @param path a path that should be shorted
+     * @param visibleChars the maximum number of characters that path should fit
+     *        into. Also the length of the returned string
+     * @return a shortened path that contains limited number of chars
+     */
+    public static String displayablePath(String path, int visibleChars) {
+        /*
+         * use a very simple method: prefix + "..." + suffix
+         *
+         * where prefix is the beginning part of path (as much as we can squeeze in) 
+         * and suffix is the end path of path
+         */
+
+        if (path == null || path.length() <= visibleChars) {
+            return path;
+        }
+
+        final String OMITTED = "...";
+        final int OMITTED_LENGTH = OMITTED.length();
+        final int MIN_PREFIX_LENGTH = 4;
+        final int MIN_SUFFIX_LENGTH = 4;
+        /*
+         * we want to show things other than OMITTED. if we have too few for
+         * suffix and prefix, then just return as much as we can of the filename
+         */
+        if (visibleChars < (OMITTED_LENGTH + MIN_PREFIX_LENGTH + MIN_SUFFIX_LENGTH)) {
+            return path.substring(path.length() - visibleChars);
+        }
+
+        int affixLength = (visibleChars - OMITTED_LENGTH)/2;
+        String prefix = path.substring(0, affixLength);
+        String suffix = path.substring(path.length() - affixLength);
+
+        return prefix + OMITTED + suffix;
+    }
+
 }
