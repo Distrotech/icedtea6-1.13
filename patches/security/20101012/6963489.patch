@@ -1,0 +1,31 @@
+diff -Nru openjdk.orig/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c
+--- openjdk.orig/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c	2010-10-04 13:45:59.000000000 +0100
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c	2010-10-04 13:50:53.713627849 +0100
+@@ -687,6 +687,9 @@
+                 LPGAMMATABLE Shapes1[3];
+ 
+                 GrayTRC = cmsReadICCGamma(hProfile, icSigGrayTRCTag);
++                if (!GrayTRC) {
++                    return NULL;
++                }
+                 FromLstarToXYZ(GrayTRC, Shapes1);
+ 
+                 if (GrayTRC == NULL)
+diff -Nru openjdk.orig/jdk/src/share/native/sun/java2d/cmm/lcms/LCMS.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/LCMS.c
+--- openjdk.orig/jdk/src/share/native/sun/java2d/cmm/lcms/LCMS.c	2010-06-21 22:15:42.000000000 +0100
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/LCMS.c	2010-10-04 13:50:53.697629314 +0100
+@@ -190,12 +190,12 @@
+                                        "sTrans.xf == NULL");
+         JNU_ThrowByName(env, "java/awt/color/CMMException",
+                         "Cannot get color transform");
++    } else {
++        Disposer_AddRecord(env, disposerRef, LCMS_freeTransform, sTrans.j);
+     }
+-
+     if (iccArray != &_iccArray[0]) {
+         free(iccArray);
+     }
+-    Disposer_AddRecord(env, disposerRef, LCMS_freeTransform, sTrans.j);
+     return sTrans.j;
+ }
+ 

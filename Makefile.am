@@ -197,7 +197,22 @@ REWRITER_SRCS = $(abs_top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.jav
 
 ICEDTEA_FSG_PATCHES =
 
+BROKEN = 
+
+SECURITY_PATCHES = \
+	patches/security/20101012/6891766.patch \
+	patches/security/20101012/6925710.patch \
+	patches/security/20101012/6938813.patch \
+	patches/security/20101012/6957564.patch \
+	patches/security/20101012/6958060.patch \
+	patches/security/20101012/6963023.patch \
+	patches/security/20101012/6963489.patch \
+	patches/security/20101012/6966692.patch \
+	patches/security/20101012/6914943.patch \
+	patches/security/20101012/6559775.patch
+
 ICEDTEA_PATCHES = \
+	$(SECURITY_PATCHES) \
 	patches/icedtea-notice-safepoints.patch \
 	patches/icedtea-parisc-opt.patch \
 	patches/icedtea-lucene-crash.patch \

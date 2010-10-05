@@ -1,0 +1,317 @@
+# HG changeset patch
+# User skoppar
+# Date 1285671517 25200
+# Node ID 57681551c11efbec9906bdf321554aabcac25228
+# Parent  bb1c74cae929a5903c0aca64b9e5a7f67726b02a
+6559775: Race allows defaultReadObject to be invoked instead of readFields during deserialization
+Reviewed-by: hawtin
+
+diff --git a/make/java/java/FILES_java.gmk b/make/java/java/FILES_java.gmk
+--- openjdk.orig/jdk/make/java/java/FILES_java.gmk
++++ openjdk/jdk/make/java/java/FILES_java.gmk
+@@ -384,6 +384,7 @@ JAVA_JAVA_java = \
+     java/io/FilePermission.java \
+     java/io/Serializable.java \
+     java/io/Externalizable.java \
++    java/io/SerialCallbackContext.java \
+ 	java/io/Bits.java \
+ 	java/io/ObjectInput.java \
+ 	java/io/ObjectInputStream.java \
+diff --git a/src/share/classes/java/io/ObjectInputStream.java b/src/share/classes/java/io/ObjectInputStream.java
+--- openjdk.orig/jdk/src/share/classes/java/io/ObjectInputStream.java
++++ openjdk/jdk/src/share/classes/java/io/ObjectInputStream.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1996, 2006, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -264,7 +264,7 @@ public class ObjectInputStream
+      * object currently being deserialized and descriptor for current class.
+      * Null when not during readObject upcall.
+      */
+-    private CallbackContext curContext;
++    private SerialCallbackContext curContext;
+ 
+     /**
+      * Creates an ObjectInputStream that reads from the specified InputStream.
+@@ -1797,7 +1797,7 @@ public class ObjectInputStream
+     private void readExternalData(Externalizable obj, ObjectStreamClass desc)
+         throws IOException
+     {
+-        CallbackContext oldContext = curContext;
++        SerialCallbackContext oldContext = curContext;
+         curContext = null;
+         try {
+             boolean blocked = desc.hasBlockExternalData();
+@@ -1856,10 +1856,10 @@ public class ObjectInputStream
+                     slotDesc.hasReadObjectMethod() &&
+                     handles.lookupException(passHandle) == null)
+                 {
+-                    CallbackContext oldContext = curContext;
++                    SerialCallbackContext oldContext = curContext;
+ 
+                     try {
+-                        curContext = new CallbackContext(obj, slotDesc);
++                        curContext = new SerialCallbackContext(obj, slotDesc);
+ 
+                         bin.setBlockDataMode(true);
+                         slotDesc.invokeReadObject(obj, this);
+@@ -3504,42 +3504,4 @@ public class ObjectInputStream
+         }
+     }
+ 
+-    /**
+-     * Context that during upcalls to class-defined readObject methods; holds
+-     * object currently being deserialized and descriptor for current class.
+-     * This context keeps a boolean state to indicate that defaultReadObject
+-     * or readFields has already been invoked with this context or the class's
+-     * readObject method has returned; if true, the getObj method throws
+-     * NotActiveException.
+-     */
+-    private static class CallbackContext {
+-        private final Object obj;
+-        private final ObjectStreamClass desc;
+-        private final AtomicBoolean used = new AtomicBoolean();
+-
+-        public CallbackContext(Object obj, ObjectStreamClass desc) {
+-            this.obj = obj;
+-            this.desc = desc;
+-        }
+-
+-        public Object getObj() throws NotActiveException {
+-            checkAndSetUsed();
+-            return obj;
+-        }
+-
+-        public ObjectStreamClass getDesc() {
+-            return desc;
+-        }
+-
+-        private void checkAndSetUsed() throws NotActiveException {
+-            if (!used.compareAndSet(false, true)) {
+-                 throw new NotActiveException(
+-                      "not in readObject invocation or fields already read");
+-            }
+-        }
+-
+-        public void setUsed() {
+-            used.set(true);
+-        }
+-    }
+ }
+diff --git a/src/share/classes/java/io/ObjectOutputStream.java b/src/share/classes/java/io/ObjectOutputStream.java
+--- openjdk.orig/jdk/src/share/classes/java/io/ObjectOutputStream.java
++++ openjdk/jdk/src/share/classes/java/io/ObjectOutputStream.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1996, 2006, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -35,6 +35,7 @@ import java.util.concurrent.ConcurrentHa
+ import java.util.concurrent.ConcurrentHashMap;
+ import java.util.concurrent.ConcurrentMap;
+ import static java.io.ObjectStreamClass.processQueue;
++import java.io.SerialCallbackContext;
+ 
+ /**
+  * An ObjectOutputStream writes primitive data types and graphs of Java objects
+@@ -191,10 +192,12 @@ public class ObjectOutputStream
+     private boolean enableReplace;
+ 
+     // values below valid only during upcalls to writeObject()/writeExternal()
+-    /** object currently being serialized */
+-    private Object curObj;
+-    /** descriptor for current class (null if in writeExternal()) */
+-    private ObjectStreamClass curDesc;
++    /**
++     * Context during upcalls to class-defined writeObject methods; holds
++     * object currently being serialized and descriptor for current class.
++     * Null when not during writeObject upcall.
++     */
++    private SerialCallbackContext curContext;
+     /** current PutField object */
+     private PutFieldImpl curPut;
+ 
+@@ -426,9 +429,11 @@ public class ObjectOutputStream
+      *          <code>OutputStream</code>
+      */
+     public void defaultWriteObject() throws IOException {
+-        if (curObj == null || curDesc == null) {
++        if ( curContext == null ) {
+             throw new NotActiveException("not in call to writeObject");
+         }
++        Object curObj = curContext.getObj();
++        ObjectStreamClass curDesc = curContext.getDesc();
+         bout.setBlockDataMode(false);
+         defaultWriteFields(curObj, curDesc);
+         bout.setBlockDataMode(true);
+@@ -446,9 +451,11 @@ public class ObjectOutputStream
+      */
+     public ObjectOutputStream.PutField putFields() throws IOException {
+         if (curPut == null) {
+-            if (curObj == null || curDesc == null) {
++            if (curContext == null) {
+                 throw new NotActiveException("not in call to writeObject");
+             }
++            Object curObj = curContext.getObj();
++            ObjectStreamClass curDesc = curContext.getDesc();  
+             curPut = new PutFieldImpl(curDesc);
+         }
+         return curPut;
+@@ -1420,17 +1427,15 @@ public class ObjectOutputStream
+      * writeExternal() method.
+      */
+     private void writeExternalData(Externalizable obj) throws IOException {
+-        Object oldObj = curObj;
+-        ObjectStreamClass oldDesc = curDesc;
+         PutFieldImpl oldPut = curPut;
+-        curObj = obj;
+-        curDesc = null;
+         curPut = null;
+-
++        SerialCallbackContext oldContext = curContext;
++            
+         if (extendedDebugInfo) {
+             debugInfoStack.push("writeExternal data");
+         }
+         try {
++            curContext = null;
+             if (protocol == PROTOCOL_VERSION_1) {
+                 obj.writeExternal(this);
+             } else {
+@@ -1440,13 +1445,12 @@ public class ObjectOutputStream
+                 bout.writeByte(TC_ENDBLOCKDATA);
+             }
+         } finally {
++            curContext = oldContext;
+             if (extendedDebugInfo) {
+                 debugInfoStack.pop();
+             }
+         }
+ 
+-        curObj = oldObj;
+-        curDesc = oldDesc;
+         curPut = oldPut;
+     }
+ 
+@@ -1461,12 +1465,9 @@ public class ObjectOutputStream
+         for (int i = 0; i < slots.length; i++) {
+             ObjectStreamClass slotDesc = slots[i].desc;
+             if (slotDesc.hasWriteObjectMethod()) {
+-                Object oldObj = curObj;
+-                ObjectStreamClass oldDesc = curDesc;
+                 PutFieldImpl oldPut = curPut;
+-                curObj = obj;
+-                curDesc = slotDesc;
+                 curPut = null;
++                SerialCallbackContext oldContext = curContext;
+ 
+                 if (extendedDebugInfo) {
+                     debugInfoStack.push(
+@@ -1474,18 +1475,19 @@ public class ObjectOutputStream
+                         slotDesc.getName() + "\")");
+                 }
+                 try {
++                    curContext = new SerialCallbackContext(obj, slotDesc);
+                     bout.setBlockDataMode(true);
+                     slotDesc.invokeWriteObject(obj, this);
+                     bout.setBlockDataMode(false);
+                     bout.writeByte(TC_ENDBLOCKDATA);
+                 } finally {
++                    curContext.setUsed();
++                    curContext = oldContext;
+                     if (extendedDebugInfo) {
+                         debugInfoStack.pop();
+                     }
+                 }
+ 
+-                curObj = oldObj;
+-                curDesc = oldDesc;
+                 curPut = oldPut;
+             } else {
+                 defaultWriteFields(obj, slotDesc);
+diff --git a/src/share/classes/java/io/SerialCallbackContext.java b/src/share/classes/java/io/SerialCallbackContext.java
+new file mode 100644
+--- /dev/null
++++ openjdk/jdk/src/share/classes/java/io/SerialCallbackContext.java
+@@ -0,0 +1,76 @@
++/*
++ * Copyright (c) 2006, 2010, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.  Oracle designates this
++ * particular file as subject to the "Classpath" exception as provided
++ * by Oracle in the LICENSE file that accompanied this code.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++  
++  package java.io;
++  
++  /**
++   * Context during upcalls from object stream to class-defined
++   * readObject/writeObject methods. 
++   * Holds object currently being deserialized and descriptor for current class. 
++   *
++   * This context keeps track of the thread it was constructed on, and allows
++   * only a single call of defaultReadObject, readFields, defaultWriteObject 
++   * or writeFields which must be invoked on the same thread before the class's
++   * readObject/writeObject method has returned.
++   * If not set to the current thread, the getObj method throws NotActiveException.
++   */
++  final class SerialCallbackContext {
++      private final Object obj;
++      private final ObjectStreamClass desc;
++      /**
++       * Thread this context is in use by.
++       * As this only works in one thread, we do not need to worry about thread-safety.
++       */
++      private Thread thread;
++  
++      public SerialCallbackContext(Object obj, ObjectStreamClass desc) {
++          this.obj = obj;
++          this.desc = desc;
++          this.thread = Thread.currentThread();
++      }
++  
++      public Object getObj() throws NotActiveException {
++          checkAndSetUsed();
++          return obj;
++      }
++  
++      public ObjectStreamClass getDesc() {
++          return desc;
++      }
++  
++      private void checkAndSetUsed() throws NotActiveException {
++          if (thread != Thread.currentThread()) {
++               throw new NotActiveException(
++                "not in readObject invocation or fields already read");
++          }
++          thread = null;
++      }
++  
++      public void setUsed() {
++          thread = null;
++      }
++  }
++  
++

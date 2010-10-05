@@ -1,0 +1,2129 @@
+--- openjdk.orig/jdk/src/share/classes/sun/security/ssl/Alerts.java	Sat Jun 12 00:03:38 2010
++++ openjdk/jdk/src/share/classes/sun/security/ssl/Alerts.java	Sat Jun 12 00:03:37 2010
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, 2007, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -74,7 +74,7 @@
+     static final byte           alert_insufficient_security = 71;
+     static final byte           alert_internal_error = 80;
+     static final byte           alert_user_canceled = 90;
+-    static final byte           alert_no_negotiation = 100;
++    static final byte           alert_no_renegotiation = 100;
+ 
+     // from RFC 3546 (TLS Extensions)
+     static final byte           alert_unsupported_extension = 110;
+@@ -132,8 +132,8 @@
+             return "internal_error";
+         case alert_user_canceled:
+             return "user_canceled";
+-        case alert_no_negotiation:
+-            return "no_negotiation";
++        case alert_no_renegotiation:
++            return "no_renegotiation";
+         case alert_unsupported_extension:
+             return "unsupported_extension";
+         case alert_certificate_unobtainable:
+@@ -203,7 +203,7 @@
+         case alert_protocol_version:
+         case alert_internal_error:
+         case alert_user_canceled:
+-        case alert_no_negotiation:
++        case alert_no_renegotiation:
+         default:
+             e = new SSLException(reason);
+             break;
+--- openjdk.orig/jdk/src/share/classes/sun/security/ssl/CipherSuite.java	Sat Jun 12 00:03:40 2010
++++ openjdk/jdk/src/share/classes/sun/security/ssl/CipherSuite.java	Sat Jun 12 00:03:39 2010
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2002, 2007, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -126,6 +126,8 @@
+             macAlg = M_SHA;
+         } else if (name.endsWith("_NULL")) {
+             macAlg = M_NULL;
++        } else if (name.endsWith("_SCSV")) {
++            macAlg = M_NULL;
+         } else {
+             throw new IllegalArgumentException
+                     ("Unknown MAC algorithm for ciphersuite " + name);
+@@ -160,6 +162,10 @@
+         return allowed && keyExchange.isAvailable() && cipher.isAvailable();
+     }
+ 
++    boolean isNegotiable() {
++        return this != C_SCSV && isAvailable();
++    }
++
+     /**
+      * Compares CipherSuites based on their priority. Has the effect of
+      * sorting CipherSuites when put in a sorted collection, which is
+@@ -191,7 +197,7 @@
+         if (s == null) {
+             throw new IllegalArgumentException("Name must not be null");
+         }
+-        CipherSuite c = (CipherSuite)nameMap.get(s);
++        CipherSuite c = nameMap.get(s);
+         if ((c == null) || (c.allowed == false)) {
+             throw new IllegalArgumentException("Unsupported ciphersuite " + s);
+         }
+@@ -268,8 +274,11 @@
+ 
+         // Kerberos cipher suites
+         K_KRB5       ("KRB5", true),
+-        K_KRB5_EXPORT("KRB5_EXPORT", true);
++        K_KRB5_EXPORT("KRB5_EXPORT", true),
+ 
++        // renegotiation protection request signaling cipher suite
++        K_SCSV       ("SCSV",        true);
++
+         // name of the key exchange algorithm, e.g. DHE_DSS
+         final String name;
+         final boolean allowed;
+@@ -344,7 +353,8 @@
+             this.exportable = true;
+         }
+ 
+-        BulkCipher(String transformation, int keySize, int ivSize, boolean allowed) {
++        BulkCipher(String transformation, int keySize,
++                int ivSize, boolean allowed) {
+             this.transformation = transformation;
+             this.algorithm = transformation.split("/")[0];
+             this.description = this.algorithm + "/" + (keySize << 3);
+@@ -362,7 +372,8 @@
+          *
+          * @exception NoSuchAlgorithmException if anything goes wrong
+          */
+-        CipherBox newCipher(ProtocolVersion version, SecretKey key, IvParameterSpec iv,
++        CipherBox newCipher(ProtocolVersion version,
++                SecretKey key, IvParameterSpec iv,
+                 boolean encrypt) throws NoSuchAlgorithmException {
+             return CipherBox.newCipherBox(version, this, key, iv, encrypt);
+         }
+@@ -395,12 +406,13 @@
+         }
+ 
+         private static synchronized boolean isAvailable(BulkCipher cipher) {
+-            Boolean b = (Boolean)availableCache.get(cipher);
++            Boolean b = availableCache.get(cipher);
+             if (b == null) {
+                 try {
+                     SecretKey key = new SecretKeySpec
+-                            (new byte[cipher.expandedKeySize], cipher.algorithm);
+-                    IvParameterSpec iv = new IvParameterSpec(new byte[cipher.ivSize]);
++                        (new byte[cipher.expandedKeySize], cipher.algorithm);
++                    IvParameterSpec iv =
++                        new IvParameterSpec(new byte[cipher.ivSize]);
+                     cipher.newCipher(ProtocolVersion.DEFAULT, key, iv, true);
+                     b = Boolean.TRUE;
+                 } catch (NoSuchAlgorithmException e) {
+@@ -452,18 +464,28 @@
+     }
+ 
+     // export strength ciphers
+-    final static BulkCipher B_NULL    = new BulkCipher("NULL",     0,  0, 0, true);
+-    final static BulkCipher B_RC4_40  = new BulkCipher(CIPHER_RC4, 5, 16, 0, true);
+-    final static BulkCipher B_RC2_40  = new BulkCipher("RC2",      5, 16, 8, false);
+-    final static BulkCipher B_DES_40  = new BulkCipher(CIPHER_DES, 5,  8, 8, true);
++    final static BulkCipher B_NULL    =
++                        new BulkCipher("NULL",         0,  0, 0, true);
++    final static BulkCipher B_RC4_40  =
++                        new BulkCipher(CIPHER_RC4,     5, 16, 0, true);
++    final static BulkCipher B_RC2_40  =
++                        new BulkCipher("RC2",          5, 16, 8, false);
++    final static BulkCipher B_DES_40  =
++                        new BulkCipher(CIPHER_DES,     5,  8, 8, true);
+ 
+     // domestic strength ciphers
+-    final static BulkCipher B_RC4_128 = new BulkCipher(CIPHER_RC4,  16,  0, true);
+-    final static BulkCipher B_DES     = new BulkCipher(CIPHER_DES,   8,  8, true);
+-    final static BulkCipher B_3DES    = new BulkCipher(CIPHER_3DES, 24,  8, true);
+-    final static BulkCipher B_IDEA    = new BulkCipher("IDEA",      16,  8, false);
+-    final static BulkCipher B_AES_128 = new BulkCipher(CIPHER_AES,  16, 16, true);
+-    final static BulkCipher B_AES_256 = new BulkCipher(CIPHER_AES,  32, 16, true);
++    final static BulkCipher B_RC4_128 =
++                        new BulkCipher(CIPHER_RC4,     16,  0, true);
++    final static BulkCipher B_DES     =
++                        new BulkCipher(CIPHER_DES,      8,  8, true);
++    final static BulkCipher B_3DES    =
++                        new BulkCipher(CIPHER_3DES,    24,  8, true);
++    final static BulkCipher B_IDEA    =
++                        new BulkCipher("IDEA",         16,  8, false);
++    final static BulkCipher B_AES_128 =
++                        new BulkCipher(CIPHER_AES,     16, 16, true);
++    final static BulkCipher B_AES_256 =
++                        new BulkCipher(CIPHER_AES,     32, 16, true);
+ 
+     // MACs
+     final static MacAlg M_NULL = new MacAlg("NULL", 0);
+@@ -479,94 +501,160 @@
+         // N: ciphersuites only allowed if we are not in FIPS mode
+         final boolean N = (SunJSSE.isFIPS() == false);
+ 
+-add("SSL_NULL_WITH_NULL_NULL",                0x0000,   1, K_NULL,       B_NULL,    F);
++        add("SSL_NULL_WITH_NULL_NULL",
++                              0x0000,   1, K_NULL,       B_NULL,    F);
+ 
+         // Definition of the CipherSuites that are enabled by default.
+         // They are listed in preference order, most preferred first.
+         int p = DEFAULT_SUITES_PRIORITY * 2;
+ 
+-add("SSL_RSA_WITH_RC4_128_MD5",              0x0004, --p, K_RSA,        B_RC4_128, N);
+-add("SSL_RSA_WITH_RC4_128_SHA",              0x0005, --p, K_RSA,        B_RC4_128, N);
+-add("TLS_RSA_WITH_AES_128_CBC_SHA",          0x002f, --p, K_RSA,        B_AES_128, T);
+-add("TLS_RSA_WITH_AES_256_CBC_SHA",          0x0035, --p, K_RSA,        B_AES_256, T);
++        add("SSL_RSA_WITH_RC4_128_MD5",
++                              0x0004, --p, K_RSA,        B_RC4_128, N);
++        add("SSL_RSA_WITH_RC4_128_SHA",
++                              0x0005, --p, K_RSA,        B_RC4_128, N);
++        add("TLS_RSA_WITH_AES_128_CBC_SHA",
++                              0x002f, --p, K_RSA,        B_AES_128, T);
++        add("TLS_RSA_WITH_AES_256_CBC_SHA",
++                              0x0035, --p, K_RSA,        B_AES_256, T);
+ 
+-add("TLS_ECDH_ECDSA_WITH_RC4_128_SHA",       0xC002, --p, K_ECDH_ECDSA, B_RC4_128, N);
+-add("TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA",   0xC004, --p, K_ECDH_ECDSA, B_AES_128, T);
+-add("TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA",   0xC005, --p, K_ECDH_ECDSA, B_AES_256, T);
+-add("TLS_ECDH_RSA_WITH_RC4_128_SHA",         0xC00C, --p, K_ECDH_RSA,   B_RC4_128, N);
+-add("TLS_ECDH_RSA_WITH_AES_128_CBC_SHA",     0xC00E, --p, K_ECDH_RSA,   B_AES_128, T);
+-add("TLS_ECDH_RSA_WITH_AES_256_CBC_SHA",     0xC00F, --p, K_ECDH_RSA,   B_AES_256, T);
++        add("TLS_ECDH_ECDSA_WITH_RC4_128_SHA",
++                              0xC002, --p, K_ECDH_ECDSA, B_RC4_128, N);
++        add("TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA",
++                              0xC004, --p, K_ECDH_ECDSA, B_AES_128, T);
++        add("TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA",
++                              0xC005, --p, K_ECDH_ECDSA, B_AES_256, T);
++        add("TLS_ECDH_RSA_WITH_RC4_128_SHA",
++                              0xC00C, --p, K_ECDH_RSA,   B_RC4_128, N);
++        add("TLS_ECDH_RSA_WITH_AES_128_CBC_SHA",
++                              0xC00E, --p, K_ECDH_RSA,   B_AES_128, T);
++        add("TLS_ECDH_RSA_WITH_AES_256_CBC_SHA",
++                              0xC00F, --p, K_ECDH_RSA,   B_AES_256, T);
+ 
+-add("TLS_ECDHE_ECDSA_WITH_RC4_128_SHA",      0xC007, --p, K_ECDHE_ECDSA,B_RC4_128, N);
+-add("TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",  0xC009, --p, K_ECDHE_ECDSA,B_AES_128, T);
+-add("TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",  0xC00A, --p, K_ECDHE_ECDSA,B_AES_256, T);
+-add("TLS_ECDHE_RSA_WITH_RC4_128_SHA",        0xC011, --p, K_ECDHE_RSA,  B_RC4_128, N);
+-add("TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",    0xC013, --p, K_ECDHE_RSA,  B_AES_128, T);
+-add("TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",    0xC014, --p, K_ECDHE_RSA,  B_AES_256, T);
++        add("TLS_ECDHE_ECDSA_WITH_RC4_128_SHA",
++                              0xC007, --p, K_ECDHE_ECDSA,B_RC4_128, N);
++        add("TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
++                              0xC009, --p, K_ECDHE_ECDSA,B_AES_128, T);
++        add("TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
++                              0xC00A, --p, K_ECDHE_ECDSA,B_AES_256, T);
++        add("TLS_ECDHE_RSA_WITH_RC4_128_SHA",
++                              0xC011, --p, K_ECDHE_RSA,  B_RC4_128, N);
++        add("TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
++                              0xC013, --p, K_ECDHE_RSA,  B_AES_128, T);
++        add("TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
++                              0xC014, --p, K_ECDHE_RSA,  B_AES_256, T);
+ 
+-add("TLS_DHE_RSA_WITH_AES_128_CBC_SHA",      0x0033, --p, K_DHE_RSA,    B_AES_128, T);
+-add("TLS_DHE_RSA_WITH_AES_256_CBC_SHA",      0x0039, --p, K_DHE_RSA,    B_AES_256, T);
+-add("TLS_DHE_DSS_WITH_AES_128_CBC_SHA",      0x0032, --p, K_DHE_DSS,    B_AES_128, T);
+-add("TLS_DHE_DSS_WITH_AES_256_CBC_SHA",      0x0038, --p, K_DHE_DSS,    B_AES_256, T);
++        add("TLS_DHE_RSA_WITH_AES_128_CBC_SHA",
++                              0x0033, --p, K_DHE_RSA,    B_AES_128, T);
++        add("TLS_DHE_RSA_WITH_AES_256_CBC_SHA",
++                              0x0039, --p, K_DHE_RSA,    B_AES_256, T);
++        add("TLS_DHE_DSS_WITH_AES_128_CBC_SHA",
++                              0x0032, --p, K_DHE_DSS,    B_AES_128, T);
++        add("TLS_DHE_DSS_WITH_AES_256_CBC_SHA",
++                              0x0038, --p, K_DHE_DSS,    B_AES_256, T);
+ 
+-add("SSL_RSA_WITH_3DES_EDE_CBC_SHA",         0x000a, --p, K_RSA,        B_3DES,    T);
+-add("TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA",  0xC003, --p, K_ECDH_ECDSA, B_3DES,    T);
+-add("TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA",    0xC00D, --p, K_ECDH_RSA,   B_3DES,    T);
+-add("TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA", 0xC008, --p, K_ECDHE_ECDSA,B_3DES,    T);
+-add("TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA",   0xC012, --p, K_ECDHE_RSA,  B_3DES,    T);
+-add("SSL_DHE_RSA_WITH_3DES_EDE_CBC_SHA",     0x0016, --p, K_DHE_RSA,    B_3DES,    T);
+-add("SSL_DHE_DSS_WITH_3DES_EDE_CBC_SHA",     0x0013, --p, K_DHE_DSS,    B_3DES,    N);
++        add("SSL_RSA_WITH_3DES_EDE_CBC_SHA",
++                              0x000a, --p, K_RSA,        B_3DES,    T);
++        add("TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA",
++                              0xC003, --p, K_ECDH_ECDSA, B_3DES,    T);
++        add("TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA",
++                              0xC00D, --p, K_ECDH_RSA,   B_3DES,    T);
++        add("TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA",
++                              0xC008, --p, K_ECDHE_ECDSA,B_3DES,    T);
++        add("TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA",
++                              0xC012, --p, K_ECDHE_RSA,  B_3DES,    T);
++        add("SSL_DHE_RSA_WITH_3DES_EDE_CBC_SHA",
++                              0x0016, --p, K_DHE_RSA,    B_3DES,    T);
++        add("SSL_DHE_DSS_WITH_3DES_EDE_CBC_SHA",
++                              0x0013, --p, K_DHE_DSS,    B_3DES,    N);
+ 
+-add("SSL_RSA_WITH_DES_CBC_SHA",              0x0009, --p, K_RSA,        B_DES,     N);
+-add("SSL_DHE_RSA_WITH_DES_CBC_SHA",          0x0015, --p, K_DHE_RSA,    B_DES,     N);
+-add("SSL_DHE_DSS_WITH_DES_CBC_SHA",          0x0012, --p, K_DHE_DSS,    B_DES,     N);
+-add("SSL_RSA_EXPORT_WITH_RC4_40_MD5",        0x0003, --p, K_RSA_EXPORT, B_RC4_40,  N);
+-add("SSL_RSA_EXPORT_WITH_DES40_CBC_SHA",     0x0008, --p, K_RSA_EXPORT, B_DES_40,  N);
+-add("SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA", 0x0014, --p, K_DHE_RSA,    B_DES_40,  N);
+-add("SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA", 0x0011, --p, K_DHE_DSS,    B_DES_40,  N);
++        add("SSL_RSA_WITH_DES_CBC_SHA",
++                              0x0009, --p, K_RSA,        B_DES,     N);
++        add("SSL_DHE_RSA_WITH_DES_CBC_SHA",
++                              0x0015, --p, K_DHE_RSA,    B_DES,     N);
++        add("SSL_DHE_DSS_WITH_DES_CBC_SHA",
++                              0x0012, --p, K_DHE_DSS,    B_DES,     N);
++        add("SSL_RSA_EXPORT_WITH_RC4_40_MD5",
++                              0x0003, --p, K_RSA_EXPORT, B_RC4_40,  N);
++        add("SSL_RSA_EXPORT_WITH_DES40_CBC_SHA",
++                              0x0008, --p, K_RSA_EXPORT, B_DES_40,  N);
++        add("SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA",
++                              0x0014, --p, K_DHE_RSA,    B_DES_40,  N);
++        add("SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA",
++                              0x0011, --p, K_DHE_DSS,    B_DES_40,  N);
+ 
++        // Renegotiation protection request Signalling Cipher Suite Value (SCSV)
++        add("TLS_EMPTY_RENEGOTIATION_INFO_SCSV",
++                              0x00ff, --p, K_SCSV,       B_NULL,    T);
++
+         // Definition of the CipherSuites that are supported but not enabled
+         // by default.
+         // They are listed in preference order, preferred first.
+         p = DEFAULT_SUITES_PRIORITY;
+ 
+-// Anonymous key exchange and the NULL ciphers
+-add("SSL_RSA_WITH_NULL_MD5",                 0x0001, --p, K_RSA,        B_NULL,    N);
+-add("SSL_RSA_WITH_NULL_SHA",                 0x0002, --p, K_RSA,        B_NULL,    N);
+-add("TLS_ECDH_ECDSA_WITH_NULL_SHA",          0xC001, --p, K_ECDH_ECDSA, B_NULL,    N);
+-add("TLS_ECDH_RSA_WITH_NULL_SHA",            0xC00B, --p, K_ECDH_RSA,   B_NULL,    N);
+-add("TLS_ECDHE_ECDSA_WITH_NULL_SHA",         0xC006, --p, K_ECDHE_ECDSA,B_NULL,    N);
+-add("TLS_ECDHE_RSA_WITH_NULL_SHA",           0xC010, --p, K_ECDHE_RSA,  B_NULL,    N);
++        // Anonymous key exchange and the NULL ciphers
++        add("SSL_RSA_WITH_NULL_MD5",
++                              0x0001, --p, K_RSA,        B_NULL,    N);
++        add("SSL_RSA_WITH_NULL_SHA",
++                              0x0002, --p, K_RSA,        B_NULL,    N);
++        add("TLS_ECDH_ECDSA_WITH_NULL_SHA",
++                              0xC001, --p, K_ECDH_ECDSA, B_NULL,    N);
++        add("TLS_ECDH_RSA_WITH_NULL_SHA",
++                              0xC00B, --p, K_ECDH_RSA,   B_NULL,    N);
++        add("TLS_ECDHE_ECDSA_WITH_NULL_SHA",
++                              0xC006, --p, K_ECDHE_ECDSA,B_NULL,    N);
++        add("TLS_ECDHE_RSA_WITH_NULL_SHA",
++                              0xC010, --p, K_ECDHE_RSA,  B_NULL,    N);
+ 
+-add("SSL_DH_anon_WITH_RC4_128_MD5",          0x0018, --p, K_DH_ANON,    B_RC4_128, N);
+-add("TLS_DH_anon_WITH_AES_128_CBC_SHA",      0x0034, --p, K_DH_ANON,    B_AES_128, N);
+-add("TLS_DH_anon_WITH_AES_256_CBC_SHA",      0x003a, --p, K_DH_ANON,    B_AES_256, N);
+-add("SSL_DH_anon_WITH_3DES_EDE_CBC_SHA",     0x001b, --p, K_DH_ANON,    B_3DES,    N);
+-add("SSL_DH_anon_WITH_DES_CBC_SHA",          0x001a, --p, K_DH_ANON,    B_DES,     N);
++        add("SSL_DH_anon_WITH_RC4_128_MD5",
++                              0x0018, --p, K_DH_ANON,    B_RC4_128, N);
++        add("TLS_DH_anon_WITH_AES_128_CBC_SHA",
++                              0x0034, --p, K_DH_ANON,    B_AES_128, N);
++        add("TLS_DH_anon_WITH_AES_256_CBC_SHA",
++                              0x003a, --p, K_DH_ANON,    B_AES_256, N);
++        add("SSL_DH_anon_WITH_3DES_EDE_CBC_SHA",
++                              0x001b, --p, K_DH_ANON,    B_3DES,    N);
++        add("SSL_DH_anon_WITH_DES_CBC_SHA",
++                              0x001a, --p, K_DH_ANON,    B_DES,     N);
+ 
+-add("TLS_ECDH_anon_WITH_RC4_128_SHA",        0xC016, --p, K_ECDH_ANON,  B_RC4_128, N);
+-add("TLS_ECDH_anon_WITH_AES_128_CBC_SHA",    0xC018, --p, K_ECDH_ANON,  B_AES_128, T);
+-add("TLS_ECDH_anon_WITH_AES_256_CBC_SHA",    0xC019, --p, K_ECDH_ANON,  B_AES_256, T);
+-add("TLS_ECDH_anon_WITH_3DES_EDE_CBC_SHA",   0xC017, --p, K_ECDH_ANON,  B_3DES,    T);
++        add("TLS_ECDH_anon_WITH_RC4_128_SHA",
++                              0xC016, --p, K_ECDH_ANON,  B_RC4_128, N);
++        add("TLS_ECDH_anon_WITH_AES_128_CBC_SHA",
++                              0xC018, --p, K_ECDH_ANON,  B_AES_128, T);
++        add("TLS_ECDH_anon_WITH_AES_256_CBC_SHA",
++                              0xC019, --p, K_ECDH_ANON,  B_AES_256, T);
++        add("TLS_ECDH_anon_WITH_3DES_EDE_CBC_SHA",
++                              0xC017, --p, K_ECDH_ANON,  B_3DES,    T);
+ 
+-add("SSL_DH_anon_EXPORT_WITH_RC4_40_MD5",    0x0017, --p, K_DH_ANON,    B_RC4_40,  N);
+-add("SSL_DH_anon_EXPORT_WITH_DES40_CBC_SHA", 0x0019, --p, K_DH_ANON,    B_DES_40,  N);
++        add("SSL_DH_anon_EXPORT_WITH_RC4_40_MD5",
++                              0x0017, --p, K_DH_ANON,    B_RC4_40,  N);
++        add("SSL_DH_anon_EXPORT_WITH_DES40_CBC_SHA",
++                              0x0019, --p, K_DH_ANON,    B_DES_40,  N);
+ 
+-add("TLS_ECDH_anon_WITH_NULL_SHA",           0xC015, --p, K_ECDH_ANON,  B_NULL,    N);
++        add("TLS_ECDH_anon_WITH_NULL_SHA",
++                              0xC015, --p, K_ECDH_ANON,  B_NULL,    N);
+ 
+-// Supported Kerberos ciphersuites from RFC2712
+-add("TLS_KRB5_WITH_RC4_128_SHA",             0x0020, --p, K_KRB5,        B_RC4_128, N);
+-add("TLS_KRB5_WITH_RC4_128_MD5",             0x0024, --p, K_KRB5,        B_RC4_128, N);
+-add("TLS_KRB5_WITH_3DES_EDE_CBC_SHA",        0x001f, --p, K_KRB5,        B_3DES,    N);
+-add("TLS_KRB5_WITH_3DES_EDE_CBC_MD5",        0x0023, --p, K_KRB5,        B_3DES,    N);
+-add("TLS_KRB5_WITH_DES_CBC_SHA",             0x001e, --p, K_KRB5,        B_DES,     N);
+-add("TLS_KRB5_WITH_DES_CBC_MD5",             0x0022, --p, K_KRB5,        B_DES,     N);
+-add("TLS_KRB5_EXPORT_WITH_RC4_40_SHA",       0x0028, --p, K_KRB5_EXPORT, B_RC4_40,  N);
+-add("TLS_KRB5_EXPORT_WITH_RC4_40_MD5",       0x002b, --p, K_KRB5_EXPORT, B_RC4_40,  N);
+-add("TLS_KRB5_EXPORT_WITH_DES_CBC_40_SHA",   0x0026, --p, K_KRB5_EXPORT, B_DES_40,  N);
+-add("TLS_KRB5_EXPORT_WITH_DES_CBC_40_MD5",   0x0029, --p, K_KRB5_EXPORT, B_DES_40,  N);
++        // Supported Kerberos ciphersuites from RFC2712
++        add("TLS_KRB5_WITH_RC4_128_SHA",
++                              0x0020, --p, K_KRB5,        B_RC4_128, N);
++        add("TLS_KRB5_WITH_RC4_128_MD5",
++                              0x0024, --p, K_KRB5,        B_RC4_128, N);
++        add("TLS_KRB5_WITH_3DES_EDE_CBC_SHA",
++                              0x001f, --p, K_KRB5,        B_3DES,    N);
++        add("TLS_KRB5_WITH_3DES_EDE_CBC_MD5",
++                              0x0023, --p, K_KRB5,        B_3DES,    N);
++        add("TLS_KRB5_WITH_DES_CBC_SHA",
++                              0x001e, --p, K_KRB5,        B_DES,     N);
++        add("TLS_KRB5_WITH_DES_CBC_MD5",
++                              0x0022, --p, K_KRB5,        B_DES,     N);
++        add("TLS_KRB5_EXPORT_WITH_RC4_40_SHA",
++                              0x0028, --p, K_KRB5_EXPORT, B_RC4_40,  N);
++        add("TLS_KRB5_EXPORT_WITH_RC4_40_MD5",
++                              0x002b, --p, K_KRB5_EXPORT, B_RC4_40,  N);
++        add("TLS_KRB5_EXPORT_WITH_DES_CBC_40_SHA",
++                              0x0026, --p, K_KRB5_EXPORT, B_DES_40,  N);
++        add("TLS_KRB5_EXPORT_WITH_DES_CBC_40_MD5",
++                              0x0029, --p, K_KRB5_EXPORT, B_DES_40,  N);
+ 
+-
+         // Register the names of a few additional CipherSuites.
+         // Makes them show up as names instead of numbers in
+         // the debug output.
+@@ -610,4 +698,6 @@
+     // ciphersuite SSL_NULL_WITH_NULL_NULL
+     final static CipherSuite C_NULL = CipherSuite.valueOf(0, 0);
+ 
++    // ciphersuite TLS_EMPTY_RENEGOTIATION_INFO_SCSV
++    final static CipherSuite C_SCSV = CipherSuite.valueOf(0x00, 0xff);
+ }
+--- openjdk.orig/jdk/src/share/classes/sun/security/ssl/CipherSuiteList.java	Sat Jun 12 00:03:46 2010
++++ openjdk/jdk/src/share/classes/sun/security/ssl/CipherSuiteList.java	Sat Jun 12 00:03:42 2010
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2002, 2007, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -51,8 +51,9 @@
+     // null if not yet checked.
+     private volatile Boolean containsEC;
+ 
+-    // for use by buildAvailableCache() only
+-    private CipherSuiteList(Collection<CipherSuite> cipherSuites) {
++    // for use by buildAvailableCache() and
++    // Handshaker.getKickstartMessage() only
++    CipherSuiteList(Collection<CipherSuite> cipherSuites) {
+         this.cipherSuites = cipherSuites;
+     }
+ 
+@@ -221,15 +222,18 @@
+         // SortedSet automatically arranges ciphersuites in default
+         // preference order
+         Set<CipherSuite> cipherSuites = new TreeSet<CipherSuite>();
+-        Collection<CipherSuite> allowedCipherSuites = CipherSuite.allowedCipherSuites();
++        Collection<CipherSuite> allowedCipherSuites =
++                                    CipherSuite.allowedCipherSuites();
+         for (CipherSuite c : allowedCipherSuites) {
+             if ((c.allowed == false) || (c.priority < minPriority)) {
+                 continue;
+             }
++
+             if (c.isAvailable()) {
+                 cipherSuites.add(c);
+             }
+         }
++
+         return new CipherSuiteList(cipherSuites);
+     }
+ 
+--- openjdk.orig/jdk/src/share/classes/sun/security/ssl/ClientHandshaker.java	Sat Jun 12 00:03:47 2010
++++ openjdk/jdk/src/share/classes/sun/security/ssl/ClientHandshaker.java	Sat Jun 12 00:03:46 2010
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1996, 2009, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -97,16 +97,24 @@
+      */
+     ClientHandshaker(SSLSocketImpl socket, SSLContextImpl context,
+             ProtocolList enabledProtocols,
+-            ProtocolVersion activeProtocolVersion) {
+-        super(socket, context, enabledProtocols, true, true);
+-        this.activeProtocolVersion = activeProtocolVersion;
++            ProtocolVersion activeProtocolVersion,
++            boolean isInitialHandshake, boolean secureRenegotiation,
++            byte[] clientVerifyData, byte[] serverVerifyData) {
++
++        super(socket, context, enabledProtocols, true, true,
++            activeProtocolVersion, isInitialHandshake, secureRenegotiation,
++            clientVerifyData, serverVerifyData);
+     }
+ 
+     ClientHandshaker(SSLEngineImpl engine, SSLContextImpl context,
+             ProtocolList enabledProtocols,
+-            ProtocolVersion activeProtocolVersion) {
+-        super(engine, context, enabledProtocols, true, true);
+-        this.activeProtocolVersion = activeProtocolVersion;
++            ProtocolVersion activeProtocolVersion,
++            boolean isInitialHandshake, boolean secureRenegotiation,
++            byte[] clientVerifyData, byte[] serverVerifyData) {
++
++        super(engine, context, enabledProtocols, true, true,
++            activeProtocolVersion, isInitialHandshake, secureRenegotiation,
++            clientVerifyData, serverVerifyData);
+     }
+ 
+     /*
+@@ -254,10 +262,11 @@
+         // sent the "client hello" but the server's not seen it.
+         //
+         if (state < HandshakeMessage.ht_client_hello) {
+-            if (!renegotiable) {    // renegotiation is not allowed.
++            if (!secureRenegotiation && !allowUnsafeRenegotiation) {
++                // renegotiation is not allowed.
+                 if (activeProtocolVersion.v >= ProtocolVersion.TLS10.v) {
+-                    // response with a no_negotiation warning,
+-                    warningSE(Alerts.alert_no_negotiation);
++                    // response with a no_renegotiation warning,
++                    warningSE(Alerts.alert_no_renegotiation);
+ 
+                     // invalidate the handshake so that the caller can
+                     // dispose this object.
+@@ -268,26 +277,24 @@
+                     // and the next handshake message will become incomplete.
+                     //
+                     // However, according to SSL/TLS specifications, no more
+-                    // handshake message could immediately follow ClientHello
+-                    // or HelloRequest. But in case of any improper messages,
+-                    // we'd better check to ensure there is no remaining bytes
+-                    // in the handshake input stream.
+-                    if (input.available() > 0) {
+-                        fatalSE(Alerts.alert_unexpected_message,
+-                            "HelloRequest followed by an unexpected  " +
+-                            "handshake message");
+-                    }
+-
++                    // handshake message should immediately follow ClientHello
++                    // or HelloRequest. So just let it be.
+                 } else {
+                     // For SSLv3, send the handshake_failure fatal error.
+-                    // Note that SSLv3 does not define a no_negotiation alert
+-                    // like TLSv1. However we cannot ignore the message
++                    // Note that SSLv3 does not define a no_renegotiation
++                    // alert like TLSv1. However we cannot ignore the message
+                     // simply, otherwise the other side was waiting for a
+                     // response that would never come.
+                     fatalSE(Alerts.alert_handshake_failure,
+-                        "renegotiation is not allowed");
++                        "Renegotiation is not allowed");
+                 }
+             } else {
++                if (!secureRenegotiation) {
++                    if (debug != null && Debug.isOn("handshake")) {
++                        System.out.println(
++                            "Warning: continue with insecure renegotiation");
++                    }
++                }
+                 kickstart();
+             }
+         }
+@@ -322,6 +329,68 @@
+         // Handshake streams
+         setVersion(mesgVersion);
+ 
++        // check the "renegotiation_info" extension
++        RenegotiationInfoExtension serverHelloRI = (RenegotiationInfoExtension)
++                    mesg.extensions.get(ExtensionType.EXT_RENEGOTIATION_INFO);
++        if (serverHelloRI != null) {
++            if (isInitialHandshake) {
++                // verify the length of the "renegotiated_connection" field
++                if (!serverHelloRI.isEmpty()) {
++                    // abort the handshake with a fatal handshake_failure alert
++                    fatalSE(Alerts.alert_handshake_failure,
++                        "The renegotiation_info field is not empty");
++                }
++
++                secureRenegotiation = true;
++            } else {
++                // For a legacy renegotiation, the client MUST verify that
++                // it does not contain the "renegotiation_info" extension.
++                if (!secureRenegotiation) {
++                    fatalSE(Alerts.alert_handshake_failure,
++                        "Unexpected renegotiation indication extension");
++                }
++
++                // verify the client_verify_data and server_verify_data values
++                byte[] verifyData =
++                    new byte[clientVerifyData.length + serverVerifyData.length];
++                System.arraycopy(clientVerifyData, 0, verifyData,
++                        0, clientVerifyData.length);
++                System.arraycopy(serverVerifyData, 0, verifyData,
++                        clientVerifyData.length, serverVerifyData.length);
++                if (!Arrays.equals(verifyData,
++                                serverHelloRI.getRenegotiatedConnection())) {
++                    fatalSE(Alerts.alert_handshake_failure,
++                        "Incorrect verify data in ServerHello " +
++                        "renegotiation_info message");
++                }
++            }
++        } else {
++            // no renegotiation indication extension
++            if (isInitialHandshake) {
++                if (!allowLegacyHelloMessages) {
++                    // abort the handshake with a fatal handshake_failure alert
++                    fatalSE(Alerts.alert_handshake_failure,
++                        "Failed to negotiate the use of secure renegotiation");
++                }
++
++                secureRenegotiation = false;
++                if (debug != null && Debug.isOn("handshake")) {
++                    System.out.println("Warning: No renegotiation " +
++                                    "indication extension in ServerHello");
++                }
++            } else {
++                // For a secure renegotiation, the client must abort the
++                // handshake if no "renegotiation_info" extension is present.
++                if (secureRenegotiation) {
++                    fatalSE(Alerts.alert_handshake_failure,
++                        "No renegotiation indication extension");
++                }
++
++                // we have already allowed unsafe renegotation before request
++                // the renegotiation.
++            }
++        }
++
+         //
+         // Save server nonce, we always use it to compute connection
+         // keys and it's also used to create the master secret if we're
+@@ -329,10 +398,11 @@
+         //
+         svr_random = mesg.svr_random;
+ 
+-        if (isEnabled(mesg.cipherSuite) == false) {
++        if (isNegotiable(mesg.cipherSuite) == false) {
+             fatalSE(Alerts.alert_illegal_parameter,
+-                "Server selected disabled ciphersuite " + cipherSuite);
++                "Server selected improper ciphersuite " + cipherSuite);
+         }
++
+         setCipherSuite(mesg.cipherSuite);
+ 
+         if (mesg.compression_method != 0) {
+@@ -428,7 +498,8 @@
+         for (HelloExtension ext : mesg.extensions.list()) {
+             ExtensionType type = ext.type;
+             if ((type != ExtensionType.EXT_ELLIPTIC_CURVES)
+-                    && (type != ExtensionType.EXT_EC_POINT_FORMATS)) {
++                    && (type != ExtensionType.EXT_EC_POINT_FORMATS)
++                    && (type != ExtensionType.EXT_RENEGOTIATION_INFO)) {
+                 fatalSE(Alerts.alert_unsupported_extension,
+                     "Server sent an unsupported extension: " + type);
+             }
+@@ -814,6 +885,13 @@
+         }
+ 
+         /*
++         * save server verify data for secure renegotiation
++         */
++        if (secureRenegotiation) {
++            serverVerifyData = mesg.getVerifyData();
++        }
++
++        /*
+          * OK, it verified.  If we're doing the fast handshake, add that
+          * "Finished" message to the hash of handshake messages, then send
+          * our own change_cipher_spec and Finished message for the server
+@@ -866,6 +944,13 @@
+         sendChangeCipherSpec(mesg, finishedTag);
+ 
+         /*
++         * save client verify data for secure renegotiation
++         */
++        if (secureRenegotiation) {
++            clientVerifyData = mesg.getVerifyData();
++        }
++
++        /*
+          * Update state machine so server MUST send 'finished' next.
+          * (In "long" handshake case; in short case, we're responding
+          * to its message.)
+@@ -878,12 +963,15 @@
+      * Returns a ClientHello message to kickstart renegotiations
+      */
+     HandshakeMessage getKickstartMessage() throws SSLException {
+-        ClientHello mesg = new ClientHello(sslContext.getSecureRandom(),
+-                                        protocolVersion);
+-        maxProtocolVersion = protocolVersion;
++        // session ID of the ClientHello message
++        SessionId sessionId = SSLSessionImpl.nullSession.getSessionId();
+ 
+-        clnt_random = mesg.clnt_random;
++        // a list of cipher suites sent by the client
++        CipherSuiteList cipherSuites = enabledCipherSuites;
+ 
++        // set the max protocol version this client is supporting.
++        maxProtocolVersion = protocolVersion;
++
+         //
+         // Try to resume an existing session.  This might be mandatory,
+         // given certain API options.
+@@ -907,9 +995,9 @@
+         if (session != null) {
+             CipherSuite sessionSuite = session.getSuite();
+             ProtocolVersion sessionVersion = session.getProtocolVersion();
+-            if (isEnabled(sessionSuite) == false) {
++            if (isNegotiable(sessionSuite) == false) {
+                 if (debug != null && Debug.isOn("session")) {
+-                    System.out.println("%% can't resume, cipher disabled");
++                    System.out.println("%% can't resume, unavailable cipher");
+                 }
+                 session = null;
+             }
+@@ -929,9 +1017,8 @@
+                             + " from port " + getLocalPortSE());
+                     }
+                 }
+-                mesg.sessionId = session.getSessionId();
+ 
+-                mesg.protocolVersion = sessionVersion;
++                sessionId = session.getSessionId();
+                 maxProtocolVersion = sessionVersion;
+ 
+                 // Update SSL version number in underlying SSL socket and
+@@ -940,33 +1027,78 @@
+                 setVersion(sessionVersion);
+             }
+ 
+-            //
+-            // don't say much beyond the obvious if we _must_ resume.
+-            //
++            /*
++             * Force use of the previous session ciphersuite, and
++	     * add the SCSV if enabled.
++             */
+             if (!enableNewSession) {
+                 if (session == null) {
+                     throw new SSLException(
+                         "Can't reuse existing SSL client session");
+                 }
+-                mesg.setCipherSuites(new CipherSuiteList(sessionSuite));
+-                return mesg;
++
++                Collection<CipherSuite> cipherList =
++                                                new ArrayList<CipherSuite>(2);
++                cipherList.add(sessionSuite);
++                if (!secureRenegotiation &&
++                        cipherSuites.contains(CipherSuite.C_SCSV)) {
++                    cipherList.add(CipherSuite.C_SCSV);
++                }   // otherwise, renegotiation_info extension will be used
++
++                cipherSuites = new CipherSuiteList(cipherList);
+             }
+         }
+-        if (session == null) {
+-            if (enableNewSession) {
+-                mesg.sessionId = SSLSessionImpl.nullSession.getSessionId();
+-            } else {
+-                throw new SSLException("No existing session to resume.");
++
++        if (session == null && !enableNewSession) {
++            throw new SSLException("No existing session to resume");
++        }
++
++        // exclude SCSV for secure renegotiation
++        if (secureRenegotiation && cipherSuites.contains(CipherSuite.C_SCSV)) {
++            Collection<CipherSuite> cipherList =
++                        new ArrayList<CipherSuite>(cipherSuites.size() - 1);
++            for (CipherSuite suite : cipherSuites.collection()) {
++                if (suite != CipherSuite.C_SCSV) {
++                    cipherList.add(suite);
++                }
+             }
++
++            cipherSuites = new CipherSuiteList(cipherList);
+         }
+ 
+-        //
+-        // All we have left to do is fill out the cipher suites.
+-        // (If this changes, change the 'return' above!)
+-        //
+-        mesg.setCipherSuites(enabledCipherSuites);
++        // make sure there is a negotiable cipher suite.
++        boolean negotiable = false;
++        for (CipherSuite suite : cipherSuites.collection()) {
++            if (isNegotiable(suite)) {
++                negotiable = true;
++                break;
++            }
++        }
+ 
+-        return mesg;
++        if (!negotiable) {
++            throw new SSLException("No negotiable cipher suite");
++        }
++
++        // create the ClientHello message
++        ClientHello clientHelloMessage = new ClientHello(
++                sslContext.getSecureRandom(), maxProtocolVersion,
++                sessionId, cipherSuites);
++
++        // reset the client random cookie
++        clnt_random = clientHelloMessage.clnt_random;
++
++        /*
++         * need to set the renegotiation_info extension for:
++         * 1: secure renegotiation
++         * 2: initial handshake and no SCSV in the ClientHello
++         * 3: insecure renegotiation and no SCSV in the ClientHello
++         */
++        if (secureRenegotiation ||
++                !cipherSuites.contains(CipherSuite.C_SCSV)) {
++            clientHelloMessage.addRenegotiationInfoExtension(clientVerifyData);
++        }
++
++        return clientHelloMessage;
+     }
+ 
+     /*
+--- openjdk.orig/jdk/src/share/classes/sun/security/ssl/HandshakeMessage.java	Sat Jun 12 00:03:58 2010
++++ openjdk/jdk/src/share/classes/sun/security/ssl/HandshakeMessage.java	Sat Jun 12 00:03:57 2010
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1996, 2007, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -173,9 +173,7 @@
+  * Server can ask the client to initiate a new handshake, e.g. to change
+  * session parameters after a connection has been (re)established.
+  */
+-static final
+-class HelloRequest extends HandshakeMessage
+-{
++static final class HelloRequest extends HandshakeMessage {
+     int messageType() { return ht_hello_request; }
+ 
+     HelloRequest() { }
+@@ -211,10 +209,7 @@
+  * Until we know how to parse it, we will just read what we know
+  * about, and let our caller handle the jumps over unknown data.
+  */
+-static final
+-class ClientHello extends HandshakeMessage
+-{
+-    int messageType() { return ht_client_hello; }
++static final class ClientHello extends HandshakeMessage {
+ 
+     ProtocolVersion     protocolVersion;
+     RandomCookie        clnt_random;
+@@ -226,27 +221,48 @@
+ 
+     private final static byte[]  NULL_COMPRESSION = new byte[] {0};
+ 
+-    ClientHello(SecureRandom generator, ProtocolVersion protocolVersion) {
++    ClientHello(SecureRandom generator, ProtocolVersion protocolVersion,
++            SessionId sessionId, CipherSuiteList cipherSuites) {
++
+         this.protocolVersion = protocolVersion;
++        this.sessionId = sessionId;
++        this.cipherSuites = cipherSuites;
++
++        if (cipherSuites.containsEC()) {
++            extensions.add(SupportedEllipticCurvesExtension.DEFAULT);
++            extensions.add(SupportedEllipticPointFormatsExtension.DEFAULT);
++        }
++
+         clnt_random = new RandomCookie(generator);
+         compression_methods = NULL_COMPRESSION;
+-        // sessionId, cipher_suites TBS later
+     }
+ 
++    ClientHello(HandshakeInStream s, int messageLength) throws IOException {
++        protocolVersion = ProtocolVersion.valueOf(s.getInt8(), s.getInt8());
++        clnt_random = new RandomCookie(s);
++        sessionId = new SessionId(s.getBytes8());
++        cipherSuites = new CipherSuiteList(s);
++        compression_methods = s.getBytes8();
++        if (messageLength() != messageLength) {
++            extensions = new HelloExtensions(s);
++        }
++    }
++
+     CipherSuiteList getCipherSuites() {
+         return cipherSuites;
+     }
+ 
+-    // Set the ciphersuites.
+-    // This method may only be called once.
+-    void setCipherSuites(CipherSuiteList cipherSuites) {
+-        this.cipherSuites = cipherSuites;
+-        if (cipherSuites.containsEC()) {
+-            extensions.add(SupportedEllipticCurvesExtension.DEFAULT);
+-            extensions.add(SupportedEllipticPointFormatsExtension.DEFAULT);
+-        }
++    // add renegotiation_info extension
++    void addRenegotiationInfoExtension(byte[] clientVerifyData) {
++        HelloExtension renegotiationInfo = new RenegotiationInfoExtension(
++                    clientVerifyData, new byte[0]);
++        extensions.add(renegotiationInfo);
+     }
+ 
++    @Override
++    int messageType() { return ht_client_hello; }
++
++    @Override
+     int messageLength() {
+         /*
+          * Add fixed size parts of each field...
+@@ -259,17 +275,7 @@
+             + extensions.length();
+     }
+ 
+-    ClientHello(HandshakeInStream s, int messageLength) throws IOException {
+-        protocolVersion = ProtocolVersion.valueOf(s.getInt8(), s.getInt8());
+-        clnt_random = new RandomCookie(s);
+-        sessionId = new SessionId(s.getBytes8());
+-        cipherSuites = new CipherSuiteList(s);
+-        compression_methods = s.getBytes8();
+-        if (messageLength() != messageLength) {
+-            extensions = new HelloExtensions(s);
+-        }
+-    }
+-
++    @Override
+     void send(HandshakeOutStream s) throws IOException {
+         s.putInt8(protocolVersion.major);
+         s.putInt8(protocolVersion.minor);
+@@ -280,6 +286,7 @@
+         extensions.send(s);
+     }
+ 
++    @Override
+     void print(PrintStream s) throws IOException {
+         s.println("*** ClientHello, " + protocolVersion);
+ 
+@@ -316,7 +323,6 @@
+     CipherSuite         cipherSuite;
+     byte                compression_method;
+     HelloExtensions extensions = new HelloExtensions();
+-    int extensionLength;
+ 
+     ServerHello() {
+         // empty
+@@ -1427,8 +1433,6 @@
+  */
+ static final class Finished extends HandshakeMessage {
+ 
+-    int messageType() { return ht_finished; }
+-
+     // constant for a Finished message sent by the client
+     final static int CLIENT = 1;
+ 
+@@ -1470,7 +1474,7 @@
+      * both client and server are fully in sync, and that the handshake
+      * computations have been successful.
+      */
+-     boolean verify(ProtocolVersion protocolVersion,
++    boolean verify(ProtocolVersion protocolVersion,
+              HandshakeHash handshakeHash, int sender, SecretKey master) {
+         byte[] myFinished = getFinished(protocolVersion, handshakeHash,
+                                         sender, master);
+@@ -1544,14 +1548,25 @@
+         CertificateVerify.updateDigest(md, pad1, pad2, masterSecret);
+     }
+ 
++    // get the verify_data of the finished message
++    byte[] getVerifyData() {
++        return verifyData;
++    }
++
++    @Override
++    int messageType() { return ht_finished; }
++
++    @Override
+     int messageLength() {
+         return verifyData.length;
+     }
+ 
++    @Override
+     void send(HandshakeOutStream out) throws IOException {
+         out.write(verifyData);
+     }
+ 
++    @Override
+     void print(PrintStream s) throws IOException {
+         s.println("*** Finished");
+         if (debug != null && Debug.isOn("verbose")) {
+@@ -1559,7 +1574,6 @@
+             s.println("***");
+         }
+     }
+-
+ }
+ 
+ //
+--- openjdk.orig/jdk/src/share/classes/sun/security/ssl/Handshaker.java	Sat Jun 12 00:04:00 2010
++++ openjdk/jdk/src/share/classes/sun/security/ssl/Handshaker.java	Sat Jun 12 00:04:00 2010
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1996, 2009, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -66,6 +66,14 @@
+     // the currently active protocol version during a renegotiation
+     ProtocolVersion     activeProtocolVersion;
+ 
++    // security parameters for secure renegotiation.
++    boolean             secureRenegotiation;
++    byte[]              clientVerifyData;
++    byte[]              serverVerifyData;
++
++    // is it an initial negotiation  or a renegotiation?
++    boolean                     isInitialHandshake;
++
+     // list of enabled protocols
+     ProtocolList enabledProtocols;
+ 
+@@ -128,31 +136,66 @@
+     static final Debug debug = Debug.getInstance("ssl");
+ 
+     // By default, disable the unsafe legacy session renegotiation
+-    static final boolean renegotiable = Debug.getBooleanProperty(
++    static final boolean allowUnsafeRenegotiation = Debug.getBooleanProperty(
+                     "sun.security.ssl.allowUnsafeRenegotiation", false);
+ 
++    // For maximum interoperability and backward compatibility, RFC 5746
++    // allows server (or client) to accept ClientHello (or ServerHello)
++    // message without the secure renegotiation_info extension or SCSV.
++    //
++    // For maximum security, RFC 5746 also allows server (or client) to
++    // reject such message with a fatal "handshake_failure" alert.
++    //
++    // By default, allow such legacy hello messages.
++    static final boolean allowLegacyHelloMessages = Debug.getBooleanProperty(
++                    "sun.security.ssl.allowLegacyHelloMessages", true);
++
+     // need to dispose the object when it is invalidated
+     boolean invalidated;
+ 
+     Handshaker(SSLSocketImpl c, SSLContextImpl context,
+             ProtocolList enabledProtocols, boolean needCertVerify,
+-            boolean isClient) {
++            boolean isClient, ProtocolVersion activeProtocolVersion,
++            boolean isInitialHandshake, boolean secureRenegotiation,
++            byte[] clientVerifyData, byte[] serverVerifyData) {
+         this.conn = c;
+-        init(context, enabledProtocols, needCertVerify, isClient);
++        init(context, enabledProtocols, needCertVerify, isClient,
++            activeProtocolVersion, isInitialHandshake, secureRenegotiation,
++            clientVerifyData, serverVerifyData);
+     }
+ 
+     Handshaker(SSLEngineImpl engine, SSLContextImpl context,
+             ProtocolList enabledProtocols, boolean needCertVerify,
+-            boolean isClient) {
++            boolean isClient, ProtocolVersion activeProtocolVersion,
++            boolean isInitialHandshake, boolean secureRenegotiation,
++            byte[] clientVerifyData, byte[] serverVerifyData) {
+         this.engine = engine;
+-        init(context, enabledProtocols, needCertVerify, isClient);
++        init(context, enabledProtocols, needCertVerify, isClient,
++            activeProtocolVersion, isInitialHandshake, secureRenegotiation,
++            clientVerifyData, serverVerifyData);
+     }
+ 
+     private void init(SSLContextImpl context, ProtocolList enabledProtocols,
+-            boolean needCertVerify, boolean isClient) {
++            boolean needCertVerify, boolean isClient,
++            ProtocolVersion activeProtocolVersion,
++            boolean isInitialHandshake, boolean secureRenegotiation,
++            byte[] clientVerifyData, byte[] serverVerifyData) {
+ 
++        if (debug != null && Debug.isOn("handshake")) {
++            System.out.println(
++                "Allow unsafe renegotiation: " + allowUnsafeRenegotiation +
++                "\nAllow legacy hello messages: " + allowLegacyHelloMessages +
++                "\nIs initial handshake: " + isInitialHandshake +
++                "\nIs secure renegotiation: " + secureRenegotiation);
++        }
++
+         this.sslContext = context;
+         this.isClient = isClient;
++        this.activeProtocolVersion = activeProtocolVersion;
++        this.isInitialHandshake = isInitialHandshake;
++        this.secureRenegotiation = secureRenegotiation;
++        this.clientVerifyData = clientVerifyData;
++        this.serverVerifyData = serverVerifyData;
+         enableNewSession = true;
+         invalidated = false;
+ 
+@@ -353,8 +396,8 @@
+      * changed due to change in JCE providers since it was enabled).
+      * Does not check if the required server certificates are available.
+      */
+-    boolean isEnabled(CipherSuite s) {
+-        return enabledCipherSuites.contains(s) && s.isAvailable();
++    boolean isNegotiable(CipherSuite s) {
++        return enabledCipherSuites.contains(s) && s.isNegotiable();
+     }
+ 
+     /**
+@@ -458,6 +501,27 @@
+         return session;
+     }
+ 
++    /*
++     * Returns true if renegotiation is in use for this connection.
++     */
++    boolean isSecureRenegotiation() {
++        return secureRenegotiation;
++    }
++
++    /*
++     * Returns the verify_data from the Finished message sent by the client.
++     */
++    byte[] getClientVerifyData() {
++        return clientVerifyData;
++    }
++
++    /*
++     * Returns the verify_data from the Finished message sent by the server.
++     */
++    byte[] getServerVerifyData() {
++        return serverVerifyData;
++    }
++
+     /*
+      * This routine is fed SSL handshake records when they become available,
+      * and processes messages found therein.
+--- openjdk.orig/jdk/src/share/classes/sun/security/ssl/HelloExtensions.java	Sat Jun 12 00:04:15 2010
++++ openjdk/jdk/src/share/classes/sun/security/ssl/HelloExtensions.java	Sat Jun 12 00:04:07 2010
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2006, 2008, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2006, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -81,7 +81,10 @@
+             } else if (extType == ExtensionType.EXT_ELLIPTIC_CURVES) {
+                 extension = new SupportedEllipticCurvesExtension(s, extlen);
+             } else if (extType == ExtensionType.EXT_EC_POINT_FORMATS) {
+-                extension = new SupportedEllipticPointFormatsExtension(s, extlen);
++                extension =
++                        new SupportedEllipticPointFormatsExtension(s, extlen);
++            } else if (extType == ExtensionType.EXT_RENEGOTIATION_INFO) {
++                extension = new RenegotiationInfoExtension(s, extlen);
+             } else {
+                 extension = new UnknownExtension(s, extlen, extType);
+             }
+@@ -89,7 +92,8 @@
+             len -= extlen + 4;
+         }
+         if (len != 0) {
+-            throw new SSLProtocolException("Error parsing extensions: extra data");
++            throw new SSLProtocolException(
++                        "Error parsing extensions: extra data");
+         }
+     }
+ 
+@@ -162,7 +166,8 @@
+         return name;
+     }
+ 
+-    static List<ExtensionType> knownExtensions = new ArrayList<ExtensionType>(8);
++    static List<ExtensionType> knownExtensions =
++                                            new ArrayList<ExtensionType>(9);
+ 
+     static ExtensionType get(int id) {
+         for (ExtensionType ext : knownExtensions) {
+@@ -180,17 +185,44 @@
+     }
+ 
+     // extensions defined in RFC 3546
+-    final static ExtensionType EXT_SERVER_NAME            = e( 0, "server_name");
+-    final static ExtensionType EXT_MAX_FRAGMENT_LENGTH    = e( 1, "max_fragment_length");
+-    final static ExtensionType EXT_CLIENT_CERTIFICATE_URL = e( 2, "client_certificate_url");
+-    final static ExtensionType EXT_TRUSTED_CA_KEYS        = e( 3, "trusted_ca_keys");
+-    final static ExtensionType EXT_TRUNCATED_HMAC         = e( 4, "truncated_hmac");
+-    final static ExtensionType EXT_STATUS_REQUEST         = e( 5, "status_request");
++    final static ExtensionType EXT_SERVER_NAME =
++            e(0x0000, "server_name");            // IANA registry value: 0
++    final static ExtensionType EXT_MAX_FRAGMENT_LENGTH =
++            e(0x0001, "max_fragment_length");    // IANA registry value: 1
++    final static ExtensionType EXT_CLIENT_CERTIFICATE_URL =
++            e(0x0002, "client_certificate_url"); // IANA registry value: 2
++    final static ExtensionType EXT_TRUSTED_CA_KEYS =
++            e(0x0003, "trusted_ca_keys");        // IANA registry value: 3
++    final static ExtensionType EXT_TRUNCATED_HMAC =
++            e(0x0004, "truncated_hmac");         // IANA registry value: 4
++    final static ExtensionType EXT_STATUS_REQUEST =
++            e(0x0005, "status_request");         // IANA registry value: 5
+ 
++    // extensions defined in RFC 4681
++    final static ExtensionType EXT_USER_MAPPING =
++            e(0x0006, "user_mapping");           // IANA registry value: 6
++
++    // extensions defined in RFC 5081
++    final static ExtensionType EXT_CERT_TYPE =
++            e(0x0009, "cert_type");              // IANA registry value: 9
++
+     // extensions defined in RFC 4492 (ECC)
+-    final static ExtensionType EXT_ELLIPTIC_CURVES        = e(10, "elliptic_curves");
+-    final static ExtensionType EXT_EC_POINT_FORMATS       = e(11, "ec_point_formats");
++    final static ExtensionType EXT_ELLIPTIC_CURVES =
++            e(0x000A, "elliptic_curves");        // IANA registry value: 10
++    final static ExtensionType EXT_EC_POINT_FORMATS =
++            e(0x000B, "ec_point_formats");       // IANA registry value: 11
+ 
++    // extensions defined in RFC 5054
++    final static ExtensionType EXT_SRP =
++            e(0x000C, "srp");                    // IANA registry value: 12
++
++    // extensions defined in RFC 5246
++    final static ExtensionType EXT_SIGNATURE_ALGORITHMS =
++            e(0x000D, "signature_algorithms");   // IANA registry value: 13
++
++    // extensions defined in RFC 5746
++    final static ExtensionType EXT_RENEGOTIATION_INFO =
++            e(0xff01, "renegotiation_info");     // IANA registry value: 65281
+ }
+ 
+ abstract class HelloExtension {
+@@ -222,7 +254,6 @@
+         if (len != 0) {
+             s.read(data);
+         }
+-
+     }
+ 
+     int length() {
+@@ -239,9 +270,11 @@
+     }
+ }
+ 
+-// Support for the server_name extension is incomplete. Parsing is implemented
+-// so that we get nicer debug output, but we neither send it nor do we do
+-// act on it if we receive it.
++/*
++ * Support for the server_name extension is incomplete. Parsing is implemented
++ * so that we get nicer debug output, but we neither send it nor do we do
++ * act on it if we receive it.
++ */
+ final class ServerNameExtension extends HelloExtension {
+ 
+     final static int NAME_HOST_NAME = 0;
+@@ -269,9 +302,9 @@
+         final String hostname;
+ 
+         ServerName(HandshakeInStream s) throws IOException {
+-            length = s.getInt16();
+-            type = s.getInt8();
+-            data = s.getBytes16();
++            length = s.getInt16();      // ServerNameList length
++            type = s.getInt8();         // NameType
++            data = s.getBytes16();      // HostName (length read in getBytes16)
+             if (type == NAME_HOST_NAME) {
+                 hostname = new String(data, "UTF8");
+             } else {
+@@ -549,4 +582,86 @@
+         }
+         return "Extension " + type + ", formats: " + list;
+     }
++}
++
++/*
++ * For secure renegotiation, RFC5746 defines a new TLS extension,
++ * "renegotiation_info" (with extension type 0xff01), which contains a
++ * cryptographic binding to the enclosing TLS connection (if any) for
++ * which the renegotiation is being performed.  The "extension data"
++ * field of this extension contains a "RenegotiationInfo" structure:
++ *
++ *      struct {
++ *          opaque renegotiated_connection<0..255>;
++ *      } RenegotiationInfo;
++ */
++final class RenegotiationInfoExtension extends HelloExtension {
++    private final byte[] renegotiated_connection;
++
++    RenegotiationInfoExtension(byte[] clientVerifyData,
++                byte[] serverVerifyData) {
++        super(ExtensionType.EXT_RENEGOTIATION_INFO);
++
++        if (clientVerifyData.length != 0) {
++            renegotiated_connection =
++                    new byte[clientVerifyData.length + serverVerifyData.length];
++            System.arraycopy(clientVerifyData, 0, renegotiated_connection,
++                    0, clientVerifyData.length);
++
++            if (serverVerifyData.length != 0) {
++                System.arraycopy(serverVerifyData, 0, renegotiated_connection,
++                        clientVerifyData.length, serverVerifyData.length);
++            }
++        } else {
++            // ignore both the client and server verify data.
++            renegotiated_connection = new byte[0];
++        }
++    }
++
++    RenegotiationInfoExtension(HandshakeInStream s, int len)
++                throws IOException {
++        super(ExtensionType.EXT_RENEGOTIATION_INFO);
++
++        // check the extension length
++        if (len < 1) {
++            throw new SSLProtocolException("Invalid " + type + " extension");
++        }
++
++        int renegoInfoDataLen = s.getInt8();
++        if (renegoInfoDataLen + 1 != len) {  // + 1 = the byte we just read
++            throw new SSLProtocolException("Invalid " + type + " extension");
++        }
++
++        renegotiated_connection = new byte[renegoInfoDataLen];
++        if (renegoInfoDataLen != 0) {
++            s.read(renegotiated_connection, 0, renegoInfoDataLen);
++        }
++    }
++
++
++    // Length of the encoded extension, including the type and length fields
++    int length() {
++        return 5 + renegotiated_connection.length;
++    }
++
++    void send(HandshakeOutStream s) throws IOException {
++        s.putInt16(type.id);
++        s.putInt16(renegotiated_connection.length + 1);
++        s.putBytes8(renegotiated_connection);
++    }
++
++    boolean isEmpty() {
++        return renegotiated_connection.length == 0;
++    }
++
++    byte[] getRenegotiatedConnection() {
++        return renegotiated_connection;
++    }
++
++    public String toString() {
++        return "Extension " + type + ", renegotiated_connection: " +
++                    (renegotiated_connection.length == 0 ? "<empty>" :
++                    Debug.toString(renegotiated_connection));
++    }
++
+ }
+--- openjdk.orig/jdk/src/share/classes/sun/security/ssl/OutputRecord.java	Sat Jun 12 00:04:17 2010
++++ openjdk/jdk/src/share/classes/sun/security/ssl/OutputRecord.java	Sat Jun 12 00:04:16 2010
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1996, 2007, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -343,6 +343,9 @@
+      * example, Netscape Commerce 1.0 servers.  The V3 message is in the
+      * header and the bytes passed as parameter.  This routine translates
+      * the V3 message into an equivalent V2 one.
++     *
++     * Note that the translation will strip off all hello extensions as
++     * SSL V2.0 does not support hello extension.
+      */
+     private void V3toV2ClientHello(byte v3Msg []) throws SSLException {
+         int v3SessionIdLenOffset = 2 + 32; // version + nonce
+@@ -361,6 +364,7 @@
+         int v3CipherSpecOffset = v3CipherSpecLenOffset + 2; // skip length
+         int v2CipherSpecLen = 0;
+         count = 11;
++        boolean containsRenegoInfoSCSV = false;
+         for (int i = 0; i < cipherSpecs; i++) {
+             byte byte1, byte2;
+ 
+@@ -367,8 +371,16 @@
+             byte1 = v3Msg[v3CipherSpecOffset++];
+             byte2 = v3Msg[v3CipherSpecOffset++];
+             v2CipherSpecLen += V3toV2CipherSuite(byte1, byte2);
++            if (!containsRenegoInfoSCSV &&
++                        byte1 == (byte)0x00 && byte2 == (byte)0xFF) {
++                containsRenegoInfoSCSV = true;
++            }
+         }
+ 
++        if (!containsRenegoInfoSCSV) {
++            v2CipherSpecLen += V3toV2CipherSuite((byte)0x00, (byte)0xFF);
++        }
++
+         /*
+          * Build the first part of the V3 record header from the V2 one
+          * that's now buffered up.  (Lengths are fixed up later).
+--- openjdk.orig/jdk/src/share/classes/sun/security/ssl/SSLEngineImpl.java	Sat Jun 12 00:04:19 2010
++++ openjdk/jdk/src/share/classes/sun/security/ssl/SSLEngineImpl.java	Sat Jun 12 00:04:18 2010
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, 2009, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -275,6 +275,12 @@
+     private CipherBox           readCipher, writeCipher;
+     // NOTE: compression state would be saved here
+ 
++    /*
++     * security parameters for secure renegotiation.
++     */
++    private boolean             secureRenegotiation;
++    private byte[]              clientVerifyData;
++    private byte[]              serverVerifyData;
+ 
+     /*
+      * READ ME * READ ME * READ ME * READ ME * READ ME * READ ME *
+@@ -356,6 +362,11 @@
+         writeCipher = CipherBox.NULL;
+         writeMAC = MAC.NULL;
+ 
++        // default security parameters for secure renegotiation
++        secureRenegotiation = false;
++        clientVerifyData = new byte[0];
++        serverVerifyData = new byte[0];
++
+         enabledCipherSuites = CipherSuiteList.getDefault();
+         enabledProtocols = ProtocolList.getDefault();
+ 
+@@ -434,11 +445,14 @@
+         }
+         if (roleIsServer) {
+             handshaker = new ServerHandshaker(this, sslContext,
+-                        enabledProtocols, doClientAuth,
+-                        connectionState == cs_RENEGOTIATE, protocolVersion);
++                    enabledProtocols, doClientAuth,
++                    protocolVersion, connectionState == cs_HANDSHAKE,
++                    secureRenegotiation, clientVerifyData, serverVerifyData);
+         } else {
+             handshaker = new ClientHandshaker(this, sslContext,
+-                        enabledProtocols, protocolVersion);
++                    enabledProtocols,
++                    protocolVersion, connectionState == cs_HANDSHAKE,
++                    secureRenegotiation, clientVerifyData, serverVerifyData);
+         }
+         handshaker.enabledCipherSuites = enabledCipherSuites;
+         handshaker.setEnableSessionCreation(enableSessionCreation);
+@@ -623,10 +637,18 @@
+             break;
+ 
+         case cs_DATA:
+-            if (!Handshaker.renegotiable) {
+-                throw new SSLHandshakeException("renegotiation is not allowed");
++            if (!secureRenegotiation && !Handshaker.allowUnsafeRenegotiation) {
++                throw new SSLHandshakeException(
++                        "Insecure renegotiation is not allowed");
+             }
+ 
++            if (!secureRenegotiation) {
++                if (debug != null && Debug.isOn("handshake")) {
++                    System.out.println(
++                        "Warning: Using insecure renegotiation");
++                }
++            }
++
+             // initialize the handshaker, move to cs_RENEGOTIATE
+             initHandshaker();
+             break;
+@@ -961,6 +983,12 @@
+                             connectionState = cs_DATA;
+                         }
+                     } else if (handshaker.isDone()) {
++                        // reset the parameters for secure renegotiation.
++                        secureRenegotiation =
++                                        handshaker.isSecureRenegotiation();
++                        clientVerifyData = handshaker.getClientVerifyData();
++                        serverVerifyData = handshaker.getServerVerifyData();
++
+                         sess = handshaker.getSession();
+                         if (!writer.hasOutboundData()) {
+                             hsStatus = HandshakeStatus.FINISHED;
+--- openjdk.orig/jdk/src/share/classes/sun/security/ssl/SSLServerSocketImpl.java	Sat Jun 12 00:04:37 2010
++++ openjdk/jdk/src/share/classes/sun/security/ssl/SSLServerSocketImpl.java	Sat Jun 12 00:04:36 2010
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1996, 2007, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -307,8 +307,9 @@
+             try {
+                 ServerHandshaker handshaker = tmp.getServerHandshaker();
+ 
+-                for (Iterator t = enabledCipherSuites.iterator(); t.hasNext(); ) {
+-                    CipherSuite suite = (CipherSuite)t.next();
++                for (Iterator<CipherSuite> t = enabledCipherSuites.iterator();
++                        t.hasNext();) {
++                    CipherSuite suite = t.next();
+                     if (handshaker.trySetCipherSuite(suite)) {
+                         checkedEnabled = true;
+                         return;
+@@ -318,7 +319,6 @@
+                 tmp.closeSocket();
+             }
+ 
+-
+             //
+             // diagnostic text here is currently appropriate
+             // since it's only certificate unavailability that can
+--- openjdk.orig/jdk/src/share/classes/sun/security/ssl/SSLSocketImpl.java	Sat Jun 12 00:04:39 2010
++++ openjdk/jdk/src/share/classes/sun/security/ssl/SSLSocketImpl.java	Sat Jun 12 00:04:38 2010
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1996, 2009, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -275,9 +275,9 @@
+      * This is necessary so that processing of close_notify alerts
+      * from the peer are handled properly.
+      */
+-    private Object              handshakeLock;
+-    ReentrantLock               writeLock;
+-    private Object              readLock;
++    final private Object        handshakeLock = new Object();
++    final ReentrantLock         writeLock = new ReentrantLock();
++    final private Object        readLock = new Object();
+ 
+     private InputRecord         inrec;
+ 
+@@ -289,6 +289,13 @@
+     // NOTE: compression state would be saved here
+ 
+     /*
++     * security parameters for secure renegotiation.
++     */
++    private boolean             secureRenegotiation;
++    private byte[]              clientVerifyData;
++    private byte[]              serverVerifyData;
++
++    /*
+      * The authentication context holds all information used to establish
+      * who this end of the connection is (certificate chains, private keys,
+      * etc) and who is trusted (e.g. as CAs or websites).
+@@ -525,11 +532,13 @@
+         writeCipher = CipherBox.NULL;
+         writeMAC = MAC.NULL;
+ 
++        // initial security parameters for secure renegotiation
++        secureRenegotiation = false;
++        clientVerifyData = new byte[0];
++        serverVerifyData = new byte[0];
++
+         enabledCipherSuites = CipherSuiteList.getDefault();
+         enabledProtocols = ProtocolList.getDefault();
+-        handshakeLock = new Object();
+-        writeLock = new ReentrantLock();
+-        readLock = new Object();
+         inrec = null;
+ 
+         // save the acc
+@@ -911,6 +920,12 @@
+                             connectionState = cs_DATA;
+                         }
+                     } else if (handshaker.isDone()) {
++                        // reset the parameters for secure renegotiation.
++                        secureRenegotiation =
++                                        handshaker.isSecureRenegotiation();
++                        clientVerifyData = handshaker.getClientVerifyData();
++                        serverVerifyData = handshaker.getServerVerifyData();
++
+                         sess = handshaker.getSession();
+                         handshaker = null;
+                         connectionState = cs_DATA;
+@@ -1088,11 +1103,14 @@
+         }
+         if (roleIsServer) {
+             handshaker = new ServerHandshaker(this, sslContext,
+-                        enabledProtocols, doClientAuth,
+-                        connectionState == cs_RENEGOTIATE, protocolVersion);
++                    enabledProtocols, doClientAuth,
++                    protocolVersion, connectionState == cs_HANDSHAKE,
++                    secureRenegotiation, clientVerifyData, serverVerifyData);
+         } else {
+             handshaker = new ClientHandshaker(this, sslContext,
+-                        enabledProtocols, protocolVersion);
++                    enabledProtocols,
++                    protocolVersion, connectionState == cs_HANDSHAKE,
++                    secureRenegotiation, clientVerifyData, serverVerifyData);
+         }
+         handshaker.enabledCipherSuites = enabledCipherSuites;
+         handshaker.setEnableSessionCreation(enableSessionCreation);
+@@ -1197,10 +1215,18 @@
+             break;
+ 
+         case cs_DATA:
+-            if (!Handshaker.renegotiable) {
+-                throw new SSLHandshakeException("renegotiation is not allowed");
++            if (!secureRenegotiation && !Handshaker.allowUnsafeRenegotiation) {
++                throw new SSLHandshakeException(
++                        "Insecure renegotiation is not allowed");
+             }
+ 
++            if (!secureRenegotiation) {
++                if (debug != null && Debug.isOn("handshake")) {
++                    System.out.println(
++                        "Warning: Using insecure renegotiation");
++                }
++            }
++
+             // initialize the handshaker, move to cs_RENEGOTIATE
+             initHandshaker();
+             break;
+--- openjdk.orig/jdk/src/share/classes/sun/security/ssl/ServerHandshaker.java	Sat Jun 12 00:04:41 2010
++++ openjdk/jdk/src/share/classes/sun/security/ssl/ServerHandshaker.java	Sat Jun 12 00:04:40 2010
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1996, 2009, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -74,9 +74,6 @@
+     // flag to check for clientCertificateVerify message
+     private boolean             needClientVerify = false;
+ 
+-    // indicate a renegotiation handshaking
+-    private boolean             isRenegotiation = false;
+-
+     /*
+      * For exportable ciphersuites using non-exportable key sizes, we use
+      * ephemeral RSA keys. We could also do anonymous RSA in the same way
+@@ -105,13 +102,15 @@
+      */
+     ServerHandshaker(SSLSocketImpl socket, SSLContextImpl context,
+             ProtocolList enabledProtocols, byte clientAuth,
+-            boolean isRenegotiation, ProtocolVersion activeProtocolVersion) {
++            ProtocolVersion activeProtocolVersion, boolean isInitialHandshake,
++            boolean secureRenegotiation,
++            byte[] clientVerifyData, byte[] serverVerifyData) {
+ 
+         super(socket, context, enabledProtocols,
+-                        (clientAuth != SSLEngineImpl.clauth_none), false);
++                (clientAuth != SSLEngineImpl.clauth_none), false,
++                activeProtocolVersion, isInitialHandshake, secureRenegotiation,
++                clientVerifyData, serverVerifyData);
+         doClientAuth = clientAuth;
+-        this.isRenegotiation = isRenegotiation;
+-        this.activeProtocolVersion = activeProtocolVersion;
+     }
+ 
+     /*
+@@ -119,13 +118,15 @@
+      */
+     ServerHandshaker(SSLEngineImpl engine, SSLContextImpl context,
+             ProtocolList enabledProtocols, byte clientAuth,
+-            boolean isRenegotiation, ProtocolVersion activeProtocolVersion) {
++            ProtocolVersion activeProtocolVersion,
++            boolean isInitialHandshake, boolean secureRenegotiation,
++            byte[] clientVerifyData, byte[] serverVerifyData) {
+ 
+         super(engine, context, enabledProtocols,
+-                        (clientAuth != SSLEngineImpl.clauth_none), false);
++                (clientAuth != SSLEngineImpl.clauth_none), false,
++                activeProtocolVersion, isInitialHandshake, secureRenegotiation,
++                clientVerifyData, serverVerifyData);
+         doClientAuth = clientAuth;
+-        this.isRenegotiation = isRenegotiation;
+-        this.activeProtocolVersion = activeProtocolVersion;
+     }
+ 
+     /*
+@@ -274,44 +275,125 @@
+             mesg.print(System.out);
+         }
+ 
+-        // if it is a renegotiation request and renegotiation is not allowed
+-        if (isRenegotiation && !renegotiable) {
+-            if (activeProtocolVersion.v >= ProtocolVersion.TLS10.v) {
+-                // response with a no_negotiation warning,
+-                warningSE(Alerts.alert_no_negotiation);
++        // Does the message include security renegotiation indication?
++        boolean renegotiationIndicated = false;
+ 
+-                // invalidate the handshake so that the caller can
+-                // dispose this object.
+-                invalidated = true;
++        // check the TLS_EMPTY_RENEGOTIATION_INFO_SCSV
++        CipherSuiteList cipherSuites = mesg.getCipherSuites();
++        if (cipherSuites.contains(CipherSuite.C_SCSV)) {
++            renegotiationIndicated = true;
++            if (isInitialHandshake) {
++                secureRenegotiation = true;
++            } else {
++                // abort the handshake with a fatal handshake_failure alert
++                if (secureRenegotiation) {
++                    fatalSE(Alerts.alert_handshake_failure,
++                        "The SCSV is present in a secure renegotiation");
++                } else {
++                    fatalSE(Alerts.alert_handshake_failure,
++                        "The SCSV is present in a insecure renegotiation");
++                }
++            }
++        }
+ 
+-                // If there is still unread block in the handshake
+-                // input stream, it would be truncated with the disposal
+-                // and the next handshake message will become incomplete.
+-                //
+-                // However, according to SSL/TLS specifications, no more
+-                // handshake message could immediately follow ClientHello
+-                // or HelloRequest. But in case of any improper messages,
+-                // we'd better check to ensure there is no remaining bytes
+-                // in the handshake input stream.
+-                if (input.available() > 0) {
+-                    fatalSE(Alerts.alert_unexpected_message,
+-                        "ClientHello followed by an unexpected  " +
+-                        "handshake message");
+-
++        // check the "renegotiation_info" extension
++        RenegotiationInfoExtension clientHelloRI = (RenegotiationInfoExtension)
++                    mesg.extensions.get(ExtensionType.EXT_RENEGOTIATION_INFO);
++        if (clientHelloRI != null) {
++            renegotiationIndicated = true;
++            if (isInitialHandshake) {
++                // verify the length of the "renegotiated_connection" field
++                if (!clientHelloRI.isEmpty()) {
++                    // abort the handshake with a fatal handshake_failure alert
++                    fatalSE(Alerts.alert_handshake_failure,
++                        "The renegotiation_info field is not empty");
+                 }
+ 
+-                return;
++                secureRenegotiation = true;
+             } else {
+-                // For SSLv3, send the handshake_failure fatal error.
+-                // Note that SSLv3 does not define a no_negotiation alert
+-                // like TLSv1. However we cannot ignore the message
+-                // simply, otherwise the other side was waiting for a
+-                // response that would never come.
+-                fatalSE(Alerts.alert_handshake_failure,
+-                    "renegotiation is not allowed");
++                if (!secureRenegotiation) {
++                    // unexpected RI extension for insecure renegotiation,
++                    // abort the handshake with a fatal handshake_failure alert
++                    fatalSE(Alerts.alert_handshake_failure,
++                        "The renegotiation_info is present in a insecure " +
++                        "renegotiation");
++                }
++
++                // verify the client_verify_data value
++                if (!Arrays.equals(clientVerifyData,
++                                clientHelloRI.getRenegotiatedConnection())) {
++                    fatalSE(Alerts.alert_handshake_failure,
++                        "Incorrect verify date in ClientHello " +
++                        "renegotiation_info message");
++                }
+             }
++        } else if (!isInitialHandshake && secureRenegotiation) {
++           // if the connection's "secure_renegotiation" flag is set to TRUE
++           // and the "renegotiation_info" extension is not present, abort
++           // the handshake.
++            fatalSE(Alerts.alert_handshake_failure,
++                        "Inconsistent secure renegotiation indication");
+         }
+ 
++        // if there is no security renegotiation indication or the previous
++        // handshake is insecure.
++        if (!renegotiationIndicated || !secureRenegotiation) {
++            if (isInitialHandshake) {
++                if (!allowLegacyHelloMessages) {
++                    // abort the handshake with a fatal handshake_failure alert
++                    fatalSE(Alerts.alert_handshake_failure,
++                        "Failed to negotiate the use of secure renegotiation");
++                }
++
++                // continue with legacy ClientHello
++                if (debug != null && Debug.isOn("handshake")) {
++                    System.out.println("Warning: No renegotiation " +
++                        "indication in ClientHello, allow legacy ClientHello");
++                }
++            } else if (!allowUnsafeRenegotiation) {
++                // abort the handshake
++                if (activeProtocolVersion.v >= ProtocolVersion.TLS10.v) {
++                    // response with a no_renegotiation warning,
++                    warningSE(Alerts.alert_no_renegotiation);
++
++                    // invalidate the handshake so that the caller can
++                    // dispose this object.
++                    invalidated = true;
++
++                    // If there is still unread block in the handshake
++                    // input stream, it would be truncated with the disposal
++                    // and the next handshake message will become incomplete.
++                    //
++                    // However, according to SSL/TLS specifications, no more
++                    // handshake message could immediately follow ClientHello
++                    // or HelloRequest. But in case of any improper messages,
++                    // we'd better check to ensure there is no remaining bytes
++                    // in the handshake input stream.
++                    if (input.available() > 0) {
++                        fatalSE(Alerts.alert_unexpected_message,
++                            "ClientHello followed by an unexpected  " +
++                            "handshake message");
++                    }
++
++                    return;
++                } else {
++                    // For SSLv3, send the handshake_failure fatal error.
++                    // Note that SSLv3 does not define a no_renegotiation
++                    // alert like TLSv1. However we cannot ignore the message
++                    // simply, otherwise the other side was waiting for a
++                    // response that would never come.
++                    fatalSE(Alerts.alert_handshake_failure,
++                        "Renegotiation is not allowed");
++                }
++            } else {   // !isInitialHandshake && allowUnsafeRenegotiation
++                // continue with unsafe renegotiation.
++                if (debug != null && Debug.isOn("handshake")) {
++                    System.out.println(
++                            "Warning: continue with insecure renegotiation");
++                }
++            }
++        }
++
+         /*
+          * Always make sure this entire record has been digested before we
+          * start emitting output, to ensure correct digesting order.
+@@ -459,7 +541,7 @@
+                     // verify that the ciphersuite from the cached session
+                     // is in the list of client requested ciphersuites and
+                     // we have it enabled
+-                    if ((isEnabled(suite) == false) ||
++                    if ((isNegotiable(suite) == false) ||
+                             (mesg.getCipherSuites().contains(suite) == false)) {
+                         resumingSession = false;
+                     } else {
+@@ -489,8 +571,8 @@
+             if (!enableNewSession) {
+                 throw new SSLException("Client did not resume a session");
+             }
+-            supportedCurves = (SupportedEllipticCurvesExtension)mesg.extensions.get
+-                                        (ExtensionType.EXT_ELLIPTIC_CURVES);
++            supportedCurves = (SupportedEllipticCurvesExtension)
++                        mesg.extensions.get(ExtensionType.EXT_ELLIPTIC_CURVES);
+             chooseCipherSuite(mesg);
+             session = new SSLSessionImpl(protocolVersion, cipherSuite,
+                 sslContext.getSecureRandom(),
+@@ -503,6 +585,21 @@
+         m1.sessionId = session.getSessionId();
+         m1.compression_method = session.getCompression();
+ 
++        if (secureRenegotiation) {
++            // For ServerHellos that are initial handshakes, then the
++            // "renegotiated_connection" field in "renegotiation_info"
++            // extension is of zero length.
++            //
++            // For ServerHellos that are renegotiating, this field contains
++            // the concatenation of client_verify_data and server_verify_data.
++            //
++            // Note that for initial handshakes, both the clientVerifyData
++            // variable and serverVerifyData variable are of zero length.
++            HelloExtension serverHelloRI = new RenegotiationInfoExtension(
++                                        clientVerifyData, serverVerifyData);
++            m1.extensions.add(serverHelloRI);
++        }
++
+         if (debug != null && Debug.isOn("handshake")) {
+             m1.print(System.out);
+             System.out.println("Cipher suite:  " + session.getSuite());
+@@ -691,11 +788,13 @@
+      */
+     private void chooseCipherSuite(ClientHello mesg) throws IOException {
+         for (CipherSuite suite : mesg.getCipherSuites().collection()) {
+-            if (isEnabled(suite) == false) {
++            if (isNegotiable(suite) == false) {
+                 continue;
+             }
++
+             if (doClientAuth == SSLEngineImpl.clauth_required) {
+-                if ((suite.keyExchange == K_DH_ANON) || (suite.keyExchange == K_ECDH_ANON)) {
++                if ((suite.keyExchange == K_DH_ANON) ||
++                    (suite.keyExchange == K_ECDH_ANON)) {
+                     continue;
+                 }
+             }
+@@ -733,7 +832,7 @@
+             return true;
+         }
+ 
+-        if (suite.isAvailable() == false) {
++        if (suite.isNegotiable() == false) {
+             return false;
+         }
+ 
+@@ -1140,6 +1239,13 @@
+         }
+ 
+         /*
++         * save client verify data for secure renegotiation
++         */
++        if (secureRenegotiation) {
++            clientVerifyData = mesg.getVerifyData();
++        }
++
++        /*
+          * OK, it verified.  If we're doing the full handshake, add that
+          * "Finished" message to the hash of handshake messages, then send
+          * the change_cipher_spec and Finished message.
+@@ -1189,6 +1295,13 @@
+         sendChangeCipherSpec(mesg, finishedTag);
+ 
+         /*
++         * save server verify data for secure renegotiation
++         */
++        if (secureRenegotiation) {
++            serverVerifyData = mesg.getVerifyData();
++        }
++
++        /*
+          * Update state machine so client MUST send 'finished' next
+          * The update should only take place if it is not in the fast
+          * handshake mode since the server has to wait for a finished
+--- openjdk.orig/jdk/test/sun/security/pkcs11/sslecc/CipherTest.java	Sat Jun 12 00:04:45 2010
++++ openjdk/jdk/test/sun/security/pkcs11/sslecc/CipherTest.java	Sat Jun 12 00:04:44 2010
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2002, 2006, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -114,12 +114,11 @@
+         }
+ 
+         boolean isEnabled() {
+-//          if (true) return cipherSuite.contains("_ECDH_");
+-//          return cipherSuite.equals("SSL_RSA_WITH_RC4_128_MD5") &&
+-//              (clientAuth != null);
+-//      return cipherSuite.indexOf("_RSA_") != -1;
+-//      return cipherSuite.indexOf("DH_anon") != -1;
+-//              return cipherSuite.contains("ECDSA") == false;
++            // ignore SCSV
++            if (cipherSuite.equals("TLS_EMPTY_RENEGOTIATION_INFO_SCSV")) {
++                return false;
++            }
++
+             return true;
+         }
+ 
+--- openjdk.orig/jdk/test/sun/security/ssl/com/sun/net/ssl/internal/ssl/SSLSocketImpl/InvalidateServerSessionRenegotiate.java	Sat Jun 12 00:04:48 2010
++++ openjdk/jdk/test/sun/security/ssl/com/sun/net/ssl/internal/ssl/SSLSocketImpl/InvalidateServerSessionRenegotiate.java	Sat Jun 12 00:04:47 2010
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2001, 2009, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -25,8 +25,6 @@
+  * @test
+  * @bug 4403428
+  * @summary Invalidating JSSE session on server causes SSLProtocolException
+- * @ignore incompatible with disabled unsafe renegotiation (6898739), please
+- *         reenable when safe renegotiation is implemented.
+  * @author Brad Wetmore
+  */
+ 
+--- openjdk.orig/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/JSSERenegotiate.java	Sat Jun 12 00:04:50 2010
++++ openjdk/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/JSSERenegotiate.java	Sat Jun 12 00:04:49 2010
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2001, 2009, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -26,8 +26,6 @@
+  * @bug 4280338
+  * @summary "Unsupported SSL message version" SSLProtocolException
+  *      w/SSL_RSA_WITH_NULL_MD5
+- * @ignore incompatible with disabled unsafe renegotiation (6898739), please
+- *         reenable when safe renegotiation is implemented.
+  *
+  * @author Ram Marti
+  * @author Brad Wetmore
+--- openjdk.orig/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/CheckStatus.java	Sat Jun 12 00:04:53 2010
++++ openjdk/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/CheckStatus.java	Sat Jun 12 00:04:53 2010
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, 2009, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -25,8 +25,6 @@
+  * @test
+  * @bug 4948079
+  * @summary SSLEngineResult needs updating [none yet]
+- * @ignore incompatible with disabled unsafe renegotiation (6898739), please
+- *         reenable when safe renegotiation is implemented.
+  *
+  * This is a simple hack to test a bunch of conditions and check
+  * their return codes.
+--- openjdk.orig/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/ConnectionTest.java	Sat Jun 12 00:04:55 2010
++++ openjdk/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/ConnectionTest.java	Sat Jun 12 00:04:55 2010
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, 2009, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -26,8 +26,6 @@
+  * @bug 4495742
+  * @summary Add non-blocking SSL/TLS functionality, usable with any
+  *      I/O abstraction
+- * @ignore incompatible with disabled unsafe renegotiation (6898739), please
+- *         reenable when safe renegotiation is implemented.
+  *
+  * This is a bit hacky, meant to test various conditions.  The main
+  * thing I wanted to do with this was to do buffer reads/writes
+--- openjdk.orig/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/NoAuthClientAuth.java	Sat Jun 12 00:04:57 2010
++++ openjdk/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/NoAuthClientAuth.java	Sat Jun 12 00:04:57 2010
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, 2009, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -25,8 +25,6 @@
+  * @test
+  * @bug 4495742
+  * @summary Demonstrate SSLEngine switch from no client auth to client auth.
+- * @ignore incompatible with disabled unsafe renegotiation (6898739), please
+- *         reenable when safe renegotiation is implemented.
+  *
+  * @author Brad R. Wetmore
+  */
+--- openjdk.orig/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/TestAllSuites.java	Sat Jun 12 00:05:00 2010
++++ openjdk/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/TestAllSuites.java	Sat Jun 12 00:04:59 2010
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, 2005, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -119,6 +119,15 @@
+             return;
+         }
+ 
++        /*
++         * Don't run the SCSV suite
++         */
++        if (suite.equals("TLS_EMPTY_RENEGOTIATION_INFO_SCSV")) {
++            System.out.println("Ignoring SCSV suite");
++            return;
++        }
++
++
+         if (!suite.contains("DH_anon")) {
+             ssle2.setNeedClientAuth(true);
+         }
+--- openjdk.orig/jdk/test/sun/security/ssl/sanity/ciphersuites/CheckCipherSuites.java	Sat Jun 12 00:05:02 2010
++++ openjdk/jdk/test/sun/security/ssl/sanity/ciphersuites/CheckCipherSuites.java	Sat Jun 12 00:05:01 2010
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -52,6 +52,8 @@
+         "SSL_RSA_EXPORT_WITH_DES40_CBC_SHA",
+         "SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA",
+         "SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA",
++        "TLS_EMPTY_RENEGOTIATION_INFO_SCSV",
++
+     };
+ 
+     private final static String[] ENABLED_UNLIMITED = {
+@@ -73,6 +75,8 @@
+         "SSL_RSA_EXPORT_WITH_DES40_CBC_SHA",
+         "SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA",
+         "SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA",
++        "TLS_EMPTY_RENEGOTIATION_INFO_SCSV",
++
+     };
+ 
+     // supported ciphersuites using default JCE policy jurisdiction files
+@@ -93,6 +97,8 @@
+         "SSL_RSA_EXPORT_WITH_DES40_CBC_SHA",
+         "SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA",
+         "SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA",
++        "TLS_EMPTY_RENEGOTIATION_INFO_SCSV",
++
+         "SSL_RSA_WITH_NULL_MD5",
+         "SSL_RSA_WITH_NULL_SHA",
+         "SSL_DH_anon_WITH_RC4_128_MD5",
+@@ -110,7 +116,8 @@
+         "TLS_KRB5_EXPORT_WITH_RC4_40_SHA",
+         "TLS_KRB5_EXPORT_WITH_RC4_40_MD5",
+         "TLS_KRB5_EXPORT_WITH_DES_CBC_40_SHA",
+-        "TLS_KRB5_EXPORT_WITH_DES_CBC_40_MD5"
++        "TLS_KRB5_EXPORT_WITH_DES_CBC_40_MD5",
++
+     };
+ 
+     // supported ciphersuites using unlimited JCE policy jurisdiction files
+@@ -134,6 +141,8 @@
+         "SSL_RSA_EXPORT_WITH_DES40_CBC_SHA",
+         "SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA",
+         "SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA",
++        "TLS_EMPTY_RENEGOTIATION_INFO_SCSV",
++
+         "SSL_RSA_WITH_NULL_MD5",
+         "SSL_RSA_WITH_NULL_SHA",
+         "SSL_DH_anon_WITH_RC4_128_MD5",
+@@ -152,7 +161,8 @@
+         "TLS_KRB5_EXPORT_WITH_RC4_40_SHA",
+         "TLS_KRB5_EXPORT_WITH_RC4_40_MD5",
+         "TLS_KRB5_EXPORT_WITH_DES_CBC_40_SHA",
+-        "TLS_KRB5_EXPORT_WITH_DES_CBC_40_MD5"
++        "TLS_KRB5_EXPORT_WITH_DES_CBC_40_MD5",
++
+     };
+ 
+     private static void showSuites(String[] suites) {
+--- openjdk.orig/jdk/test/sun/security/ssl/sanity/interop/CipherTest.java	Sat Jun 12 00:05:05 2010
++++ openjdk/jdk/test/sun/security/ssl/sanity/interop/CipherTest.java	Sat Jun 12 00:05:04 2010
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2002, 2005, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -115,10 +115,11 @@
+         }
+ 
+         boolean isEnabled() {
+-//          return cipherSuite.equals("SSL_RSA_WITH_RC4_128_MD5") &&
+-//              (clientAuth != null);
+-//      return cipherSuite.indexOf("_RSA_") != -1;
+-//      return cipherSuite.indexOf("DH_anon") != -1;
++            // ignore SCSV
++            if (cipherSuite.equals("TLS_EMPTY_RENEGOTIATION_INFO_SCSV")) {
++                return false;
++            }
++
+             return true;
+         }
+ 
