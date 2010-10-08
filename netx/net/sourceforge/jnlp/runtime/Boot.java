@@ -40,6 +40,7 @@ import net.sourceforge.jnlp.Launcher;
 import net.sourceforge.jnlp.ParseException;
 import net.sourceforge.jnlp.PropertyDesc;
 import net.sourceforge.jnlp.ResourcesDesc;
+import net.sourceforge.jnlp.cache.CacheUtil;
 import net.sourceforge.jnlp.cache.UpdatePolicy;
 import net.sourceforge.jnlp.security.VariableX509TrustManager;
 import net.sourceforge.jnlp.security.viewer.CertificateViewer;
@@ -114,6 +115,7 @@ public final class Boot implements PrivilegedAction {
         + "  -strict               "+R("BOStrict")+"\n"
         + "  -umask=value          "+R("BOUmask")+"\n"
         + "  -Xnofork              "+R("BXnofork")+"\n"
+        + "  -Xclearcache          "+R("BXclearcache")+"\n"
         + "  -help                 "+R("BOHelp")+"\n";
 
     private static final String doubleArgs = "-basedir -jnlp -arg -param -property -update";
@@ -201,6 +203,17 @@ public final class Boot implements PrivilegedAction {
         JNLPRuntime.setBaseDir(getBaseDir());
         JNLPRuntime.setSecurityEnabled(null == getOption("-nosecurity"));
         JNLPRuntime.initialize(true);
+
+        /*
+         * FIXME
+         * This should have been done with the rest of the argument parsing
+         * code. But we need to know what the cache and base directories are,
+         * and baseDir is initialized here
+         */
+        if (null != getOption("-Xclearcache")) {
+            CacheUtil.clearCache();
+            return null;
+        }
 
         try {
             new Launcher().launch(getFile());

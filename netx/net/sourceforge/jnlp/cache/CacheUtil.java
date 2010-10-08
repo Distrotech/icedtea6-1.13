@@ -19,6 +19,7 @@ package net.sourceforge.jnlp.cache;
 
 import java.io.*;
 import java.net.*;
+import java.nio.channels.FileChannel;
 import java.util.*;
 import java.lang.reflect.*;
 import java.security.*;
@@ -36,6 +37,10 @@ import net.sourceforge.jnlp.util.FileUtils;
  * @version $Revision: 1.17 $
  */
 public class CacheUtil {
+
+    private static String R(String key) {
+        return JNLPRuntime.getMessage(key);
+    }
 
     private static String R(String key, Object param) {
         return JNLPRuntime.getMessage(key, new Object[] {param});
@@ -126,6 +131,72 @@ public class CacheUtil {
         }
 
         return null;
+    }
+
+    /**
+     * Clears the cache by deleting all the Netx cache files
+     *
+     * Note: Because of how our caching system works, deleting jars of another javaws
+     * process is using them can be quite disasterous. Hence why Launcher creates lock files
+     * and we check for those by calling {@link #okToClearCache()}
+     */
+    public static void clearCache() {
+
+        if (!okToClearCache()) {
+            System.err.println(R("CCannotClearCache"));
+            return;
+        }
+
+        File cacheDir = new File(JNLPRuntime.getBaseDir() + File.separator + "cache");
+        if (!(cacheDir.isDirectory())) {
+            return;
+        }
+
+        if (JNLPRuntime.isDebug()) {
+            System.err.println("Clearing cache directory: " + cacheDir);
+        }
+        try {
+            FileUtils.recursiveDelete(cacheDir, JNLPRuntime.getBaseDir());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Returns a boolean indicating if it ok to clear the netx application cache at this point
+     * @return true if the cache can be cleared at this time without problems
+     */
+    private static boolean okToClearCache() {
+        File otherJavawsRunning = new File(JNLPRuntime.NETX_RUNNING_FILE);
+        try {
+            if (otherJavawsRunning.isFile()) {
+                FileOutputStream fis = new FileOutputStream(otherJavawsRunning);
+                try {
+                    FileChannel channel = fis.getChannel();
+                    if (channel.tryLock() == null) {
+                        if (JNLPRuntime.isDebug()) {
+                            System.out.println("Other instances of netx are running");
+                        }
+                        return false;
+                    }
+
+                    if (JNLPRuntime.isDebug()) {
+                        System.out.println("No other instances of netx are running");
+                    }
+                    return true;
+
+                } finally {
+                    fis.close();
+                }
+            } else {
+                if (JNLPRuntime.isDebug()) {
+                    System.out.println("No instance file found");
+                }
+                return true;
+            }
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     /**
