@@ -17,6 +17,9 @@
 package net.sourceforge.jnlp.util;
 
 import java.io.File;
+import java.io.IOException;
+
+import net.sourceforge.jnlp.runtime.JNLPRuntime;
 
 /**
  * This class contains a few file-related utility functions.
@@ -119,6 +122,38 @@ public final class FileUtils {
         String suffix = path.substring(path.length() - affixLength);
 
         return prefix + OMITTED + suffix;
+    }
+
+    /**
+     * Recursively delete everything under a directory. Works on either files or
+     * directories
+     *
+     * @param file the file object representing what to delete. Can be either a
+     *        file or a directory.
+     * @param base the directory under which the file and its subdirectories must be located
+     * @throws IOException on an io exception or if trying to delete something
+     *         outside the base
+     */
+    public static void recursiveDelete(File file, File base) throws IOException {
+        if (JNLPRuntime.isDebug()) {
+            System.err.println("Deleting: " + file);
+        }
+
+        if (!(file.getCanonicalPath().startsWith(base.getCanonicalPath()))) {
+            throw new IOException("Trying to delete a file outside Netx's basedir: "
+                    + file.getCanonicalPath());
+        }
+
+        if (file.isDirectory()) {
+            File[] children = file.listFiles();
+            for (int i = 0; i < children.length; i++) {
+                recursiveDelete(children[i], base);
+            }
+        }
+        if (!file.delete()) {
+            throw new IOException("Unable to delete file: " + file);
+        }
+
     }
 
 }

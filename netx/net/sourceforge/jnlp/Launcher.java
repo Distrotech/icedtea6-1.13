@@ -20,12 +20,17 @@ package net.sourceforge.jnlp;
 import java.applet.Applet;
 import java.awt.Container;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.jar.JarFile;
@@ -78,6 +83,9 @@ public class Launcher {
     /** If the application should call System.exit on fatal errors */
     private boolean exitOnFailure = true;
 
+    /** a lock which is held to indicate that an instance of netx is running */
+    private FileLock fileLock;
+
     /**
      * Create a launcher with the runtime's default update policy
      * and launch handler.
@@ -127,6 +135,7 @@ public class Launcher {
 
         this.handler = handler;
         this.updatePolicy = policy;
+
     }
 
     /**
@@ -384,6 +393,11 @@ public class Launcher {
     protected ApplicationInstance launchApplication(JNLPFile file) throws LaunchException {
         if (!file.isApplication())
             throw launchError(new LaunchException(file, null, R("LSFatal"), R("LCClient"), R("LNotApplication"), R("LNotApplicationInfo")));
+
+        markNetxRunning();
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() { markNetxStopped(); }
+         });
 
         try {
 
@@ -686,6 +700,69 @@ public class Launcher {
         return null; // chose to continue, or no handler
     }
 
+    /**
+     * Indicate that netx is running by creating the {@link JNLPRuntime#INSTANCE_FILE} and
+     * acquiring a shared lock on it
+     */
+    private void markNetxRunning() {
+        try {
+            String message = "This file is used to check if netx is running";
+
+            File netxRunningFile = new File(JNLPRuntime.NETX_RUNNING_FILE);
+            netxRunningFile.getParentFile().mkdirs();
+            if (netxRunningFile.createNewFile()) {
+                FileOutputStream fos = new FileOutputStream(netxRunningFile);
+                try {
+                    fos.write(message.getBytes());
+                } finally {
+                    fos.close();
+                }
+            }
+
+            if (!netxRunningFile.isFile()) {
+                if (JNLPRuntime.isDebug()) {
+                    System.err.println("Unable to create instance file");
+                }
+                fileLock = null;
+                return;
+            }
+
+            FileInputStream is = new FileInputStream(netxRunningFile);
+            FileChannel channel = is.getChannel();
+            fileLock = channel.tryLock(0, Long.MAX_VALUE, true);
+            if (fileLock != null && fileLock.isShared()) {
+                if (JNLPRuntime.isDebug()) {
+                    System.out.println("Acquired shared lock on " +
+                            JNLPRuntime.NETX_RUNNING_FILE + " to indicate javaws is running");
+                }
+            } else {
+                fileLock = null;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    /**
+     * Indicate that netx is stopped by releasing the shared lock on
+     * {@link JNLPRuntime#INSTANCE_FILE}.
+     */
+    private void markNetxStopped() {
+        if (fileLock == null) {
+            return;
+        }
+        try {
+            fileLock.release();
+            fileLock.channel().close();
+            fileLock = null;
+            if (JNLPRuntime.isDebug()) {
+                System.out.println("Release shared lock on " + JNLPRuntime.NETX_RUNNING_FILE);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
 
     /**
