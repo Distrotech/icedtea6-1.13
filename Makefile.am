@@ -209,7 +209,15 @@ SECURITY_PATCHES = \
 	patches/security/20101012/6963489.patch \
 	patches/security/20101012/6966692.patch \
 	patches/security/20101012/6914943.patch \
-	patches/security/20101012/6559775.patch
+	patches/security/20101012/6559775.patch \
+	patches/security/20101012/6622002.patch \
+	patches/security/20101012/6623943.patch \
+	patches/security/20101012/6952017.patch \
+	patches/security/20101012/6952603.patch \
+	patches/security/20101012/6961084.patch \
+	patches/security/20101012/6963285.patch \
+	patches/security/20101012/6981426.patch \
+	patches/security/20101012/6990437.patch
 
 ICEDTEA_PATCHES = \
 	$(SECURITY_PATCHES) \
@@ -234,7 +242,6 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-javafiles.patch \
 	patches/icedtea-jvmtiEnv.patch \
 	patches/icedtea-lcms.patch \
-	patches/icedtea-timerqueue.patch \
 	patches/hotspot/$(HSBUILD)/print_lsb_release.patch \
 	patches/icedtea-jpegclasses.patch \
 	patches/icedtea-uname.patch \
