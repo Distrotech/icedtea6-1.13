@@ -21,14 +21,15 @@ New in release 1.10 (2010-XX-XX):
   - S6963023, CVE-2010-3565: OpenJDK JPEG writeImage remote code execution
   - S6963489, CVE-2010-3566: OpenJDK ICC Profile remote code execution
   - S6966692, CVE-2010-3569: OpenJDK Serialization inconsistencies
-  - S6622002: UIDefault.ProxyLazyValue has unsafe reflection usage
+  - S6622002, CVE-2010-3553: UIDefault.ProxyLazyValue has unsafe reflection usage
   - S6623943: javax.swing.TimerQueue's thread occasionally fails to start
-  - S6952017: HttpURLConnection chunked encoding issue (Http request splitting)
-  - S6952603: NetworkInterface reveals local network address to untrusted code
-  - S6961084: limit setting of some request headers in HttpURLConnection
-  - S6963285: Crash in ICU Opentype layout engine due to mismatch in character counts
-  - S6980004: limit HTTP request cookie headers in HttpURLConnection
-  - S6981426: limit use of TRACE method in HttpURLConnection
+  - S6925672, CVE-2010-3561: Privileged ServerSocket.accept allows receiving connections from any host
+  - S6952017, CVE-2010-3549: HttpURLConnection chunked encoding issue (Http request splitting)
+  - S6952603, CVE-2010-3551: NetworkInterface reveals local network address to untrusted code
+  - S6961084, CVE-2010-3541: limit setting of some request headers in HttpURLConnection
+  - S6963285, CVE-2010-3567: Crash in ICU Opentype layout engine due to mismatch in character counts
+  - S6980004, CVE-2010-3573: limit HTTP request cookie headers in HttpURLConnection
+  - S6981426, CVE-2010-3574: limit use of TRACE method in HttpURLConnection
   - S6990437: Update with correct copyright info for source and test files from SSR10_02 fixes
 * Backports from OpenJDK6
   - S4356282, RH525870: RFE: T2K should be used to rasterize CID/CFF fonts
