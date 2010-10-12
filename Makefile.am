@@ -1340,9 +1340,9 @@ clean-icedtea-debug-against-icedtea: clean-add-zero-debug clean-add-cacao-debug 
 stamps/add-plugin.stamp: stamps/plugin.stamp stamps/icedtea.stamp
 if ENABLE_PLUGIN
 	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
+	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/
 	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
-	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
+	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)/
 	cp -pPRf $(abs_top_builddir)/liveconnect/lib/classes.jar \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/plugin.jar
 	cp -pPRf $(abs_top_builddir)/liveconnect/lib/classes.jar \
@@ -1360,9 +1360,9 @@ clean-add-plugin:
 stamps/add-plugin-debug.stamp: stamps/plugin.stamp stamps/icedtea-debug.stamp
 if ENABLE_PLUGIN
 	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/
 	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)/
 	cp -pPRf $(abs_top_builddir)/liveconnect/lib/classes.jar \
 	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/plugin.jar
 	cp -pPRf $(abs_top_builddir)/liveconnect/lib/classes.jar \
@@ -1386,10 +1386,8 @@ stamps/add-netx.stamp: stamps/netx-dist.stamp extra-lib/about.jar stamps/icedtea
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib
 	cp $(NETX_RESOURCE_DIR)/about.jnlp extra-lib/about.jar \
 	  $(BUILD_OUTPUT_DIR)/j2re-image/lib
-	mkdir -p $(BUILD_OUTPUT_DIR)/j2sdk-image/man/man1
 	cp $(NETX_SRCDIR)/javaws.1 \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/man/man1
-	mkdir -p $(BUILD_OUTPUT_DIR)/j2re-image/man/man1
 	cp $(NETX_SRCDIR)/javaws.1 \
 	  $(BUILD_OUTPUT_DIR)/j2re-image/man/man1
 	touch stamps/add-netx.stamp
@@ -1509,9 +1507,9 @@ clean-add-pulseaudio:
 stamps/add-pulseaudio-debug.stamp: stamps/icedtea-debug.stamp $(PULSE_JAVA_TARGET)
 if ENABLE_PULSE_JAVA
 	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/
 	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)/
 	cp -pPRf $(PULSE_JAVA_BUILDDIR)/pulse-java.jar \
 	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/ext
 	cp -pPRf $(PULSE_JAVA_BUILDDIR)/pulse-java.jar \
@@ -1600,9 +1598,9 @@ clean-icedtea-against-ecj: clean-add-plugin-ecj clean-add-netx-ecj clean-add-sys
 stamps/add-plugin-ecj.stamp: stamps/plugin.stamp stamps/icedtea-ecj.stamp
 if ENABLE_PLUGIN
 	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
-	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/
 	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
-	  $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)/
 	cp -pPRf $(abs_top_builddir)/liveconnect/lib/classes.jar \
 	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/plugin.jar
 	cp -pPRf $(abs_top_builddir)/liveconnect/lib/classes.jar \
@@ -2088,7 +2086,7 @@ ADD_ZERO_CONFIGURE_ARGS += \
 endif
 ADD_ZERO_CONFIGURE_ARGS += \
 	--disable-docs \
-	$(filter-out '--with-gcj-home=% '--with-ecj=% \
+	$(filter-out '--with-jdk-home=% '--with-ecj=% \
 			'--with-java=% '--with-javah=% \
 			'--with-rmic=% '--with-additional-vms=% \
 			'--with-openjdk '--with-openjdk=% , \
@@ -2100,6 +2098,7 @@ ADD_ZERO_CONFIGURE_ARGS += \
 	$(if $(findstring --with-hotspot-src-zip=, $(CONFIGURE_ARGS)),, \
 	  --with-hotspot-src-zip=$(abs_top_builddir)/$(HOTSPOT_SRC_ZIP))
 endif
+ADD_ZERO_CONFIGURE_ARGS += --disable-plugin --disable-bootstrap
 
 ADD_ZERO_EXTRA_BUILD_ENV = \
 	BUILD_LANGTOOLS=false ALT_LANGTOOLS_DIST=$(BUILD_OUTPUT_DIR)/langtools/dist \
@@ -2116,6 +2115,22 @@ if ADD_ZERO_BUILD
 	cd zerovm && \
 	    $(ADD_ZERO_EXTRA_BUILD_ENV) \
 		$(ARCH_PREFIX) $(abs_top_srcdir)/configure $(ADD_ZERO_CONFIGURE_ARGS)
+
+	: # create directories which are expected by icedtea components,
+	: # implicitly assumed to be created by the jdk build.
+	mkdir -p $(patsubst $(abs_top_builddir)/%,$(abs_top_builddir)/zerovm/%, \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR) \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/man/man1 \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR) \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/man/man1 \
+	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR) \
+	  $(BUILD_OUTPUT_DIR)/j2sdk-image/man/man1 \
+	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR) \
+	  $(BUILD_OUTPUT_DIR)/j2re-image/man/man1 \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR) \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/man/man1 \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR) \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/man/man1)
 
 	$(ADD_ZERO_EXTRA_BUILD_ENV) \
 		$(ARCH_PREFIX) $(MAKE) -C zerovm $(ICEDTEA_BUILD_TARGET)
