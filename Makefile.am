@@ -1386,10 +1386,12 @@ stamps/add-netx.stamp: stamps/netx-dist.stamp extra-lib/about.jar stamps/icedtea
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib
 	cp $(NETX_RESOURCE_DIR)/about.jnlp extra-lib/about.jar \
 	  $(BUILD_OUTPUT_DIR)/j2re-image/lib
+	mkdir -p $(BUILD_OUTPUT_DIR)/j2sdk-image/man/man1
 	cp $(NETX_SRCDIR)/javaws.1 \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/man/man1; \
+	  $(BUILD_OUTPUT_DIR)/j2sdk-image/man/man1
+	mkdir -p $(BUILD_OUTPUT_DIR)/j2re-image/man/man1
 	cp $(NETX_SRCDIR)/javaws.1 \
-	  $(BUILD_OUTPUT_DIR)/j2re-image/man/man1; \
+	  $(BUILD_OUTPUT_DIR)/j2re-image/man/man1
 	touch stamps/add-netx.stamp
 
 clean-add-netx:
