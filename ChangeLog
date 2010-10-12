@@ -1,3 +1,11 @@
+2010-10-12  Matthias Klose  <doko@ubuntu.com>
+
+	* Makefile.am (stamps/add-plugin.stamp, stamps/add-plugin-debug.stamp,
+	stamps/add-pulseaudio-debug.stamp, stamps/add-plugin-ecj.stamp): Robustify.
+	(ADD_ZERO_CONFIGURE_ARGS): Adjust to new configure flags.
+	(stamps/add-zero.stamp): Explicitly create directories that icedtea
+	components assume to be created by the jdk build (not built in zerovm).
+
 2010-10-11  Andrew John Hughes  <ahughes@redhat.com>
 
 	* NEWS: Add CVE numbers and list 6925672
