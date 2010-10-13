@@ -46,6 +46,127 @@ New in release 1.10 (2010-XX-XX):
   - PR557: Applet opens in a separate window if tab is closed when the applet loads
   - PR519: 100% CPU usage when displaying applets in Webkit based browsers
 
+New in release 1.9.1 (2010-10-13):
+
+* HotSpot 19 supported; use --with-hotspot-build=hs19 to enable.
+* Security updates
+  - S6914943, CVE-2009-3555: TLS: MITM attacks via session renegotiation 
+  - S6559775, CVE-2010-3568: OpenJDK Deserialization Race condition
+  - S6891766, CVE-2010-3554: OpenJDK corba reflection vulnerabilities
+  - S6925710, CVE-2010-3562: OpenJDK IndexColorModel double-free
+  - S6938813, CVE-2010-3557: OpenJDK Swing mutable static
+  - S6957564, CVE-2010-3548: OpenJDK DNS server IP address information leak
+  - S6958060, CVE-2010-3564: OpenJDK kerberos vulnerability
+  - S6963023, CVE-2010-3565: OpenJDK JPEG writeImage remote code execution
+  - S6963489, CVE-2010-3566: OpenJDK ICC Profile remote code execution
+  - S6966692, CVE-2010-3569: OpenJDK Serialization inconsistencies
+  - S6622002, CVE-2010-3553: UIDefault.ProxyLazyValue has unsafe reflection usage
+  - S6925672, CVE-2010-3561: Privileged ServerSocket.accept allows receiving connections from any host
+  - S6952017, CVE-2010-3549: HttpURLConnection chunked encoding issue (Http request splitting)
+  - S6952603, CVE-2010-3551: NetworkInterface reveals local network address to untrusted code
+  - S6961084, CVE-2010-3541: limit setting of some request headers in HttpURLConnection
+  - S6963285, CVE-2010-3567: Crash in ICU Opentype layout engine due to mismatch in character counts
+  - S6980004, CVE-2010-3573: limit HTTP request cookie headers in HttpURLConnection
+  - S6981426, CVE-2010-3574: limit use of TRACE method in HttpURLConnection
+  - S6990437: Update with correct copyright info for source and test files from SSR10_02 fixes
+* Backports
+  - S6638712: Inference with wildcard types causes selection of inapplicable method
+  - S6650759: Inference of formal type parameter (unused in formal parameters) is not performed
+  - S6623943: javax.swing.TimerQueue's thread occasionally fails to start
+* Fixes
+  - Fix build failure on S390
+  - RH633510: OpenJDK should use NUMA even if glibc doesn't provide it
+* NetX
+  - New man page for javaws
+* Plugin 
+  - PR519: 100% CPU usage when displaying applets in Webkit based browsers
+
+New in release 1.8.2 (2010-10-13):
+
+* Security updates
+  - S6914943, CVE-2009-3555: TLS: MITM attacks via session renegotiation 
+  - S6559775, CVE-2010-3568: OpenJDK Deserialization Race condition
+  - S6891766, CVE-2010-3554: OpenJDK corba reflection vulnerabilities
+  - S6925710, CVE-2010-3562: OpenJDK IndexColorModel double-free
+  - S6938813, CVE-2010-3557: OpenJDK Swing mutable static
+  - S6957564, CVE-2010-3548: OpenJDK DNS server IP address information leak
+  - S6958060, CVE-2010-3564: OpenJDK kerberos vulnerability
+  - S6963023, CVE-2010-3565: OpenJDK JPEG writeImage remote code execution
+  - S6963489, CVE-2010-3566: OpenJDK ICC Profile remote code execution
+  - S6966692, CVE-2010-3569: OpenJDK Serialization inconsistencies
+  - S6622002, CVE-2010-3553: UIDefault.ProxyLazyValue has unsafe reflection usage
+  - S6925672, CVE-2010-3561: Privileged ServerSocket.accept allows receiving connections from any host
+  - S6952017, CVE-2010-3549: HttpURLConnection chunked encoding issue (Http request splitting)
+  - S6952603, CVE-2010-3551: NetworkInterface reveals local network address to untrusted code
+  - S6961084, CVE-2010-3541: limit setting of some request headers in HttpURLConnection
+  - S6963285, CVE-2010-3567: Crash in ICU Opentype layout engine due to mismatch in character counts
+  - S6980004, CVE-2010-3573: limit HTTP request cookie headers in HttpURLConnection
+  - S6981426, CVE-2010-3574: limit use of TRACE method in HttpURLConnection
+  - S6990437: Update with correct copyright info for source and test files from SSR10_02 fixes
+* Fixes:
+  - G244901: Skip test_gamma on hardened (PaX-enabled) kernels
+  - G266295: Provide font configuration for Gentoo.
+  - Provide font configuration for RHEL 6.
+  - RH633510: OpenJDK should use NUMA even if glibc doesn't provide it
+* Backports:
+  - S6951319: enable solaris builds using Sun Studio 12 update 1 (fixes PR398)
+  - S6539464, RH500077: Ensure java.lang.Math functions provide consistent results.
+  - S6638712: Inference with wildcard types causes selection of inapplicable method
+  - S6650759: Inference of formal type parameter (unused in formal parameters) is not performed
+  - S6623943: javax.swing.TimerQueue's thread occasionally fails to start
+* NetX:
+  - Fix browser command in BasicService.showDocument(URL)
+  - Run programs that inherit main(String[]) in their main-class
+  - Run JNLP files that use 1.6 as the spec version
+  - RH601281: Possible NullPointerException in splash screen code
+  - New man page for javaws
+* Plugin 
+  - RH560193: Fix zip error when applet jar contained another 0-byte jar
+  - PR519: 100% CPU usage when displaying applets in Webkit based browsers
+
+New in release 1.7.5 (2010-10-13):
+
+* Security updates
+  - S6914943, CVE-2009-3555: TLS: MITM attacks via session renegotiation 
+  - S6559775, CVE-2010-3568: OpenJDK Deserialization Race condition
+  - S6891766, CVE-2010-3554: OpenJDK corba reflection vulnerabilities
+  - S6925710, CVE-2010-3562: OpenJDK IndexColorModel double-free
+  - S6938813, CVE-2010-3557: OpenJDK Swing mutable static
+  - S6957564, CVE-2010-3548: OpenJDK DNS server IP address information leak
+  - S6958060, CVE-2010-3564: OpenJDK kerberos vulnerability
+  - S6963023, CVE-2010-3565: OpenJDK JPEG writeImage remote code execution
+  - S6963489, CVE-2010-3566: OpenJDK ICC Profile remote code execution
+  - S6966692, CVE-2010-3569: OpenJDK Serialization inconsistencies
+  - S6622002, CVE-2010-3553: UIDefault.ProxyLazyValue has unsafe reflection usage
+  - S6925672, CVE-2010-3561: Privileged ServerSocket.accept allows receiving connections from any host
+  - S6952017, CVE-2010-3549: HttpURLConnection chunked encoding issue (Http request splitting)
+  - S6952603, CVE-2010-3551: NetworkInterface reveals local network address to untrusted code
+  - S6961084, CVE-2010-3541: limit setting of some request headers in HttpURLConnection
+  - S6963285, CVE-2010-3567: Crash in ICU Opentype layout engine due to mismatch in character counts
+  - S6980004, CVE-2010-3573: limit HTTP request cookie headers in HttpURLConnection
+  - S6981426, CVE-2010-3574: limit use of TRACE method in HttpURLConnection
+  - S6990437: Update with correct copyright info for source and test files from SSR10_02 fixes
+* Fixes
+  - G244901: Skip test_gamma on hardened (PaX-enabled) kernels
+  - G266295: Provide font configuration for Gentoo.
+  - Provide font configuration for RHEL 6.
+  - RH633510: OpenJDK should use NUMA even if glibc doesn't provide it
+* Backports
+  - S6539464, RH500077: Ensure java.lang.Math functions provide consistent results.
+  - S6951319: enable solaris builds using Sun Studio 12 update 1 (fixes PR398).
+  - S6638712: Inference with wildcard types causes selection of inapplicable method
+  - S6650759: Inference of formal type parameter (unused in formal parameters) is not performed
+  - S6623943: javax.swing.TimerQueue's thread occasionally fails to start
+* NetX
+  - Fix browser command in BasicService.showDocument(URL)
+  - Run programs that inherit main(String[]) in their main-class
+  - Work with JNLP files that use spec version 1.6
+  - RH601281: Possible NullPointerException in splash screen code
+  - New man page for javaws
+* Plugin 
+  - RH560193: Fix ziperror when applet jar contained another 0-byte jar
+  - PR519: 100% CPU usage when displaying applets in Webkit based browsers
+
 New in release 1.9 (2010-09-07):
 
 * VisualVM support removed; now available in its own package at http://icedtea.classpath.org/hg/visualvm
