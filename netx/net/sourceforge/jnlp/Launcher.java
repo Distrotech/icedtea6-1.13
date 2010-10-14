@@ -49,6 +49,8 @@ import net.sourceforge.jnlp.util.Reflect;
 
 import javax.swing.SwingUtilities;
 
+import sun.awt.SunToolkit;
+
 /**
  * Launches JNLPFiles either in the foreground or background.<p>
  *
@@ -69,7 +71,7 @@ public class Launcher {
     private static String R(String key) { return JNLPRuntime.getMessage(key); }
 
     /** shared thread group */
-    private static final ThreadGroup mainGroup = new ThreadGroup(R("LAllThreadGroup"));
+    /*package*/ static final ThreadGroup mainGroup = new ThreadGroup(R("LAllThreadGroup"));
 
     /** the handler */
     private LaunchHandler handler = null;
@@ -668,9 +670,21 @@ public class Launcher {
 
     /**
      * Create a thread group for the JNLP file.
+     *
+     * Note: if the JNLPFile is an applet (ie it is a subclass of PluginBridge)
+     * then this method simply returns the existing ThreadGroup. The applet
+     * ThreadGroup has to be created at an earlier point in the applet code.
      */
     protected AppThreadGroup createThreadGroup(JNLPFile file) {
-        return new AppThreadGroup(mainGroup, file.getTitle());
+        AppThreadGroup appThreadGroup = null;
+
+        if (file instanceof PluginBridge) {
+            appThreadGroup = (AppThreadGroup) Thread.currentThread().getThreadGroup();
+        } else {
+            appThreadGroup = new AppThreadGroup(mainGroup, file.getTitle());
+        }
+
+        return appThreadGroup;
     }
 
     /**
@@ -796,9 +810,10 @@ public class Launcher {
 
         public void run() {
             try {
-                // Do not create new AppContext if we're using NetX and gcjwebplugin.
+                // Do not create new AppContext if we're using NetX and icedteaplugin.
+                // The plugin needs an AppContext too, but it has to be created earlier.
                 if (context && !isPlugin)
-                        new Reflect().invokeStatic("sun.awt.SunToolkit", "createNewAppContext");
+                        SunToolkit.createNewAppContext();
 
                 if (isPlugin) {
                         // Do not display download indicators if we're using gcjwebplugin.

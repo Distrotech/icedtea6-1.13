@@ -1,3 +1,25 @@
+2010-10-14  Omair Majid  <omajid@redhat.com>
+
+	Fixes PR565
+	* NEWS: Update with fix.
+	* netx/net/sourceforge/jnlp/Launcher.java:
+	Make mainGroup package-private so NetxPanel can access it.
+	(createThreadGroup): Only create a new AppThreadGroup if not a plugin.
+	(run): Update comments and make dependence on SunToolkit explicit.
+	* netx/net/sourceforge/jnlp/NetxPanel.java
+	(run): New method. Create a new AppContext for the applet.
+	(createAppletThread): Create a new AppThreadGroup and start the applet
+	thread in that ThreadGroup.
+	* netx/net/sourceforge/jnlp/runtime/ApplicationInstance.java:
+	Add new private variable appContext.
+	(ApplicationInstance): Initialize appContext.
+	(getAppContext): New method.
+	* netx/net/sourceforge/jnlp/runtime/JNLPSecurityManager.java:
+	Extend AWTSecurityManager.
+	(JNLPSecurityManager): Save the AppContext.
+	(getAppContext): New method. Traverse the stack to find the application
+	and return its AppContext.
+
 2010-10-14  Matthias Klose  <doko@ubuntu.com>
 
 	* configure.ac: New option --with-llvm-config.
