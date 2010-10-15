@@ -1,0 +1,16 @@
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XToolkit.java	2010-07-15 10:28:21.896105637 -0400
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XToolkit.java	2010-07-15 10:30:45.039232001 -0400
+@@ -298,13 +298,6 @@
+                 if (log.isLoggable(Level.FINE)) {
+                         dumpPeers();
+                 }
+-
+-                awtLock();
+-                try {
+-                        XlibWrapper.XSetErrorHandler(saved_error_handler);
+-                } finally {
+-                        awtUnlock();
+-                }
+             }
+         });
+     }

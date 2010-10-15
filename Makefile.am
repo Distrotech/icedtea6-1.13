@@ -324,7 +324,8 @@ ICEDTEA_PATCHES += \
 	patches/shark-debug-option.patch \
 	patches/icedtea-shark.patch \
 	patches/icedtea-linux-separate-debuginfo.patch \
-	patches/openjdk/6951319-sparc_build_fixes.patch
+	patches/openjdk/6951319-sparc_build_fixes.patch \
+        patches/openjdk/6853592-badwindow-warning-fix.patch
 endif
 
 if WITH_RHINO
