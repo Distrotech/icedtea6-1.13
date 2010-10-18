@@ -34,7 +34,7 @@ ECJ_BUILD_OUTPUT_DIR = $(BUILD_OUTPUT_DIR)-ecj
 ICEDTEA_CLS_DIR = $(BUILD_OUTPUT_DIR)/classes
 ICEDTEA_CLS_DIR_ECJ = $(ECJ_BUILD_OUTPUT_DIR)/classes
 BOOT_DIR = $(abs_top_builddir)/bootstrap/jdk1.6.0
-RUNTIME = $(BOOT_DIR)/jre/lib/rt.jar:$(BOOT_DIR)/jre/lib/jsse.jar
+RUNTIME = $(BOOT_DIR)/jre/lib/rt.jar
 ENDORSED_DIR = $(BOOT_DIR)/lib/endorsed
 ECJ_BOOT_DIR = $(abs_top_builddir)/bootstrap/ecj
 ICEDTEA_BOOT_DIR = $(abs_top_builddir)/bootstrap/icedtea
@@ -86,6 +86,12 @@ NETX_BOOTSTRAP_CLASSES = \
 	$(SHARE)/javax/swing/JTable.java \
 	$(SHARE)/java/security/KeyStore.java
 
+# PR46074 - Missing java.net cookie code required by IcedTea plugin
+PLUGIN_BOOTSTRAP_CLASSES = \
+	$(SHARE)/java/net/CookieManager.java \
+	$(SHARE)/java/net/HttpCookie.java \
+	$(SHARE)/java/net/CookieHandler.java
+
 # IT563 - NetX uses sun.security code
 # IT564 - NetX depends on sun.misc.BASE64Encoder
 # IT570 - NetX depends on sun.applet.AppletViewPanel
@@ -101,6 +107,16 @@ NETX_SUN_CLASSES = \
 	$(SHARE)/sun/security/validator/ValidatorException.java \
 	$(SHARE)/com/sun/net/ssl/internal/ssl/X509ExtendedTrustManager.java
 
+# IT573 - Plugin depends on sun.awt,X11.XEmbeddedFrame.java
+# IT574 - Plugin depends on sun.misc.Ref
+# IT575 - Plugin depends on com.sun/jndi.toolkit.url.UrlUtil
+# IT576 - Plugin depends on sun.applet.AppletImageRef
+PLUGIN_SUN_CLASSES = \
+	$(SOLARIS)/sun/awt/X11/XEmbeddedFrame.java \
+	$(SHARE)/sun/misc/Ref.java \
+	$(SHARE)/com/sun/jndi/toolkit/url/UrlUtil.java \
+	$(SHARE)/sun/applet/AppletImageRef.java
+
 # PR42003 - javax.swing.plaf.basic.BasicDirectoryModel
 # PR43389 - javax.management.StandardMBean
 ICEDTEA_BOOTSTRAP_CLASSES = \
@@ -108,7 +124,9 @@ ICEDTEA_BOOTSTRAP_CLASSES = \
 	$(SHARE)/javax/management/StandardMBean.java \
 	$(SHARE)/com/sun/java/swing/plaf/nimbus/NimbusLookAndFeel.java \
 	$(NETX_BOOTSTRAP_CLASSES) \
-	$(NETX_SUN_CLASSES)
+	$(NETX_SUN_CLASSES) \
+	$(PLUGIN_BOOTSTRAP_CLASSES) \
+	$(PLUGIN_SUN_CLASSES)
 
 # Flags
 IT_CFLAGS=$(CFLAGS) $(ARCHFLAG)
@@ -1851,8 +1869,7 @@ stamps/liveconnect.stamp: liveconnect-source-files.txt stamps/netx.stamp
 	  $(BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) \
 	      -d $(abs_top_builddir)/liveconnect \
 	      -classpath $(abs_top_builddir)/netx.build:$(RUNTIME) \
-	      -sourcepath $(SOURCEPATH_DIRS) \
-	      -bootclasspath \'\' \
+	      -sourcepath $(LIVECONNECT_SRCS) \
 	      @liveconnect-source-files.txt ; \
 	fi
 	mkdir -p stamps
