@@ -314,7 +314,9 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6650759-missing_inference.patch \
 	patches/numa_on_early_glibc.patch \
 	patches/icedtea-shark-build.patch \
-	patches/openjdk/6985992-test_6933784.patch
+	patches/openjdk/6985992-test_6933784.patch \
+        patches/openjdk/6853592-badwindow-warning-fix.patch \
+        patches/6703377-freetypescaler.patch
 
 if !WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
@@ -324,8 +326,7 @@ ICEDTEA_PATCHES += \
 	patches/shark-debug-option.patch \
 	patches/icedtea-shark.patch \
 	patches/icedtea-linux-separate-debuginfo.patch \
-	patches/openjdk/6951319-sparc_build_fixes.patch \
-        patches/openjdk/6853592-badwindow-warning-fix.patch
+	patches/openjdk/6951319-sparc_build_fixes.patch
 endif
 
 if WITH_RHINO
