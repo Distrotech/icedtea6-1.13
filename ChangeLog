@@ -1,6 +1,12 @@
 2010-10-18  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:
+	(RUNTIME): Define conditionally, so that
+	jsse.jar is added when not bootstrapping.
+
+2010-10-18  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
 	(RUNTIME): Revert Omair's change which breaks
 	the standard build.
 	(PLUGIN_BOOTSTRAP_CLASSES): Add java.net dependencies

@@ -34,7 +34,6 @@ ECJ_BUILD_OUTPUT_DIR = $(BUILD_OUTPUT_DIR)-ecj
 ICEDTEA_CLS_DIR = $(BUILD_OUTPUT_DIR)/classes
 ICEDTEA_CLS_DIR_ECJ = $(ECJ_BUILD_OUTPUT_DIR)/classes
 BOOT_DIR = $(abs_top_builddir)/bootstrap/jdk1.6.0
-RUNTIME = $(BOOT_DIR)/jre/lib/rt.jar
 ENDORSED_DIR = $(BOOT_DIR)/lib/endorsed
 ECJ_BOOT_DIR = $(abs_top_builddir)/bootstrap/ecj
 ICEDTEA_BOOT_DIR = $(abs_top_builddir)/bootstrap/icedtea
@@ -190,10 +189,12 @@ if BOOTSTRAPPING
   BOOTSTRAP_DIRECTORY_STAMP = stamps/bootstrap-directory.stamp
   ICEDTEA_HOME = $(ICEDTEA_BOOT_DIR)
   INITIAL_BOOTSTRAP_LINK_STAMP = stamps/bootstrap-directory-symlink-ecj.stamp
+  RUNTIME = $(BOOT_DIR)/jre/lib/rt.jar
 else
   BOOTSTRAP_DIRECTORY_STAMP =
   ICEDTEA_HOME = $(SYSTEM_JDK_DIR)
   INITIAL_BOOTSTRAP_LINK_STAMP = stamps/bootstrap-directory-symlink.stamp
+  RUNTIME = $(BOOT_DIR)/jre/lib/rt.jar:$(BOOT_DIR)/jre/lib/jsse.jar
 endif
 
 if CP_SUPPORTS_REFLINK
