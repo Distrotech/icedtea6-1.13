@@ -246,7 +246,6 @@ SECURITY_PATCHES = \
 	patches/security/20101012/6914943.patch \
 	patches/security/20101012/6559775.patch \
 	patches/security/20101012/6622002.patch \
-	patches/security/20101012/6623943.patch \
 	patches/security/20101012/6952017.patch \
 	patches/security/20101012/6952603.patch \
 	patches/security/20101012/6961084.patch \
@@ -269,7 +268,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-headers.patch \
 	patches/icedtea-headers-hotspot.patch \
 	patches/icedtea-gcc-suffix.patch \
-	patches/hotspot/$(HSBUILD)/gcc-suffix.patch \
+	patches/gcc-suffix.patch \
 	patches/icedtea-bytebuffer-compact.patch \
 	patches/memory-limits.patch \
 	patches/icedtea-sunsrc.patch \
@@ -277,18 +276,18 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-javafiles.patch \
 	patches/icedtea-jvmtiEnv.patch \
 	patches/icedtea-lcms.patch \
-	patches/hotspot/$(HSBUILD)/print_lsb_release.patch \
+	patches/print_lsb_release.patch \
 	patches/icedtea-jpegclasses.patch \
 	patches/icedtea-uname.patch \
 	patches/icedtea-freetypeversion.patch \
 	patches/icedtea-nomotif-6706121.patch \
 	patches/icedtea-nomotif.patch \
 	patches/icedtea-nomotif-mtoolkit.patch \
-	patches/hotspot/$(HSBUILD)/alpha-fixes.patch \
+	patches/alpha-fixes.patch \
 	patches/icedtea-alt-jar.patch \
 	patches/icedtea-jdk-use-ssize_t.patch \
 	patches/icedtea-use-idx_t.patch \
-	patches/hotspot/$(HSBUILD)/params-cast-size_t.patch \
+	patches/params-cast-size_t.patch \
 	patches/icedtea-clean-crypto.patch \
 	patches/icedtea-arch.patch \
 	patches/icedtea-lc_ctype.patch \
@@ -319,7 +318,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-parisc.patch \
 	patches/icedtea-sh4-support.patch \
 	patches/icedtea-policy-evaluation.patch \
-	patches/hotspot/$(HSBUILD)/update-bootclasspath.patch \
+	patches/update-bootclasspath.patch \
 	patches/libpng.patch \
 	patches/extensions/netx.patch \
 	patches/extensions/netx-umask.patch \
@@ -340,20 +339,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6638712-wildcard_types.patch \
 	patches/openjdk/6650759-missing_inference.patch \
 	patches/numa_on_early_glibc.patch \
-	patches/icedtea-shark-build.patch \
         patches/openjdk/6853592-badwindow-warning-fix.patch \
         patches/6703377-freetypescaler.patch
-
-if !WITH_ALT_HSBUILD
-ICEDTEA_PATCHES += \
-	patches/shark_do_nothing_on_stub_frame.patch \
-	patches/icedtea-shark-build-hotspot.patch \
-	patches/shark.patch \
-	patches/shark-debug-option.patch \
-	patches/icedtea-shark.patch \
-	patches/icedtea-linux-separate-debuginfo.patch \
-	patches/openjdk/6951319-sparc_build_fixes.patch
-endif
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -945,23 +932,6 @@ clean-replace-hotspot:
 
 # Copy ports sources into tree
 stamps/ports.stamp: stamps/replace-hotspot.stamp
-if !WITH_ALT_HSBUILD
-	for target in $(abs_top_srcdir)/shark/hotspot/make/*/makefiles/* \
-		      $(abs_top_srcdir)/shark/hotspot/src/*cpu/* \
-		      $(abs_top_srcdir)/shark/hotspot/src/share/vm/*; do \
-	  link=$$(dirname $$target | sed 's/^.*shark/openjdk/'); \
-	  cp -rv $$target $$link; \
-	done
-	if ! test "x$(WITH_CACAO)" = "xno" ; then \
-	  mkdir -p openjdk/jdk/src/solaris/bin/$(BUILD_ARCH_DIR) ; \
-	  ln -sf $(abs_top_builddir)/jvm.cfg \
-	    openjdk/jdk/src/solaris/bin/$(BUILD_ARCH_DIR)/jvm.cfg ; \
-	fi
-	if ! test "x$(WITH_CACAO)" = "xno"; then \
-	  ln -sf $(abs_top_builddir)/ergo.c \
-	    openjdk/jdk/src/solaris/bin/ergo_$(BUILD_ARCH_DIR).c; \
-	fi
-endif
 	for target in $(abs_top_srcdir)/arm_port/hotspot/tools \
 		      $(abs_top_srcdir)/arm_port/hotspot/src/*cpu/* ; do \
 	  link=$$(dirname $$target | sed 's/^.*arm_port/openjdk/'); \
@@ -971,16 +941,6 @@ endif
 	touch stamps/ports.stamp
 
 clean-ports:
-if !WITH_ALT_HSBUILD
-	for target in $(abs_top_srcdir)/shark/hotspot/make/*/makefiles/* \
-		      $(abs_top_srcdir)/shark/hotspot/src/*cpu/* \
-		      $(abs_top_srcdir)/shark/hotspot/src/share/vm/*; do \
-	  link=$$(dirname $$target | sed 's/^.*shark/openjdk/'); \
-	  rm -rf $$link; \
-	done
-	rm -f openjdk/jdk/src/solaris/bin/$(BUILD_ARCH_DIR)/jvm.cfg
-	rm -f openjdk/jdk/src/solaris/bin/ergo_$(BUILD_ARCH_DIR).c 
-endif
 	for target in $(abs_top_srcdir)/arm_port/hotspot/tools \
 		      $(abs_top_srcdir)/arm_port/hotspot/src/*cpu/* ; do \
 	  link=$$(dirname $$target | sed 's/^.*arm_port/openjdk/'); \

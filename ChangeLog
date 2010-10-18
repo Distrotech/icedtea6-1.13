@@ -1,5 +1,85 @@
 2010-10-18  Andrew John Hughes  <ahughes@redhat.com>
 
+	* patches/hotspot/hs19/alpha-fixes.patch,
+	* patches/hotspot/hs19/gcc-suffix.patch,
+	* patches/hotspot/hs19/params-cast-size_t.patch,
+	* patches/hotspot/hs19/print_lsb_release.patch,
+	* patches/hotspot/hs19/update-bootclasspath.patch:
+	Move to patches.  hs19 is now the only option.
+	* patches/hotspot/original/alpha-fixes.patch,
+	* patches/hotspot/original/gcc-suffix.patch,
+	* patches/hotspot/original/params-cast-size_t.patch,
+	* patches/hotspot/original/print_lsb_release.patch,
+	* patches/hotspot/original/update-bootclasspath.patch:
+	Dropped; upstream moved from hs17 to hs19.
+	* patches/icedtea-shark-build.patch:
+	Applied upstream by Gary Benson.
+	* patches/security/20101012/6623943.patch:
+	Applied upstream by Omair Majid.
+	* shark/hotspot/make/linux/makefiles/shark.make,
+	* shark/hotspot/src/cpu/zero/vm/shark_globals_zero.hpp,
+	* shark/hotspot/src/share/vm/includeDB_shark,
+	* shark/hotspot/src/share/vm/shark/llvmHeaders.hpp,
+	* shark/hotspot/src/share/vm/shark/llvmValue.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkBlock.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkBlock.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkBuilder.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkBuilder.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkCacheDecache.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkCacheDecache.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkCodeBuffer.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkCompiler.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkCompiler.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkConstant.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkConstant.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkContext.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkContext.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkEntry.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkFunction.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkFunction.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkInliner.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkInliner.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkIntrinsics.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkIntrinsics.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkInvariants.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkInvariants.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkMemoryManager.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkMemoryManager.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkNativeWrapper.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkNativeWrapper.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkRuntime.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkRuntime.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkStack.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkStack.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkState.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkState.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkStateScanner.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkStateScanner.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkTopLevelBlock.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkTopLevelBlock.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkType.hpp,
+	* shark/hotspot/src/share/vm/shark/sharkValue.cpp,
+	* shark/hotspot/src/share/vm/shark/sharkValue.hpp,
+	* shark/hotspot/src/share/vm/shark/shark_globals.cpp,
+	* shark/hotspot/src/share/vm/shark/shark_globals.hpp:
+	Shark is in HotSpot 19.
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Remove $(HSBUILD) special casing.
+	Remove conditional !WITH_ALT_HSBUILD patches.
+	(ports): Drop !WITH_ALT_HSBUILD block.
+	(clean-ports): Likewise.
+	* hotspot.map: Remove hs19.
+	* patches/alpha-fixes.patch,
+	* patches/gcc-suffix.patch,
+	* patches/params-cast-size_t.patch,
+	* patches/print_lsb_release.patch,
+	* patches/update-bootclasspath.patch:
+	The hs19 patches moved above.
+	* acinclude.m4:
+	(AC_CHECK_WITH_HOTSPOT_BUILD): Default to original.
+
+2010-10-18  Andrew John Hughes  <ahughes@redhat.com>
+
 	* Makefile.am:
 	(RUNTIME): Define conditionally, so that
 	jsse.jar is added when not bootstrapping.
