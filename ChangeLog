@@ -1,3 +1,12 @@
+2010-10-18  Omair Majid  <omajid@redhat.com>
+
+	* netx/net/sourceforge/jnlp/security/VariableX509TrustManager.java:
+	Add temporarilyUntrusted.
+	(checkServerTrusted): Only prompt user if the certificate was not
+	untrusted.
+	(temporarilyUntrust): New method.
+	(isTemporarilyUntrusted): New method.
+
 2010-10-18  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:

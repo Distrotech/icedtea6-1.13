@@ -66,7 +66,8 @@ public class VariableX509TrustManager extends X509ExtendedTrustManager {
     X509TrustManager userTrustManager = null;
     X509TrustManager caTrustManager = null;
 
-    ArrayList<Certificate> temporarilyTrusted = new ArrayList();
+    ArrayList<Certificate> temporarilyTrusted = new ArrayList<Certificate>();
+    ArrayList<Certificate> temporarilyUntrusted = new ArrayList<Certificate>();
 
     static VariableX509TrustManager instance = null;
 
@@ -192,11 +193,14 @@ public class VariableX509TrustManager extends X509ExtendedTrustManager {
             if (checkOnly) {
                 throw ce;
             } else {
+                if (!isTemporarilyUntrusted(chain[0])) {
+                    boolean b = askUser(chain, authType, trusted, CNMatched, hostName);
 
-                boolean b = askUser(chain, authType, trusted, CNMatched, hostName);
-
-                if (b) {
-                    temporarilyTrust(chain[0]);
+                    if (b) {
+                        temporarilyTrust(chain[0]);
+                    } else {
+                        temporarilyUntrust(chain[0]);
+                    }
                 }
 
                 checkAllManagers(chain, authType);
@@ -244,6 +248,30 @@ public class VariableX509TrustManager extends X509ExtendedTrustManager {
     public X509Certificate[] getAcceptedIssuers() {
         // delegate to default
         return caTrustManager.getAcceptedIssuers();
+    }
+
+    /**
+     * Temporarily untrust the given cert - do not ask the user to trust this
+     * certificate again
+     *
+     * @param c The certificate to trust
+     */
+    private void temporarilyUntrust(Certificate c) {
+        temporarilyUntrusted.add(c);
+    }
+
+    /**
+     * Was this certificate explicitly untrusted by user?
+     *
+     * @param c the certificate
+     * @return true if the user was presented with this certificate and chose
+     * not to trust it
+     */
+    private boolean isTemporarilyUntrusted(Certificate c) {
+        if (temporarilyUntrusted.contains(c)) {
+            return true;
+        }
+        return false;
     }
 
     /**
