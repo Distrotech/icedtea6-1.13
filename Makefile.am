@@ -86,13 +86,29 @@ NETX_BOOTSTRAP_CLASSES = \
 	$(SHARE)/javax/swing/JTable.java \
 	$(SHARE)/java/security/KeyStore.java
 
+# IT563 - NetX uses sun.security code
+# IT564 - NetX depends on sun.misc.BASE64Encoder
+# IT570 - NetX depends on sun.applet.AppletViewPanel
+# IT571 - NetX depends on com.sun.net.ssl.internal.ssl.X509ExtendedTrustManager.java
+NETX_SUN_CLASSES = \
+	$(SHARE)/sun/security/provider/X509Factory.java \
+	$(SHARE)/sun/security/util/SecurityConstants.java \
+	$(SHARE)/sun/security/util/HostnameChecker.java \
+	$(SHARE)/sun/security/util/DerValue.java \
+	$(SHARE)/sun/security/x509/X500Name.java \
+	$(SHARE)/sun/misc/BASE64Encoder.java \
+	$(SHARE)/sun/applet/AppletViewerPanel.java \
+	$(SHARE)/sun/security/validator/ValidatorException.java \
+	$(SHARE)/com/sun/net/ssl/internal/ssl/X509ExtendedTrustManager.java
+
 # PR42003 - javax.swing.plaf.basic.BasicDirectoryModel
 # PR43389 - javax.management.StandardMBean
 ICEDTEA_BOOTSTRAP_CLASSES = \
 	$(SHARE)/javax/swing/plaf/basic/BasicDirectoryModel.java \
 	$(SHARE)/javax/management/StandardMBean.java \
 	$(SHARE)/com/sun/java/swing/plaf/nimbus/NimbusLookAndFeel.java \
-	$(NETX_BOOTSTRAP_CLASSES)
+	$(NETX_BOOTSTRAP_CLASSES) \
+	$(NETX_SUN_CLASSES)
 
 # Flags
 IT_CFLAGS=$(CFLAGS) $(ARCHFLAG)
@@ -1868,12 +1884,12 @@ clean-liveconnect:
 netx-source-files.txt:
 	find $(NETX_SRCDIR) -name '*.java' | sort > $@
 
-stamps/netx.stamp: netx-source-files.txt stamps/rt-class-files.stamp
+stamps/netx.stamp: netx-source-files.txt stamps/rt.stamp
 	mkdir -p $(abs_top_builddir)/netx.build
 	$(BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) \
 	    -d $(abs_top_builddir)/netx.build \
-	    -sourcepath $(NETX_SRCDIR):$(SOURCEPATH_DIRS) \
-	    -classpath $(RUNTIME) -bootclasspath \'\' \
+	    -sourcepath $(NETX_SRCDIR) \
+	    -bootclasspath $(RUNTIME) \
 	    @netx-source-files.txt
 	cp -r $(NETX_RESOURCE_DIR) $(abs_top_builddir)/netx.build/net/sourceforge/jnlp
 	mkdir -p stamps
