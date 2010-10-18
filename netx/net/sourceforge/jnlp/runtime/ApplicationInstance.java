@@ -27,6 +27,8 @@ import java.security.ProtectionDomain;
 
 import javax.swing.event.EventListenerList;
 
+import sun.awt.AppContext;
+
 import net.sourceforge.jnlp.JNLPFile;
 import net.sourceforge.jnlp.PropertyDesc;
 import net.sourceforge.jnlp.SecurityDesc;
@@ -61,6 +63,16 @@ public class ApplicationInstance {
     /** the classloader */
     private ClassLoader loader;
 
+    /**
+     * Every application/applet gets its own AppContext. This allows us to do
+     * things like have two different look and feels for two different applets
+     * (running in the same VM), allows untrusted programs to manipulate the
+     * event queue (safely) and (possibly) more.<p>
+     *
+     * It is set to the AppContext which created this ApplicationInstance
+     */
+    private AppContext appContext;
+
     /** whether the application has stopped running */
     private boolean stopped = false;
 
@@ -74,13 +86,15 @@ public class ApplicationInstance {
         private boolean isSigned = false;
 
     /**
-     * Create an application instance for the file.
+     * Create an application instance for the file. This should be done in the
+     * appropriate {@link ThreadGroup} only.
      */
     public ApplicationInstance(JNLPFile file, ThreadGroup group, ClassLoader loader) {
         this.file = file;
         this.group = group;
         this.loader = loader;
         this.isSigned = ((JNLPClassLoader) loader).getSigning();
+        this.appContext = AppContext.getAppContext();
     }
 
     /**
@@ -297,4 +311,9 @@ public class ApplicationInstance {
         public boolean isSigned() {
                 return isSigned;
         }
+
+    public AppContext getAppContext() {
+        return appContext;
+    }
+
 }

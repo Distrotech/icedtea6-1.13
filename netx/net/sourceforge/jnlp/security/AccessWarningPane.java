@@ -56,6 +56,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
 import net.sourceforge.jnlp.JNLPFile;
+import net.sourceforge.jnlp.util.FileUtils;
 
 /**
  * Provides a panel to show inside a SecurityWarningDialog. These dialogs are
@@ -114,10 +115,18 @@ public class AccessWarningPane extends SecurityDialogPanel {
                 String topLabelText = "";
                 switch (type) {
                         case READ_FILE:
-                                topLabelText = R("SFileReadAccess");
+                                if (extras != null && extras.length > 0 && extras[0] instanceof String) {
+                                    topLabelText = R("SFileReadAccess", FileUtils.displayablePath((String)extras[0]));
+                                } else {
+                                    topLabelText = R("SFileReadAccess", R("AFileOnTheMachine"));
+                                }
                                 break;
                         case WRITE_FILE:
-                                topLabelText = R("SFileWriteAccess");
+                                if (extras != null && extras.length > 0 && extras[0] instanceof String) {
+                                    topLabelText = R("SFileWriteAccess", FileUtils.displayablePath((String)extras[0]));
+                                } else {
+                                    topLabelText = R("SFileWriteAccess", R("AFileOnTheMachine"));
+                                }
                                 break;
                         case CREATE_DESTKOP_SHORTCUT:
                             topLabelText = R("SDesktopShortcut");
@@ -145,7 +154,7 @@ public class AccessWarningPane extends SecurityDialogPanel {
                 JPanel topPanel = new JPanel(new BorderLayout());
                 topPanel.setBackground(Color.WHITE);
                 topPanel.add(topLabel, BorderLayout.CENTER);
-                topPanel.setPreferredSize(new Dimension(400,60));
+                topPanel.setPreferredSize(new Dimension(450,100));
                 topPanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
 
                 //application info

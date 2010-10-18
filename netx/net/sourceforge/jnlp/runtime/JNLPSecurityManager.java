@@ -37,6 +37,8 @@ import net.sourceforge.jnlp.JNLPFile;
 import net.sourceforge.jnlp.security.SecurityWarningDialog;
 import net.sourceforge.jnlp.services.ServiceUtil;
 import net.sourceforge.jnlp.util.WeakList;
+import sun.awt.AWTSecurityManager;
+import sun.awt.AppContext;
 import sun.security.util.SecurityConstants;
 
 /**
@@ -53,7 +55,7 @@ import sun.security.util.SecurityConstants;
  * @author <a href="mailto:jmaxwell@users.sourceforge.net">Jon A. Maxwell (JAM)</a> - initial author
  * @version $Revision: 1.17 $
  */
-class JNLPSecurityManager extends SecurityManager {
+class JNLPSecurityManager extends AWTSecurityManager {
 
     // todo: some apps like JDiskReport can close the VM even when
     // an exit class is set - fix!
@@ -108,6 +110,13 @@ class JNLPSecurityManager extends SecurityManager {
     private boolean exitAllowed = true;
 
     /**
+     * The AppContext of the main application (netx). We need to store this here
+     * so we can return this when no code from an external application is
+     * running on the thread
+     */
+    private AppContext mainAppContext;
+
+    /**
      * Creates a JNLP SecurityManager.
      */
     JNLPSecurityManager() {
@@ -118,6 +127,8 @@ class JNLPSecurityManager extends SecurityManager {
 
         if (!JNLPRuntime.isHeadless())
             new JWindow().getOwner();
+
+        mainAppContext = AppContext.getAppContext();
     }
 
     /**
@@ -499,6 +510,32 @@ class JNLPSecurityManager extends SecurityManager {
 
     protected void disableExit() {
         exitAllowed = false;
+    }
+
+    /**
+     * This returns the appropriate {@link AppContext}. Hooks in AppContext
+     * check if the current {@link SecurityManager} is an instance of
+     * AWTSecurityManager and if so, call this method to give it a chance to
+     * return the appropriate appContext based on the application that is
+     * running.<p>
+     *
+     * This can be called from any thread (possibly a swing thread) to find out
+     * the AppContext for the thread (which may correspond to a particular
+     * applet).
+     */
+    @Override
+    public AppContext getAppContext() {
+        ApplicationInstance app = getApplication();
+        if (app == null) {
+            /*
+             * if we cannot find an application based on the code on the stack,
+             * then assume it is the main application
+             */
+            return mainAppContext;
+        } else {
+            return app.getAppContext();
+        }
+
     }
 
 }

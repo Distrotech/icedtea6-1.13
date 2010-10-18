@@ -22,6 +22,7 @@
 
 package net.sourceforge.jnlp;
 
+import net.sourceforge.jnlp.runtime.AppThreadGroup;
 import net.sourceforge.jnlp.runtime.AppletInstance;
 import net.sourceforge.jnlp.runtime.JNLPRuntime;
 
@@ -29,6 +30,7 @@ import java.net.URL;
 import java.util.Hashtable;
 
 import sun.applet.AppletViewerPanel;
+import sun.awt.SunToolkit;
 
 /**
  * This panel calls into netx to run an applet, and pipes the display
@@ -54,6 +56,18 @@ public class NetxPanel extends AppletViewerPanel
         this(documentURL, atts);
         this.exitOnFailure = exitOnFailure;
         this.appletAlive = true;
+    }
+
+    @Override
+    public void run() {
+        /*
+         * create an AppContext for this thread associated with this particular
+         * plugin instance (which runs in a different thread group from the rest
+         * of the plugin).
+         */
+        SunToolkit.createNewAppContext();
+
+        super.run();
     }
 
     //Overriding to use Netx classloader. You might need to relax visibility
@@ -125,9 +139,17 @@ public class NetxPanel extends AppletViewerPanel
         }
     }
 
+    /**
+     * Creates a new Thread (in a new applet-specific ThreadGroup) for running
+     * the applet
+     */
     // Reminder: Relax visibility in sun.applet.AppletPanel
     protected synchronized void createAppletThread() {
-        handler = new Thread(this);
+        // when this was being done (incorrectly) in Launcher, the call was
+        // new AppThreadGroup(mainGroup, file.getTitle());
+        ThreadGroup tg = new AppThreadGroup(Launcher.mainGroup,
+                this.documentURL.toString());
+        handler = new Thread(tg, this);
         handler.start();
     }
 

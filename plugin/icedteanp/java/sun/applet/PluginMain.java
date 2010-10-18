@@ -314,14 +314,6 @@ public class PluginMain
             if (!redirectStreams)
                 super.write(b);
         }
-
-        @Override
-        public void write(byte[] b) throws IOException {
-            logFile.write(b);
-            
-            if (!redirectStreams)
-                super.write(b);
-        }
     }
     
 }

@@ -1,0 +1,24 @@
+# HG changeset patch
+# User michaelm
+# Date 1285257398 25200
+# Node ID c4573f15b0f8f304cf5fd5653e2c4d7cd8ccd61b
+# Parent  6e389e6349c94fd9576657adcd2656a6e868acb1
+6981426: limit use of TRACE method in HttpURLConnection
+Reviewed-by: chegar
+
+diff --git a/src/share/classes/java/net/HttpURLConnection.java b/src/share/classes/java/net/HttpURLConnection.java
+--- openjdk.orig/jdk/src/share/classes/java/net/HttpURLConnection.java
++++ openjdk/jdk/src/share/classes/java/net/HttpURLConnection.java
+@@ -344,6 +344,12 @@ abstract public class HttpURLConnection 
+ 
+         for (int i = 0; i < methods.length; i++) {
+             if (methods[i].equals(method)) {
++		if (method.equals("TRACE")) {
++		    SecurityManager s = System.getSecurityManager();
++		    if (s != null) {
++		        s.checkPermission(new NetPermission("allowHttpTrace"));
++		    }
++		}
+                 this.method = method;
+                 return;
+             }

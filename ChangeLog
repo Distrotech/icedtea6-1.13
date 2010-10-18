@@ -1,3 +1,188 @@
+2010-10-18  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(RUNTIME): Define conditionally, so that
+	jsse.jar is added when not bootstrapping.
+
+2010-10-18  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(RUNTIME): Revert Omair's change which breaks
+	the standard build.
+	(PLUGIN_BOOTSTRAP_CLASSES): Add java.net dependencies
+	not yet in gcj.
+	(PLUGIN_SUN_CLASSES): Add bad internal class dependencies
+	of plugin.
+	(liveconnect): Build without setting bootclasspath to empty.
+
+2010-10-18  Omair Majid  <omajid@redhat.com>
+
+	* Makefile.am (RUNTIME): Add jsse.jar to classpath. It is required
+	for building netx with --disable-bootstrap.
+
+2010-10-18  Omair Majid  <omajid@redhat.com>
+
+	* netx/net/sourceforge/jnlp/security/VariableX509TrustManager.java:
+	Add temporarilyUntrusted.
+	(checkServerTrusted): Only prompt user if the certificate was not
+	untrusted.
+	(temporarilyUntrust): New method.
+	(isTemporarilyUntrusted): New method.
+
+2010-10-18  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(NETX_SUN_CLASSES): List internal Sun class
+	dependencies of NetX.
+	(netx): Build normally without setting the
+	bootclasspath empty.
+
+2010-10-18  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am:
+	Corrected location of patch
+	patches/openjdk/6853592-badwindow-warning-fix.patch
+	in Makefile.am
+	* patches/6703377-freetypescaler.patch:
+	Added patch which fixes bug #6703377
+
+2010-10-15  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* patches/openjdk/6853592-badwindow-warning-fix.patch:
+	Added patch which fixes bug #6853592 introduced by another patch
+	6678385-window_movement_crasher.patch
+
+2010-10-14  Omair Majid  <omajid@redhat.com>
+
+	Fixes PR565
+	* NEWS: Update with fix.
+	* netx/net/sourceforge/jnlp/Launcher.java:
+	Make mainGroup package-private so NetxPanel can access it.
+	(createThreadGroup): Only create a new AppThreadGroup if not a plugin.
+	(run): Update comments and make dependence on SunToolkit explicit.
+	* netx/net/sourceforge/jnlp/NetxPanel.java
+	(run): New method. Create a new AppContext for the applet.
+	(createAppletThread): Create a new AppThreadGroup and start the applet
+	thread in that ThreadGroup.
+	* netx/net/sourceforge/jnlp/runtime/ApplicationInstance.java:
+	Add new private variable appContext.
+	(ApplicationInstance): Initialize appContext.
+	(getAppContext): New method.
+	* netx/net/sourceforge/jnlp/runtime/JNLPSecurityManager.java:
+	Extend AWTSecurityManager.
+	(JNLPSecurityManager): Save the AppContext.
+	(getAppContext): New method. Traverse the stack to find the application
+	and return its AppContext.
+
+2010-10-14  Matthias Klose  <doko@ubuntu.com>
+
+	* configure.ac: New option --with-llvm-config.
+	* INSTALL: Document it.
+
+2010-10-13  Andrew John Hughes  <ahughes@redhat.com>
+
+	* NEWS:
+	Add 1.7.5, 1.8.2 and 1.9.1 releases.
+
+2010-10-12  Matthias Klose  <doko@ubuntu.com>
+
+	* Makefile.am (stamps/add-plugin.stamp, stamps/add-plugin-debug.stamp,
+	stamps/add-pulseaudio-debug.stamp, stamps/add-plugin-ecj.stamp): Robustify.
+	(ADD_ZERO_CONFIGURE_ARGS): Adjust to new configure flags.
+	(stamps/add-zero.stamp): Explicitly create directories that icedtea
+	components assume to be created by the jdk build (not built in zerovm).
+
+2010-10-11  Andrew John Hughes  <ahughes@redhat.com>
+
+	* NEWS: Add CVE numbers and list 6925672
+	which is covered by the 6891766 fix.
+
+2010-10-11  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/icedtea-timerqueue.patch:
+	Dropped; superceded by 6623943.
+	* Makefile.am: Add new security patches.
+	* NEWS: List new security patches.
+	* patches/security/20101012/6622002.patch,
+	* patches/security/20101012/6623943.patch,
+	* patches/security/20101012/6952017.patch,
+	* patches/security/20101012/6952603.patch,
+	* patches/security/20101012/6961084.patch,
+	* patches/security/20101012/6963285.patch,
+	* patches/security/20101012/6981426.patch,
+	* patches/security/20101012/6990437.patch:
+	Added.
+
+2010-10-08  Omair Majid  <omajid@redhat.com>
+
+	* NEWS: Updated
+	* net/sourceforge/jnlp/Launcher.java: Add fileLock.
+	(launchApplication): Call markNetxRunning and install a shutdown hook for
+	markNetxStopped.
+	(markNetxRunning): New method.
+	(markNetxStopped): New method.
+	* net/sourceforge/jnlp/cache/CacheUtil.java
+	(R): New method.
+	(clearCache): New method.
+	(okToClearCache): New method.
+	* net/sourceforge/jnlp/resources/Messages.properties: Add BXclearcache and
+	CCannotClearCache.
+	* net/sourceforge/jnlp/runtime/Boot.java
+	(run): Clear the cache.
+	* net/sourceforge/jnlp/runtime/JNLPRuntime.java: Add NETX_RUNNING_FILE.
+	* net/sourceforge/jnlp/util/FileUtils.java
+	(recursiveDelete): New method.
+
+2010-10-05  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/security/20100330/hotspot/original/6626217.patch:
+	Remove dead security patch.
+	* Makefile.am: Add new patches.
+	* NEWS: List security updates.
+	* patches/security/20101012/6559775.patch,
+	* patches/security/20101012/6891766.patch,
+	* patches/security/20101012/6914943.patch,
+	* patches/security/20101012/6925710.patch,
+	* patches/security/20101012/6938813.patch,
+	* patches/security/20101012/6957564.patch,
+	* patches/security/20101012/6958060.patch,
+	* patches/security/20101012/6963023.patch,
+	* patches/security/20101012/6963489.patch,
+	* patches/security/20101012/6966692.patch:
+	New security patches.
+
+2010-10-04  Paul Ebermann  <Paul-Ebermann@gmx.de>
+	        Omair Majid <omajid@redhat.com>
+
+	Fixes PR554.
+	* plugin/icedteanp/java/sun/applet/PluginMain.java
+	(write): Remove method.
+
+2010-10-04  Omair Majid  <omajid@redhat.com>
+
+	* /netx/net/sourceforge/jnlp/PluginBridge.java
+	Do not shadow specVersion and fileVersion variables by redeclaring them.
+	(PluginBridge): Initialize specVersion and fileVersion.
+
+2010-10-04  Omair Majid  <omajid@redhat.com>
+
+	* netx/net/sourceforge/jnlp/resources/Messages.properties:
+	Add AFileOnTheMachine, change SFileReadAccess and SFileWriteAccess.
+	* netx/net/sourceforge/jnlp/security/AccessWarningPane.java:
+	(addComponents): Add the filename to the message.
+	* netx/net/sourceforge/jnlp/services/XExtendedService.java:
+	(openFile): Pass along the filename to ServiceUtil.checkAccess.
+	* netx/net/sourceforge/jnlp/util/FileUtils.java:
+	(displayablePath): New method.
+	(displayablePath): Likewise.
+
+2010-10-01  Andrew Su  <asu@redhat.com>
+
+	* PluginAppletViewer.java:
+	(createPanel): Changed call to reframe with handle 0 to the handle
+	passed in.
+	(handleMessage): Removed the redundant reframe from initialization.
+
 2010-09-29  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:

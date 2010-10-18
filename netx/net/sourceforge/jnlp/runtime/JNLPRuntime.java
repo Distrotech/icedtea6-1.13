@@ -18,6 +18,7 @@
 package net.sourceforge.jnlp.runtime;
 
 import java.io.*;
+import java.nio.channels.FileLock;
 import java.awt.*;
 import java.text.*;
 import java.util.*;
@@ -131,6 +132,15 @@ public class JNLPRuntime {
      */
     public static final String LOCKS_DIR = TMP_DIR + File.separator + USER + File.separator
             + "netx" + File.separator + "locks";
+
+    /**
+     * The /tmp/$USER/netx/locks/netx_running file is used to indicate if any
+     * instances of netx are running (this file may exist even if no instances
+     * are running). All netx instances acquire a shared lock on this file. If
+     * this file can be locked (using a {@link FileLock}) in exclusive mode, then
+     * other netx instances are not running
+     */
+    public static final String NETX_RUNNING_FILE = LOCKS_DIR + File.separator + "netx_running";
 
     /** the java.home directory */
     public static final String JAVA_HOME_DIR = System.getProperty("java.home");

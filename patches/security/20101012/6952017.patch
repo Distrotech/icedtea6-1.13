@@ -1,0 +1,50 @@
+# HG changeset patch
+# User michaelm
+# Date 1280138166 -3600
+# Node ID 3f8ebe7db6e03ce47132bd92c18e88b9410439ed
+# Parent  7fe7aa39b5dcd501d49e88c1d5f672ca45af8658
+6952017: HttpURLConnection chunked encoding issue (Http request splitting)
+Reviewed-by: chegar
+
+diff --git a/src/share/classes/sun/net/www/protocol/http/HttpURLConnection.java b/src/share/classes/sun/net/www/protocol/http/HttpURLConnection.java
+--- openjdk.orig/jdk/src/share/classes/sun/net/www/protocol/http/HttpURLConnection.java
++++ openjdk/jdk/src/share/classes/sun/net/www/protocol/http/HttpURLConnection.java
+@@ -422,9 +422,12 @@ public class HttpURLConnection extends j
+                         "application/x-www-form-urlencoded");
+             }
+ 
++            boolean chunked = false;
++
+             if (streaming()) {
+                 if (chunkLength != -1) {
+                     requests.set ("Transfer-Encoding", "chunked");
++                    chunked = true;
+                 } else {
+                     requests.set ("Content-Length", String.valueOf(fixedContentLength));
+                 }
+@@ -435,6 +438,16 @@ public class HttpURLConnection extends j
+                     poster.close();
+                     requests.set("Content-Length",
+                                  String.valueOf(poster.size()));
++                }
++            }
++
++            if (!chunked) {
++                if (requests.findValue("Transfer-Encoding") != null) {
++                    requests.remove("Transfer-Encoding");
++                    if (logger.isLoggable(Level.WARNING)) {
++                        logger.warning(
++                            "use streaming mode for chunked encoding");
++                    }
+                 }
+             }
+ 
+@@ -562,7 +575,7 @@ public class HttpURLConnection extends j
+         if (instProxy instanceof sun.net.ApplicationProxy) {
+             /* Application set Proxies should not have access to cookies
+              * in a secure environment unless explicitly allowed. */
+-            try { 
++            try {
+                 cookieHandler = CookieHandler.getDefault();
+             } catch (SecurityException se) { /* swallow exception */ }
+         } else {

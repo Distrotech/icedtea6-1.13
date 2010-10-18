@@ -34,7 +34,6 @@ ECJ_BUILD_OUTPUT_DIR = $(BUILD_OUTPUT_DIR)-ecj
 ICEDTEA_CLS_DIR = $(BUILD_OUTPUT_DIR)/classes
 ICEDTEA_CLS_DIR_ECJ = $(ECJ_BUILD_OUTPUT_DIR)/classes
 BOOT_DIR = $(abs_top_builddir)/bootstrap/jdk1.6.0
-RUNTIME = $(BOOT_DIR)/jre/lib/rt.jar
 ENDORSED_DIR = $(BOOT_DIR)/lib/endorsed
 ECJ_BOOT_DIR = $(abs_top_builddir)/bootstrap/ecj
 ICEDTEA_BOOT_DIR = $(abs_top_builddir)/bootstrap/icedtea
@@ -86,13 +85,47 @@ NETX_BOOTSTRAP_CLASSES = \
 	$(SHARE)/javax/swing/JTable.java \
 	$(SHARE)/java/security/KeyStore.java
 
+# PR46074 - Missing java.net cookie code required by IcedTea plugin
+PLUGIN_BOOTSTRAP_CLASSES = \
+	$(SHARE)/java/net/CookieManager.java \
+	$(SHARE)/java/net/HttpCookie.java \
+	$(SHARE)/java/net/CookieHandler.java
+
+# IT563 - NetX uses sun.security code
+# IT564 - NetX depends on sun.misc.BASE64Encoder
+# IT570 - NetX depends on sun.applet.AppletViewPanel
+# IT571 - NetX depends on com.sun.net.ssl.internal.ssl.X509ExtendedTrustManager.java
+NETX_SUN_CLASSES = \
+	$(SHARE)/sun/security/provider/X509Factory.java \
+	$(SHARE)/sun/security/util/SecurityConstants.java \
+	$(SHARE)/sun/security/util/HostnameChecker.java \
+	$(SHARE)/sun/security/util/DerValue.java \
+	$(SHARE)/sun/security/x509/X500Name.java \
+	$(SHARE)/sun/misc/BASE64Encoder.java \
+	$(SHARE)/sun/applet/AppletViewerPanel.java \
+	$(SHARE)/sun/security/validator/ValidatorException.java \
+	$(SHARE)/com/sun/net/ssl/internal/ssl/X509ExtendedTrustManager.java
+
+# IT573 - Plugin depends on sun.awt,X11.XEmbeddedFrame.java
+# IT574 - Plugin depends on sun.misc.Ref
+# IT575 - Plugin depends on com.sun/jndi.toolkit.url.UrlUtil
+# IT576 - Plugin depends on sun.applet.AppletImageRef
+PLUGIN_SUN_CLASSES = \
+	$(SOLARIS)/sun/awt/X11/XEmbeddedFrame.java \
+	$(SHARE)/sun/misc/Ref.java \
+	$(SHARE)/com/sun/jndi/toolkit/url/UrlUtil.java \
+	$(SHARE)/sun/applet/AppletImageRef.java
+
 # PR42003 - javax.swing.plaf.basic.BasicDirectoryModel
 # PR43389 - javax.management.StandardMBean
 ICEDTEA_BOOTSTRAP_CLASSES = \
 	$(SHARE)/javax/swing/plaf/basic/BasicDirectoryModel.java \
 	$(SHARE)/javax/management/StandardMBean.java \
 	$(SHARE)/com/sun/java/swing/plaf/nimbus/NimbusLookAndFeel.java \
-	$(NETX_BOOTSTRAP_CLASSES)
+	$(NETX_BOOTSTRAP_CLASSES) \
+	$(NETX_SUN_CLASSES) \
+	$(PLUGIN_BOOTSTRAP_CLASSES) \
+	$(PLUGIN_SUN_CLASSES)
 
 # Flags
 IT_CFLAGS=$(CFLAGS) $(ARCHFLAG)
@@ -156,10 +189,12 @@ if BOOTSTRAPPING
   BOOTSTRAP_DIRECTORY_STAMP = stamps/bootstrap-directory.stamp
   ICEDTEA_HOME = $(ICEDTEA_BOOT_DIR)
   INITIAL_BOOTSTRAP_LINK_STAMP = stamps/bootstrap-directory-symlink-ecj.stamp
+  RUNTIME = $(BOOT_DIR)/jre/lib/rt.jar
 else
   BOOTSTRAP_DIRECTORY_STAMP =
   ICEDTEA_HOME = $(SYSTEM_JDK_DIR)
   INITIAL_BOOTSTRAP_LINK_STAMP = stamps/bootstrap-directory-symlink.stamp
+  RUNTIME = $(BOOT_DIR)/jre/lib/rt.jar:$(BOOT_DIR)/jre/lib/jsse.jar
 endif
 
 if CP_SUPPORTS_REFLINK
@@ -197,7 +232,30 @@ REWRITER_SRCS = $(abs_top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.jav
 
 ICEDTEA_FSG_PATCHES =
 
+BROKEN = 
+
+SECURITY_PATCHES = \
+	patches/security/20101012/6891766.patch \
+	patches/security/20101012/6925710.patch \
+	patches/security/20101012/6938813.patch \
+	patches/security/20101012/6957564.patch \
+	patches/security/20101012/6958060.patch \
+	patches/security/20101012/6963023.patch \
+	patches/security/20101012/6963489.patch \
+	patches/security/20101012/6966692.patch \
+	patches/security/20101012/6914943.patch \
+	patches/security/20101012/6559775.patch \
+	patches/security/20101012/6622002.patch \
+	patches/security/20101012/6623943.patch \
+	patches/security/20101012/6952017.patch \
+	patches/security/20101012/6952603.patch \
+	patches/security/20101012/6961084.patch \
+	patches/security/20101012/6963285.patch \
+	patches/security/20101012/6981426.patch \
+	patches/security/20101012/6990437.patch
+
 ICEDTEA_PATCHES = \
+	$(SECURITY_PATCHES) \
 	patches/icedtea-notice-safepoints.patch \
 	patches/icedtea-parisc-opt.patch \
 	patches/icedtea-lucene-crash.patch \
@@ -219,7 +277,6 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-javafiles.patch \
 	patches/icedtea-jvmtiEnv.patch \
 	patches/icedtea-lcms.patch \
-	patches/icedtea-timerqueue.patch \
 	patches/hotspot/$(HSBUILD)/print_lsb_release.patch \
 	patches/icedtea-jpegclasses.patch \
 	patches/icedtea-uname.patch \
@@ -283,7 +340,9 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6638712-wildcard_types.patch \
 	patches/openjdk/6650759-missing_inference.patch \
 	patches/numa_on_early_glibc.patch \
-	patches/icedtea-shark-build.patch
+	patches/icedtea-shark-build.patch \
+        patches/openjdk/6853592-badwindow-warning-fix.patch \
+        patches/6703377-freetypescaler.patch
 
 if !WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
@@ -1331,9 +1390,9 @@ clean-icedtea-debug-against-icedtea: clean-add-zero-debug clean-add-cacao-debug 
 stamps/add-plugin.stamp: stamps/plugin.stamp stamps/icedtea.stamp
 if ENABLE_PLUGIN
 	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
+	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/
 	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
-	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
+	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)/
 	cp -pPRf $(abs_top_builddir)/liveconnect/lib/classes.jar \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/plugin.jar
 	cp -pPRf $(abs_top_builddir)/liveconnect/lib/classes.jar \
@@ -1351,9 +1410,9 @@ clean-add-plugin:
 stamps/add-plugin-debug.stamp: stamps/plugin.stamp stamps/icedtea-debug.stamp
 if ENABLE_PLUGIN
 	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/
 	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)/
 	cp -pPRf $(abs_top_builddir)/liveconnect/lib/classes.jar \
 	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/plugin.jar
 	cp -pPRf $(abs_top_builddir)/liveconnect/lib/classes.jar \
@@ -1378,9 +1437,9 @@ stamps/add-netx.stamp: stamps/netx-dist.stamp extra-lib/about.jar stamps/icedtea
 	cp $(NETX_RESOURCE_DIR)/about.jnlp extra-lib/about.jar \
 	  $(BUILD_OUTPUT_DIR)/j2re-image/lib
 	cp $(NETX_SRCDIR)/javaws.1 \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/man/man1; \
+	  $(BUILD_OUTPUT_DIR)/j2sdk-image/man/man1
 	cp $(NETX_SRCDIR)/javaws.1 \
-	  $(BUILD_OUTPUT_DIR)/j2re-image/man/man1; \
+	  $(BUILD_OUTPUT_DIR)/j2re-image/man/man1
 	touch stamps/add-netx.stamp
 
 clean-add-netx:
@@ -1498,9 +1557,9 @@ clean-add-pulseaudio:
 stamps/add-pulseaudio-debug.stamp: stamps/icedtea-debug.stamp $(PULSE_JAVA_TARGET)
 if ENABLE_PULSE_JAVA
 	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/
 	cp -pPRf $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)/
 	cp -pPRf $(PULSE_JAVA_BUILDDIR)/pulse-java.jar \
 	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/ext
 	cp -pPRf $(PULSE_JAVA_BUILDDIR)/pulse-java.jar \
@@ -1589,9 +1648,9 @@ clean-icedtea-against-ecj: clean-add-plugin-ecj clean-add-netx-ecj clean-add-sys
 stamps/add-plugin-ecj.stamp: stamps/plugin.stamp stamps/icedtea-ecj.stamp
 if ENABLE_PLUGIN
 	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
-	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/
 	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
-	  $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)/
 	cp -pPRf $(abs_top_builddir)/liveconnect/lib/classes.jar \
 	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/plugin.jar
 	cp -pPRf $(abs_top_builddir)/liveconnect/lib/classes.jar \
@@ -1802,8 +1861,7 @@ stamps/liveconnect.stamp: liveconnect-source-files.txt stamps/netx.stamp
 	  $(BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) \
 	      -d $(abs_top_builddir)/liveconnect \
 	      -classpath $(abs_top_builddir)/netx.build:$(RUNTIME) \
-	      -sourcepath $(SOURCEPATH_DIRS) \
-	      -bootclasspath \'\' \
+	      -sourcepath $(LIVECONNECT_SRCS) \
 	      @liveconnect-source-files.txt ; \
 	fi
 	mkdir -p stamps
@@ -1835,12 +1893,12 @@ clean-liveconnect:
 netx-source-files.txt:
 	find $(NETX_SRCDIR) -name '*.java' | sort > $@
 
-stamps/netx.stamp: netx-source-files.txt stamps/rt-class-files.stamp
+stamps/netx.stamp: netx-source-files.txt stamps/rt.stamp
 	mkdir -p $(abs_top_builddir)/netx.build
 	$(BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) \
 	    -d $(abs_top_builddir)/netx.build \
-	    -sourcepath $(NETX_SRCDIR):$(SOURCEPATH_DIRS) \
-	    -classpath $(RUNTIME) -bootclasspath \'\' \
+	    -sourcepath $(NETX_SRCDIR) \
+	    -bootclasspath $(RUNTIME) \
 	    @netx-source-files.txt
 	cp -r $(NETX_RESOURCE_DIR) $(abs_top_builddir)/netx.build/net/sourceforge/jnlp
 	mkdir -p stamps
@@ -2077,7 +2135,7 @@ ADD_ZERO_CONFIGURE_ARGS += \
 endif
 ADD_ZERO_CONFIGURE_ARGS += \
 	--disable-docs \
-	$(filter-out '--with-gcj-home=% '--with-ecj=% \
+	$(filter-out '--with-jdk-home=% '--with-ecj=% \
 			'--with-java=% '--with-javah=% \
 			'--with-rmic=% '--with-additional-vms=% \
 			'--with-openjdk '--with-openjdk=% , \
@@ -2089,6 +2147,7 @@ ADD_ZERO_CONFIGURE_ARGS += \
 	$(if $(findstring --with-hotspot-src-zip=, $(CONFIGURE_ARGS)),, \
 	  --with-hotspot-src-zip=$(abs_top_builddir)/$(HOTSPOT_SRC_ZIP))
 endif
+ADD_ZERO_CONFIGURE_ARGS += --disable-plugin --disable-bootstrap
 
 ADD_ZERO_EXTRA_BUILD_ENV = \
 	BUILD_LANGTOOLS=false ALT_LANGTOOLS_DIST=$(BUILD_OUTPUT_DIR)/langtools/dist \
@@ -2105,6 +2164,22 @@ if ADD_ZERO_BUILD
 	cd zerovm && \
 	    $(ADD_ZERO_EXTRA_BUILD_ENV) \
 		$(ARCH_PREFIX) $(abs_top_srcdir)/configure $(ADD_ZERO_CONFIGURE_ARGS)
+
+	: # create directories which are expected by icedtea components,
+	: # implicitly assumed to be created by the jdk build.
+	mkdir -p $(patsubst $(abs_top_builddir)/%,$(abs_top_builddir)/zerovm/%, \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR) \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/man/man1 \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR) \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/man/man1 \
+	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR) \
+	  $(BUILD_OUTPUT_DIR)/j2sdk-image/man/man1 \
+	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR) \
+	  $(BUILD_OUTPUT_DIR)/j2re-image/man/man1 \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR) \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/man/man1 \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR) \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/man/man1)
 
 	$(ADD_ZERO_EXTRA_BUILD_ENV) \
 		$(ARCH_PREFIX) $(MAKE) -C zerovm $(ICEDTEA_BUILD_TARGET)
