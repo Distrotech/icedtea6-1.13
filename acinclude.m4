@@ -917,7 +917,8 @@ AC_DEFUN([AC_CHECK_WITH_GCJ],
 
 AC_DEFUN([AC_CHECK_WITH_HOTSPOT_BUILD],
 [
-  DEFAULT_BUILD="hs16"
+  DEFAULT_BUILD="hs19"
+  ALTERNATE_BUILD="original"
   AC_MSG_CHECKING([which HotSpot build to use])
   AC_ARG_WITH([hotspot-build],
 	      [AS_HELP_STRING(--with-hotspot-build,the HotSpot build to use (see hotspot.map))],
@@ -925,16 +926,16 @@ AC_DEFUN([AC_CHECK_WITH_HOTSPOT_BUILD],
     HSBUILD="${withval}"
   ],
   [ 
-    HSBUILD="original"
+    HSBUILD="${DEFAULT_BUILD}"
   ])
   if test "x${HSBUILD}" = xyes; then
-	HSBUILD="${DEFAULT_BUILD}"
+	HSBUILD="${ALTERNATE_BUILD}"
   elif test "x${HSBUILD}" = xno; then
-	HSBUILD="original"
+	HSBUILD="${DEFAULT_BUILD}"
   fi
   AC_MSG_RESULT([${HSBUILD}])
   AC_SUBST([HSBUILD])
-  AM_CONDITIONAL(WITH_ALT_HSBUILD, test "x${HSBUILD}" != "xoriginal")
+  AM_CONDITIONAL(WITH_ALT_HSBUILD, test "x${HSBUILD}" != "x${DEFAULT_BUILD}")
 ])
 
 AC_DEFUN([WITH_HOTSPOT_SRC_ZIP],

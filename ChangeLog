@@ -1,5 +1,26 @@
 2010-10-19  Andrew John Hughes  <ahughes@redhat.com>
 
+	* INSTALL: Drop plugin dependencies.
+	Document new JDK detection.  Drop removed
+	options from VisualVM and the plugin.
+	Mention new hs19 default.
+	* README:  Updated.  Remove sections on
+	plugin and NetX.  Update Zero&Shark section.
+	* NEWS: Add HotSpot 19, NetX & plugin removal,
+	Shark upstreaming and JDK detection/bootstrapping
+	changes.
+	* acinclude.m4:
+	(AC_CHECK_WITH_HOTSPOT_BUILD): Set
+	DEFAULT_BUILD to hs19 rather than the
+	non-existent hs16 (used when
+	--with-hotspot-build or
+	--with-hotspot-build=yes is passed).
+	Introduce ALTERNATE_BUILD to refer to
+	the build enabled by --with-hotspot-build,
+	which is 'original' (hs17) at present.
+
+2010-10-19  Andrew John Hughes  <ahughes@redhat.com>
+
 	Move NetX and the plugin to the IcedTea-Web project:
 	http://icedtea.classpath.org/hg/icedtea-web
 	* extra/net/sourceforge/jnlp/about/HTMLPanel.java,
