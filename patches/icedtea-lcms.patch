@@ -1,8 +1,8 @@
 diff -Nru openjdk.orig/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c
---- openjdk.orig/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c	2010-04-06 11:57:21.000000000 +0100
-+++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c	2010-04-06 17:35:02.000000000 +0100
-@@ -689,6 +689,9 @@
-                 GrayTRC = cmsReadICCGamma(hProfile, icSigGrayTRCTag);
+--- openjdk.orig/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c	2010-10-19 10:19:13.000000000 +0100
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c	2010-10-19 13:02:07.580264578 +0100
+@@ -692,6 +692,9 @@
+                 }
                  FromLstarToXYZ(GrayTRC, Shapes1);
  
 +                if (GrayTRC == NULL)
@@ -11,17 +11,16 @@ diff -Nru openjdk.orig/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c openj
                  // Reversing must be done after curve translation
  
                  Shapes[0] = cmsReverseGamma(Shapes1[0]->nEntries, Shapes1[0]);
-@@ -704,6 +707,9 @@
+@@ -706,7 +709,7 @@
+                 // Normal case
  
                  GrayTRC = cmsReadICCGammaReversed(hProfile, icSigGrayTRCTag);   // Y
- 
-+                if (GrayTRC == NULL)
-+                  return NULL;
-+
+-                if (!GrayTRC) {
++                if (GrayTRC == NULL) {
+                     return NULL;
+                 }
                  Shapes[0] = cmsDupGamma(GrayTRC);
-                 Shapes[1] = cmsDupGamma(GrayTRC);
-                 Shapes[2] = cmsDupGamma(GrayTRC);
-@@ -1343,7 +1349,7 @@
+@@ -1348,7 +1351,7 @@
                       p -> ToDevice = PCStoShaperMatrix;
                       p -> OutMatShaper = cmsBuildOutputMatrixShaper(p->OutputProfile);
  
@@ -30,7 +29,7 @@ diff -Nru openjdk.orig/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c openj
                              cmsSignalError(LCMS_ERRC_ABORTED, "profile is unsuitable for output");
                              return NULL;
                              }
-@@ -1920,6 +1926,8 @@
+@@ -1925,6 +1928,8 @@
  
          ColorSpace = ColorSpaceIn;
  

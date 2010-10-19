@@ -232,26 +232,7 @@ REWRITER_SRCS = $(abs_top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.jav
 
 ICEDTEA_FSG_PATCHES =
 
-BROKEN = 
-
-SECURITY_PATCHES = \
-	patches/security/20101012/6891766.patch \
-	patches/security/20101012/6925710.patch \
-	patches/security/20101012/6938813.patch \
-	patches/security/20101012/6957564.patch \
-	patches/security/20101012/6958060.patch \
-	patches/security/20101012/6963023.patch \
-	patches/security/20101012/6963489.patch \
-	patches/security/20101012/6966692.patch \
-	patches/security/20101012/6914943.patch \
-	patches/security/20101012/6559775.patch \
-	patches/security/20101012/6622002.patch \
-	patches/security/20101012/6952017.patch \
-	patches/security/20101012/6952603.patch \
-	patches/security/20101012/6961084.patch \
-	patches/security/20101012/6963285.patch \
-	patches/security/20101012/6981426.patch \
-	patches/security/20101012/6990437.patch
+SECURITY_PATCHES =
 
 ICEDTEA_PATCHES = \
 	$(SECURITY_PATCHES) \
