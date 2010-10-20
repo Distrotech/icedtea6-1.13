@@ -1,5 +1,16 @@
 2010-10-19  Andrew John Hughes  <ahughes@redhat.com>
 
+	* INSTALL: Clarify HotSpot build documentation.
+	* acinclude.m4:
+	(AC_CHECK_WITH_HOTSPOT_BUILD): Don't abuse
+	DEFAULT_BUILD.  Introduce ORIGINAL_BUILD to
+	represent the ORIGINAL BUILD and use that in
+	the conditional and for --without-hotspot-build.
+	Use DEFAULT_BUILD only for when the option is
+	not specified.
+
+2010-10-19  Andrew John Hughes  <ahughes@redhat.com>
+
 	* INSTALL: Drop plugin dependencies.
 	Document new JDK detection.  Drop removed
 	options from VisualVM and the plugin.

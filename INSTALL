@@ -308,8 +308,9 @@ is 'hs19'; passing --with-hotspot-build=original to configure will
 revert to the version of hs17 provided in b20.  Note that the norm. is
 for up to one alternate (non-default) build to be supported and just
 passing --with-hotspot-build (equivalent to --with-hotspot-build=yes)
-will provide the opposite to the default HotSpot (currently hs17, 'original').
-Conversely, passing --with-hotspot-build=no retains the default.
+will always provide the alternate build (currently hs19).  Conversely,
+passing --with-hotspot-build=no provides the original build (currently
+hs17).
 
 Javascript Support
 ==================
