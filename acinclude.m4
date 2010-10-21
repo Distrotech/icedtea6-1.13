@@ -917,7 +917,9 @@ AC_DEFUN([AC_CHECK_WITH_GCJ],
 
 AC_DEFUN([AC_CHECK_WITH_HOTSPOT_BUILD],
 [
-  DEFAULT_BUILD="original"
+  ORIGINAL_BUILD="original"
+  ALTERNATE_BUILD="original"
+  DEFAULT_BUILD=${ORIGINAL_BUILD}
   AC_MSG_CHECKING([which HotSpot build to use])
   AC_ARG_WITH([hotspot-build],
 	      [AS_HELP_STRING(--with-hotspot-build,the HotSpot build to use (see hotspot.map))],
@@ -925,16 +927,16 @@ AC_DEFUN([AC_CHECK_WITH_HOTSPOT_BUILD],
     HSBUILD="${withval}"
   ],
   [ 
-    HSBUILD="original"
+    HSBUILD="${DEFAULT_BUILD}"
   ])
   if test "x${HSBUILD}" = xyes; then
-	HSBUILD="${DEFAULT_BUILD}"
+	HSBUILD="${ALTERNATE_BUILD}"
   elif test "x${HSBUILD}" = xno; then
-	HSBUILD="original"
+	HSBUILD="${ORIGINAL_BUILD}"
   fi
   AC_MSG_RESULT([${HSBUILD}])
   AC_SUBST([HSBUILD])
-  AM_CONDITIONAL(WITH_ALT_HSBUILD, test "x${HSBUILD}" != "xoriginal")
+  AM_CONDITIONAL(WITH_ALT_HSBUILD, test "x${HSBUILD}" != "x${ORIGINAL_BUILD}")
 ])
 
 AC_DEFUN([WITH_HOTSPOT_SRC_ZIP],
@@ -1414,53 +1416,6 @@ AC_DEFUN_ONCE([IT_OBTAIN_HG_REVISIONS],
   AM_CONDITIONAL([HAS_ICEDTEA_REVISION], test "x${ICEDTEA_REVISION}" != xnone)
   AM_CONDITIONAL([HAS_JDK_REVISION], test "x${JDK_REVISION}" != xnone)
   AM_CONDITIONAL([HAS_HOTSPOT_REVISION], test "x${HOTSPOT_REVISION}" != xnone)
-])
-
-AC_DEFUN_ONCE([IT_CHECK_PLUGIN],
-[
-AC_MSG_CHECKING([whether to build the browser plugin])
-AC_ARG_ENABLE([plugin],
-              [AS_HELP_STRING([--disable-plugin],
-                              [Disable compilation of browser plugin])],
-              [enable_plugin="${enableval}"], [enable_plugin="yes"])
-AC_MSG_RESULT(${enable_plugin})
-])
-
-AC_DEFUN_ONCE([IT_CHECK_PLUGIN_DEPENDENCIES],
-[
-dnl Check for plugin support headers and libraries.
-dnl FIXME: use unstable
-AC_REQUIRE([IT_CHECK_PLUGIN])
-if test "x${enable_plugin}" = "xyes" ; then
-  PKG_CHECK_MODULES(GTK, gtk+-2.0)
-  PKG_CHECK_MODULES(GLIB, glib-2.0)
-  AC_SUBST(GLIB_CFLAGS)
-  AC_SUBST(GLIB_LIBS)
-  AC_SUBST(GTK_CFLAGS)
-  AC_SUBST(GTK_LIBS)
-
-  PKG_CHECK_MODULES(MOZILLA, mozilla-plugin)
-    
-  AC_SUBST(MOZILLA_CFLAGS)
-  AC_SUBST(MOZILLA_LIBS)
-fi
-AM_CONDITIONAL(ENABLE_PLUGIN, test "x${enable_plugin}" = "xyes")
-])
-
-AC_DEFUN_ONCE([IT_CHECK_XULRUNNER_VERSION],
-[
-AC_REQUIRE([IT_CHECK_PLUGIN_DEPENDENCIES])
-if test "x${enable_plugin}" = "xyes"
-then
-  AC_CACHE_CHECK([for xulrunner version], [xulrunner_cv_collapsed_version],[
-    if pkg-config --modversion libxul >/dev/null 2>&1
-    then
-      xulrunner_cv_collapsed_version=`pkg-config --modversion libxul | awk -F. '{power=6; v=0; for (i=1; i <= NF; i++) {v += $i * 10 ^ power; power -=2}; print v}'`
-    else
-      AC_MSG_FAILURE([cannot determine xulrunner version])
-    fi])
-  AC_SUBST(MOZILLA_VERSION_COLLAPSED, $xulrunner_cv_collapsed_version)
-fi
 ])
 
 AC_DEFUN_ONCE([IT_OBTAIN_DEFAULT_LIBDIR],

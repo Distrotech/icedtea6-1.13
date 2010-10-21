@@ -8,8 +8,8 @@ a default location.
 The build requirements are as follows:
 
 A bootstrap JDK, either:
-  - GNU libgcj 4.3.0 (or equivalent class library based on GNU Classpath >= 0.95) for --with-gcj-home mode (the default)
-  - IcedTea6 for --with-openjdk mode
+  - GNU libgcj >= 4.3.0 (or equivalent class library based on GNU Classpath >= 0.95) (the default)
+  - IcedTea6
 Eclipse Java Compiler (ecj)
 CUPS
 libX11 (libXp, libXtst, libXi, libXt)
@@ -23,7 +23,6 @@ wget
 alsa
 xalan
 xerces
-firefox-devel 
 glib2-devel 
 gtk2-devel
 ant >= 1.6.5 with the regexp task from ant-nodeps
@@ -32,7 +31,6 @@ giflib-devel
 libpng-devel
 libjpeg-devel >= 6b
 zlib-devel
-xulrunner-devel (can be disabled using --disable-plugin)
 rhino (can be disabled using --without-rhino)
 libffi (for --enable-zero or on archs other than x86/x86_64/sparc)
 pulseaudio-libs-devel >= 0.9.11 (for --enable-pulse-java)
@@ -41,36 +39,38 @@ systemtap-sdl-devel >= 0.9.5 (for --enable-systemtap, Java method tracing requir
 
 See ./configure --help if you need to override the defaults.
 
-To bootstrap IcedTea with ecj and a GNU Classpath-based JDK:
+To perform a full bootstrap of IcedTea:
 ./autogen.sh
 ./configure 
 make
 
-The following locations are checked for a GNU Classpath-based JDK:
-   * /usr/lib/jvm/java-gcj
-   * /usr/lib/jvm/gcj-jdk
-   * /usr/lib/jvm/cacao
-in that order.
-
-To build IcedTea with an older version of IcedTea6, use:
-./autogen.sh
-./configure --with-openjdk
-make
-
-The following locations are checked for an IcedTea6 JDK:
+The following locations are checked for a JDK:
+    * /usr/lib/jvm/java-gcj
+    * /usr/lib/jvm/gcj-jdk
+    * /usr/lib/jvm/cacao
     * /usr/lib/jvm/java-openjdk
     * /usr/lib/jvm/icedtea6
     * /usr/lib/jvm/java-6-openjdk
     * /usr/lib/jvm/openjdk
     * /usr/lib/jvm/java-icedtea
-in the order given above.
+in that order.
+
+A quick build can be performed by passing --disable-bootstrap.
+This requires a recent version of IcedTea6 as the boot JDK.
+The following locations are checked for IcedTea6:
+    * /usr/lib/jvm/java-openjdk
+    * /usr/lib/jvm/icedtea6
+    * /usr/lib/jvm/java-6-openjdk
+    * /usr/lib/jvm/openjdk
+    * /usr/lib/jvm/java-icedtea
+
 
 Note that IcedTea7 can not be used to build IcedTea6.
 
 There is currently no install target.  IcedTea ends up in
 openjdk.build when the build completes.
 
-Most targets in IcedTea creat stamp files in the stamps directory to
+Most targets in IcedTea create stamp files in the stamps directory to
 determine what and when dependencies were compiled.  Each target has a
 corresponding clean-x target which removes the output and the stamp
 file, allowing it to be rebuilt.  For example, stamps/rt.stamp (alias
@@ -90,31 +90,33 @@ to configure:
 * --enable-hg: Checkout the OpenJDK tree from Mercurial, rather than
   downloading and extracting a tarball.
 * --with-gcj: Compile ecj to native code with gcj prior to building.
-* --with-openjdk: Perform a quick (no bootstrap) build using an installed
+* --disable-bootstrap: Perform a quick build using an installed
   copy of IcedTea6.  If a directory is not specified, a check against
   the list presented above is performed.
 * --with-parallel-jobs: Run the specified number of parallel jobs when
   building HotSpot and the JDK.  If this option is passed without an
   argument, the number of online processors plus one is used.
-* --with-netbeans-home: The location of NetBeans for use in the VisualVM build,
-  defaults to /usr/share/netbeans.
 * --with-ant-home: The location of Ant, defaults to /usr/share/ant.
 * --with-pkgversion=PKG: Include the specified distro package information in
   the output of java -version.
-* --with-gcj-home: Perform a full bootstrap build using an installed
-  copy of a GNU Classpath JDK such as gcj.  If a directory is not specified,
-  a check against the list presented above is performed.
-* --with-java: Specify the location of a 'java' binary.  By default, the path
-  is checked for gij and java.
+* --with-jdk-home: The location of a JDK to build with.  If a directory is not
+  specified, a check against the list presented above is performed.
+* --with-java: Specify the location of a 'java' binary.  By default,
+  ${SYSTEM_JDK_DIR}/bin/java is used.  If this is absent, then the path is
+  checked for 'gij' and 'java'.
 * --with-ecj: Specify the location of a 'ecj' binary.  By default, the path
   is checked for ecj, ecj-3.1, ecj-3.2 and ecj-3.3.
-* --with-javac: Specify the location of a 'javac' binary.  By default, the path
-  is checked for javac.
-* --with-jar: Specify the location of a 'jar' binary.  By default, the path
+* --with-javac: Specify the location of a 'javac' binary.  By default,
+  ${SYSTEM_JDK_DIR}/bin/javac is used.  If this is absent, then the path
+  is checked for 'javac'.
+* --with-jar: Specify the location of a 'jar' binary.  By default,
+  ${SYSTEM_JDK_DIR}/bin/jar is used.  If this is absent, then the path
   is checked for gjar and jar.
-* --with-javah: Specify the location of a 'javah' binary.  By default, the path
+* --with-javah: Specify the location of a 'javah' binary.  By default,
+  ${SYSTEM_JDK_DIR}/bin/javah is used.  If this is absent, then the path
   is checked for gjavah and javah.
-* --with-rmic: Specify the location of a 'rmic' binary.  By default, the path
+* --with-rmic: Specify the location of a 'rmic' binary.  By default,
+  ${SYSTEM_JDK_DIR}/bin/rmic is used.  If this is absent, then the path
   is checked for grmic and rmic.
 * --with-ecj-jar: Specify the location of an ecj JAR file.  By default, the
   following paths are checked:
@@ -149,7 +151,6 @@ to configure:
 * --with-cacao-src-dir: Specify the location of a CACAO source tree to avoid downloading.
 * --with-hg-revision: Specify a hg revision to use (as opposed to tip) with the --enable-hg option.
 * --with-tzdata-dir: Specify the location of Java timezone data, defaulting to /usr/share/javazi.
-* --with-netbeans: Specify the location of NetBeans for VisualVM, defaulting to the netbeans on the path.
 * --with-abs-install-dir: The final install location of the j2sdk-image, for use in the SystemTap tapset.
 * --with-llvm-config: Specify the location of the llvm-config binary.
 
@@ -164,9 +165,7 @@ These are documented fully in the relevant section below.
 * --enable-cacao: Replace HotSpot with the CACAO VM.
 * --enable-shark: Build the Shark LLVM-based JIT.
 * --enable-zero: Build the zero assembler port on x86/x86_64/sparc platforms.
-* --disable-plugin: Don't build the browser plugin.
-* --disable-npplugin: Build the old unsupported plugin rather than NPPlugin.
-* --with-hotspot-build: The HotSpot to use, defaulting to 'original' i.e. hs14 as bundled with OpenJDK.
+* --with-hotspot-build: The HotSpot to use, defaulting to 'hs19'.
 * --with-rhino: Include Javascript support using Rhino.
 * --with-additional-vms=vm-list: Additional VMs to build using the system described
   below.
@@ -270,23 +269,6 @@ on any architecture supported by LLVM.  To enable it, pass the option
 --enable-shark to configure.  Please note that Shark is still in
 development and builds are still likely to fail at present.
 
-The Browser Plugin
-==================
-
-IcedTea6 contains a Free Software browser plugin based on NPRuntime
-called NPPlugin.  By default, this will be built, and it can be turned
-off using the -disable-plugin option.
-
-A test suite is supplied for the browser plugin.  It can be built
-using 'make plugin-tests' and run by loading the HTML page specified
-into a browser with the plugin installed.
-
-For debugging, the environment variable ICEDTEAPLUGIN_DEBUG should be
-set to 'true'.  This will produce output on the console from the C++
-side, and output from the Java side in $HOME/.icedteaplugin/java.stdout
-and $HOME/.icedteaplugin/java.stderr.  It also starts the debug server
-on port 8787.
-
 Support for Different Versions of HotSpot
 =========================================
 
@@ -319,8 +301,16 @@ can be specified using --with-hotspot-src-zip.  This skips the
 download stage and just verifies that the zip's MD5 sum matches that
 of the requested build.
 
-At present, IcedTea6 only supports the 'original' HotSpot (hs17)
-provided as part of the upstream tarball.
+At present, IcedTea6 supports the 'original' HotSpot 17 provided as
+part of the upstream tarball and HotSpot 19 ('hs19') from the stable
+hs19 tree at http://hg.openjdk.java.net/hsx/hsx19/master.  The default
+is 'hs19'; passing --with-hotspot-build=original to configure will
+revert to the version of hs17 provided in b20.  Note that the norm. is
+for up to one alternate (non-default) build to be supported and just
+passing --with-hotspot-build (equivalent to --with-hotspot-build=yes)
+will always provide the alternate build (currently hs19).  Conversely,
+passing --with-hotspot-build=no provides the original build (currently
+hs17).
 
 Javascript Support
 ==================

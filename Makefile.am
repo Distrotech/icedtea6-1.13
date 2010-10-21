@@ -48,10 +48,6 @@ SOLARIS = openjdk-ecj/jdk/src/solaris/classes
 LANGTOOLS = openjdk-ecj/langtools/src/share/classes
 CORBA = openjdk-ecj/corba/src/share/classes
 
-NETX_SRCDIR = $(abs_top_srcdir)/netx
-NETX_RESOURCE_DIR=$(NETX_SRCDIR)/net/sourceforge/jnlp/resources
-NETX_EXTRA_DIR=$(abs_top_srcdir)/extra/net/sourceforge/jnlp/about/resources
-
 OPENJDK_SOURCEPATH_DIRS = \
         $(SHARE):$(SOLARIS):$(LANGTOOLS):$(CORBA)
 
@@ -77,55 +73,12 @@ ICEDTEA_BOOTSTRAP_DIRS = \
 	$(LANGTOOLS)/com/sun/mirror \
 	$(LANGTOOLS)/com/sun/tools/apt
 
-# PR43578 - java.security.CodeSource.getCodeSigners() missing
-# PR43582 - Missing javax.swing.JTable.setFillsViewportHeight
-# PR43585 - java.security.KeyStore.TrustedCertificateEntry class missing
-NETX_BOOTSTRAP_CLASSES = \
-	$(SHARE)/java/security/CodeSource.java \
-	$(SHARE)/javax/swing/JTable.java \
-	$(SHARE)/java/security/KeyStore.java
-
-# PR46074 - Missing java.net cookie code required by IcedTea plugin
-PLUGIN_BOOTSTRAP_CLASSES = \
-	$(SHARE)/java/net/CookieManager.java \
-	$(SHARE)/java/net/HttpCookie.java \
-	$(SHARE)/java/net/CookieHandler.java
-
-# IT563 - NetX uses sun.security code
-# IT564 - NetX depends on sun.misc.BASE64Encoder
-# IT570 - NetX depends on sun.applet.AppletViewPanel
-# IT571 - NetX depends on com.sun.net.ssl.internal.ssl.X509ExtendedTrustManager.java
-NETX_SUN_CLASSES = \
-	$(SHARE)/sun/security/provider/X509Factory.java \
-	$(SHARE)/sun/security/util/SecurityConstants.java \
-	$(SHARE)/sun/security/util/HostnameChecker.java \
-	$(SHARE)/sun/security/util/DerValue.java \
-	$(SHARE)/sun/security/x509/X500Name.java \
-	$(SHARE)/sun/misc/BASE64Encoder.java \
-	$(SHARE)/sun/applet/AppletViewerPanel.java \
-	$(SHARE)/sun/security/validator/ValidatorException.java \
-	$(SHARE)/com/sun/net/ssl/internal/ssl/X509ExtendedTrustManager.java
-
-# IT573 - Plugin depends on sun.awt,X11.XEmbeddedFrame.java
-# IT574 - Plugin depends on sun.misc.Ref
-# IT575 - Plugin depends on com.sun/jndi.toolkit.url.UrlUtil
-# IT576 - Plugin depends on sun.applet.AppletImageRef
-PLUGIN_SUN_CLASSES = \
-	$(SOLARIS)/sun/awt/X11/XEmbeddedFrame.java \
-	$(SHARE)/sun/misc/Ref.java \
-	$(SHARE)/com/sun/jndi/toolkit/url/UrlUtil.java \
-	$(SHARE)/sun/applet/AppletImageRef.java
-
 # PR42003 - javax.swing.plaf.basic.BasicDirectoryModel
 # PR43389 - javax.management.StandardMBean
 ICEDTEA_BOOTSTRAP_CLASSES = \
 	$(SHARE)/javax/swing/plaf/basic/BasicDirectoryModel.java \
 	$(SHARE)/javax/management/StandardMBean.java \
-	$(SHARE)/com/sun/java/swing/plaf/nimbus/NimbusLookAndFeel.java \
-	$(NETX_BOOTSTRAP_CLASSES) \
-	$(NETX_SUN_CLASSES) \
-	$(PLUGIN_BOOTSTRAP_CLASSES) \
-	$(PLUGIN_SUN_CLASSES)
+	$(SHARE)/com/sun/java/swing/plaf/nimbus/NimbusLookAndFeel.java
 
 # Flags
 IT_CFLAGS=$(CFLAGS) $(ARCHFLAG)
@@ -143,16 +96,6 @@ else
 endif
 
 # FIXME (HotSpot): HotSpot changeset logic goes here
-
-if ENABLE_PLUGIN
-ICEDTEAPLUGIN_CLEAN = clean-IcedTeaPlugin
-LIVECONNECT_DIR = netscape sun/applet
-PLUGIN_DIR=$(abs_top_builddir)/plugin/icedteanp
-PLUGIN_SRCDIR=$(abs_top_srcdir)/plugin/icedteanp
-LIVECONNECT_SRCS = $(PLUGIN_SRCDIR)/java
-ICEDTEAPLUGIN_TARGET = $(PLUGIN_DIR)/IcedTeaPlugin.so \
-	stamps/liveconnect-dist.stamp
-endif
 
 if ENABLE_PULSE_JAVA
 # include the makefile in pulseaudio subdir
@@ -223,8 +166,6 @@ OPENJDK_TREE = stamps/overlay.stamp
 OPENJDK_ECJ_TREE = stamps/patch-ecj.stamp
 
 # Sources list
-
-PLUGIN_TEST_SRCS = $(abs_top_srcdir)/plugin/tests/LiveConnect/*.java
 
 REWRITER_SRCS = $(abs_top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.java
 
@@ -326,11 +267,6 @@ ICEDTEA_PATCHES = \
 if WITH_RHINO
 ICEDTEA_PATCHES += \
 	patches/icedtea-rhino.patch
-endif
-
-if ENABLE_PLUGIN
-ICEDTEA_PATCHES += \
-	patches/extensions/liveconnect.patch
 endif
 
 if BUILD_CACAO
@@ -435,8 +371,6 @@ if HAS_PKGVERSION
 ICEDTEA_PKG = $(EMPTY) (${PKGVERSION})
 endif
 
-PLUGIN_VERSION = $(ICEDTEA_NAME) $(PACKAGE_VERSION)$(ICEDTEA_REV)$(ICEDTEA_PKG)
-
 ICEDTEA_ENV = \
 	ALT_JDK_IMPORT_PATH="$(BOOT_DIR)" \
 	ANT="$(ANT)" \
@@ -540,15 +474,13 @@ ICEDTEA_ENV_ECJ = $(ICEDTEA_ENV) \
 # FIXME (distclean): Add jtreg sources
 # FIXME (distclean): Add pulseaudio sources
 
-EXTRA_DIST = generated $(NETX_SRCDIR) \
+EXTRA_DIST = generated \
 	$(abs_top_srcdir)/patches/* \
 	contrib shark arm_port \
-	extra overlays \
-	javaws.png javaws.desktop \
+	overlays \
 	jconsole.desktop policytool.desktop \
 	test/jtreg \
 	HACKING pulseaudio fsg.sh \
-	$(abs_top_srcdir)/plugin \
 	hotspot.map \
 	autogen.sh \
 	tapset/hotspot.stp.in \
@@ -567,11 +499,10 @@ all-local: icedtea-against-icedtea
 check-local: jtregcheck
 
 clean-local: clean-jtreg clean-jtreg-reports $(PULSE_JAVA_CLEAN_TARGET) \
- clean-netx clean-plugin clean-liveconnect clean-icedtea clean-icedtea-debug \
- clean-icedtea-ecj clean-extract clean-ports clean-overlay clean-native-ecj \
- clean-icedtea-against-icedtea clean-icedtea-debug-against-icedtea \
+ clean-icedtea clean-icedtea-debug clean-icedtea-ecj clean-extract clean-ports \
+ clean-overlay clean-native-ecj clean-icedtea-against-icedtea clean-icedtea-debug-against-icedtea \
  clean-icedtea-against-ecj clean-extract-ecj clean-generated clean-replace-hotspot \
- clean-rewriter clean-rewrite-rhino clean-extra clean-rt clean-bootstrap-directory \
+ clean-rewriter clean-rewrite-rhino clean-rt clean-bootstrap-directory \
  clean-bootstrap-directory-ecj clean-bootstrap-directory-symlink \
  clean-bootstrap-directory-symlink-ecj
 	if [ -e bootstrap ]; then \
@@ -599,18 +530,16 @@ install:
 	clean-bootstrap-directory-symlink clean-bootstrap-directory-ecj \
 	clean-bootstrap-directory-symlink-ecj icedtea icedtea-debug \
 	clean-icedtea icedtea-against-icedtea clean-icedtea-ecj \
-	clean-tools-jar clean-copy clean-rt $(ICEDTEAPLUGIN_CLEAN) hotspot \
+	clean-tools-jar clean-copy clean-rt hotspot \
 	hotspot-helper clean-extra clean-jtreg clean-jtreg-reports \
 	clean-add-zero clean-add-zero-debug clean-icedtea clean-icedtea-debug
 	clean-icedtea-against-ecj clean-cacao clean-add-cacao clean-add-cacao-debug \
 	clean-ports clean-overlay clean-extract-ecj clean-extract clean-extract-openjdk \
 	clean-replace-hotspot clean-generated clean-download clean-hgforest clean-download-openjdk \
-	clean-rewriter clean-rewrite-rhino clean-add-netx clean-add-netx-debug \
-	clean-add-plugin clean-add-plugin-debug clean-add-systemtap clean-add-systemtap-debug \
+	clean-rewriter clean-rewrite-rhino clean-add-systemtap clean-add-systemtap-debug \
 	clean-add-pulseaudio clean-add-pulseaudio-debug clean-add-nss clean-add-nss-debug \
-	clean-add-tzdata-support clean-add-tzdata-support-debug clean-add-plugin-ecj \
-	clean-add-netx-ecj clean-add-systemtap-ecj clean-add-pulseaudio-ecj clean-add-nss-ecj \
-	clean-add-tzdata-support-ecj
+	clean-add-tzdata-support clean-add-tzdata-support-debug clean-add-systemtap-ecj \
+	clean-add-pulseaudio-ecj clean-add-nss-ecj clean-add-tzdata-support-ecj
 
 env:
 	@echo 'unset JAVA_HOME'
@@ -1307,118 +1236,23 @@ clean-icedtea-debug:
 	rm -f stamps/icedtea-debug.stamp
 
 stamps/icedtea-against-icedtea.stamp: stamps/icedtea.stamp stamps/add-cacao.stamp stamps/add-zero.stamp \
- stamps/add-plugin.stamp stamps/add-netx.stamp stamps/add-systemtap.stamp stamps/add-pulseaudio.stamp \
- stamps/add-nss.stamp stamps/add-tzdata-support.stamp
+ stamps/add-systemtap.stamp stamps/add-pulseaudio.stamp stamps/add-nss.stamp stamps/add-tzdata-support.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-against-icedtea.stamp
 
-clean-icedtea-against-icedtea: clean-add-zero clean-add-cacao clean-add-plugin clean-add-netx \
- clean-add-systemtap clean-add-pulseaudio clean-add-nss clean-add-tzdata-support
+clean-icedtea-against-icedtea: clean-add-zero clean-add-cacao clean-add-systemtap clean-add-pulseaudio \
+ clean-add-nss clean-add-tzdata-support
 	rm -f stamps/icedtea-against-icedtea.stamp
 
 stamps/icedtea-debug-against-icedtea.stamp: stamps/icedtea-debug.stamp stamps/add-cacao-debug.stamp \
- stamps/add-zero-debug.stamp stamps/add-plugin-debug.stamp stamps/add-netx-debug.stamp \
- stamps/add-systemtap-debug.stamp stamps/add-pulseaudio-debug.stamp stamps/add-nss-debug.stamp \
- stamps/add/tzdata-support-debug.stamp
+ stamps/add-zero-debug.stamp stamps/add-systemtap-debug.stamp stamps/add-pulseaudio-debug.stamp \
+ stamps/add-nss-debug.stamp stamps/add/tzdata-support-debug.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-debug-against-icedtea.stamp
 
-clean-icedtea-debug-against-icedtea: clean-add-zero-debug clean-add-cacao-debug clean-add-plugin-debug \
- clean-add-netx-debug clean-add-systemtap-debug clean-add-pulseaudio-debug clean-add-nss-debug \
- clean-add-tzdata-support-debug
+clean-icedtea-debug-against-icedtea: clean-add-zero-debug clean-add-cacao-debug clean-add-systemtap-debug \
+ clean-add-pulseaudio-debug clean-add-nss-debug clean-add-tzdata-support-debug
 	rm -f stamps/icedtea-debug-against-icedtea.stamp
-
-stamps/add-plugin.stamp: stamps/plugin.stamp stamps/icedtea.stamp
-if ENABLE_PLUGIN
-	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/
-	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
-	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)/
-	cp -pPRf $(abs_top_builddir)/liveconnect/lib/classes.jar \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/plugin.jar
-	cp -pPRf $(abs_top_builddir)/liveconnect/lib/classes.jar \
-	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/plugin.jar
-endif
-	touch stamps/add-plugin.stamp
-
-clean-add-plugin:
-	rm -f $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/IcedTeaPlugin.so
-	rm -f $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)/IcedTeaPlugin.so
-	rm -f $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/plugin.jar
-	rm -f $(BUILD_OUTPUT_DIR)/j2re-image/lib/plugin.jar
-	rm -f stamps/add-plugin.stamp
-
-stamps/add-plugin-debug.stamp: stamps/plugin.stamp stamps/icedtea-debug.stamp
-if ENABLE_PLUGIN
-	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/
-	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)/
-	cp -pPRf $(abs_top_builddir)/liveconnect/lib/classes.jar \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/plugin.jar
-	cp -pPRf $(abs_top_builddir)/liveconnect/lib/classes.jar \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/plugin.jar
-endif
-	touch stamps/add-plugin-debug.stamp
-
-clean-add-plugin-debug:
-	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/IcedTeaPlugin.so
-	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)/IcedTeaPlugin.so
-	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/plugin.jar
-	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/plugin.jar
-	rm -f stamps/add-plugin-debug.stamp
-
-stamps/add-netx.stamp: stamps/netx-dist.stamp extra-lib/about.jar stamps/icedtea.stamp
-	cp -pPRf $(abs_top_builddir)/netx.build/lib/classes.jar \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/netx.jar
-	cp -pPRf $(abs_top_builddir)/netx.build/lib/classes.jar \
-	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/netx.jar
-	cp $(NETX_RESOURCE_DIR)/about.jnlp extra-lib/about.jar \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib
-	cp $(NETX_RESOURCE_DIR)/about.jnlp extra-lib/about.jar \
-	  $(BUILD_OUTPUT_DIR)/j2re-image/lib
-	cp $(NETX_SRCDIR)/javaws.1 \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/man/man1
-	cp $(NETX_SRCDIR)/javaws.1 \
-	  $(BUILD_OUTPUT_DIR)/j2re-image/man/man1
-	touch stamps/add-netx.stamp
-
-clean-add-netx:
-	rm -f $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/netx.jar
-	rm -f $(BUILD_OUTPUT_DIR)/j2re-image/lib/netx.jar
-	rm -f $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/about.jnlp
-	rm -f $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/about.jar
-	rm -f $(BUILD_OUTPUT_DIR)/j2re-image/lib/about.jnlp
-	rm -f $(BUILD_OUTPUT_DIR)/j2re-image/lib/about.jar
-	rm -f $(BUILD_OUTPUT_DIR)/j2sdk-image/man/man1/javaws.1
-	rm -f $(BUILD_OUTPUT_DIR)/j2re-image/man/man1/javaws.1
-	rm -f stamps/add-netx.stamp
-
-stamps/add-netx-debug.stamp: stamps/netx-dist.stamp extra-lib/about.jar stamps/icedtea-debug.stamp
-	cp -pPRf $(abs_top_builddir)/netx.build/lib/classes.jar \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/netx.jar
-	cp -pPRf $(abs_top_builddir)/netx.build/lib/classes.jar \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/netx.jar
-	cp $(NETX_RESOURCE_DIR)/about.jnlp extra-lib/about.jar \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib
-	cp $(NETX_RESOURCE_DIR)/about.jnlp extra-lib/about.jar \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib
-	cp $(NETX_SRCDIR)/javaws.1 \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/man/man1
-	cp $(NETX_SRCDIR)/javaws.1 \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/man/man1
-	touch stamps/add-netx-debug.stamp
-
-clean-add-netx-debug:
-	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/netx.jar
-	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/netx.jar
-	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/about.jnlp
-	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/about.jar
-	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/about.jnlp
-	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/about.jar
-	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/man/man1/javaws.1
-	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/man/man1/javaws.1
-	rm -f stamps/add-netx-debug.stamp
 
 stamps/add-systemtap.stamp: stamps/icedtea.stamp
 if ENABLE_SYSTEMTAP
@@ -1576,61 +1410,14 @@ clean-icedtea-ecj:
 	rm -rf $(ECJ_BUILD_OUTPUT_DIR)
 	rm -f stamps/icedtea-ecj.stamp
 
-stamps/icedtea-against-ecj.stamp: stamps/icedtea-ecj.stamp stamps/add-plugin-ecj.stamp \
- stamps/add-netx-ecj.stamp stamps/add-systemtap-ecj.stamp stamps/add-pulseaudio-ecj.stamp \
- stamps/add-nss-ecj.stamp stamps/add-tzdata-support-ecj.stamp
+stamps/icedtea-against-ecj.stamp: stamps/icedtea-ecj.stamp stamps/add-systemtap-ecj.stamp \
+ stamps/add-pulseaudio-ecj.stamp stamps/add-nss-ecj.stamp stamps/add-tzdata-support-ecj.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-against-ecj.stamp
 
-clean-icedtea-against-ecj: clean-add-plugin-ecj clean-add-netx-ecj clean-add-systemtap-ecj \
- clean-add-pulseaudio-ecj clean-add-nss-ecj clean-add-tzdata-support-ecj
+clean-icedtea-against-ecj: clean-add-systemtap-ecj clean-add-pulseaudio-ecj clean-add-nss-ecj \
+ clean-add-tzdata-support-ecj
 	rm -f stamps/icedtea-against-ecj.stamp
-
-stamps/add-plugin-ecj.stamp: stamps/plugin.stamp stamps/icedtea-ecj.stamp
-if ENABLE_PLUGIN
-	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
-	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/
-	cp -pPRf $(PLUGIN_DIR)/IcedTeaPlugin.so \
-	  $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)/
-	cp -pPRf $(abs_top_builddir)/liveconnect/lib/classes.jar \
-	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/plugin.jar
-	cp -pPRf $(abs_top_builddir)/liveconnect/lib/classes.jar \
-	  $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/plugin.jar
-endif
-	touch stamps/add-plugin-ecj.stamp
-
-clean-add-plugin-ecj:
-	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/IcedTeaPlugin.so
-	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)/IcedTeaPlugin.so
-	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/plugin.jar
-	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/plugin.jar
-	rm -f stamps/add-plugin-ecj.stamp
-
-stamps/add-netx-ecj.stamp: stamps/netx-dist.stamp extra-lib/about.jar stamps/icedtea-ecj.stamp
-	cp -pPRf $(abs_top_builddir)/netx.build/lib/classes.jar \
-	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/netx.jar
-	cp -pPRf $(abs_top_builddir)/netx.build/lib/classes.jar \
-	  $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/netx.jar
-	cp $(NETX_RESOURCE_DIR)/about.jnlp extra-lib/about.jar \
-	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib
-	cp $(NETX_RESOURCE_DIR)/about.jnlp extra-lib/about.jar \
-	  $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib
-	cp $(NETX_SRCDIR)/javaws.1 \
-	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/man/man1
-	cp $(NETX_SRCDIR)/javaws.1 \
-	  $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/man/man1
-	touch stamps/add-netx-ecj.stamp
-
-clean-add-netx-ecj:
-	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/netx.jar
-	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/netx.jar
-	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/about.jnlp
-	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/about.jar
-	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/about.jnlp
-	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/about.jar
-	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/man/man1/javaws.1
-	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/man/man1/javaws.1
-	rm -f stamps/add-netx-ecj.stamp
 
 stamps/add-systemtap-ecj.stamp: stamps/icedtea-ecj.stamp
 if ENABLE_SYSTEMTAP
@@ -1734,157 +1521,6 @@ else
 	   $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/server
 	@echo "Hotspot is served:" $(BUILD_OUTPUT_DIR)/j2sdk-image
 endif
-
-# Plugin
-
-if ENABLE_PLUGIN
-# IcedTeaPlugin.so.
-# Separate compile and link invocations to ensure intermediate object
-# is listed before -l options.  See:
-# http://developer.mozilla.org/en/docs/XPCOM_Glue
-
-PLUGIN_SRC=IcedTeaNPPlugin.cc IcedTeaScriptablePluginObject.cc \
-        IcedTeaJavaRequestProcessor.cc IcedTeaPluginRequestProcessor.cc \
-		IcedTeaPluginUtils.cc
-
-PLUGIN_OBJECTS=IcedTeaNPPlugin.o IcedTeaScriptablePluginObject.o \
-        IcedTeaJavaRequestProcessor.o IcedTeaPluginRequestProcessor.o \
-		IcedTeaPluginUtils.o
-
-$(PLUGIN_DIR)/%.o: $(PLUGIN_SRCDIR)/%.cc
-	mkdir -p $(PLUGIN_DIR) && \
-	cd $(PLUGIN_DIR) && \
-	$(CXX) $(CXXFLAGS) \
-	  -DJDK_UPDATE_VERSION="\"$(JDK_UPDATE_VERSION)\"" \
-	  -DPLUGIN_VERSION="\"$(PLUGIN_VERSION)\"" \
-	  -DMOZILLA_VERSION_COLLAPSED="$(MOZILLA_VERSION_COLLAPSED)" \
-	  $(GLIB_CFLAGS) \
-	  $(GTK_CFLAGS) \
-	  $(MOZILLA_CFLAGS) \
-	  -fPIC -o $@ -c $<
-
-$(PLUGIN_DIR)/IcedTeaPlugin.so: $(addprefix $(PLUGIN_DIR)/,$(PLUGIN_OBJECTS))
-	cd $(PLUGIN_DIR) && \
-	$(CXX) $(CXXFLAGS) \
-	  $(PLUGIN_OBJECTS) \
-	  $(GLIB_LIBS) \
-	  $(GTK_LIBS) \
-	  $(MOZILLA_LIBS)\
-	  -shared -o $@
-
-clean-IcedTeaPlugin:
-	rm -f $(PLUGIN_DIR)/*.o
-	rm -f $(PLUGIN_DIR)/IcedTeaPlugin.so
-	if [ $(abs_top_srcdir) != $(abs_top_builddir) ]; then \
-	  if [ -e $(abs_top_builddir)/plugin/icedteanp ] ; then \
-	    rmdir $(abs_top_builddir)/plugin/icedteanp ; \
-	    rmdir $(abs_top_builddir)/plugin ; \
-	  fi ; \
-	fi
-endif
-
-stamps/plugin.stamp: $(ICEDTEAPLUGIN_TARGET)
-	mkdir -p stamps
-	touch stamps/plugin.stamp
-
-clean-plugin: $(ICEDTEAPLUGIN_CLEAN)
-	rm -f stamps/plugin.stamp
-
-liveconnect-source-files.txt:
-	if test "x${LIVECONNECT_DIR}" != x; then \
-	  find $(LIVECONNECT_SRCS) -name '*.java' | sort > $@ ; \
-	fi
-	touch $@
-
-stamps/liveconnect.stamp: liveconnect-source-files.txt stamps/netx.stamp
-	if test "x${LIVECONNECT_DIR}" != x; then \
-	  mkdir -p $(abs_top_builddir)/liveconnect && \
-	  $(BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) \
-	      -d $(abs_top_builddir)/liveconnect \
-	      -classpath $(abs_top_builddir)/netx.build:$(RUNTIME) \
-	      -sourcepath $(LIVECONNECT_SRCS) \
-	      @liveconnect-source-files.txt ; \
-	fi
-	mkdir -p stamps
-	touch $@
-
-stamps/liveconnect-dist.stamp: stamps/liveconnect.stamp
-	if test "x${LIVECONNECT_DIR}" != x; then \
-	  (cd $(abs_top_builddir)/liveconnect ; \
-	   mkdir -p lib ; \
-	   $(BOOT_DIR)/bin/jar cf lib/classes.jar $(LIVECONNECT_DIR) ; \
-	   cp -pPR $(SRC_DIR_LINK) $(LIVECONNECT_SRCS) src; \
-	   find src -type f -exec chmod 640 '{}' ';' -o -type d -exec chmod 750 '{}' ';'; \
-	   cd src ; \
-	   $(ZIP) -qr $(abs_top_builddir)/liveconnect/lib/src.zip $(LIVECONNECT_DIR) ) ; \
-	fi
-	mkdir -p stamps
-	touch $@
-
-clean-liveconnect:
-	rm -rf $(abs_top_builddir)/liveconnect
-	rm -f stamps/liveconnect-dist.stamp
-	rm -f liveconnect-source-files.txt
-	rm -f stamps/liveconnect.stamp
-
-# NetX
-# requires availability of OpenJDK source code including
-# a patch applied to sun.plugin.AppletViewerPanel and generated sources
-
-netx-source-files.txt:
-	find $(NETX_SRCDIR) -name '*.java' | sort > $@
-
-stamps/netx.stamp: netx-source-files.txt stamps/rt.stamp
-	mkdir -p $(abs_top_builddir)/netx.build
-	$(BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) \
-	    -d $(abs_top_builddir)/netx.build \
-	    -sourcepath $(NETX_SRCDIR) \
-	    -bootclasspath $(RUNTIME) \
-	    @netx-source-files.txt
-	cp -r $(NETX_RESOURCE_DIR) $(abs_top_builddir)/netx.build/net/sourceforge/jnlp
-	mkdir -p stamps
-	touch $@
-
-stamps/netx-dist.stamp: stamps/netx.stamp
-	(cd $(abs_top_builddir)/netx.build ; \
-	 mkdir -p lib ; \
-	 $(BOOT_DIR)/bin/jar cf lib/classes.jar javax/jnlp net ; \
-	 cp -pPR $(SRC_DIR_LINK) $(NETX_SRCDIR) src; \
-	 find src -type f -exec chmod 640 '{}' ';' -o -type d -exec chmod 750 '{}' ';'; \
-	 cd src ; \
-	 $(BOOT_DIR)/bin/jar uf $(abs_top_builddir)/netx.build/lib/classes.jar \
-	  `find . -type f -not -name '*.java'` ; \
-	 $(ZIP) -qr $(abs_top_builddir)/netx.build/lib/src.zip javax net )
-	mkdir -p stamps
-	touch $@
-
-clean-netx:
-	rm -rf $(abs_top_builddir)/netx.build
-	rm -f stamps/netx-dist.stamp
-	rm -f netx-source-files.txt
-	rm -f stamps/netx.stamp
-
-# extras -- used to create about.jar for javaws.
-extra-source-files.txt:
-	find $(abs_top_srcdir)/extra -name '*.java' | sort > $@
-
-stamps/extra-class-files.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) \
-  extra-source-files.txt stamps/netx.stamp
-	mkdir -p extra-lib
-	$(BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) -d extra-lib \
-          -sourcepath extra -cp netx.build \
-          -bootclasspath $(RUNTIME) @extra-source-files.txt
-	cp -r $(NETX_EXTRA_DIR) extra-lib/net/sourceforge/jnlp/about
-	mkdir -p stamps
-	touch $@
-
-clean-extra:
-	rm -rf extra-lib
-	rm -f stamps/extra-class-files.stamp
-	rm -f extra-source-files.txt
-
-extra-lib/about.jar: stamps/extra-class-files.stamp
-	$(BOOT_DIR)/bin/jar cf $@ -C extra-lib net ;
 
 # PulseAudio based mixer
 # (pulse-java)
@@ -2088,7 +1724,7 @@ ADD_ZERO_CONFIGURE_ARGS += \
 	$(if $(findstring --with-hotspot-src-zip=, $(CONFIGURE_ARGS)),, \
 	  --with-hotspot-src-zip=$(abs_top_builddir)/$(HOTSPOT_SRC_ZIP))
 endif
-ADD_ZERO_CONFIGURE_ARGS += --disable-plugin --disable-bootstrap
+ADD_ZERO_CONFIGURE_ARGS += --disable-bootstrap
 
 ADD_ZERO_EXTRA_BUILD_ENV = \
 	BUILD_LANGTOOLS=false ALT_LANGTOOLS_DIST=$(BUILD_OUTPUT_DIR)/langtools/dist \
@@ -2188,24 +1824,6 @@ clean-add-zero-debug:
 
 # end additional VMs
 
-# plugin tests
-
-if ENABLE_PLUGIN
-stamps/plugin-tests.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) $(PLUGIN_TEST_SRCS) \
- stamps/plugin.stamp
-	mkdir -p plugin/tests/LiveConnect
-	$(BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) \
-	 -d plugin/tests/LiveConnect \
-	 -classpath liveconnect/lib/classes.jar \
-	 $(PLUGIN_TEST_SRCS) ;
-	$(BOOT_DIR)/bin/jar cf plugin/tests/LiveConnect/PluginTest.jar \
-	  plugin/tests/LiveConnect/*.class ;
-	cp -pPR $(SRC_DIR_LINK) $(abs_top_srcdir)/plugin/tests/LiveConnect/*.{js,html} \
-	  plugin/tests/LiveConnect ;
-	echo "Done. Now launch \"firefox file://`pwd`/index.html\"" ;
-	mkdir -p stamps
-	touch stamps/plugin-tests.stamp
-endif
 
 # jtreg
 
@@ -2397,14 +2015,6 @@ liveconnect-dist: stamps/liveconnect-dist.stamp
 
 native-ecj: stamps/native-ecj.stamp
 
-netx: stamps/netx.stamp
-
-netx-dist: stamps/netx-dist.stamp
-
-add-netx: stamps/add-netx.stamp
-
-add-netx-debug: stamps/add-netx-debug.stamp
-
 overlay: stamps/overlay.stamp
 
 patch: stamps/patch.stamp
@@ -2412,10 +2022,6 @@ patch: stamps/patch.stamp
 patch-ecj: stamps/patch-ecj.stamp
 
 patch-fsg: stamps/patch-fsg.stamp
-
-plugin: stamps/plugin.stamp
-
-plugin-tests: stamps/plugin-tests.stamp
 
 pulse-java: stamps/pulse-java.stamp
 
