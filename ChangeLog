@@ -1,4 +1,12 @@
-2010-10-19  Andrew John Hughes  <ahughes@redhat.com>
+2010-10-22  Andrew John Hughes  <ahughes@redhat.com>
+
+	* acinclude.m4:
+	(FIND_JAVAC): Don't fail if $JAVAC is empty,
+	ecj.jar can be used.
+	(FIND_ECJ_JAR): Check additional Gentoo locations.
+	Fail only if both $JAVAC is empty and ECJ_JAR is no.
+
+2010-10-20  Andrew John Hughes  <ahughes@redhat.com>
 
 	* INSTALL: Clarify HotSpot build documentation.
 	* acinclude.m4:

@@ -135,9 +135,6 @@ AC_DEFUN([FIND_JAVAC],
   IT_FIND_JAVAC
   IT_FIND_ECJ
 
-  if test "x${JAVAC}" = x; then
-      AC_MSG_ERROR([cannot find a Java compiler, try --with-javac or --with-ecj])
-  fi
   AC_SUBST(JAVAC)
 ])
 
@@ -332,7 +329,9 @@ AC_DEFUN([FIND_ECJ_JAR],
   if test -z "${ECJ_JAR}"; then
     for jar in /usr/share/java/eclipse-ecj.jar \
       /usr/share/java/ecj.jar \
-      /usr/share/eclipse-ecj-3.{2,3,4,5}/lib/ecj.jar; do
+      /usr/share/eclipse-ecj/ecj.jar \
+      /usr/share/eclipse-ecj-3.{2,3,4,5}/lib/ecj.jar \
+      /usr/share/ecj-gcj-3.{2,3,4,5}/lib/ecj.jar ; do
         if test -e $jar; then
           ECJ_JAR=$jar
 	  break
@@ -343,8 +342,8 @@ AC_DEFUN([FIND_ECJ_JAR],
       fi
   fi
   AC_MSG_RESULT(${ECJ_JAR})
-  if test "x${ECJ_JAR}" = "xno"; then
-    AC_MSG_ERROR("No compiler or ecj JAR file was found.")
+  if test "x${JAVAC}" = "x" && test "x${ECJ_JAR}" = "xno"; then
+    AC_MSG_ERROR([No compiler or ecj JAR file was found; try --with-javac, --with-ecj or --with-ecj-jar])
   fi
   AC_SUBST(ECJ_JAR)
 ])
