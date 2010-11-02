@@ -294,7 +294,10 @@ ICEDTEA_PATCHES = \
         patches/openjdk/6853592-badwindow-warning-fix.patch \
         patches/6703377-freetypescaler.patch
 
-if !WITH_ALT_HSBUILD
+if WITH_ALT_HSBUILD
+ICEDTEA_PATCHES += \
+	patches/openjdk/6994130-ppc_fix.patch
+else
 ICEDTEA_PATCHES += \
 	patches/shark_do_nothing_on_stub_frame.patch \
 	patches/icedtea-shark-build-hotspot.patch \
