@@ -291,8 +291,9 @@ ICEDTEA_PATCHES = \
 	patches/numa_on_early_glibc.patch \
 	patches/icedtea-shark-build.patch \
 	patches/openjdk/6985992-test_6933784.patch \
-        patches/openjdk/6853592-badwindow-warning-fix.patch \
-        patches/6703377-freetypescaler.patch
+	patches/openjdk/6853592-badwindow-warning-fix.patch \
+	patches/6703377-freetypescaler.patch \
+	patches/icedtea-jtreg-international-fonts.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
