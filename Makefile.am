@@ -873,8 +873,10 @@ if WITH_ALT_HSBUILD
 	  if test -e ${HOTSPOT_SRC_ZIP} ; \
 	  then \
 	    $(TAR) xf $(HOTSPOT_SRC_ZIP) ; \
-	    chmod -R ug+w master-* ; \
-	    mv master-$$($(AWK) 'version==$$1 {print $$3}' version=$(HSBUILD) \
+	    dir=$$($(AWK) 'version==$$1 {print gensub(/.*\/([^/]*)$$/,"\\1","g",$$2)}' \
+	      version=hs19 $(abs_top_srcdir)/hotspot.map) ; \
+	    chmod -R ug+w $$dir-* ; \
+	    mv $$dir-$$($(AWK) 'version==$$1 {print $$3}' version=$(HSBUILD) \
 	      $(abs_top_srcdir)/hotspot.map) openjdk/hotspot ; \
 	  fi ; \
 	fi ;
