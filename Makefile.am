@@ -11,13 +11,13 @@ CACAO_BASE_URL = http://mips.complang.tuwien.ac.at
 CACAO_URL = $(CACAO_BASE_URL)/hg/cacao/archive/$(CACAO_VERSION).tar.bz2
 CACAO_SRC_ZIP = cacao-$(CACAO_VERSION).tar.bz2
 
-JAXWS_DROP_URL = https://jax-ws.dev.java.net/files/documents/4202/150724
+JAXWS_DROP_URL = http://icedtea.classpath.org/download/drops
 JAXWS_DROP_ZIP = jdk6-jaxws-b20.zip
 JAXWS_DROP_SHA256SUM = 0c460583898b968a58bf88eb53f90a0e34369e2562d65fb3a143512dfcaeb3eb
-JAF_DROP_URL = https://jax-ws.dev.java.net/files/documents/4202/150725
+JAF_DROP_URL = http://icedtea.classpath.org/download/drops
 JAF_DROP_ZIP = jdk6-jaf-b20.zip
 JAF_DROP_SHA256SUM = 78c7b5c9d6271e88ee46abadd018a61f1e9645f8936cc8df1617e5f4f5074012
-JAXP_DROP_URL = https://jaxp.dev.java.net/files/documents/913/150648
+JAXP_DROP_URL = http://icedtea.classpath.org/download/drops
 JAXP_DROP_ZIP = jdk6-jaxp-b20.zip
 JAXP_DROP_SHA256SUM = d097627d4059d488c5a09d4e33cec275a193d4d8bc0fea8ef4f1337170904156
 
