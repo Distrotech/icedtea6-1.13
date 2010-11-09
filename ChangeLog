@@ -5,6 +5,21 @@
 	(JAXP_DROP_URL): Likewise.
 	(JAF_DROP_URL): Likewise.
 
+2010-11-08  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: Add patch.
+	* patches/openjdk/6997495-test_correction_6857159.patch:
+	Testcase correction, now the regression test Test6857159 should
+	not timeout on most machines.
+
+2010-11-05  Denis Lila <dlila@redhat.com>
+
+	* Makefile.am:
+	Apply backported patch.
+	* patches/openjdk/6967436-6976265-6967434-pisces.patch:
+	Backport of the openjdk7 rendering engine, which fixes
+	various bugs and includes performance improvements.
+
 2010-11-05  Andrew John Hughes  <ahughes@redhat.com>
 
 	* hotspot.map:

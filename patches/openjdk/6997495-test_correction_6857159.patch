@@ -1,0 +1,21 @@
+# HG changeset patch
+# User ptisnovs
+# Date 1288875792 -3600
+# Node ID 086898a88056cd9f7de4475b7ebf4cc6c65f2b5e
+# Parent  68d6141ea19de3a9ba98ef753f0da41a61f736a0
+6997495: correction of regression test compiler/6857159/Test6857159
+Summary: Testcase correction.
+Reviewed-by: never
+
+diff -r 68d6141ea19d -r 086898a88056 test/compiler/6857159/Test6857159.java
+--- openjdk.old/hotspot/test/compiler/6857159/Test6857159.java	2010-10-08 22:29:24.000000000 +0200
++++ openjdk/hotspot/test/compiler/6857159/Test6857159.java	2010-11-04 15:27:47.000000000 +0100
+@@ -54,7 +54,7 @@
+     }
+ 
+     public static void main(String[] args) throws Exception {
+-        for (int i = 0; i < 100000; i++) {
++        for (int i = 0; i < 20000; i++) {
+             Thread t = null;
+             switch (i % 3) {
+               case 0: t = new ct0(); break;
