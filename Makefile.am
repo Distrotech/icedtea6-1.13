@@ -40,6 +40,8 @@ ICEDTEA_BOOT_DIR = $(abs_top_builddir)/bootstrap/icedtea
 SERVER_DIR = hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server
 BUILD_JRE_ARCH_DIR = $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
 BUILD_DEBUG_JRE_ARCH_DIR = $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
+FONTCONFIG_PATH = openjdk/jdk/src/solaris/classes/sun/awt/fontconfigs
+
 
 # Source directories
 
@@ -298,7 +300,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6997495-test_correction_6857159.patch \
 	patches/openjdk/6622432-bigdecimal_performance.patch \
 	patches/openjdk/6850606-bigdecimal_regression.patch \
-	patches/openjdk/6876282-bigdecimal_divide.patch
+	patches/openjdk/6876282-bigdecimal_divide.patch \
+	patches/f14-fonts.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
@@ -953,7 +956,16 @@ clean-generated:
 	fi
 	rm -f stamps/generated.stamp
 
-stamps/patch-fsg.stamp: stamps/generated.stamp
+stamps/fonts.stamp: stamps/generated.stamp
+	cp $(FONTCONFIG_PATH)/linux.fontconfig.Fedora.properties $(FONTCONFIG_PATH)/linux.fontconfig.Fedora.9.properties
+	cp $(FONTCONFIG_PATH)/linux.fontconfig.Fedora.properties $(FONTCONFIG_PATH)/linux.fontconfig.Fedora.10.properties
+	cp $(FONTCONFIG_PATH)/linux.fontconfig.Fedora.properties $(FONTCONFIG_PATH)/linux.fontconfig.Fedora.11.properties
+	cp $(FONTCONFIG_PATH)/linux.fontconfig.Fedora.properties $(FONTCONFIG_PATH)/linux.fontconfig.Fedora.12.properties
+	mkdir -p stamps
+	touch stamps/fonts.stamp
+
+
+stamps/patch-fsg.stamp: stamps/fonts.stamp
 	mkdir -p stamps ; \
 	rm -f stamps/patch-fsg.stamp.tmp ; \
 	touch stamps/patch-fsg.stamp.tmp ; \
