@@ -42,7 +42,6 @@ BUILD_JRE_ARCH_DIR = $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
 BUILD_DEBUG_JRE_ARCH_DIR = $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
 FONTCONFIG_PATH = openjdk/jdk/src/solaris/classes/sun/awt/fontconfigs
 
-
 # Source directories
 
 SHARE = openjdk-ecj/jdk/src/share/classes
@@ -964,7 +963,6 @@ stamps/fonts.stamp: stamps/generated.stamp
 	cp $(FONTCONFIG_PATH)/linux.fontconfig.Fedora.properties $(FONTCONFIG_PATH)/linux.fontconfig.Fedora.12.properties
 	mkdir -p stamps
 	touch stamps/fonts.stamp
-
 
 stamps/patch-fsg.stamp: stamps/fonts.stamp
 	mkdir -p stamps ; \
