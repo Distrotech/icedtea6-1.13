@@ -1,4 +1,77 @@
-2010-10-19  Andrew John Hughes  <ahughes@redhat.com>
+2010-11-09  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(JAXWS_DROP_URL): Switch to IcedTea server.
+	(JAXP_DROP_URL): Likewise.
+	(JAF_DROP_URL): Likewise.
+
+2010-11-08  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: Add patch.
+	* patches/openjdk/6997495-test_correction_6857159.patch:
+	Testcase correction, now the regression test Test6857159 should
+	not timeout on most machines.
+
+2010-11-05  Denis Lila <dlila@redhat.com>
+
+	* Makefile.am:
+	Apply backported patch.
+	* patches/openjdk/6967436-6976265-6967434-pisces.patch:
+	Backport of the openjdk7 rendering engine, which fixes
+	various bugs and includes performance improvements.
+
+2010-11-05  Andrew John Hughes  <ahughes@redhat.com>
+
+	* hotspot.map:
+	Switch back to master now changes have been
+	pushed through (same content, different tree).
+
+2010-11-03  Dan Horák <dhorak@redhat.com>
+
+	* patches/hotspot/hs19/params-cast-size_t.patch:
+	Add additional fixes for S390.
+
+2010-11-02  Andrew John Hughes  <ahughes@redhat.com>
+
+	* hotspot.map: Update md5sum for new
+	HotSpot.
+
+2010-11-02  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(replace-hotspot): Don't hardcode 'master'
+	as the top-level directory, extract it
+	from the url.
+	* hotspot.map: Move to latest hs19 (currently
+	only on baseline tree)
+
+2010-11-02  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am:
+	* patches/icedtea-jtreg-international-fonts.patch:
+	Added new regression test
+	patches/icedtea-jtreg-international-fonts.patch
+	for checking if all non-Latin fonts are installed
+	and properly configured.
+
+2010-10-22  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am: Add new patch for hs19
+	builds only.
+	* NEWS: Mention fix.
+	* patches/openjdk/6994130-ppc_fix.patch:
+	Fix build on PPC machines (thanks to Gary
+	Benson).
+
+2010-10-22  Andrew John Hughes  <ahughes@redhat.com>
+
+	* acinclude.m4:
+	(FIND_JAVAC): Don't fail if $JAVAC is empty,
+	ecj.jar can be used.
+	(FIND_ECJ_JAR): Check additional Gentoo locations.
+	Fail only if both $JAVAC is empty and ECJ_JAR is no.
+
+2010-10-20  Andrew John Hughes  <ahughes@redhat.com>
 
 	* INSTALL: Clarify HotSpot build documentation.
 	* acinclude.m4:

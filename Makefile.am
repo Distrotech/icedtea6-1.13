@@ -11,13 +11,13 @@ CACAO_BASE_URL = http://mips.complang.tuwien.ac.at
 CACAO_URL = $(CACAO_BASE_URL)/hg/cacao/archive/$(CACAO_VERSION).tar.bz2
 CACAO_SRC_ZIP = cacao-$(CACAO_VERSION).tar.bz2
 
-JAXWS_DROP_URL = https://jax-ws.dev.java.net/files/documents/4202/150724
+JAXWS_DROP_URL = http://icedtea.classpath.org/download/drops
 JAXWS_DROP_ZIP = jdk6-jaxws-b20.zip
 JAXWS_DROP_SHA256SUM = 0c460583898b968a58bf88eb53f90a0e34369e2562d65fb3a143512dfcaeb3eb
-JAF_DROP_URL = https://jax-ws.dev.java.net/files/documents/4202/150725
+JAF_DROP_URL = http://icedtea.classpath.org/download/drops
 JAF_DROP_ZIP = jdk6-jaf-b20.zip
 JAF_DROP_SHA256SUM = 78c7b5c9d6271e88ee46abadd018a61f1e9645f8936cc8df1617e5f4f5074012
-JAXP_DROP_URL = https://jaxp.dev.java.net/files/documents/913/152561
+JAXP_DROP_URL = http://icedtea.classpath.org/download/drops
 JAXP_DROP_ZIP = jaxp-1_4_4.zip
 JAXP_DROP_SHA256SUM = 10b203bec5b7d3dd8f515a9e098f80abc316faf977bcc220b56efe3dc6e9e5e9
 
@@ -263,6 +263,12 @@ ICEDTEA_PATCHES = \
 	patches/numa_on_early_glibc.patch \
         patches/openjdk/6853592-badwindow-warning-fix.patch \
         patches/6703377-freetypescaler.patch
+	patches/openjdk/6853592-badwindow-warning-fix.patch \
+	patches/6703377-freetypescaler.patch \
+	patches/icedtea-jtreg-international-fonts.patch \
+	patches/openjdk/6967436-6976265-6967434-pisces.patch \
+	patches/openjdk/6997495-test_correction_6857159.patch \
+	patches/openjdk/6994130-ppc_fix.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -828,8 +834,10 @@ if WITH_ALT_HSBUILD
 	  if test -e ${HOTSPOT_SRC_ZIP} ; \
 	  then \
 	    $(TAR) xf $(HOTSPOT_SRC_ZIP) ; \
-	    chmod -R ug+w master-* ; \
-	    mv master-$$($(AWK) 'version==$$1 {print $$3}' version=$(HSBUILD) \
+	    dir=$$($(AWK) 'version==$$1 {print gensub(/.*\/([^/]*)$$/,"\\1","g",$$2)}' \
+	      version=hs19 $(abs_top_srcdir)/hotspot.map) ; \
+	    chmod -R ug+w $$dir-* ; \
+	    mv $$dir-$$($(AWK) 'version==$$1 {print $$3}' version=$(HSBUILD) \
 	      $(abs_top_srcdir)/hotspot.map) openjdk/hotspot ; \
 	  fi ; \
 	fi ;
