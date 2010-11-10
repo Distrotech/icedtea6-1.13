@@ -295,7 +295,10 @@ ICEDTEA_PATCHES = \
 	patches/6703377-freetypescaler.patch \
 	patches/icedtea-jtreg-international-fonts.patch \
 	patches/openjdk/6967436-6976265-6967434-pisces.patch \
-	patches/openjdk/6997495-test_correction_6857159.patch
+	patches/openjdk/6997495-test_correction_6857159.patch \
+	patches/openjdk/6622432-bigdecimal_performance.patch \
+	patches/openjdk/6850606-bigdecimal_regression.patch \
+	patches/openjdk/6876282-bigdecimal_divide.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
