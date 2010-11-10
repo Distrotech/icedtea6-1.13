@@ -261,10 +261,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6638712-wildcard_types.patch \
 	patches/openjdk/6650759-missing_inference.patch \
 	patches/numa_on_early_glibc.patch \
-        patches/openjdk/6853592-badwindow-warning-fix.patch \
-        patches/6703377-freetypescaler.patch
-	patches/openjdk/6853592-badwindow-warning-fix.patch \
-	patches/6703377-freetypescaler.patch \
 	patches/icedtea-jtreg-international-fonts.patch \
 	patches/openjdk/6967436-6976265-6967434-pisces.patch \
 	patches/openjdk/6997495-test_correction_6857159.patch \
