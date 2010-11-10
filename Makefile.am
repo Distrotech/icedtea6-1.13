@@ -302,7 +302,8 @@ ICEDTEA_PATCHES = \
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
-	patches/openjdk/6994130-ppc_fix.patch
+	patches/openjdk/6994130-ppc_fix.patch \
+	patches/disable-default-compoops.patch
 else
 ICEDTEA_PATCHES += \
 	patches/shark_do_nothing_on_stub_frame.patch \
