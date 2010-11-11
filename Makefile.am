@@ -5,11 +5,11 @@ OPENJDK_MD5SUM = 0b36adbf67e4f261e1b827ed4be4f447
 OPENJDK_VERSION = b20
 OPENJDK_URL = http://download.java.net/openjdk/jdk6/promoted/$(OPENJDK_VERSION)/
 
-CACAO_VERSION = e321b101a9ee
-CACAO_SHA256SUM = 46bc5b6212c199dc4a3dbebe6386fe15a8248625a5dffa17115aab394a298444
+CACAO_VERSION = 6a5eda011e49
+CACAO_SHA256SUM = 57f3abd73688cb8861875e2f21be9ec8a0c7c234e1e694489e3efa4436e9228c
 CACAO_BASE_URL = http://mips.complang.tuwien.ac.at
-CACAO_URL = $(CACAO_BASE_URL)/hg/cacao/archive/$(CACAO_VERSION).tar.bz2
-CACAO_SRC_ZIP = cacao-$(CACAO_VERSION).tar.bz2
+CACAO_URL = $(CACAO_BASE_URL)/hg/cacao/archive/$(CACAO_VERSION).tar.gz
+CACAO_SRC_ZIP = cacao-$(CACAO_VERSION).tar.gz
 
 JAXWS_DROP_URL = http://icedtea.classpath.org/download/drops
 JAXWS_DROP_ZIP = jdk6-jaxws-b20.zip
