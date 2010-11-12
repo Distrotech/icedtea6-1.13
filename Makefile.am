@@ -268,7 +268,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6994130-ppc_fix.patch
 	patches/f14-fonts.patch \
 	patches/disable-default-compoops.patch \
-	patches/openjdk/6980392-fix_test6581734.patch
+	patches/openjdk/6980392-fix_test6581734.patch \
+	patches/6703377-freetypescaler.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
