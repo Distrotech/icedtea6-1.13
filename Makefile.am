@@ -558,7 +558,7 @@ clean-local: clean-jtreg clean-jtreg-reports $(PULSE_JAVA_CLEAN_TARGET) \
  clean-icedtea-against-ecj clean-extract-ecj clean-generated clean-replace-hotspot \
  clean-rewriter clean-rewrite-rhino clean-rt clean-bootstrap-directory \
  clean-bootstrap-directory-ecj clean-bootstrap-directory-symlink \
- clean-bootstrap-directory-symlink-ecj
+ clean-bootstrap-directory-symlink-ecj clean-fonts
 	if [ -e bootstrap ]; then \
 	  rmdir bootstrap ; \
 	fi
@@ -593,7 +593,7 @@ install:
 	clean-rewriter clean-rewrite-rhino clean-add-systemtap clean-add-systemtap-debug \
 	clean-add-pulseaudio clean-add-pulseaudio-debug clean-add-nss clean-add-nss-debug \
 	clean-add-tzdata-support clean-add-tzdata-support-debug clean-add-systemtap-ecj \
-	clean-add-pulseaudio-ecj clean-add-nss-ecj clean-add-tzdata-support-ecj
+	clean-add-pulseaudio-ecj clean-add-nss-ecj clean-add-tzdata-support-ecj clean-fonts
 
 env:
 	@echo 'unset JAVA_HOME'
@@ -964,6 +964,9 @@ stamps/fonts.stamp: stamps/generated.stamp
 	cp $(FONTCONFIG_PATH)/linux.fontconfig.Fedora.properties $(FONTCONFIG_PATH)/linux.fontconfig.Fedora.12.properties
 	mkdir -p stamps
 	touch stamps/fonts.stamp
+
+clean-fonts:
+	rm -f stamps/fonts.stamp
 
 stamps/patch-fsg.stamp: stamps/fonts.stamp
 	mkdir -p stamps ; \
