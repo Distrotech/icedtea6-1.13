@@ -1,0 +1,4211 @@
+# HG changeset patch
+# User aph
+# Date 1288788231 0
+# Node ID cadc64fc2282d7704a3c80799a5723b502b7d69f
+# Parent  2b1a7d4b9ac69c2366f38b5b0e9ebcf61f1e3277
+6622432: RFE: Performance improvements to java.math.BigDecimal
+Reviewed-by: darcy
+
+diff -r 2b1a7d4b9ac6 -r cadc64fc2282 src/share/classes/java/math/BigDecimal.java
+--- openjdk.orig/jdk/src/share/classes/java/math/BigDecimal.java	Fri Jun 25 11:53:15 2010 -0700
++++ openjdk/jdk/src/share/classes/java/math/BigDecimal.java	Wed Nov 03 12:43:51 2010 +0000
+@@ -29,6 +29,9 @@
+ 
+ package java.math;
+ 
++import java.util.Arrays;
++import static java.math.BigInteger.LONG_MASK;
++
+ /**
+  * Immutable, arbitrary-precision signed decimal numbers.  A
+  * {@code BigDecimal} consists of an arbitrary precision integer
+@@ -229,8 +232,8 @@
+      * @serial
+      * @see #scale
+      */
+-    private int scale = 0;  // Note: this may have any value, so
+-                            // calculations must be done in longs
++    private int scale;  // Note: this may have any value, so
++                        // calculations must be done in longs
+     /**
+      * The number of decimal digits in this BigDecimal, or 0 if the
+      * number of digits are not known (lookaside information).  If
+@@ -240,25 +243,25 @@
+      *
+      * @since  1.5
+      */
+-    private volatile transient int precision = 0;
++    private transient int precision;
+ 
+     /**
+      * Used to store the canonical string representation, if computed.
+      */
+-    private volatile transient String stringCache = null;
++    private transient String stringCache;
+ 
+     /**
+      * Sentinel value for {@link #intCompact} indicating the
+      * significand information is only available from {@code intVal}.
+      */
+-    private static final long INFLATED = Long.MIN_VALUE;
++    static final long INFLATED = Long.MIN_VALUE;
+ 
+     /**
+      * If the absolute value of the significand of this BigDecimal is
+      * less than or equal to {@code Long.MAX_VALUE}, the value can be
+      * compactly stored in this field and used in computations.
+      */
+-    private transient long intCompact = INFLATED;
++    private transient long intCompact;
+ 
+     // All 18-digit base ten strings fit into a long; not all 19-digit
+     // strings will
+@@ -269,19 +272,47 @@
+     /* Appease the serialization gods */
+     private static final long serialVersionUID = 6108874887143696463L;
+ 
++    private static final ThreadLocal<StringBuilderHelper>
++        threadLocalStringBuilderHelper = new ThreadLocal<StringBuilderHelper>() {
++        @Override
++        protected StringBuilderHelper initialValue() {
++            return new StringBuilderHelper();
++        }
++    };
++
+     // Cache of common small BigDecimal values.
+     private static final BigDecimal zeroThroughTen[] = {
+-        new BigDecimal(BigInteger.ZERO,         0,  0),
+-        new BigDecimal(BigInteger.ONE,          1,  0),
+-        new BigDecimal(BigInteger.valueOf(2),   2,  0),
+-        new BigDecimal(BigInteger.valueOf(3),   3,  0),
+-        new BigDecimal(BigInteger.valueOf(4),   4,  0),
+-        new BigDecimal(BigInteger.valueOf(5),   5,  0),
+-        new BigDecimal(BigInteger.valueOf(6),   6,  0),
+-        new BigDecimal(BigInteger.valueOf(7),   7,  0),
+-        new BigDecimal(BigInteger.valueOf(8),   8,  0),
+-        new BigDecimal(BigInteger.valueOf(9),   9,  0),
+-        new BigDecimal(BigInteger.TEN,          10, 0),
++        new BigDecimal(BigInteger.ZERO,         0,  0, 1),
++        new BigDecimal(BigInteger.ONE,          1,  0, 1),
++        new BigDecimal(BigInteger.valueOf(2),   2,  0, 1),
++        new BigDecimal(BigInteger.valueOf(3),   3,  0, 1),
++        new BigDecimal(BigInteger.valueOf(4),   4,  0, 1),
++        new BigDecimal(BigInteger.valueOf(5),   5,  0, 1),
++        new BigDecimal(BigInteger.valueOf(6),   6,  0, 1),
++        new BigDecimal(BigInteger.valueOf(7),   7,  0, 1),
++        new BigDecimal(BigInteger.valueOf(8),   8,  0, 1),
++        new BigDecimal(BigInteger.valueOf(9),   9,  0, 1),
++        new BigDecimal(BigInteger.TEN,          10, 0, 2),
++    };
++
++    // Cache of zero scaled by 0 - 15
++    private static final BigDecimal[] ZERO_SCALED_BY = {
++        zeroThroughTen[0],
++        new BigDecimal(BigInteger.ZERO, 0, 1, 1),
++        new BigDecimal(BigInteger.ZERO, 0, 2, 1),
++        new BigDecimal(BigInteger.ZERO, 0, 3, 1),
++        new BigDecimal(BigInteger.ZERO, 0, 4, 1),
++        new BigDecimal(BigInteger.ZERO, 0, 5, 1),
++        new BigDecimal(BigInteger.ZERO, 0, 6, 1),
++        new BigDecimal(BigInteger.ZERO, 0, 7, 1),
++        new BigDecimal(BigInteger.ZERO, 0, 8, 1),
++        new BigDecimal(BigInteger.ZERO, 0, 9, 1),
++        new BigDecimal(BigInteger.ZERO, 0, 10, 1),
++        new BigDecimal(BigInteger.ZERO, 0, 11, 1),
++        new BigDecimal(BigInteger.ZERO, 0, 12, 1),
++        new BigDecimal(BigInteger.ZERO, 0, 13, 1),
++        new BigDecimal(BigInteger.ZERO, 0, 14, 1),
++        new BigDecimal(BigInteger.ZERO, 0, 15, 1),
+     };
+ 
+     // Constants
+@@ -312,6 +343,18 @@
+     // Constructors
+ 
+     /**
++     * Trusted package private constructor.
++     * Trusted simply means if val is INFLATED, intVal could not be null and
++     * if intVal is null, val could not be INFLATED.
++     */
++    BigDecimal(BigInteger intVal, long val, int scale, int prec) {
++        this.scale = scale;
++        this.precision = prec;
++        this.intCompact = val;
++        this.intVal = intVal;
++    }
++
++    /**
+      * Translates a character array representation of a
+      * {@code BigDecimal} into a {@code BigDecimal}, accepting the
+      * same sequence of characters as the {@link #BigDecimal(String)}
+@@ -331,10 +374,19 @@
+      * @since  1.5
+      */
+     public BigDecimal(char[] in, int offset, int len) {
++        // protect against huge length.
++        if (offset+len > in.length || offset < 0)
++            throw new NumberFormatException();
+         // This is the primary string to BigDecimal constructor; all
+         // incoming strings end up here; it uses explicit (inline)
+         // parsing for speed and generates at most one intermediate
+-        // (temporary) object (a char[] array).
++        // (temporary) object (a char[] array) for non-compact case.
++
++        // Use locals for all fields values until completion
++        int prec = 0;                 // record precision value
++        int scl = 0;                  // record scale value
++        long rs = 0;                  // the compact value in long
++        BigInteger rb = null;         // the inflated value in BigInteger
+ 
+         // use array bounds checking to handle too-long, len == 0,
+         // bad offset, etc.
+@@ -351,27 +403,62 @@
+             }
+ 
+             // should now be at numeric part of the significand
+-            int dotoff = -1;                 // '.' offset, -1 if none
++            boolean dot = false;             // true when there is a '.'
+             int cfirst = offset;             // record start of integer
+             long exp = 0;                    // exponent
+-            if (len > in.length)             // protect against huge length
+-                throw new NumberFormatException();
+-            char coeff[] = new char[len];    // integer significand array
+-            char c;                          // work
++            char c;                          // current character
++
++            boolean isCompact = (len <= MAX_COMPACT_DIGITS);
++            // integer significand array & idx is the index to it. The array
++            // is ONLY used when we can't use a compact representation.
++            char coeff[] = isCompact ? null : new char[len];
++            int idx = 0;
+ 
+             for (; len > 0; offset++, len--) {
+                 c = in[offset];
++                // have digit
+                 if ((c >= '0' && c <= '9') || Character.isDigit(c)) {
+-                    // have digit
+-                    coeff[precision] = c;
+-                    precision++;             // count of digits
++                    // First compact case, we need not to preserve the character
++                    // and we can just compute the value in place.
++                    if (isCompact) {
++                        int digit = Character.digit(c, 10);
++                        if (digit == 0) {
++                            if (prec == 0)
++                                prec = 1;
++                            else if (rs != 0) {
++                                rs *= 10;
++                                ++prec;
++                            } // else digit is a redundant leading zero
++                        } else {
++                            if (prec != 1 || rs != 0)
++                                ++prec; // prec unchanged if preceded by 0s
++                            rs = rs * 10 + digit;
++                        }
++                    } else { // the unscaled value is likely a BigInteger object.
++                        if (c == '0' || Character.digit(c, 10) == 0) {
++                            if (prec == 0) {
++                                coeff[idx] = c;
++                                prec = 1;
++                            } else if (idx != 0) {
++                                coeff[idx++] = c;
++                                ++prec;
++                            } // else c must be a redundant leading zero
++                        } else {
++                            if (prec != 1 || idx != 0)
++                                ++prec; // prec unchanged if preceded by 0s
++                            coeff[idx++] = c;
++                        }
++                    }
++                    if (dot)
++                        ++scl;
+                     continue;
+                 }
++                // have dot
+                 if (c == '.') {
+                     // have dot
+-                    if (dotoff >= 0)         // two dots
++                    if (dot)         // two dots
+                         throw new NumberFormatException();
+-                    dotoff = offset;
++                    dot = true;
+                     continue;
+                 }
+                 // exponent expected
+@@ -380,10 +467,9 @@
+                 offset++;
+                 c = in[offset];
+                 len--;
+-                boolean negexp = false;
++                boolean negexp = (c == '-');
+                 // optional sign
+-                if (c == '-' || c == '+') {
+-                    negexp = (c == '-');
++                if (negexp || c == '+') {
+                     offset++;
+                     c = in[offset];
+                     len--;
+@@ -392,9 +478,9 @@
+                     throw new NumberFormatException();
+                 // skip leading zeros in the exponent
+                 while (len > 10 && Character.digit(c, 10) == 0) {
+-                        offset++;
+-                        c = in[offset];
+-                        len--;
++                    offset++;
++                    c = in[offset];
++                    len--;
+                 }
+                 if (len > 10)  // too many nonzero exponent digits
+                     throw new NumberFormatException();
+@@ -420,55 +506,46 @@
+                 if ((int)exp != exp)         // overflow
+                     throw new NumberFormatException();
+                 break;                       // [saves a test]
+-                }
++            }
+             // here when no characters left
+-            if (precision == 0)              // no digits found
++            if (prec == 0)              // no digits found
+                 throw new NumberFormatException();
+ 
+-            if (dotoff >= 0) {               // had dot; set scale
+-                scale = precision - (dotoff - cfirst);
+-                // [cannot overflow]
+-            }
++            // Adjust scale if exp is not zero.
+             if (exp != 0) {                  // had significant exponent
+-                try {
+-                    scale = checkScale(-exp + scale); // adjust
+-                } catch (ArithmeticException e) {
++                // Can't call checkScale which relies on proper fields value
++                long adjustedScale = scl - exp;
++                if (adjustedScale > Integer.MAX_VALUE ||
++                    adjustedScale < Integer.MIN_VALUE)
+                     throw new NumberFormatException("Scale out of range.");
+-                }
++                scl = (int)adjustedScale;
+             }
+ 
+             // Remove leading zeros from precision (digits count)
+-            int first = 0;
+-            for (; (coeff[first] == '0' || Character.digit(coeff[first], 10) == 0) &&
+-                     precision > 1;
+-                 first++)
+-                precision--;
+-
+-            // Set the significand ..
+-            // Copy significand to exact-sized array, with sign if
+-            // negative
+-            // Later use: BigInteger(coeff, first, precision) for
+-            //   both cases, by allowing an extra char at the front of
+-            //   coeff.
+-            char quick[];
+-            if (!isneg) {
+-                quick = new char[precision];
+-                System.arraycopy(coeff, first, quick, 0, precision);
++            if (isCompact) {
++                rs = isneg ? -rs : rs;
+             } else {
+-                quick = new char[precision+1];
+-                quick[0] = '-';
+-                System.arraycopy(coeff, first, quick, 1, precision);
++                char quick[];
++                if (!isneg) {
++                    quick = (coeff.length != prec) ?
++                        Arrays.copyOf(coeff, prec) : coeff;
++                } else {
++                    quick = new char[prec + 1];
++                    quick[0] = '-';
++                    System.arraycopy(coeff, 0, quick, 1, prec);
++                }
++                rb = new BigInteger(quick);
++                rs = compactValFor(rb);
+             }
+-            if (precision <= MAX_COMPACT_DIGITS)
+-                intCompact = Long.parseLong(new String(quick));
+-            else
+-                intVal = new BigInteger(quick);
+-            // System.out.println(" new: " +intVal+" ["+scale+"] "+precision);
+         } catch (ArrayIndexOutOfBoundsException e) {
+             throw new NumberFormatException();
+         } catch (NegativeArraySizeException e) {
+             throw new NumberFormatException();
+         }
++        this.scale = scl;
++        this.precision = prec;
++        this.intCompact = rs;
++        this.intVal = (rs != INFLATED) ? null : rb;
+     }
+ 
+     /**
+@@ -754,16 +831,18 @@
+         }
+ 
+         // Calculate intVal and scale
+-        intVal = BigInteger.valueOf(sign*significand);
++        long s = sign * significand;
++        BigInteger b;
+         if (exponent < 0) {
+-            intVal = intVal.multiply(BigInteger.valueOf(5).pow(-exponent));
++            b = BigInteger.valueOf(5).pow(-exponent).multiply(s);
+             scale = -exponent;
+         } else if (exponent > 0) {
+-            intVal = intVal.multiply(BigInteger.valueOf(2).pow(exponent));
++            b = BigInteger.valueOf(2).pow(exponent).multiply(s);
++        } else {
++            b = BigInteger.valueOf(s);
+         }
+-        if (intVal.bitLength() <= MAX_BIGINT_BITS) {
+-            intCompact = intVal.longValue();
+-        }
++        intCompact = compactValFor(b);
++        intVal = (intCompact != INFLATED) ? null : b;
+     }
+ 
+     /**
+@@ -798,10 +877,8 @@
+      *            {@code BigDecimal}.
+      */
+     public BigDecimal(BigInteger val) {
+-        intVal = val;
+-        if (val.bitLength() <= MAX_BIGINT_BITS) {
+-            intCompact = val.longValue();
+-        }
++        intCompact = compactValFor(val);
++        intVal = (intCompact != INFLATED) ? null : val;
+     }
+ 
+     /**
+@@ -817,7 +894,7 @@
+      * @since  1.5
+      */
+     public BigDecimal(BigInteger val, MathContext mc) {
+-        intVal = val;
++        this(val);
+         if (mc.precision > 0)
+             roundThis(mc);
+     }
+@@ -833,11 +910,8 @@
+      */
+     public BigDecimal(BigInteger unscaledVal, int scale) {
+         // Negative scales are now allowed
+-        intVal = unscaledVal;
++        this(unscaledVal);
+         this.scale = scale;
+-        if (unscaledVal.bitLength() <= MAX_BIGINT_BITS) {
+-            intCompact = unscaledVal.longValue();
+-        }
+     }
+ 
+     /**
+@@ -856,7 +930,7 @@
+      * @since  1.5
+      */
+     public BigDecimal(BigInteger unscaledVal, int scale, MathContext mc) {
+-        intVal = unscaledVal;
++        this(unscaledVal);
+         this.scale = scale;
+         if (mc.precision > 0)
+             roundThis(mc);
+@@ -899,10 +973,8 @@
+      * @since  1.5
+      */
+     public BigDecimal(long val) {
+-        if (compactLong(val))
+-            intCompact = val;
+-        else
+-            intVal = BigInteger.valueOf(val);
++        this.intCompact = val;
++        this.intVal = (val == INFLATED) ? BigInteger.valueOf(val) : null;
+     }
+ 
+     /**
+@@ -917,31 +989,11 @@
+      * @since  1.5
+      */
+     public BigDecimal(long val, MathContext mc) {
+-        if (compactLong(val))
+-            intCompact = val;
+-        else
+-            intVal = BigInteger.valueOf(val);
++        this(val);
+         if (mc.precision > 0)
+             roundThis(mc);
+     }
+ 
+-    /**
+-     * Trusted internal constructor
+-     */
+-    private BigDecimal(long val, int scale) {
+-        this.intCompact = val;
+-        this.scale = scale;
+-    }
+-
+-    /**
+-     * Trusted internal constructor
+-     */
+-    private BigDecimal(BigInteger intVal, long val, int scale) {
+-        this.intVal = intVal;
+-        this.intCompact = val;
+-        this.scale = scale;
+-    }
+-
+     // Static Factory Methods
+ 
+     /**
+@@ -957,12 +1009,17 @@
+      *         <tt>(unscaledVal &times; 10<sup>-scale</sup>)</tt>.
+      */
+     public static BigDecimal valueOf(long unscaledVal, int scale) {
+-        if (scale == 0 && unscaledVal >= 0 && unscaledVal <= 10) {
+-            return zeroThroughTen[(int)unscaledVal];
++        if (scale == 0)
++            return valueOf(unscaledVal);
++        else if (unscaledVal == 0) {
++            if (scale > 0 && scale < ZERO_SCALED_BY.length)
++                return ZERO_SCALED_BY[scale];
++            else
++                return new BigDecimal(BigInteger.ZERO, 0, scale, 1);
+         }
+-        if (compactLong(unscaledVal))
+-            return new BigDecimal(unscaledVal, scale);
+-        return new BigDecimal(BigInteger.valueOf(unscaledVal), scale);
++        return new BigDecimal(unscaledVal == INFLATED ?
++                              BigInteger.valueOf(unscaledVal) : null,
++                              unscaledVal, scale, 0);
+     }
+ 
+     /**
+@@ -976,7 +1033,11 @@
+      * @return a {@code BigDecimal} whose value is {@code val}.
+      */
+     public static BigDecimal valueOf(long val) {
+-        return valueOf(val, 0);
++        if (val >= 0 && val < zeroThroughTen.length)
++            return zeroThroughTen[(int)val];
++        else if (val != INFLATED)
++            return new BigDecimal(null, val, 0, 0);
++        return new BigDecimal(BigInteger.valueOf(val), val, 0, 0);
+     }
+ 
+     /**
+@@ -1014,27 +1075,42 @@
+      * @return {@code this + augend}
+      */
+     public BigDecimal add(BigDecimal augend) {
+-        BigDecimal arg[] = {this, augend};
+-        matchScale(arg);
++        long xs = this.intCompact;
++        long ys = augend.intCompact;
++        BigInteger fst = (xs != INFLATED) ? null : this.intVal;
++        BigInteger snd = (ys != INFLATED) ? null : augend.intVal;
++        int rscale = this.scale;
+ 
+-        long x = arg[0].intCompact;
+-        long y = arg[1].intCompact;
+-
+-        // Might be able to do a more clever check incorporating the
+-        // inflated check into the overflow computation.
+-        if (x != INFLATED && y != INFLATED) {
+-            long sum = x + y;
+-            /*
+-             * If the sum is not an overflowed value, continue to use
+-             * the compact representation.  if either of x or y is
+-             * INFLATED, the sum should also be regarded as an
+-             * overflow.  See "Hacker's Delight" section 2-12 for
+-             * explanation of the overflow test.
+-             */
+-            if ( (((sum ^ x) & (sum ^ y)) >> 63) == 0L )        // not overflowed
+-                return BigDecimal.valueOf(sum, arg[0].scale);
++        long sdiff = (long)rscale - augend.scale;
++        if (sdiff != 0) {
++            if (sdiff < 0) {
++                int raise = checkScale(-sdiff);
++                rscale = augend.scale;
++                if (xs == INFLATED ||
++                    (xs = longMultiplyPowerTen(xs, raise)) == INFLATED)
++                    fst = bigMultiplyPowerTen(raise);
++            } else {
++                int raise = augend.checkScale(sdiff);
++                if (ys == INFLATED ||
++                    (ys = longMultiplyPowerTen(ys, raise)) == INFLATED)
++                    snd = augend.bigMultiplyPowerTen(raise);
++            }
+         }
+-        return new BigDecimal(arg[0].inflate().intVal.add(arg[1].inflate().intVal), arg[0].scale);
++        if (xs != INFLATED && ys != INFLATED) {
++            long sum = xs + ys;
++            // See "Hacker's Delight" section 2-12 for explanation of
++            // the overflow test.
++            if ( (((sum ^ xs) & (sum ^ ys))) >= 0L) // not overflowed
++                return new BigDecimal(null, sum, rscale, 0);
++        }
++        if (fst == null)
++            fst = BigInteger.valueOf(xs);
++        if (snd == null)
++            snd = BigInteger.valueOf(ys);
++        BigInteger sum = fst.add(snd);
++        return (fst.signum == snd.signum) ?
++            new BigDecimal(sum, INFLATED, rscale, 0) :
++            new BigDecimal(sum, rscale);
+     }
+ 
+     /**
+@@ -1072,17 +1148,19 @@
+ 
+                 // Could use a factory for zero instead of a new object
+                 if (lhsIsZero && augendIsZero)
+-                    return new BigDecimal(BigInteger.ZERO, 0, preferredScale);
++                    return new BigDecimal(BigInteger.ZERO, 0, preferredScale, 0);
+ 
+-
+-                result = lhsIsZero ? augend.doRound(mc) : lhs.doRound(mc);
++                result = lhsIsZero ? doRound(augend, mc) : doRound(lhs, mc);
+ 
+                 if (result.scale() == preferredScale)
+                     return result;
+-                else if (result.scale() > preferredScale)
+-                    return new BigDecimal(result.intVal, result.intCompact, result.scale).
+-                        stripZerosToMatchScale(preferredScale);
+-                else { // result.scale < preferredScale
++                else if (result.scale() > preferredScale) {
++                    BigDecimal scaledResult =
++                        new BigDecimal(result.intVal, result.intCompact,
++                                       result.scale, 0);
++                    scaledResult.stripZerosToMatchScale(preferredScale);
++                    return scaledResult;
++                } else { // result.scale < preferredScale
+                     int precisionDiff = mc.precision - result.precision();
+                     int scaleDiff     = preferredScale - result.scale();
+ 
+@@ -1102,8 +1180,9 @@
+             augend = arg[1];
+         }
+ 
+-        return new BigDecimal(lhs.inflate().intVal.add(augend.inflate().intVal),
+-                              lhs.scale).doRound(mc);
++        BigDecimal d = new BigDecimal(lhs.inflate().add(augend.inflate()),
++                                      lhs.scale);
++        return doRound(d, mc);
+     }
+ 
+     /**
+@@ -1181,28 +1260,7 @@
+      * @return {@code this - subtrahend}
+      */
+     public BigDecimal subtract(BigDecimal subtrahend) {
+-        BigDecimal arg[] = {this, subtrahend};
+-        matchScale(arg);
+-
+-        long x = arg[0].intCompact;
+-        long y = arg[1].intCompact;
+-
+-        // Might be able to do a more clever check incorporating the
+-        // inflated check into the overflow computation.
+-        if (x != INFLATED && y != INFLATED) {
+-            long difference = x - y;
+-            /*
+-             * If the difference is not an overflowed value, continue
+-             * to use the compact representation.  if either of x or y
+-             * is INFLATED, the difference should also be regarded as
+-             * an overflow.  See "Hacker's Delight" section 2-12 for
+-             * explanation of the overflow test.
+-             */
+-            if ( ((x ^ y) & (difference ^ x) ) >> 63 == 0L )    // not overflowed
+-                return BigDecimal.valueOf(difference, arg[0].scale);
+-        }
+-        return new BigDecimal(arg[0].inflate().intVal.subtract(arg[1].inflate().intVal),
+-                              arg[0].scale);
++        return add(subtrahend.negate());
+     }
+ 
+     /**
+@@ -1220,14 +1278,11 @@
+      * @since  1.5
+      */
+     public BigDecimal subtract(BigDecimal subtrahend, MathContext mc) {
++        BigDecimal nsubtrahend = subtrahend.negate();
+         if (mc.precision == 0)
+-            return subtract(subtrahend);
++            return add(nsubtrahend);
+         // share the special rounding code in add()
+-        this.inflate();
+-        subtrahend.inflate();
+-        BigDecimal rhs = new BigDecimal(subtrahend.intVal.negate(), subtrahend.scale);
+-        rhs.precision = subtrahend.precision;
+-        return add(rhs, mc);
++        return add(nsubtrahend, mc);
+     }
+ 
+     /**
+@@ -1241,7 +1296,7 @@
+     public BigDecimal multiply(BigDecimal multiplicand) {
+         long x = this.intCompact;
+         long y = multiplicand.intCompact;
+-        int productScale = checkScale((long)scale+multiplicand.scale);
++        int productScale = checkScale((long)scale + multiplicand.scale);
+ 
+         // Might be able to do a more clever check incorporating the
+         // inflated check into the overflow computation.
+@@ -1250,16 +1305,26 @@
+              * If the product is not an overflowed value, continue
+              * to use the compact representation.  if either of x or y
+              * is INFLATED, the product should also be regarded as
+-             * an overflow.  See "Hacker's Delight" section 2-12 for
+-             * explanation of the overflow test.
++             * an overflow. Before using the overflow test suggested in
++             * "Hacker's Delight" section 2-12, we perform quick checks
++             * using the precision information to see whether the overflow
++             * would occur since division is expensive on most CPUs.
+              */
+             long product = x * y;
+-            if ( !(y != 0L && product/y != x)  )        // not overflowed
+-                return BigDecimal.valueOf(product, productScale);
++            int prec = this.precision() + multiplicand.precision();
++            if (prec < 19 || (prec < 21 && (y == 0 || product / y == x)))
++                return new BigDecimal(null, product, productScale, 0);
++            return new BigDecimal(BigInteger.valueOf(x).multiply(y), INFLATED,
++                                  productScale, 0);
+         }
+-
+-        BigDecimal result = new BigDecimal(this.inflate().intVal.multiply(multiplicand.inflate().intVal), productScale);
+-        return result;
++        BigInteger rb;
++        if (x == INFLATED && y == INFLATED)
++            rb = this.intVal.multiply(multiplicand.intVal);
++        else if (x != INFLATED)
++            rb = multiplicand.intVal.multiply(x);
++        else
++            rb = this.intVal.multiply(y);
++        return new BigDecimal(rb, INFLATED, productScale, 0);
+     }
+ 
+     /**
+@@ -1276,8 +1341,7 @@
+     public BigDecimal multiply(BigDecimal multiplicand, MathContext mc) {
+         if (mc.precision == 0)
+             return multiply(multiplicand);
+-        BigDecimal lhs = this;
+-        return lhs.inflate().multiply(multiplicand.inflate()).doRound(mc);
++        return doRound(this.multiply(multiplicand), mc);
+     }
+ 
+     /**
+@@ -1311,7 +1375,7 @@
+     public BigDecimal divide(BigDecimal divisor, int scale, int roundingMode) {
+         /*
+          * IMPLEMENTATION NOTE: This method *must* return a new object
+-         * since dropDigits uses divide to generate a value whose
++         * since divideAndRound uses divide to generate a value whose
+          * scale is then modified.
+          */
+         if (roundingMode < ROUND_UP || roundingMode > ROUND_UNNECESSARY)
+@@ -1321,87 +1385,103 @@
+          * produce correctly scaled quotient).
+          * Take care to detect out-of-range scales
+          */
+-        BigDecimal dividend;
+-        if (checkScale((long)scale + divisor.scale) >= this.scale) {
+-            dividend = this.setScale(scale + divisor.scale);
++        BigDecimal dividend = this;
++        if (checkScale((long)scale + divisor.scale) > this.scale)
++            dividend = this.setScale(scale + divisor.scale, ROUND_UNNECESSARY);
++        else
++            divisor = divisor.setScale(checkScale((long)this.scale - scale),
++                                       ROUND_UNNECESSARY);
++        return divideAndRound(dividend.intCompact, dividend.intVal,
++                              divisor.intCompact, divisor.intVal,
++                              scale, roundingMode, scale);
++    }
++
++    /**
++     * Internally used for division operation. The dividend and divisor are
++     * passed both in {@code long} format and {@code BigInteger} format. The
++     * returned {@code BigDecimal} object is the quotient whose scale is set to
++     * the passed in scale. If the remainder is not zero, it will be rounded
++     * based on the passed in roundingMode. Also, if the remainder is zero and
++     * the last parameter, i.e. preferredScale is NOT equal to scale, the
++     * trailing zeros of the result is stripped to match the preferredScale.
++     */
++    private static BigDecimal divideAndRound(long ldividend, BigInteger bdividend,
++                                             long ldivisor,  BigInteger bdivisor,
++                                             int scale, int roundingMode,
++                                             int preferredScale) {
++        boolean isRemainderZero;       // record remainder is zero or not
++        int qsign;                     // quotient sign
++        long q = 0, r = 0;             // store quotient & remainder in long
++        MutableBigInteger mq = null;   // store quotient
++        MutableBigInteger mr = null;   // store remainder
++        MutableBigInteger mdivisor = null;
++        boolean isLongDivision = (ldividend != INFLATED && ldivisor != INFLATED);
++        if (isLongDivision) {
++            q = ldividend / ldivisor;
++            if (roundingMode == ROUND_DOWN && scale == preferredScale)
++                return new BigDecimal(null, q, scale, 0);
++            r = ldividend % ldivisor;
++            isRemainderZero = (r == 0);
++            qsign = ((ldividend < 0) == (ldivisor < 0)) ? 1 : -1;
+         } else {
+-            dividend = this;
+-            divisor = divisor.setScale(checkScale((long)this.scale - scale));
++            if (bdividend == null)
++                bdividend = BigInteger.valueOf(ldividend);
++            // Descend into mutables for faster remainder checks
++            MutableBigInteger mdividend = new MutableBigInteger(bdividend.mag);
++            mq = new MutableBigInteger();
++            if (ldivisor != INFLATED) {
++                r = mdividend.divide(ldivisor, mq);
++                isRemainderZero = (r == 0);
++                qsign = (ldivisor < 0) ? -bdividend.signum : bdividend.signum;
++            } else {
++                mdivisor = new MutableBigInteger(bdivisor.mag);
++                mr = mdividend.divide(mdivisor, mq);
++                isRemainderZero = mr.isZero();
++                qsign = (bdividend.signum != bdivisor.signum) ? -1 : 1;
++            }
+         }
+-
+-        boolean compact = dividend.intCompact != INFLATED && divisor.intCompact != INFLATED;
+-        long div = INFLATED;
+-        long rem = INFLATED;;
+-        BigInteger q=null, r=null;
+-
+-        if (compact) {
+-            div = dividend.intCompact / divisor.intCompact;
+-            rem = dividend.intCompact % divisor.intCompact;
+-        } else {
+-            // Do the division and return result if it's exact.
+-            BigInteger i[] = dividend.inflate().intVal.divideAndRemainder(divisor.inflate().intVal);
+-            q = i[0];
+-            r = i[1];
+-        }
+-
+-        // Check for exact result
+-        if (compact) {
+-            if (rem == 0)
+-                return new BigDecimal(div, scale);
+-        } else {
+-            if (r.signum() == 0)
+-                return new BigDecimal(q, scale);
+-        }
+-
+-        if (roundingMode == ROUND_UNNECESSARY)      // Rounding prohibited
+-            throw new ArithmeticException("Rounding necessary");
+-
+-        /* Round as appropriate */
+-        int signum = dividend.signum() * divisor.signum(); // Sign of result
+-        boolean increment;
+-        if (roundingMode == ROUND_UP) {             // Away from zero
+-            increment = true;
+-        } else if (roundingMode == ROUND_DOWN) {    // Towards zero
+-            increment = false;
+-        } else if (roundingMode == ROUND_CEILING) { // Towards +infinity
+-            increment = (signum > 0);
+-        } else if (roundingMode == ROUND_FLOOR) {   // Towards -infinity
+-            increment = (signum < 0);
+-        } else { // Remaining modes based on nearest-neighbor determination
++        boolean increment = false;
++        if (!isRemainderZero) {
+             int cmpFracHalf;
+-            if (compact) {
+-                 cmpFracHalf = longCompareTo(Math.abs(2*rem), Math.abs(divisor.intCompact));
++            /* Round as appropriate */
++            if (roundingMode == ROUND_UNNECESSARY) {  // Rounding prohibited
++                throw new ArithmeticException("Rounding necessary");
++            } else if (roundingMode == ROUND_UP) {      // Away from zero
++                increment = true;
++            } else if (roundingMode == ROUND_DOWN) {    // Towards zero
++                increment = false;
++            } else if (roundingMode == ROUND_CEILING) { // Towards +infinity
++                increment = (qsign > 0);
++            } else if (roundingMode == ROUND_FLOOR) {   // Towards -infinity
++                increment = (qsign < 0);
+             } else {
+-                // add(r) here is faster than multiply(2) or shiftLeft(1)
+-                cmpFracHalf= r.add(r).abs().compareTo(divisor.intVal.abs());
+-            }
+-            if (cmpFracHalf < 0) {         // We're closer to higher digit
+-                increment = false;
+-            } else if (cmpFracHalf > 0) {  // We're closer to lower digit
+-                increment = true;
+-            } else {                       // We're dead-center
+-                if (roundingMode == ROUND_HALF_UP)
++                if (isLongDivision || ldivisor != INFLATED)
++                    cmpFracHalf = longCompareMagnitude(2 * r, ldivisor);
++                else
++                    cmpFracHalf = mr.compareHalf(mdivisor);
++                if (cmpFracHalf < 0)
++                    increment = false;     // We're closer to higher digit
++                else if (cmpFracHalf > 0)  // We're closer to lower digit
++                    increment = true;
++                else if (roundingMode == ROUND_HALF_UP)
+                     increment = true;
+                 else if (roundingMode == ROUND_HALF_DOWN)
+                     increment = false;
+-                else { // roundingMode == ROUND_HALF_EVEN
+-                    if (compact)
+-                        increment = (div & 1L) != 0L;
+-                    else
+-                        increment = q.testBit(0);   // true iff q is odd
+-                }
++                else  // roundingMode == ROUND_HALF_EVEN, true iff quotient is odd
++                    increment = isLongDivision ? (q & 1L) != 0L : mq.isOdd();
+             }
+         }
+-
+-        if (compact) {
++        BigDecimal res;
++        if (isLongDivision)
++            res = new BigDecimal(null, (increment ? q + qsign : q), scale, 0);
++        else {
+             if (increment)
+-                div += signum; // guaranteed not to overflow
+-            return new BigDecimal(div, scale);
+-        } else {
+-            return (increment
+-                    ? new BigDecimal(q.add(BigInteger.valueOf(signum)), scale)
+-                    : new BigDecimal(q, scale));
++                mq.add(MutableBigInteger.ONE);
++            res = mq.toBigDecimal(qsign, scale);
+         }
++        if (isRemainderZero && preferredScale != scale)
++            res.stripZerosToMatchScale(preferredScale);
++        return res;
+     }
+ 
+     /**
+@@ -1499,10 +1579,12 @@
+         }
+ 
+         // Calculate preferred scale
+-        int preferredScale = (int)Math.max(Math.min((long)this.scale() - divisor.scale(),
+-                                                    Integer.MAX_VALUE), Integer.MIN_VALUE);
++        int preferredScale = saturateLong((long)this.scale - divisor.scale);
+         if (this.signum() == 0)        // 0/y
+-            return new BigDecimal(0, preferredScale);
++            return (preferredScale >= 0 &&
++                    preferredScale < ZERO_SCALED_BY.length) ?
++                ZERO_SCALED_BY[preferredScale] :
++                new BigDecimal(null, 0, preferredScale, 1);
+         else {
+             this.inflate();
+             divisor.inflate();
+@@ -1534,7 +1616,7 @@
+             // limit, we can add zeros too.
+ 
+             if (preferredScale > quotientScale)
+-                return quotient.setScale(preferredScale);
++                return quotient.setScale(preferredScale, ROUND_UNNECESSARY);
+ 
+             return quotient;
+         }
+@@ -1554,14 +1636,12 @@
+      * @since  1.5
+      */
+     public BigDecimal divide(BigDecimal divisor, MathContext mc) {
+-        if (mc.precision == 0)
++        int mcp = mc.precision;
++        if (mcp == 0)
+             return divide(divisor);
+-        BigDecimal lhs = this.inflate();     // left-hand-side
+-        BigDecimal rhs = divisor.inflate();  // right-hand-side
+-        BigDecimal result;                   // work
+ 
+-        long preferredScale = (long)lhs.scale() - rhs.scale();
+-
++        BigDecimal dividend = this;
++        long preferredScale = (long)dividend.scale - divisor.scale;
+         // Now calculate the answer.  We use the existing
+         // divide-and-round method, but as this rounds to scale we have
+         // to normalize the values here to achieve the desired result.
+@@ -1574,54 +1654,43 @@
+         // the right number of digits (except in the case of a result of
+         // 1.000... which can arise when x=y, or when rounding overflows
+         // The 1.000... case will reduce properly to 1.
+-        if (rhs.signum() == 0) {      // x/0
+-            if (lhs.signum() == 0)    // 0/0
++        if (divisor.signum() == 0) {      // x/0
++            if (dividend.signum() == 0)    // 0/0
+                 throw new ArithmeticException("Division undefined");  // NaN
+             throw new ArithmeticException("Division by zero");
+         }
+-        if (lhs.signum() == 0)        // 0/y
+-            return new BigDecimal(BigInteger.ZERO,
+-                                  (int)Math.max(Math.min(preferredScale,
+-                                                         Integer.MAX_VALUE),
+-                                                Integer.MIN_VALUE));
++        if (dividend.signum() == 0)        // 0/y
++            return new BigDecimal(BigInteger.ZERO, 0,
++                                  saturateLong(preferredScale), 1);
+ 
+-        BigDecimal xprime = new BigDecimal(lhs.intVal.abs(), lhs.precision());
+-        BigDecimal yprime = new BigDecimal(rhs.intVal.abs(), rhs.precision());
+-        // xprime and yprime are now both in range 0.1 through 0.999...
+-        if (mc.roundingMode == RoundingMode.CEILING ||
+-            mc.roundingMode == RoundingMode.FLOOR) {
+-            // The floor (round toward negative infinity) and ceil
+-            // (round toward positive infinity) rounding modes are not
+-            // invariant under a sign flip.  If xprime/yprime has a
+-            // different sign than lhs/rhs, the rounding mode must be
+-            // changed.
+-            if ((xprime.signum() != lhs.signum()) ^
+-                (yprime.signum() != rhs.signum())) {
+-                mc = new MathContext(mc.precision,
+-                                     (mc.roundingMode==RoundingMode.CEILING)?
+-                                     RoundingMode.FLOOR:RoundingMode.CEILING);
+-            }
+-        }
++        // Normalize dividend & divisor so that both fall into [0.1, 0.999...]
++        int xscale = dividend.precision();
++        int yscale = divisor.precision();
++        dividend = new BigDecimal(dividend.intVal, dividend.intCompact,
++                                  xscale, xscale);
++        divisor = new BigDecimal(divisor.intVal, divisor.intCompact,
++                                 yscale, yscale);
++        if (dividend.compareMagnitude(divisor) > 0) // satisfy constraint (b)
++            yscale = divisor.scale -= 1;            // [that is, divisor *= 10]
+ 
+-        if (xprime.compareTo(yprime) > 0)    // satisfy constraint (b)
+-          yprime.scale -= 1;                 // [that is, yprime *= 10]
+-        result = xprime.divide(yprime, mc.precision, mc.roundingMode.oldMode);
+-        // correct the scale of the result...
+-        result.scale = checkScale((long)yprime.scale - xprime.scale
+-            - (rhs.scale - lhs.scale) + mc.precision);
+-        // apply the sign
+-        if (lhs.signum() != rhs.signum())
+-            result = result.negate();
++        // In order to find out whether the divide generates the exact result,
++        // we avoid calling the above divide method. 'quotient' holds the
++        // return BigDecimal object whose scale will be set to 'scl'.
++        BigDecimal quotient;
++        int scl = checkScale(preferredScale + yscale - xscale + mcp);
++        if (checkScale((long)mcp + yscale) > xscale)
++            dividend = dividend.setScale(mcp + yscale, ROUND_UNNECESSARY);
++        else
++            divisor = divisor.setScale(checkScale((long)xscale - mcp),
++                                       ROUND_UNNECESSARY);
++        quotient = divideAndRound(dividend.intCompact, dividend.intVal,
++                                  divisor.intCompact, divisor.intVal,
++                                  scl, mc.roundingMode.oldMode,
++                                  checkScale(preferredScale));
+         // doRound, here, only affects 1000000000 case.
+-        result = result.doRound(mc);
++        quotient = doRound(quotient, mc);
+ 
+-        if (result.multiply(divisor).compareTo(this) == 0) {
+-            // Apply preferred scale rules for exact quotients
+-            return result.stripZerosToMatchScale(preferredScale);
+-        }
+-        else {
+-            return result;
+-        }
++        return quotient;
+     }
+ 
+     /**
+@@ -1637,17 +1706,14 @@
+      */
+     public BigDecimal divideToIntegralValue(BigDecimal divisor) {
+         // Calculate preferred scale
+-        int preferredScale = (int)Math.max(Math.min((long)this.scale() - divisor.scale(),
+-                                                    Integer.MAX_VALUE), Integer.MIN_VALUE);
+-        this.inflate();
+-        divisor.inflate();
+-        if (this.abs().compareTo(divisor.abs()) < 0) {
++        int preferredScale = saturateLong((long)this.scale - divisor.scale);
++        if (this.compareMagnitude(divisor) < 0) {
+             // much faster when this << divisor
+             return BigDecimal.valueOf(0, preferredScale);
+         }
+ 
+         if(this.signum() == 0 && divisor.signum() != 0)
+-            return this.setScale(preferredScale);
++            return this.setScale(preferredScale, ROUND_UNNECESSARY);
+ 
+         // Perform a divide with enough digits to round to a correct
+         // integer value; then remove any fractional digits
+@@ -1656,19 +1722,17 @@
+                                       (long)Math.ceil(10.0*divisor.precision()/3.0) +
+                                       Math.abs((long)this.scale() - divisor.scale()) + 2,
+                                       Integer.MAX_VALUE);
+-
+         BigDecimal quotient = this.divide(divisor, new MathContext(maxDigits,
+                                                                    RoundingMode.DOWN));
+         if (quotient.scale > 0) {
+-            quotient = quotient.setScale(0, RoundingMode.DOWN).
+-                stripZerosToMatchScale(preferredScale);
++            quotient = quotient.setScale(0, RoundingMode.DOWN);
++            quotient.stripZerosToMatchScale(preferredScale);
+         }
+ 
+         if (quotient.scale < preferredScale) {
+             // pad with zeros if necessary
+-            quotient = quotient.setScale(preferredScale);
++            quotient = quotient.setScale(preferredScale, ROUND_UNNECESSARY);
+         }
+-
+         return quotient;
+     }
+ 
+@@ -1694,12 +1758,11 @@
+      */
+     public BigDecimal divideToIntegralValue(BigDecimal divisor, MathContext mc) {
+         if (mc.precision == 0 ||                        // exact result
+-            (this.abs().compareTo(divisor.abs()) < 0) ) // zero result
++            (this.compareMagnitude(divisor) < 0) )      // zero result
+             return divideToIntegralValue(divisor);
+ 
+         // Calculate preferred scale
+-        int preferredScale = (int)Math.max(Math.min((long)this.scale() - divisor.scale(),
+-                                                    Integer.MAX_VALUE), Integer.MIN_VALUE);
++        int preferredScale = saturateLong((long)this.scale - divisor.scale);
+ 
+         /*
+          * Perform a normal divide to mc.precision digits.  If the
+@@ -1708,9 +1771,8 @@
+          * digits.  Next, remove any fractional digits from the
+          * quotient and adjust the scale to the preferred value.
+          */
+-        BigDecimal result = this.divide(divisor, new MathContext(mc.precision,
+-                                                                 RoundingMode.DOWN));
+-        int resultScale = result.scale();
++        BigDecimal result = this.
++            divide(divisor, new MathContext(mc.precision, RoundingMode.DOWN));
+ 
+         if (result.scale() < 0) {
+             /*
+@@ -1721,7 +1783,7 @@
+             BigDecimal product = result.multiply(divisor);
+             // If the quotient is the full integer value,
+             // |dividend-product| < |divisor|.
+-            if (this.subtract(product).abs().compareTo(divisor.abs()) >= 0) {
++            if (this.subtract(product).compareMagnitude(divisor) >= 0) {
+                 throw new ArithmeticException("Division impossible");
+             }
+         } else if (result.scale() > 0) {
+@@ -1736,11 +1798,13 @@
+ 
+         int precisionDiff;
+         if ((preferredScale > result.scale()) &&
+-            (precisionDiff = mc.precision - result.precision()) > 0  ) {
++            (precisionDiff = mc.precision - result.precision()) > 0) {
+             return result.setScale(result.scale() +
+                                    Math.min(precisionDiff, preferredScale - result.scale) );
+-        } else
+-            return result.stripZerosToMatchScale(preferredScale);
++        } else {
++            result.stripZerosToMatchScale(preferredScale);
++            return result;
++        }
+     }
+ 
+     /**
+@@ -1949,7 +2013,7 @@
+         int mag = Math.abs(n);               // magnitude of n
+         if (mc.precision > 0) {
+ 
+-            int elength = intLength(mag);    // length of n in digits
++            int elength = longDigitLength(mag); // length of n in digits
+             if (elength > mc.precision)        // X3.274 rule
+                 throw new ArithmeticException("Invalid operation");
+             workmc = new MathContext(mc.precision + elength + 1,
+@@ -1974,7 +2038,7 @@
+         if (n<0)                          // [hence mc.precision>0]
+             acc=ONE.divide(acc, workmc);
+         // round to final precision and strip zeros
+-        return acc.doRound(mc);
++        return doRound(acc, mc);
+     }
+ 
+     /**
+@@ -2068,7 +2132,7 @@
+     public BigDecimal plus(MathContext mc) {
+         if (mc.precision == 0)                 // no rounding please
+             return this;
+-        return this.doRound(mc);
++        return doRound(this, mc);
+     }
+ 
+     /**
+@@ -2109,7 +2173,11 @@
+     public int precision() {
+         int result = precision;
+         if (result == 0) {
+-            result = digitLength();
++            long s = intCompact;
++            if (s != INFLATED)
++                result = longDigitLength(s);
++            else
++                result = bigDigitLength(inflate());
+             precision = result;
+         }
+         return result;
+@@ -2125,7 +2193,7 @@
+      * @since  1.2
+      */
+     public BigInteger unscaledValue() {
+-        return this.inflate().intVal;
++        return this.inflate();
+     }
+ 
+     // Rounding Modes
+@@ -2302,30 +2370,34 @@
+         if (roundingMode < ROUND_UP || roundingMode > ROUND_UNNECESSARY)
+             throw new IllegalArgumentException("Invalid rounding mode");
+ 
+-        if (newScale == this.scale)        // easy case
++        int oldScale = this.scale;
++        if (newScale == oldScale)        // easy case
+             return this;
+         if (this.signum() == 0)            // zero can have any scale
+             return BigDecimal.valueOf(0, newScale);
+-        if (newScale > this.scale) {
+-            // [we can use checkScale to assure multiplier is valid]
+-            int raise = checkScale((long)newScale - this.scale);
+ 
+-            if (intCompact != INFLATED) {
+-                long scaledResult = longTenToThe(intCompact, raise);
+-                if (scaledResult != INFLATED)
+-                    return BigDecimal.valueOf(scaledResult, newScale);
+-                this.inflate();
+-            }
+-
+-            BigDecimal result = new BigDecimal(intVal.multiply(tenToThe(raise)),
+-                                               newScale);
+-            if (this.precision > 0)
+-                result.precision = this.precision + newScale - this.scale;
+-            return result;
++        long rs = this.intCompact;
++        if (newScale > oldScale) {
++            int raise = checkScale((long)newScale - oldScale);
++            BigInteger rb = null;
++            if (rs == INFLATED ||
++                (rs = longMultiplyPowerTen(rs, raise)) == INFLATED)
++                rb = bigMultiplyPowerTen(raise);
++            return new BigDecimal(rb, rs, newScale,
++                                  (precision > 0) ? precision + raise : 0);
++        } else {
++            // newScale < oldScale -- drop some digits
++            // Can't predict the precision due to the effect of rounding.
++            int drop = checkScale((long)oldScale - newScale);
++            if (drop < LONG_TEN_POWERS_TABLE.length)
++                return divideAndRound(rs, this.intVal,
++                                      LONG_TEN_POWERS_TABLE[drop], null,
++                                      newScale, roundingMode, newScale);
++            else
++                return divideAndRound(rs, this.intVal,
++                                      INFLATED, bigTenToThe(drop),
++                                      newScale, roundingMode, newScale);
+         }
+-        // scale < this.scale
+-        // we cannot perfectly predict the precision after rounding
+-        return divide(ONE, newScale, roundingMode);
+     }
+ 
+     /**
+@@ -2388,12 +2460,8 @@
+     public BigDecimal movePointLeft(int n) {
+         // Cannot use movePointRight(-n) in case of n==Integer.MIN_VALUE
+         int newScale = checkScale((long)scale + n);
+-        BigDecimal num;
+-        if (intCompact != INFLATED)
+-            num = BigDecimal.valueOf(intCompact, newScale);
+-        else
+-            num = new BigDecimal(intVal, newScale);
+-        return (num.scale<0 ? num.setScale(0) : num);
++        BigDecimal num = new BigDecimal(intVal, intCompact, newScale, 0);
++        return num.scale < 0 ? num.setScale(0, ROUND_UNNECESSARY) : num;
+     }
+ 
+     /**
+@@ -2414,12 +2482,8 @@
+     public BigDecimal movePointRight(int n) {
+         // Cannot use movePointLeft(-n) in case of n==Integer.MIN_VALUE
+         int newScale = checkScale((long)scale - n);
+-        BigDecimal num;
+-        if (intCompact != INFLATED)
+-            num = BigDecimal.valueOf(intCompact, newScale);
+-        else
+-            num = new BigDecimal(intVal, newScale);
+-        return (num.scale<0 ? num.setScale(0) : num);
++        BigDecimal num = new BigDecimal(intVal, intCompact, newScale, 0);
++        return num.scale < 0 ? num.setScale(0, ROUND_UNNECESSARY) : num;
+     }
+ 
+     /**
+@@ -2433,10 +2497,8 @@
+      * @since 1.5
+      */
+     public BigDecimal scaleByPowerOfTen(int n) {
+-        this.inflate();
+-        BigDecimal num = new BigDecimal(intVal, checkScale((long)scale - n));
+-        num.precision = precision;
+-        return num;
++        return new BigDecimal(intVal, intCompact,
++                              checkScale((long)scale - n), precision);
+     }
+ 
+     /**
+@@ -2454,7 +2516,9 @@
+      */
+     public BigDecimal stripTrailingZeros() {
+         this.inflate();
+-        return (new BigDecimal(intVal, scale)).stripZerosToMatchScale(Long.MIN_VALUE);
++        BigDecimal result = new BigDecimal(intVal, scale);
++        result.stripZerosToMatchScale(Long.MIN_VALUE);
++        return result;
+     }
+ 
+     // Comparison Operations
+@@ -2477,32 +2541,67 @@
+      *          less than, equal to, or greater than {@code val}.
+      */
+     public int compareTo(BigDecimal val) {
+-        if (this.scale == val.scale &&
+-            this.intCompact != INFLATED &&
+-            val.intCompact  != INFLATED)
+-            return longCompareTo(this.intCompact, val.intCompact);
++        // Quick path for equal scale and non-inflated case.
++        if (scale == val.scale) {
++            long xs = intCompact;
++            long ys = val.intCompact;
++            if (xs != INFLATED && ys != INFLATED)
++                return xs != ys ? ((xs > ys) ? 1 : -1) : 0;
++        }
++        int xsign = this.signum();
++        int ysign = val.signum();
++        if (xsign != ysign)
++            return (xsign > ysign) ? 1 : -1;
++        if (xsign == 0)
++            return 0;
++        int cmp = compareMagnitude(val);
++        return (xsign > 0) ? cmp : -cmp;
++    }
+ 
+-        // Optimization: would run fine without the next three lines
+-        int sigDiff = signum() - val.signum();
+-        if (sigDiff != 0)
+-            return (sigDiff > 0 ? 1 : -1);
++    /**
++     * Version of compareTo that ignores sign.
++     */
++    private int compareMagnitude(BigDecimal val) {
++        // Match scales, avoid unnecessary inflation
++        long ys = val.intCompact;
++        long xs = this.intCompact;
++        if (xs == 0)
++            return (ys == 0) ? 0 : -1;
++        if (ys == 0)
++            return 1;
+ 
+-        // If the (adjusted) exponents are different we do not need to
+-        // expensively match scales and compare the significands
+-        int aethis = this.precision() - this.scale;    // [-1]
+-        int aeval  =  val.precision() - val.scale;     // [-1]
+-        if (aethis < aeval)
+-            return -this.signum();
+-        else if (aethis > aeval)
+-            return this.signum();
+-
+-        // Scale and compare intVals
+-        BigDecimal arg[] = {this, val};
+-        matchScale(arg);
+-        if (arg[0].intCompact != INFLATED &&
+-            arg[1].intCompact != INFLATED)
+-            return longCompareTo(arg[0].intCompact, arg[1].intCompact);
+-        return arg[0].inflate().intVal.compareTo(arg[1].inflate().intVal);
++        int sdiff = this.scale - val.scale;
++        if (sdiff != 0) {
++            // Avoid matching scales if the (adjusted) exponents differ
++            int xae = this.precision() - this.scale;   // [-1]
++            int yae = val.precision() - val.scale;     // [-1]
++            if (xae < yae)
++                return -1;
++            if (xae > yae)
++                return 1;
++            BigInteger rb = null;
++            if (sdiff < 0) {
++                if ( (xs == INFLATED ||
++                      (xs = longMultiplyPowerTen(xs, -sdiff)) == INFLATED) &&
++                     ys == INFLATED) {
++                    rb = bigMultiplyPowerTen(-sdiff);
++                    return rb.compareMagnitude(val.intVal);
++                }
++            } else { // sdiff > 0
++                if ( (ys == INFLATED ||
++                      (ys = longMultiplyPowerTen(ys, sdiff)) == INFLATED) &&
++                     xs == INFLATED) {
++                    rb = val.bigMultiplyPowerTen(sdiff);
++                    return this.intVal.compareMagnitude(rb);
++                }
++            }
++        }
++        if (xs != INFLATED)
++            return (ys != INFLATED) ? longCompareMagnitude(xs, ys) : -1;
++        else if (ys != INFLATED)
++            return 1;
++        else
++            return this.intVal.compareMagnitude(val.intVal);
+     }
+ 
+     /**
+@@ -2521,15 +2620,25 @@
+      * @see    #compareTo(java.math.BigDecimal)
+      * @see    #hashCode
+      */
++    @Override
+     public boolean equals(Object x) {
+         if (!(x instanceof BigDecimal))
+             return false;
+         BigDecimal xDec = (BigDecimal) x;
++        if (x == this)
++            return true;
+         if (scale != xDec.scale)
+             return false;
+-        if (this.intCompact != INFLATED && xDec.intCompact != INFLATED)
+-            return this.intCompact == xDec.intCompact;
+-        return this.inflate().intVal.equals(xDec.inflate().intVal);
++        long s = this.intCompact;
++        long xs = xDec.intCompact;
++        if (s != INFLATED) {
++            if (xs == INFLATED)
++                xs = compactValFor(xDec.intVal);
++            return xs == s;
++        } else if (xs != INFLATED)
++            return xs == compactValFor(this.intVal);
++
++        return this.inflate().equals(xDec.inflate());
+     }
+ 
+     /**
+@@ -2572,11 +2681,12 @@
+      * @return hash code for this {@code BigDecimal}.
+      * @see #equals(Object)
+      */
++    @Override
+     public int hashCode() {
+         if (intCompact != INFLATED) {
+-            long val2 = (intCompact < 0)?-intCompact:intCompact;
++            long val2 = (intCompact < 0)? -intCompact : intCompact;
+             int temp = (int)( ((int)(val2 >>> 32)) * 31  +
+-                              (val2 & 0xffffffffL));
++                              (val2 & LONG_MASK));
+             return 31*((intCompact < 0) ?-temp:temp) + scale;
+         } else
+             return 31*intVal.hashCode() + scale;
+@@ -2683,10 +2793,12 @@
+      * @see    Character#forDigit
+      * @see    #BigDecimal(java.lang.String)
+      */
++    @Override
+     public String toString() {
+-        if (stringCache == null)
+-            stringCache = layoutChars(true);
+-        return stringCache;
++        String sc = stringCache;
++        if (sc == null)
++            stringCache = sc = layoutChars(true);
++        return sc;
+     }
+ 
+     /**
+@@ -2802,7 +2914,7 @@
+      */
+     public BigInteger toBigInteger() {
+         // force to an integer, quietly
+-        return this.setScale(0, ROUND_DOWN).inflate().intVal;
++        return this.setScale(0, ROUND_DOWN).inflate();
+     }
+ 
+     /**
+@@ -2817,7 +2929,7 @@
+      */
+     public BigInteger toBigIntegerExact() {
+         // round to an integer, with Exception if decimal part non-0
+-        return this.setScale(0, ROUND_UNNECESSARY).inflate().intVal;
++        return this.setScale(0, ROUND_UNNECESSARY).inflate();
+     }
+ 
+     /**
+@@ -2868,10 +2980,10 @@
+         if ((this.precision() - this.scale) <= 0)
+             throw new ArithmeticException("Rounding necessary");
+         // round to an integer, with Exception if decimal part non-0
+-        BigDecimal num = this.setScale(0, ROUND_UNNECESSARY).inflate();
++        BigDecimal num = this.setScale(0, ROUND_UNNECESSARY);
+         if (num.precision() >= 19) // need to check carefully
+             LongOverflow.check(num);
+-        return num.intVal.longValue();
++        return num.inflate().longValue();
+     }
+ 
+     private static class LongOverflow {
+@@ -2882,6 +2994,7 @@
+         private static final BigInteger LONGMAX = BigInteger.valueOf(Long.MAX_VALUE);
+ 
+         public static void check(BigDecimal num) {
++            num.inflate();
+             if ((num.intVal.compareTo(LONGMIN) < 0) ||
+                 (num.intVal.compareTo(LONGMAX) > 0))
+                 throw new java.lang.ArithmeticException("Overflow");
+@@ -3037,7 +3150,105 @@
+         return BigDecimal.valueOf(1, this.scale());
+     }
+ 
+-    // Private "Helper" Methods
++
++    // Private class to build a string representation for BigDecimal object.
++    // "StringBuilderHelper" is constructed as a thread local variable so it is
++    // thread safe. The StringBuilder field acts as a buffer to hold the temporary
++    // representation of BigDecimal. The cmpCharArray holds all the characters for
++    // the compact representation of BigDecimal (except for '-' sign' if it is
++    // negative) if its intCompact field is not INFLATED. It is shared by all
++    // calls to toString() and its variants in that particular thread.
++    static class StringBuilderHelper {
++        final StringBuilder sb;    // Placeholder for BigDecimal string
++        final char[] cmpCharArray; // character array to place the intCompact
++
++        StringBuilderHelper() {
++            sb = new StringBuilder();
++            // All non negative longs can be made to fit into 19 character array.
++            cmpCharArray = new char[19];
++        }
++
++        // Accessors.
++        StringBuilder getStringBuilder() {
++            sb.setLength(0);
++            return sb;
++        }
++
++        char[] getCompactCharArray() {
++            return cmpCharArray;
++        }
++
++        /**
++         * Places characters representing the intCompact in {@code long} into
++         * cmpCharArray and returns the offset to the array where the
++         * representation starts.
++         *
++         * @param intCompact the number to put into the cmpCharArray.
++         * @return offset to the array where the representation starts.
++         * Note: intCompact must be greater or equal to zero.
++         */
++        int putIntCompact(long intCompact) {
++            assert intCompact >= 0;
++
++            long q;
++            int r;
++            // since we start from the least significant digit, charPos points to
++            // the last character in cmpCharArray.
++            int charPos = cmpCharArray.length;
++
++            // Get 2 digits/iteration using longs until quotient fits into an int
++            while (intCompact > Integer.MAX_VALUE) {
++                q = intCompact / 100;
++                r = (int)(intCompact - q * 100);
++                intCompact = q;
++                cmpCharArray[--charPos] = DIGIT_ONES[r];
++                cmpCharArray[--charPos] = DIGIT_TENS[r];
++            }
++
++            // Get 2 digits/iteration using ints when i2 >= 100
++            int q2;
++            int i2 = (int)intCompact;
++            while (i2 >= 100) {
++                q2 = i2 / 100;
++                r  = i2 - q2 * 100;
++                i2 = q2;
++                cmpCharArray[--charPos] = DIGIT_ONES[r];
++                cmpCharArray[--charPos] = DIGIT_TENS[r];
++            }
++
++            cmpCharArray[--charPos] = DIGIT_ONES[i2];
++            if (i2 >= 10)
++                cmpCharArray[--charPos] = DIGIT_TENS[i2];
++
++            return charPos;
++        }
++
++        final static char[] DIGIT_TENS = {
++            '0', '0', '0', '0', '0', '0', '0', '0', '0', '0',
++            '1', '1', '1', '1', '1', '1', '1', '1', '1', '1',
++            '2', '2', '2', '2', '2', '2', '2', '2', '2', '2',
++            '3', '3', '3', '3', '3', '3', '3', '3', '3', '3',
++            '4', '4', '4', '4', '4', '4', '4', '4', '4', '4',
++            '5', '5', '5', '5', '5', '5', '5', '5', '5', '5',
++            '6', '6', '6', '6', '6', '6', '6', '6', '6', '6',
++            '7', '7', '7', '7', '7', '7', '7', '7', '7', '7',
++            '8', '8', '8', '8', '8', '8', '8', '8', '8', '8',
++            '9', '9', '9', '9', '9', '9', '9', '9', '9', '9',
++        };
++
++        final static char[] DIGIT_ONES = {
++            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
++            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
++            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
++            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
++            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
++            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
++            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
++            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
++            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
++            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
++        };
++    }
+ 
+     /**
+      * Lay out this {@code BigDecimal} into a {@code char[]} array.
+@@ -3054,41 +3265,47 @@
+                 Long.toString(intCompact):
+                 intVal.toString();
+ 
++        StringBuilderHelper sbHelper = threadLocalStringBuilderHelper.get();
++        char[] coeff;
++        int offset;  // offset is the starting index for coeff array
+         // Get the significand as an absolute value
+-        char coeff[];
+-        if (intCompact != INFLATED)
+-            coeff = Long.toString(Math.abs(intCompact)).toCharArray();
+-        else
+-            coeff = intVal.abs().toString().toCharArray();
++        if (intCompact != INFLATED) {
++            offset = sbHelper.putIntCompact(Math.abs(intCompact));
++            coeff  = sbHelper.getCompactCharArray();
++        } else {
++            offset = 0;
++            coeff  = intVal.abs().toString().toCharArray();
++        }
+ 
+         // Construct a buffer, with sufficient capacity for all cases.
+         // If E-notation is needed, length will be: +1 if negative, +1
+         // if '.' needed, +2 for "E+", + up to 10 for adjusted exponent.
+         // Otherwise it could have +1 if negative, plus leading "0.00000"
+-        StringBuilder buf=new StringBuilder(coeff.length+14);
++        StringBuilder buf = sbHelper.getStringBuilder();
+         if (signum() < 0)             // prefix '-' if negative
+             buf.append('-');
+-        long adjusted = -(long)scale + (coeff.length-1);
++        int coeffLen = coeff.length - offset;
++        long adjusted = -(long)scale + (coeffLen -1);
+         if ((scale >= 0) && (adjusted >= -6)) { // plain number
+-            int pad = scale - coeff.length;  // count of padding zeros
+-            if (pad >= 0) {                  // 0.xxx form
++            int pad = scale - coeffLen;         // count of padding zeros
++            if (pad >= 0) {                     // 0.xxx form
+                 buf.append('0');
+                 buf.append('.');
+                 for (; pad>0; pad--) {
+                     buf.append('0');
+                 }
+-                buf.append(coeff);
++                buf.append(coeff, offset, coeffLen);
+             } else {                         // xx.xx form
+-                buf.append(coeff, 0, -pad);
++                buf.append(coeff, offset, -pad);
+                 buf.append('.');
+-                buf.append(coeff, -pad, scale);
++                buf.append(coeff, -pad + offset, scale);
+             }
+         } else { // E-notation is needed
+             if (sci) {                       // Scientific notation
+-                buf.append(coeff[0]);        // first character
+-                if (coeff.length > 1) {      // more to come
++                buf.append(coeff[offset]);   // first character
++                if (coeffLen > 1) {          // more to come
+                     buf.append('.');
+-                    buf.append(coeff, 1, coeff.length-1);
++                    buf.append(coeff, offset + 1, coeffLen - 1);
+                 }
+             } else {                         // Engineering notation
+                 int sig = (int)(adjusted % 3);
+@@ -3112,15 +3329,15 @@
+                     default:
+                         throw new AssertionError("Unexpected sig value " + sig);
+                     }
+-                } else if (sig >= coeff.length) {   // significand all in integer
+-                    buf.append(coeff, 0, coeff.length);
++                } else if (sig >= coeffLen) {   // significand all in integer
++                    buf.append(coeff, offset, coeffLen);
+                     // may need some zeros, too
+-                    for (int i = sig - coeff.length; i > 0; i--)
++                    for (int i = sig - coeffLen; i > 0; i--)
+                         buf.append('0');
+                 } else {                     // xx.xxE form
+-                    buf.append(coeff, 0, sig);
++                    buf.append(coeff, offset, sig);
+                     buf.append('.');
+-                    buf.append(coeff, sig, coeff.length-sig);
++                    buf.append(coeff, offset + sig, coeffLen - sig);
+                 }
+             }
+             if (adjusted != 0) {             // [!sci could have made 0]
+@@ -3139,9 +3356,17 @@
+      * @param  n the power of ten to be returned (>=0)
+      * @return a {@code BigInteger} with the value (10<sup>n</sup>)
+      */
+-    private static BigInteger tenToThe(int n) {
+-        if (n < TENPOWERS.length)     // use value from constant array
+-            return TENPOWERS[n];
++    private static BigInteger bigTenToThe(int n) {
++        if (n < 0)
++            return BigInteger.ZERO;
++
++        if (n < BIG_TEN_POWERS_TABLE_MAX) {
++            BigInteger[] pows = BIG_TEN_POWERS_TABLE;
++            if (n < pows.length)
++                return pows[n];
++            else
++                return expandBigIntegerTenPowers(n);
++        }
+         // BigInteger.pow is slow, so make 10**n by constructing a
+         // BigInteger from a character string (still not very fast)
+         char tenpow[] = new char[n + 1];
+@@ -3150,58 +3375,145 @@
+             tenpow[i] = '0';
+         return new BigInteger(tenpow);
+     }
+-    private static BigInteger TENPOWERS[] = {BigInteger.ONE,
++
++    /**
++     * Expand the BIG_TEN_POWERS_TABLE array to contain at least 10**n.
++     *
++     * @param n the power of ten to be returned (>=0)
++     * @return a {@code BigDecimal} with the value (10<sup>n</sup>) and
++     *         in the meantime, the BIG_TEN_POWERS_TABLE array gets
++     *         expanded to the size greater than n.
++     */
++    private static BigInteger expandBigIntegerTenPowers(int n) {
++        synchronized(BigDecimal.class) {
++            BigInteger[] pows = BIG_TEN_POWERS_TABLE;
++            int curLen = pows.length;
++            // The following comparison and the above synchronized statement is
++            // to prevent multiple threads from expanding the same array.
++            if (curLen <= n) {
++                int newLen = curLen << 1;
++                while (newLen <= n)
++                    newLen <<= 1;
++                pows = Arrays.copyOf(pows, newLen);
++                for (int i = curLen; i < newLen; i++)
++                    pows[i] = pows[i - 1].multiply(BigInteger.TEN);
++                // Based on the following facts:
++                // 1. pows is a private local varible;
++                // 2. the following store is a volatile store.
++                // the newly created array elements can be safely published.
++                BIG_TEN_POWERS_TABLE = pows;
++            }
++            return pows[n];
++        }
++    }
++
++    private static final long[] LONG_TEN_POWERS_TABLE = {
++        1,                     // 0 / 10^0
++        10,                    // 1 / 10^1
++        100,                   // 2 / 10^2
++        1000,                  // 3 / 10^3
++        10000,                 // 4 / 10^4
++        100000,                // 5 / 10^5
++        1000000,               // 6 / 10^6
++        10000000,              // 7 / 10^7
++        100000000,             // 8 / 10^8
++        1000000000,            // 9 / 10^9
++        10000000000L,          // 10 / 10^10
++        100000000000L,         // 11 / 10^11
++        1000000000000L,        // 12 / 10^12
++        10000000000000L,       // 13 / 10^13
++        100000000000000L,      // 14 / 10^14
++        1000000000000000L,     // 15 / 10^15
++        10000000000000000L,    // 16 / 10^16
++        100000000000000000L,   // 17 / 10^17
++        1000000000000000000L   // 18 / 10^18
++    };
++
++    private static volatile BigInteger BIG_TEN_POWERS_TABLE[] = {BigInteger.ONE,
+         BigInteger.valueOf(10),       BigInteger.valueOf(100),
+         BigInteger.valueOf(1000),     BigInteger.valueOf(10000),
+         BigInteger.valueOf(100000),   BigInteger.valueOf(1000000),
+         BigInteger.valueOf(10000000), BigInteger.valueOf(100000000),
+-        BigInteger.valueOf(1000000000)};
++        BigInteger.valueOf(1000000000),
++        BigInteger.valueOf(10000000000L),
++        BigInteger.valueOf(100000000000L),
++        BigInteger.valueOf(1000000000000L),
++        BigInteger.valueOf(10000000000000L),
++        BigInteger.valueOf(100000000000000L),
++        BigInteger.valueOf(1000000000000000L),
++        BigInteger.valueOf(10000000000000000L),
++        BigInteger.valueOf(100000000000000000L),
++        BigInteger.valueOf(1000000000000000000L)
++    };
++
++    private static final int BIG_TEN_POWERS_TABLE_INITLEN =
++        BIG_TEN_POWERS_TABLE.length;
++    private static final int BIG_TEN_POWERS_TABLE_MAX =
++        16 * BIG_TEN_POWERS_TABLE_INITLEN;
++
++    private static final long THRESHOLDS_TABLE[] = {
++        Long.MAX_VALUE,                     // 0
++        Long.MAX_VALUE/10L,                 // 1
++        Long.MAX_VALUE/100L,                // 2
++        Long.MAX_VALUE/1000L,               // 3
++        Long.MAX_VALUE/10000L,              // 4
++        Long.MAX_VALUE/100000L,             // 5
++        Long.MAX_VALUE/1000000L,            // 6
++        Long.MAX_VALUE/10000000L,           // 7
++        Long.MAX_VALUE/100000000L,          // 8
++        Long.MAX_VALUE/1000000000L,         // 9
++        Long.MAX_VALUE/10000000000L,        // 10
++        Long.MAX_VALUE/100000000000L,       // 11
++        Long.MAX_VALUE/1000000000000L,      // 12
++        Long.MAX_VALUE/10000000000000L,     // 13
++        Long.MAX_VALUE/100000000000000L,    // 14
++        Long.MAX_VALUE/1000000000000000L,   // 15
++        Long.MAX_VALUE/10000000000000000L,  // 16
++        Long.MAX_VALUE/100000000000000000L, // 17
++        Long.MAX_VALUE/1000000000000000000L // 18
++    };
+ 
+     /**
+      * Compute val * 10 ^ n; return this product if it is
+      * representable as a long, INFLATED otherwise.
+      */
+-    private static long longTenToThe(long val, int n) {
+-        // System.err.print("\tval " + val + "\t power " + n + "\tresult ");
+-        if (n >= 0 && n < thresholds.length) {
+-            if (Math.abs(val) <= thresholds[n][0] ) {
+-                // System.err.println(val * thresholds[n][1]);
+-                return val * thresholds[n][1];
+-            }
++    private static long longMultiplyPowerTen(long val, int n) {
++        if (val == 0 || n <= 0)
++            return val;
++        long[] tab = LONG_TEN_POWERS_TABLE;
++        long[] bounds = THRESHOLDS_TABLE;
++        if (n < tab.length && n < bounds.length) {
++            long tenpower = tab[n];
++            if (val == 1)
++                return tenpower;
++            if (Math.abs(val) <= bounds[n])
++                return val * tenpower;
+         }
+-        // System.err.println(INFLATED);
+         return INFLATED;
+     }
+ 
+-    private static long thresholds[][] = {
+-        {Long.MAX_VALUE,                        1L},            // 0
+-        {Long.MAX_VALUE/10L,                    10L},           // 1
+-        {Long.MAX_VALUE/100L,                   100L},          // 2
+-        {Long.MAX_VALUE/1000L,                  1000L},         // 3
+-        {Long.MAX_VALUE/10000L,                 10000L},        // 4
+-        {Long.MAX_VALUE/100000L,                100000L},       // 5
+-        {Long.MAX_VALUE/1000000L,               1000000L},      // 6
+-        {Long.MAX_VALUE/10000000L,              10000000L},     // 7
+-        {Long.MAX_VALUE/100000000L,             100000000L},    // 8
+-        {Long.MAX_VALUE/1000000000L,            1000000000L},   // 9
+-        {Long.MAX_VALUE/10000000000L,           10000000000L},  // 10
+-        {Long.MAX_VALUE/100000000000L,          100000000000L}, // 11
+-        {Long.MAX_VALUE/1000000000000L,         1000000000000L},// 12
+-        {Long.MAX_VALUE/100000000000000L,       10000000000000L},// 13
+-    };
++    /**
++     * Compute this * 10 ^ n.
++     * Needed mainly to allow special casing to trap zero value
++     */
++    private BigInteger bigMultiplyPowerTen(int n) {
++        if (n <= 0)
++            return this.inflate();
+ 
+-    private static boolean compactLong(long val) {
+-        return (val != Long.MIN_VALUE);
++        if (intCompact != INFLATED)
++            return bigTenToThe(n).multiply(intCompact);
++        else
++            return intVal.multiply(bigTenToThe(n));
+     }
+ 
+     /**
+      * Assign appropriate BigInteger to intVal field if intVal is
+      * null, i.e. the compact representation is in use.
+      */
+-    private BigDecimal inflate() {
++    private BigInteger inflate() {
+         if (intVal == null)
+             intVal = BigInteger.valueOf(intCompact);
+-        return this;
++        return intVal;
+     }
+ 
+     /**
+@@ -3218,10 +3530,13 @@
+      *         {@code BigDecimal}s to be aligned.
+      */
+     private static void matchScale(BigDecimal[] val) {
+-        if (val[0].scale < val[1].scale)
+-            val[0] = val[0].setScale(val[1].scale);
+-        else if (val[1].scale < val[0].scale)
+-            val[1] = val[1].setScale(val[0].scale);
++        if (val[0].scale == val[1].scale) {
++            return;
++        } else if (val[0].scale < val[1].scale) {
++            val[0] = val[0].setScale(val[1].scale, ROUND_UNNECESSARY);
++        } else if (val[1].scale < val[0].scale) {
++            val[1] = val[1].setScale(val[0].scale, ROUND_UNNECESSARY);
++        }
+     }
+ 
+     /**
+@@ -3240,9 +3555,7 @@
+             throw new java.io.StreamCorruptedException(message);
+         // [all values of scale are now allowed]
+         }
+-        // Set intCompact to uninitialized value; could also see if the
+-        // intVal was small enough to fit as a compact value.
+-        intCompact = INFLATED;
++        intCompact = compactValFor(intVal);
+     }
+ 
+    /**
+@@ -3259,83 +3572,65 @@
+        s.defaultWriteObject();
+    }
+ 
++
+     /**
+-     * Returns the length of this {@code BigDecimal}, in decimal digits.
++     * Returns the length of the absolute value of a {@code long}, in decimal
++     * digits.
+      *
+-     * Notes:
+-     *<ul>
+-     * <li> This is performance-critical; most operations where a
+-     *      context is supplied will need at least one call to this
+-     *      method.
++     * @param x the {@code long}
++     * @return the length of the unscaled value, in deciaml digits.
++     */
++    private static int longDigitLength(long x) {
++        /*
++         * As described in "Bit Twiddling Hacks" by Sean Anderson,
++         * (http://graphics.stanford.edu/~seander/bithacks.html)
++         * integer log 10 of x is within 1 of
++         * (1233/4096)* (1 + integer log 2 of x).
++         * The fraction 1233/4096 approximates log10(2). So we first
++         * do a version of log2 (a variant of Long class with
++         * pre-checks and opposite directionality) and then scale and
++         * check against powers table. This is a little simpler in
++         * present context than the version in Hacker's Delight sec
++         * 11-4.  Adding one to bit length allows comparing downward
++         * from the LONG_TEN_POWERS_TABLE that we need anyway.
++         */
++        assert x != INFLATED;
++        if (x < 0)
++            x = -x;
++        if (x < 10) // must screen for 0, might as well 10
++            return 1;
++        int n = 64; // not 63, to avoid needing to add 1 later
++        int y = (int)(x >>> 32);
++        if (y == 0) { n -= 32; y = (int)x; }
++        if (y >>> 16 == 0) { n -= 16; y <<= 16; }
++        if (y >>> 24 == 0) { n -=  8; y <<=  8; }
++        if (y >>> 28 == 0) { n -=  4; y <<=  4; }
++        if (y >>> 30 == 0) { n -=  2; y <<=  2; }
++        int r = (((y >>> 31) + n) * 1233) >>> 12;
++        long[] tab = LONG_TEN_POWERS_TABLE;
++        // if r >= length, must have max possible digits for long
++        return (r >= tab.length || x < tab[r])? r : r+1;
++    }
++
++    /**
++     * Returns the length of the absolute value of a BigInteger, in
++     * decimal digits.
+      *
+-     * <li> This should be a method on BigInteger; the call to this
+-     *      method in precision() can then be replaced with the
+-     *      term: intVal.digitLength().  It could also be called
+-     *      precision() in BigInteger.
+-     *
+-     *      Better still -- the precision lookaside could be moved to
+-     *      BigInteger, too.
+-     *
+-     * <li> This could/should use MutableBigIntegers directly for the
+-     *      reduction loop.
+-     *<ul>
++     * @param b the BigInteger
+      * @return the length of the unscaled value, in decimal digits
+      */
+-    private int digitLength() {
+-        if (intCompact != INFLATED && Math.abs(intCompact) <= Integer.MAX_VALUE)
+-            return intLength(Math.abs((int)intCompact));
+-        if (signum() == 0)       // 0 is one decimal digit
++    private static int bigDigitLength(BigInteger b) {
++        /*
++         * Same idea as the long version, but we need a better
++         * approximation of log10(2). Using 646456993/2^31
++         * is accurate up to max possible reported bitLength.
++         */
++        if (b.signum == 0)
+             return 1;
+-        this.inflate();
+-        // we have a nonzero magnitude
+-        BigInteger work = intVal;
+-        int digits = 0;                 // counter
+-        for (;work.mag.length>1;) {
+-            // here when more than one integer in the magnitude; divide
+-            // by a billion (reduce by 9 digits) and try again
+-            work = work.divide(TENPOWERS[9]);
+-            digits += 9;
+-            if (work.signum() == 0)     // the division was exact
+-                return digits;          // (a power of a billion)
+-        }
+-        // down to a simple nonzero integer
+-        digits += intLength(work.mag[0]);
+-        // System.out.println("digitLength... "+this+"  ->  "+digits);
+-        return digits;
++        int r = (int)((((long)b.bitLength() + 1) * 646456993) >>> 31);
++        return b.compareMagnitude(bigTenToThe(r)) < 0? r : r+1;
+     }
+ 
+-    private static int[] ilogTable = {
+-        0,
+-        9,
+-        99,
+-        999,
+-        9999,
+-        99999,
+-        999999,
+-        9999999,
+-        99999999,
+-        999999999,
+-        Integer.MAX_VALUE};
+-
+-    /**
+-     * Returns the length of an unsigned {@code int}, in decimal digits.
+-     * @param i the {@code int} (treated as unsigned)
+-     * @return the length of the unscaled value, in decimal digits
+-     */
+-    private int intLength(int x) {
+-        int digits;
+-        if (x < 0) {            // 'negative' is 10 digits unsigned
+-            return  10;
+-        } else {                // positive integer
+-            if (x <= 9)
+-                return 1;
+-            // "Hacker's Delight"  section 11-4
+-            for(int i = -1; ; i++) {
+-                if (x <= ilogTable[i+1])
+-                    return i +1;
+-            }
+-        }
+-    }
+ 
+     /**
+      * Remove insignificant trailing zeros from this
+@@ -3352,10 +3647,9 @@
+      * to be closed to the preferred scale.
+      */
+     private BigDecimal stripZerosToMatchScale(long preferredScale) {
+-        boolean compact = (intCompact != INFLATED);
+         this.inflate();
+         BigInteger qr[];                // quotient-remainder pair
+-        while ( intVal.abs().compareTo(BigInteger.TEN) >= 0 &&
++        while ( intVal.compareMagnitude(BigInteger.TEN) >= 0 &&
+                 scale > preferredScale) {
+             if (intVal.testBit(0))
+                 break;                  // odd number cannot end in 0
+@@ -3367,17 +3661,16 @@
+             if (precision > 0)          // adjust precision if known
+               precision--;
+         }
+-        if (compact)
+-            intCompact = intVal.longValue();
++        if (intVal != null)
++            intCompact = compactValFor(intVal);
+         return this;
+     }
+ 
+     /**
+      * Check a scale for Underflow or Overflow.  If this BigDecimal is
+-     * uninitialized or initialized and nonzero, throw an exception if
+-     * the scale is out of range.  If this is zero, saturate the scale
+-     * to the extreme value of the right sign if the scale is out of
+-     * range.
++     * nonzero, throw an exception if the scale is outof range. If this
++     * is zero, saturate the scale to the extreme value of the right
++     * sign if the scale is out of range.
+      *
+      * @param val The new scale.
+      * @throws ArithmeticException (overflow or underflow) if the new
+@@ -3385,19 +3678,15 @@
+      * @return validated scale as an int.
+      */
+     private int checkScale(long val) {
+-        if ((int)val != val) {
+-            if ((this.intCompact != INFLATED && this.intCompact != 0) ||
+-                (this.intVal   != null     && this.signum() != 0) ||
+-                (this.intVal == null && this.intCompact == INFLATED) ) {
+-                if (val > Integer.MAX_VALUE)
+-                    throw new ArithmeticException("Underflow");
+-                if (val < Integer.MIN_VALUE)
+-                    throw new ArithmeticException("Overflow");
+-            } else {
+-                return (val > Integer.MAX_VALUE)?Integer.MAX_VALUE:Integer.MIN_VALUE;
+-            }
++        int asInt = (int)val;
++        if (asInt != val) {
++            asInt = val>Integer.MAX_VALUE ? Integer.MAX_VALUE : Integer.MIN_VALUE;
++            BigInteger b;
++            if (intCompact != 0 &&
++                ((b = intVal) == null || b.signum() != 0))
++                throw new ArithmeticException(asInt>0 ? "Underflow":"Overflow");
+         }
+-        return (int)val;
++        return asInt;
+     }
+ 
+     /**
+@@ -3410,7 +3699,7 @@
+      *         rounding mode is {@code UNNECESSARY}.
+      */
+     private BigDecimal roundOp(MathContext mc) {
+-        BigDecimal rounded = doRound(mc);
++        BigDecimal rounded = doRound(this, mc);
+         return rounded;
+     }
+ 
+@@ -3426,7 +3715,7 @@
+      *         {@code BigDecimal} operation would require rounding.
+      */
+     private void roundThis(MathContext mc) {
+-        BigDecimal rounded = doRound(mc);
++        BigDecimal rounded = doRound(this, mc);
+         if (rounded == this)                 // wasn't rounded
+             return;
+         this.intVal     = rounded.intVal;
+@@ -3448,56 +3737,56 @@
+      *         {@code RoundingMode.UNNECESSARY} and the
+      *         result is inexact.
+      */
+-    private BigDecimal doRound(MathContext mc) {
+-        this.inflate();
+-        if (precision == 0) {
+-            if (mc.roundingMax != null
+-                && intVal.compareTo(mc.roundingMax) < 0
+-                && intVal.compareTo(mc.roundingMin) > 0)
+-                return this; // no rounding needed
+-            precision();                     // find it
++    private static BigDecimal doRound(BigDecimal d, MathContext mc) {
++        int mcp = mc.precision;
++        int drop;
++        // This might (rarely) iterate to cover the 999=>1000 case
++        while ((drop = d.precision() - mcp) > 0) {
++            int newScale = d.checkScale((long)d.scale - drop);
++            int mode = mc.roundingMode.oldMode;
++            if (drop < LONG_TEN_POWERS_TABLE.length)
++                d = divideAndRound(d.intCompact, d.intVal,
++                                   LONG_TEN_POWERS_TABLE[drop], null,
++                                   newScale, mode, newScale);
++            else
++                d = divideAndRound(d.intCompact, d.intVal,
++                                   INFLATED, bigTenToThe(drop),
++                                   newScale, mode, newScale);
+         }
+-        int drop = precision - mc.precision;   // digits to discard
+-        if (drop <= 0)                       // we fit
+-            return this;
+-        BigDecimal rounded = dropDigits(mc, drop);
+-        // we need to double-check, in case of the 999=>1000 case
+-        return rounded.doRound(mc);
++        return d;
+     }
+ 
+     /**
+-     * Removes digits from the significand of a {@code BigDecimal},
+-     * rounding according to the MathContext settings.  Does not
+-     * change {@code this}; a new {@code BigDecimal} is always
+-     * created and returned.
+-     *
+-     * <p>Actual rounding is carried out, as before, by the divide
+-     * method, as this minimized code changes.  It might be more
+-     * efficient in most cases to move rounding to here, so we can do
+-     * a round-to-length rather than round-to-scale.
+-     *
+-     * @param mc the context to use.
+-     * @param drop the number of digits to drop, must be {@literal >} 0
+-     * @return a {@code BigDecimal} rounded according to the MathContext
+-     *         settings.  May return {@code this}, if no rounding needed.
+-     * @throws ArithmeticException if the rounding mode is
+-     *         {@code RoundingMode.UNNECESSARY} and the
+-     *         result is inexact.
++     * Returns the compact value for given {@code BigInteger}, or
++     * INFLATED if too big. Relies on internal representation of
++     * {@code BigInteger}.
+      */
+-    private BigDecimal dropDigits(MathContext mc, int drop) {
+-        // here if we need to round; make the divisor = 10**drop)
+-        // [calculating the BigInteger here saves setScale later]
+-        BigDecimal divisor = new BigDecimal(tenToThe(drop), 0);
++    private static long compactValFor(BigInteger b) {
++        int[] m = b.mag;
++        int len = m.length;
++        if (len == 0)
++            return 0;
++        int d = m[0];
++        if (len > 2 || (len == 2 && d < 0))
++            return INFLATED;
+ 
+-        // divide to same scale to force round to length
+-        BigDecimal rounded = this.divide(divisor, scale,
+-                                         mc.roundingMode.oldMode);
+-        rounded.scale = checkScale((long)rounded.scale - drop ); // adjust the scale
+-        return rounded;
++        long u = (len == 2)?
++            (((long) m[1] & LONG_MASK) + (((long)d) << 32)) :
++            (((long)d)   & LONG_MASK);
++        return (b.signum < 0)? -u : u;
+     }
+ 
+-    private static int longCompareTo(long x, long y) {
+-        return (x < y) ? -1 : (x == y) ? 0 : 1;
++    private static int longCompareMagnitude(long x, long y) {
++        if (x < 0)
++            x = -x;
++        if (y < 0)
++            y = -y;
++        return (x < y) ? -1 : ((x == y) ? 0 : 1);
++    }
++
++    private static int saturateLong(long s) {
++        int i = (int)s;
++        return (s == i) ? i : (s < 0 ? Integer.MIN_VALUE : Integer.MAX_VALUE);
+     }
+ 
+     /*
+@@ -3527,21 +3816,21 @@
+      *
+      * <li>If precision is nonzero, it must have the right value.
+      * </ul>
++     *
++     * Note: Since this is an audit method, we are not supposed to change the
++     * state of this BigDecimal object.
+      */
+     private BigDecimal audit() {
+-        // Check precision
+-        if (precision > 0) {
+-            if (precision != digitLength()) {
+-                print("audit", this);
+-                throw new AssertionError("precision mismatch");
+-            }
+-        }
+-
+         if (intCompact == INFLATED) {
+             if (intVal == null) {
+                 print("audit", this);
+                 throw new AssertionError("null intVal");
+             }
++            // Check precision
++            if (precision > 0 && precision != bigDigitLength(intVal)) {
++                print("audit", this);
++                throw new AssertionError("precision mismatch");
++            }
+         } else {
+             if (intVal != null) {
+                 long val = intVal.longValue();
+@@ -3551,6 +3840,11 @@
+                                              intCompact + "\t intVal=" + val);
+                 }
+             }
++            // Check precision
++            if (precision > 0 && precision != longDigitLength(intCompact)) {
++                print("audit", this);
++                throw new AssertionError("precision mismatch");
++            }
+         }
+         return this;
+     }
+diff -r 2b1a7d4b9ac6 -r cadc64fc2282 src/share/classes/java/math/BigInteger.java
+--- openjdk.orig/jdk/src/share/classes/java/math/BigInteger.java	Fri Jun 25 11:53:15 2010 -0700
++++ openjdk/jdk/src/share/classes/java/math/BigInteger.java	Wed Nov 03 12:43:51 2010 +0000
+@@ -105,7 +105,7 @@
+      *
+      * @serial
+      */
+-    int signum;
++    final int signum;
+ 
+     /**
+      * The magnitude of this BigInteger, in <i>big-endian</i> order: the
+@@ -116,61 +116,62 @@
+      * value.  Note that this implies that the BigInteger zero has a
+      * zero-length mag array.
+      */
+-    int[] mag;
++    final int[] mag;
+ 
+     // These "redundant fields" are initialized with recognizable nonsense
+     // values, and cached the first time they are needed (or never, if they
+     // aren't needed).
+ 
+-    /**
+-     * The bitCount of this BigInteger, as returned by bitCount(), or -1
+-     * (either value is acceptable).
++     /**
++     * One plus the bitCount of this BigInteger. Zeros means unitialized.
+      *
+      * @serial
+      * @see #bitCount
++     * @deprecated Deprecated since logical value is offset from stored
++     * value and correction factor is applied in accessor method.
+      */
+-    private int bitCount =  -1;
++    @Deprecated
++    private int bitCount;
+ 
+     /**
+-     * The bitLength of this BigInteger, as returned by bitLength(), or -1
++     * One plus the bitLength of this BigInteger. Zeros means unitialized.
+      * (either value is acceptable).
+      *
+      * @serial
+      * @see #bitLength()
++     * @deprecated Deprecated since logical value is offset from stored
++     * value and correction factor is applied in accessor method.
+      */
+-    private int bitLength = -1;
++    @Deprecated
++    private int bitLength;
+ 
+     /**
+-     * The lowest set bit of this BigInteger, as returned by getLowestSetBit(),
+-     * or -2 (either value is acceptable).
++     * Two plus the lowest set bit of this BigInteger, as returned by
++     * getLowestSetBit().
+      *
+      * @serial
+      * @see #getLowestSetBit
++     * @deprecated Deprecated since logical value is offset from stored
++     * value and correction factor is applied in accessor method.
+      */
+-    private int lowestSetBit = -2;
++    @Deprecated
++    private int lowestSetBit;
+ 
+     /**
+-     * The index of the lowest-order byte in the magnitude of this BigInteger
+-     * that contains a nonzero byte, or -2 (either value is acceptable).  The
+-     * least significant byte has int-number 0, the next byte in order of
+-     * increasing significance has byte-number 1, and so forth.
+-     *
+-     * @serial
++     * Two plus the index of the lowest-order int in the magnitude of this
++     * BigInteger that contains a nonzero int, or -2 (either value is acceptable).
++     * The least significant int has int-number 0, the next int in order of
++     * increasing significance has int-number 1, and so forth.
++     * @deprecated Deprecated since logical value is offset from stored
++     * value and correction factor is applied in accessor method.
+      */
+-    private int firstNonzeroByteNum = -2;
+-
+-    /**
+-     * The index of the lowest-order int in the magnitude of this BigInteger
+-     * that contains a nonzero int, or -2 (either value is acceptable).  The
+-     * least significant int has int-number 0, the next int in order of
+-     * increasing significance has int-number 1, and so forth.
+-     */
+-    private int firstNonzeroIntNum = -2;
++    @Deprecated
++    private int firstNonzeroIntNum;
+ 
+     /**
+      * This mask is used to obtain the value of an int as if it were unsigned.
+      */
+-    private final static long LONG_MASK = 0xffffffffL;
++    final static long LONG_MASK = 0xffffffffL;
+ 
+     //Constructors
+ 
+@@ -295,13 +296,13 @@
+             throw new NumberFormatException("Zero length BigInteger");
+ 
+         // Check for at most one leading sign
+-        signum = 1;
++        int sign = 1;
+         int index = val.lastIndexOf('-');
+         if (index != -1) {
+             if (index == 0 ) {
+                 if (val.length() == 1)
+                     throw new NumberFormatException("Zero length BigInteger");
+-                signum = -1;
++                sign = -1;
+                 cursor = 1;
+             } else {
+                 throw new NumberFormatException("Illegal embedded sign character");
+@@ -316,23 +317,24 @@
+             signum = 0;
+             mag = ZERO.mag;
+             return;
+-        } else {
+-            numDigits = len - cursor;
+         }
+ 
++        numDigits = len - cursor;
++        signum = sign;
++
+         // Pre-allocate array of expected size. May be too large but can
+         // never be too small. Typically exact.
+         int numBits = (int)(((numDigits * bitsPerDigit[radix]) >>> 10) + 1);
+-        int numWords = (numBits + 31) /32;
+-        mag = new int[numWords];
++        int numWords = (numBits + 31) >>> 5;
++        int[] magnitude = new int[numWords];
+ 
+         // Process first (potentially short) digit group
+         int firstGroupLen = numDigits % digitsPerInt[radix];
+         if (firstGroupLen == 0)
+             firstGroupLen = digitsPerInt[radix];
+         String group = val.substring(cursor, cursor += firstGroupLen);
+-        mag[mag.length - 1] = Integer.parseInt(group, radix);
+-        if (mag[mag.length - 1] < 0)
++        magnitude[numWords - 1] = Integer.parseInt(group, radix);
++        if (magnitude[numWords - 1] < 0)
+             throw new NumberFormatException("Illegal digit");
+ 
+         // Process remaining digit groups
+@@ -343,10 +345,10 @@
+             groupVal = Integer.parseInt(group, radix);
+             if (groupVal < 0)
+                 throw new NumberFormatException("Illegal digit");
+-            destructiveMulAdd(mag, superRadix, groupVal);
++            destructiveMulAdd(magnitude, superRadix, groupVal);
+         }
+         // Required for cases where the array was overallocated.
+-        mag = trustedStripLeadingZeroInts(mag);
++        mag = trustedStripLeadingZeroInts(magnitude);
+     }
+ 
+     // Constructs a new BigInteger using a char array with radix=10
+@@ -355,11 +357,11 @@
+         int len = val.length;
+ 
+         // Check for leading minus sign
+-        signum = 1;
++        int sign = 1;
+         if (val[0] == '-') {
+             if (len == 1)
+                 throw new NumberFormatException("Zero length BigInteger");
+-            signum = -1;
++            sign = -1;
+             cursor = 1;
+         }
+ 
+@@ -370,32 +372,33 @@
+             signum = 0;
+             mag = ZERO.mag;
+             return;
+-        } else {
+-            numDigits = len - cursor;
+         }
+ 
++        numDigits = len - cursor;
++        signum = sign;
++
+         // Pre-allocate array of expected size
+         int numWords;
+         if (len < 10) {
+             numWords = 1;
+         } else {
+             int numBits = (int)(((numDigits * bitsPerDigit[10]) >>> 10) + 1);
+-            numWords = (numBits + 31) /32;
++            numWords = (numBits + 31) >>> 5;
+         }
+-        mag = new int[numWords];
++        int[] magnitude = new int[numWords];
+ 
+         // Process first (potentially short) digit group
+         int firstGroupLen = numDigits % digitsPerInt[10];
+         if (firstGroupLen == 0)
+             firstGroupLen = digitsPerInt[10];
+-        mag[mag.length-1] = parseInt(val, cursor,  cursor += firstGroupLen);
++        magnitude[numWords - 1] = parseInt(val, cursor,  cursor += firstGroupLen);
+ 
+         // Process remaining digit groups
+         while (cursor < len) {
+             int groupVal = parseInt(val, cursor, cursor += digitsPerInt[10]);
+-            destructiveMulAdd(mag, intRadix[10], groupVal);
++            destructiveMulAdd(magnitude, intRadix[10], groupVal);
+         }
+-        mag = trustedStripLeadingZeroInts(mag);
++        mag = trustedStripLeadingZeroInts(magnitude);
+     }
+ 
+     // Create an integer with the digits between the two indexes
+@@ -836,26 +839,21 @@
+             u2 = u.multiply(v).mod(n);
+ 
+             v2 = v.square().add(d.multiply(u.square())).mod(n);
+-            if (v2.testBit(0)) {
+-                v2 = n.subtract(v2);
+-                v2.signum = - v2.signum;
+-            }
++            if (v2.testBit(0))
++                v2 = v2.subtract(n);
++
+             v2 = v2.shiftRight(1);
+ 
+             u = u2; v = v2;
+             if (k.testBit(i)) {
+                 u2 = u.add(v).mod(n);
+-                if (u2.testBit(0)) {
+-                    u2 = n.subtract(u2);
+-                    u2.signum = - u2.signum;
+-                }
++                if (u2.testBit(0))
++                    u2 = u2.subtract(n);
++
+                 u2 = u2.shiftRight(1);
+-
+                 v2 = v.add(d.multiply(u)).mod(n);
+-                if (v2.testBit(0)) {
+-                    v2 = n.subtract(v2);
+-                    v2.signum = - v2.signum;
+-                }
++                if (v2.testBit(0))
++                    v2 = v2.subtract(n);
+                 v2 = v2.shiftRight(1);
+ 
+                 u = u2; v = v2;
+@@ -912,11 +910,11 @@
+     }
+ 
+     /**
+-     * This private constructor differs from its public cousin
++     * This internal constructor differs from its public cousin
+      * with the arguments reversed in two ways: it assumes that its
+      * arguments are correct, and it doesn't copy the magnitude array.
+      */
+-    private BigInteger(int[] magnitude, int signum) {
++    BigInteger(int[] magnitude, int signum) {
+         this.signum = (magnitude.length==0 ? 0 : signum);
+         this.mag = magnitude;
+     }
+@@ -930,22 +928,6 @@
+         this.mag = stripLeadingZeroBytes(magnitude);
+     }
+ 
+-    /**
+-     * This private constructor is for internal use in converting
+-     * from a MutableBigInteger object into a BigInteger.
+-     */
+-    BigInteger(MutableBigInteger val, int sign) {
+-        if (val.offset > 0 || val.value.length != val.intLen) {
+-            mag = new int[val.intLen];
+-            for(int i=0; i<val.intLen; i++)
+-                mag[i] = val.value[val.offset+i];
+-        } else {
+-            mag = val.value;
+-        }
+-
+-        this.signum = (val.intLen == 0) ? 0 : sign;
+-    }
+-
+     //Static Factory Methods
+ 
+     /**
+@@ -974,8 +956,8 @@
+      */
+     private BigInteger(long val) {
+         if (val < 0) {
++            val = -val;
+             signum = -1;
+-            val = -val;
+         } else {
+             signum = 1;
+         }
+@@ -1052,7 +1034,6 @@
+      * @return {@code this + val}
+      */
+     public BigInteger add(BigInteger val) {
+-        int[] resultMag;
+         if (val.signum == 0)
+             return this;
+         if (signum == 0)
+@@ -1060,14 +1041,14 @@
+         if (val.signum == signum)
+             return new BigInteger(add(mag, val.mag), signum);
+ 
+-        int cmp = intArrayCmp(mag, val.mag);
+-        if (cmp==0)
++        int cmp = compareMagnitude(val);
++        if (cmp == 0)
+             return ZERO;
+-        resultMag = (cmp>0 ? subtract(mag, val.mag)
++        int[] resultMag = (cmp > 0 ? subtract(mag, val.mag)
+                            : subtract(val.mag, mag));
+         resultMag = trustedStripLeadingZeroInts(resultMag);
+ 
+-        return new BigInteger(resultMag, cmp*signum);
++        return new BigInteger(resultMag, cmp == signum ? 1 : -1);
+     }
+ 
+     /**
+@@ -1106,12 +1087,10 @@
+ 
+         // Grow result if necessary
+         if (carry) {
+-            int newLen = result.length + 1;
+-            int temp[] = new int[newLen];
+-            for (int i = 1; i<newLen; i++)
+-                temp[i] = result[i-1];
+-            temp[0] = 0x01;
+-            result = temp;
++            int bigger[] = new int[result.length + 1];
++            System.arraycopy(result, 0, bigger, 1, result.length);
++            bigger[0] = 0x01;
++            return bigger;
+         }
+         return result;
+     }
+@@ -1123,7 +1102,6 @@
+      * @return {@code this - val}
+      */
+     public BigInteger subtract(BigInteger val) {
+-        int[] resultMag;
+         if (val.signum == 0)
+             return this;
+         if (signum == 0)
+@@ -1131,13 +1109,13 @@
+         if (val.signum != signum)
+             return new BigInteger(add(mag, val.mag), signum);
+ 
+-        int cmp = intArrayCmp(mag, val.mag);
+-        if (cmp==0)
++        int cmp = compareMagnitude(val);
++        if (cmp == 0)
+             return ZERO;
+-        resultMag = (cmp>0 ? subtract(mag, val.mag)
++        int[] resultMag = (cmp > 0 ? subtract(mag, val.mag)
+                            : subtract(val.mag, mag));
+         resultMag = trustedStripLeadingZeroInts(resultMag);
+-        return new BigInteger(resultMag, cmp*signum);
++        return new BigInteger(resultMag, cmp == signum ? 1 : -1);
+     }
+ 
+     /**
+@@ -1185,12 +1163,54 @@
+         int[] result = multiplyToLen(mag, mag.length,
+                                      val.mag, val.mag.length, null);
+         result = trustedStripLeadingZeroInts(result);
+-        return new BigInteger(result, signum*val.signum);
++        return new BigInteger(result, signum == val.signum ? 1 : -1);
++    }
++
++    /**
++     * Package private methods used by BigDecimal code to multiply a BigInteger
++     * with a long. Assumes v is not equal to INFLATED.
++     */
++    BigInteger multiply(long v) {
++        if (v == 0 || signum == 0)
++          return ZERO;
++        if (v == BigDecimal.INFLATED)
++            return multiply(BigInteger.valueOf(v));
++        int rsign = (v > 0 ? signum : -signum);
++        if (v < 0)
++            v = -v;
++        long dh = v >>> 32;      // higher order bits
++        long dl = v & LONG_MASK; // lower order bits
++
++        int xlen = mag.length;
++        int[] value = mag;
++        int[] rmag = (dh == 0L) ? (new int[xlen + 1]) : (new int[xlen + 2]);
++        long carry = 0;
++        int rstart = rmag.length - 1;
++        for (int i = xlen - 1; i >= 0; i--) {
++            long product = (value[i] & LONG_MASK) * dl + carry;
++            rmag[rstart--] = (int)product;
++            carry = product >>> 32;
++        }
++        rmag[rstart] = (int)carry;
++        if (dh != 0L) {
++            carry = 0;
++            rstart = rmag.length - 2;
++            for (int i = xlen - 1; i >= 0; i--) {
++                long product = (value[i] & LONG_MASK) * dh +
++                    (rmag[rstart] & LONG_MASK) + carry;
++                rmag[rstart--] = (int)product;
++                carry = product >>> 32;
++            }
++            rmag[0] = (int)carry;
++        }
++        if (carry == 0L)
++            rmag = java.util.Arrays.copyOfRange(rmag, 1, rmag.length);
++        return new BigInteger(rmag, rsign);
+     }
+ 
+     /**
+      * Multiplies int arrays x and y to the specified lengths and places
+-     * the result into z.
++     * the result into z. There will be no leading zeros in the resultant array.
+      */
+     private int[] multiplyToLen(int[] x, int xlen, int[] y, int ylen, int[] z) {
+         int xstart = xlen - 1;
+@@ -1310,12 +1330,11 @@
+      */
+     public BigInteger divide(BigInteger val) {
+         MutableBigInteger q = new MutableBigInteger(),
+-                          r = new MutableBigInteger(),
+                           a = new MutableBigInteger(this.mag),
+                           b = new MutableBigInteger(val.mag);
+ 
+-        a.divide(b, q, r);
+-        return new BigInteger(q, this.signum * val.signum);
++        a.divide(b, q);
++        return q.toBigInteger(this.signum == val.signum ? 1 : -1);
+     }
+ 
+     /**
+@@ -1332,12 +1351,11 @@
+     public BigInteger[] divideAndRemainder(BigInteger val) {
+         BigInteger[] result = new BigInteger[2];
+         MutableBigInteger q = new MutableBigInteger(),
+-                          r = new MutableBigInteger(),
+                           a = new MutableBigInteger(this.mag),
+                           b = new MutableBigInteger(val.mag);
+-        a.divide(b, q, r);
+-        result[0] = new BigInteger(q, this.signum * val.signum);
+-        result[1] = new BigInteger(r, this.signum);
++        MutableBigInteger r = a.divide(b, q);
++        result[0] = q.toBigInteger(this.signum == val.signum ? 1 : -1);
++        result[1] = r.toBigInteger(this.signum);
+         return result;
+     }
+ 
+@@ -1351,12 +1369,10 @@
+      */
+     public BigInteger remainder(BigInteger val) {
+         MutableBigInteger q = new MutableBigInteger(),
+-                          r = new MutableBigInteger(),
+                           a = new MutableBigInteger(this.mag),
+                           b = new MutableBigInteger(val.mag);
+ 
+-        a.divide(b, q, r);
+-        return new BigInteger(r, this.signum);
++        return a.divide(b, q).toBigInteger(this.signum);
+     }
+ 
+     /**
+@@ -1412,7 +1428,14 @@
+ 
+         MutableBigInteger result = a.hybridGCD(b);
+ 
+-        return new BigInteger(result, 1);
++        return result.toBigInteger(1);
++    }
++
++    /**
++     * Package private method to return bit length for an integer.
++     */
++    static int bitLengthForInt(int n) {
++        return 32 - Integer.numberOfLeadingZeros(n);
+     }
+ 
+     /**
+@@ -1422,7 +1445,7 @@
+     private static int[] leftShift(int[] a, int len, int n) {
+         int nInts = n >>> 5;
+         int nBits = n&0x1F;
+-        int bitsInHighWord = bitLen(a[0]);
++        int bitsInHighWord = bitLengthForInt(a[0]);
+ 
+         // If shift can be done without recopy, do so
+         if (n <= (32-bitsInHighWord)) {
+@@ -1475,9 +1498,9 @@
+      * assuming there are no leading zero ints.
+      */
+     private static int bitLength(int[] val, int len) {
+-        if (len==0)
++        if (len == 0)
+             return 0;
+-        return ((len-1)<<5) + bitLen(val[0]);
++        return ((len - 1) << 5) + bitLengthForInt(val[0]);
+     }
+ 
+     /**
+@@ -1704,11 +1727,10 @@
+         int[] a = leftShift(base, base.length, modLen << 5);
+ 
+         MutableBigInteger q = new MutableBigInteger(),
+-                          r = new MutableBigInteger(),
+                           a2 = new MutableBigInteger(a),
+                           b2 = new MutableBigInteger(mod);
+ 
+-        a2.divide(b2, q, r);
++        MutableBigInteger r= a2.divide(b2, q);
+         table[0] = r.toIntArray();
+ 
+         // Pad table[0] with leading zeros so its length is at least modLen
+@@ -1970,7 +1992,7 @@
+             return this;
+ 
+         // Copy remaining ints of mag
+-        int numInts = (p+31)/32;
++        int numInts = (p + 31) >>> 5;
+         int[] mag = new int[numInts];
+         for (int i=0; i<numInts; i++)
+             mag[i] = this.mag[i + (this.mag.length - numInts)];
+@@ -2000,7 +2022,7 @@
+ 
+         // Calculate (this mod m)
+         BigInteger modVal = this;
+-        if (signum < 0 || (intArrayCmp(mag, m.mag) >= 0))
++        if (signum < 0 || (this.compareMagnitude(m) >= 0))
+             modVal = this.mod(m);
+ 
+         if (modVal.equals(ONE))
+@@ -2010,7 +2032,7 @@
+         MutableBigInteger b = new MutableBigInteger(m);
+ 
+         MutableBigInteger result = a.mutableModInverse(b);
+-        return new BigInteger(result, 1);
++        return result.toBigInteger(1);
+     }
+ 
+     // Shift Operations
+@@ -2235,7 +2257,7 @@
+         if (n<0)
+             throw new ArithmeticException("Negative bit address");
+ 
+-        return (getInt(n/32) & (1 << (n%32))) != 0;
++        return (getInt(n >>> 5) & (1 << (n & 31))) != 0;
+     }
+ 
+     /**
+@@ -2250,13 +2272,13 @@
+         if (n<0)
+             throw new ArithmeticException("Negative bit address");
+ 
+-        int intNum = n/32;
++        int intNum = n >>> 5;
+         int[] result = new int[Math.max(intLength(), intNum+2)];
+ 
+         for (int i=0; i<result.length; i++)
+             result[result.length-i-1] = getInt(i);
+ 
+-        result[result.length-intNum-1] |= (1 << (n%32));
++        result[result.length-intNum-1] |= (1 << (n & 31));
+ 
+         return valueOf(result);
+     }
+@@ -2274,13 +2296,13 @@
+         if (n<0)
+             throw new ArithmeticException("Negative bit address");
+ 
+-        int intNum = n/32;
+-        int[] result = new int[Math.max(intLength(), (n+1)/32+1)];
++        int intNum = n >>> 5;
++        int[] result = new int[Math.max(intLength(), ((n + 1) >>> 5) + 1)];
+ 
+         for (int i=0; i<result.length; i++)
+             result[result.length-i-1] = getInt(i);
+ 
+-        result[result.length-intNum-1] &= ~(1 << (n%32));
++        result[result.length-intNum-1] &= ~(1 << (n & 31));
+ 
+         return valueOf(result);
+     }
+@@ -2298,13 +2320,13 @@
+         if (n<0)
+             throw new ArithmeticException("Negative bit address");
+ 
+-        int intNum = n/32;
++        int intNum = n >>> 5;
+         int[] result = new int[Math.max(intLength(), intNum+2)];
+ 
+         for (int i=0; i<result.length; i++)
+             result[result.length-i-1] = getInt(i);
+ 
+-        result[result.length-intNum-1] ^= (1 << (n%32));
++        result[result.length-intNum-1] ^= (1 << (n & 31));
+ 
+         return valueOf(result);
+     }
+@@ -2318,23 +2340,21 @@
+      * @return index of the rightmost one bit in this BigInteger.
+      */
+     public int getLowestSetBit() {
+-        /*
+-         * Initialize lowestSetBit field the first time this method is
+-         * executed. This method depends on the atomicity of int modifies;
+-         * without this guarantee, it would have to be synchronized.
+-         */
+-        if (lowestSetBit == -2) {
++        @SuppressWarnings("deprecation") int lsb = lowestSetBit - 2;
++        if (lsb == -2) {  // lowestSetBit not initialized yet
++            lsb = 0;
+             if (signum == 0) {
+-                lowestSetBit = -1;
++                lsb -= 1;
+             } else {
+                 // Search for lowest order nonzero int
+                 int i,b;
+                 for (i=0; (b = getInt(i))==0; i++)
+                     ;
+-                lowestSetBit = (i << 5) + trailingZeroCnt(b);
++                lsb += (i << 5) + Integer.numberOfTrailingZeros(b);
+             }
++            lowestSetBit = lsb + 2;
+         }
+-        return lowestSetBit;
++        return lsb;
+     }
+ 
+ 
+@@ -2351,79 +2371,32 @@
+      *         representation of this BigInteger, <i>excluding</i> a sign bit.
+      */
+     public int bitLength() {
+-        /*
+-         * Initialize bitLength field the first time this method is executed.
+-         * This method depends on the atomicity of int modifies; without
+-         * this guarantee, it would have to be synchronized.
+-         */
+-        if (bitLength == -1) {
+-            if (signum == 0) {
+-                bitLength = 0;
+-            } else {
++        @SuppressWarnings("deprecation") int n = bitLength - 1;
++        if (n == -1) { // bitLength not initialized yet
++            int[] m = mag;
++            int len = m.length;
++            if (len == 0) {
++                n = 0; // offset by one to initialize
++            }  else {
+                 // Calculate the bit length of the magnitude
+-                int magBitLength = ((mag.length-1) << 5) + bitLen(mag[0]);
+-
+-                if (signum < 0) {
+-                    // Check if magnitude is a power of two
+-                    boolean pow2 = (bitCnt(mag[0]) == 1);
+-                    for(int i=1; i<mag.length && pow2; i++)
+-                        pow2 = (mag[i]==0);
+-
+-                    bitLength = (pow2 ? magBitLength-1 : magBitLength);
+-                } else {
+-                    bitLength = magBitLength;
+-                }
++                int magBitLength = ((len - 1) << 5) + bitLengthForInt(mag[0]);
++                 if (signum < 0) {
++                     // Check if magnitude is a power of two
++                     boolean pow2 = (Integer.bitCount(mag[0]) == 1);
++                     for(int i=1; i< len && pow2; i++)
++                         pow2 = (mag[i] == 0);
++
++                     n = (pow2 ? magBitLength -1 : magBitLength);
++                 } else {
++                     n = magBitLength;
++                 }
+             }
++            bitLength = n + 1;
+         }
+-        return bitLength;
++        return n;
+     }
+ 
+     /**
+-     * bitLen(val) is the number of bits in val.
+-     */
+-    static int bitLen(int w) {
+-        // Binary search - decision tree (5 tests, rarely 6)
+-        return
+-         (w < 1<<15 ?
+-          (w < 1<<7 ?
+-           (w < 1<<3 ?
+-            (w < 1<<1 ? (w < 1<<0 ? (w<0 ? 32 : 0) : 1) : (w < 1<<2 ? 2 : 3)) :
+-            (w < 1<<5 ? (w < 1<<4 ? 4 : 5) : (w < 1<<6 ? 6 : 7))) :
+-           (w < 1<<11 ?
+-            (w < 1<<9 ? (w < 1<<8 ? 8 : 9) : (w < 1<<10 ? 10 : 11)) :
+-            (w < 1<<13 ? (w < 1<<12 ? 12 : 13) : (w < 1<<14 ? 14 : 15)))) :
+-          (w < 1<<23 ?
+-           (w < 1<<19 ?
+-            (w < 1<<17 ? (w < 1<<16 ? 16 : 17) : (w < 1<<18 ? 18 : 19)) :
+-            (w < 1<<21 ? (w < 1<<20 ? 20 : 21) : (w < 1<<22 ? 22 : 23))) :
+-           (w < 1<<27 ?
+-            (w < 1<<25 ? (w < 1<<24 ? 24 : 25) : (w < 1<<26 ? 26 : 27)) :
+-            (w < 1<<29 ? (w < 1<<28 ? 28 : 29) : (w < 1<<30 ? 30 : 31)))));
+-    }
+-
+-    /*
+-     * trailingZeroTable[i] is the number of trailing zero bits in the binary
+-     * representation of i.
+-     */
+-    final static byte trailingZeroTable[] = {
+-      -25, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+-        4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+-        5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+-        4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+-        6, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+-        4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+-        5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+-        4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+-        7, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+-        4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+-        5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+-        4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+-        6, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+-        4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+-        5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+-        4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0};
+-
+-    /**
+      * Returns the number of bits in the two's complement representation
+      * of this BigInteger that differ from its sign bit.  This method is
+      * useful when implementing bit-vector style sets atop BigIntegers.
+@@ -2432,58 +2405,23 @@
+      *         of this BigInteger that differ from its sign bit.
+      */
+     public int bitCount() {
+-        /*
+-         * Initialize bitCount field the first time this method is executed.
+-         * This method depends on the atomicity of int modifies; without
+-         * this guarantee, it would have to be synchronized.
+-         */
+-        if (bitCount == -1) {
++        @SuppressWarnings("deprecation") int bc = bitCount - 1;
++        if (bc == -1) {  // bitCount not initialized yet
++            bc = 0;      // offset by one to initialize
+             // Count the bits in the magnitude
+-            int magBitCount = 0;
+             for (int i=0; i<mag.length; i++)
+-                magBitCount += bitCnt(mag[i]);
+-
++                bc += Integer.bitCount(mag[i]);
+             if (signum < 0) {
+                 // Count the trailing zeros in the magnitude
+                 int magTrailingZeroCount = 0, j;
+                 for (j=mag.length-1; mag[j]==0; j--)
+                     magTrailingZeroCount += 32;
+-                magTrailingZeroCount +=
+-                            trailingZeroCnt(mag[j]);
+-
+-                bitCount = magBitCount + magTrailingZeroCount - 1;
+-            } else {
+-                bitCount = magBitCount;
++                magTrailingZeroCount += Integer.numberOfTrailingZeros(mag[j]);
++                bc += magTrailingZeroCount - 1;
+             }
++            bitCount = bc + 1;
+         }
+-        return bitCount;
+-    }
+-
+-    static int bitCnt(int val) {
+-        val -= (0xaaaaaaaa & val) >>> 1;
+-        val = (val & 0x33333333) + ((val >>> 2) & 0x33333333);
+-        val = val + (val >>> 4) & 0x0f0f0f0f;
+-        val += val >>> 8;
+-        val += val >>> 16;
+-        return val & 0xff;
+-    }
+-
+-    static int trailingZeroCnt(int val) {
+-        // Loop unrolled for performance
+-        int byteVal = val & 0xff;
+-        if (byteVal != 0)
+-            return trailingZeroTable[byteVal];
+-
+-        byteVal = (val >>> 8) & 0xff;
+-        if (byteVal != 0)
+-            return trailingZeroTable[byteVal] + 8;
+-
+-        byteVal = (val >>> 16) & 0xff;
+-        if (byteVal != 0)
+-            return trailingZeroTable[byteVal] + 16;
+-
+-        byteVal = (val >>> 24) & 0xff;
+-        return trailingZeroTable[byteVal] + 24;
++        return bc;
+     }
+ 
+     // Primality Testing
+@@ -2530,29 +2468,41 @@
+      *         to, or greater than {@code val}.
+      */
+     public int compareTo(BigInteger val) {
+-        return (signum==val.signum
+-                ? signum*intArrayCmp(mag, val.mag)
+-                : (signum>val.signum ? 1 : -1));
++        if (signum == val.signum) {
++            switch (signum) {
++            case 1:
++                return compareMagnitude(val);
++            case -1:
++                return val.compareMagnitude(this);
++            default:
++                return 0;
++            }
++        }
++        return signum > val.signum ? 1 : -1;
+     }
+ 
+-    /*
+-     * Returns -1, 0 or +1 as big-endian unsigned int array arg1 is
+-     * less than, equal to, or greater than arg2.
++    /**
++     * Compares the magnitude array of this BigInteger with the specified
++     * BigInteger's. This is the version of compareTo ignoring sign.
++     *
++     * @param val BigInteger whose magnitude array to be compared.
++     * @return -1, 0 or 1 as this magnitude array is less than, equal to or
++     *         greater than the magnitude aray for the specified BigInteger's.
+      */
+-    private static int intArrayCmp(int[] arg1, int[] arg2) {
+-        if (arg1.length < arg2.length)
++    final int compareMagnitude(BigInteger val) {
++        int[] m1 = mag;
++        int len1 = m1.length;
++        int[] m2 = val.mag;
++        int len2 = m2.length;
++        if (len1 < len2)
+             return -1;
+-        if (arg1.length > arg2.length)
++        if (len1 > len2)
+             return 1;
+-
+-        // Argument lengths are equal; compare the values
+-        for (int i=0; i<arg1.length; i++) {
+-            long b1 = arg1[i] & LONG_MASK;
+-            long b2 = arg2[i] & LONG_MASK;
+-            if (b1 < b2)
+-                return -1;
+-            if (b1 > b2)
+-                return 1;
++        for (int i = 0; i < len1; i++) {
++            int a = m1[i];
++            int b = m2[i];
++            if (a != b)
++                return ((a & LONG_MASK) < (b & LONG_MASK)) ? -1 : 1;
+         }
+         return 0;
+     }
+@@ -2571,13 +2521,19 @@
+ 
+         if (!(x instanceof BigInteger))
+             return false;
++
+         BigInteger xInt = (BigInteger) x;
+-
+-        if (xInt.signum != signum || xInt.mag.length != mag.length)
++        if (xInt.signum != signum)
+             return false;
+ 
+-        for (int i=0; i<mag.length; i++)
+-            if (xInt.mag[i] != mag[i])
++        int[] m = mag;
++        int len = m.length;
++        int[] xm = xInt.mag;
++        if (len != xm.length)
++            return false;
++
++        for (int i = 0; i < len; i++)
++            if (xm[i] != m[i])
+                 return false;
+ 
+         return true;
+@@ -2656,12 +2612,11 @@
+             BigInteger d = longRadix[radix];
+ 
+             MutableBigInteger q = new MutableBigInteger(),
+-                              r = new MutableBigInteger(),
+                               a = new MutableBigInteger(tmp.mag),
+                               b = new MutableBigInteger(d.mag);
+-            a.divide(b, q, r);
+-            BigInteger q2 = new BigInteger(q, tmp.signum * d.signum);
+-            BigInteger r2 = new BigInteger(r, tmp.signum * d.signum);
++            MutableBigInteger r = a.divide(b, q);
++            BigInteger q2 = q.toBigInteger(tmp.signum * d.signum);
++            BigInteger r2 = r.toBigInteger(tmp.signum * d.signum);
+ 
+             digitGroup[numGroups++] = Long.toString(r2.longValue(), radix);
+             tmp = q2;
+@@ -2830,18 +2785,13 @@
+      * Returns a copy of the input array stripped of any leading zero bytes.
+      */
+     private static int[] stripLeadingZeroInts(int val[]) {
+-        int byteLength = val.length;
++        int vlen = val.length;
+         int keep;
+ 
+         // Find first nonzero byte
+-        for (keep=0; keep<val.length && val[keep]==0; keep++)
++        for (keep = 0; keep < vlen && val[keep] == 0; keep++)
+             ;
+-
+-        int result[] = new int[val.length - keep];
+-        for(int i=0; i<val.length - keep; i++)
+-            result[i] = val[keep+i];
+-
+-        return result;
++        return java.util.Arrays.copyOfRange(val, keep, vlen);
+     }
+ 
+     /**
+@@ -2849,21 +2799,13 @@
+      * Since the source is trusted the copying may be skipped.
+      */
+     private static int[] trustedStripLeadingZeroInts(int val[]) {
+-        int byteLength = val.length;
++        int vlen = val.length;
+         int keep;
+ 
+         // Find first nonzero byte
+-        for (keep=0; keep<val.length && val[keep]==0; keep++)
++        for (keep = 0; keep < vlen && val[keep] == 0; keep++)
+             ;
+-
+-        // Only perform copy if necessary
+-        if (keep > 0) {
+-            int result[] = new int[val.length - keep];
+-            for(int i=0; i<val.length - keep; i++)
+-               result[i] = val[keep+i];
+-            return result;
+-        }
+-        return val;
++        return keep == 0 ? val : java.util.Arrays.copyOfRange(val, keep, vlen);
+     }
+ 
+     /**
+@@ -2874,18 +2816,18 @@
+         int keep;
+ 
+         // Find first nonzero byte
+-        for (keep=0; keep<a.length && a[keep]==0; keep++)
++        for (keep = 0; keep < byteLength && a[keep]==0; keep++)
+             ;
+ 
+         // Allocate new array and copy relevant part of input array
+-        int intLength = ((byteLength - keep) + 3)/4;
++        int intLength = ((byteLength - keep) + 3) >>> 2;
+         int[] result = new int[intLength];
+         int b = byteLength - 1;
+         for (int i = intLength-1; i >= 0; i--) {
+             result[i] = a[b--] & 0xff;
+             int bytesRemaining = b - keep + 1;
+             int bytesToTransfer = Math.min(3, bytesRemaining);
+-            for (int j=8; j <= 8*bytesToTransfer; j += 8)
++            for (int j=8; j <= (bytesToTransfer << 3); j += 8)
+                 result[i] |= ((a[b--] & 0xff) << j);
+         }
+         return result;
+@@ -3031,7 +2973,7 @@
+      * including space for at least one sign bit.
+      */
+     private int intLength() {
+-        return bitLength()/32 + 1;
++        return (bitLength() >>> 5) + 1;
+     }
+ 
+     /* Returns sign bit */
+@@ -3068,20 +3010,20 @@
+      * least significant). If the magnitude is zero, return value is undefined.
+      */
+      private int firstNonzeroIntNum() {
+-        /*
+-         * Initialize firstNonzeroIntNum field the first time this method is
+-         * executed. This method depends on the atomicity of int modifies;
+-         * without this guarantee, it would have to be synchronized.
+-         */
+-        if (firstNonzeroIntNum == -2) {
+-            // Search for the first nonzero int
+-            int i;
+-            for (i=mag.length-1; i>=0 && mag[i]==0; i--)
+-                ;
+-            firstNonzeroIntNum = mag.length-i-1;
+-        }
+-        return firstNonzeroIntNum;
+-    }
++         int fn = firstNonzeroIntNum - 2;
++         if (fn == -2) { // firstNonzeroIntNum not initialized yet
++             fn = 0;
++
++             // Search for the first nonzero int
++             int i;
++             int mlen = mag.length;
++             for (i = mlen - 1; i >= 0 && mag[i] == 0; i--)
++                 ;
++             fn = mlen - i - 1;
++             firstNonzeroIntNum = fn + 2; // offset by two to initialize
++         }
++         return fn;
++     }
+ 
+     /** use serialVersionUID from JDK 1.1. for interoperability */
+     private static final long serialVersionUID = -8287574255936472291L;
+@@ -3115,6 +3057,12 @@
+      * deserialize it). The magnitude is read in as an array of bytes
+      * for historical reasons, but it is converted to an array of ints
+      * and the byte array is discarded.
++     * Note:
++     * The current convention is to initialize the cache fields, bitCount,
++     * bitLength and lowestSetBit, to 0 rather than some other marker value.
++     * Therefore, no explicit action to set these fields needs to be taken in
++     * readObject because those fields already have a 0 value be default since
++     * defaultReadObject is not being used.
+      */
+     private void readObject(java.io.ObjectInputStream s)
+         throws java.io.IOException, ClassNotFoundException {
+@@ -3130,29 +3078,44 @@
+         ObjectInputStream.GetField fields = s.readFields();
+ 
+         // Read the alternate persistent fields that we care about
+-        signum = fields.get("signum", -2);
++        int sign = fields.get("signum", -2);
+         byte[] magnitude = (byte[])fields.get("magnitude", null);
+ 
+         // Validate signum
+-        if (signum < -1 || signum > 1) {
++        if (sign < -1 || sign > 1) {
+             String message = "BigInteger: Invalid signum value";
+             if (fields.defaulted("signum"))
+                 message = "BigInteger: Signum not present in stream";
+             throw new java.io.StreamCorruptedException(message);
+         }
+-        if ((magnitude.length==0) != (signum==0)) {
++        if ((magnitude.length == 0) != (sign == 0)) {
+             String message = "BigInteger: signum-magnitude mismatch";
+             if (fields.defaulted("magnitude"))
+                 message = "BigInteger: Magnitude not present in stream";
+             throw new java.io.StreamCorruptedException(message);
+         }
+ 
+-        // Set "cached computation" fields to their initial values
+-        bitCount = bitLength = -1;
+-        lowestSetBit = firstNonzeroByteNum = firstNonzeroIntNum = -2;
++        // Commit final fields via Unsafe
++        unsafe.putIntVolatile(this, signumOffset, sign);
+ 
+         // Calculate mag field from magnitude and discard magnitude
+-        mag = stripLeadingZeroBytes(magnitude);
++        unsafe.putObjectVolatile(this, magOffset,
++                                 stripLeadingZeroBytes(magnitude));
++    }
++
++    // Support for resetting final fields while deserializing
++    private static final sun.misc.Unsafe unsafe = sun.misc.Unsafe.getUnsafe();
++    private static final long signumOffset;
++    private static final long magOffset;
++    static {
++        try {
++            signumOffset = unsafe.objectFieldOffset
++                (BigInteger.class.getDeclaredField("signum"));
++            magOffset = unsafe.objectFieldOffset
++                (BigInteger.class.getDeclaredField("mag"));
++        } catch (Exception ex) {
++            throw new Error(ex);
++        }
+     }
+ 
+     /**
+@@ -3168,6 +3131,8 @@
+         ObjectOutputStream.PutField fields = s.putFields();
+         fields.put("signum", signum);
+         fields.put("magnitude", magSerializedForm());
++        // The values written for cached fields are compatible with older
++        // versions, but are ignored in readObject so don't otherwise matter.
+         fields.put("bitCount", -1);
+         fields.put("bitLength", -1);
+         fields.put("lowestSetBit", -2);
+@@ -3181,12 +3146,13 @@
+      * Returns the mag array as an array of bytes.
+      */
+     private byte[] magSerializedForm() {
+-        int bitLen = (mag.length == 0 ? 0 :
+-                      ((mag.length - 1) << 5) + bitLen(mag[0]));
+-        int byteLen = (bitLen + 7)/8;
++        int len = mag.length;
++
++        int bitLen = (len == 0 ? 0 : ((len - 1) << 5) + bitLengthForInt(mag[0]));
++        int byteLen = (bitLen + 7) >>> 3;
+         byte[] result = new byte[byteLen];
+ 
+-        for (int i=byteLen-1, bytesCopied=4, intIndex=mag.length-1, nextInt=0;
++        for (int i = byteLen - 1, bytesCopied = 4, intIndex = len - 1, nextInt = 0;
+              i>=0; i--) {
+             if (bytesCopied == 4) {
+                 nextInt = mag[intIndex--];
+diff -r 2b1a7d4b9ac6 -r cadc64fc2282 src/share/classes/java/math/BitSieve.java
+--- openjdk.orig/jdk/src/share/classes/java/math/BitSieve.java	Fri Jun 25 11:53:15 2010 -0700
++++ openjdk/jdk/src/share/classes/java/math/BitSieve.java	Wed Nov 03 12:43:51 2010 +0000
+@@ -110,13 +110,11 @@
+         int convertedStep = (step *2) + 1;
+ 
+         // Construct the large sieve at an even offset specified by base
+-        MutableBigInteger r = new MutableBigInteger();
++        MutableBigInteger b = new MutableBigInteger(base);
+         MutableBigInteger q = new MutableBigInteger();
+         do {
+             // Calculate base mod convertedStep
+-            r.copyValue(base.mag);
+-            r.divideOneWord(convertedStep, q);
+-            start = r.value[r.offset];
++            start = b.divideOneWord(convertedStep, q);
+ 
+             // Take each multiple of step out of sieve
+             start = convertedStep - start;
+diff -r 2b1a7d4b9ac6 -r cadc64fc2282 src/share/classes/java/math/MathContext.java
+--- openjdk.orig/jdk/src/share/classes/java/math/MathContext.java	Fri Jun 25 11:53:15 2010 -0700
++++ openjdk/jdk/src/share/classes/java/math/MathContext.java	Wed Nov 03 12:43:51 2010 +0000
+@@ -126,19 +126,6 @@
+      */
+     final RoundingMode roundingMode;
+ 
+-    /**
+-     *  Lookaside for the rounding points (the numbers which determine
+-     *  whether the coefficient of a number will require rounding).
+-     *  These will be present if {@code precision > 0} and
+-     *  {@code precision <= MAX_LOOKASIDE}.  In this case they will share the
+-     *  {@code BigInteger int[]} array.  Note that the transients
+-     *  cannot be {@code final} because they are reconstructed on
+-     *  deserialization.
+-     */
+-    transient BigInteger roundingMax = null;
+-    transient BigInteger roundingMin = null;
+-    private static final int MAX_LOOKASIDE = 1000;
+-
+     /* ----- Constructors ----- */
+ 
+     /**
+@@ -173,11 +160,6 @@
+             throw new NullPointerException("null RoundingMode");
+ 
+         precision = setPrecision;
+-        if (precision > 0 && precision <= MAX_LOOKASIDE) {
+-            roundingMax = BigInteger.TEN.pow(precision);
+-            roundingMin = roundingMax.negate();
+-        }
+-
+         roundingMode = setRoundingMode;
+         return;
+     }
+@@ -221,10 +203,6 @@
+             throw new IllegalArgumentException("Digits < 0");
+         // the other parameters cannot be invalid if we got here
+         precision = setPrecision;
+-        if (precision > 0 && precision <= MAX_LOOKASIDE) {
+-            roundingMax = BigInteger.TEN.pow(precision);
+-            roundingMin = roundingMax.negate();
+-        }
+     }
+ 
+     /**
+@@ -343,11 +321,6 @@
+             String message = "MathContext: null roundingMode in stream";
+             throw new java.io.StreamCorruptedException(message);
+         }
+-        // Set the lookaside, if applicable
+-        if (precision <= MAX_LOOKASIDE) {
+-            roundingMax = BigInteger.TEN.pow(precision);
+-            roundingMin = roundingMax.negate();
+-        }
+     }
+ 
+ }
+diff -r 2b1a7d4b9ac6 -r cadc64fc2282 src/share/classes/java/math/MutableBigInteger.java
+--- openjdk.orig/jdk/src/share/classes/java/math/MutableBigInteger.java	Fri Jun 25 11:53:15 2010 -0700
++++ openjdk/jdk/src/share/classes/java/math/MutableBigInteger.java	Wed Nov 03 12:43:51 2010 +0000
+@@ -41,6 +41,11 @@
+  * @since   1.3
+  */
+ 
++import java.util.Arrays;
++
++import static java.math.BigInteger.LONG_MASK;
++import static java.math.BigDecimal.INFLATED;
++
+ class MutableBigInteger {
+     /**
+      * Holds the magnitude of this MutableBigInteger in big endian order.
+@@ -62,10 +67,13 @@
+      */
+     int offset = 0;
+ 
++    // Constants
+     /**
+-     * This mask is used to obtain the value of an int as if it were unsigned.
++     * MutableBigInteger with one element value array with the value 1. Used by
++     * BigDecimal divideAndRound to increment the quotient. Use this constant
++     * only when the method is not going to modify this object.
+      */
+-    private final static long LONG_MASK = 0xffffffffL;
++    static final MutableBigInteger ONE = new MutableBigInteger(1);
+ 
+     // Constructors
+ 
+@@ -90,15 +98,6 @@
+ 
+     /**
+      * Construct a new MutableBigInteger with the specified value array
+-     * up to the specified length.
+-     */
+-    MutableBigInteger(int[] val, int len) {
+-        value = val;
+-        intLen = len;
+-    }
+-
+-    /**
+-     * Construct a new MutableBigInteger with the specified value array
+      * up to the length of the array supplied.
+      */
+     MutableBigInteger(int[] val) {
+@@ -111,8 +110,8 @@
+      * specified BigInteger.
+      */
+     MutableBigInteger(BigInteger b) {
+-        value = b.mag.clone();
+-        intLen = value.length;
++        intLen = b.mag.length;
++        value = Arrays.copyOf(b.mag, intLen);
+     }
+ 
+     /**
+@@ -121,10 +120,58 @@
+      */
+     MutableBigInteger(MutableBigInteger val) {
+         intLen = val.intLen;
+-        value = new int[intLen];
++        value = Arrays.copyOfRange(val.value, val.offset, val.offset + intLen);
++    }
+ 
+-        for(int i=0; i<intLen; i++)
+-            value[i] = val.value[val.offset+i];
++    /**
++     * Internal helper method to return the magnitude array. The caller is not
++     * supposed to modify the returned array.
++     */
++    private int[] getMagnitudeArray() {
++        if (offset > 0 || value.length != intLen)
++            return Arrays.copyOfRange(value, offset, offset + intLen);
++        return value;
++    }
++
++    /**
++     * Convert this MutableBigInteger to a long value. The caller has to make
++     * sure this MutableBigInteger can be fit into long.
++     */
++    private long toLong() {
++        assert (intLen <= 2) : "this MutableBigInteger exceeds the range of long";
++        if (intLen == 0)
++            return 0;
++        long d = value[offset] & LONG_MASK;
++        return (intLen == 2) ? d << 32 | (value[offset + 1] & LONG_MASK) : d;
++    }
++
++    /**
++     * Convert this MutableBigInteger to a BigInteger object.
++     */
++    BigInteger toBigInteger(int sign) {
++        if (intLen == 0 || sign == 0)
++            return BigInteger.ZERO;
++        return new BigInteger(getMagnitudeArray(), sign);
++    }
++
++    /**
++     * Convert this MutableBigInteger to BigDecimal object with the specified sign
++     * and scale.
++     */
++    BigDecimal toBigDecimal(int sign, int scale) {
++        if (intLen == 0 || sign == 0)
++            return BigDecimal.valueOf(0, scale);
++        int[] mag = getMagnitudeArray();
++        int len = mag.length;
++        int d = mag[0];
++        // If this MutableBigInteger can't be fit into long, we need to
++        // make a BigInteger object for the resultant BigDecimal object.
++        if (len > 2 || (d < 0 && len == 2))
++            return new BigDecimal(new BigInteger(mag, sign), INFLATED, scale, 0);
++        long v = (len == 2) ?
++            ((mag[1] & LONG_MASK) | (d & LONG_MASK) << 32) :
++            d & LONG_MASK;
++        return new BigDecimal(null, sign == -1 ? -v : v, scale, 0);
+     }
+ 
+     /**
+@@ -146,17 +193,21 @@
+     /**
+      * Compare the magnitude of two MutableBigIntegers. Returns -1, 0 or 1
+      * as this MutableBigInteger is numerically less than, equal to, or
+-     * greater than {@code b}.
++     * greater than <tt>b</tt>.
+      */
+     final int compare(MutableBigInteger b) {
+-        if (intLen < b.intLen)
++        int blen = b.intLen;
++        if (intLen < blen)
+             return -1;
+-        if (intLen > b.intLen)
+-            return 1;
++        if (intLen > blen)
++           return 1;
+ 
+-        for (int i=0; i<intLen; i++) {
+-            int b1 = value[offset+i]     + 0x80000000;
+-            int b2 = b.value[b.offset+i] + 0x80000000;
++        // Add Integer.MIN_VALUE to make the comparison act as unsigned integer
++        // comparison.
++        int[] bval = b.value;
++        for (int i = offset, j = b.offset; i < intLen + offset; i++, j++) {
++            int b1 = value[i] + 0x80000000;
++            int b2 = bval[j]  + 0x80000000;
+             if (b1 < b2)
+                 return -1;
+             if (b1 > b2)
+@@ -166,6 +217,46 @@
+     }
+ 
+     /**
++     * Compare this against half of a MutableBigInteger object (Needed for
++     * remainder tests).
++     * Assumes no leading unnecessary zeros, which holds for results
++     * from divide().
++     */
++    final int compareHalf(MutableBigInteger b) {
++        int blen = b.intLen;
++        int len = intLen;
++        if (len <= 0)
++            return blen <=0 ? 0 : -1;
++        if (len > blen)
++            return 1;
++        if (len < blen - 1)
++            return -1;
++        int[] bval = b.value;
++        int bstart = 0;
++        int carry = 0;
++        // Only 2 cases left:len == blen or len == blen - 1
++        if (len != blen) { // len == blen - 1
++            if (bval[bstart] == 1) {
++                ++bstart;
++                carry = 0x80000000;
++            } else
++                return -1;
++        }
++        // compare values with right-shifted values of b,
++        // carrying shifted-out bits across words
++        int[] val = value;
++        for (int i = offset, j = bstart; i < len + offset;) {
++            int bv = bval[j++];
++            long hb = ((bv >>> 1) + carry) & LONG_MASK;
++            long v = val[i++] & LONG_MASK;
++            if (v != hb)
++                return v < hb ? -1 : 1;
++            carry = (bv & 1) << 31; // carray will be either 0x80000000 or 0
++        }
++        return carry == 0? 0 : -1;
++    }
++
++    /**
+      * Return the index of the lowest set bit in this MutableBigInteger. If the
+      * magnitude of this MutableBigInteger is zero, -1 is returned.
+      */
+@@ -178,7 +269,7 @@
+         b = value[j+offset];
+         if (b==0)
+             return -1;
+-        return ((intLen-1-j)<<5) + BigInteger.trailingZeroCnt(b);
++        return ((intLen-1-j)<<5) + Integer.numberOfTrailingZeros(b);
+     }
+ 
+     /**
+@@ -270,13 +361,11 @@
+      * Sets this MutableBigInteger's value array to a copy of the specified
+      * array. The intLen is set to the length of the new array.
+      */
+-    void copyValue(MutableBigInteger val) {
+-        int len = val.intLen;
++    void copyValue(MutableBigInteger src) {
++        int len = src.intLen;
+         if (value.length < len)
+             value = new int[len];
+-
+-        for(int i=0; i<len; i++)
+-            value[i] = val.value[val.offset+i];
++        System.arraycopy(src.value, src.offset, value, 0, len);
+         intLen = len;
+         offset = 0;
+     }
+@@ -289,8 +378,7 @@
+         int len = val.length;
+         if (value.length < len)
+             value = new int[len];
+-        for(int i=0; i<len; i++)
+-            value[i] = val[i];
++        System.arraycopy(val, 0, value, 0, len);
+         intLen = len;
+         offset = 0;
+     }
+@@ -320,7 +408,7 @@
+      * Returns true iff this MutableBigInteger is odd.
+      */
+     boolean isOdd() {
+-        return ((value[offset + intLen - 1] & 1) == 1);
++        return isZero() ? false : ((value[offset + intLen - 1] & 1) == 1);
+     }
+ 
+     /**
+@@ -340,7 +428,7 @@
+      * Returns a String representation of this MutableBigInteger in radix 10.
+      */
+     public String toString() {
+-        BigInteger b = new BigInteger(this, 1);
++        BigInteger b = toBigInteger(1);
+         return b.toString();
+     }
+ 
+@@ -356,7 +444,7 @@
+         this.intLen -= nInts;
+         if (nBits == 0)
+             return;
+-        int bitsInHighWord = BigInteger.bitLen(value[offset]);
++        int bitsInHighWord = BigInteger.bitLengthForInt(value[offset]);
+         if (nBits >= bitsInHighWord) {
+             this.primitiveLeftShift(32 - nBits);
+             this.intLen--;
+@@ -379,7 +467,7 @@
+            return;
+         int nInts = n >>> 5;
+         int nBits = n&0x1F;
+-        int bitsInHighWord = BigInteger.bitLen(value[offset]);
++        int bitsInHighWord = BigInteger.bitLengthForInt(value[offset]);
+ 
+         // If shift can be done without moving words, do so
+         if (n <= (32-bitsInHighWord)) {
+@@ -499,34 +587,41 @@
+         int[] result = (value.length < resultLen ? new int[resultLen] : value);
+ 
+         int rstart = result.length-1;
+-        long sum = 0;
++        long sum;
++        long carry = 0;
+ 
+         // Add common parts of both numbers
+         while(x>0 && y>0) {
+             x--; y--;
+             sum = (value[x+offset] & LONG_MASK) +
+-                (addend.value[y+addend.offset] & LONG_MASK) + (sum >>> 32);
++                (addend.value[y+addend.offset] & LONG_MASK) + carry;
+             result[rstart--] = (int)sum;
++            carry = sum >>> 32;
+         }
+ 
+         // Add remainder of the longer number
+         while(x>0) {
+             x--;
+-            sum = (value[x+offset] & LONG_MASK) + (sum >>> 32);
++            if (carry == 0 && result == value && rstart == (x + offset))
++                return;
++            sum = (value[x+offset] & LONG_MASK) + carry;
+             result[rstart--] = (int)sum;
++            carry = sum >>> 32;
+         }
+         while(y>0) {
+             y--;
+-            sum = (addend.value[y+addend.offset] & LONG_MASK) + (sum >>> 32);
++            sum = (addend.value[y+addend.offset] & LONG_MASK) + carry;
+             result[rstart--] = (int)sum;
++            carry = sum >>> 32;
+         }
+ 
+-        if ((sum >>> 32) > 0) { // Result must grow in length
++        if (carry > 0) { // Result must grow in length
+             resultLen++;
+             if (result.length < resultLen) {
+                 int temp[] = new int[resultLen];
+-                for (int i=resultLen-1; i>0; i--)
+-                    temp[i] = result[i-1];
++                // Result one word longer from carry-out; copy low-order
++                // bits into new result.
++                System.arraycopy(result, 0, temp, 1, result.length);
+                 temp[0] = 1;
+                 result = temp;
+             } else {
+@@ -708,29 +803,26 @@
+         z.value = zval;
+     }
+ 
+-    /**
++     /**
+      * This method is used for division of an n word dividend by a one word
+      * divisor. The quotient is placed into quotient. The one word divisor is
+-     * specified by divisor. The value of this MutableBigInteger is the
+-     * dividend at invocation but is replaced by the remainder.
++     * specified by divisor.
+      *
+-     * NOTE: The value of this MutableBigInteger is modified by this method.
++     * @return the remainder of the division is returned.
++     *
+      */
+-    void divideOneWord(int divisor, MutableBigInteger quotient) {
+-        long divLong = divisor & LONG_MASK;
++    int divideOneWord(int divisor, MutableBigInteger quotient) {
++        long divisorLong = divisor & LONG_MASK;
+ 
+         // Special case of one word dividend
+         if (intLen == 1) {
+-            long remValue = value[offset] & LONG_MASK;
+-            quotient.value[0] = (int) (remValue / divLong);
+-            quotient.intLen = (quotient.value[0] == 0) ? 0 : 1;
++            long dividendValue = value[offset] & LONG_MASK;
++            int q = (int) (dividendValue / divisorLong);
++            int r = (int) (dividendValue - q * divisorLong);
++            quotient.value[0] = q;
++            quotient.intLen = (q == 0) ? 0 : 1;
+             quotient.offset = 0;
+-
+-            value[0] = (int) (remValue - (quotient.value[0] * divLong));
+-            offset = 0;
+-            intLen = (value[0] == 0) ? 0 : 1;
+-
+-            return;
++            return r;
+         }
+ 
+         if (quotient.value.length < intLen)
+@@ -739,15 +831,15 @@
+         quotient.intLen = intLen;
+ 
+         // Normalize the divisor
+-        int shift = 32 - BigInteger.bitLen(divisor);
++        int shift = Integer.numberOfLeadingZeros(divisor);
+ 
+         int rem = value[offset];
+         long remLong = rem & LONG_MASK;
+-        if (remLong < divLong) {
++        if (remLong < divisorLong) {
+             quotient.value[0] = 0;
+         } else {
+-            quotient.value[0] = (int)(remLong/divLong);
+-            rem = (int) (remLong - (quotient.value[0] * divLong));
++            quotient.value[0] = (int)(remLong / divisorLong);
++            rem = (int) (remLong - (quotient.value[0] * divisorLong));
+             remLong = rem & LONG_MASK;
+         }
+ 
+@@ -757,8 +849,8 @@
+             long dividendEstimate = (remLong<<32) |
+                 (value[offset + intLen - xlen] & LONG_MASK);
+             if (dividendEstimate >= 0) {
+-                qWord[0] = (int) (dividendEstimate/divLong);
+-                qWord[1] = (int) (dividendEstimate - (qWord[0] * divLong));
++                qWord[0] = (int) (dividendEstimate / divisorLong);
++                qWord[1] = (int) (dividendEstimate - qWord[0] * divisorLong);
+             } else {
+                 divWord(qWord, dividendEstimate, divisor);
+             }
+@@ -767,81 +859,110 @@
+             remLong = rem & LONG_MASK;
+         }
+ 
++        quotient.normalize();
+         // Unnormalize
+         if (shift > 0)
+-            value[0] = rem %= divisor;
++            return rem % divisor;
+         else
+-            value[0] = rem;
+-        intLen = (value[0] == 0) ? 0 : 1;
+-
+-        quotient.normalize();
++            return rem;
+     }
+ 
+-
+     /**
+-     * Calculates the quotient and remainder of this div b and places them
+-     * in the MutableBigInteger objects provided.
++     * Calculates the quotient of this div b and places the quotient in the
++     * provided MutableBigInteger objects and the remainder object is returned.
+      *
+      * Uses Algorithm D in Knuth section 4.3.1.
+      * Many optimizations to that algorithm have been adapted from the Colin
+      * Plumb C library.
+-     * It special cases one word divisors for speed.
+-     * The contents of a and b are not changed.
++     * It special cases one word divisors for speed. The content of b is not
++     * changed.
+      *
+      */
+-    void divide(MutableBigInteger b,
+-                        MutableBigInteger quotient, MutableBigInteger rem) {
++    MutableBigInteger divide(MutableBigInteger b, MutableBigInteger quotient) {
+         if (b.intLen == 0)
+             throw new ArithmeticException("BigInteger divide by zero");
+ 
+         // Dividend is zero
+         if (intLen == 0) {
+-            quotient.intLen = quotient.offset = rem.intLen = rem.offset = 0;
+-            return;
++            quotient.intLen = quotient.offset;
++            return new MutableBigInteger();
+         }
+ 
+         int cmp = compare(b);
+-
+         // Dividend less than divisor
+         if (cmp < 0) {
+             quotient.intLen = quotient.offset = 0;
+-            rem.copyValue(this);
+-            return;
++            return new MutableBigInteger(this);
+         }
+         // Dividend equal to divisor
+         if (cmp == 0) {
+             quotient.value[0] = quotient.intLen = 1;
+-            quotient.offset = rem.intLen = rem.offset = 0;
+-            return;
++            quotient.offset = 0;
++            return new MutableBigInteger();
+         }
+ 
+         quotient.clear();
+-
+         // Special case one word divisor
+         if (b.intLen == 1) {
+-            rem.copyValue(this);
+-            rem.divideOneWord(b.value[b.offset], quotient);
+-            return;
++            int r = divideOneWord(b.value[b.offset], quotient);
++            if (r == 0)
++                return new MutableBigInteger();
++            return new MutableBigInteger(r);
+         }
+ 
+         // Copy divisor value to protect divisor
+-        int[] d = new int[b.intLen];
+-        for(int i=0; i<b.intLen; i++)
+-            d[i] = b.value[b.offset+i];
+-        int dlen = b.intLen;
++        int[] div = Arrays.copyOfRange(b.value, b.offset, b.offset + b.intLen);
++        return divideMagnitude(div, quotient);
++    }
++
++    /**
++     * Internally used  to calculate the quotient of this div v and places the
++     * quotient in the provided MutableBigInteger object and the remainder is
++     * returned.
++     *
++     * @return the remainder of the division will be returned.
++     */
++    long divide(long v, MutableBigInteger quotient) {
++        if (v == 0)
++            throw new ArithmeticException("BigInteger divide by zero");
++
++        // Dividend is zero
++        if (intLen == 0) {
++            quotient.intLen = quotient.offset = 0;
++            return 0;
++        }
++        if (v < 0)
++            v = -v;
++
++        int d = (int)(v >>> 32);
++        quotient.clear();
++        // Special case on word divisor
++        if (d == 0)
++            return divideOneWord((int)v, quotient) & LONG_MASK;
++        else {
++            int[] div = new int[]{ d, (int)(v & LONG_MASK) };
++            return divideMagnitude(div, quotient).toLong();
++        }
++    }
++
++    /**
++     * Divide this MutableBigInteger by the divisor represented by its magnitude
++     * array. The quotient will be placed into the provided quotient object &
++     * the remainder object is returned.
++     */
++    private MutableBigInteger divideMagnitude(int[] divisor,
++                                              MutableBigInteger quotient) {
+ 
+         // Remainder starts as dividend with space for a leading zero
+-        if (rem.value.length < intLen +1)
+-            rem.value = new int[intLen+1];
+-
+-        for (int i=0; i<intLen; i++)
+-            rem.value[i+1] = value[i+offset];
++        MutableBigInteger rem = new MutableBigInteger(new int[intLen + 1]);
++        System.arraycopy(value, offset, rem.value, 1, intLen);
+         rem.intLen = intLen;
+         rem.offset = 1;
+ 
+         int nlen = rem.intLen;
+ 
+         // Set the quotient size
++        int dlen = divisor.length;
+         int limit = nlen - dlen + 1;
+         if (quotient.value.length < limit) {
+             quotient.value = new int[limit];
+@@ -851,10 +972,10 @@
+         int[] q = quotient.value;
+ 
+         // D1 normalize the divisor
+-        int shift = 32 - BigInteger.bitLen(d[0]);
++        int shift = Integer.numberOfLeadingZeros(divisor[0]);
+         if (shift > 0) {
+             // First shift will not grow array
+-            BigInteger.primitiveLeftShift(d, dlen, shift);
++            BigInteger.primitiveLeftShift(divisor, dlen, shift);
+             // But this one might
+             rem.leftShift(shift);
+         }
+@@ -866,9 +987,9 @@
+             rem.intLen++;
+         }
+ 
+-        int dh = d[0];
++        int dh = divisor[0];
+         long dhLong = dh & LONG_MASK;
+-        int dl = d[1];
++        int dl = divisor[1];
+         int[] qWord = new int[2];
+ 
+         // D2 Initialize j
+@@ -910,7 +1031,7 @@
+                     qhat--;
+                     qrem = (int)((qrem & LONG_MASK) + dhLong);
+                     if ((qrem & LONG_MASK) >=  dhLong) {
+-                        estProduct = (dl & LONG_MASK) * (qhat & LONG_MASK);
++                        estProduct -= (dl & LONG_MASK);
+                         rs = ((qrem & LONG_MASK) << 32) | nl;
+                         if (unsignedLongCompare(estProduct, rs))
+                             qhat--;
+@@ -920,12 +1041,12 @@
+ 
+             // D4 Multiply and subtract
+             rem.value[j+rem.offset] = 0;
+-            int borrow = mulsub(rem.value, d, qhat, dlen, j+rem.offset);
++            int borrow = mulsub(rem.value, divisor, qhat, dlen, j+rem.offset);
+ 
+             // D5 Test remainder
+             if (borrow + 0x80000000 > nh2) {
+                 // D6 Add back
+-                divadd(d, rem.value, j+1+rem.offset);
++                divadd(divisor, rem.value, j+1+rem.offset);
+                 qhat--;
+             }
+ 
+@@ -937,8 +1058,9 @@
+         if (shift > 0)
+             rem.rightShift(shift);
+ 
++        quotient.normalize();
+         rem.normalize();
+-        quotient.normalize();
++        return rem;
+     }
+ 
+     /**
+@@ -989,16 +1111,15 @@
+         // Use Euclid's algorithm until the numbers are approximately the
+         // same length, then use the binary GCD algorithm to find the GCD.
+         MutableBigInteger a = this;
+-        MutableBigInteger q = new MutableBigInteger(),
+-                          r = new MutableBigInteger();
++        MutableBigInteger q = new MutableBigInteger();
+ 
+         while (b.intLen != 0) {
+             if (Math.abs(a.intLen - b.intLen) < 2)
+                 return a.binaryGCD(b);
+ 
+-            a.divide(b, q, r);
+-            MutableBigInteger swapper = a;
+-            a = b; b = r; r = swapper;
++            MutableBigInteger r = a.divide(b, q);
++            a = b;
++            b = r;
+         }
+         return a;
+     }
+@@ -1069,40 +1190,21 @@
+         if (a==0)
+             return b;
+ 
+-        int x;
+-        int aZeros = 0;
+-        while ((x = a & 0xff) == 0) {
+-            a >>>= 8;
+-            aZeros += 8;
+-        }
+-        int y = BigInteger.trailingZeroTable[x];
+-        aZeros += y;
+-        a >>>= y;
+-
+-        int bZeros = 0;
+-        while ((x = b & 0xff) == 0) {
+-            b >>>= 8;
+-            bZeros += 8;
+-        }
+-        y = BigInteger.trailingZeroTable[x];
+-        bZeros += y;
+-        b >>>= y;
++        // Right shift a & b till their last bits equal to 1.
++        int aZeros = Integer.numberOfTrailingZeros(a);
++        int bZeros = Integer.numberOfTrailingZeros(b);
++        a >>>= aZeros;
++        b >>>= bZeros;
+ 
+         int t = (aZeros < bZeros ? aZeros : bZeros);
+ 
+         while (a != b) {
+             if ((a+0x80000000) > (b+0x80000000)) {  // a > b as unsigned
+                 a -= b;
+-
+-                while ((x = a & 0xff) == 0)
+-                    a >>>= 8;
+-                a >>>= BigInteger.trailingZeroTable[x];
++                a >>>= Integer.numberOfTrailingZeros(a);
+             } else {
+                 b -= a;
+-
+-                while ((x = b & 0xff) == 0)
+-                    b >>>= 8;
+-                b >>>= BigInteger.trailingZeroTable[x];
++                b >>>= Integer.numberOfTrailingZeros(b);
+             }
+         }
+         return a<<t;
+@@ -1152,8 +1254,7 @@
+         temp1.multiply(y2, temp2);
+ 
+         result.add(temp2);
+-        result.divide(p, temp1, temp2);
+-        return temp2;
++        return result.divide(p, temp1);
+     }
+ 
+     /*
+@@ -1321,40 +1422,45 @@
+ 
+         MutableBigInteger a = new MutableBigInteger(this);
+         MutableBigInteger q = new MutableBigInteger();
+-        MutableBigInteger r = new MutableBigInteger();
++        MutableBigInteger r = b.divide(a, q);
+ 
+-        b.divide(a, q, r);
+-        MutableBigInteger swapper = b; b = r; r = swapper;
++        MutableBigInteger swapper = b;
++        // swap b & r
++        b = r;
++        r = swapper;
+ 
+         MutableBigInteger t1 = new MutableBigInteger(q);
+         MutableBigInteger t0 = new MutableBigInteger(1);
+         MutableBigInteger temp = new MutableBigInteger();
+ 
+         while (!b.isOne()) {
+-            a.divide(b, q, r);
++            r = a.divide(b, q);
+ 
+             if (r.intLen == 0)
+                 throw new ArithmeticException("BigInteger not invertible.");
+ 
+-            swapper = r; r = a; a = swapper;
++            swapper = r;
++            a = swapper;
+ 
+             if (q.intLen == 1)
+                 t1.mul(q.value[q.offset], temp);
+             else
+                 q.multiply(t1, temp);
+-            swapper = q; q = temp; temp = swapper;
+-
++            swapper = q;
++            q = temp;
++            temp = swapper;
+             t0.add(q);
+ 
+             if (a.isOne())
+                 return t0;
+ 
+-            b.divide(a, q, r);
++            r = b.divide(a, q);
+ 
+             if (r.intLen == 0)
+                 throw new ArithmeticException("BigInteger not invertible.");
+ 
+-            swapper = b; b = r; r = swapper;
++            swapper = b;
++            b =  r;
+ 
+             if (q.intLen == 1)
+                 t0.mul(q.value[q.offset], temp);
+diff -r 2b1a7d4b9ac6 -r cadc64fc2282 src/share/classes/java/math/SignedMutableBigInteger.java
+--- openjdk.orig/jdk/src/share/classes/java/math/SignedMutableBigInteger.java	Fri Jun 25 11:53:15 2010 -0700
++++ openjdk/jdk/src/share/classes/java/math/SignedMutableBigInteger.java	Wed Nov 03 12:43:51 2010 +0000
+@@ -129,9 +129,7 @@
+      * array starting at offset.
+      */
+     public String toString() {
+-        BigInteger b = new BigInteger(this, sign);
+-        return
+-            b.toString();
++        return this.toBigInteger(sign).toString();
+     }
+ 
+ }
+diff -r 2b1a7d4b9ac6 -r cadc64fc2282 test/java/math/BigDecimal/AddTests.java
+--- openjdk.orig/jdk/test/java/math/BigDecimal/AddTests.java	Fri Jun 25 11:53:15 2010 -0700
++++ openjdk/jdk/test/java/math/BigDecimal/AddTests.java	Wed Nov 03 12:43:51 2010 +0000
+@@ -39,6 +39,31 @@
+         EnumSet.complementOf(EnumSet.of(RoundingMode.UNNECESSARY));
+ 
+     /**
++     * Test for some simple additions, particularly, it will test
++     * the overflow case.
++     */
++    private static int simpleTests() {
++        int failures = 0;
++
++        BigDecimal[] bd1 = {
++            new BigDecimal(new BigInteger("7812404666936930160"), 11),
++            new BigDecimal(new BigInteger("7812404666936930160"), 12),
++            new BigDecimal(new BigInteger("7812404666936930160"), 13),
++        };
++        BigDecimal bd2 = new BigDecimal(new BigInteger("2790000"), 1);
++        BigDecimal[] expectedResult = {
++            new BigDecimal("78403046.66936930160"),
++            new BigDecimal("8091404.666936930160"),
++            new BigDecimal("1060240.4666936930160"),
++        };
++        for (int i = 0; i < bd1.length; i++) {
++            if (!bd1[i].add(bd2).equals(expectedResult[i]))
++                failures++;
++        }
++        return failures;
++    }
++
++    /**
+      * Test for extreme value of scale and rounding precision that
+      * could cause integer overflow in right-shift-into-sticky-bit
+      * computations.
+diff -r 2b1a7d4b9ac6 -r cadc64fc2282 test/java/math/BigDecimal/DivideTests.java
+--- openjdk.orig/jdk/test/java/math/BigDecimal/DivideTests.java	Fri Jun 25 11:53:15 2010 -0700
++++ openjdk/jdk/test/java/math/BigDecimal/DivideTests.java	Wed Nov 03 12:43:51 2010 +0000
+@@ -281,6 +281,10 @@
+         BigDecimal c = new BigDecimal("31425");
+         BigDecimal c_minus = c.negate();
+ 
++         // Ad hoc tests
++        BigDecimal d = new BigDecimal(new BigInteger("-37361671119238118911893939591735"), 10);
++        BigDecimal e = new BigDecimal(new BigInteger("74723342238476237823787879183470"), 15);
++
+         BigDecimal[][] testCases = {
+             {a,         b,      BigDecimal.valueOf(ROUND_UP, 3),        new BigDecimal("3.142")},
+             {a_minus,   b,      BigDecimal.valueOf(ROUND_UP, 3),        new BigDecimal("-3.142")},
+@@ -305,6 +309,10 @@
+ 
+             {c,         b,      BigDecimal.valueOf(ROUND_HALF_EVEN, 3), new BigDecimal("3.142")},
+             {c_minus,   b,      BigDecimal.valueOf(ROUND_HALF_EVEN, 3), new BigDecimal("-3.142")},
++
++            {d,         e,      BigDecimal.valueOf(ROUND_HALF_UP, -5),   BigDecimal.valueOf(-1, -5)},
++            {d,         e,      BigDecimal.valueOf(ROUND_HALF_DOWN, -5), BigDecimal.valueOf(0, -5)},
++            {d,         e,      BigDecimal.valueOf(ROUND_HALF_EVEN, -5), BigDecimal.valueOf(0, -5)},
+         };
+ 
+         for(BigDecimal tc[] : testCases) {
