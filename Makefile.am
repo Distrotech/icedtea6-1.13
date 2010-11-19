@@ -7,8 +7,8 @@ OPENJDK_URL = http://download.java.net/openjdk/jdk6/promoted/$(OPENJDK_VERSION)/
 
 CACAO_VERSION = 6a5eda011e49
 CACAO_SHA256SUM = 57f3abd73688cb8861875e2f21be9ec8a0c7c234e1e694489e3efa4436e9228c
-CACAO_BASE_URL = http://mips.complang.tuwien.ac.at
-CACAO_URL = $(CACAO_BASE_URL)/hg/cacao/archive/$(CACAO_VERSION).tar.gz
+CACAO_BASE_URL = http://icedtea.classpath.org/download/drops/cacao
+CACAO_URL = $(CACAO_BASE_URL)/$(CACAO_VERSION).tar.gz
 CACAO_SRC_ZIP = cacao-$(CACAO_VERSION).tar.gz
 
 JAXWS_DROP_URL = http://icedtea.classpath.org/download/drops
@@ -2075,6 +2075,8 @@ cacao: stamps/cacao.stamp
 nbplatform: stamps/nbplatform.stamp
 
 download: stamps/download.stamp
+
+download-cacao: stamps/download-cacao.stamp
 
 download-drops: stamps/download-drops.stamp
 
