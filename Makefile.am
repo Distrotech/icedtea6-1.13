@@ -1867,6 +1867,11 @@ else
 	cp -a zerovm/$(BUILD_DIR)/hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server/* \
 		$(BUILD_JRE_ARCH_DIR)/zero/
 	printf -- '-zero KNOWN\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
+if ADD_SHARK_BUILD
+	printf -- '-shark ALIASED_TO -zero\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
+else
+	printf -- '-shark ERROR\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
+endif
 endif
 else
 	printf -- '-zero ERROR\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
