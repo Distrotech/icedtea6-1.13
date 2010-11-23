@@ -867,6 +867,21 @@ public class RegressionScript extends Script
         return params.getJDK().getJavacProg().getPath();
     }
 
+    //--------------------------------------------------------------------------
+
+    // Get the standard properties to be set for tests
+
+    Map<String,String> getTestProperties() throws TestClassException {
+        Map<String,String> p = new HashMap<String,String>();
+        // The following will be added to javac.class.path on the test JVM
+        p.put("test.src", absTestSrcDir().getPath());
+        p.put("test.classes", absTestClsDir().getPath());
+        p.put("test.vm.opts", StringUtils.join(getTestVMOptions(), " "));
+        p.put("test.tool.vm.opts", StringUtils.join(getTestToolVMOptions(), " "));
+        p.put("test.compiler.opts", StringUtils.join(getTestCompilerOptions(), " "));
+        p.put("test.java.opts", StringUtils.join(getTestJavaOptions(), " "));
+        return p;
+    }
     /**
      * Try to determine the version of Java that is being tested.  If a system
      * has the "-fullversion" option, that string plus the appropriate

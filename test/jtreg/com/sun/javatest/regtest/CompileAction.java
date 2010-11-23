@@ -37,6 +37,12 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 
 import com.sun.javatest.Status;
 import com.sun.javatest.TestResult;
@@ -111,6 +117,8 @@ public class CompileAction extends Action {
                 timeout = parseTimeout(optValue);
             } else if (optName.equals("ref")) {
                 ref = parseRef(optValue);
+            } else if (optName.equals("process")) {
+                process = true;
             } else {
                 throw new ParseException(COMPILE_BAD_OPT + optName);
             }
@@ -133,7 +141,7 @@ public class CompileAction extends Action {
                     if (!sourceFile.isAbsolute())
                         // User must have used @compile, so file must be
                         // in the same directory as the defining file.
-                        args[i] = script.absTestSrcDir() + FILESEP + currArg;
+                        args[i] = new File(script.absTestSrcDir(), currArg).getPath();
 //                  if (!sourceFile.exists())
 //                      throw new ParseException(CANT_FIND_SRC);
                     
@@ -152,10 +160,11 @@ public class CompileAction extends Action {
                     // assume the next element provides the classpath, add
                     // test.classes and test.src and lib-list to it
                     if (script.hasEnv()) {
-                        args[i+1] = addPath(args[i+1],
-                                script.absTestClsDir() + PATHSEP +
-                                script.absTestSrcDir() + PATHSEP +
-                                script.absClsLibListStr());
+                        Path p = new Path(args[i+1])
+                                .append(script.absTestClsDir())
+                                .append(script.absTestSrcDir())
+                                .append(script.absClsLibListStr());
+                        args[i+1] = p.toString();
                     }
                     args[i+1] = singleQuoteString(args[i+1]);
                 }
@@ -169,22 +178,28 @@ public class CompileAction extends Action {
                     sourcepathp = true;
                     // assume the next element provides the sourcepath, add test.src
                     // and lib-list to it
-                    args[i+1] = addPath(args[i+1],
-                            script.absTestSrcDir() + PATHSEP +
-                            script.absSrcLibListStr());
+                    Path p = new Path(args[i+1])
+                            .append(script.absTestSrcDir())
+                            .append(script.absSrcLibListStr());
+                    args[i+1] = p.toString();
                     args[i+1] = singleQuoteString(args[i+1]);
                 }
+            }
+
+            // If we didn't set the destination directory, then we must not have
+            // found something ending with ".java" to compile.
+            if (script.hasEnv() && destDir == null) {
+                if (process) {
+                    destDir = script.absTestClsDir();
+                    if (!destDir.exists())
+                        destDir.mkdirs();
+                } else
+                    throw new ParseException(COMPILE_NO_DOT_JAVA);
             }
         } catch (RegressionScript.TestClassException e) {
             throw new ParseException(e.getMessage());
         }
-        
-        // If we didn't set the destination directory, then we must not have
-        // found something ending with ".java" to compile.
-        if (script.hasEnv() && destDir == null) {
-            throw new ParseException(COMPILE_NO_DOT_JAVA);
-        }
-        
+
         this.args = args;
     } // init()
     
@@ -267,8 +282,9 @@ public class CompileAction extends Action {
         List<String> javacOpts = new ArrayList<String>();
         
         // Why JavaTest?
+        Path cp = new Path(script.getJavaTestClassPath(), script.testClassPath());
         if (useCLASSPATHEnv) {
-            javacOpts.add("CLASSPATH=" + script.getJavaTestClassPath() + PATHSEP + script.testClassPath());
+            javacOpts.add("CLASSPATH=" + cp);
         }
         
         javacOpts.add(script.getJavacProg());
@@ -283,7 +299,7 @@ public class CompileAction extends Action {
         // JavaTest added, to match CLASSPATH, but not sure why JavaTest required at all
         if (!classpathp && useClassPathOpt) {
             javacOpts.add("-classpath");
-            javacOpts.add(script.getJavaTestClassPath() + PATHSEP + script.testClassPath());
+            javacOpts.add(cp.toString());
         }
         
         if (!sourcepathp && useSourcePathOpt) {
@@ -291,6 +307,11 @@ public class CompileAction extends Action {
             javacOpts.add(script.testSourcePath());
         }
         
+        // Set test.src and test.classes for the benefit of annotation processors
+        for (Map.Entry<String,String> e: script.getTestProperties().entrySet()) {
+            javacOpts.add("-J-D" + e.getKey() + "=" + e.getValue());
+        }
+
         String[] envVars = script.getEnvVars();
         String[] jcOpts = javacOpts.toArray(new String[javacOpts.size()]);
         String[] cmdArgs = StringArray.append(envVars, jcOpts);
@@ -365,7 +386,30 @@ public class CompileAction extends Action {
         return status;
     } // runOtherJVM()
     
+    final SecurityManager secMgr = System.getSecurityManager();
+
+    protected static Hashtable<?,?> copyProperties(Properties p) {
+        Hashtable<Object,Object> h = new Hashtable<Object,Object>();
+        for (Enumeration<?> e = p.propertyNames(); e.hasMoreElements(); ) {
+            Object key = e.nextElement();
+            h.put(key, p.get(key));
+        }
+        return h;
+    }
+
+    protected static Properties newProperties(Hashtable<?,?> h) {
+        Properties p = new Properties();
+        p.putAll(h);
+        return p;
+    }
+
     private Status runSameJVM() throws TestRunException {
+        // TAG-SPEC:  "The source and class directories of a test are made
+        // available to main and applet actions via the system properties
+        // "test.src" and "test.classes", respectively"
+        Map<String,String> props = script.getTestProperties();
+        Hashtable sysProps = null;
+
         Status status;
         
         // CONSTRUCT THE COMMAND LINE
@@ -373,8 +417,10 @@ public class CompileAction extends Action {
         
         javacOpts.addAll(script.getTestCompilerOptions());
         
-        javacOpts.add("-d");
-        javacOpts.add(destDir.toString());
+        if (destDir != null) {
+            javacOpts.add("-d");
+            javacOpts.add(destDir.toString());
+        }
         
         if (!classpathp) {
             javacOpts.add("-classpath");
@@ -391,7 +437,29 @@ public class CompileAction extends Action {
         
         if (showCmd)
             JTCmd("compile", cmdArgs, section);
-        
+
+        if (secMgr instanceof RegressionSecurityManager) {
+            RegressionSecurityManager rsm = (RegressionSecurityManager) secMgr;
+            rsm.setAllowPropertiesAccess(true);
+            rsm.resetPropertiesAccessed();
+            sysProps = copyProperties(System.getProperties());
+
+            Properties p = System.getProperties();
+            for (Map.Entry<String,String> e: props.entrySet()) {
+                String name = e.getKey();
+                String value = e.getValue();
+                if (name.equals("test.class.path.prefix")) {
+                    System.err.println("*** java.class.path" + System.getProperty("java.class.path"));
+                    Path cp = new Path(value, System.getProperty("java.class.path"));
+                    p.put("java.class.path", cp.toString());
+                } else {
+                    System.err.println("prop: " + e.getKey() + "\t" + e.getValue());
+                    p.put(e.getKey(), e.getValue());
+                }
+            }
+            System.setProperties(p);
+        }
+
         // RUN THE COMPILER
         
         // for direct use with JavaCompileCommand
@@ -503,7 +571,43 @@ public class CompileAction extends Action {
             File refFile = new File(script.absTestSrcDir(), ref);
             throw new TestRunException(COMPILE_CANT_FIND_REF + refFile);
         }
-        
+        finally
+        {
+            if (System.getSecurityManager() != secMgr) {
+                AccessController.doPrivileged(new PrivilegedAction<Object>() {
+                    public Object run() {
+                        System.setSecurityManager(secMgr);
+                        return null;
+                    }
+                });
+                //System.setSecurityManager(secMgr);
+            }
+
+            // we just reset important props that were written in the test setup
+            boolean resetAllSysProps;
+            SecurityManager sm = System.getSecurityManager();
+            if (sm instanceof RegressionSecurityManager) {
+                resetAllSysProps = ((RegressionSecurityManager) sm).isPropertiesAccessed();
+            } else {
+                resetAllSysProps = true;
+            }
+            System.err.println("resetAllSysProps: " + resetAllSysProps);
+            try {
+                if (sysProps != null)
+                {
+                    if (resetAllSysProps) {
+                        System.setProperties(newProperties(sysProps));
+                        //                    System.err.println("reset properties");
+                    } else {
+                        System.setProperty("java.class.path", (String) sysProps.get("java.class.path"));
+                        //                    System.err.println("no need to reset properties");
+                    }
+                }
+            } catch (SecurityException e) {
+                System.err.println(SAMEVM_CANT_RESET_PROPS + ": " + e);
+            }
+        }
+
         return status;
     } // runSameJVM()
     
@@ -596,6 +700,7 @@ public class CompileAction extends Action {
     private int     timeout = -1;
     private boolean classpathp  = false;
     private boolean sourcepathp = false;
+    private boolean process = false;
     
     private TestResult.Section section;
 }
