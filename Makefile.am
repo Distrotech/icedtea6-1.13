@@ -264,8 +264,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-policy-evaluation.patch \
 	patches/hotspot/$(HSBUILD)/update-bootclasspath.patch \
 	patches/libpng.patch \
-	patches/extensions/netx.patch \
-	patches/extensions/netx-umask.patch \
+	patches/applet_hole.patch \
 	patches/icedtea-jtreg-httpTest.patch \
 	patches/arm.patch \
 	patches/openjdk/6678385-window_movement_crasher.patch \
