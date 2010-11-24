@@ -57,6 +57,53 @@ New in release 1.10 (2010-XX-XX):
   - PR519: 100% CPU usage when displaying applets in Webkit based browsers
   - PR565: UIDefaults.getUI fails with jgoodies:looks 2.3.1
 
+New in release 1.9.2 (2010-11-24):
+
+* Upgrade to latest revision of hs19 (b09).
+* Allow the building of NetX to be disabled.
+* Additional S390 size_t fixes.
+* Switch to the IcedTea server for JAXP, JAF and JAXWS tarballs.
+* Security updates
+  - RH645843, CVE-2010-3860: IcedTea System property information leak via public static
+* Backports
+  - S6622432: RFE: Performance improvements to java.math.BigDecimal
+  - S6850606: Regression from JDK 1.6.0_12
+  - S6876282: BigDecimal's divide(BigDecimal bd, RoundingFormat r) produces incorrect result
+  - S6991430, PR579: Zero PowerPC fix.
+  - S6703377: freetype: glyph vector outline is not translated correctly
+  - S6853592: VM test nsk.regression.b4261880  fails with "X Error of failed request:  BadWindow"
+    inconsistently.
+* Bug fixes
+  - RH647737: Disable compressed oops in hs19 to avoid Eclipse failures.
+  - RH643674: Update fontconfig files for Fedora 11, 12, 13 and 14.
+* NetX
+  - Do not prompt user multiple times for the same certificate.
+  - PR592: NetX can create invalid desktop entry files
+
+New in release 1.8.3 (2010-11-24):
+
+* Allow the building of NetX to be disabled.
+* Security updates
+  - RH645843, CVE-2010-3860: IcedTea System property information leak via public static
+* Backports
+  - S6853592: VM test nsk.regression.b4261880  fails with "X Error of failed request:  BadWindow"
+    inconsistently.
+* NetX
+  - Do not prompt user multiple times for the same certificate.
+  - PR592: NetX can create invalid desktop entry files
+
+New in release 1.7.6 (2010-11-24):
+
+* Allow the building of NetX to be disabled.
+* Security updates
+  - RH645843, CVE-2010-3860: IcedTea System property information leak via public static
+* Backports
+  - S6853592: VM test nsk.regression.b4261880  fails with "X Error of failed request:  BadWindow"
+    inconsistently.
+* NetX
+  - Do not prompt user multiple times for the same certificate.
+  - PR592: NetX can create invalid desktop entry files
+
 New in release 1.9.1 (2010-10-13):
 
 * HotSpot 19 supported; use --with-hotspot-build=hs19 to enable.
