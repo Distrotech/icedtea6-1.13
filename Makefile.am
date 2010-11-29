@@ -300,7 +300,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6850606-bigdecimal_regression.patch \
 	patches/openjdk/6876282-bigdecimal_divide.patch \
 	patches/f14-fonts.patch \
-	patches/jtreg-DeleteFont.patch
+	patches/jtreg-DeleteFont.patch \
+	patches/jtreg-WindowWithWarningTest.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
