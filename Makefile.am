@@ -301,7 +301,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6876282-bigdecimal_divide.patch \
 	patches/f14-fonts.patch \
 	patches/jtreg-DeleteFont.patch \
-	patches/jtreg-WindowWithWarningTest.patch
+	patches/jtreg-WindowWithWarningTest.patch \
+	patches/jtreg-T6638712-fix.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
