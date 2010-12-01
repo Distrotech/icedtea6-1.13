@@ -302,12 +302,12 @@ ICEDTEA_PATCHES = \
 	patches/f14-fonts.patch \
 	patches/jtreg-DeleteFont.patch \
 	patches/jtreg-WindowWithWarningTest.patch \
-	patches/jtreg-T6638712-fix.patch
+	patches/jtreg-T6638712-fix.patch \
+	patches/openjdk/7002666-eclipse_cdt_oops_crash.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
 	patches/openjdk/6994130-ppc_fix.patch \
-	patches/openjdk/7002666-eclipse_cdt_oops_crash.patch \
 	patches/openjdk/6980392-fix_test6581734.patch \
 	patches/hotspot/hs19/ia64-fix.patch
 else
