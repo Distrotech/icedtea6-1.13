@@ -449,11 +449,9 @@ public class CompileAction extends Action {
                 String name = e.getKey();
                 String value = e.getValue();
                 if (name.equals("test.class.path.prefix")) {
-                    System.err.println("*** java.class.path" + System.getProperty("java.class.path"));
                     Path cp = new Path(value, System.getProperty("java.class.path"));
                     p.put("java.class.path", cp.toString());
                 } else {
-                    System.err.println("prop: " + e.getKey() + "\t" + e.getValue());
                     p.put(e.getKey(), e.getValue());
                 }
             }
@@ -591,16 +589,13 @@ public class CompileAction extends Action {
             } else {
                 resetAllSysProps = true;
             }
-            System.err.println("resetAllSysProps: " + resetAllSysProps);
             try {
                 if (sysProps != null)
                 {
                     if (resetAllSysProps) {
                         System.setProperties(newProperties(sysProps));
-                        //                    System.err.println("reset properties");
                     } else {
                         System.setProperty("java.class.path", (String) sysProps.get("java.class.path"));
-                        //                    System.err.println("no need to reset properties");
                     }
                 }
             } catch (SecurityException e) {
