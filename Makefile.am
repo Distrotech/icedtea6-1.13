@@ -305,7 +305,7 @@ ICEDTEA_PATCHES = \
 	patches/jtreg-T6638712-fix.patch \
 	patches/openjdk/7002666-eclipse_cdt_oops_crash.patch \
 	patches/jtreg-T6650759m-fix.patch \
-	patches/openjdk/647674-bad-html-entity-parse.patch
+	patches/openjdk/7003777-bad-html-entity-parse.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
