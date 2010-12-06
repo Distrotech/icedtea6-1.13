@@ -303,7 +303,8 @@ ICEDTEA_PATCHES = \
 	patches/jtreg-DeleteFont.patch \
 	patches/jtreg-WindowWithWarningTest.patch \
 	patches/jtreg-T6638712-fix.patch \
-	patches/openjdk/7002666-eclipse_cdt_oops_crash.patch
+	patches/openjdk/7002666-eclipse_cdt_oops_crash.patch \
+	patches/jtreg-T6650759m-fix.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
