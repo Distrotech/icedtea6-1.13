@@ -1,3 +1,11 @@
+2010-12-06  Denis Lila <dlila@redhat.com>
+
+	* Makefile.am:
+	Added patch.
+	* patches/openjdk/647674-bad-html-entity-parse.patch:
+	Fixed issue where the parsing of tokens such as "&xyz" in html
+	documents would insert "&xyz;" in the document.
+
 2010-12-06  Pavel Tisnovsky  <ptisnovs@redhat.com>
 
 	* Makefile.am:
