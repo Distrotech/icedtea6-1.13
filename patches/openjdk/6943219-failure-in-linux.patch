@@ -1,0 +1,73 @@
+# HG changeset patch
+# User chegar
+# Date 1271345836 -3600
+# Node ID ed61accf772ed2eb2002f6100f3aa945ef05431b
+# Parent  1672f0212f025441f1ad058b72568c992a0c6e16
+6943219: test/sun/security/ssl/sun/net/www/protocol/https/HttpsURLConnection/DNSIdentities.java fail in linux
+Reviewed-by: andrew
+
+diff -r 1672f0212f02 -r ed61accf772e test/sun/security/ssl/sun/net/www/protocol/https/HttpsURLConnection/DNSIdentities.java
+--- openjdk-old/jdk/test/sun/security/ssl/sun/net/www/protocol/https/HttpsURLConnection/DNSIdentities.java	Tue Apr 13 12:02:06 2010 +0100
++++ openjdk/jdk/test/sun/security/ssl/sun/net/www/protocol/https/HttpsURLConnection/DNSIdentities.java	Thu Apr 15 16:37:16 2010 +0100
+@@ -657,9 +657,6 @@
+ 
+         SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
+         sslSocket.setNeedClientAuth(true);
+-        if (sslSocket instanceof SSLSocketImpl) {
+-            ((SSLSocketImpl)sslSocket).trySetHostnameVerification("HTTPS");
+-        }
+ 
+         PrintStream out =
+                 new PrintStream(sslSocket.getOutputStream());
+diff -r 1672f0212f02 -r ed61accf772e test/sun/security/ssl/sun/net/www/protocol/https/HttpsURLConnection/IPAddressDNSIdentities.java
+--- openjdk-old/jdk/test/sun/security/ssl/sun/net/www/protocol/https/HttpsURLConnection/IPAddressDNSIdentities.java	Tue Apr 13 12:02:06 2010 +0100
++++ openjdk/jdk/test/sun/security/ssl/sun/net/www/protocol/https/HttpsURLConnection/IPAddressDNSIdentities.java	Thu Apr 15 16:37:16 2010 +0100
+@@ -657,9 +657,6 @@
+ 
+         SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
+         sslSocket.setNeedClientAuth(true);
+-        if (sslSocket instanceof SSLSocketImpl) {
+-            ((SSLSocketImpl)sslSocket).trySetHostnameVerification("HTTPS");
+-        }
+ 
+         PrintStream out =
+                 new PrintStream(sslSocket.getOutputStream());
+diff -r 1672f0212f02 -r ed61accf772e test/sun/security/ssl/sun/net/www/protocol/https/HttpsURLConnection/IPAddressIPIdentities.java
+--- openjdk-old/jdk/test/sun/security/ssl/sun/net/www/protocol/https/HttpsURLConnection/IPAddressIPIdentities.java	Tue Apr 13 12:02:06 2010 +0100
++++ openjdk/jdk/test/sun/security/ssl/sun/net/www/protocol/https/HttpsURLConnection/IPAddressIPIdentities.java	Thu Apr 15 16:37:16 2010 +0100
+@@ -658,9 +658,6 @@
+ 
+         SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
+         sslSocket.setNeedClientAuth(true);
+-        if (sslSocket instanceof SSLSocketImpl) {
+-            ((SSLSocketImpl)sslSocket).trySetHostnameVerification("HTTPS");
+-        }
+ 
+         PrintStream out =
+                 new PrintStream(sslSocket.getOutputStream());
+diff -r 1672f0212f02 -r ed61accf772e test/sun/security/ssl/sun/net/www/protocol/https/HttpsURLConnection/IPIdentities.java
+--- openjdk-old/jdk/test/sun/security/ssl/sun/net/www/protocol/https/HttpsURLConnection/IPIdentities.java	Tue Apr 13 12:02:06 2010 +0100
++++ openjdk/jdk/test/sun/security/ssl/sun/net/www/protocol/https/HttpsURLConnection/IPIdentities.java	Thu Apr 15 16:37:16 2010 +0100
+@@ -658,9 +658,6 @@
+ 
+         SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
+         sslSocket.setNeedClientAuth(true);
+-        if (sslSocket instanceof SSLSocketImpl) {
+-            ((SSLSocketImpl)sslSocket).trySetHostnameVerification("HTTPS");
+-        }
+ 
+         PrintStream out =
+                 new PrintStream(sslSocket.getOutputStream());
+diff -r 1672f0212f02 -r ed61accf772e test/sun/security/ssl/sun/net/www/protocol/https/HttpsURLConnection/Identities.java
+--- openjdk-old/jdk/test/sun/security/ssl/sun/net/www/protocol/https/HttpsURLConnection/Identities.java	Tue Apr 13 12:02:06 2010 +0100
++++ openjdk/jdk/test/sun/security/ssl/sun/net/www/protocol/https/HttpsURLConnection/Identities.java	Thu Apr 15 16:37:16 2010 +0100
+@@ -657,9 +657,6 @@
+ 
+         SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
+         sslSocket.setNeedClientAuth(true);
+-        if (sslSocket instanceof SSLSocketImpl) {
+-            ((SSLSocketImpl)sslSocket).trySetHostnameVerification("HTTPS");
+-        }
+ 
+         PrintStream out =
+                 new PrintStream(sslSocket.getOutputStream());
