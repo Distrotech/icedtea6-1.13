@@ -1,0 +1,51 @@
+--- openjdk-old/hotspot/test/runtime/6929067/Test6929067.sh	2010-10-08 22:29:24.000000000 +0200
++++ openjdk/hotspot/test/runtime/6929067/Test6929067.sh	2010-12-08 13:45:18.000000000 +0100
+@@ -7,6 +7,7 @@
+ ## @run shell Test6929067.sh
+ ##
+ 
++
+ if [ "${TESTSRC}" = "" ]
+ then TESTSRC=.
+ fi
+@@ -42,7 +43,24 @@
+     ;;
+ esac
+ 
+-LD_LIBRARY_PATH=.:${TESTJAVA}/jre/lib/i386/client:/usr/openwin/lib:/usr/dt/lib:/usr/lib:$LD_LIBRARY_PATH
++COMP_FLAG="-m32"
++
++# Get ARCH specifics
++ARCH=`uname -m`
++case "$ARCH" in
++  x86_64)
++    ARCH=amd64
++    COMP_FLAG="-m64"
++    ;;
++  i585)
++    ARCH=i386
++    ;;
++  i686)
++    ARCH=i386
++esac
++
++LD_LIBRARY_PATH=.:${TESTJAVA}/jre/lib/${ARCH}/client:${TESTJAVA}/jre/lib/${ARCH}/server:/usr/openwin/lib:/usr/dt/lib:/usr/lib:$LD_LIBRARY_PATH
++
+ export LD_LIBRARY_PATH
+ 
+ THIS_DIR=`pwd`
+@@ -55,6 +73,13 @@
+ 
+ ${TESTJAVA}${FS}bin${FS}javac T.java
+ 
+-gcc -o invoke -I${TESTJAVA}/include -I${TESTJAVA}/include/linux invoke.c ${TESTJAVA}/jre/lib/i386/client/libjvm.so
++echo "Architecture: ${ARCH}"
++echo "Compilation flag: ${COMP_FLAG}"
++
++gcc ${COMP_FLAG} -o invoke \
++-L${TESTJAVA}/jre/lib/${ARCH}/client \
++-L${TESTJAVA}/jre/lib/${ARCH}/server \
++-ljvm -I${TESTJAVA}/include -I${TESTJAVA}/include/linux invoke.c
++
+ ./invoke
+ exit $?
