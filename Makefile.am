@@ -308,7 +308,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7003777-bad-html-entity-parse.patch \
 	patches/openjdk/6941936-broken-pipe.patch \
 	patches/openjdk/6943219-failure-in-linux.patch \
-	patches/jtreg-6929067-fix.patch
+	patches/jtreg-6929067-fix.patch \
+	patches/openjdk/6979979-gtk_font_size_rounding.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
