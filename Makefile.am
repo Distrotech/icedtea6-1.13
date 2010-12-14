@@ -310,7 +310,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6943219-failure-in-linux.patch \
 	patches/jtreg-6929067-fix.patch \
 	patches/openjdk/6979979-gtk_font_size_rounding.patch \
-	patches/openjdk/6795356-proxylazyvalue-leak.patch
+	patches/openjdk/6795356-proxylazyvalue-leak.patch \
+	patches/rendering-engine-tests.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \

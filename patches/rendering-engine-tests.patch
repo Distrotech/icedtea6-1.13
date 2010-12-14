@@ -1,0 +1,367 @@
+diff -Nu openjdk-old/jdk/test/java/awt/Graphics2D/RenderingEngineTests/RenderingEngineTest.java openjdk/jdk/test/java/awt/Graphics2D/RenderingEngineTests/RenderingEngineTest.java
+--- /dev/null
++++ openjdk/jdk/test/java/awt/Graphics2D/RenderingEngineTests/RenderingEngineTest.java	2010-12-13 16:55:44.000000000 +0100
+@@ -0,0 +1,39 @@
++/*
++ * Copyright 2010 Red Hat, Inc. All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ */
++
++import java.awt.Color;
++import java.awt.Graphics;
++import java.awt.Graphics2D;
++import java.awt.image.BufferedImage;
++
++/*
++ * Helper class for rendering engine tests.
++ */
++public class RenderingEngineTest {
++
++    protected static Object[] getGraphics(int w, int h) {
++        BufferedImage bi = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
++        Graphics2D g2 = (Graphics2D) bi.getGraphics();
++        g2.setColor(Color.white);
++        g2.fillRect(0, 0, w, h);
++        g2.setColor(Color.black);
++        return new Object[] {bi, g2};
++    }
++}
++
+diff -Nu openjdk-old/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test661554.java openjdk/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test661554.java
+--- /dev/null
++++ openjdk/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test661554.java	2010-12-13 16:56:26.000000000 +0100
+@@ -0,0 +1,55 @@
++/*
++ * Copyright 2010 Red Hat, Inc. All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ */
++
++import java.awt.*;
++import static java.awt.RenderingHints.*;
++import java.awt.image.*;
++
++/*
++ * @test
++ * bug 661554 - note that this is a Red Hat bugzilla bug ID, so we cannot
++ *              use real tag "bug" (starting with "at" character) here.
++ * @summary This test check rendering of dashed lines with applied scaling.
++ * @run main Test661554
++ * @author Denis Lila <dlila@redhat.com>, Pavel Tisnovsky <ptisnovs@redhat.com>
++ */
++public class Test661554 extends RenderingEngineTest {
++    public void run() {
++        Graphics2D g2 = (Graphics2D) getGraphics(400, 400)[1];
++
++        g2.setRenderingHint(KEY_ANTIALIASING, VALUE_ANTIALIAS_ON);
++        g2.setStroke(new BasicStroke(2f));
++        g2.scale(0.0000001, 0.0000001);
++
++        // draw line using minification and check if divide by zero is not thrown
++        try {
++            g2.drawLine(10, 10, 10, 100);
++        }
++        catch (ArithmeticException e) {
++            // this might be kinda stupid. Maybe we should just let the DVZ
++            // fall through.
++            throw new RuntimeException("Divide by zero occurred; test failed.");
++        }
++    }
++
++    public static void main(String[] argv) {
++        new Test661554().run();
++    }
++}
++
+diff -Nu openjdk-old/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test6967433.java openjdk/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test6967433.java
+--- /dev/null
++++ openjdk/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test6967433.java	2010-12-13 16:57:42.000000000 +0100
+@@ -0,0 +1,59 @@
++/*
++ * Copyright 2010 Red Hat, Inc. All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ */
++
++import java.awt.*;
++import java.awt.image.*;
++import static java.awt.RenderingHints.*;
++
++/*
++ * @test
++ * @bug 6967433
++ * @summary This test check rendering of dashed lines with applied scaling.
++ * @run main Test6967433
++ * @author Denis Lila <dlila@redhat.com>, Pavel Tisnovsky <ptisnovs@redhat.com>
++ */
++
++// TODO: this test uses lines. That's good for now, but it should really use
++// Path2Ds as Shapes. That's because lines could be treated as special cases,
++// and the code we want to test (in the rendering engine) might not even run.
++// So we must use shapes that are as general as possible.
++public class Test6967433  extends RenderingEngineTest {
++
++    public void run() {
++        Object[] tmp = getGraphics(400, 400);
++        BufferedImage bi = (BufferedImage) tmp[0];
++        Graphics2D g2 = (Graphics2D) tmp[1];
++
++        // draw dashed line using scaling (magnification)
++        final int scale = 32;
++        g2.setStroke(new BasicStroke(1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 1, new float[] {1,1}, 0));
++        g2.scale(scale, scale);
++        g2.drawLine(0, 0, 10, 0);
++
++        // test if dashed shape rendering is correct
++        if (new Color(bi.getRGB(scale + scale/2, 0)).equals(Color.black)) {
++            throw new RuntimeException("ScaledDashedLines test failed.");
++        }
++    }
++
++	public static void main(String[] args) {
++        new Test6967433().run();
++	}
++}
++
+diff -Nu openjdk-old/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test6967434.java openjdk/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test6967434.java
+--- /dev/null
++++ openjdk/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test6967434.java	2010-12-13 16:57:53.000000000 +0100
+@@ -0,0 +1,64 @@
++/*
++ * Copyright 2010 Red Hat, Inc. All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ */
++
++import java.awt.*;
++import java.awt.image.*;
++import static java.awt.RenderingHints.*;
++
++/*
++ * @test
++ * @bug 6967434
++ * @summary This test check rendering of scaled up lines.
++ * @run main Test6967434
++ * @author Denis Lila <dlila@redhat.com>, Pavel Tisnovsky <ptisnovs@redhat.com>
++ */
++
++// TODO: this test uses lines. That's good for now, but it should really use
++// Path2Ds as Shapes. That's because lines could be treated as special cases,
++// and the code we want to test (in the rendering engine) might not even run.
++// So we must use shapes that are as general as possible.
++public class Test6967434 extends RenderingEngineTest {
++
++    public void run() {
++        Object[] tmp = getGraphics(400, 400);
++        BufferedImage bi = (BufferedImage) tmp[0];
++        Graphics2D g2 = (Graphics2D) tmp[1];
++
++        // draw line using custom transformation
++        final float scale = 100;
++        final float width = 1;
++        g2.setStroke(new BasicStroke(width, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL));
++        final int sw = (int)(scale*width/2);
++        g2.translate(sw, sw);
++        g2.scale(scale, scale);
++        g2.drawLine(0, 0, 1, 0);
++        final int middle = sw/2;
++
++        // test if shape rendering is correct
++        if (!(new Color(bi.getRGB(middle-2, middle - 2)).equals(Color.black) &&
++                    new Color(bi.getRGB(middle-2, sw + middle + 2)).equals(Color.black))) {
++            throw new RuntimeException("ScaledRoundCapsTest test failed.");
++        }
++    }
++
++    public static void main(String[] argv) {
++        new Test6967434().run();
++    }
++}
++
+diff -Nu openjdk-old/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test6967436.java openjdk/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test6967436.java
+--- /dev/null
++++ openjdk/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test6967436.java	2010-12-13 16:58:34.000000000 +0100
+@@ -0,0 +1,69 @@
++/*
++ * Copyright 2010 Red Hat, Inc. All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ */
++
++import java.awt.*;
++import java.awt.image.*;
++import static java.awt.RenderingHints.*;
++
++/*
++ * @test
++ * @bug 6967436
++ * @summary This test check proper rendering of diagonal line when line coordinates are bigger than 16bit integer.
++ * @run main Test6967436
++ * @author Denis Lila <dlila@redhat.com>, Pavel Tisnovsky <ptisnovs@redhat.com>
++ */
++
++// TODO: this test use lines. That's good for now, but it should really use
++// Path2Ds as Shapes. That's because lines could be treated as special cases,
++// and the code we want to test (in the rendering engine) might not even run.
++// So we must use shapes that are as general as possible.
++public class Test6967436 extends RenderingEngineTest {
++
++    public void run() {
++        // NOTE - the rendering area should be square, not generic rectangle
++        Object[] tmp = getGraphics(400, 400);
++        BufferedImage bi = (BufferedImage) tmp[0];
++        Graphics2D g2 = (Graphics2D) tmp[1];
++
++        g2.setStroke(new BasicStroke(5));
++        g2.setRenderingHint(KEY_ANTIALIASING, VALUE_ANTIALIAS_ON);
++
++        g2.drawLine(0, 0, 1<<15, 1<<15);
++
++        // test if two areas (above line and below line) contains only
++        // white pixels
++        int w = bi.getWidth(), h = bi.getHeight();
++        for (int i = 0; i < h; i++) {
++            for (int j = i + 10; j < w; j++) {
++                if (!(new Color(bi.getRGB(j, i)).equals(Color.white) &&
++                            new Color(bi.getRGB(i, j)).equals(Color.white)))
++                {
++                    throw new RuntimeException(
++                            "A non white background pixel was found.\n" +
++                            "OverflowTest failed");
++                }
++            }
++        }
++    }
++
++    public static void main(String[] argv) {
++        new Test6967436().run();
++    }
++}
++
+diff -Nu openjdk-old/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test6976265.java openjdk/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test6976265.java
+--- /dev/null
++++ openjdk/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test6976265.java	2010-12-13 16:32:29.000000000 +0100
+@@ -0,0 +1,57 @@
++/*
++ * Copyright 2010 Red Hat, Inc. All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ */
++
++import java.awt.*;
++import java.awt.image.*;
++import static java.awt.RenderingHints.*;
++
++/*
++ * @test
++ * @bug 6976265
++ * @summary This test check if STROKE_CONTROL is supported.
++ * @run main Test6976265
++ * @author Denis Lila <dlila@redhat.com>, Pavel Tisnovsky <ptisnovs@redhat.com>
++ */
++
++// TODO: this test uses lines. That's good for now, but it should really use
++// Path2Ds as Shapes. That's because lines could be treated as special cases,
++// and the code we want to test (in the rendering engine) might not even run.
++// So we must use shapes that are as general as possible.
++public class Test6976265 extends RenderingEngineTest {
++
++    public void run() {
++        Object[] tmp = getGraphics(400, 400);
++        BufferedImage bi = (BufferedImage) tmp[0];
++        Graphics2D g2 = (Graphics2D) tmp[1];
++
++        g2.setRenderingHint(KEY_STROKE_CONTROL, VALUE_STROKE_NORMALIZE);
++        g2.setRenderingHint(KEY_ANTIALIASING, VALUE_ANTIALIAS_ON);
++        g2.drawLine(10, 10, 10, 100);
++
++        // test if rendering is correct
++        if (! new Color(bi.getRGB(10, 10)).equals(Color.black)) {
++            throw new RuntimeException("StrokeControlTest test failed.");
++        }
++    }
++
++    public static void main(String[] args) {
++        new Test6976265().run();
++    }
++}
++
