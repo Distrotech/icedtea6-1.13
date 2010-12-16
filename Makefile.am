@@ -311,7 +311,8 @@ ICEDTEA_PATCHES = \
 	patches/jtreg-6929067-fix.patch \
 	patches/openjdk/6979979-gtk_font_size_rounding.patch \
 	patches/openjdk/6795356-proxylazyvalue-leak.patch \
-	patches/rendering-engine-tests.patch
+	patches/rendering-engine-tests.patch \
+	patches/jtreg-TestXEmbedServer-fix.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
