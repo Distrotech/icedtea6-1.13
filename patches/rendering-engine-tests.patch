@@ -1,7 +1,7 @@
-diff -Nu openjdk-old/jdk/test/java/awt/Graphics2D/RenderingEngineTests/RenderingEngineTest.java openjdk/jdk/test/java/awt/Graphics2D/RenderingEngineTests/RenderingEngineTest.java
---- /dev/null
-+++ openjdk/jdk/test/java/awt/Graphics2D/RenderingEngineTests/RenderingEngineTest.java	2010-12-13 16:55:44.000000000 +0100
-@@ -0,0 +1,39 @@
+diff -Nr --unified=5 ./openjdk.old/jdk/test/sun/java2d/pisces/Renderer/RenderingEngineTest.java ./openjdk/jdk/test/sun/java2d/pisces/Renderer/RenderingEngineTest.java
+--- ./openjdk.old/jdk/test/sun/java2d/pisces/Renderer/RenderingEngineTest.java	1969-12-31 19:00:00.000000000 -0500
++++ ./openjdk/jdk/test/sun/java2d/pisces/Renderer/RenderingEngineTest.java	2010-12-15 15:57:11.881597163 -0500
+@@ -0,0 +1,89 @@
 +/*
 + * Copyright 2010 Red Hat, Inc. All Rights Reserved.
 + * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -22,14 +22,21 @@ diff -Nu openjdk-old/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Rendering
 + */
 +
 +import java.awt.Color;
-+import java.awt.Graphics;
 +import java.awt.Graphics2D;
++import java.awt.Shape;
++import java.awt.geom.Path2D;
 +import java.awt.image.BufferedImage;
++import sun.awt.geom.PathConsumer2D;
 +
 +/*
 + * Helper class for rendering engine tests.
 + */
-+public class RenderingEngineTest {
++public abstract class RenderingEngineTest implements Runnable {
++
++    public abstract void run();
++
++    protected static sun.java2d.pipe.RenderingEngine re =
++                     sun.java2d.pipe.RenderingEngine.getInstance();
 +
 +    protected static Object[] getGraphics(int w, int h) {
 +        BufferedImage bi = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
@@ -39,11 +46,102 @@ diff -Nu openjdk-old/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Rendering
 +        g2.setColor(Color.black);
 +        return new Object[] {bi, g2};
 +    }
++
++    protected static class ShapeCreatorPC2D implements PathConsumer2D {
++
++        Path2D p2d = new Path2D.Double();
++
++        @Override
++        public void closePath() {
++            p2d.closePath();
++        }
++
++        @Override
++        public void curveTo(float x1, float y1, float x2, float y2, float x3, float y3) {
++            p2d.curveTo(x1, y1, x2, y2, x3, y3);
++        }
++
++        @Override
++        public long getNativeConsumer() {
++            return 0;
++        }
++
++        @Override
++        public void lineTo(float x, float y) {
++            p2d.lineTo(x, y);
++        }
++
++        @Override
++        public void moveTo(float x, float y) {
++            p2d.moveTo(x, y);
++        }
++
++        @Override
++        public void pathDone() {
++        }
++
++        @Override
++        public void quadTo(float x1, float y1, float x2, float y2) {
++            p2d.quadTo(x1, y1, x2, y2);
++        }
++
++        public Shape getShape() {
++            return p2d;
++        }
++    }
 +}
 +
-diff -Nu openjdk-old/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test661554.java openjdk/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test661554.java
---- /dev/null
-+++ openjdk/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test661554.java	2010-12-13 16:56:26.000000000 +0100
+diff -Nr --unified=5 ./openjdk.old/jdk/test/sun/java2d/pisces/Renderer/Test661554.java ./openjdk/jdk/test/sun/java2d/pisces/Renderer/Test661554.java
+--- ./openjdk.old/jdk/test/sun/java2d/pisces/Renderer/Test661554.java	1969-12-31 19:00:00.000000000 -0500
++++ ./openjdk/jdk/test/sun/java2d/pisces/Renderer/Test661554.java	2010-12-15 15:57:11.881597163 -0500
+@@ -0,0 +1,44 @@
++/*
++ * Copyright 2010 Red Hat, Inc. All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ */
++
++import java.awt.BasicStroke;
++import java.awt.geom.AffineTransform;
++import java.awt.geom.Line2D;
++
++/*
++ * @test
++ * bug 661554 - note that this is a Red Hat bugzilla bug ID, so we cannot
++ *              use real tag "bug" (starting with "at" character) here.
++ * @summary This test check rendering of dashed lines with applied scaling.
++ * @run main Test661554
++ * @author Denis Lila <dlila@redhat.com>, Pavel Tisnovsky <ptisnovs@redhat.com>
++ */
++public class Test661554 extends RenderingEngineTest {
++    public void run() {
++        AffineTransform at = new AffineTransform();
++        at.scale(0.0000001, 0.0000001);
++        ShapeCreatorPC2D pc2d = new ShapeCreatorPC2D();
++        re.strokeTo(new Line2D.Double(10, 10, 10, 100), at, new BasicStroke(2f), false, false, false, pc2d);
++    }
++
++    public static void main(String[] argv) {
++        new Test661554().run();
++    }
++}
++
+diff -Nr --unified=5 ./openjdk.old/jdk/test/sun/java2d/pisces/Renderer/Test6967433.java ./openjdk/jdk/test/sun/java2d/pisces/Renderer/Test6967433.java
+--- ./openjdk.old/jdk/test/sun/java2d/pisces/Renderer/Test6967433.java	1969-12-31 19:00:00.000000000 -0500
++++ ./openjdk/jdk/test/sun/java2d/pisces/Renderer/Test6967433.java	2010-12-15 15:57:11.882597017 -0500
 @@ -0,0 +1,55 @@
 +/*
 + * Copyright 2010 Red Hat, Inc. All Rights Reserved.
@@ -64,68 +162,9 @@ diff -Nu openjdk-old/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test66155
 + * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 + */
 +
-+import java.awt.*;
-+import static java.awt.RenderingHints.*;
-+import java.awt.image.*;
-+
-+/*
-+ * @test
-+ * bug 661554 - note that this is a Red Hat bugzilla bug ID, so we cannot
-+ *              use real tag "bug" (starting with "at" character) here.
-+ * @summary This test check rendering of dashed lines with applied scaling.
-+ * @run main Test661554
-+ * @author Denis Lila <dlila@redhat.com>, Pavel Tisnovsky <ptisnovs@redhat.com>
-+ */
-+public class Test661554 extends RenderingEngineTest {
-+    public void run() {
-+        Graphics2D g2 = (Graphics2D) getGraphics(400, 400)[1];
-+
-+        g2.setRenderingHint(KEY_ANTIALIASING, VALUE_ANTIALIAS_ON);
-+        g2.setStroke(new BasicStroke(2f));
-+        g2.scale(0.0000001, 0.0000001);
-+
-+        // draw line using minification and check if divide by zero is not thrown
-+        try {
-+            g2.drawLine(10, 10, 10, 100);
-+        }
-+        catch (ArithmeticException e) {
-+            // this might be kinda stupid. Maybe we should just let the DVZ
-+            // fall through.
-+            throw new RuntimeException("Divide by zero occurred; test failed.");
-+        }
-+    }
-+
-+    public static void main(String[] argv) {
-+        new Test661554().run();
-+    }
-+}
-+
-diff -Nu openjdk-old/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test6967433.java openjdk/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test6967433.java
---- /dev/null
-+++ openjdk/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test6967433.java	2010-12-13 16:57:42.000000000 +0100
-@@ -0,0 +1,59 @@
-+/*
-+ * Copyright 2010 Red Hat, Inc. All Rights Reserved.
-+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
-+ *
-+ * This code is free software; you can redistribute it and/or modify it
-+ * under the terms of the GNU General Public License version 2 only, as
-+ * published by the Free Software Foundation.
-+ *
-+ * This code is distributed in the hope that it will be useful, but WITHOUT
-+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-+ * version 2 for more details (a copy is included in the LICENSE file that
-+ * accompanied this code).
-+ *
-+ * You should have received a copy of the GNU General Public License version
-+ * 2 along with this work; if not, write to the Free Software Foundation,
-+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
-+ */
-+
-+import java.awt.*;
-+import java.awt.image.*;
-+import static java.awt.RenderingHints.*;
++import java.awt.BasicStroke;
++import java.awt.geom.AffineTransform;
++import java.awt.geom.Line2D;
 +
 +/*
 + * @test
@@ -135,38 +174,34 @@ diff -Nu openjdk-old/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test69674
 + * @author Denis Lila <dlila@redhat.com>, Pavel Tisnovsky <ptisnovs@redhat.com>
 + */
 +
-+// TODO: this test uses lines. That's good for now, but it should really use
-+// Path2Ds as Shapes. That's because lines could be treated as special cases,
-+// and the code we want to test (in the rendering engine) might not even run.
-+// So we must use shapes that are as general as possible.
 +public class Test6967433  extends RenderingEngineTest {
 +
 +    public void run() {
-+        Object[] tmp = getGraphics(400, 400);
-+        BufferedImage bi = (BufferedImage) tmp[0];
-+        Graphics2D g2 = (Graphics2D) tmp[1];
-+
 +        // draw dashed line using scaling (magnification)
++        ShapeCreatorPC2D pc2d = new ShapeCreatorPC2D();
 +        final int scale = 32;
-+        g2.setStroke(new BasicStroke(1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 1, new float[] {1,1}, 0));
-+        g2.scale(scale, scale);
-+        g2.drawLine(0, 0, 10, 0);
++        AffineTransform at = new AffineTransform();
++        at.scale(scale, scale);
++        re.strokeTo(new Line2D.Double(0, 0, 10, 0),
++                    at,
++                    new BasicStroke(1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 1, new float[] {1,1}, 0),
++                    false, false, false,
++                    pc2d);
 +
-+        // test if dashed shape rendering is correct
-+        if (new Color(bi.getRGB(scale + scale/2, 0)).equals(Color.black)) {
++        if (pc2d.getShape().contains(scale + scale/2, 0)) {
 +            throw new RuntimeException("ScaledDashedLines test failed.");
 +        }
 +    }
 +
-+	public static void main(String[] args) {
++    public static void main(String[] args) {
 +        new Test6967433().run();
-+	}
++    }
 +}
 +
-diff -Nu openjdk-old/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test6967434.java openjdk/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test6967434.java
---- /dev/null
-+++ openjdk/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test6967434.java	2010-12-13 16:57:53.000000000 +0100
-@@ -0,0 +1,64 @@
+diff -Nr --unified=5 ./openjdk.old/jdk/test/sun/java2d/pisces/Renderer/Test6967434.java ./openjdk/jdk/test/sun/java2d/pisces/Renderer/Test6967434.java
+--- ./openjdk.old/jdk/test/sun/java2d/pisces/Renderer/Test6967434.java	1969-12-31 19:00:00.000000000 -0500
++++ ./openjdk/jdk/test/sun/java2d/pisces/Renderer/Test6967434.java	2010-12-15 15:57:11.881597163 -0500
+@@ -0,0 +1,63 @@
 +/*
 + * Copyright 2010 Red Hat, Inc. All Rights Reserved.
 + * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -186,9 +221,10 @@ diff -Nu openjdk-old/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test69674
 + * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 + */
 +
-+import java.awt.*;
-+import java.awt.image.*;
-+import static java.awt.RenderingHints.*;
++import java.awt.BasicStroke;
++import java.awt.Shape;
++import java.awt.geom.AffineTransform;
++import java.awt.geom.Line2D;
 +
 +/*
 + * @test
@@ -198,30 +234,28 @@ diff -Nu openjdk-old/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test69674
 + * @author Denis Lila <dlila@redhat.com>, Pavel Tisnovsky <ptisnovs@redhat.com>
 + */
 +
-+// TODO: this test uses lines. That's good for now, but it should really use
-+// Path2Ds as Shapes. That's because lines could be treated as special cases,
-+// and the code we want to test (in the rendering engine) might not even run.
-+// So we must use shapes that are as general as possible.
 +public class Test6967434 extends RenderingEngineTest {
 +
 +    public void run() {
-+        Object[] tmp = getGraphics(400, 400);
-+        BufferedImage bi = (BufferedImage) tmp[0];
-+        Graphics2D g2 = (Graphics2D) tmp[1];
-+
-+        // draw line using custom transformation
 +        final float scale = 100;
 +        final float width = 1;
-+        g2.setStroke(new BasicStroke(width, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL));
 +        final int sw = (int)(scale*width/2);
-+        g2.translate(sw, sw);
-+        g2.scale(scale, scale);
-+        g2.drawLine(0, 0, 1, 0);
-+        final int middle = sw/2;
 +
++        AffineTransform at = new AffineTransform();
++        at.translate(sw, sw);
++        at.scale(scale, scale);
++
++        BasicStroke bs = new BasicStroke(width, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
++
++        ShapeCreatorPC2D pc2d = new ShapeCreatorPC2D();
++
++        re.strokeTo(new Line2D.Double(0, 0, 1, 0), at, bs, false, false, false, pc2d);
++        Shape result = pc2d.getShape();
++
++        final int middle = sw/2;
 +        // test if shape rendering is correct
-+        if (!(new Color(bi.getRGB(middle-2, middle - 2)).equals(Color.black) &&
-+                    new Color(bi.getRGB(middle-2, sw + middle + 2)).equals(Color.black))) {
++        if (!(result.contains(middle - 2, middle - 2) &&
++              result.contains(middle - 2, sw + middle + 2))) {
 +            throw new RuntimeException("ScaledRoundCapsTest test failed.");
 +        }
 +    }
@@ -231,10 +265,10 @@ diff -Nu openjdk-old/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test69674
 +    }
 +}
 +
-diff -Nu openjdk-old/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test6967436.java openjdk/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test6967436.java
---- /dev/null
-+++ openjdk/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test6967436.java	2010-12-13 16:58:34.000000000 +0100
-@@ -0,0 +1,69 @@
+diff -Nr --unified=5 ./openjdk.old/jdk/test/sun/java2d/pisces/Renderer/Test6967436.java ./openjdk/jdk/test/sun/java2d/pisces/Renderer/Test6967436.java
+--- ./openjdk.old/jdk/test/sun/java2d/pisces/Renderer/Test6967436.java	1969-12-31 19:00:00.000000000 -0500
++++ ./openjdk/jdk/test/sun/java2d/pisces/Renderer/Test6967436.java	2010-12-15 15:57:11.882597017 -0500
+@@ -0,0 +1,51 @@
 +/*
 + * Copyright 2010 Red Hat, Inc. All Rights Reserved.
 + * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -254,9 +288,9 @@ diff -Nu openjdk-old/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test69674
 + * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 + */
 +
-+import java.awt.*;
-+import java.awt.image.*;
-+import static java.awt.RenderingHints.*;
++import java.awt.BasicStroke;
++import java.awt.geom.Line2D;
++import java.awt.geom.Rectangle2D;
 +
 +/*
 + * @test
@@ -266,36 +300,18 @@ diff -Nu openjdk-old/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test69674
 + * @author Denis Lila <dlila@redhat.com>, Pavel Tisnovsky <ptisnovs@redhat.com>
 + */
 +
-+// TODO: this test use lines. That's good for now, but it should really use
-+// Path2Ds as Shapes. That's because lines could be treated as special cases,
-+// and the code we want to test (in the rendering engine) might not even run.
-+// So we must use shapes that are as general as possible.
 +public class Test6967436 extends RenderingEngineTest {
 +
 +    public void run() {
-+        // NOTE - the rendering area should be square, not generic rectangle
-+        Object[] tmp = getGraphics(400, 400);
-+        BufferedImage bi = (BufferedImage) tmp[0];
-+        Graphics2D g2 = (Graphics2D) tmp[1];
++        ShapeCreatorPC2D pc2d = new ShapeCreatorPC2D();
++        re.strokeTo(new Line2D.Double(0, 0, 1, 1 << 16), null, new BasicStroke(), false, false, false, pc2d);
++        Rectangle2D bounds = pc2d.getShape().getBounds2D();
++        double minx = bounds.getMinX();
++        double maxx = bounds.getMaxX();
++        double miny = bounds.getMinY();
 +
-+        g2.setStroke(new BasicStroke(5));
-+        g2.setRenderingHint(KEY_ANTIALIASING, VALUE_ANTIALIAS_ON);
-+
-+        g2.drawLine(0, 0, 1<<15, 1<<15);
-+
-+        // test if two areas (above line and below line) contains only
-+        // white pixels
-+        int w = bi.getWidth(), h = bi.getHeight();
-+        for (int i = 0; i < h; i++) {
-+            for (int j = i + 10; j < w; j++) {
-+                if (!(new Color(bi.getRGB(j, i)).equals(Color.white) &&
-+                            new Color(bi.getRGB(i, j)).equals(Color.white)))
-+                {
-+                    throw new RuntimeException(
-+                            "A non white background pixel was found.\n" +
-+                            "OverflowTest failed");
-+                }
-+            }
++        if (miny < -1 || minx < -1 || maxx > 2) {
++            throw new RuntimeException(" There was an overflow in the rendering engine.");
 +        }
 +    }
 +
@@ -304,10 +320,10 @@ diff -Nu openjdk-old/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test69674
 +    }
 +}
 +
-diff -Nu openjdk-old/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test6976265.java openjdk/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test6976265.java
---- /dev/null
-+++ openjdk/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test6976265.java	2010-12-13 16:32:29.000000000 +0100
-@@ -0,0 +1,57 @@
+diff -Nr --unified=5 ./openjdk.old/jdk/test/sun/java2d/pisces/Renderer/Test6976265.java ./openjdk/jdk/test/sun/java2d/pisces/Renderer/Test6976265.java
+--- ./openjdk.old/jdk/test/sun/java2d/pisces/Renderer/Test6976265.java	1969-12-31 19:00:00.000000000 -0500
++++ ./openjdk/jdk/test/sun/java2d/pisces/Renderer/Test6976265.java	2010-12-15 15:57:11.881597163 -0500
+@@ -0,0 +1,49 @@
 +/*
 + * Copyright 2010 Red Hat, Inc. All Rights Reserved.
 + * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -327,9 +343,9 @@ diff -Nu openjdk-old/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test69762
 + * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 + */
 +
-+import java.awt.*;
-+import java.awt.image.*;
-+import static java.awt.RenderingHints.*;
++import java.awt.BasicStroke;
++import java.awt.geom.Line2D;
++import java.awt.geom.Rectangle2D;
 +
 +/*
 + * @test
@@ -339,24 +355,16 @@ diff -Nu openjdk-old/jdk/test/java/awt/Graphics2D/RenderingEngineTests/Test69762
 + * @author Denis Lila <dlila@redhat.com>, Pavel Tisnovsky <ptisnovs@redhat.com>
 + */
 +
-+// TODO: this test uses lines. That's good for now, but it should really use
-+// Path2Ds as Shapes. That's because lines could be treated as special cases,
-+// and the code we want to test (in the rendering engine) might not even run.
-+// So we must use shapes that are as general as possible.
 +public class Test6976265 extends RenderingEngineTest {
 +
 +    public void run() {
-+        Object[] tmp = getGraphics(400, 400);
-+        BufferedImage bi = (BufferedImage) tmp[0];
-+        Graphics2D g2 = (Graphics2D) tmp[1];
-+
-+        g2.setRenderingHint(KEY_STROKE_CONTROL, VALUE_STROKE_NORMALIZE);
-+        g2.setRenderingHint(KEY_ANTIALIASING, VALUE_ANTIALIAS_ON);
-+        g2.drawLine(10, 10, 10, 100);
-+
-+        // test if rendering is correct
-+        if (! new Color(bi.getRGB(10, 10)).equals(Color.black)) {
-+            throw new RuntimeException("StrokeControlTest test failed.");
++        ShapeCreatorPC2D pc2d = new ShapeCreatorPC2D();
++        re.strokeTo(new Line2D.Double(10, 10, 10, 100), null, new BasicStroke(), false, true, true, pc2d);
++        Rectangle2D bounds = pc2d.getShape().getBounds2D();
++        for (int i = 10; i < 100; i++) {
++            if (bounds.contains(9.75, i) || !bounds.contains(10.75, i)) {
++                throw new RuntimeException("StrokeControlTest test failed.");
++            }
 +        }
 +    }
 +
