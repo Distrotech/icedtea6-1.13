@@ -313,6 +313,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6795356-proxylazyvalue-leak.patch \
 	patches/rendering-engine-tests.patch \
 	patches/jtreg-TestXEmbedServer-fix.patch
+	patches/openjdk/6800846-printing-quality.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \

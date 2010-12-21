@@ -1,0 +1,144 @@
+diff -U5 -r --new-file openjdk.old/jdk/src/share/native/sun/awt/image/dither.c openjdk/jdk/src/share/native/sun/awt/image/dither.c
+--- openjdk.old/jdk/src/share/native/sun/awt/image/dither.c	2010-12-20 13:07:38.305283324 -0500
++++ openjdk/jdk/src/share/native/sun/awt/image/dither.c	2010-12-20 13:06:37.348012435 -0500
+@@ -167,10 +167,11 @@
+     int i;
+     CubeStateInfo currentState;
+     int cubesize = cube_dim * cube_dim * cube_dim;
+     unsigned char *useFlags;
+     unsigned char *newILut = (unsigned char*)malloc(cubesize);
++    int cmap_mid = (cmap_len >> 1) + (cmap_len & 0x1);
+     if (newILut) {
+ 
+       useFlags = (unsigned char *)calloc(cubesize, 1);
+ 
+       if (useFlags == 0) {
+@@ -186,44 +187,44 @@
+         currentState.usedFlags      = useFlags;
+         currentState.activeEntries  = 0;
+         currentState.iLUT           = newILut;
+ 
+         currentState.rgb = (unsigned short *)
+-                                malloc(256 * sizeof(unsigned short));
++                                malloc(cmap_len * sizeof(unsigned short));
+         if (currentState.rgb == NULL) {
+             free(newILut);
+             free(useFlags);
+ #ifdef DEBUG
+         fprintf(stderr, "Out of memory in color:initCubemap()2\n");
+ #endif
+             return NULL;
+         }
+ 
+         currentState.indices = (unsigned char *)
+-                                malloc(256 * sizeof(unsigned char));
++                                malloc(cmap_len * sizeof(unsigned char));
+         if (currentState.indices == NULL) {
+             free(currentState.rgb);
+             free(newILut);
+             free(useFlags);
+ #ifdef DEBUG
+         fprintf(stderr, "Out of memory in color:initCubemap()3\n");
+ #endif
+             return NULL;
+         }
+ 
+-        for (i = 0; i < 128; i++) {
++        for (i = 0; i < cmap_mid; i++) {
+             unsigned short rgb;
+             int pixel = cmap[i];
+             rgb = (pixel & 0x00f80000) >> 9;
+             rgb |= (pixel & 0x0000f800) >> 6;
+             rgb |=  (pixel & 0xf8) >> 3;
+             INSERTNEW(currentState, rgb, i);
+-            pixel = cmap[255-i];
++            pixel = cmap[cmap_len - i - 1];
+             rgb = (pixel & 0x00f80000) >> 9;
+             rgb |= (pixel & 0x0000f800) >> 6;
+             rgb |=  (pixel & 0xf8) >> 3;
+-            INSERTNEW(currentState, rgb, 255-i);
++            INSERTNEW(currentState, rgb, cmap_len - i - 1);
+         }
+ 
+         if (!recurseLevel(&currentState)) {
+             free(newILut);
+             free(useFlags);
+diff -U5 -r --new-file openjdk.old/jdk/test/sun/awt/image/DrawByteBinary.java openjdk/jdk/test/sun/awt/image/DrawByteBinary.java
+--- openjdk.old/jdk/test/sun/awt/image/DrawByteBinary.java	1969-12-31 19:00:00.000000000 -0500
++++ openjdk/jdk/test/sun/awt/image/DrawByteBinary.java	2010-12-20 13:05:48.338287585 -0500
+@@ -0,0 +1,75 @@
++/*
++ * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/**
++ * @test
++ * @bug     6800846
++ *
++ * @summary Test verifes that images with short palette are rendered
++ *          withourt artifacts.
++ *
++ * @run     main DrawByteBinary
++ */
++
++
++import java.awt.*;
++import java.awt.color.*;
++import java.awt.image.*;
++import static java.awt.image.BufferedImage.*;
++
++
++public class DrawByteBinary {
++
++    public static void main(String args[]) {
++        int w = 100, h = 30;
++        int x = 10;
++        byte[] arr = {(byte)0xff, (byte)0x0, (byte)0x00};
++
++        IndexColorModel newCM = new IndexColorModel(1, 2, arr, arr, arr);
++        BufferedImage orig = new BufferedImage(w, h, TYPE_BYTE_BINARY, newCM);
++        Graphics2D g2d = orig.createGraphics();
++        g2d.setColor(Color.white);
++        g2d.fillRect(0, 0, w, h);
++        g2d.setColor(Color.black);
++        g2d.drawLine(x, 0, x, h);
++        g2d.dispose();
++
++        IndexColorModel origCM = (IndexColorModel)orig.getColorModel();
++        BufferedImage test = new BufferedImage(w, h, TYPE_BYTE_BINARY,origCM);
++        g2d = test.createGraphics();
++        g2d.drawImage(orig, 0, 0, null);
++        g2d.dispose();
++
++        int y = h / 2;
++
++        // we expect white color outside the line
++        if (test.getRGB(x - 1, y) != 0xffffffff) {
++            throw new RuntimeException("Invalid color outside the line.");
++        }
++
++        // we expect black color on the line
++        if (test.getRGB(x, y) != 0xff000000) {
++            throw new RuntimeException("Invalid color on the line.");
++        }
++    }
++}
