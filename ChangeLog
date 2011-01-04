@@ -1,3 +1,16 @@
+2011-01-04  Deepak Bhole <dbhole@redhat.com>
+
+	Backport S6687968, S6541476, S6782079
+	* Makefile.am: Add missing "\" to the patch list, update to include 
+	new patches.
+	* NEWS: Updated.
+	* patches/openjdk/6687968-pngimagereader_mem_leak.patch: Backport to allow
+	S6541476 fix to apply cleanly.
+	* patches/openjdk/6541476-png-iTXt-chunk.patch: Backport to fix iTXt chunk
+	handling for png images. Also addresses RH665355.
+	* patches/openjdk/6782079-png_metadata_oom.patch: Backport to fix
+	potential OOM error when reading metadata on truncated pngs.
+
 2010-12-31  Mark Wielaard  <mark@klomp.org>
 
 	* Makefile.am (ICEDTEA_PATCHES): Add missing backslash.
