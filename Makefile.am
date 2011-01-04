@@ -316,7 +316,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6800846-printing-quality.patch \
 	patches/openjdk/6687968-pngimagereader_mem_leak.patch \
 	patches/openjdk/6541476-png-iTXt-chunk.patch \
-	patches/openjdk/6782079-png_metadata_oom.patch
+	patches/openjdk/6782079-png_metadata_oom.patch \
+	patches/661505-jpeg.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
