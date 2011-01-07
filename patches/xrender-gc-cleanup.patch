@@ -1,0 +1,12 @@
+--- openjdk.orig/jdk/src/solaris/classes/sun/java2d/xr/XRSurfaceData.java	2010-10-22 19:59:12.530975783 +0200
++++ openjdk/jdk/src/solaris/classes/sun/java2d/xr/XRSurfaceData.java	2010-10-22 19:59:12.020734687 +0200
+@@ -479,8 +485,7 @@
+         if (xrpipe == null) {
+             try {
+                 SunToolkit.awtLock();
+-                xgc = renderQueue.createGC(xid); // TODO: GC leak? where to
+-                // clean up?
++                xgc = XCreateGC(getNativeOps());
+ 
+                 xrpipe = new XRRenderer(maskBuffer.getMaskBuffer());
+                 xrtxpipe = new PixelToShapeConverter(xrpipe);

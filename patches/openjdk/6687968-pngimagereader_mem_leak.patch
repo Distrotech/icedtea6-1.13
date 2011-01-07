@@ -1,0 +1,126 @@
+diff -urN openjdk.orig/jdk/src/share/classes/com/sun/imageio/plugins/png/PNGImageReader.java openjdk/jdk/src/share/classes/com/sun/imageio/plugins/png/PNGImageReader.java
+--- openjdk.orig/jdk/src/share/classes/com/sun/imageio/plugins/png/PNGImageReader.java	2010-06-21 17:15:11.000000000 -0400
++++ openjdk/jdk/src/share/classes/com/sun/imageio/plugins/png/PNGImageReader.java	2010-12-23 15:12:24.471446202 -0500
+@@ -618,10 +618,15 @@
+     private static String inflate(byte[] b) throws IOException {
+         InputStream bais = new ByteArrayInputStream(b);
+         InputStream iis = new InflaterInputStream(bais);
++
+         StringBuilder sb = new StringBuilder(80);
+         int c;
+-        while ((c = iis.read()) != -1) {
+-            sb.append((char)c);
++        try {
++            while ((c = iis.read()) != -1) {
++                sb.append((char)c);
++            }
++        } finally {
++            iis.close();
+         }
+         return sb.toString();
+     }
+@@ -1246,13 +1251,26 @@
+             destinationBands = param.getDestinationBands();
+             destinationOffset = param.getDestinationOffset();
+         }
+-
++        Inflater inf = null;
+         try {
+             stream.seek(imageStartPosition);
+ 
+             Enumeration e = new PNGImageDataEnumeration(stream);
+             InputStream is = new SequenceInputStream(e);
+-            is = new InflaterInputStream(is, new Inflater());
++
++           /* InflaterInputStream uses an Inflater instance which consumes
++            * native (non-GC visible) resources. This is normally implicitly
++            * freed when the stream is closed. However since the
++            * InflaterInputStream wraps a client-supplied input stream,
++            * we cannot close it.
++            * But the app may depend on GC finalization to close the stream.
++            * Therefore to ensure timely freeing of native resources we
++            * explicitly create the Inflater instance and free its resources
++            * when we are done with the InflaterInputStream by calling
++            * inf.end();
++            */
++            inf = new Inflater();
++            is = new InflaterInputStream(is, inf);
+             is = new BufferedInputStream(is);
+             this.pixelStream = new DataInputStream(is);
+ 
+@@ -1285,6 +1303,10 @@
+             }
+         } catch (IOException e) {
+             throw new IIOException("Error reading PNG image data", e);
++        } finally {
++            if (inf != null) {
++                inf.end();
++            }
+         }
+     }
+ 
+diff -urN openjdk.orig/jdk/src/share/classes/com/sun/imageio/plugins/png/PNGImageWriter.java openjdk/jdk/src/share/classes/com/sun/imageio/plugins/png/PNGImageWriter.java
+--- openjdk.orig/jdk/src/share/classes/com/sun/imageio/plugins/png/PNGImageWriter.java	2010-06-21 17:15:11.000000000 -0400
++++ openjdk/jdk/src/share/classes/com/sun/imageio/plugins/png/PNGImageWriter.java	2010-12-23 15:12:24.472446225 -0500
+@@ -244,13 +244,17 @@
+     }
+ 
+     public void finish() throws IOException {
+-        if (!def.finished()) {
+-            def.finish();
+-            while (!def.finished()) {
+-                deflate();
++        try {
++            if (!def.finished()) {
++                def.finish();
++                while (!def.finished()) {
++                    deflate();
++                }
+             }
++            finishChunk();
++        } finally {
++            def.end();
+         }
+-        finishChunk();
+     }
+ 
+     protected void finalize() throws Throwable {
+@@ -928,23 +932,24 @@
+     // Use sourceXOffset, etc.
+     private void write_IDAT(RenderedImage image) throws IOException {
+         IDATOutputStream ios = new IDATOutputStream(stream, 32768);
+-
+-        if (metadata.IHDR_interlaceMethod == 1) {
+-            for (int i = 0; i < 7; i++) {
+-                encodePass(ios, image,
+-                           PNGImageReader.adam7XOffset[i],
+-                           PNGImageReader.adam7YOffset[i],
+-                           PNGImageReader.adam7XSubsampling[i],
+-                           PNGImageReader.adam7YSubsampling[i]);
+-                if (abortRequested()) {
+-                    break;
++        try {
++            if (metadata.IHDR_interlaceMethod == 1) {
++                for (int i = 0; i < 7; i++) {
++                    encodePass(ios, image,
++                               PNGImageReader.adam7XOffset[i],
++                               PNGImageReader.adam7YOffset[i],
++                               PNGImageReader.adam7XSubsampling[i],
++                               PNGImageReader.adam7YSubsampling[i]);
++                    if (abortRequested()) {
++                        break;
++                    }
+                 }
++            } else {
++                encodePass(ios, image, 0, 0, 1, 1);
+             }
+-        } else {
+-            encodePass(ios, image, 0, 0, 1, 1);
++        } finally {
++            ios.finish();
+         }
+-
+-        ios.finish();
+     }
+ 
+     private void writeIEND() throws IOException {

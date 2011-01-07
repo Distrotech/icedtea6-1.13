@@ -9,12 +9,11 @@ diff -r ea703df72762 make/sun/awt/Makefile
 +	fontconfig.Fedora.properties			\
 +	fontconfig.RedHat.6.0.properties
  else
- 
+
  FONTCONFIGS_SRC	= $(CLOSED_SRC)/solaris/classes/sun/awt/fontconfigs
-diff -r ea703df72762 src/solaris/classes/sun/awt/fontconfigs/linux.fontconfig.RedHat.6.0.properties
---- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ openjdk/jdk/src/solaris/classes/sun/awt/fontconfigs/linux.fontconfig.RedHat.6.0.properties	Mon Aug 02 16:56:20 2010 +0100
-@@ -0,0 +1,376 @@
+--- /dev/null	2010-12-20 09:26:08.850062021 +0100
++++ openjdk/jdk/src/solaris/classes/sun/awt/fontconfigs/linux.fontconfig.RedHat.6.0.properties	2010-12-22 11:21:32.606781127 +0100
+@@ -0,0 +1,441 @@
 +# 
 +# Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
 +# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -42,16 +41,19 @@ diff -r ea703df72762 src/solaris/classes/sun/awt/fontconfigs/linux.fontconfig.Re
 +
 +# Version
 +
-+# Uses Fedora 9 fonts and file paths.
++# Uses Fedora 14  fonts and file paths, added VL-gothic
 +version=1
 +
 +# Component Font Mappings
 +
 +dialog.plain.latin-1=DejaVu Sans
-+dialog.plain.japanese-x0208=Sazanami Gothic
++#dialog.plain.japanese-x0208=Sazanami Gothic
++dialog.plain.japanese-x0208=VL PGothic
 +dialog.plain.korean=Baekmuk Gulim
 +dialog.plain.chinese-big5=AR PL ShanHeiSun Uni
 +dialog.plain.chinese-gb18030=AR PL ShanHeiSun Uni
++dialog.plain.assamese=Lohit Assamese
++dialog.plain.devanagari=Lohit Devanagari
 +dialog.plain.bengali=Lohit Bengali
 +dialog.plain.gujarati=Lohit Gujarati
 +dialog.plain.hindi=Lohit Hindi
@@ -63,10 +65,13 @@ diff -r ea703df72762 src/solaris/classes/sun/awt/fontconfigs/linux.fontconfig.Re
 +dialog.plain.sinhala=LKLUG
 +
 +dialog.bold.latin-1=DejaVu Sans Bold
-+dialog.bold.japanese-x0208=Sazanami Gothic
++#dialog.bold.japanese-x0208=Sazanami Gothic
++dialog.bold.japanese-x0208=VL PGothic
 +dialog.bold.korean=Baekmuk Gulim
 +dialog.bold.chinese-big5=AR PL ShanHeiSun Uni
 +dialog.bold.chinese-gb18030=AR PL ShanHeiSun Uni
++dialog.bold.assamese=Lohit Assamese
++dialog.bold.devanagari=Lohit Devanagari
 +dialog.bold.bengali=Lohit Bengali
 +dialog.bold.gujarati=Lohit Gujarati
 +dialog.bold.hindi=Lohit Hindi
@@ -78,10 +83,13 @@ diff -r ea703df72762 src/solaris/classes/sun/awt/fontconfigs/linux.fontconfig.Re
 +dialog.bold.sinhala=LKLUG
 +
 +dialog.italic.latin-1=DejaVu Sans Oblique
-+dialog.italic.japanese-x0208=Sazanami Gothic
++#dialog.italic.japanese-x0208=Sazanami Gothic
++dialog.italic.japanese-x0208=VL PGothic
 +dialog.italic.korean=Baekmuk Gulim
 +dialog.italic.chinese-big5=AR PL ShanHeiSun Uni
 +dialog.italic.chinese-gb18030=AR PL ShanHeiSun Uni
++dialog.italic.assamese=Lohit Assamese
++dialog.italic.devanagari=Lohit Devanagari
 +dialog.italic.bengali=Lohit Bengali
 +dialog.italic.gujarati=Lohit Gujarati
 +dialog.italic.hindi=Lohit Hindi
@@ -93,10 +101,13 @@ diff -r ea703df72762 src/solaris/classes/sun/awt/fontconfigs/linux.fontconfig.Re
 +dialog.italic.sinhala=LKLUG
 +
 +dialog.bolditalic.latin-1=DejaVu Sans Bold Oblique
-+dialog.bolditalic.japanese-x0208=Sazanami Gothic
++#dialog.bolditalic.japanese-x0208=Sazanami Gothic
++dialog.bolditalic.japanese-x0208=VL PGothic
 +dialog.bolditalic.korean=Baekmuk Gulim
 +dialog.bolditalic.chinese-big5=AR PL ShanHeiSun Uni
 +dialog.bolditalic.chinese-gb18030=AR PL ShanHeiSun Uni
++dialog.bolditalic.assamese=Lohit Assamese
++dialog.bolditalic.devanagari=Lohit Devanagari
 +dialog.bolditalic.bengali=Lohit Bengali
 +dialog.bolditalic.gujarati=Lohit Gujarati
 +dialog.bolditalic.hindi=Lohit Hindi
@@ -108,10 +119,13 @@ diff -r ea703df72762 src/solaris/classes/sun/awt/fontconfigs/linux.fontconfig.Re
 +dialog.bolditalic.sinhala=LKLUG
 +
 +sansserif.plain.latin-1=DejaVu Sans
-+sansserif.plain.japanese-x0208=Sazanami Gothic
++#sansserif.plain.japanese-x0208=Sazanami Gothic
++sansserif.plain.japanese-x0208=VL PGothic
 +sansserif.plain.korean=Baekmuk Gulim
 +sansserif.plain.chinese-big5=AR PL ShanHeiSun Uni
 +sansserif.plain.chinese-gb18030=AR PL ShanHeiSun Uni
++sansserif.plain.assamese=Lohit Assamese
++sansserif.plain.devanagari=Lohit Devanagari
 +sansserif.plain.bengali=Lohit Bengali
 +sansserif.plain.gujarati=Lohit Gujarati
 +sansserif.plain.hindi=Lohit Hindi
@@ -123,10 +137,13 @@ diff -r ea703df72762 src/solaris/classes/sun/awt/fontconfigs/linux.fontconfig.Re
 +sansserif.plain.sinhala=LKLUG
 +
 +sansserif.bold.latin-1=DejaVu Sans Bold
-+sansserif.bold.japanese-x0208=Sazanami Gothic
++#sansserif.bold.japanese-x0208=Sazanami Gothic
++sansserif.bold.japanese-x0208=VL PGothic
 +sansserif.bold.korean=Baekmuk Gulim
 +sansserif.bold.chinese-big5=AR PL ShanHeiSun Uni
 +sansserif.bold.chinese-gb18030=AR PL ShanHeiSun Uni
++sansserif.bold.assamese=Lohit Assamese
++sansserif.bold.devanagari=Lohit Devanagari
 +sansserif.bold.bengali=Lohit Bengali
 +sansserif.bold.gujarati=Lohit Gujarati
 +sansserif.bold.hindi=Lohit Hindi
@@ -138,10 +155,13 @@ diff -r ea703df72762 src/solaris/classes/sun/awt/fontconfigs/linux.fontconfig.Re
 +sansserif.bold.sinhala=LKLUG
 +
 +sansserif.italic.latin-1=DejaVu Sans Oblique
-+sansserif.italic.japanese-x0208=Sazanami Gothic
++#sansserif.italic.japanese-x0208=Sazanami Gothic
++sansserif.italic.japanese-x0208=VL PGothic
 +sansserif.italic.korean=Baekmuk Gulim
 +sansserif.italic.chinese-big5=AR PL ShanHeiSun Uni
 +sansserif.italic.chinese-gb18030=AR PL ShanHeiSun Uni
++sansserif.italic.assamese=Lohit Assamese
++sansserif.italic.devanagari=Lohit Devanagari
 +sansserif.italic.bengali=Lohit Bengali
 +sansserif.italic.gujarati=Lohit Gujarati
 +sansserif.italic.hindi=Lohit Hindi
@@ -153,10 +173,13 @@ diff -r ea703df72762 src/solaris/classes/sun/awt/fontconfigs/linux.fontconfig.Re
 +sansserif.italic.sinhala=LKLUG
 +
 +sansserif.bolditalic.latin-1=DejaVu Sans Bold Oblique
-+sansserif.bolditalic.japanese-x0208=Sazanami Gothic
++#sansserif.bolditalic.japanese-x0208=Sazanami Gothic
++sansserif.bolditalic.japanese-x0208=VL PGothic
 +sansserif.bolditalic.korean=Baekmuk Gulim
 +sansserif.bolditalic.chinese-big5=AR PL ShanHeiSun Uni
 +sansserif.bolditalic.chinese-gb18030=AR PL ShanHeiSun Uni
++sansserif.bolditalic.assamese=Lohit Assamese
++sansserif.bolditalic.devanagari=Lohit Devanagari
 +sansserif.bolditalic.bengali=Lohit Bengali
 +sansserif.bolditalic.gujarati=Lohit Gujarati
 +sansserif.bolditalic.hindi=Lohit Hindi
@@ -168,10 +191,13 @@ diff -r ea703df72762 src/solaris/classes/sun/awt/fontconfigs/linux.fontconfig.Re
 +sansserif.bolditalic.sinhala=LKLUG
 +
 +serif.plain.latin-1=DejaVu Serif
-+serif.plain.japanese-x0208=Sazanami Mincho
++#serif.plain.japanese-x0208=Sazanami Mincho
++serif.plain.japanese-x0208=VL PGothic
 +serif.plain.korean=Baekmuk Batang
 +serif.plain.chinese-big5=AR PL ZenKai Uni
 +serif.plain.chinese-gb18030=AR PL ZenKai Uni
++serif.plain.assamese=Lohit Assamese
++serif.plain.devanagari=Lohit Devanagari
 +serif.plain.bengali=Lohit Bengali
 +serif.plain.gujarati=Lohit Gujarati
 +serif.plain.hindi=Lohit Hindi
@@ -183,10 +209,13 @@ diff -r ea703df72762 src/solaris/classes/sun/awt/fontconfigs/linux.fontconfig.Re
 +serif.plain.sinhala=LKLUG
 +
 +serif.bold.latin-1=DejaVu Serif Bold
-+serif.bold.japanese-x0208=Sazanami Mincho
++#serif.bold.japanese-x0208=Sazanami Mincho
++serif.bold.japanese-x0208=VL PGothic
 +serif.bold.korean=Baekmuk Batang
 +serif.bold.chinese-big5=AR PL ZenKai Uni
 +serif.bold.chinese-gb18030=AR PL ZenKai Uni
++serif.bold.assamese=Lohit Assamese
++serif.bold.devanagari=Lohit Devanagari
 +serif.bold.bengali=Lohit Bengali
 +serif.bold.gujarati=Lohit Gujarati
 +serif.bold.hindi=Lohit Hindi
@@ -198,10 +227,13 @@ diff -r ea703df72762 src/solaris/classes/sun/awt/fontconfigs/linux.fontconfig.Re
 +serif.bold.sinhala=LKLUG
 +
 +serif.italic.latin-1=DejaVu Serif Oblique
-+serif.italic.japanese-x0208=Sazanami Mincho
++#serif.italic.japanese-x0208=Sazanami Mincho
++serif.italic.japanese-x0208=VL PGothic
 +serif.italic.korean=Baekmuk Batang
 +serif.italic.chinese-big5=AR PL ZenKai Uni
 +serif.italic.chinese-gb18030=AR PL ZenKai Uni
++serif.italic.assamese=Lohit Assamese
++serif.italic.devanagari=Lohit Devanagari
 +serif.italic.bengali=Lohit Bengali
 +serif.italic.gujarati=Lohit Gujarati
 +serif.italic.hindi=Lohit Hindi
@@ -213,10 +245,13 @@ diff -r ea703df72762 src/solaris/classes/sun/awt/fontconfigs/linux.fontconfig.Re
 +serif.italic.sinhala=LKLUG
 +
 +serif.bolditalic.latin-1=DejaVu Serif Bold Oblique
-+serif.bolditalic.japanese-x0208=Sazanami Mincho
++#serif.bolditalic.japanese-x0208=Sazanami Mincho
++serif.bolditalic.japanese-x0208=VL PGothic
 +serif.bolditalic.korean=Baekmuk Batang
 +serif.bolditalic.chinese-big5=AR PL ZenKai Uni
 +serif.bolditalic.chinese-gb18030=AR PL ZenKai Uni
++serif.bolditalic.assamese=Lohit Assamese
++serif.bolditalic.devanagari=Lohit Devanagari
 +serif.bolditalic.bengali=Lohit Bengali
 +serif.bolditalic.gujarati=Lohit Gujarati
 +serif.bolditalic.hindi=Lohit Hindi
@@ -228,10 +263,13 @@ diff -r ea703df72762 src/solaris/classes/sun/awt/fontconfigs/linux.fontconfig.Re
 +serif.bolditalic.sinhala=LKLUG
 +
 +monospaced.plain.latin-1=DejaVu Sans Mono
-+monospaced.plain.japanese-x0208=Sazanami Gothic
++#monospaced.plain.japanese-x0208=Sazanami Gothic
++monospaced.plain.japanese-x0208=VL Gothic
 +monospaced.plain.korean=Baekmuk Gulim
 +monospaced.plain.chinese-big5=AR PL ShanHeiSun Uni
 +monospaced.plain.chinese-gb18030=AR PL ShanHeiSun Uni
++monospaced.plain.assamese=Lohit Assamese
++monospaced.plain.devanagari=Lohit Devanagari
 +monospaced.plain.bengali=Lohit Bengali
 +monospaced.plain.gujarati=Lohit Gujarati
 +monospaced.plain.hindi=Lohit Hindi
@@ -243,10 +281,13 @@ diff -r ea703df72762 src/solaris/classes/sun/awt/fontconfigs/linux.fontconfig.Re
 +monospaced.plain.sinhala=LKLUG
 +
 +monospaced.bold.latin-1=DejaVu Sans Mono Bold
-+monospaced.bold.japanese-x0208=Sazanami Gothic
++#monospaced.bold.japanese-x0208=Sazanami Gothic
++monospaced.bold.japanese-x0208=VL Gothic
 +monospaced.bold.korean=Baekmuk Gulim
 +monospaced.bold.chinese-big5=AR PL ShanHeiSun Uni
 +monospaced.bold.chinese-gb18030=AR PL ShanHeiSun Uni
++monospaced.bold.assamese=Lohit Assamese
++monospaced.bold.devanagari=Lohit Devanagari
 +monospaced.bold.bengali=Lohit Bengali
 +monospaced.bold.gujarati=Lohit Gujarati
 +monospaced.bold.hindi=Lohit Hindi
@@ -258,10 +299,13 @@ diff -r ea703df72762 src/solaris/classes/sun/awt/fontconfigs/linux.fontconfig.Re
 +monospaced.bold.sinhala=LKLUG
 +
 +monospaced.italic.latin-1=DejaVu Sans Mono Oblique
-+monospaced.italic.japanese-x0208=Sazanami Gothic
++#monospaced.italic.japanese-x0208=Sazanami Gothic
++monospaced.italic.japanese-x0208=VL Gothic
 +monospaced.italic.korean=Baekmuk Gulim
 +monospaced.italic.chinese-big5=AR PL ShanHeiSun Uni
 +monospaced.italic.chinese-gb18030=AR PL ShanHeiSun Uni
++monospaced.italic.assamese=Lohit Assamese
++monospaced.italic.devanagari=Lohit Devanagari
 +monospaced.italic.bengali=Lohit Bengali
 +monospaced.italic.gujarati=Lohit Gujarati
 +monospaced.italic.hindi=Lohit Hindi
@@ -273,10 +317,13 @@ diff -r ea703df72762 src/solaris/classes/sun/awt/fontconfigs/linux.fontconfig.Re
 +monospaced.italic.sinhala=LKLUG
 +
 +monospaced.bolditalic.latin-1=DejaVu Sans Mono Bold Oblique
-+monospaced.bolditalic.japanese-x0208=Sazanami Gothic
++#monospaced.bolditalic.japanese-x0208=Sazanami Gothic
++monospaced.bolditalic.japanese-x0208=VL Gothic
 +monospaced.bolditalic.korean=Baekmuk Gulim
 +monospaced.bolditalic.chinese-big5=AR PL ShanHeiSun Uni
 +monospaced.bolditalic.chinese-gb18030=AR PL ShanHeiSun Uni
++monospaced.bolditalic.assamese=Lohit Assamese
++monospaced.bolditalic.devanagari=Lohit Devanagari
 +monospaced.bolditalic.bengali=Lohit Bengali
 +monospaced.bolditalic.gujarati=Lohit Gujarati
 +monospaced.bolditalic.hindi=Lohit Hindi
@@ -288,10 +335,13 @@ diff -r ea703df72762 src/solaris/classes/sun/awt/fontconfigs/linux.fontconfig.Re
 +monospaced.bolditalic.sinhala=LKLUG
 +
 +dialoginput.plain.latin-1=DejaVu Sans Mono
-+dialoginput.plain.japanese-x0208=Sazanami Gothic
++#dialoginput.plain.japanese-x0208=Sazanami Gothic
++dialoginput.plain.japanese-x0208=VL PGothic
 +dialoginput.plain.korean=Baekmuk Gulim
 +dialoginput.plain.chinese-big5=AR PL ShanHeiSun Uni
 +dialoginput.plain.chinese-gb18030=AR PL ShanHeiSun Uni
++dialoginput.plain.assamese=Lohit Assamese
++dialoginput.plain.devanagari=Lohit Devanagari
 +dialoginput.plain.bengali=Lohit Bengali
 +dialoginput.plain.gujarati=Lohit Gujarati
 +dialoginput.plain.hindi=Lohit Hindi
@@ -303,10 +353,13 @@ diff -r ea703df72762 src/solaris/classes/sun/awt/fontconfigs/linux.fontconfig.Re
 +dialoginput.plain.sinhala=LKLUG
 +
 +dialoginput.bold.latin-1=DejaVu Sans Mono Bold
-+dialoginput.bold.japanese-x0208=Sazanami Gothic
++#dialoginput.bold.japanese-x0208=Sazanami Gothic
++dialoginput.bold.japanese-x0208=VL PGothic
 +dialoginput.bold.korean=Baekmuk Gulim
 +dialoginput.bold.chinese-big5=AR PL ShanHeiSun Uni
 +dialoginput.bold.chinese-gb18030=AR PL ShanHeiSun Uni
++dialoginput.bold.assamese=Lohit Assamese
++dialoginput.bold.devanagari=Lohit Devanagari
 +dialoginput.bold.bengali=Lohit Bengali
 +dialoginput.bold.gujarati=Lohit Gujarati
 +dialoginput.bold.hindi=Lohit Hindi
@@ -318,10 +371,13 @@ diff -r ea703df72762 src/solaris/classes/sun/awt/fontconfigs/linux.fontconfig.Re
 +dialoginput.bold.sinhala=LKLUG
 +
 +dialoginput.italic.latin-1=DejaVu Sans Mono Oblique
-+dialoginput.italic.japanese-x0208=Sazanami Gothic
++#dialoginput.italic.japanese-x0208=Sazanami Gothic
++dialoginput.italic.japanese-x0208=VL PGothic
 +dialoginput.italic.korean=Baekmuk Gulim
 +dialoginput.italic.chinese-big5=AR PL ShanHeiSun Uni
 +dialoginput.italic.chinese-gb18030=AR PL ShanHeiSun Uni
++dialoginput.italic.assamese=Lohit Assamese
++dialoginput.italic.devanagari=Lohit Devanagari
 +dialoginput.italic.bengali=Lohit Bengali
 +dialoginput.italic.gujarati=Lohit Gujarati
 +dialoginput.italic.hindi=Lohit Hindi
@@ -333,10 +389,13 @@ diff -r ea703df72762 src/solaris/classes/sun/awt/fontconfigs/linux.fontconfig.Re
 +dialoginput.italic.sinhala=LKLUG
 +
 +dialoginput.bolditalic.latin-1=DejaVu Sans Mono Bold Oblique
-+dialoginput.bolditalic.japanese-x0208=Sazanami Gothic
++#dialoginput.bolditalic.japanese-x0208=Sazanami Gothic
++dialoginput.bolditalic.japanese-x0208=VL PGothic
 +dialoginput.bolditalic.korean=Baekmuk Gulim
 +dialoginput.bolditalic.chinese-big5=AR PL ShanHeiSun Uni
 +dialoginput.bolditalic.chinese-gb18030=AR PL ShanHeiSun Uni
++dialoginput.bolditalic.assamese=Lohit Assamese
++dialoginput.bolditalic.devanagari=Lohit Devanagari
 +dialoginput.bolditalic.bengali=Lohit Bengali
 +dialoginput.bolditalic.gujarati=Lohit Gujarati
 +dialoginput.bolditalic.hindi=Lohit Hindi
@@ -370,24 +429,29 @@ diff -r ea703df72762 src/solaris/classes/sun/awt/fontconfigs/linux.fontconfig.Re
 +
 +filename.DejaVu_Serif=/usr/share/fonts/dejavu/DejaVuSerif.ttf
 +filename.DejaVu_Serif_Bold=/usr/share/fonts/dejavu/DejaVuSerif-Bold.ttf
-+filename.DejaVu_Serif_Oblique=/usr/share/fonts/dejavu/DejaVuSerif-Oblique.ttf
++filename.DejaVu_Serif_Oblique=/usr/share/fonts/dejavu/DejaVuSerif-Oblique.ttfok
 +filename.DejaVu_Serif_Bold_Oblique=/usr/share/fonts/dejavu/DejaVuSerif-BoldOblique.ttf
 +
-+filename.Sazanami_Gothic=/usr/share/fonts/sazanami-fonts-gothic/sazanami-gothic.ttf
-+filename.Sazanami_Mincho=/usr/share/fonts/sazanami-fonts-mincho/sazanami-mincho.ttf
-+filename.AR_PL_ShanHeiSun_Uni=/usr/share/fonts/cjkunifonts-uming/uming.ttc
-+filename.AR_PL_ZenKai_Uni=/usr/share/fonts/cjkunifonts-ukai/ukai.ttc
-+filename.Baekmuk_Gulim=/usr/share/fonts/baekmuk-ttf-gulim/gulim.ttf
-+filename.Baekmuk_Batang=/usr/share/fonts/baekmuk-ttf-batang/batang.ttf
++#filename.Sazanami_Gothic=/usr/share/fonts/sazanami/gothic/sazanami-gothic.ttf
++#filename.Sazanami_Mincho=/usr/share/fonts/sazanami/mincho/sazanami-mincho.ttf
++filename.VL_Gothic=/usr/share/fonts/vlgothic/VL-Gothic-Regular.ttf
++filename.VL_PGothic=/usr/share/fonts/svlgothic/VL-PGothic-Regular.ttf
++filename.AR_PL_ShanHeiSun_Uni=/usr/share/fonts/cjkuni-uming/uming.ttc
++filename.AR_PL_ZenKai_Uni=/usr/share/fonts/cjkuni-ukai/ukai.ttc
++filename.Baekmuk_Gulim=/usr/share/fonts/baekmuk-ttf/gulim.ttf
++filename.Baekmuk_Batang=/usr/share/fonts/baekmuk-ttf/batang.ttf
 +
-+filename.Lohit_Bengali=/usr/share/fonts/lohit-bengali/lohit_bn.ttf
-+filename.Lohit_Gujarati=/usr/share/fonts/lohit-gujarati/lohit_gu.ttf
-+filename.Lohit_Hindi=/usr/share/fonts/lohit-hindi/lohit_hi.ttf
-+filename.Lohit_Kannda=/usr/share/fonts/lohit-kannada/lohit_kn.ttf
-+filename.Lohit_Malayalam=/usr/share/fonts/lohit-malayalam/lohit_ml.ttf
-+filename.Lohit_Oriya=/usr/share/fonts/lohit-oriya/lohit_or.ttf
-+filename.Lohit_Punjabi=/usr/share/fonts/lohit-punjabi/lohit_pa.ttf
-+filename.Lohit_Tamil=/usr/share/fonts/lohit-tamil/lohit_ta.ttf
-+filename.Lohit_Telugu=/usr/share/fonts/lohit-telugu/lohit_te.ttf
++filename.Lohit_Assamese=/usr/share/fonts/lohit-assamese/Lohit-Assamese.ttf
++filename.Lohit_Devanagari=/usr/share/fonts/lohit-devanagari/Lohit-Devanagari.ttf
++filename.Lohit_Bengali=/usr/share/fonts/lohit-bengali/Lohit-Bengali.ttf
++filename.Lohit_Gujarati=/usr/share/fonts/lohit-gujarati/Lohit-Gujarati.ttf
++filename.Lohit_Hindi=/usr/share/fonts/lohit-devanagari/Lohit-Devanagari.ttf
++filename.Lohit_Kannda=/usr/share/fonts/lohit-kannada/Lohit-Kannada.ttf
++filename.Lohit_Malayalam=/usr/share/fonts/lohit-malayalam/Lohit-Malayalam.ttf
++filename.Lohit_Oriya=/usr/share/fonts/lohit-oriya/Lohit-Oriya.ttf
++filename.Lohit_Punjabi=/usr/share/fonts/lohit-punjabi/Lohit-Punjabi.ttf
++filename.Lohit_Tamil=/usr/share/fonts/lohit-tamil/Lohit-Tamil.ttf
++filename.Lohit_Telugu=/usr/share/fonts/lohit-telugu/Lohit-Telugu.ttf
++
 +filename.LKLUG=/usr/share/fonts/lklug/lklug.ttf
 +

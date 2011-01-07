@@ -7,8 +7,8 @@ OPENJDK_URL = http://download.java.net/openjdk/jdk6/promoted/$(OPENJDK_VERSION)/
 
 CACAO_VERSION = 6a5eda011e49
 CACAO_SHA256SUM = 57f3abd73688cb8861875e2f21be9ec8a0c7c234e1e694489e3efa4436e9228c
-CACAO_BASE_URL = http://mips.complang.tuwien.ac.at
-CACAO_URL = $(CACAO_BASE_URL)/hg/cacao/archive/$(CACAO_VERSION).tar.gz
+CACAO_BASE_URL = http://icedtea.classpath.org/download/drops/cacao
+CACAO_URL = $(CACAO_BASE_URL)/$(CACAO_VERSION).tar.gz
 CACAO_SRC_ZIP = cacao-$(CACAO_VERSION).tar.gz
 
 JAXWS_DROP_URL = http://icedtea.classpath.org/download/drops
@@ -243,8 +243,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-policy-evaluation.patch \
 	patches/update-bootclasspath.patch \
 	patches/libpng.patch \
-	patches/extensions/netx.patch \
-	patches/extensions/netx-umask.patch \
+	patches/applet_hole.patch \
 	patches/icedtea-jtreg-httpTest.patch \
 	patches/arm.patch \
 	patches/debug-dir.patch \
@@ -265,11 +264,33 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-jtreg-international-fonts.patch \
 	patches/openjdk/6967436-6976265-6967434-pisces.patch \
 	patches/openjdk/6997495-test_correction_6857159.patch \
-	patches/openjdk/6994130-ppc_fix.patch
+	patches/openjdk/6994130-ppc_fix.patch \
+	patches/openjdk/6622432-bigdecimal_performance.patch \
+	patches/openjdk/6850606-bigdecimal_regression.patch \
+	patches/openjdk/6876282-bigdecimal_divide.patch \
 	patches/f14-fonts.patch \
 	patches/disable-default-compoops.patch \
+	patches/jtreg-DeleteFont.patch \
+	patches/jtreg-WindowWithWarningTest.patch \
+	patches/jtreg-T6638712-fix.patch \
+	patches/openjdk/7002666-eclipse_cdt_oops_crash.patch \
+	patches/jtreg-T6650759m-fix.patch \
+	patches/openjdk/7003777-bad-html-entity-parse.patch \
+	patches/openjdk/6941936-broken-pipe.patch \
+	patches/openjdk/6943219-failure-in-linux.patch \
+	patches/jtreg-6929067-fix.patch \
+	patches/openjdk/6979979-gtk_font_size_rounding.patch \
+	patches/openjdk/6795356-proxylazyvalue-leak.patch \
+	patches/rendering-engine-tests.patch \
+	patches/jtreg-TestXEmbedServer-fix.patch \
+	patches/openjdk/6800846-printing-quality.patch \
+	patches/openjdk/6687968-pngimagereader_mem_leak.patch \
+	patches/openjdk/6541476-png-iTXt-chunk.patch \
+	patches/openjdk/6782079-png_metadata_oom.patch \
+	patches/661505-jpeg.patch \
 	patches/openjdk/6980392-fix_test6581734.patch \
-	patches/6703377-freetypescaler.patch
+	patches/6703377-freetypescaler.patch \
+	patches/ia64-fix.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -301,7 +322,8 @@ ICEDTEA_PATCHES += patches/openjdk/6725214-direct3d-01.patch \
 	patches/openjdk/6961633-xrender-02.patch \
         patches/openjdk/6791612-opengl-jni-fix.patch \
         patches/openjdk/6755274-glgetstring-crash.patch \
-        patches/openjdk/6984543-onscreen_rendering_resize_test.patch
+        patches/openjdk/6984543-onscreen_rendering_resize_test.patch \
+	patches/xrender-gc-cleanup.patch
 endif
 
 if ENABLE_NIO2
@@ -1791,6 +1813,11 @@ else
 	cp -a zerovm/$(BUILD_DIR)/hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server/* \
 		$(BUILD_JRE_ARCH_DIR)/zero/
 	printf -- '-zero KNOWN\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
+if ADD_SHARK_BUILD
+	printf -- '-shark ALIASED_TO -zero\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
+else
+	printf -- '-shark ERROR\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
+endif
 endif
 else
 	printf -- '-zero ERROR\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
@@ -2000,6 +2027,8 @@ cacao: stamps/cacao.stamp
 nbplatform: stamps/nbplatform.stamp
 
 download: stamps/download.stamp
+
+download-cacao: stamps/download-cacao.stamp
 
 download-drops: stamps/download-drops.stamp
 

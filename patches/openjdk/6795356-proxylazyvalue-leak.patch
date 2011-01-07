@@ -1,0 +1,320 @@
+diff -Nr --unified=5 ./openjdk.old/jdk/src/share/classes/javax/swing/JTable.java ./openjdk/jdk/src/share/classes/javax/swing/JTable.java
+--- ./openjdk.old/jdk/src/share/classes/javax/swing/JTable.java	2010-12-11 14:54:38.545715965 -0500
++++ ./openjdk/jdk/src/share/classes/javax/swing/JTable.java	2010-12-11 14:59:53.227448612 -0500
+@@ -55,10 +55,11 @@
+ 
+ import sun.swing.SwingUtilities2;
+ import sun.swing.SwingUtilities2.Section;
+ import static sun.swing.SwingUtilities2.Section.*;
+ import sun.swing.PrintingStatus;
++import sun.swing.SwingLazyValue;
+ 
+ /**
+  * The <code>JTable</code> is used to display and edit regular two-dimensional tables
+  * of cells.
+  * See <a href="http://java.sun.com/docs/books/tutorial/uiswing/components/table.html">How to Use Tables</a>
+@@ -5307,11 +5308,11 @@
+         }
+         return retValue;
+     }
+ 
+     private void setLazyValue(Hashtable h, Class c, String s) {
+-        h.put(c, new UIDefaults.ProxyLazyValue(s));
++        h.put(c, new SwingLazyValue(s));
+     }
+ 
+     private void setLazyRenderer(Class c, String s) {
+         setLazyValue(defaultRenderersByColumnClass, c, s);
+     }
+diff -Nr --unified=5 ./openjdk.old/jdk/src/share/classes/javax/swing/plaf/metal/OceanTheme.java ./openjdk/jdk/src/share/classes/javax/swing/plaf/metal/OceanTheme.java
+--- ./openjdk.old/jdk/src/share/classes/javax/swing/plaf/metal/OceanTheme.java	2010-12-11 14:54:38.560721896 -0500
++++ ./openjdk/jdk/src/share/classes/javax/swing/plaf/metal/OceanTheme.java	2010-12-11 16:48:35.748454088 -0500
+@@ -30,10 +30,11 @@
+ import java.util.*;
+ import javax.swing.*;
+ import javax.swing.plaf.*;
+ import sun.swing.SwingUtilities2;
+ import sun.swing.PrintColorUIResource;
++import sun.swing.SwingLazyValue;
+ 
+ /**
+  * The default theme for the {@code MetalLookAndFeel}.
+  * <p>
+  * The designers
+@@ -126,11 +127,11 @@
+      *
+      * @param table the defaults table, non-null
+      * @throws NullPointerException if {@code table} is {@code null}
+      */
+     public void addCustomEntriesToTable(UIDefaults table) {
+-        Object focusBorder = new UIDefaults.ProxyLazyValue(
++        Object focusBorder = new SwingLazyValue(
+                       "javax.swing.plaf.BorderUIResource$LineBorderUIResource",
+                       new Object[] {getPrimary1()});
+         // .30 0 DDE8F3 white secondary2
+         java.util.List buttonGradient = Arrays.asList(
+                  new Object[] {new Float(.3f), new Float(0f),
+diff -Nr --unified=5 ./openjdk.old/jdk/src/share/classes/sun/swing/SwingLazyValue.java ./openjdk/jdk/src/share/classes/sun/swing/SwingLazyValue.java
+--- ./openjdk.old/jdk/src/share/classes/sun/swing/SwingLazyValue.java	2010-12-11 14:54:38.525528084 -0500
++++ ./openjdk/jdk/src/share/classes/sun/swing/SwingLazyValue.java	2010-12-11 16:53:05.461512406 -0500
+@@ -24,10 +24,13 @@
+  */
+ package sun.swing;
+ 
+ import java.lang.reflect.Constructor;
+ import java.lang.reflect.Method;
++import java.lang.reflect.AccessibleObject;
++import java.security.AccessController;
++import java.security.PrivilegedAction; 
+ import javax.swing.UIDefaults;
+ 
+ /**
+  * SwingLazyValue is a copy of ProxyLazyValue that does not snapshot the
+  * AccessControlContext or use a doPrivileged to resolve the class name.
+@@ -64,26 +67,37 @@
+             Object cl;
+             c = Class.forName(className, true, null);
+             if (methodName != null) {
+                 Class[] types = getClassArray(args);
+                 Method m = c.getMethod(methodName, types);
++                makeAccessible(m);
+                 return m.invoke(c, args);
+             } else {
+                 Class[] types = getClassArray(args);
+                 Constructor constructor = c.getConstructor(types);
++                makeAccessible(constructor);
+                 return constructor.newInstance(args);
+             }
+-        } catch(Exception e) {
++        } catch (Exception e) {
+             // Ideally we would throw an exception, unfortunately
+             // often times there are errors as an initial look and
+             // feel is loaded before one can be switched. Perhaps a
+             // flag should be added for debugging, so that if true
+             // the exception would be thrown.
+         }
+         return null;
+     }
+ 
++    private void makeAccessible(final AccessibleObject object) {
++        AccessController.doPrivileged(new PrivilegedAction<Void>() {
++            public Void run() {
++                object.setAccessible(true);
++                return null;
++            }
++        }); 
++    }
++
+     private Class[] getClassArray(Object[] args) {
+         Class[] types = null;
+         if (args!=null) {
+             types = new Class[args.length];
+             for (int i = 0; i< args.length; i++) {
+diff -Nr --unified=5 ./openjdk.old/jdk/test/javax/swing/UIDefaults/6795356/bug6795356.java ./openjdk/jdk/test/javax/swing/UIDefaults/6795356/bug6795356.java
+--- ./openjdk.old/jdk/test/javax/swing/UIDefaults/6795356/bug6795356.java	1969-12-31 19:00:00.000000000 -0500
++++ ./openjdk/jdk/test/javax/swing/UIDefaults/6795356/bug6795356.java	2010-12-11 14:54:38.580717450 -0500
+@@ -0,0 +1,100 @@
++/*
++ * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/*
++ * @test
++ * @bug 6795356
++ * @summary Leak caused by javax.swing.UIDefaults.ProxyLazyValue.acc
++ * @author Alexander Potochkin
++ * @run main bug6795356
++ */
++
++import java.lang.ref.WeakReference;
++import java.security.ProtectionDomain;
++import java.security.AccessController;
++import java.security.PrivilegedAction;
++import java.security.AccessControlContext;
++import java.util.LinkedList;
++import java.util.List;
++import javax.swing.*;
++
++public class bug6795356 {
++    volatile static WeakReference<ProtectionDomain> weakRef;
++
++    public static void main(String[] args) throws Exception {
++
++        ProtectionDomain domain = new ProtectionDomain(null, null);
++
++        AccessController.doPrivileged(new PrivilegedAction<Object>() {
++            public Object run() {
++
++                // this initialize ProxyLazyValues
++                UIManager.getLookAndFeel();
++
++                return null;
++            }
++        }, new AccessControlContext(new ProtectionDomain[]{domain}));
++
++        weakRef = new WeakReference<ProtectionDomain>(domain);
++        domain = null;
++
++        // Generate OutOfMemory and check the weak ref
++        generateOOME();
++
++        if (weakRef.get() != null) {
++            throw new RuntimeException("Memory leak found!");
++        }
++        System.out.println("Test passed");
++    }
++
++    static void generateOOME() {
++        List<Object> bigLeak = new LinkedList<Object>();
++        boolean oome = false;
++        System.out.print("Filling the heap");
++        try {
++            for(int i = 0; true ; i++) {
++                // Now, use up all RAM
++                bigLeak.add(new byte[1024 * 1024]);
++                System.out.print(".");
++
++                // Give the GC a change at that weakref
++                if (i % 10 == 0) {
++                    System.gc();
++                    try {
++                        Thread.sleep(100);
++                    } catch (InterruptedException e) {
++                        e.printStackTrace();
++                    }
++                }
++            }
++        } catch (OutOfMemoryError e) {
++            bigLeak = null;
++            oome = true;
++        }
++        System.out.println("");
++        if (!oome) {
++            throw new RuntimeException("Problem with test case - never got OOME");
++        }
++        System.out.println("Got OOME");
++    }
++}
+diff -Nr --unified=5 ./openjdk.old/jdk/test/javax/swing/UIDefaults/6795356/SwingLazyValueTest.java ./openjdk/jdk/test/javax/swing/UIDefaults/6795356/SwingLazyValueTest.java
+--- ./openjdk.old/jdk/test/javax/swing/UIDefaults/6795356/SwingLazyValueTest.java	1969-12-31 19:00:00.000000000 -0500
++++ ./openjdk/jdk/test/javax/swing/UIDefaults/6795356/SwingLazyValueTest.java	2010-12-11 14:54:38.565646896 -0500
+@@ -0,0 +1,44 @@
++/*
++ * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/*
++ * @test
++ * @bug 6795356
++ * @summary Checks that SwingLazyValue class correclty works
++ * @author Alexander Potochkin
++ * @run main SwingLazyValueTest
++ */
++
++import sun.swing.SwingLazyValue;
++
++import javax.swing.*;
++
++public class SwingLazyValueTest {
++
++    public static void main(String[] args) throws Exception {
++        if(new SwingLazyValue("javax.swing.JTable$DoubleRenderer").
++                createValue(null) == null) {
++            throw new RuntimeException("SwingLazyValue doesn't work");
++        }
++    }
++}
+diff -Nr --unified=5 ./openjdk.old/jdk/test/javax/swing/UIDefaults/6795356/TableTest.java ./openjdk/jdk/test/javax/swing/UIDefaults/6795356/TableTest.java
+--- ./openjdk.old/jdk/test/javax/swing/UIDefaults/6795356/TableTest.java	1969-12-31 19:00:00.000000000 -0500
++++ ./openjdk/jdk/test/javax/swing/UIDefaults/6795356/TableTest.java	2010-12-11 14:54:38.571643951 -0500
+@@ -0,0 +1,52 @@
++/*
++ * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/*
++ * @test
++ * @bug 6795356
++ * @summary Checks that SwingLazyValue class correclty works
++ * @author Alexander Potochkin
++ * @run main/othervm TableTest
++ */
++
++import sun.applet.AppletSecurity;
++
++import javax.swing.*;
++import javax.swing.table.TableCellEditor;
++import java.awt.*;
++
++public class TableTest {
++
++    public static void main(String[] args) throws Exception {
++
++        KeyboardFocusManager.getCurrentKeyboardFocusManager();
++        System.setSecurityManager(new AppletSecurity());
++
++        JTable table = new JTable();
++        TableCellEditor de = table.getDefaultEditor(Double.class);
++        if (de == null) {
++            throw new RuntimeException("Table default editor is null");
++        }
++    }
++}
++

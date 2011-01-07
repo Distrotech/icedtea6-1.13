@@ -1,0 +1,80 @@
+diff -U5 -r --new-file openjdk.old/jdk/src/share/classes/javax/swing/text/html/parser/Parser.java openjdk/jdk/src/share/classes/javax/swing/text/html/parser/Parser.java
+--- openjdk.old/jdk/src/share/classes/javax/swing/text/html/parser/Parser.java	2010-11-30 16:41:02.011095918 -0500
++++ openjdk/jdk/src/share/classes/javax/swing/text/html/parser/Parser.java	2010-11-30 16:23:10.068090762 -0500
+@@ -966,10 +966,14 @@
+             }
+         } else if (!parseIdentifier(false)) {
+             char data[] = {'&'};
+             return data;
+         }
++        // We need this in case the entity does not exist. If it doesn't then
++        // we only want to return "&identifier;" if the semicolon was actually
++        // there. Otherwise we return "&identifier".
++        boolean chWasSemicolon = false;
+         switch (ch) {
+           case '\n':
+             ln++;
+             ch = readCh();
+             lfCount++;
+@@ -986,10 +990,11 @@
+             }
+             break;
+ 
+           case ';':
+             ch = readCh();
++            chWasSemicolon = true;
+             break;
+         }
+ 
+         String nm = getString(pos);
+         Entity ent = dtd.getEntity(nm);
+@@ -1006,11 +1011,11 @@
+             if (nm.length() == 0) {
+                 error("invalid.entref", nm);
+                 return new char[0];
+             }
+             /* given that there is not a match restore the entity reference */
+-            String str = "&" + nm + ";";
++            String str = "&" + nm + (chWasSemicolon ? ";" : "");
+ 
+             char b[] = new char[str.length()];
+             str.getChars(0, b.length, b, 0);
+             return b;
+         }
+diff -U5 -r --new-file openjdk.old/jdk/test/javax/swing/text/html/Test7003777.java openjdk/jdk/test/javax/swing/text/html/Test7003777.java
+--- openjdk.old/jdk/test/javax/swing/text/html/Test7003777.java	1969-12-31 19:00:00.000000000 -0500
++++ openjdk/jdk/test/javax/swing/text/html/Test7003777.java	2010-11-30 16:16:13.419104648 -0500
+@@ -0,0 +1,33 @@
++/*
++  @test
++  @bug 7003777
++  @summary html nonexistent entities not parsed properly when the ";" is missing.
++  @author Denis Lila <dlila@redhat.com>, cnsturgeon2000@yahoo.com
++  @run main Test7003777
++ */
++import javax.swing.JTextPane;
++import javax.swing.text.BadLocationException;
++
++/**
++ * Test7003777.java
++ * 
++ * Summary: Check that invalid html entities are parsed "properly".
++ * (see code below for what that means).
++ */
++
++public class Test7003777 {
++    public static void main(String[] args) throws BadLocationException {
++        JTextPane pane = new JTextPane();
++        pane.setContentType("text/html");
++        String content = "&somenonvalidentity";
++        pane.setText(content);
++
++        // The bug we're testing consisted of a ';' being inserted after the
++        // entity during the parsing.
++        String out = pane.getDocument().getText(0, pane.getDocument().getLength());
++        if (out.charAt(out.length() - 1) == ';') {
++            throw new RuntimeException("bad non existent html entity parse");
++        }
++    }
++}
++
