@@ -249,8 +249,6 @@ ICEDTEA_PATCHES = \
 	patches/debug-dir.patch \
 	patches/no-sync.patch \
 	patches/icedtea-override-redirect-metacity.patch \
-	patches/openjdk/6963870-swing_npe.patch \
-	patches/openjdk/6668231-ssl_cert.patch \
 	patches/openjdk/6967533-pre_epoch.patch \
 	patches/fonts-rhel.patch \
 	patches/fonts-gentoo.patch \
@@ -264,27 +262,16 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-jtreg-international-fonts.patch \
 	patches/openjdk/6967436-6976265-6967434-pisces.patch \
 	patches/openjdk/6997495-test_correction_6857159.patch \
-	patches/openjdk/6994130-ppc_fix.patch \
-	patches/openjdk/6622432-bigdecimal_performance.patch \
-	patches/openjdk/6850606-bigdecimal_regression.patch \
-	patches/openjdk/6876282-bigdecimal_divide.patch \
 	patches/f14-fonts.patch \
-	patches/disable-default-compoops.patch \
 	patches/jtreg-DeleteFont.patch \
 	patches/jtreg-WindowWithWarningTest.patch \
 	patches/jtreg-T6638712-fix.patch \
 	patches/openjdk/7002666-eclipse_cdt_oops_crash.patch \
 	patches/jtreg-T6650759m-fix.patch \
 	patches/openjdk/7003777-bad-html-entity-parse.patch \
-	patches/openjdk/6941936-broken-pipe.patch \
-	patches/openjdk/6943219-failure-in-linux.patch \
 	patches/jtreg-6929067-fix.patch \
-	patches/openjdk/6979979-gtk_font_size_rounding.patch \
-	patches/openjdk/6795356-proxylazyvalue-leak.patch \
 	patches/rendering-engine-tests.patch \
-	patches/jtreg-TestXEmbedServer-fix.patch \
 	patches/openjdk/6800846-printing-quality.patch \
-	patches/openjdk/6687968-pngimagereader_mem_leak.patch \
 	patches/openjdk/6541476-png-iTXt-chunk.patch \
 	patches/openjdk/6782079-png_metadata_oom.patch \
 	patches/661505-jpeg.patch \
