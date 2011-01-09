@@ -308,11 +308,10 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7003777-bad-html-entity-parse.patch \
 	patches/openjdk/6941936-broken-pipe.patch \
 	patches/openjdk/6943219-failure-in-linux.patch \
-	patches/jtreg-6929067-fix.patch \
 	patches/openjdk/6979979-gtk_font_size_rounding.patch \
 	patches/openjdk/6795356-proxylazyvalue-leak.patch \
 	patches/rendering-engine-tests.patch \
-	patches/jtreg-TestXEmbedServer-fix.patch \
+	patches/openjdk/6560348-jtreg-TestXEmbedServer-fix.patch \
 	patches/openjdk/6800846-printing-quality.patch \
 	patches/openjdk/6687968-pngimagereader_mem_leak.patch \
 	patches/openjdk/6541476-png-iTXt-chunk.patch \
@@ -323,7 +322,8 @@ if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
 	patches/openjdk/6994130-ppc_fix.patch \
 	patches/openjdk/6980392-fix_test6581734.patch \
-	patches/hotspot/hs19/ia64-fix.patch
+	patches/hotspot/hs19/ia64-fix.patch \
+	patches/jtreg-6929067-fix.patch
 else
 ICEDTEA_PATCHES += \
 	patches/shark_do_nothing_on_stub_frame.patch \
