@@ -1,5 +1,15 @@
 2011-01-07  Andrew John Hughes  <ahughes@redhat.com>
 
+	* patches/jtreg-TestXEmbedServer-fix.patch:
+	Moved to...
+	* Makefile.am:
+	Fix path to above patch.  Only apply jtreg-6929067-fix.patch
+	when building hs19.
+	* patches/openjdk/6560348-jtreg-TestXEmbedServer-fix.patch:
+	... OpenJDK patch with appropriate bug ID.
+
+2011-01-07  Andrew John Hughes  <ahughes@redhat.com>
+
 	* patches/jtreg-TestXEmbedServer-fix.patch,
 	* patches/openjdk/6668231-ssl_cert.patch,
 	* patches/openjdk/6687968-pngimagereader_mem_leak.patch,
