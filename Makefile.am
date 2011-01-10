@@ -266,14 +266,11 @@ ICEDTEA_PATCHES = \
 	patches/jtreg-DeleteFont.patch \
 	patches/jtreg-WindowWithWarningTest.patch \
 	patches/jtreg-T6638712-fix.patch \
-	patches/openjdk/7002666-eclipse_cdt_oops_crash.patch \
 	patches/jtreg-T6650759m-fix.patch \
 	patches/openjdk/7003777-bad-html-entity-parse.patch \
 	patches/jtreg-6929067-fix.patch \
 	patches/rendering-engine-tests.patch \
 	patches/openjdk/6800846-printing-quality.patch \
-	patches/openjdk/6541476-png-iTXt-chunk.patch \
-	patches/openjdk/6782079-png_metadata_oom.patch \
 	patches/661505-jpeg.patch \
 	patches/openjdk/6980392-fix_test6581734.patch \
 	patches/6703377-freetypescaler.patch \
