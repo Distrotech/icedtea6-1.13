@@ -272,7 +272,6 @@ ICEDTEA_PATCHES = \
 	patches/rendering-engine-tests.patch \
 	patches/openjdk/6800846-printing-quality.patch \
 	patches/661505-jpeg.patch \
-	patches/openjdk/6980392-fix_test6581734.patch \
 	patches/6703377-freetypescaler.patch \
 	patches/ia64-fix.patch
 
