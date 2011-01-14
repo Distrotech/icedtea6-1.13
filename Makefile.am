@@ -263,7 +263,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6967436-6976265-6967434-pisces.patch \
 	patches/openjdk/6997495-test_correction_6857159.patch \
 	patches/f14-fonts.patch \
-	patches/jtreg-DeleteFont.patch \
 	patches/jtreg-WindowWithWarningTest.patch \
 	patches/jtreg-T6638712-fix.patch \
 	patches/jtreg-T6650759m-fix.patch \
