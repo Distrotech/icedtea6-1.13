@@ -272,7 +272,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6800846-printing-quality.patch \
 	patches/661505-jpeg.patch \
 	patches/6703377-freetypescaler.patch \
-	patches/ia64-fix.patch
+	patches/ia64-fix.patch \
 	patches/openjdk/6642612-filechooser_button_sizes.patch \
 	patches/jtreg-international-fonts-styles.patch
 
