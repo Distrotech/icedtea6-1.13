@@ -53,6 +53,10 @@ IT_CP_SUPPORTS_REFLINK
 IT_CAN_HARDLINK_TO_SOURCE_TREE
 IT_CHECK_FOR_PAX
 
+# Use xvfb-run if found to run gui tests (check-jdk).
+AC_CHECK_PROG(XVFB_RUN_CMD, xvfb-run, [xvfb-run -a -e xvfb-errors], [])
+AC_SUBST(XVFB_RUN_CMD)
+
 AC_MSG_CHECKING([for an Ant home directory])
 AC_ARG_WITH([ant-home],
             [AS_HELP_STRING([--with-ant-home],

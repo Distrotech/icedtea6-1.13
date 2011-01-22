@@ -1898,6 +1898,11 @@ check-langtools: stamps/jtreg.stamp
 
 check-jdk: stamps/jtreg.stamp
 	mkdir -p test/jdk/JTwork test/jdk/JTreport
+	if test "x$${DISPLAY}" = "x"; then XVFB_RUN="@XVFB_RUN_CMD@"; fi; \
+	if test "x$${DISPLAY}" = "x" && test "x$${XVFB_RUN}" = "x"; then \
+		echo "WARNING: DISPLAY not set and xvfb-run not found"; \
+	fi; \
+	$${XVFB_RUN} \
 	$(BOOT_DIR)/bin/java -jar test/jtreg.jar -v1 -a -ignore:quiet \
 		-w:test/jdk/JTwork -r:test/jdk/JTreport \
 		$${ICEDTEA_JTREG_OTHERVM:--samevm} \
