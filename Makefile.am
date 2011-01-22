@@ -273,6 +273,8 @@ ICEDTEA_PATCHES = \
 	patches/661505-jpeg.patch \
 	patches/6703377-freetypescaler.patch \
 	patches/ia64-fix.patch
+	patches/openjdk/6642612-filechooser_button_sizes.patch \
+	patches/jtreg-international-fonts-styles.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \

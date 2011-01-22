@@ -1,0 +1,67 @@
+# HG changeset patch
+# User rupashka
+# Date 1209546061 -14400
+# Node ID 9a322f3dccd8bf3ab5726ec18fbaa0131938f2c4
+# Parent  eca2e5716b86c31a2f6421473bcee3fec30a500f
+6642612: JFileChooser approve buttons should use Open and Save text (GTK)
+Summary: In FileChooser under GTK LaF "Ok" and "Cancel" buttons were made with the same size
+Reviewed-by: peterz
+
+diff -r eca2e5716b86 -r 9a322f3dccd8 src/share/classes/com/sun/java/swing/plaf/gtk/GTKFileChooserUI.java
+--- openjdk/jdk/src/share/classes/com/sun/java/swing/plaf/gtk/GTKFileChooserUI.java	Wed Apr 30 12:32:05 2008 +0400
++++ openjdk/jdk/src/share/classes/com/sun/java/swing/plaf/gtk/GTKFileChooserUI.java	Wed Apr 30 13:01:01 2008 +0400
+@@ -97,14 +97,11 @@
+     private static final Dimension hstrut3 = new Dimension(3, 1);
+     private static final Dimension vstrut10 = new Dimension(1, 10);
+ 
+-    private static final Insets insets = new Insets(10, 10, 10, 10);
+-
+     private static Dimension prefListSize = new Dimension(75, 150);
+ 
+     private static Dimension PREF_SIZE = new Dimension(435, 360);
+     private static Dimension MIN_SIZE = new Dimension(200, 300);
+ 
+-    private static Dimension PREF_ACC_SIZE = new Dimension(10, 10);
+     private static Dimension ZERO_ACC_SIZE = new Dimension(1, 1);
+ 
+     private static Dimension MAX_SIZE = new Dimension(Short.MAX_VALUE, Short.MAX_VALUE);
+@@ -125,7 +122,6 @@
+     private JPanel bottomButtonPanel;
+     private GTKDirectoryModel model = null;
+     private Action newFolderAction;
+-    private JPanel interior;
+     private boolean readOnly;
+     private boolean showDirectoryIcons;
+     private boolean showFileIcons;
+@@ -710,15 +706,19 @@
+         bottomButtonPanel.setName("GTKFileChooser.bottomButtonPanel");
+         align(bottomButtonPanel);
+ 
++        JPanel pnButtons = new JPanel(new GridLayout(1, 2, 5, 0));
++
+         JButton cancelButton = getCancelButton(fc);
+         align(cancelButton);
+         cancelButton.setMargin(buttonMargin);
+-        bottomButtonPanel.add(cancelButton);
++        pnButtons.add(cancelButton);
+ 
+-        JButton approveButton = getApproveButton(fc);;
++        JButton approveButton = getApproveButton(fc);
+         align(approveButton);
+         approveButton.setMargin(buttonMargin);
+-        bottomButtonPanel.add(approveButton);
++        pnButtons.add(approveButton);
++
++        bottomButtonPanel.add(pnButtons);
+ 
+         if (fc.getControlButtonsAreShown()) {
+             fc.add(bottomButtonPanel, BorderLayout.SOUTH);
+@@ -1108,7 +1108,7 @@
+             // Get the canonical (full) path. This has the side
+             // benefit of removing extraneous chars from the path,
+             // for example /foo/bar/ becomes /foo/bar
+-            File canonical = null;
++            File canonical;
+             try {
+                 canonical = fsv.createFileObject(ShellFolder.getNormalizedFile(directory).getPath());
+             } catch (IOException e) {

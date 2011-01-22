@@ -1,6 +1,25 @@
---- /dev/null	2010-06-29 14:56:30.329576932 +0200
-+++ openjdk/jdk/test/java/awt/font/InternationalFonts/InternationalFontsRendering.java	2010-11-01 11:27:46.000000000 +0100
-@@ -0,0 +1,192 @@
+--- /dev/null	2010-06-29 11:10:08.737208357 +0200
++++ openjdk/jdk/test/java/awt/font/InternationalFonts/InternationalFontsRendering.java	2011-01-17 17:06:44.000000000 +0100
+@@ -0,0 +1,211 @@
++/*
++ * Copyright 2010 Red Hat, Inc. All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ */
++
 +import java.awt.Color;
 +import java.awt.Font;
 +import java.awt.Graphics2D;
@@ -51,13 +70,13 @@
 +
 +    private static final String[][] testedStrings = {
 +        {"Latin-1",    "abcdefABCDEF"},
-+        {"Latin-2",    "ěščřžýáíéúůľň"},
-+        {"Cyrilic",    "ДЗИѲФХѰѠЦ"},
-+        {"Greek",      "βξγδπερζΣσςητθυΩ"},
-+        {"Asia-Test1", "体中文符号"},
-+        {"Asia-Test2", "繁體中文符號"},
-+        {"Asia-Test3", "日本の象徴"},
-+        {"Asia-Test4", "한국어기호"},
++        {"Latin-2",    "\u011b\u0161\u010d\u0159\u017e\u00fd\u00e1\u00ed\u00e9\u00fa\u016f\u013e\u0148"},
++        {"Cyrilic",    "\u0414\u0417\u0418\u0472\u0424\u0425\u0470\u0460\u0426"},
++        {"Greek",      "\u03b2\u03be\u03b3\u03b4\u03c0\u03b5\u03c1\u03b6\u03a3\u03c3\u03c2\u03b7\u03c4\u03b8\u03c5\u03a9"},
++        {"Asia-Test1", "\u4f53\u4e2d\u6587\u7b26\u53f7"},
++        {"Asia-Test2", "\u7e41\u9ad4\u4e2d\u6587\u7b26\u865f"},
++        {"Asia-Test3", "\u65e5\u672c\u306e\u8c61\u5fb4"},
++        {"Asia-Test4", "\ud55c\uad6d\uc5b4\uae30\ud638"},
 +    };
 +
 +    /**
