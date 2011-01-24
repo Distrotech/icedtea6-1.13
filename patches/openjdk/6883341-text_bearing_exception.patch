@@ -1,0 +1,92 @@
+# HG changeset patch
+# User alexp
+# Date 1253541489 -14400
+# Node ID 9d78c3d9def2044404e678f3508dd0bb25946fd2
+# Parent  fa71ca7a36555ea20de4669a3959bb0ba226d9a8
+6883341: SWAT: jdk7-b72 swat build(2009-09-17) threw exceptions when running Java2D demo by clicking Paint ta
+Reviewed-by: peterz
+
+diff -r fa71ca7a3655 -r 9d78c3d9def2 src/share/classes/sun/swing/SwingUtilities2.java
+--- openjdk/jdk/src/share/classes/sun/swing/SwingUtilities2.java	Mon Sep 21 01:26:57 2009 -0700
++++ openjdk/jdk/src/share/classes/sun/swing/SwingUtilities2.java	Mon Sep 21 17:58:09 2009 +0400
+@@ -250,15 +250,23 @@
+      * Returns the left side bearing of the first character of string. The
+      * left side bearing is calculated from the passed in
+      * FontMetrics.  If the passed in String is less than one
+-     * character, this will throw a StringIndexOutOfBoundsException exception.
++     * character {@code 0} is returned.
+      *
+      * @param c JComponent that will display the string
+      * @param fm FontMetrics used to measure the String width
+      * @param string String to get the left side bearing for.
++     * @throws NullPointerException if {@code string} is {@code null}
++     *
++     * @return the left side bearing of the first character of string
++     * or {@code 0} if the string is empty
+      */
+     public static int getLeftSideBearing(JComponent c, FontMetrics fm,
+                                          String string) {
+-        return getLeftSideBearing(c, fm, string.charAt(0));
++        int res = 0;
++        if (!string.isEmpty()) {
++            res = getLeftSideBearing(c, fm, string.charAt(0));
++        }
++        return res;
+     }
+ 
+     /**
+diff -r fa71ca7a3655 -r 9d78c3d9def2 test/javax/swing/JMenuItem/6883341/bug6883341.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/javax/swing/JMenuItem/6883341/bug6883341.java	Mon Sep 21 17:58:09 2009 +0400
+@@ -0,0 +1,50 @@
++/*
++ * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++ /*
++ * @test
++ * @bug 6883341
++ * @summary Checks that menu items with no text don't throw an exception
++ * @author Alexander Potochkin
++ * @run main bug6883341
++ */
++
++import javax.swing.*;
++
++public class bug6883341 {
++
++    private static void createGui() {
++        JPopupMenu menu = new JPopupMenu();
++        menu.add(new JMenuItem());
++        menu.setVisible(true);
++        menu.setVisible(false);
++    }
++
++    public static void main(String[] args) throws Exception {
++        SwingUtilities.invokeAndWait(new Runnable() {
++            public void run() {
++                bug6883341.createGui();
++            }
++        });
++    }
++}
+

@@ -274,7 +274,10 @@ ICEDTEA_PATCHES = \
 	patches/6703377-freetypescaler.patch \
 	patches/ia64-fix.patch \
 	patches/openjdk/6642612-filechooser_button_sizes.patch \
-	patches/jtreg-international-fonts-styles.patch
+	patches/jtreg-international-fonts-styles.patch \
+	patches/openjdk/6736649-text_bearings.patch \
+	patches/openjdk/6797139-jbutton_truncation.patch \
+	patches/openjdk/6883341-text_bearing_exception.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
