@@ -395,17 +395,67 @@ New in release 1.10 (2011-XX-XX):
   - S6962318: Update copyright year
   - S7008433: Minor copyright changes
 * Backports
-  - S6991430, PR579: Zero PowerPC fix.
-  - S6967436, RH597227: lines longer than 2^15 can fill window.
-  - S6967433: dashed lines broken when using scaling transforms.
-  - S6976265: No STROKE_CONTROL
-  - S6967434, PR450, RH530642: Round joins/caps of scaled up lines have poor quality.
   - S6800846, RH662230: Printing quality degraded with Java 6 compared to 5.0, index out of bounds exception.
   - RH661505: JPEGs with sRGB IEC61966-2.1 color profiles have wrong colors
   - S6642612: JFileChooser's approve buttons should be the same size (GTK)
 * Bug fixes
-  - S7003777, RH647674: JTextPane produces incorrect content after parsing the html text
   - RH647157, RH582455: Update fontconfig files for rhel 6
+
+New in release 1.9.4 (2011-01-18):
+
+* Security updates
+  - RH663680, CVE-2010-4351: IcedTea JNLP SecurityManager bypass
+* Backports
+  - S4356282: RFE: JDK should support OpenType/CFF fonts
+  - S6954424, RH525870: Support OpenType/CFF fonts in JDK 7
+  - S6795356, PR590: Leak caused by javax.swing.UIDefaults.ProxyLazyValue.acc
+  - S6967436, RH597227: lines longer than 2^15 can fill window.
+  - S6967433: dashed lines broken when using scaling transforms.
+  - S6976265: No STROKE_CONTROL
+  - S6967434, PR450, RH530642: Round joins/caps of scaled up lines have poor quality.
+  - S6438179, RH569121: XToolkit.isTraySupported() result has nothing to do with the system tray
+* Fixes
+  - S7003777, RH647674: JTextPane produces incorrect content after parsing the html text
+
+New in release 1.8.4 (2011-01-18):
+
+* Security updates
+  - RH663680, CVE-2010-4351: IcedTea JNLP SecurityManager bypass
+* Backports
+  - S6438179, RH569121: XToolkit.isTraySupported() result has nothing to do with the system tray
+  - S4356282: RFE: JDK should support OpenType/CFF fonts
+  - S6954424, RH525870: Support OpenType/CFF fonts in JDK 7
+  - S6795356, PR590: Leak caused by javax.swing.UIDefaults.ProxyLazyValue.acc
+  - S6967436, RH597227: lines longer than 2^15 can fill window.
+  - S6967433: dashed lines broken when using scaling transforms.
+  - S6976265: No STROKE_CONTROL
+  - S6967434, PR450, RH530642: Round joins/caps of scaled up lines have poor quality.
+* Fixes:
+  - S7003777, RH647674: JTextPane produces incorrect content after parsing the html text
+
+New in release 1.7.7 (2011-01-18):
+
+* Security updates
+  - RH663680, CVE-2010-4351: IcedTea JNLP SecurityManager bypass
+* Backports
+  - S6438179, RH569121: XToolkit.isTraySupported() result has nothing to do with the system tray
+  - S4356282: RFE: JDK should support OpenType/CFF fonts
+  - S6954424, RH525870: Support OpenType/CFF fonts in JDK 7
+  - S6795356, PR590: Leak caused by javax.swing.UIDefaults.ProxyLazyValue.acc
+  - S6967436, RH597227: lines longer than 2^15 can fill window.
+  - S6967433: dashed lines broken when using scaling transforms.
+  - S6976265: No STROKE_CONTROL
+  - S6967434, PR450, RH530642: Round joins/caps of scaled up lines have poor quality.
+* Fixes:
+  - S7003777, RH647674: JTextPane produces incorrect content after parsing the html text
+
+New in release 1.9.3 (2010-12-01):
+
+* Re-enable compressed oops by default now 7002666 is fixed.
+* Backports
+  - S7002666: Eclipse CDT projects crash with compressed oops
+* Fixes
+  - Reapply ia64 fix from 6896043 which was reverted by 6953477
 
 New in release 1.9.2 (2010-11-24):
 
