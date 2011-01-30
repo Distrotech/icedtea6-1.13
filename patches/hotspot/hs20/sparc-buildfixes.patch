@@ -1,0 +1,26 @@
+diff -Nru openjdk.orig/hotspot/make/linux/makefiles/defs.make openjdk/hotspot/make/linux/makefiles/defs.make
+--- openjdk.orig/hotspot/make/linux/makefiles/defs.make	2011-01-25 22:57:24.000000000 +0000
++++ openjdk/hotspot/make/linux/makefiles/defs.make	2011-01-28 01:21:25.609237228 +0000
+@@ -58,7 +58,7 @@
+ endif
+ 
+ # sparc
+-ifeq ($(ARCH), sparc64)
++ifneq (,$(filter $(ARCH), sparc sparc64))
+   ifeq ($(ARCH_DATA_MODEL), 64)
+     ARCH_DATA_MODEL  = 64
+     MAKE_ARGS        += LP64=1
+diff -Nru openjdk.orig/hotspot/make/linux/makefiles/gcc.make openjdk/hotspot/make/linux/makefiles/gcc.make
+--- openjdk.orig/hotspot/make/linux/makefiles/gcc.make	2011-01-28 01:14:57.000000000 +0000
++++ openjdk/hotspot/make/linux/makefiles/gcc.make	2011-01-28 01:21:25.609237228 +0000
+@@ -64,6 +64,10 @@
+ PICFLAG = -fpic
+ endif
+ 
++ifneq ($(filter sparc sparcv9,$(BUILDARCH)),)
++PICFLAG = -fPIC
++endif
++
+ VM_PICFLAG/LIBJVM = $(PICFLAG)
+ VM_PICFLAG/AOUT   =
+ VM_PICFLAG        = $(VM_PICFLAG/$(LINK_INTO))

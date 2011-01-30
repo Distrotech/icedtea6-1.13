@@ -1,3 +1,57 @@
+2011-01-29  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/gcc-suffix.patch,
+	* patches/ia64-fix.patch:
+	Split into original and hs20 versions.
+	* patches/icedtea-no-precompiled.patch:
+	Apply to original only.
+	* patches/icedtea-sparc-buildfixes.patch,
+	* patches/icedtea-text-relocations.patch,
+	* patches/icedtea-too-many-args.patch,
+	* patches/params-cast-size_t.patch:
+	Split into original and hs20 versions.
+	* INSTALL:
+	Document new status (original as default,
+	hs20 as alternative).
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Updated with changes listed.
+	(replace-hotspot): Use ${HSBUILD} instead of hardcoded hs19.
+	* NEWS: List availability of hs20.
+	* acinclude.m4:
+	(AC_CHECK_WITH_HOTSPOT_BUILD): Provide hs20 as alternate build.
+	* hotspot.map: Add hs20.
+	* patches/arm.patch: Split bytecodes_zero.hpp changes into original
+	and hs20 versions.
+	* patches/hotspot/hs20/arm.patch,
+	hs20 version of bytecodes_zero.hpp changes.
+	* patches/hotspot/hs20/gcc-suffix.patch,
+	* patches/hotspot/hs20/ia64-fix.patch,
+	* patches/hotspot/hs20/params-cast-size_t.patch,
+	* patches/hotspot/hs20/sparc-buildfixes.patch:
+	hs20 version of patches.
+	* patches/hotspot/hs20/systemtap.patch:
+	hs20 version of dtrace.hpp changes.
+	* patches/hotspot/hs20/text-relocations.patch:
+	hs20 versions of patch.
+	* patches/hotspot/original/arm.patch:
+	original version of bytecodes_zero.hpp changes.
+	* patches/hotspot/original/gcc-suffix.patch,
+	* patches/hotspot/original/ia64-fix.patch:
+	original versions of patches moved from patches directory.
+	* patches/hotspot/original/no-precompiled-headers.patch:
+	Only for original; USE_PRECOMPILED_HEADER=0 provides the
+	same in hs20.
+	* patches/hotspot/original/params-cast-size_t.patch,
+	* patches/hotspot/original/sparc-buildfixes.patch:
+	original versions of patches moved from patches directory.
+	* patches/hotspot/original/systemtap.patch:
+	original version of dtrace.hpp changes.
+	* patches/hotspot/original/text-relocations.patch,
+	* patches/hotspot/original/too-many-args.patch:
+	original versions of patches moved from patches directory.
+	* patches/systemtap.patch:
+	Split dtrace.hpp changes into original and hs20 versions.
+
 2011-01-24  Omair Majid  <omajid@redhat.com>
 
 	* NEWS: Update with the 3 backports

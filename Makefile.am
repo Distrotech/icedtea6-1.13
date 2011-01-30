@@ -183,7 +183,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-lucene-crash.patch \
 	patches/icedtea-version.patch \
 	patches/icedtea-version-hotspot.patch \
-	patches/icedtea-text-relocations.patch \
+	patches/hotspot/$(HSBUILD)/text-relocations.patch \
 	patches/icedtea-ssl.patch \
 	patches/icedtea-rmi_amd64.patch \
 	patches/icedtea-tools.patch \
@@ -191,7 +191,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-headers.patch \
 	patches/icedtea-headers-hotspot.patch \
 	patches/icedtea-gcc-suffix.patch \
-	patches/gcc-suffix.patch \
+	patches/hotspot/$(HSBUILD)/gcc-suffix.patch \
 	patches/icedtea-bytebuffer-compact.patch \
 	patches/memory-limits.patch \
 	patches/icedtea-sunsrc.patch \
@@ -210,7 +210,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-alt-jar.patch \
 	patches/icedtea-jdk-use-ssize_t.patch \
 	patches/icedtea-use-idx_t.patch \
-	patches/params-cast-size_t.patch \
+	patches/hotspot/$(HSBUILD)/params-cast-size_t.patch \
 	patches/icedtea-clean-crypto.patch \
 	patches/icedtea-arch.patch \
 	patches/icedtea-lc_ctype.patch \
@@ -221,7 +221,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-testenv.patch \
 	patches/icedtea-samejvm-safe.patch \
 	patches/icedtea-pr261.patch \
-	patches/icedtea-sparc-buildfixes.patch \
+	patches/hotspot/$(HSBUILD)/sparc-buildfixes.patch \
 	patches/icedtea-sparc64-linux.patch \
 	patches/icedtea-sparc-ptracefix.patch \
 	patches/icedtea-sparc-trapsfix.patch \
@@ -237,7 +237,6 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-disable-cc-incompatible-sanity-checks.patch \
 	patches/icedtea-explicit-target-arch.patch \
 	patches/icedtea-gcc-stack-markings.patch \
-	patches/icedtea-no-precompiled.patch \
 	patches/icedtea-parisc.patch \
 	patches/icedtea-sh4-support.patch \
 	patches/icedtea-policy-evaluation.patch \
@@ -246,6 +245,7 @@ ICEDTEA_PATCHES = \
 	patches/applet_hole.patch \
 	patches/icedtea-jtreg-httpTest.patch \
 	patches/arm.patch \
+	patches/hotspot/$(HSBUILD)/arm.patch \
 	patches/debug-dir.patch \
 	patches/no-sync.patch \
 	patches/icedtea-override-redirect-metacity.patch \
@@ -253,7 +253,6 @@ ICEDTEA_PATCHES = \
 	patches/fonts-rhel.patch \
 	patches/fonts-gentoo.patch \
 	patches/ipv4-mapped-ipv6-addresses.patch \
-	patches/icedtea-too-many-args.patch \
 	patches/icedtea-jtreg-OpenGLContextInit.patch \
 	patches/openjdk/6510892-httpserver_test.patch \
 	patches/openjdk/6638712-wildcard_types.patch \
@@ -261,7 +260,6 @@ ICEDTEA_PATCHES = \
 	patches/numa_on_early_glibc.patch \
 	patches/icedtea-jtreg-international-fonts.patch \
 	patches/openjdk/6967436-6976265-6967434-pisces.patch \
-	patches/openjdk/6997495-test_correction_6857159.patch \
 	patches/f14-fonts.patch \
 	patches/jtreg-WindowWithWarningTest.patch \
 	patches/jtreg-T6638712-fix.patch \
@@ -272,12 +270,19 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6800846-printing-quality.patch \
 	patches/rh661505-jpeg.patch \
 	patches/6703377-freetypescaler.patch \
-	patches/ia64-fix.patch \
+	patches/hotspot/$(HSBUILD)/ia64-fix.patch \
 	patches/openjdk/6642612-filechooser_button_sizes.patch \
 	patches/jtreg-international-fonts-styles.patch \
 	patches/openjdk/6736649-text_bearings.patch \
 	patches/openjdk/6797139-jbutton_truncation.patch \
 	patches/openjdk/6883341-text_bearing_exception.patch
+
+if !WITH_ALT_HSBUILD
+ICEDTEA_PATCHES += \
+	patches/hotspot/$(HSBUILD)/no-precompiled-headers.patch \
+	patches/hotspot/$(HSBUILD)/too-many-args.patch \
+	patches/openjdk/6997495-test_correction_6857159.patch
+endif
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -319,6 +324,7 @@ endif
 
 if ENABLE_SYSTEMTAP
 ICEDTEA_PATCHES += patches/systemtap.patch \
+	patches/hotspot/$(HSBUILD)/systemtap.patch \
 	patches/systemtap-gcc-4.5.patch \
 	patches/systemtap-alloc-size-workaround.patch
 endif
@@ -845,7 +851,7 @@ if WITH_ALT_HSBUILD
 	  then \
 	    $(TAR) xf $(HOTSPOT_SRC_ZIP) ; \
 	    dir=$$($(AWK) 'version==$$1 {print gensub(/.*\/([^/]*)$$/,"\\1","g",$$2)}' \
-	      version=hs19 $(abs_top_srcdir)/hotspot.map) ; \
+	      version=$(HSBUILD) $(abs_top_srcdir)/hotspot.map) ; \
 	    chmod -R ug+w $$dir-* ; \
 	    mv $$dir-$$($(AWK) 'version==$$1 {print $$3}' version=$(HSBUILD) \
 	      $(abs_top_srcdir)/hotspot.map) openjdk/hotspot ; \
