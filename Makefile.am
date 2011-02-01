@@ -275,7 +275,8 @@ ICEDTEA_PATCHES = \
 	patches/jtreg-international-fonts-styles.patch \
 	patches/openjdk/6736649-text_bearings.patch \
 	patches/openjdk/6797139-jbutton_truncation.patch \
-	patches/openjdk/6883341-text_bearing_exception.patch
+	patches/openjdk/6883341-text_bearing_exception.patch \
+	patches/jtreg-png-reader.patch
 
 if !WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
