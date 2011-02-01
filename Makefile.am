@@ -276,7 +276,10 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6736649-text_bearings.patch \
 	patches/openjdk/6797139-jbutton_truncation.patch \
 	patches/openjdk/6883341-text_bearing_exception.patch \
-	patches/jtreg-png-reader.patch
+	patches/jtreg-png-reader.patch \
+	patches/openjdk/4724552-CubicCurve2D.patch \
+	patches/openjdk/4493128-CubicCurve2D.patch \
+	patches/openjdk/4645692-CubicCurve2D.solveCubic.patch
 
 if !WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
