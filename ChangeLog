@@ -1,3 +1,15 @@
+2011-02-03  Andrew John Hughes  <ahughes@redhat.com>
+
+	PR616, PR99:
+	* Makefile.am: Add new patch.
+	* patches/jtreg-6929067-fix.patch:
+	Link against pthread explicitly now
+	libstdc++ is no longer static.
+	* patches/no-static-linking.patch:
+	Don't statically link libstdc++ or
+	libgcc.
+	* NEWS: Updated.
+
 2011-02-01  Denis Lila <dlila@redhat.com>
 
 	* NEWS: Update with the 3 backports
