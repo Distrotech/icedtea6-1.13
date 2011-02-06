@@ -403,6 +403,9 @@ New in release 1.10 (2011-XX-XX):
   - S6736649: test/closed/javax/swing/JMenuItem/6458123/ManualBug6458123.java fails on Linux
   - S6797139: JButton title is truncating for some strings irrespective of preferred size.
   - S6883341: SWAT: jdk7-b72 swat build(2009-09-17) threw exceptions when running Java2D demo by clicking Paint ta
+  - S4493128: CubicCurve2D intersects method fails
+  - S4724552: CubicCurve2D.contains(Rectangle2D) returns true when partially contained.
+  - S4645692: CubicCurve2D.solveCubic does not return all solutions.
   - S4993545: NativeInLightFixer adds asynchronousity
   - S6637796: setBounds doesn't enlarge Component
   - S6607660: java.awt.Container.getMouseEventTargetImpl should be invoked while holding the TreeLock
@@ -413,6 +416,7 @@ New in release 1.10 (2011-XX-XX):
   - S6725214: D3D: forward-port the new pipeline from 6u10
 * Bug fixes
   - RH661505: JPEGs with sRGB IEC61966-2.1 color profiles have wrong colors
+  - PR616, PR99: Don't statically link libstdc++ or libgcc
 
 New in release 1.9.5 (2011-02-01):
 

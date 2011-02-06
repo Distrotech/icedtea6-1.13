@@ -12,7 +12,26 @@
 	Rejigged against new patches with Oracle copyrights added.
 	* patches/openjdk/6797195-hw_lw_mixing.patch:
 	New AWT backport from OpenJDK7.
+
+2011-02-03  Andrew John Hughes  <ahughes@redhat.com>
+
+	PR616, PR99:
+	* Makefile.am: Add new patch.
+	* patches/jtreg-6929067-fix.patch:
+	Link against pthread explicitly now
+	libstdc++ is no longer static.
+	* patches/no-static-linking.patch:
+	Don't statically link libstdc++ or
+	libgcc.
 	* NEWS: Updated.
+
+2011-02-01  Denis Lila <dlila@redhat.com>
+
+	* NEWS: Update with the 3 backports
+	* Makefile.am (ICEDTEA_PATCHES): Add the patches
+	* patches/openjdk/4493128-CubicCurve2D.patch: New file.
+	* patches/openjdk/4645692-CubicCurve2D.solveCubic.patch: Likewise.
+	* patches/openjdk/4724552-CubicCurve2D.patch: Likewise.
 
 2011-02-01  Andrew John Hughes  <ahughes@redhat.com>
 

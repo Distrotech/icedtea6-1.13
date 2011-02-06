@@ -45,7 +45,7 @@
 +gcc ${COMP_FLAG} -o invoke \
 +-L${TESTJAVA}/jre/lib/${ARCH}/client \
 +-L${TESTJAVA}/jre/lib/${ARCH}/server \
-+-ljvm -I${TESTJAVA}/include -I${TESTJAVA}/include/linux invoke.c
++-ljvm -lpthread -I${TESTJAVA}/include -I${TESTJAVA}/include/linux invoke.c
 +
  ./invoke
  exit $?
