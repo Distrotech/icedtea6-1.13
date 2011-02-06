@@ -1,0 +1,506 @@
+# HG changeset patch
+# User anthony
+# Date 1292028654 0
+# Node ID 6de73ab429ca5638f4761c98f15a92dda7327d09
+# Parent  5dab44569221369c0353129cd4fac0c3f259f258
+6682046: Mixing code does not always recalculate shapes correctly when resizing components
+Summary: The valid property is now encapsulated in Component.
+Reviewed-by: art
+
+diff -r 5dab44569221 -r 6de73ab429ca src/share/classes/java/awt/Button.java
+--- openjdk.orig/jdk/src/share/classes/java/awt/Button.java	Tue Feb 01 17:59:02 2011 +0000
++++ openjdk/jdk/src/share/classes/java/awt/Button.java	Sat Dec 11 00:50:54 2010 +0000
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1995, 2006, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1995, 2008, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -213,8 +213,8 @@
+         }
+ 
+         // This could change the preferred size of the Component.
+-        if (testvalid && valid) {
+-            invalidate();
++        if (testvalid) {
++            invalidateIfValid();
+         }
+     }
+ 
+diff -r 5dab44569221 -r 6de73ab429ca src/share/classes/java/awt/Checkbox.java
+--- openjdk.orig/jdk/src/share/classes/java/awt/Checkbox.java	Tue Feb 01 17:59:02 2011 +0000
++++ openjdk/jdk/src/share/classes/java/awt/Checkbox.java	Sat Dec 11 00:50:54 2010 +0000
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1995, 2006, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1995, 2008, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -284,8 +284,8 @@
+         }
+ 
+         // This could change the preferred size of the Component.
+-        if (testvalid && valid) {
+-            invalidate();
++        if (testvalid) {
++            invalidateIfValid();
+         }
+     }
+ 
+diff -r 5dab44569221 -r 6de73ab429ca src/share/classes/java/awt/Choice.java
+--- openjdk.orig/jdk/src/share/classes/java/awt/Choice.java	Tue Feb 01 17:59:02 2011 +0000
++++ openjdk/jdk/src/share/classes/java/awt/Choice.java	Sat Dec 11 00:50:54 2010 +0000
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1995, 2006, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1995, 2008, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -207,9 +207,7 @@
+         }
+ 
+         // This could change the preferred size of the Component.
+-        if (valid) {
+-            invalidate();
+-        }
++        invalidateIfValid();
+     }
+ 
+     /**
+@@ -269,9 +267,7 @@
+         }
+ 
+         // This could change the preferred size of the Component.
+-        if (valid) {
+-            invalidate();
+-        }
++        invalidateIfValid();
+     }
+ 
+     /**
+@@ -299,9 +295,7 @@
+         }
+ 
+         // This could change the preferred size of the Component.
+-        if (valid) {
+-            invalidate();
+-        }
++        invalidateIfValid();
+     }
+ 
+     /**
+@@ -323,9 +317,7 @@
+         }
+ 
+         // This could change the preferred size of the Component.
+-        if (valid) {
+-            invalidate();
+-        }
++        invalidateIfValid();
+     }
+ 
+     /**
+@@ -367,9 +359,7 @@
+         }
+ 
+         // This could change the preferred size of the Component.
+-        if (valid) {
+-            invalidate();
+-        }
++        invalidateIfValid();
+     }
+ 
+     /**
+diff -r 5dab44569221 -r 6de73ab429ca src/share/classes/java/awt/Component.java
+--- openjdk.orig/jdk/src/share/classes/java/awt/Component.java	Tue Feb 01 17:59:02 2011 +0000
++++ openjdk/jdk/src/share/classes/java/awt/Component.java	Sat Dec 11 00:50:54 2010 +0000
+@@ -345,7 +345,7 @@
+      * @see #validate
+      * @see #invalidate
+      */
+-    volatile boolean valid = false;
++    private volatile boolean valid = false;
+ 
+     /**
+      * The <code>DropTarget</code> associated with this component.
+@@ -1699,9 +1699,9 @@
+         // This could change the preferred size of the Component.
+         // Fix for 6213660. Should compare old and new fonts and do not
+         // call invalidate() if they are equal.
+-        if (valid && f != oldFont && (oldFont == null ||
++        if (f != oldFont && (oldFont == null ||
+                                       !oldFont.equals(f))) {
+-            invalidate();
++            invalidateIfValid();
+         }
+     }
+ 
+@@ -1758,9 +1758,7 @@
+         firePropertyChange("locale", oldValue, l);
+ 
+         // This could change the preferred size of the Component.
+-        if (valid) {
+-            invalidate();
+-        }
++        invalidateIfValid();
+     }
+ 
+     /**
+@@ -2069,8 +2067,8 @@
+                     if (resized) {
+                         invalidate();
+                     }
+-                    if (parent != null && parent.valid) {
+-                        parent.invalidate();
++                    if (parent != null) {
++                        parent.invalidateIfValid();
+                     }
+                 }
+                 if (needNotify) {
+@@ -2639,7 +2637,8 @@
+     public void validate() {
+         synchronized (getTreeLock()) {
+             ComponentPeer peer = this.peer;
+-            if (!valid && peer != null) {
++            boolean wasValid = isValid();
++            if (!wasValid && peer != null) {
+                 Font newfont = getFont();
+                 Font oldfont = peerFont;
+                 if (newfont != oldfont && (oldfont == null
+@@ -2650,6 +2649,9 @@
+                 peer.layout();
+             }
+             valid = true;
++            if (!wasValid) {
++                mixOnValidating();
++            }
+         }
+     }
+ 
+@@ -2678,9 +2680,17 @@
+             if (!isMaximumSizeSet()) {
+                 maxSize = null;
+             }
+-            if (parent != null && parent.valid) {
+-                parent.invalidate();
+-            }
++            if (parent != null) {
++                parent.invalidateIfValid();
++            }
++        }
++    }
++
++    /** Invalidates the component unless it is already invalid.
++     */
++    final void invalidateIfValid() {
++        if (isValid()) {
++            invalidate();
+         }
+     }
+ 
+@@ -7690,7 +7700,7 @@
+     protected String paramString() {
+         String thisName = getName();
+         String str = (thisName != null? thisName : "") + "," + x + "," + y + "," + width + "x" + height;
+-        if (!valid) {
++        if (!isValid()) {
+             str += ",invalid";
+         }
+         if (!visible) {
+@@ -8450,9 +8460,7 @@
+         firePropertyChange("componentOrientation", oldValue, o);
+ 
+         // This could change the preferred size of the Component.
+-        if (valid) {
+-            invalidate();
+-        }
++        invalidateIfValid();
+     }
+ 
+     /**
+@@ -9294,7 +9302,8 @@
+      */
+     private boolean areBoundsValid() {
+         Container cont = getContainer();
+-        return cont == null || cont.isValid() || cont.getLayout() == null;
++        return cont == null || cont.isValid()
++            || cont.getLayout() == null;
+     }
+ 
+     /**
+@@ -9565,5 +9574,10 @@
+         }
+     }
+ 
++    void mixOnValidating() {
++        // This method gets overriden in the Container. Obviously, a plain
++        // non-container components don't need to handle validation.
++    }
++
+     // ****************** END OF MIXING CODE ********************************
+ }
+diff -r 5dab44569221 -r 6de73ab429ca src/share/classes/java/awt/Container.java
+--- openjdk.orig/jdk/src/share/classes/java/awt/Container.java	Tue Feb 01 17:59:02 2011 +0000
++++ openjdk/jdk/src/share/classes/java/awt/Container.java	Sat Dec 11 00:50:54 2010 +0000
+@@ -505,9 +505,7 @@
+             comp.parent = null;
+             component.remove(index);
+ 
+-            if (valid) {
+-                invalidate();
+-            }
++            invalidateIfValid();
+         } else {
+             // We should remove component and then
+             // add it by the newIndex without newIndex decrement if even we shift components to the left
+@@ -796,9 +794,7 @@
+             }
+         }
+ 
+-        if (valid) {
+-            invalidate();
+-        }
++        invalidateIfValid();
+         if (peer != null) {
+             if (comp.peer == null) { // Remove notify was called or it didn't have peer - create new one
+                 comp.addNotify();
+@@ -1060,9 +1056,7 @@
+                 comp.numListening(AWTEvent.HIERARCHY_BOUNDS_EVENT_MASK));
+             adjustDescendants(comp.countHierarchyMembers());
+ 
+-            if (valid) {
+-                invalidate();
+-            }
++            invalidateIfValid();
+             if (peer != null) {
+                 comp.addNotify();
+             }
+@@ -1151,9 +1145,7 @@
+             comp.parent = null;
+             component.remove(index);
+ 
+-            if (valid) {
+-                invalidate();
+-            }
++            invalidateIfValid();
+             if (containerListener != null ||
+                 (eventMask & AWTEvent.CONTAINER_EVENT_MASK) != 0 ||
+                 Toolkit.enabledOnToolkit(AWTEvent.CONTAINER_EVENT_MASK)) {
+@@ -1245,9 +1237,7 @@
+             if (peer != null && layoutMgr == null && isVisible()) {
+                 updateCursorImmediately();
+             }
+-            if (valid) {
+-                invalidate();
+-            }
++            invalidateIfValid();
+         }
+     }
+ 
+@@ -1407,9 +1397,7 @@
+      */
+     public void setLayout(LayoutManager mgr) {
+         layoutMgr = mgr;
+-        if (valid) {
+-            invalidate();
+-        }
++        invalidateIfValid();
+     }
+ 
+     /**
+@@ -1481,10 +1469,10 @@
+      */
+     public void validate() {
+         /* Avoid grabbing lock unless really necessary. */
+-        if (!valid) {
++        if (!isValid()) {
+             boolean updateCur = false;
+             synchronized (getTreeLock()) {
+-                if (!valid && peer != null) {
++                if (!isValid() && peer != null) {
+                     ContainerPeer p = null;
+                     if (peer instanceof ContainerPeer) {
+                         p = (ContainerPeer) peer;
+@@ -1493,7 +1481,6 @@
+                         p.beginValidate();
+                     }
+                     validateTree();
+-                    valid = true;
+                     if (p != null) {
+                         p.endValidate();
+                         updateCur = isVisible();
+@@ -1516,7 +1503,7 @@
+      * @see #validate
+      */
+     protected void validateTree() {
+-        if (!valid) {
++        if (!isValid()) {
+             if (peer instanceof ContainerPeer) {
+                 ((ContainerPeer)peer).beginLayout();
+             }
+@@ -1525,7 +1512,7 @@
+                 Component comp = component.get(i);
+                 if (   (comp instanceof Container)
+                        && !(comp instanceof Window)
+-                       && !comp.valid) {
++                       && !comp.isValid()) {
+                     ((Container)comp).validateTree();
+                 } else {
+                     comp.validate();
+@@ -1535,7 +1522,7 @@
+                 ((ContainerPeer)peer).endLayout();
+             }
+         }
+-        valid = true;
++        super.validate();
+     }
+ 
+     /**
+@@ -1550,14 +1537,10 @@
+                     ((Container)comp).invalidateTree();
+                 }
+                 else {
+-                    if (comp.valid) {
+-                        comp.invalidate();
+-                    }
++                    comp.invalidateIfValid();
+                 }
+             }
+-            if (valid) {
+-                invalidate();
+-            }
++            invalidateIfValid();
+         }
+     }
+ 
+@@ -4079,6 +4062,21 @@
+         }
+     }
+ 
++    @Override
++    void mixOnValidating() {
++        synchronized (getTreeLock()) {
++            if (mixingLog.isLoggable(Level.FINE)) {
++                mixingLog.fine("this = " + this);
++            }
++
++            if (hasHeavyweightDescendants()) {
++                recursiveApplyCurrentShape();
++            }
++
++            super.mixOnValidating();
++        }
++    }
++
+     // ****************** END OF MIXING CODE ********************************
+ }
+ 
+diff -r 5dab44569221 -r 6de73ab429ca src/share/classes/java/awt/Dialog.java
+--- openjdk.orig/jdk/src/share/classes/java/awt/Dialog.java	Tue Feb 01 17:59:02 2011 +0000
++++ openjdk/jdk/src/share/classes/java/awt/Dialog.java	Sat Dec 11 00:50:54 2010 +0000
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1995, 2007, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1995, 2008, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -1327,8 +1327,8 @@
+         // the insets of the Dialog. If we could, we'd call invalidate()
+         // from the peer, but we need to guarantee that we're not holding
+         // the Dialog lock when we call invalidate().
+-        if (testvalid && valid) {
+-            invalidate();
++        if (testvalid) {
++            invalidateIfValid();
+         }
+     }
+ 
+diff -r 5dab44569221 -r 6de73ab429ca src/share/classes/java/awt/Frame.java
+--- openjdk.orig/jdk/src/share/classes/java/awt/Frame.java	Tue Feb 01 17:59:02 2011 +0000
++++ openjdk/jdk/src/share/classes/java/awt/Frame.java	Sat Dec 11 00:50:54 2010 +0000
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1995, 2006, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1995, 2008, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -590,9 +590,7 @@
+                 if (peer != null) {
+                     mbManagement = true;
+                     menuBar.addNotify();
+-                    if (valid) {
+-                        invalidate();
+-                    }
++                    invalidateIfValid();
+                     peer.setMenuBar(menuBar);
+                 }
+             }
+@@ -633,8 +631,8 @@
+         // the insets of the Frame. If we could, we'd call invalidate()
+         // from the peer, but we need to guarantee that we're not holding
+         // the Frame lock when we call invalidate().
+-        if (testvalid && valid) {
+-            invalidate();
++        if (testvalid) {
++            invalidateIfValid();
+         }
+         firePropertyChange("resizable", oldResizable, resizable);
+     }
+@@ -858,9 +856,7 @@
+                 FramePeer peer = (FramePeer)this.peer;
+                 if (peer != null) {
+                     mbManagement = true;
+-                    if (valid) {
+-                        invalidate();
+-                    }
++                    invalidateIfValid();
+                     peer.setMenuBar(null);
+                     m.removeNotify();
+                 }
+diff -r 5dab44569221 -r 6de73ab429ca src/share/classes/java/awt/Label.java
+--- openjdk.orig/jdk/src/share/classes/java/awt/Label.java	Tue Feb 01 17:59:02 2011 +0000
++++ openjdk/jdk/src/share/classes/java/awt/Label.java	Sat Dec 11 00:50:54 2010 +0000
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1995, 2006, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1995, 2008, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -257,8 +257,8 @@
+         }
+ 
+         // This could change the preferred size of the Component.
+-        if (testvalid && valid) {
+-            invalidate();
++        if (testvalid) {
++            invalidateIfValid();
+         }
+     }
+ 
+diff -r 5dab44569221 -r 6de73ab429ca src/share/classes/java/awt/TextField.java
+--- openjdk.orig/jdk/src/share/classes/java/awt/TextField.java	Tue Feb 01 17:59:02 2011 +0000
++++ openjdk/jdk/src/share/classes/java/awt/TextField.java	Sat Dec 11 00:50:54 2010 +0000
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1995, 2007, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1995, 2008, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -296,9 +296,7 @@
+         super.setText(t);
+ 
+         // This could change the preferred size of the Component.
+-        if (valid) {
+-            invalidate();
+-        }
++        invalidateIfValid();
+     }
+ 
+     /**

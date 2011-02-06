@@ -1,0 +1,3337 @@
+# HG changeset patch
+# User anthony
+# Date 1296589085 0
+# Node ID f683aef5858502b989c2bc0714003ca49d83c242
+# Parent  6de73ab429ca5638f4761c98f15a92dda7327d09
+6797195: Forward-port enhancements for hw/lw mixing from 6u12 to 7
+Reviewed-by: art, dcherepanov
+
+diff -r 6de73ab429ca -r f683aef58585 make/sun/awt/Makefile
+--- openjdk.orig/jdk/make/sun/awt/Makefile	Sat Dec 11 00:50:54 2010 +0000
++++ openjdk/jdk/make/sun/awt/Makefile	Tue Feb 01 19:38:05 2011 +0000
+@@ -51,7 +51,7 @@
+ # sun/awt/resources       handled by java/awt/Makefile
+ # sun/java2d/pisces       handled by sun/pisces/Makefile
+ #
+-AUTO_FILES_JAVA_DIRS = sun/awt sun/java2d
++AUTO_FILES_JAVA_DIRS = sun/awt sun/java2d com/sun/awt
+ AUTO_JAVA_PRUNE = resources pisces
+ 
+ ifeq ($(PLATFORM), windows)
+diff -r 6de73ab429ca -r f683aef58585 make/tools/sharing/classlist.linux
+--- openjdk.orig/jdk/make/tools/sharing/classlist.linux	Sat Dec 11 00:50:54 2010 +0000
++++ openjdk/jdk/make/tools/sharing/classlist.linux	Tue Feb 01 19:38:05 2011 +0000
+@@ -1718,6 +1718,7 @@
+ sun/awt/color/CMM
+ java/applet/Applet
+ java/awt/Panel
++com/sun/awt/AWTUtilities
+ javax/swing/KeyboardManager$ComponentKeyStrokePair
+ sun/awt/EmbeddedFrame
+ sun/awt/im/InputMethodContext
+diff -r 6de73ab429ca -r f683aef58585 make/tools/sharing/classlist.solaris
+--- openjdk.orig/jdk/make/tools/sharing/classlist.solaris	Sat Dec 11 00:50:54 2010 +0000
++++ openjdk/jdk/make/tools/sharing/classlist.solaris	Tue Feb 01 19:38:05 2011 +0000
+@@ -961,6 +961,7 @@
+ javax/swing/SystemEventQueueUtilities$ComponentWorkRequest
+ java/applet/Applet
+ java/awt/Panel
++com/sun/awt/AWTUtilities
+ sun/awt/X11/XExposeEvent
+ java/util/jar/Manifest
+ java/io/ByteArrayInputStream
+diff -r 6de73ab429ca -r f683aef58585 make/tools/sharing/classlist.windows
+--- openjdk.orig/jdk/make/tools/sharing/classlist.windows	Sat Dec 11 00:50:54 2010 +0000
++++ openjdk/jdk/make/tools/sharing/classlist.windows	Tue Feb 01 19:38:05 2011 +0000
+@@ -1621,6 +1621,7 @@
+ sun/font/FontDesignMetrics$MetricsKey
+ java/applet/Applet
+ java/awt/Panel
++com/sun/awt/AWTUtilities
+ javax/swing/KeyboardManager$ComponentKeyStrokePair
+ sun/awt/im/InputMethodContext
+ java/awt/im/spi/InputMethodContext
+diff -r 6de73ab429ca -r f683aef58585 src/share/classes/com/sun/awt/AWTUtilities.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/src/share/classes/com/sun/awt/AWTUtilities.java	Tue Feb 01 19:38:05 2011 +0000
+@@ -0,0 +1,104 @@
++/*
++ * Copyright (c) 2008, 2009, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.  Oracle designates this
++ * particular file as subject to the "Classpath" exception as provided
++ * by Oracle in the LICENSE file that accompanied this code.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++package com.sun.awt;
++
++import java.awt.*;
++import sun.awt.AWTAccessor;
++
++
++/**
++ * A collection of utility methods for AWT.
++ *
++ * The functionality provided by the static methods of the class includes:
++ * <ul>
++ * <li>Setting a 'mixing-cutout' shape for a component.
++ * </ul>
++ * <p>
++ * <b>WARNING</b>: This class is an implementation detail and only meant
++ * for limited use outside of the core platform. This API may change
++ * drastically between update release, and it may even be
++ * removed or be moved in some other package(s)/class(es).
++ */
++public final class AWTUtilities {
++
++    /**
++     * The AWTUtilities class should not be instantiated
++     */
++    private AWTUtilities() {
++    }
++
++    /**
++     * Sets a 'mixing-cutout' shape for the given component.
++     *
++     * By default a lightweight component is treated as an opaque rectangle for
++     * the purposes of the Heavyweight/Lightweight Components Mixing feature.
++     * This method enables developers to set an arbitrary shape to be cut out
++     * from heavyweight components positioned underneath the lightweight
++     * component in the z-order.
++     * <p>
++     * The {@code shape} argument may have the following values:
++     * <ul>
++     * <li>{@code null} - reverts the default cutout shape (the rectangle equal
++     * to the component's {@code getBounds()})
++     * <li><i>empty-shape</i> - does not cut out anything from heavyweight
++     * components. This makes the given lightweight component effectively
++     * transparent. Note that descendants of the lightweight component still
++     * affect the shapes of heavyweight components.  An example of an
++     * <i>empty-shape</i> is {@code new Rectangle()}.
++     * <li><i>non-empty-shape</i> - the given shape will be cut out from
++     * heavyweight components.
++     * </ul>
++     * <p>
++     * The most common example when the 'mixing-cutout' shape is needed is a
++     * glass pane component. The {@link JRootPane#setGlassPane()} method
++     * automatically sets the <i>empty-shape</i> as the 'mixing-cutout' shape
++     * for the given glass pane component.  If a developer needs some other
++     * 'mixing-cutout' shape for the glass pane (which is rare), this must be
++     * changed manually after installing the glass pane to the root pane.
++     * <p>
++     * Note that the 'mixing-cutout' shape neither affects painting, nor the
++     * mouse events handling for the given component. It is used exclusively
++     * for the purposes of the Heavyweight/Lightweight Components Mixing
++     * feature.
++     *
++     * @param component the component that needs non-default
++     * 'mixing-cutout' shape
++     * @param shape the new 'mixing-cutout' shape
++     * @throws NullPointerException if the component argument is {@code null}
++     */
++    public static void setComponentMixingCutoutShape(Component component,
++            Shape shape)
++    {
++        if (component == null) {
++            throw new NullPointerException(
++                    "The component argument should not be null.");
++        }
++
++        AWTAccessor.getComponentAccessor().setMixingCutoutShape(component,
++                shape);
++    }
++}
++
+diff -r 6de73ab429ca -r f683aef58585 src/share/classes/java/awt/Component.java
+--- openjdk.orig/jdk/src/share/classes/java/awt/Component.java	Sat Dec 11 00:50:54 2010 +0000
++++ openjdk/jdk/src/share/classes/java/awt/Component.java	Tue Feb 01 19:38:05 2011 +0000
+@@ -64,8 +64,10 @@
+ 
+ import sun.security.action.GetPropertyAction;
+ import sun.awt.AppContext;
++import sun.awt.AWTAccessor;
+ import sun.awt.ConstrainableGraphics;
+ import sun.awt.SubRegionShowable;
++import sun.awt.SunToolkit;
+ import sun.awt.WindowClosingListener;
+ import sun.awt.CausedFocusEvent;
+ import sun.awt.EmbeddedFrame;
+@@ -743,22 +745,26 @@
+      * The shape set with the applyCompoundShape() method. It uncludes the result
+      * of the HW/LW mixing related shape computation. It may also include
+      * the user-specified shape of the component.
++     * The 'null' value means the component has normal shape (or has no shape at all)
++     * and applyCompoundShape() will skip the following shape identical to normal.
+      */
+     private transient Region compoundShape = null;
+ 
+     /*
++     * Represents the shape of this lightweight component to be cut out from
++     * heavyweight components should they intersect. Possible values:
++     *    1. null - consider the shape rectangular
++     *    2. EMPTY_REGION - nothing gets cut out (children still get cut out)
++     *    3. non-empty - this shape gets cut out.
++     */
++    private transient Region mixingCutoutRegion = null;
++
++    /*
+      * Indicates whether addNotify() is complete
+      * (i.e. the peer is created).
+      */
+     private transient boolean isAddNotifyComplete = false;
+ 
+-    private static final PropertyChangeListener opaquePropertyChangeListener =
+-        new PropertyChangeListener() {
+-            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+-                ((Component)evt.getSource()).mixOnOpaqueChanging();
+-            }
+-        };
+-
+     /**
+      * Should only be used in subclass getBounds to check that part of bounds
+      * is actualy changing
+@@ -778,6 +784,39 @@
+             }
+     }
+ 
++    static {
++        AWTAccessor.setComponentAccessor(new AWTAccessor.ComponentAccessor() {
++            public void setMixingCutoutShape(Component comp, Shape shape) {
++                Region region = shape == null ?  null :
++                    Region.getInstance(shape, null);
++
++                synchronized (comp.getTreeLock()) {
++                    boolean needShowing = false;
++                    boolean needHiding = false;
++
++                    if (!comp.isNonOpaqueForMixing()) {
++                        needHiding = true;
++                    }
++
++                    comp.mixingCutoutRegion = region;
++
++                    if (!comp.isNonOpaqueForMixing()) {
++                        needShowing = true;
++                    }
++
++                    if (comp.isMixingNeeded()) {
++                        if (needHiding) {
++                            comp.mixOnHiding(comp.isLightweight());
++                        }
++                        if (needShowing) {
++                            comp.mixOnShowing();
++                        }
++                    }
++                }
++            }
++        });
++    }
++
+     /**
+      * Constructs a new component. Class <code>Component</code> can be
+      * extended directly to create a lightweight component that does not
+@@ -6546,7 +6585,6 @@
+             }
+ 
+             if (!isAddNotifyComplete) {
+-                addPropertyChangeListener("opaque", opaquePropertyChangeListener);
+                 mixOnShowing();
+             }
+ 
+@@ -6638,9 +6676,11 @@
+                 p.dispose();
+ 
+                 mixOnHiding(isLightweight);
+-                removePropertyChangeListener("opaque", opaquePropertyChangeListener);
+ 
+                 isAddNotifyComplete = false;
++                // Nullifying compoundShape means that the component has normal shape
++                // (or has no shape at all).
++                this.compoundShape = null;
+             }
+ 
+             if (hierarchyListener != null ||
+@@ -9300,10 +9340,9 @@
+      * Null-layout of the container or absence of the container mean
+      * the bounds of the component are final and can be trusted.
+      */
+-    private boolean areBoundsValid() {
++    final boolean areBoundsValid() {
+         Container cont = getContainer();
+-        return cont == null || cont.isValid()
+-            || cont.getLayout() == null;
++        return cont == null || cont.isValid() || cont.getLayout() == null;
+     }
+ 
+     /**
+@@ -9312,6 +9351,14 @@
+      */
+     void applyCompoundShape(Region shape) {
+         checkTreeLock();
++
++        if (!areBoundsValid()) {
++            if (mixingLog.isLoggable(Level.FINE)) {
++                mixingLog.fine("this = " + this + "; areBoundsValid = " + areBoundsValid());
++            }
++            return;
++        }
++
+         if (!isLightweight()) {
+             ComponentPeer peer = getPeer();
+             if (peer != null) {
+@@ -9321,22 +9368,31 @@
+                 // with some incorrect Region object with loX being
+                 // greater than the hiX for instance.
+                 if (shape.isEmpty()) {
+-                    shape = Region.getInstanceXYWH(0, 0, 0, 0);
++                    shape = Region.EMPTY_REGION;
+                 }
+ 
++
+                 // Note: the shape is not really copied/cloned. We create
+                 // the Region object ourselves, so there's no any possibility
+                 // to modify the object outside of the mixing code.
+-                this.compoundShape = shape;
+-
+-                if (areBoundsValid()) {
++                // Nullifying compoundShape means that the component has normal shape
++                // (or has no shape at all).
++                if (shape.equals(getNormalShape())) {
++                    if (this.compoundShape == null) {
++                        return;
++                    }
++                    this.compoundShape = null;
++                    peer.applyShape(null);
++                } else {
++                    if (shape.equals(getAppliedShape())) {
++                        return;
++                    }
++                    this.compoundShape = shape;
+                     Point compAbsolute = getLocationOnWindow();
+-
+                     if (mixingLog.isLoggable(Level.FINER)) {
+                         mixingLog.fine("this = " + this +
+-                            "; compAbsolute=" + compAbsolute + "; shape=" + shape);
++                                "; compAbsolute=" + compAbsolute + "; shape=" + shape);
+                     }
+-
+                     peer.applyShape(shape.getTranslatedRegion(-compAbsolute.x, -compAbsolute.y));
+                 }
+             }
+@@ -9359,7 +9415,7 @@
+         Point curLocation = getLocation();
+ 
+         for (Container parent = getContainer();
+-                parent != null;
++                parent != null && !(parent instanceof Window);
+                 parent = parent.getContainer())
+         {
+             curLocation.x += parent.getX();
+@@ -9385,7 +9441,28 @@
+             );
+     }
+ 
+-    private int getSiblingIndexAbove() {
++    /**
++     * Returns the "opaque shape" of the component.
++     *
++     * The opaque shape of a lightweight components is the actual shape that
++     * needs to be cut off of the heavyweight components in order to mix this
++     * lightweight component correctly with them.
++     *
++     * The method is overriden in the java.awt.Container to handle non-opaque
++     * containers containing opaque children.
++     *
++     * See 6637655 for details.
++     */
++    Region getOpaqueShape() {
++        checkTreeLock();
++        if (mixingCutoutRegion != null) {
++            return mixingCutoutRegion;
++        } else {
++            return getNormalShape();
++        }
++    }
++
++    final int getSiblingIndexAbove() {
+         checkTreeLock();
+         Container parent = getContainer();
+         if (parent == null) {
+@@ -9397,7 +9474,7 @@
+         return nextAbove < 0 ? -1 : nextAbove;
+     }
+ 
+-    private int getSiblingIndexBelow() {
++    final int getSiblingIndexBelow() {
+         checkTreeLock();
+         Container parent = getContainer();
+         if (parent == null) {
+@@ -9409,6 +9486,11 @@
+         return nextBelow >= parent.getComponentCount() ? -1 : nextBelow;
+     }
+ 
++    final boolean isNonOpaqueForMixing() {
++        return mixingCutoutRegion != null &&
++            mixingCutoutRegion.isEmpty();
++    }
++
+     private Region calculateCurrentShape() {
+         checkTreeLock();
+         Region s = getNormalShape();
+@@ -9431,8 +9513,8 @@
+                      * implementation of the Container class.
+                      */
+                     Component c = cont.getComponent(index);
+-                    if (c.isLightweight() && c.isShowing() && c.isOpaque()) {
+-                        s = s.getDifference(c.getNormalShape());
++                    if (c.isLightweight() && c.isShowing()) {
++                        s = s.getDifference(c.getOpaqueShape());
+                     }
+                 }
+ 
+@@ -9457,6 +9539,9 @@
+     void applyCurrentShape() {
+         checkTreeLock();
+         if (!areBoundsValid()) {
++            if (mixingLog.isLoggable(Level.FINE)) {
++                mixingLog.fine("this = " + this + "; areBoundsValid = " + areBoundsValid());
++            }
+             return; // Because applyCompoundShape() ignores such components anyway
+         }
+         if (mixingLog.isLoggable(Level.FINE)) {
+@@ -9475,16 +9560,54 @@
+         applyCompoundShape(getAppliedShape().getDifference(s));
+     }
+ 
++    private final void applyCurrentShapeBelowMe() {
++        checkTreeLock();
++        Container parent = getContainer();
++        if (parent != null && parent.isShowing()) {
++            // First, reapply shapes of my siblings
++            parent.recursiveApplyCurrentShape(getSiblingIndexBelow());
++
++            // Second, if my container is non-opaque, reapply shapes of siblings of my container
++            Container parent2 = parent.getContainer();
++            while (!parent.isOpaque() && parent2 != null) {
++                parent2.recursiveApplyCurrentShape(parent.getSiblingIndexBelow());
++
++                parent = parent2;
++                parent2 = parent.getContainer();
++            }
++        }
++    }
++
++    final void subtractAndApplyShapeBelowMe() {
++        checkTreeLock();
++        Container parent = getContainer();
++        if (parent != null && isShowing()) {
++            Region opaqueShape = getOpaqueShape();
++
++            // First, cut my siblings
++            parent.recursiveSubtractAndApplyShape(opaqueShape, getSiblingIndexBelow());
++
++            // Second, if my container is non-opaque, cut siblings of my container
++            Container parent2 = parent.getContainer();
++            while (!parent.isOpaque() && parent2 != null) {
++                parent2.recursiveSubtractAndApplyShape(opaqueShape, parent.getSiblingIndexBelow());
++
++                parent = parent2;
++                parent2 = parent.getContainer();
++            }
++        }
++    }
++
+     void mixOnShowing() {
+         synchronized (getTreeLock()) {
+             if (mixingLog.isLoggable(Level.FINE)) {
+                 mixingLog.fine("this = " + this);
+             }
++            if (!isMixingNeeded()) {
++                return;
++            }
+             if (isLightweight()) {
+-                Container parent = getContainer();
+-                if (parent != null && isShowing() && isOpaque()) {
+-                    parent.recursiveSubtractAndApplyShape(getNormalShape(), getSiblingIndexBelow());
+-                }
++                subtractAndApplyShapeBelowMe();
+             } else {
+                 applyCurrentShape();
+             }
+@@ -9498,12 +9621,12 @@
+             if (mixingLog.isLoggable(Level.FINE)) {
+                 mixingLog.fine("this = " + this + "; isLightweight = " + isLightweight);
+             }
++            if (!isMixingNeeded()) {
++                return;
++            }
+             if (isLightweight) {
+-                Container parent = getContainer();
+-                if (parent != null) {
+-                    parent.recursiveApplyCurrentShape(getSiblingIndexBelow());
+-                }
+-            } //XXX: else applyNormalShape() ???
++                applyCurrentShapeBelowMe();
++            }
+         }
+     }
+ 
+@@ -9512,11 +9635,11 @@
+             if (mixingLog.isLoggable(Level.FINE)) {
+                 mixingLog.fine("this = " + this);
+             }
++            if (!isMixingNeeded()) {
++                return;
++            }
+             if (isLightweight()) {
+-                Container parent = getContainer();
+-                if (parent != null) {
+-                    parent.recursiveApplyCurrentShape(parent.getComponentZOrder(this));
+-                }
++                applyCurrentShapeBelowMe();
+             } else {
+                 applyCurrentShape();
+             }
+@@ -9532,11 +9655,13 @@
+                 mixingLog.fine("this = " + this +
+                     "; oldZorder=" + oldZorder + "; newZorder=" + newZorder + "; parent=" + parent);
+             }
+-
++            if (!isMixingNeeded()) {
++                return;
++            }
+             if (isLightweight()) {
+                 if (becameHigher) {
+-                    if (parent != null && isShowing() && isOpaque()) {
+-                        parent.recursiveSubtractAndApplyShape(getNormalShape(), getSiblingIndexBelow(), oldZorder);
++                    if (parent != null && isShowing()) {
++                        parent.recursiveSubtractAndApplyShape(getOpaqueShape(), getSiblingIndexBelow(), oldZorder);
+                     }
+                 } else {
+                     if (parent != null) {
+@@ -9552,8 +9677,8 @@
+ 
+                         for (int index = oldZorder; index < newZorder; index++) {
+                             Component c = parent.getComponent(index);
+-                            if (c.isLightweight() && c.isShowing() && c.isOpaque()) {
+-                                shape = shape.getDifference(c.getNormalShape());
++                            if (c.isLightweight() && c.isShowing()) {
++                                shape = shape.getDifference(c.getOpaqueShape());
+                             }
+                         }
+                         applyCompoundShape(shape);
+@@ -9563,21 +9688,42 @@
+         }
+     }
+ 
+-    void mixOnOpaqueChanging() {
+-        if (mixingLog.isLoggable(Level.FINE)) {
+-            mixingLog.fine("this = " + this);
+-        }
+-        if (isOpaque()) {
+-            mixOnShowing();
+-        } else {
+-            mixOnHiding(isLightweight());
+-        }
+-    }
+-
+     void mixOnValidating() {
+         // This method gets overriden in the Container. Obviously, a plain
+         // non-container components don't need to handle validation.
+     }
+ 
++    final boolean isMixingNeeded() {
++        if (SunToolkit.getSunAwtDisableMixing()) {
++            if (mixingLog.isLoggable(Level.FINEST)) {
++                mixingLog.finest("this = " + this + "; Mixing disabled via sun.awt.disableMixing");
++            }
++            return false;
++        }
++        if (!areBoundsValid()) {
++            if (mixingLog.isLoggable(Level.FINE)) {
++                mixingLog.fine("this = " + this + "; areBoundsValid = " + areBoundsValid());
++            }
++            return false;
++        }
++        Window window = getContainingWindow();
++        if (window != null) {
++            if (!window.hasHeavyweightDescendants() || !window.hasLightweightDescendants()) {
++                if (mixingLog.isLoggable(Level.FINE)) {
++                    mixingLog.fine("containing window = " + window +
++                            "; has h/w descendants = " + window.hasHeavyweightDescendants() +
++                            "; has l/w descendants = " + window.hasLightweightDescendants());
++                }
++                return false;
++            }
++        } else {
++            if (mixingLog.isLoggable(Level.FINE)) {
++                mixingLog.finest("this = " + this + "; containing window is null");
++            }
++            return false;
++        }
++        return true;
++    }
++
+     // ****************** END OF MIXING CODE ********************************
+ }
+diff -r 6de73ab429ca -r f683aef58585 src/share/classes/java/awt/Container.java
+--- openjdk.orig/jdk/src/share/classes/java/awt/Container.java	Sat Dec 11 00:50:54 2010 +0000
++++ openjdk/jdk/src/share/classes/java/awt/Container.java	Tue Feb 01 19:38:05 2011 +0000
+@@ -569,7 +569,7 @@
+      * @return true if there is at least one heavyweight children in a container, false otherwise
+      * @since 1.5
+      */
+-    private boolean hasHeavyweightDescendants() {
++    final boolean hasHeavyweightDescendants() {
+         checkTreeLock();
+         return numOfHWComponents > 0;
+     }
+@@ -580,7 +580,7 @@
+      * @return true if there is at least one lightweight children in a container, false otherwise
+      * @since 1.7
+      */
+-    private boolean hasLightweightDescendants() {
++    final boolean hasLightweightDescendants() {
+         checkTreeLock();
+         return numOfLWComponents > 0;
+     }
+@@ -3857,6 +3857,28 @@
+         return -1;
+     }
+ 
++    /*
++     * This method is overriden to handle opaque children in non-opaque
++     * containers.
++     */
++    @Override
++    final Region getOpaqueShape() {
++        checkTreeLock();
++        if (isLightweight() && isNonOpaqueForMixing()
++                && hasLightweightDescendants())
++        {
++            Region s = Region.EMPTY_REGION;
++            for (int index = 0; index < getComponentCount(); index++) {
++                Component c = getComponent(index);
++                if (c.isLightweight() && c.isShowing()) {
++                    s = s.getUnion(c.getOpaqueShape());
++                }
++            }
++            return s.getIntersection(getNormalShape());
++        }
++        return super.getOpaqueShape();
++    }
++
+     final void recursiveSubtractAndApplyShape(Region shape) {
+         recursiveSubtractAndApplyShape(shape, getTopmostComponentIndex(), getBottommostComponentIndex());
+     }
+@@ -3874,6 +3896,15 @@
+         if (fromZorder == -1) {
+             return;
+         }
++        if (shape.isEmpty()) {
++            return;
++        }
++        // An invalid container with not-null layout should be ignored
++        // by the mixing code, the container will be validated later
++        // and the mixing code will be executed later.
++        if (getLayout() != null && !isValid()) {
++            return;
++        }
+         for (int index = fromZorder; index <= toZorder; index++) {
+             Component comp = getComponent(index);
+             if (!comp.isLightweight()) {
+@@ -3902,10 +3933,19 @@
+         if (fromZorder == -1) {
+             return;
+         }
++        // An invalid container with not-null layout should be ignored
++        // by the mixing code, the container will be validated later
++        // and the mixing code will be executed later.
++        if (getLayout() != null && !isValid()) {
++            return;
++        }
+         for (int index = fromZorder; index <= toZorder; index++) {
+             Component comp = getComponent(index);
+             if (!comp.isLightweight()) {
+                 comp.applyCurrentShape();
++                if (comp instanceof Container && ((Container)comp).getLayout() == null) {
++                    ((Container)comp).recursiveApplyCurrentShape();
++                }
+             } else if (comp instanceof Container &&
+                     ((Container)comp).hasHeavyweightDescendants()) {
+                 ((Container)comp).recursiveApplyCurrentShape();
+@@ -3996,6 +4036,10 @@
+                 mixingLog.fine("this = " + this);
+             }
+ 
++            if (!isMixingNeeded()) {
++                return;
++            }
++
+             boolean isLightweight = isLightweight();
+ 
+             if (isLightweight && isRecursivelyVisibleUpToHeavyweightContainer()) {
+@@ -4030,6 +4074,9 @@
+             if (mixingLog.isLoggable(Level.FINE)) {
+                 mixingLog.fine("this = " + this);
+             }
++
++            boolean isMixingNeeded = isMixingNeeded();
++
+             if (isLightweight() && hasHeavyweightDescendants()) {
+                 final Point origin = new Point(getX(), getY());
+                 for (Container cont = getContainer();
+@@ -4040,7 +4087,18 @@
+                 }
+ 
+                 recursiveRelocateHeavyweightChildren(origin);
++
++                if (!isMixingNeeded) {
++                    return;
++                }
++
++                recursiveApplyCurrentShape();
+             }
++
++            if (!isMixingNeeded) {
++                return;
++            }
++
+             super.mixOnReshaping();
+         }
+     }
+@@ -4053,6 +4111,10 @@
+                     "; oldZ=" + oldZorder + "; newZ=" + newZorder);
+             }
+ 
++            if (!isMixingNeeded()) {
++                return;
++            }
++
+             boolean becameHigher = newZorder < oldZorder;
+ 
+             if (becameHigher && isLightweight() && hasHeavyweightDescendants()) {
+@@ -4069,10 +4131,18 @@
+                 mixingLog.fine("this = " + this);
+             }
+ 
++            if (!isMixingNeeded()) {
++                return;
++            }
++
+             if (hasHeavyweightDescendants()) {
+                 recursiveApplyCurrentShape();
+             }
+ 
++            if (isLightweight() && isNonOpaqueForMixing()) {
++                subtractAndApplyShapeBelowMe();
++            }
++
+             super.mixOnValidating();
+         }
+     }
+diff -r 6de73ab429ca -r f683aef58585 src/share/classes/javax/swing/JRootPane.java
+--- openjdk.orig/jdk/src/share/classes/javax/swing/JRootPane.java	Sat Dec 11 00:50:54 2010 +0000
++++ openjdk/jdk/src/share/classes/javax/swing/JRootPane.java	Tue Feb 01 19:38:05 2011 +0000
+@@ -34,6 +34,7 @@
+ import java.util.Vector;
+ import java.io.Serializable;
+ import javax.swing.border.*;
++import sun.awt.AWTAccessor;
+ import sun.security.action.GetBooleanAction;
+ 
+ 
+@@ -688,6 +689,9 @@
+             throw new NullPointerException("glassPane cannot be set to null.");
+         }
+ 
++        AWTAccessor.getComponentAccessor().setMixingCutoutShape(glass,
++                new Rectangle());
++
+         boolean visible = false;
+         if (glassPane != null && glassPane.getParent() == this) {
+             this.remove(glassPane);
+diff -r 6de73ab429ca -r f683aef58585 src/share/classes/sun/awt/AWTAccessor.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/src/share/classes/sun/awt/AWTAccessor.java	Tue Feb 01 19:38:05 2011 +0000
+@@ -0,0 +1,77 @@
++/*
++ * Copyright (c) 2008, 2009, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.  Oracle designates this
++ * particular file as subject to the "Classpath" exception as provided
++ * by Oracle in the LICENSE file that accompanied this code.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++package sun.awt;
++
++import java.awt.*;
++import sun.misc.Unsafe;
++
++/** The AWTAccessor utility class.
++ * The main purpose of this class is to enable accessing
++ * private and package-private fields of classes from
++ * different classes/packages. See sun.misc.SharedSecretes
++ * for another example.
++ */
++public final class AWTAccessor {
++    private static final Unsafe unsafe = Unsafe.getUnsafe();
++
++    /** We don't need any objects of this class.
++     * It's rather a collection of static methods
++     * and interfaces.
++     */
++    private AWTAccessor() {
++    }
++
++    /** An accessor for the java.awt.Component class.
++     */
++    public interface ComponentAccessor {
++        // See 6797587
++        // Also see: 6776743, 6768307, and 6768332.
++        /**
++         * Sets the shape of a lw component to cut out from hw components.
++         */
++        void setMixingCutoutShape(Component comp, Shape shape);
++    }
++
++    /* The java.awt.Component class accessor object.
++     */
++    private static ComponentAccessor componentAccessor;
++
++    /** Set an accessor object for the java.awt.Component class.
++     */
++    public static void setComponentAccessor(ComponentAccessor ca) {
++        componentAccessor = ca;
++    }
++
++    /** Retrieve the accessor object for the java.awt.Window class.
++     */
++    public static ComponentAccessor getComponentAccessor() {
++        if (componentAccessor == null) {
++            unsafe.ensureClassInitialized(Component.class);
++        }
++
++        return componentAccessor;
++    }
++}
+diff -r 6de73ab429ca -r f683aef58585 src/share/classes/sun/awt/SunToolkit.java
+--- openjdk.orig/jdk/src/share/classes/sun/awt/SunToolkit.java	Sat Dec 11 00:50:54 2010 +0000
++++ openjdk/jdk/src/share/classes/sun/awt/SunToolkit.java	Tue Feb 01 19:38:05 2011 +0000
+@@ -1973,6 +1973,21 @@
+         AWTAutoShutdown.getInstance().dumpPeers(aLog);
+     }
+ 
++    private static Boolean sunAwtDisableMixing = null;
++
++    /**
++     * Returns the value of "sun.awt.disableMixing" property. Default
++     * value is {@code false}.
++     */
++    public synchronized static boolean getSunAwtDisableMixing() {
++        if (sunAwtDisableMixing == null) {
++            sunAwtDisableMixing = Boolean.valueOf(
++                    AccessController.doPrivileged(
++                        new GetBooleanAction("sun.awt.disableMixing")));
++        }
++        return sunAwtDisableMixing.booleanValue();
++    }
++
+     /**
+      * Returns true if the native GTK libraries are available.  The
+      * default implementation returns false, but UNIXToolkit overrides this
+diff -r 6de73ab429ca -r f683aef58585 src/share/classes/sun/java2d/pipe/Region.java
+--- openjdk.orig/jdk/src/share/classes/sun/java2d/pipe/Region.java	Sat Dec 11 00:50:54 2010 +0000
++++ openjdk/jdk/src/share/classes/sun/java2d/pipe/Region.java	Tue Feb 01 19:38:05 2011 +0000
+@@ -28,6 +28,7 @@
+ import java.awt.Rectangle;
+ import java.awt.Shape;
+ import java.awt.geom.AffineTransform;
++import java.awt.geom.RectangularShape;
+ 
+ /**
+  * This class encapsulates a definition of a two dimensional region which
+@@ -63,11 +64,28 @@
+     static final int INIT_SIZE = 50;
+     static final int GROW_SIZE = 50;
+ 
+-    static final Region EMPTY_REGION = new Region(0, 0, 0, 0);
+-    static final Region WHOLE_REGION = new Region(Integer.MIN_VALUE,
+-                                                  Integer.MIN_VALUE,
+-                                                  Integer.MAX_VALUE,
+-                                                  Integer.MAX_VALUE);
++    /**
++     * Immutable Region.
++     */
++    private static final class ImmutableRegion extends Region {
++        protected ImmutableRegion(int lox, int loy, int hix, int hiy) {
++            super(lox, loy, hix, hiy);
++        }
++
++        // Override all the methods that mutate the object
++        public void appendSpans(sun.java2d.pipe.SpanIterator si) {}
++        public void setOutputArea(java.awt.Rectangle r) {}
++        public void setOutputAreaXYWH(int x, int y, int w, int h) {}
++        public void setOutputArea(int[] box) {}
++        public void setOutputAreaXYXY(int lox, int loy, int hix, int hiy) {}
++    }
++
++    public static final Region EMPTY_REGION = new ImmutableRegion(0, 0, 0, 0);
++    public static final Region WHOLE_REGION = new ImmutableRegion(
++            Integer.MIN_VALUE,
++            Integer.MIN_VALUE,
++            Integer.MAX_VALUE,
++            Integer.MAX_VALUE);
+ 
+     int lox;
+     int loy;
+@@ -113,7 +131,7 @@
+         return newv;
+     }
+ 
+-    private Region(int lox, int loy, int hix, int hiy) {
++    protected Region(int lox, int loy, int hix, int hiy) {
+         this.lox = lox;
+         this.loy = loy;
+         this.hix = hix;
+@@ -194,6 +212,13 @@
+     public static Region getInstance(Region devBounds, boolean normalize,
+                                      Shape s, AffineTransform at)
+     {
++        // Optimize for empty shapes to avoid involving the SpanIterator
++        if (s instanceof RectangularShape &&
++                ((RectangularShape)s).isEmpty())
++        {
++            return EMPTY_REGION;
++        }
++
+         int box[] = new int[4];
+         ShapeSpanIterator sr = new ShapeSpanIterator(normalize);
+         try {
+@@ -1206,7 +1231,7 @@
+             return false;
+         }
+         if (r.lox != this.lox || r.loy != this.loy ||
+-            r.hiy != this.hiy || r.hiy != this.hiy)
++            r.hix != this.hix || r.hiy != this.hiy)
+         {
+             return false;
+         }
+diff -r 6de73ab429ca -r f683aef58585 src/solaris/classes/sun/awt/X11/XComponentPeer.java
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XComponentPeer.java	Sat Dec 11 00:50:54 2010 +0000
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XComponentPeer.java	Tue Feb 01 19:38:05 2011 +0000
+@@ -1536,13 +1536,23 @@
+             }
+             XToolkit.awtLock();
+             try {
+-                XlibWrapper.SetRectangularShape(
+-                        XToolkit.getDisplay(),
+-                        getWindow(),
+-                        shape.getLoX(), shape.getLoY(),
+-                        shape.getHiX(), shape.getHiY(),
+-                        (shape.isRectangular() ? null : shape)
+-                        );
++                if (shape != null) {
++                    XlibWrapper.SetRectangularShape(
++                            XToolkit.getDisplay(),
++                            getWindow(),
++                            shape.getLoX(), shape.getLoY(),
++                            shape.getHiX(), shape.getHiY(),
++                            (shape.isRectangular() ? null : shape)
++                            );
++                } else {
++                    XlibWrapper.SetRectangularShape(
++                            XToolkit.getDisplay(),
++                            getWindow(),
++                            0, 0,
++                            0, 0,
++                            null
++                            );
++                }
+             } finally {
+                 XToolkit.awtUnlock();
+             }
+diff -r 6de73ab429ca -r f683aef58585 src/solaris/native/sun/xawt/XlibWrapper.c
+--- openjdk.orig/jdk/src/solaris/native/sun/xawt/XlibWrapper.c	Sat Dec 11 00:50:54 2010 +0000
++++ openjdk/jdk/src/solaris/native/sun/xawt/XlibWrapper.c	Tue Feb 01 19:38:05 2011 +0000
+@@ -1933,19 +1933,30 @@
+  jint x1, jint y1, jint x2, jint y2,
+  jobject region)
+ {
+-    XRectangle rects[256];
+-    XRectangle *pRect = rects;
+-    int numrects;
+-
+     AWT_CHECK_HAVE_LOCK();
+ 
+-    numrects = RegionToYXBandedRectangles(env, x1, y1, x2, y2, region,
+-            &pRect, 256);
++    // If all the params are zeros, the shape must be simply reset.
++    // Otherwise, the shape may be not rectangular.
++    if (region || x1 || x2 || y1 || y2) {
++        XRectangle rects[256];
++        XRectangle *pRect = rects;
+ 
+-    XShapeCombineRectangles((Display *)jlong_to_ptr(display), (Window)jlong_to_ptr(window),
++        int numrects = RegionToYXBandedRectangles(env, x1, y1, x2, y2, region,
++                &pRect, 256);
++
++        XShapeCombineRectangles((Display *)jlong_to_ptr(display), (Window)jlong_to_ptr(window),
++                ShapeClip, 0, 0, pRect, numrects, ShapeSet, YXBanded);
++        XShapeCombineRectangles((Display *)jlong_to_ptr(display), (Window)jlong_to_ptr(window),
+                 ShapeBounding, 0, 0, pRect, numrects, ShapeSet, YXBanded);
+ 
+-    if (pRect != rects) {
+-        free(pRect);
++        if (pRect != rects) {
++            free(pRect);
++        }
++    } else {
++        // Reset the shape to a rectangular form.
++        XShapeCombineMask((Display *)jlong_to_ptr(display), (Window)jlong_to_ptr(window),
++                ShapeClip, 0, 0, None, ShapeSet);
++        XShapeCombineMask((Display *)jlong_to_ptr(display), (Window)jlong_to_ptr(window),
++                ShapeBounding, 0, 0, None, ShapeSet);
+     }
+ }
+diff -r 6de73ab429ca -r f683aef58585 src/windows/classes/sun/awt/windows/WComponentPeer.java
+--- openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WComponentPeer.java	Sat Dec 11 00:50:54 2010 +0000
++++ openjdk/jdk/src/windows/classes/sun/awt/windows/WComponentPeer.java	Tue Feb 01 19:38:05 2011 +0000
+@@ -878,8 +878,12 @@
+                     + "; SHAPE: " + shape);
+         }
+ 
+-        setRectangularShape(shape.getLoX(), shape.getLoY(), shape.getHiX(), shape.getHiY(),
+-                (shape.isRectangular() ? null : shape));
++        if (shape != null) {
++            setRectangularShape(shape.getLoX(), shape.getLoY(), shape.getHiX(), shape.getHiY(),
++                    (shape.isRectangular() ? null : shape));
++        } else {
++            setRectangularShape(0, 0, 0, 0, null);
++        }
+     }
+ 
+ }
+diff -r 6de73ab429ca -r f683aef58585 src/windows/native/sun/windows/awt_Component.cpp
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.cpp	Sat Dec 11 00:50:54 2010 +0000
++++ openjdk/jdk/src/windows/native/sun/windows/awt_Component.cpp	Tue Feb 01 19:38:05 2011 +0000
+@@ -6315,30 +6315,36 @@
+     c = (AwtComponent *)pData;
+     if (::IsWindow(c->GetHWnd()))
+     {
+-        RGNDATA *pRgnData = NULL;
+-        RGNDATAHEADER *pRgnHdr;
+-
+-        /* reserving memory for the worst case */
+-        size_t worstBufferSize = size_t(((x2 - x1) / 2 + 1) * (y2 - y1));
+-        pRgnData = (RGNDATA *) safe_Malloc(sizeof(RGNDATAHEADER) +
+-                sizeof(RECT_T) * worstBufferSize);
+-        pRgnHdr = (RGNDATAHEADER *) pRgnData;
+-
+-        pRgnHdr->dwSize = sizeof(RGNDATAHEADER);
+-        pRgnHdr->iType = RDH_RECTANGLES;
+-        pRgnHdr->nRgnSize = 0;
+-        pRgnHdr->rcBound.top = 0;
+-        pRgnHdr->rcBound.left = 0;
+-        pRgnHdr->rcBound.bottom = LONG(y2 - y1);
+-        pRgnHdr->rcBound.right = LONG(x2 - x1);
+-
+-        RECT_T * pRect = (RECT_T *) (((BYTE *) pRgnData) + sizeof(RGNDATAHEADER));
+-        pRgnHdr->nCount = RegionToYXBandedRectangles(env, x1, y1, x2, y2, region, &pRect, worstBufferSize);
+-
+-        HRGN hRgn = ::ExtCreateRegion(NULL,
+-                sizeof(RGNDATAHEADER) + sizeof(RECT_T) * pRgnHdr->nCount, pRgnData);
+-
+-        free(pRgnData);
++        HRGN hRgn = NULL;
++
++        if (region || x1 || x2 || y1 || y2) {
++            // If all the params are zeros, the shape must be simply reset.
++            // Otherwise, convert it into a region.
++            RGNDATA *pRgnData = NULL;
++            RGNDATAHEADER *pRgnHdr;
++
++            /* reserving memory for the worst case */
++            size_t worstBufferSize = size_t(((x2 - x1) / 2 + 1) * (y2 - y1));
++            pRgnData = (RGNDATA *) safe_Malloc(sizeof(RGNDATAHEADER) +
++                    sizeof(RECT_T) * worstBufferSize);
++            pRgnHdr = (RGNDATAHEADER *) pRgnData;
++
++            pRgnHdr->dwSize = sizeof(RGNDATAHEADER);
++            pRgnHdr->iType = RDH_RECTANGLES;
++            pRgnHdr->nRgnSize = 0;
++            pRgnHdr->rcBound.top = 0;
++            pRgnHdr->rcBound.left = 0;
++            pRgnHdr->rcBound.bottom = LONG(y2 - y1);
++            pRgnHdr->rcBound.right = LONG(x2 - x1);
++
++            RECT_T * pRect = (RECT_T *) (((BYTE *) pRgnData) + sizeof(RGNDATAHEADER));
++            pRgnHdr->nCount = RegionToYXBandedRectangles(env, x1, y1, x2, y2, region, &pRect, worstBufferSize);
++
++            hRgn = ::ExtCreateRegion(NULL,
++                    sizeof(RGNDATAHEADER) + sizeof(RECT_T) * pRgnHdr->nCount, pRgnData);
++
++            free(pRgnData);
++        }
+ 
+         ::SetWindowRgn(c->GetHWnd(), hRgn, TRUE);
+     }
+diff -r 6de73ab429ca -r f683aef58585 test/java/awt/Mixing/HWDisappear.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/java/awt/Mixing/HWDisappear.java	Tue Feb 01 19:38:05 2011 +0000
+@@ -0,0 +1,426 @@
++/*
++ * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/*
++  @test %W% %E%
++  @bug 6769511
++  @summary AWT components are invisible for a while after frame is moved & menu items are visible
++  @author anthony.petrov@...: area=awt.mixing
++  @library ../regtesthelpers
++  @build Util
++  @run main HWDisappear
++*/
++
++/**
++ * HWDisappear.java
++ *
++ * summary:  AWT components are invisible for a while after frame is moved & menu items are visible
++ */
++
++import java.awt.*;
++import java.awt.event.*;
++import javax.swing.*;
++import test.java.awt.regtesthelpers.Util;
++
++public class HWDisappear
++{
++
++    static volatile boolean clickPassed = false;
++
++    private static void init()
++    {
++        //*** Create instructions for the user here ***
++
++        String[] instructions =
++        {
++            "This is an AUTOMATIC test, simply wait until it is done.",
++            "The result (passed or failed) will be shown in the",
++            "message window below."
++        };
++        Sysout.createDialog( );
++        Sysout.printInstructions( instructions );
++
++
++        // Create the frame and the button
++        JFrame f = new JFrame();
++        f.setBounds(100, 100, 400, 300);
++
++        JMenuBar menubar = new JMenuBar();
++        f.setJMenuBar(menubar);
++
++        // Create lightweight-enabled menu
++        JMenu lmenu = new JMenu("Lite Menu");
++        lmenu.add("Salad");
++        lmenu.add("Fruit Plate");
++        lmenu.add("Water");
++        menubar.add(lmenu);
++
++        Button b = new Button("OK");
++
++        f.setLayout(null);
++        f.add(b);
++        b.setBounds(50, 50, 200, 50);
++
++        b.addActionListener(new java.awt.event.ActionListener() {
++            public void actionPerformed(java.awt.event.ActionEvent e) {
++                clickPassed = true;
++            }
++        });
++
++        f.setVisible(true);
++
++        Robot robot = Util.createRobot();
++        robot.setAutoDelay(20);
++
++        Util.waitForIdle(robot);
++
++        // Move quite far to ensure the button is hidden completely
++        f.setLocation(500, 200);
++
++        Util.waitForIdle(robot);
++
++        // Activate the menu
++        Point lLoc = lmenu.getLocationOnScreen();
++        robot.mouseMove(lLoc.x + 5, lLoc.y + 5);
++
++        robot.mousePress(InputEvent.BUTTON1_MASK);
++        robot.mouseRelease(InputEvent.BUTTON1_MASK);
++        Util.waitForIdle(robot);
++
++        // Click on the button.
++        Point bLoc = b.getLocationOnScreen();
++        robot.mouseMove(bLoc.x + b.getWidth() / 2, bLoc.y + 5);
++
++        robot.mousePress(InputEvent.BUTTON1_MASK);
++        robot.mouseRelease(InputEvent.BUTTON1_MASK);
++        Util.waitForIdle(robot);
++
++        if (clickPassed) {
++            pass();
++        } else {
++            fail("The button cannot be clicked.");
++        }
++    }//End  init()
++
++
++
++    /*****************************************************
++     * Standard Test Machinery Section
++     * DO NOT modify anything in this section -- it's a
++     * standard chunk of code which has all of the
++     * synchronisation necessary for the test harness.
++     * By keeping it the same in all tests, it is easier
++     * to read and understand someone else's test, as
++     * well as insuring that all tests behave correctly
++     * with the test harness.
++     * There is a section following this for test-
++     * classes
++     ******************************************************/
++    private static boolean theTestPassed = false;
++    private static boolean testGeneratedInterrupt = false;
++    private static String failureMessage = "";
++
++    private static Thread mainThread = null;
++
++    private static int sleepTime = 300000;
++
++    // Not sure about what happens if multiple of this test are
++    //  instantiated in the same VM.  Being static (and using
++    //  static vars), it aint gonna work.  Not worrying about
++    //  it for now.
++    public static void main( String args[] ) throws InterruptedException
++    {
++        mainThread = Thread.currentThread();
++        try
++        {
++            init();
++        }
++        catch( TestPassedException e )
++        {
++            //The test passed, so just return from main and harness will
++            // interepret this return as a pass
++            return;
++        }
++        //At this point, neither test pass nor test fail has been
++        // called -- either would have thrown an exception and ended the
++        // test, so we know we have multiple threads.
++
++        //Test involves other threads, so sleep and wait for them to
++        // called pass() or fail()
++        try
++        {
++            Thread.sleep( sleepTime );
++            //Timed out, so fail the test
++            throw new RuntimeException( "Timed out after " + sleepTime/1000 + " seconds" );
++        }
++        catch (InterruptedException e)
++        {
++            //The test harness may have interrupted the test.  If so, rethrow the exception
++            // so that the harness gets it and deals with it.
++            if( ! testGeneratedInterrupt ) throw e;
++
++            //reset flag in case hit this code more than once for some reason (just safety)
++            testGeneratedInterrupt = false;
++
++            if ( theTestPassed == false )
++            {
++                throw new RuntimeException( failureMessage );
++            }
++        }
++
++    }//main
++
++    public static synchronized void setTimeoutTo( int seconds )
++    {
++        sleepTime = seconds * 1000;
++    }
++
++    public static synchronized void pass()
++    {
++        Sysout.println( "The test passed." );
++        Sysout.println( "The test is over, hit  Ctl-C to stop Java VM" );
++        //first check if this is executing in main thread
++        if ( mainThread == Thread.currentThread() )
++        {
++            //Still in the main thread, so set the flag just for kicks,
++            // and throw a test passed exception which will be caught
++            // and end the test.
++            theTestPassed = true;
++            throw new TestPassedException();
++        }
++        theTestPassed = true;
++        testGeneratedInterrupt = true;
++        mainThread.interrupt();
++    }//pass()
++
++    public static synchronized void fail()
++    {
++        //test writer didn't specify why test failed, so give generic
++        fail( "it just plain failed! :-)" );
++    }
++
++    public static synchronized void fail( String whyFailed )
++    {
++        Sysout.println( "The test failed: " + whyFailed );
++        Sysout.println( "The test is over, hit  Ctl-C to stop Java VM" );
++        //check if this called from main thread
++        if ( mainThread == Thread.currentThread() )
++        {
++            //If main thread, fail now 'cause not sleeping
++            throw new RuntimeException( whyFailed );
++        }
++        theTestPassed = false;
++        testGeneratedInterrupt = true;
++        failureMessage = whyFailed;
++        mainThread.interrupt();
++    }//fail()
++
++}// class HWDisappear
++
++//This exception is used to exit from any level of call nesting
++// when it's determined that the test has passed, and immediately
++// end the test.
++class TestPassedException extends RuntimeException
++{
++}
++
++//*********** End Standard Test Machinery Section **********
++
++
++//************ Begin classes defined for the test ****************
++
++// if want to make listeners, here is the recommended place for them, then instantiate
++//  them in init()
++
++/* Example of a class which may be written as part of a test
++class NewClass implements anInterface
++ {
++   static int newVar = 0;
++
++   public void eventDispatched(AWTEvent e)
++    {
++      //Counting events to see if we get enough
++      eventCount++;
++
++      if( eventCount == 20 )
++       {
++         //got enough events, so pass
++
++         HWDisappear.pass();
++       }
++      else if( tries == 20 )
++       {
++         //tried too many times without getting enough events so fail
++
++         HWDisappear.fail();
++       }
++
++    }// eventDispatched()
++
++ }// NewClass class
++
++*/
++
++
++//************** End classes defined for the test *******************
++
++
++
++
++/****************************************************
++ Standard Test Machinery
++ DO NOT modify anything below -- it's a standard
++  chunk of code whose purpose is to make user
++  interaction uniform, and thereby make it simpler
++  to read and understand someone else's test.
++ ****************************************************/
++
++/**
++ This is part of the standard test machinery.
++ It creates a dialog (with the instructions), and is the interface
++  for sending text messages to the user.
++ To print the instructions, send an array of strings to Sysout.createDialog
++  WithInstructions method.  Put one line of instructions per array entry.
++ To display a message for the tester to see, simply call Sysout.println
++  with the string to be displayed.
++ This mimics System.out.println but works within the test harness as well
++  as standalone.
++ */
++
++class Sysout
++{
++    private static TestDialog dialog;
++
++    public static void createDialogWithInstructions( String[] instructions )
++    {
++        dialog = new TestDialog( new Frame(), "Instructions" );
++        dialog.printInstructions( instructions );
++        dialog.setVisible(true);
++        println( "Any messages for the tester will display here." );
++    }
++
++    public static void createDialog( )
++    {
++        dialog = new TestDialog( new Frame(), "Instructions" );
++        String[] defInstr = { "Instructions will appear here. ", "" } ;
++        dialog.printInstructions( defInstr );
++        dialog.setVisible(true);
++        println( "Any messages for the tester will display here." );
++    }
++
++
++    public static void printInstructions( String[] instructions )
++    {
++        dialog.printInstructions( instructions );
++    }
++
++
++    public static void println( String messageIn )
++    {
++        dialog.displayMessage( messageIn );
++        System.out.println(messageIn);
++    }
++
++}// Sysout  class
++
++/**
++  This is part of the standard test machinery.  It provides a place for the
++   test instructions to be displayed, and a place for interactive messages
++   to the user to be displayed.
++  To have the test instructions displayed, see Sysout.
++  To have a message to the user be displayed, see Sysout.
++  Do not call anything in this dialog directly.
++  */
++class TestDialog extends Dialog
++{
++
++    TextArea instructionsText;
++    TextArea messageText;
++    int maxStringLength = 80;
++
++    //DO NOT call this directly, go through Sysout
++    public TestDialog( Frame frame, String name )
++    {
++        super( frame, name );
++        int scrollBoth = TextArea.SCROLLBARS_BOTH;
++        instructionsText = new TextArea( "", 15, maxStringLength, scrollBoth );
++        add( "North", instructionsText );
++
++        messageText = new TextArea( "", 5, maxStringLength, scrollBoth );
++        add("Center", messageText);
++
++        pack();
++
++        setVisible(true);
++    }// TestDialog()
++
++    //DO NOT call this directly, go through Sysout
++    public void printInstructions( String[] instructions )
++    {
++        //Clear out any current instructions
++        instructionsText.setText( "" );
++
++        //Go down array of instruction strings
++
++        String printStr, remainingStr;
++        for( int i=0; i < instructions.length; i++ )
++        {
++            //chop up each into pieces maxSringLength long
++            remainingStr = instructions[ i ];
++            while( remainingStr.length() > 0 )
++            {
++                //if longer than max then chop off first max chars to print
++                if( remainingStr.length() >= maxStringLength )
++                {
++                    //Try to chop on a word boundary
++                    int posOfSpace = remainingStr.
++                        lastIndexOf( ' ', maxStringLength - 1 );
++
++                    if( posOfSpace <= 0 ) posOfSpace = maxStringLength - 1;
++
++                    printStr = remainingStr.substring( 0, posOfSpace + 1 );
++                    remainingStr = remainingStr.substring( posOfSpace + 1 );
++                }
++                //else just print
++                else
++                {
++                    printStr = remainingStr;
++                    remainingStr = "";
++                }
++
++                instructionsText.append( printStr + "\n" );
++
++            }// while
++
++        }// for
++
++    }//printInstructions()
++
++    //DO NOT call this directly, go through Sysout
++    public void displayMessage( String messageIn )
++    {
++        messageText.append( messageIn + "\n" );
++        System.out.println(messageIn);
++    }
++
++}// TestDialog  class
+diff -r 6de73ab429ca -r f683aef58585 test/java/awt/Mixing/JButtonInGlassPane.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/java/awt/Mixing/JButtonInGlassPane.java	Tue Feb 01 19:38:05 2011 +0000
+@@ -0,0 +1,430 @@
++/*
++ * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/*
++  @test %W% %E%
++  @bug 6779670
++  @summary Tests if a LW components in the glass pane affects HW in the content pane
++  @author anthony.petrov@...: area=awt.mixing
++  @library ../regtesthelpers
++  @build Util
++  @run main JButtonInGlassPane
++*/
++
++
++/**
++ * JButtonInGlassPane.java
++ *
++ * summary:  Tests whether a LW menu correctly overlaps a HW button
++ */
++
++import java.awt.*;
++import java.awt.event.*;
++import javax.swing.*;
++import test.java.awt.regtesthelpers.Util;
++
++
++
++public class JButtonInGlassPane
++{
++    static volatile boolean failed = false;
++
++    private static void init()
++    {
++        //*** Create instructions for the user here ***
++
++        String[] instructions =
++        {
++            "This is an AUTOMATIC test, simply wait until it is done.",
++            "The result (passed or failed) will be shown in the",
++            "message window below."
++        };
++        Sysout.createDialog( );
++        Sysout.printInstructions( instructions );
++
++        JFrame frame = new JFrame("Glass Pane children test");
++        frame.setLayout(null);
++
++        final Button button = new Button("AWT Button");
++        button.setBounds(100,100,100,100);
++        frame.add(button);
++
++        button.addActionListener(new ActionListener() {
++            public void actionPerformed(ActionEvent e) {
++                failed = true;
++            }
++        });
++
++        frame.getGlassPane().setVisible(true);
++        Container glassPane = (Container) frame.getGlassPane();
++        glassPane.setLayout(null);
++
++        final JButton jbutton = new JButton("JButton");
++        jbutton.setBounds(50,50,100,100);
++        glassPane.add(jbutton);
++
++        jbutton.setVisible(false);
++
++        frame.setSize(400, 400);
++        frame.setLocationRelativeTo(null);
++        frame.setVisible(true);
++
++        Robot robot = Util.createRobot();
++        robot.setAutoDelay(20);
++
++        Util.waitForIdle(robot);
++
++        jbutton.setVisible(true);
++        Util.waitForIdle(robot);
++
++        // Click the LW button - in the area that intersects with
++        // the HW button.
++        Point lLoc = jbutton.getLocationOnScreen();
++        robot.mouseMove(lLoc.x + jbutton.getWidth() - 5, lLoc.y + jbutton.getHeight() - 5);
++
++        robot.mousePress(InputEvent.BUTTON1_MASK);
++        robot.mouseRelease(InputEvent.BUTTON1_MASK);
++        Util.waitForIdle(robot);
++
++        jbutton.setBounds(50,50,120,120);
++        Util.waitForIdle(robot);
++
++        // Now click on the 'added' area of the LW button that again
++        // intersects with the HW.
++        robot.mouseMove(lLoc.x + jbutton.getWidth() - 5, lLoc.y + jbutton.getHeight() - 5);
++
++        robot.mousePress(InputEvent.BUTTON1_MASK);
++        robot.mouseRelease(InputEvent.BUTTON1_MASK);
++        Util.waitForIdle(robot);
++
++        if (failed) {
++            JButtonInGlassPane.fail("The LW button did not receive the click.");
++        } else {
++            JButtonInGlassPane.pass();
++        }
++    }//End  init()
++
++
++
++    /*****************************************************
++     * Standard Test Machinery Section
++     * DO NOT modify anything in this section -- it's a
++     * standard chunk of code which has all of the
++     * synchronisation necessary for the test harness.
++     * By keeping it the same in all tests, it is easier
++     * to read and understand someone else's test, as
++     * well as insuring that all tests behave correctly
++     * with the test harness.
++     * There is a section following this for test-
++     * classes
++     ******************************************************/
++    private static boolean theTestPassed = false;
++    private static boolean testGeneratedInterrupt = false;
++    private static String failureMessage = "";
++
++    private static Thread mainThread = null;
++
++    private static int sleepTime = 300000;
++
++    // Not sure about what happens if multiple of this test are
++    //  instantiated in the same VM.  Being static (and using
++    //  static vars), it aint gonna work.  Not worrying about
++    //  it for now.
++    public static void main( String args[] ) throws InterruptedException
++    {
++        mainThread = Thread.currentThread();
++        try
++        {
++            init();
++        }
++        catch( TestPassedException e )
++        {
++            //The test passed, so just return from main and harness will
++            // interepret this return as a pass
++            return;
++        }
++        //At this point, neither test pass nor test fail has been
++        // called -- either would have thrown an exception and ended the
++        // test, so we know we have multiple threads.
++
++        //Test involves other threads, so sleep and wait for them to
++        // called pass() or fail()
++        try
++        {
++            Thread.sleep( sleepTime );
++            //Timed out, so fail the test
++            throw new RuntimeException( "Timed out after " + sleepTime/1000 + " seconds" );
++        }
++        catch (InterruptedException e)
++        {
++            //The test harness may have interrupted the test.  If so, rethrow the exception
++            // so that the harness gets it and deals with it.
++            if( ! testGeneratedInterrupt ) throw e;
++
++            //reset flag in case hit this code more than once for some reason (just safety)
++            testGeneratedInterrupt = false;
++
++            if ( theTestPassed == false )
++            {
++                throw new RuntimeException( failureMessage );
++            }
++        }
++
++    }//main
++
++    public static synchronized void setTimeoutTo( int seconds )
++    {
++        sleepTime = seconds * 1000;
++    }
++
++    public static synchronized void pass()
++    {
++        Sysout.println( "The test passed." );
++        Sysout.println( "The test is over, hit  Ctl-C to stop Java VM" );
++        //first check if this is executing in main thread
++        if ( mainThread == Thread.currentThread() )
++        {
++            //Still in the main thread, so set the flag just for kicks,
++            // and throw a test passed exception which will be caught
++            // and end the test.
++            theTestPassed = true;
++            throw new TestPassedException();
++        }
++        theTestPassed = true;
++        testGeneratedInterrupt = true;
++        mainThread.interrupt();
++    }//pass()
++
++    public static synchronized void fail()
++    {
++        //test writer didn't specify why test failed, so give generic
++        fail( "it just plain failed! :-)" );
++    }
++
++    public static synchronized void fail( String whyFailed )
++    {
++        Sysout.println( "The test failed: " + whyFailed );
++        Sysout.println( "The test is over, hit  Ctl-C to stop Java VM" );
++        //check if this called from main thread
++        if ( mainThread == Thread.currentThread() )
++        {
++            //If main thread, fail now 'cause not sleeping
++            throw new RuntimeException( whyFailed );
++        }
++        theTestPassed = false;
++        testGeneratedInterrupt = true;
++        failureMessage = whyFailed;
++        mainThread.interrupt();
++    }//fail()
++
++}// class JButtonInGlassPane
++
++//This exception is used to exit from any level of call nesting
++// when it's determined that the test has passed, and immediately
++// end the test.
++class TestPassedException extends RuntimeException
++{
++}
++
++//*********** End Standard Test Machinery Section **********
++
++
++//************ Begin classes defined for the test ****************
++
++// if want to make listeners, here is the recommended place for them, then instantiate
++//  them in init()
++
++/* Example of a class which may be written as part of a test
++class NewClass implements anInterface
++ {
++   static int newVar = 0;
++
++   public void eventDispatched(AWTEvent e)
++    {
++      //Counting events to see if we get enough
++      eventCount++;
++
++      if( eventCount == 20 )
++       {
++         //got enough events, so pass
++
++         JButtonInGlassPane.pass();
++       }
++      else if( tries == 20 )
++       {
++         //tried too many times without getting enough events so fail
++
++         JButtonInGlassPane.fail();
++       }
++
++    }// eventDispatched()
++
++ }// NewClass class
++
++*/
++
++
++//************** End classes defined for the test *******************
++
++
++
++
++/****************************************************
++ Standard Test Machinery
++ DO NOT modify anything below -- it's a standard
++  chunk of code whose purpose is to make user
++  interaction uniform, and thereby make it simpler
++  to read and understand someone else's test.
++ ****************************************************/
++
++/**
++ This is part of the standard test machinery.
++ It creates a dialog (with the instructions), and is the interface
++  for sending text messages to the user.
++ To print the instructions, send an array of strings to Sysout.createDialog
++  WithInstructions method.  Put one line of instructions per array entry.
++ To display a message for the tester to see, simply call Sysout.println
++  with the string to be displayed.
++ This mimics System.out.println but works within the test harness as well
++  as standalone.
++ */
++
++class Sysout
++{
++    private static TestDialog dialog;
++
++    public static void createDialogWithInstructions( String[] instructions )
++    {
++        dialog = new TestDialog( new Frame(), "Instructions" );
++        dialog.printInstructions( instructions );
++        dialog.setVisible(true);
++        println( "Any messages for the tester will display here." );
++    }
++
++    public static void createDialog( )
++    {
++        dialog = new TestDialog( new Frame(), "Instructions" );
++        String[] defInstr = { "Instructions will appear here. ", "" } ;
++        dialog.printInstructions( defInstr );
++        dialog.setVisible(true);
++        println( "Any messages for the tester will display here." );
++    }
++
++
++    public static void printInstructions( String[] instructions )
++    {
++        dialog.printInstructions( instructions );
++    }
++
++
++    public static void println( String messageIn )
++    {
++        dialog.displayMessage( messageIn );
++        System.out.println(messageIn);
++    }
++
++}// Sysout  class
++
++/**
++  This is part of the standard test machinery.  It provides a place for the
++   test instructions to be displayed, and a place for interactive messages
++   to the user to be displayed.
++  To have the test instructions displayed, see Sysout.
++  To have a message to the user be displayed, see Sysout.
++  Do not call anything in this dialog directly.
++  */
++class TestDialog extends Dialog
++{
++
++    TextArea instructionsText;
++    TextArea messageText;
++    int maxStringLength = 80;
++
++    //DO NOT call this directly, go through Sysout
++    public TestDialog( Frame frame, String name )
++    {
++        super( frame, name );
++        int scrollBoth = TextArea.SCROLLBARS_BOTH;
++        instructionsText = new TextArea( "", 15, maxStringLength, scrollBoth );
++        add( "North", instructionsText );
++
++        messageText = new TextArea( "", 5, maxStringLength, scrollBoth );
++        add("Center", messageText);
++
++        pack();
++
++        setVisible(true);
++    }// TestDialog()
++
++    //DO NOT call this directly, go through Sysout
++    public void printInstructions( String[] instructions )
++    {
++        //Clear out any current instructions
++        instructionsText.setText( "" );
++
++        //Go down array of instruction strings
++
++        String printStr, remainingStr;
++        for( int i=0; i < instructions.length; i++ )
++        {
++            //chop up each into pieces maxSringLength long
++            remainingStr = instructions[ i ];
++            while( remainingStr.length() > 0 )
++            {
++                //if longer than max then chop off first max chars to print
++                if( remainingStr.length() >= maxStringLength )
++                {
++                    //Try to chop on a word boundary
++                    int posOfSpace = remainingStr.
++                        lastIndexOf( ' ', maxStringLength - 1 );
++
++                    if( posOfSpace <= 0 ) posOfSpace = maxStringLength - 1;
++
++                    printStr = remainingStr.substring( 0, posOfSpace + 1 );
++                    remainingStr = remainingStr.substring( posOfSpace + 1 );
++                }
++                //else just print
++                else
++                {
++                    printStr = remainingStr;
++                    remainingStr = "";
++                }
++
++                instructionsText.append( printStr + "\n" );
++
++            }// while
++
++        }// for
++
++    }//printInstructions()
++
++    //DO NOT call this directly, go through Sysout
++    public void displayMessage( String messageIn )
++    {
++        messageText.append( messageIn + "\n" );
++        System.out.println(messageIn);
++    }
++
++}// TestDialog  class
++
++
+diff -r 6de73ab429ca -r f683aef58585 test/java/awt/Mixing/LWComboBox.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/java/awt/Mixing/LWComboBox.java	Tue Feb 01 19:38:05 2011 +0000
+@@ -0,0 +1,425 @@
++/*
++ * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/*
++  @test %W% %E%
++  @bug 6637655
++  @summary Tests whether a LW combobox correctly overlaps a HW button
++  @author anthony.petrov@...: area=awt.mixing
++  @library ../regtesthelpers
++  @build Util
++  @run main LWComboBox
++*/
++
++
++/**
++ * LWComboBox.java
++ *
++ * summary:  Tests whether a LW combobox correctly overlaps a HW button
++ */
++
++import java.awt.*;
++import java.awt.event.*;
++import javax.swing.*;
++import java.util.Vector;
++import test.java.awt.regtesthelpers.Util;
++
++
++
++public class LWComboBox
++{
++    static volatile boolean failed = false;
++
++    private static void init()
++    {
++        //*** Create instructions for the user here ***
++
++        String[] instructions =
++        {
++            "This is an AUTOMATIC test, simply wait until it is done.",
++            "The result (passed or failed) will be shown in the",
++            "message window below."
++        };
++        Sysout.createDialog( );
++        Sysout.printInstructions( instructions );
++
++        JFrame f = new JFrame("LW menu test");
++
++        JComboBox ch;
++        Button b;
++
++        Vector v = new Vector();
++        for(int i = 1 ; i <=20;i++){
++            v.add("Item # "+i);
++        }
++        ch = new JComboBox(v);
++
++
++        b = new Button("AWT Button");
++        b.addActionListener(new ActionListener() {
++            public void actionPerformed(ActionEvent e) {
++                failed = true;
++            }
++        });
++
++        f.add(ch,BorderLayout.NORTH);
++        f.add(b,BorderLayout.CENTER);
++        f.setSize(300,300);
++        f.setVisible(true);
++
++        Robot robot = Util.createRobot();
++        robot.setAutoDelay(20);
++
++        Util.waitForIdle(robot);
++
++        // Pop up the combobox
++        Point lLoc = ch.getLocationOnScreen();
++        System.err.println("lLoc: " + lLoc);
++        robot.mouseMove(lLoc.x + 5, lLoc.y + 5);
++
++        robot.mousePress(InputEvent.BUTTON1_MASK);
++        robot.mouseRelease(InputEvent.BUTTON1_MASK);
++        Util.waitForIdle(robot);
++
++        // Click on the combo popup.
++        //    It's assumed that the popup item is located
++        //    above the heavyweight button.
++        Point bLoc = b.getLocationOnScreen();
++        System.err.println("bLoc: " + bLoc);
++        robot.mouseMove(bLoc.x + 10, bLoc.y + 10);
++
++        robot.mousePress(InputEvent.BUTTON1_MASK);
++        robot.mouseRelease(InputEvent.BUTTON1_MASK);
++        Util.waitForIdle(robot);
++
++        if (failed) {
++            fail("The LW popup did not received the click.");
++        } else {
++            pass();
++        }
++    }//End  init()
++
++
++
++    /*****************************************************
++     * Standard Test Machinery Section
++     * DO NOT modify anything in this section -- it's a
++     * standard chunk of code which has all of the
++     * synchronisation necessary for the test harness.
++     * By keeping it the same in all tests, it is easier
++     * to read and understand someone else's test, as
++     * well as insuring that all tests behave correctly
++     * with the test harness.
++     * There is a section following this for test-
++     * classes
++     ******************************************************/
++    private static boolean theTestPassed = false;
++    private static boolean testGeneratedInterrupt = false;
++    private static String failureMessage = "";
++
++    private static Thread mainThread = null;
++
++    private static int sleepTime = 300000;
++
++    // Not sure about what happens if multiple of this test are
++    //  instantiated in the same VM.  Being static (and using
++    //  static vars), it aint gonna work.  Not worrying about
++    //  it for now.
++    public static void main( String args[] ) throws InterruptedException
++    {
++        mainThread = Thread.currentThread();
++        try
++        {
++            init();
++        }
++        catch( TestPassedException e )
++        {
++            //The test passed, so just return from main and harness will
++            // interepret this return as a pass
++            return;
++        }
++        //At this point, neither test pass nor test fail has been
++        // called -- either would have thrown an exception and ended the
++        // test, so we know we have multiple threads.
++
++        //Test involves other threads, so sleep and wait for them to
++        // called pass() or fail()
++        try
++        {
++            Thread.sleep( sleepTime );
++            //Timed out, so fail the test
++            throw new RuntimeException( "Timed out after " + sleepTime/1000 + " seconds" );
++        }
++        catch (InterruptedException e)
++        {
++            //The test harness may have interrupted the test.  If so, rethrow the exception
++            // so that the harness gets it and deals with it.
++            if( ! testGeneratedInterrupt ) throw e;
++
++            //reset flag in case hit this code more than once for some reason (just safety)
++            testGeneratedInterrupt = false;
++
++            if ( theTestPassed == false )
++            {
++                throw new RuntimeException( failureMessage );
++            }
++        }
++
++    }//main
++
++    public static synchronized void setTimeoutTo( int seconds )
++    {
++        sleepTime = seconds * 1000;
++    }
++
++    public static synchronized void pass()
++    {
++        Sysout.println( "The test passed." );
++        Sysout.println( "The test is over, hit  Ctl-C to stop Java VM" );
++        //first check if this is executing in main thread
++        if ( mainThread == Thread.currentThread() )
++        {
++            //Still in the main thread, so set the flag just for kicks,
++            // and throw a test passed exception which will be caught
++            // and end the test.
++            theTestPassed = true;
++            throw new TestPassedException();
++        }
++        theTestPassed = true;
++        testGeneratedInterrupt = true;
++        mainThread.interrupt();
++    }//pass()
++
++    public static synchronized void fail()
++    {
++        //test writer didn't specify why test failed, so give generic
++        fail( "it just plain failed! :-)" );
++    }
++
++    public static synchronized void fail( String whyFailed )
++    {
++        Sysout.println( "The test failed: " + whyFailed );
++        Sysout.println( "The test is over, hit  Ctl-C to stop Java VM" );
++        //check if this called from main thread
++        if ( mainThread == Thread.currentThread() )
++        {
++            //If main thread, fail now 'cause not sleeping
++            throw new RuntimeException( whyFailed );
++        }
++        theTestPassed = false;
++        testGeneratedInterrupt = true;
++        failureMessage = whyFailed;
++        mainThread.interrupt();
++    }//fail()
++
++}// class LWComboBox
++
++//This exception is used to exit from any level of call nesting
++// when it's determined that the test has passed, and immediately
++// end the test.
++class TestPassedException extends RuntimeException
++{
++}
++
++//*********** End Standard Test Machinery Section **********
++
++
++//************ Begin classes defined for the test ****************
++
++// if want to make listeners, here is the recommended place for them, then instantiate
++//  them in init()
++
++/* Example of a class which may be written as part of a test
++class NewClass implements anInterface
++ {
++   static int newVar = 0;
++
++   public void eventDispatched(AWTEvent e)
++    {
++      //Counting events to see if we get enough
++      eventCount++;
++
++      if( eventCount == 20 )
++       {
++         //got enough events, so pass
++
++         LWComboBox.pass();
++       }
++      else if( tries == 20 )
++       {
++         //tried too many times without getting enough events so fail
++
++         LWComboBox.fail();
++       }
++
++    }// eventDispatched()
++
++ }// NewClass class
++
++*/
++
++
++//************** End classes defined for the test *******************
++
++
++
++
++/****************************************************
++ Standard Test Machinery
++ DO NOT modify anything below -- it's a standard
++  chunk of code whose purpose is to make user
++  interaction uniform, and thereby make it simpler
++  to read and understand someone else's test.
++ ****************************************************/
++
++/**
++ This is part of the standard test machinery.
++ It creates a dialog (with the instructions), and is the interface
++  for sending text messages to the user.
++ To print the instructions, send an array of strings to Sysout.createDialog
++  WithInstructions method.  Put one line of instructions per array entry.
++ To display a message for the tester to see, simply call Sysout.println
++  with the string to be displayed.
++ This mimics System.out.println but works within the test harness as well
++  as standalone.
++ */
++
++class Sysout
++{
++    private static TestDialog dialog;
++
++    public static void createDialogWithInstructions( String[] instructions )
++    {
++        dialog = new TestDialog( new Frame(), "Instructions" );
++        dialog.printInstructions( instructions );
++        dialog.setVisible(true);
++        println( "Any messages for the tester will display here." );
++    }
++
++    public static void createDialog( )
++    {
++        dialog = new TestDialog( new Frame(), "Instructions" );
++        String[] defInstr = { "Instructions will appear here. ", "" } ;
++        dialog.printInstructions( defInstr );
++        dialog.setVisible(true);
++        println( "Any messages for the tester will display here." );
++    }
++
++
++    public static void printInstructions( String[] instructions )
++    {
++        dialog.printInstructions( instructions );
++    }
++
++
++    public static void println( String messageIn )
++    {
++        dialog.displayMessage( messageIn );
++        System.out.println(messageIn);
++    }
++
++}// Sysout  class
++
++/**
++  This is part of the standard test machinery.  It provides a place for the
++   test instructions to be displayed, and a place for interactive messages
++   to the user to be displayed.
++  To have the test instructions displayed, see Sysout.
++  To have a message to the user be displayed, see Sysout.
++  Do not call anything in this dialog directly.
++  */
++class TestDialog extends Dialog
++{
++
++    TextArea instructionsText;
++    TextArea messageText;
++    int maxStringLength = 80;
++
++    //DO NOT call this directly, go through Sysout
++    public TestDialog( Frame frame, String name )
++    {
++        super( frame, name );
++        int scrollBoth = TextArea.SCROLLBARS_BOTH;
++        instructionsText = new TextArea( "", 15, maxStringLength, scrollBoth );
++        add( "North", instructionsText );
++
++        messageText = new TextArea( "", 5, maxStringLength, scrollBoth );
++        add("Center", messageText);
++
++        pack();
++
++        setVisible(true);
++    }// TestDialog()
++
++    //DO NOT call this directly, go through Sysout
++    public void printInstructions( String[] instructions )
++    {
++        //Clear out any current instructions
++        instructionsText.setText( "" );
++
++        //Go down array of instruction strings
++
++        String printStr, remainingStr;
++        for( int i=0; i < instructions.length; i++ )
++        {
++            //chop up each into pieces maxSringLength long
++            remainingStr = instructions[ i ];
++            while( remainingStr.length() > 0 )
++            {
++                //if longer than max then chop off first max chars to print
++                if( remainingStr.length() >= maxStringLength )
++                {
++                    //Try to chop on a word boundary
++                    int posOfSpace = remainingStr.
++                        lastIndexOf( ' ', maxStringLength - 1 );
++
++                    if( posOfSpace <= 0 ) posOfSpace = maxStringLength - 1;
++
++                    printStr = remainingStr.substring( 0, posOfSpace + 1 );
++                    remainingStr = remainingStr.substring( posOfSpace + 1 );
++                }
++                //else just print
++                else
++                {
++                    printStr = remainingStr;
++                    remainingStr = "";
++                }
++
++                instructionsText.append( printStr + "\n" );
++
++            }// while
++
++        }// for
++
++    }//printInstructions()
++
++    //DO NOT call this directly, go through Sysout
++    public void displayMessage( String messageIn )
++    {
++        messageText.append( messageIn + "\n" );
++        System.out.println(messageIn);
++    }
++
++}// TestDialog  class
++
++
+diff -r 6de73ab429ca -r f683aef58585 test/java/awt/Mixing/MixingOnShrinkingHWButton.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/java/awt/Mixing/MixingOnShrinkingHWButton.java	Tue Feb 01 19:38:05 2011 +0000
+@@ -0,0 +1,429 @@
++/*
++ * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/*
++  @test %W% %E%
++  @bug 6777320
++  @summary PIT : Canvas is not fully painted on the internal frame & internal frame goes behind the canvas
++  @author dmitry.cherepanov@...: area=awt.mixing
++  @library ../regtesthelpers
++  @build Util
++  @run main MixingOnShrinkingHWButton
++*/
++
++
++/**
++ * MixingOnDialog.java
++ *
++ * summary:  Tests whether awt.Button and swing.JButton mix correctly
++ *           when awt.Button's width got shrinked
++ */
++
++import java.awt.*;
++import java.awt.event.*;
++import javax.swing.*;
++import test.java.awt.regtesthelpers.Util;
++
++
++
++public class MixingOnShrinkingHWButton
++{
++    static volatile boolean heavyClicked = false;
++    static volatile boolean lightClicked = false;
++
++    private static void init()
++    {
++        //*** Create instructions for the user here ***
++
++        String[] instructions =
++        {
++            "This is an AUTOMATIC test, simply wait until it is done.",
++            "The result (passed or failed) will be shown in the",
++            "message window below."
++        };
++        Sysout.createDialog( );
++        Sysout.printInstructions( instructions );
++
++
++        // Create components
++        final Dialog d = new Dialog((Frame)null, "Button-JButton mix test");
++        final Button heavy = new Button("  Heavyweight Button  ");
++        final JButton light = new JButton("  LW Button  ");
++
++        // Actions for the buttons add appropriate number to the test sequence
++        heavy.addActionListener(new java.awt.event.ActionListener()
++                {
++                    public void actionPerformed(java.awt.event.ActionEvent e) {
++                        heavyClicked = true;
++                    }
++                }
++                );
++
++        light.addActionListener(new java.awt.event.ActionListener()
++                {
++                    public void actionPerformed(java.awt.event.ActionEvent e) {
++                        lightClicked = true;
++                    }
++                }
++                );
++
++        // Shrink the HW button under LW button
++        heavy.setBounds(30, 30, 100, 100);
++        light.setBounds(40, 30, 100, 100);
++
++        // Put the components into the frame
++        d.setLayout(null);
++        d.add(light);
++        d.add(heavy);
++        d.setBounds(50, 50, 400, 400);
++        d.setVisible(true);
++
++
++        Robot robot = Util.createRobot();
++        robot.setAutoDelay(20);
++
++        Util.waitForIdle(robot);
++
++        // Move the mouse pointer to the position where both
++        //    buttons overlap
++        Point heavyLoc = heavy.getLocationOnScreen();
++        robot.mouseMove(heavyLoc.x + 20, heavyLoc.y + 20);
++
++        // Now perform the click at this point
++        robot.mousePress(InputEvent.BUTTON1_MASK);
++        robot.mouseRelease(InputEvent.BUTTON1_MASK);
++        Util.waitForIdle(robot);
++
++        // If the buttons are correctly mixed, the test sequence
++        // is equal to the check sequence.
++        if (lightClicked == true) {
++            MixingOnShrinkingHWButton.pass();
++        } else {
++            MixingOnShrinkingHWButton.fail("The lightweight component left behind the heavyweight one.");
++        }
++    }//End  init()
++
++
++
++    /*****************************************************
++     * Standard Test Machinery Section
++     * DO NOT modify anything in this section -- it's a
++     * standard chunk of code which has all of the
++     * synchronisation necessary for the test harness.
++     * By keeping it the same in all tests, it is easier
++     * to read and understand someone else's test, as
++     * well as insuring that all tests behave correctly
++     * with the test harness.
++     * There is a section following this for test-
++     * classes
++     ******************************************************/
++    private static boolean theTestPassed = false;
++    private static boolean testGeneratedInterrupt = false;
++    private static String failureMessage = "";
++
++    private static Thread mainThread = null;
++
++    private static int sleepTime = 300000;
++
++    // Not sure about what happens if multiple of this test are
++    //  instantiated in the same VM.  Being static (and using
++    //  static vars), it aint gonna work.  Not worrying about
++    //  it for now.
++    public static void main( String args[] ) throws InterruptedException
++    {
++        mainThread = Thread.currentThread();
++        try
++        {
++            init();
++        }
++        catch( TestPassedException e )
++        {
++            //The test passed, so just return from main and harness will
++            // interepret this return as a pass
++            return;
++        }
++        //At this point, neither test pass nor test fail has been
++        // called -- either would have thrown an exception and ended the
++        // test, so we know we have multiple threads.
++
++        //Test involves other threads, so sleep and wait for them to
++        // called pass() or fail()
++        try
++        {
++            Thread.sleep( sleepTime );
++            //Timed out, so fail the test
++            throw new RuntimeException( "Timed out after " + sleepTime/1000 + " seconds" );
++        }
++        catch (InterruptedException e)
++        {
++            //The test harness may have interrupted the test.  If so, rethrow the exception
++            // so that the harness gets it and deals with it.
++            if( ! testGeneratedInterrupt ) throw e;
++
++            //reset flag in case hit this code more than once for some reason (just safety)
++            testGeneratedInterrupt = false;
++
++            if ( theTestPassed == false )
++            {
++                throw new RuntimeException( failureMessage );
++            }
++        }
++
++    }//main
++
++    public static synchronized void setTimeoutTo( int seconds )
++    {
++        sleepTime = seconds * 1000;
++    }
++
++    public static synchronized void pass()
++    {
++        Sysout.println( "The test passed." );
++        Sysout.println( "The test is over, hit  Ctl-C to stop Java VM" );
++        //first check if this is executing in main thread
++        if ( mainThread == Thread.currentThread() )
++        {
++            //Still in the main thread, so set the flag just for kicks,
++            // and throw a test passed exception which will be caught
++            // and end the test.
++            theTestPassed = true;
++            throw new TestPassedException();
++        }
++        theTestPassed = true;
++        testGeneratedInterrupt = true;
++        mainThread.interrupt();
++    }//pass()
++
++    public static synchronized void fail()
++    {
++        //test writer didn't specify why test failed, so give generic
++        fail( "it just plain failed! :-)" );
++    }
++
++    public static synchronized void fail( String whyFailed )
++    {
++        Sysout.println( "The test failed: " + whyFailed );
++        Sysout.println( "The test is over, hit  Ctl-C to stop Java VM" );
++        //check if this called from main thread
++        if ( mainThread == Thread.currentThread() )
++        {
++            //If main thread, fail now 'cause not sleeping
++            throw new RuntimeException( whyFailed );
++        }
++        theTestPassed = false;
++        testGeneratedInterrupt = true;
++        failureMessage = whyFailed;
++        mainThread.interrupt();
++    }//fail()
++
++}// class MixingOnDialog
++
++//This exception is used to exit from any level of call nesting
++// when it's determined that the test has passed, and immediately
++// end the test.
++class TestPassedException extends RuntimeException
++{
++}
++
++//*********** End Standard Test Machinery Section **********
++
++
++//************ Begin classes defined for the test ****************
++
++// if want to make listeners, here is the recommended place for them, then instantiate
++//  them in init()
++
++/* Example of a class which may be written as part of a test
++class NewClass implements anInterface
++ {
++   static int newVar = 0;
++
++   public void eventDispatched(AWTEvent e)
++    {
++      //Counting events to see if we get enough
++      eventCount++;
++
++      if( eventCount == 20 )
++       {
++         //got enough events, so pass
++
++         MixingOnDialog.pass();
++       }
++      else if( tries == 20 )
++       {
++         //tried too many times without getting enough events so fail
++
++         MixingOnDialog.fail();
++       }
++
++    }// eventDispatched()
++
++ }// NewClass class
++
++*/
++
++
++//************** End classes defined for the test *******************
++
++
++
++
++/****************************************************
++ Standard Test Machinery
++ DO NOT modify anything below -- it's a standard
++  chunk of code whose purpose is to make user
++  interaction uniform, and thereby make it simpler
++  to read and understand someone else's test.
++ ****************************************************/
++
++/**
++ This is part of the standard test machinery.
++ It creates a dialog (with the instructions), and is the interface
++  for sending text messages to the user.
++ To print the instructions, send an array of strings to Sysout.createDialog
++  WithInstructions method.  Put one line of instructions per array entry.
++ To display a message for the tester to see, simply call Sysout.println
++  with the string to be displayed.
++ This mimics System.out.println but works within the test harness as well
++  as standalone.
++ */
++
++class Sysout
++{
++    private static TestDialog dialog;
++
++    public static void createDialogWithInstructions( String[] instructions )
++    {
++        dialog = new TestDialog( new Frame(), "Instructions" );
++        dialog.printInstructions( instructions );
++        dialog.setVisible(true);
++        println( "Any messages for the tester will display here." );
++    }
++
++    public static void createDialog( )
++    {
++        dialog = new TestDialog( new Frame(), "Instructions" );
++        String[] defInstr = { "Instructions will appear here. ", "" } ;
++        dialog.printInstructions( defInstr );
++        dialog.setVisible(true);
++        println( "Any messages for the tester will display here." );
++    }
++
++
++    public static void printInstructions( String[] instructions )
++    {
++        dialog.printInstructions( instructions );
++    }
++
++
++    public static void println( String messageIn )
++    {
++        dialog.displayMessage( messageIn );
++        System.out.println(messageIn);
++    }
++
++}// Sysout  class
++
++/**
++  This is part of the standard test machinery.  It provides a place for the
++   test instructions to be displayed, and a place for interactive messages
++   to the user to be displayed.
++  To have the test instructions displayed, see Sysout.
++  To have a message to the user be displayed, see Sysout.
++  Do not call anything in this dialog directly.
++  */
++class TestDialog extends Dialog
++{
++
++    TextArea instructionsText;
++    TextArea messageText;
++    int maxStringLength = 80;
++
++    //DO NOT call this directly, go through Sysout
++    public TestDialog( Frame frame, String name )
++    {
++        super( frame, name );
++        int scrollBoth = TextArea.SCROLLBARS_BOTH;
++        instructionsText = new TextArea( "", 15, maxStringLength, scrollBoth );
++        add( "North", instructionsText );
++
++        messageText = new TextArea( "", 5, maxStringLength, scrollBoth );
++        add("Center", messageText);
++
++        pack();
++
++        setVisible(true);
++    }// TestDialog()
++
++    //DO NOT call this directly, go through Sysout
++    public void printInstructions( String[] instructions )
++    {
++        //Clear out any current instructions
++        instructionsText.setText( "" );
++
++        //Go down array of instruction strings
++
++        String printStr, remainingStr;
++        for( int i=0; i < instructions.length; i++ )
++        {
++            //chop up each into pieces maxSringLength long
++            remainingStr = instructions[ i ];
++            while( remainingStr.length() > 0 )
++            {
++                //if longer than max then chop off first max chars to print
++                if( remainingStr.length() >= maxStringLength )
++                {
++                    //Try to chop on a word boundary
++                    int posOfSpace = remainingStr.
++                        lastIndexOf( ' ', maxStringLength - 1 );
++
++                    if( posOfSpace <= 0 ) posOfSpace = maxStringLength - 1;
++
++                    printStr = remainingStr.substring( 0, posOfSpace + 1 );
++                    remainingStr = remainingStr.substring( posOfSpace + 1 );
++                }
++                //else just print
++                else
++                {
++                    printStr = remainingStr;
++                    remainingStr = "";
++                }
++
++                instructionsText.append( printStr + "\n" );
++
++            }// while
++
++        }// for
++
++    }//printInstructions()
++
++    //DO NOT call this directly, go through Sysout
++    public void displayMessage( String messageIn )
++    {
++        messageText.append( messageIn + "\n" );
++        System.out.println(messageIn);
++    }
++
++}// TestDialog  class
++
++
+diff -r 6de73ab429ca -r f683aef58585 test/java/awt/Mixing/NonOpaqueInternalFrame.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/java/awt/Mixing/NonOpaqueInternalFrame.java	Tue Feb 01 19:38:05 2011 +0000
+@@ -0,0 +1,434 @@
++/*
++ * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/*
++  @test %W% %E%
++  @bug 6768332
++  @summary Tests whether internal frames are always considered opaque
++  @author anthony.petrov@...: area=awt.mixing
++  @library ../regtesthelpers
++  @build Util
++  @run main NonOpaqueInternalFrame
++*/
++
++
++/**
++ * NonOpaqueInternalFrame.java
++ *
++ * summary:  Tests whether internal frames are always considered opaque
++ */
++
++import java.awt.*;
++import java.awt.event.*;
++import java.beans.PropertyVetoException;
++import javax.swing.*;
++import java.util.Vector;
++import test.java.awt.regtesthelpers.Util;
++
++
++
++public class NonOpaqueInternalFrame
++{
++    static volatile boolean failed = false;
++
++    private static final class MyButton extends Button
++            implements ActionListener
++        {
++            public MyButton() {
++                setPreferredSize(new Dimension(100, 100));
++                addActionListener(this);
++            }
++
++            public void actionPerformed(ActionEvent e) {
++                failed = true;
++            }
++        }
++
++    private static void init()
++    {
++        String[] instructions =
++        {
++            "This is an AUTOMATIC test, simply wait until it is done.",
++            "The result (passed or failed) will be shown in the",
++            "message window below."
++        };
++        Sysout.createDialog( );
++        Sysout.printInstructions( instructions );
++
++
++        // Create a frame with two non-opaque JInternalFrame's containing
++        // heavyweight buttons.
++        JFrame jframe = new JFrame("mixing test");
++        JDesktopPane desktop = new JDesktopPane();
++        jframe.setContentPane(desktop);
++        JInternalFrame iframe1 = new JInternalFrame("iframe 1");
++        iframe1.setIconifiable(true);
++        iframe1.add(new MyButton());
++        iframe1.setBounds(10, 10, 100, 100);
++        iframe1.setOpaque(false);
++        iframe1.setVisible(true);
++        desktop.add(iframe1);
++        JInternalFrame iframe2 = new JInternalFrame("iframe 2");
++        iframe2.setIconifiable(true);
++        iframe2.add(new MyButton());
++        iframe2.setBounds(50, 50, 100, 100);
++        iframe2.setOpaque(false);
++        iframe2.setVisible(true);
++        desktop.add(iframe2);
++        jframe.setSize(300, 300);
++        jframe.setVisible(true);
++
++        Robot robot = Util.createRobot();
++        robot.setAutoDelay(20);
++
++        Util.waitForIdle(robot);
++
++        // Try selecting the bottommost frame
++        try {
++            iframe2.setSelected(true);
++        } catch (PropertyVetoException ex) {
++            ex.printStackTrace();
++        }
++
++        // Click the title bar of the internal frame
++        Point lLoc = iframe2.getLocationOnScreen();
++        System.err.println("lLoc: " + lLoc);
++        robot.mouseMove(lLoc.x + 10, lLoc.y + 10);
++        Util.waitForIdle(robot);
++
++        robot.mousePress(InputEvent.BUTTON1_MASK);
++        robot.mouseRelease(InputEvent.BUTTON1_MASK);
++        Util.waitForIdle(robot);
++
++
++        if (failed) {
++            fail("The JInternalFrame is considered non-opaque.");
++        } else {
++            pass();
++        }
++    }//End  init()
++
++
++
++    /*****************************************************
++     * Standard Test Machinery Section
++     * DO NOT modify anything in this section -- it's a
++     * standard chunk of code which has all of the
++     * synchronisation necessary for the test harness.
++     * By keeping it the same in all tests, it is easier
++     * to read and understand someone else's test, as
++     * well as insuring that all tests behave correctly
++     * with the test harness.
++     * There is a section following this for test-
++     * classes
++     ******************************************************/
++    private static boolean theTestPassed = false;
++    private static boolean testGeneratedInterrupt = false;
++    private static String failureMessage = "";
++
++    private static Thread mainThread = null;
++
++    private static int sleepTime = 300000;
++
++    // Not sure about what happens if multiple of this test are
++    //  instantiated in the same VM.  Being static (and using
++    //  static vars), it aint gonna work.  Not worrying about
++    //  it for now.
++    public static void main( String args[] ) throws InterruptedException
++    {
++        mainThread = Thread.currentThread();
++        try
++        {
++            init();
++        }
++        catch( TestPassedException e )
++        {
++            //The test passed, so just return from main and harness will
++            // interepret this return as a pass
++            return;
++        }
++        //At this point, neither test pass nor test fail has been
++        // called -- either would have thrown an exception and ended the
++        // test, so we know we have multiple threads.
++
++        //Test involves other threads, so sleep and wait for them to
++        // called pass() or fail()
++        try
++        {
++            Thread.sleep( sleepTime );
++            //Timed out, so fail the test
++            throw new RuntimeException( "Timed out after " + sleepTime/1000 + " seconds" );
++        }
++        catch (InterruptedException e)
++        {
++            //The test harness may have interrupted the test.  If so, rethrow the exception
++            // so that the harness gets it and deals with it.
++            if( ! testGeneratedInterrupt ) throw e;
++
++            //reset flag in case hit this code more than once for some reason (just safety)
++            testGeneratedInterrupt = false;
++
++            if ( theTestPassed == false )
++            {
++                throw new RuntimeException( failureMessage );
++            }
++        }
++
++    }//main
++
++    public static synchronized void setTimeoutTo( int seconds )
++    {
++        sleepTime = seconds * 1000;
++    }
++
++    public static synchronized void pass()
++    {
++        Sysout.println( "The test passed." );
++        Sysout.println( "The test is over, hit  Ctl-C to stop Java VM" );
++        //first check if this is executing in main thread
++        if ( mainThread == Thread.currentThread() )
++        {
++            //Still in the main thread, so set the flag just for kicks,
++            // and throw a test passed exception which will be caught
++            // and end the test.
++            theTestPassed = true;
++            throw new TestPassedException();
++        }
++        theTestPassed = true;
++        testGeneratedInterrupt = true;
++        mainThread.interrupt();
++    }//pass()
++
++    public static synchronized void fail()
++    {
++        //test writer didn't specify why test failed, so give generic
++        fail( "it just plain failed! :-)" );
++    }
++
++    public static synchronized void fail( String whyFailed )
++    {
++        Sysout.println( "The test failed: " + whyFailed );
++        Sysout.println( "The test is over, hit  Ctl-C to stop Java VM" );
++        //check if this called from main thread
++        if ( mainThread == Thread.currentThread() )
++        {
++            //If main thread, fail now 'cause not sleeping
++            throw new RuntimeException( whyFailed );
++        }
++        theTestPassed = false;
++        testGeneratedInterrupt = true;
++        failureMessage = whyFailed;
++        mainThread.interrupt();
++    }//fail()
++
++}// class NonOpaqueInternalFrame
++
++//This exception is used to exit from any level of call nesting
++// when it's determined that the test has passed, and immediately
++// end the test.
++class TestPassedException extends RuntimeException
++{
++}
++
++//*********** End Standard Test Machinery Section **********
++
++
++//************ Begin classes defined for the test ****************
++
++// if want to make listeners, here is the recommended place for them, then instantiate
++//  them in init()
++
++/* Example of a class which may be written as part of a test
++class NewClass implements anInterface
++ {
++   static int newVar = 0;
++
++   public void eventDispatched(AWTEvent e)
++    {
++      //Counting events to see if we get enough
++      eventCount++;
++
++      if( eventCount == 20 )
++       {
++         //got enough events, so pass
++
++         NonOpaqueInternalFrame.pass();
++       }
++      else if( tries == 20 )
++       {
++         //tried too many times without getting enough events so fail
++
++         NonOpaqueInternalFrame.fail();
++       }
++
++    }// eventDispatched()
++
++ }// NewClass class
++
++*/
++
++
++//************** End classes defined for the test *******************
++
++
++
++
++/****************************************************
++ Standard Test Machinery
++ DO NOT modify anything below -- it's a standard
++  chunk of code whose purpose is to make user
++  interaction uniform, and thereby make it simpler
++  to read and understand someone else's test.
++ ****************************************************/
++
++/**
++ This is part of the standard test machinery.
++ It creates a dialog (with the instructions), and is the interface
++  for sending text messages to the user.
++ To print the instructions, send an array of strings to Sysout.createDialog
++  WithInstructions method.  Put one line of instructions per array entry.
++ To display a message for the tester to see, simply call Sysout.println
++  with the string to be displayed.
++ This mimics System.out.println but works within the test harness as well
++  as standalone.
++ */
++
++class Sysout
++{
++    private static TestDialog dialog;
++
++    public static void createDialogWithInstructions( String[] instructions )
++    {
++        dialog = new TestDialog( new Frame(), "Instructions" );
++        dialog.printInstructions( instructions );
++        dialog.setVisible(true);
++        println( "Any messages for the tester will display here." );
++    }
++
++    public static void createDialog( )
++    {
++        dialog = new TestDialog( new Frame(), "Instructions" );
++        String[] defInstr = { "Instructions will appear here. ", "" } ;
++        dialog.printInstructions( defInstr );
++        dialog.setVisible(true);
++        println( "Any messages for the tester will display here." );
++    }
++
++
++    public static void printInstructions( String[] instructions )
++    {
++        dialog.printInstructions( instructions );
++    }
++
++
++    public static void println( String messageIn )
++    {
++        dialog.displayMessage( messageIn );
++        System.out.println(messageIn);
++    }
++
++}// Sysout  class
++
++/**
++  This is part of the standard test machinery.  It provides a place for the
++   test instructions to be displayed, and a place for interactive messages
++   to the user to be displayed.
++  To have the test instructions displayed, see Sysout.
++  To have a message to the user be displayed, see Sysout.
++  Do not call anything in this dialog directly.
++  */
++class TestDialog extends Dialog
++{
++
++    TextArea instructionsText;
++    TextArea messageText;
++    int maxStringLength = 80;
++
++    //DO NOT call this directly, go through Sysout
++    public TestDialog( Frame frame, String name )
++    {
++        super( frame, name );
++        int scrollBoth = TextArea.SCROLLBARS_BOTH;
++        instructionsText = new TextArea( "", 15, maxStringLength, scrollBoth );
++        add( "North", instructionsText );
++
++        messageText = new TextArea( "", 5, maxStringLength, scrollBoth );
++        add("Center", messageText);
++
++        pack();
++
++        setVisible(true);
++    }// TestDialog()
++
++    //DO NOT call this directly, go through Sysout
++    public void printInstructions( String[] instructions )
++    {
++        //Clear out any current instructions
++        instructionsText.setText( "" );
++
++        //Go down array of instruction strings
++
++        String printStr, remainingStr;
++        for( int i=0; i < instructions.length; i++ )
++        {
++            //chop up each into pieces maxSringLength long
++            remainingStr = instructions[ i ];
++            while( remainingStr.length() > 0 )
++            {
++                //if longer than max then chop off first max chars to print
++                if( remainingStr.length() >= maxStringLength )
++                {
++                    //Try to chop on a word boundary
++                    int posOfSpace = remainingStr.
++                        lastIndexOf( ' ', maxStringLength - 1 );
++
++                    if( posOfSpace <= 0 ) posOfSpace = maxStringLength - 1;
++
++                    printStr = remainingStr.substring( 0, posOfSpace + 1 );
++                    remainingStr = remainingStr.substring( posOfSpace + 1 );
++                }
++                //else just print
++                else
++                {
++                    printStr = remainingStr;
++                    remainingStr = "";
++                }
++
++                instructionsText.append( printStr + "\n" );
++
++            }// while
++
++        }// for
++
++    }//printInstructions()
++
++    //DO NOT call this directly, go through Sysout
++    public void displayMessage( String messageIn )
++    {
++        messageText.append( messageIn + "\n" );
++        System.out.println(messageIn);
++    }
++
++}// TestDialog  class
++
++
+diff -r 6de73ab429ca -r f683aef58585 test/java/awt/Mixing/OpaqueTest.java
+--- openjdk.orig/jdk/test/java/awt/Mixing/OpaqueTest.java	Sat Dec 11 00:50:54 2010 +0000
++++ openjdk/jdk/test/java/awt/Mixing/OpaqueTest.java	Tue Feb 01 19:38:05 2011 +0000
+@@ -42,6 +42,7 @@
+ import java.awt.event.*;
+ import javax.swing.*;
+ import test.java.awt.regtesthelpers.Util;
++import com.sun.awt.AWTUtilities;
+ 
+ 
+ 
+@@ -78,6 +79,7 @@
+                 {
+                     public void actionPerformed(java.awt.event.ActionEvent e) {
+                         p.setComponentZOrder(light, 0);
++                        f.validate();
+                         testSeq = testSeq + "0";
+                     }
+                 }
+@@ -87,6 +89,7 @@
+                 {
+                     public void actionPerformed(java.awt.event.ActionEvent e) {
+                         p.setComponentZOrder(heavy, 0);
++                        f.validate();
+                         testSeq = testSeq + "1";
+                     }
+                 }
+@@ -120,10 +123,12 @@
+         // flag value.
+         for (int i = 0; i < 9; ++i) {
+             if (i == 3) {
+-                light.setOpaque(false);
++                AWTUtilities.setComponentMixingCutoutShape(light,
++                        new Rectangle());
+             }
+             if (i == 6) {
+-                light.setOpaque(true);
++                AWTUtilities.setComponentMixingCutoutShape(light,
++                        null);
+             }
+ 
+             robot.mousePress(InputEvent.BUTTON1_MASK);
+diff -r 6de73ab429ca -r f683aef58585 test/java/awt/Mixing/OverlappingButtons.java
+--- openjdk.orig/jdk/test/java/awt/Mixing/OverlappingButtons.java	Sat Dec 11 00:50:54 2010 +0000
++++ openjdk/jdk/test/java/awt/Mixing/OverlappingButtons.java	Tue Feb 01 19:38:05 2011 +0000
+@@ -78,6 +78,7 @@
+                 {
+                     public void actionPerformed(java.awt.event.ActionEvent e) {
+                         p.setComponentZOrder(light, 0);
++                        f.validate();
+                         testSeq = testSeq + "0";
+                     }
+                 }
+@@ -87,6 +88,7 @@
+                 {
+                     public void actionPerformed(java.awt.event.ActionEvent e) {
+                         p.setComponentZOrder(heavy, 0);
++                        f.validate();
+                         testSeq = testSeq + "1";
+                     }
+                 }

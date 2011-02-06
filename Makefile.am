@@ -178,6 +178,17 @@ SECURITY_PATCHES =
 
 ICEDTEA_PATCHES = \
 	$(SECURITY_PATCHES) \
+	patches/openjdk/4993545-nativeinlightfixer.patch \
+	patches/openjdk/6637796-set_bounds.patch \
+	patches/openjdk/6607660-treelock.patch \
+	patches/openjdk/6607170-request_focus.patch \
+	patches/openjdk/6616323-component_array.patch \
+	patches/openjdk/6682046-shape_calculation.patch \
+	patches/openjdk/6797195-hw_lw_mixing.patch \
+	patches/openjdk/6725214-direct3d-01.patch \
+        patches/openjdk/6791612-opengl-jni-fix.patch \
+        patches/openjdk/6755274-glgetstring-crash.patch \
+        patches/openjdk/6984543-onscreen_rendering_resize_test.patch \
 	patches/icedtea-notice-safepoints.patch \
 	patches/icedtea-parisc-opt.patch \
 	patches/icedtea-lucene-crash.patch \
@@ -310,12 +321,8 @@ ICEDTEA_PATCHES += \
 endif
 
 if ENABLE_XRENDER
-ICEDTEA_PATCHES += patches/openjdk/6725214-direct3d-01.patch \
-	patches/openjdk/6307603-xrender-01.patch \
+ICEDTEA_PATCHES += patches/openjdk/6307603-xrender-01.patch \
 	patches/openjdk/6961633-xrender-02.patch \
-        patches/openjdk/6791612-opengl-jni-fix.patch \
-        patches/openjdk/6755274-glgetstring-crash.patch \
-        patches/openjdk/6984543-onscreen_rendering_resize_test.patch \
 	patches/xrender-gc-cleanup.patch
 endif
 
