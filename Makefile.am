@@ -291,7 +291,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/4724552-CubicCurve2D.patch \
 	patches/openjdk/4493128-CubicCurve2D.patch \
 	patches/openjdk/4645692-CubicCurve2D.solveCubic.patch \
-	patches/no-static-linking.patch
+	patches/no-static-linking.patch \
+	patches/rh676659-gcc-export-dynamic.patch
 
 if !WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
