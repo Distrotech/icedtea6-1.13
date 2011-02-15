@@ -186,6 +186,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6682046-shape_calculation.patch \
 	patches/openjdk/6797195-hw_lw_mixing.patch \
 	patches/openjdk/6725214-direct3d-01.patch \
+	patches/openjdk/6633275-shaped_translucent_windows.patch \
         patches/openjdk/6791612-opengl-jni-fix.patch \
         patches/openjdk/6755274-glgetstring-crash.patch \
         patches/openjdk/6984543-onscreen_rendering_resize_test.patch \
