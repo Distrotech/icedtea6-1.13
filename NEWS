@@ -15,15 +15,6 @@ New in release 1.10 (2011-XX-XX):
 * Shark provided upstream rather than as part of IcedTea.
 * The option --with-openjdk becomes --with-jdk-home and --disable-bootstrap
 * Support for building with HotSpot 20 from its stable tree
-* Security updates
-  - S4421494, CVE-2010-4476: infinite loop while parsing double literal.
-  - S6878713, CVE-2010-4469: Hotspot backward jsr heap corruption
-  - S6907662, CVE-2010-4465: Swing timer-based security manager bypass
-  - S6994263, CVE-2010-4472: Untrusted code allowed to replace DSIG/C14N implementation
-  - S6981922, CVE-2010-4448: DNS cache poisoning by untrusted applets
-  - S6983554, CVE-2010-4450: Launcher incorrect processing of empty library path entries
-  - S6985453, CVE-2010-4471: Java2D font-related system property leak
-  - S6927050, CVE-2010-4470: JAXP untrusted component state manipulation
 * Import of OpenJDK6 b21 including upgrade to HotSpot 19
   - S6961870: More rebranding fixes for templates/gpl-*-header files
   - S6976186: Shark build system changes
@@ -429,8 +420,67 @@ New in release 1.10 (2011-XX-XX):
 * Bug fixes
   - RH661505: JPEGs with sRGB IEC61966-2.1 color profiles have wrong colors
   - PR616, PR99: Don't statically link libstdc++ or libgcc
-  - RH676659: Pass -export-dynamic flag to linker using -Wl as option is broken in gcc 4.6+
+
+New in release 1.9.7 (2011-02-15):
+
+* Security updates
+  - S6878713, CVE-2010-4469: Hotspot backward jsr heap corruption
+  - S6907662, CVE-2010-4465: Swing timer-based security manager bypass
+  - S6994263, CVE-2010-4472: Untrusted code allowed to replace DSIG/C14N implementation
+  - S6981922, CVE-2010-4448: DNS cache poisoning by untrusted applets
+  - S6983554, CVE-2010-4450: Launcher incorrect processing of empty library path entries
+  - S6985453, CVE-2010-4471: Java2D font-related system property leak
+  - S6927050, CVE-2010-4470: JAXP untrusted component state manipulation
+  - RH677332, CVE-2011-0706: Multiple signers privilege escalation
+* Bug fixes
+  - RH676659: Pass -export-dynamic flag to linker using -Wl, as option in gcc 4.6+ is broken
   - G344659: Fix issue when building on SPARC
+  - Fix latent JAXP bug caused by missing import
+
+New in release 1.8.7 (2011-02-15):
+
+* Security updates
+  - S6878713, CVE-2010-4469: Hotspot backward jsr heap corruption
+  - S6907662, CVE-2010-4465: Swing timer-based security manager bypass
+  - S6994263, CVE-2010-4472: Untrusted code allowed to replace DSIG/C14N implementation
+  - S6981922, CVE-2010-4448: DNS cache poisoning by untrusted applets
+  - S6983554, CVE-2010-4450: Launcher incorrect processing of empty library path entries
+  - S6985453, CVE-2010-4471: Java2D font-related system property leak
+  - S6927050, CVE-2010-4470: JAXP untrusted component state manipulation
+  - RH677332, CVE-2011-0706: Multiple signers privilege escalation
+* Bug fixes
+  - RH676659: Pass -export-dynamic flag to linker using -Wl, as option in gcc 4.6+ is broken
+  - Fix latent JAXP bug caused by missing import
+
+New in release 1.7.10 (2011-02-15):
+
+* Security updates
+  - S6878713, CVE-2010-4469: Hotspot backward jsr heap corruption
+  - S6907662, CVE-2010-4465: Swing timer-based security manager bypass
+  - S6994263, CVE-2010-4472: Untrusted code allowed to replace DSIG/C14N implementation
+  - S6981922, CVE-2010-4448: DNS cache poisoning by untrusted applets
+  - S6983554, CVE-2010-4450: Launcher incorrect processing of empty library path entries
+  - S6985453, CVE-2010-4471: Java2D font-related system property leak
+  - S6927050, CVE-2010-4470: JAXP untrusted component state manipulation
+  - RH677332, CVE-2011-0706: Multiple signers privilege escalation
+* Bug fixes
+  - RH676659: Pass -export-dynamic flag to linker using -Wl, as option in gcc 4.6+ is broken
+  - Fix latent JAXP bug caused by missing import
+
+New in release 1.9.6 (2011-02-09):
+
+* Security updates
+  - S4421494, CVE-2010-4476: infinite loop while parsing double literal.
+
+New in release 1.8.6 (2011-02-09):
+
+* Security updates
+  - S4421494, CVE-2010-4476: infinite loop while parsing double literal.
+
+New in release 1.7.9 (2011-02-09):
+
+* Security updates
+  - S4421494, CVE-2010-4476: infinite loop while parsing double literal.
 
 New in release 1.9.5 (2011-02-01):
 
