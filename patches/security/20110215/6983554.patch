@@ -1,0 +1,20 @@
+# HG changeset patch
+# User ksrini
+# Date 1288026697 25200
+# Node ID 547ec9b43edde622a08cc9bae0f4e2efae861796
+# Parent  9216ec4e4c1443fe854872630aa8b3726523c0c9
+6983554: (launcher) Fix empty user's LD_LIBRARY_PATH environment variable in the launcher
+Reviewed-by: darcy, ohair, asaha
+
+diff --git a/src/solaris/bin/java_md.c b/src/solaris/bin/java_md.c
+--- openjdk/jdk/src/solaris/bin/java_md.c
++++ openjdk/jdk/src/solaris/bin/java_md.c
+@@ -484,7 +484,7 @@ CreateExecutionEnvironment(int *_argcp,
+        * LD_LIBRARY_PATH.  Note that this prevents any possible infinite
+        * loop of execv() because we test for the prefix, above.
+        */
+-      if (runpath != 0) {
++      if (runpath != 0 && (runpath[0] != '\0')) {
+         strcat(new_runpath, ":");
+         strcat(new_runpath, runpath);
+       }
