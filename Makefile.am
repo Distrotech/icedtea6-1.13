@@ -186,6 +186,7 @@ SECURITY_PATCHES = patches/security/20110209/4421494.patch \
 
 ICEDTEA_PATCHES = \
 	$(SECURITY_PATCHES) \
+	patches/icedtea-stdc-limit-macros.patch \
 	patches/openjdk/4993545-nativeinlightfixer.patch \
 	patches/openjdk/6637796-set_bounds.patch \
 	patches/openjdk/6607660-treelock.patch \

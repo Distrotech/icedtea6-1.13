@@ -1,3 +1,13 @@
+2011-02-16  Xerxes Ranby  <xerxes@zafena.se>
+	    Mark Wielaard  <mark@klomp.org>
+
+	PR632: 6878713.patch breaks shark zero build
+	* patches/icedtea-stdc-limit-macros.patch
+	(openjdk/hotspot/src/share/vm/utilities/globalDefinitions_gcc.hpp):
+	Only define __STDC_LIMIT_MACROS if undefined.
+	* Makefile.am (ICEDTEA_PATCHES): Add new patch.
+	* NEWS: Updated.
+
 2011-02-16  Andrew John Hughes  <ahughes@redhat.com>
 
 	* patches/icedtea-nomotif-6706121.patch:
