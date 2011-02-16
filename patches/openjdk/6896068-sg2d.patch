@@ -1,0 +1,209 @@
+# HG changeset patch
+# User neugens
+# Date 1256926775 -3600
+# Node ID 634221297c37bc73c0f598e6ce212ef83ba74d14
+# Parent  1f2ef3a7d7c023c7ffcdf4e8fbb204ec66098f80
+6896068: SunGraphics2D exposes a reference to itself while non fully initialised.
+Summary: Introduce a new Interface to mark the Loops based pipes and initialise the loops accordingly.
+Reviewed-by: flar, rkennke
+
+diff -r 1f2ef3a7d7c0 -r 634221297c37 src/share/classes/sun/java2d/SunGraphics2D.java
+--- openjdk.orig/jdk/src/share/classes/sun/java2d/SunGraphics2D.java	Fri Oct 23 16:21:50 2009 +0400
++++ openjdk/jdk/src/share/classes/sun/java2d/SunGraphics2D.java	Fri Oct 30 19:19:35 2009 +0100
+@@ -257,7 +257,6 @@
+             font = defaultFont;
+         }
+ 
+-        loops = sd.getRenderLoops(this);
+         setDevClip(sd.getBounds());
+         invalidatePipe();
+     }
+@@ -367,6 +366,7 @@
+         shapepipe = invalidpipe;
+         textpipe = invalidpipe;
+         imagepipe = invalidpipe;
++        loops = null;
+     }
+ 
+     public void validatePipe() {
+diff -r 1f2ef3a7d7c0 -r 634221297c37 src/share/classes/sun/java2d/SurfaceData.java
+--- openjdk.orig/jdk/src/share/classes/sun/java2d/SurfaceData.java	Fri Oct 23 16:21:50 2009 +0400
++++ openjdk/jdk/src/share/classes/sun/java2d/SurfaceData.java	Fri Oct 30 19:19:35 2009 +0100
+@@ -69,6 +69,7 @@
+ import sun.java2d.pipe.DrawImage;
+ import sun.awt.SunHints;
+ import sun.awt.image.SurfaceManager;
++import sun.java2d.pipe.LoopBasedPipe;
+ 
+ /**
+  * This class provides various pieces of information relevant to a
+@@ -506,7 +507,6 @@
+                     sg2d.textpipe = solidTextRenderer;
+                 }
+                 sg2d.shapepipe = colorPrimitives;
+-                sg2d.loops = getRenderLoops(sg2d);
+                 // assert(sg2d.surfaceData == this);
+             }
+         } else if (sg2d.compositeState == sg2d.COMP_CUSTOM) {
+@@ -603,8 +603,17 @@
+ 
+             sg2d.textpipe = getTextPipe(sg2d, false /* AA==OFF */);
+             sg2d.shapepipe = colorPrimitives;
++            // assert(sg2d.surfaceData == this);
++        }
++
++        // check for loops
++        if (sg2d.textpipe  instanceof LoopBasedPipe ||
++            sg2d.shapepipe instanceof LoopBasedPipe ||
++            sg2d.fillpipe  instanceof LoopBasedPipe ||
++            sg2d.drawpipe  instanceof LoopBasedPipe ||
++            sg2d.imagepipe instanceof LoopBasedPipe)
++        {
+             sg2d.loops = getRenderLoops(sg2d);
+-            // assert(sg2d.surfaceData == this);
+         }
+     }
+ 
+diff -r 1f2ef3a7d7c0 -r 634221297c37 src/share/classes/sun/java2d/pipe/AATextRenderer.java
+--- openjdk.orig/jdk/src/share/classes/sun/java2d/pipe/AATextRenderer.java	Fri Oct 23 16:21:50 2009 +0400
++++ openjdk/jdk/src/share/classes/sun/java2d/pipe/AATextRenderer.java	Fri Oct 30 19:19:35 2009 +0100
+@@ -34,8 +34,9 @@
+  * a solid source colour to an opaque destination.
+  */
+ 
+-public class AATextRenderer extends GlyphListLoopPipe {
+-
++public class AATextRenderer extends GlyphListLoopPipe
++    implements LoopBasedPipe
++{
+    protected void drawGlyphList(SunGraphics2D sg2d, GlyphList gl) {
+        sg2d.loops.drawGlyphListAALoop.DrawGlyphListAA(sg2d, sg2d.surfaceData,
+                                                       gl);
+diff -r 1f2ef3a7d7c0 -r 634221297c37 src/share/classes/sun/java2d/pipe/GlyphListLoopPipe.java
+--- openjdk.orig/jdk/src/share/classes/sun/java2d/pipe/GlyphListLoopPipe.java	Fri Oct 23 16:21:50 2009 +0400
++++ openjdk/jdk/src/share/classes/sun/java2d/pipe/GlyphListLoopPipe.java	Fri Oct 30 19:19:35 2009 +0100
+@@ -36,8 +36,9 @@
+  * the installed loop may not match the glyphvector.
+  */
+ 
+-public abstract class GlyphListLoopPipe extends GlyphListPipe {
+-
++public abstract class GlyphListLoopPipe extends GlyphListPipe
++    implements LoopBasedPipe
++{
+     protected void drawGlyphList(SunGraphics2D sg2d, GlyphList gl,
+                                  int aaHint) {
+         switch (aaHint) {
+diff -r 1f2ef3a7d7c0 -r 634221297c37 src/share/classes/sun/java2d/pipe/LoopBasedPipe.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/src/share/classes/sun/java2d/pipe/LoopBasedPipe.java	Fri Oct 30 19:19:35 2009 +0100
+@@ -0,0 +1,37 @@
++/*
++ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.  Sun designates this
++ * particular file as subject to the "Classpath" exception as provided
++ * by Sun in the LICENSE file that accompanied this code.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++package sun.java2d.pipe;
++
++/**
++ * This is a marker interface used by Pipes that need RenderLoops.
++ * RenderLoops are validated in SurfaceData when a pipe is recognised to
++ * implement this interface.
++ *
++ * @author Mario Torre <neugens@aicas.com>
++ */
++public interface LoopBasedPipe {
++
++}
+diff -r 1f2ef3a7d7c0 -r 634221297c37 src/share/classes/sun/java2d/pipe/LoopPipe.java
+--- openjdk.orig/jdk/src/share/classes/sun/java2d/pipe/LoopPipe.java	Fri Oct 23 16:21:50 2009 +0400
++++ openjdk/jdk/src/share/classes/sun/java2d/pipe/LoopPipe.java	Fri Oct 30 19:19:35 2009 +0100
+@@ -46,7 +46,8 @@
+ public class LoopPipe
+     implements PixelDrawPipe,
+                PixelFillPipe,
+-               ShapeDrawPipe
++               ShapeDrawPipe,
++               LoopBasedPipe
+ {
+     final static RenderingEngine RenderEngine = RenderingEngine.getInstance();
+ 
+diff -r 1f2ef3a7d7c0 -r 634221297c37 src/share/classes/sun/java2d/pipe/SolidTextRenderer.java
+--- openjdk.orig/jdk/src/share/classes/sun/java2d/pipe/SolidTextRenderer.java	Fri Oct 23 16:21:50 2009 +0400
++++ openjdk/jdk/src/share/classes/sun/java2d/pipe/SolidTextRenderer.java	Fri Oct 30 19:19:35 2009 +0100
+@@ -35,8 +35,9 @@
+  * a solid source colour to an opaque destination.
+  */
+ 
+-public class SolidTextRenderer extends GlyphListLoopPipe {
+-
++public class SolidTextRenderer extends GlyphListLoopPipe
++    implements LoopBasedPipe
++{
+     protected void drawGlyphList(SunGraphics2D sg2d, GlyphList gl) {
+         sg2d.loops.drawGlyphListLoop.DrawGlyphList(sg2d, sg2d.surfaceData, gl);
+     }
+diff -r 1f2ef3a7d7c0 -r 634221297c37 src/share/classes/sun/java2d/pipe/SpanShapeRenderer.java
+--- openjdk.orig/jdk/src/share/classes/sun/java2d/pipe/SpanShapeRenderer.java	Fri Oct 23 16:21:50 2009 +0400
++++ openjdk/jdk/src/share/classes/sun/java2d/pipe/SpanShapeRenderer.java	Fri Oct 30 19:19:35 2009 +0100
+@@ -65,7 +65,9 @@
+         }
+     }
+ 
+-    public static class Simple extends SpanShapeRenderer {
++    public static class Simple extends SpanShapeRenderer
++        implements  LoopBasedPipe
++    {
+         public Object startSequence(SunGraphics2D sg, Shape s,
+                                     Rectangle devR, int[] bbox) {
+             return sg;
+diff -r 1f2ef3a7d7c0 -r 634221297c37 src/solaris/classes/sun/java2d/x11/X11SurfaceData.java
+--- openjdk.orig/jdk/src/solaris/classes/sun/java2d/x11/X11SurfaceData.java	Fri Oct 23 16:21:50 2009 +0400
++++ openjdk/jdk/src/solaris/classes/sun/java2d/x11/X11SurfaceData.java	Fri Oct 30 19:19:35 2009 +0100
+@@ -388,7 +388,10 @@
+             // if a GlyphVector overrides the AA setting.
+             // We use getRenderLoops() rather than setting solidloops
+             // directly so that we get the appropriate loops in XOR mode.
+-            sg2d.loops = getRenderLoops(sg2d);
++            if (sg2d.loops == null) {
++                // assert(some pipe will always be a LoopBasedPipe)
++                sg2d.loops = getRenderLoops(sg2d);
++            }
+         } else {
+             super.validatePipe(sg2d);
+         }
+diff -r 1f2ef3a7d7c0 -r 634221297c37 src/windows/classes/sun/java2d/windows/GDIWindowSurfaceData.java
+--- openjdk.orig/jdk/src/windows/classes/sun/java2d/windows/GDIWindowSurfaceData.java	Fri Oct 23 16:21:50 2009 +0400
++++ openjdk/jdk/src/windows/classes/sun/java2d/windows/GDIWindowSurfaceData.java	Fri Oct 30 19:19:35 2009 +0100
+@@ -210,7 +210,10 @@
+             // if a GlyphVector overrides the AA setting.
+             // We use getRenderLoops() rather than setting solidloops
+             // directly so that we get the appropriate loops in XOR mode.
+-            sg2d.loops = getRenderLoops(sg2d);
++            if (sg2d.loops == null) {
++                // assert(some pipe will always be a LoopBasedPipe)
++                sg2d.loops = getRenderLoops(sg2d);
++            }
+         } else {
+             super.validatePipe(sg2d);
+         }
