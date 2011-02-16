@@ -1,0 +1,104 @@
+# HG changeset patch
+# User bae
+# Date 1288382134 -14400
+# Node ID 5e70dbac6a7d3743e64e19399552a60d25ba5cff
+# Parent  f3dff5c1b9c2cc8d38fde74c3661786f6332a3eb
+6985453: Font.createFont may expose some system properties in exception text
+Reviewed-by: prr, hawtin
+
+diff --git a/src/share/classes/sun/font/FileFont.java b/src/share/classes/sun/font/FileFont.java
+--- openjdk/jdk/src/share/classes/sun/font/FileFont.java
++++ openjdk/jdk/src/share/classes/sun/font/FileFont.java
+@@ -48,6 +48,9 @@ import java.util.HashSet;
+ import java.util.HashSet;
+ import java.util.HashMap;
+ import java.awt.Font;
++import java.security.AccessController;
++import java.security.PrivilegedActionException;
++import java.security.PrivilegedExceptionAction;
+ 
+ public abstract class FileFont extends PhysicalFont {
+ 
+@@ -284,4 +287,49 @@ public abstract class FileFont extends P
+             });
+         }
+     }
++
++    protected String getPublicFileName() {
++        SecurityManager sm = System.getSecurityManager();
++        if (sm == null) {
++            return platName;
++        }
++        boolean canReadProperty = true;
++
++        try {
++            sm.checkPropertyAccess("java.io.tmpdir");
++        } catch (SecurityException e) {
++            canReadProperty = false;
++        }
++
++        if (canReadProperty) {
++            return platName;
++        }
++
++        final File f = new File(platName);
++
++         Boolean isTmpFile = Boolean.FALSE;
++         try {
++             isTmpFile = AccessController.doPrivileged(
++                 new PrivilegedExceptionAction<Boolean>() {
++                     public Boolean run() {
++                         File tmp = new File(System.getProperty("java.io.tmpdir"));
++                         try {
++                             String tpath = tmp.getCanonicalPath();
++                             String fpath = f.getCanonicalPath();
++
++                             return (fpath == null) || fpath.startsWith(tpath);
++                         } catch (IOException e) {
++                             return Boolean.TRUE;
++                         }
++                     }
++                 }
++             );
++         } catch (PrivilegedActionException e) {
++             // unable to verify whether value of java.io.tempdir will be
++             // exposed, so return only a name of the font file.
++             isTmpFile = Boolean.TRUE;
++         }
++
++         return  isTmpFile ? "temp file" : platName;
++     }
+ }
+diff --git a/src/share/classes/sun/font/TrueTypeFont.java b/src/share/classes/sun/font/TrueTypeFont.java
+--- openjdk/jdk/src/share/classes/sun/font/TrueTypeFont.java
++++ openjdk/jdk/src/share/classes/sun/font/TrueTypeFont.java
+@@ -504,7 +504,8 @@ public class TrueTypeFont extends FileFo
+                 break;
+ 
+             default:
+-                throw new FontFormatException("Unsupported sfnt " + platName);
++                throw new FontFormatException("Unsupported sfnt " +
++                                              getPublicFileName());
+             }
+ 
+             /* Now have the offset of this TT font (possibly within a TTC)
+@@ -1369,6 +1370,6 @@ public class TrueTypeFont extends FileFo
+ 
+     public String toString() {
+         return "** TrueType Font: Family="+familyName+ " Name="+fullName+
+-            " style="+style+" fileName="+platName;
++            " style="+style+" fileName="+getPublicFileName();
+     }
+ }
+diff --git a/src/share/classes/sun/font/Type1Font.java b/src/share/classes/sun/font/Type1Font.java
+--- openjdk/jdk/src/share/classes/sun/font/Type1Font.java
++++ openjdk/jdk/src/share/classes/sun/font/Type1Font.java
+@@ -677,7 +677,7 @@ public class Type1Font extends FileFont 
+ 
+     public String toString() {
+         return "** Type1 Font: Family="+familyName+ " Name="+fullName+
+-            " style="+style+" fileName="+platName;
++            " style="+style+" fileName="+getPublicFileName();
+     }
+ 
+ }
