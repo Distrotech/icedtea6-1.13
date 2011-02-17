@@ -304,6 +304,8 @@ ICEDTEA_PATCHES = \
 	patches/no-static-linking.patch \
 	patches/rh676659-gcc-export-dynamic.patch \
 	patches/g344659-sparc_fix.patch \
+	patches/openjdk/6728834-blurred-lcd-aa-text.patch \
+	patches/openjdk/6749060-bad-lcd-aa-non-opaque-dest.patch \
 	patches/openjdk/6896068-sg2d.patch
 
 if !WITH_ALT_HSBUILD
