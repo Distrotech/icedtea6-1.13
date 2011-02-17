@@ -1,0 +1,245 @@
+# HG changeset patch
+# User michaelm
+# Date 1296485276 28800
+# Node ID 1da22d47056eebecb9aec43c8d79c0f9f54ff04b
+# Parent  0933d8b8547a6c657b4d4f636ac6b94e70bb2e40
+6981922: DNS cache poisoning by untrusted applets
+Reviewed-by: chegar
+
+diff --git a/make/sun/net/FILES_java.gmk b/make/sun/net/FILES_java.gmk
+--- openjdk/jdk/make/sun/net/FILES_java.gmk
++++ openjdk/jdk/make/sun/net/FILES_java.gmk
+@@ -34,6 +34,7 @@ FILES_java = \
+ 	sun/net/ProgressEvent.java \
+ 	sun/net/ProgressListener.java \
+ 	sun/net/ProgressMeteringPolicy.java \
++	sun/net/ResourceManager.java \
+ 	sun/net/TelnetInputStream.java \
+ 	sun/net/TelnetOutputStream.java \
+ 	sun/net/TelnetProtocolException.java \
+diff --git a/src/share/classes/java/net/AbstractPlainDatagramSocketImpl.java b/src/share/classes/java/net/AbstractPlainDatagramSocketImpl.java
+--- openjdk/jdk/src/share/classes/java/net/AbstractPlainDatagramSocketImpl.java
++++ openjdk/jdk/src/share/classes/java/net/AbstractPlainDatagramSocketImpl.java
+@@ -28,6 +28,7 @@ import java.io.IOException;
+ import java.io.IOException;
+ import java.io.InterruptedIOException;
+ import java.util.Enumeration;
++import sun.net.ResourceManager;
+ 
+ /**
+  * Abstract datagram and multicast socket implementation base class.
+@@ -65,8 +66,15 @@ abstract class AbstractPlainDatagramSock
+      * Creates a datagram socket
+      */
+     protected synchronized void create() throws SocketException {
++        ResourceManager.beforeUdpCreate();
+         fd = new FileDescriptor();
+-        datagramSocketCreate();
++        try {
++            datagramSocketCreate();
++        } catch (SocketException ioe) {
++            ResourceManager.afterUdpClose();
++            fd = null;
++            throw ioe;
++        }
+     }
+ 
+     /**
+@@ -211,6 +219,7 @@ abstract class AbstractPlainDatagramSock
+     protected void close() {
+         if (fd != null) {
+             datagramSocketClose();
++            ResourceManager.afterUdpClose();
+             fd = null;
+         }
+     }
+diff --git a/src/share/classes/java/net/AbstractPlainSocketImpl.java b/src/share/classes/java/net/AbstractPlainSocketImpl.java
+--- openjdk/jdk/src/share/classes/java/net/AbstractPlainSocketImpl.java
++++ openjdk/jdk/src/share/classes/java/net/AbstractPlainSocketImpl.java
+@@ -33,6 +33,7 @@ import java.io.ByteArrayOutputStream;
+ import java.io.ByteArrayOutputStream;
+ 
+ import sun.net.ConnectionResetException;
++import sun.net.ResourceManager;
+ 
+ /**
+  * Default Socket Implementation. This implementation does
+@@ -69,6 +70,10 @@ abstract class AbstractPlainSocketImpl e
+     private int resetState;
+     private Object resetLock = new Object();
+ 
++   /* whether this Socket is a stream (TCP) socket or not (UDP)
++    */
++    private boolean stream;
++
+     /**
+      * Load net library into runtime.
+      */
+@@ -83,7 +88,19 @@ abstract class AbstractPlainSocketImpl e
+      */
+     protected synchronized void create(boolean stream) throws IOException {
+         fd = new FileDescriptor();
+-        socketCreate(stream);
++        this.stream = stream;
++        if (!stream) {
++            ResourceManager.beforeUdpCreate();
++            try {
++                socketCreate(false);
++            } catch (IOException ioe) {
++                ResourceManager.afterUdpClose();
++                fd = null;
++                throw ioe;
++            }
++        } else {
++            socketCreate(true);
++        }
+         if (socket != null)
+             socket.setCreated();
+         if (serverSocket != null)
+@@ -458,6 +475,9 @@ abstract class AbstractPlainSocketImpl e
+     protected void close() throws IOException {
+         synchronized(fdLock) {
+             if (fd != null) {
++                if (!stream) {
++                    ResourceManager.afterUdpClose();
++                }
+                 if (fdUseCount == 0) {
+                     if (closePending) {
+                         return;
+diff --git a/src/share/classes/sun/net/ResourceManager.java b/src/share/classes/sun/net/ResourceManager.java
+new file mode 100644
+--- /dev/null
++++ openjdk/jdk/src/share/classes/sun/net/ResourceManager.java
+@@ -0,0 +1,82 @@
++/*
++ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.  Oracle designates this
++ * particular file as subject to the "Classpath" exception as provided
++ * by Oracle in the LICENSE file that accompanied this code.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++package sun.net;
++
++import java.net.SocketException;
++import java.util.concurrent.atomic.AtomicInteger;
++import sun.security.action.GetPropertyAction;
++
++/**
++ * Manages count of total number of UDP sockets and ensures
++ * that exception is thrown if we try to create more than the
++ * configured limit.
++ *
++ * This functionality could be put in NetHooks some time in future.
++ */
++
++public class ResourceManager {
++
++    /* default maximum number of udp sockets per VM
++     * when a security manager is enabled.
++     * The default is 1024 which is high enough to be useful
++     * but low enough to be well below the maximum number
++     * of port numbers actually available on all OSes for
++     * such sockets (5000 on some versions of windows)
++     */
++
++    private static final int DEFAULT_MAX_SOCKETS = 1024;
++    private static final int maxSockets;
++    private static final AtomicInteger numSockets;
++
++    static {
++        String prop = java.security.AccessController.doPrivileged(
++            new GetPropertyAction("sun.net.maxDatagramSockets")
++        );
++        int defmax = DEFAULT_MAX_SOCKETS;
++        try {
++            if (prop != null) {
++                defmax = Integer.parseInt(prop);
++            }
++        } catch (NumberFormatException e) {}
++        maxSockets = defmax;
++        numSockets = new AtomicInteger(0);
++    }
++
++    public static void beforeUdpCreate() throws SocketException {
++        if (System.getSecurityManager() != null) {
++            if (numSockets.incrementAndGet() > maxSockets) {
++                numSockets.decrementAndGet();
++                throw new SocketException("maximum number of DatagramSockets reached");
++            }
++        }
++    }
++
++    public static void afterUdpClose() {
++        if (System.getSecurityManager() != null) {
++            numSockets.decrementAndGet();
++        }
++    }
++}
+diff --git a/src/share/classes/sun/nio/ch/DatagramChannelImpl.java b/src/share/classes/sun/nio/ch/DatagramChannelImpl.java
+--- openjdk/jdk/src/share/classes/sun/nio/ch/DatagramChannelImpl.java
++++ openjdk/jdk/src/share/classes/sun/nio/ch/DatagramChannelImpl.java
+@@ -32,6 +32,7 @@ import java.nio.channels.*;
+ import java.nio.channels.*;
+ import java.nio.channels.spi.*;
+ import java.lang.ref.SoftReference;
++import sun.net.ResourceManager;
+ 
+ 
+ /**
+@@ -98,9 +99,15 @@ class DatagramChannelImpl
+         throws IOException
+     {
+         super(sp);
+-        this.fd = Net.socket(false);
+-        this.fdVal = IOUtil.fdVal(fd);
+-        this.state = ST_UNCONNECTED;
++        ResourceManager.beforeUdpCreate();
++        try {
++            this.fd = Net.socket(false);
++            this.fdVal = IOUtil.fdVal(fd);
++            this.state = ST_UNCONNECTED;
++        } catch (IOException ioe) {
++            ResourceManager.afterUdpClose();
++            throw ioe;
++        }
+     }
+ 
+     public DatagramChannelImpl(SelectorProvider sp, FileDescriptor fd)
+@@ -587,6 +594,7 @@ class DatagramChannelImpl
+     protected void implCloseSelectableChannel() throws IOException {
+         synchronized (stateLock) {
+             nd.preClose(fd);
++            ResourceManager.afterUdpClose();
+             long th;
+             if ((th = readerThread) != 0)
+                 NativeThread.signal(th);
+diff --git a/src/share/classes/sun/nio/ch/Net.java b/src/share/classes/sun/nio/ch/Net.java
+--- openjdk/jdk/src/share/classes/sun/nio/ch/Net.java
++++ openjdk/jdk/src/share/classes/sun/nio/ch/Net.java
+@@ -111,7 +111,7 @@ class Net {                             
+ 
+     // -- Socket operations --
+ 
+-    static FileDescriptor socket(boolean stream) {
++    static FileDescriptor socket(boolean stream) throws IOException {
+         return IOUtil.newFD(socket0(stream, false));
+     }
+ 

@@ -1,0 +1,112 @@
+# HG changeset patch
+# User mlapshin
+# Date 1219738583 -14400
+# Node ID e78c2f17a60646b8198279b2f676712094b833a0
+# Parent  c9d407ab230941d41025428b25bc5d787cf7c18f
+6736649: test/closed/javax/swing/JMenuItem/6458123/ManualBug6458123.java fails on Linux
+Summary: Now text bearings are taken into account when labelRect width is calculated
+Reviewed-by: alexp
+
+diff -r c9d407ab2309 -r e78c2f17a606 src/share/classes/javax/swing/plaf/synth/SynthMenuItemLayoutHelper.java
+--- openjdk/jdk/src/share/classes/javax/swing/plaf/synth/SynthMenuItemLayoutHelper.java	Tue Aug 12 17:59:58 2008 -0700
++++ openjdk/jdk/src/share/classes/javax/swing/plaf/synth/SynthMenuItemLayoutHelper.java	Tue Aug 26 12:16:23 2008 +0400
+@@ -136,7 +136,7 @@
+ 
+         // accRect
+         if (!getAccText().equals("")) {
+-            getAccSize().setWidth(accGu.computeStringWidth(getAccContext(),
++             getAccSize().setWidth(accGu.computeStringWidth(getAccContext(),
+                     getAccFontMetrics().getFont(), getAccFontMetrics(),
+                     getAccText()));
+             getAccSize().setHeight(getAccFontMetrics().getHeight());
+@@ -195,6 +195,7 @@
+                     getHorizontalAlignment(), getVerticalAlignment(),
+                     getHorizontalTextPosition(), getVerticalTextPosition(),
+                     getViewRect(), iconRect, textRect, getGap());
++            textRect.width += getLeftTextExtraWidth() + getRightTextExtraWidth();
+             Rectangle labelRect = iconRect.union(textRect);
+             getLabelSize().setHeight(labelRect.height);
+             getLabelSize().setWidth(labelRect.width);
+diff -r c9d407ab2309 -r e78c2f17a606 src/share/classes/sun/swing/MenuItemLayoutHelper.java
+--- openjdk/jdk/src/share/classes/sun/swing/MenuItemLayoutHelper.java	Tue Aug 12 17:59:58 2008 -0700
++++ openjdk/jdk/src/share/classes/sun/swing/MenuItemLayoutHelper.java	Tue Aug 26 12:16:23 2008 +0400
+@@ -83,6 +83,9 @@
+     private int afterCheckIconGap;
+     private int minTextOffset;
+ 
++    private int leftTextExtraWidth;
++    private int rightTextExtraWidth;
++
+     private Rectangle viewRect;
+ 
+     private RectSize iconSize;
+@@ -143,6 +146,7 @@
+         this.checkSize = new RectSize();
+         this.arrowSize = new RectSize();
+         this.labelSize = new RectSize();
++        calcExtraWidths();
+         calcWidthsAndHeights();
+         setOriginalWidths();
+         calcMaxWidths();
+@@ -151,6 +155,29 @@
+         calcMaxTextOffset(viewRect);
+     }
+ 
++    private void calcExtraWidths() {
++        leftTextExtraWidth = getLeftExtraWidth(text);
++        rightTextExtraWidth = getRightExtraWidth(text);
++    }
++
++    private int getLeftExtraWidth(String str) {
++        int lsb = SwingUtilities2.getLeftSideBearing(mi, fm, str);
++        if (lsb < 0) {
++            return -lsb;
++        } else {
++            return 0;
++        }
++    }
++
++    private int getRightExtraWidth(String str) {
++        int rsb = SwingUtilities2.getRightSideBearing(mi, fm, str);
++        if (rsb > 0) {
++            return rsb;
++        } else {
++            return 0;
++        }
++    }
++
+     private void setOriginalWidths() {
+         iconSize.origWidth = iconSize.width;
+         textSize.origWidth = textSize.width;
+@@ -286,6 +313,7 @@
+                     verticalAlignment, horizontalAlignment,
+                     verticalTextPosition, horizontalTextPosition,
+                     viewRect, iconRect, textRect, gap);
++            textRect.width += leftTextExtraWidth + rightTextExtraWidth;
+             Rectangle labelRect = iconRect.union(textRect);
+             labelSize.height = labelRect.height;
+             labelSize.width = labelRect.width;
+@@ -727,7 +755,7 @@
+         }
+     }
+ 
+-    /**
++   /**
+      * Sets Y coordinates of text and icon
+      * taking into account the vertical alignment
+      */
+@@ -1089,6 +1117,14 @@
+         this.labelSize = labelSize;
+     }
+ 
++    public int getLeftTextExtraWidth() {
++        return leftTextExtraWidth;
++    }
++
++    public int getRightTextExtraWidth() {
++        return rightTextExtraWidth;
++    }
++
+     /**
+      * Returns false if the component is a JMenu and it is a top
+      * level menu (on the menubar).

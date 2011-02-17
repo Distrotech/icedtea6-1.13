@@ -1,0 +1,12 @@
+diff -uNr openjdk.orig/hotspot/src/os_cpu/linux_sparc/vm/vm_version_linux_sparc.cpp openjdk/hotspot/src/os_cpu/linux_sparc/vm/v_version_linux_sparc.cpp
+--- openjdk.orig/hotspot/src/os_cpu/linux_sparc/vm/vm_version_linux_sparc.cpp	2010-06-21 22:12:15.000000000 +0100
++++ openjdk/hotspot/src/os_cpu/linux_sparc/vm/vm_version_linux_sparc.cpp	2010-11-29 20:15:36.179541001 +0000
+@@ -35,7 +35,7 @@
+   }
+ 
+   while (!feof(fp)) {
+-    if (fscanf(fp, "cpu\t\t: %100[^\n]", &cpu) == 1) {
++    if (fscanf(fp, "cpu\t\t: %100[^\n]", &cpu[0]) == 1) {
+       if (strstr(cpu, "Niagara") != NULL) {
+         rv = true;
+       }

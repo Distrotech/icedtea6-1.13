@@ -1,3 +1,276 @@
+2011-02-17  Andrew John Hughes  <ahughes@redhat.com>
+
+	6693253: Security Warning appearance requires enhancements
+	6779717: A Window does not show applet security warning icon on X platforms
+	6785058: Parent don't get the focus after dialog is closed if security warning is applied
+	* Makefile.am: Add new patch.
+	* patches/openjdk/6307603-xrender-01.patch: Rejigged.
+	* patches/openjdk/6693253-security_warning.patch:
+	Security warning backport.
+	* overlays/openjdk/jdk/src/solaris/classes/sun/awt/X11/security-icon-bw16.png,
+	* overlays/openjdk/jdk/src/solaris/classes/sun/awt/X11/security-icon-bw24.png,
+	* overlays/openjdk/jdk/src/solaris/classes/sun/awt/X11/security-icon-bw32.png,
+	* overlays/openjdk/jdk/src/solaris/classes/sun/awt/X11/security-icon-bw48.png,
+	* overlays/openjdk/jdk/src/solaris/classes/sun/awt/X11/security-icon-interim16.png,
+	* overlays/openjdk/jdk/src/solaris/classes/sun/awt/X11/security-icon-interim24.png,
+	* overlays/openjdk/jdk/src/solaris/classes/sun/awt/X11/security-icon-interim32.png,
+	* overlays/openjdk/jdk/src/solaris/classes/sun/awt/X11/security-icon-interim48.png,
+	* overlays/openjdk/jdk/src/solaris/classes/sun/awt/X11/security-icon-yellow16.png,
+	* overlays/openjdk/jdk/src/solaris/classes/sun/awt/X11/security-icon-yellow24.png,
+	* overlays/openjdk/jdk/src/solaris/classes/sun/awt/X11/security-icon-yellow32.png,
+	* overlays/openjdk/jdk/src/solaris/classes/sun/awt/X11/security-icon-yellow48.png,
+	* overlays/openjdk/jdk/src/windows/native/sun/windows/security_warning.ico,
+	* overlays/openjdk/jdk/src/windows/native/sun/windows/security_warning_bw.ico,
+	* overlays/openjdk/jdk/src/windows/native/sun/windows/security_warning_int.ico:
+	Images for new backport.
+	* NEWS: Updated.
+
+2011-02-16  Denis Lila <dlila@redhat.com>
+
+	* NEWS: Update with the backports
+	* Makefile.am (ICEDTEA_PATCHES): Added the 2 patches
+	* patches/openjdk/6728834-blurred-lcd-aa-text.patch
+	* patches/openjdk/6749060-bad-lcd-aa-non-opaque-dest.patch
+
+2011-02-16  Xerxes Ranby  <xerxes@zafena.se>
+	    Mark Wielaard  <mark@klomp.org>
+
+	PR632: 6878713.patch breaks shark zero build
+	* patches/icedtea-stdc-limit-macros.patch
+	(openjdk/hotspot/src/share/vm/utilities/globalDefinitions_gcc.hpp):
+	Only define __STDC_LIMIT_MACROS if undefined.
+	* Makefile.am (ICEDTEA_PATCHES): Add new patch.
+	* NEWS: Updated.
+
+2011-02-16  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/icedtea-nomotif-6706121.patch:
+	Remove .orig file created by previous
+	recreation of patch.
+
+2011-02-16  Denis Lila <dlila@redhat.com>
+
+	* NEWS: Update with the backport
+	* Makefile.am (ICEDTEA_PATCHES): Added the patch
+	* patches/openjdk/6896068-sg2d.patch: Patch
+
+2011-02-16  Andrew John Hughes  <ahughes@redhat.com>
+
+	* NEWS: Include new releases:
+	1.7.9, 1.7.10, 1.8.6, 1.8.7, 1.9.6, 1.9.7.
+
+2011-02-11  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am: Add additional patch.
+	* NEWS: Updated.
+	* patches/security/20110215/6927050.patch,
+	Add patch for 6927050 missing from first two
+	Oracle bundles.
+
+2011-02-10  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am: Add additional patch.
+	* NEWS: Updated.
+	* patches/security/20110215/6985453.patch:
+	Add patch for 6985453 missing from first Oracle
+	bundle.
+
+2011-02-09  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am: Add new patches.
+	* NEWS: Updated.
+	* patches/icedtea-nio2.patch: Rejigged.
+	* patches/openjdk/6633275-shaped_translucent_windows.patch,
+	* patches/openjdk/6797195-hw_lw_mixing.patch:
+	Fixed to accomodate appearance of AWTAccessor via
+	security patch.
+	* patches/security/20110215/6878713.patch,
+	* patches/security/20110215/6907662.patch,
+	* patches/security/20110215/6981922.patch,
+	* patches/security/20110215/6983554.patch,
+	* patches/security/20110215/6994263.patch:
+	Security updates from Oracle SSR.
+
+2011-02-15  Andrew John Hughes  <ahughes@redhat.com>
+
+	* NEWS: Mention backports of copyright header
+	fixes for 6616323 and 6633275.
+
+2011-02-15  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am: Add patch below.
+	* NEWS: Updated.
+	* patches/openjdk/6633275-shaped_translucent_windows.patch:
+	Support shaped/translucent windows
+
+2011-02-13  Andrew John Hughes  <ahughes@redhat.com>
+
+	G344659: Fix issue when building on SPARC
+	* Makefile.am: Add new patch.
+	* NEWS: Updated.
+	* patches/g344659-sparc_fix.patch:
+	Add fix for SPARC builds on Gentoo.
+
+2011-02-13  Andrew John Hughes  <ahughes@redhat.com>
+
+	* NEWS: Updated.
+
+2011-02-11  Omair Majid  <omajid@redhat.com>
+
+	RH676659: Pass -export-dynamic option to linker not gcc.
+	* Makefile.am: Add new patch.
+	* patches/rh676659-gcc-export-dynamic.patch:
+	Pass -Wl,-export-dynamic rather than -export-dynamic.
+
+2011-02-09  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am: Add patch.
+	* NEWS: Updated.
+	* patches/security/20110209/4421494.patch:
+	Add floating point bug fix.
+
+2011-02-06  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am: Add patches below.
+	* patches/openjdk/4993545-nativeinlightfixer.patch,
+	* patches/openjdk/6607170-request_focus.patch,
+	* patches/openjdk/6607660-treelock.patch,
+	* patches/openjdk/6616323-component_array.patch,
+	* patches/openjdk/6637796-set_bounds.patch,
+	* patches/openjdk/6682046-shape_calculation.patch,
+	New AWT backports from OpenJDK7.
+	* patches/openjdk/6725214-direct3d-01.patch:
+	Rejigged against new patches with Oracle copyrights added.
+	* patches/openjdk/6797195-hw_lw_mixing.patch:
+	New AWT backport from OpenJDK7.
+
+2011-02-03  Andrew John Hughes  <ahughes@redhat.com>
+
+	PR616, PR99:
+	* Makefile.am: Add new patch.
+	* patches/jtreg-6929067-fix.patch:
+	Link against pthread explicitly now
+	libstdc++ is no longer static.
+	* patches/no-static-linking.patch:
+	Don't statically link libstdc++ or
+	libgcc.
+	* NEWS: Updated.
+
+2011-02-01  Denis Lila <dlila@redhat.com>
+
+	* NEWS: Update with the 3 backports
+	* Makefile.am (ICEDTEA_PATCHES): Add the patches
+	* patches/openjdk/4493128-CubicCurve2D.patch: New file.
+	* patches/openjdk/4645692-CubicCurve2D.solveCubic.patch: Likewise.
+	* patches/openjdk/4724552-CubicCurve2D.patch: Likewise.
+
+2011-02-01  Andrew John Hughes  <ahughes@redhat.com>
+
+	* NEWS: Add announcements for 1.7.8,
+	1.8.5 and 1.9.5.
+
+2011-02-01  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* patches/jtreg-png-reader.patch:
+	Added two new regression tests which check correct behaviour of PNG
+	reader.
+
+2011-01-29  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/gcc-suffix.patch,
+	* patches/ia64-fix.patch:
+	Split into original and hs20 versions.
+	* patches/icedtea-no-precompiled.patch:
+	Apply to original only.
+	* patches/icedtea-sparc-buildfixes.patch,
+	* patches/icedtea-text-relocations.patch,
+	* patches/icedtea-too-many-args.patch,
+	* patches/params-cast-size_t.patch:
+	Split into original and hs20 versions.
+	* INSTALL:
+	Document new status (original as default,
+	hs20 as alternative).
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Updated with changes listed.
+	(replace-hotspot): Use ${HSBUILD} instead of hardcoded hs19.
+	* NEWS: List availability of hs20.
+	* acinclude.m4:
+	(AC_CHECK_WITH_HOTSPOT_BUILD): Provide hs20 as alternate build.
+	* hotspot.map: Add hs20.
+	* patches/arm.patch: Split bytecodes_zero.hpp changes into original
+	and hs20 versions.
+	* patches/hotspot/hs20/arm.patch,
+	hs20 version of bytecodes_zero.hpp changes.
+	* patches/hotspot/hs20/gcc-suffix.patch,
+	* patches/hotspot/hs20/ia64-fix.patch,
+	* patches/hotspot/hs20/params-cast-size_t.patch,
+	* patches/hotspot/hs20/sparc-buildfixes.patch:
+	hs20 version of patches.
+	* patches/hotspot/hs20/systemtap.patch:
+	hs20 version of dtrace.hpp changes.
+	* patches/hotspot/hs20/text-relocations.patch:
+	hs20 versions of patch.
+	* patches/hotspot/original/arm.patch:
+	original version of bytecodes_zero.hpp changes.
+	* patches/hotspot/original/gcc-suffix.patch,
+	* patches/hotspot/original/ia64-fix.patch:
+	original versions of patches moved from patches directory.
+	* patches/hotspot/original/no-precompiled-headers.patch:
+	Only for original; USE_PRECOMPILED_HEADER=0 provides the
+	same in hs20.
+	* patches/hotspot/original/params-cast-size_t.patch,
+	* patches/hotspot/original/sparc-buildfixes.patch:
+	original versions of patches moved from patches directory.
+	* patches/hotspot/original/systemtap.patch:
+	original version of dtrace.hpp changes.
+	* patches/hotspot/original/text-relocations.patch,
+	* patches/hotspot/original/too-many-args.patch:
+	original versions of patches moved from patches directory.
+	* patches/systemtap.patch:
+	Split dtrace.hpp changes into original and hs20 versions.
+
+2011-01-24  Omair Majid  <omajid@redhat.com>
+
+	* NEWS: Update with the 3 backports
+	* Makefile.am (ICEDTEA_PATCHES): Add the patches
+	* patches/openjdk/6736649-text_bearings.patch: New file.
+	* patches/openjdk/6797139-jbutton_truncation.patch: Likewise.
+	* patches/openjdk/6883341-text_bearing_exception.patch: Likewise.
+
+2011-01-24  Andrew John Hughes  <ahughes@redhat.com>
+
+	* NEWS: Add unlisted backports.
+
+2011-01-24  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/661505-jpeg.patch:
+	Move to...
+	* Makefile.am: Add rh prefix to jpeg fix.
+	* NEWS: Move jpeg fix to Bug Fixes as not
+	a backport.
+	* patches/rh661505-jpeg.patch:
+	... here.
+
+2011-01-24  Andrew John Hughes  <ahughes@redhat.com>
+
+	* NEWS: Add 1.9.3, 1.9.4, 1.7.7 and 1.8.4
+	NEWS entries.
+
+2011-01-24  Andrew John Hughes  <ahughes@redhat.com>
+
+	* NEWS: Update 1.10 with b21 changes.
+	Remove changes in b21 from list of backports.
+
+2010-01-22  Mark Wielaard  <mark@klomp.org>
+
+	* configure.ac: Add xvfb-run AC_CHECK_PROG.
+	* Makefile.am (check-jdk): Use xvfb-run if available and DISPLAY
+	not set.
+
+2010-01-22  Mark Wielaard  <mark@klomp.org>
+
+        * Makefile.am (ICEDTEA_PATCHES): Add missing backslash.
+
 2011-01-22  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:

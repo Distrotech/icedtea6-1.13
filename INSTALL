@@ -165,7 +165,7 @@ These are documented fully in the relevant section below.
 * --enable-cacao: Replace HotSpot with the CACAO VM.
 * --enable-shark: Build the Shark LLVM-based JIT.
 * --enable-zero: Build the zero assembler port on x86/x86_64/sparc platforms.
-* --with-hotspot-build: The HotSpot to use, defaulting to 'hs19'.
+* --with-hotspot-build: The HotSpot to use, defaulting to 'original'.
 * --with-rhino: Include Javascript support using Rhino.
 * --with-additional-vms=vm-list: Additional VMs to build using the system described
   below.
@@ -301,16 +301,16 @@ can be specified using --with-hotspot-src-zip.  This skips the
 download stage and just verifies that the zip's MD5 sum matches that
 of the requested build.
 
-At present, IcedTea6 supports the 'original' HotSpot 17 provided as
-part of the upstream tarball and HotSpot 19 ('hs19') from the stable
-hs19 tree at http://hg.openjdk.java.net/hsx/hsx19/master.  The default
-is 'hs19'; passing --with-hotspot-build=original to configure will
-revert to the version of hs17 provided in b20.  Note that the norm. is
+At present, IcedTea6 supports the 'original' HotSpot 19 provided as
+part of the upstream tarball and HotSpot 20 ('hs20') from the stable
+hs20 tree at http://hg.openjdk.java.net/hsx/hsx20/baseline.  The default
+is 'original'; passing --with-hotspot-build=hs20 to configure will
+use the version of hs20 specified in hotspot.map.  Note that the norm. is
 for up to one alternate (non-default) build to be supported and just
 passing --with-hotspot-build (equivalent to --with-hotspot-build=yes)
-will always provide the alternate build (currently hs19).  Conversely,
+will always provide the alternate build (currently hs20).  Conversely,
 passing --with-hotspot-build=no provides the original build (currently
-hs17).
+hs19).
 
 Javascript Support
 ==================

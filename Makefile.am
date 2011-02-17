@@ -174,16 +174,38 @@ REWRITER_SRCS = $(abs_top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.jav
 
 ICEDTEA_FSG_PATCHES =
 
-SECURITY_PATCHES =
+SECURITY_PATCHES = patches/security/20110209/4421494.patch \
+	patches/security/20110215/6878713.patch \
+	patches/security/20110215/6907662.patch \
+	patches/security/20110215/6981922.patch \
+	patches/security/20110215/6983554.patch \
+	patches/security/20110215/6994263.patch \
+	patches/security/20110215/6985453.patch \
+	patches/security/20110215/6927050.patch
+
 
 ICEDTEA_PATCHES = \
 	$(SECURITY_PATCHES) \
+	patches/icedtea-stdc-limit-macros.patch \
+	patches/openjdk/4993545-nativeinlightfixer.patch \
+	patches/openjdk/6637796-set_bounds.patch \
+	patches/openjdk/6607660-treelock.patch \
+	patches/openjdk/6607170-request_focus.patch \
+	patches/openjdk/6616323-component_array.patch \
+	patches/openjdk/6682046-shape_calculation.patch \
+	patches/openjdk/6797195-hw_lw_mixing.patch \
+	patches/openjdk/6725214-direct3d-01.patch \
+	patches/openjdk/6633275-shaped_translucent_windows.patch \
+        patches/openjdk/6791612-opengl-jni-fix.patch \
+        patches/openjdk/6755274-glgetstring-crash.patch \
+        patches/openjdk/6984543-onscreen_rendering_resize_test.patch \
+	patches/openjdk/6693253-security_warning.patch \
 	patches/icedtea-notice-safepoints.patch \
 	patches/icedtea-parisc-opt.patch \
 	patches/icedtea-lucene-crash.patch \
 	patches/icedtea-version.patch \
 	patches/icedtea-version-hotspot.patch \
-	patches/icedtea-text-relocations.patch \
+	patches/hotspot/$(HSBUILD)/text-relocations.patch \
 	patches/icedtea-ssl.patch \
 	patches/icedtea-rmi_amd64.patch \
 	patches/icedtea-tools.patch \
@@ -191,7 +213,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-headers.patch \
 	patches/icedtea-headers-hotspot.patch \
 	patches/icedtea-gcc-suffix.patch \
-	patches/gcc-suffix.patch \
+	patches/hotspot/$(HSBUILD)/gcc-suffix.patch \
 	patches/icedtea-bytebuffer-compact.patch \
 	patches/memory-limits.patch \
 	patches/icedtea-sunsrc.patch \
@@ -210,7 +232,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-alt-jar.patch \
 	patches/icedtea-jdk-use-ssize_t.patch \
 	patches/icedtea-use-idx_t.patch \
-	patches/params-cast-size_t.patch \
+	patches/hotspot/$(HSBUILD)/params-cast-size_t.patch \
 	patches/icedtea-clean-crypto.patch \
 	patches/icedtea-arch.patch \
 	patches/icedtea-lc_ctype.patch \
@@ -221,7 +243,7 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-testenv.patch \
 	patches/icedtea-samejvm-safe.patch \
 	patches/icedtea-pr261.patch \
-	patches/icedtea-sparc-buildfixes.patch \
+	patches/hotspot/$(HSBUILD)/sparc-buildfixes.patch \
 	patches/icedtea-sparc64-linux.patch \
 	patches/icedtea-sparc-ptracefix.patch \
 	patches/icedtea-sparc-trapsfix.patch \
@@ -237,7 +259,6 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-disable-cc-incompatible-sanity-checks.patch \
 	patches/icedtea-explicit-target-arch.patch \
 	patches/icedtea-gcc-stack-markings.patch \
-	patches/icedtea-no-precompiled.patch \
 	patches/icedtea-parisc.patch \
 	patches/icedtea-sh4-support.patch \
 	patches/icedtea-policy-evaluation.patch \
@@ -246,6 +267,7 @@ ICEDTEA_PATCHES = \
 	patches/applet_hole.patch \
 	patches/icedtea-jtreg-httpTest.patch \
 	patches/arm.patch \
+	patches/hotspot/$(HSBUILD)/arm.patch \
 	patches/debug-dir.patch \
 	patches/no-sync.patch \
 	patches/icedtea-override-redirect-metacity.patch \
@@ -253,7 +275,6 @@ ICEDTEA_PATCHES = \
 	patches/fonts-rhel.patch \
 	patches/fonts-gentoo.patch \
 	patches/ipv4-mapped-ipv6-addresses.patch \
-	patches/icedtea-too-many-args.patch \
 	patches/icedtea-jtreg-OpenGLContextInit.patch \
 	patches/openjdk/6510892-httpserver_test.patch \
 	patches/openjdk/6638712-wildcard_types.patch \
@@ -261,7 +282,6 @@ ICEDTEA_PATCHES = \
 	patches/numa_on_early_glibc.patch \
 	patches/icedtea-jtreg-international-fonts.patch \
 	patches/openjdk/6967436-6976265-6967434-pisces.patch \
-	patches/openjdk/6997495-test_correction_6857159.patch \
 	patches/f14-fonts.patch \
 	patches/jtreg-WindowWithWarningTest.patch \
 	patches/jtreg-T6638712-fix.patch \
@@ -270,11 +290,31 @@ ICEDTEA_PATCHES = \
 	patches/jtreg-6929067-fix.patch \
 	patches/rendering-engine-tests.patch \
 	patches/openjdk/6800846-printing-quality.patch \
-	patches/661505-jpeg.patch \
+	patches/rh661505-jpeg.patch \
 	patches/6703377-freetypescaler.patch \
-	patches/ia64-fix.patch
+	patches/hotspot/$(HSBUILD)/ia64-fix.patch \
 	patches/openjdk/6642612-filechooser_button_sizes.patch \
-	patches/jtreg-international-fonts-styles.patch
+	patches/jtreg-international-fonts-styles.patch \
+	patches/openjdk/6736649-text_bearings.patch \
+	patches/openjdk/6797139-jbutton_truncation.patch \
+	patches/openjdk/6883341-text_bearing_exception.patch \
+	patches/jtreg-png-reader.patch \
+	patches/openjdk/4724552-CubicCurve2D.patch \
+	patches/openjdk/4493128-CubicCurve2D.patch \
+	patches/openjdk/4645692-CubicCurve2D.solveCubic.patch \
+	patches/no-static-linking.patch \
+	patches/rh676659-gcc-export-dynamic.patch \
+	patches/g344659-sparc_fix.patch \
+	patches/openjdk/6728834-blurred-lcd-aa-text.patch \
+	patches/openjdk/6749060-bad-lcd-aa-non-opaque-dest.patch \
+	patches/openjdk/6896068-sg2d.patch
+
+if !WITH_ALT_HSBUILD
+ICEDTEA_PATCHES += \
+	patches/hotspot/$(HSBUILD)/no-precompiled-headers.patch \
+	patches/hotspot/$(HSBUILD)/too-many-args.patch \
+	patches/openjdk/6997495-test_correction_6857159.patch
+endif
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -301,12 +341,8 @@ ICEDTEA_PATCHES += \
 endif
 
 if ENABLE_XRENDER
-ICEDTEA_PATCHES += patches/openjdk/6725214-direct3d-01.patch \
-	patches/openjdk/6307603-xrender-01.patch \
+ICEDTEA_PATCHES += patches/openjdk/6307603-xrender-01.patch \
 	patches/openjdk/6961633-xrender-02.patch \
-        patches/openjdk/6791612-opengl-jni-fix.patch \
-        patches/openjdk/6755274-glgetstring-crash.patch \
-        patches/openjdk/6984543-onscreen_rendering_resize_test.patch \
 	patches/xrender-gc-cleanup.patch
 endif
 
@@ -316,6 +352,7 @@ endif
 
 if ENABLE_SYSTEMTAP
 ICEDTEA_PATCHES += patches/systemtap.patch \
+	patches/hotspot/$(HSBUILD)/systemtap.patch \
 	patches/systemtap-gcc-4.5.patch \
 	patches/systemtap-alloc-size-workaround.patch
 endif
@@ -842,7 +879,7 @@ if WITH_ALT_HSBUILD
 	  then \
 	    $(TAR) xf $(HOTSPOT_SRC_ZIP) ; \
 	    dir=$$($(AWK) 'version==$$1 {print gensub(/.*\/([^/]*)$$/,"\\1","g",$$2)}' \
-	      version=hs19 $(abs_top_srcdir)/hotspot.map) ; \
+	      version=$(HSBUILD) $(abs_top_srcdir)/hotspot.map) ; \
 	    chmod -R ug+w $$dir-* ; \
 	    mv $$dir-$$($(AWK) 'version==$$1 {print $$3}' version=$(HSBUILD) \
 	      $(abs_top_srcdir)/hotspot.map) openjdk/hotspot ; \
@@ -1898,6 +1935,11 @@ check-langtools: stamps/jtreg.stamp
 
 check-jdk: stamps/jtreg.stamp
 	mkdir -p test/jdk/JTwork test/jdk/JTreport
+	if test "x$${DISPLAY}" = "x"; then XVFB_RUN="@XVFB_RUN_CMD@"; fi; \
+	if test "x$${DISPLAY}" = "x" && test "x$${XVFB_RUN}" = "x"; then \
+		echo "WARNING: DISPLAY not set and xvfb-run not found"; \
+	fi; \
+	$${XVFB_RUN} \
 	$(BOOT_DIR)/bin/java -jar test/jtreg.jar -v1 -a -ignore:quiet \
 		-w:test/jdk/JTwork -r:test/jdk/JTreport \
 		$${ICEDTEA_JTREG_OTHERVM:--samevm} \

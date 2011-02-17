@@ -1,0 +1,331 @@
+diff -Nru jaxp.orig/build.properties jaxp/build.properties
+--- openjdk.orig/jaxp/build.properties	2010-02-17 03:11:24.000000000 +0000
++++ openjdk/jaxp/build.properties	2011-02-11 16:56:51.000000000 +0000
+@@ -77,6 +77,9 @@
+ # Where patches to drop bundle sources live
+ patches.dir=patches
+ 
++# Patches to apply
++jaxp_src.patch.list=6927050.patch
++
+ # Sanity information
+ sanity.info= Sanity Settings:${line.separator}\
+   ant.home=${ant.home}${line.separator}\
+diff -Nru jaxp.orig/patches/jaxp_src/6927050.patch jaxp/patches/jaxp_src/6927050.patch
+--- openjdk.orig/jaxp/patches/jaxp_src/6927050.patch	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/jaxp/patches/jaxp_src/6927050.patch	2011-02-11 16:54:43.000000000 +0000
+@@ -0,0 +1,314 @@
++diff -Nruw src.orig/com/sun/org/apache/xerces/internal/jaxp/validation/AbstractXMLSchema.java src/com/sun/org/apache/xerces/internal/jaxp/validation/AbstractXMLSchema.java
++--- src.orig/com/sun/org/apache/xerces/internal/jaxp/validation/AbstractXMLSchema.java	2010-08-26 22:50:55.000000000 +0100
+++++ src/com/sun/org/apache/xerces/internal/jaxp/validation/AbstractXMLSchema.java	2011-02-16 13:26:37.183169937 +0000
++@@ -20,6 +20,8 @@
++ 
++ package com.sun.org.apache.xerces.internal.jaxp.validation;
++ 
+++import java.util.HashMap;
+++
++ import javax.xml.validation.Schema;
++ import javax.xml.validation.Validator;
++ import javax.xml.validation.ValidatorHandler;
++@@ -32,6 +34,16 @@
++ abstract class AbstractXMLSchema extends Schema implements
++         XSGrammarPoolContainer {
++ 
+++    /**
+++     * Map containing the initial values of features for
+++     * validators created using this grammar pool container.
+++     */
+++    private final HashMap<String,Boolean> fFeatures;
+++
+++    public AbstractXMLSchema() {
+++        fFeatures = new HashMap<String,Boolean>();
+++    }
+++
++     /*
++      * Schema methods
++      */
++@@ -50,4 +62,26 @@
++         return new ValidatorHandlerImpl(this);
++     }
++ 
+++    /*
+++     * XSGrammarPoolContainer methods
+++     */
+++
+++    /**
+++     * Returns the initial value of a feature for validators created
+++     * using this grammar pool container or null if the validators
+++     * should use the default value.
+++     */
+++    public final Boolean getFeature(String featureId) {
+++        return fFeatures.get(featureId);
+++    }
+++
+++    /*
+++     * Other methods
+++     */
+++
+++    final void setFeature(String featureId, boolean state) {
+++        fFeatures.put(featureId, state ? Boolean.TRUE : Boolean.FALSE);
+++    }
+++
+++
++ } // AbstractXMLSchema
++diff -Nruw src.orig/com/sun/org/apache/xerces/internal/jaxp/validation/EmptyXMLSchema.java src/com/sun/org/apache/xerces/internal/jaxp/validation/EmptyXMLSchema.java
++--- src.orig/com/sun/org/apache/xerces/internal/jaxp/validation/EmptyXMLSchema.java	2010-08-26 22:50:55.000000000 +0100
+++++ src/com/sun/org/apache/xerces/internal/jaxp/validation/EmptyXMLSchema.java	2011-02-16 13:26:37.187169628 +0000
++@@ -32,17 +32,10 @@
++  */
++ final class EmptyXMLSchema extends AbstractXMLSchema implements XMLGrammarPool {
++ 
++-    private static EmptyXMLSchema EMPTY_XML_SCHEMA_INSTANCE = new EmptyXMLSchema();
++-
++     /** Zero length grammar array. */
++     private static final Grammar [] ZERO_LENGTH_GRAMMAR_ARRAY = new Grammar [0];
++ 
++-    /** Returns the one and only instance of this class. */
++-    public static EmptyXMLSchema getInstance() {
++-        return EMPTY_XML_SCHEMA_INSTANCE;
++-    }
++-
++-    private EmptyXMLSchema() {}
+++    public EmptyXMLSchema() {}
++ 
++     /*
++      * XMLGrammarPool methods
++diff -Nruw src.orig/com/sun/org/apache/xerces/internal/jaxp/validation/XMLSchemaFactory.java src/com/sun/org/apache/xerces/internal/jaxp/validation/XMLSchemaFactory.java
++--- src.orig/com/sun/org/apache/xerces/internal/jaxp/validation/XMLSchemaFactory.java	2010-08-27 21:13:40.000000000 +0100
+++++ src/com/sun/org/apache/xerces/internal/jaxp/validation/XMLSchemaFactory.java	2011-02-16 13:28:55.108485839 +0000
++@@ -228,21 +228,26 @@
++         
++         // Select Schema implementation based on grammar count.
++         final int grammarCount = pool.getGrammarCount();
+++        AbstractXMLSchema schema = null;
++         if (grammarCount > 1) {
++-            return new XMLSchema(new ReadOnlyGrammarPool(pool));
+++            schema = new XMLSchema(new ReadOnlyGrammarPool(pool));
++         }
++         else if (grammarCount == 1) {
++             Grammar[] grammars = pool.retrieveInitialGrammarSet(XMLGrammarDescription.XML_SCHEMA);
++-            return new SimpleXMLSchema(grammars[0]);
+++            schema = new SimpleXMLSchema(grammars[0]);
++         }
++         else {
++-            return EmptyXMLSchema.getInstance();
+++            schema = new EmptyXMLSchema();
++         }
+++        propagateFeatures(schema);
+++        return schema;
++     }
++     
++     public Schema newSchema() throws SAXException {
++         // Use a Schema that uses the system id as the equality source.
++-        return new WeakReferenceXMLSchema();
+++        AbstractXMLSchema schema = new WeakReferenceXMLSchema();
+++        propagateFeatures(schema);
+++        return schema;
++     }
++     
++     public boolean getFeature(String name) 
++@@ -372,6 +377,15 @@
++         }
++     }
++     
+++    private void propagateFeatures(AbstractXMLSchema schema) {
+++        schema.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, fSecurityManager != null);
+++        String[] features = fXMLSchemaLoader.getRecognizedFeatures();
+++        for (int i = 0; i < features.length; ++i) {
+++            boolean state = fXMLSchemaLoader.getFeature(features[i]);
+++            schema.setFeature(features[i], state);
+++        }
+++    }
+++
++     /** 
++      * Extension of XMLGrammarPoolImpl which exposes the number of
++      * grammars stored in the grammar pool.
++diff -Nruw src.orig/com/sun/org/apache/xerces/internal/jaxp/validation/XMLSchemaValidatorComponentManager.java src/com/sun/org/apache/xerces/internal/jaxp/validation/XMLSchemaValidatorComponentManager.java
++--- src.orig/com/sun/org/apache/xerces/internal/jaxp/validation/XMLSchemaValidatorComponentManager.java	2010-08-27 21:13:39.000000000 +0100
+++++ src/com/sun/org/apache/xerces/internal/jaxp/validation/XMLSchemaValidatorComponentManager.java	2011-02-16 13:37:55.778587505 +0000
++@@ -21,6 +21,8 @@
++ package com.sun.org.apache.xerces.internal.jaxp.validation;
++ 
++ import java.util.HashMap;
+++import java.util.Iterator;
+++import java.util.Map;
++ import java.util.Locale;
++ 
++ import javax.xml.XMLConstants;
++@@ -161,6 +163,19 @@
++     private ValidationManager fValidationManager;
++     
++     //
+++    // Configuration
+++    //
+++
+++    /** Stores initial feature values for validator reset. */
+++    private final HashMap<String,Boolean> fInitFeatures = new HashMap<String,Boolean>();
+++
+++    /** Stores initial property values for validator reset. */
+++    private final HashMap<String,Object> fInitProperties = new HashMap<String,Object>();
+++
+++    /** Stores the initial security manager. */
+++    private final SecurityManager fInitSecurityManager;
+++
+++    //
++     // User Objects
++     //
++     
++@@ -211,9 +226,20 @@
++         fErrorReporter.putMessageFormatter(XSMessageFormatter.SCHEMA_DOMAIN, new XSMessageFormatter());
++         
++         // add all recognized features and properties and apply their defaults
++-        addRecognizedParamsAndSetDefaults(fEntityManager);
++-        addRecognizedParamsAndSetDefaults(fErrorReporter);
++-        addRecognizedParamsAndSetDefaults(fSchemaValidator); 
+++        addRecognizedParamsAndSetDefaults(fEntityManager, grammarContainer);
+++        addRecognizedParamsAndSetDefaults(fErrorReporter, grammarContainer);
+++        addRecognizedParamsAndSetDefaults(fSchemaValidator, grammarContainer);
+++
+++        // if the secure processing feature is set to true, add a security manager to the configuration
+++        Boolean secureProcessing = grammarContainer.getFeature(XMLConstants.FEATURE_SECURE_PROCESSING);
+++        if (Boolean.TRUE.equals(secureProcessing)) {
+++            fInitSecurityManager = new SecurityManager();
+++        }
+++        else {
+++            fInitSecurityManager = null;
+++        }
+++        fComponents.put(SECURITY_MANAGER, fInitSecurityManager);
+++
++     }
++ 
++     /**
++@@ -266,7 +292,6 @@
++         else if (USE_GRAMMAR_POOL_ONLY.equals(featureId) && value != fUseGrammarPoolOnly) {
++             throw new XMLConfigurationException(XMLConfigurationException.NOT_SUPPORTED, featureId);
++         }
++-        fConfigUpdated = true;
++         if (XMLConstants.FEATURE_SECURE_PROCESSING.equals(featureId)) {
++             if (_isSecureMode && !value) {
++                 throw new XMLConfigurationException(XMLConfigurationException.NOT_ALLOWED, XMLConstants.FEATURE_SECURE_PROCESSING);
++@@ -274,9 +299,14 @@
++             setProperty(SECURITY_MANAGER, value ? new SecurityManager() : null);
++             return;
++         }
+++        fConfigUpdated = true;
++         fEntityManager.setFeature(featureId, value);
++         fErrorReporter.setFeature(featureId, value);
++         fSchemaValidator.setFeature(featureId, value);
+++        if (!fInitFeatures.containsKey(featureId)) {
+++            boolean current = super.getFeature(featureId);
+++            fInitFeatures.put(featureId, current ? Boolean.TRUE : Boolean.FALSE);
+++        }
++         super.setFeature(featureId, value);
++     }
++     
++@@ -336,6 +366,9 @@
++             fComponents.put(propertyId, value);
++             return;
++         }
+++        if (!fInitProperties.containsKey(propertyId)) {
+++            fInitProperties.put(propertyId, super.getProperty(propertyId));
+++        }
++         super.setProperty(propertyId, value);
++     }
++     
++@@ -348,7 +381,7 @@
++      * @param component The component whose recognized features
++      * and properties will be added to the configuration
++      */
++-    public void addRecognizedParamsAndSetDefaults(XMLComponent component) {
+++    public void addRecognizedParamsAndSetDefaults(XMLComponent component, XSGrammarPoolContainer grammarContainer) {
++         
++         // register component's recognized features
++         final String[] recognizedFeatures = component.getRecognizedFeatures();
++@@ -359,7 +392,7 @@
++         addRecognizedProperties(recognizedProperties);
++ 
++         // set default values
++-        setFeatureDefaults(component, recognizedFeatures);
+++        setFeatureDefaults(component, recognizedFeatures, grammarContainer);
++         setPropertyDefaults(component, recognizedProperties);
++     }
++     
++@@ -406,33 +439,50 @@
++     void restoreInitialState() {
++         fConfigUpdated = true;
++         
++-        // Clear feature and property tables.
++-        fFeatures.clear();
++-        fProperties.clear();
++-        
++         // Remove error resolver and error handler
++         fComponents.put(ENTITY_RESOLVER, null);
++         fComponents.put(ERROR_HANDLER, null);
++ 
+++        // Restore initial security manager
+++        fComponents.put(SECURITY_MANAGER, fInitSecurityManager);
+++
++         // Set the Locale back to null.
++         setLocale(null);
++         fComponents.put(LOCALE, null);
++        
++-        // Restore component defaults.
++-        setFeatureDefaults(fEntityManager, fEntityManager.getRecognizedFeatures());
++-        setPropertyDefaults(fEntityManager, fEntityManager.getRecognizedProperties());
++-        setFeatureDefaults(fErrorReporter, fErrorReporter.getRecognizedFeatures());
++-        setPropertyDefaults(fErrorReporter, fErrorReporter.getRecognizedProperties());
++-        setFeatureDefaults(fSchemaValidator, fSchemaValidator.getRecognizedFeatures());
++-        setPropertyDefaults(fSchemaValidator, fSchemaValidator.getRecognizedProperties());
+++        // Reset feature and property values to their initial values
+++        if (!fInitFeatures.isEmpty()) {
+++            Iterator<Map.Entry<String,Boolean>> iter = fInitFeatures.entrySet().iterator();
+++            while (iter.hasNext()) {
+++                Map.Entry<String,Boolean> entry = iter.next();
+++                String name = entry.getKey();
+++                boolean value = entry.getValue().booleanValue();
+++                super.setFeature(name, value);
+++            }
+++            fInitFeatures.clear();
+++        }
+++        if (!fInitProperties.isEmpty()) {
+++            Iterator<Map.Entry<String,Object>> iter = fInitProperties.entrySet().iterator();
+++            while (iter.hasNext()) {
+++                Map.Entry<String,Object> entry = iter.next();
+++                String name = entry.getKey();
+++                Object value = entry.getValue();
+++                super.setProperty(name, value);
+++            }
+++            fInitProperties.clear();
+++        }
++     }
++     
++     /** Sets feature defaults for the given component on this configuration. */
++-    private void setFeatureDefaults(final XMLComponent component, final String [] recognizedFeatures) {
+++    private void setFeatureDefaults(final XMLComponent component,
+++            final String [] recognizedFeatures, XSGrammarPoolContainer grammarContainer) {
++         if (recognizedFeatures != null) {
++             for (int i = 0; i < recognizedFeatures.length; ++i) {
++                 String featureId = recognizedFeatures[i];
++-                Boolean state = component.getFeatureDefault(featureId);
+++                Boolean state = grammarContainer.getFeature(featureId);
+++                if (state == null) {
+++                    state = component.getFeatureDefault(featureId);
+++                }
++                 if (state != null) {
++                     // Do not overwrite values already set on the configuration.
++                     if (!fFeatures.containsKey(featureId)) {
++diff -Nruw src.orig/com/sun/org/apache/xerces/internal/jaxp/validation/XSGrammarPoolContainer.java src/com/sun/org/apache/xerces/internal/jaxp/validation/XSGrammarPoolContainer.java
++--- src.orig/com/sun/org/apache/xerces/internal/jaxp/validation/XSGrammarPoolContainer.java	2010-08-26 22:50:55.000000000 +0100
+++++ src/com/sun/org/apache/xerces/internal/jaxp/validation/XSGrammarPoolContainer.java	2011-02-16 13:26:37.187169628 +0000
++@@ -47,4 +47,11 @@
++      */
++     public boolean isFullyComposed();
++ 
+++    /**
+++     * Returns the initial value of a feature for validators created
+++     * using this grammar pool container or null if the validators
+++     * should use the default value.
+++     */
+++    public Boolean getFeature(String featureId);
+++
++ }
