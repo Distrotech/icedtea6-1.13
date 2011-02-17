@@ -199,6 +199,7 @@ ICEDTEA_PATCHES = \
         patches/openjdk/6791612-opengl-jni-fix.patch \
         patches/openjdk/6755274-glgetstring-crash.patch \
         patches/openjdk/6984543-onscreen_rendering_resize_test.patch \
+	patches/openjdk/6693253-security_warning.patch \
 	patches/icedtea-notice-safepoints.patch \
 	patches/icedtea-parisc-opt.patch \
 	patches/icedtea-lucene-crash.patch \

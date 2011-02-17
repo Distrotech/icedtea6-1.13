@@ -1,3 +1,30 @@
+2011-02-17  Andrew John Hughes  <ahughes@redhat.com>
+
+	6693253: Security Warning appearance requires enhancements
+	6779717: A Window does not show applet security warning icon on X platforms
+	6785058: Parent don't get the focus after dialog is closed if security warning is applied
+	* Makefile.am: Add new patch.
+	* patches/openjdk/6307603-xrender-01.patch: Rejigged.
+	* patches/openjdk/6693253-security_warning.patch:
+	Security warning backport.
+	* overlays/openjdk/jdk/src/solaris/classes/sun/awt/X11/security-icon-bw16.png,
+	* overlays/openjdk/jdk/src/solaris/classes/sun/awt/X11/security-icon-bw24.png,
+	* overlays/openjdk/jdk/src/solaris/classes/sun/awt/X11/security-icon-bw32.png,
+	* overlays/openjdk/jdk/src/solaris/classes/sun/awt/X11/security-icon-bw48.png,
+	* overlays/openjdk/jdk/src/solaris/classes/sun/awt/X11/security-icon-interim16.png,
+	* overlays/openjdk/jdk/src/solaris/classes/sun/awt/X11/security-icon-interim24.png,
+	* overlays/openjdk/jdk/src/solaris/classes/sun/awt/X11/security-icon-interim32.png,
+	* overlays/openjdk/jdk/src/solaris/classes/sun/awt/X11/security-icon-interim48.png,
+	* overlays/openjdk/jdk/src/solaris/classes/sun/awt/X11/security-icon-yellow16.png,
+	* overlays/openjdk/jdk/src/solaris/classes/sun/awt/X11/security-icon-yellow24.png,
+	* overlays/openjdk/jdk/src/solaris/classes/sun/awt/X11/security-icon-yellow32.png,
+	* overlays/openjdk/jdk/src/solaris/classes/sun/awt/X11/security-icon-yellow48.png,
+	* overlays/openjdk/jdk/src/windows/native/sun/windows/security_warning.ico,
+	* overlays/openjdk/jdk/src/windows/native/sun/windows/security_warning_bw.ico,
+	* overlays/openjdk/jdk/src/windows/native/sun/windows/security_warning_int.ico:
+	Images for new backport.
+	* NEWS: Updated.
+
 2011-02-16  Denis Lila <dlila@redhat.com>
 
 	* NEWS: Update with the backports
