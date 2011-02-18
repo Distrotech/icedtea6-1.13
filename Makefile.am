@@ -18,8 +18,8 @@ JAF_DROP_URL = http://icedtea.classpath.org/download/drops
 JAF_DROP_ZIP = jdk6-jaf-b20.zip
 JAF_DROP_SHA256SUM = 78c7b5c9d6271e88ee46abadd018a61f1e9645f8936cc8df1617e5f4f5074012
 JAXP_DROP_URL = http://icedtea.classpath.org/download/drops
-JAXP_DROP_ZIP = jaxp-1_4_4.zip
-JAXP_DROP_SHA256SUM = 10b203bec5b7d3dd8f515a9e098f80abc316faf977bcc220b56efe3dc6e9e5e9
+JAXP_DROP_ZIP = jaxp144_01.zip
+JAXP_DROP_SHA256SUM = d72c2e27a479e7e78e0141cfcf3a9c5dbc5677495bd21b2d52dce85d21322186
 
 OPENJDK_HG_URL = http://hg.openjdk.java.net/jdk6/jdk6
 
@@ -174,7 +174,7 @@ REWRITER_SRCS = $(abs_top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.jav
 
 ICEDTEA_FSG_PATCHES =
 
-SECURITY_PATCHES = patches/security/20110215/6927050.patch
+SECURITY_PATCHES = 
 
 ICEDTEA_PATCHES = \
 	$(SECURITY_PATCHES) \
