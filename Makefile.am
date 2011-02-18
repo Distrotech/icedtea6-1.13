@@ -276,7 +276,6 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-jtreg-international-fonts.patch \
 	patches/openjdk/6967436-6976265-6967434-pisces.patch \
 	patches/f14-fonts.patch \
-	patches/jtreg-WindowWithWarningTest.patch \
 	patches/jtreg-T6638712-fix.patch \
 	patches/jtreg-T6650759m-fix.patch \
 	patches/openjdk/7003777-bad-html-entity-parse.patch \
