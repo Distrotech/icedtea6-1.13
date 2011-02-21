@@ -186,7 +186,7 @@ SECURITY_PATCHES = patches/security/20110209/4421494.patch \
 
 ICEDTEA_PATCHES = \
 	$(SECURITY_PATCHES) \
-	patches/icedtea-stdc-limit-macros.patch \
+	patches/stdc-limit-macros.patch \
 	patches/openjdk/4993545-nativeinlightfixer.patch \
 	patches/openjdk/6637796-set_bounds.patch \
 	patches/openjdk/6607660-treelock.patch \
@@ -201,87 +201,87 @@ ICEDTEA_PATCHES = \
         patches/openjdk/6984543-onscreen_rendering_resize_test.patch \
 	patches/openjdk/6693253-security_warning.patch \
 	patches/openjdk/6444769-windowwithwarningtest.patch \
-	patches/icedtea-notice-safepoints.patch \
-	patches/icedtea-parisc-opt.patch \
-	patches/icedtea-lucene-crash.patch \
-	patches/icedtea-version.patch \
-	patches/icedtea-version-hotspot.patch \
+	patches/notice-safepoints.patch \
+	patches/parisc-opt.patch \
+	patches/lucene-crash.patch \
+	patches/version.patch \
+	patches/version-hotspot.patch \
 	patches/hotspot/$(HSBUILD)/text-relocations.patch \
-	patches/icedtea-ssl.patch \
-	patches/icedtea-rmi_amd64.patch \
-	patches/icedtea-tools.patch \
-	patches/icedtea-use-system-tzdata.patch \
-	patches/icedtea-headers.patch \
-	patches/icedtea-headers-hotspot.patch \
-	patches/icedtea-gcc-suffix.patch \
+	patches/ssl.patch \
+	patches/rmi_amd64.patch \
+	patches/tools.patch \
+	patches/use-system-tzdata.patch \
+	patches/headers.patch \
+	patches/headers-hotspot.patch \
+	patches/gcc-suffix.patch \
 	patches/hotspot/$(HSBUILD)/gcc-suffix.patch \
-	patches/icedtea-bytebuffer-compact.patch \
+	patches/bytebuffer-compact.patch \
 	patches/memory-limits.patch \
-	patches/icedtea-sunsrc.patch \
-	patches/icedtea-libraries.patch \
-	patches/icedtea-javafiles.patch \
-	patches/icedtea-jvmtiEnv.patch \
-	patches/icedtea-lcms.patch \
+	patches/sunsrc.patch \
+	patches/libraries.patch \
+	patches/javafiles.patch \
+	patches/jvmtiEnv.patch \
+	patches/lcms.patch \
 	patches/print_lsb_release.patch \
-	patches/icedtea-jpegclasses.patch \
-	patches/icedtea-uname.patch \
-	patches/icedtea-freetypeversion.patch \
-	patches/icedtea-nomotif-6706121.patch \
-	patches/icedtea-nomotif.patch \
-	patches/icedtea-nomotif-mtoolkit.patch \
+	patches/jpegclasses.patch \
+	patches/uname.patch \
+	patches/freetypeversion.patch \
+	patches/nomotif-6706121.patch \
+	patches/nomotif.patch \
+	patches/nomotif-mtoolkit.patch \
 	patches/alpha-fixes.patch \
-	patches/icedtea-alt-jar.patch \
-	patches/icedtea-jdk-use-ssize_t.patch \
-	patches/icedtea-use-idx_t.patch \
+	patches/alt-jar.patch \
+	patches/jdk-use-ssize_t.patch \
+	patches/use-idx_t.patch \
 	patches/hotspot/$(HSBUILD)/params-cast-size_t.patch \
-	patches/icedtea-clean-crypto.patch \
-	patches/icedtea-arch.patch \
-	patches/icedtea-lc_ctype.patch \
-	patches/icedtea-xjc.patch \
-	patches/icedtea-renderer-crossing.patch \
-	patches/icedtea-stroker-finish.patch \
-	patches/icedtea-linker-libs-order.patch \
-	patches/icedtea-testenv.patch \
-	patches/icedtea-samejvm-safe.patch \
-	patches/icedtea-pr261.patch \
+	patches/clean-crypto.patch \
+	patches/arch.patch \
+	patches/lc_ctype.patch \
+	patches/xjc.patch \
+	patches/renderer-crossing.patch \
+	patches/stroker-finish.patch \
+	patches/linker-libs-order.patch \
+	patches/testenv.patch \
+	patches/samejvm-safe.patch \
+	patches/pr261.patch \
 	patches/hotspot/$(HSBUILD)/sparc-buildfixes.patch \
-	patches/icedtea-sparc64-linux.patch \
-	patches/icedtea-sparc-ptracefix.patch \
-	patches/icedtea-sparc-trapsfix.patch \
-	patches/icedtea-demo-swingapplet.patch \
-	patches/icedtea-jtreg-6592792.patch \
-	patches/icedtea-s390-noinline.patch \
-	patches/icedtea-jtreg-dnd.patch \
-	patches/icedtea-jtreg-jrunscript.patch \
-	patches/icedtea-network-unreachable.patch \
-	patches/icedtea-dnd-filelists.patch \
-	patches/icedtea-java2d-stroker-internal-joint.patch \
-	patches/icedtea-java2d-stroker-internal-close-joint.patch \
-	patches/icedtea-disable-cc-incompatible-sanity-checks.patch \
-	patches/icedtea-explicit-target-arch.patch \
-	patches/icedtea-gcc-stack-markings.patch \
-	patches/icedtea-parisc.patch \
-	patches/icedtea-sh4-support.patch \
-	patches/icedtea-policy-evaluation.patch \
+	patches/sparc64-linux.patch \
+	patches/sparc-ptracefix.patch \
+	patches/sparc-trapsfix.patch \
+	patches/demo-swingapplet.patch \
+	patches/jtreg-6592792.patch \
+	patches/s390-noinline.patch \
+	patches/jtreg-dnd.patch \
+	patches/jtreg-jrunscript.patch \
+	patches/network-unreachable.patch \
+	patches/dnd-filelists.patch \
+	patches/java2d-stroker-internal-joint.patch \
+	patches/java2d-stroker-internal-close-joint.patch \
+	patches/disable-cc-incompatible-sanity-checks.patch \
+	patches/explicit-target-arch.patch \
+	patches/gcc-stack-markings.patch \
+	patches/parisc.patch \
+	patches/sh4-support.patch \
+	patches/policy-evaluation.patch \
 	patches/update-bootclasspath.patch \
 	patches/libpng.patch \
 	patches/applet_hole.patch \
-	patches/icedtea-jtreg-httpTest.patch \
+	patches/jtreg-httpTest.patch \
 	patches/arm.patch \
 	patches/hotspot/$(HSBUILD)/arm.patch \
 	patches/debug-dir.patch \
 	patches/no-sync.patch \
-	patches/icedtea-override-redirect-metacity.patch \
+	patches/override-redirect-metacity.patch \
 	patches/openjdk/6967533-pre_epoch.patch \
 	patches/fonts-rhel.patch \
 	patches/fonts-gentoo.patch \
 	patches/ipv4-mapped-ipv6-addresses.patch \
-	patches/icedtea-jtreg-OpenGLContextInit.patch \
+	patches/jtreg-OpenGLContextInit.patch \
 	patches/openjdk/6510892-httpserver_test.patch \
 	patches/openjdk/6638712-wildcard_types.patch \
 	patches/openjdk/6650759-missing_inference.patch \
 	patches/numa_on_early_glibc.patch \
-	patches/icedtea-jtreg-international-fonts.patch \
+	patches/jtreg-international-fonts.patch \
 	patches/openjdk/6967436-6976265-6967434-pisces.patch \
 	patches/f14-fonts.patch \
 	patches/jtreg-T6638712-fix.patch \
@@ -318,7 +318,7 @@ endif
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
-	patches/icedtea-rhino.patch
+	patches/rhino.patch
 endif
 
 if BUILD_CACAO
@@ -338,7 +338,7 @@ endif
 
 if ENABLE_PULSE_JAVA
 ICEDTEA_PATCHES += \
-	patches/icedtea-pulse-soundproperties.patch
+	patches/pulse-soundproperties.patch
 endif
 
 if ENABLE_XRENDER
@@ -348,7 +348,7 @@ ICEDTEA_PATCHES += patches/openjdk/6307603-xrender-01.patch \
 endif
 
 if ENABLE_NIO2
-ICEDTEA_PATCHES += patches/icedtea-nio2.patch
+ICEDTEA_PATCHES += patches/nio2.patch
 endif
 
 if ENABLE_SYSTEMTAP
@@ -359,9 +359,9 @@ ICEDTEA_PATCHES += patches/systemtap.patch \
 endif
 
 if ENABLE_NSS
-ICEDTEA_PATCHES += patches/icedtea-nss-config.patch
+ICEDTEA_PATCHES += patches/nss-config.patch
 else
-ICEDTEA_PATCHES += patches/icedtea-nss-not-enabled-config.patch
+ICEDTEA_PATCHES += patches/nss-not-enabled-config.patch
 endif
 
 if HAS_PAX
@@ -373,17 +373,17 @@ ICEDTEA_PATCHES += $(DISTRIBUTION_PATCHES)
 # Bootstrapping patches
 
 ICEDTEA_ECJ_PATCHES = patches/ecj/icedtea.patch \
-	patches/ecj/icedtea-hotspot.patch \
-	patches/ecj/icedtea-spp.patch \
-	patches/ecj/icedtea-jopt.patch \
-	patches/ecj/icedtea-jaxp-dependency.patch \
+	patches/ecj/hotspot.patch \
+	patches/ecj/spp.patch \
+	patches/ecj/jopt.patch \
+	patches/ecj/jaxp-dependency.patch \
 	patches/ecj/bootver.patch \
 	patches/ecj/getannotation-cast.patch \
 	patches/ecj/override.patch
 
 if DTDTYPE_QNAME
 ICEDTEA_ECJ_PATCHES += \
-	patches/ecj/icedtea-jaxws-getdtdtype.patch
+	patches/ecj/jaxws-getdtdtype.patch
 endif
 
 if ENABLE_XRENDER
