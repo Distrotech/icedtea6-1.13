@@ -1533,7 +1533,8 @@ clean-add-tzdata-support-debug:
 # ===================
 
 stamps/icedtea-ecj.stamp: stamps/bootstrap-directory-symlink-ecj.stamp \
- $(OPENJDK_ECJ_TREE) stamps/cacao.stamp stamps/rewrite-rhino.stamp
+ $(OPENJDK_ECJ_TREE) stamps/jamvm.stamp stamps/cacao.stamp \
+ stamps/rewrite-rhino.stamp
 	$(ARCH_PREFIX) $(MAKE) \
 	  $(ICEDTEA_ENV_ECJ) \
 	  -C openjdk-ecj/ \
