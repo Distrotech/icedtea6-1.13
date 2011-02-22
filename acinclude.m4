@@ -783,7 +783,8 @@ AC_DEFUN([IT_ENABLE_ZERO_BUILD],
         sparc*-*-*) ;;
         x86_64-*-*) ;;
         *)
-          if test "x${WITH_CACAO}" != xno; then
+          if test "x${WITH_CACAO}" != xno || \
+	     test "x${ENABLE_JAMVM}" = xyes; then
             use_zero=no
           else
             use_zero=yes
@@ -855,6 +856,23 @@ AC_DEFUN([IT_SET_SHARK_BUILD],
   AC_MSG_RESULT($use_shark)
 
   AM_CONDITIONAL(SHARK_BUILD, test "x${use_shark}" = xyes)
+])
+
+AC_DEFUN([IT_CHECK_ENABLE_JAMVM],
+[
+  AC_MSG_CHECKING(whether to use JamVM as VM)
+  AC_ARG_ENABLE([jamvm],
+	      [AS_HELP_STRING(--enable-jamvm,use JamVM as VM [[default=no]])],
+  [
+    ENABLE_JAMVM="${enableval}"
+  ],
+  [
+    ENABLE_JAMVM=no
+  ])
+
+  AC_MSG_RESULT(${ENABLE_JAMVM})
+  AM_CONDITIONAL(ENABLE_JAMVM, test x"${ENABLE_JAMVM}" = "xyes")
+  AC_SUBST(ENABLE_JAMVM)
 ])
 
 AC_DEFUN([IT_CHECK_ENABLE_CACAO],
@@ -1203,6 +1221,7 @@ AC_MSG_RESULT($with_additional_vms)
 AM_CONDITIONAL(ADD_CACAO_BUILD, test x$add_vm_cacao != x)
 AM_CONDITIONAL(ADD_ZERO_BUILD,  test x$add_vm_zero  != x || test x$add_vm_shark != x)
 AM_CONDITIONAL(ADD_SHARK_BUILD, test x$add_vm_shark != x)
+AM_CONDITIONAL(BUILD_JAMVM, test "x${ENABLE_JAMVM}" = xyes)
 AM_CONDITIONAL(BUILD_CACAO, test x$add_vm_cacao != x || test "x${WITH_CACAO}" = xyes)
 
 if test "x${WITH_CACAO}" = xyes && test "x${ADD_CACAO_BUILD_TRUE}" = x; then
