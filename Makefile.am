@@ -1185,7 +1185,7 @@ stamps/bootstrap-directory-ecj.stamp: stamps/native-ecj.stamp
 	  ln -s $(SYSTEM_JDK_DIR)/include/$$i $(ECJ_BOOT_DIR)/include/$$i; \
 	done
 # For HotSpot
-	mkdir -p $(abs_top_builddir)/$(ECJ_BOOT_DIR)/lib && \
+	mkdir -p $(ECJ_BOOT_DIR)/lib && \
 	ln -sf $(ECJ_BOOT_DIR)/jre/lib/rt.jar $(ECJ_BOOT_DIR)/lib/tools.jar
 	mkdir -p stamps
 	touch stamps/bootstrap-directory-ecj.stamp
