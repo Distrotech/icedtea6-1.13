@@ -10,12 +10,12 @@ CVE-XXXX-YYYY: http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
 New in release 1.10 (2011-XX-XX):
 
-* Added out-of-the-box JamVM support using --enable-jamvm
 * NetX and the plugin moved to the IcedTea-Web project with a separate
   release cycle.
 * Shark provided upstream rather than as part of IcedTea.
 * The option --with-openjdk becomes --with-jdk-home and --disable-bootstrap
 * Support for building with HotSpot 20 from its stable tree
+* Added out-of-the-box JamVM support using --enable-jamvm
 * Import of OpenJDK6 b21 including upgrade to HotSpot 19
   - S6961870: More rebranding fixes for templates/gpl-*-header files
   - S6976186: Shark build system changes
@@ -433,6 +433,7 @@ New in release 1.10 (2011-XX-XX):
   - PR103: Usage of native2ascii during bootstrap
   - PR633: IcedTea installs javaws manpages on x86 even with --disable-webstart
   - PR635: zero fails to build on icedtea6 trunk 20110217 with hs20
+  - PR586: Sources missing from src.zip
 * Cleanup
   - Patches are no longer prefixed with 'icedtea-'.
   - All m4 macros are now prefixed with 'IT_' to denote their origin correctly.

@@ -1,0 +1,37 @@
+diff -Nru openjdk.orig/jdk/make/common/Release.gmk openjdk/jdk/make/common/Release.gmk
+--- openjdk.orig/jdk/make/common/Release.gmk	2011-02-22 14:08:16.200485180 +0000
++++ openjdk/jdk/make/common/Release.gmk	2011-02-22 14:11:03.695409585 +0000
+@@ -975,13 +975,9 @@
+ 	for d in $(SOURCE_DIRS); do \
+ 	  $(RM) $(ABS_TEMPDIR)/src-files.list; \
+ 	  ($(CD) $$d &&  \
+-	    for sd in $(SOURCES) ; do \
+-              if [ -d $$sd ] ; then \
+-	        $(FIND) $$sd $(SOURCE_FILES_filter) \
+-		        -name '*.java' -print \
+-		        >> $(ABS_TEMPDIR)/src-files.list ; \
+-	      fi; \
+-	    done ; \
++	    $(FIND) . $(SOURCE_FILES_filter) \
++	        -name '*.java' -print \
++	        >> $(ABS_TEMPDIR)/src-files.list ; \
+ 	  ) ; \
+ 	  if [ -f  $(ABS_TEMPDIR)/src-files.list ] ; then \
+ 	    ($(CD) $$d && $(TAR) cf - -T $(ABS_TEMPDIR)/src-files.list ) \
+@@ -994,13 +990,9 @@
+ 	for d in $(SOURCE_DIRS); do \
+ 	  $(RM) $(ABS_TEMPDIR)/src-files.list; \
+ 	  ($(CD) $$d && \
+-	    for sd in $(SOURCES) ; do \
+-              if [ -d $$sd ] ; then \
+-	        $(FIND) $$sd $(SOURCE_FILES_filter) \
+-		        -name '*.java' -print \
+-		        >> $(ABS_TEMPDIR)/src-files.list ; \
+-	      fi; \
+-	    done ; \
++	    $(FIND) . $(SOURCE_FILES_filter) \
++	        -name '*.java' -print \
++	        >> $(ABS_TEMPDIR)/src-files.list ; \
+ 	  ) ; \
+ 	  if [ -f  $(ABS_TEMPDIR)/src-files.list ] ; then \
+ 	    ($(CD) $$d && $(TAR) cf - `$(CAT) $(ABS_TEMPDIR)/src-files.list`) \

@@ -325,7 +325,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6728834-blurred-lcd-aa-text.patch \
 	patches/openjdk/6749060-bad-lcd-aa-non-opaque-dest.patch \
 	patches/openjdk/6896068-sg2d.patch \
-	patches/pr633-no_javaws_man_page.patch
+	patches/pr633-no_javaws_man_page.patch \
+	patches/pr586-include_all_srcs.patch
 
 if !WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
