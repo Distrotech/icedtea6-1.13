@@ -1161,6 +1161,7 @@ stamps/bootstrap-directory-ecj.stamp: stamps/native-ecj.stamp
 	ln -sf $(JAVAH) $(ECJ_BOOT_DIR)/bin/javah
 	ln -sf $(RMIC) $(ECJ_BOOT_DIR)/bin/rmic
 	ln -sf $(JAR) $(ECJ_BOOT_DIR)/bin/jar
+	ln -sf $(NATIVE2ASCII) $(ECJ_BOOT_DIR)/bin/native2ascii
 	ln -sf $(abs_top_builddir)/javac $(ECJ_BOOT_DIR)/bin/javac
 	ln -sf $(abs_top_builddir)/javap $(ECJ_BOOT_DIR)/bin/javap
 	mkdir -p $(ECJ_BOOT_DIR)/lib/endorsed && \
