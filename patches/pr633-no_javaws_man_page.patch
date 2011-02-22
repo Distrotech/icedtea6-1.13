@@ -1,0 +1,15 @@
+diff -Nru openjdk.orig/jdk/make/common/Release.gmk openjdk/jdk/make/common/Release.gmk
+--- openjdk.orig/jdk/make/common/Release.gmk	2011-02-22 08:36:53.832333120 +0000
++++ openjdk/jdk/make/common/Release.gmk	2011-02-22 08:37:11.462960201 +0000
+@@ -145,9 +145,11 @@
+ 	tnameserv.1     \
+ 	unpack200.1
+ 
++ifndef OPENJDK
+ ifeq ($(ARCH_DATA_MODEL),32)
+   JRE_MAN_PAGES += javaws.1
+ endif
++endif
+ 
+ JDK_MAN_PAGES =            \
+ 	$(JRE_MAN_PAGES)   \

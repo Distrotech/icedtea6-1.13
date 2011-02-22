@@ -84,3 +84,8 @@ rm -f \
 
 # END Debian/Ubuntu additions
 
+# Remove man page for proprietary javaws
+rm -f openjdk/jdk/src/linux/doc/man/javaws.1 \
+    openjdk/jdk/src/linux/doc/man/ja/javaws.1 \
+    openjdk/jdk/src/solaris/doc/sun/man/man1/javaws.1 \
+    openjdk/jdk/src/solaris/doc/sun/man/man1/ja/javaws.1
