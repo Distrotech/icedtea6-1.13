@@ -826,7 +826,7 @@ endif
 if WITH_ALT_HSBUILD
 if USE_ALT_HOTSPOT_SRC_ZIP
 	ln -sf $(ALT_HOTSPOT_SRC_ZIP) $(HOTSPOT_SRC_ZIP)
-else
+endif
 	hotspot_md5sum="`$(AWK) 'version==$$1 {print $$4}' version=$(HSBUILD) \
 	  $(abs_top_srcdir)/hotspot.map`" ; \
 	if ! echo "$${hotspot_md5sum}  $(HOTSPOT_SRC_ZIP)" \
@@ -840,7 +840,6 @@ else
 	    version=$(HSBUILD) $(abs_top_srcdir)/hotspot.map`"; \
 	  $(WGET) $${hotspot_url} -O $(HOTSPOT_SRC_ZIP) ; \
 	fi
-endif
 endif
 endif
 	mkdir -p stamps
