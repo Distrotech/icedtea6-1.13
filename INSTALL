@@ -118,6 +118,9 @@ to configure:
 * --with-rmic: Specify the location of a 'rmic' binary.  By default,
   ${SYSTEM_JDK_DIR}/bin/rmic is used.  If this is absent, then the path
   is checked for grmic and rmic.
+* --with-native2ascii:  Specify the location of a 'native2ascii' binary.  By default,
+  ${SYSTEM_JDK_DIR}/bin/native2ascii is used.  If this is absent, then the path
+  is checked for native2ascii and gnative2ascii.
 * --with-ecj-jar: Specify the location of an ecj JAR file.  By default, the
   following paths are checked:
     - /usr/share/java/eclipse-ecj.jar
@@ -163,6 +166,7 @@ These are documented fully in the relevant section below.
 * --enable-systemtap: Include support for tracing using systemtap.
 * --enable-nss: Enable the NSS security provider.
 * --enable-cacao: Replace HotSpot with the CACAO VM.
+* --enable-jamvm: Replace HotSpot with JamVM.
 * --enable-shark: Build the Shark LLVM-based JIT.
 * --enable-zero: Build the zero assembler port on x86/x86_64/sparc platforms.
 * --with-hotspot-build: The HotSpot to use, defaulting to 'original'.
@@ -252,6 +256,14 @@ option can be used to specify the use of an existing CACAO install
 instead, and --with-cacao-src-zip/dir options exist to allow the use
 of a pre-downloaded zip or source tree respectively.
 
+JamVM
+=====
+
+IcedTea6 can use JamVM as the virtual machine, as opposed to HotSpot.
+When --enable-jamvm is specified, JamVM will be downloaded and built,
+followed by the JDK portion of OpenJDK resulting in a JamVM+OpenJDK
+image in openjdk/build/<os>-<arch>/j2sdk-image.
+
 Zero & Shark
 ============
 
@@ -303,14 +315,14 @@ of the requested build.
 
 At present, IcedTea6 supports the 'original' HotSpot 19 provided as
 part of the upstream tarball and HotSpot 20 ('hs20') from the stable
-hs20 tree at http://hg.openjdk.java.net/hsx/hsx20/baseline.  The default
+hs20 tree at http://hg.openjdk.java.net/hsx/hsx20/master.  The default
 is 'original'; passing --with-hotspot-build=hs20 to configure will
 use the version of hs20 specified in hotspot.map.  Note that the norm. is
 for up to one alternate (non-default) build to be supported and just
 passing --with-hotspot-build (equivalent to --with-hotspot-build=yes)
 will always provide the alternate build (currently hs20).  Conversely,
-passing --with-hotspot-build=no provides the original build (currently
-hs19).
+passing --without-hotspot-build (equivalent to --with-hotspot-build=no)
+provides the original build (currently hs19).
 
 Javascript Support
 ==================
