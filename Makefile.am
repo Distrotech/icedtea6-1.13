@@ -326,7 +326,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6896068-sg2d.patch \
 	patches/pr633-no_javaws_man_page.patch \
 	patches/pr586-include_all_srcs.patch \
-	patches/jtreg-LastErrorString.patch
+	patches/jtreg-LastErrorString.patch \
+	patches/com-sun-awt.patch
 
 if !WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
