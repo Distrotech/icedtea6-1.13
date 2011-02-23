@@ -610,7 +610,7 @@ install:
 	hotspot-helper clean-extra clean-jtreg clean-jtreg-reports \
 	clean-add-zero clean-add-zero-debug clean-icedtea clean-icedtea-debug \
 	clean-icedtea-against-ecj \
-	clean-jamvm \
+	clean-jamvm clean-add-jamvm clean-add-jamvm-debug \
 	clean-cacao clean-add-cacao clean-add-cacao-debug \
 	clean-ports clean-overlay clean-extract-ecj clean-extract clean-extract-openjdk \
 	clean-replace-hotspot clean-generated clean-download clean-hgforest clean-download-openjdk \
@@ -1376,22 +1376,26 @@ clean-icedtea-debug:
 	rm -rf $(DEBUG_BUILD_OUTPUT_DIR)
 	rm -f stamps/icedtea-debug.stamp
 
-stamps/icedtea-against-icedtea.stamp: stamps/icedtea.stamp stamps/add-cacao.stamp stamps/add-zero.stamp \
+stamps/icedtea-against-icedtea.stamp: stamps/icedtea.stamp \
+ stamps/add-jamvm.stamp stamps/add-cacao.stamp stamps/add-zero.stamp \
  stamps/add-systemtap.stamp stamps/add-pulseaudio.stamp stamps/add-nss.stamp stamps/add-tzdata-support.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-against-icedtea.stamp
 
-clean-icedtea-against-icedtea: clean-add-zero clean-add-cacao clean-add-systemtap clean-add-pulseaudio \
+clean-icedtea-against-icedtea: clean-add-jamvm clean-add-zero clean-add-cacao \
+ clean-add-systemtap clean-add-pulseaudio \
  clean-add-nss clean-add-tzdata-support
 	rm -f stamps/icedtea-against-icedtea.stamp
 
-stamps/icedtea-debug-against-icedtea.stamp: stamps/icedtea-debug.stamp stamps/add-cacao-debug.stamp \
+stamps/icedtea-debug-against-icedtea.stamp: stamps/icedtea-debug.stamp \
+ stamps/add-jamvm-debug.stamp stamps/add-cacao-debug.stamp \
  stamps/add-zero-debug.stamp stamps/add-systemtap-debug.stamp stamps/add-pulseaudio-debug.stamp \
  stamps/add-nss-debug.stamp stamps/add/tzdata-support-debug.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-debug-against-icedtea.stamp
 
-clean-icedtea-debug-against-icedtea: clean-add-zero-debug clean-add-cacao-debug clean-add-systemtap-debug \
+clean-icedtea-debug-against-icedtea: clean-add-zero-debug \
+ clean-add-jamvm-debug clean-add-cacao-debug clean-add-systemtap-debug \
  clean-add-pulseaudio-debug clean-add-nss-debug clean-add-tzdata-support-debug
 	rm -f stamps/icedtea-debug-against-icedtea.stamp
 
@@ -1795,6 +1799,40 @@ clean-jamvm:
 	rm -rf jamvm
 	rm -f stamps/jamvm.stamp
 	rm -f stamps/extract-jamvm.stamp
+
+# Targets for additional VMs
+
+stamps/add-jamvm.stamp: stamps/icedtea.stamp stamps/jamvm.stamp
+if ADD_JAMVM_BUILD
+	mkdir -p $(BUILD_JRE_ARCH_DIR)/jamvm
+	install -m 644 jamvm/install/lib/libjvm.so \
+		$(BUILD_JRE_ARCH_DIR)/jamvm/
+	printf -- '-jamvm KNOWN\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
+else
+	printf -- '-jamvm ERROR\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
+endif
+	touch $@
+
+clean-add-jamvm:
+	rm -rf $(BUILD_JRE_ARCH_DIR)/jamvm
+	sed -i 's#-jamvm KNOWN#-jamvm ERROR#' jvm.cfg
+	rm -f stamps/add-jamvm.stamp
+
+stamps/add-jamvm-debug.stamp: stamps/icedtea-debug.stamp stamps/jamvm.stamp
+if ADD_JAMVM_BUILD
+	mkdir -p $(BUILD_DEBUG_JRE_ARCH_DIR)/jamvm
+	install -m 644 jamvm/install/lib/libjvm.so \
+		$(BUILD_DEBUG_JRE_ARCH_DIR)/jamvm/
+	printf -- '-jamvm KNOWN\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
+else
+	printf -- '-jamvm ERROR\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
+endif
+	touch $@
+
+clean-add-jamvm-debug:
+	rm -rf $(BUILD_DEBUG_JRE_ARCH_DIR)/jamvm
+	sed -i 's#-jamvm KNOWN#-jamvm ERROR#' jvm.cfg
+	rm -f stamps/add-jamvm-debug.stamp
 
 # CACAO
 
