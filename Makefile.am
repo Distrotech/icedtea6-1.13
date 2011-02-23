@@ -134,7 +134,7 @@ else
   MEMORY_LIMIT = -J-Xmx1024m
 endif
 
-if WITH_CACAO
+if ENABLE_CACAO
   ICEDTEA_BUILD_TARGET=jdk_only
   ICEDTEA_DEBUG_BUILD_TARGET = jdk_fastdebug_only
 else
@@ -350,7 +350,7 @@ ICEDTEA_PATCHES += \
 	patches/cacao/arm-jvm.cfg-pr600.patch
 endif
 
-if WITH_CACAO
+if ENABLE_CACAO
 ICEDTEA_PATCHES += \
 	patches/cacao/ignore-jdi-tests.patch \
 	patches/cacao/ignore-tests.patch
@@ -485,7 +485,7 @@ ICEDTEA_ENV = \
 	VERBOSE="$(VERBOSE)" \
 	ALT_OUTPUTDIR="$(BUILD_OUTPUT_DIR)"
 
-if WITH_CACAO
+if ENABLE_CACAO
 ICEDTEA_ENV += \
 	ALT_HOTSPOT_IMPORT_PATH="$(CACAO_IMPORT_PATH)"
 endif
@@ -1086,7 +1086,7 @@ stamps/patch.stamp: stamps/patch-fsg.stamp
 	fi
 
 	icedtea_version="$(PACKAGE_VERSION)$(ICEDTEA_REV)" ; \
-	if test "x$(WITH_CACAO)" = "xyes" || \
+	if test "x$(ENABLE_CACAO)" = "xyes" || \
 	   test "x$(ENABLE_JAMVM)" = "xyes"; then \
 	  echo "JDK_DERIVATIVE_NAME=$${icedtea_version}" \
 	    >>openjdk/jdk/make/common/shared/Defs.gmk ; \
@@ -1330,7 +1330,7 @@ endif
 if SHARK_BUILD
 	printf -- '-shark ALIASED_TO -server\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
 endif
-if WITH_CACAO
+if ENABLE_CACAO
 	printf -- '-cacao ALIASED_TO -server\n' >> $(BUILD_JRE_ARCH_DIR)/jvm.cfg
 endif
 if ENABLE_JAMVM
@@ -1361,7 +1361,7 @@ endif
 if SHARK_BUILD
 	printf -- '-shark ALIASED_TO -server\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
 endif
-if WITH_CACAO
+if ENABLE_CACAO
 	printf -- '-cacao ALIASED_TO -server\n' >> $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg
 endif
 if ENABLE_JAMVM
