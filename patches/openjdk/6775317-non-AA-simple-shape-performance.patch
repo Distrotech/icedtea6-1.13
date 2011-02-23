@@ -1,0 +1,1697 @@
+# HG changeset patch
+# User flar
+# Date 1291700748 28800
+# Node ID 47cd69eff64122a14e1e1557bc0f6e00f66e9980
+# Parent  1d4340015b85857a7f001fff4776307f576dc274
+6775317: Improve performance of non-AA transformed rectangles and single wide lines in software pipelines
+Reviewed-by: jgodinez, prr
+
+diff -r 1d4340015b85 -r 47cd69eff641 make/sun/awt/Depend.mak
+--- openjdk.orig/jdk/make/sun/awt/Depend.mak	Mon Dec 06 16:10:01 2010 -0800
++++ openjdk/jdk/make/sun/awt/Depend.mak	Mon Dec 06 21:45:48 2010 -0800
+@@ -18,11 +18,15 @@
+ J2D_SRC  = $(SUN_SRC)/java2d
+ J2D_FONT_SRC = $(SUN_SRC)/font
+ J2D_WINDOWS_SRC = $(WINDOWS_SRC)/native/sun/java2d
++AWT_WINDOWS_SRC = $(WINDOWS_SRC)/native/sun/awt
+ LOOP_SRC = $(SUN_SRC)/java2d/loops
+ PIPE_SRC = $(SUN_SRC)/java2d/pipe
+ WINDOWS_SRC = $(TOPDIR)/src/windows
+ SRC = $(WINDOWS_SRC)/native/sun/windows
+ 
++# ensure consistent sort order
++LC_ALL:= C
++
+ SRCDIRS = \
+ 	$(COMP_SRC) \
+ 	$(DEBUG_SRC) \
+@@ -61,6 +65,7 @@
+ 	   -I$(J2D_WINDOWS_SRC)/windows \
+ 	   -I$(J2D_WINDOWS_SRC)/d3d \
+ 	   -I$(J2D_WINDOWS_SRC)/opengl \
++	   -I$(AWT_WINDOWS_SRC) \
+ 	   -I$(LOOP_SRC) \
+ 	   -I$(PIPE_SRC) \
+ 	   -I$(SRC)
+@@ -68,22 +73,29 @@
+ STUBFILES = \
+ 	$(STUBDIR)/ddraw.h \
+ 	$(STUBDIR)/d3d.h \
++	$(STUBDIR)/d3d9.h \
+ 	$(STUBDIR)/Ole2.h \
+ 	$(STUBDIR)/Zmouse.h \
+ 	$(STUBDIR)/cderr.h \
++	$(STUBDIR)/comdef.h \
+ 	$(STUBDIR)/commctrl.h \
+ 	$(STUBDIR)/commdlg.h \
++	$(STUBDIR)/comutil.h \
+ 	$(STUBDIR)/direct.h \
+ 	$(STUBDIR)/d3dcom.h \
+ 	$(STUBDIR)/imm.h \
+ 	$(STUBDIR)/ime.h \
+ 	$(STUBDIR)/io.h \
++	$(STUBDIR)/map \
+ 	$(STUBDIR)/mmsystem.h \
+ 	$(STUBDIR)/new.h \
++	$(STUBDIR)/new \
+ 	$(STUBDIR)/ole2.h \
++	$(STUBDIR)/process.h \
+ 	$(STUBDIR)/richole.h \
+ 	$(STUBDIR)/richedit.h \
+ 	$(STUBDIR)/shellapi.h \
++	$(STUBDIR)/shlwapi.h \
+ 	$(STUBDIR)/shlobj.h \
+ 	$(STUBDIR)/tchar.h \
+ 	$(STUBDIR)/winbase.h \
+@@ -135,6 +147,9 @@
+ include FILES_export_windows.gmk
+ 
+ EXTRAFILES_java = \
++        sun/java2d/opengl/OGLContext/OGLContextCaps.java \
++        sun/java2d/d3d/D3DPaints/MultiGradient.java \
++        sun/java2d/d3d/D3DContext/D3DContextCaps.java \
+ 	java/lang/Integer.java
+ 
+ FILES_java = $(FILES_export) $(FILES_export2) $(FILES_export3) \
+diff -r 1d4340015b85 -r 47cd69eff641 make/sun/awt/FILES_c_unix.gmk
+--- openjdk.orig/jdk/make/sun/awt/FILES_c_unix.gmk	Mon Dec 06 16:10:01 2010 -0800
++++ openjdk/jdk/make/sun/awt/FILES_c_unix.gmk	Mon Dec 06 21:45:48 2010 -0800
+@@ -85,6 +85,8 @@
+ 	ScaledBlit.c \
+ 	FillRect.c \
+ 	FillSpans.c \
++	FillParallelogram.c \
++	DrawParallelogram.c \
+ 	DrawLine.c \
+ 	DrawRect.c \
+ 	DrawPolygons.c \
+diff -r 1d4340015b85 -r 47cd69eff641 make/sun/awt/FILES_c_windows.gmk
+--- openjdk.orig/jdk/make/sun/awt/FILES_c_windows.gmk	Mon Dec 06 16:10:01 2010 -0800
++++ openjdk/jdk/make/sun/awt/FILES_c_windows.gmk	Mon Dec 06 21:45:48 2010 -0800
+@@ -30,6 +30,8 @@
+ 	ScaledBlit.c \
+ 	FillRect.c \
+ 	FillSpans.c \
++	FillParallelogram.c \
++	DrawParallelogram.c \
+ 	DrawLine.c \
+ 	DrawRect.c \
+ 	DrawPolygons.c \
+diff -r 1d4340015b85 -r 47cd69eff641 make/sun/awt/FILES_export_unix.gmk
+--- openjdk.orig/jdk/make/sun/awt/FILES_export_unix.gmk	Mon Dec 06 16:10:01 2010 -0800
++++ openjdk/jdk/make/sun/awt/FILES_export_unix.gmk	Mon Dec 06 21:45:48 2010 -0800
+@@ -36,6 +36,8 @@
+ 	sun/java2d/loops/TransformBlit.java \
+ 	sun/java2d/loops/FillRect.java \
+ 	sun/java2d/loops/FillSpans.java \
++	sun/java2d/loops/FillParallelogram.java \
++	sun/java2d/loops/DrawParallelogram.java \
+         sun/java2d/loops/DrawGlyphList.java \
+         sun/java2d/loops/DrawGlyphListAA.java \
+         sun/java2d/loops/DrawGlyphListLCD.java \
+diff -r 1d4340015b85 -r 47cd69eff641 make/sun/awt/FILES_export_windows.gmk
+--- openjdk.orig/jdk/make/sun/awt/FILES_export_windows.gmk	Mon Dec 06 16:10:01 2010 -0800
++++ openjdk/jdk/make/sun/awt/FILES_export_windows.gmk	Mon Dec 06 21:45:48 2010 -0800
+@@ -135,6 +135,8 @@
+ 	sun/java2d/loops/ScaledBlit.java \
+ 	sun/java2d/loops/FillRect.java \
+ 	sun/java2d/loops/FillSpans.java \
++	sun/java2d/loops/FillParallelogram.java \
++	sun/java2d/loops/DrawParallelogram.java \
+         sun/java2d/loops/DrawGlyphList.java \
+         sun/java2d/loops/DrawGlyphListAA.java \
+         sun/java2d/loops/DrawGlyphListLCD.java \
+diff -r 1d4340015b85 -r 47cd69eff641 make/sun/awt/mapfile-vers
+--- openjdk.orig/jdk/make/sun/awt/mapfile-vers	Mon Dec 06 16:10:01 2010 -0800
++++ openjdk/jdk/make/sun/awt/mapfile-vers	Mon Dec 06 21:45:48 2010 -0800
+@@ -112,6 +112,8 @@
+ 		Java_sun_java2d_loops_DrawRect_DrawRect;
+ 		Java_sun_java2d_loops_FillRect_FillRect;
+ 		Java_sun_java2d_loops_FillSpans_FillSpans;
++		Java_sun_java2d_loops_FillParallelogram_FillParallelogram;
++		Java_sun_java2d_loops_DrawParallelogram_DrawParallelogram;
+ 		Java_sun_java2d_loops_GraphicsPrimitiveMgr_initIDs;
+ 		Java_sun_java2d_loops_GraphicsPrimitiveMgr_registerNativeLoops;
+ 		Java_sun_java2d_loops_MaskBlit_MaskBlit;
+diff -r 1d4340015b85 -r 47cd69eff641 src/share/classes/sun/java2d/SurfaceData.java
+--- openjdk.orig/jdk/src/share/classes/sun/java2d/SurfaceData.java	Mon Dec 06 16:10:01 2010 -0800
++++ openjdk/jdk/src/share/classes/sun/java2d/SurfaceData.java	Mon Dec 06 21:45:48 2010 -0800
+@@ -46,11 +46,15 @@
+ import sun.java2d.loops.DrawPath;
+ import sun.java2d.loops.FillPath;
+ import sun.java2d.loops.FillSpans;
++import sun.java2d.loops.FillParallelogram;
++import sun.java2d.loops.DrawParallelogram;
+ import sun.java2d.loops.FontInfo;
+ import sun.java2d.loops.DrawGlyphList;
+ import sun.java2d.loops.DrawGlyphListAA;
+ import sun.java2d.loops.DrawGlyphListLCD;
+ import sun.java2d.pipe.LoopPipe;
++import sun.java2d.pipe.ShapeDrawPipe;
++import sun.java2d.pipe.ParallelogramPipe;
+ import sun.java2d.pipe.CompositePipe;
+ import sun.java2d.pipe.GeneralCompositePipe;
+ import sun.java2d.pipe.SpanClipRenderer;
+@@ -59,6 +63,7 @@
+ import sun.java2d.pipe.AlphaPaintPipe;
+ import sun.java2d.pipe.AlphaColorPipe;
+ import sun.java2d.pipe.PixelToShapeConverter;
++import sun.java2d.pipe.PixelToParallelogramConverter;
+ import sun.java2d.pipe.TextPipe;
+ import sun.java2d.pipe.TextRenderer;
+ import sun.java2d.pipe.AATextRenderer;
+@@ -364,6 +369,7 @@
+ 
+     protected static final CompositePipe colorPipe;
+     protected static final PixelToShapeConverter colorViaShape;
++    protected static final PixelToParallelogramConverter colorViaPgram;
+     protected static final TextPipe colorText;
+     protected static final CompositePipe clipColorPipe;
+     protected static final TextPipe clipColorText;
+@@ -396,6 +402,31 @@
+ 
+     protected static final DrawImagePipe imagepipe;
+ 
++    // Utility subclass to add the LoopBasedPipe tagging interface
++    static class PixelToShapeLoopConverter
++        extends PixelToShapeConverter
++        implements LoopBasedPipe
++    {
++        public PixelToShapeLoopConverter(ShapeDrawPipe pipe) {
++            super(pipe);
++        }
++    }
++
++    // Utility subclass to add the LoopBasedPipe tagging interface
++    static class PixelToPgramLoopConverter
++        extends PixelToParallelogramConverter
++        implements LoopBasedPipe
++    {
++        public PixelToPgramLoopConverter(ShapeDrawPipe shapepipe,
++                                         ParallelogramPipe pgrampipe,
++                                         double minPenSize,
++                                         double normPosition,
++                                         boolean adjustfill)
++        {
++            super(shapepipe, pgrampipe, minPenSize, normPosition, adjustfill);
++        }
++    }
++
+     static {
+         colorPrimitives = new LoopPipe();
+ 
+@@ -406,7 +437,10 @@
+ 
+         colorPipe = new AlphaColorPipe();
+         // colorShape = colorPrimitives;
+-        colorViaShape = new PixelToShapeConverter(colorPrimitives);
++        colorViaShape = new PixelToShapeLoopConverter(colorPrimitives);
++        colorViaPgram = new PixelToPgramLoopConverter(colorPrimitives,
++                                                      colorPrimitives,
++                                                      1.0, 0.25, true);
+         colorText = new TextRenderer(colorPipe);
+         clipColorPipe = new SpanClipRenderer(colorPipe);
+         clipColorText = new TextRenderer(clipColorPipe);
+@@ -441,10 +475,12 @@
+     }
+ 
+     /* Not all surfaces and rendering mode combinations support LCD text. */
+-    static final int LCDLOOP_UNKNOWN = 0;
+-    static final int LCDLOOP_FOUND = 1;
+-    static final int LCDLOOP_NOTFOUND = 2;
++    static final int LOOP_UNKNOWN = 0;
++    static final int LOOP_FOUND = 1;
++    static final int LOOP_NOTFOUND = 2;
+     int haveLCDLoop;
++    int havePgramXORLoop;
++    int havePgramSolidLoop;
+ 
+     public boolean canRenderLCDText(SunGraphics2D sg2d) {
+         // For now the answer can only be true in the following cases:
+@@ -453,18 +489,48 @@
+             sg2d.clipState <= SunGraphics2D.CLIP_RECTANGULAR &&
+             sg2d.surfaceData.getTransparency() == Transparency.OPAQUE)
+         {
+-            if (haveLCDLoop == LCDLOOP_UNKNOWN) {
++            if (haveLCDLoop == LOOP_UNKNOWN) {
+                 DrawGlyphListLCD loop =
+                     DrawGlyphListLCD.locate(SurfaceType.AnyColor,
+                                             CompositeType.SrcNoEa,
+                                             getSurfaceType());
+-                haveLCDLoop = (loop!= null) ? LCDLOOP_FOUND : LCDLOOP_NOTFOUND;
++                haveLCDLoop = (loop != null) ? LOOP_FOUND : LOOP_NOTFOUND;
+             }
+-            return haveLCDLoop == LCDLOOP_FOUND;
++            return haveLCDLoop == LOOP_FOUND;
+         }
+         return false; /* for now - in the future we may want to search */
+     }
+ 
++    public boolean canRenderParallelograms(SunGraphics2D sg2d) {
++        if (sg2d.paintState <= sg2d.PAINT_ALPHACOLOR) {
++            if (sg2d.compositeState == sg2d.COMP_XOR) {
++                if (havePgramXORLoop == LOOP_UNKNOWN) {
++                    FillParallelogram loop =
++                        FillParallelogram.locate(SurfaceType.AnyColor,
++                                                 CompositeType.Xor,
++                                                 getSurfaceType());
++                    havePgramXORLoop =
++                        (loop != null) ? LOOP_FOUND : LOOP_NOTFOUND;
++                }
++                return havePgramXORLoop == LOOP_FOUND;
++            } else if (sg2d.compositeState <= sg2d.COMP_ISCOPY &&
++                       sg2d.antialiasHint != SunHints.INTVAL_ANTIALIAS_ON &&
++                       sg2d.clipState != sg2d.CLIP_SHAPE)
++            {
++                if (havePgramSolidLoop == LOOP_UNKNOWN) {
++                    FillParallelogram loop =
++                        FillParallelogram.locate(SurfaceType.AnyColor,
++                                                 CompositeType.SrcNoEa,
++                                                 getSurfaceType());
++                    havePgramSolidLoop =
++                        (loop != null) ? LOOP_FOUND : LOOP_NOTFOUND;
++                }
++                return havePgramSolidLoop == LOOP_FOUND;
++            }
++        }
++        return false;
++    }
++
+     public void validatePipe(SunGraphics2D sg2d) {
+         sg2d.imagepipe = imagepipe;
+         if (sg2d.compositeState == sg2d.COMP_XOR) {
+@@ -480,9 +546,21 @@
+                 // text drawn in XOR mode with a Paint object.
+                 sg2d.textpipe = outlineTextRenderer;
+             } else {
++                PixelToShapeConverter converter;
++                if (canRenderParallelograms(sg2d)) {
++                    converter = colorViaPgram;
++                    // Note that we use the transforming pipe here because it
++                    // will examine the shape and possibly perform an optimized
++                    // operation if it can be simplified.  The simplifications
++                    // will be valid for all STROKE and TRANSFORM types.
++                    sg2d.shapepipe = colorViaPgram;
++                } else {
++                    converter = colorViaShape;
++                    sg2d.shapepipe = colorPrimitives;
++                }
+                 if (sg2d.clipState == sg2d.CLIP_SHAPE) {
+-                    sg2d.drawpipe = colorViaShape;
+-                    sg2d.fillpipe = colorViaShape;
++                    sg2d.drawpipe = converter;
++                    sg2d.fillpipe = converter;
+                     // REMIND: We should not be changing text strategies
+                     // between outline and glyph rendering based upon the
+                     // presence of a complex clip as that could cause a
+@@ -494,11 +572,11 @@
+                     sg2d.textpipe = outlineTextRenderer;
+                 } else {
+                     if (sg2d.transformState >= sg2d.TRANSFORM_TRANSLATESCALE) {
+-                        sg2d.drawpipe = colorViaShape;
+-                        sg2d.fillpipe = colorViaShape;
++                        sg2d.drawpipe = converter;
++                        sg2d.fillpipe = converter;
+                     } else {
+                         if (sg2d.strokeState != sg2d.STROKE_THIN) {
+-                            sg2d.drawpipe = colorViaShape;
++                            sg2d.drawpipe = converter;
+                         } else {
+                             sg2d.drawpipe = colorPrimitives;
+                         }
+@@ -506,7 +584,6 @@
+                     }
+                     sg2d.textpipe = solidTextRenderer;
+                 }
+-                sg2d.shapepipe = colorPrimitives;
+                 // assert(sg2d.surfaceData == this);
+             }
+         } else if (sg2d.compositeState == sg2d.COMP_CUSTOM) {
+@@ -589,12 +666,24 @@
+                 }
+             }
+         } else {
++            PixelToShapeConverter converter;
++            if (canRenderParallelograms(sg2d)) {
++                converter = colorViaPgram;
++                // Note that we use the transforming pipe here because it
++                // will examine the shape and possibly perform an optimized
++                // operation if it can be simplified.  The simplifications
++                // will be valid for all STROKE and TRANSFORM types.
++                sg2d.shapepipe = colorViaPgram;
++            } else {
++                converter = colorViaShape;
++                sg2d.shapepipe = colorPrimitives;
++            }
+             if (sg2d.transformState >= sg2d.TRANSFORM_TRANSLATESCALE) {
+-                sg2d.drawpipe = colorViaShape;
+-                sg2d.fillpipe = colorViaShape;
++                sg2d.drawpipe = converter;
++                sg2d.fillpipe = converter;
+             } else {
+                 if (sg2d.strokeState != sg2d.STROKE_THIN) {
+-                    sg2d.drawpipe = colorViaShape;
++                    sg2d.drawpipe = converter;
+                 } else {
+                     sg2d.drawpipe = colorPrimitives;
+                 }
+@@ -602,7 +691,6 @@
+             }
+ 
+             sg2d.textpipe = getTextPipe(sg2d, false /* AA==OFF */);
+-            sg2d.shapepipe = colorPrimitives;
+             // assert(sg2d.surfaceData == this);
+         }
+ 
+@@ -761,6 +849,8 @@
+         loops.drawPathLoop = DrawPath.locate(src, comp, dst);
+         loops.fillPathLoop = FillPath.locate(src, comp, dst);
+         loops.fillSpansLoop = FillSpans.locate(src, comp, dst);
++        loops.fillParallelogramLoop = FillParallelogram.locate(src, comp, dst);
++        loops.drawParallelogramLoop = DrawParallelogram.locate(src, comp, dst);
+         loops.drawGlyphListLoop = DrawGlyphList.locate(src, comp, dst);
+         loops.drawGlyphListAALoop = DrawGlyphListAA.locate(src, comp, dst);
+         loops.drawGlyphListLCDLoop = DrawGlyphListLCD.locate(src, comp, dst);
+diff -r 1d4340015b85 -r 47cd69eff641 src/share/classes/sun/java2d/loops/DrawParallelogram.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/src/share/classes/sun/java2d/loops/DrawParallelogram.java	Mon Dec 06 21:45:48 2010 -0800
+@@ -0,0 +1,123 @@
++/*
++ * Copyright (c) 2008, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.  Oracle designates this
++ * particular file as subject to the "Classpath" exception as provided
++ * by Oracle in the LICENSE file that accompanied this code.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/*
++ * @author Jim Graham
++ */
++
++package sun.java2d.loops;
++
++import sun.java2d.loops.GraphicsPrimitive;
++import sun.java2d.SunGraphics2D;
++import sun.java2d.SurfaceData;
++
++/**
++ * DrawParallelogram
++ * 1) fill the area between the 4 edges of an outer parallelogram
++ *    (as specified by an origin and 2 delta vectors)
++ *    but also outside the 4 edges of an inner parallelogram
++ *    (as specified by proportional amounts of the outer delta vectors)
++ */
++public class DrawParallelogram extends GraphicsPrimitive
++{
++    public final static String methodSignature =
++        "DrawParallelogram(...)".toString();
++
++    public final static int primTypeID = makePrimTypeID();
++
++    public static DrawParallelogram locate(SurfaceType srctype,
++                                           CompositeType comptype,
++                                           SurfaceType dsttype)
++    {
++        return (DrawParallelogram)
++            GraphicsPrimitiveMgr.locate(primTypeID,
++                                        srctype, comptype, dsttype);
++    }
++
++    protected DrawParallelogram(SurfaceType srctype,
++                                CompositeType comptype,
++                                SurfaceType dsttype)
++    {
++        super(methodSignature, primTypeID,
++              srctype, comptype, dsttype);
++    }
++
++    public DrawParallelogram(long pNativePrim,
++                             SurfaceType srctype,
++                             CompositeType comptype,
++                             SurfaceType dsttype)
++    {
++        super(pNativePrim, methodSignature, primTypeID,
++              srctype, comptype, dsttype);
++    }
++
++    /**
++     * All DrawParallelogram implementors must have this invoker method
++     */
++    public native void DrawParallelogram(SunGraphics2D sg, SurfaceData dest,
++                                         double x, double y,
++                                         double dx1, double dy1,
++                                         double dx2, double dy2,
++                                         double lw1, double lw2);
++
++    public GraphicsPrimitive makePrimitive(SurfaceType srctype,
++                                           CompositeType comptype,
++                                           SurfaceType dsttype)
++    {
++        // REMIND: iterate with a FillRect primitive?
++        throw new InternalError("DrawParallelogram not implemented for "+
++                                srctype+" with "+comptype);
++    }
++
++    public GraphicsPrimitive traceWrap() {
++        return new TraceDrawParallelogram(this);
++    }
++
++    private static class TraceDrawParallelogram extends DrawParallelogram {
++        DrawParallelogram target;
++
++        public TraceDrawParallelogram(DrawParallelogram target) {
++            super(target.getSourceType(),
++                  target.getCompositeType(),
++                  target.getDestType());
++            this.target = target;
++        }
++
++        public GraphicsPrimitive traceWrap() {
++            return this;
++        }
++
++        public void DrawParallelogram(SunGraphics2D sg2d, SurfaceData dest,
++                                      double x, double y,
++                                      double dx1, double dy1,
++                                      double dx2, double dy2,
++                                      double lw1, double lw2)
++        {
++            tracePrimitive(target);
++            target.DrawParallelogram(sg2d, dest,
++                                     x, y, dx1, dy1, dx2, dy2, lw1, lw2);
++        }
++    }
++}
+diff -r 1d4340015b85 -r 47cd69eff641 src/share/classes/sun/java2d/loops/FillParallelogram.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/src/share/classes/sun/java2d/loops/FillParallelogram.java	Mon Dec 06 21:45:48 2010 -0800
+@@ -0,0 +1,118 @@
++/*
++ * Copyright (c) 2008, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.  Oracle designates this
++ * particular file as subject to the "Classpath" exception as provided
++ * by Oracle in the LICENSE file that accompanied this code.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/*
++ * @author Jim Graham
++ */
++
++package sun.java2d.loops;
++
++import sun.java2d.loops.GraphicsPrimitive;
++import sun.java2d.SunGraphics2D;
++import sun.java2d.SurfaceData;
++
++/**
++ * FillParallelogram
++ * 1) fill the area between the 4 edges of a parallelogram
++ *    (as specified by an origin and 2 delta vectors)
++ */
++public class FillParallelogram extends GraphicsPrimitive
++{
++    public final static String methodSignature =
++        "FillParallelogram(...)".toString();
++
++    public final static int primTypeID = makePrimTypeID();
++
++    public static FillParallelogram locate(SurfaceType srctype,
++                                           CompositeType comptype,
++                                           SurfaceType dsttype)
++    {
++        return (FillParallelogram)
++            GraphicsPrimitiveMgr.locate(primTypeID,
++                                        srctype, comptype, dsttype);
++    }
++
++    protected FillParallelogram(SurfaceType srctype,
++                                CompositeType comptype,
++                                SurfaceType dsttype)
++    {
++        super(methodSignature, primTypeID,
++              srctype, comptype, dsttype);
++    }
++
++    public FillParallelogram(long pNativePrim,
++                             SurfaceType srctype,
++                             CompositeType comptype,
++                             SurfaceType dsttype)
++    {
++        super(pNativePrim, methodSignature, primTypeID,
++              srctype, comptype, dsttype);
++    }
++
++    /**
++     * All FillParallelogram implementors must have this invoker method
++     */
++    public native void FillParallelogram(SunGraphics2D sg2d, SurfaceData dest,
++                                         double x0, double y0,
++                                         double dx1, double dy1,
++                                         double dx2, double dy2);
++
++    public GraphicsPrimitive makePrimitive(SurfaceType srctype,
++                                           CompositeType comptype,
++                                           SurfaceType dsttype)
++    {
++        // REMIND: iterate with a FillRect primitive?
++        throw new InternalError("FillParallelogram not implemented for "+
++                                srctype+" with "+comptype);
++    }
++
++    public GraphicsPrimitive traceWrap() {
++        return new TraceFillParallelogram(this);
++    }
++
++    private static class TraceFillParallelogram extends FillParallelogram {
++        FillParallelogram target;
++
++        public TraceFillParallelogram(FillParallelogram target) {
++            super(target.getSourceType(),
++                  target.getCompositeType(),
++                  target.getDestType());
++            this.target = target;
++        }
++
++        public GraphicsPrimitive traceWrap() {
++            return this;
++        }
++
++        public void FillParallelogram(SunGraphics2D sg2d, SurfaceData dest,
++                                      double x0, double y0,
++                                      double dx1, double dy1,
++                                      double dx2, double dy2)
++        {
++            tracePrimitive(target);
++            target.FillParallelogram(sg2d, dest, x0, y0, dx1, dy1, dx2, dy2);
++        }
++    }
++}
+diff -r 1d4340015b85 -r 47cd69eff641 src/share/classes/sun/java2d/loops/RenderLoops.java
+--- openjdk.orig/jdk/src/share/classes/sun/java2d/loops/RenderLoops.java	Mon Dec 06 16:10:01 2010 -0800
++++ openjdk/jdk/src/share/classes/sun/java2d/loops/RenderLoops.java	Mon Dec 06 21:45:48 2010 -0800
+@@ -47,6 +47,8 @@
+     public DrawPath             drawPathLoop;
+     public FillPath             fillPathLoop;
+     public FillSpans            fillSpansLoop;
++    public FillParallelogram    fillParallelogramLoop;
++    public DrawParallelogram    drawParallelogramLoop;
+     public DrawGlyphList        drawGlyphListLoop;
+     public DrawGlyphListAA      drawGlyphListAALoop;
+     public DrawGlyphListLCD     drawGlyphListLCDLoop;
+diff -r 1d4340015b85 -r 47cd69eff641 src/share/classes/sun/java2d/pipe/LoopPipe.java
+--- openjdk.orig/jdk/src/share/classes/sun/java2d/pipe/LoopPipe.java	Mon Dec 06 16:10:01 2010 -0800
++++ openjdk/jdk/src/share/classes/sun/java2d/pipe/LoopPipe.java	Mon Dec 06 21:45:48 2010 -0800
+@@ -41,11 +41,14 @@
+ import sun.java2d.SurfaceData;
+ import sun.java2d.loops.FontInfo;
+ import sun.java2d.loops.DrawPolygons;
++import sun.java2d.loops.FillParallelogram;
++import sun.java2d.loops.DrawParallelogram;
+ import sun.awt.SunHints;
+ 
+ public class LoopPipe
+     implements PixelDrawPipe,
+                PixelFillPipe,
++               ParallelogramPipe,
+                ShapeDrawPipe,
+                LoopBasedPipe
+ {
+@@ -347,4 +350,25 @@
+             sg2d.loops.fillRectLoop.FillRect(sg2d, sd, x, y, w, h);
+         }
+     }
++
++    public void fillParallelogram(SunGraphics2D sg2d,
++                                  double x, double y,
++                                  double dx1, double dy1,
++                                  double dx2, double dy2)
++    {
++        FillParallelogram fp = sg2d.loops.fillParallelogramLoop;
++        fp.FillParallelogram(sg2d, sg2d.getSurfaceData(),
++                             x, y, dx1, dy1, dx2, dy2);
++    }
++
++    public void drawParallelogram(SunGraphics2D sg2d,
++                                  double x, double y,
++                                  double dx1, double dy1,
++                                  double dx2, double dy2,
++                                  double lw1, double lw2)
++    {
++        DrawParallelogram dp = sg2d.loops.drawParallelogramLoop;
++        dp.DrawParallelogram(sg2d, sg2d.getSurfaceData(),
++                             x, y, dx1, dy1, dx2, dy2, lw1, lw2);
++    }
+ }
+diff -r 1d4340015b85 -r 47cd69eff641 src/share/native/sun/java2d/loops/Any3Byte.c
+--- openjdk.orig/jdk/src/share/native/sun/java2d/loops/Any3Byte.c	Mon Dec 06 16:10:01 2010 -0800
++++ openjdk/jdk/src/share/native/sun/java2d/loops/Any3Byte.c	Mon Dec 06 21:45:48 2010 -0800
+@@ -38,6 +38,7 @@
+ 
+ DECLARE_SOLID_FILLRECT(Any3Byte);
+ DECLARE_SOLID_FILLSPANS(Any3Byte);
++DECLARE_SOLID_PARALLELOGRAM(Any3Byte);
+ DECLARE_SOLID_DRAWLINE(Any3Byte);
+ DECLARE_XOR_FILLRECT(Any3Byte);
+ DECLARE_XOR_FILLSPANS(Any3Byte);
+@@ -48,6 +49,7 @@
+ NativePrimitive Any3BytePrimitives[] = {
+     REGISTER_SOLID_FILLRECT(Any3Byte),
+     REGISTER_SOLID_FILLSPANS(Any3Byte),
++    REGISTER_SOLID_PARALLELOGRAM(Any3Byte),
+     REGISTER_SOLID_LINE_PRIMITIVES(Any3Byte),
+     REGISTER_XOR_FILLRECT(Any3Byte),
+     REGISTER_XOR_FILLSPANS(Any3Byte),
+@@ -72,6 +74,8 @@
+ 
+ DEFINE_SOLID_FILLSPANS(Any3Byte)
+ 
++DEFINE_SOLID_PARALLELOGRAM(Any3Byte)
++
+ DEFINE_SOLID_DRAWLINE(Any3Byte)
+ 
+ DEFINE_XOR_FILLRECT(Any3Byte)
+diff -r 1d4340015b85 -r 47cd69eff641 src/share/native/sun/java2d/loops/Any4Byte.c
+--- openjdk.orig/jdk/src/share/native/sun/java2d/loops/Any4Byte.c	Mon Dec 06 16:10:01 2010 -0800
++++ openjdk/jdk/src/share/native/sun/java2d/loops/Any4Byte.c	Mon Dec 06 21:45:48 2010 -0800
+@@ -41,6 +41,7 @@
+ 
+ DECLARE_SOLID_FILLRECT(Any4Byte);
+ DECLARE_SOLID_FILLSPANS(Any4Byte);
++DECLARE_SOLID_PARALLELOGRAM(Any4Byte);
+ DECLARE_SOLID_DRAWLINE(Any4Byte);
+ DECLARE_XOR_FILLRECT(Any4Byte);
+ DECLARE_XOR_FILLSPANS(Any4Byte);
+@@ -51,6 +52,7 @@
+ NativePrimitive Any4BytePrimitives[] = {
+     REGISTER_SOLID_FILLRECT(Any4Byte),
+     REGISTER_SOLID_FILLSPANS(Any4Byte),
++    REGISTER_SOLID_PARALLELOGRAM(Any4Byte),
+     REGISTER_SOLID_LINE_PRIMITIVES(Any4Byte),
+     REGISTER_XOR_FILLRECT(Any4Byte),
+     REGISTER_XOR_FILLSPANS(Any4Byte),
+@@ -75,6 +77,8 @@
+ 
+ DEFINE_SOLID_FILLSPANS(Any4Byte)
+ 
++DEFINE_SOLID_PARALLELOGRAM(Any4Byte)
++
+ DEFINE_SOLID_DRAWLINE(Any4Byte)
+ 
+ DEFINE_XOR_FILLRECT(Any4Byte)
+diff -r 1d4340015b85 -r 47cd69eff641 src/share/native/sun/java2d/loops/AnyByte.c
+--- openjdk.orig/jdk/src/share/native/sun/java2d/loops/AnyByte.c	Mon Dec 06 16:10:01 2010 -0800
++++ openjdk/jdk/src/share/native/sun/java2d/loops/AnyByte.c	Mon Dec 06 21:45:48 2010 -0800
+@@ -38,6 +38,7 @@
+ 
+ DECLARE_SOLID_FILLRECT(AnyByte);
+ DECLARE_SOLID_FILLSPANS(AnyByte);
++DECLARE_SOLID_PARALLELOGRAM(AnyByte);
+ DECLARE_SOLID_DRAWLINE(AnyByte);
+ DECLARE_XOR_FILLRECT(AnyByte);
+ DECLARE_XOR_FILLSPANS(AnyByte);
+@@ -48,6 +49,7 @@
+ NativePrimitive AnyBytePrimitives[] = {
+     REGISTER_SOLID_FILLRECT(AnyByte),
+     REGISTER_SOLID_FILLSPANS(AnyByte),
++    REGISTER_SOLID_PARALLELOGRAM(AnyByte),
+     REGISTER_SOLID_LINE_PRIMITIVES(AnyByte),
+     REGISTER_XOR_FILLRECT(AnyByte),
+     REGISTER_XOR_FILLSPANS(AnyByte),
+@@ -72,6 +74,8 @@
+ 
+ DEFINE_SOLID_FILLSPANS(AnyByte)
+ 
++DEFINE_SOLID_PARALLELOGRAM(AnyByte)
++
+ DEFINE_SOLID_DRAWLINE(AnyByte)
+ 
+ DEFINE_XOR_FILLRECT(AnyByte)
+diff -r 1d4340015b85 -r 47cd69eff641 src/share/native/sun/java2d/loops/AnyInt.c
+--- openjdk.orig/jdk/src/share/native/sun/java2d/loops/AnyInt.c	Mon Dec 06 16:10:01 2010 -0800
++++ openjdk/jdk/src/share/native/sun/java2d/loops/AnyInt.c	Mon Dec 06 21:45:48 2010 -0800
+@@ -38,6 +38,7 @@
+ 
+ DECLARE_SOLID_FILLRECT(AnyInt);
+ DECLARE_SOLID_FILLSPANS(AnyInt);
++DECLARE_SOLID_PARALLELOGRAM(AnyInt);
+ DECLARE_SOLID_DRAWLINE(AnyInt);
+ DECLARE_XOR_FILLRECT(AnyInt);
+ DECLARE_XOR_FILLSPANS(AnyInt);
+@@ -48,6 +49,7 @@
+ NativePrimitive AnyIntPrimitives[] = {
+     REGISTER_SOLID_FILLRECT(AnyInt),
+     REGISTER_SOLID_FILLSPANS(AnyInt),
++    REGISTER_SOLID_PARALLELOGRAM(AnyInt),
+     REGISTER_SOLID_LINE_PRIMITIVES(AnyInt),
+     REGISTER_XOR_FILLRECT(AnyInt),
+     REGISTER_XOR_FILLSPANS(AnyInt),
+@@ -72,6 +74,8 @@
+ 
+ DEFINE_SOLID_FILLSPANS(AnyInt)
+ 
++DEFINE_SOLID_PARALLELOGRAM(AnyInt)
++
+ DEFINE_SOLID_DRAWLINE(AnyInt)
+ 
+ DEFINE_XOR_FILLRECT(AnyInt)
+diff -r 1d4340015b85 -r 47cd69eff641 src/share/native/sun/java2d/loops/AnyShort.c
+--- openjdk.orig/jdk/src/share/native/sun/java2d/loops/AnyShort.c	Mon Dec 06 16:10:01 2010 -0800
++++ openjdk/jdk/src/share/native/sun/java2d/loops/AnyShort.c	Mon Dec 06 21:45:48 2010 -0800
+@@ -38,6 +38,7 @@
+ 
+ DECLARE_SOLID_FILLRECT(AnyShort);
+ DECLARE_SOLID_FILLSPANS(AnyShort);
++DECLARE_SOLID_PARALLELOGRAM(AnyShort);
+ DECLARE_SOLID_DRAWLINE(AnyShort);
+ DECLARE_XOR_FILLRECT(AnyShort);
+ DECLARE_XOR_FILLSPANS(AnyShort);
+@@ -48,6 +49,7 @@
+ NativePrimitive AnyShortPrimitives[] = {
+     REGISTER_SOLID_FILLRECT(AnyShort),
+     REGISTER_SOLID_FILLSPANS(AnyShort),
++    REGISTER_SOLID_PARALLELOGRAM(AnyShort),
+     REGISTER_SOLID_LINE_PRIMITIVES(AnyShort),
+     REGISTER_XOR_FILLRECT(AnyShort),
+     REGISTER_XOR_FILLSPANS(AnyShort),
+@@ -72,6 +74,8 @@
+ 
+ DEFINE_SOLID_FILLSPANS(AnyShort)
+ 
++DEFINE_SOLID_PARALLELOGRAM(AnyShort)
++
+ DEFINE_SOLID_DRAWLINE(AnyShort)
+ 
+ DEFINE_XOR_FILLRECT(AnyShort)
+diff -r 1d4340015b85 -r 47cd69eff641 src/share/native/sun/java2d/loops/DrawParallelogram.c
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/src/share/native/sun/java2d/loops/DrawParallelogram.c	Mon Dec 06 21:45:48 2010 -0800
+@@ -0,0 +1,341 @@
++/*
++ * Copyright (c) 2008, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.  Oracle designates this
++ * particular file as subject to the "Classpath" exception as provided
++ * by Oracle in the LICENSE file that accompanied this code.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++#include "math.h"
++#include "GraphicsPrimitiveMgr.h"
++#include "LineUtils.h"
++#include "LoopMacros.h"
++#include "Trace.h"
++
++#include "sun_java2d_loops_FillParallelogram.h"
++#include "sun_java2d_loops_DrawParallelogram.h"
++
++DECLARE_SOLID_DRAWLINE(AnyInt);
++
++#define HANDLE_PGRAM_EDGE(X1, Y1, X2, Y2, \
++                          pRasInfo, pixel, pPrim, pFunc, pCompInfo) \
++    do { \
++         jint ix1 = (jint) floor(X1); \
++         jint ix2 = (jint) floor(X2); \
++         jint iy1 = (jint) floor(Y1); \
++         jint iy2 = (jint) floor(Y2); \
++         LineUtils_ProcessLine(pRasInfo, pixel, \
++                               pFunc, pPrim, pCompInfo, \
++                               ix1, iy1, ix2, iy2, JNI_TRUE); \
++    } while (0)
++
++#define PGRAM_MIN_MAX(bmin, bmax, v0, dv1, dv2) \
++    do { \
++        double vmin, vmax; \
++        if (dv1 < 0) { \
++            vmin = v0+dv1; \
++            vmax = v0; \
++        } else { \
++            vmin = v0; \
++            vmax = v0+dv1; \
++        } \
++        if (dv2 < 0) { \
++            vmin -= dv2; \
++        } else { \
++            vmax += dv2; \
++        } \
++        bmin = (jint) floor(vmin + 0.5); \
++        bmax = (jint) floor(vmax + 0.5); \
++    } while(0)
++
++#define PGRAM_INIT_X(starty, x, y, slope) \
++    (DblToLong((x) + (slope) * ((starty)+0.5 - (y))) + LongOneHalf - 1)
++
++typedef struct {
++    jdouble x0;
++    jdouble y0;
++    jdouble y1;
++    jdouble slope;
++    jlong dx;
++    jint ystart;
++    jint yend;
++} EdgeInfo;
++
++#define STORE_EDGE(pEDGE, X0, Y0, Y1, SLOPE, DELTAX) \
++    do { \
++        (pEDGE)->x0 = (X0); \
++        (pEDGE)->y0 = (Y0); \
++        (pEDGE)->y1 = (Y1); \
++        (pEDGE)->slope = (SLOPE); \
++        (pEDGE)->dx = (DELTAX); \
++        (pEDGE)->ystart = (jint) floor((Y0) + 0.5); \
++        (pEDGE)->yend   = (jint) floor((Y1) + 0.5); \
++    } while (0)
++
++#define STORE_PGRAM(pLTEDGE, pRTEDGE, \
++                    X0, Y0, dX1, dY1, dX2, dY2, \
++                    SLOPE1, SLOPE2, DELTAX1, DELTAX2) \
++    do { \
++        STORE_EDGE((pLTEDGE)+0, \
++                   (X0), (Y0), (Y0) + (dY1), \
++                   (SLOPE1), (DELTAX1)); \
++        STORE_EDGE((pRTEDGE)+0, \
++                   (X0), (Y0), (Y0) + (dY2), \
++                   (SLOPE2), (DELTAX2)); \
++        STORE_EDGE((pLTEDGE)+1, \
++                   (X0) + (dX1), (Y0) + (dY1), (Y0) + (dY1) + (dY2), \
++                   (SLOPE2), (DELTAX2)); \
++        STORE_EDGE((pRTEDGE)+1, \
++                   (X0) + (dX2), (Y0) + (dY2), (Y0) + (dY1) + (dY2), \
++                   (SLOPE1), (DELTAX1)); \
++    } while (0)
++
++/*
++ * Class:     sun_java2d_loops_DrawParallelogram
++ * Method:    DrawParallelogram
++ * Signature: (Lsun/java2d/SunGraphics2D;Lsun/java2d/SurfaceData;DDDDDDDD)V
++ */
++JNIEXPORT void JNICALL
++Java_sun_java2d_loops_DrawParallelogram_DrawParallelogram
++    (JNIEnv *env, jobject self,
++     jobject sg2d, jobject sData,
++     jdouble x0, jdouble y0,
++     jdouble dx1, jdouble dy1,
++     jdouble dx2, jdouble dy2,
++     jdouble lw1, jdouble lw2)
++{
++    SurfaceDataOps *sdOps;
++    SurfaceDataRasInfo rasInfo;
++    NativePrimitive *pPrim;
++    CompositeInfo compInfo;
++    jint pixel;
++    EdgeInfo edges[8];
++    EdgeInfo *active[4];
++    jint ix1, iy1, ix2, iy2;
++    jdouble ldx1, ldy1, ldx2, ldy2;
++    jdouble ox0, oy0;
++
++    /*
++     * Sort parallelogram by y values, ensure that each delta vector
++     * has a non-negative y delta.
++     */
++    if (dy1 < 0) {
++        x0 += dx1;  y0 += dy1;
++        dx1 = -dx1; dy1 = -dy1;
++    }
++    if (dy2 < 0) {
++        x0 += dx2;  y0 += dy2;
++        dx2 = -dx2; dy2 = -dy2;
++    }
++    /* Sort delta vectors so dxy1 is left of dxy2. */
++    if (dx1 * dy2 > dx2 * dy1) {
++        double v = dx1; dx1 = dx2; dx2 = v;
++               v = dy1; dy1 = dy2; dy2 = v;
++               v = lw1; lw1 = lw2; lw2 = v;
++    }
++
++    // dx,dy for line width in the "1" and "2" directions.
++    ldx1 = dx1 * lw1;
++    ldy1 = dy1 * lw1;
++    ldx2 = dx2 * lw2;
++    ldy2 = dy2 * lw2;
++
++    // calculate origin of the outer parallelogram
++    ox0 = x0 - (ldx1 + ldx2) / 2.0;
++    oy0 = y0 - (ldy1 + ldy2) / 2.0;
++
++    PGRAM_MIN_MAX(ix1, ix2, ox0, dx1+ldx1, dx2+ldx2);
++    iy1 = (jint) floor(oy0 + 0.5);
++    iy2 = (jint) floor(oy0 + dy1 + ldy1 + dy2 + ldy2 + 0.5);
++
++    pPrim = GetNativePrim(env, self);
++    if (pPrim == NULL) {
++        return;
++    }
++    pixel = GrPrim_Sg2dGetPixel(env, sg2d);
++    if (pPrim->pCompType->getCompInfo != NULL) {
++        GrPrim_Sg2dGetCompInfo(env, sg2d, pPrim, &compInfo);
++    }
++
++    sdOps = SurfaceData_GetOps(env, sData);
++    if (sdOps == NULL) {
++        return;
++    }
++
++    GrPrim_Sg2dGetClip(env, sg2d, &rasInfo.bounds);
++    SurfaceData_IntersectBoundsXYXY(&rasInfo.bounds, ix1, iy1, ix2, iy2);
++    if (rasInfo.bounds.y2 <= rasInfo.bounds.y1 ||
++        rasInfo.bounds.x2 <= rasInfo.bounds.x1)
++    {
++        return;
++    }
++
++    if (sdOps->Lock(env, sdOps, &rasInfo, pPrim->dstflags) != SD_SUCCESS) {
++        return;
++    }
++
++    ix1 = rasInfo.bounds.x1;
++    iy1 = rasInfo.bounds.y1;
++    ix2 = rasInfo.bounds.x2;
++    iy2 = rasInfo.bounds.y2;
++    if (ix2 > ix1 && iy2 > iy1) {
++        sdOps->GetRasInfo(env, sdOps, &rasInfo);
++        if (rasInfo.rasBase) {
++            jdouble lslope, rslope;
++            jlong ldx, rdx;
++            jint loy, hiy, numedges;
++            FillParallelogramFunc *pFill =
++                pPrim->funcs.drawparallelogram->fillpgram;
++
++            lslope = (dy1 == 0) ? 0 : dx1 / dy1;
++            rslope = (dy2 == 0) ? 0 : dx2 / dy2;
++            ldx = DblToLong(lslope);
++            rdx = DblToLong(rslope);
++
++            // Only need to generate 4 quads if the interior still
++            // has a hole in it (i.e. if the line width ratios were
++            // both less than 1.0)
++            if (lw1 < 1.0f && lw2 < 1.0f) {
++                // If the line widths are both less than a pixel wide
++                // then we can use a drawline function instead for even
++                // more performance.
++                lw1 = sqrt(ldx1*ldx1 + ldy1*ldy1);
++                lw2 = sqrt(ldx2*ldx2 + ldy2*ldy2);
++                if (lw1 <= 1.0001 && lw2 <= 1.0001) {
++                    jdouble x3, y3;
++                    DrawLineFunc *pLine =
++                        pPrim->funcs.drawparallelogram->drawline;
++
++                    x3 = (dx1 += x0);
++                    y3 = (dy1 += y0);
++                    x3 += dx2;
++                    y3 += dy2;
++                    dx2 += x0;
++                    dy2 += y0;
++
++                    HANDLE_PGRAM_EDGE( x0,  y0, dx1, dy1,
++                                      &rasInfo, pixel, pPrim, pLine, &compInfo);
++                    HANDLE_PGRAM_EDGE(dx1, dy1,  x3,  y3,
++                                      &rasInfo, pixel, pPrim, pLine, &compInfo);
++                    HANDLE_PGRAM_EDGE( x3,  y3, dx2, dy2,
++                                      &rasInfo, pixel, pPrim, pLine, &compInfo);
++                    HANDLE_PGRAM_EDGE(dx2, dy2,  x0,  y0,
++                                      &rasInfo, pixel, pPrim, pLine, &compInfo);
++                    SurfaceData_InvokeRelease(env, sdOps, &rasInfo);
++                    SurfaceData_InvokeUnlock(env, sdOps, &rasInfo);
++                    return;
++                }
++
++                // To simplify the edge management below we presort the
++                // inner and outer edges so that they are globally sorted
++                // from left to right.  If you scan across the array of
++                // edges for a given Y range then the edges you encounter
++                // will be sorted in X as well.
++                // If AB are left top and bottom edges of outer parallelogram,
++                // and CD are the right pair of edges, and abcd are the
++                // corresponding inner parallelogram edges then we want them
++                // sorted as ABabcdCD to ensure this horizontal ordering.
++                // Conceptually it is like 2 pairs of nested parentheses.
++                STORE_PGRAM(edges + 2, edges + 4,
++                            ox0 + ldx1 + ldx2, oy0 + ldy1 + ldy2,
++                            dx1 - ldx1, dy1 - ldy1,
++                            dx2 - ldx2, dy2 - ldy2,
++                            lslope, rslope, ldx, rdx);
++                numedges = 8;
++            } else {
++                // The line width ratios were large enough to consume
++                // the entire hole in the middle of the parallelogram
++                // so we can just issue one large quad for the outer
++                // parallelogram.
++                numedges = 4;
++            }
++
++            // The outer parallelogram always goes in the first two
++            // and last two entries in the array so we either have
++            // ABabcdCD ordering for 8 edges or ABCD ordering for 4
++            // edges.  See comment above where we store the inner
++            // parallelogram for a more complete description.
++            STORE_PGRAM(edges + 0, edges + numedges-2,
++                        ox0, oy0,
++                        dx1 + ldx1, dy1 + ldy1,
++                        dx2 + ldx2, dy2 + ldy2,
++                        lslope, rslope, ldx, rdx);
++
++            loy = edges[0].ystart;
++            if (loy < iy1) loy = iy1;
++            while (loy < iy2) {
++                jint numactive = 0;
++                jint cur;
++
++                hiy = iy2;
++                // Maintaining a sorted edge list is probably overkill for
++                // 4 or 8 edges.  The indices chosen above for storing the
++                // inner and outer left and right edges already guarantee
++                // left to right ordering so we just need to scan for edges
++                // that overlap the current Y range (and also determine the
++                // maximum Y value for which the range is valid).
++                for (cur = 0; cur < numedges; cur++) {
++                    EdgeInfo *pEdge = &edges[cur];
++                    jint yend = pEdge->yend;
++                    if (loy < yend) {
++                        // This edge is still in play, have we reached it yet?
++                        jint ystart = pEdge->ystart;
++                        if (loy < ystart) {
++                            // This edge is not active (yet)
++                            // Stop before we get to the top of it
++                            if (hiy > ystart) hiy = ystart;
++                        } else {
++                            // This edge is active, store it
++                            active[numactive++] = pEdge;
++                            // And stop when we get to the bottom of it
++                            if (hiy > yend) hiy = yend;
++                        }
++                    }
++                }
++#ifdef DEBUG
++                if ((numactive & 1) != 0) {
++                    J2dTraceLn1(J2D_TRACE_ERROR,
++                                "DrawParallelogram: "
++                                "ODD NUMBER OF PGRAM EDGES (%d)!!",
++                                numactive);
++                }
++#endif
++                for (cur = 0; cur < numactive; cur += 2) {
++                    EdgeInfo *pLeft  = active[cur+0];
++                    EdgeInfo *pRight = active[cur+1];
++                    jlong lx = PGRAM_INIT_X(loy,
++                                            pLeft->x0, pLeft->y0,
++                                            pLeft->slope);
++                    jlong rx = PGRAM_INIT_X(loy,
++                                            pRight->x0, pRight->y0,
++                                            pRight->slope);
++                    (*pFill)(&rasInfo,
++                             ix1, loy, ix2, hiy,
++                             lx, pLeft->dx,
++                             rx, pRight->dx,
++                             pixel, pPrim, &compInfo);
++                }
++                loy = hiy;
++            }
++        }
++        SurfaceData_InvokeRelease(env, sdOps, &rasInfo);
++    }
++    SurfaceData_InvokeUnlock(env, sdOps, &rasInfo);
++}
+diff -r 1d4340015b85 -r 47cd69eff641 src/share/native/sun/java2d/loops/FillParallelogram.c
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/src/share/native/sun/java2d/loops/FillParallelogram.c	Mon Dec 06 21:45:48 2010 -0800
+@@ -0,0 +1,209 @@
++/*
++ * Copyright (c) 2008, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.  Oracle designates this
++ * particular file as subject to the "Classpath" exception as provided
++ * by Oracle in the LICENSE file that accompanied this code.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++#include "math.h"
++#include "GraphicsPrimitiveMgr.h"
++
++#include "sun_java2d_loops_FillParallelogram.h"
++
++#define PGRAM_MIN_MAX(bmin, bmax, v0, dv1, dv2) \
++    do { \
++        double vmin, vmax; \
++        if (dv1 < 0) { \
++            vmin = v0+dv1; \
++            vmax = v0; \
++        } else { \
++            vmin = v0; \
++            vmax = v0+dv1; \
++        } \
++        if (dv2 < 0) { \
++            vmin -= dv2; \
++        } else { \
++            vmax += dv2; \
++        } \
++        bmin = (jint) floor(vmin + 0.5); \
++        bmax = (jint) floor(vmax + 0.5); \
++    } while(0)
++
++#define PGRAM_INIT_X(starty, x, y, slope) \
++    (DblToLong((x) + (slope) * ((starty)+0.5 - (y))) + LongOneHalf - 1)
++
++/*
++ * Class:     sun_java2d_loops_FillParallelogram
++ * Method:    FillParallelogram
++ * Signature: (Lsun/java2d/SunGraphics2D;Lsun/java2d/SurfaceData;DDDDDD)V
++ */
++JNIEXPORT void JNICALL
++Java_sun_java2d_loops_FillParallelogram_FillParallelogram
++    (JNIEnv *env, jobject self,
++     jobject sg2d, jobject sData,
++     jdouble x0, jdouble y0,
++     jdouble dx1, jdouble dy1,
++     jdouble dx2, jdouble dy2)
++{
++    SurfaceDataOps *sdOps;
++    SurfaceDataRasInfo rasInfo;
++    NativePrimitive *pPrim;
++    CompositeInfo compInfo;
++    jint pixel;
++    jint ix1, iy1, ix2, iy2;
++
++    if ((dy1 == 0 && dx1 == 0) || (dy2 == 0 && dx2 == 0)) {
++        return;
++    }
++
++    /*
++     * Sort parallelogram by y values, ensure that each delta vector
++     * has a non-negative y delta, and eliminate degenerate parallelograms.
++     */
++    if (dy1 < 0) {
++        x0 += dx1;  y0 += dy1;
++        dx1 = -dx1; dy1 = -dy1;
++    }
++    if (dy2 < 0) {
++        x0 += dx2;  y0 += dy2;
++        dx2 = -dx2; dy2 = -dy2;
++    }
++    /* Sort delta vectors so dxy1 is left of dxy2. */
++    if (dx1 * dy2 > dx2 * dy1) {
++        double v = dx1; dx1 = dx2; dx2 = v;
++               v = dy1; dy1 = dy2; dy2 = v;
++    }
++    PGRAM_MIN_MAX(ix1, ix2, x0, dx1, dx2);
++    iy1 = (jint) floor(y0 + 0.5);
++    iy2 = (jint) floor(y0 + dy1 + dy2 + 0.5);
++
++    pPrim = GetNativePrim(env, self);
++    if (pPrim == NULL) {
++        return;
++    }
++    pixel = GrPrim_Sg2dGetPixel(env, sg2d);
++    if (pPrim->pCompType->getCompInfo != NULL) {
++        GrPrim_Sg2dGetCompInfo(env, sg2d, pPrim, &compInfo);
++    }
++
++    sdOps = SurfaceData_GetOps(env, sData);
++    if (sdOps == NULL) {
++        return;
++    }
++
++    GrPrim_Sg2dGetClip(env, sg2d, &rasInfo.bounds);
++    SurfaceData_IntersectBoundsXYXY(&rasInfo.bounds, ix1, iy1, ix2, iy2);
++    if (rasInfo.bounds.y2 <= rasInfo.bounds.y1 ||
++        rasInfo.bounds.x2 <= rasInfo.bounds.x1)
++    {
++        return;
++    }
++
++    if (sdOps->Lock(env, sdOps, &rasInfo, pPrim->dstflags) != SD_SUCCESS) {
++        return;
++    }
++
++    ix1 = rasInfo.bounds.x1;
++    iy1 = rasInfo.bounds.y1;
++    ix2 = rasInfo.bounds.x2;
++    iy2 = rasInfo.bounds.y2;
++    if (ix2 > ix1 && iy2 > iy1) {
++        sdOps->GetRasInfo(env, sdOps, &rasInfo);
++        if (rasInfo.rasBase) {
++            jdouble lslope = (dy1 == 0) ? 0 : dx1 / dy1;
++            jdouble rslope = (dy2 == 0) ? 0 : dx2 / dy2;
++            jlong ldx = DblToLong(lslope);
++            jlong rdx = DblToLong(rslope);
++            jint cy1, cy2, loy, hiy;
++            dx1 += x0;
++            dy1 += y0;
++            dx2 += x0;
++            dy2 += y0;
++            cy1 = (jint) floor(dy1 + 0.5);
++            cy2 = (jint) floor(dy2 + 0.5);
++
++            /* Top triangular portion. */
++            loy = iy1;
++            hiy = (cy1 < cy2) ? cy1 : cy2;
++            if (hiy > iy2) hiy = iy2;
++            if (loy < hiy) {
++                jlong lx = PGRAM_INIT_X(loy, x0, y0, lslope);
++                jlong rx = PGRAM_INIT_X(loy, x0, y0, rslope);
++                (*pPrim->funcs.fillparallelogram)(&rasInfo,
++                                                  ix1, loy, ix2, hiy,
++                                                  lx, ldx, rx, rdx,
++                                                  pixel, pPrim, &compInfo);
++            }
++
++            /* Middle parallelogram portion, which way does it slant? */
++            if (cy1 < cy2) {
++                /* Middle parallelogram portion, slanted to right. */
++                /* left leg turned a corner at y0+dy1 */
++                /* right leg continuing on its initial trajectory from y0 */
++                loy = cy1;
++                hiy = cy2;
++                if (loy < iy1) loy = iy1;
++                if (hiy > iy2) hiy = iy2;
++                if (loy < hiy) {
++                    jlong lx = PGRAM_INIT_X(loy, dx1, dy1, rslope);
++                    jlong rx = PGRAM_INIT_X(loy,  x0,  y0, rslope);
++                    (*pPrim->funcs.fillparallelogram)(&rasInfo,
++                                                      ix1, loy, ix2, hiy,
++                                                      lx, rdx, rx, rdx,
++                                                      pixel, pPrim, &compInfo);
++                }
++            } else if (cy2 < cy1) {
++                /* Middle parallelogram portion, slanted to left. */
++                /* left leg continuing on its initial trajectory from y0 */
++                /* right leg turned a corner at y0+dy2 */
++                loy = cy2;
++                hiy = cy1;
++                if (loy < iy1) loy = iy1;
++                if (hiy > iy2) hiy = iy2;
++                if (loy < hiy) {
++                    jlong lx = PGRAM_INIT_X(loy,  x0,  y0, lslope);
++                    jlong rx = PGRAM_INIT_X(loy, dx2, dy2, lslope);
++                    (*pPrim->funcs.fillparallelogram)(&rasInfo,
++                                                      ix1, loy, ix2, hiy,
++                                                      lx, ldx, rx, ldx,
++                                                      pixel, pPrim, &compInfo);
++                }
++            }
++
++            /* Bottom triangular portion. */
++            loy = (cy1 > cy2) ? cy1 : cy2;
++            if (loy < iy1) loy = iy1;
++            hiy = iy2;
++            if (loy < hiy) {
++                /* left leg turned its corner at y0+dy1, now moving right */
++                /* right leg turned its corner at y0+dy2, now moving left */
++                jlong lx = PGRAM_INIT_X(loy, dx1, dy1, rslope);
++                jlong rx = PGRAM_INIT_X(loy, dx2, dy2, lslope);
++                (*pPrim->funcs.fillparallelogram)(&rasInfo,
++                                                  ix1, loy, ix2, hiy,
++                                                  lx, rdx, rx, ldx,
++                                                  pixel, pPrim, &compInfo);
++            }
++        }
++        SurfaceData_InvokeRelease(env, sdOps, &rasInfo);
++    }
++    SurfaceData_InvokeUnlock(env, sdOps, &rasInfo);
++}
+diff -r 1d4340015b85 -r 47cd69eff641 src/share/native/sun/java2d/loops/GraphicsPrimitiveMgr.c
+--- openjdk.orig/jdk/src/share/native/sun/java2d/loops/GraphicsPrimitiveMgr.c	Mon Dec 06 16:10:01 2010 -0800
++++ openjdk/jdk/src/share/native/sun/java2d/loops/GraphicsPrimitiveMgr.c	Mon Dec 06 21:45:48 2010 -0800
+@@ -574,6 +574,8 @@
+     { "sun/java2d/loops/ScaledBlit", SD_LOCK_READ, SD_LOCK_WRITE, NULL, NULL},
+     { "sun/java2d/loops/FillRect", 0, SD_LOCK_WRITE, NULL, NULL},
+     { "sun/java2d/loops/FillSpans", 0, SD_LOCK_PARTIAL_WRITE, NULL, NULL},
++    { "sun/java2d/loops/FillParallelogram", 0, SD_LOCK_PARTIAL_WRITE, NULL, NULL},
++    { "sun/java2d/loops/DrawParallelogram", 0, SD_LOCK_PARTIAL_WRITE, NULL, NULL},
+     { "sun/java2d/loops/DrawLine", 0, SD_LOCK_PARTIAL_WRITE, NULL, NULL},
+     { "sun/java2d/loops/DrawRect", 0, SD_LOCK_PARTIAL_WRITE, NULL, NULL},
+     { "sun/java2d/loops/DrawPolygons", 0, SD_LOCK_PARTIAL_WRITE, NULL, NULL},
+diff -r 1d4340015b85 -r 47cd69eff641 src/share/native/sun/java2d/loops/GraphicsPrimitiveMgr.h
+--- openjdk.orig/jdk/src/share/native/sun/java2d/loops/GraphicsPrimitiveMgr.h	Mon Dec 06 16:10:01 2010 -0800
++++ openjdk/jdk/src/share/native/sun/java2d/loops/GraphicsPrimitiveMgr.h	Mon Dec 06 21:45:48 2010 -0800
+@@ -334,6 +334,26 @@
+                                    jint yfract, jint dyfract);
+ 
+ /*
++ * The signature of the inner loop function for a "FillParallelogram"
++ * Note that this same inner loop is used for native DrawParallelogram
++ * primitives.
++ * Note that these functions are paired with equivalent DrawLine
++ * inner loop functions to facilitate nicer looking and faster thin
++ * transformed drawrect calls.
++ */
++typedef void (FillParallelogramFunc)(SurfaceDataRasInfo *pRasInfo,
++                                     jint lox, jint loy, jint hix, jint hiy,
++                                     jlong leftx, jlong dleftx,
++                                     jlong rightx, jlong drightx,
++                                     jint pixel, struct _NativePrimitive *pPrim,
++                                     CompositeInfo *pCompInfo);
++
++typedef struct {
++    FillParallelogramFunc       *fillpgram;
++    DrawLineFunc                *drawline;
++} DrawParallelogramFuncs;
++
++/*
+  * This structure contains all information for defining a single
+  * native GraphicsPrimitive, including:
+  * - The information about the type of the GraphicsPrimitive subclass.
+@@ -363,6 +383,8 @@
+         ScaleBlitFunc           *scaledblit;
+         FillRectFunc            *fillrect;
+         FillSpansFunc           *fillspans;
++        FillParallelogramFunc   *fillparallelogram;
++        DrawParallelogramFuncs  *drawparallelogram;
+         DrawLineFunc            *drawline;
+         MaskFillFunc            *maskfill;
+         MaskBlitFunc            *maskblit;
+@@ -393,6 +415,8 @@
+     PrimitiveType       ScaledBlit;
+     PrimitiveType       FillRect;
+     PrimitiveType       FillSpans;
++    PrimitiveType       FillParallelogram;
++    PrimitiveType       DrawParallelogram;
+     PrimitiveType       DrawLine;
+     PrimitiveType       DrawRect;
+     PrimitiveType       DrawPolygons;
+@@ -536,6 +560,7 @@
+ #define LongOneHalf     (((jlong) 1) << 31)
+ #define IntToLong(i)    (((jlong) (i)) << 32)
+ #define DblToLong(d)    ((jlong) ((d) * IntToLong(1)))
++#define LongToDbl(l)    (((jdouble) l) / IntToLong(1))
+ #define WholeOfLong(l)  ((jint) ((l) >> 32))
+ #define FractOfLong(l)  ((jint) (l))
+ #define URShift(i, n)   (((juint) (i)) >> (n))
+@@ -595,6 +620,10 @@
+ #define REGISTER_FILLSPANS(SRC, COMP, DST, FUNC) \
+     REGISTER_PRIMITIVE(FillSpans, SRC, COMP, DST, FUNC)
+ 
++#define REGISTER_FILLPGRAM(SRC, COMP, DST, FUNC) \
++    REGISTER_PRIMITIVE(FillParallelogram, SRC, COMP, DST, FUNC), \
++    REGISTER_PRIMITIVE(DrawParallelogram, SRC, COMP, DST, FUNC)
++
+ #define REGISTER_LINE_PRIMITIVES(SRC, COMP, DST, FUNC) \
+     REGISTER_PRIMITIVE(DrawLine, SRC, COMP, DST, FUNC), \
+     REGISTER_PRIMITIVE(DrawRect, SRC, COMP, DST, FUNC), \
+diff -r 1d4340015b85 -r 47cd69eff641 src/share/native/sun/java2d/loops/LoopMacros.h
+--- openjdk.orig/jdk/src/share/native/sun/java2d/loops/LoopMacros.h	Mon Dec 06 16:10:01 2010 -0800
++++ openjdk/jdk/src/share/native/sun/java2d/loops/LoopMacros.h	Mon Dec 06 21:45:48 2010 -0800
+@@ -607,6 +607,12 @@
+ 
+ #define NAME_TRANSFORMHELPER_FUNCS(TYPE) TYPE ## TransformHelperFuncs
+ 
++#define NAME_SOLID_FILLPGRAM(TYPE)       TYPE ## SetParallelogram
++#define NAME_SOLID_PGRAM_FUNCS(TYPE)     TYPE ## SetParallelogramFuncs
++
++#define NAME_XOR_FILLPGRAM(TYPE)         TYPE ## XorParallelogram
++#define NAME_XOR_PGRAM_FUNCS(TYPE)       TYPE ## XorParallelogramFuncs
++
+ /*
+  * These macros conveniently name and declare the indicated native
+  * primitive loop function for forward referencing.
+@@ -689,6 +695,16 @@
+     TransformHelperFunc NAME_TRANSFORMHELPER_BC(TYPE); \
+     TransformHelperFuncs NAME_TRANSFORMHELPER_FUNCS(TYPE)
+ 
++#define DECLARE_SOLID_PARALLELOGRAM(TYPE) \
++    FillParallelogramFunc NAME_SOLID_FILLPGRAM(TYPE); \
++    DECLARE_SOLID_DRAWLINE(TYPE); \
++    DrawParallelogramFuncs NAME_SOLID_PGRAM_FUNCS(TYPE)
++
++#define DECLARE_XOR_PARALLELOGRAM(TYPE) \
++    FillParallelogramFunc NAME_XOR_FILLPGRAM(TYPE); \
++    DECLARE_XOR_DRAWLINE(TYPE); \
++    DrawParallelogramFuncs NAME_XOR_PGRAM_FUNCS(TYPE)
++
+ /*
+  * These macros construct the necessary NativePrimitive structure
+  * for the indicated native primitive loop function which will be
+@@ -800,6 +816,18 @@
+     REGISTER_PRIMITIVE(TransformHelper, TYPE, SrcNoEa, IntArgbPre, \
+                        (AnyFunc *) &NAME_TRANSFORMHELPER_FUNCS(TYPE))
+ 
++#define REGISTER_SOLID_PARALLELOGRAM(TYPE) \
++    REGISTER_PRIMITIVE(FillParallelogram, AnyColor, SrcNoEa, TYPE, \
++                       NAME_SOLID_FILLPGRAM(TYPE)), \
++    REGISTER_PRIMITIVE(DrawParallelogram, AnyColor, SrcNoEa, TYPE, \
++                       (AnyFunc *) &NAME_SOLID_PGRAM_FUNCS(TYPE))
++
++#define REGISTER_XOR_PARALLELOGRAM(TYPE) \
++    REGISTER_PRIMITIVE(FillParallelogram, AnyColor, Xor, TYPE, \
++                       NAME_XOR_FILLPGRAM(TYPE)), \
++    REGISTER_PRIMITIVE(DrawParallelogram, AnyColor, Xor, TYPE, \
++                       (AnyFunc *) &NAME_XOR_PGRAM_FUNCS(TYPE))
++
+ /*
+  * This macro defines an entire function to implement a Blit inner loop
+  * for copying pixels of a common type from one buffer to another.
+@@ -1265,6 +1293,51 @@
+ }
+ 
+ /*
++ * This macro defines an entire function to implement a FillParallelogram
++ * inner loop for tracing 2 diagonal edges (left and right) and setting
++ * those regions of pixels between them to a specific pixel value.
++ * No blending of the fill color is done with the pixels.
++ */
++#define DEFINE_SOLID_FILLPGRAM(DST) \
++void NAME_SOLID_FILLPGRAM(DST)(SurfaceDataRasInfo *pRasInfo, \
++                               jint lox, jint loy, jint hix, jint hiy, \
++                               jlong leftx, jlong dleftx, \
++                               jlong rightx, jlong drightx, \
++                               jint pixel, struct _NativePrimitive *pPrim, \
++                               CompositeInfo *pCompInfo) \
++{ \
++    Declare ## DST ## PixelData(pix) \
++    jint scan = pRasInfo->scanStride; \
++    DST ## DataType *pPix = PtrCoord(pRasInfo->rasBase, 0, 0, loy, scan); \
++ \
++    Extract ## DST ## PixelData(pixel, pix); \
++    while (loy < hiy) { \
++        jint lx = WholeOfLong(leftx); \
++        jint rx = WholeOfLong(rightx); \
++        if (lx < lox) lx = lox; \
++        if (rx > hix) rx = hix; \
++        while (lx < rx) { \
++            Store ## DST ## PixelData(pPix, lx, pixel, pix); \
++            lx++; \
++        } \
++        pPix = PtrAddBytes(pPix, scan); \
++        leftx += dleftx; \
++        rightx += drightx; \
++        loy++; \
++    } \
++}
++
++#define DEFINE_SOLID_DRAWPARALLELOGRAM_FUNCS(DST) \
++    DrawParallelogramFuncs NAME_SOLID_PGRAM_FUNCS(DST) = { \
++        NAME_SOLID_FILLPGRAM(DST), \
++        NAME_SOLID_DRAWLINE(DST), \
++    };
++
++#define DEFINE_SOLID_PARALLELOGRAM(DST) \
++    DEFINE_SOLID_FILLPGRAM(DST) \
++    DEFINE_SOLID_DRAWPARALLELOGRAM_FUNCS(DST)
++
++/*
+  * This macro declares the bumpmajor and bumpminor variables used for the
+  * DrawLine functions.
+  */
+diff -r 1d4340015b85 -r 47cd69eff641 src/solaris/native/sun/java2d/loops/java2d_Mlib.c
+--- openjdk.orig/jdk/src/solaris/native/sun/java2d/loops/java2d_Mlib.c	Mon Dec 06 16:10:01 2010 -0800
++++ openjdk/jdk/src/solaris/native/sun/java2d/loops/java2d_Mlib.c	Mon Dec 06 21:45:48 2010 -0800
+@@ -282,6 +282,50 @@
+ 
+ /***************************************************************/
+ 
++#define DEFINE_SET_PGRAM(FUNC, ANYTYPE, NCHAN)                      \
++void ADD_SUFF(ANYTYPE##FUNC)(SurfaceDataRasInfo *pRasInfo,          \
++                             jint lox, jint loy,                    \
++                             jint hix, jint hiy,                    \
++                             jlong leftx, jlong dleftx,             \
++                             jlong rightx, jlong drightx,           \
++                             jint pixel, NativePrimitive * pPrim,   \
++                             CompositeInfo * pCompInfo)             \
++{                                                                   \
++    mlib_image dst[1];                                              \
++    mlib_s32 dstScan = pRasInfo->scanStride;                        \
++    mlib_u8  *dstBase = (mlib_u8*)(pRasInfo->rasBase), *pdst;       \
++    mlib_s32 c_arr[4];                                              \
++                                                                    \
++    STORE_CONST_##NCHAN(c_arr, pixel);                              \
++    pdst = dstBase + loy*dstScan;                                   \
++                                                                    \
++    while (loy < hiy) {                                             \
++        jint lx = WholeOfLong(leftx);                               \
++        jint rx = WholeOfLong(rightx);                              \
++        if (lx < lox) lx = lox;                                     \
++        if (rx > hix) rx = hix;                                     \
++                                                                    \
++        MLIB_IMAGE_SET(dst, MLIB_##ANYTYPE, NCHAN_##ANYTYPE,        \
++                       rx-lx, 1, dstScan,                           \
++                       pdst + lx*ANYTYPE##PixelStride);             \
++                                                                    \
++        mlib_ImageClear(dst, c_arr);                                \
++                                                                    \
++        pdst = PtrAddBytes(pdst, dstScan);                          \
++        leftx += dleftx;                                            \
++        rightx += drightx;                                          \
++        loy++;                                                      \
++    }                                                               \
++}
++
++DEFINE_SET_PGRAM(SetParallelogram, Any3Byte, 3)
++DEFINE_SET_PGRAM(SetParallelogram, Any4Byte, 4)
++DEFINE_SET_PGRAM(SetParallelogram, AnyByte,  1)
++DEFINE_SET_PGRAM(SetParallelogram, AnyInt,   1)
++DEFINE_SET_PGRAM(SetParallelogram, AnyShort, 1)
++
++/***************************************************************/
++
+ #define SCALE_COPY(index, chan)         \
+     pDst[chan] = pSrc[index]
+ 
+diff -r 1d4340015b85 -r 47cd69eff641 src/solaris/native/sun/java2d/loops/vis_FuncArray.c
+--- openjdk.orig/jdk/src/solaris/native/sun/java2d/loops/vis_FuncArray.c	Mon Dec 06 16:10:01 2010 -0800
++++ openjdk/jdk/src/solaris/native/sun/java2d/loops/vis_FuncArray.c	Mon Dec 06 21:45:48 2010 -0800
+@@ -51,6 +51,7 @@
+ DEF_FUNC(AnyByteSetLine)
+ DEF_FUNC(AnyByteSetRect)
+ DEF_FUNC(AnyByteSetSpans)
++DEF_FUNC(AnyByteSetParallelogram)
+ DEF_FUNC(AnyByteXorLine)
+ DEF_FUNC(AnyByteXorRect)
+ DEF_FUNC(AnyByteXorSpans)
+@@ -62,6 +63,7 @@
+ DEF_FUNC(AnyShortSetLine)
+ DEF_FUNC(AnyShortSetRect)
+ DEF_FUNC(AnyShortSetSpans)
++DEF_FUNC(AnyShortSetParallelogram)
+ DEF_FUNC(AnyShortXorLine)
+ DEF_FUNC(AnyShortXorRect)
+ DEF_FUNC(AnyShortXorSpans)
+@@ -73,6 +75,7 @@
+ DEF_FUNC(Any3ByteSetLine)
+ DEF_FUNC(Any3ByteSetRect)
+ DEF_FUNC(Any3ByteSetSpans)
++DEF_FUNC(Any3ByteSetParallelogram)
+ DEF_FUNC(Any3ByteXorLine)
+ DEF_FUNC(Any3ByteXorRect)
+ DEF_FUNC(Any3ByteXorSpans)
+@@ -84,6 +87,7 @@
+ DEF_FUNC(Any4ByteSetLine)
+ DEF_FUNC(Any4ByteSetRect)
+ DEF_FUNC(Any4ByteSetSpans)
++DEF_FUNC(Any4ByteSetParallelogram)
+ DEF_FUNC(Any4ByteXorLine)
+ DEF_FUNC(Any4ByteXorRect)
+ DEF_FUNC(Any4ByteXorSpans)
+@@ -95,6 +99,7 @@
+ DEF_FUNC(AnyIntSetLine)
+ DEF_FUNC(AnyIntSetRect)
+ DEF_FUNC(AnyIntSetSpans)
++DEF_FUNC(AnyIntSetParallelogram)
+ DEF_FUNC(AnyIntXorLine)
+ DEF_FUNC(AnyIntXorRect)
+ DEF_FUNC(AnyIntXorSpans)
+@@ -513,6 +518,7 @@
+     ADD_FUNC(AnyByteSetLine),
+     ADD_FUNC(AnyByteSetRect),
+     ADD_FUNC(AnyByteSetSpans),
++    ADD_FUNC(AnyByteSetParallelogram),
+     ADD_FUNC(AnyByteXorLine),
+     ADD_FUNC(AnyByteXorRect),
+     ADD_FUNC(AnyByteXorSpans),
+@@ -524,6 +530,7 @@
+     ADD_FUNC(AnyShortSetLine),
+     ADD_FUNC(AnyShortSetRect),
+     ADD_FUNC(AnyShortSetSpans),
++    ADD_FUNC(AnyShortSetParallelogram),
+     ADD_FUNC(AnyShortXorLine),
+     ADD_FUNC(AnyShortXorRect),
+     ADD_FUNC(AnyShortXorSpans),
+@@ -533,6 +540,7 @@
+     ADD_FUNC(Any3ByteSetLine),
+     ADD_FUNC(Any3ByteSetRect),
+     ADD_FUNC(Any3ByteSetSpans),
++    ADD_FUNC(Any3ByteSetParallelogram),
+     ADD_FUNC(Any3ByteXorLine),
+     ADD_FUNC(Any3ByteXorRect),
+     ADD_FUNC(Any3ByteXorSpans),
+@@ -544,6 +552,7 @@
+     ADD_FUNC(Any4ByteSetLine),
+     ADD_FUNC(Any4ByteSetRect),
+     ADD_FUNC(Any4ByteSetSpans),
++    ADD_FUNC(Any4ByteSetParallelogram),
+     ADD_FUNC(Any4ByteXorLine),
+     ADD_FUNC(Any4ByteXorRect),
+     ADD_FUNC(Any4ByteXorSpans),
+@@ -555,6 +564,7 @@
+     ADD_FUNC(AnyIntSetLine),
+     ADD_FUNC(AnyIntSetRect),
+     ADD_FUNC(AnyIntSetSpans),
++    ADD_FUNC(AnyIntSetParallelogram),
+     ADD_FUNC(AnyIntXorLine),
+     ADD_FUNC(AnyIntXorRect),
+     ADD_FUNC(AnyIntXorSpans),
