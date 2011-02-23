@@ -322,7 +322,7 @@ ICEDTEA_PATCHES = \
 	patches/pr633-no_javaws_man_page.patch \
 	patches/pr586-include_all_srcs.patch \
 	patches/jtreg-LastErrorString.patch \
-	patches/com-sun-awt.patch \
+	patches/openjdk/6663040-com.sun.awt.patch \
 	patches/openjdk/6775317-non-AA-simple-shape-performance.patch \
 	patches/openjdk/6766342-AA-simple-shape-performance.patch
 
