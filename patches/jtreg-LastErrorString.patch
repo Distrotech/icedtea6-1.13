@@ -1,0 +1,201 @@
+diff -Nru IOException/LastErrorString.java /home/brq/ptisnovs/IOException/LastErrorString.java
+--- openjdk-old/jdk/test/java/io/IOException/LastErrorString.java	2011-01-21 00:54:47.000000000 +0100
++++ openjdk/jdk/test/java/io/IOException/LastErrorString.java	2011-02-21 15:34:58.972481000 +0100
+@@ -21,9 +21,13 @@
+  * questions.
+  */
+ 
+-/* @test
+-   @bug 4167937
+-   @summary Test code paths that use the JVM_LastErrorString procedure
++/*
++ * @test
++ * @bug 4167937
++ * @summary Test code paths that use the JVM_LastErrorString procedure
++ *
++ * @compile LastErrorString.java
++ * @run shell LastErrorString.sh
+  */
+ 
+ import java.io.IOException;
+@@ -37,33 +41,11 @@
+ 
+     static String UNWRITEABLE_DIR;
+     static String UNREADABLE_FILE;
++    static String UNWRITEABLE_FILE;
+     static String READABLE_FILE;
+     static String WRITEABLE_FILE;
+     static String INVALID_PATH;
+ 
+-    static {
+-        if (File.separatorChar == '/') {
+-            UNWRITEABLE_DIR = "/etc/dfs";
+-            UNREADABLE_FILE = "/etc/shadow";
+-        } else if (File.separatorChar == '\\') {
+-            UNREADABLE_FILE = "c:/pagefile.sys";
+-            UNWRITEABLE_DIR = "z:/fooBAR/baz/GORP";
+-        } else {
+-            throw new RuntimeException("What kind of system is this?");
+-        }
+-        File d = new File(System.getProperty("test.src", "."));
+-        READABLE_FILE = new File(d, "LastErrorString.java").getPath();
+-        WRITEABLE_FILE = "x.LastErrorString";
+-        String s = "foo/";
+-        for (;;) {
+-            s = s + s;
+-            if (s.length() > 8192) break;
+-        }
+-        s += "bar";
+-        INVALID_PATH = s;
+-    }
+-
+-
+     static abstract class Test {
+ 
+         String name;
+@@ -197,7 +179,7 @@
+ 
+         new Test("FileOutputStream") {
+             public void run() throws IOException {
+-                new FileOutputStream(UNREADABLE_FILE);
++                new FileOutputStream(UNWRITEABLE_FILE);
+             }}.go();
+ 
+         new ClosedFOSTest("write()") {
+@@ -257,8 +239,29 @@
+ 
+     }
+ 
++    public static void preparePaths(String workDir) {
++        System.out.println("Work directory: " + workDir);
++
++        // directory prepared by shell script
++        UNWRITEABLE_DIR = workDir + "unwriteable_dir";
++
++        // files prepared by shell script
++        READABLE_FILE = workDir + "readable_file";
++        WRITEABLE_FILE = workDir + "writeable_file";
++        UNREADABLE_FILE = workDir + "unreadable_file";
++        UNWRITEABLE_FILE = workDir + "unwriteable_file";
++
++        String s = "foo/";
++        for (;;) {
++            s = s + s;
++            if (s.length() > 8192) break;
++        }
++        s += "bar";
++        INVALID_PATH = s;
++    }
+ 
+     public static void main(String[] args) throws Exception {
++        preparePaths(args[0]);
+         go();
+     }
+ 
+diff -Nru IOException/LastErrorString.sh /home/brq/ptisnovs/IOException/LastErrorString.sh
+--- /dev/null	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/jdk/test/java/io/IOException/LastErrorString.sh	2011-02-21 15:34:58.972481000 +0100
+@@ -0,0 +1,103 @@
++#!/bin/sh
++
++# Copyright (c) 2011, Red Hat Inc.
++#
++# This code is free software; you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation; either version 2, or (at your option)
++# any later version.
++# 
++# This code is distributed in the hope that it will be useful, but
++# WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++# General Public License for more details.
++# 
++# You should have received a copy of the GNU General Public License version
++# 2 along with this work; if not, write to the Free Software Foundation,
++# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++
++# @test
++# @bug 4167937
++# @summary Test code paths that use the JVM_LastErrorString procedure
++#
++# @compile LastErrorString.java
++# @run shell LastErrorString.sh
++
++if [ "${TESTSRC}" = "" ]
++then
++    TESTSRC=.
++fi
++
++# if TESTJAVA isn't set then we assume an interactive run. So that it's
++# clear which version of 'java' is running we do a 'which java' and
++# a 'java -version'.
++if [ "${TESTJAVA}" = "" ]
++then
++    PARENT=`dirname \`which java\``
++    TESTJAVA=`dirname ${PARENT}`
++    echo "TESTJAVA not set, selecting ${TESTJAVA}"
++    echo "If this is incorrect, try selecting the variable manually."
++fi
++
++echo "TESTJAVA is set to ${TESTJAVA}"
++
++if [ "${TESTCLASSES}" = "" ]
++then
++    echo "TESTCLASSES not set.  Test cannot execute.  Failed."
++    exit 1
++fi
++
++echo "TESTCLASSES is set to ${TESTCLASSES}"
++
++CLASSPATH=${TESTCLASSES}
++export CLASSPATH
++
++WORK_DIR=`pwd`
++echo "WORK_DIR is set to ${WORK_DIR}"
++
++# set platform-dependent variables and create work files
++OS=`uname -s`
++case "$OS" in
++    Linux | SunOS )
++        echo "UNIX-like system found - that's great!"
++        FS="/"
++    ;;
++    Windows_* )
++        echo "Windows system found, can live with that."
++        FS="\\"
++    ;;
++    * )
++        echo "Unrecognized system $OS!"
++        exit 1
++    ;;
++esac
++
++# erase files created by previous test run
++rm -f readable_file
++rm -f writeable_file
++rm -f unreadable_file
++rm -f unwriteable_file
++
++# create directory + files
++mkdir unwriteable_dir
++touch readable_file
++touch writeable_file
++touch unreadable_file
++touch unwriteable_file
++
++# set proper ACL
++chmod u+r readable_file
++chmod u+w writeable_file
++chmod a-r unreadable_file
++chmod a-w unwriteable_file
++chmod a-w unwriteable_dir
++
++echo "Work directory content:"
++ls -l .
++
++# first parameter to test: work directory + separator
++${TESTJAVA}${FS}bin${FS}java LastErrorString ${WORK_DIR}${FS}
++STATUS=$?
++
++exit $STATUS
++
