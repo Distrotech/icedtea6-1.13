@@ -324,7 +324,8 @@ ICEDTEA_PATCHES = \
 	patches/jtreg-LastErrorString.patch \
 	patches/openjdk/6663040-com.sun.awt.patch \
 	patches/openjdk/6775317-non-AA-simple-shape-performance.patch \
-	patches/openjdk/6766342-AA-simple-shape-performance.patch
+	patches/openjdk/6766342-AA-simple-shape-performance.patch \
+	patches/pr600-arm-jvm.cfg.patch
 
 if !WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
@@ -343,8 +344,7 @@ ICEDTEA_PATCHES += \
 	patches/cacao/launcher.patch \
 	patches/cacao/arm-arch-defines.patch \
 	patches/cacao/jsig.patch \
-	patches/cacao/memory.patch \
-	patches/cacao/arm-jvm.cfg-pr600.patch
+	patches/cacao/memory.patch
 endif
 
 if ENABLE_CACAO
