@@ -14,7 +14,7 @@
 	(stamps/download-jamvm.stamp): Likewise for JAMVM_SRC_ZIP.
 	(stamps/download-openjdk.stamp):
 	Likewise for OPENJDK_SRC_ZIP and HOTSPOT_SRC_ZIP.
- 
+
 2011-02-24  Pavel Tisnovsky  <ptisnovs@redhat.com>
 
 	* patches/jtreg-png-reader.patch:
@@ -825,7 +825,7 @@
 
 2010-01-22  Mark Wielaard  <mark@klomp.org>
 
-        * Makefile.am (ICEDTEA_PATCHES): Add missing backslash.
+	* Makefile.am (ICEDTEA_PATCHES): Add missing backslash.
 
 2011-01-22  Andrew John Hughes  <ahughes@redhat.com>
 
@@ -1189,10 +1189,10 @@
 2010-11-10  Jiri Vanek  <jvanek@redhat.com>
 
 	* Makefile.am:
-        (FONTCONFIG_PATH): Added path to fontconfig files.
+	(FONTCONFIG_PATH): Added path to fontconfig files.
 	(ICEDTEA_PATCHES): Add f14-fonts.patch.	
 	(fonts): Added cloning of fontconfig.Fedora
-        to Fedora.12,11,10,9.
+	to Fedora.12,11,10,9.
 	(patch-fsg): Depend on fonts.stamp.
 	* patches/f14-fonts.patch
 	Updated font configurations for Fedora 9-14
@@ -3120,7 +3120,7 @@
 	(setSystemLookAndFeel): New method. Sets the LookAndFeel of the system.
 
 2010-07-19  Gary Benson  <gbenson@redhat.com>
-            Xerxes Rånby  <xerxes@zafena.se>
+	    Xerxes Rånby  <xerxes@zafena.se>
 
 	PR icedtea/498
 	* ports/hotspot/src/share/vm/shark/sharkTopLevelBlock.cpp
@@ -6811,7 +6811,7 @@
 
 2010-01-15  Edward Nevill <ed@camswl.com>
 
-        * ports/hotspot/src/os_cpu/linux_zero/vm/os_linux_zero.cpp
+	* ports/hotspot/src/os_cpu/linux_zero/vm/os_linux_zero.cpp
 	Implement is_allocatable to make build word with hs16
 
 2010-01-15  Xerxes Rånby  <xerxes@zafena.se>
@@ -8499,9 +8499,9 @@
 
 2009-09-10  Andrew Haley  <aph@redhat.com>
 
-        * Makefile.am, patches/icedtea-jar-misc.patch: Import patch from
-        upstream OpenJDK 6.
-        http://hg.openjdk.java.net/jdk6/jdk6/jdk/rev/b35f1e5075a4
+	* Makefile.am, patches/icedtea-jar-misc.patch: Import patch from
+	upstream OpenJDK 6.
+	http://hg.openjdk.java.net/jdk6/jdk6/jdk/rev/b35f1e5075a4
 
 2009-09-09  Gary Benson  <gbenson@redhat.com>
 
@@ -8810,7 +8810,7 @@
 
 	* patches/hotspot/default/icedtea-gcc-stack-markings.patch: New.
 	Adding stack markings to the x86 assembly for not using executable
-        stack.
+	stack.
 
 2009-08-27  Kees Cook <kees@canonical.com>
 
@@ -9540,7 +9540,7 @@
 	(SharkBuilder::CreateMemoryBarrier): Likewise.
 	(SharkBuilder::CreateDump): llvm::ConstantArray::get have been
 	moved to llvm::LLVMContext::getConstantArray.
- 
+
 2009-07-14  Deepak Bhole  <dbhole@redhat.com>
 
 	* Makefile.am: Fix npplugin build.
@@ -9649,12 +9649,12 @@
 	* plugin/icedteanp/IcedTeaJavaRequestProcessor.h: New file. Header for
 	IcedTeaJavaRequestProcessor.cc.
 	* plugin/icedteanp/IcedTeaNPPlugin.cc: Modified to work with the new
-	MessageBus archtecture for the new plugin. Also, moved from top level 
+	MessageBus archtecture for the new plugin. Also, moved from top level
 	directory.
 	* plugin/icedteanp/IcedTeaNPPlugin.h: New file. Header for
 	IcedTeaNPPlugin.cc.
-	* plugin/icedteanp/IcedTeaPluginRequestProcessor.cc: New file. Processes 
-    plugin data requests from Java side.
+	* plugin/icedteanp/IcedTeaPluginRequestProcessor.cc: New file. Processes
+	plugin data requests from Java side.
 	* plugin/icedteanp/IcedTeaPluginRequestProcessor.h: new file. Header for
 	IcedTeaPluginRequestProcessor.cc.
 	* plugin/icedteanp/IcedTeaPluginUtils.cc: New file. Utility functions for
@@ -9726,7 +9726,7 @@
 	llvm version.
 	* ports/hotspot/src/share/vm/shark/sharkMemoryManager.hpp:
 	Likewise.
- 
+
 2009-07-08  Xerxes Rånby  <xerxes@zafena.se>
 
 	* ports/hotspot/src/share/vm/shark/sharkBuilder.hpp
@@ -10754,7 +10754,7 @@
 	(SharkStateScanner::scan): Replace monitor scanning, remove
 	exception slot, and add temporary oop slot.
 	
- 	* ports/hotspot/src/share/vm/shark/sharkCacheDecache.hpp
+	* ports/hotspot/src/share/vm/shark/sharkCacheDecache.hpp
 	(SharkDecacher::process_monitor): New argument.
 	(SharkDecacher::process_oop_tmp_slot): New method.
 	(SharkCacher::process_oop_tmp_slot): Likewise.
@@ -10786,7 +10786,7 @@
 
 	* ports/hotspot/src/cpu/zero/vm/sharkFrame_zero.hpp
 	(SharkFrame::Layout): Replaced exception slot with oop_tmp slot.
- 	* ports/hotspot/src/cpu/zero/vm/stackPrinter_zero.hpp
+	* ports/hotspot/src/cpu/zero/vm/stackPrinter_zero.hpp
 	(ZeroStackPrinter::print_word): Likewise.
 
 	* ports/hotspot/src/share/vm/shark/sharkMonitor.hpp: Removed.
@@ -12645,7 +12645,7 @@
 	(read): Fixed bounds checking.
 
 2009-02-11  Marc Schoenefeld <mschoene@redhat.com>
-            Omair Majid  <omajid@redhat.com>
+	    Omair Majid  <omajid@redhat.com>
 
 	* pulseaudio/src/java/org/classpath/icedtea/pulseaudio/PulseAudioSourceDataLine.java
 	(write): Fix bounds checking.
@@ -13745,7 +13745,7 @@
 2009-01-12  Andrew Haley  <aph@redhat.com>
 
 	* ports/hotspot/src/share/vm/shark/sharkBlock.cpp (SharkBlock::do_ldc):
-        Add logic for ldc(Class).
+	Add logic for ldc(Class).
 
 2009-01-11  Mark Wielaard  <mark@klomp.org>
 
@@ -17256,7 +17256,7 @@
 	* jvm.cfg.in: Updated with new libjvm.so location.
 
 2008-04-15  Gary Benson  <gbenson@redhat.com>
-            Yi Zhan <yi.zhan@intel.com>
+	    Yi Zhan <yi.zhan@intel.com>
 
 	* patches/icedtea-ia64-fdlibm.patch: New file.
 	* Makefile.am (ICEDTEA_PATCHES): Added the above.
