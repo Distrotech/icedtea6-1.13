@@ -325,7 +325,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6663040-com.sun.awt.patch \
 	patches/openjdk/6775317-non-AA-simple-shape-performance.patch \
 	patches/openjdk/6766342-AA-simple-shape-performance.patch \
-	patches/pr600-arm-jvm.cfg.patch
+	patches/pr600-arm-jvm.cfg.patch \
+	patches/pr639-missing_shark_include.patch
 
 if !WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
