@@ -334,7 +334,8 @@ ICEDTEA_PATCHES += \
 	patches/openjdk/6997495-test_correction_6857159.patch
 else
 ICEDTEA_PATCHES += \
-	patches/pr639-broken_shark_build.patch
+	patches/pr639-broken_shark_build.patch \
+	patches/hotspot/$(HSBUILD)/powerpc-stacksize.patch
 endif
 
 if WITH_RHINO

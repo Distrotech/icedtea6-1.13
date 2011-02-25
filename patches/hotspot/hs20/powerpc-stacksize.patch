@@ -1,0 +1,42 @@
+--- openjdk/hotspot/src/os_cpu/linux_zero/vm/globals_linux_zero.hpp~	2011-02-22 17:51:24.000000000 +0100
++++ openjdk/hotspot/src/os_cpu/linux_zero/vm/globals_linux_zero.hpp	2011-02-24 18:58:27.758228950 +0100
+@@ -32,7 +32,11 @@
+ //
+ 
+ define_pd_global(bool,  DontYieldALot,           false);
++#ifdef __powerpc64__
++define_pd_global(intx,  ThreadStackSize,         2048);
++#else
+ define_pd_global(intx,  ThreadStackSize,         1536);
++#endif
+ #ifdef _LP64
+ define_pd_global(intx,  VMThreadStackSize,       1024);
+ #else
+--- openjdk/corba/make/common/shared/Defs-java.gmk~	2011-02-24 18:56:20.278228999 +0100
++++ openjdk/corba/make/common/shared/Defs-java.gmk	2011-02-24 19:01:47.938229001 +0100
+@@ -68,9 +68,9 @@
+ 
+ # 64-bit builds require a larger thread stack size.
+ ifeq ($(ARCH_DATA_MODEL), 32)
+-  JAVAC_JVM_FLAGS    += -J-XX:ThreadStackSize=768
++  JAVAC_JVM_FLAGS    += -J-XX:ThreadStackSize=1024
+ else
+-  JAVAC_JVM_FLAGS    += -J-XX:ThreadStackSize=1536
++  JAVAC_JVM_FLAGS    += -J-XX:ThreadStackSize=2048
+ endif
+ JAVAC_JVM_FLAGS    += $(JAVA_TOOLS_FLAGS:%=-J%)
+ 
+--- openjdk/jdk/make/common/shared/Defs-java.gmk~	2011-02-24 20:10:20.598229000 +0100
++++ openjdk/jdk/make/common/shared/Defs-java.gmk	2011-02-24 20:11:45.608228331 +0100
+@@ -75,9 +75,9 @@
+ 
+ # 64-bit builds require a larger thread stack size.
+ ifeq ($(ARCH_DATA_MODEL), 32)
+-  JAVAC_JVM_FLAGS    += -J-XX:ThreadStackSize=768
++  JAVAC_JVM_FLAGS    += -J-XX:ThreadStackSize=1024
+ else
+-  JAVAC_JVM_FLAGS    += -J-XX:ThreadStackSize=1536
++  JAVAC_JVM_FLAGS    += -J-XX:ThreadStackSize=2048
+ endif
+ JAVAC_JVM_FLAGS    += $(JAVA_TOOLS_FLAGS:%=-J%)
+ 
