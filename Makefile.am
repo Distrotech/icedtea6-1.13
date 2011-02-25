@@ -1398,7 +1398,7 @@ clean-icedtea-against-icedtea: clean-add-jamvm clean-add-zero clean-add-cacao \
 stamps/icedtea-debug-against-icedtea.stamp: stamps/icedtea-debug.stamp \
  stamps/add-jamvm-debug.stamp stamps/add-cacao-debug.stamp \
  stamps/add-zero-debug.stamp stamps/add-systemtap-debug.stamp stamps/add-pulseaudio-debug.stamp \
- stamps/add-nss-debug.stamp stamps/add/tzdata-support-debug.stamp
+ stamps/add-nss-debug.stamp stamps/add-tzdata-support-debug.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-debug-against-icedtea.stamp
 
