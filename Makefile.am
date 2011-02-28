@@ -249,7 +249,6 @@ ICEDTEA_PATCHES = \
 	patches/arch.patch \
 	patches/lc_ctype.patch \
 	patches/xjc.patch \
-	patches/stroker-finish.patch \
 	patches/linker-libs-order.patch \
 	patches/testenv.patch \
 	patches/samejvm-safe.patch \
@@ -265,8 +264,6 @@ ICEDTEA_PATCHES = \
 	patches/jtreg-jrunscript.patch \
 	patches/network-unreachable.patch \
 	patches/dnd-filelists.patch \
-	patches/java2d-stroker-internal-joint.patch \
-	patches/java2d-stroker-internal-close-joint.patch \
 	patches/disable-cc-incompatible-sanity-checks.patch \
 	patches/explicit-target-arch.patch \
 	patches/gcc-stack-markings.patch \
@@ -323,7 +320,12 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6663040-com.sun.awt.patch \
 	patches/openjdk/6775317-non-AA-simple-shape-performance.patch \
 	patches/pr600-arm-jvm.cfg.patch \
-	patches/openjdk/6887494-NPE-in-pisces.patch
+	patches/piscesMakefile.patch \
+	patches/openjdk/6887494-NPE-in-pisces.patch \
+	patches/openjdk/6967436-6967433-floating-pt-conversion.patch \
+	patches/openjdk/6976265-stroke-control.patch \
+	patches/openjdk/6967434-bad-round-joins.patch \
+	patches/openjdk/6766342-AA-simple-shape-performance.patch
 
 if !WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \

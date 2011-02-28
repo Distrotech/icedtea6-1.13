@@ -1,0 +1,11 @@
+--- openjdk/jdk/make/sun/pisces/Makefile.orig  2011-02-23 20:16:27.116261331 -0500
++++ openjdk/jdk/make/sun/pisces/Makefile   2011-02-23 20:17:08.106141482 -0500
+@@ -28,6 +28,8 @@
+ PRODUCT = sun
+ include $(BUILDDIR)/common/Defs.gmk
+ 
++LANGUAGE_VERSION = -source 6
++CLASS_VERSION = -target 6
+ #
+ # Files
+ #

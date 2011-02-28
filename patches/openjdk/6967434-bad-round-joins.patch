@@ -1,0 +1,4992 @@
+# HG changeset patch
+# User dlila
+# Date 1288103963 14400
+# Node ID 065e6c5a80276390345fe863724e8207e43c7b08
+# Parent  12b65e7ee3e41c8f6ba49b86dfb347dd38d84e09
+6967434: Round joins/caps of scaled up lines have poor quality.
+Summary: eliminated flattening from the rendering engine.
+Reviewed-by: flar
+
+diff -r 12b65e7ee3e4 -r 065e6c5a8027 src/share/classes/sun/java2d/pisces/Curve.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/src/share/classes/sun/java2d/pisces/Curve.java	Tue Oct 26 10:39:23 2010 -0400
+@@ -0,0 +1,294 @@
++/*
++ * Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.  Oracle designates this
++ * particular file as subject to the "Classpath" exception as provided
++ * by Oracle in the LICENSE file that accompanied this code.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++package sun.java2d.pisces;
++
++import java.util.Iterator;
++
++class Curve {
++
++    float ax, ay, bx, by, cx, cy, dx, dy;
++    float dax, day, dbx, dby;
++
++    Curve() {
++    }
++
++    void set(float[] points, int type) {
++        switch(type) {
++        case 8:
++            set(points[0], points[1],
++                points[2], points[3],
++                points[4], points[5],
++                points[6], points[7]);
++            break;
++        case 6:
++            set(points[0], points[1],
++                points[2], points[3],
++                points[4], points[5]);
++            break;
++        default:
++            throw new InternalError("Curves can only be cubic or quadratic");
++        }
++    }
++
++    void set(float x1, float y1,
++             float x2, float y2,
++             float x3, float y3,
++             float x4, float y4)
++    {
++        ax = 3 * (x2 - x3) + x4 - x1;
++        ay = 3 * (y2 - y3) + y4 - y1;
++        bx = 3 * (x1 - 2 * x2 + x3);
++        by = 3 * (y1 - 2 * y2 + y3);
++        cx = 3 * (x2 - x1);
++        cy = 3 * (y2 - y1);
++        dx = x1;
++        dy = y1;
++        dax = 3 * ax; day = 3 * ay;
++        dbx = 2 * bx; dby = 2 * by;
++    }
++
++    void set(float x1, float y1,
++             float x2, float y2,
++             float x3, float y3)
++    {
++        ax = ay = 0f;
++
++        bx = x1 - 2 * x2 + x3;
++        by = y1 - 2 * y2 + y3;
++        cx = 2 * (x2 - x1);
++        cy = 2 * (y2 - y1);
++        dx = x1;
++        dy = y1;
++        dax = 0; day = 0;
++        dbx = 2 * bx; dby = 2 * by;
++    }
++
++    float xat(float t) {
++        return t * (t * (t * ax + bx) + cx) + dx;
++    }
++    float yat(float t) {
++        return t * (t * (t * ay + by) + cy) + dy;
++    }
++
++    float dxat(float t) {
++        return t * (t * dax + dbx) + cx;
++    }
++
++    float dyat(float t) {
++        return t * (t * day + dby) + cy;
++    }
++
++    private float ddxat(float t) {
++        return 2 * dax * t + dbx;
++    }
++
++    private float ddyat(float t) {
++        return 2 * day * t + dby;
++    }
++
++    int dxRoots(float[] roots, int off) {
++        return Helpers.quadraticRoots(dax, dbx, cx, roots, off);
++    }
++
++    int dyRoots(float[] roots, int off) {
++        return Helpers.quadraticRoots(day, dby, cy, roots, off);
++    }
++
++    int infPoints(float[] pts, int off) {
++        // inflection point at t if -f'(t)x*f''(t)y + f'(t)y*f''(t)x == 0
++        // Fortunately, this turns out to be quadratic, so there are at
++        // most 2 inflection points.
++        final float a = dax * dby - dbx * day;
++        final float b = 2 * (cy * dax - day * cx);
++        final float c = cy * dbx - cx * dby;
++
++        return Helpers.quadraticRoots(a, b, c, pts, off);
++    }
++
++    // finds points where the first and second derivative are
++    // perpendicular. This happens when g(t) = f'(t)*f''(t) == 0 (where
++    // * is a dot product). Unfortunately, we have to solve a cubic.
++    private int perpendiculardfddf(float[] pts, int off, final float err) {
++        assert pts.length >= off + 4;
++
++        // these are the coefficients of g(t):
++        final float a = 2*(dax*dax + day*day);
++        final float b = 3*(dax*dbx + day*dby);
++        final float c = 2*(dax*cx + day*cy) + dbx*dbx + dby*dby;
++        final float d = dbx*cx + dby*cy;
++        // TODO: We might want to divide the polynomial by a to make the
++        // coefficients smaller. This won't change the roots.
++        return Helpers.cubicRootsInAB(a, b, c, d, pts, off, err, 0f, 1f);
++    }
++
++    // Tries to find the roots of the function ROC(t)-w in [0, 1). It uses
++    // a variant of the false position algorithm to find the roots. False
++    // position requires that 2 initial values x0,x1 be given, and that the
++    // function must have opposite signs at those values. To find such
++    // values, we need the local extrema of the ROC function, for which we
++    // need the roots of its derivative; however, it's harder to find the
++    // roots of the derivative in this case than it is to find the roots
++    // of the original function. So, we find all points where this curve's
++    // first and second derivative are perpendicular, and we pretend these
++    // are our local extrema. There are at most 3 of these, so we will check
++    // at most 4 sub-intervals of (0,1). ROC has asymptotes at inflection
++    // points, so roc-w can have at least 6 roots. This shouldn't be a
++    // problem for what we're trying to do (draw a nice looking curve).
++    int rootsOfROCMinusW(float[] roots, int off, final float w, final float err) {
++        // no OOB exception, because by now off<=6, and roots.length >= 10
++        assert off <= 6 && roots.length >= 10;
++        int ret = off;
++        int numPerpdfddf = perpendiculardfddf(roots, off, err);
++        float t0 = 0, ft0 = ROCsq(t0) - w*w;
++        roots[off + numPerpdfddf] = 1f; // always check interval end points
++        numPerpdfddf++;
++        for (int i = off; i < off + numPerpdfddf; i++) {
++            float t1 = roots[i], ft1 = ROCsq(t1) - w*w;
++            if (ft0 == 0f) {
++                roots[ret++] = t0;
++            } else if (ft1 * ft0 < 0f) { // have opposite signs
++                // (ROC(t)^2 == w^2) == (ROC(t) == w) is true because
++                // ROC(t) >= 0 for all t.
++                roots[ret++] = falsePositionROCsqMinusX(t0, t1, w*w, err);
++            }
++            t0 = t1;
++            ft0 = ft1;
++        }
++
++        return ret - off;
++    }
++
++    private static float eliminateInf(float x) {
++        return (x == Float.POSITIVE_INFINITY ? Float.MAX_VALUE :
++            (x == Float.NEGATIVE_INFINITY ? Float.MIN_VALUE : x));
++    }
++
++    // A slight modification of the false position algorithm on wikipedia.
++    // This only works for the ROCsq-x functions. It might be nice to have
++    // the function as an argument, but that would be awkward in java6.
++    // It is something to consider for java7, depending on how closures
++    // and function objects turn out. Same goes for the newton's method
++    // algorithm in Helpers.java
++    private float falsePositionROCsqMinusX(float x0, float x1,
++                                           final float x, final float err)
++    {
++        final int iterLimit = 100;
++        int side = 0;
++        float t = x1, ft = eliminateInf(ROCsq(t) - x);
++        float s = x0, fs = eliminateInf(ROCsq(s) - x);
++        float r = s, fr;
++        for (int i = 0; i < iterLimit && Math.abs(t - s) > err * Math.abs(t + s); i++) {
++            r = (fs * t - ft * s) / (fs - ft);
++            fr = ROCsq(r) - x;
++            if (fr * ft > 0) {// have the same sign
++                ft = fr; t = r;
++                if (side < 0) {
++                    fs /= (1 << (-side));
++                    side--;
++                } else {
++                    side = -1;
++                }
++            } else if (fr * fs > 0) {
++                fs = fr; s = r;
++                if (side > 0) {
++                    ft /= (1 << side);
++                    side++;
++                } else {
++                    side = 1;
++                }
++            } else {
++                break;
++            }
++        }
++        return r;
++    }
++
++    // returns the radius of curvature squared at t of this curve
++    // see http://en.wikipedia.org/wiki/Radius_of_curvature_(applications)
++    private float ROCsq(final float t) {
++        final float dx = dxat(t);
++        final float dy = dyat(t);
++        final float ddx = ddxat(t);
++        final float ddy = ddyat(t);
++        final float dx2dy2 = dx*dx + dy*dy;
++        final float ddx2ddy2 = ddx*ddx + ddy*ddy;
++        final float ddxdxddydy = ddx*dx + ddy*dy;
++        float ret = ((dx2dy2*dx2dy2) / (dx2dy2 * ddx2ddy2 - ddxdxddydy*ddxdxddydy))*dx2dy2;
++        return ret;
++    }
++
++    // curve to be broken should be in pts[0]
++    // this will change the contents of both pts and Ts
++    // TODO: There's no reason for Ts to be an array. All we need is a sequence
++    // of t values at which to subdivide. An array statisfies this condition,
++    // but is unnecessarily restrictive. Ts should be an Iterator<Float> instead.
++    // Doing this will also make dashing easier, since we could easily make
++    // LengthIterator an Iterator<Float> and feed it to this function to simplify
++    // the loop in Dasher.somethingTo.
++    static Iterator<float[]> breakPtsAtTs(final float[][] pts, final int type,
++                                          final float[] Ts, final int numTs)
++    {
++        assert pts.length >= 2 && pts[0].length >= 8 && numTs <= Ts.length;
++        return new Iterator<float[]>() {
++            int nextIdx = 0;
++            int nextCurveIdx = 0;
++            float prevT = 0;
++
++            @Override public boolean hasNext() {
++                return nextCurveIdx < numTs + 1;
++            }
++
++            @Override public float[] next() {
++                float[] ret;
++                if (nextCurveIdx < numTs) {
++                    float curT = Ts[nextCurveIdx];
++                    float splitT = (curT - prevT) / (1 - prevT);
++                    Helpers.subdivideAt(splitT,
++                                        pts[nextIdx], 0,
++                                        pts[nextIdx], 0,
++                                        pts[1-nextIdx], 0, type);
++                    updateTs(Ts, Ts[nextCurveIdx], nextCurveIdx + 1, numTs - nextCurveIdx - 1);
++                    ret = pts[nextIdx];
++                    nextIdx = 1 - nextIdx;
++                } else {
++                    ret = pts[nextIdx];
++                }
++                nextCurveIdx++;
++                return ret;
++            }
++
++            @Override public void remove() {}
++        };
++    }
++
++    // precondition: ts[off]...ts[off+len-1] must all be greater than t.
++    private static void updateTs(float[] ts, final float t, final int off, final int len) {
++        for (int i = off; i < off + len; i++) {
++            ts[i] = (ts[i] - t) / (1 - t);
++        }
++    }
++}
++
+diff -r 12b65e7ee3e4 -r 065e6c5a8027 src/share/classes/sun/java2d/pisces/Dasher.java
+--- openjdk.orig/jdk/src/share/classes/sun/java2d/pisces/Dasher.java	Fri Oct 22 16:57:41 2010 +0400
++++ openjdk/jdk/src/share/classes/sun/java2d/pisces/Dasher.java	Tue Oct 26 10:39:23 2010 -0400
+@@ -25,6 +25,8 @@
+ 
+ package sun.java2d.pisces;
+ 
++import sun.awt.geom.PathConsumer2D;
++
+ /**
+  * The <code>Dasher</code> class takes a series of linear commands
+  * (<code>moveTo</code>, <code>lineTo</code>, <code>close</code> and
+@@ -36,18 +38,16 @@
+  * semantics are unclear.
+  *
+  */
+-public class Dasher implements LineSink {
+-    private final LineSink output;
++public class Dasher implements sun.awt.geom.PathConsumer2D {
++
++    private final PathConsumer2D out;
+     private final float[] dash;
+     private final float startPhase;
+     private final boolean startDashOn;
+     private final int startIdx;
+ 
+-    private final float m00, m10, m01, m11;
+-    private final float det;
+-
+-    private boolean firstDashOn;
+     private boolean starting;
++    private boolean needsMoveTo;
+ 
+     private int idx;
+     private boolean dashOn;
+@@ -55,28 +55,23 @@
+ 
+     private float sx, sy;
+     private float x0, y0;
+-    private float sx1, sy1;
+ 
++    // temporary storage for the current curve
++    private float[] curCurvepts;
+ 
+     /**
+      * Constructs a <code>Dasher</code>.
+      *
+-     * @param output an output <code>LineSink</code>.
+-     * @param dash an array of <code>int</code>s containing the dash pattern
+-     * @param phase an <code>int</code> containing the dash phase
+-     * @param transform a <code>Transform4</code> object indicating
+-     * the transform that has been previously applied to all incoming
+-     * coordinates.  This is required in order to compute dash lengths
+-     * properly.
++     * @param out an output <code>PathConsumer2D</code>.
++     * @param dash an array of <code>float</code>s containing the dash pattern
++     * @param phase a <code>float</code> containing the dash phase
+      */
+-    public Dasher(LineSink output,
+-                  float[] dash, float phase,
+-                  float a00, float a01, float a10, float a11) {
++    public Dasher(PathConsumer2D out, float[] dash, float phase) {
+         if (phase < 0) {
+             throw new IllegalArgumentException("phase < 0 !");
+         }
+ 
+-        this.output = output;
++        this.out = out;
+ 
+         // Normalize so 0 <= phase < dash[0]
+         int idx = 0;
+@@ -92,16 +87,19 @@
+         this.startPhase = this.phase = phase;
+         this.startDashOn = dashOn;
+         this.startIdx = idx;
++        this.starting = true;
+ 
+-        m00 = a00;
+-        m01 = a01;
+-        m10 = a10;
+-        m11 = a11;
+-        det = m00 * m11 - m01 * m10;
++        // we need curCurvepts to be able to contain 2 curves because when
++        // dashing curves, we need to subdivide it
++        curCurvepts = new float[8 * 2];
+     }
+ 
+     public void moveTo(float x0, float y0) {
+-        output.moveTo(x0, y0);
++        if (firstSegidx > 0) {
++            out.moveTo(sx, sy);
++            emitFirstSegments();
++        }
++        needsMoveTo = true;
+         this.idx = startIdx;
+         this.dashOn = this.startDashOn;
+         this.phase = this.startPhase;
+@@ -110,88 +108,108 @@
+         this.starting = true;
+     }
+ 
+-    public void lineJoin() {
+-        output.lineJoin();
++    private void emitSeg(float[] buf, int off, int type) {
++        switch (type) {
++        case 8:
++            out.curveTo(buf[off+0], buf[off+1],
++                        buf[off+2], buf[off+3],
++                        buf[off+4], buf[off+5]);
++            break;
++        case 6:
++            out.quadTo(buf[off+0], buf[off+1],
++                       buf[off+2], buf[off+3]);
++            break;
++        case 4:
++            out.lineTo(buf[off], buf[off+1]);
++        }
+     }
+ 
+-    private void goTo(float x1, float y1) {
++    private void emitFirstSegments() {
++        for (int i = 0; i < firstSegidx; ) {
++            emitSeg(firstSegmentsBuffer, i+1, (int)firstSegmentsBuffer[i]);
++            i += (((int)firstSegmentsBuffer[i]) - 1);
++        }
++        firstSegidx = 0;
++    }
++
++    // We don't emit the first dash right away. If we did, caps would be
++    // drawn on it, but we need joins to be drawn if there's a closePath()
++    // So, we store the path elements that make up the first dash in the
++    // buffer below.
++    private float[] firstSegmentsBuffer = new float[7];
++    private int firstSegidx = 0;
++    // precondition: pts must be in relative coordinates (relative to x0,y0)
++    // fullCurve is true iff the curve in pts has not been split.
++    private void goTo(float[] pts, int off, final int type) {
++        float x = pts[off + type - 4];
++        float y = pts[off + type - 3];
+         if (dashOn) {
+             if (starting) {
+-                this.sx1 = x1;
+-                this.sy1 = y1;
+-                firstDashOn = true;
+-                starting = false;
++                firstSegmentsBuffer = Helpers.widenArray(firstSegmentsBuffer,
++                                      firstSegidx, type - 2);
++                firstSegmentsBuffer[firstSegidx++] = type;
++                System.arraycopy(pts, off, firstSegmentsBuffer, firstSegidx, type - 2);
++                firstSegidx += type - 2;
++            } else {
++                if (needsMoveTo) {
++                    out.moveTo(x0, y0);
++                    needsMoveTo = false;
++                }
++                emitSeg(pts, off, type);
+             }
+-            output.lineTo(x1, y1);
+         } else {
+-            if (starting) {
+-                firstDashOn = false;
+-                starting = false;
+-            }
+-            output.moveTo(x1, y1);
++            starting = false;
++            needsMoveTo = true;
+         }
+-        this.x0 = x1;
+-        this.y0 = y1;
++        this.x0 = x;
++        this.y0 = y;
+     }
+ 
+     public void lineTo(float x1, float y1) {
+-        // The widened line is squished to a 0 width one, so no drawing is done
+-        if (det == 0) {
+-            goTo(x1, y1);
+-            return;
+-        }
+         float dx = x1 - x0;
+         float dy = y1 - y0;
+ 
++        float len = (float) Math.hypot(dx, dy);
+ 
+-        // Compute segment length in the untransformed
+-        // coordinate system
+-
+-        float la = (dy*m00 - dx*m10)/det;
+-        float lb = (dy*m01 - dx*m11)/det;
+-        float origLen = (float) Math.hypot(la, lb);
+-
+-        if (origLen == 0) {
+-            // Let the output LineSink deal with cases where dx, dy are 0.
+-            goTo(x1, y1);
++        if (len == 0) {
+             return;
+         }
+ 
+         // The scaling factors needed to get the dx and dy of the
+         // transformed dash segments.
+-        float cx = dx / origLen;
+-        float cy = dy / origLen;
++        float cx = dx / len;
++        float cy = dy / len;
+ 
+         while (true) {
+             float leftInThisDashSegment = dash[idx] - phase;
+-            if (origLen < leftInThisDashSegment) {
+-                goTo(x1, y1);
++            if (len <= leftInThisDashSegment) {
++                curCurvepts[0] = x1;
++                curCurvepts[1] = y1;
++                goTo(curCurvepts, 0, 4);
+                 // Advance phase within current dash segment
+-                phase += origLen;
+-                return;
+-            } else if (origLen == leftInThisDashSegment) {
+-                goTo(x1, y1);
+-                phase = 0f;
+-                idx = (idx + 1) % dash.length;
+-                dashOn = !dashOn;
++                phase += len;
++                if (len == leftInThisDashSegment) {
++                    phase = 0f;
++                    idx = (idx + 1) % dash.length;
++                    dashOn = !dashOn;
++                }
+                 return;
+             }
+ 
+-            float dashx, dashy;
+             float dashdx = dash[idx] * cx;
+             float dashdy = dash[idx] * cy;
+             if (phase == 0) {
+-                dashx = x0 + dashdx;
+-                dashy = y0 + dashdy;
++                curCurvepts[0] = x0 + dashdx;
++                curCurvepts[1] = y0 + dashdy;
+             } else {
+-                float p = (leftInThisDashSegment) / dash[idx];
+-                dashx = x0 + p * dashdx;
+-                dashy = y0 + p * dashdy;
++                float p = leftInThisDashSegment / dash[idx];
++                curCurvepts[0] = x0 + p * dashdx;
++                curCurvepts[1] = y0 + p * dashdy;
+             }
+ 
+-            goTo(dashx, dashy);
++            goTo(curCurvepts, 0, 4);
+ 
+-            origLen -= (dash[idx] - phase);
++            len -= leftInThisDashSegment;
+             // Advance to next dash segment
+             idx = (idx + 1) % dash.length;
+             dashOn = !dashOn;
+@@ -199,15 +217,289 @@
+         }
+     }
+ 
++    private LengthIterator li = null;
+ 
+-    public void close() {
+-        lineTo(sx, sy);
+-        if (firstDashOn) {
+-            output.lineTo(sx1, sy1);
++    // preconditions: curCurvepts must be an array of length at least 2 * type,
++    // that contains the curve we want to dash in the first type elements
++    private void somethingTo(int type) {
++        if (pointCurve(curCurvepts, type)) {
++            return;
++        }
++        if (li == null) {
++            li = new LengthIterator(4, 0.0001f);
++        }
++        li.initializeIterationOnCurve(curCurvepts, type);
++
++        int curCurveoff = 0; // initially the current curve is at curCurvepts[0...type]
++        float lastSplitT = 0;
++        float t = 0;
++        float leftInThisDashSegment = dash[idx] - phase;
++        while ((t = li.next(leftInThisDashSegment)) < 1) {
++            if (t != 0) {
++                Helpers.subdivideAt((t - lastSplitT) / (1 - lastSplitT),
++                        curCurvepts, curCurveoff,
++                        curCurvepts, 0,
++                        curCurvepts, type, type);
++                lastSplitT = t;
++                goTo(curCurvepts, 2, type);
++                curCurveoff = type;
++            }
++            // Advance to next dash segment
++            idx = (idx + 1) % dash.length;
++            dashOn = !dashOn;
++            phase = 0;
++            leftInThisDashSegment = dash[idx];
++        }
++        goTo(curCurvepts, curCurveoff+2, type);
++        phase += li.lastSegLen();
++        if (phase >= dash[idx]) {
++            phase = 0f;
++            idx = (idx + 1) % dash.length;
++            dashOn = !dashOn;
+         }
+     }
+ 
+-    public void end() {
+-        output.end();
++    private static boolean pointCurve(float[] curve, int type) {
++        for (int i = 2; i < type; i++) {
++            if (curve[i] != curve[i-2]) {
++                return false;
++            }
++        }
++        return true;
++    }
++
++    // Objects of this class are used to iterate through curves. They return
++    // t values where the left side of the curve has a specified length.
++    // It does this by subdividing the input curve until a certain error
++    // condition has been met. A recursive subdivision procedure would
++    // return as many as 1<<limit curves, but this is an iterator and we
++    // don't need all the curves all at once, so what we carry out a
++    // lazy inorder traversal of the recursion tree (meaning we only move
++    // through the tree when we need the next subdivided curve). This saves
++    // us a lot of memory because at any one time we only need to store
++    // limit+1 curves - one for each level of the tree + 1.
++    // NOTE: the way we do things here is not enough to traverse a general
++    // tree; however, the trees we are interested in have the property that
++    // every non leaf node has exactly 2 children
++    private static class LengthIterator {
++        private enum Side {LEFT, RIGHT};
++        // Holds the curves at various levels of the recursion. The root
++        // (i.e. the original curve) is at recCurveStack[0] (but then it
++        // gets subdivided, the left half is put at 1, so most of the time
++        // only the right half of the original curve is at 0)
++        private float[][] recCurveStack;
++        // sides[i] indicates whether the node at level i+1 in the path from
++        // the root to the current leaf is a left or right child of its parent.
++        private Side[] sides;
++        private int curveType;
++        private final int limit;
++        private final float ERR;
++        private final float minTincrement;
++        // lastT and nextT delimit the current leaf.
++        private float nextT;
++        private float lenAtNextT;
++        private float lastT;
++        private float lenAtLastT;
++        private float lenAtLastSplit;
++        private float lastSegLen;
++        // the current level in the recursion tree. 0 is the root. limit
++        // is the deepest possible leaf.
++        private int recLevel;
++        private boolean done;
++
++        public LengthIterator(int reclimit, float err) {
++            this.limit = reclimit;
++            this.minTincrement = 1f / (1 << limit);
++            this.ERR = err;
++            this.recCurveStack = new float[reclimit+1][8];
++            this.sides = new Side[reclimit];
++            // if any methods are called without first initializing this object on
++            // a curve, we want it to fail ASAP.
++            this.nextT = Float.MAX_VALUE;
++            this.lenAtNextT = Float.MAX_VALUE;
++            this.lenAtLastSplit = Float.MIN_VALUE;
++            this.recLevel = Integer.MIN_VALUE;
++            this.lastSegLen = Float.MAX_VALUE;
++            this.done = true;
++        }
++
++        public void initializeIterationOnCurve(float[] pts, int type) {
++            System.arraycopy(pts, 0, recCurveStack[0], 0, type);
++            this.curveType = type;
++            this.recLevel = 0;
++            this.lastT = 0;
++            this.lenAtLastT = 0;
++            this.nextT = 0;
++            this.lenAtNextT = 0;
++            goLeft(); // initializes nextT and lenAtNextT properly
++            this.lenAtLastSplit = 0;
++            if (recLevel > 0) {
++                this.sides[0] = Side.LEFT;
++                this.done = false;
++            } else {
++                // the root of the tree is a leaf so we're done.
++                this.sides[0] = Side.RIGHT;
++                this.done = true;
++            }
++            this.lastSegLen = 0;
++        }
++
++        // returns the t value where the remaining curve should be split in
++        // order for the left subdivided curve to have length len. If len
++        // is >= than the length of the uniterated curve, it returns 1.
++        public float next(float len) {
++            float targetLength = lenAtLastSplit + len;
++            while(lenAtNextT < targetLength) {
++                if (done) {
++                    lastSegLen = lenAtNextT - lenAtLastSplit;
++                    return 1;
++                }
++                goToNextLeaf();
++            }
++            lenAtLastSplit = targetLength;
++            float t = binSearchForLen(lenAtLastSplit - lenAtLastT,
++                    recCurveStack[recLevel], curveType, lenAtNextT - lenAtLastT, ERR);
++            // t is relative to the current leaf, so we must make it a valid parameter
++            // of the original curve.
++            t = t * (nextT - lastT) + lastT;
++            if (t >= 1) {
++                t = 1;
++                done = true;
++            }
++            // even if done = true, if we're here, that means targetLength
++            // is equal to, or very, very close to the total length of the
++            // curve, so lastSegLen won't be too high. In cases where len
++            // overshoots the curve, this method will exit in the while
++            // loop, and lastSegLen will still be set to the right value.
++            lastSegLen = len;
++            return t;
++        }
++
++        public float lastSegLen() {
++            return lastSegLen;
++        }
++
++        // Returns t such that if leaf is subdivided at t the left
++        // curve will have length len. leafLen must be the length of leaf.
++        private static Curve bsc = new Curve();
++        private static float binSearchForLen(float len, float[] leaf, int type,
++                                             float leafLen, float err)
++        {
++            assert len <= leafLen;
++            bsc.set(leaf, type);
++            float errBound = err*len;
++            float left = 0, right = 1;
++            while (left < right) {
++                float m = (left + right) / 2;
++                if (m == left || m == right) {
++                    return m;
++                }
++                float x = bsc.xat(m);
++                float y = bsc.yat(m);
++                float leftLen = Helpers.linelen(leaf[0], leaf[1], x, y);
++                if (Math.abs(leftLen - len) < errBound) {
++                    return m;
++                }
++                if (leftLen < len) {
++                    left = m;
++                } else {
++                    right = m;
++                }
++            }
++            return left;
++        }
++
++        // go to the next leaf (in an inorder traversal) in the recursion tree
++        // preconditions: must be on a leaf, and that leaf must not be the root.
++        private void goToNextLeaf() {
++            // We must go to the first ancestor node that has an unvisited
++            // right child.
++            recLevel--;
++            while(sides[recLevel] == Side.RIGHT) {
++                if (recLevel == 0) {
++                    done = true;
++                    return;
++                }
++                recLevel--;
++            }
++
++            sides[recLevel] = Side.RIGHT;
++            System.arraycopy(recCurveStack[recLevel], 0, recCurveStack[recLevel+1], 0, curveType);
++            recLevel++;
++            goLeft();
++        }
++
++        // go to the leftmost node from the current node. Return its length.
++        private void goLeft() {
++            float len = onLeaf();
++            if (len >= 0) {
++                lastT = nextT;
++                lenAtLastT = lenAtNextT;
++                nextT += (1 << (limit - recLevel)) * minTincrement;
++                lenAtNextT += len;
++            } else {
++                Helpers.subdivide(recCurveStack[recLevel], 0,
++                                  recCurveStack[recLevel+1], 0,
++                                  recCurveStack[recLevel], 0, curveType);
++                sides[recLevel] = Side.LEFT;
++                recLevel++;
++                goLeft();
++            }
++        }
++
++        // this is a bit of a hack. It returns -1 if we're not on a leaf, and
++        // the length of the leaf if we are on a leaf.
++        private float onLeaf() {
++            float polylen = Helpers.polyLineLength(recCurveStack[recLevel], 0, curveType);
++            float linelen = Helpers.linelen(recCurveStack[recLevel][0], recCurveStack[recLevel][1],
++                    recCurveStack[recLevel][curveType - 2], recCurveStack[recLevel][curveType - 1]);
++            return (polylen - linelen < ERR || recLevel == limit) ?
++                   (polylen + linelen)/2 : -1;
++        }
++    }
++
++    @Override
++    public void curveTo(float x1, float y1,
++                        float x2, float y2,
++                        float x3, float y3)
++    {
++        curCurvepts[0] = x0;        curCurvepts[1] = y0;
++        curCurvepts[2] = x1;        curCurvepts[3] = y1;
++        curCurvepts[4] = x2;        curCurvepts[5] = y2;
++        curCurvepts[6] = x3;        curCurvepts[7] = y3;
++        somethingTo(8);
++    }
++
++    @Override
++    public void quadTo(float x1, float y1, float x2, float y2) {
++        curCurvepts[0] = x0;        curCurvepts[1] = y0;
++        curCurvepts[2] = x1;        curCurvepts[3] = y1;
++        curCurvepts[4] = x2;        curCurvepts[5] = y2;
++        somethingTo(6);
++    }
++
++    public void closePath() {
++        lineTo(sx, sy);
++        if (firstSegidx > 0) {
++            if (!dashOn || needsMoveTo) {
++                out.moveTo(sx, sy);
++            }
++            emitFirstSegments();
++        }
++        moveTo(sx, sy);
++    }
++
++    public void pathDone() {
++        if (firstSegidx > 0) {
++            out.moveTo(sx, sy);
++            emitFirstSegments();
++        }
++        out.pathDone();
++    }
++
++    @Override
++    public long getNativeConsumer() {
++        throw new InternalError("Dasher does not use a native consumer");
+     }
+ }
++
+diff -r 12b65e7ee3e4 -r 065e6c5a8027 src/share/classes/sun/java2d/pisces/Helpers.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/src/share/classes/sun/java2d/pisces/Helpers.java	Tue Oct 26 10:39:23 2010 -0400
+@@ -0,0 +1,478 @@
++/*
++ * Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.  Oracle designates this
++ * particular file as subject to the "Classpath" exception as provided
++ * by Oracle in the LICENSE file that accompanied this code.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++package sun.java2d.pisces;
++
++import java.util.Arrays;
++
++final class Helpers {
++    private Helpers() {
++        throw new Error("This is a non instantiable class");
++    }
++
++    static boolean within(final float x, final float y, final float err) {
++        final float d = y - x;
++        return (d <= err && d >= -err);
++    }
++
++    static boolean within(final double x, final double y, final double err) {
++        final double d = y - x;
++        return (d <= err && d >= -err);
++    }
++
++    static int quadraticRoots(final float a, final float b,
++                              final float c, float[] zeroes, final int off)
++    {
++        int ret = off;
++        float t;
++        if (a != 0f) {
++            final float dis = b*b - 4*a*c;
++            if (dis > 0) {
++                final float sqrtDis = (float)Math.sqrt(dis);
++                // depending on the sign of b we use a slightly different
++                // algorithm than the traditional one to find one of the roots
++                // so we can avoid adding numbers of different signs (which
++                // might result in loss of precision).
++                if (b >= 0) {
++                    zeroes[ret++] = (2 * c) / (-b - sqrtDis);
++                    zeroes[ret++] = (-b - sqrtDis) / (2 * a);
++                } else {
++                    zeroes[ret++] = (-b + sqrtDis) / (2 * a);
++                    zeroes[ret++] = (2 * c) / (-b + sqrtDis);
++                }
++            } else if (dis == 0f) {
++                t = (-b) / (2 * a);
++                zeroes[ret++] = t;
++            }
++        } else {
++            if (b != 0f) {
++                t = (-c) / b;
++                zeroes[ret++] = t;
++            }
++        }
++        return ret - off;
++    }
++
++    // find the roots of g(t) = a*t^3 + b*t^2 + c*t + d in [A,B)
++    // We will not use Cardano's method, since it is complicated and
++    // involves too many square and cubic roots. We will use Newton's method.
++    // TODO: this should probably return ALL roots. Then the user can do
++    // his own filtering of roots outside [A,B).
++    static int cubicRootsInAB(final float a, final float b,
++                              final float c, final float d,
++                              float[] pts, final int off, final float E,
++                              final float A, final float B)
++    {
++        if (a == 0) {
++            return quadraticRoots(b, c, d, pts, off);
++        }
++        // the coefficients of g'(t). no dc variable because dc=c
++        // we use these to get the critical points of g(t), which
++        // we then use to chose starting points for Newton's method. These
++        // should be very close to the actual roots.
++        final float da = 3 * a;
++        final float db = 2 * b;
++        int numCritPts = quadraticRoots(da, db, c, pts, off+1);
++        numCritPts = filterOutNotInAB(pts, off+1, numCritPts, A, B) - off - 1;
++        // need them sorted.
++        if (numCritPts == 2 && pts[off+1] > pts[off+2]) {
++            float tmp = pts[off+1];
++            pts[off+1] = pts[off+2];
++            pts[off+2] = tmp;
++        }
++
++        int ret = off;
++
++        // we don't actually care much about the extrema themselves. We
++        // only use them to ensure that g(t) is monotonic in each
++        // interval [pts[i],pts[i+1] (for i in off...off+numCritPts+1).
++        // This will allow us to determine intervals containing exactly
++        // one root.
++        // The end points of the interval are always local extrema.
++        pts[off] = A;
++        pts[off + numCritPts + 1] = B;
++        numCritPts += 2;
++
++        float x0 = pts[off], fx0 = evalCubic(a, b, c, d, x0);
++        for (int i = off; i < off + numCritPts - 1; i++) {
++            float x1 = pts[i+1], fx1 = evalCubic(a, b, c, d, x1);
++            if (fx0 == 0f) {
++                pts[ret++] = x0;
++            } else if (fx1 * fx0 < 0f) { // have opposite signs
++                pts[ret++] = CubicNewton(a, b, c, d,
++                        x0 + fx0 * (x1 - x0) / (fx0 - fx1), E);
++            }
++            x0 = x1;
++            fx0 = fx1;
++        }
++        return ret - off;
++    }
++
++    // precondition: the polynomial to be evaluated must not be 0 at x0.
++    static float CubicNewton(final float a, final float b,
++                             final float c, final float d,
++                             float x0, final float err)
++    {
++        // considering how this function is used, 10 should be more than enough
++        final int itlimit = 10;
++        float fx0 = evalCubic(a, b, c, d, x0);
++        float x1;
++        int count = 0;
++        while(true) {
++            x1 = x0 - (fx0 / evalCubic(0, 3 * a, 2 * b, c, x0));
++            if (Math.abs(x1 - x0) < err * Math.abs(x1 + x0) || count == itlimit) {
++                break;
++            }
++            x0 = x1;
++            fx0 = evalCubic(a, b, c, d, x0);
++            count++;
++        }
++        return x1;
++    }
++
++    // fills the input array with numbers 0, INC, 2*INC, ...
++    static void fillWithIdxes(final float[] data, final int[] idxes) {
++        if (idxes.length > 0) {
++            idxes[0] = 0;
++            for (int i = 1; i < idxes.length; i++) {
++                idxes[i] = idxes[i-1] + (int)data[idxes[i-1]];
++            }
++        }
++    }
++
++    static void fillWithIdxes(final int[] idxes, final int inc) {
++        if (idxes.length > 0) {
++            idxes[0] = 0;
++            for (int i = 1; i < idxes.length; i++) {
++                idxes[i] = idxes[i-1] + inc;
++            }
++        }
++    }
++
++    // These use a hardcoded factor of 2 for increasing sizes. Perhaps this
++    // should be provided as an argument.
++    static float[] widenArray(float[] in, final int cursize, final int numToAdd) {
++        if (in == null) {
++            return new float[5 * numToAdd];
++        }
++        if (in.length >= cursize + numToAdd) {
++            return in;
++        }
++        return Arrays.copyOf(in, 2 * (cursize + numToAdd));
++    }
++    static int[] widenArray(int[] in, final int cursize, final int numToAdd) {
++        if (in.length >= cursize + numToAdd) {
++            return in;
++        }
++        return Arrays.copyOf(in, 2 * (cursize + numToAdd));
++    }
++
++    static float evalCubic(final float a, final float b,
++                           final float c, final float d,
++                           final float t)
++    {
++        return t * (t * (t * a + b) + c) + d;
++    }
++
++    static float evalQuad(final float a, final float b,
++                          final float c, final float t)
++    {
++        return t * (t * a + b) + c;
++    }
++
++    // returns the index 1 past the last valid element remaining after filtering
++    static int filterOutNotInAB(float[] nums, final int off, final int len,
++                                final float a, final float b)
++    {
++        int ret = off;
++        for (int i = off; i < off + len; i++) {
++            if (nums[i] > a && nums[i] < b) {
++                nums[ret++] = nums[i];
++            }
++        }
++        return ret;
++    }
++
++    static float polyLineLength(float[] poly, final int off, final int nCoords) {
++        assert nCoords % 2 == 0 && poly.length >= off + nCoords : "";
++        float acc = 0;
++        for (int i = off + 2; i < off + nCoords; i += 2) {
++            acc += linelen(poly[i], poly[i+1], poly[i-2], poly[i-1]);
++        }
++        return acc;
++    }
++
++    static float linelen(float x1, float y1, float x2, float y2) {
++        return (float)Math.hypot(x2 - x1, y2 - y1);
++    }
++
++    static void subdivide(float[] src, int srcoff, float[] left, int leftoff,
++                          float[] right, int rightoff, int type)
++    {
++        switch(type) {
++        case 6:
++            Helpers.subdivideQuad(src, srcoff, left, leftoff, right, rightoff);
++            break;
++        case 8:
++            Helpers.subdivideCubic(src, srcoff, left, leftoff, right, rightoff);
++            break;
++        default:
++            throw new InternalError("Unsupported curve type");
++        }
++    }
++
++    static void isort(float[] a, int off, int len) {
++        for (int i = off + 1; i < off + len; i++) {
++            float ai = a[i];
++            int j = i - 1;
++            for (; j >= off && a[j] > ai; j--) {
++                a[j+1] = a[j];
++            }
++            a[j+1] = ai;
++        }
++    }
++
++    // Most of these are copied from classes in java.awt.geom because we need
++    // float versions of these functions, and Line2D, CubicCurve2D,
++    // QuadCurve2D don't provide them.
++    /**
++     * Subdivides the cubic curve specified by the coordinates
++     * stored in the <code>src</code> array at indices <code>srcoff</code>
++     * through (<code>srcoff</code>&nbsp;+&nbsp;7) and stores the
++     * resulting two subdivided curves into the two result arrays at the
++     * corresponding indices.
++     * Either or both of the <code>left</code> and <code>right</code>
++     * arrays may be <code>null</code> or a reference to the same array
++     * as the <code>src</code> array.
++     * Note that the last point in the first subdivided curve is the
++     * same as the first point in the second subdivided curve. Thus,
++     * it is possible to pass the same array for <code>left</code>
++     * and <code>right</code> and to use offsets, such as <code>rightoff</code>
++     * equals (<code>leftoff</code> + 6), in order
++     * to avoid allocating extra storage for this common point.
++     * @param src the array holding the coordinates for the source curve
++     * @param srcoff the offset into the array of the beginning of the
++     * the 6 source coordinates
++     * @param left the array for storing the coordinates for the first
++     * half of the subdivided curve
++     * @param leftoff the offset into the array of the beginning of the
++     * the 6 left coordinates
++     * @param right the array for storing the coordinates for the second
++     * half of the subdivided curve
++     * @param rightoff the offset into the array of the beginning of the
++     * the 6 right coordinates
++     * @since 1.7
++     */
++    static void subdivideCubic(float src[], int srcoff,
++                               float left[], int leftoff,
++                               float right[], int rightoff)
++    {
++        float x1 = src[srcoff + 0];
++        float y1 = src[srcoff + 1];
++        float ctrlx1 = src[srcoff + 2];
++        float ctrly1 = src[srcoff + 3];
++        float ctrlx2 = src[srcoff + 4];
++        float ctrly2 = src[srcoff + 5];
++        float x2 = src[srcoff + 6];
++        float y2 = src[srcoff + 7];
++        if (left != null) {
++            left[leftoff + 0] = x1;
++            left[leftoff + 1] = y1;
++        }
++        if (right != null) {
++            right[rightoff + 6] = x2;
++            right[rightoff + 7] = y2;
++        }
++        x1 = (x1 + ctrlx1) / 2.0f;
++        y1 = (y1 + ctrly1) / 2.0f;
++        x2 = (x2 + ctrlx2) / 2.0f;
++        y2 = (y2 + ctrly2) / 2.0f;
++        float centerx = (ctrlx1 + ctrlx2) / 2.0f;
++        float centery = (ctrly1 + ctrly2) / 2.0f;
++        ctrlx1 = (x1 + centerx) / 2.0f;
++        ctrly1 = (y1 + centery) / 2.0f;
++        ctrlx2 = (x2 + centerx) / 2.0f;
++        ctrly2 = (y2 + centery) / 2.0f;
++        centerx = (ctrlx1 + ctrlx2) / 2.0f;
++        centery = (ctrly1 + ctrly2) / 2.0f;
++        if (left != null) {
++            left[leftoff + 2] = x1;
++            left[leftoff + 3] = y1;
++            left[leftoff + 4] = ctrlx1;
++            left[leftoff + 5] = ctrly1;
++            left[leftoff + 6] = centerx;
++            left[leftoff + 7] = centery;
++        }
++        if (right != null) {
++            right[rightoff + 0] = centerx;
++            right[rightoff + 1] = centery;
++            right[rightoff + 2] = ctrlx2;
++            right[rightoff + 3] = ctrly2;
++            right[rightoff + 4] = x2;
++            right[rightoff + 5] = y2;
++        }
++    }
++
++
++    static void subdivideCubicAt(float t, float src[], int srcoff,
++                                 float left[], int leftoff,
++                                 float right[], int rightoff)
++    {
++        float x1 = src[srcoff + 0];
++        float y1 = src[srcoff + 1];
++        float ctrlx1 = src[srcoff + 2];
++        float ctrly1 = src[srcoff + 3];
++        float ctrlx2 = src[srcoff + 4];
++        float ctrly2 = src[srcoff + 5];
++        float x2 = src[srcoff + 6];
++        float y2 = src[srcoff + 7];
++        if (left != null) {
++            left[leftoff + 0] = x1;
++            left[leftoff + 1] = y1;
++        }
++        if (right != null) {
++            right[rightoff + 6] = x2;
++            right[rightoff + 7] = y2;
++        }
++        x1 = x1 + t * (ctrlx1 - x1);
++        y1 = y1 + t * (ctrly1 - y1);
++        x2 = ctrlx2 + t * (x2 - ctrlx2);
++        y2 = ctrly2 + t * (y2 - ctrly2);
++        float centerx = ctrlx1 + t * (ctrlx2 - ctrlx1);
++        float centery = ctrly1 + t * (ctrly2 - ctrly1);
++        ctrlx1 = x1 + t * (centerx - x1);
++        ctrly1 = y1 + t * (centery - y1);
++        ctrlx2 = centerx + t * (x2 - centerx);
++        ctrly2 = centery + t * (y2 - centery);
++        centerx = ctrlx1 + t * (ctrlx2 - ctrlx1);
++        centery = ctrly1 + t * (ctrly2 - ctrly1);
++        if (left != null) {
++            left[leftoff + 2] = x1;
++            left[leftoff + 3] = y1;
++            left[leftoff + 4] = ctrlx1;
++            left[leftoff + 5] = ctrly1;
++            left[leftoff + 6] = centerx;
++            left[leftoff + 7] = centery;
++        }
++        if (right != null) {
++            right[rightoff + 0] = centerx;
++            right[rightoff + 1] = centery;
++            right[rightoff + 2] = ctrlx2;
++            right[rightoff + 3] = ctrly2;
++            right[rightoff + 4] = x2;
++            right[rightoff + 5] = y2;
++        }
++    }
++
++    static void subdivideQuad(float src[], int srcoff,
++                              float left[], int leftoff,
++                              float right[], int rightoff)
++    {
++        float x1 = src[srcoff + 0];
++        float y1 = src[srcoff + 1];
++        float ctrlx = src[srcoff + 2];
++        float ctrly = src[srcoff + 3];
++        float x2 = src[srcoff + 4];
++        float y2 = src[srcoff + 5];
++        if (left != null) {
++            left[leftoff + 0] = x1;
++            left[leftoff + 1] = y1;
++        }
++        if (right != null) {
++            right[rightoff + 4] = x2;
++            right[rightoff + 5] = y2;
++        }
++        x1 = (x1 + ctrlx) / 2.0f;
++        y1 = (y1 + ctrly) / 2.0f;
++        x2 = (x2 + ctrlx) / 2.0f;
++        y2 = (y2 + ctrly) / 2.0f;
++        ctrlx = (x1 + x2) / 2.0f;
++        ctrly = (y1 + y2) / 2.0f;
++        if (left != null) {
++            left[leftoff + 2] = x1;
++            left[leftoff + 3] = y1;
++            left[leftoff + 4] = ctrlx;
++            left[leftoff + 5] = ctrly;
++        }
++        if (right != null) {
++            right[rightoff + 0] = ctrlx;
++            right[rightoff + 1] = ctrly;
++            right[rightoff + 2] = x2;
++            right[rightoff + 3] = y2;
++        }
++    }
++
++    static void subdivideQuadAt(float t, float src[], int srcoff,
++                                float left[], int leftoff,
++                                float right[], int rightoff)
++    {
++        float x1 = src[srcoff + 0];
++        float y1 = src[srcoff + 1];
++        float ctrlx = src[srcoff + 2];
++        float ctrly = src[srcoff + 3];
++        float x2 = src[srcoff + 4];
++        float y2 = src[srcoff + 5];
++        if (left != null) {
++            left[leftoff + 0] = x1;
++            left[leftoff + 1] = y1;
++        }
++        if (right != null) {
++            right[rightoff + 4] = x2;
++            right[rightoff + 5] = y2;
++        }
++        x1 = x1 + t * (ctrlx - x1);
++        y1 = y1 + t * (ctrly - y1);
++        x2 = ctrlx + t * (x2 - ctrlx);
++        y2 = ctrly + t * (y2 - ctrly);
++        ctrlx = x1 + t * (x2 - x1);
++        ctrly = y1 + t * (y2 - y1);
++        if (left != null) {
++            left[leftoff + 2] = x1;
++            left[leftoff + 3] = y1;
++            left[leftoff + 4] = ctrlx;
++            left[leftoff + 5] = ctrly;
++        }
++        if (right != null) {
++            right[rightoff + 0] = ctrlx;
++            right[rightoff + 1] = ctrly;
++            right[rightoff + 2] = x2;
++            right[rightoff + 3] = y2;
++        }
++    }
++
++    static void subdivideAt(float t, float src[], int srcoff,
++                            float left[], int leftoff,
++                            float right[], int rightoff, int size)
++    {
++        switch(size) {
++        case 8:
++            subdivideCubicAt(t, src, srcoff, left, leftoff, right, rightoff);
++            break;
++        case 6:
++            subdivideQuadAt(t, src, srcoff, left, leftoff, right, rightoff);
++            break;
++        }
++    }
++}
+diff -r 12b65e7ee3e4 -r 065e6c5a8027 src/share/classes/sun/java2d/pisces/LineSink.java
+--- openjdk/jdk/src/share/classes/sun/java2d/pisces/LineSink.java	Fri Oct 22 16:57:41 2010 +0400
++++ /dev/null	Thu Jan 01 00:00:00 1970 +0000
+@@ -1,93 +0,0 @@
+-/*
+- * Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
+- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+- *
+- * This code is free software; you can redistribute it and/or modify it
+- * under the terms of the GNU General Public License version 2 only, as
+- * published by the Free Software Foundation.  Oracle designates this
+- * particular file as subject to the "Classpath" exception as provided
+- * by Oracle in the LICENSE file that accompanied this code.
+- *
+- * This code is distributed in the hope that it will be useful, but WITHOUT
+- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+- * version 2 for more details (a copy is included in the LICENSE file that
+- * accompanied this code).
+- *
+- * You should have received a copy of the GNU General Public License version
+- * 2 along with this work; if not, write to the Free Software Foundation,
+- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+- *
+- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+- * or visit www.oracle.com if you need additional information or have any
+- * questions.
+- */
+-
+-package sun.java2d.pisces;
+-
+-/**
+- * The <code>LineSink</code> interface accepts a series of line
+- * drawing commands: <code>moveTo</code>, <code>lineTo</code>,
+- * <code>close</code> (equivalent to a <code>lineTo</code> command
+- * with an argument equal to the argument of the last
+- * <code>moveTo</code> command), and <code>end</code>.
+- *
+- * <p> A <code>Flattener</code> may be used to connect a general path
+- * source to a <code>LineSink</code>.
+- *
+- * <p> The <code>Renderer</code> class implements the
+- * <code>LineSink</code> interface.
+- *
+- */
+-public interface LineSink {
+-
+-    /**
+-     * Moves the current drawing position to the point <code>(x0,
+-     * y0)</code>.
+-     *
+-     * @param x0 the X coordinate
+-     * @param y0 the Y coordinate
+-     */
+-    public void moveTo(float x0, float y0);
+-
+-    /**
+-     * Provides a hint that the current segment should be joined to
+-     * the following segment using an explicit miter or round join if
+-     * required.
+-     *
+-     * <p> An application-generated path will generally have no need
+-     * to contain calls to this method; they are typically introduced
+-     * by a <code>Flattener</code> to mark segment divisions that
+-     * appear in its input, and consumed by a <code>Stroker</code>
+-     * that is responsible for emitting the miter or round join
+-     * segments.
+-     *
+-     * <p> Other <code>LineSink</code> classes should simply pass this
+-     * hint to their output sink as needed.
+-     */
+-    public void lineJoin();
+-
+-    /**
+-     * Draws a line from the current drawing position to the point
+-     * <code>(x1, y1)</code> and sets the current drawing position to
+-     * <code>(x1, y1)</code>.
+-     *
+-     * @param x1 the X coordinate
+-     * @param y1 the Y coordinate
+-     */
+-    public void lineTo(float x1, float y1);
+-
+-    /**
+-     * Closes the current path by drawing a line from the current
+-     * drawing position to the point specified by the moset recent
+-     * <code>moveTo</code> command.
+-     */
+-    public void close();
+-
+-    /**
+-     * Ends the current path.  It may be necessary to end a path in
+-     * order to allow end caps to be drawn.
+-     */
+-    public void end();
+-
+-}
+diff -r 12b65e7ee3e4 -r 065e6c5a8027 src/share/classes/sun/java2d/pisces/PiscesCache.java
+--- openjdk.orig/jdk/src/share/classes/sun/java2d/pisces/PiscesCache.java	Fri Oct 22 16:57:41 2010 +0400
++++ openjdk/jdk/src/share/classes/sun/java2d/pisces/PiscesCache.java	Tue Oct 26 10:39:23 2010 -0400
+@@ -25,6 +25,8 @@
+ 
+ package sun.java2d.pisces;
+ 
++import java.util.Arrays;
++
+ /**
+  * An object used to cache pre-rendered complex paths.
+  *
+@@ -32,115 +34,153 @@
+  */
+ public final class PiscesCache {
+ 
+-    int bboxX0, bboxY0, bboxX1, bboxY1;
++    final int bboxX0, bboxY0, bboxX1, bboxY1;
+ 
+-    byte[] rowAARLE;
+-    int alphaRLELength;
++    // rowAARLE[i] holds the encoding of the pixel row with y = bboxY0+i.
++    // The format of each of the inner arrays is: rowAARLE[i][0,1] = (x0, n)
++    // where x0 is the first x in row i with nonzero alpha, and n is the
++    // number of RLE entries in this row. rowAARLE[i][j,j+1] for j>1 is
++    // (val,runlen)
++    final int[][] rowAARLE;
+ 
+-    int[] rowOffsetsRLE;
+-    int[] minTouched;
+-    int alphaRows;
++    // RLE encodings are added in increasing y rows and then in increasing
++    // x inside those rows. Therefore, at any one time there is a well
++    // defined position (x,y) where a run length is about to be added (or
++    // the row terminated). x0,y0 is this (x,y)-(bboxX0,bboxY0). They
++    // are used to get indices into the current tile.
++    private int x0 = Integer.MIN_VALUE, y0 = Integer.MIN_VALUE;
+ 
+-    private PiscesCache() {}
++    // touchedTile[i][j] is the sum of all the alphas in the tile with
++    // y=i*TILE_SIZE+bboxY0 and x=j*TILE_SIZE+bboxX0.
++    private final int[][] touchedTile;
+ 
+-    public static PiscesCache createInstance() {
+-        return new PiscesCache();
++    static final int TILE_SIZE_LG = 5;
++    static final int TILE_SIZE = 1 << TILE_SIZE_LG; // 32
++    private static final int INIT_ROW_SIZE = 8; // enough for 3 run lengths
++
++    PiscesCache(int minx, int miny, int maxx, int maxy) {
++        assert maxy >= miny && maxx >= minx;
++        bboxX0 = minx;
++        bboxY0 = miny;
++        bboxX1 = maxx + 1;
++        bboxY1 = maxy + 1;
++        // we could just leave the inner arrays as null and allocate them
++        // lazily (which would be beneficial for shapes with gaps), but we
++        // assume there won't be too many of those so we allocate everything
++        // up front (which is better for other cases)
++        rowAARLE = new int[bboxY1 - bboxY0 + 1][INIT_ROW_SIZE];
++        x0 = 0;
++        y0 = -1; // -1 makes the first assert in startRow succeed
++        // the ceiling of (maxy - miny + 1) / TILE_SIZE;
++        int nyTiles = (maxy - miny + TILE_SIZE) >> TILE_SIZE_LG;
++        int nxTiles = (maxx - minx + TILE_SIZE) >> TILE_SIZE_LG;
++
++        touchedTile = new int[nyTiles][nxTiles];
+     }
+ 
+-    private static final float ROWAA_RLE_FACTOR = 1.5f;
+-    private static final float TOUCHED_FACTOR = 1.5f;
+-    private static final int MIN_TOUCHED_LEN = 64;
+-
+-    private void reallocRowAARLE(int newLength) {
+-        if (rowAARLE == null) {
+-            rowAARLE = new byte[newLength];
+-        } else if (rowAARLE.length < newLength) {
+-            int len = Math.max(newLength,
+-                               (int)(rowAARLE.length*ROWAA_RLE_FACTOR));
+-            byte[] newRowAARLE = new byte[len];
+-            System.arraycopy(rowAARLE, 0, newRowAARLE, 0, rowAARLE.length);
+-            rowAARLE = newRowAARLE;
++    void addRLERun(int val, int runLen) {
++        if (runLen > 0) {
++            addTupleToRow(y0, val, runLen);
++            if (val != 0) {
++                // the x and y of the current row, minus bboxX0, bboxY0
++                int tx = x0 >> TILE_SIZE_LG;
++                int ty = y0 >> TILE_SIZE_LG;
++                int tx1 = (x0 + runLen - 1) >> TILE_SIZE_LG;
++                // while we forbid rows from starting before bboxx0, our users
++                // can still store rows that go beyond bboxx1 (although this
++                // shouldn't happen), so it's a good idea to check that i
++                // is not going out of bounds in touchedTile[ty]
++                if (tx1 >= touchedTile[ty].length) {
++                    tx1 = touchedTile[ty].length - 1;
++                }
++                if (tx <= tx1) {
++                    int nextTileXCoord = (tx + 1) << TILE_SIZE_LG;
++                    if (nextTileXCoord > x0+runLen) {
++                        touchedTile[ty][tx] += val * runLen;
++                    } else {
++                        touchedTile[ty][tx] += val * (nextTileXCoord - x0);
++                    }
++                    tx++;
++                }
++                // don't go all the way to tx1 - we need to handle the last
++                // tile as a special case (just like we did with the first
++                for (; tx < tx1; tx++) {
++//                    try {
++                    touchedTile[ty][tx] += (val << TILE_SIZE_LG);
++//                    } catch (RuntimeException e) {
++//                        System.out.println("x0, y0: " + x0 + ", " + y0);
++//                        System.out.printf("tx, ty, tx1: %d, %d, %d %n", tx, ty, tx1);
++//                        System.out.printf("bboxX/Y0/1: %d, %d, %d, %d %n",
++//                                bboxX0, bboxY0, bboxX1, bboxY1);
++//                        throw e;
++//                    }
++                }
++                // they will be equal unless x0>>TILE_SIZE_LG == tx1
++                if (tx == tx1) {
++                    int lastXCoord = Math.min(x0 + runLen, (tx + 1) << TILE_SIZE_LG);
++                    int txXCoord = tx << TILE_SIZE_LG;
++                    touchedTile[ty][tx] += val * (lastXCoord - txXCoord);
++                }
++            }
++            x0 += runLen;
+         }
+     }
+ 
+-    private void reallocRowInfo(int newHeight) {
+-        if (minTouched == null) {
+-            int len = Math.max(newHeight, MIN_TOUCHED_LEN);
+-            minTouched = new int[len];
+-            rowOffsetsRLE = new int[len];
+-        } else if (minTouched.length < newHeight) {
+-            int len = Math.max(newHeight,
+-                               (int)(minTouched.length*TOUCHED_FACTOR));
+-            int[] newMinTouched = new int[len];
+-            int[] newRowOffsetsRLE = new int[len];
+-            System.arraycopy(minTouched, 0, newMinTouched, 0,
+-                             alphaRows);
+-            System.arraycopy(rowOffsetsRLE, 0, newRowOffsetsRLE, 0,
+-                             alphaRows);
+-            minTouched = newMinTouched;
+-            rowOffsetsRLE = newRowOffsetsRLE;
+-        }
++    void startRow(int y, int x) {
++        // rows are supposed to be added by increasing y.
++        assert y - bboxY0 > y0;
++        assert y <= bboxY1; // perhaps this should be < instead of <=
++
++        y0 = y - bboxY0;
++        // this should be a new, uninitialized row.
++        assert rowAARLE[y0][1] == 0;
++
++        x0 = x - bboxX0;
++        assert x0 >= 0 : "Input must not be to the left of bbox bounds";
++
++        // the way addTupleToRow is implemented it would work for this but it's
++        // not a good idea to use it because it is meant for adding
++        // RLE tuples, not the first tuple (which is special).
++        rowAARLE[y0][0] = x;
++        rowAARLE[y0][1] = 2;
+     }
+ 
+-    void addRLERun(byte val, int runLen) {
+-        reallocRowAARLE(alphaRLELength + 2);
+-        rowAARLE[alphaRLELength++] = val;
+-        rowAARLE[alphaRLELength++] = (byte)runLen;
++    int alphaSumInTile(int x, int y) {
++        x -= bboxX0;
++        y -= bboxY0;
++        return touchedTile[y>>TILE_SIZE_LG][x>>TILE_SIZE_LG];
+     }
+ 
+-    void startRow(int y, int x0, int x1) {
+-        if (alphaRows == 0) {
+-            bboxY0 = y;
+-            bboxY1 = y+1;
+-            bboxX0 = x0;
+-            bboxX1 = x1+1;
+-        } else {
+-            if (bboxX0 > x0) bboxX0 = x0;
+-            if (bboxX1 < x1 + 1) bboxX1 = x1 + 1;
+-            while (bboxY1++ < y) {
+-                reallocRowInfo(alphaRows+1);
+-                minTouched[alphaRows] = 0;
+-                // Assuming last 2 entries in rowAARLE are 0,0
+-                rowOffsetsRLE[alphaRows] = alphaRLELength-2;
+-                alphaRows++;
++    int minTouched(int rowidx) {
++        return rowAARLE[rowidx][0];
++    }
++
++    int rowLength(int rowidx) {
++        return rowAARLE[rowidx][1];
++    }
++
++    private void addTupleToRow(int row, int a, int b) {
++        int end = rowAARLE[row][1];
++        rowAARLE[row] = Helpers.widenArray(rowAARLE[row], end, 2);
++        rowAARLE[row][end++] = a;
++        rowAARLE[row][end++] = b;
++        rowAARLE[row][1] = end;
++    }
++
++    @Override
++    public String toString() {
++        String ret = "bbox = ["+
++                      bboxX0+", "+bboxY0+" => "+
++                      bboxX1+", "+bboxY1+"]\n";
++        for (int[] row : rowAARLE) {
++            if (row != null) {
++                ret += ("minTouchedX=" + row[0] +
++                        "\tRLE Entries: " + Arrays.toString(
++                                Arrays.copyOfRange(row, 2, row[1])) + "\n");
++            } else {
++                ret += "[]\n";
+             }
+         }
+-        reallocRowInfo(alphaRows+1);
+-        minTouched[alphaRows] = x0;
+-        rowOffsetsRLE[alphaRows] = alphaRLELength;
+-        alphaRows++;
+-    }
+-
+-    public synchronized void dispose() {
+-        rowAARLE = null;
+-        alphaRLELength = 0;
+-
+-        minTouched = null;
+-        rowOffsetsRLE = null;
+-        alphaRows = 0;
+-
+-        bboxX0 = bboxY0 = bboxX1 = bboxY1 = 0;
+-    }
+-
+-    public void print(java.io.PrintStream out) {
+-        synchronized (out) {
+-        out.println("bbox = ["+
+-                    bboxX0+", "+bboxY0+" => "+
+-                    bboxX1+", "+bboxY1+"]");
+-
+-        out.println("alphRLELength = "+alphaRLELength);
+-
+-        for (int y = bboxY0; y < bboxY1; y++) {
+-            int i = y-bboxY0;
+-            out.println("row["+i+"] == {"+
+-                        "minX = "+minTouched[i]+
+-                        ", off = "+rowOffsetsRLE[i]+"}");
+-        }
+-
+-        for (int i = 0; i < alphaRLELength; i += 2) {
+-            out.println("rle["+i+"] = "+
+-                        (rowAARLE[i+1]&0xff)+" of "+(rowAARLE[i]&0xff));
+-        }
+-    }
++        return ret;
+     }
+ }
+diff -r 12b65e7ee3e4 -r 065e6c5a8027 src/share/classes/sun/java2d/pisces/PiscesRenderingEngine.java
+--- openjdk.orig/jdk/src/share/classes/sun/java2d/pisces/PiscesRenderingEngine.java	Fri Oct 22 16:57:41 2010 +0400
++++ openjdk/jdk/src/share/classes/sun/java2d/pisces/PiscesRenderingEngine.java	Tue Oct 26 10:39:23 2010 -0400
+@@ -27,7 +27,7 @@
+ 
+ import java.awt.Shape;
+ import java.awt.BasicStroke;
+-import java.awt.geom.FlatteningPathIterator;
++import java.awt.geom.NoninvertibleTransformException;
+ import java.awt.geom.Path2D;
+ import java.awt.geom.AffineTransform;
+ import java.awt.geom.PathIterator;
+@@ -38,8 +38,6 @@
+ import sun.java2d.pipe.AATileGenerator;
+ 
+ public class PiscesRenderingEngine extends RenderingEngine {
+-    public static double defaultFlat = 0.1;
+-
+     private static enum NormMode {OFF, ON_NO_AA, ON_WITH_AA}
+ 
+     /**
+@@ -78,20 +76,29 @@
+                  miterlimit,
+                  dashes,
+                  dashphase,
+-                 new LineSink() {
++                 new PathConsumer2D() {
+                      public void moveTo(float x0, float y0) {
+                          p2d.moveTo(x0, y0);
+                      }
+-                     public void lineJoin() {}
+                      public void lineTo(float x1, float y1) {
+                          p2d.lineTo(x1, y1);
+                      }
+-                     public void close() {
++                     public void closePath() {
+                          p2d.closePath();
+                      }
+-                     public void end() {}
++                     public void pathDone() {}
++                     public void curveTo(float x1, float y1,
++                                         float x2, float y2,
++                                         float x3, float y3) {
++                         p2d.curveTo(x1, y1, x2, y2, x3, y3);
++                     }
++                     public void quadTo(float x1, float y1, float x2, float y2) {
++                         p2d.quadTo(x1, y1, x2, y2);
++                     }
++                     public long getNativeConsumer() {
++                         throw new InternalError("Not using a native peer");
++                     }
+                  });
+-
+         return p2d;
+     }
+ 
+@@ -133,22 +140,7 @@
+         NormMode norm = (normalize) ?
+                 ((antialias) ? NormMode.ON_WITH_AA : NormMode.ON_NO_AA)
+                 : NormMode.OFF;
+-        strokeTo(src, at, bs, thin, norm, antialias,
+-                 new LineSink() {
+-                     public void moveTo(float x0, float y0) {
+-                         consumer.moveTo(x0, y0);
+-                     }
+-                     public void lineJoin() {}
+-                     public void lineTo(float x1, float y1) {
+-                         consumer.lineTo(x1, y1);
+-                     }
+-                     public void close() {
+-                         consumer.closePath();
+-                     }
+-                     public void end() {
+-                         consumer.pathDone();
+-                     }
+-                 });
++        strokeTo(src, at, bs, thin, norm, antialias, consumer);
+     }
+ 
+     void strokeTo(Shape src,
+@@ -157,7 +149,7 @@
+                   boolean thin,
+                   NormMode normalize,
+                   boolean antialias,
+-                  LineSink lsink)
++                  PathConsumer2D pc2d)
+     {
+         float lw;
+         if (thin) {
+@@ -178,7 +170,7 @@
+                  bs.getMiterLimit(),
+                  bs.getDashArray(),
+                  bs.getDashPhase(),
+-                 lsink);
++                 pc2d);
+     }
+ 
+     private float userSpaceLineWidth(AffineTransform at, float lw) {
+@@ -256,28 +248,113 @@
+                   float miterlimit,
+                   float dashes[],
+                   float dashphase,
+-                  LineSink lsink)
++                  PathConsumer2D pc2d)
+     {
+-        float a00 = 1f, a01 = 0f, a10 = 0f, a11 = 1f;
++        // We use inat and outat so that in Stroker and Dasher we can work only
++        // with the pre-transformation coordinates. This will repeat a lot of
++        // computations done in the path iterator, but the alternative is to
++        // work with transformed paths and compute untransformed coordinates
++        // as needed. This would be faster but I do not think the complexity
++        // of working with both untransformed and transformed coordinates in
++        // the same code is worth it.
++        // However, if a path's width is constant after a transformation,
++        // we can skip all this untransforming.
++
++        // If normalization is off we save some transformations by not
++        // transforming the input to pisces. Instead, we apply the
++        // transformation after the path processing has been done.
++        // We can't do this if normalization is on, because it isn't a good
++        // idea to normalize before the transformation is applied.
++        AffineTransform inat = null;
++        AffineTransform outat = null;
++
++        PathIterator pi = null;
++
+         if (at != null && !at.isIdentity()) {
+-            a00 = (float)at.getScaleX();
+-            a01 = (float)at.getShearX();
+-            a10 = (float)at.getShearY();
+-            a11 = (float)at.getScaleY();
++            final double a = at.getScaleX();
++            final double b = at.getShearX();
++            final double c = at.getShearY();
++            final double d = at.getScaleY();
++            final double det = a * d - c * b;
++            if (Math.abs(det) <= 2 * Float.MIN_VALUE) {
++                // this rendering engine takes one dimensional curves and turns
++                // them into 2D shapes by giving them width.
++                // However, if everything is to be passed through a singular
++                // transformation, these 2D shapes will be squashed down to 1D
++                // again so, nothing can be drawn.
++
++                // Every path needs an initial moveTo and a pathDone. If these
++                // aren't there this causes a SIGSEV in libawt.so (at the time
++                // of writing of this comment (September 16, 2010)). Actually,
++                // I'm not sure if the moveTo is necessary to avoid the SIGSEV
++                // but the pathDone is definitely needed.
++                pc2d.moveTo(0, 0);
++                pc2d.pathDone();
++                return;
++            }
++
++            // If the transform is a constant multiple of an orthogonal transformation
++            // then every length is just multiplied by a constant, so we just
++            // need to transform input paths to stroker and tell stroker
++            // the scaled width. This condition is satisfied if
++            // a*b == -c*d && a*a+c*c == b*b+d*d. In the actual check below, we
++            // leave a bit of room for error.
++            if (nearZero(a*b + c*d, 2) && nearZero(a*a+c*c - (b*b+d*d), 2)) {
++                double scale = Math.sqrt(a*a + c*c);
++                if (dashes != null) {
++                    dashes = java.util.Arrays.copyOf(dashes, dashes.length);
++                    for (int i = 0; i < dashes.length; i++) {
++                        dashes[i] = (float)(scale * dashes[i]);
++                    }
++                    dashphase = (float)(scale * dashphase);
++                }
++                width = (float)(scale * width);
++                pi = src.getPathIterator(at);
++                if (normalize != NormMode.OFF) {
++                    pi = new NormalizingPathIterator(pi, normalize);
++                }
++                // leave inat and outat null.
++            } else {
++                // We only need the inverse if normalization is on. Otherwise
++                // we just don't transform the input paths, do all the stroking
++                // and then transform out output (instead of making PathIterator
++                // apply the transformation, us applying the inverse, and then
++                // us applying the transform again to our output).
++                outat = at;
++                if (normalize != NormMode.OFF) {
++                    try {
++                        inat = outat.createInverse();
++                    } catch (NoninvertibleTransformException e) {
++                        // we made sure this can't happen
++                        e.printStackTrace();
++                    }
++                    pi = src.getPathIterator(at);
++                    pi = new NormalizingPathIterator(pi, normalize);
++                } else {
++                    pi = src.getPathIterator(null);
++                }
++            }
++        } else {
++            // either at is null or it's the identity. In either case
++            // we don't transform the path.
++            pi = src.getPathIterator(null);
++            if (normalize != NormMode.OFF) {
++                pi = new NormalizingPathIterator(pi, normalize);
++            }
+         }
+-        lsink = new Stroker(lsink, width, caps, join, miterlimit, a00, a01, a10, a11);
++
++        pc2d = TransformingPathConsumer2D.transformConsumer(pc2d, outat);
++        pc2d = new Stroker(pc2d, width, caps, join, miterlimit);
+         if (dashes != null) {
+-            lsink = new Dasher(lsink, dashes, dashphase, a00, a01, a10, a11);
++            pc2d = new Dasher(pc2d, dashes, dashphase);
+         }
+-        PathIterator pi;
+-        if (normalize != NormMode.OFF) {
+-            pi = new FlatteningPathIterator(
+-                    new NormalizingPathIterator(src.getPathIterator(at), normalize),
+-                    defaultFlat);
+-        } else {
+-            pi = src.getPathIterator(at, defaultFlat);
+-        }
+-        pathTo(pi, lsink);
++        pc2d = TransformingPathConsumer2D.transformConsumer(pc2d, inat);
++
++        pathTo(pi, pc2d);
++    }
++
++    private static boolean nearZero(double num, int nulps) {
++        return Math.abs(num) < nulps * Math.ulp(num);
+     }
+ 
+     private static class NormalizingPathIterator implements PathIterator {
+@@ -337,10 +414,10 @@
+             }
+ 
+             // normalize endpoint
+-            float x_adjust = (float)Math.floor(coords[lastCoord] + lval) + rval -
+-                         coords[lastCoord];
+-            float y_adjust = (float)Math.floor(coords[lastCoord+1] + lval) + rval -
+-                         coords[lastCoord + 1];
++            float x_adjust = (float)Math.floor(coords[lastCoord] + lval) +
++                         rval - coords[lastCoord];
++            float y_adjust = (float)Math.floor(coords[lastCoord+1] + lval) +
++                         rval - coords[lastCoord + 1];
+ 
+             coords[lastCoord    ] += x_adjust;
+             coords[lastCoord + 1] += y_adjust;
+@@ -393,27 +470,9 @@
+         }
+     }
+ 
+-    void pathTo(PathIterator pi, LineSink lsink) {
+-        float coords[] = new float[2];
+-        while (!pi.isDone()) {
+-            switch (pi.currentSegment(coords)) {
+-            case PathIterator.SEG_MOVETO:
+-                lsink.moveTo(coords[0], coords[1]);
+-                break;
+-            case PathIterator.SEG_LINETO:
+-                lsink.lineJoin();
+-                lsink.lineTo(coords[0], coords[1]);
+-                break;
+-            case PathIterator.SEG_CLOSE:
+-                lsink.lineJoin();
+-                lsink.close();
+-                break;
+-            default:
+-                throw new InternalError("unknown flattened segment type");
+-            }
+-            pi.next();
+-        }
+-        lsink.end();
++    static void pathTo(PathIterator pi, PathConsumer2D pc2d) {
++        RenderingEngine.feedConsumer(pi, pc2d);
++        pc2d.pathDone();
+     }
+ 
+     /**
+@@ -471,32 +530,29 @@
+                                               boolean normalize,
+                                               int bbox[])
+     {
+-        PiscesCache pc = PiscesCache.createInstance();
+         Renderer r;
+         NormMode norm = (normalize) ? NormMode.ON_WITH_AA : NormMode.OFF;
+         if (bs == null) {
+             PathIterator pi;
+             if (normalize) {
+-                pi = new FlatteningPathIterator(
+-                        new NormalizingPathIterator(s.getPathIterator(at), norm),
+-                        defaultFlat);
++                pi = new NormalizingPathIterator(s.getPathIterator(at), norm);
+             } else {
+-                pi = s.getPathIterator(at, defaultFlat);
++                pi = s.getPathIterator(at);
+             }
+             r = new Renderer(3, 3,
+                              clip.getLoX(), clip.getLoY(),
+                              clip.getWidth(), clip.getHeight(),
+-                             pi.getWindingRule(), pc);
++                             pi.getWindingRule());
+             pathTo(pi, r);
+         } else {
+             r = new Renderer(3, 3,
+                              clip.getLoX(), clip.getLoY(),
+                              clip.getWidth(), clip.getHeight(),
+-                             PathIterator.WIND_NON_ZERO, pc);
++                             PathIterator.WIND_NON_ZERO);
+             strokeTo(s, at, bs, thin, norm, true, r);
+         }
+         r.endRendering();
+-        PiscesTileGenerator ptg = new PiscesTileGenerator(pc, r.MAX_AA_ALPHA);
++        PiscesTileGenerator ptg = new PiscesTileGenerator(r, r.MAX_AA_ALPHA);
+         ptg.getBbox(bbox);
+         return ptg;
+     }
+diff -r 12b65e7ee3e4 -r 065e6c5a8027 src/share/classes/sun/java2d/pisces/PiscesTileGenerator.java
+--- openjdk.orig/jdk/src/share/classes/sun/java2d/pisces/PiscesTileGenerator.java	Fri Oct 22 16:57:41 2010 +0400
++++ openjdk/jdk/src/share/classes/sun/java2d/pisces/PiscesTileGenerator.java	Tue Oct 26 10:39:23 2010 -0400
+@@ -25,40 +25,54 @@
+ 
+ package sun.java2d.pisces;
+ 
++import java.util.Map;
++import java.util.concurrent.ConcurrentHashMap;
++
+ import sun.java2d.pipe.AATileGenerator;
+ 
+-public class PiscesTileGenerator implements AATileGenerator {
+-    public static final int TILE_SIZE = 32;
++public final class PiscesTileGenerator implements AATileGenerator {
++    public static final int TILE_SIZE = PiscesCache.TILE_SIZE;
++
++    // perhaps we should be using weak references here, but right now
++    // that's not necessary. The way the renderer is, this map will
++    // never contain more than one element - the one with key 64, since
++    // we only do 8x8 supersampling.
++    private static final Map<Integer, byte[]> alphaMapsCache = new
++                   ConcurrentHashMap<Integer, byte[]>();
+ 
+     PiscesCache cache;
+     int x, y;
+-    int maxalpha;
++    final int maxalpha;
++    private final int maxTileAlphaSum;
++
++    // The alpha map used by this object (taken out of our map cache) to convert
++    // pixel coverage counts gotten from PiscesCache (which are in the range
++    // [0, maxalpha]) into alpha values, which are in [0,256).
+     byte alphaMap[];
+ 
+-    public PiscesTileGenerator(PiscesCache cache, int maxalpha) {
+-        this.cache = cache;
++    public PiscesTileGenerator(Renderer r, int maxalpha) {
++        this.cache = r.getCache();
+         this.x = cache.bboxX0;
+         this.y = cache.bboxY0;
+         this.alphaMap = getAlphaMap(maxalpha);
+         this.maxalpha = maxalpha;
++        this.maxTileAlphaSum = TILE_SIZE*TILE_SIZE*maxalpha;
+     }
+ 
+-    static int prevMaxAlpha;
+-    static byte prevAlphaMap[];
++    private static byte[] buildAlphaMap(int maxalpha) {
++        byte[] alMap = new byte[maxalpha+1];
++        int halfmaxalpha = maxalpha>>2;
++        for (int i = 0; i <= maxalpha; i++) {
++            alMap[i] = (byte) ((i * 255 + halfmaxalpha) / maxalpha);
++        }
++        return alMap;
++    }
+ 
+-    public synchronized static byte[] getAlphaMap(int maxalpha) {
+-        if (maxalpha != prevMaxAlpha) {
+-            prevAlphaMap = new byte[maxalpha+300];
+-            int halfmaxalpha = maxalpha>>2;
+-            for (int i = 0; i <= maxalpha; i++) {
+-                prevAlphaMap[i] = (byte) ((i * 255 + halfmaxalpha) / maxalpha);
+-            }
+-            for (int i = maxalpha; i < prevAlphaMap.length; i++) {
+-                prevAlphaMap[i] = (byte) 255;
+-            }
+-            prevMaxAlpha = maxalpha;
++    public static byte[] getAlphaMap(int maxalpha) {
++        if (!alphaMapsCache.containsKey(maxalpha)) {
++            alphaMapsCache.put(maxalpha, buildAlphaMap(maxalpha));
+         }
+-        return prevAlphaMap;
++        return alphaMapsCache.get(maxalpha);
+     }
+ 
+     public void getBbox(int bbox[]) {
+@@ -96,53 +110,24 @@
+      *         value for partial coverage of the tile
+      */
+     public int getTypicalAlpha() {
+-        if (true) return 0x80;
+-        // Decode run-length encoded alpha mask data
+-        // The data for row j begins at cache.rowOffsetsRLE[j]
+-        // and is encoded as a set of 2-byte pairs (val, runLen)
+-        // terminated by a (0, 0) pair.
+-
+-        int x0 = this.x;
+-        int x1 = x0 + TILE_SIZE;
+-        int y0 = this.y;
+-        int y1 = y0 + TILE_SIZE;
+-        if (x1 > cache.bboxX1) x1 = cache.bboxX1;
+-        if (y1 > cache.bboxY1) y1 = cache.bboxY1;
+-        y0 -= cache.bboxY0;
+-        y1 -= cache.bboxY0;
+-
+-        int ret = -1;
+-        for (int cy = y0; cy < y1; cy++) {
+-            int pos = cache.rowOffsetsRLE[cy];
+-            int cx = cache.minTouched[cy];
+-
+-            if (cx > x0) {
+-                if (ret > 0) return 0x80;
+-                ret = 0x00;
+-            }
+-            while (cx < x1) {
+-                int runLen = cache.rowAARLE[pos + 1] & 0xff;
+-                if (runLen == 0) {
+-                    if (ret > 0) return 0x80;
+-                    ret = 0x00;
+-                    break;
+-                }
+-                cx += runLen;
+-                if (cx > x0) {
+-                    int val = cache.rowAARLE[pos] & 0xff;
+-                    if (ret != val) {
+-                        if (ret < 0) {
+-                            if (val != 0x00 && val != maxalpha) return 0x80;
+-                            ret = val;
+-                        } else {
+-                            return 0x80;
+-                        }
+-                    }
+-                }
+-                pos += 2;
+-            }
+-        }
+-        return ret;
++        int al = cache.alphaSumInTile(x, y);
++        // Note: if we have a filled rectangle that doesn't end on a tile
++        // border, we could still return 0xff, even though al!=maxTileAlphaSum
++        // This is because if we return 0xff, our users will fill a rectangle
++        // starting at x,y that has width = Math.min(TILE_SIZE, bboxX1-x),
++        // and height min(TILE_SIZE,bboxY1-y), which is what should happen.
++        // However, to support this, we would have to use 2 Math.min's
++        // and 2 multiplications per tile, instead of just 2 multiplications
++        // to compute maxTileAlphaSum. The savings offered would probably
++        // not be worth it, considering how rare this case is.
++        // Note: I have not tested this, so in the future if it is determined
++        // that it is worth it, it should be implemented. Perhaps this method's
++        // interface should be changed to take arguments the width and height
++        // of the current tile. This would eliminate the 2 Math.min calls that
++        // would be needed here, since our caller needs to compute these 2
++        // values anyway.
++        return (al == 0x00 ? 0x00 :
++            (al == maxTileAlphaSum ? 0xff : 0x80));
+     }
+ 
+     /**
+@@ -179,22 +164,24 @@
+ 
+         int idx = offset;
+         for (int cy = y0; cy < y1; cy++) {
+-            int pos = cache.rowOffsetsRLE[cy];
+-            int cx = cache.minTouched[cy];
++            int[] row = cache.rowAARLE[cy];
++            assert row != null;
++            int cx = cache.minTouched(cy);
+             if (cx > x1) cx = x1;
+ 
+-            if (cx > x0) {
+-                //System.out.println("L["+(cx-x0)+"]");
+-                for (int i = x0; i < cx; i++) {
+-                    tile[idx++] = 0x00;
+-                }
++            for (int i = x0; i < cx; i++) {
++                tile[idx++] = 0x00;
+             }
+-            while (cx < x1) {
++
++            int pos = 2;
++            while (cx < x1 && pos < row[1]) {
+                 byte val;
+                 int runLen = 0;
++                assert row[1] > 2;
+                 try {
+-                    val = alphaMap[cache.rowAARLE[pos] & 0xff];
+-                    runLen = cache.rowAARLE[pos + 1] & 0xff;
++                    val = alphaMap[row[pos]];
++                    runLen = row[pos + 1];
++                    assert runLen > 0;
+                 } catch (RuntimeException e0) {
+                     System.out.println("maxalpha = "+maxalpha);
+                     System.out.println("tile["+x0+", "+y0+
+@@ -202,14 +189,12 @@
+                     System.out.println("cx = "+cx+", cy = "+cy);
+                     System.out.println("idx = "+idx+", pos = "+pos);
+                     System.out.println("len = "+runLen);
+-                    cache.print(System.out);
++                    System.out.print(cache.toString());
+                     e0.printStackTrace();
+                     System.exit(1);
+                     return;
+                 }
+-                if (runLen == 0) {
+-                    break;
+-                }
++
+                 int rx0 = cx;
+                 cx += runLen;
+                 int rx1 = cx;
+@@ -228,7 +213,7 @@
+                         System.out.println("idx = "+idx+", pos = "+pos);
+                         System.out.println("rx0 = "+rx0+", rx1 = "+rx1);
+                         System.out.println("len = "+runLen);
+-                        cache.print(System.out);
++                        System.out.print(cache.toString());
+                         e.printStackTrace();
+                         System.exit(1);
+                         return;
+@@ -265,4 +250,4 @@
+      * No further calls will be made on this instance.
+      */
+     public void dispose() {}
+-}
++}
+\ No newline at end of file
+diff -r 12b65e7ee3e4 -r 065e6c5a8027 src/share/classes/sun/java2d/pisces/Renderer.java
+--- openjdk.orig/jdk/src/share/classes/sun/java2d/pisces/Renderer.java	Fri Oct 22 16:57:41 2010 +0400
++++ openjdk/jdk/src/share/classes/sun/java2d/pisces/Renderer.java	Tue Oct 26 10:39:23 2010 -0400
+@@ -26,250 +26,552 @@
+ package sun.java2d.pisces;
+ 
+ import java.util.Arrays;
++import java.util.Iterator;
+ 
+-public class Renderer implements LineSink {
++import sun.awt.geom.PathConsumer2D;
+ 
+-///////////////////////////////////////////////////////////////////////////////
+-// Scan line iterator and edge crossing data.
+-//////////////////////////////////////////////////////////////////////////////
++public class Renderer implements PathConsumer2D {
+ 
+-    private int[] crossings;
++    private class ScanlineIterator {
+ 
+-    // This is an array of indices into the edge array. It is initialized to
+-    // [i * SIZEOF_STRUCT_EDGE for i in range(0, edgesSize/SIZEOF_STRUCT_EDGE)]
+-    // (where range(i, j) is i,i+1,...,j-1 -- just like in python).
+-    // The reason for keeping this is because we need the edges array sorted
+-    // by y0, but we don't want to move all that data around, so instead we
+-    // sort the indices into the edge array, and use edgeIndices to access
+-    // the edges array. This is meant to simulate a pointer array (hence the name)
+-    private int[] edgePtrs;
++        private int[] crossings;
+ 
+-    // crossing bounds. The bounds are not necessarily tight (the scan line
+-    // at minY, for example, might have no crossings). The x bounds will
+-    // be accumulated as crossings are computed.
+-    private int minY, maxY;
+-    private int minX, maxX;
+-    private int nextY;
++        // crossing bounds. The bounds are not necessarily tight (the scan line
++        // at minY, for example, might have no crossings). The x bounds will
++        // be accumulated as crossings are computed.
++        private int minY, maxY;
++        private int nextY;
+ 
+-    // indices into the edge pointer list. They indicate the "active" sublist in
+-    // the edge list (the portion of the list that contains all the edges that
+-    // cross the next scan line).
+-    private int lo, hi;
++        // indices into the segment pointer lists. They indicate the "active"
++        // sublist in the segment lists (the portion of the list that contains
++        // all the segments that cross the next scan line).
++        private int elo, ehi;
++        private final int[] edgePtrs;
++        private int qlo, qhi;
++        private final int[] quadPtrs;
++        private int clo, chi;
++        private final int[] curvePtrs;
+ 
+-    private static final int INIT_CROSSINGS_SIZE = 50;
+-    private void ScanLineItInitialize() {
+-        crossings = new int[INIT_CROSSINGS_SIZE];
+-        edgePtrs = new int[edgesSize / SIZEOF_STRUCT_EDGE];
+-        for (int i = 0; i < edgePtrs.length; i++) {
+-            edgePtrs[i] = i * SIZEOF_STRUCT_EDGE;
++        private static final int INIT_CROSSINGS_SIZE = 10;
++
++        private ScanlineIterator() {
++            crossings = new int[INIT_CROSSINGS_SIZE];
++
++            edgePtrs = new int[numEdges];
++            Helpers.fillWithIdxes(edgePtrs, SIZEOF_EDGE);
++            qsort(edges, edgePtrs, YMIN, 0, numEdges - 1);
++
++            quadPtrs = new int[numQuads];
++            Helpers.fillWithIdxes(quadPtrs, SIZEOF_QUAD);
++            qsort(quads, quadPtrs, YMIN, 0, numQuads - 1);
++
++            curvePtrs = new int[numCurves];
++            Helpers.fillWithIdxes(curvePtrs, SIZEOF_CURVE);
++            qsort(curves, curvePtrs, YMIN, 0, numCurves - 1);
++
++            // We don't care if we clip some of the line off with ceil, since
++            // no scan line crossings will be eliminated (in fact, the ceil is
++            // the y of the first scan line crossing).
++            nextY = minY = Math.max(boundsMinY, (int)Math.ceil(edgeMinY));
++            maxY = Math.min(boundsMaxY, (int)Math.ceil(edgeMaxY));
++
++            for (elo = 0; elo < numEdges && edges[edgePtrs[elo]+YMAX] <= minY; elo++)
++                ;
++            // the active list is *edgePtrs[lo] (inclusive) *edgePtrs[hi] (exclusive)
++            for (ehi = elo; ehi < numEdges && edges[edgePtrs[ehi]+YMIN] <= minY; ehi++)
++                edgeSetCurY(edgePtrs[ehi], minY);// TODO: make minY a float to avoid casts
++
++            for (qlo = 0; qlo < numQuads && quads[quadPtrs[qlo]+YMAX] <= minY; qlo++)
++                ;
++            for (qhi = qlo; qhi < numQuads && quads[quadPtrs[qhi]+YMIN] <= minY; qhi++)
++                quadSetCurY(quadPtrs[qhi], minY);
++
++            for (clo = 0; clo < numCurves && curves[curvePtrs[clo]+YMAX] <= minY; clo++)
++                ;
++            for (chi = clo; chi < numCurves && curves[curvePtrs[chi]+YMIN] <= minY; chi++)
++                curveSetCurY(curvePtrs[chi], minY);
+         }
+ 
+-        qsort(0, edgePtrs.length - 1);
++        private int next() {
++            // we go through the active lists and remove segments that don't cross
++            // the nextY scanline.
++            int crossingIdx = 0;
++            for (int i = elo; i < ehi; i++) {
++                if (edges[edgePtrs[i]+YMAX] <= nextY) {
++                    edgePtrs[i] = edgePtrs[elo++];
++                }
++            }
++            for (int i = qlo; i < qhi; i++) {
++                if (quads[quadPtrs[i]+YMAX] <= nextY) {
++                    quadPtrs[i] = quadPtrs[qlo++];
++                }
++            }
++            for (int i = clo; i < chi; i++) {
++                if (curves[curvePtrs[i]+YMAX] <= nextY) {
++                    curvePtrs[i] = curvePtrs[clo++];
++                }
++            }
+ 
+-        // We don't care if we clip some of the line off with ceil, since
+-        // no scan line crossings will be eliminated (in fact, the ceil is
+-        // the y of the first scan line crossing).
+-        nextY = minY = Math.max(boundsMinY, (int)Math.ceil(edgeMinY));
+-        maxY = Math.min(boundsMaxY, (int)Math.ceil(edgeMaxY));
++            crossings = Helpers.widenArray(crossings, 0, ehi-elo+qhi-qlo+chi-clo);
+ 
+-        for (lo = 0; lo < edgePtrs.length && edges[edgePtrs[lo]+Y1] <= nextY; lo++)
+-            ;
+-        for (hi = lo; hi < edgePtrs.length && edges[edgePtrs[hi]+CURY] <= nextY; hi++)
+-            ; // the active list is *edgePtrs[lo] (inclusive) *edgePtrs[hi] (exclusive)
+-        for (int i = lo; i < hi; i++) {
+-            setCurY(edgePtrs[i], nextY);
++            // Now every edge between lo and hi crosses nextY. Compute it's
++            // crossing and put it in the crossings array.
++            for (int i = elo; i < ehi; i++) {
++                int ptr = edgePtrs[i];
++                addCrossing(nextY, (int)edges[ptr+CURX], edges[ptr+OR], crossingIdx);
++                edgeGoToNextY(ptr);
++                crossingIdx++;
++            }
++            for (int i = qlo; i < qhi; i++) {
++                int ptr = quadPtrs[i];
++                addCrossing(nextY, (int)quads[ptr+CURX], quads[ptr+OR], crossingIdx);
++                quadGoToNextY(ptr);
++                crossingIdx++;
++            }
++            for (int i = clo; i < chi; i++) {
++                int ptr = curvePtrs[i];
++                addCrossing(nextY, (int)curves[ptr+CURX], curves[ptr+OR], crossingIdx);
++                curveGoToNextY(ptr);
++                crossingIdx++;
++            }
++
++            nextY++;
++            // Expand active lists to include new edges.
++            for (; ehi < numEdges && edges[edgePtrs[ehi]+YMIN] <= nextY; ehi++) {
++                edgeSetCurY(edgePtrs[ehi], nextY);
++            }
++            for (; qhi < numQuads && quads[quadPtrs[qhi]+YMIN] <= nextY; qhi++) {
++                quadSetCurY(quadPtrs[qhi], nextY);
++            }
++            for (; chi < numCurves && curves[curvePtrs[chi]+YMIN] <= nextY; chi++) {
++                curveSetCurY(curvePtrs[chi], nextY);
++            }
++            Arrays.sort(crossings, 0, crossingIdx);
++            return crossingIdx;
+         }
+ 
+-        // We accumulate X in the iterator because accumulating it in addEdge
+-        // like we do with Y does not do much good: if there's an edge
+-        // (0,0)->(1000,10000), and if y gets clipped to 1000, then the x
+-        // bound should be 100, but the accumulator from addEdge would say 1000,
+-        // so we'd still have to accumulate the X bounds as we add crossings.
+-        minX = boundsMinX;
+-        maxX = boundsMaxX;
+-    }
+-
+-    private int ScanLineItCurrentY() {
+-        return nextY - 1;
+-    }
+-
+-    private int ScanLineItGoToNextYAndComputeCrossings() {
+-        // we go through the active list and remove the ones that don't cross
+-        // the nextY scanline.
+-        int crossingIdx = 0;
+-        for (int i = lo; i < hi; i++) {
+-            if (edges[edgePtrs[i]+Y1] <= nextY) {
+-                edgePtrs[i] = edgePtrs[lo++];
+-            }
+-        }
+-        if (hi - lo > crossings.length) {
+-            int newSize = Math.max(hi - lo, crossings.length * 2);
+-            crossings = Arrays.copyOf(crossings, newSize);
+-        }
+-        // Now every edge between lo and hi crosses nextY. Compute it's
+-        // crossing and put it in the crossings array.
+-        for (int i = lo; i < hi; i++) {
+-            addCrossing(nextY, getCurCrossing(edgePtrs[i]), (int)edges[edgePtrs[i]+OR], crossingIdx);
+-            gotoNextY(edgePtrs[i]);
+-            crossingIdx++;
++        private boolean hasNext() {
++            return nextY < maxY;
+         }
+ 
+-        nextY++;
+-        // Expand active list to include new edges.
+-        for (; hi < edgePtrs.length && edges[edgePtrs[hi]+CURY] <= nextY; hi++) {
+-            setCurY(edgePtrs[hi], nextY);
++        private int curY() {
++            return nextY - 1;
+         }
+ 
+-        Arrays.sort(crossings, 0, crossingIdx);
+-        return crossingIdx;
++        private void addCrossing(int y, int x, float or, int idx) {
++            x <<= 1;
++            crossings[idx] = ((or > 0) ? (x | 0x1) : x);
++        }
+     }
+-
+-    private boolean ScanLineItHasNext() {
+-        return nextY < maxY;
+-    }
+-
+-    private void addCrossing(int y, int x, int or, int idx) {
+-        if (x < minX) {
+-            minX = x;
+-        }
+-        if (x > maxX) {
+-            maxX = x;
+-        }
+-        x <<= 1;
+-        crossings[idx] = ((or == 1) ? (x | 0x1) : x);
+-    }
+-
+-
+     // quicksort implementation for sorting the edge indices ("pointers")
+     // by increasing y0. first, last are indices into the "pointer" array
+     // It sorts the pointer array from first (inclusive) to last (inclusive)
+-    private void qsort(int first, int last) {
++    private static void qsort(final float[] data, final int[] ptrs,
++                              final int fieldForCmp, int first, int last)
++    {
+         if (last > first) {
+-            int p = partition(first, last);
++            int p = partition(data, ptrs, fieldForCmp, first, last);
+             if (first < p - 1) {
+-                qsort(first, p - 1);
++                qsort(data, ptrs, fieldForCmp, first, p - 1);
+             }
+             if (p < last) {
+-                qsort(p, last);
++                qsort(data, ptrs, fieldForCmp, p, last);
+             }
+         }
+     }
+ 
+     // i, j are indices into edgePtrs.
+-    private int partition(int i, int j) {
+-        int pivotVal = edgePtrs[i];
++    private static int partition(final float[] data, final int[] ptrs,
++                                 final int fieldForCmp, int i, int j)
++    {
++        int pivotValFieldForCmp = ptrs[i]+fieldForCmp;
+         while (i <= j) {
+             // edges[edgePtrs[i]+1] is equivalent to (*(edgePtrs[i])).y0 in C
+-            while (edges[edgePtrs[i]+CURY] < edges[pivotVal+CURY]) { i++; }
+-            while (edges[edgePtrs[j]+CURY] > edges[pivotVal+CURY]) { j--; }
++            while (data[ptrs[i]+fieldForCmp] < data[pivotValFieldForCmp])
++                i++;
++            while (data[ptrs[j]+fieldForCmp] > data[pivotValFieldForCmp])
++                j--;
+             if (i <= j) {
+-                int tmp = edgePtrs[i];
+-                edgePtrs[i] = edgePtrs[j];
+-                edgePtrs[j] = tmp;
++                int tmp = ptrs[i];
++                ptrs[i] = ptrs[j];
++                ptrs[j] = tmp;
+                 i++;
+                 j--;
+             }
+         }
+         return i;
+     }
+-
+ //============================================================================
+ 
+ 
+ //////////////////////////////////////////////////////////////////////////////
+ //  EDGE LIST
+ //////////////////////////////////////////////////////////////////////////////
++// TODO(maybe): very tempting to use fixed point here. A lot of opportunities
++// for shifts and just removing certain operations altogether.
++// TODO: it might be worth it to make an EdgeList class. It would probably
++// clean things up a bit and not impact performance much.
+ 
+-    private static final int INIT_NUM_EDGES = 1000;
+-    private static final int SIZEOF_STRUCT_EDGE = 5;
++    // common to all types of input path segments.
++    private static final int YMIN = 0;
++    private static final int YMAX = 1;
++    private static final int CURX = 2;
++    // this and OR are meant to be indeces into "int" fields, but arrays must
++    // be homogenous, so every field is a float. However floats can represent
++    // exactly up to 26 bit ints, so we're ok.
++    private static final int CURY = 3;
++    private static final int OR   = 4;
+ 
+-    // The following array is a poor man's struct array:
+-    // it simulates a struct array by having
+-    // edges[SIZEOF_STRUCT_EDGE * i + j] be the jth field in the ith element
+-    // of an array of edge structs.
+-    private float[] edges;
+-    private int edgesSize; // size of the edge list.
+-    private static final int Y1    = 0;
+-    private static final int SLOPE = 1;
+-    private static final int OR    = 2; // the orientation. This can be -1 or 1.
+-                                     // -1 means up, 1 means down.
+-    private static final int CURY  = 3; // j = 5 corresponds to the "current Y".
+-                             // Each edge keeps track of the last scanline
+-                             // crossing it computed, and this is the y coord of
+-                             // that scanline.
+-    private static final int CURX = 4; //the x coord of the current crossing.
++    // for straight lines only:
++    private static final int SLOPE = 5;
+ 
+-    // Note that while the array is declared as a float[] not all of it's
+-    // elements should be floats. currentY and Orientation should be ints (or int and
+-    // byte respectively), but they all need to be the same type. This isn't
+-    // really a problem because floats can represent exactly all 23 bit integers,
+-    // which should be more than enough.
+-    // Note, also, that we only need x1 for slope computation, so we don't need
+-    // to store it. x0, y0 don't need to be stored either. They can be put into
+-    // curx, cury, and it's ok if they're lost when curx and cury are changed.
+-    // We take this undeniably ugly and error prone approach (instead of simply
+-    // making an Edge class) for performance reasons. Also, it would probably be nicer
+-    // to have one array for each field, but that would defeat the purpose because
+-    // it would make poor use of the processor cache, since we tend to access
+-    // all the fields for one edge at a time.
++    // for quads and cubics:
++    private static final int X0 = 5;
++    private static final int Y0 = 6;
++    private static final int XL = 7;
++    private static final int COUNT = 8;
++    private static final int CURSLOPE = 9;
++    private static final int DX = 10;
++    private static final int DY = 11;
++    private static final int DDX = 12;
++    private static final int DDY = 13;
+ 
+-    private float edgeMinY;
+-    private float edgeMaxY;
++    // for cubics only
++    private static final int DDDX = 14;
++    private static final int DDDY = 15;
+ 
++    private float edgeMinY = Float.POSITIVE_INFINITY;
++    private float edgeMaxY = Float.NEGATIVE_INFINITY;
++    private float edgeMinX = Float.POSITIVE_INFINITY;
++    private float edgeMaxX = Float.NEGATIVE_INFINITY;
+ 
+-    private void addEdge(float x0, float y0, float x1, float y1) {
+-        float or = (y0 < y1) ? 1f : -1f; // orientation: 1 = UP; -1 = DOWN
+-        if (or == -1) {
+-            float tmp = y0;
+-            y0 = y1;
+-            y1 = tmp;
+-            tmp = x0;
+-            x0 = x1;
+-            x1 = tmp;
++    private static final int SIZEOF_EDGE = 6;
++    private float[] edges = null;
++    private int numEdges;
++    // these are static because we need them to be usable from ScanlineIterator
++    private void edgeSetCurY(final int idx, int y) {
++        edges[idx+CURX] += (y - edges[idx+CURY]) * edges[idx+SLOPE];
++        edges[idx+CURY] = y;
++    }
++    private void edgeGoToNextY(final int idx) {
++        edges[idx+CURY] += 1;
++        edges[idx+CURX] += edges[idx+SLOPE];
++    }
++
++
++    private static final int SIZEOF_QUAD = 14;
++    private float[] quads = null;
++    private int numQuads;
++    // This function should be called exactly once, to set the first scanline
++    // of the curve. Before it is called, the curve should think its first
++    // scanline is CEIL(YMIN).
++    private void quadSetCurY(final int idx, final int y) {
++        assert y < quads[idx+YMAX];
++        assert (quads[idx+CURY] > y);
++        assert (quads[idx+CURY] == Math.ceil(quads[idx+CURY]));
++
++        while (quads[idx+CURY] < ((float)y)) {
++            quadGoToNextY(idx);
+         }
+-        // skip edges that don't cross a scanline
+-        if (Math.ceil(y0) >= Math.ceil(y1)) {
++    }
++    private void quadGoToNextY(final int idx) {
++        quads[idx+CURY] += 1;
++        // this will get overriden if the while executes.
++        quads[idx+CURX] += quads[idx+CURSLOPE];
++        int count = (int)quads[idx+COUNT];
++        // this loop should never execute more than once because our
++        // curve is monotonic in Y. Still we put it in because you can
++        // never be too sure when dealing with floating point.
++        while(quads[idx+CURY] >= quads[idx+Y0] && count > 0) {
++            float x0 = quads[idx+X0], y0 = quads[idx+Y0];
++            count = executeQuadAFDIteration(idx);
++            float x1 = quads[idx+X0], y1 = quads[idx+Y0];
++            // our quads are monotonic, so this shouldn't happen, but
++            // it is conceivable that for very flat quads with different
++            // y values at their endpoints AFD might give us a horizontal
++            // segment.
++            if (y1 == y0) {
++                continue;
++            }
++            quads[idx+CURSLOPE] = (x1 - x0) / (y1 - y0);
++            quads[idx+CURX] = x0 + (quads[idx+CURY] - y0) * quads[idx+CURSLOPE];
++        }
++    }
++
++
++    private static final int SIZEOF_CURVE = 16;
++    private float[] curves = null;
++    private int numCurves;
++    private void curveSetCurY(final int idx, final int y) {
++        assert y < curves[idx+YMAX];
++        assert (curves[idx+CURY] > y);
++        assert (curves[idx+CURY] == Math.ceil(curves[idx+CURY]));
++
++        while (curves[idx+CURY] < ((float)y)) {
++            curveGoToNextY(idx);
++        }
++    }
++    private void curveGoToNextY(final int idx) {
++        curves[idx+CURY] += 1;
++        // this will get overriden if the while executes.
++        curves[idx+CURX] += curves[idx+CURSLOPE];
++        int count = (int)curves[idx+COUNT];
++        // this loop should never execute more than once because our
++        // curve is monotonic in Y. Still we put it in because you can
++        // never be too sure when dealing with floating point.
++        while(curves[idx+CURY] >= curves[idx+Y0] && count > 0) {
++            float x0 = curves[idx+X0], y0 = curves[idx+Y0];
++            count = executeCurveAFDIteration(idx);
++            float x1 = curves[idx+X0], y1 = curves[idx+Y0];
++            // our curves are monotonic, so this shouldn't happen, but
++            // it is conceivable that for very flat curves with different
++            // y values at their endpoints AFD might give us a horizontal
++            // segment.
++            if (y1 == y0) {
++                continue;
++            }
++            curves[idx+CURSLOPE] = (x1 - x0) / (y1 - y0);
++            curves[idx+CURX] = x0 + (curves[idx+CURY] - y0) * curves[idx+CURSLOPE];
++        }
++    }
++
++
++    private static final float DEC_BND = 20f;
++    private static final float INC_BND = 8f;
++    // Flattens using adaptive forward differencing. This only carries out
++    // one iteration of the AFD loop. All it does is update AFD variables (i.e.
++    // X0, Y0, D*[X|Y], COUNT; not variables used for computing scanline crossings).
++    private int executeQuadAFDIteration(int idx) {
++        int count = (int)quads[idx+COUNT];
++        float ddx = quads[idx+DDX];
++        float ddy = quads[idx+DDY];
++        float dx = quads[idx+DX];
++        float dy = quads[idx+DY];
++
++        while (Math.abs(ddx) > DEC_BND || Math.abs(ddy) > DEC_BND) {
++            ddx = ddx / 4;
++            ddy = ddy / 4;
++            dx = (dx - ddx) / 2;
++            dy = (dy - ddy) / 2;
++            count <<= 1;
++        }
++        // can only do this on even "count" values, because we must divide count by 2
++        while (count % 2 == 0 && Math.abs(dx) <= INC_BND && Math.abs(dy) <= INC_BND) {
++            dx = 2 * dx + ddx;
++            dy = 2 * dy + ddy;
++            ddx = 4 * ddx;
++            ddy = 4 * ddy;
++            count >>= 1;
++        }
++        count--;
++        if (count > 0) {
++            quads[idx+X0] += dx;
++            dx += ddx;
++            quads[idx+Y0] += dy;
++            dy += ddy;
++        } else {
++            quads[idx+X0] = quads[idx+XL];
++            quads[idx+Y0] = quads[idx+YMAX];
++        }
++        quads[idx+COUNT] = count;
++        quads[idx+DDX] = ddx;
++        quads[idx+DDY] = ddy;
++        quads[idx+DX] = dx;
++        quads[idx+DY] = dy;
++        return count;
++    }
++    private int executeCurveAFDIteration(int idx) {
++        int count = (int)curves[idx+COUNT];
++        float ddx = curves[idx+DDX];
++        float ddy = curves[idx+DDY];
++        float dx = curves[idx+DX];
++        float dy = curves[idx+DY];
++        float dddx = curves[idx+DDDX];
++        float dddy = curves[idx+DDDY];
++
++        while (Math.abs(ddx) > DEC_BND || Math.abs(ddy) > DEC_BND) {
++            dddx /= 8;
++            dddy /= 8;
++            ddx = ddx/4 - dddx;
++            ddy = ddy/4 - dddy;
++            dx = (dx - ddx) / 2;
++            dy = (dy - ddy) / 2;
++            count <<= 1;
++        }
++        // can only do this on even "count" values, because we must divide count by 2
++        while (count % 2 == 0 && Math.abs(dx) <= INC_BND && Math.abs(dy) <= INC_BND) {
++            dx = 2 * dx + ddx;
++            dy = 2 * dy + ddy;
++            ddx = 4 * (ddx + dddx);
++            ddy = 4 * (ddy + dddy);
++            dddx = 8 * dddx;
++            dddy = 8 * dddy;
++            count >>= 1;
++        }
++        count--;
++        if (count > 0) {
++            curves[idx+X0] += dx;
++            dx += ddx;
++            ddx += dddx;
++            curves[idx+Y0] += dy;
++            dy += ddy;
++            ddy += dddy;
++        } else {
++            curves[idx+X0] = curves[idx+XL];
++            curves[idx+Y0] = curves[idx+YMAX];
++        }
++        curves[idx+COUNT] = count;
++        curves[idx+DDDX] = dddx;
++        curves[idx+DDDY] = dddy;
++        curves[idx+DDX] = ddx;
++        curves[idx+DDY] = ddy;
++        curves[idx+DX] = dx;
++        curves[idx+DY] = dy;
++        return count;
++    }
++
++
++    private void initLine(final int idx, float[] pts, int or) {
++        edges[idx+SLOPE] = (pts[2] - pts[0]) / (pts[3] - pts[1]);
++        edges[idx+CURX] = pts[0] + (edges[idx+CURY] - pts[1]) * edges[idx+SLOPE];
++    }
++
++    private void initQuad(final int idx, float[] points, int or) {
++        final int countlg = 3;
++        final int count = 1 << countlg;
++
++        // the dx and dy refer to forward differencing variables, not the last
++        // coefficients of the "points" polynomial
++        final float ddx, ddy, dx, dy;
++        c.set(points, 6);
++
++        ddx = c.dbx / (1 << (2 * countlg));
++        ddy = c.dby / (1 << (2 * countlg));
++        dx = c.bx / (1 << (2 * countlg)) + c.cx / (1 << countlg);
++        dy = c.by / (1 << (2 * countlg)) + c.cy / (1 << countlg);
++
++        quads[idx+DDX] = ddx;
++        quads[idx+DDY] = ddy;
++        quads[idx+DX] = dx;
++        quads[idx+DY] = dy;
++        quads[idx+COUNT] = count;
++        quads[idx+XL] = points[4];
++        quads[idx+X0] = points[0];
++        quads[idx+Y0] = points[1];
++        executeQuadAFDIteration(idx);
++        float x1 = quads[idx+X0], y1 = quads[idx+Y0];
++        quads[idx+CURSLOPE] = (x1 - points[0]) / (y1 - points[1]);
++        quads[idx+CURX] = points[0] + (quads[idx+CURY] - points[1])*quads[idx+CURSLOPE];
++    }
++
++    private void initCurve(final int idx, float[] points, int or) {
++        final int countlg = 3;
++        final int count = 1 << countlg;
++
++        // the dx and dy refer to forward differencing variables, not the last
++        // coefficients of the "points" polynomial
++        final float dddx, dddy, ddx, ddy, dx, dy;
++        c.set(points, 8);
++        dddx = 2f * c.dax / (1 << (3 * countlg));
++        dddy = 2f * c.day / (1 << (3 * countlg));
++
++        ddx = dddx + c.dbx / (1 << (2 * countlg));
++        ddy = dddy + c.dby / (1 << (2 * countlg));
++        dx = c.ax / (1 << (3 * countlg)) + c.bx / (1 << (2 * countlg)) + c.cx / (1 << countlg);
++        dy = c.ay / (1 << (3 * countlg)) + c.by / (1 << (2 * countlg)) + c.cy / (1 << countlg);
++
++        curves[idx+DDDX] = dddx;
++        curves[idx+DDDY] = dddy;
++        curves[idx+DDX] = ddx;
++        curves[idx+DDY] = ddy;
++        curves[idx+DX] = dx;
++        curves[idx+DY] = dy;
++        curves[idx+COUNT] = count;
++        curves[idx+XL] = points[6];
++        curves[idx+X0] = points[0];
++        curves[idx+Y0] = points[1];
++        executeCurveAFDIteration(idx);
++        float x1 = curves[idx+X0], y1 = curves[idx+Y0];
++        curves[idx+CURSLOPE] = (x1 - points[0]) / (y1 - points[1]);
++        curves[idx+CURX] = points[0] + (curves[idx+CURY] - points[1])*curves[idx+CURSLOPE];
++    }
++
++    private void addPathSegment(float[] pts, final int type, final int or) {
++        int idx;
++        float[] addTo;
++        switch (type) {
++        case 4:
++            idx = numEdges * SIZEOF_EDGE;
++            addTo = edges = Helpers.widenArray(edges, numEdges*SIZEOF_EDGE, SIZEOF_EDGE);
++            numEdges++;
++            break;
++        case 6:
++            idx = numQuads * SIZEOF_QUAD;
++            addTo = quads = Helpers.widenArray(quads, numQuads*SIZEOF_QUAD, SIZEOF_QUAD);
++            numQuads++;
++            break;
++        case 8:
++            idx = numCurves * SIZEOF_CURVE;
++            addTo = curves = Helpers.widenArray(curves, numCurves*SIZEOF_CURVE, SIZEOF_CURVE);
++            numCurves++;
++            break;
++        default:
++            throw new InternalError();
++        }
++        // set the common fields, except CURX, for which we must know the kind
++        // of curve. NOTE: this must be done before the type specific fields
++        // are initialized, because those depend on the common ones.
++        addTo[idx+YMIN] = pts[1];
++        addTo[idx+YMAX] = pts[type-1];
++        addTo[idx+OR] = or;
++        addTo[idx+CURY] = (float)Math.ceil(pts[1]);
++        switch (type) {
++        case 4:
++            initLine(idx, pts, or);
++            break;
++        case 6:
++            initQuad(idx, pts, or);
++            break;
++        case 8:
++            initCurve(idx, pts, or);
++            break;
++        default:
++            throw new InternalError();
++        }
++    }
++
++    // precondition: the curve in pts must be monotonic and increasing in y.
++    private void somethingTo(float[] pts, final int type, final int or) {
++        // NOTE: it's very important that we check for or >= 0 below (as
++        // opposed to or == 1, or or > 0, or anything else). That's
++        // because if we check for or==1, when the curve being added
++        // is a horizontal line, or will be 0 so or==1 will be false and
++        // x0 and y0 will be updated to pts[0] and pts[1] instead of pts[type-2]
++        // and pts[type-1], which is the correct thing to do.
++        this.x0 = or >= 0 ? pts[type - 2] : pts[0];
++        this.y0 = or >= 0 ? pts[type - 1] : pts[1];
++
++        float minY = pts[1], maxY = pts[type - 1];
++        if (Math.ceil(minY) >= Math.ceil(maxY) ||
++            Math.ceil(minY) >= boundsMaxY || maxY < boundsMinY)
++        {
+             return;
+         }
+ 
+-        int newSize = edgesSize + SIZEOF_STRUCT_EDGE;
+-        if (edges.length < newSize) {
+-            edges = Arrays.copyOf(edges, newSize * 2);
+-        }
+-        edges[edgesSize+CURX] = x0;
+-        edges[edgesSize+CURY] = y0;
+-        edges[edgesSize+Y1] = y1;
+-        edges[edgesSize+SLOPE] = (x1 - x0) / (y1 - y0);
+-        edges[edgesSize+OR] = or;
+-        // the crossing values can't be initialized meaningfully yet. This
+-        // will have to wait until setCurY is called
+-        edgesSize += SIZEOF_STRUCT_EDGE;
++        if (minY < edgeMinY) { edgeMinY = minY; }
++        if (maxY > edgeMaxY) { edgeMaxY = maxY; }
+ 
+-        // Accumulate edgeMinY and edgeMaxY
+-        if (y0 < edgeMinY) { edgeMinY = y0; }
+-        if (y1 > edgeMaxY) { edgeMaxY = y1; }
++        int minXidx = (pts[0] < pts[type-2] ? 0 : type - 2);
++        float minX = pts[minXidx];
++        float maxX = pts[type - 2 - minXidx];
++        if (minX < edgeMinX) { edgeMinX = minX; }
++        if (maxX > edgeMaxX) { edgeMaxX = maxX; }
++        addPathSegment(pts, type, or);
+     }
+ 
+-    // As far as the following methods care, this edges extends to infinity.
+-    // They can compute the x intersect of any horizontal line.
+-    // precondition: idx is the index to the start of the desired edge.
+-    // So, if the ith edge is wanted, idx should be SIZEOF_STRUCT_EDGE * i
+-    private void setCurY(int idx, int y) {
+-        // compute the x crossing of edge at idx and horizontal line y
+-        // currentXCrossing = (y - y0)*slope + x0
+-        edges[idx + CURX] = (y - edges[idx + CURY]) * edges[idx + SLOPE] + edges[idx+CURX];
+-        edges[idx + CURY] = (float)y;
+-    }
++// END EDGE LIST
++//////////////////////////////////////////////////////////////////////////////
+ 
+-    private void gotoNextY(int idx) {
+-        edges[idx + CURY] += 1f; // i.e. curY += 1
+-        edges[idx + CURX] += edges[idx + SLOPE]; // i.e. curXCrossing += slope
+-    }
+-
+-    private int getCurCrossing(int idx) {
+-        return (int)edges[idx + CURX];
+-    }
+-//====================================================================================
+ 
+     public static final int WIND_EVEN_ODD = 0;
+     public static final int WIND_NON_ZERO = 1;
+@@ -284,16 +586,13 @@
+     final int MAX_AA_ALPHA;
+ 
+     // Cache to store RLE-encoded coverage mask of the current primitive
+-    final PiscesCache cache;
++    PiscesCache cache;
+ 
+     // Bounds of the drawing region, at subpixel precision.
+-    final private int boundsMinX, boundsMinY, boundsMaxX, boundsMaxY;
+-
+-    // Pixel bounding box for current primitive
+-    private int pix_bboxX0, pix_bboxY0, pix_bboxX1, pix_bboxY1;
++    private final int boundsMinX, boundsMinY, boundsMaxX, boundsMaxY;
+ 
+     // Current winding rule
+-    final private int windingRule;
++    private final int windingRule;
+ 
+     // Current drawing position, i.e., final point of last segment
+     private float x0, y0;
+@@ -304,8 +603,8 @@
+     public Renderer(int subpixelLgPositionsX, int subpixelLgPositionsY,
+                     int pix_boundsX, int pix_boundsY,
+                     int pix_boundsWidth, int pix_boundsHeight,
+-                    int windingRule,
+-                    PiscesCache cache) {
++                    int windingRule)
++    {
+         this.SUBPIXEL_LG_POSITIONS_X = subpixelLgPositionsX;
+         this.SUBPIXEL_LG_POSITIONS_Y = subpixelLgPositionsY;
+         this.SUBPIXEL_MASK_X = (1 << (SUBPIXEL_LG_POSITIONS_X)) - 1;
+@@ -314,23 +613,12 @@
+         this.SUBPIXEL_POSITIONS_Y = 1 << (SUBPIXEL_LG_POSITIONS_Y);
+         this.MAX_AA_ALPHA = (SUBPIXEL_POSITIONS_X * SUBPIXEL_POSITIONS_Y);
+ 
+-        this.edges = new float[SIZEOF_STRUCT_EDGE * INIT_NUM_EDGES];
+-        edgeMinY = Float.POSITIVE_INFINITY;
+-        edgeMaxY = Float.NEGATIVE_INFINITY;
+-        edgesSize = 0;
+-
+         this.windingRule = windingRule;
+-        this.cache = cache;
+ 
+         this.boundsMinX = pix_boundsX * SUBPIXEL_POSITIONS_X;
+         this.boundsMinY = pix_boundsY * SUBPIXEL_POSITIONS_Y;
+         this.boundsMaxX = (pix_boundsX + pix_boundsWidth) * SUBPIXEL_POSITIONS_X;
+         this.boundsMaxY = (pix_boundsY + pix_boundsHeight) * SUBPIXEL_POSITIONS_Y;
+-
+-        this.pix_bboxX0 = pix_boundsX;
+-        this.pix_bboxY0 = pix_boundsY;
+-        this.pix_bboxX1 = pix_boundsX + pix_boundsWidth;
+-        this.pix_bboxY1 = pix_boundsY + pix_boundsHeight;
+     }
+ 
+     private float tosubpixx(float pix_x) {
+@@ -341,7 +629,7 @@
+     }
+ 
+     public void moveTo(float pix_x0, float pix_y0) {
+-        close();
++        closePath();
+         this.pix_sx0 = pix_x0;
+         this.pix_sy0 = pix_y0;
+         this.y0 = tosubpixy(pix_y0);
+@@ -350,39 +638,102 @@
+ 
+     public void lineJoin() { /* do nothing */ }
+ 
+-    public void lineTo(float pix_x1, float pix_y1) {
+-        float x1 = tosubpixx(pix_x1);
+-        float y1 = tosubpixy(pix_y1);
++    private final float[][] pts = new float[2][8];
++    private final float[] ts = new float[4];
+ 
+-        // Ignore horizontal lines
+-        if (y0 == y1) {
+-            this.x0 = x1;
+-            return;
++    private static void invertPolyPoints(float[] pts, int off, int type) {
++        for (int i = off, j = off + type - 2; i < j; i += 2, j -= 2) {
++            float tmp = pts[i];
++            pts[i] = pts[j];
++            pts[j] = tmp;
++            tmp = pts[i+1];
++            pts[i+1] = pts[j+1];
++            pts[j+1] = tmp;
+         }
+-
+-        addEdge(x0, y0, x1, y1);
+-
+-        this.x0 = x1;
+-        this.y0 = y1;
+     }
+ 
+-    public void close() {
++    // return orientation before making the curve upright.
++    private static int makeMonotonicCurveUpright(float[] pts, int off, int type) {
++        float y0 = pts[off + 1];
++        float y1 = pts[off + type - 1];
++        if (y0 > y1) {
++            invertPolyPoints(pts, off, type);
++            return -1;
++        } else if (y0 < y1) {
++            return 1;
++        }
++        return 0;
++    }
++
++    public void lineTo(float pix_x1, float pix_y1) {
++        pts[0][0] = x0; pts[0][1] = y0;
++        pts[0][2] = tosubpixx(pix_x1); pts[0][3] = tosubpixy(pix_y1);
++        int or = makeMonotonicCurveUpright(pts[0], 0, 4);
++        somethingTo(pts[0], 4, or);
++    }
++
++    Curve c = new Curve();
++    private void curveOrQuadTo(int type) {
++        c.set(pts[0], type);
++        int numTs = c.dxRoots(ts, 0);
++        numTs += c.dyRoots(ts, numTs);
++        numTs = Helpers.filterOutNotInAB(ts, 0, numTs, 0, 1);
++        Helpers.isort(ts, 0, numTs);
++
++        Iterator<float[]> it = Curve.breakPtsAtTs(pts, type, ts, numTs);
++        while(it.hasNext()) {
++            float[] curCurve = it.next();
++            int or = makeMonotonicCurveUpright(curCurve, 0, type);
++            somethingTo(curCurve, type, or);
++        }
++    }
++
++    @Override public void curveTo(float x1, float y1,
++                                  float x2, float y2,
++                                  float x3, float y3)
++    {
++        pts[0][0] = x0; pts[0][1] = y0;
++        pts[0][2] = tosubpixx(x1); pts[0][3] = tosubpixy(y1);
++        pts[0][4] = tosubpixx(x2); pts[0][5] = tosubpixy(y2);
++        pts[0][6] = tosubpixx(x3); pts[0][7] = tosubpixy(y3);
++        curveOrQuadTo(8);
++    }
++
++    @Override public void quadTo(float x1, float y1, float x2, float y2) {
++        pts[0][0] = x0; pts[0][1] = y0;
++        pts[0][2] = tosubpixx(x1); pts[0][3] = tosubpixy(y1);
++        pts[0][4] = tosubpixx(x2); pts[0][5] = tosubpixy(y2);
++        curveOrQuadTo(6);
++    }
++
++    public void closePath() {
+         // lineTo expects its input in pixel coordinates.
+         lineTo(pix_sx0, pix_sy0);
+     }
+ 
+-    public void end() {
+-        close();
++    public void pathDone() {
++        closePath();
+     }
+ 
+-    private void _endRendering() {
++
++    @Override
++    public long getNativeConsumer() {
++        throw new InternalError("Renderer does not use a native consumer.");
++    }
++
++    private void _endRendering(final int pix_bboxx0, final int pix_bboxy0,
++                               final int pix_bboxx1, final int pix_bboxy1)
++    {
+         // Mask to determine the relevant bit of the crossing sum
+         // 0x1 if EVEN_ODD, all bits if NON_ZERO
+         int mask = (windingRule == WIND_EVEN_ODD) ? 0x1 : ~0x0;
+ 
+         // add 1 to better deal with the last pixel in a pixel row.
+-        int width = ((boundsMaxX - boundsMinX) >> SUBPIXEL_LG_POSITIONS_X) + 1;
+-        byte[] alpha = new byte[width+1];
++        int width = pix_bboxx1 - pix_bboxx0 + 1;
++        int[] alpha = new int[width+1];
++
++        int bboxx0 = pix_bboxx0 << SUBPIXEL_LG_POSITIONS_X;
++        int bboxx1 = pix_bboxx1 << SUBPIXEL_LG_POSITIONS_X;
+ 
+         // Now we iterate through the scanlines. We must tell emitRow the coord
+         // of the first non-transparent pixel, so we must keep accumulators for
+@@ -394,33 +745,34 @@
+         int pix_minX = Integer.MAX_VALUE;
+ 
+         int y = boundsMinY; // needs to be declared here so we emit the last row properly.
+-        ScanLineItInitialize();
+-        for ( ; ScanLineItHasNext(); ) {
+-            int numCrossings = ScanLineItGoToNextYAndComputeCrossings();
+-            y = ScanLineItCurrentY();
++        ScanlineIterator it = this.new ScanlineIterator();
++        for ( ; it.hasNext(); ) {
++            int numCrossings = it.next();
++            int[] crossings = it.crossings;
++            y = it.curY();
+ 
+             if (numCrossings > 0) {
+                 int lowx = crossings[0] >> 1;
+                 int highx = crossings[numCrossings - 1] >> 1;
+-                int x0 = Math.max(lowx, boundsMinX);
+-                int x1 = Math.min(highx, boundsMaxX);
++                int x0 = Math.max(lowx, bboxx0);
++                int x1 = Math.min(highx, bboxx1);
+ 
+                 pix_minX = Math.min(pix_minX, x0 >> SUBPIXEL_LG_POSITIONS_X);
+                 pix_maxX = Math.max(pix_maxX, x1 >> SUBPIXEL_LG_POSITIONS_X);
+             }
+ 
+             int sum = 0;
+-            int prev = boundsMinX;
++            int prev = bboxx0;
+             for (int i = 0; i < numCrossings; i++) {
+                 int curxo = crossings[i];
+                 int curx = curxo >> 1;
+                 int crorientation = ((curxo & 0x1) == 0x1) ? 1 : -1;
+                 if ((sum & mask) != 0) {
+-                    int x0 = Math.max(prev, boundsMinX);
+-                    int x1 = Math.min(curx, boundsMaxX);
++                    int x0 = Math.max(prev, bboxx0);
++                    int x1 = Math.min(curx, bboxx1);
+                     if (x0 < x1) {
+-                        x0 -= boundsMinX; // turn x0, x1 from coords to indeces
+-                        x1 -= boundsMinX; // in the alpha array.
++                        x0 -= bboxx0; // turn x0, x1 from coords to indeces
++                        x1 -= bboxx0; // in the alpha array.
+ 
+                         int pix_x = x0 >> SUBPIXEL_LG_POSITIONS_X;
+                         int pix_xmaxm1 = (x1 - 1) >> SUBPIXEL_LG_POSITIONS_X;
+@@ -442,6 +794,9 @@
+                 prev = curx;
+             }
+ 
++            // even if this last row had no crossings, alpha will be zeroed
++            // from the last emitRow call. But this doesn't matter because
++            // maxX < minX, so no row will be emitted to the cache.
+             if ((y & SUBPIXEL_MASK_Y) == SUBPIXEL_MASK_Y) {
+                 emitRow(alpha, y >> SUBPIXEL_LG_POSITIONS_Y, pix_minX, pix_maxX);
+                 pix_minX = Integer.MAX_VALUE;
+@@ -453,47 +808,53 @@
+         if (pix_maxX >= pix_minX) {
+             emitRow(alpha, y >> SUBPIXEL_LG_POSITIONS_Y, pix_minX, pix_maxX);
+         }
+-        pix_bboxX0 = minX >> SUBPIXEL_LG_POSITIONS_X;
+-        pix_bboxX1 = maxX >> SUBPIXEL_LG_POSITIONS_X;
+-        pix_bboxY0 = minY >> SUBPIXEL_LG_POSITIONS_Y;
+-        pix_bboxY1 = maxY >> SUBPIXEL_LG_POSITIONS_Y;
+     }
+ 
++    public void endRendering() {
++        final int bminx = boundsMinX >> SUBPIXEL_LG_POSITIONS_X;
++        final int bmaxx = boundsMaxX >> SUBPIXEL_LG_POSITIONS_X;
++        final int bminy = boundsMinY >> SUBPIXEL_LG_POSITIONS_Y;
++        final int bmaxy = boundsMaxY >> SUBPIXEL_LG_POSITIONS_Y;
++        final int eminx = ((int)Math.floor(edgeMinX)) >> SUBPIXEL_LG_POSITIONS_X;
++        final int emaxx = ((int)Math.ceil(edgeMaxX)) >> SUBPIXEL_LG_POSITIONS_X;
++        final int eminy = ((int)Math.floor(edgeMinY)) >> SUBPIXEL_LG_POSITIONS_Y;
++        final int emaxy = ((int)Math.ceil(edgeMaxY)) >> SUBPIXEL_LG_POSITIONS_Y;
+ 
+-    public void endRendering() {
+-        // Set up the cache to accumulate the bounding box
+-        if (cache != null) {
+-            cache.bboxX0 = Integer.MAX_VALUE;
+-            cache.bboxY0 = Integer.MAX_VALUE;
+-            cache.bboxX1 = Integer.MIN_VALUE;
+-            cache.bboxY1 = Integer.MIN_VALUE;
++        final int minX = Math.max(bminx, eminx);
++        final int maxX = Math.min(bmaxx, emaxx);
++        final int minY = Math.max(bminy, eminy);
++        final int maxY = Math.min(bmaxy, emaxy);
++        if (minX > maxX || minY > maxY) {
++            this.cache = new PiscesCache(bminx, bminy, bmaxx, bmaxy);
++            return;
+         }
+ 
+-        _endRendering();
++        this.cache = new PiscesCache(minX, minY, maxX, maxY);
++        _endRendering(minX, minY, maxX, maxY);
+     }
+ 
+-    public void getBoundingBox(int[] pix_bbox) {
+-        pix_bbox[0] = pix_bboxX0;
+-        pix_bbox[1] = pix_bboxY0;
+-        pix_bbox[2] = pix_bboxX1 - pix_bboxX0;
+-        pix_bbox[3] = pix_bboxY1 - pix_bboxY0;
++    public PiscesCache getCache() {
++        if (cache == null) {
++            throw new InternalError("cache not yet initialized");
++        }
++        return cache;
+     }
+ 
+-    private void emitRow(byte[] alphaRow, int pix_y, int pix_from, int pix_to) {
++    private void emitRow(int[] alphaRow, int pix_y, int pix_from, int pix_to) {
+         // Copy rowAA data into the cache if one is present
+         if (cache != null) {
+             if (pix_to >= pix_from) {
+-                cache.startRow(pix_y, pix_from, pix_to);
++                cache.startRow(pix_y, pix_from);
+ 
+                 // Perform run-length encoding and store results in the cache
+-                int from = pix_from - (boundsMinX >> SUBPIXEL_LG_POSITIONS_X);
+-                int to = pix_to - (boundsMinX >> SUBPIXEL_LG_POSITIONS_X);
++                int from = pix_from - cache.bboxX0;
++                int to = pix_to - cache.bboxX0;
+ 
+                 int runLen = 1;
+-                byte startVal = alphaRow[from];
++                int startVal = alphaRow[from];
+                 for (int i = from + 1; i <= to; i++) {
+-                    byte nextVal = (byte)(startVal + alphaRow[i]);
+-                    if (nextVal == startVal && runLen < 255) {
++                    int nextVal = startVal + alphaRow[i];
++                    if (nextVal == startVal) {
+                         runLen++;
+                     } else {
+                         cache.addRLERun(startVal, runLen);
+@@ -502,9 +863,8 @@
+                     }
+                 }
+                 cache.addRLERun(startVal, runLen);
+-                cache.addRLERun((byte)0, 0);
+             }
+         }
+-        java.util.Arrays.fill(alphaRow, (byte)0);
++        java.util.Arrays.fill(alphaRow, 0);
+     }
+ }
+diff -r 12b65e7ee3e4 -r 065e6c5a8027 src/share/classes/sun/java2d/pisces/Stroker.java
+--- openjdk.orig/jdk/src/share/classes/sun/java2d/pisces/Stroker.java	Fri Oct 22 16:57:41 2010 +0400
++++ openjdk/jdk/src/share/classes/sun/java2d/pisces/Stroker.java	Tue Oct 26 10:39:23 2010 -0400
+@@ -25,10 +25,18 @@
+ 
+ package sun.java2d.pisces;
+ 
+-public class Stroker implements LineSink {
++import java.util.Arrays;
++import java.util.Iterator;
++
++import sun.awt.geom.PathConsumer2D;
++
++// TODO: some of the arithmetic here is too verbose and prone to hard to
++// debug typos. We should consider making a small Point/Vector class that
++// has methods like plus(Point), minus(Point), dot(Point), cross(Point)and such
++public class Stroker implements PathConsumer2D {
+ 
+     private static final int MOVE_TO = 0;
+-    private static final int LINE_TO = 1;
++    private static final int DRAWING_OP_TO = 1; // ie. curve, line, or quad
+     private static final int CLOSE = 2;
+ 
+     /**
+@@ -61,57 +69,37 @@
+      */
+     public static final int CAP_SQUARE = 2;
+ 
+-    private final LineSink output;
++    private final PathConsumer2D out;
+ 
+     private final int capStyle;
+     private final int joinStyle;
+ 
+-    private final float m00, m01, m10, m11, det;
++    private final float lineWidth2;
+ 
+-    private final float lineWidth2;
+-    private final float scaledLineWidth2;
+-
+-    // For any pen offset (pen_dx, pen_dy) that does not depend on
+-    // the line orientation, the pen should be transformed so that:
+-    //
+-    // pen_dx' = m00*pen_dx + m01*pen_dy
+-    // pen_dy' = m10*pen_dx + m11*pen_dy
+-    //
+-    // For a round pen, this means:
+-    //
+-    // pen_dx(r, theta) = r*cos(theta)
+-    // pen_dy(r, theta) = r*sin(theta)
+-    //
+-    // pen_dx'(r, theta) = r*(m00*cos(theta) + m01*sin(theta))
+-    // pen_dy'(r, theta) = r*(m10*cos(theta) + m11*sin(theta))
+-    private int numPenSegments;
+-    private final float[] pen_dx;
+-    private final float[] pen_dy;
+-    private boolean[] penIncluded;
+-    private final float[] join;
+-
+-    private final float[] offset = new float[2];
+-    private float[] reverse = new float[100];
++    private final float[][] offset = new float[3][2];
+     private final float[] miter = new float[2];
+     private final float miterLimitSq;
+ 
+     private int prev;
+-    private int rindex;
+-    private boolean started;
+-    private boolean lineToOrigin;
+-    private boolean joinToOrigin;
+ 
+-    private float sx0, sy0, sx1, sy1, x0, y0, px0, py0;
+-    private float mx0, my0, omx, omy;
++    // The starting point of the path, and the slope there.
++    private float sx0, sy0, sdx, sdy;
++    // the current point and the slope there.
++    private float cx0, cy0, cdx, cdy; // c stands for current
++    // vectors that when added to (sx0,sy0) and (cx0,cy0) respectively yield the
++    // first and last points on the left parallel path. Since this path is
++    // parallel, it's slope at any point is parallel to the slope of the
++    // original path (thought they may have different directions), so these
++    // could be computed from sdx,sdy and cdx,cdy (and vice versa), but that
++    // would be error prone and hard to read, so we keep these anyway.
++    private float smx, smy, cmx, cmy;
+ 
+-    private float m00_2_m01_2;
+-    private float m10_2_m11_2;
+-    private float m00_m10_m01_m11;
++    private final PolyStack reverse = new PolyStack();
+ 
+     /**
+      * Constructs a <code>Stroker</code>.
+      *
+-     * @param output an output <code>LineSink</code>.
++     * @param pc2d an output <code>PathConsumer2D</code>.
+      * @param lineWidth the desired line width in pixels
+      * @param capStyle the desired end cap style, one of
+      * <code>CAP_BUTT</code>, <code>CAP_ROUND</code> or
+@@ -120,183 +108,61 @@
+      * <code>JOIN_MITER</code>, <code>JOIN_ROUND</code> or
+      * <code>JOIN_BEVEL</code>.
+      * @param miterLimit the desired miter limit
+-     * @param transform a <code>Transform4</code> object indicating
+-     * the transform that has been previously applied to all incoming
+-     * coordinates.  This is required in order to produce consistently
+-     * shaped end caps and joins.
+      */
+-    public Stroker(LineSink output,
++    public Stroker(PathConsumer2D pc2d,
+                    float lineWidth,
+                    int capStyle,
+                    int joinStyle,
+-                   float miterLimit,
+-                   float m00, float m01, float m10, float m11) {
+-        this.output = output;
++                   float miterLimit)
++    {
++        this.out = pc2d;
+ 
+         this.lineWidth2 = lineWidth / 2;
+-        this.scaledLineWidth2 = m00 * lineWidth2;
+         this.capStyle = capStyle;
+         this.joinStyle = joinStyle;
+ 
+-        m00_2_m01_2 = m00*m00 + m01*m01;
+-        m10_2_m11_2 = m10*m10 + m11*m11;
+-        m00_m10_m01_m11 = m00*m10 + m01*m11;
+-
+-        this.m00 = m00;
+-        this.m01 = m01;
+-        this.m10 = m10;
+-        this.m11 = m11;
+-        det = m00*m11 - m01*m10;
+-
+-        float limit = miterLimit * lineWidth2 * det;
++        float limit = miterLimit * lineWidth2;
+         this.miterLimitSq = limit*limit;
+ 
+-        this.numPenSegments = (int)(3.14159f * lineWidth);
+-        this.pen_dx = new float[numPenSegments];
+-        this.pen_dy = new float[numPenSegments];
+-        this.penIncluded = new boolean[numPenSegments];
+-        this.join = new float[2*numPenSegments];
+-
+-        for (int i = 0; i < numPenSegments; i++) {
+-            double theta = (i * 2.0 * Math.PI)/numPenSegments;
+-
+-            double cos = Math.cos(theta);
+-            double sin = Math.sin(theta);
+-            pen_dx[i] = (float)(lineWidth2 * (m00*cos + m01*sin));
+-            pen_dy[i] = (float)(lineWidth2 * (m10*cos + m11*sin));
+-        }
+-
+-        prev = CLOSE;
+-        rindex = 0;
+-        started = false;
+-        lineToOrigin = false;
++        this.prev = CLOSE;
+     }
+ 
+-    private void computeOffset(float x0, float y0,
+-                               float x1, float y1, float[] m) {
+-        float lx = x1 - x0;
+-        float ly = y1 - y0;
+-
+-        float dx, dy;
+-        if (m00 > 0 && m00 == m11 && m01 == 0 & m10 == 0) {
+-            float ilen = (float)Math.hypot(lx, ly);
+-            if (ilen == 0) {
+-                dx = dy = 0;
+-            } else {
+-                dx = (ly * scaledLineWidth2)/ilen;
+-                dy = -(lx * scaledLineWidth2)/ilen;
+-            }
++    private static void computeOffset(final float lx, final float ly,
++                                      final float w, final float[] m)
++    {
++        final float len = (float)Math.hypot(lx, ly);
++        if (len == 0) {
++            m[0] = m[1] = 0;
+         } else {
+-            int sdet = (det > 0) ? 1 : -1;
+-            float a = ly * m00 - lx * m10;
+-            float b = ly * m01 - lx * m11;
+-            float dh = (float)Math.hypot(a, b);
+-            float div = sdet * lineWidth2/dh;
+-
+-            float ddx = ly * m00_2_m01_2 - lx * m00_m10_m01_m11;
+-            float ddy = ly * m00_m10_m01_m11 - lx * m10_2_m11_2;
+-            dx = ddx*div;
+-            dy = ddy*div;
+-        }
+-
+-        m[0] = dx;
+-        m[1] = dy;
+-    }
+-
+-    private void ensureCapacity(int newrindex) {
+-        if (reverse.length < newrindex) {
+-            reverse = java.util.Arrays.copyOf(reverse, 6*reverse.length/5);
++            m[0] = (ly * w)/len;
++            m[1] = -(lx * w)/len;
+         }
+     }
+ 
+-    private boolean isCCW(float x0, float y0,
+-                          float x1, float y1,
+-                          float x2, float y2) {
+-        return (x1 - x0) * (y2 - y1) < (y1 - y0) * (x2 - x1);
+-    }
+-
+-    private boolean side(float x,  float y,
+-                         float x0, float y0,
+-                         float x1, float y1) {
+-        return (y0 - y1)*x + (x1 - x0)*y + (x0*y1 - x1*y0) > 0;
+-    }
+-
+-    private int computeRoundJoin(float cx, float cy,
+-                                 float xa, float ya,
+-                                 float xb, float yb,
+-                                 int side,
+-                                 boolean flip,
+-                                 float[] join) {
+-        float px, py;
+-        int ncoords = 0;
+-
+-        boolean centerSide;
+-        if (side == 0) {
+-            centerSide = side(cx, cy, xa, ya, xb, yb);
+-        } else {
+-            centerSide = (side == 1);
+-        }
+-        for (int i = 0; i < numPenSegments; i++) {
+-            px = cx + pen_dx[i];
+-            py = cy + pen_dy[i];
+-
+-            boolean penSide = side(px, py, xa, ya, xb, yb);
+-            penIncluded[i] = (penSide != centerSide);
+-        }
+-
+-        int start = -1, end = -1;
+-        for (int i = 0; i < numPenSegments; i++) {
+-            if (penIncluded[i] &&
+-                !penIncluded[(i + numPenSegments - 1) % numPenSegments]) {
+-                start = i;
+-            }
+-            if (penIncluded[i] &&
+-                !penIncluded[(i + 1) % numPenSegments]) {
+-                end = i;
+-            }
+-        }
+-
+-        if (end < start) {
+-            end += numPenSegments;
+-        }
+-
+-        if (start != -1 && end != -1) {
+-            float dxa = cx + pen_dx[start] - xa;
+-            float dya = cy + pen_dy[start] - ya;
+-            float dxb = cx + pen_dx[start] - xb;
+-            float dyb = cy + pen_dy[start] - yb;
+-
+-            boolean rev = (dxa*dxa + dya*dya > dxb*dxb + dyb*dyb);
+-            int i = rev ? end : start;
+-            int incr = rev ? -1 : 1;
+-            while (true) {
+-                int idx = i % numPenSegments;
+-                px = cx + pen_dx[idx];
+-                py = cy + pen_dy[idx];
+-                join[ncoords++] = px;
+-                join[ncoords++] = py;
+-                if (i == (rev ? start : end)) {
+-                    break;
+-                }
+-                i += incr;
+-            }
+-        }
+-
+-        return ncoords/2;
++    // Returns true if the vectors (dx1, dy1) and (dx2, dy2) are
++    // clockwise (if dx1,dy1 needs to be rotated clockwise to close
++    // the smallest angle between it and dx2,dy2).
++    // This is equivalent to detecting whether a point q is on the right side
++    // of a line passing through points p1, p2 where p2 = p1+(dx1,dy1) and
++    // q = p2+(dx2,dy2), which is the same as saying p1, p2, q are in a
++    // clockwise order.
++    // NOTE: "clockwise" here assumes coordinates with 0,0 at the bottom left.
++    private static boolean isCW(final float dx1, final float dy1,
++                                final float dx2, final float dy2)
++    {
++        return dx1 * dy2 <= dy1 * dx2;
+     }
+ 
+     // pisces used to use fixed point arithmetic with 16 decimal digits. I
+-    // didn't want to change the values of the constants below when I converted
++    // didn't want to change the values of the constant below when I converted
+     // it to floating point, so that's why the divisions by 2^16 are there.
+     private static final float ROUND_JOIN_THRESHOLD = 1000/65536f;
+-    private static final float ROUND_JOIN_INTERNAL_THRESHOLD = 1000000000/65536f;
+ 
+     private void drawRoundJoin(float x, float y,
+                                float omx, float omy, float mx, float my,
+-                               int side,
+-                               boolean flip,
+                                boolean rev,
+-                               float threshold) {
++                               float threshold)
++    {
+         if ((omx == 0 && omy == 0) || (mx == 0 && my == 0)) {
+             return;
+         }
+@@ -314,54 +180,148 @@
+             mx = -mx;
+             my = -my;
+         }
++        drawRoundJoin(x, y, omx, omy, mx, my, rev);
++    }
+ 
+-        float bx0 = x + omx;
+-        float by0 = y + omy;
+-        float bx1 = x + mx;
+-        float by1 = y + my;
++    private void drawRoundJoin(float cx, float cy,
++                               float omx, float omy,
++                               float mx, float my,
++                               boolean rev)
++    {
++        // The sign of the dot product of mx,my and omx,omy is equal to the
++        // the sign of the cosine of ext
++        // (ext is the angle between omx,omy and mx,my).
++        double cosext = omx * mx + omy * my;
++        // If it is >=0, we know that abs(ext) is <= 90 degrees, so we only
++        // need 1 curve to approximate the circle section that joins omx,omy
++        // and mx,my.
++        final int numCurves = cosext >= 0 ? 1 : 2;
+ 
+-        int npoints = computeRoundJoin(x, y,
+-                                       bx0, by0, bx1, by1, side, flip,
+-                                       join);
+-        for (int i = 0; i < npoints; i++) {
+-            emitLineTo(join[2*i], join[2*i + 1], rev);
++        switch (numCurves) {
++        case 1:
++            drawBezApproxForArc(cx, cy, omx, omy, mx, my, rev);
++            break;
++        case 2:
++            // we need to split the arc into 2 arcs spanning the same angle.
++            // The point we want will be one of the 2 intersections of the
++            // perpendicular bisector of the chord (omx,omy)->(mx,my) and the
++            // circle. We could find this by scaling the vector
++            // (omx+mx, omy+my)/2 so that it has length=lineWidth2 (and thus lies
++            // on the circle), but that can have numerical problems when the angle
++            // between omx,omy and mx,my is close to 180 degrees. So we compute a
++            // normal of (omx,omy)-(mx,my). This will be the direction of the
++            // perpendicular bisector. To get one of the intersections, we just scale
++            // this vector that its length is lineWidth2 (this works because the
++            // perpendicular bisector goes through the origin). This scaling doesn't
++            // have numerical problems because we know that lineWidth2 divided by
++            // this normal's length is at least 0.5 and at most sqrt(2)/2 (because
++            // we know the angle of the arc is > 90 degrees).
++            float nx = my - omy, ny = omx - mx;
++            float nlen = (float)Math.sqrt(nx*nx + ny*ny);
++            float scale = lineWidth2/nlen;
++            float mmx = nx * scale, mmy = ny * scale;
++
++            // if (isCW(omx, omy, mx, my) != isCW(mmx, mmy, mx, my)) then we've
++            // computed the wrong intersection so we get the other one.
++            // The test above is equivalent to if (rev).
++            if (rev) {
++                mmx = -mmx;
++                mmy = -mmy;
++            }
++            drawBezApproxForArc(cx, cy, omx, omy, mmx, mmy, rev);
++            drawBezApproxForArc(cx, cy, mmx, mmy, mx, my, rev);
++            break;
+         }
+     }
+ 
+-    // Return the intersection point of the lines (ix0, iy0) -> (ix1, iy1)
+-    // and (ix0p, iy0p) -> (ix1p, iy1p) in m[0] and m[1]
+-    private void computeMiter(float x0, float y0, float x1, float y1,
+-                              float x0p, float y0p, float x1p, float y1p,
+-                              float[] m) {
++    // the input arc defined by omx,omy and mx,my must span <= 90 degrees.
++    private void drawBezApproxForArc(final float cx, final float cy,
++                                     final float omx, final float omy,
++                                     final float mx, final float my,
++                                     boolean rev)
++    {
++        float cosext2 = (omx * mx + omy * my) / (2 * lineWidth2 * lineWidth2);
++        // cv is the length of P1-P0 and P2-P3 divided by the radius of the arc
++        // (so, cv assumes the arc has radius 1). P0, P1, P2, P3 are the points that
++        // define the bezier curve we're computing.
++        // It is computed using the constraints that P1-P0 and P3-P2 are parallel
++        // to the arc tangents at the endpoints, and that |P1-P0|=|P3-P2|.
++        float cv = (float)((4.0 / 3.0) * Math.sqrt(0.5-cosext2) /
++                           (1.0 + Math.sqrt(cosext2+0.5)));
++        // if clockwise, we need to negate cv.
++        if (rev) { // rev is equivalent to isCW(omx, omy, mx, my)
++            cv = -cv;
++        }
++        final float x1 = cx + omx;
++        final float y1 = cy + omy;
++        final float x2 = x1 - cv * omy;
++        final float y2 = y1 + cv * omx;
++
++        final float x4 = cx + mx;
++        final float y4 = cy + my;
++        final float x3 = x4 + cv * my;
++        final float y3 = y4 - cv * mx;
++
++        emitCurveTo(x1, y1, x2, y2, x3, y3, x4, y4, rev);
++    }
++
++    private void drawRoundCap(float cx, float cy, float mx, float my) {
++        final float C = 0.5522847498307933f;
++        // the first and second arguments of the following two calls
++        // are really will be ignored by emitCurveTo (because of the false),
++        // but we put them in anyway, as opposed to just giving it 4 zeroes,
++        // because it's just 4 additions and it's not good to rely on this
++        // sort of assumption (right now it's true, but that may change).
++        emitCurveTo(cx+mx,      cy+my,
++                    cx+mx-C*my, cy+my+C*mx,
++                    cx-my+C*mx, cy+mx+C*my,
++                    cx-my,      cy+mx,
++                    false);
++        emitCurveTo(cx-my,      cy+mx,
++                    cx-my-C*mx, cy+mx-C*my,
++                    cx-mx-C*my, cy-my+C*mx,
++                    cx-mx,      cy-my,
++                    false);
++    }
++
++    // Return the intersection point of the lines (x0, y0) -> (x1, y1)
++    // and (x0p, y0p) -> (x1p, y1p) in m[0] and m[1]
++    private void computeMiter(final float x0, final float y0,
++                              final float x1, final float y1,
++                              final float x0p, final float y0p,
++                              final float x1p, final float y1p,
++                              final float[] m, int off)
++    {
+         float x10 = x1 - x0;
+         float y10 = y1 - y0;
+         float x10p = x1p - x0p;
+         float y10p = y1p - y0p;
+ 
++        // if this is 0, the lines are parallel. If they go in the
++        // same direction, there is no intersection so m[off] and
++        // m[off+1] will contain infinity, so no miter will be drawn.
++        // If they go in the same direction that means that the start of the
++        // current segment and the end of the previous segment have the same
++        // tangent, in which case this method won't even be involved in
++        // miter drawing because it won't be called by drawMiter (because
++        // (mx == omx && my == omy) will be true, and drawMiter will return
++        // immediately).
+         float den = x10*y10p - x10p*y10;
+-        if (den == 0) {
+-            m[0] = x0;
+-            m[1] = y0;
+-            return;
+-        }
+-
+-        float t = x1p*(y0 - y0p) - x0*y10p + x0p*(y1p - y0);
+-        m[0] = x0 + (t*x10)/den;
+-        m[1] = y0 + (t*y10)/den;
++        float t = x10p*(y0-y0p) - y10p*(x0-x0p);
++        t /= den;
++        m[off++] = x0 + t*x10;
++        m[off] = y0 + t*y10;
+     }
+ 
+-    private void drawMiter(float px0, float py0,
+-                           float x0, float y0,
+-                           float x1, float y1,
++    private void drawMiter(final float pdx, final float pdy,
++                           final float x0, final float y0,
++                           final float dx, final float dy,
+                            float omx, float omy, float mx, float my,
+-                           boolean rev) {
+-        if (mx == omx && my == omy) {
+-            return;
+-        }
+-        if (px0 == x0 && py0 == y0) {
+-            return;
+-        }
+-        if (x0 == x1 && y0 == y1) {
++                           boolean rev)
++    {
++        if ((mx == omx && my == omy) ||
++            (pdx == 0 && pdy == 0) ||
++            (dx == 0 && dy == 0)) {
+             return;
+         }
+ 
+@@ -372,297 +332,734 @@
+             my = -my;
+         }
+ 
+-        computeMiter(px0 + omx, py0 + omy, x0 + omx, y0 + omy,
+-                     x0 + mx, y0 + my, x1 + mx, y1 + my,
+-                     miter);
++        computeMiter((x0 - pdx) + omx, (y0 - pdy) + omy, x0 + omx, y0 + omy,
++                     (dx + x0) + mx, (dy + y0) + my, x0 + mx, y0 + my,
++                     miter, 0);
+ 
+-        // Compute miter length in untransformed coordinates
+-        float dx = miter[0] - x0;
+-        float dy = miter[1] - y0;
+-        float a = dy*m00 - dx*m10;
+-        float b = dy*m01 - dx*m11;
+-        float lenSq = a*a + b*b;
++        float lenSq = (miter[0]-x0)*(miter[0]-x0) + (miter[1]-y0)*(miter[1]-y0);
+ 
+         if (lenSq < miterLimitSq) {
+             emitLineTo(miter[0], miter[1], rev);
+         }
+     }
+ 
+-
+     public void moveTo(float x0, float y0) {
+-        // System.out.println("Stroker.moveTo(" + x0/65536.0 + ", " + y0/65536.0 + ")");
+-
+-        if (lineToOrigin) {
+-            // not closing the path, do the previous lineTo
+-            lineToImpl(sx0, sy0, joinToOrigin);
+-            lineToOrigin = false;
+-        }
+-
+-        if (prev == LINE_TO) {
++        if (prev == DRAWING_OP_TO) {
+             finish();
+         }
+-
+-        this.sx0 = this.x0 = x0;
+-        this.sy0 = this.y0 = y0;
+-        this.rindex = 0;
+-        this.started = false;
+-        this.joinSegment = false;
++        this.sx0 = this.cx0 = x0;
++        this.sy0 = this.cy0 = y0;
++        this.cdx = this.sdx = 1;
++        this.cdy = this.sdy = 0;
+         this.prev = MOVE_TO;
+     }
+ 
+-    boolean joinSegment = false;
++    public void lineTo(float x1, float y1) {
++        float dx = x1 - cx0;
++        float dy = y1 - cy0;
++        if (dx == 0f && dy == 0f) {
++            dx = 1;
++        }
++        computeOffset(dx, dy, lineWidth2, offset[0]);
++        float mx = offset[0][0];
++        float my = offset[0][1];
+ 
+-    public void lineJoin() {
+-        // System.out.println("Stroker.lineJoin()");
+-        this.joinSegment = true;
++        drawJoin(cdx, cdy, cx0, cy0, dx, dy, cmx, cmy, mx, my);
++
++        emitLineTo(cx0 + mx, cy0 + my);
++        emitLineTo(x1 + mx, y1 + my);
++
++        emitLineTo(cx0 - mx, cy0 - my, true);
++        emitLineTo(x1 - mx, y1 - my, true);
++
++        this.cmx = mx;
++        this.cmy = my;
++        this.cdx = dx;
++        this.cdy = dy;
++        this.cx0 = x1;
++        this.cy0 = y1;
++        this.prev = DRAWING_OP_TO;
+     }
+ 
+-    public void lineTo(float x1, float y1) {
+-        // System.out.println("Stroker.lineTo(" + x1/65536.0 + ", " + y1/65536.0 + ")");
+-
+-        if (lineToOrigin) {
+-            if (x1 == sx0 && y1 == sy0) {
+-                // staying in the starting point
++    public void closePath() {
++        if (prev != DRAWING_OP_TO) {
++            if (prev == CLOSE) {
+                 return;
+             }
+-
+-            // not closing the path, do the previous lineTo
+-            lineToImpl(sx0, sy0, joinToOrigin);
+-            lineToOrigin = false;
+-        } else if (x1 == x0 && y1 == y0) {
+-            return;
+-        } else if (x1 == sx0 && y1 == sy0) {
+-            lineToOrigin = true;
+-            joinToOrigin = joinSegment;
+-            joinSegment = false;
+-            return;
+-        }
+-
+-        lineToImpl(x1, y1, joinSegment);
+-        joinSegment = false;
+-    }
+-
+-    private void lineToImpl(float x1, float y1, boolean joinSegment) {
+-        computeOffset(x0, y0, x1, y1, offset);
+-        float mx = offset[0];
+-        float my = offset[1];
+-
+-        if (!started) {
+-            emitMoveTo(x0 + mx, y0 + my);
+-            this.sx1 = x1;
+-            this.sy1 = y1;
+-            this.mx0 = mx;
+-            this.my0 = my;
+-            started = true;
+-        } else {
+-            boolean ccw = isCCW(px0, py0, x0, y0, x1, y1);
+-            if (joinSegment) {
+-                if (joinStyle == JOIN_MITER) {
+-                    drawMiter(px0, py0, x0, y0, x1, y1, omx, omy, mx, my,
+-                              ccw);
+-                } else if (joinStyle == JOIN_ROUND) {
+-                    drawRoundJoin(x0, y0,
+-                                  omx, omy,
+-                                  mx, my, 0, false, ccw,
+-                                  ROUND_JOIN_THRESHOLD);
+-                }
+-            } else {
+-                // Draw internal joins as round
+-                drawRoundJoin(x0, y0,
+-                              omx, omy,
+-                              mx, my, 0, false, ccw,
+-                              ROUND_JOIN_INTERNAL_THRESHOLD);
+-            }
+-
+-            emitLineTo(x0, y0, !ccw);
+-        }
+-
+-        emitLineTo(x0 + mx, y0 + my, false);
+-        emitLineTo(x1 + mx, y1 + my, false);
+-
+-        emitLineTo(x0 - mx, y0 - my, true);
+-        emitLineTo(x1 - mx, y1 - my, true);
+-
+-        this.omx = mx;
+-        this.omy = my;
+-        this.px0 = x0;
+-        this.py0 = y0;
+-        this.x0 = x1;
+-        this.y0 = y1;
+-        this.prev = LINE_TO;
+-    }
+-
+-    public void close() {
+-        // System.out.println("Stroker.close()");
+-
+-        if (lineToOrigin) {
+-            // ignore the previous lineTo
+-            lineToOrigin = false;
+-        }
+-
+-        if (!started) {
++            emitMoveTo(cx0, cy0 - lineWidth2);
++            this.cmx = this.smx = 0;
++            this.cmy = this.smy = -lineWidth2;
++            this.cdx = this.sdx = 1;
++            this.cdy = this.sdy = 0;
+             finish();
+             return;
+         }
+ 
+-        computeOffset(x0, y0, sx0, sy0, offset);
+-        float mx = offset[0];
+-        float my = offset[1];
+-
+-        // Draw penultimate join
+-        boolean ccw = isCCW(px0, py0, x0, y0, sx0, sy0);
+-        if (joinSegment) {
+-            if (joinStyle == JOIN_MITER) {
+-                drawMiter(px0, py0, x0, y0, sx0, sy0, omx, omy, mx, my, ccw);
+-            } else if (joinStyle == JOIN_ROUND) {
+-                drawRoundJoin(x0, y0, omx, omy, mx, my, 0, false, ccw,
+-                              ROUND_JOIN_THRESHOLD);
+-            }
+-        } else {
+-            // Draw internal joins as round
+-            drawRoundJoin(x0, y0,
+-                          omx, omy,
+-                          mx, my, 0, false, ccw,
+-                          ROUND_JOIN_INTERNAL_THRESHOLD);
++        if (cx0 != sx0 || cy0 != sy0) {
++            lineTo(sx0, sy0);
+         }
+ 
+-        emitLineTo(x0 + mx, y0 + my);
+-        emitLineTo(sx0 + mx, sy0 + my);
++        drawJoin(cdx, cdy, cx0, cy0, sdx, sdy, cmx, cmy, smx, smy);
+ 
+-        ccw = isCCW(x0, y0, sx0, sy0, sx1, sy1);
++        emitLineTo(sx0 + smx, sy0 + smy);
+ 
+-        // Draw final join on the outside
+-        if (!ccw) {
+-            if (joinStyle == JOIN_MITER) {
+-                drawMiter(x0, y0, sx0, sy0, sx1, sy1,
+-                          mx, my, mx0, my0, false);
+-            } else if (joinStyle == JOIN_ROUND) {
+-                drawRoundJoin(sx0, sy0, mx, my, mx0, my0, 0, false, false,
+-                              ROUND_JOIN_THRESHOLD);
+-            }
+-        }
++        emitMoveTo(sx0 - smx, sy0 - smy);
++        emitReverse();
+ 
+-        emitLineTo(sx0 + mx0, sy0 + my0);
+-        emitLineTo(sx0 - mx0, sy0 - my0);  // same as reverse[0], reverse[1]
+-
+-        // Draw final join on the inside
+-        if (ccw) {
+-            if (joinStyle == JOIN_MITER) {
+-                drawMiter(x0, y0, sx0, sy0, sx1, sy1,
+-                          -mx, -my, -mx0, -my0, false);
+-            } else if (joinStyle == JOIN_ROUND) {
+-                drawRoundJoin(sx0, sy0, -mx, -my, -mx0, -my0, 0,
+-                              true, false,
+-                              ROUND_JOIN_THRESHOLD);
+-            }
+-        }
+-
+-        emitLineTo(sx0 - mx, sy0 - my);
+-        emitLineTo(x0 - mx, y0 - my);
+-        for (int i = rindex - 2; i >= 0; i -= 2) {
+-            emitLineTo(reverse[i], reverse[i + 1]);
+-        }
+-
+-        this.x0 = this.sx0;
+-        this.y0 = this.sy0;
+-        this.rindex = 0;
+-        this.started = false;
+-        this.joinSegment = false;
+         this.prev = CLOSE;
+         emitClose();
+     }
+ 
+-    public void end() {
+-        // System.out.println("Stroker.end()");
++    private void emitReverse() {
++        while(!reverse.isEmpty()) {
++            reverse.pop(out);
++        }
++    }
+ 
+-        if (lineToOrigin) {
+-            // not closing the path, do the previous lineTo
+-            lineToImpl(sx0, sy0, joinToOrigin);
+-            lineToOrigin = false;
+-        }
+-
+-        if (prev == LINE_TO) {
++    public void pathDone() {
++        if (prev == DRAWING_OP_TO) {
+             finish();
+         }
+ 
+-        output.end();
+-        this.joinSegment = false;
+-        this.prev = MOVE_TO;
+-    }
+-
+-    double userSpaceLineLength(double dx, double dy) {
+-        double a = (dy*m00 - dx*m10)/det;
+-        double b = (dy*m01 - dx*m11)/det;
+-        return Math.hypot(a, b);
++        out.pathDone();
++        // this shouldn't matter since this object won't be used
++        // after the call to this method.
++        this.prev = CLOSE;
+     }
+ 
+     private void finish() {
+         if (capStyle == CAP_ROUND) {
+-            drawRoundJoin(x0, y0,
+-                          omx, omy, -omx, -omy, 1, false, false,
+-                          ROUND_JOIN_THRESHOLD);
++            drawRoundCap(cx0, cy0, cmx, cmy);
+         } else if (capStyle == CAP_SQUARE) {
+-            float dx = px0 - x0;
+-            float dy = py0 - y0;
+-            float len = (float)userSpaceLineLength(dx, dy);
+-            float s = lineWidth2/len;
+-
+-            float capx = x0 - dx*s;
+-            float capy = y0 - dy*s;
+-
+-            emitLineTo(capx + omx, capy + omy);
+-            emitLineTo(capx - omx, capy - omy);
++            emitLineTo(cx0 - cmy + cmx, cy0 + cmx + cmy);
++            emitLineTo(cx0 - cmy - cmx, cy0 + cmx - cmy);
+         }
+ 
+-        for (int i = rindex - 2; i >= 0; i -= 2) {
+-            emitLineTo(reverse[i], reverse[i + 1]);
+-        }
+-        this.rindex = 0;
++        emitReverse();
+ 
+         if (capStyle == CAP_ROUND) {
+-            drawRoundJoin(sx0, sy0,
+-                          -mx0, -my0, mx0, my0, 1, false, false,
+-                          ROUND_JOIN_THRESHOLD);
++            drawRoundCap(sx0, sy0, -smx, -smy);
+         } else if (capStyle == CAP_SQUARE) {
+-            float dx = sx1 - sx0;
+-            float dy = sy1 - sy0;
+-            float len = (float)userSpaceLineLength(dx, dy);
+-            float s = lineWidth2/len;
+-
+-            float capx = sx0 - dx*s;
+-            float capy = sy0 - dy*s;
+-
+-            emitLineTo(capx - mx0, capy - my0);
+-            emitLineTo(capx + mx0, capy + my0);
++            emitLineTo(sx0 + smy - smx, sy0 - smx - smy);
++            emitLineTo(sx0 + smy + smx, sy0 - smx + smy);
+         }
+ 
+         emitClose();
+-        this.joinSegment = false;
+     }
+ 
+-    private void emitMoveTo(float x0, float y0) {
+-        // System.out.println("Stroker.emitMoveTo(" + x0/65536.0 + ", " + y0/65536.0 + ")");
+-        output.moveTo(x0, y0);
++    private void emitMoveTo(final float x0, final float y0) {
++        out.moveTo(x0, y0);
+     }
+ 
+-    private void emitLineTo(float x1, float y1) {
+-        // System.out.println("Stroker.emitLineTo(" + x0/65536.0 + ", " + y0/65536.0 + ")");
+-        output.lineTo(x1, y1);
++    private void emitLineTo(final float x1, final float y1) {
++        out.lineTo(x1, y1);
+     }
+ 
+-    private void emitLineTo(float x1, float y1, boolean rev) {
++    private void emitLineTo(final float x1, final float y1,
++                            final boolean rev)
++    {
+         if (rev) {
+-            ensureCapacity(rindex + 2);
+-            reverse[rindex++] = x1;
+-            reverse[rindex++] = y1;
++            reverse.pushLine(x1, y1);
+         } else {
+             emitLineTo(x1, y1);
+         }
+     }
+ 
++    private void emitQuadTo(final float x0, final float y0,
++                            final float x1, final float y1,
++                            final float x2, final float y2, final boolean rev)
++    {
++        if (rev) {
++            reverse.pushQuad(x0, y0, x1, y1);
++        } else {
++            out.quadTo(x1, y1, x2, y2);
++        }
++    }
++
++    private void emitCurveTo(final float x0, final float y0,
++                             final float x1, final float y1,
++                             final float x2, final float y2,
++                             final float x3, final float y3, final boolean rev)
++    {
++        if (rev) {
++            reverse.pushCubic(x0, y0, x1, y1, x2, y2);
++        } else {
++            out.curveTo(x1, y1, x2, y2, x3, y3);
++        }
++    }
++
+     private void emitClose() {
+-        // System.out.println("Stroker.emitClose()");
+-        output.close();
++        out.closePath();
++    }
++
++    private void drawJoin(float pdx, float pdy,
++                          float x0, float y0,
++                          float dx, float dy,
++                          float omx, float omy,
++                          float mx, float my)
++    {
++        if (prev != DRAWING_OP_TO) {
++            emitMoveTo(x0 + mx, y0 + my);
++            this.sdx = dx;
++            this.sdy = dy;
++            this.smx = mx;
++            this.smy = my;
++        } else {
++            boolean cw = isCW(pdx, pdy, dx, dy);
++            if (joinStyle == JOIN_MITER) {
++                drawMiter(pdx, pdy, x0, y0, dx, dy, omx, omy, mx, my, cw);
++            } else if (joinStyle == JOIN_ROUND) {
++                drawRoundJoin(x0, y0,
++                              omx, omy,
++                              mx, my, cw,
++                              ROUND_JOIN_THRESHOLD);
++            }
++            emitLineTo(x0, y0, !cw);
++        }
++        prev = DRAWING_OP_TO;
++    }
++
++    private static boolean within(final float x1, final float y1,
++                                  final float x2, final float y2,
++                                  final float ERR)
++    {
++        assert ERR > 0 : "";
++        // compare taxicab distance. ERR will always be small, so using
++        // true distance won't give much benefit
++        return (Helpers.within(x1, x2, ERR) &&  // we want to avoid calling Math.abs
++                Helpers.within(y1, y2, ERR)); // this is just as good.
++    }
++
++    private void getLineOffsets(float x1, float y1,
++                                float x2, float y2,
++                                float[] left, float[] right) {
++        computeOffset(x2 - x1, y2 - y1, lineWidth2, offset[0]);
++        left[0] = x1 + offset[0][0];
++        left[1] = y1 + offset[0][1];
++        left[2] = x2 + offset[0][0];
++        left[3] = y2 + offset[0][1];
++        right[0] = x1 - offset[0][0];
++        right[1] = y1 - offset[0][1];
++        right[2] = x2 - offset[0][0];
++        right[3] = y2 - offset[0][1];
++    }
++
++    private int computeOffsetCubic(float[] pts, final int off,
++                                   float[] leftOff, float[] rightOff)
++    {
++        // if p1=p2 or p3=p4 it means that the derivative at the endpoint
++        // vanishes, which creates problems with computeOffset. Usually
++        // this happens when this stroker object is trying to winden
++        // a curve with a cusp. What happens is that curveTo splits
++        // the input curve at the cusp, and passes it to this function.
++        // because of inaccuracies in the splitting, we consider points
++        // equal if they're very close to each other.
++        final float x1 = pts[off + 0], y1 = pts[off + 1];
++        final float x2 = pts[off + 2], y2 = pts[off + 3];
++        final float x3 = pts[off + 4], y3 = pts[off + 5];
++        final float x4 = pts[off + 6], y4 = pts[off + 7];
++
++        float dx4 = x4 - x3;
++        float dy4 = y4 - y3;
++        float dx1 = x2 - x1;
++        float dy1 = y2 - y1;
++
++        // if p1 == p2 && p3 == p4: draw line from p1->p4, unless p1 == p4,
++        // in which case ignore if p1 == p2
++        final boolean p1eqp2 = within(x1,y1,x2,y2, 6 * Math.ulp(y2));
++        final boolean p3eqp4 = within(x3,y3,x4,y4, 6 * Math.ulp(y4));
++        if (p1eqp2 && p3eqp4) {
++            getLineOffsets(x1, y1, x4, y4, leftOff, rightOff);
++            return 4;
++        } else if (p1eqp2) {
++            dx1 = x3 - x1;
++            dy1 = y3 - y1;
++        } else if (p3eqp4) {
++            dx4 = x4 - x2;
++            dy4 = y4 - y2;
++        }
++
++        // if p2-p1 and p4-p3 are parallel, that must mean this curve is a line
++        float dotsq = (dx1 * dx4 + dy1 * dy4);
++        dotsq = dotsq * dotsq;
++        float l1sq = dx1 * dx1 + dy1 * dy1, l4sq = dx4 * dx4 + dy4 * dy4;
++        if (Helpers.within(dotsq, l1sq * l4sq, 4 * Math.ulp(dotsq))) {
++            getLineOffsets(x1, y1, x4, y4, leftOff, rightOff);
++            return 4;
++        }
++
++//      What we're trying to do in this function is to approximate an ideal
++//      offset curve (call it I) of the input curve B using a bezier curve Bp.
++//      The constraints I use to get the equations are:
++//
++//      1. The computed curve Bp should go through I(0) and I(1). These are
++//      x1p, y1p, x4p, y4p, which are p1p and p4p. We still need to find
++//      4 variables: the x and y components of p2p and p3p (i.e. x2p, y2p, x3p, y3p).
++//
++//      2. Bp should have slope equal in absolute value to I at the endpoints. So,
++//      (by the way, the operator || in the comments below means "aligned with".
++//      It is defined on vectors, so when we say I'(0) || Bp'(0) we mean that
++//      vectors I'(0) and Bp'(0) are aligned, which is the same as saying
++//      that the tangent lines of I and Bp at 0 are parallel. Mathematically
++//      this means (I'(t) || Bp'(t)) <==> (I'(t) = c * Bp'(t)) where c is some
++//      nonzero constant.)
++//      I'(0) || Bp'(0) and I'(1) || Bp'(1). Obviously, I'(0) || B'(0) and
++//      I'(1) || B'(1); therefore, Bp'(0) || B'(0) and Bp'(1) || B'(1).
++//      We know that Bp'(0) || (p2p-p1p) and Bp'(1) || (p4p-p3p) and the same
++//      is true for any bezier curve; therefore, we get the equations
++//          (1) p2p = c1 * (p2-p1) + p1p
++//          (2) p3p = c2 * (p4-p3) + p4p
++//      We know p1p, p4p, p2, p1, p3, and p4; therefore, this reduces the number
++//      of unknowns from 4 to 2 (i.e. just c1 and c2).
++//      To eliminate these 2 unknowns we use the following constraint:
++//
++//      3. Bp(0.5) == I(0.5). Bp(0.5)=(x,y) and I(0.5)=(xi,yi), and I should note
++//      that I(0.5) is *the only* reason for computing dxm,dym. This gives us
++//          (3) Bp(0.5) = (p1p + 3 * (p2p + p3p) + p4p)/8, which is equivalent to
++//          (4) p2p + p3p = (Bp(0.5)*8 - p1p - p4p) / 3
++//      We can substitute (1) and (2) from above into (4) and we get:
++//          (5) c1*(p2-p1) + c2*(p4-p3) = (Bp(0.5)*8 - p1p - p4p)/3 - p1p - p4p
++//      which is equivalent to
++//          (6) c1*(p2-p1) + c2*(p4-p3) = (4/3) * (Bp(0.5) * 2 - p1p - p4p)
++//
++//      The right side of this is a 2D vector, and we know I(0.5), which gives us
++//      Bp(0.5), which gives us the value of the right side.
++//      The left side is just a matrix vector multiplication in disguise. It is
++//
++//      [x2-x1, x4-x3][c1]
++//      [y2-y1, y4-y3][c2]
++//      which, is equal to
++//      [dx1, dx4][c1]
++//      [dy1, dy4][c2]
++//      At this point we are left with a simple linear system and we solve it by
++//      getting the inverse of the matrix above. Then we use [c1,c2] to compute
++//      p2p and p3p.
++
++        float x = 0.125f * (x1 + 3 * (x2 + x3) + x4);
++        float y = 0.125f * (y1 + 3 * (y2 + y3) + y4);
++        // (dxm,dym) is some tangent of B at t=0.5. This means it's equal to
++        // c*B'(0.5) for some constant c.
++        float dxm = x3 + x4 - x1 - x2, dym = y3 + y4 - y1 - y2;
++
++        // this computes the offsets at t=0, 0.5, 1, using the property that
++        // for any bezier curve the vectors p2-p1 and p4-p3 are parallel to
++        // the (dx/dt, dy/dt) vectors at the endpoints.
++        computeOffset(dx1, dy1, lineWidth2, offset[0]);
++        computeOffset(dxm, dym, lineWidth2, offset[1]);
++        computeOffset(dx4, dy4, lineWidth2, offset[2]);
++        float x1p = x1 + offset[0][0]; // start
++        float y1p = y1 + offset[0][1]; // point
++        float xi  = x + offset[1][0]; // interpolation
++        float yi  = y + offset[1][1]; // point
++        float x4p = x4 + offset[2][0]; // end
++        float y4p = y4 + offset[2][1]; // point
++
++        float invdet43 = 4f / (3f * (dx1 * dy4 - dy1 * dx4));
++
++        float two_pi_m_p1_m_p4x = 2*xi - x1p - x4p;
++        float two_pi_m_p1_m_p4y = 2*yi - y1p - y4p;
++        float c1 = invdet43 * (dy4 * two_pi_m_p1_m_p4x - dx4 * two_pi_m_p1_m_p4y);
++        float c2 = invdet43 * (dx1 * two_pi_m_p1_m_p4y - dy1 * two_pi_m_p1_m_p4x);
++
++        float x2p, y2p, x3p, y3p;
++        x2p = x1p + c1*dx1;
++        y2p = y1p + c1*dy1;
++        x3p = x4p + c2*dx4;
++        y3p = y4p + c2*dy4;
++
++        leftOff[0] = x1p; leftOff[1] = y1p;
++        leftOff[2] = x2p; leftOff[3] = y2p;
++        leftOff[4] = x3p; leftOff[5] = y3p;
++        leftOff[6] = x4p; leftOff[7] = y4p;
++
++        x1p = x1 - offset[0][0]; y1p = y1 - offset[0][1];
++        xi = xi - 2 * offset[1][0]; yi = yi - 2 * offset[1][1];
++        x4p = x4 - offset[2][0]; y4p = y4 - offset[2][1];
++
++        two_pi_m_p1_m_p4x = 2*xi - x1p - x4p;
++        two_pi_m_p1_m_p4y = 2*yi - y1p - y4p;
++        c1 = invdet43 * (dy4 * two_pi_m_p1_m_p4x - dx4 * two_pi_m_p1_m_p4y);
++        c2 = invdet43 * (dx1 * two_pi_m_p1_m_p4y - dy1 * two_pi_m_p1_m_p4x);
++
++        x2p = x1p + c1*dx1;
++        y2p = y1p + c1*dy1;
++        x3p = x4p + c2*dx4;
++        y3p = y4p + c2*dy4;
++
++        rightOff[0] = x1p; rightOff[1] = y1p;
++        rightOff[2] = x2p; rightOff[3] = y2p;
++        rightOff[4] = x3p; rightOff[5] = y3p;
++        rightOff[6] = x4p; rightOff[7] = y4p;
++        return 8;
++    }
++
++    // compute offset curves using bezier spline through t=0.5 (i.e.
++    // ComputedCurve(0.5) == IdealParallelCurve(0.5))
++    // return the kind of curve in the right and left arrays.
++    private int computeOffsetQuad(float[] pts, final int off,
++                                  float[] leftOff, float[] rightOff)
++    {
++        final float x1 = pts[off + 0], y1 = pts[off + 1];
++        final float x2 = pts[off + 2], y2 = pts[off + 3];
++        final float x3 = pts[off + 4], y3 = pts[off + 5];
++
++        float dx3 = x3 - x2;
++        float dy3 = y3 - y2;
++        float dx1 = x2 - x1;
++        float dy1 = y2 - y1;
++
++        // if p1=p2 or p3=p4 it means that the derivative at the endpoint
++        // vanishes, which creates problems with computeOffset. Usually
++        // this happens when this stroker object is trying to winden
++        // a curve with a cusp. What happens is that curveTo splits
++        // the input curve at the cusp, and passes it to this function.
++        // because of inaccuracies in the splitting, we consider points
++        // equal if they're very close to each other.
++
++        // if p1 == p2 && p3 == p4: draw line from p1->p4, unless p1 == p4,
++        // in which case ignore.
++        final boolean p1eqp2 = within(x1,y1,x2,y2, 6 * Math.ulp(y2));
++        final boolean p2eqp3 = within(x2,y2,x3,y3, 6 * Math.ulp(y3));
++        if (p1eqp2 || p2eqp3) {
++            getLineOffsets(x1, y1, x3, y3, leftOff, rightOff);
++            return 4;
++        }
++
++        // if p2-p1 and p4-p3 are parallel, that must mean this curve is a line
++        float dotsq = (dx1 * dx3 + dy1 * dy3);
++        dotsq = dotsq * dotsq;
++        float l1sq = dx1 * dx1 + dy1 * dy1, l3sq = dx3 * dx3 + dy3 * dy3;
++        if (Helpers.within(dotsq, l1sq * l3sq, 4 * Math.ulp(dotsq))) {
++            getLineOffsets(x1, y1, x3, y3, leftOff, rightOff);
++            return 4;
++        }
++
++        // this computes the offsets at t=0, 0.5, 1, using the property that
++        // for any bezier curve the vectors p2-p1 and p4-p3 are parallel to
++        // the (dx/dt, dy/dt) vectors at the endpoints.
++        computeOffset(dx1, dy1, lineWidth2, offset[0]);
++        computeOffset(dx3, dy3, lineWidth2, offset[1]);
++        float x1p = x1 + offset[0][0]; // start
++        float y1p = y1 + offset[0][1]; // point
++        float x3p = x3 + offset[1][0]; // end
++        float y3p = y3 + offset[1][1]; // point
++
++        computeMiter(x1p, y1p, x1p+dx1, y1p+dy1, x3p, y3p, x3p-dx3, y3p-dy3, leftOff, 2);
++        leftOff[0] = x1p; leftOff[1] = y1p;
++        leftOff[4] = x3p; leftOff[5] = y3p;
++        x1p = x1 - offset[0][0]; y1p = y1 - offset[0][1];
++        x3p = x3 - offset[1][0]; y3p = y3 - offset[1][1];
++        computeMiter(x1p, y1p, x1p+dx1, y1p+dy1, x3p, y3p, x3p-dx3, y3p-dy3, rightOff, 2);
++        rightOff[0] = x1p; rightOff[1] = y1p;
++        rightOff[4] = x3p; rightOff[5] = y3p;
++        return 6;
++    }
++
++    // This is where the curve to be processed is put. We give it
++    // enough room to store 2 curves: one for the current subdivision, the
++    // other for the rest of the curve.
++    private float[][] middle = new float[2][8];
++    private float[] lp = new float[8];
++    private float[] rp = new float[8];
++    private static final int MAX_N_CURVES = 11;
++    private float[] subdivTs = new float[MAX_N_CURVES - 1];
++
++    private void somethingTo(final int type) {
++        // need these so we can update the state at the end of this method
++        final float xf = middle[0][type-2], yf = middle[0][type-1];
++        float dxs = middle[0][2] - middle[0][0];
++        float dys = middle[0][3] - middle[0][1];
++        float dxf = middle[0][type - 2] - middle[0][type - 4];
++        float dyf = middle[0][type - 1] - middle[0][type - 3];
++        switch(type) {
++        case 6:
++            if ((dxs == 0f && dys == 0f) ||
++                (dxf == 0f && dyf == 0f)) {
++               dxs = dxf = middle[0][4] - middle[0][0];
++               dys = dyf = middle[0][5] - middle[0][1];
++            }
++            break;
++        case 8:
++            boolean p1eqp2 = (dxs == 0f && dys == 0f);
++            boolean p3eqp4 = (dxf == 0f && dyf == 0f);
++            if (p1eqp2) {
++                dxs = middle[0][4] - middle[0][0];
++                dys = middle[0][5] - middle[0][1];
++                if (dxs == 0f && dys == 0f) {
++                    dxs = middle[0][6] - middle[0][0];
++                    dys = middle[0][7] - middle[0][1];
++                }
++            }
++            if (p3eqp4) {
++                dxf = middle[0][6] - middle[0][2];
++                dyf = middle[0][7] - middle[0][3];
++                if (dxf == 0f && dyf == 0f) {
++                    dxf = middle[0][6] - middle[0][0];
++                    dyf = middle[0][7] - middle[0][1];
++                }
++            }
++        }
++        if (dxs == 0f && dys == 0f) {
++            // this happens iff the "curve" is just a point
++            lineTo(middle[0][0], middle[0][1]);
++            return;
++        }
++        // if these vectors are too small, normalize them, to avoid future
++        // precision problems.
++        if (Math.abs(dxs) < 0.1f && Math.abs(dys) < 0.1f) {
++            double len = Math.hypot(dxs, dys);
++            dxs = (float)(dxs / len);
++            dys = (float)(dys / len);
++        }
++        if (Math.abs(dxf) < 0.1f && Math.abs(dyf) < 0.1f) {
++            double len = Math.hypot(dxf, dyf);
++            dxf = (float)(dxf / len);
++            dyf = (float)(dyf / len);
++        }
++
++        computeOffset(dxs, dys, lineWidth2, offset[0]);
++        final float mx = offset[0][0];
++        final float my = offset[0][1];
++        drawJoin(cdx, cdy, cx0, cy0, dxs, dys, cmx, cmy, mx, my);
++
++        int nSplits = findSubdivPoints(middle[0], subdivTs, type,lineWidth2);
++
++        int kind = 0;
++        Iterator<float[]> it = Curve.breakPtsAtTs(middle, type, subdivTs, nSplits);
++        while(it.hasNext()) {
++            float[] curCurve = it.next();
++
++            kind = 0;
++            switch (type) {
++            case 8:
++                kind = computeOffsetCubic(curCurve, 0, lp, rp);
++                break;
++            case 6:
++                kind = computeOffsetQuad(curCurve, 0, lp, rp);
++                break;
++            }
++            if (kind != 0) {
++                emitLineTo(lp[0], lp[1]);
++                switch(kind) {
++                case 8:
++                    emitCurveTo(lp[0], lp[1], lp[2], lp[3], lp[4], lp[5], lp[6], lp[7], false);
++                    emitCurveTo(rp[0], rp[1], rp[2], rp[3], rp[4], rp[5], rp[6], rp[7], true);
++                    break;
++                case 6:
++                    emitQuadTo(lp[0], lp[1], lp[2], lp[3], lp[4], lp[5], false);
++                    emitQuadTo(rp[0], rp[1], rp[2], rp[3], rp[4], rp[5], true);
++                    break;
++                case 4:
++                    emitLineTo(lp[2], lp[3]);
++                    emitLineTo(rp[0], rp[1], true);
++                    break;
++                }
++                emitLineTo(rp[kind - 2], rp[kind - 1], true);
++            }
++        }
++
++        this.cmx = (lp[kind - 2] - rp[kind - 2]) / 2;
++        this.cmy = (lp[kind - 1] - rp[kind - 1]) / 2;
++        this.cdx = dxf;
++        this.cdy = dyf;
++        this.cx0 = xf;
++        this.cy0 = yf;
++        this.prev = DRAWING_OP_TO;
++    }
++
++    // finds values of t where the curve in pts should be subdivided in order
++    // to get good offset curves a distance of w away from the middle curve.
++    // Stores the points in ts, and returns how many of them there were.
++    private static Curve c = new Curve();
++    private static int findSubdivPoints(float[] pts, float[] ts,
++                                        final int type, final float w)
++    {
++        final float x12 = pts[2] - pts[0];
++        final float y12 = pts[3] - pts[1];
++        // if the curve is already parallel to either axis we gain nothing
++        // from rotating it.
++        if (y12 != 0f && x12 != 0f) {
++            // we rotate it so that the first vector in the control polygon is
++            // parallel to the x-axis. This will ensure that rotated quarter
++            // circles won't be subdivided.
++            final float hypot = (float)Math.sqrt(x12 * x12 + y12 * y12);
++            final float cos = x12 / hypot;
++            final float sin = y12 / hypot;
++            final float x1 = cos * pts[0] + sin * pts[1];
++            final float y1 = cos * pts[1] - sin * pts[0];
++            final float x2 = cos * pts[2] + sin * pts[3];
++            final float y2 = cos * pts[3] - sin * pts[2];
++            final float x3 = cos * pts[4] + sin * pts[5];
++            final float y3 = cos * pts[5] - sin * pts[4];
++            switch(type) {
++            case 8:
++                final float x4 = cos * pts[6] + sin * pts[7];
++                final float y4 = cos * pts[7] - sin * pts[6];
++                c.set(x1, y1, x2, y2, x3, y3, x4, y4);
++                break;
++            case 6:
++                c.set(x1, y1, x2, y2, x3, y3);
++                break;
++            }
++        } else {
++            c.set(pts, type);
++        }
++
++        int ret = 0;
++        // we subdivide at values of t such that the remaining rotated
++        // curves are monotonic in x and y.
++        ret += c.dxRoots(ts, ret);
++        ret += c.dyRoots(ts, ret);
++        // subdivide at inflection points.
++        if (type == 8) {
++            // quadratic curves can't have inflection points
++            ret += c.infPoints(ts, ret);
++        }
++
++        // now we must subdivide at points where one of the offset curves will have
++        // a cusp. This happens at ts where the radius of curvature is equal to w.
++        ret += c.rootsOfROCMinusW(ts, ret, w, 0.0001f);
++        ret = Helpers.filterOutNotInAB(ts, 0, ret, 0.0001f, 0.9999f);
++        Helpers.isort(ts, 0, ret);
++        return ret;
++    }
++
++    @Override public void curveTo(float x1, float y1,
++                                  float x2, float y2,
++                                  float x3, float y3)
++    {
++        middle[0][0] = cx0; middle[0][1] = cy0;
++        middle[0][2] = x1; middle[0][3] = y1;
++        middle[0][4] = x2; middle[0][5] = y2;
++        middle[0][6] = x3; middle[0][7] = y3;
++        somethingTo(8);
++    }
++
++    @Override public long getNativeConsumer() {
++        throw new InternalError("Stroker doesn't use a native consumer");
++    }
++
++    @Override public void quadTo(float x1, float y1, float x2, float y2) {
++        middle[0][0] = cx0; middle[0][1] = cy0;
++        middle[0][2] = x1; middle[0][3] = y1;
++        middle[0][4] = x2; middle[0][5] = y2;
++        somethingTo(6);
++    }
++
++    // a stack of polynomial curves where each curve shares endpoints with
++    // adjacent ones.
++    private static final class PolyStack {
++        float[] curves;
++        int end;
++        int[] curveTypes;
++        int numCurves;
++
++        private static final int INIT_SIZE = 50;
++
++        PolyStack() {
++            curves = new float[8 * INIT_SIZE];
++            curveTypes = new int[INIT_SIZE];
++            end = 0;
++            numCurves = 0;
++        }
++
++        public boolean isEmpty() {
++            return numCurves == 0;
++        }
++
++        private void ensureSpace(int n) {
++            if (end + n >= curves.length) {
++                int newSize = (end + n) * 2;
++                curves = Arrays.copyOf(curves, newSize);
++            }
++            if (numCurves >= curveTypes.length) {
++                int newSize = numCurves * 2;
++                curveTypes = Arrays.copyOf(curveTypes, newSize);
++            }
++        }
++
++        public void pushCubic(float x0, float y0,
++                              float x1, float y1,
++                              float x2, float y2)
++        {
++            ensureSpace(6);
++            curveTypes[numCurves++] = 8;
++            // assert(x0 == lastX && y0 == lastY)
++
++            // we reverse the coordinate order to make popping easier
++            curves[end++] = x2;    curves[end++] = y2;
++            curves[end++] = x1;    curves[end++] = y1;
++            curves[end++] = x0;    curves[end++] = y0;
++        }
++
++        public void pushQuad(float x0, float y0,
++                             float x1, float y1)
++        {
++            ensureSpace(4);
++            curveTypes[numCurves++] = 6;
++            // assert(x0 == lastX && y0 == lastY)
++            curves[end++] = x1;    curves[end++] = y1;
++            curves[end++] = x0;    curves[end++] = y0;
++        }
++
++        public void pushLine(float x, float y) {
++            ensureSpace(2);
++            curveTypes[numCurves++] = 4;
++            // assert(x0 == lastX && y0 == lastY)
++            curves[end++] = x;    curves[end++] = y;
++        }
++
++        @SuppressWarnings("unused")
++        public int pop(float[] pts) {
++            int ret = curveTypes[numCurves - 1];
++            numCurves--;
++            end -= (ret - 2);
++            System.arraycopy(curves, end, pts, 0, ret - 2);
++            return ret;
++        }
++
++        public void pop(PathConsumer2D io) {
++            numCurves--;
++            int type = curveTypes[numCurves];
++            end -= (type - 2);
++            switch(type) {
++            case 8:
++                io.curveTo(curves[end+0], curves[end+1],
++                           curves[end+2], curves[end+3],
++                           curves[end+4], curves[end+5]);
++                break;
++            case 6:
++                io.quadTo(curves[end+0], curves[end+1],
++                           curves[end+2], curves[end+3]);
++                 break;
++            case 4:
++                io.lineTo(curves[end], curves[end+1]);
++            }
++        }
++
++        @Override
++        public String toString() {
++            String ret = "";
++            int nc = numCurves;
++            int end = this.end;
++            while (nc > 0) {
++                nc--;
++                int type = curveTypes[numCurves];
++                end -= (type - 2);
++                switch(type) {
++                case 8:
++                    ret += "cubic: ";
++                    break;
++                case 6:
++                    ret += "quad: ";
++                    break;
++                case 4:
++                    ret += "line: ";
++                    break;
++                }
++                ret += Arrays.toString(Arrays.copyOfRange(curves, end, end+type-2)) + "\n";
++            }
++            return ret;
++        }
+     }
+ }
+-
+diff -r 12b65e7ee3e4 -r 065e6c5a8027 src/share/classes/sun/java2d/pisces/TransformingPathConsumer2D.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/src/share/classes/sun/java2d/pisces/TransformingPathConsumer2D.java	Tue Oct 26 10:39:23 2010 -0400
+@@ -0,0 +1,229 @@
++/*
++ * Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.  Oracle designates this
++ * particular file as subject to the "Classpath" exception as provided
++ * by Oracle in the LICENSE file that accompanied this code.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++package sun.java2d.pisces;
++
++import sun.awt.geom.PathConsumer2D;
++import java.awt.geom.AffineTransform;
++
++public class TransformingPathConsumer2D {
++    public static PathConsumer2D
++        transformConsumer(PathConsumer2D out,
++                          AffineTransform at)
++    {
++        if (at == null) {
++            return out;
++        }
++        float Mxx = (float) at.getScaleX();
++        float Mxy = (float) at.getShearX();
++        float Mxt = (float) at.getTranslateX();
++        float Myx = (float) at.getShearY();
++        float Myy = (float) at.getScaleY();
++        float Myt = (float) at.getTranslateY();
++        if (Mxy == 0f && Myx == 0f) {
++            if (Mxx == 1f && Myy == 1f) {
++                if (Mxt == 0f && Myt == 0f) {
++                    return out;
++                } else {
++                    return new TranslateFilter(out, Mxt, Myt);
++                }
++            } else {
++                return new ScaleFilter(out, Mxx, Myy, Mxt, Myt);
++            }
++        } else {
++            return new TransformFilter(out, Mxx, Mxy, Mxt, Myx, Myy, Myt);
++        }
++    }
++
++    static class TranslateFilter implements PathConsumer2D {
++        PathConsumer2D out;
++        float tx;
++        float ty;
++
++        TranslateFilter(PathConsumer2D out,
++                        float tx, float ty)
++        {
++            this.out = out;
++            this.tx = tx;
++            this.ty = ty;
++        }
++
++        public void moveTo(float x0, float y0) {
++            out.moveTo(x0 + tx, y0 + ty);
++        }
++
++        public void lineTo(float x1, float y1) {
++            out.lineTo(x1 + tx, y1 + ty);
++        }
++
++        public void quadTo(float x1, float y1,
++                           float x2, float y2)
++        {
++            out.quadTo(x1 + tx, y1 + ty,
++                       x2 + tx, y2 + ty);
++        }
++
++        public void curveTo(float x1, float y1,
++                            float x2, float y2,
++                            float x3, float y3)
++        {
++            out.curveTo(x1 + tx, y1 + ty,
++                        x2 + tx, y2 + ty,
++                        x3 + tx, y3 + ty);
++        }
++
++        public void closePath() {
++            out.closePath();
++        }
++
++        public void pathDone() {
++            out.pathDone();
++        }
++
++        public long getNativeConsumer() {
++            return 0;
++        }
++    }
++
++    static class ScaleFilter implements PathConsumer2D {
++        PathConsumer2D out;
++        float sx;
++        float sy;
++        float tx;
++        float ty;
++
++        ScaleFilter(PathConsumer2D out,
++                    float sx, float sy, float tx, float ty)
++        {
++            this.out = out;
++            this.sx = sx;
++            this.sy = sy;
++            this.tx = tx;
++            this.ty = ty;
++        }
++
++        public void moveTo(float x0, float y0) {
++            out.moveTo(x0 * sx + tx, y0 * sy + ty);
++        }
++
++        public void lineTo(float x1, float y1) {
++            out.lineTo(x1 * sx + tx, y1 * sy + ty);
++        }
++
++        public void quadTo(float x1, float y1,
++                           float x2, float y2)
++        {
++            out.quadTo(x1 * sx + tx, y1 * sy + ty,
++                       x2 * sx + tx, y2 * sy + ty);
++        }
++
++        public void curveTo(float x1, float y1,
++                            float x2, float y2,
++                            float x3, float y3)
++        {
++            out.curveTo(x1 * sx + tx, y1 * sy + ty,
++                        x2 * sx + tx, y2 * sy + ty,
++                        x3 * sx + tx, y3 * sy + ty);
++        }
++
++        public void closePath() {
++            out.closePath();
++        }
++
++        public void pathDone() {
++            out.pathDone();
++        }
++
++        public long getNativeConsumer() {
++            return 0;
++        }
++    }
++
++    static class TransformFilter implements PathConsumer2D {
++        PathConsumer2D out;
++        float Mxx;
++        float Mxy;
++        float Mxt;
++        float Myx;
++        float Myy;
++        float Myt;
++
++        TransformFilter(PathConsumer2D out,
++                        float Mxx, float Mxy, float Mxt,
++                        float Myx, float Myy, float Myt)
++        {
++            this.out = out;
++            this.Mxx = Mxx;
++            this.Mxy = Mxy;
++            this.Mxt = Mxt;
++            this.Myx = Myx;
++            this.Myy = Myy;
++            this.Myt = Myt;
++        }
++
++        public void moveTo(float x0, float y0) {
++            out.moveTo(x0 * Mxx + y0 * Mxy + Mxt,
++                       x0 * Myx + y0 * Myy + Myt);
++        }
++
++        public void lineTo(float x1, float y1) {
++            out.lineTo(x1 * Mxx + y1 * Mxy + Mxt,
++                       x1 * Myx + y1 * Myy + Myt);
++        }
++
++        public void quadTo(float x1, float y1,
++                           float x2, float y2)
++        {
++            out.quadTo(x1 * Mxx + y1 * Mxy + Mxt,
++                       x1 * Myx + y1 * Myy + Myt,
++                       x2 * Mxx + y2 * Mxy + Mxt,
++                       x2 * Myx + y2 * Myy + Myt);
++        }
++
++        public void curveTo(float x1, float y1,
++                            float x2, float y2,
++                            float x3, float y3)
++        {
++            out.curveTo(x1 * Mxx + y1 * Mxy + Mxt,
++                        x1 * Myx + y1 * Myy + Myt,
++                        x2 * Mxx + y2 * Mxy + Mxt,
++                        x2 * Myx + y2 * Myy + Myt,
++                        x3 * Mxx + y3 * Mxy + Mxt,
++                        x3 * Myx + y3 * Myy + Myt);
++        }
++
++        public void closePath() {
++            out.closePath();
++        }
++
++        public void pathDone() {
++            out.pathDone();
++        }
++
++        public long getNativeConsumer() {
++            return 0;
++        }
++    }
++}

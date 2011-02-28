@@ -1,5 +1,30 @@
 2011-02-28  Denis Lila  <dlila@redhat.com>
 
+	* Makefile.am: Added patches
+	patches/openjdk/6967434-bad-round-joins.patch,
+	patches/openjdk/6967436-6967433-floating-pt-conversion.patch, and
+	patches/openjdk/6976265-stroke-control.patch to replace
+	patches/openjdk/6967436-6976265-6967434-pisces.patch, which
+	was removed in the previous changeset.
+	Added patches/piscesMakefile.patch to make the build work.
+	No longer applying:
+	patches/stroker-finish.patch,
+	patches/java2d-stroker-internal-joint.patch, and
+	patches/java2d-stroker-internal-close-joint.patch.
+	Applying once again:
+	patches/openjdk/6766342-AA-simple-shape-performance.patch
+	* patches/openjdk/6967434-bad-round-joins.patch
+	* patches/openjdk/6967436-6967433-floating-pt-conversion.patch
+	* patches/openjdk/6976265-stroke-control.patch
+	* patches/piscesMakefile.patch:
+	Added.
+	* patches/java2d-stroker-internal-close-joint.patch
+	* patches/java2d-stroker-internal-joint.patch
+	* patches/stroker-finish.patch:
+	Obsolete and unused. Removed.
+
+2011-02-28  Denis Lila  <dlila@redhat.com>
+
 	* Makefile.am: Replaced patches/renderer-crossing.patch with
 	patches/openjdk/6887494-NPE-in-pisces.patch.
 	No longer applying:
