@@ -249,7 +249,6 @@ ICEDTEA_PATCHES = \
 	patches/arch.patch \
 	patches/lc_ctype.patch \
 	patches/xjc.patch \
-	patches/renderer-crossing.patch \
 	patches/stroker-finish.patch \
 	patches/linker-libs-order.patch \
 	patches/testenv.patch \
@@ -293,7 +292,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6650759-missing_inference.patch \
 	patches/numa_on_early_glibc.patch \
 	patches/jtreg-international-fonts.patch \
-	patches/openjdk/6967436-6976265-6967434-pisces.patch \
 	patches/f14-fonts.patch \
 	patches/jtreg-T6638712-fix.patch \
 	patches/jtreg-T6650759m-fix.patch \
@@ -324,8 +322,8 @@ ICEDTEA_PATCHES = \
 	patches/jtreg-LastErrorString.patch \
 	patches/openjdk/6663040-com.sun.awt.patch \
 	patches/openjdk/6775317-non-AA-simple-shape-performance.patch \
-	patches/openjdk/6766342-AA-simple-shape-performance.patch \
-	patches/pr600-arm-jvm.cfg.patch
+	patches/pr600-arm-jvm.cfg.patch \
+	patches/openjdk/6887494-NPE-in-pisces.patch
 
 if !WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
