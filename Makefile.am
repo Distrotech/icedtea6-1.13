@@ -326,7 +326,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6976265-stroke-control.patch \
 	patches/openjdk/6967434-bad-round-joins.patch \
 	patches/openjdk/6766342-AA-simple-shape-performance.patch \
-	patches/openjdk/7016856-pisces-performance.patch
+	patches/openjdk/7016856-pisces-performance.patch \
+	patches/openjdk/6934977-MappedByteBuffer.load.patch
 
 if !WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \

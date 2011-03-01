@@ -1,0 +1,353 @@
+# HG changeset patch
+# User alanb
+# Date 1280405338 -3600
+# Node ID 24741c4bf300b4bfffdcfe92c747558d20842082
+# Parent  5ff8b884a92c0294ab60e20b00b83274eca3170e
+6934977: (bf) MappedByteBuffer.load can SIGBUS if file is truncated
+6799037: (fs) MappedByteBuffer.load crash with unaligned file-mapping (sol)
+Reviewed-by: chegar, forax
+
+diff -r 5ff8b884a92c -r 24741c4bf300 src/share/classes/java/nio/Bits.java
+--- openjdk.orig/jdk/src/share/classes/java/nio/Bits.java	Tue Jul 27 11:40:46 2010 +0100
++++ openjdk/jdk/src/share/classes/java/nio/Bits.java	Thu Jul 29 13:08:58 2010 +0100
+@@ -596,6 +596,9 @@
+         return pageSize;
+     }
+ 
++    static int pageCount(long size) {
++        return (int)(size + (long)pageSize() - 1L) / pageSize();
++    }
+ 
+     private static boolean unaligned;
+     private static boolean unalignedKnown = false;
+diff -r 5ff8b884a92c -r 24741c4bf300 src/share/classes/java/nio/MappedByteBuffer.java
+--- openjdk.orig/jdk/src/share/classes/java/nio/MappedByteBuffer.java	Tue Jul 27 11:40:46 2010 +0100
++++ openjdk/jdk/src/share/classes/java/nio/MappedByteBuffer.java	Thu Jul 29 13:08:58 2010 +0100
+@@ -25,6 +25,8 @@
+ 
+ package java.nio;
+ 
++import sun.misc.Unsafe;
++
+ 
+ /**
+  * A direct byte buffer whose content is a memory-mapped region of a file.
+@@ -93,6 +95,22 @@
+             throw new UnsupportedOperationException();
+     }
+ 
++    // Returns the distance (in bytes) of the buffer from the page aligned address
++    // of the mapping. Computed each time to avoid storing in every direct buffer.
++    private long mappingOffset() {
++        int ps = Bits.pageSize();
++        long offset = address % ps;
++        return (offset >= 0) ? offset : (ps + offset);
++    }
++
++    private long mappingAddress(long mappingOffset) {
++        return address - mappingOffset;
++    }
++
++    private long mappingLength(long mappingOffset) {
++        return (long)capacity() + mappingOffset;
++    }
++
+     /**
+      * Tells whether or not this buffer's content is resident in physical
+      * memory.
+@@ -115,7 +133,9 @@
+         checkMapped();
+         if ((address == 0) || (capacity() == 0))
+             return true;
+-        return isLoaded0(((DirectByteBuffer)this).address(), capacity());
++        long offset = mappingOffset();
++        long length = mappingLength(offset);
++        return isLoaded0(mappingAddress(offset), length, Bits.pageCount(length));
+     }
+ 
+     /**
+@@ -132,7 +152,20 @@
+         checkMapped();
+         if ((address == 0) || (capacity() == 0))
+             return this;
+-        load0(((DirectByteBuffer)this).address(), capacity(), Bits.pageSize());
++        long offset = mappingOffset();
++        long length = mappingLength(offset);
++        load0(mappingAddress(offset), length);
++
++        // touch each page
++        Unsafe unsafe = Unsafe.getUnsafe();
++        int ps = Bits.pageSize();
++        int count = Bits.pageCount(length);
++        long a = mappingAddress(offset);
++        for (int i=0; i<count; i++) {
++            unsafe.getByte(a);
++            a += ps;
++        }
++
+         return this;
+     }
+ 
+@@ -156,14 +189,15 @@
+      */
+     public final MappedByteBuffer force() {
+         checkMapped();
+-        if ((address == 0) || (capacity() == 0))
+-            return this;
+-        force0(((DirectByteBuffer)this).address(), capacity());
++        if ((address != 0) && (capacity() != 0)) {
++            long offset = mappingOffset();
++            force0(mappingAddress(offset), mappingLength(offset));
++        }
+         return this;
+     }
+ 
+-    private native boolean isLoaded0(long address, long length);
+-    private native int load0(long address, long length, int pageSize);
++    private native boolean isLoaded0(long address, long length, int pageCount);
++    private native void load0(long address, long length);
+     private native void force0(long address, long length);
+ 
+ }
+diff -r 5ff8b884a92c -r 24741c4bf300 src/solaris/native/java/nio/MappedByteBuffer.c
+--- openjdk.orig/jdk/src/solaris/native/java/nio/MappedByteBuffer.c	Tue Jul 27 11:40:46 2010 +0100
++++ openjdk/jdk/src/solaris/native/java/nio/MappedByteBuffer.c	Thu Jul 29 13:08:58 2010 +0100
+@@ -32,14 +32,11 @@
+ #include <stddef.h>
+ #include <stdlib.h>
+ 
+-
+ JNIEXPORT jboolean JNICALL
+-Java_java_nio_MappedByteBuffer_isLoaded0(JNIEnv *env, jobject obj,
+-                                        jlong address, jlong len)
++Java_java_nio_MappedByteBuffer_isLoaded0(JNIEnv *env, jobject obj, jlong address,
++                                         jlong len, jint numPages)
+ {
+     jboolean loaded = JNI_TRUE;
+-    jint pageSize = sysconf(_SC_PAGESIZE);
+-    jint numPages = (len + pageSize - 1) / pageSize;
+     int result = 0;
+     int i = 0;
+     void *a = (void *) jlong_to_ptr(address);
+@@ -55,9 +52,9 @@
+     }
+ 
+     result = mincore(a, (size_t)len, vec);
+-    if (result != 0) {
++    if (result == -1) {
++        JNU_ThrowIOExceptionWithLastError(env, "mincore failed");
+         free(vec);
+-        JNU_ThrowIOExceptionWithLastError(env, "mincore failed");
+         return JNI_FALSE;
+     }
+ 
+@@ -72,23 +69,15 @@
+ }
+ 
+ 
+-JNIEXPORT jint JNICALL
++JNIEXPORT void JNICALL
+ Java_java_nio_MappedByteBuffer_load0(JNIEnv *env, jobject obj, jlong address,
+-                                     jlong len, jint pageSize)
++                                     jlong len)
+ {
+-    int pageIncrement = pageSize / sizeof(int);
+-    int numPages = (len + pageSize - 1) / pageSize;
+-    int *ptr = (int *)jlong_to_ptr(address);
+-    int i = 0;
+-    int j = 0;
+-    int result = madvise((caddr_t)ptr, len, MADV_WILLNEED);
+-
+-    /* touch every page */
+-    for (i=0; i<numPages; i++) {
+-        j += *((volatile int *)ptr);
+-        ptr += pageIncrement;
++    char *a = (char *)jlong_to_ptr(address);
++    int result = madvise((caddr_t)a, (size_t)len, MADV_WILLNEED);
++    if (result == -1) {
++        JNU_ThrowIOExceptionWithLastError(env, "madvise failed");
+     }
+-    return j;
+ }
+ 
+ 
+@@ -96,13 +85,9 @@
+ Java_java_nio_MappedByteBuffer_force0(JNIEnv *env, jobject obj, jlong address,
+                                       jlong len)
+ {
+-    jlong pageSize = sysconf(_SC_PAGESIZE);
+-    unsigned long lAddress = address;
+-
+-    jlong offset = lAddress % pageSize;
+-    void *a = (void *) jlong_to_ptr(lAddress - offset);
+-    int result = msync(a, (size_t)(len + offset), MS_SYNC);
+-    if (result != 0) {
++    void* a = (void *)jlong_to_ptr(address);
++    int result = msync(a, (size_t)len, MS_SYNC);
++    if (result == -1) {
+         JNU_ThrowIOExceptionWithLastError(env, "msync failed");
+     }
+ }
+diff -r 5ff8b884a92c -r 24741c4bf300 src/windows/native/java/nio/MappedByteBuffer.c
+--- openjdk.orig/jdk/src/windows/native/java/nio/MappedByteBuffer.c	Tue Jul 27 11:40:46 2010 +0100
++++ openjdk/jdk/src/windows/native/java/nio/MappedByteBuffer.c	Thu Jul 29 13:08:58 2010 +0100
+@@ -31,8 +31,8 @@
+ #include <stdlib.h>
+ 
+ JNIEXPORT jboolean JNICALL
+-Java_java_nio_MappedByteBuffer_isLoaded0(JNIEnv *env, jobject obj,
+-                                        jlong address, jlong len)
++Java_java_nio_MappedByteBuffer_isLoaded0(JNIEnv *env, jobject obj, jlong address,
++                                         jlong len, jint numPages)
+ {
+     jboolean loaded = JNI_FALSE;
+     /* Information not available?
+@@ -43,22 +43,11 @@
+     return loaded;
+ }
+ 
+-JNIEXPORT jint JNICALL
++JNIEXPORT void JNICALL
+ Java_java_nio_MappedByteBuffer_load0(JNIEnv *env, jobject obj, jlong address,
+-                                     jlong len, jint pageSize)
++                                     jlong len)
+ {
+-    int *ptr = (int *) jlong_to_ptr(address);
+-    int pageIncrement = pageSize / sizeof(int);
+-    jlong numPages = (len + pageSize - 1) / pageSize;
+-    int i = 0;
+-    int j = 0;
+-
+-    /* touch every page */
+-    for (i=0; i<numPages; i++) {
+-        j += *((volatile int *)ptr);
+-        ptr += pageIncrement;
+-    }
+-    return j;
++    // no madvise available
+ }
+ 
+ JNIEXPORT void JNICALL
+diff -r 5ff8b884a92c -r 24741c4bf300 test/java/nio/MappedByteBuffer/Basic.java
+--- openjdk.orig/jdk/test/java/nio/MappedByteBuffer/Basic.java	Tue Jul 27 11:40:46 2010 +0100
++++ openjdk/jdk/test/java/nio/MappedByteBuffer/Basic.java	Thu Jul 29 13:08:58 2010 +0100
+@@ -22,7 +22,7 @@
+  */
+ 
+ /* @test
+- * @bug 4462336
++ * @bug 4462336 6799037
+  * @summary Simple MappedByteBuffer tests
+  * @run main/othervm Basic
+  */
+@@ -52,6 +52,12 @@
+         mbb.force();
+         if (!mbb.isReadOnly())
+             throw new RuntimeException("Incorrect isReadOnly");
++
++        // repeat with unaligned position in file
++        mbb = fc.map(FileChannel.MapMode.READ_ONLY, 1, 10);
++        mbb.load();
++        mbb.isLoaded();
++        mbb.force();
+         fc.close();
+         fis.close();
+ 
+diff -r 5ff8b884a92c -r 24741c4bf300 test/java/nio/MappedByteBuffer/Truncate.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/java/nio/MappedByteBuffer/Truncate.java	Thu Jul 29 13:08:58 2010 +0100
+@@ -0,0 +1,94 @@
++/*
++ * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/* @test
++ * @bug 6934977
++ * @summary Test MappedByteBuffer operations after mapped bye buffer becomes
++ *   inaccessible
++ * @run main/othervm Truncate
++ */
++
++import java.io.*;
++import java.nio.*;
++import java.nio.channels.*;
++import java.util.concurrent.Callable;
++
++public class Truncate {
++
++    static final long INITIAL_FILE_SIZE   = 32000L;
++    static final long TRUNCATED_FILE_SIZE =   512L;
++
++    public static void main(String[] args) throws Exception {
++        File blah = File.createTempFile("blah", null);
++        blah.deleteOnExit();
++
++        final FileChannel fc = new RandomAccessFile(blah, "rw").getChannel();
++        fc.position(INITIAL_FILE_SIZE).write(ByteBuffer.wrap("THE END".getBytes()));
++        final MappedByteBuffer mbb =
++            fc.map(FileChannel.MapMode.READ_WRITE, 0, fc.size());
++        boolean truncated;
++        try {
++            fc.truncate(TRUNCATED_FILE_SIZE);
++            truncated = true;
++        } catch (IOException ioe) {
++            // probably on Windows where a file cannot be truncated when
++            // there is a file mapping.
++            truncated = false;
++        }
++        if (truncated) {
++            // Test 1: access region that is no longer accessible
++            execute(new Callable<Void>() {
++                public Void call() {
++                    mbb.get((int)TRUNCATED_FILE_SIZE + 1);
++                    mbb.put((int)TRUNCATED_FILE_SIZE + 2, (byte)123);
++                    return null;
++                }
++            });
++            // Test 2: load buffer into memory
++            execute(new Callable<Void>() {
++                public Void call() throws IOException {
++                    mbb.load();
++                    return null;
++                }
++            });
++        }
++        fc.close();
++    }
++
++    // Runs the given task in its own thread. If operating correcting the
++    // the thread will terminate with an InternalError as the mapped buffer
++    // is inaccessible.
++    static void execute(final Callable<?> c) {
++        Runnable r = new Runnable() {
++            public void run() {
++                try {
++                    Object ignore = c.call();
++                } catch (Exception ignore) {
++                }
++            }
++        };
++        Thread t = new Thread(r);
++        t.start();
++        try { t.join(); } catch (InterruptedException ignore) { }
++    }
++}
