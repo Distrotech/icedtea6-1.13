@@ -1,6 +1,17 @@
 2011-03-02  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:
+	(icedtea): Explicitly set -j1 for the
+	legacy OpenJDK build as it can't handle
+	parallelism correctly.  This allows the
+	main IcedTea build to be parallel while
+	still allowing OpenJDK to build.
+	(icedtea-debug): Likewise.
+	(icedtea-ecj): Likewise.
+
+2011-03-02  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
 	Apply 6878713 for hs20 which still doesn't
 	have it.  Make HotSpot conditional patching
 	clearer.

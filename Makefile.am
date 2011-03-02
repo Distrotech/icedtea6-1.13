@@ -1323,7 +1323,7 @@ clean-bootstrap-directory-symlink:
 stamps/icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
  $(OPENJDK_TREE) stamps/cacao.stamp stamps/rewrite-rhino.stamp \
  stamps/jamvm.stamp
-	$(ARCH_PREFIX) $(MAKE) \
+	$(ARCH_PREFIX) $(MAKE) -j1 \
 	  $(ICEDTEA_ENV) \
 	  -C openjdk \
 	  $(ICEDTEA_BUILD_TARGET)
@@ -1354,7 +1354,7 @@ clean-icedtea:
 stamps/icedtea-debug.stamp: stamps/bootstrap-directory-symlink.stamp \
  $(OPENJDK_TREE) stamps/cacao.stamp stamps/rewrite-rhino.stamp \
  stamps/jamvm.stamp
-	$(ARCH_PREFIX) $(MAKE) \
+	$(ARCH_PREFIX) $(MAKE) -j1 \
 	  $(ICEDTEA_ENV) \
 	  -C openjdk \
 	  $(ICEDTEA_DEBUG_BUILD_TARGET)
@@ -1550,7 +1550,7 @@ clean-add-tzdata-support-debug:
 stamps/icedtea-ecj.stamp: stamps/bootstrap-directory-symlink-ecj.stamp \
  $(OPENJDK_ECJ_TREE) stamps/jamvm.stamp stamps/cacao.stamp \
  stamps/rewrite-rhino.stamp
-	$(ARCH_PREFIX) $(MAKE) \
+	$(ARCH_PREFIX) $(MAKE) -j1 \
 	  $(ICEDTEA_ENV_ECJ) \
 	  -C openjdk-ecj/ \
 	  $(ICEDTEA_BUILD_TARGET)
