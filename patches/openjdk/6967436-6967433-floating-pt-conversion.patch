@@ -1,13 +1,14 @@
-# HG changeset patch
-# User dlila
-# Date 1281460784 14400
-# Node ID d47bd9d94ba42529aa1adb6d521ebea8fcc00031
-# Parent  cf0c23a99823536ad6cf720e442896276f8020e5
-6967436: lines longer than 2^15 can fill window.
-6967433: dashed lines broken when using scaling transforms.
-Summary: converted pisces to floating point. Also, using better AA algorithm
-Reviewed-by: flar
-
+--- openjdk/jdk/make/sun/pisces/Makefile.orig  2011-02-23 20:16:27.116261331 -0500
++++ openjdk/jdk/make/sun/pisces/Makefile   2011-02-23 20:17:08.106141482 -0500
+@@ -28,6 +28,8 @@
+ PRODUCT = sun
+ include $(BUILDDIR)/common/Defs.gmk
+ 
++LANGUAGE_VERSION = -source 6
++CLASS_VERSION = -target 6
+ #
+ # Files
+ #
 diff -r cf0c23a99823 -r d47bd9d94ba4 src/share/classes/sun/java2d/pisces/Dasher.java
 --- openjdk.orig/jdk/src/share/classes/sun/java2d/pisces/Dasher.java	Thu Jul 29 17:12:27 2010 -0700
 +++ openjdk/jdk/src/share/classes/sun/java2d/pisces/Dasher.java	Tue Aug 10 13:19:44 2010 -0400

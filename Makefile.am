@@ -320,7 +320,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6663040-com.sun.awt.patch \
 	patches/openjdk/6775317-non-AA-simple-shape-performance.patch \
 	patches/pr600-arm-jvm.cfg.patch \
-	patches/piscesMakefile.patch \
 	patches/openjdk/6887494-NPE-in-pisces.patch \
 	patches/openjdk/6967436-6967433-floating-pt-conversion.patch \
 	patches/openjdk/6976265-stroke-control.patch \
