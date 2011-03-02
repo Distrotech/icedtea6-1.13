@@ -494,11 +494,30 @@
 
 2011-02-18  Andrew John Hughes  <ahughes@redhat.com>
 
+	* Makefile.am:
+	(JAXP_DROP_ZIP): Use zip with security fix.
+	(JAXP_DROP_SHA256SUM): Likewise.
+	(SECURITY_PATCHES): Drop local JAXP security fix.
+
+2011-02-17  Andrew John Hughes  <ahughes@redhat.com>
+
 	S6444769: java/awt/Insets/WindowWithWarningTest/WindowWithWarningTest.html fails
 	* Makefile.am: Add patch.
 	* NEWS: Updated.
 	* patches/openjdk/6444769-windowwithwarningtest.patch:
 	Remove obsolete WindowWithWarningTest.
+
+2011-02-17  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/security/20110209/4421494.patch,
+	* patches/security/20110215/6878713.patch,
+	* patches/security/20110215/6907662.patch,
+	* patches/security/20110215/6981922.patch,
+	* patches/security/20110215/6983554.patch,
+	* patches/security/20110215/6985453.patch,
+	* patches/security/20110215/6994263.patch:
+	Drop security patches available upstream.
+	* Makefile.am: Remove above.
 
 2011-02-17  Andrew John Hughes  <ahughes@redhat.com>
 
@@ -776,6 +795,11 @@
 2010-01-22  Mark Wielaard  <mark@klomp.org>
 
         * Makefile.am (ICEDTEA_PATCHES): Add missing backslash.
+
+2011-01-22  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Bump to b22.
 
 2011-01-22  Andrew John Hughes  <ahughes@redhat.com>
 
