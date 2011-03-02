@@ -188,6 +188,11 @@ ICEDTEA_FSG_PATCHES =
 
 SECURITY_PATCHES = 
 
+if WITH_ALT_HSBUILD
+SECURITY_PATCHES += \
+	patches/security/20110215/6878713.patch
+endif
+
 ICEDTEA_PATCHES = \
 	$(SECURITY_PATCHES) \
 	patches/stdc-limit-macros.patch \
@@ -321,15 +326,15 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6934977-MappedByteBuffer.load.patch \
 	patches/jaxp-serial-version-uid.patch
 
-if !WITH_ALT_HSBUILD
+if WITH_ALT_HSBUILD
+ICEDTEA_PATCHES += \
+	patches/pr639-broken_shark_build.patch \
+	patches/hotspot/$(HSBUILD)/powerpc-stacksize.patch
+else
 ICEDTEA_PATCHES += \
 	patches/hotspot/$(HSBUILD)/no-precompiled-headers.patch \
 	patches/hotspot/$(HSBUILD)/too-many-args.patch \
 	patches/openjdk/6997495-test_correction_6857159.patch
-else
-ICEDTEA_PATCHES += \
-	patches/pr639-broken_shark_build.patch \
-	patches/hotspot/$(HSBUILD)/powerpc-stacksize.patch
 endif
 
 if WITH_RHINO
