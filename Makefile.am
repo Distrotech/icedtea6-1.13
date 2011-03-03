@@ -2,7 +2,7 @@
 
 OPENJDK_DATE = 28_feb_2011
 OPENJDK_MD5SUM = 2d2bbbb0f9b81f1fec41ec730da8a933
-OPENJDK_VERSION = b22
+OPENJDK_VERSION = b23
 OPENJDK_URL = http://download.java.net/openjdk/jdk6/promoted/$(OPENJDK_VERSION)/
 
 CACAO_VERSION = 6a5eda011e49
