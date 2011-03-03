@@ -318,13 +318,13 @@ of the requested build.
 At present, IcedTea6 supports the 'original' HotSpot 19 provided as
 part of the upstream tarball and HotSpot 20 ('hs20') from the stable
 hs20 tree at http://hg.openjdk.java.net/hsx/hsx20/master.  The default
-is 'original'; passing --with-hotspot-build=hs20 to configure will
-use the version of hs20 specified in hotspot.map.  Note that the norm. is
-for up to one alternate (non-default) build to be supported and just
-passing --with-hotspot-build (equivalent to --with-hotspot-build=yes)
-will always provide the alternate build (currently hs20).  Conversely,
-passing --without-hotspot-build (equivalent to --with-hotspot-build=no)
-provides the original build (currently hs19).
+is 'hs20' which will use the version of hs20 specified in hotspot.map.
+Note that the norm. is for up to one alternate (non-default) build to
+be supported and just passing --with-hotspot-build (equivalent to
+--with-hotspot-build=yes) will always provide the alternate build
+(currently hs20).  Conversely, passing --without-hotspot-build
+(equivalent to --with-hotspot-build=no) provides the original build
+from the OpenJDK tarball (currently hs19).
 
 Javascript Support
 ==================
