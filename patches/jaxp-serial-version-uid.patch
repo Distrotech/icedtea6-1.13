@@ -1,16 +1,19 @@
---- openjdk.orig/jaxp/build.properties	2011-03-01 12:32:15.000000000 +0100
-+++ openjdk/jaxp/build.properties	2011-03-01 12:32:15.000000000 +0100
-@@ -78,7 +78,7 @@
+diff -Nru openjdk.orig/jaxp/build.properties openjdk/jaxp/build.properties
+--- openjdk.orig/jaxp/build.properties	2011-02-28 16:03:34.000000000 +0000
++++ openjdk/jaxp/build.properties	2011-03-02 17:46:39.609899609 +0000
+@@ -77,6 +77,9 @@
+ # Where patches to drop bundle sources live
  patches.dir=patches
  
- # Patches to apply
--jaxp_src.patch.list=6927050.patch
-+jaxp_src.patch.list=6927050.patch SerialVersionUid.patch
- 
++# Patches to apply
++jaxp_src.patch.list=6927050.patch serialversionuid.patch
++
  # Sanity information
  sanity.info= Sanity Settings:${line.separator}\
---- openjdk.orig/jaxp/patches/jaxp_src/SerialVersionUid.patch	2010-06-29 10:52:54.337250608 +0200
-+++ openjdk/jaxp/patches/jaxp_src/SerialVersionUid.patch	2010-06-29 10:52:54.337250608 +0200
+   ant.home=${ant.home}${line.separator}\
+diff -Nru openjdk.orig/jaxp/patches/jaxp_src/serialversionuid.patch openjdk/jaxp/patches/jaxp_src/serialversionuid.patch
+--- openjdk.orig/jaxp/patches/jaxp_src/serialversionuid.patch	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/jaxp/patches/jaxp_src/serialversionuid.patch	2011-03-02 17:46:17.322764393 +0000
 @@ -0,0 +1,36 @@
 +--- src/javax/xml/stream/FactoryConfigurationError.java	2010-06-04 01:51:47.000000000 +0200
 ++++ src/javax/xml/stream/FactoryConfigurationError.java	2010-06-04 01:51:47.000000000 +0200
@@ -18,7 +21,7 @@
 +  */
 + public class FactoryConfigurationError extends Error {
 + 
-++  // explicitly defined serial version ID to make TCK happy
+++  // explicitly defined serial version ID to match previous versions.
 ++  private static final long serialVersionUID = -2994412584589975744L;
 ++
 +   Exception nested;
@@ -30,7 +33,7 @@
 +  */
 + public class TransformerFactoryConfigurationError extends Error {
 + 
-++    // explicitly defined serial version ID to make TCK happy
+++    // explicitly defined serial version ID to match previous versions.
 ++    private static final long serialVersionUID = -6527718720676281516L;
 ++
 +     /**
@@ -42,7 +45,7 @@
 + 
 + public class FactoryConfigurationError extends Error {
 + 
-++    // explicitly defined serial version ID to make TCK happy
+++    // explicitly defined serial version ID to match previous versions.
 ++    private static final long serialVersionUID = -827108682472263355L;
 ++
 +     /**
