@@ -552,7 +552,7 @@ ICEDTEA_ENV_ECJ = $(ICEDTEA_ENV) \
 
 EXTRA_DIST = generated \
 	$(abs_top_srcdir)/patches/* \
-	contrib shark arm_port \
+	contrib arm_port \
 	overlays \
 	jconsole.desktop policytool.desktop \
 	test/jtreg \
