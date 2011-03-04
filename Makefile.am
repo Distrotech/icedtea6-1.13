@@ -2108,7 +2108,9 @@ jtreg_processes = ps x -ww -o pid,ppid,args \
 jtreg_pids = ps x --no-headers -ww -o pid,ppid,args \
 	| awk '$$2 == 1 && $$3 ~ /^$(subst /,\/,$(CURDIR)/$(sdkimg))/ {print $$1}'
 
-jtregcheck: jtreg check-hotspot check-langtools check-jdk
+jtreg_checks = hotspot langtools jdk
+
+jtregcheck: jtreg $(jtreg_checks:%=check-%)
 	for i in hotspot langtools jdk; do \
 	  echo "--------------- jtreg console summary for $$i ---------------"; \
 	  egrep -v '^(Passed:|Directory|Re[a-z]+\ written\ to)' test/check-$$i.log; \
