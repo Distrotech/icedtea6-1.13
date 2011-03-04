@@ -347,7 +347,8 @@ ICEDTEA_PATCHES += \
 	patches/cacao/launcher.patch \
 	patches/cacao/arm-arch-defines.patch \
 	patches/cacao/jsig.patch \
-	patches/cacao/memory.patch
+	patches/cacao/memory.patch \
+	patches/cacao/ignore-unknown-options.patch
 endif
 
 if ENABLE_CACAO
