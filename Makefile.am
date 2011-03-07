@@ -324,7 +324,9 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6766342-AA-simple-shape-performance.patch \
 	patches/openjdk/7016856-pisces-performance.patch \
 	patches/openjdk/6934977-MappedByteBuffer.load.patch \
-	patches/jaxp-serial-version-uid.patch
+	patches/jaxp-serial-version-uid.patch \
+	patches/jtreg-remove-test-6987555.patch \
+	patches/jtreg-remove-test-6991596.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
