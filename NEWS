@@ -11,6 +11,13 @@ CVE-XXXX-YYYY: http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 New in release 1.11 (2011-XX-XX):
 
 * Use HotSpot 20 as the default virtual machine.
+* Bug fixes
+  - PR637: make check should exit with an error code if any of regression test
+    failed. Use make check -k if you want to run all three test suites. And it
+    is now also possible to run individual jtreg testsuite (jdk,langtools and
+    hotspot) with the jtreg_checks argument:
+    make check jtreg_checks="langtools hotspot".
+    If none is provided make check runs all testsuites.
 
 New in release 1.10 (2011-XX-XX):
 

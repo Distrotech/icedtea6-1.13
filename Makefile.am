@@ -625,7 +625,8 @@ install:
 	clean-rewriter clean-rewrite-rhino clean-add-systemtap clean-add-systemtap-debug \
 	clean-add-pulseaudio clean-add-pulseaudio-debug clean-add-nss clean-add-nss-debug \
 	clean-add-tzdata-support clean-add-tzdata-support-debug clean-add-systemtap-ecj \
-	clean-add-pulseaudio-ecj clean-add-nss-ecj clean-add-tzdata-support-ecj clean-fonts
+	clean-add-pulseaudio-ecj clean-add-nss-ecj clean-add-tzdata-support-ecj clean-fonts \
+	jtregcheck-summary
 
 env:
 	@echo 'unset JAVA_HOME'
@@ -2072,6 +2073,7 @@ check-hotspot: stamps/jtreg.stamp
 		$(ICEDTEA_JTREG_OPTIONS) \
 		`pwd`/openjdk/hotspot/test \
 	    | tee test/$@.log
+	test -z `grep "^Error:\|^FAILED:" test/$@.log`
 
 check-langtools: stamps/jtreg.stamp
 	mkdir -p test/langtools/JTwork test/langtools/JTreport
@@ -2082,6 +2084,7 @@ check-langtools: stamps/jtreg.stamp
 		$(ICEDTEA_JTREG_OPTIONS) \
 		`pwd`/openjdk/langtools/test \
 	    | tee test/$@.log
+	test -z `grep "^Error:\|^FAILED:" test/$@.log`
 
 check-jdk: stamps/jtreg.stamp
 	mkdir -p test/jdk/JTwork test/jdk/JTreport
@@ -2098,6 +2101,7 @@ check-jdk: stamps/jtreg.stamp
 		$(ICEDTEA_JTREG_OPTIONS) \
 		`pwd`/openjdk/jdk/test \
 	    | tee test/$@.log
+	test -z `grep "^Error:\|^FAILED:" test/$@.log`
 
 clean-jtreg-reports:
 	rm -rf test/hotspot test/langtools test/jdk
@@ -2112,8 +2116,11 @@ jtreg_pids = ps x --no-headers -ww -o pid,ppid,args \
 
 jtreg_checks = hotspot langtools jdk
 
-jtregcheck: jtreg $(jtreg_checks:%=check-%)
+jtregcheck: jtreg $(jtreg_checks:%=check-%) jtregcheck-summary
+
+jtregcheck-summary:
 	for i in hotspot langtools jdk; do \
+	  touch test/check-$$i.log; \
 	  echo "--------------- jtreg console summary for $$i ---------------"; \
 	  egrep -v '^(Passed:|Directory|Re[a-z]+\ written\ to)' test/check-$$i.log; \
 	done | tee test/jtreg-summary.log
