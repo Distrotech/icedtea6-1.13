@@ -1,3 +1,63 @@
+2011-03-09  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: Add new patch.
+	* patches/jtreg-double-to-string.patch:
+	Patch which adds more test cases to test
+	java/lang/Double/ToString
+
+2011-03-08  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* patches/jtreg-hotspot-bug-6196102.patch:
+	Fixed number of patched lines.
+
+2011-03-08  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: Add new patch.
+	* patches/jtreg-hotspot-bug-6196102.patch:
+	Added new hotspot regresion test.
+
+2011-03-08  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am:
+	Added checking of JTreg results - if at least one
+	regression test failed, make exits with error code
+	* NEWS: Updated, added PR637 to a list of bug fixes.
+
+2011-03-07  Omair Majid  <omajid@redhat.com>
+
+	* Makefile.am (ICEDTEA_PATCHES): Apply
+	patches/jtreg-remove-test-6987555.patch and
+	patches/jtreg-remove-test-6991596.patch only on ALT_HSBUILD.
+
+2011-03-07  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: Added two new patches.
+	* patches/jtreg-remove-test-6987555.patch:
+	Patch to remove regression test
+	hotspot/test/compiler/6987555/Test6987555
+	which is not valid for OpenJDK6
+	* patches/jtreg-remove-test-6991596.patch:
+	Patch to remove regression test
+	hotspot/test/compiler/6991596/Test6991596
+	which is not valid for OpenJDK6
+
+2011-02-24  Matthias Klose  <doko@ubuntu.com>
+
+	* Makefile.am (jtregcheck): Allow setting which tests to run.
+
+2011-03-04  Xerxes Ranby  <xerxes@zafena.se>
+
+	CACAO: Ignore all unknown options.
+	* Makefile.am: Add CACAO patch.
+	* patches/cacao/ignore-unknown-options.patch: Added.
+
+2011-03-03  Xerxes Ranby  <xerxes@zafena.se>
+
+	JamVM: Ignore all unknown options.
+	* Makefile.am: Replaced JamVM patch.
+	* patches/jamvm/ignore-more-XX-options.patch: Removed.
+	* patches/jamvm/ignore-unknown-options.patch: Added.
+
 2011-03-03  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:

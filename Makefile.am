@@ -324,12 +324,16 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6766342-AA-simple-shape-performance.patch \
 	patches/openjdk/7016856-pisces-performance.patch \
 	patches/openjdk/6934977-MappedByteBuffer.load.patch \
-	patches/jaxp-serial-version-uid.patch
+	patches/jaxp-serial-version-uid.patch \
+	patches/jtreg-hotspot-bug-6196102.patch \
+	patches/jtreg-double-to-string.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
 	patches/pr639-broken_shark_build.patch \
-	patches/hotspot/$(HSBUILD)/powerpc-stacksize.patch
+	patches/hotspot/$(HSBUILD)/powerpc-stacksize.patch \
+	patches/jtreg-remove-test-6987555.patch \
+	patches/jtreg-remove-test-6991596.patch
 else
 ICEDTEA_PATCHES += \
 	patches/hotspot/$(HSBUILD)/no-precompiled-headers.patch \
@@ -347,7 +351,8 @@ ICEDTEA_PATCHES += \
 	patches/cacao/launcher.patch \
 	patches/cacao/arm-arch-defines.patch \
 	patches/cacao/jsig.patch \
-	patches/cacao/memory.patch
+	patches/cacao/memory.patch \
+	patches/cacao/ignore-unknown-options.patch
 endif
 
 if ENABLE_CACAO
@@ -358,7 +363,7 @@ endif
 
 if BUILD_JAMVM
 ICEDTEA_PATCHES += \
-	patches/jamvm/ignore-more-XX-options.patch
+	patches/jamvm/ignore-unknown-options.patch
 endif
 
 if ENABLE_PULSE_JAVA
@@ -622,7 +627,8 @@ install:
 	clean-rewriter clean-rewrite-rhino clean-add-systemtap clean-add-systemtap-debug \
 	clean-add-pulseaudio clean-add-pulseaudio-debug clean-add-nss clean-add-nss-debug \
 	clean-add-tzdata-support clean-add-tzdata-support-debug clean-add-systemtap-ecj \
-	clean-add-pulseaudio-ecj clean-add-nss-ecj clean-add-tzdata-support-ecj clean-fonts
+	clean-add-pulseaudio-ecj clean-add-nss-ecj clean-add-tzdata-support-ecj clean-fonts \
+	jtregcheck-summary
 
 env:
 	@echo 'unset JAVA_HOME'
@@ -2069,6 +2075,7 @@ check-hotspot: stamps/jtreg.stamp
 		$(ICEDTEA_JTREG_OPTIONS) \
 		`pwd`/openjdk/hotspot/test \
 	    | tee test/$@.log
+	test -z `grep "^Error:\|^FAILED:" test/$@.log`
 
 check-langtools: stamps/jtreg.stamp
 	mkdir -p test/langtools/JTwork test/langtools/JTreport
@@ -2079,6 +2086,7 @@ check-langtools: stamps/jtreg.stamp
 		$(ICEDTEA_JTREG_OPTIONS) \
 		`pwd`/openjdk/langtools/test \
 	    | tee test/$@.log
+	test -z `grep "^Error:\|^FAILED:" test/$@.log`
 
 check-jdk: stamps/jtreg.stamp
 	mkdir -p test/jdk/JTwork test/jdk/JTreport
@@ -2095,6 +2103,7 @@ check-jdk: stamps/jtreg.stamp
 		$(ICEDTEA_JTREG_OPTIONS) \
 		`pwd`/openjdk/jdk/test \
 	    | tee test/$@.log
+	test -z `grep "^Error:\|^FAILED:" test/$@.log`
 
 clean-jtreg-reports:
 	rm -rf test/hotspot test/langtools test/jdk
@@ -2107,8 +2116,13 @@ jtreg_processes = ps x -ww -o pid,ppid,args \
 jtreg_pids = ps x --no-headers -ww -o pid,ppid,args \
 	| awk '$$2 == 1 && $$3 ~ /^$(subst /,\/,$(CURDIR)/$(sdkimg))/ {print $$1}'
 
-jtregcheck: jtreg check-hotspot check-langtools check-jdk
+jtreg_checks = hotspot langtools jdk
+
+jtregcheck: jtreg $(jtreg_checks:%=check-%) jtregcheck-summary
+
+jtregcheck-summary:
 	for i in hotspot langtools jdk; do \
+	  touch test/check-$$i.log; \
 	  echo "--------------- jtreg console summary for $$i ---------------"; \
 	  egrep -v '^(Passed:|Directory|Re[a-z]+\ written\ to)' test/check-$$i.log; \
 	done | tee test/jtreg-summary.log

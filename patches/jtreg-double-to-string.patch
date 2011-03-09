@@ -1,0 +1,48 @@
+--- openjdk-old/jdk/test/java/lang/Double/ToString.java	2011-02-28 10:51:09.454128000 +0100
++++ openjdk/jdk/test/java/lang/Double/ToString.java	2011-02-28 10:51:09.454128000 +0100
+@@ -23,17 +23,39 @@
+ 
+ /*
+  * @test
+- * @bug 4428022
++ * @bug 4428022 4511638
+  * @summary Tests for Double.toString
+- * @author Andrew Haley <aph@redhat.com>
++ * @author Andrew Haley <aph@redhat.com>, Pavel Tisnovsky <ptisnovs@redhat.com>
+  */
+ 
+ public class ToString {
++    private static boolean conversionFailure = false;
++
++    public static void check(double d, String str) {
++        String converted = Double.toString(d);
++        if (!converted.equals(str)) {
++            conversionFailure = true;
++            System.out.println("Double.toString(" + str + ") is not \"" + str + "\" but \"" + converted + "\"");
++        }
++        else {
++            System.out.println("Double value " + str + " converted correctly");
++        }
++    }
+ 
+     public static void main(String args[]) {
+-      if (!Double.toString(0.001).equals("0.001"))
+-	  throw new RuntimeException("Double.toString(0.001) is not \"0.001\"");
+-      if (!Double.toString(0.002).equals("0.002"))
+-	  throw new RuntimeException("Double.toString(0.001) is not \"0.002\"");
++        check(0.001, "0.001");
++        check(0.002, "0.002");
++        check(7.79625120912E289, "7.79625120912E289");
++        check(1.0E23, "1.0E23");
++        check(9.999999999999999E22, "1.0E23");
++        check(8.41E21, "8.41E21");
++        check(2.0E23, "2.0E23");
++        check(8.962E21, "8.962E21");
++        check(7.3879E20, "7.3879E20");
++        check(3.1E22, "3.1E22");
++        check(5.63E21, "5.63E21");
++        if (conversionFailure) {
++            throw new RuntimeException("At least one conversion failure occured");
++        }
+     }
+ }
