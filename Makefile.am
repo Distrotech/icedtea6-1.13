@@ -352,6 +352,7 @@ ICEDTEA_PATCHES += \
 	patches/cacao/arm-arch-defines.patch \
 	patches/cacao/jsig.patch \
 	patches/cacao/memory.patch \
+	patches/cacao/arm-memory-barrier.patch \
 	patches/cacao/ignore-unknown-options.patch
 endif
 
