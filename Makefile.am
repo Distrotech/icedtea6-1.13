@@ -328,7 +328,8 @@ ICEDTEA_PATCHES = \
 	patches/jtreg-hotspot-bug-6196102.patch \
 	patches/jtreg-double-to-string.patch \
 	patches/openjdk/7023591-AAShapePipe.patch \
-	patches/openjdk/7027667-AAShapePipeRegTest.patch
+	patches/openjdk/7027667-AAShapePipeRegTest.patch \
+	patches/openjdk/7019861-AA-regression-fix.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
