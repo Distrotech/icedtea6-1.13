@@ -326,7 +326,9 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6934977-MappedByteBuffer.load.patch \
 	patches/jaxp-serial-version-uid.patch \
 	patches/jtreg-hotspot-bug-6196102.patch \
-	patches/jtreg-double-to-string.patch
+	patches/jtreg-double-to-string.patch \
+	patches/openjdk/7023591-AAShapePipe.patch \
+	patches/openjdk/7027667-AAShapePipeRegTest.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \

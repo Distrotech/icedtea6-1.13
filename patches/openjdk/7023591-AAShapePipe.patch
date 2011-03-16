@@ -1,0 +1,20 @@
+# HG changeset patch
+# User prr
+# Date 1299282881 28800
+# Node ID f82f0af7de5bb0e41cb957d654e8a1beaeab0008
+# Parent  01dcb496946e514fe5e61504d0bd2516d6a42783
+7023591: Xrender: java2D font demo - text highlighting tab content is black
+Reviewed-by: flar
+
+diff -r 01dcb496946e -r f82f0af7de5b src/share/classes/sun/java2d/pipe/AAShapePipe.java
+--- openjdk.orig/jdk/src/share/classes/sun/java2d/pipe/AAShapePipe.java	Thu Mar 03 16:06:42 2011 -0800
++++ openjdk/jdk/src/share/classes/sun/java2d/pipe/AAShapePipe.java	Fri Mar 04 15:54:41 2011 -0800
+@@ -109,7 +109,7 @@
+         Region clip = sg.getCompClip();
+         int abox[] = new int[4];
+         AATileGenerator aatg =
+-            renderengine.getAATileGenerator(x, y, dx1, dy1, dx2, dy2, 0, 0,
++            renderengine.getAATileGenerator(x, y, dx1, dy1, dx2, dy2, lw1, lw2,
+                                             clip, abox);
+         if (aatg == null) {
+             // Nothing to render
