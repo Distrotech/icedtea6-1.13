@@ -2078,7 +2078,7 @@ check-hotspot: stamps/jtreg.stamp
 		$(ICEDTEA_JTREG_OPTIONS) \
 		`pwd`/openjdk/hotspot/test \
 	    | tee test/$@.log
-	test -z `grep "^Error:\|^FAILED:" test/$@.log`
+	test -z `grep \"^Error:\|^FAILED:\" test/$@.log`
 
 check-langtools: stamps/jtreg.stamp
 	mkdir -p test/langtools/JTwork test/langtools/JTreport
@@ -2089,7 +2089,7 @@ check-langtools: stamps/jtreg.stamp
 		$(ICEDTEA_JTREG_OPTIONS) \
 		`pwd`/openjdk/langtools/test \
 	    | tee test/$@.log
-	test -z `grep "^Error:\|^FAILED:" test/$@.log`
+	test -z `grep \"^Error:\|^FAILED:\" test/$@.log`
 
 check-jdk: stamps/jtreg.stamp
 	mkdir -p test/jdk/JTwork test/jdk/JTreport
@@ -2106,7 +2106,7 @@ check-jdk: stamps/jtreg.stamp
 		$(ICEDTEA_JTREG_OPTIONS) \
 		`pwd`/openjdk/jdk/test \
 	    | tee test/$@.log
-	test -z `grep "^Error:\|^FAILED:" test/$@.log`
+	test -z `grep \"^Error:\|^FAILED:\" test/$@.log`
 
 clean-jtreg-reports:
 	rm -rf test/hotspot test/langtools test/jdk
