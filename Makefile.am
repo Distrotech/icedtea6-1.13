@@ -5,8 +5,8 @@ OPENJDK_MD5SUM = 2d2bbbb0f9b81f1fec41ec730da8a933
 OPENJDK_VERSION = b22
 OPENJDK_URL = http://download.java.net/openjdk/jdk6/promoted/$(OPENJDK_VERSION)/
 
-CACAO_VERSION = 6a5eda011e49
-CACAO_SHA256SUM = 57f3abd73688cb8861875e2f21be9ec8a0c7c234e1e694489e3efa4436e9228c
+CACAO_VERSION = c7bf150bfa46
+CACAO_SHA256SUM = 73629f5ac9514afbcf63b6cdf58556e889a5f6a22d4bd70de1dd2816c6500aee
 CACAO_BASE_URL = http://icedtea.classpath.org/download/drops/cacao
 CACAO_URL = $(CACAO_BASE_URL)/$(CACAO_VERSION).tar.gz
 CACAO_SRC_ZIP = cacao-$(CACAO_VERSION).tar.gz
@@ -352,11 +352,8 @@ endif
 if BUILD_CACAO
 ICEDTEA_PATCHES += \
 	patches/cacao/launcher.patch \
-	patches/cacao/arm-arch-defines.patch \
 	patches/cacao/jsig.patch \
-	patches/cacao/memory.patch \
-	patches/cacao/arm-memory-barrier.patch \
-	patches/cacao/ignore-unknown-options.patch
+	patches/cacao/memory.patch
 endif
 
 if ENABLE_CACAO

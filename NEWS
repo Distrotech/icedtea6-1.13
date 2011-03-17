@@ -5,6 +5,7 @@ PRX - http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=X
 RHX - https://bugzilla.redhat.com/show_bug.cgi?id=X
 DX  - http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=X
 GX  - http://bugs.gentoo.org/show_bug.cgi?id=X
+CAX - http://server.complang.tuwien.ac.at/cgi-bin/bugzilla/show_bug.cgi?id=X
 
 CVE-XXXX-YYYY: http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
@@ -18,7 +19,17 @@ New in release 1.11 (2011-XX-XX):
     hotspot) with the jtreg_checks argument:
     make check jtreg_checks="langtools hotspot".
     If none is provided make check runs all testsuites.
-  - CACAO PR157: ARM SMP Assertion thinlock failed.
+* CACAO
+  - Ignore all unknown options, but report them.
+  - Fixes build for newer gcc (at least 4.4) on PPC64, breaks older gcc.
+  - CA123: LD_LIBRARY_PATH and java.library.path.
+  - CA143: don't hang with invalid locale.
+  - CA144: aligned patchers on x86_64.
+  - CA148: support for LCMP bytecode.
+  - CA152: Calling Policy.setPolicy with a new Policy object
+    has no effect on the DefaultSecurityManager.
+  - CA156: uncaughtExceptionHandler doesn't work with OpenJDK 6 b21.
+  - CA157: ARM SMP Assertion thinlock failed.
 * JamVM
   - Ignore all unknown options.
   - Handle O_DELETE in JVM_Open.
