@@ -11,7 +11,6 @@ CVE-XXXX-YYYY: http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 New in release 1.11 (2011-XX-XX):
 
 * Use HotSpot 20 as the default virtual machine.
-* Added JamVM support for mips and mips64.
 * Bug fixes
   - PR637: make check should exit with an error code if any of regression test
     failed. Use make check -k if you want to run all three test suites. And it
@@ -20,6 +19,16 @@ New in release 1.11 (2011-XX-XX):
     make check jtreg_checks="langtools hotspot".
     If none is provided make check runs all testsuites.
   - CACAO PR157: ARM SMP Assertion thinlock failed.
+* JamVM
+  - Ignore all unknown options.
+  - Handle O_DELETE in JVM_Open.
+  - Minor performance improvement on ARM.
+  - First set of changes to support JamVM/OpenJDK on MacOS X.
+  - Minor memory leak (missing free).
+  - Handle integer overflow on i386/amd64.
+  - On ARM, force interpreter to be built in ARM mode.
+  - MIPS: 64-bit and interpreter inlining by default.
+  - Trivial implementation of stubs for MIPS.
 * Backports
   - S7023591, S7027667: Clipped antialiased rectangles are filled, not drawn.
   - S7019861: Last scanline skpped when doing AA.
