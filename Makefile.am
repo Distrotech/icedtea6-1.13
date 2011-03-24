@@ -329,7 +329,8 @@ ICEDTEA_PATCHES = \
 	patches/jtreg-double-to-string.patch \
 	patches/openjdk/7023591-AAShapePipe.patch \
 	patches/openjdk/7027667-AAShapePipeRegTest.patch \
-	patches/openjdk/7019861-AA-regression-fix.patch
+	patches/openjdk/7019861-AA-regression-fix.patch \
+	patches/openjdk/6768387-jtable_not_serializable.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
