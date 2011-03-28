@@ -180,9 +180,12 @@ Testing
 
 IcedTea6 includes support for running the test suite included with
 OpenJDK, using the in-tree copy of JTReg.  Invoking 'make check' will
-cause the HotSpot, JDK and langtools test suites to be run.  The
-individual test suites may be run using the check-hotspot, check-jdk
-and check-langtools targets respectively.
+cause the HotSpot, JDK and langtools test suites to be run.  It will
+exit with an error code if a regression test fails, so use 'make check
+-k' if you want to run all three test suites, regardless of if
+failures occur in one.  The individual test suites may be run using
+the check-hotspot, check-jdk and check-langtools targets respectively,
+or by setting jtreg_checks e.g. jtreg_checks="langtools hotspot".
 
 The PulseAudio provider
 =======================
