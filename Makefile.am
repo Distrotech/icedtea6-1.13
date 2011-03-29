@@ -332,7 +332,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7019861-AA-regression-fix.patch \
 	patches/openjdk/6768387-jtable_not_serializable.patch \
 	patches/mark_sun_toolkit_privileged_code.patch \
-	patches/g356743-libpng-1.5.patch
+	patches/g356743-libpng-1.5.patch \
+	patches/revert-6885123.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
