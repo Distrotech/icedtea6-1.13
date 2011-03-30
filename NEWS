@@ -5,19 +5,45 @@ PRX - http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=X
 RHX - https://bugzilla.redhat.com/show_bug.cgi?id=X
 DX  - http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=X
 GX  - http://bugs.gentoo.org/show_bug.cgi?id=X
+CAX - http://server.complang.tuwien.ac.at/cgi-bin/bugzilla/show_bug.cgi?id=X
 
 CVE-XXXX-YYYY: http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
 New in release 1.11 (2011-XX-XX):
 
 * Use HotSpot 20 as the default virtual machine.
+* Backports
+  - S7023591, S7027667: Clipped antialiased rectangles are filled, not drawn.
+  - S7019861: Last scanline skpped when doing AA.
+  - S6768387, PR670: REGRESSION: JTable no longer serializable
+  - Add missing privileged block around access to the sun.awt.nativedebug property.
 * Bug fixes
-  - PR637: make check should exit with an error code if any of regression test
-    failed. Use make check -k if you want to run all three test suites. And it
-    is now also possible to run individual jtreg testsuite (jdk,langtools and
-    hotspot) with the jtreg_checks argument:
-    make check jtreg_checks="langtools hotspot".
-    If none is provided make check runs all testsuites.
+  - PR637: make check should exit with an error code if any regression test failed.
+  - G356743: Support libpng 1.5.
+* Allow selection of test suites using the jtreg_checks argument e.g. jtreg_checks="langtools"
+* CACAO
+  - Ignore all unknown options, but report them.
+  - Fixes build for newer gcc (at least 4.4) on PPC64, breaks older gcc.
+  - CA123: LD_LIBRARY_PATH and java.library.path.
+  - CA143: don't hang with invalid locale.
+  - CA144: aligned patchers on x86_64.
+  - CA148: support for LCMP bytecode.
+  - CA152: Calling Policy.setPolicy with a new Policy object has no effect on the DefaultSecurityManager.
+  - CA156: uncaughtExceptionHandler doesn't work with OpenJDK 6 b21.
+  - CA157: ARM SMP Assertion thinlock failed.
+* JamVM
+  - Ignore all unknown options.
+  - Handle overflow in getPhysicalMemory().
+  - Base default min and max heap size on physical memory.
+  - Fix reflective array access.
+  - Handle O_DELETE in JVM_Open.
+  - Minor performance improvement on ARM.
+  - First set of changes to support JamVM/OpenJDK on MacOS X.
+  - Minor memory leak (missing free).
+  - Handle integer overflow on i386/amd64.
+  - On ARM, force interpreter to be built in ARM mode.
+  - MIPS: 64-bit and interpreter inlining by default.
+  - Trivial implementation of stubs for MIPS.
 
 New in release 1.10 (2011-XX-XX):
 

@@ -1,0 +1,310 @@
+--- openjdk.old/langtools/src/share/classes/com/sun/tools/javac/file/RegularFileObject.java	2011-02-28 17:07:28.000000000 +0100
++++ openjdk/langtools/src/share/classes/com/sun/tools/javac/file/RegularFileObject.java	2011-03-25 10:16:13.646180000 +0100
+@@ -78,7 +78,7 @@
+ 
+     //@Override
+     public String getName() {
+-        return file.getPath();
++        return this.name;
+     }
+ 
+     //@Override
+--- /dev/null	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/jdk/test/javax/tools/JavaFileManager/JavaFileManagerTest.java	2011-03-28 15:51:43.000000000 +0200
+@@ -0,0 +1,119 @@
++/*
++ * Copyright 2011 Red Hat, Inc. All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ */
++
++
++import java.util.*;
++import java.io.*;
++import java.nio.charset.*;
++
++import javax.tools.*;
++import javax.tools.JavaFileManager.*;
++import javax.tools.JavaFileObject.*;
++
++public class JavaFileManagerTest {
++
++    /**
++     * Test data files are stored in a subdirectory named "test_data".
++     */
++    private static final String TEST_DATA_DIRECTORY = "test_data";
++
++    /**
++     * Charset used by JavaFileManager.
++     */
++    private static final Charset FILE_MANAGER_CHARSET = Charset.forName("US-ASCII");
++
++    /**
++     * Locale used by JavaFileManager.
++     */
++    private static final Locale FILE_MANAGER_LOCALE = (java.util.Locale)null;
++
++    /**
++     * Location of file objects being tested.
++     */
++    private static final Location FILE_OBJECTS_LOCATION = javax.tools.StandardLocation.SOURCE_PATH;
++
++    public static DiagnosticListener<JavaFileObject> listener = new DiagnosticCollector<JavaFileObject>();
++
++    private void doTest() throws IOException {
++        StandardJavaFileManager fileManager = getStandardFileManager();
++        fileManager.setLocation(FILE_OBJECTS_LOCATION, Collections.singleton(getSourceDirPathFile()));
++
++        checkFileManagerLocation(fileManager.getLocation(FILE_OBJECTS_LOCATION));
++        checkFileManagerGetName(fileManager);
++    }
++
++    private StandardJavaFileManager getStandardFileManager() {
++        return ToolProvider.getSystemJavaCompiler().getStandardFileManager(
++                listener, FILE_MANAGER_LOCALE, FILE_MANAGER_CHARSET);
++    }
++
++    public static File getSourceDirPathFile() {
++        return new File(new File("."), TEST_DATA_DIRECTORY);
++    }
++
++    /**
++     * Check if there's "./test_data" location included in a locations argument.
++     * @param locations set of locations returned by fileManager.getLocation()
++     */
++    private void checkFileManagerLocation(Iterable<? extends File> locations) {
++        for (File file : locations) {
++            if (".".equals(file.getParent()) && TEST_DATA_DIRECTORY.equals(file.getName())) {
++                System.out.println("checkFileManagerLocation: ok");
++                return;
++            }
++        }
++        throw new RuntimeException("fileManager.getLocation() returns wrong locations! " + locations.toString());
++    }
++
++    /**
++     * Check if method JavaFileManager.getName() returns correct file name.
++     * @param fileManager
++     * @throws IOException
++     */
++    private void checkFileManagerGetName(JavaFileManager fileManager) throws IOException {
++        Map<Kind, String> kinds = new HashMap<Kind, String>();
++        kinds.put(Kind.SOURCE, "Test.java");
++        kinds.put(Kind.CLASS,  "Test.class");
++        kinds.put(Kind.HTML,   "Test.html");
++        kinds.put(Kind.OTHER,  "Test.txt");
++        for (Map.Entry<Kind, String> kind : kinds.entrySet()) {
++            System.out.println("Testing JavaFileManager for kind " + kind.getKey());
++            Iterable<JavaFileObject> fileObjects = fileManager.list(
++                    FILE_OBJECTS_LOCATION, "", Collections.singleton(kind.getKey()), false);
++            checkIfFileObjectsContainName(fileObjects, kind.getValue());
++        }
++    }
++
++    private void checkIfFileObjectsContainName(Iterable<JavaFileObject> fileObjects, String name) {
++        //System.out.println(fileObjects);
++        for (JavaFileObject fileObject : fileObjects) {
++            //System.out.println(fileObject.getName());
++            if (name.equals(fileObject.getName())) {
++                System.out.println("JavaFileObject.getName(): ok  ('" + fileObject.getName() + "')");
++                return;
++            }
++        }
++        throw new RuntimeException("JavaFileObject.getName() returns wrong name!");
++    }
++
++    public static void main(String argv[]) throws IOException {
++        new JavaFileManagerTest().doTest();
++    }
++
++}
+--- /dev/null	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/jdk/test/javax/tools/JavaFileManager/JavaFileManagerTest.sh	2011-03-28 15:47:23.000000000 +0200
+@@ -0,0 +1,153 @@
++#!/bin/sh
++
++#
++# Copyright 2011 Red Hat, Inc. All Rights Reserved.
++# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++#
++# This code is free software; you can redistribute it and/or modify it
++# under the terms of the GNU General Public License version 2 only, as
++# published by the Free Software Foundation.
++#
++# This code is distributed in the hope that it will be useful, but WITHOUT
++# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++# FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
++# version 2 for more details (a copy is included in the LICENSE file that
++# accompanied this code).
++#
++# You should have received a copy of the GNU General Public License version
++# 2 along with this work; if not, write to the Free Software Foundation,
++# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++
++#
++# This script is the actual launcher of JavaFileManagerTest.java
++# 
++
++# @test
++# @summary Test that check proper behaviour of JavaFileManager and
++#          JavaFileObject classes.
++
++
++
++# check arguments set by JTreg
++function checkArgs() {
++    if [ "${TESTSRC}" = "" ]
++    then
++        echo "TESTSRC not set.  Test cannot execute.  Failed."
++        exit 1
++    fi
++    echo "TESTSRC=${TESTSRC}"
++    if [ "${TESTJAVA}" = "" ]
++    then
++        echo "TESTJAVA not set.  Test cannot execute.  Failed."
++        exit 1
++    fi
++    echo "TESTJAVA=${TESTJAVA}"
++    if [ "${TESTCLASSES}" = "" ]
++    then
++        echo "TESTCLASSES not set.  Test cannot execute.  Failed."
++        exit 1
++    fi
++}
++
++
++
++# print paths to test sources and test classes
++function printPaths() {
++    echo "TESTCLASSES=${TESTCLASSES}"
++    echo "CLASSPATH=${CLASSPATH}"
++}
++
++
++
++# copy of all necessarry files into work directory
++function copyWorkFiles() {
++    cp -r "${TESTSRC}/test_data" "${TESTCLASSES}/"
++    result=$?
++    if [ $result -eq 0 ]
++    then
++        echo "Copy of work files was successful."
++    else 
++        echo "copy of work files have failed."
++        exit $result
++    fi
++
++    cp "${TESTSRC}/JavaFileManagerTest.java" "${TESTCLASSES}"
++    result=$?
++    if [ $result -eq 0 ]
++    then
++        echo "Copy of work files was successful."
++    else 
++        echo "copy of work files have failed."
++        exit $result
++    fi
++}
++
++
++
++# compilation of Test class which is stored in test_data subdirectory
++function compileTestClass() {
++    COMPILE="${TESTJAVA}/bin/javac ${TESTCLASSES}/test_data/Test.java"
++    echo ${COMPILE}
++    ${COMPILE}
++    result=$?
++
++    if [ $result -eq 0 ]
++    then
++        echo "Compilation of the test class was successful."
++    else 
++        echo "Compilation of the test class have failed."
++        # Cleanup
++        rm -rf ${TESTCLASSES}/
++        exit $result
++    fi
++}
++
++
++
++# compilation of the Test itself
++function compileTest() {
++    COMPILE="${TESTJAVA}/bin/javac ${TESTCLASSES}/JavaFileManagerTest.java"
++    echo ${COMPILE}
++    ${COMPILE}
++    result=$?
++
++    if [ $result -eq 0 ]
++    then
++        echo "Compilation of the test case was successful."
++    else 
++        echo "Compilation of the test case failed."
++        # Cleanup
++        rm -rf ${TESTCLASSES}/
++        exit $result
++    fi
++}
++
++
++
++# run the test
++function runTest() {
++    cd ${TESTCLASSES}
++    RUNCMD="${TESTJAVA}/bin/java JavaFileManagerTest"
++    echo ${RUNCMD}
++    ${RUNCMD}
++    result=$?
++
++    if [ $result -eq 0 ]
++    then
++        echo "Execution successful"
++    else
++        echo "Execution of the test case failed."
++    fi
++    rm -rf ${TESTCLASSES}/
++    exit $result
++}
++
++
++
++checkArgs
++printPaths
++copyWorkFiles
++compileTestClass
++compileTest
++runTest
++
+--- /dev/null	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/jdk/test/javax/tools/JavaFileManager/test_data/Test.html	2011-03-25 18:19:45.000000000 +0100
+@@ -0,0 +1,5 @@
++<html>
++<body>
++42
++</body>
++</html>
+--- /dev/null	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/jdk/test/javax/tools/JavaFileManager/test_data/Test.java	2011-03-28 14:53:50.000000000 +0200
+@@ -0,0 +1,5 @@
++package test_data;
++
++public class Test {
++	// nothing here
++}
+--- /dev/null	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/jdk/test/javax/tools/JavaFileManager/test_data/Test.txt	2011-03-28 16:15:09.000000000 +0200
+@@ -0,0 +1,2 @@
++42
++

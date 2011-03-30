@@ -1,3 +1,161 @@
+2011-03-29  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: Add new patch.
+	* patches/revert-6885123.patch:
+	Patch which fixes the behaviour of JavaFileManager
+	and JavaFileObject classes. This patch also contains
+	regression test for check if the fix is correct.
+
+2011-03-29  Andrew John Hughes  <ahughes@redhat.com>
+
+	* INSTALL: Update test documentation.
+	* NEWS: Cleanup.
+
+2011-03-28  Andrew John Hughes  <ahughes@redhat.com>
+	Patch contributed by: Alexis Ballier <aballier@gentoo.org>
+
+	* Makefile.am: Add patch.
+	* THANKYOU: List Alexis.
+	* NEWS: Updated.
+	* patches/g356743-libpng-1.5.patch:
+	Patch to build against libpng 1.5.
+
+2011-03-26  Xerxes Ranby  <xerxes@zafena.se>
+
+	JamVM: Handle overflow in getPhysicalMemory().
+	* NEWS: Updated.
+	* Makefile.am
+	(JAMVM_VERSION): Updated to latest JamVM revision.
+	(JAMVM_SHA256SUM): Updated.
+
+2011-03-25  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: Add new patch.
+	* NEWS: Updated (added info about new fix).
+	* patches/mark_sun_toolkit_privileged_code.patch:
+	Patch which fixes the AccessControlException while
+	working with Color class in a PropertyEditor
+
+2011-03-24  Omair Majid  <omajid@redhat.com>
+
+	* patches/openjdk/6768387-jtable_not_serializable.patch: Fix path in patch
+	so the test is added to openjdk/test.
+
+2011-03-24  Omair Majid  <omajid@redhat.com>
+
+	S6768387, PR670: REGRESSION: JTable no longer serializable
+	* NEWS: Add backport.
+	* Makefile.am (ICEDTEA_PATCHES): Add new patch.
+	* patches/openjdk/6768387-jtable_not_serializable.patch: New file.
+
+2011-03-24  Xerxes Ranby  <xerxes@zafena.se>
+
+	JamVM: Base default min and max heap size on physical memory.
+	* NEWS: Updated.
+	* Makefile.am
+	(JAMVM_VERSION): Updated to latest JamVM revision.
+	(JAMVM_SHA256SUM): Updated.
+
+2011-03-23  Andrew John Hughes  <ahughes@redhat.com>
+
+	* hotspot.map:
+	Bump to hs20 b11.
+
+2011-03-21  Xerxes Ranby  <xerxes@zafena.se>
+
+	JamVM: Fix reflective array access.
+	* NEWS: Updated.
+	* Makefile.am
+	(JAMVM_VERSION): Updated to latest JamVM revision.
+	(JAMVM_SHA256SUM): Updated.
+
+2011-03-17  Xerxes Ranby  <xerxes@zafena.se>
+
+	CACAO: Update to latest CACAO revision and remove upstreamed pathes.
+	Update contains the following new CACAO improvements:
+	Fixes build for newer gcc (at least 4.4) on PPC64, breaks older gcc.
+	CA123: LD_LIBRARY_PATH and java.library.path.
+	CA143: don't hang with invalid locale.
+	CA144: aligned patchers on x86_64.
+	CA148: support for LCMP bytecode.
+	CA152: Calling Policy.setPolicy with a new Policy object
+	has no effect on the DefaultSecurityManager.
+	CA156: uncaughtExceptionHandler doesn't work with OpenJDK 6 b21.
+	* NEWS: Updated.
+	* Makefile.am: Remove upstreamed CACAO patches.
+	(CACAO_VERSION): Updated to latest CACAO revision.
+	(CACAO_SHA256SUM): Updated.
+	* patches/cacao/arm-arch-defines.patch: Deleted.
+	* patches/cacao/arm-memory-barrier.patch: Deleted.
+	* patches/cacao/ignore-unknown-options.patch: Deleted.
+
+2011-03-17  Xerxes Ranby  <xerxes@zafena.se>
+
+	JamVM: Update to latest JamVM revision and remove upstreamed pathes.
+	Update contains the following new JamVM improvements:
+	Handle O_DELETE in JVM_Open
+	Minor performance improvement on ARM
+	First set of changes to support JamVM/OpenJDK on MacOS X
+	Minor memory leak (missing free)
+	Handle integer overflow on i386/amd64
+	* NEWS: Updated.
+	* Makefile.am: Remove upstreamed JamVM patches.
+	(JAMVM_VERSION): Updated to latest JamVM revision.
+	(JAMVM_SHA256SUM): Updated.
+	* patches/jamvm/arm-interp_cflags-marm.patch: Deleted.
+	* patches/jamvm/mips64el.patch: Deleted.
+
+2011-03-16  Denis Lila  <dlila@redhat.com>
+
+	* patches/openjdk/7027667-AAShapePipeRegTest.patch:
+	Removed comma from the bug tag of the regression test.
+
+2011-03-16  Denis Lila  <dlila@redhat.com>
+
+	* Makefile.am: Add patch.
+	* patches/openjdk/7019861-AA-regression-fix.patch:
+	Backport.
+	* NEWS:
+	Updated with backport.
+
+2011-03-16  Denis Lila  <dlila@redhat.com>
+
+	* Makefile.am: Add patches.
+	* patches/openjdk/7027667-AAShapePipeRegTest.patch:
+	Backport.
+	* patches/openjdk/7023591-AAShapePipe.patch:
+	Backport.
+	* NEWS:
+	Updated with backports.
+
+2011-03-16  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: Fixed tests at the end in check-* targets to work
+	correctly in Dash and various versions of Bash.
+
+2011-03-13  Xerxes Ranby  <xerxes@zafena.se>
+	    Robert Loughter  <rob@jamvm.org.uk>
+
+	JamVM: Compile interp using -marm to work on ARM Thumb2 systems.
+	* Makefile.am: Add new JamVM patch.
+	* patches/jamvm/arm-interp_cflags-marm.patch: New patch.
+
+2011-03-11  Xerxes Ranby  <xerxes@zafena.se>
+
+	JamVM: mips
+	* NEWS: Updated.
+	* Makefile.am: Add new JamVM patch.
+	(JAMVM_VERSION): Updated to latest JamVM revision.
+	(JAMVM_SHA256SUM): Updated.
+	* patches/jamvm/mips64el.patch: New patch.
+
+2011-03-11  Xerxes Ranby  <xerxes@zafena.se>
+
+	CACAO PR157: ARM SMP Assertion thinlock failed.
+	* NEWS: Updated.
+	* Makefile.am: Add new CACAO patch.
+	* patches/cacao/arm-memory-barrier.patch: New patch.
+
 2011-03-09  Pavel Tisnovsky  <ptisnovs@redhat.com>
 
 	* Makefile.am: Add new patch.

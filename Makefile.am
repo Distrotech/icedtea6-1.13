@@ -5,14 +5,14 @@ OPENJDK_MD5SUM = 2d2bbbb0f9b81f1fec41ec730da8a933
 OPENJDK_VERSION = b23
 OPENJDK_URL = http://download.java.net/openjdk/jdk6/promoted/$(OPENJDK_VERSION)/
 
-CACAO_VERSION = 6a5eda011e49
-CACAO_SHA256SUM = 57f3abd73688cb8861875e2f21be9ec8a0c7c234e1e694489e3efa4436e9228c
+CACAO_VERSION = c7bf150bfa46
+CACAO_SHA256SUM = 73629f5ac9514afbcf63b6cdf58556e889a5f6a22d4bd70de1dd2816c6500aee
 CACAO_BASE_URL = http://icedtea.classpath.org/download/drops/cacao
 CACAO_URL = $(CACAO_BASE_URL)/$(CACAO_VERSION).tar.gz
 CACAO_SRC_ZIP = cacao-$(CACAO_VERSION).tar.gz
 
-JAMVM_VERSION = 30c4a6b93ffa385833360921bfc613829fb081c9
-JAMVM_SHA256SUM = e77434a7d02d75de7fe44e9e1d7d6a3fd7ddcd5447ddd175fde2a7ccb40f8838
+JAMVM_VERSION = a95ca049d3bb257d730535a5d5ec3f73a943d0aa
+JAMVM_SHA256SUM = 18bb5c97c03fb73f70b481440e3e11803448d327c024d4570a338b899693fefd
 JAMVM_BASE_URL = http://icedtea.classpath.org/download/drops/jamvm
 JAMVM_URL = $(JAMVM_BASE_URL)/jamvm-$(JAMVM_VERSION).tar.gz
 JAMVM_SRC_ZIP = jamvm-$(JAMVM_VERSION).tar.gz
@@ -326,7 +326,14 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6934977-MappedByteBuffer.load.patch \
 	patches/jaxp-serial-version-uid.patch \
 	patches/jtreg-hotspot-bug-6196102.patch \
-	patches/jtreg-double-to-string.patch
+	patches/jtreg-double-to-string.patch \
+	patches/openjdk/7023591-AAShapePipe.patch \
+	patches/openjdk/7027667-AAShapePipeRegTest.patch \
+	patches/openjdk/7019861-AA-regression-fix.patch \
+	patches/openjdk/6768387-jtable_not_serializable.patch \
+	patches/mark_sun_toolkit_privileged_code.patch \
+	patches/g356743-libpng-1.5.patch \
+	patches/revert-6885123.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
@@ -349,10 +356,8 @@ endif
 if BUILD_CACAO
 ICEDTEA_PATCHES += \
 	patches/cacao/launcher.patch \
-	patches/cacao/arm-arch-defines.patch \
 	patches/cacao/jsig.patch \
-	patches/cacao/memory.patch \
-	patches/cacao/ignore-unknown-options.patch
+	patches/cacao/memory.patch
 endif
 
 if ENABLE_CACAO
@@ -2075,7 +2080,7 @@ check-hotspot: stamps/jtreg.stamp
 		$(ICEDTEA_JTREG_OPTIONS) \
 		`pwd`/openjdk/hotspot/test \
 	    | tee test/$@.log
-	test -z `grep "^Error:\|^FAILED:" test/$@.log`
+	test -z `grep \"^Error:\|^FAILED:\" test/$@.log`
 
 check-langtools: stamps/jtreg.stamp
 	mkdir -p test/langtools/JTwork test/langtools/JTreport
@@ -2086,7 +2091,7 @@ check-langtools: stamps/jtreg.stamp
 		$(ICEDTEA_JTREG_OPTIONS) \
 		`pwd`/openjdk/langtools/test \
 	    | tee test/$@.log
-	test -z `grep "^Error:\|^FAILED:" test/$@.log`
+	test -z `grep \"^Error:\|^FAILED:\" test/$@.log`
 
 check-jdk: stamps/jtreg.stamp
 	mkdir -p test/jdk/JTwork test/jdk/JTreport
@@ -2103,7 +2108,7 @@ check-jdk: stamps/jtreg.stamp
 		$(ICEDTEA_JTREG_OPTIONS) \
 		`pwd`/openjdk/jdk/test \
 	    | tee test/$@.log
-	test -z `grep "^Error:\|^FAILED:" test/$@.log`
+	test -z `grep \"^Error:\|^FAILED:\" test/$@.log`
 
 clean-jtreg-reports:
 	rm -rf test/hotspot test/langtools test/jdk

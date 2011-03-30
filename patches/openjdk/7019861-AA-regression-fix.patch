@@ -1,0 +1,502 @@
+# HG changeset patch
+# User dlila
+# Date 1300223102 14400
+# Node ID 253f3bc64961944b1886a243a662bd929e9ab605
+# Parent  fd8b81c558d307a984ad2dcd06b7de092c3f01f5
+7019861: Last scanline is skipped in pisces.Renderer.
+Summary: not skipping it anymore.
+Reviewed-by: flar
+
+diff -r fd8b81c558d3 -r 253f3bc64961 src/share/classes/sun/java2d/pisces/Helpers.java
+--- openjdk.orig/jdk/src/share/classes/sun/java2d/pisces/Helpers.java	Tue Mar 15 15:15:10 2011 -0400
++++ openjdk/jdk/src/share/classes/sun/java2d/pisces/Helpers.java	Tue Mar 15 17:05:02 2011 -0400
+@@ -154,9 +154,6 @@
+     // These use a hardcoded factor of 2 for increasing sizes. Perhaps this
+     // should be provided as an argument.
+     static float[] widenArray(float[] in, final int cursize, final int numToAdd) {
+-        if (in == null) {
+-            return new float[5 * numToAdd];
+-        }
+         if (in.length >= cursize + numToAdd) {
+             return in;
+         }
+diff -r fd8b81c558d3 -r 253f3bc64961 src/share/classes/sun/java2d/pisces/PiscesTileGenerator.java
+--- openjdk.orig/jdk/src/share/classes/sun/java2d/pisces/PiscesTileGenerator.java	Tue Mar 15 15:15:10 2011 -0400
++++ openjdk/jdk/src/share/classes/sun/java2d/pisces/PiscesTileGenerator.java	Tue Mar 15 17:05:02 2011 -0400
+@@ -191,8 +191,7 @@
+                     System.out.println("len = "+runLen);
+                     System.out.print(cache.toString());
+                     e0.printStackTrace();
+-                    System.exit(1);
+-                    return;
++                    throw e0;
+                 }
+ 
+                 int rx0 = cx;
+@@ -215,8 +214,7 @@
+                         System.out.println("len = "+runLen);
+                         System.out.print(cache.toString());
+                         e.printStackTrace();
+-                        System.exit(1);
+-                        return;
++                        throw e;
+                     }
+                 }
+                 pos += 2;
+@@ -250,4 +248,5 @@
+      * No further calls will be made on this instance.
+      */
+     public void dispose() {}
+-}
+\ No newline at end of file
++}
++
+diff -r fd8b81c558d3 -r 253f3bc64961 src/share/classes/sun/java2d/pisces/Renderer.java
+--- openjdk.orig/jdk/src/share/classes/sun/java2d/pisces/Renderer.java	Tue Mar 15 15:15:10 2011 -0400
++++ openjdk/jdk/src/share/classes/sun/java2d/pisces/Renderer.java	Tue Mar 15 17:05:02 2011 -0400
+@@ -47,16 +47,16 @@
+ 
+         private static final int INIT_CROSSINGS_SIZE = 10;
+ 
+-        private ScanlineIterator() {
++        // Preconditions: Only subpixel scanlines in the range
++        // (start <= subpixel_y <= end) will be evaluated. No
++        // edge may have a valid (i.e. inside the supplied clip)
++        // crossing that would be generated outside that range.
++        private ScanlineIterator(int start, int end) {
+             crossings = new int[INIT_CROSSINGS_SIZE];
+             edgePtrs = new int[INIT_CROSSINGS_SIZE];
+ 
+-            // We don't care if we clip some of the line off with ceil, since
+-            // no scan line crossings will be eliminated (in fact, the ceil is
+-            // the y of the first scan line crossing).
+-            final int minY = getFirstScanLineCrossing();
+-            nextY = minY;
+-            maxY = getScanLineCrossingEnd()-1;
++            nextY = start;
++            maxY = end;
+             edgeCount = 0;
+         }
+ 
+@@ -148,6 +148,7 @@
+     // don't just set NULL to -1, because we want NULL+NEXT to be negative.
+     private static final int NULL = -SIZEOF_EDGE;
+     private float[] edges = null;
++    private static final int INIT_NUM_EDGES = 8;
+     private int[] edgeBuckets = null;
+     private int[] edgeBucketCounts = null; // 2*newedges + (1 if pruning needed)
+     private int numEdges;
+@@ -156,7 +157,7 @@
+     private static final float INC_BND = 8f;
+ 
+     // each bucket is a linked list. this method adds eptr to the
+-    // start "bucket"th linked list.
++    // start of the "bucket"th linked list.
+     private void addEdgeToBucket(final int eptr, final int bucket) {
+         edges[eptr+NEXT] = edgeBuckets[bucket];
+         edgeBuckets[bucket] = eptr;
+@@ -168,7 +169,8 @@
+     // X0, Y0, D*[X|Y], COUNT; not variables used for computing scanline crossings).
+     private void quadBreakIntoLinesAndAdd(float x0, float y0,
+                                           final Curve c,
+-                                          final float x2, final float y2) {
++                                          final float x2, final float y2)
++    {
+         final float QUAD_DEC_BND = 32;
+         final int countlg = 4;
+         int count = 1 << countlg;
+@@ -204,7 +206,8 @@
+     // here, but then too many numbers are passed around.
+     private void curveBreakIntoLinesAndAdd(float x0, float y0,
+                                            final Curve c,
+-                                           final float x3, final float y3) {
++                                           final float x3, final float y3)
++    {
+         final int countlg = 3;
+         int count = 1 << countlg;
+ 
+@@ -259,8 +262,6 @@
+         }
+     }
+ 
+-    // Preconditions: y2 > y1 and the curve must cross some scanline
+-    // i.e.: y1 <= y < y2 for some y such that boundsMinY <= y < boundsMaxY
+     private void addLine(float x1, float y1, float x2, float y2) {
+         float or = 1; // orientation of the line. 1 if y increases, 0 otherwise.
+         if (y2 < y1) {
+@@ -272,12 +273,11 @@
+             x1 = or;
+             or = 0;
+         }
+-        final int firstCrossing = Math.max((int) Math.ceil(y1), boundsMinY);
++        final int firstCrossing = Math.max((int)Math.ceil(y1), boundsMinY);
+         final int lastCrossing = Math.min((int)Math.ceil(y2), boundsMaxY);
+         if (firstCrossing >= lastCrossing) {
+             return;
+         }
+-
+         if (y1 < edgeMinY) { edgeMinY = y1; }
+         if (y2 > edgeMaxY) { edgeMaxY = y2; }
+ 
+@@ -297,22 +297,10 @@
+         edges[ptr+OR] = or;
+         edges[ptr+CURX] = x1 + (firstCrossing - y1) * slope;
+         edges[ptr+SLOPE] = slope;
+-        edges[ptr+YMAX] = y2;
++        edges[ptr+YMAX] = lastCrossing;
+         final int bucketIdx = firstCrossing - boundsMinY;
+         addEdgeToBucket(ptr, bucketIdx);
+-        if (lastCrossing < boundsMaxY) {
+-            edgeBucketCounts[lastCrossing - boundsMinY] |= 1;
+-        }
+-    }
+-
+-    // preconditions: should not be called before the last line has been added
+-    // to the edge list (even though it will return a correct answer at that
+-    // point in time, it's not meant to be used that way).
+-    private int getFirstScanLineCrossing() {
+-        return Math.max(boundsMinY, (int)Math.ceil(edgeMinY));
+-    }
+-    private int getScanLineCrossingEnd() {
+-        return Math.min(boundsMaxY, (int)Math.ceil(edgeMaxY));
++        edgeBucketCounts[lastCrossing - boundsMinY] |= 1;
+     }
+ 
+ // END EDGE LIST
+@@ -366,9 +354,11 @@
+         this.boundsMaxX = (pix_boundsX + pix_boundsWidth) * SUBPIXEL_POSITIONS_X;
+         this.boundsMaxY = (pix_boundsY + pix_boundsHeight) * SUBPIXEL_POSITIONS_Y;
+ 
++        edges = new float[INIT_NUM_EDGES * SIZEOF_EDGE];
++        numEdges = 0;
+         edgeBuckets = new int[boundsMaxY - boundsMinY];
+         java.util.Arrays.fill(edgeBuckets, NULL);
+-        edgeBucketCounts = new int[edgeBuckets.length];
++        edgeBucketCounts = new int[edgeBuckets.length + 1];
+     }
+ 
+     private float tosubpixx(float pix_x) {
+@@ -394,7 +384,7 @@
+         y0 = y1;
+     }
+ 
+-    Curve c = new Curve();
++    private Curve c = new Curve();
+     @Override public void curveTo(float x1, float y1,
+                                   float x2, float y2,
+                                   float x3, float y3)
+@@ -431,8 +421,8 @@
+         throw new InternalError("Renderer does not use a native consumer.");
+     }
+ 
+-    private void _endRendering(final int pix_bboxx0, final int pix_bboxy0,
+-                               final int pix_bboxx1, final int pix_bboxy1)
++    private void _endRendering(final int pix_bboxx0, final int pix_bboxx1,
++                               int ymin, int ymax)
+     {
+         // Mask to determine the relevant bit of the crossing sum
+         // 0x1 if EVEN_ODD, all bits if NON_ZERO
+@@ -455,7 +445,7 @@
+         int pix_minX = Integer.MAX_VALUE;
+ 
+         int y = boundsMinY; // needs to be declared here so we emit the last row properly.
+-        ScanlineIterator it = this.new ScanlineIterator();
++        ScanlineIterator it = this.new ScanlineIterator(ymin, ymax);
+         for ( ; it.hasNext(); ) {
+             int numCrossings = it.next();
+             int[] crossings = it.crossings;
+@@ -477,7 +467,7 @@
+                 int curxo = crossings[i];
+                 int curx = curxo >> 1;
+                 // to turn {0, 1} into {-1, 1}, multiply by 2 and subtract 1.
+-                int crorientation = ((curxo & 0x1) << 1) -1;
++                int crorientation = ((curxo & 0x1) << 1) - 1;
+                 if ((sum & mask) != 0) {
+                     int x0 = Math.max(prev, bboxx0);
+                     int x1 = Math.min(curx, bboxx1);
+@@ -541,7 +531,7 @@
+         }
+ 
+         this.cache = new PiscesCache(pminX, pminY, pmaxX, pmaxY);
+-        _endRendering(pminX, pminY, pmaxX, pmaxY);
++        _endRendering(pminX, pmaxX, spminY, spmaxY);
+     }
+ 
+     public PiscesCache getCache() {
+diff -r fd8b81c558d3 -r 253f3bc64961 src/share/classes/sun/java2d/pisces/Stroker.java
+--- openjdk.orig/jdk/src/share/classes/sun/java2d/pisces/Stroker.java	Tue Mar 15 15:15:10 2011 -0400
++++ openjdk/jdk/src/share/classes/sun/java2d/pisces/Stroker.java	Tue Mar 15 17:05:02 2011 -0400
+@@ -764,6 +764,11 @@
+     private static final int MAX_N_CURVES = 11;
+     private float[] subdivTs = new float[MAX_N_CURVES - 1];
+ 
++    // If this class is compiled with ecj, then Hotspot crashes when OSR
++    // compiling this function. See bugs 7004570 and 6675699
++    // TODO: until those are fixed, we should work around that by
++    // manually inlining this into curveTo and quadTo.
++/******************************* WORKAROUND **********************************
+     private void somethingTo(final int type) {
+         // need these so we can update the state at the end of this method
+         final float xf = middle[type-2], yf = middle[type-1];
+@@ -866,6 +871,7 @@
+         this.cy0 = yf;
+         this.prev = DRAWING_OP_TO;
+     }
++****************************** END WORKAROUND *******************************/
+ 
+     // finds values of t where the curve in pts should be subdivided in order
+     // to get good offset curves a distance of w away from the middle curve.
+@@ -932,18 +938,168 @@
+         middle[2] = x1;  middle[3] = y1;
+         middle[4] = x2;  middle[5] = y2;
+         middle[6] = x3;  middle[7] = y3;
+-        somethingTo(8);
+-    }
+ 
+-    @Override public long getNativeConsumer() {
+-        throw new InternalError("Stroker doesn't use a native consumer");
++        // inlined version of somethingTo(8);
++        // See the TODO on somethingTo
++
++        // need these so we can update the state at the end of this method
++        final float xf = middle[6], yf = middle[7];
++        float dxs = middle[2] - middle[0];
++        float dys = middle[3] - middle[1];
++        float dxf = middle[6] - middle[4];
++        float dyf = middle[7] - middle[5];
++
++        boolean p1eqp2 = (dxs == 0f && dys == 0f);
++        boolean p3eqp4 = (dxf == 0f && dyf == 0f);
++        if (p1eqp2) {
++            dxs = middle[4] - middle[0];
++            dys = middle[5] - middle[1];
++            if (dxs == 0f && dys == 0f) {
++                dxs = middle[6] - middle[0];
++                dys = middle[7] - middle[1];
++            }
++        }
++        if (p3eqp4) {
++            dxf = middle[6] - middle[2];
++            dyf = middle[7] - middle[3];
++            if (dxf == 0f && dyf == 0f) {
++                dxf = middle[6] - middle[0];
++                dyf = middle[7] - middle[1];
++            }
++        }
++        if (dxs == 0f && dys == 0f) {
++            // this happens iff the "curve" is just a point
++            lineTo(middle[0], middle[1]);
++            return;
++        }
++
++        // if these vectors are too small, normalize them, to avoid future
++        // precision problems.
++        if (Math.abs(dxs) < 0.1f && Math.abs(dys) < 0.1f) {
++            float len = (float)Math.sqrt(dxs*dxs + dys*dys);
++            dxs /= len;
++            dys /= len;
++        }
++        if (Math.abs(dxf) < 0.1f && Math.abs(dyf) < 0.1f) {
++            float len = (float)Math.sqrt(dxf*dxf + dyf*dyf);
++            dxf /= len;
++            dyf /= len;
++        }
++
++        computeOffset(dxs, dys, lineWidth2, offset[0]);
++        final float mx = offset[0][0];
++        final float my = offset[0][1];
++        drawJoin(cdx, cdy, cx0, cy0, dxs, dys, cmx, cmy, mx, my);
++
++        int nSplits = findSubdivPoints(middle, subdivTs, 8, lineWidth2);
++
++        int kind = 0;
++        Iterator<Integer> it = Curve.breakPtsAtTs(middle, 8, subdivTs, nSplits);
++        while(it.hasNext()) {
++            int curCurveOff = it.next();
++
++            kind = computeOffsetCubic(middle, curCurveOff, lp, rp);
++            if (kind != 0) {
++                emitLineTo(lp[0], lp[1]);
++                switch(kind) {
++                case 8:
++                    emitCurveTo(lp[0], lp[1], lp[2], lp[3], lp[4], lp[5], lp[6], lp[7], false);
++                    emitCurveTo(rp[0], rp[1], rp[2], rp[3], rp[4], rp[5], rp[6], rp[7], true);
++                    break;
++                case 4:
++                    emitLineTo(lp[2], lp[3]);
++                    emitLineTo(rp[0], rp[1], true);
++                    break;
++                }
++                emitLineTo(rp[kind - 2], rp[kind - 1], true);
++            }
++        }
++
++        this.cmx = (lp[kind - 2] - rp[kind - 2]) / 2;
++        this.cmy = (lp[kind - 1] - rp[kind - 1]) / 2;
++        this.cdx = dxf;
++        this.cdy = dyf;
++        this.cx0 = xf;
++        this.cy0 = yf;
++        this.prev = DRAWING_OP_TO;
+     }
+ 
+     @Override public void quadTo(float x1, float y1, float x2, float y2) {
+         middle[0] = cx0; middle[1] = cy0;
+         middle[2] = x1;  middle[3] = y1;
+         middle[4] = x2;  middle[5] = y2;
+-        somethingTo(6);
++
++        // inlined version of somethingTo(8);
++        // See the TODO on somethingTo
++
++        // need these so we can update the state at the end of this method
++        final float xf = middle[4], yf = middle[5];
++        float dxs = middle[2] - middle[0];
++        float dys = middle[3] - middle[1];
++        float dxf = middle[4] - middle[2];
++        float dyf = middle[5] - middle[3];
++        if ((dxs == 0f && dys == 0f) || (dxf == 0f && dyf == 0f)) {
++            dxs = dxf = middle[4] - middle[0];
++            dys = dyf = middle[5] - middle[1];
++        }
++        if (dxs == 0f && dys == 0f) {
++            // this happens iff the "curve" is just a point
++            lineTo(middle[0], middle[1]);
++            return;
++        }
++        // if these vectors are too small, normalize them, to avoid future
++        // precision problems.
++        if (Math.abs(dxs) < 0.1f && Math.abs(dys) < 0.1f) {
++            float len = (float)Math.sqrt(dxs*dxs + dys*dys);
++            dxs /= len;
++            dys /= len;
++        }
++        if (Math.abs(dxf) < 0.1f && Math.abs(dyf) < 0.1f) {
++            float len = (float)Math.sqrt(dxf*dxf + dyf*dyf);
++            dxf /= len;
++            dyf /= len;
++        }
++
++        computeOffset(dxs, dys, lineWidth2, offset[0]);
++        final float mx = offset[0][0];
++        final float my = offset[0][1];
++        drawJoin(cdx, cdy, cx0, cy0, dxs, dys, cmx, cmy, mx, my);
++
++        int nSplits = findSubdivPoints(middle, subdivTs, 6, lineWidth2);
++
++        int kind = 0;
++        Iterator<Integer> it = Curve.breakPtsAtTs(middle, 6, subdivTs, nSplits);
++        while(it.hasNext()) {
++            int curCurveOff = it.next();
++
++            kind = computeOffsetQuad(middle, curCurveOff, lp, rp);
++            if (kind != 0) {
++                emitLineTo(lp[0], lp[1]);
++                switch(kind) {
++                case 6:
++                    emitQuadTo(lp[0], lp[1], lp[2], lp[3], lp[4], lp[5], false);
++                    emitQuadTo(rp[0], rp[1], rp[2], rp[3], rp[4], rp[5], true);
++                    break;
++                case 4:
++                    emitLineTo(lp[2], lp[3]);
++                    emitLineTo(rp[0], rp[1], true);
++                    break;
++                }
++                emitLineTo(rp[kind - 2], rp[kind - 1], true);
++            }
++        }
++
++        this.cmx = (lp[kind - 2] - rp[kind - 2]) / 2;
++        this.cmy = (lp[kind - 1] - rp[kind - 1]) / 2;
++        this.cdx = dxf;
++        this.cdy = dyf;
++        this.cx0 = xf;
++        this.cy0 = yf;
++        this.prev = DRAWING_OP_TO;
++    }
++
++    @Override public long getNativeConsumer() {
++        throw new InternalError("Stroker doesn't use a native consumer");
+     }
+ 
+     // a stack of polynomial curves where each curve shares endpoints with
+diff -r fd8b81c558d3 -r 253f3bc64961 test/sun/java2d/pisces/Renderer/Test7019861.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/sun/java2d/pisces/Renderer/Test7019861.java	Tue Mar 15 17:05:02 2011 -0400
+@@ -0,0 +1,76 @@
++/*
++ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/**
++ * @test
++ * @bug     7019861
++ *
++ * @summary Verifies that the last scanline isn't skipped when doing
++ *          antialiased rendering.
++ *
++ * @run     main Test7019861
++ */
++
++import java.awt.BasicStroke;
++import java.awt.Color;
++import java.awt.Graphics2D;
++import java.awt.geom.Path2D;
++import java.awt.image.BufferedImage;
++import java.util.Arrays;
++
++import static java.awt.RenderingHints.*;
++
++public class Test7019861 {
++
++    public static void main(String[] argv) throws Exception {
++        BufferedImage im = getWhiteImage(30, 30);
++        Graphics2D g2 = (Graphics2D)im.getGraphics();
++        g2.setRenderingHint(KEY_ANTIALIASING, VALUE_ANTIALIAS_ON);
++        g2.setRenderingHint(KEY_STROKE_CONTROL, VALUE_STROKE_PURE);
++        g2.setStroke(new BasicStroke(10, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
++        g2.setBackground(Color.white);
++        g2.setColor(Color.black);
++
++        Path2D p = getPath(0, 0, 20);
++        g2.draw(p);
++
++        if (!(new Color(im.getRGB(20, 19))).equals(Color.black)) {
++            throw new Exception("This pixel should be black");
++        }
++    }
++
++    private static Path2D getPath(int x, int y, int len) {
++        Path2D p = new Path2D.Double();
++        p.moveTo(x, y);
++        p.quadTo(x + len, y, x + len, y + len);
++        return p;
++    }
++
++    private static BufferedImage getWhiteImage(int w, int h) {
++        BufferedImage ret = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
++        final int[] white = new int[w * h];
++        Arrays.fill(white, 0xffffff);
++        ret.setRGB(0, 0, w, h, white, 0, w);
++        return ret;
++    }
++}
