@@ -24,9 +24,8 @@ JAF_DROP_URL = http://icedtea.classpath.org/download/drops
 JAF_DROP_ZIP = jdk6-jaf-b20.zip
 JAF_DROP_SHA256SUM = 78c7b5c9d6271e88ee46abadd018a61f1e9645f8936cc8df1617e5f4f5074012
 JAXP_DROP_URL = http://icedtea.classpath.org/download/drops
-JAXP_DROP_ZIP = jaxp144_01.zip
-JAXP_DROP_SHA256SUM = d72c2e27a479e7e78e0141cfcf3a9c5dbc5677495bd21b2d52dce85d21322186
-
+JAXP_DROP_ZIP = jaxp144_02.zip
+JAXP_DROP_SHA256SUM = 29edfda4b7e5e2f87da5a172b4d3e3cf05b1c1ec60e5ebb0144470edcb2a9c1d
 OPENJDK_HG_URL = http://hg.openjdk.java.net/jdk6/jdk6
 
 HOTSPOT_SRC_ZIP = hotspot.tar.gz
@@ -324,13 +323,11 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6766342-AA-simple-shape-performance.patch \
 	patches/openjdk/7016856-pisces-performance.patch \
 	patches/openjdk/6934977-MappedByteBuffer.load.patch \
-	patches/jaxp-serial-version-uid.patch \
 	patches/jtreg-hotspot-bug-6196102.patch \
 	patches/jtreg-double-to-string.patch \
 	patches/openjdk/7023591-AAShapePipe.patch \
 	patches/openjdk/7027667-AAShapePipeRegTest.patch \
 	patches/openjdk/7019861-AA-regression-fix.patch \
-	patches/openjdk/6768387-jtable_not_serializable.patch \
 	patches/mark_sun_toolkit_privileged_code.patch \
 	patches/g356743-libpng-1.5.patch \
 	patches/revert-6885123.patch
