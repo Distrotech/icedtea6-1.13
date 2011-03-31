@@ -1,6 +1,15 @@
 2011-03-31  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:
+	Revert broken changes in
+	478d3f5f6a59409078b1adcfba24150158b92695
+	(.PHONY): Remove jtregcheck-summary.
+	(jtregcheck): Revert to version before last change.
+	Remove pointless touch invocation.
+
+2011-03-31  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
 	Add missing download-openjdk and new download-hotspot aliases.
 	(.PHONY): Add clean-download-hotspot.
 	(download-openjdk): Move HotSpot download to...

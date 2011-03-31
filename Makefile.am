@@ -633,7 +633,7 @@ install:
 	clean-add-pulseaudio clean-add-pulseaudio-debug clean-add-nss clean-add-nss-debug \
 	clean-add-tzdata-support clean-add-tzdata-support-debug clean-add-systemtap-ecj \
 	clean-add-pulseaudio-ecj clean-add-nss-ecj clean-add-tzdata-support-ecj clean-fonts \
-	jtregcheck-summary clean-download-hotspot
+	clean-download-hotspot
 
 env:
 	@echo 'unset JAVA_HOME'
@@ -2130,11 +2130,8 @@ jtreg_pids = ps x --no-headers -ww -o pid,ppid,args \
 
 jtreg_checks = hotspot langtools jdk
 
-jtregcheck: jtreg $(jtreg_checks:%=check-%) jtregcheck-summary
-
-jtregcheck-summary:
+jtregcheck: jtreg $(jtreg_checks:%=check-%)
 	for i in hotspot langtools jdk; do \
-	  touch test/check-$$i.log; \
 	  echo "--------------- jtreg console summary for $$i ---------------"; \
 	  egrep -v '^(Passed:|Directory|Re[a-z]+\ written\ to)' test/check-$$i.log; \
 	done | tee test/jtreg-summary.log
