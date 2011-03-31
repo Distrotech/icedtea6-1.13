@@ -633,7 +633,7 @@ install:
 	clean-add-pulseaudio clean-add-pulseaudio-debug clean-add-nss clean-add-nss-debug \
 	clean-add-tzdata-support clean-add-tzdata-support-debug clean-add-systemtap-ecj \
 	clean-add-pulseaudio-ecj clean-add-nss-ecj clean-add-tzdata-support-ecj clean-fonts \
-	jtregcheck-summary
+	jtregcheck-summary clean-download-hotspot
 
 env:
 	@echo 'unset JAVA_HOME'
@@ -842,6 +842,16 @@ else
 	fi
 endif
 endif
+endif
+	mkdir -p stamps
+	touch stamps/download-openjdk.stamp
+
+clean-download-openjdk:
+	rm -f $(OPENJDK_SRC_ZIP)
+	rm -rf openjdk.hg
+	rm -f stamps/download-openjdk.stamp
+
+stamps/download-hotspot.stamp:
 if WITH_ALT_HSBUILD
 if USE_ALT_HOTSPOT_SRC_ZIP
 	ln -sf $(ALT_HOTSPOT_SRC_ZIP) $(HOTSPOT_SRC_ZIP)
@@ -860,22 +870,19 @@ endif
 	  $(WGET) $${hotspot_url} -O $(HOTSPOT_SRC_ZIP) ; \
 	fi
 endif
-endif
 	mkdir -p stamps
-	touch stamps/download-openjdk.stamp
+	touch stamps/download-hotspot.stamp
 
-clean-download-openjdk:
-	rm -f $(OPENJDK_SRC_ZIP)
+clean-download-hotspot:
 	rm -f $(HOTSPOT_SRC_ZIP)
-	rm -rf openjdk.hg
-	rm -f stamps/download-openjdk.stamp
+	rm -f stamps/download-hotspot.stamp
 
 stamps/download.stamp: stamps/download-drops.stamp stamps/download-cacao.stamp \
- stamps/download-jamvm.stamp stamps/download-openjdk.stamp
+ stamps/download-jamvm.stamp stamps/download-openjdk.stamp stamps/download-hotspot.stamp
 	touch stamps/download.stamp
 
 clean-download: clean-drops clean-download-cacao clean-download-jamvm \
- clean-download-openjdk
+ clean-download-openjdk clean-download-hotspot
 	rm -f stamps/download.stamp
 
 stamps/extract.stamp: stamps/extract-openjdk.stamp \
@@ -2224,6 +2231,8 @@ download-cacao: stamps/download-cacao.stamp
 
 download-drops: stamps/download-drops.stamp
 
+download-hotspot: stamps/download-hotspot.stamp
+
 download-jamvm: stamps/download-jamvm.stamp
 
 download-jaf-drop: stamps/download-jaf-drop.stamp
@@ -2231,6 +2240,8 @@ download-jaf-drop: stamps/download-jaf-drop.stamp
 download-jaxp-drop: stamps/download-jaxp-drop.stamp
 
 download-jaxws-drop: stamps/download-jaxws-drop.stamp
+
+download-openjdk: stamps/download-openjdk.stamp
 
 extract: stamps/extract.stamp
 

@@ -1,3 +1,15 @@
+2011-03-31  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Add missing download-openjdk and new download-hotspot aliases.
+	(.PHONY): Add clean-download-hotspot.
+	(download-openjdk): Move HotSpot download to...
+	(clean-download-openjdk): Don't delete hotspot zip.
+	(download-hotspot): ...here.
+	(clean-download-hotspot): Remove hotspot zip and stamp.
+	(download): Add download-hotspot as a dependency.
+	(clean-download): Add clean-download-hotspot as a dependency.
+
 2011-03-29  Pavel Tisnovsky  <ptisnovs@redhat.com>
 
 	* Makefile.am: Add new patch.
