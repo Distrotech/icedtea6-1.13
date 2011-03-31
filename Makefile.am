@@ -333,7 +333,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6768387-jtable_not_serializable.patch \
 	patches/mark_sun_toolkit_privileged_code.patch \
 	patches/g356743-libpng-1.5.patch \
-	patches/revert-6885123.patch
+	patches/revert-6885123.patch \
+	patches/hotspot/$(HSBUILD)/7032388-work_without_cmov_instruction.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
