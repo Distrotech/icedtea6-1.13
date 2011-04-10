@@ -1067,6 +1067,7 @@ probe hotspot.jni.CallVoidMethodV.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualBooleanMethodA =
@@ -1076,8 +1077,9 @@ probe hotspot.jni.CallNonvirtualBooleanMethodA =
   name = "CallNonvirtualBooleanMethodA"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualBooleanMethodA.return
@@ -1099,6 +1101,7 @@ probe hotspot.jni.CallNonvirtualBooleanMethodA.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualBooleanMethod =
@@ -1108,8 +1111,9 @@ probe hotspot.jni.CallNonvirtualBooleanMethod =
   name = "CallNonvirtualBooleanMethod"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualBooleanMethod.return
@@ -1131,6 +1135,7 @@ probe hotspot.jni.CallNonvirtualBooleanMethod.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualBooleanMethodV =
@@ -1140,8 +1145,9 @@ probe hotspot.jni.CallNonvirtualBooleanMethodV =
   name = "CallNonvirtualBooleanMethodV"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualBooleanMethodV.return
@@ -1163,6 +1169,7 @@ probe hotspot.jni.CallNonvirtualBooleanMethodV.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualByteMethodA =
@@ -1172,8 +1179,9 @@ probe hotspot.jni.CallNonvirtualByteMethodA =
   name = "CallNonvirtualByteMethodA"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualByteMethodA.return
@@ -1195,6 +1203,7 @@ probe hotspot.jni.CallNonvirtualByteMethodA.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualByteMethod =
@@ -1204,8 +1213,9 @@ probe hotspot.jni.CallNonvirtualByteMethod =
   name = "CallNonvirtualByteMethod"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualByteMethod.return
@@ -1227,6 +1237,7 @@ probe hotspot.jni.CallNonvirtualByteMethod.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualByteMethodV =
@@ -1236,8 +1247,9 @@ probe hotspot.jni.CallNonvirtualByteMethodV =
   name = "CallNonvirtualByteMethodV"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualByteMethodV.return
@@ -1259,6 +1271,7 @@ probe hotspot.jni.CallNonvirtualByteMethodV.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualCharMethodA =
@@ -1268,8 +1281,9 @@ probe hotspot.jni.CallNonvirtualCharMethodA =
   name = "CallNonvirtualCharMethodA"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualCharMethodA.return
@@ -1291,6 +1305,7 @@ probe hotspot.jni.CallNonvirtualCharMethodA.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualCharMethod =
@@ -1300,8 +1315,9 @@ probe hotspot.jni.CallNonvirtualCharMethod =
   name = "CallNonvirtualCharMethod"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualCharMethod.return
@@ -1323,6 +1339,7 @@ probe hotspot.jni.CallNonvirtualCharMethod.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualCharMethodV =
@@ -1332,8 +1349,9 @@ probe hotspot.jni.CallNonvirtualCharMethodV =
   name = "CallNonvirtualCharMethodV"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualCharMethodV.return
@@ -1355,6 +1373,7 @@ probe hotspot.jni.CallNonvirtualCharMethodV.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualDoubleMethodA =
@@ -1364,8 +1383,9 @@ probe hotspot.jni.CallNonvirtualDoubleMethodA =
   name = "CallNonvirtualDoubleMethodA"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualDoubleMethodA.return
@@ -1384,6 +1404,7 @@ probe hotspot.jni.CallNonvirtualDoubleMethodA.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualDoubleMethod =
@@ -1393,8 +1414,9 @@ probe hotspot.jni.CallNonvirtualDoubleMethod =
   name = "CallNonvirtualDoubleMethod"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualDoubleMethod.return
@@ -1413,6 +1435,7 @@ probe hotspot.jni.CallNonvirtualDoubleMethod.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualDoubleMethodV =
@@ -1422,8 +1445,9 @@ probe hotspot.jni.CallNonvirtualDoubleMethodV =
   name = "CallNonvirtualDoubleMethodV"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualDoubleMethodV.return
@@ -1442,6 +1466,7 @@ probe hotspot.jni.CallNonvirtualDoubleMethodV.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualFloatMethodA =
@@ -1451,8 +1476,9 @@ probe hotspot.jni.CallNonvirtualFloatMethodA =
   name = "CallNonvirtualFloatMethodA"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualFloatMethodA.return
@@ -1471,6 +1497,7 @@ probe hotspot.jni.CallNonvirtualFloatMethodA.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualFloatMethod =
@@ -1480,8 +1507,9 @@ probe hotspot.jni.CallNonvirtualFloatMethod =
   name = "CallNonvirtualFloatMethod"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualFloatMethod.return
@@ -1500,6 +1528,7 @@ probe hotspot.jni.CallNonvirtualFloatMethod.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualFloatMethodV =
@@ -1509,8 +1538,9 @@ probe hotspot.jni.CallNonvirtualFloatMethodV =
   name = "CallNonvirtualFloatMethodV"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualFloatMethodV.return
@@ -1529,6 +1559,7 @@ probe hotspot.jni.CallNonvirtualFloatMethodV.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualIntMethodA =
@@ -1538,8 +1569,9 @@ probe hotspot.jni.CallNonvirtualIntMethodA =
   name = "CallNonvirtualIntMethodA"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualIntMethodA.return
@@ -1561,6 +1593,7 @@ probe hotspot.jni.CallNonvirtualIntMethodA.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualIntMethod =
@@ -1570,8 +1603,9 @@ probe hotspot.jni.CallNonvirtualIntMethod =
   name = "CallNonvirtualIntMethod"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualIntMethod.return
@@ -1593,6 +1627,7 @@ probe hotspot.jni.CallNonvirtualIntMethod.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualIntMethodV =
@@ -1602,8 +1637,9 @@ probe hotspot.jni.CallNonvirtualIntMethodV =
   name = "CallNonvirtualIntMethodV"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualIntMethodV.return
@@ -1625,6 +1661,7 @@ probe hotspot.jni.CallNonvirtualIntMethodV.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualLongMethodA =
@@ -1634,8 +1671,9 @@ probe hotspot.jni.CallNonvirtualLongMethodA =
   name = "CallNonvirtualLongMethodA"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualLongMethodA.return
@@ -1657,6 +1695,7 @@ probe hotspot.jni.CallNonvirtualLongMethodA.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualLongMethod =
@@ -1666,8 +1705,9 @@ probe hotspot.jni.CallNonvirtualLongMethod =
   name = "CallNonvirtualLongMethod"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualLongMethod.return
@@ -1689,6 +1729,7 @@ probe hotspot.jni.CallNonvirtualLongMethod.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualLongMethodV =
@@ -1698,8 +1739,9 @@ probe hotspot.jni.CallNonvirtualLongMethodV =
   name = "CallNonvirtualLongMethodV"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualLongMethodV.return
@@ -1721,6 +1763,7 @@ probe hotspot.jni.CallNonvirtualLongMethodV.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualObjectMethodA =
@@ -1730,8 +1773,9 @@ probe hotspot.jni.CallNonvirtualObjectMethodA =
   name = "CallNonvirtualObjectMethodA"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualObjectMethodA.return
@@ -1753,6 +1797,7 @@ probe hotspot.jni.CallNonvirtualObjectMethodA.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualObjectMethod =
@@ -1762,8 +1807,9 @@ probe hotspot.jni.CallNonvirtualObjectMethod =
   name = "CallNonvirtualObjectMethod"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualObjectMethod.return
@@ -1785,6 +1831,7 @@ probe hotspot.jni.CallNonvirtualObjectMethod.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualObjectMethodV =
@@ -1794,8 +1841,9 @@ probe hotspot.jni.CallNonvirtualObjectMethodV =
   name = "CallNonvirtualObjectMethodV"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualObjectMethodV.return
@@ -1817,6 +1865,7 @@ probe hotspot.jni.CallNonvirtualObjectMethodV.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualShortMethodA =
@@ -1826,8 +1875,9 @@ probe hotspot.jni.CallNonvirtualShortMethodA =
   name = "CallNonvirtualShortMethodA"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualShortMethodA.return
@@ -1849,6 +1899,7 @@ probe hotspot.jni.CallNonvirtualShortMethodA.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualShortMethod =
@@ -1858,8 +1909,9 @@ probe hotspot.jni.CallNonvirtualShortMethod =
   name = "CallNonvirtualShortMethod"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualShortMethod.return
@@ -1881,6 +1933,7 @@ probe hotspot.jni.CallNonvirtualShortMethod.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualShortMethodV =
@@ -1890,8 +1943,9 @@ probe hotspot.jni.CallNonvirtualShortMethodV =
   name = "CallNonvirtualShortMethodV"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualShortMethodV.return
@@ -1913,6 +1967,7 @@ probe hotspot.jni.CallNonvirtualShortMethodV.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualVoidMethodA =
@@ -1922,8 +1977,9 @@ probe hotspot.jni.CallNonvirtualVoidMethodA =
   name = "CallNonvirtualVoidMethodA"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualVoidMethodA.return
@@ -1942,6 +1998,7 @@ probe hotspot.jni.CallNonvirtualVoidMethodA.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualVoidMethod =
@@ -1951,8 +2008,9 @@ probe hotspot.jni.CallNonvirtualVoidMethod =
   name = "CallNonvirtualVoidMethod"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualVoidMethod.return
@@ -1971,6 +2029,7 @@ probe hotspot.jni.CallNonvirtualVoidMethod.return =
  *
  * env - JNIEnv pointer.
  * obj - jobject reference.
+ * clazz - jclass reference.
  * methodid - ID of the method to call.
  */
 probe hotspot.jni.CallNonvirtualVoidMethodV =
@@ -1980,8 +2039,9 @@ probe hotspot.jni.CallNonvirtualVoidMethodV =
   name = "CallNonvirtualVoidMethodV"
   env = $arg1
   obj = $arg2
-  methodid = $arg3
-  probestr = sprintf("%s(env=0x%x,obj=0x%x,methodid=0x%x)", name, env, obj, methodid)
+  clazz = $arg3
+  methodid = $arg4
+  probestr = sprintf("%s(env=0x%x,obj=0x%x,clazz=0x%x,methodid=0x%x)", name, env, obj, clazz, methodid)
 }
 
 /* hotspot.jni.CallNonvirtualVoidMethodV.return
