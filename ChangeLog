@@ -1,3 +1,11 @@
+2011-04-12  Xerxes Rånby  <xerxes@zafena.se>
+
+	PR689: Shark fails to find LLVM 2.9 System headers during build
+	* Makefile.am: Add patch.
+	* patches/shark-llvm-2.9.patch:
+	In LLVM 2.9 System headers are moved to Support.
+	* NEWS: Updated.
+
 2011-04-10  Yasumasa Suenaga  <suenaga.yasumasa@oss.ntt.co.jp>
 
 	* tapset/hotspot_jni.stp.in (hotspot.jni.CallNonvirtual*):

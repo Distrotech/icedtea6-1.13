@@ -335,7 +335,8 @@ ICEDTEA_PATCHES = \
 	patches/g356743-libpng-1.5.patch \
 	patches/revert-6885123.patch \
 	patches/hotspot/$(HSBUILD)/7032388-work_without_cmov_instruction.patch \
-	patches/openjdk/7031385-gcc-register-allocation-fix.patch
+	patches/openjdk/7031385-gcc-register-allocation-fix.patch \
+	patches/shark-llvm-2.9.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
