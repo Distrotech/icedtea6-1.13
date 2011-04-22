@@ -224,6 +224,7 @@ ICEDTEA_PATCHES = \
 	patches/headers-hotspot.patch \
 	patches/gcc-suffix.patch \
 	patches/hotspot/$(HSBUILD)/gcc-suffix.patch \
+	patches/bytebuffer-compact.patch \
 	patches/memory-limits.patch \
 	patches/libraries.patch \
 	patches/javafiles.patch \
