@@ -204,6 +204,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6682046-shape_calculation.patch \
 	patches/openjdk/6797195-hw_lw_mixing.patch \
 	patches/openjdk/6725214-direct3d-01.patch \
+	patches/openjdk/6748082-isDisplayLocal.patch \
 	patches/openjdk/6633275-shaped_translucent_windows.patch \
         patches/openjdk/6791612-opengl-jni-fix.patch \
         patches/openjdk/6755274-glgetstring-crash.patch \
@@ -310,6 +311,7 @@ ICEDTEA_PATCHES = \
 	patches/g344659-sparc_fix.patch \
 	patches/openjdk/6728834-blurred-lcd-aa-text.patch \
 	patches/openjdk/6749060-bad-lcd-aa-non-opaque-dest.patch \
+	patches/openjdk/6708580-exa_slow.patch \
 	patches/openjdk/6896068-sg2d.patch \
 	patches/pr633-no_javaws_man_page.patch \
 	patches/pr586-include_all_srcs.patch \
