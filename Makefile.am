@@ -217,7 +217,6 @@ ICEDTEA_PATCHES = \
 	patches/version.patch \
 	patches/version-hotspot.patch \
 	patches/hotspot/$(HSBUILD)/text-relocations.patch \
-	patches/ssl.patch \
 	patches/rmi_amd64.patch \
 	patches/tools.patch \
 	patches/use-system-tzdata.patch \
