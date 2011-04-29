@@ -1,0 +1,56 @@
+# HG changeset patch
+# User ohair
+# Date 1301955066 25200
+# Node ID 9d1f5ad258f89cde283c7c468bfd4d04f91f9c29
+# Parent  aa13e7702cd9d8aca9aa38f1227f966990866944
+7029905: demo applets missing some html files
+Reviewed-by: omajid, mchung, igor
+
+diff -r aa13e7702cd9 -r 9d1f5ad258f8 make/mkdemo/jfc/Font2DTest/Makefile
+--- openjdk/jdk/make/mkdemo/jfc/Font2DTest/Makefile	Tue Mar 29 20:19:55 2011 -0700
++++ openjdk/jdk/make/mkdemo/jfc/Font2DTest/Makefile	Mon Apr 04 15:11:06 2011 -0700
+@@ -33,7 +33,7 @@
+ include $(BUILDDIR)/common/Defs.gmk
+ 
+ DEMO_ROOT       = $(SHARE_SRC)/demo/jfc/$(DEMONAME)
+-DEMO_TOPFILES   = ./README.txt
++DEMO_TOPFILES   = ./README.txt ./$(DEMONAME).html
+ DEMO_MAINCLASS  = $(DEMONAME)
+ DEMO_DESTDIR    = $(DEMODIR)/jfc/$(DEMONAME)
+ 
+diff -r aa13e7702cd9 -r 9d1f5ad258f8 make/mkdemo/jfc/Java2D/Makefile
+--- openjdk/jdk/make/mkdemo/jfc/Java2D/Makefile	Tue Mar 29 20:19:55 2011 -0700
++++ openjdk/jdk/make/mkdemo/jfc/Java2D/Makefile	Mon Apr 04 15:11:06 2011 -0700
+@@ -33,7 +33,7 @@
+ include $(BUILDDIR)/common/Defs.gmk
+ 
+ DEMO_ROOT       = $(CLOSED_SRC)/share/demo/jfc/Java2D
+-DEMO_TOPFILES   = ./Java2Demo.html ./README.txt
++DEMO_TOPFILES   = ./README.txt ./$(DEMONAME).html
+ DEMO_MAINCLASS  = java2d.Java2Demo
+ DEMO_DESTDIR    = $(DEMODIR)/jfc/Java2D
+ 
+diff -r aa13e7702cd9 -r 9d1f5ad258f8 make/mkdemo/jfc/SwingApplet/Makefile
+--- openjdk/jdk/make/mkdemo/jfc/SwingApplet/Makefile	Tue Mar 29 20:19:55 2011 -0700
++++ openjdk/jdk/make/mkdemo/jfc/SwingApplet/Makefile	Mon Apr 04 15:11:06 2011 -0700
+@@ -33,7 +33,7 @@
+ include $(BUILDDIR)/common/Defs.gmk
+ 
+ DEMO_ROOT       = $(SHARE_SRC)/demo/jfc/$(DEMONAME)
+-DEMO_TOPFILES   = ./README.txt
++DEMO_TOPFILES   = ./README.txt ./$(DEMONAME).html
+ DEMO_MAINCLASS  = $(DEMONAME)
+ DEMO_DESTDIR    = $(DEMODIR)/jfc/$(DEMONAME)
+ 
+diff -r aa13e7702cd9 -r 9d1f5ad258f8 make/mkdemo/jfc/SwingSet2/Makefile
+--- openjdk/jdk/make/mkdemo/jfc/SwingSet2/Makefile	Tue Mar 29 20:19:55 2011 -0700
++++ openjdk/jdk/make/mkdemo/jfc/SwingSet2/Makefile	Mon Apr 04 15:11:06 2011 -0700
+@@ -33,7 +33,7 @@
+ include $(BUILDDIR)/common/Defs.gmk
+ 
+ DEMO_ROOT       = $(CLOSED_SRC)/share/demo/jfc/$(DEMONAME)
+-DEMO_TOPFILES   = ./README.txt
++DEMO_TOPFILES   = ./README.txt ./$(DEMONAME).html
+ DEMO_MAINCLASS  = $(DEMONAME)
+ DEMO_MANIFEST_ATTR = SplashScreen-Image: resources/images/splash.png
+ DEMO_DESTDIR    = $(DEMODIR)/jfc/$(DEMONAME)

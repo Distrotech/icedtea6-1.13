@@ -254,7 +254,7 @@ ICEDTEA_PATCHES = \
 	patches/sparc64-linux.patch \
 	patches/sparc-ptracefix.patch \
 	patches/sparc-trapsfix.patch \
-	patches/demo-swingapplet.patch \
+	patches/openjdk/7029905-demo_applet_html_files.patch \
 	patches/jtreg-6592792.patch \
 	patches/s390-noinline.patch \
 	patches/jtreg-dnd.patch \
