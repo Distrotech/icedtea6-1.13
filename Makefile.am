@@ -384,7 +384,7 @@ endif
 if ENABLE_XRENDER
 ICEDTEA_PATCHES += patches/openjdk/6307603-xrender-01.patch \
 	patches/openjdk/6961633-xrender-02.patch \
-	patches/xrender-gc-cleanup.patch
+	patches/openjdk/7018387-xrender_gc_leak.patch
 endif
 
 if ENABLE_NIO2

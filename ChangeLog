@@ -1,3 +1,12 @@
+2011-05-03  Omair Majid  <omajid@redhat.com>
+
+	Replace xrender patch with (identical) upstream fix.
+	* NEWS: Document backport of S7018387.
+	* Makefile.am (ICEDTEA_PATCHES): Replace patches/xrender-gc-cleanup.patch
+	with patches/openjdk/7018387-xrender_gc_leak.patch.
+	* patches/openjdk/7018387-xrender_gc_leak.patch: New file.
+	* patches/xrender-gc-cleanup.patch: Remove.
+
 2011-05-03  Andrew Haley  <aph@redhat.com>
 
 	* Makefile.am: Don't fail if sed command to clean jvm.cfg fails.
