@@ -1845,7 +1845,7 @@ endif
 
 clean-add-jamvm:
 	rm -rf $(BUILD_JRE_ARCH_DIR)/jamvm
-	sed -i 's#-jamvm KNOWN#-jamvm ERROR#' jvm.cfg
+	-sed -i 's#-jamvm KNOWN#-jamvm ERROR#' jvm.cfg
 	rm -f stamps/add-jamvm.stamp
 
 stamps/add-jamvm-debug.stamp: stamps/icedtea-debug.stamp stamps/jamvm.stamp
