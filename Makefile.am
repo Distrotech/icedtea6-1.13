@@ -338,7 +338,8 @@ ICEDTEA_PATCHES = \
 	patches/hotspot/$(HSBUILD)/7032388-work_without_cmov_instruction.patch \
 	patches/openjdk/7031385-gcc-register-allocation-fix.patch \
 	patches/shark-llvm-2.9.patch \
-	patches/openjdk/6986968-crash_on_xim_restart.patch
+	patches/openjdk/6986968-crash_on_xim_restart.patch \
+	patches/openjdk/7036754-stroker-nan.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
