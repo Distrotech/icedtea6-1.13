@@ -354,7 +354,7 @@ class DirectCharBufferS
         unsafe.copyMemory(ix(pos), ix(0), rem << 1);
         position(rem);
         limit(capacity());
-	clearMark();
+        discardMark();
         return this;
 
 

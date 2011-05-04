@@ -1,5 +1,34 @@
 2011-05-04  Omair Majid  <omajid@redhat.com>
 
+	* Makefile.am (ICEDTEA_PATCHES): Drop bytebuffer-compact.patch. The
+	original issue this patch used to address was fixed upstream. Now this
+	patch just adds another method clearMark in addition to upstream's
+	discardMark.
+	* generated/java/nio/DirectByteBuffer.java,
+	* generated/java/nio/DirectCharBufferS.java,
+	* generated/java/nio/DirectCharBufferU.java,
+	* generated/java/nio/DirectDoubleBufferS.java,
+	* generated/java/nio/DirectDoubleBufferU.java,
+	* generated/java/nio/DirectFloatBufferS.java,
+	* generated/java/nio/DirectFloatBufferU.java,
+	* generated/java/nio/DirectIntBufferS.java,
+	* generated/java/nio/DirectIntBufferU.java,
+	* generated/java/nio/DirectLongBufferS.java,
+	* generated/java/nio/DirectLongBufferU.java,
+	* generated/java/nio/DirectShortBufferS.java,
+	* generated/java/nio/DirectShortBufferU.java,
+	* generated/java/nio/HeapByteBuffer.java,
+	* generated/java/nio/HeapCharBuffer.java,
+	* generated/java/nio/HeapDoubleBuffer.java,
+	* generated/java/nio/HeapFloatBuffer.java,
+	* generated/java/nio/HeapIntBuffer.java,
+	* generated/java/nio/HeapLongBuffer.java,
+	* generated/java/nio/HeapShortBuffer.java: Replace all uses of clearMark
+	with discardMark.
+	* patches/bytebuffer-compact.patch: Remove.
+
+2011-05-04  Omair Majid  <omajid@redhat.com>
+
 	* patches/nss-debug.patch: Remove file. It was upstreamed and was not
 	being applied locally.
 
