@@ -262,7 +262,7 @@ ICEDTEA_PATCHES = \
 	patches/dnd-filelists.patch \
 	patches/disable-cc-incompatible-sanity-checks.patch \
 	patches/explicit-target-arch.patch \
-	patches/gcc-stack-markings.patch \
+	patches/openjdk/7019808-stack_noexec.patch \
 	patches/parisc.patch \
 	patches/sh4-support.patch \
 	patches/policy-evaluation.patch \
