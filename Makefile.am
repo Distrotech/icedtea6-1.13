@@ -305,7 +305,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/4493128-CubicCurve2D.patch \
 	patches/openjdk/4645692-CubicCurve2D.solveCubic.patch \
 	patches/no-static-linking.patch \
-	patches/rh676659-gcc-export-dynamic.patch \
+	patches/openjdk/7041156-gcc_export_dynamic.patch \
 	patches/g344659-sparc_fix.patch \
 	patches/openjdk/6728834-blurred-lcd-aa-text.patch \
 	patches/openjdk/6749060-bad-lcd-aa-non-opaque-dest.patch \
