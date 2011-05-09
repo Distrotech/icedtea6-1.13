@@ -1,3 +1,13 @@
+2011-05-09  Andrew Haley  <aph@redhat.com>
+
+	* Makefile (ICEDTEA_PATCHES): Add icedtea-hugepage-7034464.patch,
+	patches/icedtea-hugepage-7037939.patch
+	* patches/icedtea-hugepage-7034464.patch: Support transparent huge
+	pages on Linux available since 2.6.38
+	* patches/icedtea-hugepage-7037939.patch: Disable adaptive
+	resizing if SHM large pages are used.
+	* NEWS: Add S7037939, S7034464.
+
 2011-05-06  Omair Majid  <omajid@redhat.com>
 
 	* Makefile.am (ICEDTEA_PATCHES): Replace
