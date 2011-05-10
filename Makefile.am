@@ -230,7 +230,6 @@ ICEDTEA_PATCHES = \
 	patches/jvmtiEnv.patch \
 	patches/lcms.patch \
 	patches/print_lsb_release.patch \
-	patches/jpegclasses.patch \
 	patches/uname.patch \
 	patches/freetypeversion.patch \
 	patches/nomotif-6706121.patch \
@@ -1163,6 +1162,7 @@ stamps/overlay.stamp: stamps/patch.stamp
 if ENABLE_NIO2
 	cp -r $(abs_top_srcdir)/overlays/nio2/openjdk/* openjdk/
 endif
+	cp -r $(abs_top_srcdir)/overlays/jpeg/openjdk/* openjdk/
 	touch stamps/overlay.stamp
 
 clean-overlay:
