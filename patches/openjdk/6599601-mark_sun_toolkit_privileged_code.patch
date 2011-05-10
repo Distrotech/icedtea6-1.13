@@ -1,0 +1,22 @@
+# HG changeset patch
+# User ptisnovs
+# Date 1305021522 -7200
+# Node ID fe6a8ddfe33d460fe19867c6625ee6390934e4b7
+# Parent  593007922695685523c0730db47e379c26490967
+6599601: Permissions/AWTWindowTest and Permissions/DFLoadTest failed in PIT 7.0 B20 on Windows Vista
+Summary: Correction of checking sun.awt.nativedebug flag.
+Reviewed-by: ohair
+
+diff -r 593007922695 -r fe6a8ddfe33d src/share/classes/sun/awt/SunToolkit.java
+--- openjdk/jdk/src/share/classes/sun/awt/SunToolkit.java	Tue Jan 11 12:36:43 2011 -0500
++++ openjdk/jdk/src/share/classes/sun/awt/SunToolkit.java	Tue May 10 11:58:42 2011 +0200
+@@ -70,8 +70,7 @@
+ 
+     /* Load debug settings for native code */
+     static {
+-        String nativeDebug = System.getProperty("sun.awt.nativedebug");
+-        if ("true".equalsIgnoreCase(nativeDebug)) {
++        if (AccessController.doPrivileged(new GetBooleanAction("sun.awt.nativedebug"))) {
+             DebugSettings.init();
+         }
+     };
