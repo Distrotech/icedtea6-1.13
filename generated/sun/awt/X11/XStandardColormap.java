@@ -8,7 +8,7 @@ import java.util.logging.*;
 public class XStandardColormap extends XWrapperBase { 
 	private Unsafe unsafe = XlibWrapper.unsafe; 
 	private final boolean should_free_memory;
-	public static int getSize() { return 40; }
+	public static int getSize() { return ((XlibWrapper.dataModel == 32)?(40):(80)); }
 	public int getDataSize() { return getSize(); }
 
 	long pData;
@@ -16,14 +16,14 @@ public class XStandardColormap extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	XStandardColormap(long addr) {
+	public XStandardColormap(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	XStandardColormap() {
+	public XStandardColormap() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;
@@ -39,24 +39,24 @@ public class XStandardColormap extends XWrapperBase {
 		}
 	public long get_colormap() { log.finest("");return (Native.getLong(pData+0)); }
 	public void set_colormap(long v) { log.finest(""); Native.putLong(pData+0, v); }
-	public long get_red_max() { log.finest("");return (Native.getLong(pData+4)); }
-	public void set_red_max(long v) { log.finest(""); Native.putLong(pData+4, v); }
-	public long get_red_mult() { log.finest("");return (Native.getLong(pData+8)); }
-	public void set_red_mult(long v) { log.finest(""); Native.putLong(pData+8, v); }
-	public long get_green_max() { log.finest("");return (Native.getLong(pData+12)); }
-	public void set_green_max(long v) { log.finest(""); Native.putLong(pData+12, v); }
-	public long get_green_mult() { log.finest("");return (Native.getLong(pData+16)); }
-	public void set_green_mult(long v) { log.finest(""); Native.putLong(pData+16, v); }
-	public long get_blue_max() { log.finest("");return (Native.getLong(pData+20)); }
-	public void set_blue_max(long v) { log.finest(""); Native.putLong(pData+20, v); }
-	public long get_blue_mult() { log.finest("");return (Native.getLong(pData+24)); }
-	public void set_blue_mult(long v) { log.finest(""); Native.putLong(pData+24, v); }
-	public long get_base_pixel() { log.finest("");return (Native.getLong(pData+28)); }
-	public void set_base_pixel(long v) { log.finest(""); Native.putLong(pData+28, v); }
-	public long get_visualid() { log.finest("");return (Native.getLong(pData+32)); }
-	public void set_visualid(long v) { log.finest(""); Native.putLong(pData+32, v); }
-	public long get_killid() { log.finest("");return (Native.getLong(pData+36)); }
-	public void set_killid(long v) { log.finest(""); Native.putLong(pData+36, v); }
+	public long get_red_max() { log.finest("");return (Native.getLong(pData+((XlibWrapper.dataModel == 32)?(4):(8)))); }
+	public void set_red_max(long v) { log.finest(""); Native.putLong(pData+((XlibWrapper.dataModel == 32)?(4):(8)), v); }
+	public long get_red_mult() { log.finest("");return (Native.getLong(pData+((XlibWrapper.dataModel == 32)?(8):(16)))); }
+	public void set_red_mult(long v) { log.finest(""); Native.putLong(pData+((XlibWrapper.dataModel == 32)?(8):(16)), v); }
+	public long get_green_max() { log.finest("");return (Native.getLong(pData+((XlibWrapper.dataModel == 32)?(12):(24)))); }
+	public void set_green_max(long v) { log.finest(""); Native.putLong(pData+((XlibWrapper.dataModel == 32)?(12):(24)), v); }
+	public long get_green_mult() { log.finest("");return (Native.getLong(pData+((XlibWrapper.dataModel == 32)?(16):(32)))); }
+	public void set_green_mult(long v) { log.finest(""); Native.putLong(pData+((XlibWrapper.dataModel == 32)?(16):(32)), v); }
+	public long get_blue_max() { log.finest("");return (Native.getLong(pData+((XlibWrapper.dataModel == 32)?(20):(40)))); }
+	public void set_blue_max(long v) { log.finest(""); Native.putLong(pData+((XlibWrapper.dataModel == 32)?(20):(40)), v); }
+	public long get_blue_mult() { log.finest("");return (Native.getLong(pData+((XlibWrapper.dataModel == 32)?(24):(48)))); }
+	public void set_blue_mult(long v) { log.finest(""); Native.putLong(pData+((XlibWrapper.dataModel == 32)?(24):(48)), v); }
+	public long get_base_pixel() { log.finest("");return (Native.getLong(pData+((XlibWrapper.dataModel == 32)?(28):(56)))); }
+	public void set_base_pixel(long v) { log.finest(""); Native.putLong(pData+((XlibWrapper.dataModel == 32)?(28):(56)), v); }
+	public long get_visualid() { log.finest("");return (Native.getLong(pData+((XlibWrapper.dataModel == 32)?(32):(64)))); }
+	public void set_visualid(long v) { log.finest(""); Native.putLong(pData+((XlibWrapper.dataModel == 32)?(32):(64)), v); }
+	public long get_killid() { log.finest("");return (Native.getLong(pData+((XlibWrapper.dataModel == 32)?(36):(72)))); }
+	public void set_killid(long v) { log.finest(""); Native.putLong(pData+((XlibWrapper.dataModel == 32)?(36):(72)), v); }
 
 
 	String getName() {

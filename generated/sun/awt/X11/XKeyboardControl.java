@@ -16,14 +16,14 @@ public class XKeyboardControl extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	XKeyboardControl(long addr) {
+	public XKeyboardControl(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	XKeyboardControl() {
+	public XKeyboardControl() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;

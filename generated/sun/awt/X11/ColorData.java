@@ -8,7 +8,7 @@ import java.util.logging.*;
 public class ColorData extends XWrapperBase { 
 	private Unsafe unsafe = XlibWrapper.unsafe; 
 	private final boolean should_free_memory;
-	public static int getSize() { return 44; }
+	public static int getSize() { return ((XlibWrapper.dataModel == 32)?(44):(88)); }
 	public int getDataSize() { return getSize(); }
 
 	long pData;
@@ -16,14 +16,14 @@ public class ColorData extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	ColorData(long addr) {
+	public ColorData(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	ColorData() {
+	public ColorData() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;
@@ -40,34 +40,34 @@ public class ColorData extends XWrapperBase {
 	public ColorEntry get_awt_Colors(int index) { log.finest(""); return (Native.getLong(pData+0) != 0)?(new ColorEntry(Native.getLong(pData+0)+index*4)):(null); }
 	public long get_awt_Colors() { log.finest("");return Native.getLong(pData+0); }
 	public void set_awt_Colors(long v) { log.finest(""); Native.putLong(pData + 0, v); }
-	public int get_awt_numICMcolors() { log.finest("");return (Native.getInt(pData+4)); }
-	public void set_awt_numICMcolors(int v) { log.finest(""); Native.putInt(pData+4, v); }
-	public int get_awt_icmLUT(int index) { log.finest(""); return Native.getInt(Native.getLong(pData+8)+index*4); }
-	public long get_awt_icmLUT() { log.finest("");return Native.getLong(pData+8); }
-	public void set_awt_icmLUT(long v) { log.finest(""); Native.putLong(pData + 8, v); }
-	public byte get_awt_icmLUT2Colors(int index) { log.finest(""); return Native.getByte(Native.getLong(pData+12)+index*1); }
-	public long get_awt_icmLUT2Colors() { log.finest("");return Native.getLong(pData+12); }
-	public void set_awt_icmLUT2Colors(long v) { log.finest(""); Native.putLong(pData + 12, v); }
-	public byte get_img_grays(int index) { log.finest(""); return Native.getByte(Native.getLong(pData+16)+index*1); }
-	public long get_img_grays() { log.finest("");return Native.getLong(pData+16); }
-	public void set_img_grays(long v) { log.finest(""); Native.putLong(pData + 16, v); }
-	public byte get_img_clr_tbl(int index) { log.finest(""); return Native.getByte(Native.getLong(pData+20)+index*1); }
-	public long get_img_clr_tbl() { log.finest("");return Native.getLong(pData+20); }
-	public void set_img_clr_tbl(long v) { log.finest(""); Native.putLong(pData + 20, v); }
-	public byte get_img_oda_red(int index) { log.finest(""); return Native.getByte(Native.getLong(pData+24)+index*1); }
-	public long get_img_oda_red() { log.finest("");return Native.getLong(pData+24); }
-	public void set_img_oda_red(long v) { log.finest(""); Native.putLong(pData + 24, v); }
-	public byte get_img_oda_green(int index) { log.finest(""); return Native.getByte(Native.getLong(pData+28)+index*1); }
-	public long get_img_oda_green() { log.finest("");return Native.getLong(pData+28); }
-	public void set_img_oda_green(long v) { log.finest(""); Native.putLong(pData + 28, v); }
-	public byte get_img_oda_blue(int index) { log.finest(""); return Native.getByte(Native.getLong(pData+32)+index*1); }
-	public long get_img_oda_blue() { log.finest("");return Native.getLong(pData+32); }
-	public void set_img_oda_blue(long v) { log.finest(""); Native.putLong(pData + 32, v); }
-	public int get_pGrayInverseLutData(int index) { log.finest(""); return Native.getInt(Native.getLong(pData+36)+index*4); }
-	public long get_pGrayInverseLutData() { log.finest("");return Native.getLong(pData+36); }
-	public void set_pGrayInverseLutData(long v) { log.finest(""); Native.putLong(pData + 36, v); }
-	public int get_screendata() { log.finest("");return (Native.getInt(pData+40)); }
-	public void set_screendata(int v) { log.finest(""); Native.putInt(pData+40, v); }
+	public int get_awt_numICMcolors() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(4):(8)))); }
+	public void set_awt_numICMcolors(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(4):(8)), v); }
+	public int get_awt_icmLUT(int index) { log.finest(""); return Native.getInt(Native.getLong(pData+((XlibWrapper.dataModel == 32)?(8):(16)))+index*4); }
+	public long get_awt_icmLUT() { log.finest("");return Native.getLong(pData+((XlibWrapper.dataModel == 32)?(8):(16))); }
+	public void set_awt_icmLUT(long v) { log.finest(""); Native.putLong(pData + ((XlibWrapper.dataModel == 32)?(8):(16)), v); }
+	public byte get_awt_icmLUT2Colors(int index) { log.finest(""); return Native.getByte(Native.getLong(pData+((XlibWrapper.dataModel == 32)?(12):(24)))+index*1); }
+	public long get_awt_icmLUT2Colors() { log.finest("");return Native.getLong(pData+((XlibWrapper.dataModel == 32)?(12):(24))); }
+	public void set_awt_icmLUT2Colors(long v) { log.finest(""); Native.putLong(pData + ((XlibWrapper.dataModel == 32)?(12):(24)), v); }
+	public byte get_img_grays(int index) { log.finest(""); return Native.getByte(Native.getLong(pData+((XlibWrapper.dataModel == 32)?(16):(32)))+index*1); }
+	public long get_img_grays() { log.finest("");return Native.getLong(pData+((XlibWrapper.dataModel == 32)?(16):(32))); }
+	public void set_img_grays(long v) { log.finest(""); Native.putLong(pData + ((XlibWrapper.dataModel == 32)?(16):(32)), v); }
+	public byte get_img_clr_tbl(int index) { log.finest(""); return Native.getByte(Native.getLong(pData+((XlibWrapper.dataModel == 32)?(20):(40)))+index*1); }
+	public long get_img_clr_tbl() { log.finest("");return Native.getLong(pData+((XlibWrapper.dataModel == 32)?(20):(40))); }
+	public void set_img_clr_tbl(long v) { log.finest(""); Native.putLong(pData + ((XlibWrapper.dataModel == 32)?(20):(40)), v); }
+	public byte get_img_oda_red(int index) { log.finest(""); return Native.getByte(Native.getLong(pData+((XlibWrapper.dataModel == 32)?(24):(48)))+index*1); }
+	public long get_img_oda_red() { log.finest("");return Native.getLong(pData+((XlibWrapper.dataModel == 32)?(24):(48))); }
+	public void set_img_oda_red(long v) { log.finest(""); Native.putLong(pData + ((XlibWrapper.dataModel == 32)?(24):(48)), v); }
+	public byte get_img_oda_green(int index) { log.finest(""); return Native.getByte(Native.getLong(pData+((XlibWrapper.dataModel == 32)?(28):(56)))+index*1); }
+	public long get_img_oda_green() { log.finest("");return Native.getLong(pData+((XlibWrapper.dataModel == 32)?(28):(56))); }
+	public void set_img_oda_green(long v) { log.finest(""); Native.putLong(pData + ((XlibWrapper.dataModel == 32)?(28):(56)), v); }
+	public byte get_img_oda_blue(int index) { log.finest(""); return Native.getByte(Native.getLong(pData+((XlibWrapper.dataModel == 32)?(32):(64)))+index*1); }
+	public long get_img_oda_blue() { log.finest("");return Native.getLong(pData+((XlibWrapper.dataModel == 32)?(32):(64))); }
+	public void set_img_oda_blue(long v) { log.finest(""); Native.putLong(pData + ((XlibWrapper.dataModel == 32)?(32):(64)), v); }
+	public int get_pGrayInverseLutData(int index) { log.finest(""); return Native.getInt(Native.getLong(pData+((XlibWrapper.dataModel == 32)?(36):(72)))+index*4); }
+	public long get_pGrayInverseLutData() { log.finest("");return Native.getLong(pData+((XlibWrapper.dataModel == 32)?(36):(72))); }
+	public void set_pGrayInverseLutData(long v) { log.finest(""); Native.putLong(pData + ((XlibWrapper.dataModel == 32)?(36):(72)), v); }
+	public int get_screendata() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(40):(80)))); }
+	public void set_screendata(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(40):(80)), v); }
 
 
 	String getName() {

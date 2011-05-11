@@ -8,7 +8,7 @@ import java.util.logging.*;
 public class Visual extends XWrapperBase { 
 	private Unsafe unsafe = XlibWrapper.unsafe; 
 	private final boolean should_free_memory;
-	public static int getSize() { return 32; }
+	public static int getSize() { return ((XlibWrapper.dataModel == 32)?(32):(56)); }
 	public int getDataSize() { return getSize(); }
 
 	long pData;
@@ -16,14 +16,14 @@ public class Visual extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	Visual(long addr) {
+	public Visual(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	Visual() {
+	public Visual() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;
@@ -37,23 +37,23 @@ public class Visual extends XWrapperBase {
 			unsafe.freeMemory(pData); 
 	}
 		}
-	public XExtData get_ext_data(int index) { log.finest(""); return (Native.getLong(pData+0) != 0)?(new XExtData(Native.getLong(pData+0)+index*16)):(null); }
+	public XExtData get_ext_data(int index) { log.finest(""); return (Native.getLong(pData+0) != 0)?(new XExtData(Native.getLong(pData+0)+index*((XlibWrapper.dataModel == 32)?(16):(32)))):(null); }
 	public long get_ext_data() { log.finest("");return Native.getLong(pData+0); }
 	public void set_ext_data(long v) { log.finest(""); Native.putLong(pData + 0, v); }
-	public long get_visualid() { log.finest("");return (Native.getLong(pData+4)); }
-	public void set_visualid(long v) { log.finest(""); Native.putLong(pData+4, v); }
-	public int get_class() { log.finest("");return (Native.getInt(pData+8)); }
-	public void set_class(int v) { log.finest(""); Native.putInt(pData+8, v); }
-	public long get_red_mask() { log.finest("");return (Native.getLong(pData+12)); }
-	public void set_red_mask(long v) { log.finest(""); Native.putLong(pData+12, v); }
-	public long get_green_mask() { log.finest("");return (Native.getLong(pData+16)); }
-	public void set_green_mask(long v) { log.finest(""); Native.putLong(pData+16, v); }
-	public long get_blue_mask() { log.finest("");return (Native.getLong(pData+20)); }
-	public void set_blue_mask(long v) { log.finest(""); Native.putLong(pData+20, v); }
-	public int get_bits_per_rgb() { log.finest("");return (Native.getInt(pData+24)); }
-	public void set_bits_per_rgb(int v) { log.finest(""); Native.putInt(pData+24, v); }
-	public int get_map_entries() { log.finest("");return (Native.getInt(pData+28)); }
-	public void set_map_entries(int v) { log.finest(""); Native.putInt(pData+28, v); }
+	public long get_visualid() { log.finest("");return (Native.getLong(pData+((XlibWrapper.dataModel == 32)?(4):(8)))); }
+	public void set_visualid(long v) { log.finest(""); Native.putLong(pData+((XlibWrapper.dataModel == 32)?(4):(8)), v); }
+	public int get_class() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(8):(16)))); }
+	public void set_class(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(8):(16)), v); }
+	public long get_red_mask() { log.finest("");return (Native.getLong(pData+((XlibWrapper.dataModel == 32)?(12):(24)))); }
+	public void set_red_mask(long v) { log.finest(""); Native.putLong(pData+((XlibWrapper.dataModel == 32)?(12):(24)), v); }
+	public long get_green_mask() { log.finest("");return (Native.getLong(pData+((XlibWrapper.dataModel == 32)?(16):(32)))); }
+	public void set_green_mask(long v) { log.finest(""); Native.putLong(pData+((XlibWrapper.dataModel == 32)?(16):(32)), v); }
+	public long get_blue_mask() { log.finest("");return (Native.getLong(pData+((XlibWrapper.dataModel == 32)?(20):(40)))); }
+	public void set_blue_mask(long v) { log.finest(""); Native.putLong(pData+((XlibWrapper.dataModel == 32)?(20):(40)), v); }
+	public int get_bits_per_rgb() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(24):(48)))); }
+	public void set_bits_per_rgb(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(24):(48)), v); }
+	public int get_map_entries() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(28):(52)))); }
+	public void set_map_entries(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(28):(52)), v); }
 
 
 	String getName() {

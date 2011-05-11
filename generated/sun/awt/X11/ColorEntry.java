@@ -16,14 +16,14 @@ public class ColorEntry extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	ColorEntry(long addr) {
+	public ColorEntry(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	ColorEntry() {
+	public ColorEntry() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;

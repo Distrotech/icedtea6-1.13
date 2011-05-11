@@ -230,7 +230,6 @@ ICEDTEA_PATCHES = \
 	patches/jvmtiEnv.patch \
 	patches/lcms.patch \
 	patches/print_lsb_release.patch \
-	patches/jpegclasses.patch \
 	patches/uname.patch \
 	patches/freetypeversion.patch \
 	patches/nomotif-6706121.patch \
@@ -311,7 +310,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6749060-bad-lcd-aa-non-opaque-dest.patch \
 	patches/openjdk/6708580-exa_slow.patch \
 	patches/openjdk/6896068-sg2d.patch \
-	patches/pr633-no_javaws_man_page.patch \
+	patches/openjdk/7021314-no_javaws_man_page.patch \
 	patches/pr586-include_all_srcs.patch \
 	patches/jtreg-LastErrorString.patch \
 	patches/openjdk/6663040-com.sun.awt.patch \
@@ -331,7 +330,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7027667-AAShapePipeRegTest.patch \
 	patches/openjdk/7019861-AA-regression-fix.patch \
 	patches/openjdk/6768387-jtable_not_serializable.patch \
-	patches/mark_sun_toolkit_privileged_code.patch \
+	patches/openjdk/6599601-mark_sun_toolkit_privileged_code.patch \
 	patches/g356743-libpng-1.5.patch \
 	patches/revert-6885123.patch \
 	patches/hotspot/$(HSBUILD)/7032388-work_without_cmov_instruction.patch \
@@ -1165,6 +1164,7 @@ stamps/overlay.stamp: stamps/patch.stamp
 if ENABLE_NIO2
 	cp -r $(abs_top_srcdir)/overlays/nio2/openjdk/* openjdk/
 endif
+	cp -r $(abs_top_srcdir)/overlays/jpeg/openjdk/* openjdk/
 	touch stamps/overlay.stamp
 
 clean-overlay:

@@ -8,7 +8,7 @@ import java.util.logging.*;
 public class XWindowChanges extends XWrapperBase { 
 	private Unsafe unsafe = XlibWrapper.unsafe; 
 	private final boolean should_free_memory;
-	public static int getSize() { return 28; }
+	public static int getSize() { return ((XlibWrapper.dataModel == 32)?(28):(40)); }
 	public int getDataSize() { return getSize(); }
 
 	long pData;
@@ -16,14 +16,14 @@ public class XWindowChanges extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	XWindowChanges(long addr) {
+	public XWindowChanges(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	XWindowChanges() {
+	public XWindowChanges() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;
@@ -47,10 +47,10 @@ public class XWindowChanges extends XWrapperBase {
 	public void set_height(int v) { log.finest(""); Native.putInt(pData+12, v); }
 	public int get_border_width() { log.finest("");return (Native.getInt(pData+16)); }
 	public void set_border_width(int v) { log.finest(""); Native.putInt(pData+16, v); }
-	public long get_sibling() { log.finest("");return (Native.getLong(pData+20)); }
-	public void set_sibling(long v) { log.finest(""); Native.putLong(pData+20, v); }
-	public int get_stack_mode() { log.finest("");return (Native.getInt(pData+24)); }
-	public void set_stack_mode(int v) { log.finest(""); Native.putInt(pData+24, v); }
+	public long get_sibling() { log.finest("");return (Native.getLong(pData+((XlibWrapper.dataModel == 32)?(20):(24)))); }
+	public void set_sibling(long v) { log.finest(""); Native.putLong(pData+((XlibWrapper.dataModel == 32)?(20):(24)), v); }
+	public int get_stack_mode() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(24):(32)))); }
+	public void set_stack_mode(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(24):(32)), v); }
 
 
 	String getName() {

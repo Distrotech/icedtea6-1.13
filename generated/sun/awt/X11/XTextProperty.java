@@ -8,7 +8,7 @@ import java.util.logging.*;
 public class XTextProperty extends XWrapperBase { 
 	private Unsafe unsafe = XlibWrapper.unsafe; 
 	private final boolean should_free_memory;
-	public static int getSize() { return 16; }
+	public static int getSize() { return ((XlibWrapper.dataModel == 32)?(16):(32)); }
 	public int getDataSize() { return getSize(); }
 
 	long pData;
@@ -16,14 +16,14 @@ public class XTextProperty extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	XTextProperty(long addr) {
+	public XTextProperty(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	XTextProperty() {
+	public XTextProperty() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;
@@ -40,12 +40,12 @@ public class XTextProperty extends XWrapperBase {
 	public byte get_value(int index) { log.finest(""); return Native.getByte(Native.getLong(pData+0)+index*1); }
 	public long get_value() { log.finest("");return Native.getLong(pData+0); }
 	public void set_value(long v) { log.finest(""); Native.putLong(pData + 0, v); }
-	public long get_encoding() { log.finest("");return (Native.getLong(pData+4)); }
-	public void set_encoding(long v) { log.finest(""); Native.putLong(pData+4, v); }
-	public int get_format() { log.finest("");return (Native.getInt(pData+8)); }
-	public void set_format(int v) { log.finest(""); Native.putInt(pData+8, v); }
-	public long get_nitems() { log.finest("");return (Native.getLong(pData+12)); }
-	public void set_nitems(long v) { log.finest(""); Native.putLong(pData+12, v); }
+	public long get_encoding() { log.finest("");return (Native.getLong(pData+((XlibWrapper.dataModel == 32)?(4):(8)))); }
+	public void set_encoding(long v) { log.finest(""); Native.putLong(pData+((XlibWrapper.dataModel == 32)?(4):(8)), v); }
+	public int get_format() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(8):(16)))); }
+	public void set_format(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(8):(16)), v); }
+	public long get_nitems() { log.finest("");return (Native.getLong(pData+((XlibWrapper.dataModel == 32)?(12):(24)))); }
+	public void set_nitems(long v) { log.finest(""); Native.putLong(pData+((XlibWrapper.dataModel == 32)?(12):(24)), v); }
 
 
 	String getName() {

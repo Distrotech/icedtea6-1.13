@@ -8,7 +8,7 @@ import java.util.logging.*;
 public class XSizeHints extends XWrapperBase { 
 	private Unsafe unsafe = XlibWrapper.unsafe; 
 	private final boolean should_free_memory;
-	public static int getSize() { return 72; }
+	public static int getSize() { return ((XlibWrapper.dataModel == 32)?(72):(80)); }
 	public int getDataSize() { return getSize(); }
 
 	long pData;
@@ -16,14 +16,14 @@ public class XSizeHints extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	XSizeHints(long addr) {
+	public XSizeHints(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	XSizeHints() {
+	public XSizeHints() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;
@@ -39,40 +39,40 @@ public class XSizeHints extends XWrapperBase {
 		}
 	public long get_flags() { log.finest("");return (Native.getLong(pData+0)); }
 	public void set_flags(long v) { log.finest(""); Native.putLong(pData+0, v); }
-	public int get_x() { log.finest("");return (Native.getInt(pData+4)); }
-	public void set_x(int v) { log.finest(""); Native.putInt(pData+4, v); }
-	public int get_y() { log.finest("");return (Native.getInt(pData+8)); }
-	public void set_y(int v) { log.finest(""); Native.putInt(pData+8, v); }
-	public int get_width() { log.finest("");return (Native.getInt(pData+12)); }
-	public void set_width(int v) { log.finest(""); Native.putInt(pData+12, v); }
-	public int get_height() { log.finest("");return (Native.getInt(pData+16)); }
-	public void set_height(int v) { log.finest(""); Native.putInt(pData+16, v); }
-	public int get_min_width() { log.finest("");return (Native.getInt(pData+20)); }
-	public void set_min_width(int v) { log.finest(""); Native.putInt(pData+20, v); }
-	public int get_min_height() { log.finest("");return (Native.getInt(pData+24)); }
-	public void set_min_height(int v) { log.finest(""); Native.putInt(pData+24, v); }
-	public int get_max_width() { log.finest("");return (Native.getInt(pData+28)); }
-	public void set_max_width(int v) { log.finest(""); Native.putInt(pData+28, v); }
-	public int get_max_height() { log.finest("");return (Native.getInt(pData+32)); }
-	public void set_max_height(int v) { log.finest(""); Native.putInt(pData+32, v); }
-	public int get_width_inc() { log.finest("");return (Native.getInt(pData+36)); }
-	public void set_width_inc(int v) { log.finest(""); Native.putInt(pData+36, v); }
-	public int get_height_inc() { log.finest("");return (Native.getInt(pData+40)); }
-	public void set_height_inc(int v) { log.finest(""); Native.putInt(pData+40, v); }
-	public int get_min_aspect_x() { log.finest("");return (Native.getInt(pData+44)); }
-	public void set_min_aspect_x(int v) { log.finest(""); Native.putInt(pData+44, v); }
-	public int get_min_aspect_y() { log.finest("");return (Native.getInt(pData+48)); }
-	public void set_min_aspect_y(int v) { log.finest(""); Native.putInt(pData+48, v); }
-	public int get_max_aspect_x() { log.finest("");return (Native.getInt(pData+52)); }
-	public void set_max_aspect_x(int v) { log.finest(""); Native.putInt(pData+52, v); }
-	public int get_max_aspect_y() { log.finest("");return (Native.getInt(pData+56)); }
-	public void set_max_aspect_y(int v) { log.finest(""); Native.putInt(pData+56, v); }
-	public int get_base_width() { log.finest("");return (Native.getInt(pData+60)); }
-	public void set_base_width(int v) { log.finest(""); Native.putInt(pData+60, v); }
-	public int get_base_height() { log.finest("");return (Native.getInt(pData+64)); }
-	public void set_base_height(int v) { log.finest(""); Native.putInt(pData+64, v); }
-	public int get_win_gravity() { log.finest("");return (Native.getInt(pData+68)); }
-	public void set_win_gravity(int v) { log.finest(""); Native.putInt(pData+68, v); }
+	public int get_x() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(4):(8)))); }
+	public void set_x(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(4):(8)), v); }
+	public int get_y() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(8):(12)))); }
+	public void set_y(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(8):(12)), v); }
+	public int get_width() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(12):(16)))); }
+	public void set_width(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(12):(16)), v); }
+	public int get_height() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(16):(20)))); }
+	public void set_height(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(16):(20)), v); }
+	public int get_min_width() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(20):(24)))); }
+	public void set_min_width(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(20):(24)), v); }
+	public int get_min_height() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(24):(28)))); }
+	public void set_min_height(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(24):(28)), v); }
+	public int get_max_width() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(28):(32)))); }
+	public void set_max_width(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(28):(32)), v); }
+	public int get_max_height() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(32):(36)))); }
+	public void set_max_height(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(32):(36)), v); }
+	public int get_width_inc() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(36):(40)))); }
+	public void set_width_inc(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(36):(40)), v); }
+	public int get_height_inc() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(40):(44)))); }
+	public void set_height_inc(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(40):(44)), v); }
+	public int get_min_aspect_x() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(44):(48)))); }
+	public void set_min_aspect_x(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(44):(48)), v); }
+	public int get_min_aspect_y() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(48):(52)))); }
+	public void set_min_aspect_y(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(48):(52)), v); }
+	public int get_max_aspect_x() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(52):(56)))); }
+	public void set_max_aspect_x(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(52):(56)), v); }
+	public int get_max_aspect_y() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(56):(60)))); }
+	public void set_max_aspect_y(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(56):(60)), v); }
+	public int get_base_width() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(60):(64)))); }
+	public void set_base_width(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(60):(64)), v); }
+	public int get_base_height() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(64):(68)))); }
+	public void set_base_height(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(64):(68)), v); }
+	public int get_win_gravity() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(68):(72)))); }
+	public void set_win_gravity(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(68):(72)), v); }
 
 
 	String getName() {

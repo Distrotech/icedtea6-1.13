@@ -1,3 +1,38 @@
+2011-05-10  Omair Majid  <omajid@redhat.com>
+
+	Move pr633-no_javaws_man_page.patch to proper location
+	* Makefile.am (ICEDTEA_PATCHES): Update patch location and name.
+	* patches/pr633-no_javaws_man_page.patch: Remove.
+	* patches/openjdk/7021314-no_javaws_man_page.patch: New file. Backport
+	from OpenJDK7.
+
+2011-05-10  Omair Majid  <omajid@redhat.com>
+
+	Move fix for S6599601 to proper location.
+	* Makefile.am (ICEDTEA_PATCHES): Update patch location and name.
+	* patches/mark_sun_toolkit_privileged_code.patch: Remove.
+	* patches/openjdk/6599601-mark_sun_toolkit_privileged_code.patch: New
+	file. Backport from OpenJDK6.
+
+2011-05-10  Andrew Su  <asu@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Removed patch jpegclasses.patch.
+	(stamps/overlay.stamp): Added jpeg class overlay path.
+	* patches/jpegclasses.patch: Removed
+	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/ImageFormatException.java,
+	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/JPEGCodec.java,
+	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/JPEGDecodeParam.java,
+	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/JPEGEncodeParam.java,
+	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/JPEGHuffmanTable.java,
+	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/JPEGImageDecoder.java,
+	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/JPEGImageEncoder.java,
+	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/JPEGQTable.java,
+	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/TruncatedFileException.java,
+	* overlays/jpeg/openjdk/jdk/src/share/classes/sun/awt/image/codec/JPEGImageDecoderImpl.java,
+	* overlays/jpeg/openjdk/jdk/src/share/classes/sun/awt/image/codec/JPEGImageEncoderImpl.java,
+	* overlays/jpeg/openjdk/jdk/src/share/classes/sun/awt/image/codec/JPEGParam.java: New classes.
+
 2011-05-09  Andrew Haley  <aph@redhat.com>
 
 	* Makefile (ICEDTEA_PATCHES): Add icedtea-hugepage-7034464.patch,

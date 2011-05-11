@@ -16,14 +16,14 @@ public class XFontSetExtents extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	XFontSetExtents(long addr) {
+	public XFontSetExtents(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	XFontSetExtents() {
+	public XFontSetExtents() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;

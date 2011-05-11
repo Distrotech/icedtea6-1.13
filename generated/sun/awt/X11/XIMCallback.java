@@ -8,7 +8,7 @@ import java.util.logging.*;
 public class XIMCallback extends XWrapperBase { 
 	private Unsafe unsafe = XlibWrapper.unsafe; 
 	private final boolean should_free_memory;
-	public static int getSize() { return 8; }
+	public static int getSize() { return ((XlibWrapper.dataModel == 32)?(8):(16)); }
 	public int getDataSize() { return getSize(); }
 
 	long pData;
@@ -16,14 +16,14 @@ public class XIMCallback extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	XIMCallback(long addr) {
+	public XIMCallback(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	XIMCallback() {
+	public XIMCallback() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;
@@ -40,9 +40,9 @@ public class XIMCallback extends XWrapperBase {
 	public long get_client_data(int index) { log.finest(""); return Native.getLong(pData+0)+index*Native.getLongSize(); }
 	public long get_client_data() { log.finest("");return Native.getLong(pData+0); }
 	public void set_client_data(long v) { log.finest(""); Native.putLong(pData + 0, v); }
-	public long get_callback(int index) { log.finest(""); return Native.getLong(pData+4)+index*Native.getLongSize(); }
-	public long get_callback() { log.finest("");return Native.getLong(pData+4); }
-	public void set_callback(long v) { log.finest(""); Native.putLong(pData + 4, v); }
+	public long get_callback(int index) { log.finest(""); return Native.getLong(pData+((XlibWrapper.dataModel == 32)?(4):(8)))+index*Native.getLongSize(); }
+	public long get_callback() { log.finest("");return Native.getLong(pData+((XlibWrapper.dataModel == 32)?(4):(8))); }
+	public void set_callback(long v) { log.finest(""); Native.putLong(pData + ((XlibWrapper.dataModel == 32)?(4):(8)), v); }
 
 
 	String getName() {

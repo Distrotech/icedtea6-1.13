@@ -16,14 +16,14 @@ public class XExtCodes extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	XExtCodes(long addr) {
+	public XExtCodes(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	XExtCodes() {
+	public XExtCodes() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;

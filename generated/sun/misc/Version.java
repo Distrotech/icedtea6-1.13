@@ -1,12 +1,12 @@
 /*
- * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1999, 2007, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package sun.misc;
@@ -33,18 +33,27 @@ public class Version {
         "java";
 
     private static final String java_version =
-        "1.6.0_0";
+        "1.6.0_22";
 
     private static final String java_runtime_name =
         "OpenJDK Runtime Environment";
 
     private static final String java_runtime_version =
-        "1.6.0_0-b17";
+        "1.6.0_22-b22";
 
     private static final String jdk_derivative_name =
-        "IcedTea6 1.7pre-r046c77dadfb3";
+        "IcedTea6 1.11pre+re32979d54978+d778bb012d22+";
+
+    private static final String distro_name =
+        "Fedora";
 
     private static final String distro_package_version =
+        "";
+
+    private static final String jdk_revid =
+        "";
+
+    private static final String hotspot_revid =
         "";
 
     static {
@@ -90,21 +99,27 @@ public class Version {
         String java_vm_name    = System.getProperty("java.vm.name");
 
         /* Second line: runtime version (ie, libraries). */
-	StringBuilder sb = new StringBuilder();
-	if (java_vm_name.toLowerCase().startsWith("cacao")) {
-	    sb.append("IcedTea Runtime Environment");
-	} else {
-	    sb.append(java_runtime_name);
-	}
-	if (jdk_derivative_name.length() > 0) {
-	    sb.append(" (").append(jdk_derivative_name).append(")");
-	}
-	if (distro_package_version.length() > 0) {
-	    sb.append(" (").append(distro_package_version).append(")");
-	} else {
-	    sb.append(" (build ").append(java_runtime_version).append(")");
-	}
-	ps.println(sb.toString());
+        StringBuilder sb = new StringBuilder();
+        if (java_vm_name.toLowerCase().startsWith("cacao")) {
+            sb.append("IcedTea Runtime Environment");
+        } else {
+            sb.append(java_runtime_name);
+        }
+        if (jdk_derivative_name.length() > 0) {
+            sb.append(" (").append(jdk_derivative_name).append(")");
+        }
+        if (distro_package_version.length() > 0) {
+            sb.append(" (").append(distro_package_version).append(")");
+        } else {
+            sb.append(" (");
+            if (distro_name.length() > 0)
+                sb.append(distro_name).append(" ");
+            sb.append("build ").append(java_runtime_version);
+            if (jdk_revid.length() > 0)
+                sb.append("+").append(jdk_revid);
+            sb.append(")");
+        }
+        ps.println(sb.toString());
 
         /* Third line: JVM information. */
         String java_vm_version = System.getProperty("java.vm.version");

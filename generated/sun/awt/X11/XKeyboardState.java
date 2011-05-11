@@ -8,7 +8,7 @@ import java.util.logging.*;
 public class XKeyboardState extends XWrapperBase { 
 	private Unsafe unsafe = XlibWrapper.unsafe; 
 	private final boolean should_free_memory;
-	public static int getSize() { return 56; }
+	public static int getSize() { return ((XlibWrapper.dataModel == 32)?(56):(64)); }
 	public int getDataSize() { return getSize(); }
 
 	long pData;
@@ -16,14 +16,14 @@ public class XKeyboardState extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	XKeyboardState(long addr) {
+	public XKeyboardState(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	XKeyboardState() {
+	public XKeyboardState() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;
@@ -47,11 +47,11 @@ public class XKeyboardState extends XWrapperBase {
 	public void set_bell_duration(int v) { log.finest(""); Native.putInt(pData+12, v); }
 	public long get_led_mask() { log.finest("");return (Native.getLong(pData+16)); }
 	public void set_led_mask(long v) { log.finest(""); Native.putLong(pData+16, v); }
-	public int get_global_auto_repeat() { log.finest("");return (Native.getInt(pData+20)); }
-	public void set_global_auto_repeat(int v) { log.finest(""); Native.putInt(pData+20, v); }
-	public byte get_auto_repeats(int index) { log.finest("");return Native.getByte(pData + 24+index*1); }
-	public void set_auto_repeats(int index, byte v) { log.finest(""); Native.putByte(pData+24 + index*1, v); }
-	public long get_auto_repeats() { log.finest("");return pData+24; }
+	public int get_global_auto_repeat() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(20):(24)))); }
+	public void set_global_auto_repeat(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(20):(24)), v); }
+	public byte get_auto_repeats(int index) { log.finest("");return Native.getByte(pData + ((XlibWrapper.dataModel == 32)?(24):(28))+index*1); }
+	public void set_auto_repeats(int index, byte v) { log.finest(""); Native.putByte(pData+((XlibWrapper.dataModel == 32)?(24):(28)) + index*1, v); }
+	public long get_auto_repeats() { log.finest("");return pData+((XlibWrapper.dataModel == 32)?(24):(28)); }
 
 
 	String getName() {

@@ -8,7 +8,7 @@ import java.util.logging.*;
 public class awtImageData extends XWrapperBase { 
 	private Unsafe unsafe = XlibWrapper.unsafe; 
 	private final boolean should_free_memory;
-	public static int getSize() { return 304; }
+	public static int getSize() { return ((XlibWrapper.dataModel == 32)?(304):(560)); }
 	public int getDataSize() { return getSize(); }
 
 	long pData;
@@ -16,14 +16,14 @@ public class awtImageData extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	awtImageData(long addr) {
+	public awtImageData(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	awtImageData() {
+	public awtImageData() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;

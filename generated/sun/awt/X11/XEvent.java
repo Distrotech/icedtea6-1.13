@@ -8,7 +8,7 @@ import java.util.logging.*;
 public class XEvent extends XWrapperBase { 
 	private Unsafe unsafe = XlibWrapper.unsafe; 
 	private final boolean should_free_memory;
-	public static int getSize() { return 96; }
+	public static int getSize() { return ((XlibWrapper.dataModel == 32)?(96):(192)); }
 	public int getDataSize() { return getSize(); }
 
 	long pData;
@@ -16,14 +16,14 @@ public class XEvent extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	XEvent(long addr) {
+	public XEvent(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	XEvent() {
+	public XEvent() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;
