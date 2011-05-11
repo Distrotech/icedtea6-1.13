@@ -272,7 +272,7 @@ ICEDTEA_PATCHES = \
 	patches/arm.patch \
 	patches/hotspot/$(HSBUILD)/arm.patch \
 	patches/debug-dir.patch \
-	patches/no-sync.patch \
+	patches/openjdk/7042040-no_disk_space_check.patch \
 	patches/override-redirect-metacity.patch \
 	patches/openjdk/6967533-pre_epoch.patch \
 	patches/fonts-rhel.patch \

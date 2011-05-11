@@ -1,3 +1,12 @@
+2011-05-11  Omair Majid  <omajid@redhat.com>
+
+	Backport S7042040: Remove disk space sanity check
+	* Makefile.am (ICEDTEA_PATCHES): Add
+	patches/openjdk/7042040-no_disk_space_check.patch. Remove
+	patches/no-sync.patch.
+	* patches/openjdk/7042040-no_disk_space_check.patch: New file.
+	* patches/no-sync.patch: Remove. Upstream's fix is an improved version.
+
 2011-05-11  Andrew Su  <asu@redhat.com>
 
 	* AUTHORS: Added Denis Lila, Marathon, and Andrew Su.
