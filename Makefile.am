@@ -265,7 +265,7 @@ ICEDTEA_PATCHES = \
 	patches/sh4-support.patch \
 	patches/policy-evaluation.patch \
 	patches/update-bootclasspath.patch \
-	patches/libpng.patch \
+	patches/openjdk/6959123-libpng_14.patch \
 	patches/applet_hole.patch \
 	patches/jtreg-httpTest.patch \
 	patches/arm.patch \
