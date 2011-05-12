@@ -338,7 +338,8 @@ ICEDTEA_PATCHES = \
 	patches/icedtea-hugepage-7034464.patch \
 	patches/icedtea-hugepage-7037939.patch \
 	patches/openjdk/6986968-crash_on_xim_restart.patch \
-	patches/openjdk/7036754-stroker-nan.patch
+	patches/openjdk/7036754-stroker-nan.patch \
+	patches/openjdk/pgram-pipe-regression.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
