@@ -217,7 +217,7 @@ ICEDTEA_PATCHES = \
 	patches/version.patch \
 	patches/version-hotspot.patch \
 	patches/hotspot/$(HSBUILD)/text-relocations.patch \
-	patches/rmi_amd64.patch \
+	patches/openjdk/7043921-java_rmi_cgi.patch \
 	patches/tools.patch \
 	patches/use-system-tzdata.patch \
 	patches/headers.patch \
