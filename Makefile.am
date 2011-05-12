@@ -221,7 +221,6 @@ ICEDTEA_PATCHES = \
 	patches/tools.patch \
 	patches/use-system-tzdata.patch \
 	patches/headers.patch \
-	patches/headers-hotspot.patch \
 	patches/gcc-suffix.patch \
 	patches/hotspot/$(HSBUILD)/gcc-suffix.patch \
 	patches/memory-limits.patch \
@@ -415,6 +414,7 @@ ICEDTEA_PATCHES += $(DISTRIBUTION_PATCHES)
 
 ICEDTEA_ECJ_PATCHES = patches/ecj/icedtea.patch \
 	patches/ecj/hotspot.patch \
+	patches/ecj/endorsed-dir-for-jvmti.patch \
 	patches/ecj/spp.patch \
 	patches/ecj/jopt.patch \
 	patches/ecj/jaxp-dependency.patch \
@@ -475,8 +475,6 @@ ICEDTEA_ENV = \
 	ALT_BOOTDIR="$(BOOT_DIR)" \
 	BUILD_ARCH_DIR="$(BUILD_ARCH_DIR)" \
 	ICEDTEA_CLS_DIR="$(ICEDTEA_CLS_DIR)" \
-	ICEDTEA_ENDORSED_DIR="$(ENDORSED_DIR)" \
-	ENDORSED="-Djava.endorsed.dirs=$(ENDORSED_DIR)" \
 	CLASSPATH="" \
 	LD_LIBRARY_PATH="" \
 	ZERO_BUILD="$(ICEDTEA_ZERO_BUILD)" \
@@ -558,6 +556,8 @@ ICEDTEA_ENV_ECJ = $(ICEDTEA_ENV) \
 	BOOTCLASSPATH_CLS="-bootclasspath $(ICEDTEA_CLS_DIR_ECJ)" \
 	BOOTCLASSPATH_RT_LIBGCJ="-bootclasspath $(RUNTIME)" \
 	CLASSPATH="" \
+	ICEDTEA_ENDORSED_DIR="$(ENDORSED_DIR)" \
+	ENDORSED="-Djava.endorsed.dirs=$(ENDORSED_DIR)" \
 	LD_LIBRARY_PATH="" \
 	GENSRCDIR="$(abs_top_builddir)/generated" \
 	JAR_KNOWS_ATFILE="$(JAR_KNOWS_ATFILE)" \

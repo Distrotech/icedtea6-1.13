@@ -1,5 +1,15 @@
 2011-05-11  Omair Majid  <omajid@redhat.com>
 
+	* Makefile.am
+	(ICEDTEA_PATCHES): Move headers-hotspot.patch to ...
+	(ICEDTEA_ECJ_PATCHES): New patch.
+	(ICEDTEA_ENV): Moves endorsed dir varaibles to ...
+	(ICEDTEA_ENV_ECJ): Here.
+	* patches/headers-hotspot.patch: Move to ...
+	* patches/ecj/endorsed-dir-for-jvmti.patch: New file.
+
+2011-05-11  Omair Majid  <omajid@redhat.com>
+
 	Backport S7042040: Remove disk space sanity check
 	* Makefile.am (ICEDTEA_PATCHES): Add
 	patches/openjdk/7042040-no_disk_space_check.patch. Remove
