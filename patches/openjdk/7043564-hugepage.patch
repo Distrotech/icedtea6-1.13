@@ -1,0 +1,21 @@
+
+# HG changeset patch
+# User iveresov
+# Date 1305055570 25200
+# Node ID 97b64f73103bddbcd9d987fd13854957d2a80600
+# Parent fc2b798ab316df025526f208aeeef19609ad51b3
+7043564: compile warning and copyright fixes
+Summary: Fixed the warning, also fixed copyrights in a bunch of files.
+Reviewed-by: johnc, kvn
+
+--- openjdk.prev/hotspot/src/os/linux/vm/os_linux.cpp	Tue May 10 00:33:21 2011 -0700
++++ openjdk/hotspot/src/os/linux/vm/os_linux.cpp	Tue May 10 12:26:10 2011 -0700
+@@ -2850,7 +2850,7 @@ bool os::Linux::hugetlbfs_sanity_check(b
+         char chars[257];
+         long x = 0;
+         if (fgets(chars, sizeof(chars), fp)) {
+-          if (sscanf(chars, "%lx-%*lx", &x) == 1
++          if (sscanf(chars, "%lx-%*x", &x) == 1
+               && x == (long)p) {
+             if (strstr (chars, "hugepage")) {
+               result = true;
