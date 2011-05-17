@@ -218,7 +218,6 @@ ICEDTEA_PATCHES = \
 	patches/version-hotspot.patch \
 	patches/hotspot/$(HSBUILD)/text-relocations.patch \
 	patches/openjdk/7043921-java_rmi_cgi.patch \
-	patches/tools.patch \
 	patches/use-system-tzdata.patch \
 	patches/headers.patch \
 	patches/gcc-suffix.patch \
