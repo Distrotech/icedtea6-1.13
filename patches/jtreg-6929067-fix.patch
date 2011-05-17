@@ -10,7 +10,7 @@
 +# Test if JDK is 32 or 64 bits
 +${TESTJAVA}/bin/java -d64
 +
-+if [[ $? == 0 ]]
++if [ $? -eq 0 ]
 +then
 +    COMP_FLAG="-m64"
 +fi
