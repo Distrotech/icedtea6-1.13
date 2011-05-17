@@ -225,7 +225,6 @@ ICEDTEA_PATCHES = \
 	patches/hotspot/$(HSBUILD)/gcc-suffix.patch \
 	patches/memory-limits.patch \
 	patches/libraries.patch \
-	patches/javafiles.patch \
 	patches/jvmtiEnv.patch \
 	patches/lcms.patch \
 	patches/print_lsb_release.patch \
@@ -417,6 +416,7 @@ ICEDTEA_PATCHES += $(DISTRIBUTION_PATCHES)
 ICEDTEA_ECJ_PATCHES = patches/ecj/icedtea.patch \
 	patches/ecj/hotspot.patch \
 	patches/ecj/endorsed-dir-for-jvmti.patch \
+	patches/ecj/javafiles.patch \
 	patches/ecj/spp.patch \
 	patches/ecj/jopt.patch \
 	patches/ecj/jaxp-dependency.patch \
