@@ -1,6 +1,15 @@
 2011-05-17  Omair Majid  <omajid@redhat.com>
 
 	* Makefile.am
+	(ICEDTEA_PATCHES): Replace patches/shark-llvm-2.9.patch with
+	patches/openjdk/7036220-shark_llvm_29_headers.patch.
+	* patches/shark-llvm-2.9.patch: Move to...
+	* patches/openjdk/7036220-shark_llvm_29_headers.patch: New file. Contains
+	contents of patches/shark-llvm-2.9.patch as well as hg metadata.
+
+2011-05-17  Omair Majid  <omajid@redhat.com>
+
+	* Makefile.am
 	(ICEDTEA_PATCHES): Move patches/javafiles.patch to ...
 	(ICEDTEA_ECJ_PATCHES): Add patches/ecj/javafiles.patch.
 	* patches/javafiles.patch: Move to...
