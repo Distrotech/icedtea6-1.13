@@ -5,6 +5,34 @@
 	* patches/openjdk/mutter.patch: Add Mutter as a window manager,
 	so that a WM specific workaround keeps working.
 
+2011-05-17  Omair Majid  <omajid@redhat.com>
+
+	* patches/linux-separate-debuginfo.patch: Remove unapplied patch. An
+	improved version of this patch (which allows running jmap -heap) without
+	debuginfo packages is already included in openjdk6.
+
+2011-05-17  Omair Majid  <omajid@redhat.com>
+
+	* Makefile.am (ICEDTEA_PATCHES): Remove patches/tools.patch.
+	* patches/tools.patch: Remove file. Not required anymore.
+
+2011-05-17  Omair Majid  <omajid@redhat.com>
+
+	* Makefile.am
+	(ICEDTEA_PATCHES): Replace patches/shark-llvm-2.9.patch with
+	patches/openjdk/7036220-shark_llvm_29_headers.patch.
+	* patches/shark-llvm-2.9.patch: Move to...
+	* patches/openjdk/7036220-shark_llvm_29_headers.patch: New file. Contains
+	contents of patches/shark-llvm-2.9.patch as well as hg metadata.
+
+2011-05-17  Omair Majid  <omajid@redhat.com>
+
+	* Makefile.am
+	(ICEDTEA_PATCHES): Move patches/javafiles.patch to ...
+	(ICEDTEA_ECJ_PATCHES): Add patches/ecj/javafiles.patch.
+	* patches/javafiles.patch: Move to...
+	* patches/ecj/javafiles.patch: New file.
+
 2011-05-17  Pavel Tisnovsky  <ptisnovs@redhat.com>
 
 	* patches/jtreg-6929067-fix.patch: Fix bashism.
