@@ -340,7 +340,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/pgram-pipe-regression.patch \
 	patches/openjdk/7034464-hugepage.patch \
 	patches/openjdk/7037939-hugepage.patch \
-	patches/openjdk/7043564-hugepage.patch
+	patches/openjdk/7043564-hugepage.patch \
+	patches/openjdk/mutter.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
