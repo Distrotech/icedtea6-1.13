@@ -1,3 +1,51 @@
+2011-05-18  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/hotspot/hs20/7032388-work_without_cmov_instruction.patch,
+	* patches/hotspot/hs20/arm.patch,
+	* patches/hotspot/hs20/gcc-suffix.patch,
+	* patches/hotspot/hs20/ia64-fix.patch,
+	* patches/hotspot/hs20/params-cast-size_t.patch,
+	* patches/hotspot/hs20/powerpc-stacksize.patch,
+	* patches/hotspot/hs20/sparc-buildfixes.patch,
+	* patches/hotspot/hs20/systemtap.patch,
+	* patches/hotspot/hs20/text-relocations.patch:
+	Moved to main tree.
+	* patches/hotspot/original/7032388-work_without_cmov_instruction.patch,
+	* patches/hotspot/original/arm.patch,
+	* patches/hotspot/original/gcc-suffix.patch,
+	* patches/hotspot/original/ia64-fix.patch,
+	* patches/hotspot/original/no-precompiled-headers.patch,
+	* patches/hotspot/original/params-cast-size_t.patch,
+	* patches/hotspot/original/sparc-buildfixes.patch,
+	* patches/hotspot/original/systemtap.patch,
+	* patches/hotspot/original/text-relocations.patch,
+	* patches/hotspot/original/too-many-args.patch:
+	Dropped; hs19 no longer supported.
+	* patches/openjdk/6599601-mark_sun_toolkit_privileged_code.patch,
+	* patches/openjdk/6997495-test_correction_6857159.patch,
+	* patches/openjdk/7029905-demo_applet_html_files.patch,
+	* patches/openjdk/7042040-no_disk_space_check.patch:
+	Removed; upstream in OpenJDK6.
+	* INSTALL: Update HotSpot documentation.
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Updated.
+	* acinclude.m4:
+	(IT_WITH_HOTSPOT_BUILD): Set default back to original.
+	* hotspot.map: Remove hs19.
+	* patches/arm.patch,
+	* patches/gcc-suffix.patch,
+	* patches/ia64-fix.patch:
+	Extended with HotSpot segments from hotspot/hs20.
+	* patches/openjdk/6633275-shaped_translucent_windows.patch:
+	Recreated due to copyright header change in Component.java.
+	* patches/openjdk/7032388-work_without_cmov_instruction.patch,
+	* patches/params-cast-size_t.patch,
+	* patches/powerpc-stacksize.patch,
+	* patches/sparc-buildfixes.patch,
+	* patches/systemtap.patch,
+	* patches/text-relocations.patch:
+	Moved from hotspot/hs20.
+
 2011-05-17  Denis Lila <dlila@redhat.com>
 
 	* Makefile.am: Apply patch.

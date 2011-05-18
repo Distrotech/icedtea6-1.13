@@ -187,11 +187,6 @@ ICEDTEA_FSG_PATCHES =
 
 SECURITY_PATCHES = 
 
-if WITH_ALT_HSBUILD
-SECURITY_PATCHES += \
-	patches/security/20110215/6878713.patch
-endif
-
 ICEDTEA_PATCHES = \
 	$(SECURITY_PATCHES) \
 	patches/stdc-limit-macros.patch \
@@ -215,12 +210,11 @@ ICEDTEA_PATCHES = \
 	patches/lucene-crash.patch \
 	patches/version.patch \
 	patches/version-hotspot.patch \
-	patches/hotspot/$(HSBUILD)/text-relocations.patch \
+	patches/text-relocations.patch \
 	patches/openjdk/7043921-java_rmi_cgi.patch \
 	patches/use-system-tzdata.patch \
 	patches/headers.patch \
 	patches/gcc-suffix.patch \
-	patches/hotspot/$(HSBUILD)/gcc-suffix.patch \
 	patches/memory-limits.patch \
 	patches/libraries.patch \
 	patches/jvmtiEnv.patch \
@@ -235,7 +229,7 @@ ICEDTEA_PATCHES = \
 	patches/alt-jar.patch \
 	patches/jdk-use-ssize_t.patch \
 	patches/use-idx_t.patch \
-	patches/hotspot/$(HSBUILD)/params-cast-size_t.patch \
+	patches/params-cast-size_t.patch \
 	patches/clean-crypto.patch \
 	patches/arch.patch \
 	patches/lc_ctype.patch \
@@ -244,11 +238,10 @@ ICEDTEA_PATCHES = \
 	patches/testenv.patch \
 	patches/samejvm-safe.patch \
 	patches/pr261.patch \
-	patches/hotspot/$(HSBUILD)/sparc-buildfixes.patch \
+	patches/sparc-buildfixes.patch \
 	patches/sparc64-linux.patch \
 	patches/sparc-ptracefix.patch \
 	patches/sparc-trapsfix.patch \
-	patches/openjdk/7029905-demo_applet_html_files.patch \
 	patches/jtreg-6592792.patch \
 	patches/s390-noinline.patch \
 	patches/jtreg-dnd.patch \
@@ -266,9 +259,7 @@ ICEDTEA_PATCHES = \
 	patches/applet_hole.patch \
 	patches/jtreg-httpTest.patch \
 	patches/arm.patch \
-	patches/hotspot/$(HSBUILD)/arm.patch \
 	patches/debug-dir.patch \
-	patches/openjdk/7042040-no_disk_space_check.patch \
 	patches/override-redirect-metacity.patch \
 	patches/openjdk/6967533-pre_epoch.patch \
 	patches/fonts-rhel.patch \
@@ -289,7 +280,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6800846-printing-quality.patch \
 	patches/rh661505-jpeg.patch \
 	patches/6703377-freetypescaler.patch \
-	patches/hotspot/$(HSBUILD)/ia64-fix.patch \
+	patches/ia64-fix.patch \
 	patches/openjdk/6642612-filechooser_button_sizes.patch \
 	patches/jtreg-international-fonts-styles.patch \
 	patches/openjdk/6736649-text_bearings.patch \
@@ -324,10 +315,9 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7023591-AAShapePipe.patch \
 	patches/openjdk/7027667-AAShapePipeRegTest.patch \
 	patches/openjdk/7019861-AA-regression-fix.patch \
-	patches/openjdk/6599601-mark_sun_toolkit_privileged_code.patch \
 	patches/g356743-libpng-1.5.patch \
 	patches/revert-6885123.patch \
-	patches/hotspot/$(HSBUILD)/7032388-work_without_cmov_instruction.patch \
+	patches/openjdk/7032388-work_without_cmov_instruction.patch \
 	patches/openjdk/7031385-gcc-register-allocation-fix.patch \
 	patches/openjdk/7036220-shark_llvm_29_headers.patch \
 	patches/openjdk/6986968-crash_on_xim_restart.patch \
@@ -336,20 +326,11 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7034464-hugepage.patch \
 	patches/openjdk/7037939-hugepage.patch \
 	patches/openjdk/7043564-hugepage.patch \
-	patches/openjdk/mutter.patch
-
-if WITH_ALT_HSBUILD
-ICEDTEA_PATCHES += \
+	patches/openjdk/mutter.patch \
 	patches/pr639-broken_shark_build.patch \
-	patches/hotspot/$(HSBUILD)/powerpc-stacksize.patch \
+	patches/powerpc-stacksize.patch \
 	patches/jtreg-remove-test-6987555.patch \
 	patches/jtreg-remove-test-6991596.patch
-else
-ICEDTEA_PATCHES += \
-	patches/hotspot/$(HSBUILD)/no-precompiled-headers.patch \
-	patches/hotspot/$(HSBUILD)/too-many-args.patch \
-	patches/openjdk/6997495-test_correction_6857159.patch
-endif
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -391,7 +372,6 @@ endif
 
 if ENABLE_SYSTEMTAP
 ICEDTEA_PATCHES += patches/systemtap.patch \
-	patches/hotspot/$(HSBUILD)/systemtap.patch \
 	patches/systemtap-gcc-4.5.patch \
 	patches/systemtap-alloc-size-workaround.patch
 endif
