@@ -16,14 +16,14 @@ public class XIMPreeditCaretCallbackStruct extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	XIMPreeditCaretCallbackStruct(long addr) {
+	public XIMPreeditCaretCallbackStruct(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	XIMPreeditCaretCallbackStruct() {
+	public XIMPreeditCaretCallbackStruct() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;

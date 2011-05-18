@@ -8,7 +8,7 @@ import java.util.logging.*;
 public class XIMStringConversionCallbackStruct extends XWrapperBase { 
 	private Unsafe unsafe = XlibWrapper.unsafe; 
 	private final boolean should_free_memory;
-	public static int getSize() { return 16; }
+	public static int getSize() { return ((XlibWrapper.dataModel == 32)?(16):(24)); }
 	public int getDataSize() { return getSize(); }
 
 	long pData;
@@ -16,14 +16,14 @@ public class XIMStringConversionCallbackStruct extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	XIMStringConversionCallbackStruct(long addr) {
+	public XIMStringConversionCallbackStruct(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	XIMStringConversionCallbackStruct() {
+	public XIMStringConversionCallbackStruct() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;
@@ -45,9 +45,9 @@ public class XIMStringConversionCallbackStruct extends XWrapperBase {
 	public void set_operation(short v) { log.finest(""); Native.putShort(pData+8, v); }
 	public short get_factor() { log.finest("");return (Native.getShort(pData+10)); }
 	public void set_factor(short v) { log.finest(""); Native.putShort(pData+10, v); }
-	public XIMStringConversionText get_text(int index) { log.finest(""); return (Native.getLong(pData+12) != 0)?(new XIMStringConversionText(Native.getLong(pData+12)+index*16)):(null); }
-	public long get_text() { log.finest("");return Native.getLong(pData+12); }
-	public void set_text(long v) { log.finest(""); Native.putLong(pData + 12, v); }
+	public XIMStringConversionText get_text(int index) { log.finest(""); return (Native.getLong(pData+((XlibWrapper.dataModel == 32)?(12):(16))) != 0)?(new XIMStringConversionText(Native.getLong(pData+((XlibWrapper.dataModel == 32)?(12):(16)))+index*((XlibWrapper.dataModel == 32)?(16):(32)))):(null); }
+	public long get_text() { log.finest("");return Native.getLong(pData+((XlibWrapper.dataModel == 32)?(12):(16))); }
+	public void set_text(long v) { log.finest(""); Native.putLong(pData + ((XlibWrapper.dataModel == 32)?(12):(16)), v); }
 
 
 	String getName() {

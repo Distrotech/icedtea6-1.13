@@ -8,7 +8,7 @@ import java.util.logging.*;
 public class XModifierKeymap extends XWrapperBase { 
 	private Unsafe unsafe = XlibWrapper.unsafe; 
 	private final boolean should_free_memory;
-	public static int getSize() { return 8; }
+	public static int getSize() { return ((XlibWrapper.dataModel == 32)?(8):(16)); }
 	public int getDataSize() { return getSize(); }
 
 	long pData;
@@ -16,14 +16,14 @@ public class XModifierKeymap extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	XModifierKeymap(long addr) {
+	public XModifierKeymap(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	XModifierKeymap() {
+	public XModifierKeymap() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;
@@ -39,9 +39,9 @@ public class XModifierKeymap extends XWrapperBase {
 		}
 	public int get_max_keypermod() { log.finest("");return (Native.getInt(pData+0)); }
 	public void set_max_keypermod(int v) { log.finest(""); Native.putInt(pData+0, v); }
-	public long get_modifiermap(int index) { log.finest(""); return Native.getLong(pData+4)+index*Native.getLongSize(); }
-	public long get_modifiermap() { log.finest("");return Native.getLong(pData+4); }
-	public void set_modifiermap(long v) { log.finest(""); Native.putLong(pData + 4, v); }
+	public long get_modifiermap(int index) { log.finest(""); return Native.getLong(pData+((XlibWrapper.dataModel == 32)?(4):(8)))+index*Native.getLongSize(); }
+	public long get_modifiermap() { log.finest("");return Native.getLong(pData+((XlibWrapper.dataModel == 32)?(4):(8))); }
+	public void set_modifiermap(long v) { log.finest(""); Native.putLong(pData + ((XlibWrapper.dataModel == 32)?(4):(8)), v); }
 
 
 	String getName() {

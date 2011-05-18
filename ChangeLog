@@ -1,12 +1,356 @@
+2011-05-17  Denis Lila <dlila@redhat.com>
+
+	* Makefile.am: Apply patch.
+	* NEWS: Update with backport.
+	* patches/openjdk/mutter.patch: Add Mutter as a window manager,
+	so that a WM specific workaround keeps working.
+
+2011-05-17  Omair Majid  <omajid@redhat.com>
+
+	* patches/linux-separate-debuginfo.patch: Remove unapplied patch. An
+	improved version of this patch (which allows running jmap -heap) without
+	debuginfo packages is already included in openjdk6.
+
+2011-05-17  Omair Majid  <omajid@redhat.com>
+
+	* Makefile.am (ICEDTEA_PATCHES): Remove patches/tools.patch.
+	* patches/tools.patch: Remove file. Not required anymore.
+
+2011-05-17  Omair Majid  <omajid@redhat.com>
+
+	* Makefile.am
+	(ICEDTEA_PATCHES): Replace patches/shark-llvm-2.9.patch with
+	patches/openjdk/7036220-shark_llvm_29_headers.patch.
+	* patches/shark-llvm-2.9.patch: Move to...
+	* patches/openjdk/7036220-shark_llvm_29_headers.patch: New file. Contains
+	contents of patches/shark-llvm-2.9.patch as well as hg metadata.
+
+2011-05-17  Omair Majid  <omajid@redhat.com>
+
+	* Makefile.am
+	(ICEDTEA_PATCHES): Move patches/javafiles.patch to ...
+	(ICEDTEA_ECJ_PATCHES): Add patches/ecj/javafiles.patch.
+	* patches/javafiles.patch: Move to...
+	* patches/ecj/javafiles.patch: New file.
+
+2011-05-17  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* patches/jtreg-6929067-fix.patch: Fix bashism.
+
+2011-05-16  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* patches/jtreg-6929067-fix.patch: fix this regression
+	test so it works on any combination of JVM and platform
+	(32 bit and 64 bit)
+
+2011-05-12  Andrew Su  <asu@redhat.com>
+
+	* AUTHORS: Updated name.
+
+2011-05-12  Andrew Haley  <aph@redhat.com>
+
+	Rename icedtea-hugepage-7034464.patch -> openjdk/7034464-hugepage.patch
+	icedtea-hugepage-7037939.patch -> openjdk/7037939-hugepage.patch
+	* patches/openjdk/7043564-hugepage.patch: Import from upstream.
+	* Makefile.am: move patches, add new patch.
+
+2011-05-12  Denis Lila <dlila@redhat.com>
+
+	* Makefile.am: Apply patch.
+	* NEWS: Update with backport.
+	* patches/openjdk/pgram-pipe-regression.patch: Fix regression a
+	where the wrong user space bounds would be passed to user supplied
+	paint object.
+
+2011-05-12  Omair Majid  <omajid@redhat.com>
+
+	* Makefile.am (ICEDTEA_PATCHES): Remove rmi_amd64.patch. Add
+	7043921-java_rmi_cgi.patch
+	* patches/openjdk/7043921-java_rmi_cgi.patch: New file.
+	* patches/rmi_amd64.patch: Remove.
+
+2011-05-12  Omair Majid  <omajid@redhat.com>
+
+	* Makefile.am (ICEDTEA_PATCHES): Replace patches/libpng.patch with
+	patches/openjdk/6959123-libpng_14.patch.
+	* patches/libpng.patch: Remove.
+	* patches/openjdk/6959123-libpng_14.patch: New file.
+
+2011-05-11  Omair Majid  <omajid@redhat.com>
+
+	* Makefile.am
+	(ICEDTEA_PATCHES): Move headers-hotspot.patch to ...
+	(ICEDTEA_ECJ_PATCHES): New patch.
+	(ICEDTEA_ENV): Moves endorsed dir varaibles to ...
+	(ICEDTEA_ENV_ECJ): Here.
+	* patches/headers-hotspot.patch: Move to ...
+	* patches/ecj/endorsed-dir-for-jvmti.patch: New file.
+
+2011-05-11  Omair Majid  <omajid@redhat.com>
+
+	Backport S7042040: Remove disk space sanity check
+	* Makefile.am (ICEDTEA_PATCHES): Add
+	patches/openjdk/7042040-no_disk_space_check.patch. Remove
+	patches/no-sync.patch.
+	* patches/openjdk/7042040-no_disk_space_check.patch: New file.
+	* patches/no-sync.patch: Remove. Upstream's fix is an improved version.
+
+2011-05-11  Andrew Su  <asu@redhat.com>
+
+	* AUTHORS: Added Denis Lila, Marathon, and Andrew Su.
+
+2011-05-10  Omair Majid  <omajid@redhat.com>
+
+	Move pr633-no_javaws_man_page.patch to proper location
+	* Makefile.am (ICEDTEA_PATCHES): Update patch location and name.
+	* patches/pr633-no_javaws_man_page.patch: Remove.
+	* patches/openjdk/7021314-no_javaws_man_page.patch: New file. Backport
+	from OpenJDK7.
+
+2011-05-10  Omair Majid  <omajid@redhat.com>
+
+	Move fix for S6599601 to proper location.
+	* Makefile.am (ICEDTEA_PATCHES): Update patch location and name.
+	* patches/mark_sun_toolkit_privileged_code.patch: Remove.
+	* patches/openjdk/6599601-mark_sun_toolkit_privileged_code.patch: New
+	file. Backport from OpenJDK6.
+
+2011-05-10  Andrew Su  <asu@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Removed patch jpegclasses.patch.
+	(stamps/overlay.stamp): Added jpeg class overlay path.
+	* patches/jpegclasses.patch: Removed
+	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/ImageFormatException.java,
+	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/JPEGCodec.java,
+	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/JPEGDecodeParam.java,
+	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/JPEGEncodeParam.java,
+	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/JPEGHuffmanTable.java,
+	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/JPEGImageDecoder.java,
+	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/JPEGImageEncoder.java,
+	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/JPEGQTable.java,
+	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/TruncatedFileException.java,
+	* overlays/jpeg/openjdk/jdk/src/share/classes/sun/awt/image/codec/JPEGImageDecoderImpl.java,
+	* overlays/jpeg/openjdk/jdk/src/share/classes/sun/awt/image/codec/JPEGImageEncoderImpl.java,
+	* overlays/jpeg/openjdk/jdk/src/share/classes/sun/awt/image/codec/JPEGParam.java: New classes.
+
+2011-05-09  Andrew Haley  <aph@redhat.com>
+
+	* Makefile (ICEDTEA_PATCHES): Add icedtea-hugepage-7034464.patch,
+	patches/icedtea-hugepage-7037939.patch
+	* patches/icedtea-hugepage-7034464.patch: Support transparent huge
+	pages on Linux available since 2.6.38
+	* patches/icedtea-hugepage-7037939.patch: Disable adaptive
+	resizing if SHM large pages are used.
+	* NEWS: Add S7037939, S7034464.
+
+2011-05-06  Omair Majid  <omajid@redhat.com>
+
+	* Makefile.am (ICEDTEA_PATCHES): Replace
+	patches/rh676659-gcc-export-dynamic.patch with the upstream fix
+	patches/openjdk/7041156-gcc_export_dynamic.patch.
+	* patches/openjdk/7041156-gcc_export_dynamic.patch: New file.
+	* patches/rh676659-gcc-export-dynamic.patch: Remove file.
+
+2011-05-05  Omair Majid  <omajid@redhat.com>
+
+	* patches/shark-build-hotspot.patch,
+	* patches/shark-debug-option.patch,
+	* patches/shark_do_nothing_on_stub_frame.patch: Drop upstreamed/unapplied
+	patches. These were not being applied.
+
+2011-05-05  Omair Majid  <omajid@redhat.com>
+
+	* Makefile.am (ICEDTEA_PATCHES): Replace patches/gcc-stack-markings.patch
+	with patches/openjdk/7019808-stack_noexec.patch.
+	* patches/gcc-stack-markings.patch: Remove
+	* patches/openjdk/7019808-stack_noexec.patch: Fix from upstream.
+
+2011-05-05  Xerxes Rånby  <xranby@zafena.se>
+
+	CACAO threadlist & threadobject improvements.
+	* NEWS: Updated.
+	* Makefile.am
+	(CACAO_VERSION): Updated to latest CACAO revision.
+	(CACAO_SHA256SUM): Updated.
+
+2011-05-04  Omair Majid  <omajid@redhat.com>
+
+	* Makefile.am (ICEDTEA_PATCHES): Drop bytebuffer-compact.patch. The
+	original issue this patch used to address was fixed upstream. Now this
+	patch just adds another method clearMark in addition to upstream's
+	discardMark.
+	* generated/java/nio/DirectByteBuffer.java,
+	* generated/java/nio/DirectCharBufferS.java,
+	* generated/java/nio/DirectCharBufferU.java,
+	* generated/java/nio/DirectDoubleBufferS.java,
+	* generated/java/nio/DirectDoubleBufferU.java,
+	* generated/java/nio/DirectFloatBufferS.java,
+	* generated/java/nio/DirectFloatBufferU.java,
+	* generated/java/nio/DirectIntBufferS.java,
+	* generated/java/nio/DirectIntBufferU.java,
+	* generated/java/nio/DirectLongBufferS.java,
+	* generated/java/nio/DirectLongBufferU.java,
+	* generated/java/nio/DirectShortBufferS.java,
+	* generated/java/nio/DirectShortBufferU.java,
+	* generated/java/nio/HeapByteBuffer.java,
+	* generated/java/nio/HeapCharBuffer.java,
+	* generated/java/nio/HeapDoubleBuffer.java,
+	* generated/java/nio/HeapFloatBuffer.java,
+	* generated/java/nio/HeapIntBuffer.java,
+	* generated/java/nio/HeapLongBuffer.java,
+	* generated/java/nio/HeapShortBuffer.java: Replace all uses of clearMark
+	with discardMark.
+	* patches/bytebuffer-compact.patch: Remove.
+
+2011-05-04  Omair Majid  <omajid@redhat.com>
+
+	* patches/nss-debug.patch: Remove file. It was upstreamed and was not
+	being applied locally.
+
+2011-05-04  Denis Lila <dlila@redhat.com>
+
+	* Makefile.am: Apply patch.
+	* NEWS: Update with backport.
+	* patches/openjdk/7036754-stroker-nan.patch: New patch. Fix NaN
+	quad stroking problem.
+
+2011-05-04  Xerxes Rånby  <xerxes@zafena.se>
+
+	* .hgtags Update.
+	icedtea6-1.6-branchpoint renamed from icedtea-1.6-branchpoint
+	icedtea6-1.7-branchpoint renamed from icedtea-1.7-branchpoint
+	icedtea6-1.8-branchpoint corrected to rev 1997:1188b1a313b9
+
+2011-05-03  Omair Majid  <omajid@redhat.com>
+
+	Replace xrender patch with (identical) upstream fix.
+	* NEWS: Document backport of S7018387.
+	* Makefile.am (ICEDTEA_PATCHES): Replace patches/xrender-gc-cleanup.patch
+	with patches/openjdk/7018387-xrender_gc_leak.patch.
+	* patches/openjdk/7018387-xrender_gc_leak.patch: New file.
+	* patches/xrender-gc-cleanup.patch: Remove.
+
+2011-05-03  Andrew Haley  <aph@redhat.com>
+
+	* Makefile.am: Don't fail if sed command to clean jvm.cfg fails.
+
+2011-05-02  Omair Majid  <omajid@redhat.com>
+
+	* NEWS: Update.
+	* Makefile.am (ICEDTEA_PATCHES): Add new patch.
+	* patches/openjdk/6986968-crash_on_xim_restart.patch: New file.
+
+2011-04-29  Omair Majid  <omajid@redhat.com>
+
+	* NEWS: Update.
+	* Makefile.am (ICEDTEA_PATCHES): Replace patches/demo-swingapplet.patch
+	with patches/openjdk/7029905-demo_applet_html_files.patch.
+	* patches/demo-swingapplet.patch: Remove.
+	* patches/openjdk/7029905-demo_applet_html_files.patch: New patch.
+
+2011-04-28  Omair Majid  <omajid@redhat.com>
+
+	Drop ssl.patch
+	* Makefile.am (ICEDTEA_PATCHES): Remove ssl.patch.
+	* patches/ssl.patch: Removed.
+
+2011-04-28  Denis Lila <dlila@redhat.com>
+
+	* Makefile.am: Apply patches.
+	* NEWS: Update with backports.
+	* patches/openjdk/6748082-isDisplayLocal.patch: New patch.
+	* patches/openjdk/6708580-exa_slow.patch: New patch. Speeds
+	up certain rendering operations.
+	* patches/openjdk/6307603-xrender-01.patch: Make it apply when
+	the previous patch has been applied before it.
+
+2011-04-22  Omair Majid  <omajid@redhat.com>
+
+	Revert previous patch.
+	* Makefile.am (ICEDTEA_PATCHES): Apply patch.
+	* patches/bytebuffer-compact.patch: Add back patch file.
+
+2011-04-21  Omair Majid  <omajid@redhat.com>
+
+	* patches/bytebuffer-compact.patch: Drop useless patch.
+	* Makefile.am (ICEDTEA_PATCHES): Do not apply dropped patch.
+
+2011-04-12  Xerxes Rånby  <xerxes@zafena.se>
+
+	PR689: Shark fails to find LLVM 2.9 System headers during build
+	* Makefile.am: Add patch.
+	* patches/shark-llvm-2.9.patch:
+	In LLVM 2.9 System headers are moved to Support.
+	* NEWS: Updated.
+
+2011-04-10  Yasumasa Suenaga  <suenaga.yasumasa@oss.ntt.co.jp>
+
+	* tapset/hotspot_jni.stp.in (hotspot.jni.CallNonvirtual*):
+	Add missing clazz argument to all probes. Fix methodid
+	to be last argument. Add clazz to probestr.
+
+2011-03-31  Deepak Bhole <dbhole@redhat.com>
+
+	S7031385, PR680: Incorrect register allocation in
+	orderAccess_linux_x86.inline.hpp 
+	* Makefile.am: Apply patch.
+	* NEWS: Updated
+	* patches/openjdk/7031385-gcc-register-allocation-fix.patch: New patch. 
+	Fixes register allocation by constraining output to one of a/b/c/d 
+	registers.
+
 2011-03-31  Andrew John Hughes  <ahughes@redhat.com>
 
 	* patches/jaxp-serial-version-uid.patch,
 	* patches/openjdk/6768387-jtable_not_serializable.patch:
 	Dropped, upstream.
+
+2011-03-31  Andrew John Hughes  <ahughes@redhat.com>
+
+	S7032388, PR682: Make HotSpot work on machines without
+	cmov instruction again
+	* Makefile.am: Add new patch.
+	* NEWS: Mention patch.
+	* patches/hotspot/hs20/7032388-work_without_cmov_instruction.patch,
+	* patches/hotspot/original/7032388-work_without_cmov_instruction.patch:
+	Versions of patch for each HotSpot version.
+
+2011-03-31  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* patches/revert-6885123.patch:
+	Fixed test shell script to work on POSIX shells.
+	This patch also deletes now defunct regression
+	test:
+	openjdk/langtools/test/tools/javac/api/6411310/Test.java
+
+2011-03-31  Andrew John Hughes  <ahughes@redhat.com>
+
 	* Makefile.am:
 	(JAXP_DROP_ZIP): Update.
 	(JAXP_DROP_SHA256SUM): Likewise.
 	(ICEDTEA_PATCHES): Drop above.
+
+2011-03-31  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Revert broken changes in
+	478d3f5f6a59409078b1adcfba24150158b92695
+	(.PHONY): Remove jtregcheck-summary.
+	(jtregcheck): Revert to version before last change.
+	Remove pointless touch invocation.
+
+2011-03-31  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Add missing download-openjdk and new download-hotspot aliases.
+	(.PHONY): Add clean-download-hotspot.
+	(download-openjdk): Move HotSpot download to...
+	(clean-download-openjdk): Don't delete hotspot zip.
+	(download-hotspot): ...here.
+	(clean-download-hotspot): Remove hotspot zip and stamp.
+	(download): Add download-hotspot as a dependency.
+	(clean-download): Add clean-download-hotspot as a dependency.
 
 2011-03-29  Pavel Tisnovsky  <ptisnovs@redhat.com>
 

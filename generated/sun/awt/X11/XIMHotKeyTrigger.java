@@ -8,7 +8,7 @@ import java.util.logging.*;
 public class XIMHotKeyTrigger extends XWrapperBase { 
 	private Unsafe unsafe = XlibWrapper.unsafe; 
 	private final boolean should_free_memory;
-	public static int getSize() { return 12; }
+	public static int getSize() { return ((XlibWrapper.dataModel == 32)?(12):(16)); }
 	public int getDataSize() { return getSize(); }
 
 	long pData;
@@ -16,14 +16,14 @@ public class XIMHotKeyTrigger extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	XIMHotKeyTrigger(long addr) {
+	public XIMHotKeyTrigger(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	XIMHotKeyTrigger() {
+	public XIMHotKeyTrigger() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;
@@ -39,10 +39,10 @@ public class XIMHotKeyTrigger extends XWrapperBase {
 		}
 	public long get_keysym() { log.finest("");return (Native.getLong(pData+0)); }
 	public void set_keysym(long v) { log.finest(""); Native.putLong(pData+0, v); }
-	public int get_modifier() { log.finest("");return (Native.getInt(pData+4)); }
-	public void set_modifier(int v) { log.finest(""); Native.putInt(pData+4, v); }
-	public int get_modifier_mask() { log.finest("");return (Native.getInt(pData+8)); }
-	public void set_modifier_mask(int v) { log.finest(""); Native.putInt(pData+8, v); }
+	public int get_modifier() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(4):(8)))); }
+	public void set_modifier(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(4):(8)), v); }
+	public int get_modifier_mask() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(8):(12)))); }
+	public void set_modifier_mask(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(8):(12)), v); }
 
 
 	String getName() {

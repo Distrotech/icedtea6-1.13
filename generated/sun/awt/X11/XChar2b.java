@@ -16,14 +16,14 @@ public class XChar2b extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	XChar2b(long addr) {
+	public XChar2b(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	XChar2b() {
+	public XChar2b() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;

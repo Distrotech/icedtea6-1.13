@@ -16,14 +16,14 @@ public class XPixmapFormatValues extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	XPixmapFormatValues(long addr) {
+	public XPixmapFormatValues(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	XPixmapFormatValues() {
+	public XPixmapFormatValues() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;

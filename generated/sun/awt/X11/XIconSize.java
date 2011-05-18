@@ -16,14 +16,14 @@ public class XIconSize extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	XIconSize(long addr) {
+	public XIconSize(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	XIconSize() {
+	public XIconSize() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;

@@ -1,0 +1,21 @@
+# HG changeset patch
+# User ceisserer
+# Date 1297290844 28800
+# Node ID 37d20456c54c11402b4c62c6f4d7a50b563c1308
+# Parent  d42ce0b309ae19742cd509dfbadba37d868b592f
+7018387: Xrender pipeline may leak GC's
+Reviewed-by: prr
+
+diff -r d42ce0b309ae -r 37d20456c54c src/solaris/classes/sun/java2d/xr/XRSurfaceData.java
+--- openjdk/jdk/src/solaris/classes/sun/java2d/xr/XRSurfaceData.java	Wed Feb 09 22:24:42 2011 +0300
++++ openjdk/jdk/src/solaris/classes/sun/java2d/xr/XRSurfaceData.java	Wed Feb 09 14:34:04 2011 -0800
+@@ -479,8 +479,7 @@
+         if (xrpipe == null) {
+             try {
+                 SunToolkit.awtLock();
+-                xgc = renderQueue.createGC(xid); // TODO: GC leak? where to
+-                // clean up?
++                xgc = XCreateGC(getNativeOps());
+ 
+                 xrpipe = new XRRenderer(maskBuffer.getMaskBuffer());
+                 xrtxpipe = new PixelToShapeConverter(xrpipe);

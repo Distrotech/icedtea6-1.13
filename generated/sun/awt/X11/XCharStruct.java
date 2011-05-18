@@ -16,14 +16,14 @@ public class XCharStruct extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	XCharStruct(long addr) {
+	public XCharStruct(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	XCharStruct() {
+	public XCharStruct() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;

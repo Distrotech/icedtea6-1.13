@@ -5,8 +5,8 @@ OPENJDK_MD5SUM = 2d2bbbb0f9b81f1fec41ec730da8a933
 OPENJDK_VERSION = b23
 OPENJDK_URL = http://download.java.net/openjdk/jdk6/promoted/$(OPENJDK_VERSION)/
 
-CACAO_VERSION = c7bf150bfa46
-CACAO_SHA256SUM = 73629f5ac9514afbcf63b6cdf58556e889a5f6a22d4bd70de1dd2816c6500aee
+CACAO_VERSION = d6264eb66506
+CACAO_SHA256SUM = 94ea7899e806ccbc33a732b5113a8f969d8b1f4ce7ffd27cf04577054f65f63c
 CACAO_BASE_URL = http://icedtea.classpath.org/download/drops/cacao
 CACAO_URL = $(CACAO_BASE_URL)/$(CACAO_VERSION).tar.gz
 CACAO_SRC_ZIP = cacao-$(CACAO_VERSION).tar.gz
@@ -203,6 +203,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6682046-shape_calculation.patch \
 	patches/openjdk/6797195-hw_lw_mixing.patch \
 	patches/openjdk/6725214-direct3d-01.patch \
+	patches/openjdk/6748082-isDisplayLocal.patch \
 	patches/openjdk/6633275-shaped_translucent_windows.patch \
         patches/openjdk/6791612-opengl-jni-fix.patch \
         patches/openjdk/6755274-glgetstring-crash.patch \
@@ -215,22 +216,16 @@ ICEDTEA_PATCHES = \
 	patches/version.patch \
 	patches/version-hotspot.patch \
 	patches/hotspot/$(HSBUILD)/text-relocations.patch \
-	patches/ssl.patch \
-	patches/rmi_amd64.patch \
-	patches/tools.patch \
+	patches/openjdk/7043921-java_rmi_cgi.patch \
 	patches/use-system-tzdata.patch \
 	patches/headers.patch \
-	patches/headers-hotspot.patch \
 	patches/gcc-suffix.patch \
 	patches/hotspot/$(HSBUILD)/gcc-suffix.patch \
-	patches/bytebuffer-compact.patch \
 	patches/memory-limits.patch \
 	patches/libraries.patch \
-	patches/javafiles.patch \
 	patches/jvmtiEnv.patch \
 	patches/lcms.patch \
 	patches/print_lsb_release.patch \
-	patches/jpegclasses.patch \
 	patches/uname.patch \
 	patches/freetypeversion.patch \
 	patches/nomotif-6706121.patch \
@@ -253,7 +248,7 @@ ICEDTEA_PATCHES = \
 	patches/sparc64-linux.patch \
 	patches/sparc-ptracefix.patch \
 	patches/sparc-trapsfix.patch \
-	patches/demo-swingapplet.patch \
+	patches/openjdk/7029905-demo_applet_html_files.patch \
 	patches/jtreg-6592792.patch \
 	patches/s390-noinline.patch \
 	patches/jtreg-dnd.patch \
@@ -262,18 +257,18 @@ ICEDTEA_PATCHES = \
 	patches/dnd-filelists.patch \
 	patches/disable-cc-incompatible-sanity-checks.patch \
 	patches/explicit-target-arch.patch \
-	patches/gcc-stack-markings.patch \
+	patches/openjdk/7019808-stack_noexec.patch \
 	patches/parisc.patch \
 	patches/sh4-support.patch \
 	patches/policy-evaluation.patch \
 	patches/update-bootclasspath.patch \
-	patches/libpng.patch \
+	patches/openjdk/6959123-libpng_14.patch \
 	patches/applet_hole.patch \
 	patches/jtreg-httpTest.patch \
 	patches/arm.patch \
 	patches/hotspot/$(HSBUILD)/arm.patch \
 	patches/debug-dir.patch \
-	patches/no-sync.patch \
+	patches/openjdk/7042040-no_disk_space_check.patch \
 	patches/override-redirect-metacity.patch \
 	patches/openjdk/6967533-pre_epoch.patch \
 	patches/fonts-rhel.patch \
@@ -305,12 +300,13 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/4493128-CubicCurve2D.patch \
 	patches/openjdk/4645692-CubicCurve2D.solveCubic.patch \
 	patches/no-static-linking.patch \
-	patches/rh676659-gcc-export-dynamic.patch \
+	patches/openjdk/7041156-gcc_export_dynamic.patch \
 	patches/g344659-sparc_fix.patch \
 	patches/openjdk/6728834-blurred-lcd-aa-text.patch \
 	patches/openjdk/6749060-bad-lcd-aa-non-opaque-dest.patch \
+	patches/openjdk/6708580-exa_slow.patch \
 	patches/openjdk/6896068-sg2d.patch \
-	patches/pr633-no_javaws_man_page.patch \
+	patches/openjdk/7021314-no_javaws_man_page.patch \
 	patches/pr586-include_all_srcs.patch \
 	patches/jtreg-LastErrorString.patch \
 	patches/openjdk/6663040-com.sun.awt.patch \
@@ -328,9 +324,19 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7023591-AAShapePipe.patch \
 	patches/openjdk/7027667-AAShapePipeRegTest.patch \
 	patches/openjdk/7019861-AA-regression-fix.patch \
-	patches/mark_sun_toolkit_privileged_code.patch \
+	patches/openjdk/6599601-mark_sun_toolkit_privileged_code.patch \
 	patches/g356743-libpng-1.5.patch \
-	patches/revert-6885123.patch
+	patches/revert-6885123.patch \
+	patches/hotspot/$(HSBUILD)/7032388-work_without_cmov_instruction.patch \
+	patches/openjdk/7031385-gcc-register-allocation-fix.patch \
+	patches/openjdk/7036220-shark_llvm_29_headers.patch \
+	patches/openjdk/6986968-crash_on_xim_restart.patch \
+	patches/openjdk/7036754-stroker-nan.patch \
+	patches/openjdk/pgram-pipe-regression.patch \
+	patches/openjdk/7034464-hugepage.patch \
+	patches/openjdk/7037939-hugepage.patch \
+	patches/openjdk/7043564-hugepage.patch \
+	patches/openjdk/mutter.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
@@ -376,7 +382,7 @@ endif
 if ENABLE_XRENDER
 ICEDTEA_PATCHES += patches/openjdk/6307603-xrender-01.patch \
 	patches/openjdk/6961633-xrender-02.patch \
-	patches/xrender-gc-cleanup.patch
+	patches/openjdk/7018387-xrender_gc_leak.patch
 endif
 
 if ENABLE_NIO2
@@ -406,6 +412,8 @@ ICEDTEA_PATCHES += $(DISTRIBUTION_PATCHES)
 
 ICEDTEA_ECJ_PATCHES = patches/ecj/icedtea.patch \
 	patches/ecj/hotspot.patch \
+	patches/ecj/endorsed-dir-for-jvmti.patch \
+	patches/ecj/javafiles.patch \
 	patches/ecj/spp.patch \
 	patches/ecj/jopt.patch \
 	patches/ecj/jaxp-dependency.patch \
@@ -466,8 +474,6 @@ ICEDTEA_ENV = \
 	ALT_BOOTDIR="$(BOOT_DIR)" \
 	BUILD_ARCH_DIR="$(BUILD_ARCH_DIR)" \
 	ICEDTEA_CLS_DIR="$(ICEDTEA_CLS_DIR)" \
-	ICEDTEA_ENDORSED_DIR="$(ENDORSED_DIR)" \
-	ENDORSED="-Djava.endorsed.dirs=$(ENDORSED_DIR)" \
 	CLASSPATH="" \
 	LD_LIBRARY_PATH="" \
 	ZERO_BUILD="$(ICEDTEA_ZERO_BUILD)" \
@@ -549,6 +555,8 @@ ICEDTEA_ENV_ECJ = $(ICEDTEA_ENV) \
 	BOOTCLASSPATH_CLS="-bootclasspath $(ICEDTEA_CLS_DIR_ECJ)" \
 	BOOTCLASSPATH_RT_LIBGCJ="-bootclasspath $(RUNTIME)" \
 	CLASSPATH="" \
+	ICEDTEA_ENDORSED_DIR="$(ENDORSED_DIR)" \
+	ENDORSED="-Djava.endorsed.dirs=$(ENDORSED_DIR)" \
 	LD_LIBRARY_PATH="" \
 	GENSRCDIR="$(abs_top_builddir)/generated" \
 	JAR_KNOWS_ATFILE="$(JAR_KNOWS_ATFILE)" \
@@ -630,7 +638,7 @@ install:
 	clean-add-pulseaudio clean-add-pulseaudio-debug clean-add-nss clean-add-nss-debug \
 	clean-add-tzdata-support clean-add-tzdata-support-debug clean-add-systemtap-ecj \
 	clean-add-pulseaudio-ecj clean-add-nss-ecj clean-add-tzdata-support-ecj clean-fonts \
-	jtregcheck-summary
+	clean-download-hotspot
 
 env:
 	@echo 'unset JAVA_HOME'
@@ -839,6 +847,16 @@ else
 	fi
 endif
 endif
+endif
+	mkdir -p stamps
+	touch stamps/download-openjdk.stamp
+
+clean-download-openjdk:
+	rm -f $(OPENJDK_SRC_ZIP)
+	rm -rf openjdk.hg
+	rm -f stamps/download-openjdk.stamp
+
+stamps/download-hotspot.stamp:
 if WITH_ALT_HSBUILD
 if USE_ALT_HOTSPOT_SRC_ZIP
 	ln -sf $(ALT_HOTSPOT_SRC_ZIP) $(HOTSPOT_SRC_ZIP)
@@ -857,22 +875,19 @@ endif
 	  $(WGET) $${hotspot_url} -O $(HOTSPOT_SRC_ZIP) ; \
 	fi
 endif
-endif
 	mkdir -p stamps
-	touch stamps/download-openjdk.stamp
+	touch stamps/download-hotspot.stamp
 
-clean-download-openjdk:
-	rm -f $(OPENJDK_SRC_ZIP)
+clean-download-hotspot:
 	rm -f $(HOTSPOT_SRC_ZIP)
-	rm -rf openjdk.hg
-	rm -f stamps/download-openjdk.stamp
+	rm -f stamps/download-hotspot.stamp
 
 stamps/download.stamp: stamps/download-drops.stamp stamps/download-cacao.stamp \
- stamps/download-jamvm.stamp stamps/download-openjdk.stamp
+ stamps/download-jamvm.stamp stamps/download-openjdk.stamp stamps/download-hotspot.stamp
 	touch stamps/download.stamp
 
 clean-download: clean-drops clean-download-cacao clean-download-jamvm \
- clean-download-openjdk
+ clean-download-openjdk clean-download-hotspot
 	rm -f stamps/download.stamp
 
 stamps/extract.stamp: stamps/extract-openjdk.stamp \
@@ -1148,6 +1163,7 @@ stamps/overlay.stamp: stamps/patch.stamp
 if ENABLE_NIO2
 	cp -r $(abs_top_srcdir)/overlays/nio2/openjdk/* openjdk/
 endif
+	cp -r $(abs_top_srcdir)/overlays/jpeg/openjdk/* openjdk/
 	touch stamps/overlay.stamp
 
 clean-overlay:
@@ -1830,7 +1846,7 @@ endif
 
 clean-add-jamvm:
 	rm -rf $(BUILD_JRE_ARCH_DIR)/jamvm
-	sed -i 's#-jamvm KNOWN#-jamvm ERROR#' jvm.cfg
+	-sed -i 's#-jamvm KNOWN#-jamvm ERROR#' jvm.cfg
 	rm -f stamps/add-jamvm.stamp
 
 stamps/add-jamvm-debug.stamp: stamps/icedtea-debug.stamp stamps/jamvm.stamp
@@ -2120,11 +2136,8 @@ jtreg_pids = ps x --no-headers -ww -o pid,ppid,args \
 
 jtreg_checks = hotspot langtools jdk
 
-jtregcheck: jtreg $(jtreg_checks:%=check-%) jtregcheck-summary
-
-jtregcheck-summary:
+jtregcheck: jtreg $(jtreg_checks:%=check-%)
 	for i in hotspot langtools jdk; do \
-	  touch test/check-$$i.log; \
 	  echo "--------------- jtreg console summary for $$i ---------------"; \
 	  egrep -v '^(Passed:|Directory|Re[a-z]+\ written\ to)' test/check-$$i.log; \
 	done | tee test/jtreg-summary.log
@@ -2221,6 +2234,8 @@ download-cacao: stamps/download-cacao.stamp
 
 download-drops: stamps/download-drops.stamp
 
+download-hotspot: stamps/download-hotspot.stamp
+
 download-jamvm: stamps/download-jamvm.stamp
 
 download-jaf-drop: stamps/download-jaf-drop.stamp
@@ -2228,6 +2243,8 @@ download-jaf-drop: stamps/download-jaf-drop.stamp
 download-jaxp-drop: stamps/download-jaxp-drop.stamp
 
 download-jaxws-drop: stamps/download-jaxws-drop.stamp
+
+download-openjdk: stamps/download-openjdk.stamp
 
 extract: stamps/extract.stamp
 

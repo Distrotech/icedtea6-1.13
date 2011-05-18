@@ -8,7 +8,7 @@ import java.util.logging.*;
 public class XVisualInfo extends XWrapperBase { 
 	private Unsafe unsafe = XlibWrapper.unsafe; 
 	private final boolean should_free_memory;
-	public static int getSize() { return 40; }
+	public static int getSize() { return ((XlibWrapper.dataModel == 32)?(40):(64)); }
 	public int getDataSize() { return getSize(); }
 
 	long pData;
@@ -16,14 +16,14 @@ public class XVisualInfo extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	XVisualInfo(long addr) {
+	public XVisualInfo(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	XVisualInfo() {
+	public XVisualInfo() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;
@@ -40,24 +40,24 @@ public class XVisualInfo extends XWrapperBase {
 	public long get_visual(int index) { log.finest(""); return Native.getLong(pData+0)+index*Native.getLongSize(); }
 	public long get_visual() { log.finest("");return Native.getLong(pData+0); }
 	public void set_visual(long v) { log.finest(""); Native.putLong(pData + 0, v); }
-	public long get_visualid() { log.finest("");return (Native.getLong(pData+4)); }
-	public void set_visualid(long v) { log.finest(""); Native.putLong(pData+4, v); }
-	public int get_screen() { log.finest("");return (Native.getInt(pData+8)); }
-	public void set_screen(int v) { log.finest(""); Native.putInt(pData+8, v); }
-	public int get_depth() { log.finest("");return (Native.getInt(pData+12)); }
-	public void set_depth(int v) { log.finest(""); Native.putInt(pData+12, v); }
-	public int get_class() { log.finest("");return (Native.getInt(pData+16)); }
-	public void set_class(int v) { log.finest(""); Native.putInt(pData+16, v); }
-	public long get_red_mask() { log.finest("");return (Native.getLong(pData+20)); }
-	public void set_red_mask(long v) { log.finest(""); Native.putLong(pData+20, v); }
-	public long get_green_mask() { log.finest("");return (Native.getLong(pData+24)); }
-	public void set_green_mask(long v) { log.finest(""); Native.putLong(pData+24, v); }
-	public long get_blue_mask() { log.finest("");return (Native.getLong(pData+28)); }
-	public void set_blue_mask(long v) { log.finest(""); Native.putLong(pData+28, v); }
-	public int get_colormap_size() { log.finest("");return (Native.getInt(pData+32)); }
-	public void set_colormap_size(int v) { log.finest(""); Native.putInt(pData+32, v); }
-	public int get_bits_per_rgb() { log.finest("");return (Native.getInt(pData+36)); }
-	public void set_bits_per_rgb(int v) { log.finest(""); Native.putInt(pData+36, v); }
+	public long get_visualid() { log.finest("");return (Native.getLong(pData+((XlibWrapper.dataModel == 32)?(4):(8)))); }
+	public void set_visualid(long v) { log.finest(""); Native.putLong(pData+((XlibWrapper.dataModel == 32)?(4):(8)), v); }
+	public int get_screen() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(8):(16)))); }
+	public void set_screen(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(8):(16)), v); }
+	public int get_depth() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(12):(20)))); }
+	public void set_depth(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(12):(20)), v); }
+	public int get_class() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(16):(24)))); }
+	public void set_class(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(16):(24)), v); }
+	public long get_red_mask() { log.finest("");return (Native.getLong(pData+((XlibWrapper.dataModel == 32)?(20):(32)))); }
+	public void set_red_mask(long v) { log.finest(""); Native.putLong(pData+((XlibWrapper.dataModel == 32)?(20):(32)), v); }
+	public long get_green_mask() { log.finest("");return (Native.getLong(pData+((XlibWrapper.dataModel == 32)?(24):(40)))); }
+	public void set_green_mask(long v) { log.finest(""); Native.putLong(pData+((XlibWrapper.dataModel == 32)?(24):(40)), v); }
+	public long get_blue_mask() { log.finest("");return (Native.getLong(pData+((XlibWrapper.dataModel == 32)?(28):(48)))); }
+	public void set_blue_mask(long v) { log.finest(""); Native.putLong(pData+((XlibWrapper.dataModel == 32)?(28):(48)), v); }
+	public int get_colormap_size() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(32):(56)))); }
+	public void set_colormap_size(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(32):(56)), v); }
+	public int get_bits_per_rgb() { log.finest("");return (Native.getInt(pData+((XlibWrapper.dataModel == 32)?(36):(60)))); }
+	public void set_bits_per_rgb(int v) { log.finest(""); Native.putInt(pData+((XlibWrapper.dataModel == 32)?(36):(60)), v); }
 
 
 	String getName() {

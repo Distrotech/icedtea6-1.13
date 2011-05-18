@@ -1,0 +1,21 @@
+# HG changeset patch
+# User andrew
+# Date 1276015967 -3600
+# Node ID 4d55419ce99e749da5037fa4d8247117f1a5cc2e
+# Parent  be6f14f83ea7cfbb4b9d167d853b1fda420bb2cf
+6959123: Remove use of obsolete png_check_sig function in splashscreen_png.c
+Summary: Avoid use of deprecated libpng macro (removed in some 1.4.x releases)
+Reviewed-by: prr
+
+diff --git a/src/share/native/sun/awt/splashscreen/splashscreen_png.c b/src/share/native/sun/awt/splashscreen/splashscreen_png.c
+--- openjdk/jdk/src/share/native/sun/awt/splashscreen/splashscreen_png.c
++++ openjdk/jdk/src/share/native/sun/awt/splashscreen/splashscreen_png.c
+@@ -182,7 +182,7 @@
+     int success = 0;
+ 
+     stream->read(stream, sig, SIG_BYTES);
+-    if (!png_check_sig(sig, SIG_BYTES)) {
++    if (png_sig_cmp(sig, 0, SIG_BYTES)) {
+         goto done;
+     }
+     success = SplashDecodePng(splash, my_png_read_stream, stream);

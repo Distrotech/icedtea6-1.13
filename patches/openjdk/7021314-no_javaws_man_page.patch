@@ -1,0 +1,24 @@
+# HG changeset patch
+# User andrew
+# Date 1298481016 0
+# Node ID 5e09deee19671a6d10c7cb24ba789b5bbf6636b8
+# Parent  9b2631288894758318b59caac3b1f079fa36e98a
+7021314: Build should not install javaws man page
+Summary: Only install javaws.1 when not building OpenJDK
+Reviewed-by: alanb, ohair
+
+diff -r 9b2631288894 -r 5e09deee1967 make/common/Release.gmk
+--- openjdk/jdk/make/common/Release.gmk	Wed Feb 16 14:33:48 2011 -0800
++++ openjdk/jdk/make/common/Release.gmk	Wed Feb 23 17:10:16 2011 +0000
+@@ -124,9 +124,11 @@
+ 	tnameserv.1     \
+ 	unpack200.1
+ 
++ifndef OPENJDK
+ ifeq ($(ARCH_DATA_MODEL),32)
+   JRE_MAN_PAGES += javaws.1
+ endif
++endif
+ 
+ JDK_MAN_PAGES =            \
+ 	$(JRE_MAN_PAGES)   \

@@ -8,7 +8,7 @@ import java.util.logging.*;
 public class XErrorEvent extends XWrapperBase { 
 	private Unsafe unsafe = XlibWrapper.unsafe; 
 	private final boolean should_free_memory;
-	public static int getSize() { return 20; }
+	public static int getSize() { return ((XlibWrapper.dataModel == 32)?(20):(40)); }
 	public int getDataSize() { return getSize(); }
 
 	long pData;
@@ -16,14 +16,14 @@ public class XErrorEvent extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	XErrorEvent(long addr) {
+	public XErrorEvent(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	XErrorEvent() {
+	public XErrorEvent() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;
@@ -39,18 +39,18 @@ public class XErrorEvent extends XWrapperBase {
 		}
 	public int get_type() { log.finest("");return (Native.getInt(pData+0)); }
 	public void set_type(int v) { log.finest(""); Native.putInt(pData+0, v); }
-	public long get_display() { log.finest("");return (Native.getLong(pData+4)); }
-	public void set_display(long v) { log.finest(""); Native.putLong(pData+4, v); }
-	public long get_resourceid() { log.finest("");return (Native.getLong(pData+8)); }
-	public void set_resourceid(long v) { log.finest(""); Native.putLong(pData+8, v); }
-	public long get_serial() { log.finest("");return (Native.getLong(pData+12)); }
-	public void set_serial(long v) { log.finest(""); Native.putLong(pData+12, v); }
-	public byte get_error_code() { log.finest("");return (Native.getByte(pData+16)); }
-	public void set_error_code(byte v) { log.finest(""); Native.putByte(pData+16, v); }
-	public byte get_request_code() { log.finest("");return (Native.getByte(pData+17)); }
-	public void set_request_code(byte v) { log.finest(""); Native.putByte(pData+17, v); }
-	public byte get_minor_code() { log.finest("");return (Native.getByte(pData+18)); }
-	public void set_minor_code(byte v) { log.finest(""); Native.putByte(pData+18, v); }
+	public long get_display() { log.finest("");return (Native.getLong(pData+((XlibWrapper.dataModel == 32)?(4):(8)))); }
+	public void set_display(long v) { log.finest(""); Native.putLong(pData+((XlibWrapper.dataModel == 32)?(4):(8)), v); }
+	public long get_resourceid() { log.finest("");return (Native.getLong(pData+((XlibWrapper.dataModel == 32)?(8):(16)))); }
+	public void set_resourceid(long v) { log.finest(""); Native.putLong(pData+((XlibWrapper.dataModel == 32)?(8):(16)), v); }
+	public long get_serial() { log.finest("");return (Native.getLong(pData+((XlibWrapper.dataModel == 32)?(12):(24)))); }
+	public void set_serial(long v) { log.finest(""); Native.putLong(pData+((XlibWrapper.dataModel == 32)?(12):(24)), v); }
+	public byte get_error_code() { log.finest("");return (Native.getByte(pData+((XlibWrapper.dataModel == 32)?(16):(32)))); }
+	public void set_error_code(byte v) { log.finest(""); Native.putByte(pData+((XlibWrapper.dataModel == 32)?(16):(32)), v); }
+	public byte get_request_code() { log.finest("");return (Native.getByte(pData+((XlibWrapper.dataModel == 32)?(17):(33)))); }
+	public void set_request_code(byte v) { log.finest(""); Native.putByte(pData+((XlibWrapper.dataModel == 32)?(17):(33)), v); }
+	public byte get_minor_code() { log.finest("");return (Native.getByte(pData+((XlibWrapper.dataModel == 32)?(18):(34)))); }
+	public void set_minor_code(byte v) { log.finest(""); Native.putByte(pData+((XlibWrapper.dataModel == 32)?(18):(34)), v); }
 
 
 	String getName() {

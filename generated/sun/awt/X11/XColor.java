@@ -8,7 +8,7 @@ import java.util.logging.*;
 public class XColor extends XWrapperBase { 
 	private Unsafe unsafe = XlibWrapper.unsafe; 
 	private final boolean should_free_memory;
-	public static int getSize() { return 12; }
+	public static int getSize() { return ((XlibWrapper.dataModel == 32)?(12):(16)); }
 	public int getDataSize() { return getSize(); }
 
 	long pData;
@@ -16,14 +16,14 @@ public class XColor extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	XColor(long addr) {
+	public XColor(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	XColor() {
+	public XColor() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;
@@ -39,16 +39,16 @@ public class XColor extends XWrapperBase {
 		}
 	public long get_pixel() { log.finest("");return (Native.getLong(pData+0)); }
 	public void set_pixel(long v) { log.finest(""); Native.putLong(pData+0, v); }
-	public short get_red() { log.finest("");return (Native.getShort(pData+4)); }
-	public void set_red(short v) { log.finest(""); Native.putShort(pData+4, v); }
-	public short get_green() { log.finest("");return (Native.getShort(pData+6)); }
-	public void set_green(short v) { log.finest(""); Native.putShort(pData+6, v); }
-	public short get_blue() { log.finest("");return (Native.getShort(pData+8)); }
-	public void set_blue(short v) { log.finest(""); Native.putShort(pData+8, v); }
-	public byte get_flags() { log.finest("");return (Native.getByte(pData+10)); }
-	public void set_flags(byte v) { log.finest(""); Native.putByte(pData+10, v); }
-	public byte get_pad() { log.finest("");return (Native.getByte(pData+11)); }
-	public void set_pad(byte v) { log.finest(""); Native.putByte(pData+11, v); }
+	public short get_red() { log.finest("");return (Native.getShort(pData+((XlibWrapper.dataModel == 32)?(4):(8)))); }
+	public void set_red(short v) { log.finest(""); Native.putShort(pData+((XlibWrapper.dataModel == 32)?(4):(8)), v); }
+	public short get_green() { log.finest("");return (Native.getShort(pData+((XlibWrapper.dataModel == 32)?(6):(10)))); }
+	public void set_green(short v) { log.finest(""); Native.putShort(pData+((XlibWrapper.dataModel == 32)?(6):(10)), v); }
+	public short get_blue() { log.finest("");return (Native.getShort(pData+((XlibWrapper.dataModel == 32)?(8):(12)))); }
+	public void set_blue(short v) { log.finest(""); Native.putShort(pData+((XlibWrapper.dataModel == 32)?(8):(12)), v); }
+	public byte get_flags() { log.finest("");return (Native.getByte(pData+((XlibWrapper.dataModel == 32)?(10):(14)))); }
+	public void set_flags(byte v) { log.finest(""); Native.putByte(pData+((XlibWrapper.dataModel == 32)?(10):(14)), v); }
+	public byte get_pad() { log.finest("");return (Native.getByte(pData+((XlibWrapper.dataModel == 32)?(11):(15)))); }
+	public void set_pad(byte v) { log.finest(""); Native.putByte(pData+((XlibWrapper.dataModel == 32)?(11):(15)), v); }
 
 
 	String getName() {

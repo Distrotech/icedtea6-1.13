@@ -16,14 +16,14 @@ public class XPoint extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	XPoint(long addr) {
+	public XPoint(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	XPoint() {
+	public XPoint() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;

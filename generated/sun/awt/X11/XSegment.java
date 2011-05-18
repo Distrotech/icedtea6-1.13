@@ -16,14 +16,14 @@ public class XSegment extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	XSegment(long addr) {
+	public XSegment(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	XSegment() {
+	public XSegment() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;

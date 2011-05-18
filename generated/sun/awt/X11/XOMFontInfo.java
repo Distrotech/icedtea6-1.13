@@ -8,7 +8,7 @@ import java.util.logging.*;
 public class XOMFontInfo extends XWrapperBase { 
 	private Unsafe unsafe = XlibWrapper.unsafe; 
 	private final boolean should_free_memory;
-	public static int getSize() { return 12; }
+	public static int getSize() { return ((XlibWrapper.dataModel == 32)?(12):(24)); }
 	public int getDataSize() { return getSize(); }
 
 	long pData;
@@ -16,14 +16,14 @@ public class XOMFontInfo extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	XOMFontInfo(long addr) {
+	public XOMFontInfo(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	XOMFontInfo() {
+	public XOMFontInfo() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;
@@ -39,12 +39,12 @@ public class XOMFontInfo extends XWrapperBase {
 		}
 	public int get_num_font() { log.finest("");return (Native.getInt(pData+0)); }
 	public void set_num_font(int v) { log.finest(""); Native.putInt(pData+0, v); }
-	public long get_font_struct_list(int index) { log.finest(""); return Native.getLong(pData+4)+index*Native.getLongSize(); }
-	public long get_font_struct_list() { log.finest("");return Native.getLong(pData+4); }
-	public void set_font_struct_list(long v) { log.finest(""); Native.putLong(pData + 4, v); }
-	public long get_font_name_list(int index) { log.finest(""); return Native.getLong(pData+8)+index*Native.getLongSize(); }
-	public long get_font_name_list() { log.finest("");return Native.getLong(pData+8); }
-	public void set_font_name_list(long v) { log.finest(""); Native.putLong(pData + 8, v); }
+	public long get_font_struct_list(int index) { log.finest(""); return Native.getLong(pData+((XlibWrapper.dataModel == 32)?(4):(8)))+index*Native.getLongSize(); }
+	public long get_font_struct_list() { log.finest("");return Native.getLong(pData+((XlibWrapper.dataModel == 32)?(4):(8))); }
+	public void set_font_struct_list(long v) { log.finest(""); Native.putLong(pData + ((XlibWrapper.dataModel == 32)?(4):(8)), v); }
+	public long get_font_name_list(int index) { log.finest(""); return Native.getLong(pData+((XlibWrapper.dataModel == 32)?(8):(16)))+index*Native.getLongSize(); }
+	public long get_font_name_list() { log.finest("");return Native.getLong(pData+((XlibWrapper.dataModel == 32)?(8):(16))); }
+	public void set_font_name_list(long v) { log.finest(""); Native.putLong(pData + ((XlibWrapper.dataModel == 32)?(8):(16)), v); }
 
 
 	String getName() {

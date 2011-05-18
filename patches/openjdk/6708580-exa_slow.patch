@@ -1,0 +1,103 @@
+# HG changeset patch
+# User tdv
+# Date 1228418486 28800
+# Node ID 15435c60c751bc39af2fc6b3a30744c6713db1de
+# Parent  c8eea39734e85b50977434a5b37b3eb8ac8c0a59
+6708580: Java applications slow when EXA enabled
+Reviewed-by: prr, tdv
+Contributed-by: ceisserer <linuxhippy@gmail.com>
+
+diff -r c8eea39734e8 -r 15435c60c751 make/sun/awt/mapfile-mawt-vers
+--- openjdk.orig/jdk/make/sun/awt/mapfile-mawt-vers	Thu Dec 04 10:05:36 2008 -0800
++++ openjdk/jdk/make/sun/awt/mapfile-mawt-vers	Thu Dec 04 11:21:26 2008 -0800
+@@ -407,6 +407,7 @@
+ 		Java_sun_java2d_x11_X11SurfaceData_initSurface;
+ 		Java_sun_java2d_x11_X11SurfaceData_isDrawableValid;
+ 		Java_sun_java2d_x11_X11SurfaceData_isDgaAvailable;
++		Java_sun_java2d_x11_X11SurfaceData_isShmPMAvailable;
+ 		Java_sun_java2d_x11_X11SurfaceData_setInvalid;
+ 		Java_sun_java2d_x11_X11SurfaceData_flushNativeSurface;
+                 Java_sun_java2d_x11_X11SurfaceData_XCreateGC;
+diff -r c8eea39734e8 -r 15435c60c751 make/sun/xawt/mapfile-vers
+--- openjdk.orig/jdk/make/sun/xawt/mapfile-vers	Thu Dec 04 10:05:36 2008 -0800
++++ openjdk/jdk/make/sun/xawt/mapfile-vers	Thu Dec 04 11:21:26 2008 -0800
+@@ -337,6 +337,7 @@
+         Java_sun_java2d_x11_X11SurfaceData_initIDs;
+ 	Java_sun_java2d_x11_X11SurfaceData_isDrawableValid;
+         Java_sun_java2d_x11_X11SurfaceData_isDgaAvailable;
++	Java_sun_java2d_x11_X11SurfaceData_isShmPMAvailable;
+         Java_sun_java2d_x11_X11SurfaceData_initOps;
+         Java_sun_java2d_x11_X11SurfaceData_initSurface;
+         Java_sun_java2d_x11_X11SurfaceData_flushNativeSurface;
+diff -r c8eea39734e8 -r 15435c60c751 src/solaris/classes/sun/java2d/x11/X11SurfaceData.java
+--- openjdk.orig/jdk/src/solaris/classes/sun/java2d/x11/X11SurfaceData.java	Thu Dec 04 10:05:36 2008 -0800
++++ openjdk/jdk/src/solaris/classes/sun/java2d/x11/X11SurfaceData.java	Thu Dec 04 11:21:26 2008 -0800
+@@ -50,6 +50,7 @@
+ import sun.font.X11TextRenderer;
+ import sun.java2d.InvalidPipeException;
+ import sun.java2d.SunGraphics2D;
++import sun.java2d.SunGraphicsEnvironment;
+ import sun.java2d.SurfaceData;
+ import sun.java2d.SurfaceDataProxy;
+ import sun.java2d.loops.SurfaceType;
+@@ -240,6 +241,11 @@
+      */
+     public static native boolean isDgaAvailable();
+ 
++    /**
++     * Returns true if shared memory pixmaps are available
++     */
++    private static native boolean isShmPMAvailable();
++
+     public static boolean isAccelerationEnabled() {
+         if (accelerationEnabled == null) {
+ 
+@@ -253,8 +259,17 @@
+                     // true iff prop==true, false otherwise
+                     accelerationEnabled = Boolean.valueOf(prop);
+                 } else {
+-                    // use pixmaps if there is no dga, no matter local or remote
+-                    accelerationEnabled = Boolean.valueOf(!isDgaAvailable());
++                    boolean isDisplayLocal = false;
++                    GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
++                    if (ge instanceof SunGraphicsEnvironment) {
++                        isDisplayLocal = ((SunGraphicsEnvironment) ge).isDisplayLocal();
++                     }
++
++                    // EXA based drivers tend to place pixmaps in VRAM, slowing down readbacks.
++                    // Don't use pixmaps if dga is available,
++                    // or we are local and shared memory Pixmaps are not available.
++                    accelerationEnabled =
++                        !(isDgaAvailable() || (isDisplayLocal && !isShmPMAvailable()));
+                 }
+             }
+         }
+diff -r c8eea39734e8 -r 15435c60c751 src/solaris/native/sun/java2d/x11/X11SurfaceData.c
+--- openjdk.orig/jdk/src/solaris/native/sun/java2d/x11/X11SurfaceData.c	Thu Dec 04 10:05:36 2008 -0800
++++ openjdk/jdk/src/solaris/native/sun/java2d/x11/X11SurfaceData.c	Thu Dec 04 11:21:26 2008 -0800
+@@ -208,6 +208,23 @@
+ #endif /* HEADLESS */
+ }
+ 
++
++/*
++ * Class:     sun_java2d_x11_X11SurfaceData
++ * Method:    isShmPMAvailable
++ * Signature: ()Z
++ */
++JNIEXPORT jboolean JNICALL
++Java_sun_java2d_x11_X11SurfaceData_isShmPMAvailable(JNIEnv *env, jobject this)
++{
++#if defined(HEADLESS) || !defined(MITSHM)
++    return JNI_FALSE;
++#else
++    return useMitShmPixmaps;
++#endif /* HEADLESS, MITSHM */
++}
++
++
+ /*
+  * Class:     sun_java2d_x11_X11SurfaceData
+  * Method:    initOps
+exporting patch:
+<fdopen>

@@ -16,14 +16,14 @@ public class XArc extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	XArc(long addr) {
+	public XArc(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	XArc() {
+	public XArc() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;

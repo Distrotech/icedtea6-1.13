@@ -1,0 +1,71 @@
+
+# HG changeset patch
+# User iveresov
+# Date 1303843594 25200
+# Node ID c303b3532d4ada074facc42292219952c2a4204e
+# Parent d6cdc6c77582408f6450bdda3ffc831d44298714
+7037939: NUMA: Disable adaptive resizing if SHM large pages are used
+Summary: Make the NUMA allocator behave properly with SHM and ISM large pages.
+Reviewed-by: ysr
+
+--- openjdk.patched/hotspot/src/os/linux/vm/os_linux.cpp	Sat Apr 23 04:20:09 2011 -0700
++++ openjdk/hotspot/src/os/linux/vm/os_linux.cpp	Tue Apr 26 11:46:34 2011 -0700
+@@ -4170,6 +4170,23 @@ jint os::init_2(void)
+         UseNUMA = false;
+       }
+     }
++    // With SHM large pages we cannot uncommit a page, so there's not way
++    // we can make the adaptive lgrp chunk resizing work. If the user specified
++    // both UseNUMA and UseLargePages (or UseSHM) on the command line - warn and
++    // disable adaptive resizing.
++    if (UseNUMA && UseLargePages && UseSHM) {
++      if (!FLAG_IS_DEFAULT(UseNUMA)) {
++        if (FLAG_IS_DEFAULT(UseLargePages) && FLAG_IS_DEFAULT(UseSHM)) {
++          UseLargePages = false;
++        } else {
++          warning("UseNUMA is not fully compatible with SHM large pages, disabling adaptive resizing");
++          UseAdaptiveSizePolicy = false;
++          UseAdaptiveNUMAChunkSizing = false;
++        }
++      } else {
++        UseNUMA = false;
++      }
++    }
+     if (!UseNUMA && ForceNUMA) {
+       UseNUMA = true;
+     }
+--- openjdk.patched/hotspot/src/os/solaris/vm/os_solaris.cpp	Sat Apr 23 04:20:09 2011 -0700
++++ openjdk/hotspot/src/os/solaris/vm/os_solaris.cpp	Tue Apr 26 11:46:34 2011 -0700
+@@ -2826,7 +2826,9 @@ void os::realign_memory(char *addr, size
+ void os::realign_memory(char *addr, size_t bytes, size_t alignment_hint) {
+   assert((intptr_t)addr % alignment_hint == 0, "Address should be aligned.");
+   assert((intptr_t)(addr + bytes) % alignment_hint == 0, "End should be aligned.");
+-  Solaris::set_mpss_range(addr, bytes, alignment_hint);
++  if (UseLargePages && UseMPSS) {
++    Solaris::set_mpss_range(addr, bytes, alignment_hint);
++  }
+ }
+ 
+ // Tell the OS to make the range local to the first-touching LWP
+@@ -5041,6 +5043,20 @@ jint os::init_2(void) {
+       FREE_C_HEAP_ARRAY(int, lgrp_ids);
+       if (lgrp_num < 2) {
+         // There's only one locality group, disable NUMA.
++        UseNUMA = false;
++      }
++    }
++    // ISM is not compatible with the NUMA allocator - it always allocates
++    // pages round-robin across the lgroups.
++    if (UseNUMA && UseLargePages && UseISM) {
++      if (!FLAG_IS_DEFAULT(UseNUMA)) {
++        if (FLAG_IS_DEFAULT(UseLargePages) && FLAG_IS_DEFAULT(UseISM)) {
++          UseLargePages = false;
++        } else {
++          warning("UseNUMA is not compatible with ISM large pages, disabling NUMA allocator");
++          UseNUMA = false;
++        }
++      } else {
+         UseNUMA = false;
+       }
+     }
+

@@ -8,7 +8,7 @@ import java.util.logging.*;
 public class XIMPreeditDrawCallbackStruct extends XWrapperBase { 
 	private Unsafe unsafe = XlibWrapper.unsafe; 
 	private final boolean should_free_memory;
-	public static int getSize() { return 16; }
+	public static int getSize() { return ((XlibWrapper.dataModel == 32)?(16):(24)); }
 	public int getDataSize() { return getSize(); }
 
 	long pData;
@@ -16,14 +16,14 @@ public class XIMPreeditDrawCallbackStruct extends XWrapperBase {
 	public long getPData() { return pData; }
 
 
-	XIMPreeditDrawCallbackStruct(long addr) {
+	public XIMPreeditDrawCallbackStruct(long addr) {
 		log.finest("Creating");
 		pData=addr;
 		should_free_memory = false;
 	}
 
 
-	XIMPreeditDrawCallbackStruct() {
+	public XIMPreeditDrawCallbackStruct() {
 		log.finest("Creating");
 		pData = unsafe.allocateMemory(getSize());
 		should_free_memory = true;
@@ -43,9 +43,9 @@ public class XIMPreeditDrawCallbackStruct extends XWrapperBase {
 	public void set_chg_first(int v) { log.finest(""); Native.putInt(pData+4, v); }
 	public int get_chg_length() { log.finest("");return (Native.getInt(pData+8)); }
 	public void set_chg_length(int v) { log.finest(""); Native.putInt(pData+8, v); }
-	public XIMText get_text(int index) { log.finest(""); return (Native.getLong(pData+12) != 0)?(new XIMText(Native.getLong(pData+12)+index*16)):(null); }
-	public long get_text() { log.finest("");return Native.getLong(pData+12); }
-	public void set_text(long v) { log.finest(""); Native.putLong(pData + 12, v); }
+	public XIMText get_text(int index) { log.finest(""); return (Native.getLong(pData+((XlibWrapper.dataModel == 32)?(12):(16))) != 0)?(new XIMText(Native.getLong(pData+((XlibWrapper.dataModel == 32)?(12):(16)))+index*((XlibWrapper.dataModel == 32)?(16):(32)))):(null); }
+	public long get_text() { log.finest("");return Native.getLong(pData+((XlibWrapper.dataModel == 32)?(12):(16))); }
+	public void set_text(long v) { log.finest(""); Native.putLong(pData + ((XlibWrapper.dataModel == 32)?(12):(16)), v); }
 
 
 	String getName() {
