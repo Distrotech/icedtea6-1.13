@@ -200,6 +200,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6637796-set_bounds.patch \
 	patches/openjdk/6607660-treelock.patch \
 	patches/openjdk/6607170-request_focus.patch \
+	patches/openjdk/4685768-focus.patch \
 	patches/openjdk/6616323-component_array.patch \
 	patches/openjdk/6682046-shape_calculation.patch \
 	patches/openjdk/6797195-hw_lw_mixing.patch \
