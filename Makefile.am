@@ -1952,6 +1952,7 @@ ADD_ZERO_CONFIGURE_ARGS += \
 	--disable-docs \
 	$(filter-out '--with-jdk-home=% '--with-ecj=% \
 			'--with-java=% '--with-javah=% \
+			'--with-javac=% '--with-javac=% \
 			'--with-rmic=% '--with-additional-vms=% \
 			'--with-openjdk '--with-openjdk=% , \
 		$(CONFIGURE_ARGS)) \
