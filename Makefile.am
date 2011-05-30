@@ -333,7 +333,6 @@ ICEDTEA_PATCHES = \
 	patches/revert-6885123.patch \
 	patches/hotspot/$(HSBUILD)/7032388-work_without_cmov_instruction.patch \
 	patches/openjdk/7031385-gcc-register-allocation-fix.patch \
-	patches/openjdk/7036220-shark_llvm_29_headers.patch \
 	patches/openjdk/6986968-crash_on_xim_restart.patch \
 	patches/openjdk/7036754-stroker-nan.patch \
 	patches/openjdk/pgram-pipe-regression.patch \
@@ -347,7 +346,8 @@ ICEDTEA_PATCHES += \
 	patches/pr639-broken_shark_build.patch \
 	patches/hotspot/$(HSBUILD)/powerpc-stacksize.patch \
 	patches/jtreg-remove-test-6987555.patch \
-	patches/jtreg-remove-test-6991596.patch
+	patches/jtreg-remove-test-6991596.patch \
+	patches/hotspot/$(HSBUILD)/7036220-shark_llvm_29_headers.patch
 else
 ICEDTEA_PATCHES += \
 	patches/hotspot/$(HSBUILD)/no-precompiled-headers.patch \
