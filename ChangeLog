@@ -1,3 +1,41 @@
+2011-05-30  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/openjdk/7036220-shark_llvm_29_headers.patch:
+	Moved to...
+	* Makefile.am: Only apply 7036220 to hs20.
+	* patches/hotspot/hs20/7036220-shark_llvm_29_headers.patch:
+	...here.
+
+2011-05-28  Matthias Klose  <doko@ubuntu.com>
+
+	* Makefile.am (ADD_ZERO_CONFIGURE_ARGS): Filter-out --with-javac.
+
+2011-05-27  Xerxes Rånby  <xranby@zafena.se>
+
+	JamVM
+	- Fix leak of native thread structure.
+	- Consistent naming for classlib functions.
+	- Add extra includes to get rid off compiler warning.
+	- Rework OpenJDK storage of native thread structure.
+	- Implement remaining OpenJDK Array reflection interface.
+	* NEWS: Updated.
+	* Makefile.am
+	(JAMVM_VERSION): Updated JamVM to 2011-04-28 revision.
+	(JAMVM_SHA256SUM): Updated.
+
+2011-05-19  Denis Lila <dlila@redhat.com>
+
+	* Makefile.am: Apply patch.
+	* NEWS: Update with backport.
+	* patches/openjdk/4685768-focus.patchpatch: The restore focus
+	procedure now skips disabled components.
+
+2011-05-19  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* patches/jtreg-6929067-fix.patch: Test enhancement -
+	make the test compatible with OpenJDK7/IcedTea7, disabling printing
+	unnecessary information to error output.
+
 2011-05-18  Andrew John Hughes  <ahughes@redhat.com>
 
 	* patches/hotspot/hs20/7032388-work_without_cmov_instruction.patch,

@@ -29,6 +29,7 @@ New in release 1.11 (2011-XX-XX):
   - S7042040: Remove disk space sanity check
   - S7043054: REGRESSION - wrong userBounds in Paint.createContext()
   - S7043963, RH698295: Window manager workaround in AWT was not applied to mutter. Now it is.
+  - S4685768: Focus set to disabled component, can't Tab/Shift-Tab 
 * Bug fixes
   - PR637: make check should exit with an error code if any regression test failed.
   - G356743: Support libpng 1.5.
@@ -46,6 +47,11 @@ New in release 1.11 (2011-XX-XX):
   - CA156: uncaughtExceptionHandler doesn't work with OpenJDK 6 b21.
   - CA157: ARM SMP Assertion thinlock failed.
 * JamVM
+  - Fix leak of native thread structure.
+  - Consistent naming for classlib functions.
+  - Add extra includes to get rid off compiler warning.
+  - Rework OpenJDK storage of native thread structure.
+  - Implement remaining OpenJDK Array reflection interface.
   - Ignore all unknown options.
   - Handle overflow in getPhysicalMemory().
   - Base default min and max heap size on physical memory.

@@ -11,8 +11,8 @@ CACAO_BASE_URL = http://icedtea.classpath.org/download/drops/cacao
 CACAO_URL = $(CACAO_BASE_URL)/$(CACAO_VERSION).tar.gz
 CACAO_SRC_ZIP = cacao-$(CACAO_VERSION).tar.gz
 
-JAMVM_VERSION = a95ca049d3bb257d730535a5d5ec3f73a943d0aa
-JAMVM_SHA256SUM = 18bb5c97c03fb73f70b481440e3e11803448d327c024d4570a338b899693fefd
+JAMVM_VERSION = 2e52a601883dda84c824b43363c02881def3e06d
+JAMVM_SHA256SUM = b26bc67ddfb50c98761aa4939254470ec9a8f88e9a22628b858603099a784af8
 JAMVM_BASE_URL = http://icedtea.classpath.org/download/drops/jamvm
 JAMVM_URL = $(JAMVM_BASE_URL)/jamvm-$(JAMVM_VERSION).tar.gz
 JAMVM_SRC_ZIP = jamvm-$(JAMVM_VERSION).tar.gz
@@ -194,6 +194,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6637796-set_bounds.patch \
 	patches/openjdk/6607660-treelock.patch \
 	patches/openjdk/6607170-request_focus.patch \
+	patches/openjdk/4685768-focus.patch \
 	patches/openjdk/6616323-component_array.patch \
 	patches/openjdk/6682046-shape_calculation.patch \
 	patches/openjdk/6797195-hw_lw_mixing.patch \
@@ -319,7 +320,6 @@ ICEDTEA_PATCHES = \
 	patches/revert-6885123.patch \
 	patches/openjdk/7032388-work_without_cmov_instruction.patch \
 	patches/openjdk/7031385-gcc-register-allocation-fix.patch \
-	patches/openjdk/7036220-shark_llvm_29_headers.patch \
 	patches/openjdk/6986968-crash_on_xim_restart.patch \
 	patches/openjdk/7036754-stroker-nan.patch \
 	patches/openjdk/pgram-pipe-regression.patch \
@@ -330,7 +330,8 @@ ICEDTEA_PATCHES = \
 	patches/pr639-broken_shark_build.patch \
 	patches/powerpc-stacksize.patch \
 	patches/jtreg-remove-test-6987555.patch \
-	patches/jtreg-remove-test-6991596.patch
+	patches/jtreg-remove-test-6991596.patch \
+	patches/openjdk/7036220-shark_llvm_29_headers.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -1928,6 +1929,7 @@ ADD_ZERO_CONFIGURE_ARGS += \
 	--disable-docs \
 	$(filter-out '--with-jdk-home=% '--with-ecj=% \
 			'--with-java=% '--with-javah=% \
+			'--with-javac=% '--with-javac=% \
 			'--with-rmic=% '--with-additional-vms=% \
 			'--with-openjdk '--with-openjdk=% , \
 		$(CONFIGURE_ARGS)) \
