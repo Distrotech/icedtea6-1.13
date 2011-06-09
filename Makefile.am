@@ -195,6 +195,8 @@ endif
 
 ICEDTEA_PATCHES = \
 	$(SECURITY_PATCHES) \
+	patches/openjdk/6578583-modality-broken-vista.patch \
+	patches/openjdk/6610244-modal-fatal-error-windows.patch \
 	patches/stdc-limit-macros.patch \
 	patches/openjdk/4993545-nativeinlightfixer.patch \
 	patches/openjdk/6637796-set_bounds.patch \
@@ -207,6 +209,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6725214-direct3d-01.patch \
 	patches/openjdk/6748082-isDisplayLocal.patch \
 	patches/openjdk/6633275-shaped_translucent_windows.patch \
+	patches/openjdk/6769607-modal-hangs.patch \
         patches/openjdk/6791612-opengl-jni-fix.patch \
         patches/openjdk/6755274-glgetstring-crash.patch \
         patches/openjdk/6984543-onscreen_rendering_resize_test.patch \

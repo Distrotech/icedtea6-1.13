@@ -1,3 +1,18 @@
+2011-06-06  Denis Lila <dlila@redhat.com>
+
+	* Makefile.am: Apply patches.
+	* NEWS: Update with backports.
+	* patches/openjdk/6578583-modality-broken-vista.patch:
+	* patches/openjdk/6610244-modal-fatal-error-windows.patch:
+	* patches/openjdk/6769607-modal-hangs.patch:
+	New patches. The last fixes PR677. The other two are
+	necessary for the last to fully apply.
+	* patches/openjdk/6693253-security_warning.patch:
+	Replsace the awt_Dialog.cpp hunk with the corresponding hunk
+	from the OpenJDK7 changeset of which this patch is a backport.
+	Without this change, this patch doesn't apply unless the
+	previous 3 are removed.
+
 2011-05-30  Andrew John Hughes  <ahughes@redhat.com>
 
 	* patches/openjdk/7036220-shark_llvm_29_headers.patch:
