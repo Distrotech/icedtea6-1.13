@@ -13,6 +13,14 @@
 	Without this change, this patch doesn't apply unless the
 	previous 3 are removed.
 
+2011-06-09  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: Added new patch
+	* patches/fonts-rhel-version.patch:
+	Patch which ensures, that only one fontconfig file
+	will be needed on particular RHEL version
+	(ie. only one file for RHEL 6.0, RHEL 6.1 and RHEL 6.2)
+
 2011-05-30  Andrew John Hughes  <ahughes@redhat.com>
 
 	* patches/openjdk/7036220-shark_llvm_29_headers.patch:
