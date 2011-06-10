@@ -186,7 +186,15 @@ REWRITER_SRCS = $(abs_top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.jav
 
 ICEDTEA_FSG_PATCHES =
 
-SECURITY_PATCHES = 
+SECURITY_PATCHES = patches/security/20110607/6213702.patch \
+	patches/security/20110607/6618658.patch \
+	patches/security/20110607/7012520.patch \
+	patches/security/20110607/7013519.patch \
+	patches/security/20110607/7013969.patch \
+	patches/security/20110607/7013971.patch \
+	patches/security/20110607/7016495.patch \
+	patches/security/20110607/7020198.patch \
+	patches/security/20110607/7020373.patch
 
 if WITH_ALT_HSBUILD
 SECURITY_PATCHES += \
