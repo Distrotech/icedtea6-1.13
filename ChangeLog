@@ -5,6 +5,17 @@
 	* patches/openjdk/7036148-npe-null-jmenu-name.patch:
 	Backport of S7036148. Fixes RH712211 too.
 
+2011-06-13  Danesh Dadachanji  <ddadacha@redhat.com>
+
+	* AUTHORS: Added myself. 
+	* Makefile.am: Use explicit xml-commons locations if necessary.
+	* acinclude.m4: Added explicit xml-commons check.
+	(IT_CHECK_IF_INSTANTIABLE): Added generic macro to instantiate any
+	class. Paramaters are the define, name of the class, paramaters
+	for instatiation and (optional) classpath.
+	* configure.ac: Invoke IT_FIND_XML_COMMONS_APIS_JAR macro after
+	IT_FIND_XERCES2_JAR, assigns XML_COMMONS_APIS_JAR if necessary.
+
 2011-05-23  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am: Add security patches.
