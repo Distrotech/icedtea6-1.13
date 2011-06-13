@@ -725,6 +725,41 @@ AC_DEFUN([IT_FIND_XERCES2_JAR],
   AC_SUBST(XERCES2_JAR)
 ])
 
+AC_DEFUN([IT_FIND_XML_COMMONS_APIS_JAR],
+[
+  AC_MSG_CHECKING([for an xml-commons-apis jar])
+  AC_ARG_WITH([xml-commons-apis-jar],
+              [AS_HELP_STRING(--with-xml-commons-apis-jar,specify location of the xml-commons-apis jar)],
+  [
+    if test -f "${withval}" || test -h "${withval}" ; then
+      XML_COMMONS_APIS_JAR="${withval}"
+    fi
+  ],
+  [
+    XML_COMMONS_APIS_JAR=
+  ])
+  if test -z "${XML_COMMONS_APIS_JAR}"; then
+    if test -e "/usr/share/java/xml-commons-apis.jar"; then
+      XML_COMMONS_APIS_JAR=/usr/share/java/xml-commons-apis.jar
+    elif test -e "/usr/share/xml-commons/lib/xml-apis.jar"; then
+      XML_COMMONS_APIS_JAR=/usr/share/xml-commons/lib/xml-apis.jar
+    elif test -e "/usr/share/java/xml-apis-ext.jar";  then
+      XML_COMMONS_APIS_JAR=/usr/share/java/xml-apis-ext.jar
+    elif test -e "/usr/share/java/xml-commons-external.jar";  then
+      XML_COMMONS_APIS_JAR=/usr/share/java/xml-commons-external.jar
+    elif test -e "/usr/share/java/apache-xml-commons-apis.jar";  then
+      XML_COMMONS_APIS_JAR=/usr/share/java/apache-xml-commons-apis.jar
+    else
+      AC_MSG_RESULT(no)
+    fi
+  fi
+  if test -z "${XML_COMMONS_APIS_JAR}"; then
+    AC_MSG_ERROR("An xml-commons-apis jar was not found.")
+  fi
+  AC_MSG_RESULT(${XML_COMMONS_APIS_JAR})
+  AC_SUBST(XML_COMMONS_APIS_JAR)
+])
+
 AC_DEFUN([IT_FIND_RHINO_JAR],
 [
   AC_MSG_CHECKING([whether to include Javascript support via Rhino])
@@ -1371,6 +1406,63 @@ rm -f $CLASS *.class
 cd ..
 rmdir tmp.$$
 AM_CONDITIONAL([LACKS_$1], test x"${it_cv_$1}" = "xyes")
+AC_PROVIDE([$0])dnl
+])
+
+dnl Generic macro to instantiate a Java class
+dnl Takes three arguments: the name of the macro,
+dnl the name of the class and the instantiation
+dnl paramaters.  The macro name is usually the 
+dnl name of the class with '.' replaced by '_' 
+dnl and all letters capitalised.
+dnl Also takes optional classpath paramater.
+dnl e.g. IT_CHECK_FOR_INSTANTIABLE_CLASS([JAVA_LANG_INTEGER],
+dnl        [java.lang.Integer],[0],[./bin])
+AC_DEFUN([IT_CHECK_IF_INSTANTIABLE],[
+AC_CACHE_CHECK([if $2 is instantiable], it_cv_$1, [
+CLASS=Test.java
+BYTECODE=$(echo $CLASS|sed 's#\.java##')
+mkdir tmp.$$
+cd tmp.$$
+cat << \EOF > $CLASS
+[/* [#]line __oline__ "configure" */
+public class Test
+{
+  public static void main(String[] args)
+  {
+    new $2($3);
+  }
+}
+]
+EOF
+
+if test -z $4; then
+  WITH_CLASSPATH=.
+else
+  WITH_CLASSPATH=$4:.
+fi
+
+if $JAVAC -cp $WITH_CLASSPATH $JAVACFLAGS -nowarn $CLASS >&AS_MESSAGE_LOG_FD 2>&1; then
+  if $JAVA -classpath $WITH_CLASSPATH $BYTECODE >&AS_MESSAGE_LOG_FD 2>&1; then
+    it_cv_$1=yes;
+  else
+    it_cv_$1=no;
+  fi
+else
+  it_cv_$1=no;
+fi
+])
+rm -f $CLASS *.class
+cd ..
+rmdir tmp.$$
+
+if test x"${it_cv_$1}" = "xyes"
+then
+  $1_INSTANTIABLE=yes
+else
+  $1_INSTANTIABLE=no
+fi
+AM_CONDITIONAL([LACKS_$1], test x"${it_cv_$1}" = "xno")
 AC_PROVIDE([$0])dnl
 ])
 
