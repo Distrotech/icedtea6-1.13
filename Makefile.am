@@ -352,7 +352,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7043564-hugepage.patch \
 	patches/openjdk/mutter.patch \
 	patches/fonts-rhel-version.patch \
-	patches/jtreg-ChangeDir.patch
+	patches/jtreg-ChangeDir.patch \
+	patches/jtreg-TempBuffer.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
