@@ -354,7 +354,8 @@ ICEDTEA_PATCHES = \
 	patches/fonts-rhel-version.patch \
 	patches/openjdk/7036148-npe-null-jmenu-name.patch \
 	patches/jtreg-ChangeDir.patch \
-	patches/jtreg-TempBuffer.patch
+	patches/jtreg-TempBuffer.patch \
+	patches/jtreg-EncodedMultiByteChar.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
