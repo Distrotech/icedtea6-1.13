@@ -352,7 +352,9 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7043564-hugepage.patch \
 	patches/openjdk/mutter.patch \
 	patches/fonts-rhel-version.patch \
-	patches/openjdk/7036148-npe-null-jmenu-name.patch
+	patches/openjdk/7036148-npe-null-jmenu-name.patch \
+	patches/jtreg-ChangeDir.patch \
+	patches/jtreg-TempBuffer.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
@@ -1284,12 +1286,7 @@ stamps/bootstrap-directory-ecj.stamp: stamps/native-ecj.stamp
 	ln -sf $(XALAN2_JAR) $(ECJ_BOOT_DIR)/lib/endorsed/xalan-j2.jar && \
 	ln -sf $(XALAN2_SERIALIZER_JAR) \
 	  $(ECJ_BOOT_DIR)/lib/endorsed/xalan-j2-serializer.jar && \
-	ln -sf $(XERCES2_JAR) $(ECJ_BOOT_DIR)/lib/endorsed/xerces-j2.jar && \
-	if test -n "$(XML_COMMONS_APIS_JAR)"; \
-		then \
-		ln -sf $(XML_COMMONS_APIS_JAR) \
-			$(ECJ_BOOT_DIR)/lib/endorsed/xml-commons-apis.jar; \
-	fi
+	ln -sf $(XERCES2_JAR) $(ECJ_BOOT_DIR)/lib/endorsed/xerces-j2.jar
 	mkdir -p $(ECJ_BOOT_DIR)/jre/lib && \
 	cp $(SYSTEM_JDK_DIR)/jre/lib/rt.jar $(ECJ_BOOT_DIR)/jre/lib/rt.jar && \
 	ln -sf $(SYSTEM_JDK_DIR)/jre/lib/$(JRE_ARCH_DIR) \

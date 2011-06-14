@@ -159,15 +159,6 @@ if test "x$enable_bootstrap" = "xyes"; then
   IT_FIND_XALAN2_JAR
   IT_FIND_XALAN2_SERIALIZER_JAR
   IT_FIND_XERCES2_JAR
-  IT_CHECK_IF_INSTANTIABLE([ORG_APACHE_XERCES_DOM_DEFERREDDOCUMENTIMPL],
-[org.apache.xerces.dom.DeferredDocumentImpl],[],
-[$XALAN2_JAR:$XALAN2_SERIALIZER_JAR:$XERCES2_JAR])
-  if test x"${ORG_APACHE_XERCES_DOM_DEFERREDDOCUMENTIMPL_INSTANTIABLE}" = "xno"
-  then
-    IT_FIND_XML_COMMONS_APIS_JAR
-  else
-    XML_COMMONS_APIS_JAR=
-  fi
 fi
 AC_CONFIG_FILES([javac], [chmod +x javac])
 AC_CONFIG_FILES([javap], [chmod +x javap])

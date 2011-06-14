@@ -1,0 +1,61 @@
+--- openjdk.orig/jdk/test/sun/nio/ch/TempBuffer_orig.java	2011-02-28 17:07:06.000000000 +0100
++++ openjdk/jdk/test/sun/nio/ch/TempBuffer.java	2011-06-13 15:10:29.000000000 +0200
+@@ -48,18 +48,29 @@
+ 
+         Thread writerThread = new Thread() {
+             public void run() {
++                File blah = null;
+                 try {
+                     OutputStream out = Channels.newOutputStream(sinkChannel);
+-                    File blah = File.createTempFile("blah1", null);
++                    blah = File.createTempFile("blah1", null);
+                     blah.deleteOnExit();
+                     TempBuffer.initTestFile(blah);
+                     RandomAccessFile raf = new RandomAccessFile(blah, "rw");
+                     FileChannel fs = raf.getChannel();
+-                    fs.transferTo(0, SIZE, Channels.newChannel(out));
++                    try {
++                        fs.transferTo(0, SIZE, Channels.newChannel(out));
++                    } finally {
++                        fs.close();
++                        raf.close();
++                    }
+                     out.flush();
+                 } catch (IOException ioe) {
+                     throw new RuntimeException(ioe);
+                 }
++                finally {
++                    if (blah != null) {
++                        blah.delete();
++                    }
++                }
+             }
+         };
+ 
+@@ -70,9 +81,16 @@
+         blah.deleteOnExit();
+         RandomAccessFile raf = new RandomAccessFile(blah, "rw");
+         FileChannel fs = raf.getChannel();
+-        raf.setLength(SIZE);
+-        fs.transferFrom(Channels.newChannel(in), 0, SIZE);
+-        fs.close();
++        try {
++            raf.setLength(SIZE);
++            fs.transferFrom(Channels.newChannel(in), 0, SIZE);
++        } finally {
++            fs.close();
++        }
++
++        sourceChannel.close();
++        sinkChannel.close();
++        blah.delete();
+     }
+ 
+     private static void initTestFile(File blah) throws IOException {
+@@ -89,5 +107,6 @@
+         }
+        awriter.flush();
+        awriter.close();
++       fos.close();
+     }
+ }
