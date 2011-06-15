@@ -355,7 +355,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7036148-npe-null-jmenu-name.patch \
 	patches/jtreg-ChangeDir.patch \
 	patches/jtreg-TempBuffer.patch \
-	patches/jtreg-EncodedMultiByteChar.patch
+	patches/jtreg-EncodedMultiByteChar.patch \
+	patches/jtreg-FileLoaderTest.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \

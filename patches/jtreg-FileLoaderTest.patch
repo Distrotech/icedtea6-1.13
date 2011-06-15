@@ -1,0 +1,36 @@
+--- openjdk.orig/jdk/test/sun/misc/URLClassPath/FileLoaderTest.java	2011-02-28 17:07:05.000000000 +0100
++++ openjdk/jdk/test/sun/misc/URLClassPath/FileLoaderTest.java	2011-06-14 16:49:57.000000000 +0200
+@@ -31,16 +31,24 @@
+ 
+ public class FileLoaderTest {
+   public static void main (String args[]) throws Exception {
+-      File tempFile = File.createTempFile("foo", ".txt");
+-      tempFile.deleteOnExit();
+-      String basestr = tempFile.toURL().toString();
+-      basestr = basestr.substring(0, basestr.lastIndexOf("/")+1);
+-      URL url = new URL(basestr+"."+"/");
++      File tempFile = null;
++      try
++      {
++          tempFile = File.createTempFile("foo", ".txt");
++          String basestr = tempFile.toURL().toString();
++          basestr = basestr.substring(0, basestr.lastIndexOf("/")+1);
++          URL url = new URL(basestr+"."+"/");
+ 
+-      ClassLoader cl = new URLClassLoader (new URL[] { url });
+-      if (cl.getResource (tempFile.getName()) == null) {
+-          throw new RuntimeException("Returned null instead of " +
+-                                     tempFile.toURL().toString());
++          ClassLoader cl = new URLClassLoader (new URL[] { url });
++          if (cl.getResource (tempFile.getName()) == null) {
++              throw new RuntimeException("Returned null instead of " +
++                      tempFile.toURL().toString());
++          }
++      }
++      finally {
++          if (tempFile != null) {
++              tempFile.delete();
++          }
+       }
+    }
+ }
