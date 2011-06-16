@@ -218,9 +218,9 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6748082-isDisplayLocal.patch \
 	patches/openjdk/6633275-shaped_translucent_windows.patch \
 	patches/openjdk/6769607-modal-hangs.patch \
-        patches/openjdk/6791612-opengl-jni-fix.patch \
-        patches/openjdk/6755274-glgetstring-crash.patch \
-        patches/openjdk/6984543-onscreen_rendering_resize_test.patch \
+	patches/openjdk/6791612-opengl-jni-fix.patch \
+	patches/openjdk/6755274-glgetstring-crash.patch \
+	patches/openjdk/6984543-onscreen_rendering_resize_test.patch \
 	patches/openjdk/6693253-security_warning.patch \
 	patches/openjdk/6444769-windowwithwarningtest.patch \
 	patches/notice-safepoints.patch \
