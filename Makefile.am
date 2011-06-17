@@ -357,7 +357,8 @@ ICEDTEA_PATCHES = \
 	patches/jtreg-TempBuffer.patch \
 	patches/jtreg-EncodedMultiByteChar.patch \
 	patches/jtreg-FileLoaderTest.patch \
-	patches/jtreg-FileMap.patch
+	patches/jtreg-FileMap.patch \
+	patches/jtreg-ChannelsWrite.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
