@@ -1,5 +1,12 @@
 2011-06-20  Denis Lila  <dlila@redhat.com>
 
+	* Makefile.am: Add patch.
+	* patches/jtreg-bug7036148-test.patch:
+	Fix regression test. It used to never end, regardless of
+	success/failure.
+
+2011-06-20  Denis Lila  <dlila@redhat.com>
+
 	* pulseaudio/src/java/org/classpath/icedtea/pulseaudio/PulseAudioDataLine.java
 	(bufferSize): Remove.
 	(getBufferSize): Return stream.getBufferSize().
