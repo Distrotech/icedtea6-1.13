@@ -359,7 +359,8 @@ ICEDTEA_PATCHES = \
 	patches/jtreg-FileLoaderTest.patch \
 	patches/jtreg-FileMap.patch \
 	patches/jtreg-ChannelsWrite.patch \
-	patches/jtreg-bug7036148-test.patch
+	patches/jtreg-bug7036148-test.patch \
+	patches/jtreg-ReadWriteProfileTest.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
