@@ -360,7 +360,8 @@ ICEDTEA_PATCHES = \
 	patches/jtreg-FileMap.patch \
 	patches/jtreg-ChannelsWrite.patch \
 	patches/jtreg-bug7036148-test.patch \
-	patches/jtreg-ReadWriteProfileTest.patch
+	patches/jtreg-ReadWriteProfileTest.patch \
+	patches/openjdk/6818312-com.sun.awt.SecurityWarning.getSize.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
