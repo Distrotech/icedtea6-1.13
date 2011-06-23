@@ -362,7 +362,8 @@ ICEDTEA_PATCHES = \
 	patches/jtreg-bug7036148-test.patch \
 	patches/jtreg-ReadWriteProfileTest.patch \
 	patches/openjdk/6818312-com.sun.awt.SecurityWarning.getSize.patch \
-	patches/jtreg-MappedByteBuffer-Basic.patch
+	patches/jtreg-MappedByteBuffer-Basic.patch \
+	patches/openjdk/7008106-WindowOpacity.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \

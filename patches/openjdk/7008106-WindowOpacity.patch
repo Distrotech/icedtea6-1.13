@@ -1,0 +1,19 @@
+# HG changeset patch
+# User dav
+# Date 1293624780 -10800
+# Node ID 8b05f9b91765b7b9da4d2033693e10c1a174a2a5
+# Parent  39e9d5613145dbdd3973a1ecaa481c679dcfbf8f
+7008106: com/sun/awt/Translucency/WindowOpacity.java test fails just against jdk7 b122
+Reviewed-by: dcherepanov
+
+diff -r 39e9d5613145 -r 8b05f9b91765 test/com/sun/awt/Translucency/WindowOpacity.java
+--- openjdk.orig/jdk/test/com/sun/awt/Translucency/WindowOpacity.java	Tue Dec 28 17:13:13 2010 +0300
++++ openjdk/jdk/test/com/sun/awt/Translucency/WindowOpacity.java	Wed Dec 29 15:13:00 2010 +0300
+@@ -64,6 +64,7 @@
+         boolean passed;
+ 
+         Frame f = new Frame("Opacity test");
++        f.setUndecorated(true);
+ 
+         passed = false;
+         try {
