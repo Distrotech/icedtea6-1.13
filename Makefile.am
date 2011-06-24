@@ -364,7 +364,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6818312-com.sun.awt.SecurityWarning.getSize.patch \
 	patches/jtreg-MappedByteBuffer-Basic.patch \
 	patches/openjdk/7008106-WindowOpacity.patch \
-	patches/openjdk/6956668-misbehavior_of_XOR_operator_with_int.patch
+	patches/openjdk/6956668-misbehavior_of_XOR_operator_with_int.patch \
+	patches/openjdk/6699843-IllegalArgumentException_drawString.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \

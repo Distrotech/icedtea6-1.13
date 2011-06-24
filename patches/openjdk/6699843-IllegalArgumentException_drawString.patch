@@ -1,0 +1,133 @@
+# HG changeset patch
+# User prr
+# Date 1210720710 25200
+# Node ID fb61ff1cc5fd6850289e94b69b5308dadafc0bf9
+# Parent  55e6548451dfdc5e9c8b00a39930d53c70b578a0
+6699843: IllegalArgumentException when using Graphics.drawString( "", 0, 0 )
+Reviewed-by: igor, tdv
+
+diff -r 55e6548451df -r fb61ff1cc5fd src/share/classes/sun/java2d/SunGraphics2D.java
+--- openjdk.orig/jdk/src/share/classes/sun/java2d/SunGraphics2D.java	Wed Apr 30 13:10:39 2008 -0700
++++ openjdk/jdk/src/share/classes/sun/java2d/SunGraphics2D.java	Tue May 13 16:18:30 2008 -0700
+@@ -2805,6 +2805,9 @@
+         }
+ 
+         if (font.hasLayoutAttributes()) {
++            if (str.length() == 0) {
++                return;
++            }
+             new TextLayout(str, font, getFontRenderContext()).draw(this, x, y);
+             return;
+         }
+@@ -2831,6 +2834,9 @@
+         }
+ 
+         if (font.hasLayoutAttributes()) {
++            if (str.length() == 0) {
++                return;
++            }
+             new TextLayout(str, font, getFontRenderContext()).draw(this, x, y);
+             return;
+         }
+@@ -2856,6 +2862,9 @@
+         if (iterator == null) {
+             throw new NullPointerException("AttributedCharacterIterator is null");
+         }
++        if (iterator.getBeginIndex() == iterator.getEndIndex()) {
++            return; /* nothing to draw */
++        }
+         TextLayout tl = new TextLayout(iterator, getFontRenderContext());
+         tl.draw(this, (float) x, (float) y);
+     }
+@@ -2865,6 +2874,9 @@
+         if (iterator == null) {
+             throw new NullPointerException("AttributedCharacterIterator is null");
+         }
++        if (iterator.getBeginIndex() == iterator.getEndIndex()) {
++            return; /* nothing to draw */
++        }
+         TextLayout tl = new TextLayout(iterator, getFontRenderContext());
+         tl.draw(this, x, y);
+     }
+@@ -2900,6 +2912,9 @@
+             throw new ArrayIndexOutOfBoundsException("bad offset/length");
+         }
+         if (font.hasLayoutAttributes()) {
++            if (data.length == 0) {
++                return;
++            }
+             new TextLayout(new String(data, offset, length),
+                            font, getFontRenderContext()).draw(this, x, y);
+             return;
+@@ -2934,6 +2949,9 @@
+             chData[i] = (char)(data[i+offset] & 0xff);
+         }
+         if (font.hasLayoutAttributes()) {
++            if (data.length == 0) {
++                return;
++            }
+             new TextLayout(new String(chData),
+                            font, getFontRenderContext()).draw(this, x, y);
+             return;
+diff -r 55e6548451df -r fb61ff1cc5fd test/java/awt/Graphics2D/DrawString/EmptyAttrString.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/java/awt/Graphics2D/DrawString/EmptyAttrString.java	Tue May 13 16:18:30 2008 -0700
+@@ -0,0 +1,58 @@
++/*
++ * Copyright 2008 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/**
++ * @test
++ * @bug 6699843
++ * @summary IllegalArgumentException when using Graphics.drawString( "", 0, 0 )
++ */
++
++import java.awt.*;
++import java.awt.font.*;
++import java.awt.image.*;
++import java.text.*;
++import java.util.*;
++
++public class EmptyAttrString {
++
++    public static void main(String[] args) {
++        BufferedImage bi =
++           new BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB);
++        Graphics2D g = bi.createGraphics();
++        Font f = new Font( "Dialog", Font.PLAIN, 12 );
++        Map map = new HashMap();
++        map.put(TextAttribute.STRIKETHROUGH, TextAttribute.STRIKETHROUGH_ON);
++        f = f.deriveFont(map);
++        g.setFont(f);
++        g.drawString("", 50, 50);
++        g.drawString("", 50f, 50f);
++        char[] chs = { } ;
++        g.drawChars(chs, 0, 0, 50, 50);
++        byte[] bytes = { } ;
++        g.drawBytes(bytes, 0, 0, 50, 50);
++        AttributedString astr = new AttributedString("");
++        g.drawString(astr.getIterator(), 50, 50);
++        g.drawString(astr.getIterator(), 50f, 50f);
++        return;
++    }
++}
