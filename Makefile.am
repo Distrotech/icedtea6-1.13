@@ -365,7 +365,8 @@ ICEDTEA_PATCHES = \
 	patches/jtreg-MappedByteBuffer-Basic.patch \
 	patches/openjdk/7008106-WindowOpacity.patch \
 	patches/openjdk/6956668-misbehavior_of_XOR_operator_with_int.patch \
-	patches/openjdk/6699843-IllegalArgumentException_drawString.patch
+	patches/openjdk/6699843-IllegalArgumentException_drawString.patch \
+	patches/openjdk/6918065-Crash_in_Java2D_blit_loop.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
