@@ -1,0 +1,141 @@
+# HG changeset patch
+# User dav
+# Date 1291143295 -10800
+# Node ID 357ecafd727b56555e8adc7dd39bfa01abdd12f7
+# Parent  4becb3dd78618a7d211778d8b1d1f0029512f5fb
+6783910: (dav) java.awt.Color.brighter()/darker() methods make color opaque
+Reviewed-by: art, yan
+
+diff -r 4becb3dd7861 -r 357ecafd727b src/share/classes/java/awt/Color.java
+--- openjdk.orig/jdk/src/share/classes/java/awt/Color.java	Tue Nov 30 17:36:56 2010 +0300
++++ openjdk/jdk/src/share/classes/java/awt/Color.java	Tue Nov 30 21:54:55 2010 +0300
+@@ -611,12 +611,15 @@
+      * <p>
+      * This method applies an arbitrary scale factor to each of the three RGB
+      * components of this <code>Color</code> to create a brighter version
+-     * of this <code>Color</code>. Although <code>brighter</code> and
++     * of this <code>Color</code>.
++     * The {@code alpha} value is preserved.
++     * Although <code>brighter</code> and
+      * <code>darker</code> are inverse operations, the results of a
+      * series of invocations of these two methods might be inconsistent
+      * because of rounding errors.
+      * @return     a new <code>Color</code> object that is
+-     *                 a brighter version of this <code>Color</code>.
++     *                 a brighter version of this <code>Color</code>
++     *                 with the same {@code alpha} value.
+      * @see        java.awt.Color#darker
+      * @since      JDK1.0
+      */
+@@ -624,6 +627,7 @@
+         int r = getRed();
+         int g = getGreen();
+         int b = getBlue();
++        int alpha = getAlpha();
+ 
+         /* From 2D group:
+          * 1. black.brighter() should return grey
+@@ -632,7 +636,7 @@
+          */
+         int i = (int)(1.0/(1.0-FACTOR));
+         if ( r == 0 && g == 0 && b == 0) {
+-           return new Color(i, i, i);
++            return new Color(i, i, i, alpha);
+         }
+         if ( r > 0 && r < i ) r = i;
+         if ( g > 0 && g < i ) g = i;
+@@ -640,7 +644,8 @@
+ 
+         return new Color(Math.min((int)(r/FACTOR), 255),
+                          Math.min((int)(g/FACTOR), 255),
+-                         Math.min((int)(b/FACTOR), 255));
++                         Math.min((int)(b/FACTOR), 255),
++                         alpha);
+     }
+ 
+     /**
+@@ -649,19 +654,23 @@
+      * <p>
+      * This method applies an arbitrary scale factor to each of the three RGB
+      * components of this <code>Color</code> to create a darker version of
+-     * this <code>Color</code>.  Although <code>brighter</code> and
++     * this <code>Color</code>.
++     * The {@code alpha} value is preserved.
++     * Although <code>brighter</code> and
+      * <code>darker</code> are inverse operations, the results of a series
+      * of invocations of these two methods might be inconsistent because
+      * of rounding errors.
+      * @return  a new <code>Color</code> object that is
+-     *                    a darker version of this <code>Color</code>.
++     *                    a darker version of this <code>Color</code>
++     *                    with the same {@code alpha} value.
+      * @see        java.awt.Color#brighter
+      * @since      JDK1.0
+      */
+     public Color darker() {
+         return new Color(Math.max((int)(getRed()  *FACTOR), 0),
+                          Math.max((int)(getGreen()*FACTOR), 0),
+-                         Math.max((int)(getBlue() *FACTOR), 0));
++                         Math.max((int)(getBlue() *FACTOR), 0),
++                         getAlpha());
+     }
+ 
+     /**
+diff -r 4becb3dd7861 -r 357ecafd727b test/java/awt/Color/OpacityChange/OpacityChange.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/java/awt/Color/OpacityChange/OpacityChange.java	Tue Nov 30 21:54:55 2010 +0300
+@@ -0,0 +1,54 @@
++/*
++ * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/*
++  @test
++  @bug 6783910
++  @summary java.awt.Color.brighter()/darker() methods make color opaque
++  @author Andrei Dmitriev: area=awt-color
++  @run main OpacityChange
++*/
++
++import java.awt.*;
++
++public class OpacityChange {
++    private final static int INITIAL_ALPHA = 125;
++
++    public static void main(String argv[]) {
++        Color color = new Color(20, 20, 20, INITIAL_ALPHA);
++        System.out.println("Initial alpha: " + color.getAlpha());
++        Color colorBrighter = color.brighter();
++        System.out.println("New alpha (after brighter): " + colorBrighter.getAlpha());
++
++        Color colorDarker = color.darker();
++        System.out.println("New alpha (after darker): " + colorDarker.getAlpha());
++
++
++        if (INITIAL_ALPHA != colorBrighter.getAlpha()) {
++            throw new RuntimeException("Brighter color alpha has changed from : " +INITIAL_ALPHA + " to " + colorBrighter.getAlpha());
++        }
++        if (INITIAL_ALPHA != colorDarker.getAlpha()) {
++            throw new RuntimeException("Darker color alpha has changed from : " +INITIAL_ALPHA + " to " + colorDarker.getAlpha());
++        }
++    }
++}

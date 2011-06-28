@@ -368,7 +368,9 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6699843-IllegalArgumentException_drawString.patch \
 	patches/openjdk/6918065-Crash_in_Java2D_blit_loop.patch \
 	patches/openjdk/6623219-Font_canDisplayUpTo_does_not_work.patch \
-	patches/support_linux_3.patch
+	patches/support_linux_3.patch \
+	patches/openjdk/6783910-java_awt_Color_brighter_darker_fix.patch \
+	patches/openjdk/6785424-SecurityException_locating_physical_fonts.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
