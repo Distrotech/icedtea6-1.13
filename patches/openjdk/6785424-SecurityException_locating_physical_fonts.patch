@@ -1,0 +1,97 @@
+# HG changeset patch
+# User prr
+# Date 1231278723 28800
+# Node ID eaeaacda1c568a3e013ade338c9b833d767e8591
+# Parent  40ec164889bd9ec1955e36864593bc222474ba43
+6785424: SecurityException locating physical fonts on Windows Terminal Server
+Reviewed-by: campbell, jgodinez
+
+diff -r 40ec164889bd -r eaeaacda1c56 src/share/classes/sun/font/FontManager.java
+--- openjdk.orig/jdk/src/share/classes/sun/font/FontManager.java	Wed Dec 24 09:57:48 2008 -0800
++++ openjdk/jdk/src/share/classes/sun/font/FontManager.java	Tue Jan 06 13:52:03 2009 -0800
+@@ -1601,18 +1601,27 @@
+     /* Path may be absolute or a base file name relative to one of
+      * the platform font directories
+      */
+-    private static String getPathName(String s) {
++    private static String getPathName(final String s) {
+         File f = new File(s);
+         if (f.isAbsolute()) {
+             return s;
+         } else if (pathDirs.length==1) {
+             return pathDirs[0] + File.separator + s;
+         } else {
+-            for (int p=0; p<pathDirs.length; p++) {
+-                f = new File(pathDirs[p] + File.separator + s);
+-                if (f.exists()) {
+-                    return f.getAbsolutePath();
+-                }
++            String path = java.security.AccessController.doPrivileged(
++                 new java.security.PrivilegedAction<String>() {
++                     public String run() {
++                         for (int p=0; p<pathDirs.length; p++) {
++                             File f = new File(pathDirs[p] +File.separator+ s);
++                             if (f.exists()) {
++                                 return f.getAbsolutePath();
++                             }
++                         }
++                         return null;
++                     }
++                });
++            if (path != null) {
++                return path;
+             }
+         }
+         return s; // shouldn't happen, but harmless
+diff -r 40ec164889bd -r eaeaacda1c56 test/java/awt/FontClass/FontAccess.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/java/awt/FontClass/FontAccess.java	Tue Jan 06 13:52:03 2009 -0800
+@@ -0,0 +1,48 @@
++/*
++ * Copyright (c) 2009 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/*
++ * @test
++ * @bug 6785424
++ * @summary Test no SecurityException searching for a font.
++ * @run main FontAccess
++ *
++ * This can only test the specific bug if run on something like
++ * Windows Citrix Server where SystemDirectory and WindowsDirectory
++ * are different locations.
++ */
++
++import java.awt.*;
++import java.awt.image.*;
++
++public class FontAccess {
++
++     public static void main(String[] args) {
++        System.setSecurityManager(new SecurityManager());
++        Font f = new Font("Verdana", Font.PLAIN, 12);
++        BufferedImage bi = new BufferedImage(1,1,1);
++        Graphics2D g = bi.createGraphics();
++        g.setFont(f);
++        System.out.println(g.getFontMetrics());
++     }
++}
