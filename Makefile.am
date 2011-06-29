@@ -371,7 +371,9 @@ ICEDTEA_PATCHES = \
 	patches/support_linux_3.patch \
 	patches/openjdk/6783910-java_awt_Color_brighter_darker_fix.patch \
 	patches/openjdk/6785424-SecurityException_locating_physical_fonts.patch \
-	patches/openjdk/7047069-Array_can_dynamically_change_size.patch
+	patches/openjdk/7047069-Array_can_dynamically_change_size.patch \
+	patches/openjdk/6796786-invalid_FP_identity_transform.patch \
+	patches/openjdk/7042070-Typo_in_Test6796786.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \

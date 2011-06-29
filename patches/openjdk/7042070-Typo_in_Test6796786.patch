@@ -1,0 +1,33 @@
+# HG changeset patch
+# User kvn
+# Date 1304574077 25200
+# Node ID 37e4df3c8952604ca0b65d4bbd43aeb2e4b2e68f
+# Parent  dcfb3dede00994a52cf5cdc4ac078cee0a1e1b32
+7042070: Typo in Test6796786.java
+Summary: The test should compare with -0.0f.
+Reviewed-by: never, iveresov
+
+diff -r dcfb3dede009 -r 37e4df3c8952 test/compiler/6796786/Test6796786.java
+--- openjdk.orig/hotspot/test/compiler/6796786/Test6796786.java	Wed May 04 22:31:18 2011 -0700
++++ openjdk/hotspot/test/compiler/6796786/Test6796786.java	Wed May 04 22:41:17 2011 -0700
+@@ -27,18 +27,17 @@
+  * @bug 6796786
+  * @summary invalid FP identity transform - (a - b) -> b - a
+  *
+- * @run main Test6796786
++ * @run main/othervm -Xbatch Test6796786
+  */
+ 
+ public class Test6796786 {
+     static volatile float d1;
+     static volatile float d2;
+-    static float zero;
+ 
+     public static void main(String[] args) {
+         int total = 0;
+         for (int i = 0; i < 100000; i++) {
+-            if (Float.floatToRawIntBits(- (d1 - d1)) == Float.floatToRawIntBits(0.0f)) {
++            if (Float.floatToRawIntBits(- (d1 - d2)) == Float.floatToRawIntBits(-0.0f)) {
+                 total++;
+             }
+         }
