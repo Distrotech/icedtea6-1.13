@@ -381,7 +381,8 @@ ICEDTEA_PATCHES += \
 	patches/hotspot/$(HSBUILD)/powerpc-stacksize.patch \
 	patches/jtreg-remove-test-6987555.patch \
 	patches/jtreg-remove-test-6991596.patch \
-	patches/hotspot/$(HSBUILD)/7036220-shark_llvm_29_headers.patch
+	patches/hotspot/$(HSBUILD)/7036220-shark_llvm_29_headers.patch \
+	patches/openjdk/7029152-String_intrinsics_miss_optimization.patch
 else
 ICEDTEA_PATCHES += \
 	patches/hotspot/$(HSBUILD)/no-precompiled-headers.patch \
