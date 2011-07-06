@@ -45,59 +45,59 @@ public class JPEGImageDecoderImpl implements JPEGImageDecoder {
     private JPEGDecodeParam param;
 
     public JPEGImageDecoderImpl(InputStream in) {
-	this(in, null);
+        this(in, null);
     }
 
     public JPEGImageDecoderImpl(InputStream in, JPEGDecodeParam param) {
-	this.in = in;
-	setJPEGDecodeParam(param);
+        this.in = in;
+        setJPEGDecodeParam(param);
 
-	Iterator<ImageReader> JPGReaderIter = ImageIO
-		.getImageReadersByMIMEType(JPGMime);
-	if (JPGReaderIter.hasNext()) {
-	    JPGReader = (JPEGImageReader) JPGReaderIter.next();
-	}
+        Iterator<ImageReader> JPGReaderIter = ImageIO
+                .getImageReadersByMIMEType(JPGMime);
+        if (JPGReaderIter.hasNext()) {
+            JPGReader = (JPEGImageReader) JPGReaderIter.next();
+        }
 
-	JPGReader.setInput(new MemoryCacheImageInputStream(in));
+        JPGReader.setInput(new MemoryCacheImageInputStream(in));
     }
 
     public BufferedImage decodeAsBufferedImage() throws IOException,
-	    ImageFormatException {
-	JPEGImageReadParam irp = null;
+            ImageFormatException {
+        JPEGImageReadParam irp = null;
 
-	if (param != null) {
-	    // We should do more than this, but it's a start.
-	    javax.imageio.plugins.jpeg.JPEGQTable[] qTables = new javax.imageio.plugins.jpeg.JPEGQTable[4];
-	    javax.imageio.plugins.jpeg.JPEGHuffmanTable[] DCHuffmanTables = new JPEGHuffmanTable[4];
-	    javax.imageio.plugins.jpeg.JPEGHuffmanTable[] ACHuffmanTables = new JPEGHuffmanTable[4];
+        if (param != null) {
+            // We should do more than this, but it's a start.
+            javax.imageio.plugins.jpeg.JPEGQTable[] qTables = new javax.imageio.plugins.jpeg.JPEGQTable[4];
+            javax.imageio.plugins.jpeg.JPEGHuffmanTable[] DCHuffmanTables = new JPEGHuffmanTable[4];
+            javax.imageio.plugins.jpeg.JPEGHuffmanTable[] ACHuffmanTables = new JPEGHuffmanTable[4];
 
-	    for (int i = 0; i < 4; i++) {
-		qTables[i] = new javax.imageio.plugins.jpeg.JPEGQTable(param.getQTable(i).getTable());
-		DCHuffmanTables[i] = param.getDCHuffmanTable(i);
-		ACHuffmanTables[i] = param.getACHuffmanTable(i);
-	    }
+            for (int i = 0; i < 4; i++) {
+                qTables[i] = new javax.imageio.plugins.jpeg.JPEGQTable(param.getQTable(i).getTable());
+                DCHuffmanTables[i] = param.getDCHuffmanTable(i);
+                ACHuffmanTables[i] = param.getACHuffmanTable(i);
+            }
 
-	    irp = new JPEGImageReadParam();
-	    irp.setDecodeTables(qTables, DCHuffmanTables, ACHuffmanTables);
-	}
+            irp = new JPEGImageReadParam();
+            irp.setDecodeTables(qTables, DCHuffmanTables, ACHuffmanTables);
+        }
 
-	return JPGReader.read(0, irp);
+        return JPGReader.read(0, irp);
     }
 
     public Raster decodeAsRaster() throws IOException, ImageFormatException {
-	return JPGReader.readRaster(0, null);
+        return JPGReader.readRaster(0, null);
     }
 
     public InputStream getInputStream() {
-	return in;
+        return in;
     }
 
     public JPEGDecodeParam getJPEGDecodeParam() {
-	if (param == null) return null;
-	return (JPEGDecodeParam) param.clone();
+        if (param == null) return null;
+        return (JPEGDecodeParam) param.clone();
     }
 
     public void setJPEGDecodeParam(JPEGDecodeParam jdp) {
-	param = jdp;
+        param = jdp;
     }
 }

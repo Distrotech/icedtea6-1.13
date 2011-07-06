@@ -22,7 +22,7 @@ package com.sun.image.codec.jpeg;
  * A class to encapsulate a JPEG Huffman table.
  */
 public class JPEGHuffmanTable extends
-	javax.imageio.plugins.jpeg.JPEGHuffmanTable {
+        javax.imageio.plugins.jpeg.JPEGHuffmanTable {
 
     /**
      * The standard DC luminance Huffman table.
@@ -45,28 +45,28 @@ public class JPEGHuffmanTable extends
     public static final JPEGHuffmanTable StdACChrominance;
 
     static {
-	javax.imageio.plugins.jpeg.JPEGHuffmanTable temp = javax.imageio.plugins.jpeg.JPEGHuffmanTable.StdDCLuminance;
-	StdDCLuminance = new JPEGHuffmanTable(temp.getLengths(),
-		temp.getValues());
+        javax.imageio.plugins.jpeg.JPEGHuffmanTable temp = javax.imageio.plugins.jpeg.JPEGHuffmanTable.StdDCLuminance;
+        StdDCLuminance = new JPEGHuffmanTable(temp.getLengths(),
+                temp.getValues());
 
-	temp = javax.imageio.plugins.jpeg.JPEGHuffmanTable.StdDCChrominance;
-	StdDCChrominance = new JPEGHuffmanTable(temp.getLengths(),
-		temp.getValues());
+        temp = javax.imageio.plugins.jpeg.JPEGHuffmanTable.StdDCChrominance;
+        StdDCChrominance = new JPEGHuffmanTable(temp.getLengths(),
+                temp.getValues());
 
-	temp = javax.imageio.plugins.jpeg.JPEGHuffmanTable.StdACLuminance;
-	StdACLuminance = new JPEGHuffmanTable(temp.getLengths(),
-		temp.getValues());
+        temp = javax.imageio.plugins.jpeg.JPEGHuffmanTable.StdACLuminance;
+        StdACLuminance = new JPEGHuffmanTable(temp.getLengths(),
+                temp.getValues());
 
-	temp = javax.imageio.plugins.jpeg.JPEGHuffmanTable.StdACChrominance;
-	StdACChrominance = new JPEGHuffmanTable(temp.getLengths(),
-		temp.getValues());
+        temp = javax.imageio.plugins.jpeg.JPEGHuffmanTable.StdACChrominance;
+        StdACChrominance = new JPEGHuffmanTable(temp.getLengths(),
+                temp.getValues());
     }
 
     /**
      * Creates a Huffman table and initializes it. The input arrays are copied.
      * The arrays must describe a possible Huffman table. For example, 3 codes
      * cannot be expressed with a single bit.
-     * 
+     *
      * @param lengths
      *            an array of {@code short}s where <code>lengths[k]</code> is
      *            equal to the number of values with corresponding codes of
@@ -82,16 +82,16 @@ public class JPEGHuffmanTable extends
      *             zero, or if the arrays do not describe a valid Huffman table.
      */
     public JPEGHuffmanTable(short lengths[], short symbols[]) {
-	super(lengths, symbols);
+        super(lengths, symbols);
     }
 
     /**
      * Return an array containing the Huffman symbols arranged by increasing
      * length. To make use of this array you must refer the the lengths array.
-     * 
+     *
      * @return A short array of Huffman symbols
      */
     public short[] getSymbols() {
-	return getValues();
+        return getValues();
     }
 }

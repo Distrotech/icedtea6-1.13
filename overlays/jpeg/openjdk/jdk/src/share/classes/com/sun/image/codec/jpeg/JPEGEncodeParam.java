@@ -1,4 +1,4 @@
-/* JPEGEncodeParam.java -- 
+/* JPEGEncodeParam.java --
    Copyright (C) 2007 Free Software Foundation, Inc.
 
    This file is part of GNU Classpath.
@@ -72,20 +72,20 @@ package com.sun.image.codec.jpeg;
  * Raster. In this case the API programmer must specify the colorID of the data
  * in the Raster and no color conversion will take place.
  * </p>
- * 
+ *
  * ENCODING:
- * 
+ *
  * <pre>
  * BufferedImage Type/Instance   JPEG (Encoded) Color ID
- * ===========================   ======================= 
- * TYPE_GRAY                     COLOR_ID_GRAYSCALE 
- * TYPE_RGB                      COLOR_ID_YCbCr 
+ * ===========================   =======================
+ * TYPE_GRAY                     COLOR_ID_GRAYSCALE
+ * TYPE_RGB                      COLOR_ID_YCbCr
  * TYPE_YCbCr                    COLOR_ID_YCbCr
- * TYPE_YCbCr/CS_PYCC            COLOR_ID_PYCC 
- * TYPE_CMYK                     COLOR_ID_CMYK 
- * TYPE_RGB (w/ alpha)           COLOR_ID_YCbCrA 
- * TYPE_YCbCr (w/ alpha)         COLOR_ID_YCbCrA 
- * TYPE_YCbCr/CS_PYCC (w/ alpha) COLOR_ID_PYCCA 
+ * TYPE_YCbCr/CS_PYCC            COLOR_ID_PYCC
+ * TYPE_CMYK                     COLOR_ID_CMYK
+ * TYPE_RGB (w/ alpha)           COLOR_ID_YCbCrA
+ * TYPE_YCbCr (w/ alpha)         COLOR_ID_YCbCrA
+ * TYPE_YCbCr/CS_PYCC (w/ alpha) COLOR_ID_PYCCA
  * ** Any Other **               COLOR_ID_UNKNOWN
  * </pre>
  * <p>
@@ -118,7 +118,7 @@ public interface JPEGEncodeParam extends JPEGDecodeParam {
      * Set the horizontal subsample factor for the given component. Note that
      * the subsample factor is the number of input pixels that contribute to
      * each output pixel (usually 2 for YCC).
-     * 
+     *
      * @param component
      *            The component being specified.
      * @param subsample
@@ -130,7 +130,7 @@ public interface JPEGEncodeParam extends JPEGDecodeParam {
      * Set the vertical subsample factor for the given component. Note that the
      * subsample factor is the number of input pixels that contribute to each
      * output pixel (usually 2 for YCC).
-     * 
+     *
      * @param component
      *            The component being specified.
      * @param subsample
@@ -141,7 +141,7 @@ public interface JPEGEncodeParam extends JPEGDecodeParam {
     /**
      * Sets the coefficient quantization tables at index passed. tableNum must
      * range in value from 0 - 3.
-     * 
+     *
      * @param qtable
      *            that will be used.
      * @param tableNum
@@ -151,7 +151,7 @@ public interface JPEGEncodeParam extends JPEGDecodeParam {
 
     /**
      * Sets the DC Huffman coding table at index to the table provided.
-     * 
+     *
      * @param huffTable
      *            JPEGHuffmanTable that will be assigned to index tableNum.
      * @param tableNum
@@ -164,7 +164,7 @@ public interface JPEGEncodeParam extends JPEGDecodeParam {
 
     /**
      * Sets the AC Huffman coding table at index to the table provided.
-     * 
+     *
      * @param huffTable
      *            JPEGHuffmanTable that will be assigned to index tableNum.
      * @param tableNum
@@ -177,7 +177,7 @@ public interface JPEGEncodeParam extends JPEGDecodeParam {
 
     /**
      * Sets the mapping between a component and it's DC Huffman Table.
-     * 
+     *
      * @param component
      *            The component to set the mapping for
      * @param table
@@ -187,7 +187,7 @@ public interface JPEGEncodeParam extends JPEGDecodeParam {
 
     /**
      * Sets the mapping between a component and it's AC Huffman Table.
-     * 
+     *
      * @param component
      *            The component to set the mapping for
      * @param table
@@ -197,7 +197,7 @@ public interface JPEGEncodeParam extends JPEGDecodeParam {
 
     /**
      * Sets the mapping between a component and it's Quantization Table.
-     * 
+     *
      * @param component
      *            The component to set the mapping for
      * @param table
@@ -223,7 +223,7 @@ public interface JPEGEncodeParam extends JPEGDecodeParam {
      * Sets the marker data to be written to the output data stream. This
      * removes any existing marker data in the JPEParm object. This can be used
      * to remove the default APP0 marker by calling it with data set to null.
-     * 
+     *
      * @param marker
      *            The marker to set the data for.
      * @param data
@@ -235,7 +235,7 @@ public interface JPEGEncodeParam extends JPEGDecodeParam {
      * Appends 'data' to the array of byte[] associated with marker. This will
      * result in additional instance of the marker being written (one for each
      * byte[] in the array.).
-     * 
+     *
      * @param marker
      *            The marker to add and instance of.
      * @param data
@@ -245,7 +245,7 @@ public interface JPEGEncodeParam extends JPEGDecodeParam {
 
     /**
      * Set the MCUs per restart, or 0 for no restart markers.
-     * 
+     *
      * @param restartInterval
      *            number MCUs per restart marker.
      */
@@ -254,7 +254,7 @@ public interface JPEGEncodeParam extends JPEGDecodeParam {
     /**
      * Set the pixel size units This value is copied into the APP0 marker (if
      * that marker is written). This value isn't used by the JPEG code.
-     * 
+     *
      * @param unit
      *            One of the DENSITY_UNIT_* values.
      */
@@ -263,7 +263,7 @@ public interface JPEGEncodeParam extends JPEGDecodeParam {
     /**
      * Set the horizontal pixel density. This value is written into the APP0
      * marker. It isn't used by the JPEG code.
-     * 
+     *
      * @param density
      *            the horizontal pixel density, in units described by @see
      *            JPEGParam.getDensityUnit.
@@ -273,7 +273,7 @@ public interface JPEGEncodeParam extends JPEGDecodeParam {
     /**
      * Set the vertical pixel density. This value is copied into the JFIF APP0
      * marker. It isn't used by the JPEG code.
-     * 
+     *
      * @param density
      *            The vertical pixel density, in units described by @see
      *            JPEGParam.getDensityUnit.
@@ -284,20 +284,20 @@ public interface JPEGEncodeParam extends JPEGDecodeParam {
      * This creates new Quantization tables that replace the currently installed
      * Quantization tables. It also updates the Component QTable mapping to the
      * default for the current encoded COLOR_ID.
-     * 
+     *
      * The Created Quantization table varies from very high compression, very
      * low quality, (0.0) to low compression, very high quality (1.0) based on
      * the quality parameter.
-     * 
+     *
      * At a quality level of 1.0 the table will be all 1's which will lead to no
      * loss of data due to quantization (however chrominance subsampling, if
      * used, and roundoff error in the DCT will still degrade the image some
      * what).
-     * 
+     *
      * This is a linear manipulation of the standard chrominance Q-Table.
-     * 
+     *
      * Some guidelines: 0.75 high quality 0.5 medium quality 0.25 low quality
-     * 
+     *
      * @param quality
      *            0.0-1.0 setting of desired quality level.
      * @param forceBaseline

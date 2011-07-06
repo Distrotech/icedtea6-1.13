@@ -1,4 +1,4 @@
-/* JPEGQTable.java -- 
+/* JPEGQTable.java --
    Copyright (C) 2011 Red Hat
    Copyright (C) 2007 Free Software Foundation, Inc.
    Copyright (C) 2007 Matthew Flaschen
@@ -43,12 +43,12 @@ import java.util.Arrays;
 
 /**
  * Class to encapsulate the JPEG quantization tables.
- * 
+ *
  * Note: The tables K1Luminance, K1Div2Luminance, K2Chrominance,
  * K2Div2Chrominance is an instance of the superclass.
- * 
+ *
  * @author Andrew Su (asu@redhat.com)
- * 
+ *
  */
 public class JPEGQTable {
 
@@ -63,22 +63,22 @@ public class JPEGQTable {
     public static final JPEGQTable StdChrominance;
 
     static {
-	/* table for luminance values in zig-zag order */
-	int[] table1 = { 16, 11, 12, 14, 12, 10, 16, 14, 13, 14, 18, 17, 16,
-		19, 24, 40, 26, 24, 22, 22, 24, 49, 35, 37, 29, 40, 58, 51, 61,
-		60, 57, 51, 56, 55, 64, 72, 92, 78, 64, 68, 87, 69, 55, 56, 80,
-		109, 81, 87, 95, 98, 103, 104, 103, 62, 77, 113, 121, 112, 100,
-		120, 92, 101, 103, 99 };
+        /* table for luminance values in zig-zag order */
+        int[] table1 = { 16, 11, 12, 14, 12, 10, 16, 14, 13, 14, 18, 17, 16,
+                19, 24, 40, 26, 24, 22, 22, 24, 49, 35, 37, 29, 40, 58, 51, 61,
+                60, 57, 51, 56, 55, 64, 72, 92, 78, 64, 68, 87, 69, 55, 56, 80,
+                109, 81, 87, 95, 98, 103, 104, 103, 62, 77, 113, 121, 112, 100,
+                120, 92, 101, 103, 99 };
 
-	StdLuminance = new JPEGQTable(table1);
+        StdLuminance = new JPEGQTable(table1);
 
-	/* table for chrominance values in zig-zag order */
-	int[] table2 = { 17, 18, 18, 24, 21, 24, 47, 26, 26, 47, 99, 66, 56,
-		66, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
-		99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
-		99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
-		99, 99, 99 };
-	StdChrominance = new JPEGQTable(table2);
+        /* table for chrominance values in zig-zag order */
+        int[] table2 = { 17, 18, 18, 24, 21, 24, 47, 26, 26, 47, 99, 66, 56,
+                66, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+                99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+                99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+                99, 99, 99 };
+        StdChrominance = new JPEGQTable(table2);
     }
 
     private int[] table;
@@ -87,32 +87,32 @@ public class JPEGQTable {
      * Constructs an quantization table from the array that was passed. The
      * coefficients must be in zig-zag order. The array must be of length 64.
      * The table will be copied.
-     * 
+     *
      * @param table
      *            the quantization table, as an int array.
      * @throws IllegalArgumentException
      *             if table is null or table.length is not equal to 64.
      */
     public JPEGQTable(int[] table) {
-	/* Table must be 8x8 thus 64 entries */
-	if (table == null || table.length != 64) {
-	    throw new IllegalArgumentException("Not a valid table.");
-	}
-	this.table = Arrays.copyOf(table, table.length);
+        /* Table must be 8x8 thus 64 entries */
+        if (table == null || table.length != 64) {
+            throw new IllegalArgumentException("Not a valid table.");
+        }
+        this.table = Arrays.copyOf(table, table.length);
     }
 
     public int[] getTable() {
-	return Arrays.copyOf(table, table.length);
+        return Arrays.copyOf(table, table.length);
     }
 
     public JPEGQTable getScaledInstance(float scaleFactor, boolean forceBaseline) {
-	int limit = (forceBaseline) ? 255 : 32767;
-	int[] newTable = new int[table.length];
-	for (int i = 0; i < table.length; i++) {
-	    int newValue = Math.round(table[i] * scaleFactor);
-	    newTable[i] = (newValue < 1) ? 1 : (newValue > limit) ? limit : newValue;
-	}
-	return new JPEGQTable(newTable);
+        int limit = (forceBaseline) ? 255 : 32767;
+        int[] newTable = new int[table.length];
+        for (int i = 0; i < table.length; i++) {
+            int newValue = Math.round(table[i] * scaleFactor);
+            newTable[i] = (newValue < 1) ? 1 : (newValue > limit) ? limit : newValue;
+        }
+        return new JPEGQTable(newTable);
     }
 
 }

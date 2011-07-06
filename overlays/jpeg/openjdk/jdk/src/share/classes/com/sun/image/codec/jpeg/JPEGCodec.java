@@ -1,29 +1,29 @@
 /* JPEGCodec.java --
  * Copyright (C) 2007 Free Software Foundation, Inc.
  * Copyright (C) 2007 Matthew Flaschen
- * 
+ *
  * This file is part of GNU Classpath.
- * 
+ *
  * GNU Classpath is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2, or (at your option)
  * any later version.
- * 
+ *
  * GNU Classpath is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with GNU Classpath; see the file COPYING. If not, write to the
  * Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301 USA.
- * 
+ *
  * Linking this library statically or dynamically with other modules is
  * making a combined work based on this library. Thus, the terms and
  * conditions of the GNU General Public License cover the whole
  * combination.
- * 
+ *
  * As a special exception, the copyright holders of this library give you
  * permission to link this library with independent modules to produce an
  * executable, regardless of the license terms of these independent
@@ -59,133 +59,133 @@ public class JPEGCodec {
     /**
      * This creates an instance of a JPEGImageDecoder that can be used to decode
      * JPEG Data streams.
-     * 
+     *
      * @param src
      * @return
      */
     public static JPEGImageDecoder createJPEGDecoder(InputStream src) {
-	return new JPEGImageDecoderImpl(src);
+        return new JPEGImageDecoderImpl(src);
     }
 
     /**
      * This creates an instance of a JPEGImageDecoder that can be used to decode
      * JPEG Data streams.
-     * 
+     *
      * @param src
      * @param jdp
      * @return
      */
     public static JPEGImageDecoder createJPEGDecoder(InputStream src,
-	    JPEGDecodeParam jdp) {
-	return new JPEGImageDecoderImpl(src, jdp);
+            JPEGDecodeParam jdp) {
+        return new JPEGImageDecoderImpl(src, jdp);
     }
 
     /**
      * This creates an instance of a JPEGImageEncoder that can be used to encode
      * image data as JPEG Data streams.
-     * 
+     *
      * @param os
      * @return
      */
     public static JPEGImageEncoder createJPEGEncoder(OutputStream os) {
-	return new JPEGImageEncoderImpl(os);
+        return new JPEGImageEncoderImpl(os);
     }
 
     /**
      * This creates an instance of a JPEGImageEncoder that can be used to encode
      * image data as JPEG Data streams.
-     * 
+     *
      * @param dest
      * @param jep
      * @return
      */
     public static JPEGImageEncoder createJPEGEncoder(OutputStream dest,
-	    JPEGEncodeParam jep) {
-	return new JPEGImageEncoderImpl(dest, jep);
+            JPEGEncodeParam jep) {
+        return new JPEGImageEncoderImpl(dest, jep);
     }
 
     /**
      * This is a factory method for creating JPEGEncodeParam objects.
-     * 
+     *
      * @param bi
      * @return
      */
     public static JPEGEncodeParam getDefaultJPEGEncodeParam(BufferedImage bi) {
-	return getDefaultJPEGEncodeParam(bi.getRaster(),
-		getDefaultColorID(bi.getColorModel()));
+        return getDefaultJPEGEncodeParam(bi.getRaster(),
+                getDefaultColorID(bi.getColorModel()));
     }
 
     /**
      * This is a factory method for creating JPEGEncodeParam objects.
-     * 
+     *
      * @param numBands
      * @param colorID
      * @return
      */
     public static JPEGEncodeParam getDefaultJPEGEncodeParam(int numBands,
-	    int colorID) {
-	return new JPEGParam(colorID, numBands);
+            int colorID) {
+        return new JPEGParam(colorID, numBands);
     }
 
     /**
      * This is a factory method for creating a JPEGEncodeParam from a
      * JPEGDecodeParam.
-     * 
+     *
      * @param jdp
      * @return
      */
     public static JPEGEncodeParam getDefaultJPEGEncodeParam(JPEGDecodeParam jdp) {
-	return new JPEGParam(jdp);
+        return new JPEGParam(jdp);
     }
 
     /**
      * This is a factory method for creating JPEGEncodeParam objects.
-     * 
+     *
      * @param ras
      * @param colorID
      * @return
      */
     public static JPEGEncodeParam getDefaultJPEGEncodeParam(Raster ras,
-	    int colorID) {
-	return getDefaultJPEGEncodeParam(ras.getNumBands(), colorID);
+            int colorID) {
+        return getDefaultJPEGEncodeParam(ras.getNumBands(), colorID);
     }
 
     private static int getDefaultColorID(ColorModel cm) {
-	ColorSpace cs = cm.getColorSpace();
-	int type = cs.getType();
-	int id = -1;
-	switch (type) {
-	    case ColorSpace.TYPE_GRAY:
-		id = JPEGEncodeParam.COLOR_ID_GRAY;
-		break;
+        ColorSpace cs = cm.getColorSpace();
+        int type = cs.getType();
+        int id = -1;
+        switch (type) {
+            case ColorSpace.TYPE_GRAY:
+                id = JPEGEncodeParam.COLOR_ID_GRAY;
+                break;
 
-	    case ColorSpace.TYPE_RGB:
-		id = cm.hasAlpha() ? JPEGEncodeParam.COLOR_ID_RGBA
-			: JPEGEncodeParam.COLOR_ID_RGB;
+            case ColorSpace.TYPE_RGB:
+                id = cm.hasAlpha() ? JPEGEncodeParam.COLOR_ID_RGBA
+                        : JPEGEncodeParam.COLOR_ID_RGB;
 
-	    case ColorSpace.TYPE_YCbCr:
-		try {
-		    if (cs == ColorSpace.getInstance(ColorSpace.CS_PYCC)) {
-			id = cm.hasAlpha() ? JPEGEncodeParam.COLOR_ID_PYCCA
-				: JPEGEncodeParam.COLOR_ID_PYCC;
-		    }
-		} catch (IllegalArgumentException e) {
-		    /* We know it isn't PYCC type, nothing to handle */
-		}
-		if (id == -1) {
-		    id = cm.hasAlpha() ? JPEGEncodeParam.COLOR_ID_YCbCrA
-			    : JPEGEncodeParam.COLOR_ID_YCbCr;
-		}
-		break;
+            case ColorSpace.TYPE_YCbCr:
+                try {
+                    if (cs == ColorSpace.getInstance(ColorSpace.CS_PYCC)) {
+                        id = cm.hasAlpha() ? JPEGEncodeParam.COLOR_ID_PYCCA
+                                : JPEGEncodeParam.COLOR_ID_PYCC;
+                    }
+                } catch (IllegalArgumentException e) {
+                    /* We know it isn't PYCC type, nothing to handle */
+                }
+                if (id == -1) {
+                    id = cm.hasAlpha() ? JPEGEncodeParam.COLOR_ID_YCbCrA
+                            : JPEGEncodeParam.COLOR_ID_YCbCr;
+                }
+                break;
 
-	    case ColorSpace.TYPE_CMYK:
-		id = JPEGEncodeParam.COLOR_ID_CMYK;
-		break;
+            case ColorSpace.TYPE_CMYK:
+                id = JPEGEncodeParam.COLOR_ID_CMYK;
+                break;
 
-	    default:
-		id = JPEGEncodeParam.COLOR_ID_UNKNOWN;
-	}
+            default:
+                id = JPEGEncodeParam.COLOR_ID_UNKNOWN;
+        }
 
-	return id;
+        return id;
     }
 }

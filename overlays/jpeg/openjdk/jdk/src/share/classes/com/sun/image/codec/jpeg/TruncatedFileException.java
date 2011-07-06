@@ -41,14 +41,14 @@ import java.awt.image.BufferedImage;
 
 public class TruncatedFileException extends RuntimeException {
     public TruncatedFileException() {
-	this("");
+        this("");
     }
 
     public TruncatedFileException(String s) {
-	super(s);
+        super(s);
     }
 
     public BufferedImage getBufferedImage() {
-	return null;
+        return null;
     }
 }

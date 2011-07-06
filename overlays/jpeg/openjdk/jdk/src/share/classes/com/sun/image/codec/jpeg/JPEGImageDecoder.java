@@ -1,4 +1,4 @@
-/* JPEGImageDecoder.java -- 
+/* JPEGImageDecoder.java --
    Copyright (C) 2007 Free Software Foundation, Inc.
    Copyright (C) 2007 Matthew Flaschen
 
@@ -51,7 +51,7 @@ public interface JPEGImageDecoder {
      * InputStream is a BufferedImage the ColorModel associated with this
      * BufferedImage is determined based on the encoded COLOR_ID of the
      * JPEGDecodeParam object. For a tables only stream this will return null.
-     * 
+     *
      * @return BufferedImage containing the image data.
      * @throws ImageFormatException
      *             If irregularities in the JPEG stream or an unknown condition
@@ -59,13 +59,13 @@ public interface JPEGImageDecoder {
      * @throws IOException
      */
     public BufferedImage decodeAsBufferedImage() throws IOException,
-	    ImageFormatException;
+            ImageFormatException;
 
     /**
      * Decode the JPEG stream that was passed as part of construction. The JPEG
      * decompression will be performed according to the current settings of the
      * JPEGDecodeParam object. For a tables only stream this will return null.
-     * 
+     *
      * @return Raster containg the image data. Colorspace and other pertinent
      *         information can be obtained from the JPEGDecodeParam object.
      * @throws ImageFormatException
@@ -77,7 +77,7 @@ public interface JPEGImageDecoder {
 
     /**
      * Get the input stream that decoding will occur from.
-     * 
+     *
      * @return The stream that the decoder is currently associated with.
      */
     public InputStream getInputStream();
@@ -85,7 +85,7 @@ public interface JPEGImageDecoder {
     /**
      * Returns the JPEGDecodeParam object that resulted from the most recent
      * decoding event.
-     * 
+     *
      * @return
      */
     public JPEGDecodeParam getJPEGDecodeParam();
@@ -94,7 +94,7 @@ public interface JPEGImageDecoder {
      * Sets the JPEGDecodeParam object used to determine the features of the
      * decompression performed on the JPEG encoded data. This is usually only
      * needed for decoding abbreviated JPEG data streams.
-     * 
+     *
      * @param jdp
      *            JPEGDecodeParam object
      */

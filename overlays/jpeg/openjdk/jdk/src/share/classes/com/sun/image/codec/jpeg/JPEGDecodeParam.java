@@ -1,29 +1,29 @@
 /* JPEGImageDecoder.java --
  * Copyright (C) 2007 Free Software Foundation, Inc.
  * Copyright (C) 2007 Matthew Flaschen
- * 
+ *
  * This file is part of GNU Classpath.
- * 
+ *
  * GNU Classpath is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2, or (at your option)
  * any later version.
- * 
+ *
  * GNU Classpath is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with GNU Classpath; see the file COPYING. If not, write to the
  * Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301 USA.
- * 
+ *
  * Linking this library statically or dynamically with other modules is
  * making a combined work based on this library. Thus, the terms and
  * conditions of the GNU General Public License cover the whole
  * combination.
- * 
+ *
  * As a special exception, the copyright holders of this library give you
  * permission to link this library with independent modules to produce an
  * executable, regardless of the license terms of these independent
@@ -72,20 +72,20 @@ package com.sun.image.codec.jpeg;
  * with the BufferedImage returned rather than make assumptions.
  * </p>
  * DECODING:
- * 
+ *
  * <pre>
- * JPEG (Encoded) Color ID   BufferedImage ColorSpace 
- * =======================   ======================== 
- * COLOR_ID_UNKNOWN          ** Invalid ** 
+ * JPEG (Encoded) Color ID   BufferedImage ColorSpace
+ * =======================   ========================
+ * COLOR_ID_UNKNOWN          ** Invalid **
  * COLOR_ID_GRAY             CS_GRAY
- * COLOR_ID_RGB              CS_sRGB 
- * COLOR_ID_YCbCr            CS_sRGB 
+ * COLOR_ID_RGB              CS_sRGB
+ * COLOR_ID_YCbCr            CS_sRGB
  * COLOR_ID_CMYK             ** Invalid **
- * COLOR_ID_PYCC             CS_PYCC 
- * COLOR_ID_RGBA             CS_sRGB (w/ alpha) 
- * COLOR_ID_YCbCrA           CS_sRGB (w/ alpha) 
+ * COLOR_ID_PYCC             CS_PYCC
+ * COLOR_ID_RGBA             CS_sRGB (w/ alpha)
+ * COLOR_ID_YCbCrA           CS_sRGB (w/ alpha)
  * COLOR_ID_RGBA_INVERTED    ** Invalid **
- * COLOR_ID_YCbCrA_INVERTED  ** Invalid ** 
+ * COLOR_ID_YCbCrA_INVERTED  ** Invalid **
  * COLOR_ID_PYCCA            CS_PYCC (w/ alpha)
  * COLOR_ID_YCCK             ** Invalid **
  * </pre>
@@ -173,14 +173,14 @@ public interface JPEGDecodeParam extends Cloneable {
 
     /**
      * Get the image width.
-     * 
+     *
      * @return int the width of the image data in pixels.
      */
     public int getWidth();
 
     /**
      * Get the image height.
-     * 
+     *
      * @return The height of the image data in pixels.
      */
     public int getHeight();
@@ -191,7 +191,7 @@ public interface JPEGDecodeParam extends Cloneable {
      * output pixel. This is distinct from the way the JPEG to each output
      * pixel. This is distinct from the way the JPEG standard defines this
      * quantity, because fractional subsampling factors are not allowed.
-     * 
+     *
      * @param component
      *            The component of the encoded image to return the subsampling
      *            factor for.
@@ -205,7 +205,7 @@ public interface JPEGDecodeParam extends Cloneable {
      * output pixel. This is distinct from the way the JPEG to each output
      * pixel. This is distinct from the way the JPEG standard defines this
      * quantity, because fractional subsampling factors are not allowed.
-     * 
+     *
      * @param component
      *            The component of the encoded image to return the subsampling
      *            factor for.
@@ -216,7 +216,7 @@ public interface JPEGDecodeParam extends Cloneable {
     /**
      * Returns the coefficient quantization tables or NULL if not defined.
      * tableNum must range in value from 0 - 3.
-     * 
+     *
      * @param tableNum
      *            the index of the table to be returned.
      * @return Quantization table stored at index tableNum.
@@ -225,7 +225,7 @@ public interface JPEGDecodeParam extends Cloneable {
 
     /**
      * Returns the Quantization table for the requested component.
-     * 
+     *
      * @param component
      *            the image component of interest.
      * @return Quantization table associated with component
@@ -234,7 +234,7 @@ public interface JPEGDecodeParam extends Cloneable {
 
     /**
      * Returns the DC Huffman coding table requested or null if not defined
-     * 
+     *
      * @param tableNum
      *            the index of the table to be returned.
      * @return Huffman table stored at index tableNum.
@@ -243,7 +243,7 @@ public interface JPEGDecodeParam extends Cloneable {
 
     /**
      * Returns the DC Huffman coding table for the requested component.
-     * 
+     *
      * @param component
      *            the image component of interest.
      * @return Huffman table associated with component
@@ -252,7 +252,7 @@ public interface JPEGDecodeParam extends Cloneable {
 
     /**
      * Returns the AC Huffman coding table requested or null if not defined
-     * 
+     *
      * @param tableNum
      *            the index of the table to be returned.
      * @return Huffman table stored at index tableNum.
@@ -261,7 +261,7 @@ public interface JPEGDecodeParam extends Cloneable {
 
     /**
      * Returns the AC Huffman coding table for the requested component.
-     * 
+     *
      * @param component
      *            the image component of interest.
      * @return Huffman table associated with component
@@ -271,7 +271,7 @@ public interface JPEGDecodeParam extends Cloneable {
     /**
      * Get the number of the DC Huffman table that will be used for a particular
      * component.
-     * 
+     *
      * @param component
      *            The Component of interest.
      * @return The table number of the DC Huffman table for component.
@@ -281,7 +281,7 @@ public interface JPEGDecodeParam extends Cloneable {
     /**
      * Get the number of the AC Huffman table that will be used for a particular
      * component.
-     * 
+     *
      * @param component
      *            The Component of interest.
      * @return The table number of the AC Huffman table for component.
@@ -291,7 +291,7 @@ public interface JPEGDecodeParam extends Cloneable {
     /**
      * Get the number of the quantization table that will be used for a
      * particular component.
-     * 
+     *
      * @param component
      *            The Component of interest.
      * @return The table number of the Quantization table for component.
@@ -316,7 +316,7 @@ public interface JPEGDecodeParam extends Cloneable {
      * Returns true if at least one instance of the marker is present in the
      * Parameter object. For encoding returns true if there is at least one
      * instance of the marker to be written.
-     * 
+     *
      * @param marker
      *            The marker of interest.
      */
@@ -327,7 +327,7 @@ public interface JPEGDecodeParam extends Cloneable {
      * parameter object. Each entry in the 'byte[][]' is the data associated
      * with one instance of the marker (each marker can theoretically appear any
      * number of times in a stream).
-     * 
+     *
      * @param marker
      *            The marker of interest.
      * @return The 'byte[][]' for this marker or null if none available.
@@ -338,21 +338,21 @@ public interface JPEGDecodeParam extends Cloneable {
      * Returns the JPEG Encoded color id. This is generally speaking only used
      * if you are decoding into Rasters. Note that when decoding into a Raster
      * no color conversion is performed.
-     * 
+     *
      * @return The value of the JPEG encoded data's color id.
      */
     public int getEncodedColorID();
 
     /**
      * Returns the number of components for the current encoding COLOR_ID.
-     * 
+     *
      * @return the number of Components
      */
     public int getNumComponents();
 
     /**
      * Get the MCUs per restart marker.
-     * 
+     *
      * @return The number of MCUs between restart markers.
      */
     public int getRestartInterval();
@@ -361,7 +361,7 @@ public interface JPEGDecodeParam extends Cloneable {
      * Get the code for pixel size units This value is copied from the APP0
      * marker. It isn't used by the JPEG codec. If the APP0 marker wasn't
      * present then you can not rely on this value.
-     * 
+     *
      * @return Value indicating the density unit one of the DENSITY_UNIT_*
      *         constants.
      */
@@ -371,7 +371,7 @@ public interface JPEGDecodeParam extends Cloneable {
      * Get the horizontal pixel density This value is copied from the APP0
      * marker. It isn't used by the JPEG code. If the APP0 marker wasn't present
      * then you can not rely on this value.
-     * 
+     *
      * @return The horizontal pixel density, in units described by
      * @see #getDensityUnit()
      */
@@ -381,7 +381,7 @@ public interface JPEGDecodeParam extends Cloneable {
      * Get the vertical pixel density This value is copied into the APP0 marker.
      * It isn't used by the JPEG code. If the APP0 marker wasn't present then
      * you can not rely on this value.
-     * 
+     *
      * @return The vertical pixel density, in units described by
      * @see #getDensityUnit()
      */
