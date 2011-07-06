@@ -1,19 +1,18 @@
 diff -Nru openjdk.orig/jaxws/build.properties openjdk/jaxws/build.properties
---- openjdk.orig/jaxws/build.properties	2009-12-04 16:41:02.000000000 +0000
-+++ openjdk/jaxws/build.properties	2009-12-04 16:41:47.000000000 +0000
-@@ -73,6 +73,9 @@
- # Where patches to drop bundle sources live
+--- openjdk.orig/jaxws/build.properties	2011-05-23 23:27:25.858844463 +0100
++++ openjdk/jaxws/build.properties	2011-05-23 23:28:12.143588051 +0100
+@@ -78,7 +78,7 @@
  patches.dir=patches
  
-+# Patches to apply
-+jaxws_src.patch.list=xjc.patch
-+
+ # Patches to apply
+-jaxws_src.patch.list=7013971.patch
++jaxws_src.patch.list=7013971.patch xjc.patch
+ 
  # Sanity information
  sanity.info= Sanity Settings:${line.separator}\
-   ant.home=${ant.home}${line.separator}\
 diff -Nru openjdk.orig/jaxws/patches/jaxws_src/xjc.patch openjdk/jaxws/patches/jaxws_src/xjc.patch
 --- openjdk.orig/jaxws/patches/jaxws_src/xjc.patch	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jaxws/patches/jaxws_src/xjc.patch	2009-12-04 16:40:10.000000000 +0000
++++ openjdk/jaxws/patches/jaxws_src/xjc.patch	2011-05-23 23:28:02.719436649 +0100
 @@ -0,0 +1,17 @@
 +--- src/com/sun/tools/internal/xjc/reader/xmlschema/parser/SchemaConstraintChecker.java.prev       2008-10-21 15:50:20.000000000 +0100
 ++++ src/com/sun/tools/internal/xjc/reader/xmlschema/parser/SchemaConstraintChecker.java    2008-10-21 15:57:37.000000000 +0100

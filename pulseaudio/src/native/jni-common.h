@@ -39,20 +39,30 @@
 #define _JNI_COMMON_H
 
 #include <jni.h>
+
 /*
- * This file contains some commonly used functions 
- * 
+ * This file contains some commonly used functions
+ *
  */
 
+// Sets the field with name field_name from jclass clz to pa_prefix_field_name.
+#define SET_JAVA_STATIC_LONG_FIELD_TO_PA_ENUM(env, clz, java_prefix, pa_prefix, name) \
+    do { \
+        char *java_full_name = #java_prefix #name; \
+        jfieldID fid = (*env)->GetStaticFieldID(env, clz, java_full_name, "J"); \
+        assert(fid); \
+        (*env)->SetStaticLongField(env, clz, fid, PA_##pa_prefix##_##name); \
+    } while(0);
+
 typedef struct java_context_t {
-	JNIEnv* env;
-	jobject obj;
+    JNIEnv* env;
+    jobject obj;
 } java_context_t;
 
 /* Exception Handling */
 
 void throwByName(JNIEnv* const env, const char* const name,
-		const char* const msg);
+        const char* const msg);
 
 #define ILLEGAL_ARGUMENT_EXCEPTION "java/lang/IllegalArgumentException"
 #define ILLEGAL_STATE_EXCEPTION "java/lang/IllegalStateException"
@@ -72,7 +82,7 @@ void setJavaLongField(JNIEnv* env, jobject, char* name, jlong value);
 
 jbyteArray getJavaByteArrayField(JNIEnv* env, jobject obj, char* name);
 void setJavaByteArrayField(JNIEnv* env, jobject obj, char* name,
-		jbyteArray array);
+        jbyteArray array);
 
 /* Pointers and Java */
 

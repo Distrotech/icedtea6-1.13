@@ -1,0 +1,24 @@
+--- openjdk.orig/jdk/test/sun/net/www/protocol/file/FileMap.java	2011-02-28 17:07:06.000000000 +0100
++++ openjdk/jdk/test/sun/net/www/protocol/file/FileMap.java	2011-06-16 11:30:19.000000000 +0200
+@@ -32,8 +32,9 @@
+ 
+ public class FileMap {
+     public static void main(String[] args) {
++        File f = null;
+         try {
+-            File f = File.createTempFile("test", null);
++            f = File.createTempFile("test", null);
+             f.deleteOnExit();
+             String s = f.getAbsolutePath();
+             s = s.startsWith("/") ? s : "/" + s;
+@@ -48,5 +49,10 @@
+         } catch (Exception ex) {
+             throw new RuntimeException("Unexpected exception: " + ex);
+         }
++        finally {
++            if ( f != null ) {
++                f.delete();
++            }
++        }
+     }
+ }

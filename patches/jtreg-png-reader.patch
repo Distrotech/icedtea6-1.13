@@ -1,7 +1,7 @@
 diff -Nu old/AbstractImageProcessor.java PngReader/AbstractImageProcessor.java
 --- /dev/null	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/test/javax/imageio/plugins/png/PngReader/AbstractImageProcessor.java	2011-01-31 13:59:40.976990000 +0100
-@@ -0,0 +1,316 @@
++++ openjdk/jdk/test/javax/imageio/plugins/png/PngReader/AbstractImageProcessor.java	2011-06-21 11:46:22.000000000 +0200
+@@ -0,0 +1,321 @@
 +/*
 + * Copyright 2011 Red Hat, Inc. All Rights Reserved.
 + * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -190,7 +190,7 @@ diff -Nu old/AbstractImageProcessor.java PngReader/AbstractImageProcessor.java
 +     * @param fileName
 +     * @return text containing basic info about image
 +     */
-+    private String getImageInfoFromFileName(String fileName) {
++    protected String getImageInfoFromFileName(String fileName) {
 +        String testType = resolveTestType(fileName.substring(0, 3));
 +        String interlaced = resolveInterlaced(fileName.charAt(3));
 +        String colorType = fileName.substring(4, 6);
@@ -271,6 +271,12 @@ diff -Nu old/AbstractImageProcessor.java PngReader/AbstractImageProcessor.java
 +        return ch == 'i' ? "interlaced" : "non-interlaced";
 +    }
 +
++    protected String[] getSortedImageNames(File imageDir) {
++        String[] imageNames = imageDir.list();
++        Arrays.sort(imageNames);
++        return imageNames;
++    }
++
 +    /**
 +     * This method tries to read all images from given directory and then
 +     * check if no exception is thrown (expectException==false) or if
@@ -282,8 +288,7 @@ diff -Nu old/AbstractImageProcessor.java PngReader/AbstractImageProcessor.java
 +     */
 +    protected void run(String imageDirectoryName, boolean expectException) {
 +        File imageDir = new File(System.getProperty("test.src", "."), imageDirectoryName);
-+        String[] imageNames = imageDir.list();
-+        Arrays.sort(imageNames);
++        String[] imageNames = getSortedImageNames(imageDir);
 +        int errors = 0;
 +        for (String imageName : imageNames) {
 +            File imageFile = new File(imageDir, imageName);
@@ -320,7 +325,7 @@ diff -Nu old/AbstractImageProcessor.java PngReader/AbstractImageProcessor.java
 +}
 diff -Nu old/BrokenPngImageProcessor.java PngReader/BrokenPngImageProcessor.java
 --- /dev/null	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/test/javax/imageio/plugins/png/PngReader/BrokenPngImageProcessor.java	2011-01-31 13:59:40.976990000 +0100
++++ openjdk/jdk/test/javax/imageio/plugins/png/PngReader/BrokenPngImageProcessor.java	2011-01-28 17:47:13.000000000 +0100
 @@ -0,0 +1,36 @@
 +/*
 + * Copyright 2011 Red Hat, Inc. All Rights Reserved.
@@ -360,7 +365,7 @@ diff -Nu old/BrokenPngImageProcessor.java PngReader/BrokenPngImageProcessor.java
 +}
 diff -Nu old/GoodPngImageProcessor.java PngReader/GoodPngImageProcessor.java
 --- /dev/null	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/test/javax/imageio/plugins/png/PngReader/GoodPngImageProcessor.java	2011-01-31 13:59:40.976990000 +0100
++++ openjdk/jdk/test/javax/imageio/plugins/png/PngReader/GoodPngImageProcessor.java	2011-01-28 17:47:17.000000000 +0100
 @@ -0,0 +1,36 @@
 +/*
 + * Copyright 2011 Red Hat, Inc. All Rights Reserved.
@@ -398,9 +403,341 @@ diff -Nu old/GoodPngImageProcessor.java PngReader/GoodPngImageProcessor.java
 +        new GoodPngImageProcessor().run(IMAGE_DIR, EXPECT_EXCEPTION);
 +    }
 +}
-diff -Nu old/ImageReadException.java PngReader/ImageReadException.java
---- /dev/null	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/test/javax/imageio/plugins/png/PngReader/ImageReadException.java	2011-01-31 13:59:40.976990000 +0100
+--- /dev/null	2011-03-28 09:47:44.855266162 +0200
++++ openjdk/jdk/test/javax/imageio/plugins/png/PngReader/ImageCompareException.java	2011-06-21 11:32:11.000000000 +0200
+@@ -0,0 +1,51 @@
++/*
++ * Copyright 2011 Red Hat, Inc. All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ */
++
++public class ImageCompareException extends Exception {
++    /**
++     * Generated serial version UID.
++     */
++    private static final long serialVersionUID = -8857533785949817059L;
++
++    private int x;
++    private int y;
++    private int r1;
++    private int g1;
++    private int b1;
++    private int r2;
++    private int g2;
++    private int b2;
++
++    public ImageCompareException(int x, int y, int r1, int g1, int b1, int r2, int g2, int b2) {
++        this.x = x;
++        this.y = y;
++        this.r1 = r1;
++        this.g1 = g1;
++        this.b1 = b1;
++        this.r2 = r2;
++        this.g2 = g2;
++        this.b2 = b2;
++    }
++
++    @SuppressWarnings({ "boxing", "unqualified-field-access" })
++    @Override
++    public String toString() {
++        return String.format("pixel [%d,%d] values differ: (%d, %d, %d) <> (%d, %d, %d)\n", x, y, r1, g1, b1, r2, g2, b2);
++    }
++}
+--- /dev/null	2011-03-28 09:47:44.855266162 +0200
++++ openjdk/jdk/test/javax/imageio/plugins/png/PngReader/ImageReaderAndComparator.java	2011-06-21 11:48:38.123378000 +0200
+@@ -0,0 +1,276 @@
++/*
++ * Copyright 2011 Red Hat, Inc. All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ */
++
++import java.awt.image.BufferedImage;
++import java.io.BufferedInputStream;
++import java.io.DataInputStream;
++import java.io.File;
++import java.io.FileInputStream;
++import java.io.IOException;
++
++/**
++ * @test
++ * @summary This test check if the PNG images read by ImageIO system
++ *          has proper pixel values. Read images are checked against
++ *          corresponding PAM images generated by external tool.
++ *          This test are able to work with:
++ *          - grayscale images with 1 byte color depth (256 grayscales)
++ *          - grayscale images with 2 bytes color depth (65536 grayscales)
++ *          - RGB images with 1 byte color depth/color component (2^24 colors)
++ *          - RGB images with 2 bytes color depth/color component (2^48 colors)
++ * 
++ * @author Pavel Tisnovsky
++ * 
++ */
++public class ImageReaderAndComparator extends AbstractImageProcessor {
++
++    /**
++     * Directory containing tested PNG images.
++     */
++    private static final String PNG_IMAGE_DIR = "good_images";
++
++    /**
++     * Directory containing corresponding PAM images.
++     */
++    private static final String PAM_IMAGE_DIR = "pam_images";
++
++    /**
++     * Maximum allowable difference between color values of corresponding pixels.
++     */
++    private static int MAX_COLOR_COMPONENT_DIFF = 1;
++
++    /**
++     * Parse integer value from PAM file.
++     */
++    @SuppressWarnings("deprecation")
++    private int readIntegerFromPam(String attributeName, String fileName, DataInputStream input, int lineNumber)
++                    throws IOException, PamImageReadException {
++        String line;
++        line = input.readLine();
++        if (!line.startsWith(attributeName)) {
++            throw new PamImageReadException(fileName, lineNumber);
++        }
++        return Integer.parseInt(line.substring(line.indexOf(' ') + 1));
++    }
++
++    /**
++     * Linear to sRGB conversion
++     * @param Clinear color value in linear RGB color space
++     * @return color value in sRGB color space
++     */
++    private double linear2srgb(double Clinear)
++    {   
++        double alpha = 0.055;
++        return (Clinear <= 0.0031308) ? 12.92 * Clinear : (1. + alpha) * Math.pow(Clinear, 1 / 2.4) - alpha;
++    }
++
++    /**
++     * Read PAM image
++     * @param imageFile file containing image in PAM format
++     * @return raster image
++     * @throws IOException
++     * @throws PamImageReadException
++     */
++    @SuppressWarnings({ "deprecation", "boxing" })
++    private BufferedImage readPamImage(File imageFile) throws IOException, PamImageReadException {
++        // PAM image header format:
++        // P7
++        // WIDTH 32
++        // HEIGHT 32
++        // DEPTH 1
++        // MAXVAL 1
++        // ENDHDR
++        String fileName = imageFile.getName();
++        DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(imageFile)));
++        int lineNumber = 1;
++        String line;
++
++        // check first line of PAM image
++        line = input.readLine();
++        if (! "P7".equals(line)) {
++            throw new PamImageReadException(fileName, lineNumber);
++        }
++
++        lineNumber++;
++        int width = readIntegerFromPam("WIDTH", fileName, input, lineNumber);
++        lineNumber++;
++        int height = readIntegerFromPam("HEIGHT", fileName, input, lineNumber);
++        lineNumber++;
++        int depth = readIntegerFromPam("DEPTH", fileName, input, lineNumber);
++        lineNumber++;
++        int maxval = readIntegerFromPam("MAXVAL", fileName, input, lineNumber);
++
++        input.readLine(); // ENDHDR
++        System.out.format("width: %d, height: %d, depth: %d, maxval: %d\n", width, height, depth, maxval); 
++
++        BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
++        for (int y = 0; y < height; y++) {
++            for (int x = 0; x < width; x++) {
++                int rgb;
++                switch (depth) {
++                    case 1:
++                        int grayLevel = readOneColorComponent(maxval, input, true);
++                        rgb = (grayLevel << 16) + (grayLevel << 8) + grayLevel;
++                        img.setRGB(x, y, rgb);
++                        break;
++                    case 4:
++                        int r = readOneColorComponent(maxval, input, false);
++                        int g = readOneColorComponent(maxval, input, false);
++                        int b = readOneColorComponent(maxval, input, false);
++                        // ignore alpha channel for the moment
++                        input.readUnsignedByte();
++                        if (maxval == 65535) {
++                            input.readUnsignedByte();
++                        }
++                        rgb = (r << 16) + (g << 8) + b;
++                        img.setRGB(x, y, rgb);
++                        break;
++                    default:
++                        throw new PamImageReadException("unknown color depth");
++                }
++            }
++        }
++        return img;
++    }
++
++    /**
++     * Read one color component from PAM file
++     * @param maxval
++     * @param input
++     * @param convertToSRGB 
++     * @return
++     * @throws IOException
++     */
++    private int readOneColorComponent(int maxval, DataInputStream input, boolean convertToSRGB) throws IOException {
++        int i = input.readUnsignedByte();
++        if (maxval == 65535) {
++            int i2 = input.readUnsignedByte();
++            double c = (double) ((i << 8) + i2) / maxval;
++            if (convertToSRGB) {
++                c = linear2srgb(c);
++            }
++            i = (int) (c * 255.0);
++        }
++        else if (maxval == 255) {
++            double c = (double) i / maxval;
++            if (convertToSRGB) {
++                c = linear2srgb(c);
++            }
++            i = (int) (c * 255.0);
++        }
++        else {
++            i = i * 255 / maxval;
++        }
++        return i;
++    }
++
++    /**
++     * Compare two images
++     * @param img1
++     * @param img2
++     * @throws Exception
++     */
++    private void compareImages(BufferedImage img1, BufferedImage img2) throws Exception {
++        if (img1 == null || img2 == null) {
++            throw new Exception("at least one image can not be read");
++        }
++        if (img1.getWidth() != img2.getWidth() || img1.getHeight() != img2.getHeight()) {
++            throw new Exception("image size differs");
++        }
++        System.out.println();
++        for (int y = 0; y < img1.getHeight(); y++) {
++            for (int x = 0; x < img1.getWidth(); x++) {
++                int rgb1 = img1.getRGB(x, y);
++                int rgb2 = img2.getRGB(x, y);
++
++                int r1 = rgb1 & 0xff;
++                int b1 = (rgb1 >> 8) & 0xff;
++                int g1 = (rgb1 >> 16) & 0xff;
++
++                int r2 = rgb2 & 0xff;
++                int b2 = (rgb2 >> 8) & 0xff;
++                int g2 = (rgb2 >> 16) & 0xff;
++
++                if (Math.abs(r1 - r2) > MAX_COLOR_COMPONENT_DIFF || Math.abs(g1 - g2) > MAX_COLOR_COMPONENT_DIFF  || Math.abs(b1 - b2) > MAX_COLOR_COMPONENT_DIFF   ) {
++                    throw new ImageCompareException(x, y, r1, g1, b1, r2, g2, b2);
++                }
++            }
++        }
++        System.out.println("OK - images are the same");
++    }
++
++    /**
++     * Run the test
++     */
++    private void run() {
++        File pngImageDir = new File(System.getProperty("test.src", "."), PNG_IMAGE_DIR);
++        File pamImageDir = new File(System.getProperty("test.src", "."), PAM_IMAGE_DIR);
++        String[] imageNames = getSortedImageNames(pngImageDir);
++        int errors = 0;
++        int comparingOk = 0;
++        int comparingErrors = 0;
++        for (String imageName : imageNames) {
++            File imageFile1 = new File(pngImageDir, imageName);
++            File imageFile2 = new File(pamImageDir, imageName.replace(".png", ".pam"));
++            System.out.println("\nChecking images: " + imageFile1.getAbsolutePath() + " and "
++                            + imageFile2.getAbsolutePath());
++            //System.out.println(getImageInfoFromFileName(imageName));
++            try {
++                BufferedImage img1 = readBufferedImage(imageFile1);
++                BufferedImage img2 = readPamImage(imageFile2);
++                try {
++                    compareImages(img1, img2);
++                    comparingOk++;
++                }
++                catch (ImageCompareException e) {
++                    comparingErrors++;
++                    e.printStackTrace();
++                }
++                catch (Exception e) {
++                    comparingErrors++;
++                    e.printStackTrace();
++                }
++            }
++            catch (ImageReadException e) {
++                errors++;
++                e.printStackTrace();
++            }
++            catch (IOException e) {
++                errors++;
++                e.printStackTrace();
++            }
++            catch (PamImageReadException e) {
++                errors++;
++                e.printStackTrace();
++            }
++        }
++        if (comparingErrors > 0) {
++            throw new RuntimeException("Catch " + comparingErrors + " comparison failures");
++        }
++        if (errors > 0) {
++            throw new RuntimeException("Error processing " + errors + " images");
++        }
++        System.out.format("Sucessfuly compared %d images!\n", Integer.valueOf(comparingOk));
++    }
++    
++    public static void main(String args[]) {
++        new ImageReaderAndComparator().run();
++    }
++    
++}
+--- /dev/null	2011-03-28 09:47:44.855266162 +0200
++++ openjdk/jdk/test/javax/imageio/plugins/png/PngReader/ImageReadException.java	2011-01-28 17:47:22.000000000 +0100
 @@ -0,0 +1,48 @@
 +/*
 + * Copyright 2011 Red Hat, Inc. All Rights Reserved.
@@ -450,9 +787,68 @@ diff -Nu old/ImageReadException.java PngReader/ImageReadException.java
 +    }
 +
 +}
-diff -Nu old/pngsuite.doc PngReader/pngsuite.doc
---- /dev/null	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/test/javax/imageio/plugins/png/PngReader/pngsuite.doc	2011-01-31 13:59:40.976990000 +0100
+--- /dev/null	2011-03-28 09:47:44.855266162 +0200
++++ openjdk/jdk/test/javax/imageio/plugins/png/PngReader/PamImageReadException.java	2011-06-21 11:32:23.000000000 +0200
+@@ -0,0 +1,57 @@
++/*
++ * Copyright 2011 Red Hat, Inc. All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ */
++
++public class PamImageReadException extends Exception {
++
++    private String message = "";
++    private String fileName = "";
++    private int lineNumber = 0;
++
++    /**
++     * Generated serial version UID
++     */
++    private static final long serialVersionUID = -1324117718127778562L;
++
++    public PamImageReadException(String fileName, int lineNumber) {
++        this.setFileName(fileName);
++        this.setLineNumber(lineNumber);
++    }
++
++    public PamImageReadException(String message) {
++        this.setMessage(message);
++    }
++
++    private void setMessage(String message) {
++        this.message = message;
++    }
++
++    private void setFileName(String fileName) {
++        this.fileName = fileName;
++    }
++
++    private void setLineNumber(int lineNumber) {
++        this.lineNumber = lineNumber;
++    }
++
++    @Override
++    public String getMessage() {
++        return "Error reading file " + this.fileName + " on line " + this.lineNumber + "  message: " + this.message;
++    }
++
++}
+--- /dev/null	2011-03-28 09:47:44.855266162 +0200
++++ openjdk/jdk/test/javax/imageio/plugins/png/PngReader/pngsuite.doc	1998-04-05 17:02:03.000000000 +0200
 @@ -0,0 +1,520 @@
 +        PNGSUITE
 +----------------

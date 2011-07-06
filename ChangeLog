@@ -1,3 +1,445 @@
+2011-07-01  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: added new patches
+	* NEWS: updated with backports
+	* patches/openjdk/6679308-Poor_text_rendering_on_translucent_image.patch:
+	Backport of 6679308.
+
+2011-07-01  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: added new patch
+	* NEWS: updated with backport
+	* patches/openjdk/7029152-String_intrinsics_miss_optimization.patch:
+	Backport of 7029152 fix.
+
+2011-06-29  Andrew John Hughes  <ahughes@redhat.com>
+
+	* NEWS: Updated with latest bug fixes.
+
+2011-06-29  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/ecj/jaxws-getdtdtype.patch:
+	Fix patch to still apply after recent
+	security updates.
+
+2011-06-29  Andrew John Hughes  <ahughes@redhat.com>
+
+	* acinclude.m4:
+	(IT_FIND_JAVA): Check that the binary is also
+	a regular file as well as executable.
+	(IT_FIND_JAVAH): Likewise.
+	(IT_FIND_JAR): Likewise.
+	(IT_FIND_RMIC): Likewise.
+	(IT_FIND_NATIVE2ASCII): Likewise.
+
+2011-06-29  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: added new patches
+	* NEWS: updated with backports
+	* patches/openjdk/6796786-invalid_FP_identity_transform.patch:
+	* patches/openjdk/7042070-Typo_in_Test6796786.patch:
+	Backport of 6796786 and 7042070 fixes.
+
+2011-06-29  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: added new patches
+	* NEWS: updated with backports
+	* patches/openjdk/7047069-Array_can_dynamically_change_size.patch:
+	Backport of 7047069 fix.
+
+2011-06-28  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: added new patch
+	* NEWS: updated with backport
+	* patches/openjdk/6785424-SecurityException_locating_physical_fonts.patch:
+	Backport of 6785424 fix.
+
+2011-06-28  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: added new patch
+	* NEWS: updated with backport
+	* patches/openjdk/6783910-java_awt_Color_brighter_darker_fix.patch:
+	Backport of 6783910 fix.
+
+2011-06-28  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am: Add new patch.
+	* patches/support_linux_3.patch:
+	Allow Linux 3* through the HotSpot OS version
+	filter.
+
+2011-06-27  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: added new patch
+	* NEWS: updated with backport
+	* patches/openjdk/6623219-Font_canDisplayUpTo_does_not_work.patch
+	Backport of 6623219 fix.
+
+2011-06-27  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: added new patch
+	* NEWS: updated with backport
+	* patches/openjdk/6918065-Crash_in_Java2D_blit_loop.patch:
+	Backport of 6918065 fix.
+
+2011-06-27  Xerxes Rånby  <xerxes@zafena.se>
+
+	JamVM
+	- Make classlib init functions consistent + warnings.
+	- Correctly implement sun.misc.Unsafe freeMemory().
+	- Move lazy-loading to init function.
+	- Fix various warnings with -Wall.
+	- PrintThreadsDump needs "self" as argument.
+	- CopyMemory, etc. handle negative or truncation in length.
+	- Extra sun.misc.Unsafe functions.
+	- Ignore options for jtreg tests.
+	- Enable shutdownVM to be called with OpenJDK classlib.
+	- Initial implementation of JVM_FindClassFromBootLoader.
+	- Fix callJNIMethod on i386 with -fomit-frame-pointer.
+	- Fix backwards cache conflict resolution code.
+	- Unify command line options parsing.
+	- Remove debug printf.
+	* NEWS: Updated.
+	* Makefile.am
+	(ICEDTEA_PATCHES): Remove upstreamed JamVM patch.
+	(JAMVM_VERSION): Updated JamVM to 2011-06-13 revision.
+	(JAMVM_SHA256SUM): Updated.
+	(stamps/jamvm.stamp):
+	Add -f when creating client symlink to handle repeat builds.
+	Link the fake libjsig.so to JamVM libjvm.so to work
+	with latest OpenJDK ALT_HOTSPOT_IMPORT_PATH functionality.
+	* patches/jamvm/ignore-unknown-options.patch: Removed.
+	Replaced by upstream, unify command line options parsing,
+	changeset 1b248439e88ae6cbd1471addc49e2666b8964ced.
+
+2011-06-24  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: added new patch
+	* NEWS: updated with backport
+	* patches/openjdk/6699843-IllegalArgumentException_drawString.patch:
+	Backport of 6699843 fix.
+
+2011-06-24  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: added new patch
+	* NEWS: updated with backport
+	* patches/openjdk/6956668-misbehavior_of_XOR_operator_with_int:
+	Backport of 6956668 fix.
+
+2011-06-23  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: added new patch
+	* NEWS: updated with backport
+	* patches/openjdk/7008106-WindowOpacity.patch:
+	Backport of 7008106 regression test fix.
+
+2011-06-23  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: added new patch
+	* patches/jtreg-MappedByteBuffer-Basic.patch:
+	Make sure that the regression test
+	openjdk/jdk/test/java/nio/MappedByteBuffer/Basic.java
+	deletes all its work files.
+
+2011-06-22  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: added new patch
+	* patches/openjdk/6818312-com.sun.awt.SecurityWarning.getSize.patch:
+	Backport of 6818312 regression test.
+
+2011-06-22  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: Added new patch.
+	* patches/jtreg-ReadWriteProfileTest.patch:
+	Added regression test missing from 6733501 backport.
+
+2011-06-22  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* patches/jtreg-png-reader.patch:
+	Added new regression test which check if PNG
+	images read by ImageIO subsytstem contains
+	proper pixel values.
+
+2011-06-20  Denis Lila  <dlila@redhat.com>
+
+	* pulseaudio/src/native/org_classpath_icedtea_pulseaudio_Stream.c
+	(SET_STREAM_ENUM): Add an underscore after java_prefix so that
+	the produced string matches the names in Stream.java.
+
+2011-06-20  Denis Lila  <dlila@redhat.com>
+
+	* Makefile.am: Add patch.
+	* patches/jtreg-bug7036148-test.patch:
+	Fix regression test. It used to never end, regardless of
+	success/failure.
+
+2011-06-20  Denis Lila  <dlila@redhat.com>
+
+	* pulseaudio/src/java/org/classpath/icedtea/pulseaudio/PulseAudioDataLine.java
+	(bufferSize): Remove.
+	(getBufferSize): Return stream.getBufferSize().
+	* pulseaudio/src/java/org/classpath/icedtea/pulseaudio/PulseAudioSourceDataLine.java
+	(connectLine): Improve formatting.
+	* pulseaudio/src/java/org/classpath/icedtea/pulseaudio/PulseAudioTargetDataLine.java
+	(connectLine): Set up flags to adjust the latency, if needed.
+	* pulseaudio/src/java/org/classpath/icedtea/pulseaudio/Stream.java
+	(bufAttr, bufAttrMutex): New members.
+	(setBufAttr, bufferAttrCallback): New methods. They both set bufAttr.
+	(getBufferSize): Return the current buffer size.
+	(connectForRecording): Add a flags argument to allow callers to chose the
+	flags.
+	(stateCallback): When the stream is ready, set the buffer attributes to
+	the actual ones used by the server.
+	* pulseaudio/src/native/org_classpath_icedtea_pulseaudio_Stream.c
+	(buf_attr_changed_callback): New function. 
+	(Java_org_classpath_icedtea_pulseaudio_Stream_native_1pa_1stream_1new):
+	Set the buffer attribute callback.
+
+2011-06-17  Denis Lila  <dlila@redhat.com>
+
+	* pulseaudio/src/java/org/classpath/icedtea/pulseaudio/Stream.java
+	(FLAG_NOFLAGS, FLAG_START_CORKED, FLAG_INTERPOLATE_TIMING,
+	 FLAG_NOT_MONOTONIC, FLAG_AUTO_TIMING_UPDATE, FLAG_NO_REMAP_CHANNELS,
+	 FLAG_NO_REMIX_CHANNELS, FLAG_FIX_FORMAT, FLAG_FIX_RATE,
+	 FLAG_FIX_CHANNELS, FLAG_DONT_MOVE, FLAG_VARIABLE_RATE, FLAG_PEAK_DETECT,
+	 FLAG_START_MUTED, FLAG_ADJUST_LATENCY, FLAG_EARLY_REQUESTS,
+	 FLAG_DONT_INHIBIT_AUTO_SUSPEND, FLAG_START_UNMUTED, FLAG_FAIL_ON_SUSPEND):
+	New static long variables mirroring pa_stream_flag_t values.
+	(STATE_UNCONNECTED, STATE_CREATING, STATE_READY, STATE_FAILED,
+	 STATE_TERMINATED): Add the STATE_ prefix to distinguish them from
+	the flag variables.
+	(native_pa_stream_connect_playback, native_pa_stream_connect_record):
+	Change flags parameter to long.
+	(connectForPlayback, connectForRecording): Start the stream corked.
+	Change formatting to make it more readable.
+	* pulseaudio/src/native/org_classpath_icedtea_pulseaudio_Stream.c
+	(SET_STREAM_ENUM): Renamed from SET_STREAM_STATE_ENUM, since the
+	macro could have been used for any PA_STREAM constants, not just
+	stream states (and indeed, we now use it for flag constants too).
+	(Java_org_classpath_icedtea_pulseaudio_Stream_init_1constants):
+	Initialize flag constants in addition to the stream states.
+	(Java_org_classpath_icedtea_pulseaudio_Stream_native_1pa_1stream_1connect_1playback):
+	Change flags parameter to jlong (from jint), remove commented out
+	dead code, remove obsolete comment, and start the stream with whatever
+	flags were passed in the flags parameter, instead of ignoring that
+	parameter and using PA_STREAM_START_CORKED.
+	(Java_org_classpath_icedtea_pulseaudio_Stream_native_1pa_1stream_1connect_1record):
+	Change flags parameter to jlong (from jint), remove commented out
+	dead code.
+
+2011-06-17  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: added new patch
+	* patches/jtreg-ChannelsWrite.patch:
+	Make sure that the regression test
+	openjdk/jdk/test/java/nio/channels/Channels/Write.java
+	deletes all its work files.
+
+2011-06-16  Denis Lila  <dlila@redhat.com>
+
+	* pulseaudio/src/java/org/classpath/icedtea/pulseaudio/PulseAudioDataLine.java
+	(addStreamListeners): Remove this.notifyAll() from
+	openCloseListener.update; change this.notifyAll() to
+	PulseAudioDataLine.this.notifyAll() in startedListener.update.
+	* pulseaudio/src/java/org/classpath/icedtea/pulseaudio/PulseAudioTargetDataLine.java
+	(read): Put fragmentBuffer null check in the synchronized block.
+	(flush): Make it synchronized to avoid race condition with read().
+
+2011-06-16  Denis Lila  <dlila@redhat.com>
+
+	* Makefile.am: Add ContextEvent to the list of pulse audio classes that
+	need javah run on them.
+	* pulseaudio/src/java/org/classpath/icedtea/pulseaudio/ContextEvent.java
+	(Type): Remove and replace with...
+	(UNCONNECTED, CONNECTING, AUTHORIZING, SETTING_NAME, READY, FAILED,
+	 TERMINATED): New static long variables replacing enum Type.
+	(init_constants): New native method to initialize the above variables.
+	(checkNativeEnumReturn): Make sure that the input is one of the longs
+	representing the type of ContextEvent.
+	(type): Change type from Type to long.
+	(ContextEvent): Take a long argument, instead of a Type.
+	(getType): Return a long, not a Type.
+	* pulseaudio/src/java/org/classpath/icedtea/pulseaudio/EventLoop.java
+	(status): Change from int to long.
+	(native_set_sink_volume): Remove. It was unimplemented in the JNI side.
+	(getStatus): Return long instead of int.
+	(update): Replace int argument with long argument. Remove the switch
+	statement.
+	(setVolume): Remove. Unused.
+	* pulseaudio/src/java/org/classpath/icedtea/pulseaudio/Operation.java
+	(State): Remove and replace with...
+	(Running, Done, Cancelled): Static longs, enumerating the possible
+	operation states.
+	(init_constants): New native method to initialize the above variables.
+	(checkNativeOperationState): Make sure that the input is one of the longs
+	representing the operation state.
+	(native_get_state): Change return type from int to long.
+	(getState): Change return type to long; remove switch.
+	* pulseaudio/src/java/org/classpath/icedtea/pulseaudio/PulseAudioDataLine.java
+	Remove the names of enums from the names of constants since most of them
+	were changed to static longs.
+	* pulseaudio/src/java/org/classpath/icedtea/pulseaudio/PulseAudioMixer.java
+	Same changes as in PulseAudioDataLine.java.
+	* pulseaudio/src/java/org/classpath/icedtea/pulseaudio/Stream.java
+	(State): Remove and replace with...
+	(UNCONNECTED, CREATING, READY, FAILED, TERMINATED): New static long variables
+	replacing enum Type.
+	(init_constants): New native method to initialize the above variables.
+	(checkNativeStreamState): Make sure that the input is one of the longs
+	representing the kind of StreamState.
+	(native_pa_stream_get_state): Change the return from int to long.
+	(getState): Remove the switch.
+	* pulseaudio/src/native/jni-common.h
+	(SET_JAVA_STATIC_LONG_FIELD_TO_PA_ENUM): Macro that sets one of the java
+	 static longs to the corresponding pa_constant.
+	* pulseaudio/src/native/org_classpath_icedtea_pulseaudio_ContextEvent.c
+	New file.
+	(SET_CONTEXT_ENUM): Macro that sets the ContextEvent types.
+	(Java_org_classpath_icedtea_pulseaudio_ContextEvent_init_1constants):
+	Implementation of ContextEvent.init_constants.
+	* pulseaudio/src/native/org_classpath_icedtea_pulseaudio_EventLoop.c
+	(context_change_callback): Change the fourth argument of GetMethodID
+	to "(J)V" to reflect the change in the signature of EventLoop.update.
+	* pulseaudio/src/native/org_classpath_icedtea_pulseaudio_Operation.c
+	(SET_OP_ENUM): Macro that sets the operation types.
+	(Java_org_classpath_icedtea_pulseaudio_Operation_init_1constants):
+	Implementation of Operation.init_constants.
+	(Java_org_classpath_icedtea_pulseaudio_Operation_native_1get_1state):
+	Change return type to jlong.
+	* pulseaudio/src/native/org_classpath_icedtea_pulseaudio_Stream.c
+	(SET_STREAM_ENUM): Macro that sets the stream states.
+	(Java_org_classpath_icedtea_pulseaudio_Stream_init_1constants):
+	Implementation of Stream.init_constants.
+	(Java_org_classpath_icedtea_pulseaudio_Stream_native_1pa_1stream_1get_1state):
+	Change return type to jlong.
+
+2011-06-16  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: fixed indentation (spaces2tabs)
+
+2011-06-16  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: added new patch
+	* patches/jtreg-FileMap.patch:
+	Make sure that the regression test
+	openjdk/jdk/test/sun/net/www/protocol/file/FileMap.java
+	deletes all its work files.
+
+2011-06-15  Danesh Dadachanji  <ddadacha@redhat.com>
+
+	* AUTHORS: Added myself.
+	* Makefile.am: Use explicit xml-commons locations if necessary.
+	* acinclude.m4: Added explicit xml-commons check.
+	(IT_CHECK_IF_INSTANTIABLE): Added generic macro to instantiate any
+	class. Paramaters are the define, name of the class, paramaters
+	for instatiation and (optional) classpath.
+	* configure.ac: Invoke IT_FIND_XML_COMMONS_APIS_JAR macro after
+	IT_FIND_XERCES2_JAR, assigns XML_COMMONS_APIS_JAR if necessary.
+
+2011-06-15  Denis Lila  <dlila@redhat.com>
+
+	* Makefile.am: Add back the -classpath option to javah in
+	building the pulse audio header files. The bootstrap javah
+	doesn't recognize -J-Xbootclasspath/p: so it couldn't find
+	the classfiles.
+
+2011-06-15  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: added new patch
+	* patches/jtreg-EncodedMultiByteChar.patch:
+	Make sure that the regression test
+	openjdk/jdk/test/sun/net/www/protocol/file/EncodedMultiByteChar.java
+	deletes all its work files.
+
+2011-06-14  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: added new patch
+	* patches/jtreg-FileLoaderTest.patch:
+	Make sure that the regression test
+	openjdk/jdk/test/sun/misc/URLClassPath/FileLoaderTest.java
+	deletes all its work files.
+
+2011-06-14  Denis Lila  <dlila@redhat.com>
+
+	* Makefile.am: Add patch.
+	* NEWS: Update with backports.
+	* patches/openjdk/7036148-npe-null-jmenu-name.patch:
+	Backport of S7036148. Fixes RH712211 too.
+
+2011-06-14  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: added new patch
+	* patches/jtreg-TempBuffer.patch:
+	Make sure that the regression test
+	openjdk/jdk/test/sun/nio/ch/TempBuffer.java
+	deletes all its work files.
+
+2011-06-14  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: added new patch
+	* patches/jtreg-ChangeDir.patch:
+	Make sure that the regression test
+	openjdk/jdk/test/tools/jar/ChangeDir.java
+	deletes all its work files.
+
+2011-05-23  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am: Add security patches.
+	* patches/nio2.patch: Rerolled post-security
+	patching.
+	* patches/security/20110607/6213702.patch,
+	* patches/security/20110607/6618658.patch,
+	* patches/security/20110607/7012520.patch,
+	* patches/security/20110607/7013519.patch,
+	* patches/security/20110607/7013969.patch,
+	* patches/security/20110607/7013971.patch,
+	* patches/security/20110607/7016495.patch,
+	* patches/security/20110607/7020198.patch,
+	* patches/security/20110607/7020373.patch:
+	New security patches.
+	* patches/xjc.patch: Rerolled after 7013971.
+
+2011-06-10  Denis Lila  <dlila@redhat.com>
+
+	* pulseaudio/*: Fix whitespace.
+
+2011-06-10  Denis Lila  <dlila@redhat.com>
+
+	* Makefile.am
+	(stamps/pulse-java-headers.stamp): Prepend the java build directory
+	to the boot class path to avoid generating headers for the system
+	pulse-java classes.
+
+2011-06-10  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* patches/font-rhel.patch:
+	* patches/f14-fonts.patch:
+	* patches/fonts-gentoo.patch:
+	Patch updated: use only major RHEL version, not minor one.
+
+2011-06-09  Denis Lila <dlila@redhat.com>
+
+	* Makefile.am: Apply patches.
+	* NEWS: Update with backports.
+	* patches/openjdk/6578583-modality-broken-vista.patch:
+	* patches/openjdk/6610244-modal-fatal-error-windows.patch:
+	* patches/openjdk/6769607-modal-hangs.patch:
+	New patches. The last fixes PR677. The other two are
+	necessary for the last to fully apply.
+	* patches/openjdk/6693253-security_warning.patch:
+	Replsace the awt_Dialog.cpp hunk with the corresponding hunk
+	from the OpenJDK7 changeset of which this patch is a backport.
+	Without this change, this patch doesn't apply unless the
+	previous 3 are removed.
+
+2011-06-09  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: Added new patch
+	* patches/fonts-rhel-version.patch:
+	Patch which ensures, that only one fontconfig file
+	will be needed on particular RHEL version
+	(ie. only one file for RHEL 6.0, RHEL 6.1 and RHEL 6.2)
+
 2011-05-30  Andrew John Hughes  <ahughes@redhat.com>
 
 	* patches/openjdk/7036220-shark_llvm_29_headers.patch:

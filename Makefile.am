@@ -11,8 +11,8 @@ CACAO_BASE_URL = http://icedtea.classpath.org/download/drops/cacao
 CACAO_URL = $(CACAO_BASE_URL)/$(CACAO_VERSION).tar.gz
 CACAO_SRC_ZIP = cacao-$(CACAO_VERSION).tar.gz
 
-JAMVM_VERSION = 2e52a601883dda84c824b43363c02881def3e06d
-JAMVM_SHA256SUM = b26bc67ddfb50c98761aa4939254470ec9a8f88e9a22628b858603099a784af8
+JAMVM_VERSION = f8b8e8e78ec057a5852ff8c0f3386b48f3eca907
+JAMVM_SHA256SUM = 4107152b0a840656f3551c9b21cb52696417ba6d597457a8b34c86437f9ce64e
 JAMVM_BASE_URL = http://icedtea.classpath.org/download/drops/jamvm
 JAMVM_URL = $(JAMVM_BASE_URL)/jamvm-$(JAMVM_VERSION).tar.gz
 JAMVM_SRC_ZIP = jamvm-$(JAMVM_VERSION).tar.gz
@@ -185,10 +185,20 @@ REWRITER_SRCS = $(abs_top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.jav
 
 ICEDTEA_FSG_PATCHES =
 
-SECURITY_PATCHES = 
+SECURITY_PATCHES = patches/security/20110607/6213702.patch \
+	patches/security/20110607/6618658.patch \
+	patches/security/20110607/7012520.patch \
+	patches/security/20110607/7013519.patch \
+	patches/security/20110607/7013969.patch \
+	patches/security/20110607/7013971.patch \
+	patches/security/20110607/7016495.patch \
+	patches/security/20110607/7020198.patch \
+	patches/security/20110607/7020373.patch
 
 ICEDTEA_PATCHES = \
 	$(SECURITY_PATCHES) \
+	patches/openjdk/6578583-modality-broken-vista.patch \
+	patches/openjdk/6610244-modal-fatal-error-windows.patch \
 	patches/stdc-limit-macros.patch \
 	patches/openjdk/4993545-nativeinlightfixer.patch \
 	patches/openjdk/6637796-set_bounds.patch \
@@ -201,9 +211,10 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6725214-direct3d-01.patch \
 	patches/openjdk/6748082-isDisplayLocal.patch \
 	patches/openjdk/6633275-shaped_translucent_windows.patch \
-        patches/openjdk/6791612-opengl-jni-fix.patch \
-        patches/openjdk/6755274-glgetstring-crash.patch \
-        patches/openjdk/6984543-onscreen_rendering_resize_test.patch \
+	patches/openjdk/6769607-modal-hangs.patch \
+	patches/openjdk/6791612-opengl-jni-fix.patch \
+	patches/openjdk/6755274-glgetstring-crash.patch \
+	patches/openjdk/6984543-onscreen_rendering_resize_test.patch \
 	patches/openjdk/6693253-security_warning.patch \
 	patches/openjdk/6444769-windowwithwarningtest.patch \
 	patches/notice-safepoints.patch \
@@ -327,11 +338,36 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7037939-hugepage.patch \
 	patches/openjdk/7043564-hugepage.patch \
 	patches/openjdk/mutter.patch \
+	patches/fonts-rhel-version.patch \
+	patches/openjdk/7036148-npe-null-jmenu-name.patch \
+	patches/jtreg-ChangeDir.patch \
+	patches/jtreg-TempBuffer.patch \
+	patches/jtreg-EncodedMultiByteChar.patch \
+	patches/jtreg-FileLoaderTest.patch \
+	patches/jtreg-FileMap.patch \
+	patches/jtreg-ChannelsWrite.patch \
+	patches/jtreg-bug7036148-test.patch \
+	patches/jtreg-ReadWriteProfileTest.patch \
+	patches/openjdk/6818312-com.sun.awt.SecurityWarning.getSize.patch \
+	patches/jtreg-MappedByteBuffer-Basic.patch \
+	patches/openjdk/7008106-WindowOpacity.patch \
+	patches/openjdk/6956668-misbehavior_of_XOR_operator_with_int.patch \
+	patches/openjdk/6699843-IllegalArgumentException_drawString.patch \
+	patches/openjdk/6918065-Crash_in_Java2D_blit_loop.patch \
+	patches/openjdk/6623219-Font_canDisplayUpTo_does_not_work.patch \
+	patches/support_linux_3.patch \
+	patches/openjdk/6783910-java_awt_Color_brighter_darker_fix.patch \
+	patches/openjdk/6785424-SecurityException_locating_physical_fonts.patch \
+	patches/openjdk/7047069-Array_can_dynamically_change_size.patch \
+	patches/openjdk/6796786-invalid_FP_identity_transform.patch \
+	patches/openjdk/7042070-Typo_in_Test6796786.patch \
+	patches/openjdk/6679308-Poor_text_rendering_on_translucent_image.patch
 	patches/pr639-broken_shark_build.patch \
 	patches/powerpc-stacksize.patch \
 	patches/jtreg-remove-test-6987555.patch \
 	patches/jtreg-remove-test-6991596.patch \
-	patches/openjdk/7036220-shark_llvm_29_headers.patch
+	patches/openjdk/7036220-shark_llvm_29_headers.patch \
+	patches/openjdk/7029152-String_intrinsics_miss_optimization.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -349,11 +385,6 @@ if ENABLE_CACAO
 ICEDTEA_PATCHES += \
 	patches/cacao/ignore-jdi-tests.patch \
 	patches/cacao/ignore-tests.patch
-endif
-
-if BUILD_JAMVM
-ICEDTEA_PATCHES += \
-	patches/jamvm/ignore-unknown-options.patch
 endif
 
 if ENABLE_PULSE_JAVA
@@ -1248,7 +1279,12 @@ stamps/bootstrap-directory-ecj.stamp: stamps/native-ecj.stamp
 	ln -sf $(XALAN2_JAR) $(ECJ_BOOT_DIR)/lib/endorsed/xalan-j2.jar && \
 	ln -sf $(XALAN2_SERIALIZER_JAR) \
 	  $(ECJ_BOOT_DIR)/lib/endorsed/xalan-j2-serializer.jar && \
-	ln -sf $(XERCES2_JAR) $(ECJ_BOOT_DIR)/lib/endorsed/xerces-j2.jar
+	ln -sf $(XERCES2_JAR) $(ECJ_BOOT_DIR)/lib/endorsed/xerces-j2.jar && \
+	if test -n "$(XML_COMMONS_APIS_JAR)"; \
+		then \
+		ln -sf $(XML_COMMONS_APIS_JAR) \
+			$(ECJ_BOOT_DIR)/lib/endorsed/xml-commons-apis.jar; \
+	fi
 	mkdir -p $(ECJ_BOOT_DIR)/jre/lib && \
 	cp $(SYSTEM_JDK_DIR)/jre/lib/rt.jar $(ECJ_BOOT_DIR)/jre/lib/rt.jar && \
 	ln -sf $(SYSTEM_JDK_DIR)/jre/lib/$(JRE_ARCH_DIR) \
@@ -1719,15 +1755,17 @@ stamps/pulse-java-class.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP)
 stamps/pulse-java-headers.stamp: stamps/pulse-java-class.stamp
 	mkdir -p $(PULSE_JAVA_NATIVE_BUILDDIR)
 	$(BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) \
-	  org.classpath.icedtea.pulseaudio.EventLoop ; \
+	  -J-Xbootclasspath/p:$(PULSE_JAVA_CLASS_DIR) org.classpath.icedtea.pulseaudio.EventLoop ; \
 	$(BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) \
-	  org.classpath.icedtea.pulseaudio.Stream ; \
+	  -J-Xbootclasspath/p:$(PULSE_JAVA_CLASS_DIR) org.classpath.icedtea.pulseaudio.Stream ; \
 	$(BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) \
-	  org.classpath.icedtea.pulseaudio.Operation; \
+	  -J-Xbootclasspath/p:$(PULSE_JAVA_CLASS_DIR) org.classpath.icedtea.pulseaudio.Operation; \
 	$(BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) \
-	  org.classpath.icedtea.pulseaudio.PulseAudioSourcePort ; \
+	  -J-Xbootclasspath/p:$(PULSE_JAVA_CLASS_DIR) org.classpath.icedtea.pulseaudio.PulseAudioSourcePort ; \
 	$(BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) \
-	  org.classpath.icedtea.pulseaudio.PulseAudioTargetPort ; \
+	  -J-Xbootclasspath/p:$(PULSE_JAVA_CLASS_DIR) org.classpath.icedtea.pulseaudio.PulseAudioTargetPort ; \
+	$(BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) \
+	  -J-Xbootclasspath/p:$(PULSE_JAVA_CLASS_DIR) org.classpath.icedtea.pulseaudio.ContextEvent; \
 	mkdir -p stamps
 	touch stamps/pulse-java-headers.stamp
 
@@ -1800,9 +1838,9 @@ if BUILD_JAMVM
 	$(MAKE) install
 	mkdir -p $(abs_top_builddir)/jamvm/install/hotspot/jre/lib/$(INSTALL_ARCH_DIR)/server
 	cp $(abs_top_builddir)/jamvm/install/lib/libjvm.so $(abs_top_builddir)/jamvm/install/hotspot/jre/lib/$(INSTALL_ARCH_DIR)/server
-	ln -s server $(abs_top_builddir)/jamvm/install/hotspot/jre/lib/$(INSTALL_ARCH_DIR)/client
+	ln -sf server $(abs_top_builddir)/jamvm/install/hotspot/jre/lib/$(INSTALL_ARCH_DIR)/client
 	touch $(abs_top_builddir)/jamvm/install/hotspot/jre/lib/$(INSTALL_ARCH_DIR)/server/Xusage.txt
-	touch $(abs_top_builddir)/jamvm/install/hotspot/jre/lib/$(INSTALL_ARCH_DIR)/libjsig.so
+	ln -sf client/libjvm.so $(abs_top_builddir)/jamvm/install/hotspot/jre/lib/$(INSTALL_ARCH_DIR)/libjsig.so
 endif
 	mkdir -p stamps
 	touch $@

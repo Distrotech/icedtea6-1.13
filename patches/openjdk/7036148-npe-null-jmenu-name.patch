@@ -1,0 +1,85 @@
+# HG changeset patch
+# User alexp
+# Date 1302889010 -14400
+# Node ID d353dcff4f14a1c7efcfb34a436e9ab3795ffcf9
+# Parent  71e769dc8cf689aad94c21a3b4b6f400a9f8f13c
+7036148: NullPointerException with null JMenu name
+Reviewed-by: rupashka
+
+diff -r 71e769dc8cf6 -r d353dcff4f14 src/share/classes/sun/swing/SwingUtilities2.java
+--- openjdk.orig/jdk/src/share/classes/sun/swing/SwingUtilities2.java	Fri Apr 15 21:26:09 2011 +0400
++++ openjdk/jdk/src/share/classes/sun/swing/SwingUtilities2.java	Fri Apr 15 21:36:50 2011 +0400
+@@ -270,11 +270,10 @@
+      */
+     public static int getLeftSideBearing(JComponent c, FontMetrics fm,
+                                          String string) {
+-        int res = 0;
+-        if (!string.isEmpty()) {
+-            res = getLeftSideBearing(c, fm, string.charAt(0));
++        if ((string == null) || (string.length() == 0)) {
++            return 0;
+         }
+-        return res;
++        return getLeftSideBearing(c, fm, string.charAt(0));
+     }
+ 
+     /**
+diff -r 71e769dc8cf6 -r d353dcff4f14 test/javax/swing/JMenuItem/7036148/bug7036148.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/javax/swing/JMenuItem/7036148/bug7036148.java	Fri Apr 15 21:36:50 2011 +0400
+@@ -0,0 +1,53 @@
++/*
++ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++ /*
++ * @test
++ * @bug 7036148
++ * @summary NullPointerException with null JMenu name
++ * @author Alexander Potochkin
++ * @run main bug7036148
++ */
++
++
++import javax.swing.*;
++import java.awt.event.ActionEvent;
++
++public class bug7036148 extends JFrame {
++    public bug7036148() {
++        JMenuBar bar = new JMenuBar();
++        Action menuAction = new AbstractAction(null, null){
++            public void actionPerformed(ActionEvent e) {
++            }
++        };
++        JMenu menu = new JMenu(menuAction);
++        menu.add(new JMenuItem("test"));
++        bar.add(menu);
++        setJMenuBar(bar);
++        pack();
++    }
++
++       public static void main(String[] args) {
++            new bug7036148();
++       }
++}
+exporting patch:
+<fdopen>

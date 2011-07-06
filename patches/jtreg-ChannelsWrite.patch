@@ -1,0 +1,51 @@
+--- openjdk.orig/jdk/test/java/nio/channels/Channels/Write.java	2011-02-28 17:06:59.000000000 +0100
++++ openjdk/jdk/test/java/nio/channels/Channels/Write.java	2011-06-16 14:14:44.000000000 +0200
+@@ -34,18 +34,37 @@
+ 
+     public static void main(String[] args) throws Exception {
+         byte[] bb = new byte[3];
+-        File testFile = File.createTempFile("test1", null);
+-        testFile.deleteOnExit();
++        File testFile = null;
++        try {
++            testFile = File.createTempFile("test1", null);
+ 
+-        FileOutputStream fos = new FileOutputStream(testFile);
+-        FileChannel fc = fos.getChannel();
+-        OutputStream out = Channels.newOutputStream(fc);
++            FileOutputStream fos = null;
++            FileChannel fc = null;
++            OutputStream out = null;
++            try {
++                fos = new FileOutputStream(testFile);
++                fc = fos.getChannel();
++                out = Channels.newOutputStream(fc);
+ 
+-        out.write(bb,0,1);
+-        out.write(bb,2,1);
+-
+-        out.close();
+-        fc.close();
+-        fos.close();
++                out.write(bb,0,1);
++                out.write(bb,2,1);
++            }
++            finally {
++                if (out != null) {
++                    out.close();
++                }
++                if (fc != null) {
++                    fc.close();
++                }
++                if (fos != null) {
++                    fos.close();
++                }
++            }
++        }
++        finally {
++            if (testFile != null) {
++                testFile.delete();
++            }
++        }
+     }
+ }

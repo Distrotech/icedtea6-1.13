@@ -1,0 +1,383 @@
+# HG changeset patch
+# User kvn
+# Date 1301512129 25200
+# Node ID f9424955eb1894f874b73cb7596f19ee53a79149
+# Parent  63997f575155c27cbc193a345f814e5b59db5054
+7029152: Ideal nodes for String intrinsics miss memory edge optimization
+Summary: In Ideal() method of String intrinsics nodes look for TypeAryPtr::CHARS memory slice if memory is MergeMem. Do not unroll a loop with String intrinsics code.
+Reviewed-by: never
+
+diff -r 63997f575155 -r f9424955eb18 src/share/vm/opto/loopTransform.cpp
+--- openjdk.orig/hotspot/src/share/vm/opto/loopTransform.cpp	Wed Mar 30 07:47:19 2011 -0700
++++ openjdk/hotspot/src/share/vm/opto/loopTransform.cpp	Wed Mar 30 12:08:49 2011 -0700
+@@ -396,16 +396,16 @@
+ // Return exact loop trip count, or 0 if not maximally unrolling
+ bool IdealLoopTree::policy_maximally_unroll( PhaseIdealLoop *phase ) const {
+   CountedLoopNode *cl = _head->as_CountedLoop();
+-  assert( cl->is_normal_loop(), "" );
++  assert(cl->is_normal_loop(), "");
+ 
+   Node *init_n = cl->init_trip();
+   Node *limit_n = cl->limit();
+ 
+   // Non-constant bounds
+-  if( init_n   == NULL || !init_n->is_Con()  ||
++  if (init_n   == NULL || !init_n->is_Con()  ||
+       limit_n  == NULL || !limit_n->is_Con() ||
+       // protect against stride not being a constant
+-      !cl->stride_is_con() ) {
++      !cl->stride_is_con()) {
+     return false;
+   }
+   int init   = init_n->get_int();
+@@ -428,7 +428,25 @@
+   uint unroll_limit = (uint)LoopUnrollLimit * 4;
+   assert( (intx)unroll_limit == LoopUnrollLimit * 4, "LoopUnrollLimit must fit in 32bits");
+   cl->set_trip_count(trip_count);
+-  if( trip_count <= unroll_limit && body_size <= unroll_limit ) {
++  if (trip_count > unroll_limit || body_size > unroll_limit) {
++    return false;
++  }
++
++  // Do not unroll a loop with String intrinsics code.
++  // String intrinsics are large and have loops.
++  for (uint k = 0; k < _body.size(); k++) {
++    Node* n = _body.at(k);
++    switch (n->Opcode()) {
++      case Op_StrComp:
++      case Op_StrEquals:
++      case Op_StrIndexOf:
++      case Op_AryEq: {
++        return false;
++      }
++    } // switch
++  }
++
++  if (body_size <= unroll_limit) {
+     uint new_body_size = body_size * trip_count;
+     if (new_body_size <= unroll_limit &&
+         body_size == new_body_size / trip_count &&
+@@ -448,13 +466,13 @@
+ bool IdealLoopTree::policy_unroll( PhaseIdealLoop *phase ) const {
+ 
+   CountedLoopNode *cl = _head->as_CountedLoop();
+-  assert( cl->is_normal_loop() || cl->is_main_loop(), "" );
++  assert(cl->is_normal_loop() || cl->is_main_loop(), "");
+ 
+   // protect against stride not being a constant
+-  if( !cl->stride_is_con() ) return false;
++  if (!cl->stride_is_con()) return false;
+ 
+   // protect against over-unrolling
+-  if( cl->trip_count() <= 1 ) return false;
++  if (cl->trip_count() <= 1) return false;
+ 
+   int future_unroll_ct = cl->unrolled_count() * 2;
+ 
+@@ -485,21 +503,21 @@
+   // Non-constant bounds.
+   // Protect against over-unrolling when init or/and limit are not constant
+   // (so that trip_count's init value is maxint) but iv range is known.
+-  if( init_n   == NULL || !init_n->is_Con()  ||
+-      limit_n  == NULL || !limit_n->is_Con() ) {
++  if (init_n   == NULL || !init_n->is_Con()  ||
++      limit_n  == NULL || !limit_n->is_Con()) {
+     Node* phi = cl->phi();
+-    if( phi != NULL ) {
++    if (phi != NULL) {
+       assert(phi->is_Phi() && phi->in(0) == _head, "Counted loop should have iv phi.");
+       const TypeInt* iv_type = phase->_igvn.type(phi)->is_int();
+       int next_stride = cl->stride_con() * 2; // stride after this unroll
+-      if( next_stride > 0 ) {
+-        if( iv_type->_lo + next_stride <= iv_type->_lo || // overflow
+-            iv_type->_lo + next_stride >  iv_type->_hi ) {
++      if (next_stride > 0) {
++        if (iv_type->_lo + next_stride <= iv_type->_lo || // overflow
++            iv_type->_lo + next_stride >  iv_type->_hi) {
+           return false;  // over-unrolling
+         }
+-      } else if( next_stride < 0 ) {
+-        if( iv_type->_hi + next_stride >= iv_type->_hi || // overflow
+-            iv_type->_hi + next_stride <  iv_type->_lo ) {
++      } else if (next_stride < 0) {
++        if (iv_type->_hi + next_stride >= iv_type->_hi || // overflow
++            iv_type->_hi + next_stride <  iv_type->_lo) {
+           return false;  // over-unrolling
+         }
+       }
+@@ -511,24 +529,33 @@
+   // Key test to unroll CaffeineMark's Logic test
+   int xors_in_loop = 0;
+   // Also count ModL, DivL and MulL which expand mightly
+-  for( uint k = 0; k < _body.size(); k++ ) {
+-    switch( _body.at(k)->Opcode() ) {
+-    case Op_XorI: xors_in_loop++; break; // CaffeineMark's Logic test
+-    case Op_ModL: body_size += 30; break;
+-    case Op_DivL: body_size += 30; break;
+-    case Op_MulL: body_size += 10; break;
+-    }
++  for (uint k = 0; k < _body.size(); k++) {
++    Node* n = _body.at(k);
++    switch (n->Opcode()) {
++      case Op_XorI: xors_in_loop++; break; // CaffeineMark's Logic test
++      case Op_ModL: body_size += 30; break;
++      case Op_DivL: body_size += 30; break;
++      case Op_MulL: body_size += 10; break;
++      case Op_StrComp:
++      case Op_StrEquals:
++      case Op_StrIndexOf:
++      case Op_AryEq: {
++        // Do not unroll a loop with String intrinsics code.
++        // String intrinsics are large and have loops.
++        return false;
++      }
++    } // switch
+   }
+ 
+   // Check for being too big
+-  if( body_size > (uint)LoopUnrollLimit ) {
+-    if( xors_in_loop >= 4 && body_size < (uint)LoopUnrollLimit*4) return true;
++  if (body_size > (uint)LoopUnrollLimit) {
++    if (xors_in_loop >= 4 && body_size < (uint)LoopUnrollLimit*4) return true;
+     // Normal case: loop too big
+     return false;
+   }
+ 
+   // Check for stride being a small enough constant
+-  if( abs(cl->stride_con()) > (1<<3) ) return false;
++  if (abs(cl->stride_con()) > (1<<3)) return false;
+ 
+   // Unroll once!  (Each trip will soon do double iterations)
+   return true;
+diff -r 63997f575155 -r f9424955eb18 src/share/vm/opto/memnode.cpp
+--- openjdk.orig/hotspot/src/share/vm/opto/memnode.cpp	Wed Mar 30 07:47:19 2011 -0700
++++ openjdk/hotspot/src/share/vm/opto/memnode.cpp	Wed Mar 30 12:08:49 2011 -0700
+@@ -2617,54 +2617,24 @@
+ }
+ 
+ //=============================================================================
+-// Do we match on this edge? No memory edges
+-uint StrCompNode::match_edge(uint idx) const {
+-  return idx == 2 || idx == 3; // StrComp (Binary str1 cnt1) (Binary str2 cnt2)
++// Do not match memory edge.
++uint StrIntrinsicNode::match_edge(uint idx) const {
++  return idx == 2 || idx == 3;
+ }
+ 
+ //------------------------------Ideal------------------------------------------
+ // Return a node which is more "ideal" than the current node.  Strip out
+ // control copies
+-Node *StrCompNode::Ideal(PhaseGVN *phase, bool can_reshape){
+-  return remove_dead_region(phase, can_reshape) ? this : NULL;
+-}
+-
+-//=============================================================================
+-// Do we match on this edge? No memory edges
+-uint StrEqualsNode::match_edge(uint idx) const {
+-  return idx == 2 || idx == 3; // StrEquals (Binary str1 str2) cnt
+-}
+-
+-//------------------------------Ideal------------------------------------------
+-// Return a node which is more "ideal" than the current node.  Strip out
+-// control copies
+-Node *StrEqualsNode::Ideal(PhaseGVN *phase, bool can_reshape){
+-  return remove_dead_region(phase, can_reshape) ? this : NULL;
+-}
+-
+-//=============================================================================
+-// Do we match on this edge? No memory edges
+-uint StrIndexOfNode::match_edge(uint idx) const {
+-  return idx == 2 || idx == 3; // StrIndexOf (Binary str1 cnt1) (Binary str2 cnt2)
+-}
+-
+-//------------------------------Ideal------------------------------------------
+-// Return a node which is more "ideal" than the current node.  Strip out
+-// control copies
+-Node *StrIndexOfNode::Ideal(PhaseGVN *phase, bool can_reshape){
+-  return remove_dead_region(phase, can_reshape) ? this : NULL;
+-}
+-
+-//=============================================================================
+-// Do we match on this edge? No memory edges
+-uint AryEqNode::match_edge(uint idx) const {
+-  return idx == 2 || idx == 3; // StrEquals ary1 ary2
+-}
+-//------------------------------Ideal------------------------------------------
+-// Return a node which is more "ideal" than the current node.  Strip out
+-// control copies
+-Node *AryEqNode::Ideal(PhaseGVN *phase, bool can_reshape){
+-  return remove_dead_region(phase, can_reshape) ? this : NULL;
++Node *StrIntrinsicNode::Ideal(PhaseGVN *phase, bool can_reshape) {
++  if (remove_dead_region(phase, can_reshape)) return this;
++
++  Node* mem = phase->transform(in(MemNode::Memory));
++  // If transformed to a MergeMem, get the desired slice
++  uint alias_idx = phase->C->get_alias_index(adr_type());
++  mem = mem->is_MergeMem() ? mem->as_MergeMem()->memory_at(alias_idx) : mem;
++  if (mem != in(MemNode::Memory))
++    set_req(MemNode::Memory, mem);
++  return NULL;
+ }
+ 
+ //=============================================================================
+diff -r 63997f575155 -r f9424955eb18 src/share/vm/opto/memnode.hpp
+--- openjdk.orig/hotspot/src/share/vm/opto/memnode.hpp	Wed Mar 30 07:47:19 2011 -0700
++++ openjdk/hotspot/src/share/vm/opto/memnode.hpp	Wed Mar 30 12:08:49 2011 -0700
+@@ -776,67 +776,69 @@
+   static bool step_through(Node** np, uint instance_id, PhaseTransform* phase);
+ };
+ 
+-//------------------------------StrComp-------------------------------------
+-class StrCompNode: public Node {
++//------------------------------StrIntrinsic-------------------------------
++// Base class for Ideal nodes used in String instrinsic code.
++class StrIntrinsicNode: public Node {
+ public:
+-  StrCompNode(Node* control, Node* char_array_mem,
+-              Node* s1, Node* c1,
+-              Node* s2, Node* c2): Node(control, char_array_mem,
+-                                        s1, c1,
+-                                        s2, c2) {};
+-  virtual int Opcode() const;
++  StrIntrinsicNode(Node* control, Node* char_array_mem,
++                   Node* s1, Node* c1, Node* s2, Node* c2):
++    Node(control, char_array_mem, s1, c1, s2, c2) {
++  }
++
++  StrIntrinsicNode(Node* control, Node* char_array_mem,
++                   Node* s1, Node* s2, Node* c):
++    Node(control, char_array_mem, s1, s2, c) {
++  }
++
++  StrIntrinsicNode(Node* control, Node* char_array_mem,
++                   Node* s1, Node* s2):
++    Node(control, char_array_mem, s1, s2) {
++  }
++
+   virtual bool depends_only_on_test() const { return false; }
+-  virtual const Type* bottom_type() const { return TypeInt::INT; }
+   virtual const TypePtr* adr_type() const { return TypeAryPtr::CHARS; }
+   virtual uint match_edge(uint idx) const;
+   virtual uint ideal_reg() const { return Op_RegI; }
+   virtual Node *Ideal(PhaseGVN *phase, bool can_reshape);
+ };
+ 
++//------------------------------StrComp-------------------------------------
++class StrCompNode: public StrIntrinsicNode {
++public:
++  StrCompNode(Node* control, Node* char_array_mem,
++              Node* s1, Node* c1, Node* s2, Node* c2):
++    StrIntrinsicNode(control, char_array_mem, s1, c1, s2, c2) {};
++  virtual int Opcode() const;
++  virtual const Type* bottom_type() const { return TypeInt::INT; }
++};
++
+ //------------------------------StrEquals-------------------------------------
+-class StrEqualsNode: public Node {
++class StrEqualsNode: public StrIntrinsicNode {
+ public:
+   StrEqualsNode(Node* control, Node* char_array_mem,
+-                Node* s1, Node* s2, Node* c): Node(control, char_array_mem,
+-                                                   s1, s2, c) {};
++                Node* s1, Node* s2, Node* c):
++    StrIntrinsicNode(control, char_array_mem, s1, s2, c) {};
+   virtual int Opcode() const;
+-  virtual bool depends_only_on_test() const { return false; }
+   virtual const Type* bottom_type() const { return TypeInt::BOOL; }
+-  virtual const TypePtr* adr_type() const { return TypeAryPtr::CHARS; }
+-  virtual uint match_edge(uint idx) const;
+-  virtual uint ideal_reg() const { return Op_RegI; }
+-  virtual Node *Ideal(PhaseGVN *phase, bool can_reshape);
+ };
+ 
+ //------------------------------StrIndexOf-------------------------------------
+-class StrIndexOfNode: public Node {
++class StrIndexOfNode: public StrIntrinsicNode {
+ public:
+   StrIndexOfNode(Node* control, Node* char_array_mem,
+-                 Node* s1, Node* c1,
+-                 Node* s2, Node* c2): Node(control, char_array_mem,
+-                                           s1, c1,
+-                                           s2, c2) {};
++              Node* s1, Node* c1, Node* s2, Node* c2):
++    StrIntrinsicNode(control, char_array_mem, s1, c1, s2, c2) {};
+   virtual int Opcode() const;
+-  virtual bool depends_only_on_test() const { return false; }
+   virtual const Type* bottom_type() const { return TypeInt::INT; }
+-  virtual const TypePtr* adr_type() const { return TypeAryPtr::CHARS; }
+-  virtual uint match_edge(uint idx) const;
+-  virtual uint ideal_reg() const { return Op_RegI; }
+-  virtual Node *Ideal(PhaseGVN *phase, bool can_reshape);
+ };
+ 
+ //------------------------------AryEq---------------------------------------
+-class AryEqNode: public Node {
++class AryEqNode: public StrIntrinsicNode {
+ public:
+-  AryEqNode(Node* control, Node* char_array_mem,
+-            Node* s1, Node* s2): Node(control, char_array_mem, s1, s2) {};
++  AryEqNode(Node* control, Node* char_array_mem, Node* s1, Node* s2):
++    StrIntrinsicNode(control, char_array_mem, s1, s2) {};
+   virtual int Opcode() const;
+-  virtual bool depends_only_on_test() const { return false; }
+   virtual const Type* bottom_type() const { return TypeInt::BOOL; }
+-  virtual const TypePtr* adr_type() const { return TypeAryPtr::CHARS; }
+-  virtual uint match_edge(uint idx) const;
+-  virtual uint ideal_reg() const { return Op_RegI; }
+-  virtual Node *Ideal(PhaseGVN *phase, bool can_reshape);
+ };
+ 
+ //------------------------------MemBar-----------------------------------------
+diff -r 63997f575155 -r f9424955eb18 test/compiler/7029152/Test.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/hotspot/test/compiler/7029152/Test.java	Wed Mar 30 12:08:49 2011 -0700
+@@ -0,0 +1,49 @@
++/*
++ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/**
++ * @test
++ * @bug 7029152
++ * @summary Ideal nodes for String intrinsics miss memory edge optimization
++ *
++ * @run main/othervm -Xbatch Test
++ */
++
++public class Test {
++
++  static final String str = "11111xx11111xx1x";
++  static int idx = 0;
++
++  static int IndexOfTest(String str) {
++    return str.indexOf("11111xx1x");
++  }
++
++  public static void main(String args[]) {
++    final int ITERS=2000000;
++
++    for (int i=0; i<ITERS; i++) {
++      idx = IndexOfTest(str);
++    }
++    System.out.println("IndexOf = " + idx);
++  }
++}

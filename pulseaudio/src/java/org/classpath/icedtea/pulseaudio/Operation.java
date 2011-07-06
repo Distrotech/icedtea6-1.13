@@ -37,6 +37,8 @@ exception statement from your version.
 
 package org.classpath.icedtea.pulseaudio;
 
+import java.util.Arrays;
+
 /**
  * Encapsulates a pa_operation object
  * 
@@ -54,109 +56,111 @@ package org.classpath.icedtea.pulseaudio;
 
 class Operation {
 
-	private byte[] operationPointer;
-	private EventLoop eventLoop;
+    private byte[] operationPointer;
+    private EventLoop eventLoop;
 
-	public enum State {
-		Running, Done, Cancelled,
-	}
+    // These should never be written to in java. They will be initialized
+    // properly in native code.
+    public static long RUNNING   = -1,
+                       DONE      = -1,
+                       CANCELLED = -1;
 
-	static {
-		SecurityWrapper.loadNativeLibrary();
-	}
+    private static native void init_constants();
 
-	private native void native_ref();
+    static {
+        SecurityWrapper.loadNativeLibrary();
+        init_constants();
+    }
 
-	private native void native_unref();
+    // If value is not one of RUNNING, DONE, CANCELLED, throw an
+    // IllegalStateException. Otherwise return the input.
+    private static long checkNativeOperationState(long value) {
+        if (!Arrays.asList(RUNNING, DONE, CANCELLED).contains(value)) {
+            throw new IllegalStateException("Unknown operation state: " + value);
+        }
+        return value;
+    }
 
-	private native int native_get_state();
+    private native void native_ref();
 
-	Operation(byte[] operationPointer) {
-		assert (operationPointer != null);
-		this.operationPointer = operationPointer;
-		this.eventLoop = EventLoop.getEventLoop();
-	}
+    private native void native_unref();
 
-	@Override
-	protected void finalize() throws Throwable {
-		// might catch operations which havent been released
-		assert (operationPointer == null);
-		super.finalize();
-	}
+    private native long native_get_state();
 
-	/**
-	 * Increase reference count by 1
-	 */
-	void addReference() {
-		assert (operationPointer != null);
-		synchronized (eventLoop.threadLock) {
-			native_ref();
-		}
-	}
+    Operation(byte[] operationPointer) {
+        assert (operationPointer != null);
+        this.operationPointer = operationPointer;
+        this.eventLoop = EventLoop.getEventLoop();
+    }
 
-	/**
-	 * Decrease reference count by 1. If the count reaches 0, object will be freed
-	 */
-	void releaseReference() {
-		assert (operationPointer != null);
-		synchronized (eventLoop.threadLock) {
-			native_unref();
-		}
-		operationPointer = null;
-	}
+    @Override
+    protected void finalize() throws Throwable {
+        // might catch operations which havent been released
+        assert (operationPointer == null);
+        super.finalize();
+    }
 
-	// FIXME broken function
-	boolean isNull() {
-		if (operationPointer == null) {
-			return true;
-		}
-		return false;
-	}
+    /**
+     * Increase reference count by 1
+     */
+    void addReference() {
+        assert (operationPointer != null);
+        synchronized (eventLoop.threadLock) {
+            native_ref();
+        }
+    }
 
-	State getState() {
-		assert (operationPointer != null);
-		int state;
-		synchronized (eventLoop.threadLock) {
-			state = native_get_state();
-		}
-		switch (state) {
-		case 0:
-			return State.Running;
-		case 1:
-			return State.Done;
-		case 2:
-			return State.Cancelled;
-		default:
-			throw new IllegalStateException("Invalid operation State");
-		}
+    /**
+     * Decrease reference count by 1. If the count reaches 0, object will be freed
+     */
+    void releaseReference() {
+        assert (operationPointer != null);
+        synchronized (eventLoop.threadLock) {
+            native_unref();
+        }
+        operationPointer = null;
+    }
 
-	}
+    // FIXME broken function
+    boolean isNull() {
+        if (operationPointer == null) {
+            return true;
+        }
+        return false;
+    }
 
-	/**
-	 * Block until the operation has completed
-	 * 
-	 */
-	void waitForCompletion() {
-		assert (operationPointer != null);
+    long getState() {
+        assert (operationPointer != null);
+        synchronized (eventLoop.threadLock) {
+            return checkNativeOperationState(native_get_state());
+        }
+    }
 
-		boolean interrupted = false;
-		do {
-			synchronized (eventLoop.threadLock) {
-				if (getState() == Operation.State.Done) {
-					return;
-				}
-				try {
-					eventLoop.threadLock.wait();
-				} catch (InterruptedException e) {
-					// ingore the interrupt for now
-					interrupted = true;
-				}
-			}
-		} while (getState() != State.Done);
+    /**
+     * Block until the operation has completed
+     * 
+     */
+    void waitForCompletion() {
+        assert (operationPointer != null);
 
-		// let the caller know about the interrupt
-		if (interrupted) {
-			Thread.currentThread().interrupt();
-		}
-	}
+        boolean interrupted = false;
+        do {
+            synchronized (eventLoop.threadLock) {
+                if (getState() == DONE) {
+                    return;
+                }
+                try {
+                    eventLoop.threadLock.wait();
+                } catch (InterruptedException e) {
+                    // ingore the interrupt for now
+                    interrupted = true;
+                }
+            }
+        } while (getState() != DONE);
+
+        // let the caller know about the interrupt
+        if (interrupted) {
+            Thread.currentThread().interrupt();
+        }
+    }
 }

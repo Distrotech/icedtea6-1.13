@@ -1,0 +1,535 @@
+# HG changeset patch
+# User prr
+# Date 1209423466 25200
+# Node ID d7accc312aec0905bb1ad1685c8aa8f66cfd84cb
+# Parent  f50304904b8f181be07595be0e88416186001088
+6679308: Poor text rendering on translucent image.
+Reviewed-by: flar, campbell
+
+diff -r f50304904b8f -r d7accc312aec src/share/native/sun/java2d/loops/AlphaMacros.h
+--- openjdk.orig/jdk/src/share/native/sun/java2d/loops/AlphaMacros.h	Mon Apr 28 11:06:18 2008 -0700
++++ openjdk/jdk/src/share/native/sun/java2d/loops/AlphaMacros.h	Mon Apr 28 15:57:46 2008 -0700
+@@ -416,7 +416,8 @@
+                             MultiplyAndStore ## STRATEGY ## Comps(res, \
+                                                                   srcF, res);\
+                         } \
+-                        if (!(DST ## IsPremultiplied) && resA && \
++                        if (!(DST ## IsOpaque) && \
++                            !(DST ## IsPremultiplied) && resA && \
+                             resA < MaxValFor ## STRATEGY) \
+                         { \
+                             DivideAndStore ## STRATEGY ## Comps(res, \
+@@ -475,7 +476,8 @@
+                         MultiplyAndStore ## STRATEGY ## Comps(res, \
+                                                               srcF, res); \
+                     } \
+-                    if (!(DST ## IsPremultiplied) && resA && \
++                    if (!(DST ## IsOpaque) && \
++                        !(DST ## IsPremultiplied) && resA && \
+                         resA < MaxValFor ## STRATEGY) \
+                     { \
+                         DivideAndStore ## STRATEGY ## Comps(res, res, resA); \
+@@ -797,7 +799,8 @@
+                             Store ## STRATEGY ## CompsUsingOp(res, +=, tmp); \
+                         } \
+                     } \
+-                    if (!(TYPE ## IsPremultiplied) && resA && \
++                    if (!(TYPE ## IsOpaque) && \
++                        !(TYPE ## IsPremultiplied) && resA && \
+                         resA < MaxValFor ## STRATEGY) \
+                     { \
+                         DivideAndStore ## STRATEGY ## Comps(res, res, resA); \
+@@ -831,7 +834,8 @@
+                 Postload ## STRATEGY ## From ## TYPE(pRas, DstPix, res); \
+                 MultiplyAddAndStore ## STRATEGY ## Comps(res, \
+                                                          dstF, res, src); \
+-                if (!(TYPE ## IsPremultiplied) && resA && \
++                if (!(TYPE ## IsOpaque) && \
++                    !(TYPE ## IsPremultiplied) && resA && \
+                     resA < MaxValFor ## STRATEGY) \
+                 { \
+                     DivideAndStore ## STRATEGY ## Comps(res, res, resA); \
+diff -r f50304904b8f -r d7accc312aec src/share/native/sun/java2d/loops/ByteGray.h
+--- openjdk.orig/jdk/src/share/native/sun/java2d/loops/ByteGray.h	Mon Apr 28 11:06:18 2008 -0700
++++ openjdk/jdk/src/share/native/sun/java2d/loops/ByteGray.h	Mon Apr 28 15:57:46 2008 -0700
+@@ -36,6 +36,8 @@
+ typedef jubyte  ByteGrayPixelType;
+ typedef jubyte  ByteGrayDataType;
+ 
++#define ByteGrayIsOpaque 1
++
+ #define ByteGrayPixelStride     1
+ #define ByteGrayBitsPerPixel    8
+ 
+diff -r f50304904b8f -r d7accc312aec src/share/native/sun/java2d/loops/FourByteAbgr.h
+--- openjdk.orig/jdk/src/share/native/sun/java2d/loops/FourByteAbgr.h	Mon Apr 28 11:06:18 2008 -0700
++++ openjdk/jdk/src/share/native/sun/java2d/loops/FourByteAbgr.h	Mon Apr 28 15:57:46 2008 -0700
+@@ -34,6 +34,8 @@
+ typedef jint    FourByteAbgrPixelType;
+ typedef jubyte  FourByteAbgrDataType;
+ 
++#define FourByteAbgrIsOpaque 0
++
+ #define FourByteAbgrPixelStride         4
+ 
+ #define DeclareFourByteAbgrLoadVars(PREFIX)
+diff -r f50304904b8f -r d7accc312aec src/share/native/sun/java2d/loops/FourByteAbgrPre.h
+--- openjdk.orig/jdk/src/share/native/sun/java2d/loops/FourByteAbgrPre.h	Mon Apr 28 11:06:18 2008 -0700
++++ openjdk/jdk/src/share/native/sun/java2d/loops/FourByteAbgrPre.h	Mon Apr 28 15:57:46 2008 -0700
+@@ -34,6 +34,8 @@
+ typedef jint    FourByteAbgrPrePixelType;
+ typedef jubyte  FourByteAbgrPreDataType;
+ 
++#define FourByteAbgrPreIsOpaque 0
++
+ #define FourByteAbgrPrePixelStride              4
+ 
+ #define DeclareFourByteAbgrPreLoadVars(PREFIX)
+diff -r f50304904b8f -r d7accc312aec src/share/native/sun/java2d/loops/Index12Gray.h
+--- openjdk.orig/jdk/src/share/native/sun/java2d/loops/Index12Gray.h	Mon Apr 28 11:06:18 2008 -0700
++++ openjdk/jdk/src/share/native/sun/java2d/loops/Index12Gray.h	Mon Apr 28 15:57:46 2008 -0700
+@@ -37,6 +37,8 @@
+ typedef jushort Index12GrayPixelType;
+ typedef jushort Index12GrayDataType;
+ 
++#define Index12GrayIsOpaque 1
++
+ #define Index12GrayPixelStride          2
+ #define Index12GrayBitsPerPixel        12
+ 
+diff -r f50304904b8f -r d7accc312aec src/share/native/sun/java2d/loops/Index8Gray.h
+--- openjdk.orig/jdk/src/share/native/sun/java2d/loops/Index8Gray.h	Mon Apr 28 11:06:18 2008 -0700
++++ openjdk/jdk/src/share/native/sun/java2d/loops/Index8Gray.h	Mon Apr 28 15:57:46 2008 -0700
+@@ -37,6 +37,8 @@
+ typedef jubyte  Index8GrayPixelType;
+ typedef jubyte  Index8GrayDataType;
+ 
++#define Index8GrayIsOpaque 1
++
+ #define Index8GrayPixelStride           1
+ #define Index8GrayBitsPerPixel          8
+ 
+diff -r f50304904b8f -r d7accc312aec src/share/native/sun/java2d/loops/IntArgb.h
+--- openjdk.orig/jdk/src/share/native/sun/java2d/loops/IntArgb.h	Mon Apr 28 11:06:18 2008 -0700
++++ openjdk/jdk/src/share/native/sun/java2d/loops/IntArgb.h	Mon Apr 28 15:57:46 2008 -0700
+@@ -38,6 +38,8 @@
+ typedef jint    IntArgbPixelType;
+ typedef jint    IntArgbDataType;
+ 
++#define IntArgbIsOpaque 0
++
+ #define IntArgbPixelStride      4
+ 
+ #define DeclareIntArgbLoadVars(PREFIX)
+diff -r f50304904b8f -r d7accc312aec src/share/native/sun/java2d/loops/IntArgbBm.h
+--- openjdk.orig/jdk/src/share/native/sun/java2d/loops/IntArgbBm.h	Mon Apr 28 11:06:18 2008 -0700
++++ openjdk/jdk/src/share/native/sun/java2d/loops/IntArgbBm.h	Mon Apr 28 15:57:46 2008 -0700
+@@ -38,6 +38,8 @@
+ typedef jint    IntArgbBmPixelType;
+ typedef jint    IntArgbBmDataType;
+ 
++#define IntArgbBmIsOpaque 0
++
+ #define IntArgbBmPixelStride    4
+ 
+ #define DeclareIntArgbBmLoadVars(PREFIX)
+diff -r f50304904b8f -r d7accc312aec src/share/native/sun/java2d/loops/IntArgbPre.h
+--- openjdk.orig/jdk/src/share/native/sun/java2d/loops/IntArgbPre.h	Mon Apr 28 11:06:18 2008 -0700
++++ openjdk/jdk/src/share/native/sun/java2d/loops/IntArgbPre.h	Mon Apr 28 15:57:46 2008 -0700
+@@ -36,6 +36,8 @@
+ typedef jint    IntArgbPrePixelType;
+ typedef jint    IntArgbPreDataType;
+ 
++#define IntArgbPreIsOpaque 0
++
+ #define IntArgbPrePixelStride   4
+ 
+ #define DeclareIntArgbPreLoadVars(PREFIX)
+diff -r f50304904b8f -r d7accc312aec src/share/native/sun/java2d/loops/IntBgr.h
+--- openjdk.orig/jdk/src/share/native/sun/java2d/loops/IntBgr.h	Mon Apr 28 11:06:18 2008 -0700
++++ openjdk/jdk/src/share/native/sun/java2d/loops/IntBgr.h	Mon Apr 28 15:57:46 2008 -0700
+@@ -38,6 +38,8 @@
+ typedef jint    IntBgrPixelType;
+ typedef jint    IntBgrDataType;
+ 
++#define IntBgrIsOpaque 1
++
+ #define IntBgrPixelStride       4
+ 
+ #define DeclareIntBgrLoadVars(PREFIX)
+diff -r f50304904b8f -r d7accc312aec src/share/native/sun/java2d/loops/IntRgb.h
+--- openjdk.orig/jdk/src/share/native/sun/java2d/loops/IntRgb.h	Mon Apr 28 11:06:18 2008 -0700
++++ openjdk/jdk/src/share/native/sun/java2d/loops/IntRgb.h	Mon Apr 28 15:57:46 2008 -0700
+@@ -38,6 +38,8 @@
+ typedef jint    IntRgbPixelType;
+ typedef jint    IntRgbDataType;
+ 
++#define IntRgbIsOpaque 1
++
+ #define IntRgbPixelStride       4
+ 
+ #define DeclareIntRgbLoadVars(PREFIX)
+diff -r f50304904b8f -r d7accc312aec src/share/native/sun/java2d/loops/IntRgbx.h
+--- openjdk.orig/jdk/src/share/native/sun/java2d/loops/IntRgbx.h	Mon Apr 28 11:06:18 2008 -0700
++++ openjdk/jdk/src/share/native/sun/java2d/loops/IntRgbx.h	Mon Apr 28 15:57:46 2008 -0700
+@@ -36,6 +36,8 @@
+ typedef jint    IntRgbxPixelType;
+ typedef jint    IntRgbxDataType;
+ 
++#define IntRgbxIsOpaque 1
++
+ #define IntRgbxPixelStride      4
+ 
+ #define DeclareIntRgbxLoadVars(PREFIX)
+diff -r f50304904b8f -r d7accc312aec src/share/native/sun/java2d/loops/LoopMacros.h
+--- openjdk.orig/jdk/src/share/native/sun/java2d/loops/LoopMacros.h	Mon Apr 28 11:06:18 2008 -0700
++++ openjdk/jdk/src/share/native/sun/java2d/loops/LoopMacros.h	Mon Apr 28 15:57:46 2008 -0700
+@@ -1610,8 +1610,12 @@
+                        MUL8(SRC_PREFIX ## A, mixValSrc); \
+                 MultMultAddAndStore4ByteArgbComps(dst, mixValDst, dst, \
+                                                   mixValSrc, SRC_PREFIX); \
+-                Store ## DST ## From4ByteArgb(DST_PTR, pix, PIXEL_INDEX, \
+-                                              dstA, dstR, dstG, dstB); \
++                if (!(DST ## IsOpaque) && \
++                    !(DST ## IsPremultiplied) && dstA && dstA < 255) { \
++                    DivideAndStore4ByteArgbComps(dst, dst, dstA); \
++                } \
++                Store ## DST ## From4ByteArgbComps(DST_PTR, pix, \
++                                                   PIXEL_INDEX, dst); \
+             } else { \
+                 Store ## DST ## PixelData(DST_PTR, PIXEL_INDEX, \
+                                           FG_PIXEL, PREFIX); \
+@@ -1793,8 +1797,12 @@
+                 dstR = gammaLut[dstR]; \
+                 dstG = gammaLut[dstG]; \
+                 dstB = gammaLut[dstB]; \
+-                Store ## DST ## From4ByteArgb(DST_PTR, pix, PIXEL_INDEX, \
+-                                              dstA, dstR, dstG, dstB); \
++                if (!(DST ## IsOpaque) && \
++                    !(DST ## IsPremultiplied) && dstA && dstA < 255) { \
++                    DivideAndStore4ByteArgbComps(dst, dst, dstA); \
++                } \
++                Store ## DST ## From4ByteArgbComps(DST_PTR, pix, \
++                                                   PIXEL_INDEX, dst); \
+             } else { \
+                 Store ## DST ## PixelData(DST_PTR, PIXEL_INDEX, \
+                                           FG_PIXEL, PREFIX); \
+diff -r f50304904b8f -r d7accc312aec src/share/native/sun/java2d/loops/ThreeByteBgr.h
+--- openjdk.orig/jdk/src/share/native/sun/java2d/loops/ThreeByteBgr.h	Mon Apr 28 11:06:18 2008 -0700
++++ openjdk/jdk/src/share/native/sun/java2d/loops/ThreeByteBgr.h	Mon Apr 28 15:57:46 2008 -0700
+@@ -34,6 +34,8 @@
+ typedef jint    ThreeByteBgrPixelType;
+ typedef jubyte  ThreeByteBgrDataType;
+ 
++#define ThreeByteBgrIsOpaque 1
++
+ #define ThreeByteBgrPixelStride         3
+ 
+ #define DeclareThreeByteBgrLoadVars(PREFIX)
+diff -r f50304904b8f -r d7accc312aec src/share/native/sun/java2d/loops/Ushort4444Argb.h
+--- openjdk.orig/jdk/src/share/native/sun/java2d/loops/Ushort4444Argb.h	Mon Apr 28 11:06:18 2008 -0700
++++ openjdk/jdk/src/share/native/sun/java2d/loops/Ushort4444Argb.h	Mon Apr 28 15:57:46 2008 -0700
+@@ -34,6 +34,8 @@
+ typedef jushort Ushort4444ArgbPixelType;
+ typedef jushort Ushort4444ArgbDataType;
+ 
++#define Ushort4444ArgbIsOpaque 0
++
+ #define Ushort4444ArgbPixelStride               2
+ 
+ #define DeclareUshort4444ArgbLoadVars(PREFIX)
+diff -r f50304904b8f -r d7accc312aec src/share/native/sun/java2d/loops/Ushort555Rgb.h
+--- openjdk.orig/jdk/src/share/native/sun/java2d/loops/Ushort555Rgb.h	Mon Apr 28 11:06:18 2008 -0700
++++ openjdk/jdk/src/share/native/sun/java2d/loops/Ushort555Rgb.h	Mon Apr 28 15:57:46 2008 -0700
+@@ -34,6 +34,8 @@
+ typedef jushort Ushort555RgbPixelType;
+ typedef jushort Ushort555RgbDataType;
+ 
++#define Ushort555RgbIsOpaque 1
++
+ #define Ushort555RgbPixelStride         2
+ 
+ #define DeclareUshort555RgbLoadVars(PREFIX)
+diff -r f50304904b8f -r d7accc312aec src/share/native/sun/java2d/loops/Ushort555Rgbx.h
+--- openjdk.orig/jdk/src/share/native/sun/java2d/loops/Ushort555Rgbx.h	Mon Apr 28 11:06:18 2008 -0700
++++ openjdk/jdk/src/share/native/sun/java2d/loops/Ushort555Rgbx.h	Mon Apr 28 15:57:46 2008 -0700
+@@ -34,6 +34,8 @@
+ typedef jushort Ushort555RgbxPixelType;
+ typedef jushort Ushort555RgbxDataType;
+ 
++#define Ushort555RgbxIsOpaque 1
++
+ #define Ushort555RgbxPixelStride        2
+ 
+ #define DeclareUshort555RgbxLoadVars(PREFIX)
+diff -r f50304904b8f -r d7accc312aec src/share/native/sun/java2d/loops/Ushort565Rgb.h
+--- openjdk.orig/jdk/src/share/native/sun/java2d/loops/Ushort565Rgb.h	Mon Apr 28 11:06:18 2008 -0700
++++ openjdk/jdk/src/share/native/sun/java2d/loops/Ushort565Rgb.h	Mon Apr 28 15:57:46 2008 -0700
+@@ -34,6 +34,8 @@
+ typedef jushort Ushort565RgbPixelType;
+ typedef jushort Ushort565RgbDataType;
+ 
++#define Ushort565RgbIsOpaque 1
++
+ #define Ushort565RgbPixelStride         2
+ 
+ #define DeclareUshort565RgbLoadVars(PREFIX)
+diff -r f50304904b8f -r d7accc312aec src/share/native/sun/java2d/loops/UshortGray.h
+--- openjdk.orig/jdk/src/share/native/sun/java2d/loops/UshortGray.h	Mon Apr 28 11:06:18 2008 -0700
++++ openjdk/jdk/src/share/native/sun/java2d/loops/UshortGray.h	Mon Apr 28 15:57:46 2008 -0700
+@@ -36,6 +36,8 @@
+ typedef jushort UshortGrayPixelType;
+ typedef jushort UshortGrayDataType;
+ 
++#define UshortGrayIsOpaque 1
++
+ #define UshortGrayPixelStride           2
+ #define UshortGrayBitsPerPixel         16
+ 
+diff -r f50304904b8f -r d7accc312aec src/solaris/native/sun/java2d/loops/vis_FourByteAbgr.c
+--- openjdk.orig/jdk/src/solaris/native/sun/java2d/loops/vis_FourByteAbgr.c	Mon Apr 28 11:06:18 2008 -0700
++++ openjdk/jdk/src/solaris/native/sun/java2d/loops/vis_FourByteAbgr.c	Mon Apr 28 15:57:46 2008 -0700
+@@ -1936,6 +1936,7 @@
+         for (j = 0; j < height; j++) {
+             mlib_u8  *src = (void*)pixels;
+             mlib_s32 *dst, *dst_end;
++            mlib_u8 *dst_start;
+ 
+             if ((mlib_s32)dstBase & 3) {
+                 COPY_NA(dstBase, pbuff, width*sizeof(mlib_s32));
+@@ -1943,8 +1944,14 @@
+             } else {
+                 dst = (void*)dstBase;
+             }
++            dst_start = (void*)dst;
+             dst_end = dst + width;
+ 
++            /* Need to reset the GSR from the values set by the
++             * convert call near the end of this loop.
++             */
++            vis_write_gsr(7 << 0);
++
+             if ((mlib_s32)dst & 7) {
+                 pix = *src++;
+                 dd = vis_fpadd16(MUL8_VIS(srcG_f, pix), d_half);
+@@ -1984,8 +1991,13 @@
+                 dst++;
+             }
+ 
++            ADD_SUFF(IntArgbPreToIntArgbConvert)(dst_start, dst_start,
++                                                 width, 1,
++                                                 pRasInfo, pRasInfo,
++                                                 pPrim, pCompInfo);
++
+             if ((mlib_s32)dstBase & 3) {
+-                COPY_NA(pbuff, dstBase, width*sizeof(mlib_s32));
++                COPY_NA(dst_start, dstBase, width*sizeof(mlib_s32));
+             }
+ 
+             PTR_ADD(dstBase, scan);
+diff -r f50304904b8f -r d7accc312aec src/solaris/native/sun/java2d/loops/vis_FourByteAbgrPre.c
+--- openjdk.orig/jdk/src/solaris/native/sun/java2d/loops/vis_FourByteAbgrPre.c	Mon Apr 28 11:06:18 2008 -0700
++++ openjdk/jdk/src/solaris/native/sun/java2d/loops/vis_FourByteAbgrPre.c	Mon Apr 28 15:57:46 2008 -0700
+@@ -181,6 +181,7 @@
+     d_half = vis_to_double_dup((1 << (16 + 6)) | (1 << 6));
+ 
+     srcG_f = vis_to_float(argbcolor);
++    ARGB2ABGR_FL(srcG_f);
+ 
+     for (glyphCounter = 0; glyphCounter < totalGlyphs; glyphCounter++) {
+         const jubyte *pixels;
+@@ -238,8 +239,33 @@
+             mlib_u8  *src = (void*)pixels;
+             mlib_s32 *dst, *dst_end;
+             mlib_u8  *dst8;
++            mlib_u8* dst_start = dstBase;
+ 
+-            ADD_SUFF(FourByteAbgrPreToIntArgbConvert)(dstBase, pbuff, width, 1,
++            /*
++             * Typically the inner loop here works on Argb input data, an
++             * Argb color, and produces ArgbPre output data.  To use that
++             * standard approach we would need a FourByteAbgrPre to IntArgb
++             * converter for the front end and an IntArgbPre to FourByteAbgrPre
++             * converter for the back end.  The converter exists for the
++             * front end, but it is a workaround implementation that uses a 2
++             * stage conversion and an intermediate buffer that is allocated
++             * on every call.  The converter for the back end doesn't really
++             * exist, but we could reuse the IntArgb to FourByteAbgr converter
++             * to do the same work - at the cost of swapping the components as
++             * we copy the data back.  All of this is more work than we really
++             * need so we use an alternate procedure:
++             * - Copy the data into an int-aligned temporary buffer (if needed)
++             * - Convert the data from FourByteAbgrPre to IntAbgr by using the
++             * IntArgbPre to IntArgb converter in the int-aligned buffer.
++             * - Swap the color data to Abgr so that the inner loop goes from
++             * IntAbgr data to IntAbgrPre data
++             * - Simply copy the IntAbgrPre data back into place.
++             */
++            if (((mlib_s32)dstBase) & 3) {
++                COPY_NA(dstBase, pbuff, width*sizeof(mlib_s32));
++                dst_start = pbuff;
++            }
++            ADD_SUFF(IntArgbPreToIntArgbConvert)(dst_start, pbuff, width, 1,
+                                                       pRasInfo, pRasInfo,
+                                                       pPrim, pCompInfo);
+ 
+@@ -283,9 +309,7 @@
+                 dst++;
+             }
+ 
+-            ADD_SUFF(IntArgbToFourByteAbgrPreConvert)(pbuff, dstBase, width, 1,
+-                                                      pRasInfo, pRasInfo,
+-                                                      pPrim, pCompInfo);
++            COPY_NA(pbuff, dstBase, width*sizeof(mlib_s32));
+ 
+             src = (void*)pixels;
+             dst8 = (void*)dstBase;
+diff -r f50304904b8f -r d7accc312aec src/solaris/native/sun/java2d/loops/vis_IntArgb.c
+--- openjdk.orig/jdk/src/solaris/native/sun/java2d/loops/vis_IntArgb.c	Mon Apr 28 11:06:18 2008 -0700
++++ openjdk/jdk/src/solaris/native/sun/java2d/loops/vis_IntArgb.c	Mon Apr 28 15:57:46 2008 -0700
+@@ -428,6 +428,11 @@
+             dst = (void*)dstBase;
+             dst_end = dst + width;
+ 
++            /* Clearing the Graphics Status Register is necessary otherwise
++             * left over scale settings affect the pack instructions.
++             */
++            vis_write_gsr(0 << 3);
++
+             if ((mlib_s32)dst & 7) {
+                 pix = *src++;
+                 dd = vis_fpadd16(MUL8_VIS(srcG_f, pix), d_half);
+@@ -467,6 +472,9 @@
+                 dst++;
+             }
+ 
++            ADD_SUFF(IntArgbPreToIntArgbConvert)(dstBase, dstBase, width, 1,
++                                                 pRasInfo, pRasInfo,
++                                                 pPrim, pCompInfo);
+             PTR_ADD(dstBase, scan);
+             pixels += rowBytes;
+         }
+diff -r f50304904b8f -r d7accc312aec src/solaris/native/sun/java2d/loops/vis_IntArgbPre.c
+--- openjdk.orig/jdk/src/solaris/native/sun/java2d/loops/vis_IntArgbPre.c	Mon Apr 28 11:06:18 2008 -0700
++++ openjdk/jdk/src/solaris/native/sun/java2d/loops/vis_IntArgbPre.c	Mon Apr 28 15:57:46 2008 -0700
+@@ -1193,10 +1193,6 @@
+                 dst++;
+             }
+ 
+-            ADD_SUFF(IntArgbToIntArgbPreConvert)(dstBase, dstBase, width, 1,
+-                                                 pRasInfo, pRasInfo,
+-                                                 pPrim, pCompInfo);
+-
+             PTR_ADD(dstBase, scan);
+             pixels += rowBytes;
+         }
+diff -r f50304904b8f -r d7accc312aec test/java/awt/Graphics2D/DrawString/AlphaSurfaceText.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/test/java/awt/Graphics2D/DrawString/AlphaSurfaceText.java	Mon Apr 28 15:57:46 2008 -0700
+@@ -0,0 +1,106 @@
++/*
++ * Copyright 2008 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/**
++ * @test
++ * @bug 6679308
++ * @summary test drawing to Alpha surfaces
++ */
++
++import java.awt.*;
++import java.awt.image.*;
++
++public class AlphaSurfaceText {
++
++    int wid=400, hgt=200;
++
++    public AlphaSurfaceText(int biType, Color c) {
++        BufferedImage opaquebi0 =
++           new BufferedImage(wid, hgt, BufferedImage.TYPE_INT_RGB);
++        drawText(opaquebi0, c);
++
++        BufferedImage alphabi = new BufferedImage(wid, hgt, biType);
++        drawText(alphabi, c);
++        BufferedImage opaquebi1 =
++           new BufferedImage(wid, hgt, BufferedImage.TYPE_INT_RGB);
++        Graphics2D g2d = opaquebi1.createGraphics();
++        g2d.drawImage(alphabi, 0, 0, null);
++        compare(opaquebi0, opaquebi1, biType, c);
++    }
++
++    private void drawText(BufferedImage bi, Color c) {
++        Graphics2D g = bi.createGraphics();
++        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
++                           RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
++        g.setColor(c);
++        g.setFont(new Font("sansserif", Font.PLAIN, 70));
++        g.drawString("Hello!", 20, 100);
++        g.setFont(new Font("sansserif", Font.PLAIN, 12));
++        g.drawString("Hello!", 20, 130);
++        g.setFont(new Font("sansserif", Font.PLAIN, 10));
++        g.drawString("Hello!", 20, 150);
++    }
++
++    // Need to allow for minimal rounding error, so allow each component
++    // to differ by 1.
++    void compare(BufferedImage bi0, BufferedImage bi1, int biType, Color c) {
++        for (int x=0; x<wid; x++) {
++            for (int y=0; y<hgt; y++) {
++                int rgb0 = bi0.getRGB(x, y);
++                int rgb1 = bi1.getRGB(x, y);
++                if (rgb0 == rgb1) continue;
++                int r0 = (rgb0 & 0xff0000) >> 16;
++                int r1 = (rgb1 & 0xff0000) >> 16;
++                int rdiff = r0-r1; if (rdiff<0) rdiff = -rdiff;
++                int g0 = (rgb0 & 0x00ff00) >> 8;
++                int g1 = (rgb1 & 0x00ff00) >> 8;
++                int gdiff = g0-g1; if (gdiff<0) gdiff = -gdiff;
++                int b0 = (rgb0 & 0x0000ff);
++                int b1 = (rgb1 & 0x0000ff);
++                int bdiff = b0-b1; if (bdiff<0) bdiff = -bdiff;
++                if (rdiff > 1 || gdiff > 1 || bdiff > 1) {
++                    throw new RuntimeException(
++                      "Images differ for type "+biType + " col="+c +
++                      " at x=" + x + " y="+ y + " " +
++                      Integer.toHexString(rgb0) + " vs " +
++                      Integer.toHexString(rgb1));
++                }
++            }
++        }
++
++    }
++    public static void main(String[] args) {
++        new AlphaSurfaceText(BufferedImage.TYPE_INT_ARGB, Color.white);
++        new AlphaSurfaceText(BufferedImage.TYPE_INT_ARGB, Color.red);
++        new AlphaSurfaceText(BufferedImage.TYPE_INT_ARGB, Color.blue);
++        new AlphaSurfaceText(BufferedImage.TYPE_INT_ARGB_PRE, Color.white);
++        new AlphaSurfaceText(BufferedImage.TYPE_INT_ARGB_PRE, Color.red);
++        new AlphaSurfaceText(BufferedImage.TYPE_INT_ARGB_PRE, Color.blue);
++        new AlphaSurfaceText(BufferedImage.TYPE_4BYTE_ABGR, Color.white);
++        new AlphaSurfaceText(BufferedImage.TYPE_4BYTE_ABGR, Color.red);
++        new AlphaSurfaceText(BufferedImage.TYPE_4BYTE_ABGR, Color.blue);
++        new AlphaSurfaceText(BufferedImage.TYPE_4BYTE_ABGR_PRE, Color.white);
++        new AlphaSurfaceText(BufferedImage.TYPE_4BYTE_ABGR_PRE, Color.red);
++        new AlphaSurfaceText(BufferedImage.TYPE_4BYTE_ABGR_PRE, Color.blue);
++   }
++}

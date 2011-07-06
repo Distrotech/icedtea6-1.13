@@ -3280,19 +3280,18 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.h openjd
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Dialog.cpp openjdk/jdk/src/windows/native/sun/windows/awt_Dialog.cpp
 --- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Dialog.cpp	2011-01-20 23:54:44.000000000 +0000
 +++ openjdk/jdk/src/windows/native/sun/windows/awt_Dialog.cpp	2011-02-17 15:50:10.732056235 +0000
-@@ -284,9 +284,7 @@
-                 if ((::WindowFromPoint(mhs->pt) == hWnd) &&
-                     (::GetForegroundWindow() == topMostBlocker))
-                 {
--                    ::MessageBeep(MB_OK);
--                    // some heuristics: 3 times x 64 milliseconds
--                    AwtWindow::FlashWindowEx(topMostBlocker, 3, 64, FLASHW_CAPTION);
-+		    AnimateModalBlocker(dialog);
-                 }
-                 if (topMostBlocker != AwtToolkit::GetInstance().GetHWnd()) {
-                     ::BringWindowToTop(topMostBlocker);
-@@ -299,6 +297,13 @@
-     return CallNextHookEx(0, nCode, wParam, lParam);
+@@ -310,15 +310,20 @@
+         // no beep/flash if the mouse was clicked in the taskbar menu
+         // or the dialog is currently inactive
+         if (!isModalHook && !onTaskbar && (dialog == prevFGWindow)) {
+-            ::MessageBeep(MB_OK);
+-            // some heuristics: 3 times x 64 milliseconds
+-            AwtWindow::FlashWindowEx(dialog, 3, 64, FLASHW_CAPTION);
++            AnimateModalBlocker(dialog);
+         }
+         ::BringWindowToTop(dialog);
+         ::SetForegroundWindow(dialog);
+     }
  }
  
 +void AwtDialog::AnimateModalBlocker(HWND window)

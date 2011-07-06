@@ -1,0 +1,93 @@
+# HG changeset patch
+# User kvn
+# Date 1306861536 25200
+# Node ID f88fb2fa90cf92088890d601c13046546df61cb0
+# Parent  7c907a50c1bb7c5722924bdcf44952909dd8b55b
+6956668: misbehavior of XOR operator (^) with int
+Summary: optimize cmp_ne(xor(X,1),0) to cmp_eq(X,0) only for boolean values X.
+Reviewed-by: never
+
+diff -r 7c907a50c1bb -r f88fb2fa90cf src/share/vm/opto/subnode.cpp
+--- openjdk.orig/hotspot/src/share/vm/opto/subnode.cpp	Wed Jun 01 14:46:14 2011 -0700
++++ openjdk/hotspot/src/share/vm/opto/subnode.cpp	Tue May 31 10:05:36 2011 -0700
+@@ -1101,6 +1101,7 @@
+   if( cmp2_type == TypeInt::ZERO &&
+       cmp1_op == Op_XorI &&
+       j_xor->in(1) != j_xor &&          // An xor of itself is dead
++      phase->type( j_xor->in(1) ) == TypeInt::BOOL &&
+       phase->type( j_xor->in(2) ) == TypeInt::ONE &&
+       (_test._test == BoolTest::eq ||
+        _test._test == BoolTest::ne) ) {
+diff -r 7c907a50c1bb -r f88fb2fa90cf test/compiler/6956668/Test6956668.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/hotspot/test/compiler/6956668/Test6956668.java	Tue May 31 10:05:36 2011 -0700
+@@ -0,0 +1,69 @@
++/*
++ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ *
++ */
++
++/**
++ * @test
++ * @bug 6956668
++ * @summary misbehavior of XOR operator (^) with int
++ *
++ * @run main/othervm -Xbatch Test6956668
++ */
++
++
++public class Test6956668 {
++
++   public static int bitTest() {
++      int result = 0;
++
++      int testValue = 73;
++      int bitCount = Integer.bitCount(testValue);
++
++      if (testValue != 0) {
++         int gap = Long.numberOfTrailingZeros(testValue);
++         testValue >>>= gap;
++
++         while (testValue != 0) {
++            result++;
++
++            if ((testValue ^= 0x1) != 0) {
++               gap = Long.numberOfTrailingZeros(testValue);
++               testValue >>>= gap;
++            }
++         }
++      }
++
++      if (bitCount != result) {
++         System.out.println("ERROR: " + bitCount + " != " + result);
++         System.exit(97);
++      }
++
++      return (result);
++   }
++
++   public static void main(String[] args) {
++      for (int i = 0; i < 100000; i++) {
++         int ct = bitTest();
++      }
++   }
++}

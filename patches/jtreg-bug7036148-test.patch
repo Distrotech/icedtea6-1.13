@@ -1,0 +1,24 @@
+diff -r e7493c32e598 test/javax/swing/JMenuItem/7036148/bug7036148.java
+--- openjdk.orig/jdk/test/javax/swing/JMenuItem/7036148/bug7036148.java	Wed Jun 08 10:24:10 2011 -0700
++++ openjdk/jdk/test/javax/swing/JMenuItem/7036148/bug7036148.java	Wed Jun 15 14:25:59 2011 -0400
+@@ -44,10 +44,16 @@
+         menu.add(new JMenuItem("test"));
+         bar.add(menu);
+         setJMenuBar(bar);
+-        pack();
+     }
+ 
+-       public static void main(String[] args) {
+-            new bug7036148();
+-       }
++    public static void main(String[] args) {
++        // if the bug is present, an NPE will be thrown on pack() above.
++        JFrame f = new bug7036148();
++
++        try {
++            f.pack();
++        } finally {
++            f.dispose();
++        }
++    }
+ }

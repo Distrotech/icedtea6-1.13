@@ -40,6 +40,24 @@
 #include "jni-common.h"
 #include <pulse/pulseaudio.h>
 
+// we don't prefix the java names with anything, so we leave the third argument
+// empty
+#define SET_OP_ENUM(env, clz, name) \
+    SET_JAVA_STATIC_LONG_FIELD_TO_PA_ENUM(env, clz, , OPERATION, name)
+
+/*
+ * Class:     org_classpath_icedtea_pulseaudio_Operation
+ * Method:    init_constants
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_classpath_icedtea_pulseaudio_Operation_init_1constants
+  (JNIEnv *env, jclass clz) {
+    SET_OP_ENUM(env, clz, RUNNING);
+    SET_OP_ENUM(env, clz, DONE);
+    SET_OP_ENUM(env, clz, CANCELLED);
+}
+
+
 /*
  * Class:     org_classpath_icedtea_pulseaudio_Operation
  * Method:    native_ref
@@ -48,9 +66,9 @@
 JNIEXPORT void JNICALL Java_org_classpath_icedtea_pulseaudio_Operation_native_1ref
 (JNIEnv* env, jobject obj) {
 
-	pa_operation* operation = (pa_operation*) getJavaPointer(env, obj, "operationPointer");
-	assert(operation);
-	pa_operation_ref(operation);
+    pa_operation* operation = (pa_operation*) getJavaPointer(env, obj, "operationPointer");
+    assert(operation);
+    pa_operation_ref(operation);
 
 }
 
@@ -62,10 +80,9 @@ JNIEXPORT void JNICALL Java_org_classpath_icedtea_pulseaudio_Operation_native_1r
 JNIEXPORT void JNICALL Java_org_classpath_icedtea_pulseaudio_Operation_native_1unref
 (JNIEnv* env, jobject obj) {
 
-	pa_operation* operation = (pa_operation*) getJavaPointer(env, obj, "operationPointer");
-	assert(operation);
-	pa_operation_unref(operation);
-
+    pa_operation* operation = (pa_operation*) getJavaPointer(env, obj, "operationPointer");
+    assert(operation);
+    pa_operation_unref(operation);
 }
 
 /*
@@ -73,11 +90,11 @@ JNIEXPORT void JNICALL Java_org_classpath_icedtea_pulseaudio_Operation_native_1u
  * Method:    native_get_state
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_org_classpath_icedtea_pulseaudio_Operation_native_1get_1state
+JNIEXPORT jlong JNICALL Java_org_classpath_icedtea_pulseaudio_Operation_native_1get_1state
 (JNIEnv *env, jobject obj) {
 
-	pa_operation* operation = (pa_operation*) getJavaPointer(env, obj, "operationPointer");
-	assert(operation);
-	int state = pa_operation_get_state(operation);
-	return state;
+    pa_operation* operation = (pa_operation*) getJavaPointer(env, obj, "operationPointer");
+    assert(operation);
+    jlong state = pa_operation_get_state(operation);
+    return state;
 }

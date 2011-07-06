@@ -1,0 +1,58 @@
+# HG changeset patch
+# User minqi
+# Date 1268076930 28800
+# Node ID 1d7db2d5c4c5eeea61b23a6f6ca4d304dec8df10
+# Parent  840601ac5ab7cf49421e9de10c9c36c8f958d9cf
+6918065: Crash in Java2D blit loop (IntArgbToIntArgbPreSrcOverMaskBlit) in 64bit mode
+Reviewed-by: igor, bae
+
+diff -r 840601ac5ab7 -r 1d7db2d5c4c5 src/share/classes/java/awt/AlphaComposite.java
+--- openjdk.orig/jdk/src/share/classes/java/awt/AlphaComposite.java	Wed Mar 03 15:50:33 2010 +0100
++++ openjdk/jdk/src/share/classes/java/awt/AlphaComposite.java	Mon Mar 08 11:35:30 2010 -0800
+@@ -614,14 +614,15 @@
+     }
+ 
+     private AlphaComposite(int rule, float alpha) {
+-        if (alpha < 0.0f || alpha > 1.0f) {
+-            throw new IllegalArgumentException("alpha value out of range");
+-        }
+         if (rule < MIN_RULE || rule > MAX_RULE) {
+             throw new IllegalArgumentException("unknown composite rule");
+         }
+-        this.rule = rule;
+-        this.extraAlpha = alpha;
++        if (alpha >= 0.0f && alpha <= 1.0f) {
++            this.rule = rule;
++            this.extraAlpha = alpha;
++        } else {
++            throw new IllegalArgumentException("alpha value out of range");
++        }
+     }
+ 
+     /**
+diff -r 840601ac5ab7 -r 1d7db2d5c4c5 test/java/awt/AlphaComposite/TestAlphaCompositeForNaN.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/java/awt/AlphaComposite/TestAlphaCompositeForNaN.java	Mon Mar 08 11:35:30 2010 -0800
+@@ -0,0 +1,22 @@
++/*
++ * @test
++ * @bug 6918065
++ * @summary Test for passing NaN as alpha
++ *          should throw IllegalArgumentException
++ */
++
++import java.awt.*;
++
++public class TestAlphaCompositeForNaN {
++  public static void main(String[] args) {
++    try {
++      AlphaComposite a = AlphaComposite.getInstance(AlphaComposite.DST, Float.NaN);
++      System.out.println("Failed");
++      throw new RuntimeException(a + " failed to throw IllegalArgumentException for alpha = " + Float.NaN);
++    }
++    catch (IllegalArgumentException ie) {
++      System.out.println("Passed");
++      System.out.println("Caught " + ie);
++    }
++  }
++}

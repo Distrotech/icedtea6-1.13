@@ -1,0 +1,105 @@
+# HG changeset patch
+# User never
+# Date 1304449914 25200
+# Node ID f1d6640088a1d3ffc30910e93f1bd782ae74eca9
+# Parent  2e038ad0c1d09407fe8a1627269a5b1c4d163985
+6796786: invalid FP identity transform - (a - b) -> b - a
+Reviewed-by: iveresov, twisti
+
+diff -r 2e038ad0c1d0 -r f1d6640088a1 src/share/vm/opto/subnode.cpp
+--- openjdk.orig/hotspot/src/share/vm/opto/subnode.cpp	Mon May 02 18:53:37 2011 -0700
++++ openjdk/hotspot/src/share/vm/opto/subnode.cpp	Tue May 03 12:11:54 2011 -0700
+@@ -1223,21 +1223,6 @@
+ }
+ 
+ //=============================================================================
+-//------------------------------NegNode----------------------------------------
+-Node *NegFNode::Ideal(PhaseGVN *phase, bool can_reshape) {
+-  if( in(1)->Opcode() == Op_SubF )
+-    return new (phase->C, 3) SubFNode( in(1)->in(2), in(1)->in(1) );
+-  return NULL;
+-}
+-
+-Node *NegDNode::Ideal(PhaseGVN *phase, bool can_reshape) {
+-  if( in(1)->Opcode() == Op_SubD )
+-    return new (phase->C, 3) SubDNode( in(1)->in(2), in(1)->in(1) );
+-  return NULL;
+-}
+-
+-
+-//=============================================================================
+ //------------------------------Value------------------------------------------
+ // Compute sqrt
+ const Type *SqrtDNode::Value( PhaseTransform *phase ) const {
+diff -r 2e038ad0c1d0 -r f1d6640088a1 src/share/vm/opto/subnode.hpp
+--- openjdk.orig/hotspot/src/share/vm/opto/subnode.hpp	Mon May 02 18:53:37 2011 -0700
++++ openjdk/hotspot/src/share/vm/opto/subnode.hpp	Tue May 03 12:11:54 2011 -0700
+@@ -377,7 +377,6 @@
+ public:
+   NegFNode( Node *in1 ) : NegNode(in1) {}
+   virtual int Opcode() const;
+-  virtual Node *Ideal(PhaseGVN *phase, bool can_reshape);
+   const Type *bottom_type() const { return Type::FLOAT; }
+   virtual uint ideal_reg() const { return Op_RegF; }
+ };
+@@ -391,7 +390,6 @@
+ public:
+   NegDNode( Node *in1 ) : NegNode(in1) {}
+   virtual int Opcode() const;
+-  virtual Node *Ideal(PhaseGVN *phase, bool can_reshape);
+   const Type *bottom_type() const { return Type::DOUBLE; }
+   virtual uint ideal_reg() const { return Op_RegD; }
+ };
+diff -r 2e038ad0c1d0 -r f1d6640088a1 test/compiler/6796786/Test6796786.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/hotspot/test/compiler/6796786/Test6796786.java	Tue May 03 12:11:54 2011 -0700
+@@ -0,0 +1,49 @@
++/*
++ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ *
++ */
++
++/**
++ * @test
++ * @bug 6796786
++ * @summary invalid FP identity transform - (a - b) -> b - a
++ *
++ * @run main Test6796786
++ */
++
++public class Test6796786 {
++    static volatile float d1;
++    static volatile float d2;
++    static float zero;
++
++    public static void main(String[] args) {
++        int total = 0;
++        for (int i = 0; i < 100000; i++) {
++            if (Float.floatToRawIntBits(- (d1 - d1)) == Float.floatToRawIntBits(0.0f)) {
++                total++;
++            }
++        }
++        if (total != 100000) {
++            throw new InternalError();
++        }
++    }
++}
