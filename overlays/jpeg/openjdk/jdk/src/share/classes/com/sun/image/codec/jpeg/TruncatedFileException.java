@@ -1,5 +1,6 @@
 /* TruncatedFileException.java
    Copyright (C) 2007 Matthew Flaschen
+   Copyright (C) 2011 Red Hat, Inc.
 
    This file is part of IcedTea
 
@@ -38,17 +39,54 @@
 package com.sun.image.codec.jpeg;
 
 import java.awt.image.BufferedImage;
+import java.awt.image.Raster;
 
 public class TruncatedFileException extends RuntimeException {
-    public TruncatedFileException() {
-        this("");
+
+    private final BufferedImage bufferedImage;
+
+    private final Raster raster;
+
+    /**
+     * Creates a new exception with the specified {@link BufferedImage}
+     * containing the partially read image data.
+     *
+     * @param bufferedImage the partially decoded image (may be null).
+     */
+    public TruncatedFileException(BufferedImage bufferedImage) {
+        this.bufferedImage = bufferedImage;
+        this.raster = null;
     }
 
-    public TruncatedFileException(String s) {
-        super(s);
+    /**
+     * Creates a new exception with the specified {@link Raster}
+     * containing the partially read image data.
+     *
+     * @param raster the partially decoded image (may be null).
+     */
+    public TruncatedFileException(Raster raster) {
+        this.raster = raster;
+        this.bufferedImage = null;
     }
 
+    /**
+     * Returns the partially read data as a {@link BufferedImage}
+     * if available, or {@code null} if not.
+     *
+     * @return the partially read data.
+     */
     public BufferedImage getBufferedImage() {
-        return null;
+        return bufferedImage;
     }
+
+    /**
+     * Returns the partially read data as a {@link Raster}
+     * if available, or {@code null} if not.
+     *
+     * @return the partially read data.
+     */
+    public Raster getRaster() {
+        return raster;
+    }
+
 }

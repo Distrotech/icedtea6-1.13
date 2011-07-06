@@ -1,5 +1,37 @@
 2011-07-06  Andrew John Hughes  <ahughes@redhat.com>
 
+	Make JPEG classes more binary compatible with
+	Oracle versions.
+	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/ImageFormatException.java:
+	Extend RuntimeException.
+	(ImageFormatException()): Call superclass constructor.
+	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/JPEGCodec.java:
+	(JPEGCodec()): Make explicit private constructor to prevent implicit public one.
+	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/JPEGHuffmanTable.java:
+	Don't extend javax.imageio.plugins.jpeg.JPEGHuffmanTable.
+	(lengths): Added.
+	(symbols): Added.
+	(JPEGHuffmanTable(short[], short[])): Perform checks outlined in documentation.
+	(getLengths()): Added.
+	(getSymbols()): Return symbols.
+	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/JPEGImageEncoder.java:
+	(getDefaultColorId(ColorModel)): Fix typo (was DefaultColorID).
+	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/TruncatedFileException.java:
+	(TruncatedFileException(BufferedImage)): Add missing constructor.
+	(TruncatedFileException(Raster)): Likewise.
+	(getBufferedImage()): Implemented.
+	(getRaster()): Add missing method.
+	(TruncatedFileException()): Removed.
+	(TruncatedFileException(String)): Likewise.
+	* overlays/jpeg/openjdk/jdk/src/share/classes/sun/awt/image/codec/JPEGImageDecoderImpl.java:
+	(decodeAsBufferedImage()): Remove unneeded qualification and convert from com.sun JPEGHuffmanTable
+	to javax.imageio one.
+	* overlays/jpeg/openjdk/jdk/src/share/classes/sun/awt/image/codec/JPEGImageEncoderImpl.java:
+	(getDefaultColorId(ColorModel)): Fix typo (was DefaultColorID).
+	* NEWS: Updated.
+
+2011-07-06  Andrew John Hughes  <ahughes@redhat.com>
+
 	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/ImageFormatException.java,
 	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/JPEGCodec.java,
 	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/JPEGDecodeParam.java,

@@ -1,5 +1,6 @@
 /* ImageFormatException.java
  * Copyright (C) 2007 Matthew Flaschen
+ * Copyright (C) 2011 Red Hat, Inc.
  *
  * This file is part of IcedTea
  *
@@ -38,9 +39,10 @@
 
 package com.sun.image.codec.jpeg;
 
-public class ImageFormatException extends Exception {
+public class ImageFormatException extends RuntimeException {
+
     public ImageFormatException() {
-        this("");
+        super();
     }
 
     public ImageFormatException(String s) {

@@ -56,6 +56,8 @@ import sun.awt.image.codec.JPEGParam;
  */
 public class JPEGCodec {
 
+    private JPEGCodec() {}
+
     /**
      * This creates an instance of a JPEGImageDecoder that can be used to decode
      * JPEG Data streams.

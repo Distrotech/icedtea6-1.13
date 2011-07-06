@@ -21,8 +21,7 @@ package com.sun.image.codec.jpeg;
 /**
  * A class to encapsulate a JPEG Huffman table.
  */
-public class JPEGHuffmanTable extends
-        javax.imageio.plugins.jpeg.JPEGHuffmanTable {
+public class JPEGHuffmanTable {
 
     /**
      * The standard DC luminance Huffman table.
@@ -44,8 +43,14 @@ public class JPEGHuffmanTable extends
      */
     public static final JPEGHuffmanTable StdACChrominance;
 
+    private short[] lengths;
+
+    private short[] symbols;
+
     static {
-        javax.imageio.plugins.jpeg.JPEGHuffmanTable temp = javax.imageio.plugins.jpeg.JPEGHuffmanTable.StdDCLuminance;
+        javax.imageio.plugins.jpeg.JPEGHuffmanTable temp;
+
+        temp = javax.imageio.plugins.jpeg.JPEGHuffmanTable.StdDCLuminance;
         StdDCLuminance = new JPEGHuffmanTable(temp.getLengths(),
                 temp.getValues());
 
@@ -82,16 +87,43 @@ public class JPEGHuffmanTable extends
      *             zero, or if the arrays do not describe a valid Huffman table.
      */
     public JPEGHuffmanTable(short lengths[], short symbols[]) {
-        super(lengths, symbols);
+        if (lengths == null)
+            throw new IllegalArgumentException("lengths array can not be null.");
+        if (symbols == null)
+            throw new IllegalArgumentException("symbols array can not be null.");
+        if (lengths.length > 17)
+            throw new IllegalArgumentException("lengths array can not be longer than 17.");
+        if (symbols.length > 256)
+            throw new IllegalArgumentException("symbols array can not be longer than 256.");
+        for (int a = 0; a < lengths.length; ++a)
+            if (lengths[a] < 0)
+                throw new IllegalArgumentException("length " + a + " is smaller than zero.");
+        for (int a = 0; a < symbols.length; ++a)
+            if (symbols[a] < 0)
+                throw new IllegalArgumentException("symbol " + a + " is smaller than zero.");
+        this.lengths = lengths;
+        this.symbols = symbols;
+    }
+
+    /**
+     * Return an array containing the number of symbols for each length in
+     * the Huffman table.
+     *
+     * @return A short array where length[a] is equal to the number of symbols
+     *         in the Huffman table of length a.  The first element (length[0])
+     *         is unused.
+     */
+    public short[] getLengths() {
+        return lengths;
     }
 
     /**
      * Return an array containing the Huffman symbols arranged by increasing
-     * length. To make use of this array you must refer the the lengths array.
+     * length. To make use of this array you must refer to the lengths array.
      *
      * @return A short array of Huffman symbols
      */
     public short[] getSymbols() {
-        return getValues();
+        return symbols;
     }
 }

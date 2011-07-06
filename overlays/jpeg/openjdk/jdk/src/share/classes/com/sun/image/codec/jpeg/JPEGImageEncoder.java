@@ -204,5 +204,5 @@ public interface JPEGImageEncoder {
      *            The ColorModel to map to an jpeg encoded COLOR_ID.
      * @return
      */
-    public int getDefaultColorID(ColorModel cm);
+    public int getDefaultColorId(ColorModel cm);
 }

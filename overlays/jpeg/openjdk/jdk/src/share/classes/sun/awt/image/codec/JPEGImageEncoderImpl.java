@@ -142,7 +142,7 @@ public class JPEGImageEncoderImpl implements JPEGImageEncoder {
     }
 
     @Override
-    public int getDefaultColorID(ColorModel cm) {
+    public int getDefaultColorId(ColorModel cm) {
         ColorSpace cs = cm.getColorSpace();
         int type = cs.getType();
         int id = -1;

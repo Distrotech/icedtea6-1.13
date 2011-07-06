@@ -27,6 +27,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.plugins.jpeg.JPEGHuffmanTable;
 import javax.imageio.plugins.jpeg.JPEGImageReadParam;
+import javax.imageio.plugins.jpeg.JPEGQTable;
 import javax.imageio.stream.MemoryCacheImageInputStream;
 
 import com.sun.image.codec.jpeg.ImageFormatException;
@@ -67,14 +68,18 @@ public class JPEGImageDecoderImpl implements JPEGImageDecoder {
 
         if (param != null) {
             // We should do more than this, but it's a start.
-            javax.imageio.plugins.jpeg.JPEGQTable[] qTables = new javax.imageio.plugins.jpeg.JPEGQTable[4];
-            javax.imageio.plugins.jpeg.JPEGHuffmanTable[] DCHuffmanTables = new JPEGHuffmanTable[4];
-            javax.imageio.plugins.jpeg.JPEGHuffmanTable[] ACHuffmanTables = new JPEGHuffmanTable[4];
+            JPEGQTable[] qTables = new JPEGQTable[4];
+            JPEGHuffmanTable[] DCHuffmanTables = new JPEGHuffmanTable[4];
+            JPEGHuffmanTable[] ACHuffmanTables = new JPEGHuffmanTable[4];
 
             for (int i = 0; i < 4; i++) {
-                qTables[i] = new javax.imageio.plugins.jpeg.JPEGQTable(param.getQTable(i).getTable());
-                DCHuffmanTables[i] = param.getDCHuffmanTable(i);
-                ACHuffmanTables[i] = param.getACHuffmanTable(i);
+                qTables[i] = new JPEGQTable(param.getQTable(i).getTable());
+                com.sun.image.codec.jpeg.JPEGHuffmanTable dcHuffman = param.getDCHuffmanTable(i);
+                com.sun.image.codec.jpeg.JPEGHuffmanTable acHuffman = param.getACHuffmanTable(i);
+                DCHuffmanTables[i] = new JPEGHuffmanTable(dcHuffman.getLengths(),
+                                                          dcHuffman.getSymbols());
+                ACHuffmanTables[i] = new JPEGHuffmanTable(acHuffman.getLengths(),
+                                                          dcHuffman.getSymbols());
             }
 
             irp = new JPEGImageReadParam();
