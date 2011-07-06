@@ -18,14 +18,14 @@ JAMVM_URL = $(JAMVM_BASE_URL)/jamvm-$(JAMVM_VERSION).tar.gz
 JAMVM_SRC_ZIP = jamvm-$(JAMVM_VERSION).tar.gz
 
 JAXWS_DROP_URL = http://icedtea.classpath.org/download/drops
-JAXWS_DROP_ZIP = jdk6-jaxws-b20.zip
-JAXWS_DROP_SHA256SUM = 0c460583898b968a58bf88eb53f90a0e34369e2562d65fb3a143512dfcaeb3eb
+JAXWS_DROP_ZIP = jdk6-jaxws2_1_6-2011_06_08.zip
+JAXWS_DROP_SHA256SUM = be95ff0ae05b474d0bbb3ad8bdb2a23f20cb8c48b1a21f16aa079e43a50c057f
 JAF_DROP_URL = http://icedtea.classpath.org/download/drops
 JAF_DROP_ZIP = jdk6-jaf-b20.zip
 JAF_DROP_SHA256SUM = 78c7b5c9d6271e88ee46abadd018a61f1e9645f8936cc8df1617e5f4f5074012
 JAXP_DROP_URL = http://icedtea.classpath.org/download/drops
-JAXP_DROP_ZIP = jaxp144_02.zip
-JAXP_DROP_SHA256SUM = 29edfda4b7e5e2f87da5a172b4d3e3cf05b1c1ec60e5ebb0144470edcb2a9c1d
+JAXP_DROP_ZIP = jaxp144_03.zip
+JAXP_DROP_SHA256SUM = c1a5348e17b330a7e4b18431e61a40efd2ba99a7da71102cf2c604478ef96012
 OPENJDK_HG_URL = http://hg.openjdk.java.net/jdk6/jdk6
 
 HOTSPOT_SRC_ZIP = hotspot.tar.gz
@@ -185,15 +185,7 @@ REWRITER_SRCS = $(abs_top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.jav
 
 ICEDTEA_FSG_PATCHES =
 
-SECURITY_PATCHES = patches/security/20110607/6213702.patch \
-	patches/security/20110607/6618658.patch \
-	patches/security/20110607/7012520.patch \
-	patches/security/20110607/7013519.patch \
-	patches/security/20110607/7013969.patch \
-	patches/security/20110607/7013971.patch \
-	patches/security/20110607/7016495.patch \
-	patches/security/20110607/7020198.patch \
-	patches/security/20110607/7020373.patch
+SECURITY_PATCHES =
 
 ICEDTEA_PATCHES = \
 	$(SECURITY_PATCHES) \

@@ -1,3 +1,26 @@
+2011-07-06  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/security/20110215/6878713.patch,
+	* patches/security/20110607/6213702.patch,
+	* patches/security/20110607/6618658.patch,
+	* patches/security/20110607/7012520.patch,
+	* patches/security/20110607/7013519.patch,
+	* patches/security/20110607/7013969.patch,
+	* patches/security/20110607/7013971.patch,
+	* patches/security/20110607/7016495.patch,
+	* patches/security/20110607/7020198.patch,
+	* patches/security/20110607/7020373.patch:
+	Removed; upstream.
+	* Makefile.am:
+	(JAXWS_DROP_ZIP): Updatede.
+	(JAXWS_DROP_SHA256SUM): Likewise.
+	(JAXP_DROP_ZIP): Likewise.
+	(JAXP_DROP_SHA256SUM): Likewise.
+	(SECURITY_PATCHES): Set to empty.
+	* patches/xjc.patch: Revert to pre-security
+	patch version (security patch is now part of the
+	tarball, not a patch)
+
 2011-07-01  Pavel Tisnovsky  <ptisnovs@redhat.com>
 
 	* Makefile.am: added new patches
