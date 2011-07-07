@@ -32,6 +32,29 @@
 
 2011-07-06  Andrew John Hughes  <ahughes@redhat.com>
 
+	* patches/security/20110215/6878713.patch,
+	* patches/security/20110607/6213702.patch,
+	* patches/security/20110607/6618658.patch,
+	* patches/security/20110607/7012520.patch,
+	* patches/security/20110607/7013519.patch,
+	* patches/security/20110607/7013969.patch,
+	* patches/security/20110607/7013971.patch,
+	* patches/security/20110607/7016495.patch,
+	* patches/security/20110607/7020198.patch,
+	* patches/security/20110607/7020373.patch:
+	Removed; upstream.
+	* Makefile.am:
+	(JAXWS_DROP_ZIP): Updatede.
+	(JAXWS_DROP_SHA256SUM): Likewise.
+	(JAXP_DROP_ZIP): Likewise.
+	(JAXP_DROP_SHA256SUM): Likewise.
+	(SECURITY_PATCHES): Set to empty.
+	* patches/xjc.patch: Revert to pre-security
+	patch version (security patch is now part of the
+	tarball, not a patch)
+
+2011-07-06  Andrew John Hughes  <ahughes@redhat.com>
+
 	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/ImageFormatException.java,
 	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/JPEGCodec.java,
 	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/JPEGDecodeParam.java,
@@ -526,6 +549,54 @@
 	make the test compatible with OpenJDK7/IcedTea7, disabling printing
 	unnecessary information to error output.
 
+2011-05-18  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/hotspot/hs20/7032388-work_without_cmov_instruction.patch,
+	* patches/hotspot/hs20/arm.patch,
+	* patches/hotspot/hs20/gcc-suffix.patch,
+	* patches/hotspot/hs20/ia64-fix.patch,
+	* patches/hotspot/hs20/params-cast-size_t.patch,
+	* patches/hotspot/hs20/powerpc-stacksize.patch,
+	* patches/hotspot/hs20/sparc-buildfixes.patch,
+	* patches/hotspot/hs20/systemtap.patch,
+	* patches/hotspot/hs20/text-relocations.patch:
+	Moved to main tree.
+	* patches/hotspot/original/7032388-work_without_cmov_instruction.patch,
+	* patches/hotspot/original/arm.patch,
+	* patches/hotspot/original/gcc-suffix.patch,
+	* patches/hotspot/original/ia64-fix.patch,
+	* patches/hotspot/original/no-precompiled-headers.patch,
+	* patches/hotspot/original/params-cast-size_t.patch,
+	* patches/hotspot/original/sparc-buildfixes.patch,
+	* patches/hotspot/original/systemtap.patch,
+	* patches/hotspot/original/text-relocations.patch,
+	* patches/hotspot/original/too-many-args.patch:
+	Dropped; hs19 no longer supported.
+	* patches/openjdk/6599601-mark_sun_toolkit_privileged_code.patch,
+	* patches/openjdk/6997495-test_correction_6857159.patch,
+	* patches/openjdk/7029905-demo_applet_html_files.patch,
+	* patches/openjdk/7042040-no_disk_space_check.patch:
+	Removed; upstream in OpenJDK6.
+	* INSTALL: Update HotSpot documentation.
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Updated.
+	* acinclude.m4:
+	(IT_WITH_HOTSPOT_BUILD): Set default back to original.
+	* hotspot.map: Remove hs19.
+	* patches/arm.patch,
+	* patches/gcc-suffix.patch,
+	* patches/ia64-fix.patch:
+	Extended with HotSpot segments from hotspot/hs20.
+	* patches/openjdk/6633275-shaped_translucent_windows.patch:
+	Recreated due to copyright header change in Component.java.
+	* patches/openjdk/7032388-work_without_cmov_instruction.patch,
+	* patches/params-cast-size_t.patch,
+	* patches/powerpc-stacksize.patch,
+	* patches/sparc-buildfixes.patch,
+	* patches/systemtap.patch,
+	* patches/text-relocations.patch:
+	Moved from hotspot/hs20.
+
 2011-05-17  Denis Lila <dlila@redhat.com>
 
 	* Makefile.am: Apply patch.
@@ -830,6 +901,12 @@
 
 2011-03-31  Andrew John Hughes  <ahughes@redhat.com>
 
+	* patches/jaxp-serial-version-uid.patch,
+	* patches/openjdk/6768387-jtable_not_serializable.patch:
+	Dropped, upstream.
+
+2011-03-31  Andrew John Hughes  <ahughes@redhat.com>
+
 	S7032388, PR682: Make HotSpot work on machines without
 	cmov instruction again
 	* Makefile.am: Add new patch.
@@ -845,6 +922,13 @@
 	This patch also deletes now defunct regression
 	test:
 	openjdk/langtools/test/tools/javac/api/6411310/Test.java
+
+2011-03-31  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(JAXP_DROP_ZIP): Update.
+	(JAXP_DROP_SHA256SUM): Likewise.
+	(ICEDTEA_PATCHES): Drop above.
 
 2011-03-31  Andrew John Hughes  <ahughes@redhat.com>
 
@@ -1084,6 +1168,11 @@
 	* Makefile.am: Replaced JamVM patch.
 	* patches/jamvm/ignore-more-XX-options.patch: Removed.
 	* patches/jamvm/ignore-unknown-options.patch: Added.
+
+2011-03-03  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	Bump to b23.
 
 2011-03-03  Andrew John Hughes  <ahughes@redhat.com>
 

@@ -2,7 +2,7 @@
 
 OPENJDK_DATE = 28_feb_2011
 OPENJDK_MD5SUM = 2d2bbbb0f9b81f1fec41ec730da8a933
-OPENJDK_VERSION = b22
+OPENJDK_VERSION = b23
 OPENJDK_URL = http://download.java.net/openjdk/jdk6/promoted/$(OPENJDK_VERSION)/
 
 CACAO_VERSION = d6264eb66506
@@ -18,15 +18,14 @@ JAMVM_URL = $(JAMVM_BASE_URL)/jamvm-$(JAMVM_VERSION).tar.gz
 JAMVM_SRC_ZIP = jamvm-$(JAMVM_VERSION).tar.gz
 
 JAXWS_DROP_URL = http://icedtea.classpath.org/download/drops
-JAXWS_DROP_ZIP = jdk6-jaxws-b20.zip
-JAXWS_DROP_SHA256SUM = 0c460583898b968a58bf88eb53f90a0e34369e2562d65fb3a143512dfcaeb3eb
+JAXWS_DROP_ZIP = jdk6-jaxws2_1_6-2011_06_08.zip
+JAXWS_DROP_SHA256SUM = be95ff0ae05b474d0bbb3ad8bdb2a23f20cb8c48b1a21f16aa079e43a50c057f
 JAF_DROP_URL = http://icedtea.classpath.org/download/drops
 JAF_DROP_ZIP = jdk6-jaf-b20.zip
 JAF_DROP_SHA256SUM = 78c7b5c9d6271e88ee46abadd018a61f1e9645f8936cc8df1617e5f4f5074012
 JAXP_DROP_URL = http://icedtea.classpath.org/download/drops
-JAXP_DROP_ZIP = jaxp144_01.zip
-JAXP_DROP_SHA256SUM = d72c2e27a479e7e78e0141cfcf3a9c5dbc5677495bd21b2d52dce85d21322186
-
+JAXP_DROP_ZIP = jaxp144_03.zip
+JAXP_DROP_SHA256SUM = c1a5348e17b330a7e4b18431e61a40efd2ba99a7da71102cf2c604478ef96012
 OPENJDK_HG_URL = http://hg.openjdk.java.net/jdk6/jdk6
 
 HOTSPOT_SRC_ZIP = hotspot.tar.gz
@@ -186,20 +185,7 @@ REWRITER_SRCS = $(abs_top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.jav
 
 ICEDTEA_FSG_PATCHES =
 
-SECURITY_PATCHES = patches/security/20110607/6213702.patch \
-	patches/security/20110607/6618658.patch \
-	patches/security/20110607/7012520.patch \
-	patches/security/20110607/7013519.patch \
-	patches/security/20110607/7013969.patch \
-	patches/security/20110607/7013971.patch \
-	patches/security/20110607/7016495.patch \
-	patches/security/20110607/7020198.patch \
-	patches/security/20110607/7020373.patch
-
-if WITH_ALT_HSBUILD
-SECURITY_PATCHES += \
-	patches/security/20110215/6878713.patch
-endif
+SECURITY_PATCHES =
 
 ICEDTEA_PATCHES = \
 	$(SECURITY_PATCHES) \
@@ -228,12 +214,11 @@ ICEDTEA_PATCHES = \
 	patches/lucene-crash.patch \
 	patches/version.patch \
 	patches/version-hotspot.patch \
-	patches/hotspot/$(HSBUILD)/text-relocations.patch \
+	patches/text-relocations.patch \
 	patches/openjdk/7043921-java_rmi_cgi.patch \
 	patches/use-system-tzdata.patch \
 	patches/headers.patch \
 	patches/gcc-suffix.patch \
-	patches/hotspot/$(HSBUILD)/gcc-suffix.patch \
 	patches/memory-limits.patch \
 	patches/libraries.patch \
 	patches/jvmtiEnv.patch \
@@ -248,7 +233,7 @@ ICEDTEA_PATCHES = \
 	patches/alt-jar.patch \
 	patches/jdk-use-ssize_t.patch \
 	patches/use-idx_t.patch \
-	patches/hotspot/$(HSBUILD)/params-cast-size_t.patch \
+	patches/params-cast-size_t.patch \
 	patches/clean-crypto.patch \
 	patches/arch.patch \
 	patches/lc_ctype.patch \
@@ -257,11 +242,10 @@ ICEDTEA_PATCHES = \
 	patches/testenv.patch \
 	patches/samejvm-safe.patch \
 	patches/pr261.patch \
-	patches/hotspot/$(HSBUILD)/sparc-buildfixes.patch \
+	patches/sparc-buildfixes.patch \
 	patches/sparc64-linux.patch \
 	patches/sparc-ptracefix.patch \
 	patches/sparc-trapsfix.patch \
-	patches/openjdk/7029905-demo_applet_html_files.patch \
 	patches/jtreg-6592792.patch \
 	patches/s390-noinline.patch \
 	patches/jtreg-dnd.patch \
@@ -279,9 +263,7 @@ ICEDTEA_PATCHES = \
 	patches/applet_hole.patch \
 	patches/jtreg-httpTest.patch \
 	patches/arm.patch \
-	patches/hotspot/$(HSBUILD)/arm.patch \
 	patches/debug-dir.patch \
-	patches/openjdk/7042040-no_disk_space_check.patch \
 	patches/override-redirect-metacity.patch \
 	patches/openjdk/6967533-pre_epoch.patch \
 	patches/fonts-rhel.patch \
@@ -302,7 +284,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6800846-printing-quality.patch \
 	patches/rh661505-jpeg.patch \
 	patches/6703377-freetypescaler.patch \
-	patches/hotspot/$(HSBUILD)/ia64-fix.patch \
+	patches/ia64-fix.patch \
 	patches/openjdk/6642612-filechooser_button_sizes.patch \
 	patches/jtreg-international-fonts-styles.patch \
 	patches/openjdk/6736649-text_bearings.patch \
@@ -332,17 +314,14 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6766342-AA-simple-shape-performance.patch \
 	patches/openjdk/7016856-pisces-performance.patch \
 	patches/openjdk/6934977-MappedByteBuffer.load.patch \
-	patches/jaxp-serial-version-uid.patch \
 	patches/jtreg-hotspot-bug-6196102.patch \
 	patches/jtreg-double-to-string.patch \
 	patches/openjdk/7023591-AAShapePipe.patch \
 	patches/openjdk/7027667-AAShapePipeRegTest.patch \
 	patches/openjdk/7019861-AA-regression-fix.patch \
-	patches/openjdk/6768387-jtable_not_serializable.patch \
-	patches/openjdk/6599601-mark_sun_toolkit_privileged_code.patch \
 	patches/g356743-libpng-1.5.patch \
 	patches/revert-6885123.patch \
-	patches/hotspot/$(HSBUILD)/7032388-work_without_cmov_instruction.patch \
+	patches/openjdk/7032388-work_without_cmov_instruction.patch \
 	patches/openjdk/7031385-gcc-register-allocation-fix.patch \
 	patches/openjdk/6986968-crash_on_xim_restart.patch \
 	patches/openjdk/7036754-stroker-nan.patch \
@@ -375,21 +354,12 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6796786-invalid_FP_identity_transform.patch \
 	patches/openjdk/7042070-Typo_in_Test6796786.patch \
 	patches/openjdk/6679308-Poor_text_rendering_on_translucent_image.patch
-
-if WITH_ALT_HSBUILD
-ICEDTEA_PATCHES += \
 	patches/pr639-broken_shark_build.patch \
-	patches/hotspot/$(HSBUILD)/powerpc-stacksize.patch \
+	patches/powerpc-stacksize.patch \
 	patches/jtreg-remove-test-6987555.patch \
 	patches/jtreg-remove-test-6991596.patch \
-	patches/hotspot/$(HSBUILD)/7036220-shark_llvm_29_headers.patch \
+	patches/openjdk/7036220-shark_llvm_29_headers.patch \
 	patches/openjdk/7029152-String_intrinsics_miss_optimization.patch
-else
-ICEDTEA_PATCHES += \
-	patches/hotspot/$(HSBUILD)/no-precompiled-headers.patch \
-	patches/hotspot/$(HSBUILD)/too-many-args.patch \
-	patches/openjdk/6997495-test_correction_6857159.patch
-endif
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -426,7 +396,6 @@ endif
 
 if ENABLE_SYSTEMTAP
 ICEDTEA_PATCHES += patches/systemtap.patch \
-	patches/hotspot/$(HSBUILD)/systemtap.patch \
 	patches/systemtap-gcc-4.5.patch \
 	patches/systemtap-alloc-size-workaround.patch
 endif

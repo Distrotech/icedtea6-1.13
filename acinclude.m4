@@ -1081,8 +1081,8 @@ AC_DEFUN([IT_WITH_GCJ],
 AC_DEFUN([IT_WITH_HOTSPOT_BUILD],
 [
   ORIGINAL_BUILD="original"
-  ALTERNATE_BUILD="hs20"
-  DEFAULT_BUILD=${ALTERNATE_BUILD}
+  ALTERNATE_BUILD="original"
+  DEFAULT_BUILD=${ORIGINAL_BUILD}
   AC_MSG_CHECKING([which HotSpot build to use])
   AC_ARG_WITH([hotspot-build],
 	      [AS_HELP_STRING(--with-hotspot-build,the HotSpot build to use (see hotspot.map))],
