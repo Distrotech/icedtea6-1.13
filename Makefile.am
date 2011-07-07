@@ -374,7 +374,9 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7047069-Array_can_dynamically_change_size.patch \
 	patches/openjdk/6796786-invalid_FP_identity_transform.patch \
 	patches/openjdk/7042070-Typo_in_Test6796786.patch \
-	patches/openjdk/6679308-Poor_text_rendering_on_translucent_image.patch
+	patches/openjdk/6679308-Poor_text_rendering_on_translucent_image.patch \
+	patches/openjdk/6842838-64-bit_failure_in_handling_invalid_manifest.patch \
+	patches/openjdk/6882768-test_for_6842838_is_broken.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
