@@ -1,7 +1,7 @@
 # Dependencies
 
-OPENJDK_DATE = 28_feb_2011
-OPENJDK_MD5SUM = 2d2bbbb0f9b81f1fec41ec730da8a933
+OPENJDK_DATE = 05_jul_2011
+OPENJDK_SHA256SUM = f36198920e84053d7bfa3599ee32477c1e2b911dba38d75a669b79e9ae5393e5
 OPENJDK_VERSION = b23
 OPENJDK_URL = http://download.java.net/openjdk/jdk6/promoted/$(OPENJDK_VERSION)/
 
@@ -840,8 +840,8 @@ else
 if USE_ALT_OPENJDK_SRC_ZIP
 	ln -sf $(ALT_OPENJDK_SRC_ZIP) $(OPENJDK_SRC_ZIP)
 else
-	if ! echo "$(OPENJDK_MD5SUM)  $(OPENJDK_SRC_ZIP)" \
-	  | $(MD5SUM) --check ; \
+	if ! echo "$(OPENJDK_SHA256SUM)  $(OPENJDK_SRC_ZIP)" \
+	  | $(SHA256SUM) --check ; \
 	then \
 	  if [ -e $(OPENJDK_SRC_ZIP) ] ; \
 	  then \
@@ -865,10 +865,10 @@ if WITH_ALT_HSBUILD
 if USE_ALT_HOTSPOT_SRC_ZIP
 	ln -sf $(ALT_HOTSPOT_SRC_ZIP) $(HOTSPOT_SRC_ZIP)
 endif
-	hotspot_md5sum="`$(AWK) 'version==$$1 {print $$4}' version=$(HSBUILD) \
+	hotspot_sha256sum="`$(AWK) 'version==$$1 {print $$4}' version=$(HSBUILD) \
 	  $(abs_top_srcdir)/hotspot.map`" ; \
-	if ! echo "$${hotspot_md5sum}  $(HOTSPOT_SRC_ZIP)" \
-	  | $(MD5SUM) --check ; \
+	if ! echo "$${hotspot_sha256sum}  $(HOTSPOT_SRC_ZIP)" \
+	  | $(SHA256SUM) --check ; \
 	then \
 	  if [ -e $(HOTSPOT_SRC_ZIP) ] ; \
 	  then \

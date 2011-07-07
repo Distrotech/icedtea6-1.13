@@ -1,5 +1,16 @@
 2011-07-06  Andrew John Hughes  <ahughes@redhat.com>
 
+	* Makefile.am:
+	(OPENJDK_DATE): Updated.
+	(OPENJDK_SHA256SUM): Replaces OPENJDK_MD5SUM.
+	(download-openjdk): Use sha256 as with all
+	other bundles.
+	(download-hotspot): Likewise.
+	* configure.ac: Remove check for md5sum.
+	* hotspot.map: Move to sha256.
+
+2011-07-06  Andrew John Hughes  <ahughes@redhat.com>
+
 	Make JPEG classes more binary compatible with
 	Oracle versions.
 	* overlays/jpeg/openjdk/jdk/src/share/classes/com/sun/image/codec/jpeg/ImageFormatException.java:
