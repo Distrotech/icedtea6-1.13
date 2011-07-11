@@ -362,7 +362,8 @@ ICEDTEA_PATCHES = \
 	patches/jtreg-remove-test-6991596.patch \
 	patches/openjdk/7036220-shark_llvm_29_headers.patch \
 	patches/openjdk/7029152-String_intrinsics_miss_optimization.patch \
-	patches/openjdk/6711682-JCheckBox_in_JTable_does_not_respond_to_click.patch
+	patches/openjdk/6711682-JCheckBox_in_JTable_does_not_respond_to_click.patch \
+	patches/jtreg-7020373-add-ignore-tag.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
