@@ -12,6 +12,7 @@ CVE-XXXX-YYYY: http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 New in release 1.11 (2011-XX-XX):
 
 * Use HotSpot 20 as the default virtual machine.
+* ARM assembler port and Thumb2 JIT removed (broken and unmaintained).
 * Backports
   - S7023591, S7027667: Clipped antialiased rectangles are filled, not drawn.
   - S7019861: Last scanline skpped when doing AA.
@@ -101,7 +102,6 @@ New in release 1.11 (2011-XX-XX):
   - Trivial implementation of stubs for MIPS.
 * Zero/Shark
   - PR689: Shark fails to find LLVM 2.9 System headers during build.
-  - Removal of the ARM assembler port and Thumb2 JIT.
 
 New in release 1.10 (2011-XX-XX):
 
