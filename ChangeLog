@@ -1,5 +1,17 @@
 2011-07-11  Andrew John Hughes  <ahughes@redhat.com>
 
+	* Makefile.am:
+	(clean-add-jamvm): Only perform sed on jvm.cfg
+	if it exists and use correct path as in original
+	rule.
+	(clean-add-jamvm-debug): Likewise.
+	(clean-add-cacao): Likewise.
+	(clean-add-cacao-debug): Likewise.
+	(clean-add-jamvm): Likewise.
+	(clean-add-jamvm-debug): Likewise.
+
+2011-07-11  Andrew John Hughes  <ahughes@redhat.com>
+
 	* NEWS: Import 1.10.2, 1.9.8, 1.8.8 and
 	1.10.1 release announcements.  Sync 1.10
 	announcement with final version.  Remove

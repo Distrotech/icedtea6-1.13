@@ -1840,7 +1840,9 @@ endif
 
 clean-add-jamvm:
 	rm -rf $(BUILD_JRE_ARCH_DIR)/jamvm
-	-sed -i 's#-jamvm KNOWN#-jamvm ERROR#' jvm.cfg
+	if [ -e $(BUILD_JRE_ARCH_DIR)/jvm.cfg ] ; then \
+	  sed -i 's#-jamvm KNOWN#-jamvm ERROR#' $(BUILD_JRE_ARCH_DIR)/jvm.cfg ; \
+	fi
 	rm -f stamps/add-jamvm.stamp
 
 stamps/add-jamvm-debug.stamp: stamps/icedtea-debug.stamp stamps/jamvm.stamp
@@ -1856,7 +1858,9 @@ endif
 
 clean-add-jamvm-debug:
 	rm -rf $(BUILD_DEBUG_JRE_ARCH_DIR)/jamvm
-	sed -i 's#-jamvm KNOWN#-jamvm ERROR#' jvm.cfg
+	if [ -e $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg ] ; then \
+	  sed -i 's#-jamvm KNOWN#-jamvm ERROR#' $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg ; \
+	fi
 	rm -f stamps/add-jamvm-debug.stamp
 
 # CACAO
@@ -1906,7 +1910,9 @@ endif
 
 clean-add-cacao:
 	rm -rf $(BUILD_JRE_ARCH_DIR)/cacao
-	sed -i 's#-cacao KNOWN#-cacao ERROR#' jvm.cfg
+	if [ -e $(BUILD_JRE_ARCH_DIR)/jvm.cfg ] ; then \
+	  sed -i 's#-cacao KNOWN#-cacao ERROR#' $(BUILD_JRE_ARCH_DIR)/jvm.cfg ; \
+	fi
 	rm -f stamps/add-cacao.stamp
 
 stamps/add-cacao-debug.stamp: stamps/icedtea-debug.stamp stamps/cacao.stamp
@@ -1926,7 +1932,9 @@ endif
 
 clean-add-cacao-debug:
 	rm -rf $(BUILD_DEBUG_JRE_ARCH_DIR)/cacao
-	sed -i 's#-cacao KNOWN#-cacao ERROR#' jvm.cfg
+	if [ -e $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg ] ; then \
+	  sed -i 's#-cacao KNOWN#-cacao ERROR#' $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg ; \
+	fi
 	rm -f stamps/add-cacao-debug.stamp
 
 # configure script arguments, quoted in single quotes
@@ -2016,8 +2024,10 @@ clean-add-zero:
 	rm -rf $(BUILD_JRE_ARCH_DIR)/zero
 	rm -rf $(BUILD_JRE_ARCH_DIR)/shark
 	rm -rf zerovm
-	sed -i 's#-zero KNOWN#-zero ERROR#' jvm.cfg
-	sed -i 's#-shark KNOWN#-shark ERROR#' jvm.cfg
+	if [ -e $(BUILD_JRE_ARCH_DIR)/jvm.cfg ] ; then \
+	  sed -i 's#-zero KNOWN#-zero ERROR#' $(BUILD_JRE_ARCH_DIR)/jvm.cfg ; \
+	  sed -i 's#-shark KNOWN#-shark ERROR#' $(BUILD_JRE_ARCH_DIR)/jvm.cfg ; \
+	fi
 	rm -f stamps/add-zero.stamp
 
 stamps/add-zero-debug.stamp: stamps/icedtea-debug.stamp
@@ -2052,8 +2062,10 @@ clean-add-zero-debug:
 	rm -rf $(BUILD_DEBUG_JRE_ARCH_DIR)/zero
 	rm -rf $(BUILD_JRE_ARCH_DIR)/shark
 	rm -rf zerovm
-	sed -i 's#-zero KNOWN#-zero ERROR#' jvm.cfg
-	sed -i 's#-shark KNOWN#-shark ERROR#' jvm.cfg
+	if [ -e $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg ] ; then \
+	  sed -i 's#-zero KNOWN#-zero ERROR#' $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg ; \
+	  sed -i 's#-shark KNOWN#-shark ERROR#' $(BUILD_DEBUG_JRE_ARCH_DIR)/jvm.cfg ; \
+	fi
 	rm -f stamps/add-zero-debug.stamp
 
 # end additional VMs
