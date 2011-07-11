@@ -14,11 +14,8 @@ New in release 1.11 (2011-XX-XX):
 * Use HotSpot 20 as the default virtual machine.
 * ARM assembler port and Thumb2 JIT removed (broken and unmaintained).
 * Backports
-  - S7023591, S7027667: Clipped antialiased rectangles are filled, not drawn.
   - S7019861: Last scanline skpped when doing AA.
   - S6768387, PR670: REGRESSION: JTable no longer serializable
-  - Add missing privileged block around access to the sun.awt.nativedebug property.
-  - S7032388, PR682: Make HotSpot work on machines without cmov instruction again
   - S6748082: remove platform-specific code from SwingUtilities2.isDisplayLocal
   - S6708580: Java applications slow when EXA enabled
   - S7029905: demo applets missing some html files
@@ -28,9 +25,6 @@ New in release 1.11 (2011-XX-XX):
   - S7018387: Xrender pipeline may leak GC's
   - S7036754: Stroked quads sometimes contain NaN
   - S7042040: Remove disk space sanity check
-  - S7043054: REGRESSION - wrong userBounds in Paint.createContext()
-  - S7043963, RH698295: Window manager workaround in AWT was not applied to mutter. Now it is.
-  - S4685768: Focus set to disabled component, can't Tab/Shift-Tab 
   - S6769607, PR677: Modal frame hangs for a while.
   - S6578583: Modality is broken in windows vista home premium from jdk1.7 b02 onwards.
   - S6610244: modal dialog closes with fatal error if -Xcheck:jni is set
@@ -50,25 +44,16 @@ New in release 1.11 (2011-XX-XX):
   - S6842838: 64-bit failure in handling invalid manifest in launcher.
   - S6882768: Test for 6842838 is broken
   - S6711682: JCheckBox in JTable: checkbox doesn't always respond to the first mouse click
+  - S7016856: fix dashing performance regression. Improve other rendering performance.
+  - S6934977: MappedByteBuffer.load crashes with SIGBUS.
 * Bug fixes
   - PR637: make check should exit with an error code if any regression test failed.
-  - G356743: Support libpng 1.5.
-  - S7031385, PR680: Incorrect register allocation in orderAccess_linux_x86.inline.hpp
   - PR748: Icedtea6 fails to build with Linux 3.0.
   - PR744: icedtea6-1.10.2 : patching error
   - PR752: ImageFormatException extends Exception not RuntimeException
 * Allow selection of test suites using the jtreg_checks argument e.g. jtreg_checks="langtools"
 * CACAO
   - Threadlist & threadobject improvements.
-  - Ignore all unknown options, but report them.
-  - Fixes build for newer gcc (at least 4.4) on PPC64, breaks older gcc.
-  - CA123: LD_LIBRARY_PATH and java.library.path.
-  - CA143: don't hang with invalid locale.
-  - CA144: aligned patchers on x86_64.
-  - CA148: support for LCMP bytecode.
-  - CA152: Calling Policy.setPolicy with a new Policy object has no effect on the DefaultSecurityManager.
-  - CA156: uncaughtExceptionHandler doesn't work with OpenJDK 6 b21.
-  - CA157: ARM SMP Assertion thinlock failed.
 * JamVM
   - Make classlib init functions consistent + warnings.
   - Correctly implement sun.misc.Unsafe freeMemory().
@@ -89,6 +74,92 @@ New in release 1.11 (2011-XX-XX):
   - Add extra includes to get rid off compiler warning.
   - Rework OpenJDK storage of native thread structure.
   - Implement remaining OpenJDK Array reflection interface.
+
+New in release 1.10.2 (2011-06-07):
+
+* Security fixes
+  - S6213702, CVE-2011-0872: (so) non-blocking sockets with TCP urgent disabled get still selected for read ops (win)
+  - S6618658, CVE-2011-0865: Vulnerability in deserialization
+  - S7012520, CVE-2011-0815: Heap overflow vulnerability in FileDialog.show()
+  - S7013519, CVE-2011-0822, CVE-2011-0862: Integer overflows in 2D code
+  - S7013969, CVE-2011-0867: NetworkInterface.toString can reveal bindings
+  - S7013971, CVE-2011-0869: Vulnerability in SAAJ
+  - S7016340, CVE-2011-0870: Vulnerability in SAAJ
+  - S7016495, CVE-2011-0868: Crash in Java 2D transforming an image with scale close to zero
+  - S7020198, CVE-2011-0871: ImageIcon creates Component with null acc
+  - S7020373, CVE-2011-0864: JSR rewriting can overflow memory address size variables
+* Backports
+  - S7043054: REGRESSION - wrong userBounds in Paint.createContext()
+  - S7043963, RH698295: Window manager workaround in AWT was not applied to mutter. Now it is.
+* Shark
+  - PR689: Shark fails to find LLVM 2.9 System headers during build.
+
+New in release 1.9.8 (2011-06-07):
+
+* Security fixes
+  - S6213702, CVE-2011-0872: (so) non-blocking sockets with TCP urgent disabled get still selected for read ops (win)
+  - S6618658, CVE-2011-0865: Vulnerability in deserialization
+  - S7012520, CVE-2011-0815: Heap overflow vulnerability in FileDialog.show()
+  - S7013519, CVE-2011-0822, CVE-2011-0862: Integer overflows in 2D code
+  - S7013969, CVE-2011-0867: NetworkInterface.toString can reveal bindings
+  - S7013971, CVE-2011-0869: Vulnerability in SAAJ
+  - S7016340, CVE-2011-0870: Vulnerability in SAAJ
+  - S7016495, CVE-2011-0868: Crash in Java 2D transforming an image with scale close to zero
+  - S7020198, CVE-2011-0871: ImageIcon creates Component with null acc
+  - S7020373, CVE-2011-0864: JSR rewriting can overflow memory address size variables
+* Backports
+  - S6675802: Regression: heavyweight popups cause SecurityExceptions in applets
+  - S6691503: Malicious applet can show always-on-top popup menu which has whole screen size 
+  - S6980392, PR642: simple correction in testcase, added missing bracket
+  - Fixed AccessControlContext which was thrown while working with Color class in a PropertyEditor
+* Plugin
+  - PR542: Plugin fails with NPE on http://www.openprocessing.org/visuals/iframe.php?visualID=2615
+* Shark
+  - PR689: Shark fails to find LLVM 2.9 System headers during build
+
+New in release 1.8.8 (2011-06-07):
+
+* Security fixes
+  - S6213702, CVE-2011-0872: (so) non-blocking sockets with TCP urgent disabled get still selected for read ops (win)
+  - S6618658, CVE-2011-0865: Vulnerability in deserialization
+  - S7012520, CVE-2011-0815: Heap overflow vulnerability in FileDialog.show()
+  - S7013519, CVE-2011-0822, CVE-2011-0862: Integer overflows in 2D code
+  - S7013969, CVE-2011-0867: NetworkInterface.toString can reveal bindings
+  - S7013971, CVE-2011-0869: Vulnerability in SAAJ
+  - S7016340, CVE-2011-0870: Vulnerability in SAAJ
+  - S7016495, CVE-2011-0868: Crash in Java 2D transforming an image with scale close to zero
+  - S7020198, CVE-2011-0871: ImageIcon creates Component with null acc
+  - S7020373, CVE-2011-0864: JSR rewriting can overflow memory address size variables
+* Backports
+  - S6675802: Regression: heavyweight popups cause SecurityExceptions in applets
+  - S6691503: Malicious applet can show always-on-top popup menu which has whole screen size
+  - PR632: patches/security/20110215/6878713.patch breaks shark zero build
+  - Fixed AccessControlContext which was thrown while working with Color class in a PropertyEditor
+* Plugin
+  - PR542: Plugin fails with NPE on http://www.openprocessing.org/visuals/iframe.php?visualID=2615
+
+New in release 1.10.1 (2011-04-04):
+
+* HotSpot 20 updated to b11.
+* Backports
+  - S7023591, S7027667: Clipped antialiased rectangles are filled, not drawn.
+  - Add missing privileged block around access to the sun.awt.nativedebug property.
+  - S7032388, PR682: Make HotSpot work on machines without cmov instruction again
+  - S7031385, PR680: Incorrect register allocation in orderAccess_linux_x86.inline.hpp
+  - S4685768: Focus set to disabled component, can't Tab/Shift-Tab 
+* Fixes
+  - G356743: Support libpng 1.5.
+* CACAO
+  - Ignore all unknown options, but report them.
+  - Fixes build for newer gcc (at least 4.4) on PPC64, breaks older gcc.
+  - CA123: LD_LIBRARY_PATH and java.library.path.
+  - CA143: don't hang with invalid locale.
+  - CA144: aligned patchers on x86_64.
+  - CA148: support for LCMP bytecode.
+  - CA152: Calling Policy.setPolicy with a new Policy object has no effect on the DefaultSecurityManager.
+  - CA156: uncaughtExceptionHandler doesn't work with OpenJDK 6 b21.
+  - CA157: ARM SMP Assertion thinlock failed.
+* JamVM
   - Handle overflow in getPhysicalMemory().
   - Base default min and max heap size on physical memory.
   - Fix reflective array access.
@@ -100,10 +171,8 @@ New in release 1.11 (2011-XX-XX):
   - On ARM, force interpreter to be built in ARM mode.
   - MIPS: 64-bit and interpreter inlining by default.
   - Trivial implementation of stubs for MIPS.
-* Zero/Shark
-  - PR689: Shark fails to find LLVM 2.9 System headers during build.
 
-New in release 1.10 (2011-XX-XX):
+New in release 1.10 (2011-03-02):
 
 * NetX and the plugin moved to the IcedTea-Web project with a separate
   release cycle.
@@ -416,7 +485,7 @@ New in release 1.10 (2011-XX-XX):
   - S6633613: (str) StringCoding optimizations to avoid unnecessary array copies with Charset arg
   - S6675802: Regression: heavyweight popups cause SecurityExceptions in applets
   - S6691503: Malicious applet can show always-on-top popup menu which has whole screen size
-  - S6632959: swing html parser doesn't know &euro; or &rsaquo;
+  - S6632959, PR291: swing html parser doesn't know &euro; or &rsaquo;
   - S6721088: Bad window size calculation after using pack()
   - S6949710: 3/3 the GC'able nature of Logging objects needs to be made brutally clear
   - S6623943: javax.swing.TimerQueue's thread occasionally fails to start
@@ -524,8 +593,6 @@ New in release 1.10 (2011-XX-XX):
   - S6444769: java/awt/Insets/WindowWithWarningTest/WindowWithWarningTest.html fails
   - S6775317: Improve performance of non-AA transformed rectangles and single wide lines in software pipelines
   - S6766342: Improve performance of Ductus rasterizer
-  - S7016856: fix dashing performance regression. Improve other rendering performance.
-  - S6934977: MappedByteBuffer.load crashes with SIGBUS.
 * Bug fixes
   - RH661505: JPEGs with sRGB IEC61966-2.1 color profiles have wrong colors
   - PR600: HS19 upgrade broke CACAO build on ARM
@@ -539,6 +606,7 @@ New in release 1.10 (2011-XX-XX):
   - PR640: JamVM fails to build - Unrecognised option: -XX:ThreadStackSize.
   - PR641: Increase stack size for PPC
   - PR497: Mercurial revision detection not very reliable
+  - PR585: Freenet throws java.lang.UnsatisfiedLinkError with OpenJDK/CACAO
 * Cleanup
   - Patches are no longer prefixed with 'icedtea-'.
   - All m4 macros are now prefixed with 'IT_' to denote their origin correctly.
