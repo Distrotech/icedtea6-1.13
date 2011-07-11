@@ -1,3 +1,18 @@
+2011-07-11  Xerxes Rånby  <xerxes@zafena.se>
+
+	Removal of the ARM assembler port, unbreaks Zero and Shark builds.
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Remove patches/arm.patch.
+	(clean-ports): Removed.
+	(stamps/ports.stamp): Likewise.
+	(hotspot-ports): Likewise.
+	* arm_port/hotspot/src/cpu/zero/vm/asm_helper.cpp: Removed.
+	* arm_port/hotspot/src/cpu/zero/vm/bytecodes_arm.def: Likewise.
+	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S: Likewise.
+	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp: Likewise.
+	* arm_port/hotspot/tools/mkbc.c: Likewise.
+	* patches/arm.patch: Likewise.
+
 2011-07-11  Pavel Tisnovsky  <ptisnovs@redhat.com>
 
 	* Makefile.am: added new patch
