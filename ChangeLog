@@ -1,3 +1,34 @@
+2011-05-25  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(ENDORSED_DIR): Removed.
+	(ICEDTEA_ECJ_PATCHES): Add xsltproc.patch.
+	Remove endorsed-dir-for-jvmti.patch.
+	(ICEDTEA_ENV_ECJ): Set XSLT.  Don't
+	set ICEDTEA_ENDORSED_DIR or ENDORSED.
+	(bootstrap-directory-stage1): Don't link
+	xalan2, xerces2 or xalan2 serialiser.
+	* acinclude.m4:
+	(IT_FIND_XALAN2_JAR): Removed.
+	(IT_FIND_XALAN2_SERIALIZER_JAR): Likewise.
+	(IT_FIND_XERCES2_JAR): Likewise.
+	(IT_FIND_XML_COMMONS_API_JAR): Likewise.
+	* configure.ac:
+	Replace calls to IT_FIND_XALAN2_JAR,
+	IT_FIND_XALAN2_SERIALIZER_JAR,
+	IT_FIND_XERCES2_JAR and
+	IT_FIND_XML_COMMONS_API_JAR with call to
+	IT_FIND_TOOL for xsltproc.
+	* patches/ecj/xsltproc.patch:
+	Patch jvmti.make in HotSpot to use
+	xsltproc instead of Java's XSLT
+	when bootstrapping.
+	* patches/ecj/endorsed-dir-for-jvmti.patch:
+	Remove addition of $(ENDORSED) to
+	jvmti.make.
+	* NEWS: Update and make bug fixes more
+	prominent.
+
 2011-07-11  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:

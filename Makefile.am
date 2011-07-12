@@ -39,7 +39,6 @@ ECJ_BUILD_OUTPUT_DIR = $(BUILD_OUTPUT_DIR)-ecj
 ICEDTEA_CLS_DIR = $(BUILD_OUTPUT_DIR)/classes
 ICEDTEA_CLS_DIR_ECJ = $(ECJ_BUILD_OUTPUT_DIR)/classes
 BOOT_DIR = $(abs_top_builddir)/bootstrap/jdk1.6.0
-ENDORSED_DIR = $(BOOT_DIR)/lib/endorsed
 ECJ_BOOT_DIR = $(abs_top_builddir)/bootstrap/ecj
 ICEDTEA_BOOT_DIR = $(abs_top_builddir)/bootstrap/icedtea
 JAMVM_IMPORT_PATH = $(abs_top_builddir)/jamvm/install/hotspot
@@ -419,14 +418,14 @@ ICEDTEA_PATCHES += $(DISTRIBUTION_PATCHES)
 
 ICEDTEA_ECJ_PATCHES = patches/ecj/icedtea.patch \
 	patches/ecj/hotspot.patch \
-	patches/ecj/endorsed-dir-for-jvmti.patch \
 	patches/ecj/javafiles.patch \
 	patches/ecj/spp.patch \
 	patches/ecj/jopt.patch \
 	patches/ecj/jaxp-dependency.patch \
 	patches/ecj/bootver.patch \
 	patches/ecj/getannotation-cast.patch \
-	patches/ecj/override.patch
+	patches/ecj/override.patch \
+	patches/ecj/xsltproc.patch
 
 if DTDTYPE_QNAME
 ICEDTEA_ECJ_PATCHES += \
@@ -562,15 +561,14 @@ ICEDTEA_ENV_ECJ = $(ICEDTEA_ENV) \
 	BOOTCLASSPATH_CLS="-bootclasspath $(ICEDTEA_CLS_DIR_ECJ)" \
 	BOOTCLASSPATH_RT_LIBGCJ="-bootclasspath $(RUNTIME)" \
 	CLASSPATH="" \
-	ICEDTEA_ENDORSED_DIR="$(ENDORSED_DIR)" \
-	ENDORSED="-Djava.endorsed.dirs=$(ENDORSED_DIR)" \
 	LD_LIBRARY_PATH="" \
 	GENSRCDIR="$(abs_top_builddir)/generated" \
 	JAR_KNOWS_ATFILE="$(JAR_KNOWS_ATFILE)" \
 	JAR_KNOWS_J_OPTIONS="$(JAR_KNOWS_J_OPTIONS)" \
 	JAR_ACCEPTS_STDIN_LIST="$(JAR_ACCEPTS_STDIN_LIST)" \
 	DISABLE_NIMBUS="true" \
-	NO_DOCS="true"
+	NO_DOCS="true" \
+	XSLT="$(XSLTPROC)"
 
 # Source files
 # FIXME (distclean): Add generated file list
@@ -1250,16 +1248,6 @@ stamps/bootstrap-directory-ecj.stamp: stamps/native-ecj.stamp
 	ln -sf $(NATIVE2ASCII) $(ECJ_BOOT_DIR)/bin/native2ascii
 	ln -sf $(abs_top_builddir)/javac $(ECJ_BOOT_DIR)/bin/javac
 	ln -sf $(abs_top_builddir)/javap $(ECJ_BOOT_DIR)/bin/javap
-	mkdir -p $(ECJ_BOOT_DIR)/lib/endorsed && \
-	ln -sf $(XALAN2_JAR) $(ECJ_BOOT_DIR)/lib/endorsed/xalan-j2.jar && \
-	ln -sf $(XALAN2_SERIALIZER_JAR) \
-	  $(ECJ_BOOT_DIR)/lib/endorsed/xalan-j2-serializer.jar && \
-	ln -sf $(XERCES2_JAR) $(ECJ_BOOT_DIR)/lib/endorsed/xerces-j2.jar && \
-	if test -n "$(XML_COMMONS_APIS_JAR)"; \
-		then \
-		ln -sf $(XML_COMMONS_APIS_JAR) \
-			$(ECJ_BOOT_DIR)/lib/endorsed/xml-commons-apis.jar; \
-	fi
 	mkdir -p $(ECJ_BOOT_DIR)/jre/lib && \
 	cp $(SYSTEM_JDK_DIR)/jre/lib/rt.jar $(ECJ_BOOT_DIR)/jre/lib/rt.jar && \
 	ln -sf $(SYSTEM_JDK_DIR)/jre/lib/$(JRE_ARCH_DIR) \

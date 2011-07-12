@@ -13,6 +13,12 @@ New in release 1.11 (2011-XX-XX):
 
 * Use HotSpot 20 as the default virtual machine.
 * ARM assembler port and Thumb2 JIT removed (broken and unmaintained).
+* Bug fixes
+  - PR637: make check should exit with an error code if any regression test failed.
+  - PR748: Icedtea6 fails to build with Linux 3.0.
+  - PR744: icedtea6-1.10.2 : patching error
+  - PR752: ImageFormatException extends Exception not RuntimeException
+  - PR732: Use xsltproc for bootstrap xslt in place of Xerces/Xalan
 * Backports
   - S7019861: Last scanline skpped when doing AA.
   - S6768387, PR670: REGRESSION: JTable no longer serializable
@@ -46,11 +52,6 @@ New in release 1.11 (2011-XX-XX):
   - S6711682: JCheckBox in JTable: checkbox doesn't always respond to the first mouse click
   - S7016856: fix dashing performance regression. Improve other rendering performance.
   - S6934977: MappedByteBuffer.load crashes with SIGBUS.
-* Bug fixes
-  - PR637: make check should exit with an error code if any regression test failed.
-  - PR748: Icedtea6 fails to build with Linux 3.0.
-  - PR744: icedtea6-1.10.2 : patching error
-  - PR752: ImageFormatException extends Exception not RuntimeException
 * Allow selection of test suites using the jtreg_checks argument e.g. jtreg_checks="langtools"
 * CACAO
   - Threadlist & threadobject improvements.
