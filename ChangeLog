@@ -1,6 +1,14 @@
 2011-07-12  Pavel Tisnovsky  <ptisnovs@redhat.com>
 
 	* Makefile.am: added new patch
+	* patches/jtreg-ConstructDeflaterInput-fix.patch:
+	Regression test jdk/test/java/util/zip/ConstructDeflaterInput.java
+	should be run in othervm mode to not to print messages to JTreg
+	log files (such messages must be stored in .jtr file).
+
+2011-07-12  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: added new patch
 	* NEWS: updated with backport
 	* patches/openjdk/6758179-D3D_AlphaComposite_is_applied_incorrectly.patch:
 	Backport of 6758179.
