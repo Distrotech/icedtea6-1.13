@@ -364,6 +364,7 @@ ICEDTEA_PATCHES = \
 	patches/jtreg-7020373-add-ignore-tag.patch \
 	patches/openjdk/6758179-D3D_AlphaComposite_is_applied_incorrectly.patch \
 	patches/jtreg-ConstructDeflaterInput-fix.patch \
+	patches/openjdk/6613904-GroupLayout_createParallelGroup_null_arg.patch \
 	patches/openjdk/7049339-anyblit-broken.patch
 
 if WITH_RHINO
