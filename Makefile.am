@@ -365,7 +365,8 @@ ICEDTEA_PATCHES = \
 	patches/jtreg-ConstructDeflaterInput-fix.patch \
 	patches/openjdk/6613904-GroupLayout_createParallelGroup_null_arg.patch \
 	patches/openjdk/7049339-anyblit-broken.patch \
-	patches/jtreg-hotspot-Test7020373-fix.patch
+	patches/jtreg-hotspot-Test7020373-fix.patch \
+	patches/openjdk/4917091-javac_rejects_array_over_128_in_length.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
