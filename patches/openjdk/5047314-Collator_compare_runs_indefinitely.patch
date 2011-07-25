@@ -1,0 +1,117 @@
+# HG changeset patch
+# User peytoia
+# Date 1260856201 -32400
+# Node ID de7807599a9b1aabb574bc2ccf0d84b166103aef
+# Parent  f012e2c094ffa7b58f66c7e56320580a83f7bf80
+5047314: [Col] Collator.compare() runs indefinitely for a certain set of Thai strings
+Reviewed-by: okutsu
+
+diff -r f012e2c094ff -r de7807599a9b src/share/classes/java/text/CollationElementIterator.java
+--- openjdk.orig/jdk/src/share/classes/java/text/CollationElementIterator.java	Thu Dec 10 12:08:58 2009 +0300
++++ openjdk/jdk/src/share/classes/java/text/CollationElementIterator.java	Tue Dec 15 14:50:01 2009 +0900
+@@ -232,7 +232,7 @@
+                     buffer = makeReorderedBuffer(consonant, value, buffer, true);
+                     value = buffer[0];
+                     expIndex = 1;
+-                } else {
++                } else if (consonant != NormalizerBase.DONE) {
+                     text.previous();
+                 }
+             }
+@@ -242,7 +242,7 @@
+                     buffer = makeReorderedBuffer(consonant, value, buffer, true);
+                     value = buffer[0];
+                     expIndex = 1;
+-                } else {
++                } else if (consonant != NormalizerBase.DONE) {
+                     text.previous();
+                 }
+             }
+diff -r f012e2c094ff -r de7807599a9b test/java/text/Collator/Bug5047314.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/java/text/Collator/Bug5047314.java	Tue Dec 15 14:50:01 2009 +0900
+@@ -0,0 +1,84 @@
++/*
++ * Copyright (c) 2009 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/*
++ * @test
++ * @bug 5047314
++ * @summary verify that compare() and getCollationKey() don't go into an infinite loop for unfinished Thai/Lao text.
++ * @run main/timeout=60 Bug5047314
++ */
++import java.text.Collator;
++import java.util.Locale;
++
++public class Bug5047314 {
++
++    private static Collator colLao = Collator.getInstance(new Locale("lo"));
++    private static Collator colThai = Collator.getInstance(new Locale("th"));
++
++    private static String[] textLao = {
++        "\u0ec0", "\u0ec1", "\u0ec2", "\u0ec3", "\u0ec4"
++    };
++    private static String[] textThai = {
++        "\u0e40", "\u0e41", "\u0e42", "\u0e43", "\u0e44"
++    };
++
++    public static void main(String[] args) {
++        testLao1();
++        testLao2();
++        testThai1();
++        testThai2();
++    }
++
++    private static void testLao1() {
++        System.out.print("Test(Lao 1) .... ");
++        for (int i = 0; i < textLao.length; i++) {
++            colLao.compare(textLao[i], textLao[i]);
++        }
++        System.out.println("Passed.");
++    }
++
++    private static void testLao2() {
++        System.out.print("Test(Lao 2) .... ");
++        for (int i = 0; i < textLao.length; i++) {
++            colLao.compare(textLao[i], textLao[i]);
++        }
++        System.out.println("Passed.");
++    }
++
++    private static void testThai1() {
++        System.out.print("Test(Thai 1) .... ");
++        for (int i = 0; i < textThai.length; i++) {
++            colThai.compare(textThai[i], textThai[i]);
++        }
++        System.out.println("Passed.");
++    }
++
++    private static void testThai2() {
++        System.out.print("Test(Thai 2) .... ");
++        for (int i = 0; i < textThai.length; i++) {
++            colThai.getCollationKey(textThai[i]);
++        }
++        System.out.println("Passed.");
++    }
++
++}

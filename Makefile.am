@@ -368,7 +368,8 @@ ICEDTEA_PATCHES = \
 	patches/jtreg-hotspot-Test7020373-fix.patch \
 	patches/openjdk/4917091-javac_rejects_array_over_128_in_length.patch \
 	patches/openjdk/6390045-error_cannot_access_java_lang_void.patch \
-	patches/openjdk/6752638-preferLocaleFonts_throws_NPE.patch
+	patches/openjdk/6752638-preferLocaleFonts_throws_NPE.patch \
+	patches/openjdk/5047314-Collator_compare_runs_indefinitely.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
