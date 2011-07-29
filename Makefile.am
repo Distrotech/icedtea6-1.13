@@ -369,7 +369,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/4917091-javac_rejects_array_over_128_in_length.patch \
 	patches/openjdk/6390045-error_cannot_access_java_lang_void.patch \
 	patches/openjdk/6752638-preferLocaleFonts_throws_NPE.patch \
-	patches/openjdk/5047314-Collator_compare_runs_indefinitely.patch
+	patches/openjdk/5047314-Collator_compare_runs_indefinitely.patch \
+	patches/openjdk/6669869-Beans_isDesignTime_should_be_per-AppContext.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
