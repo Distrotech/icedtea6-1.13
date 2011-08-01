@@ -1,0 +1,293 @@
+# HG changeset patch
+# User mduigou
+# Date 1297708731 28800
+# Node ID 28037efa90a3ac3740897685b238f4a3318c237e
+# Parent  21a1e86dedc2091d47562a676a19f72bbc58c0bf
+6934356: Vector.writeObject() serialization may deadlock
+Summary: No longer synchronize on self while writing other objects.
+Reviewed-by: alanb, forax, mduigou, peterjones
+Contributed-by: Neil Richards <neil.richards@ngmr.net>
+
+diff -r 21a1e86dedc2 -r 28037efa90a3 src/share/classes/java/util/Vector.java
+--- openjdk.orig/jdk/src/share/classes/java/util/Vector.java	Fri Feb 11 17:09:35 2011 -0800
++++ openjdk/jdk/src/share/classes/java/util/Vector.java	Mon Feb 14 10:38:51 2011 -0800
+@@ -1027,13 +1027,21 @@
+ 
+     /**
+      * Save the state of the {@code Vector} instance to a stream (that
+-     * is, serialize it).  This method is present merely for synchronization.
+-     * It just calls the default writeObject method.
++     * is, serialize it).
++     * This method performs synchronization to ensure the consistency
++     * of the serialized data.
+      */
+-    private synchronized void writeObject(java.io.ObjectOutputStream s)
+-        throws java.io.IOException
+-    {
+-        s.defaultWriteObject();
++    private void writeObject(java.io.ObjectOutputStream s)
++            throws java.io.IOException {
++        final java.io.ObjectOutputStream.PutField fields = s.putFields();
++        final Object[] data;
++        synchronized (this) {
++            fields.put("capacityIncrement", capacityIncrement);
++            fields.put("elementCount", elementCount);
++            data = elementData.clone();
++        }
++        fields.put("elementData", data);
++        s.writeFields();
+     }
+ 
+     /**
+diff -r 21a1e86dedc2 -r 28037efa90a3 test/java/util/Vector/SerializationDeadlock.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/java/util/Vector/SerializationDeadlock.java	Mon Feb 14 10:38:51 2011 -0800
+@@ -0,0 +1,157 @@
++/*
++ * Copyright (c) 2010, 2011 Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/*
++ * Portions Copyright (c) 2010, 2011 IBM Corporation
++ */
++
++/*
++ * @test
++ * @bug 6934356
++ * @summary Serializing Vector objects which refer to each other should not be able to deadlock.
++ * @author Neil Richards <neil.richards@ngmr.net>, <neil_richards@uk.ibm.com>
++ */
++
++import java.io.ByteArrayOutputStream;
++import java.io.IOException;
++import java.io.ObjectOutputStream;
++import java.io.PrintWriter;
++import java.io.Serializable;
++import java.io.StringWriter;
++import java.util.ArrayList;
++import java.util.List;
++import java.util.Vector;
++import java.util.concurrent.CyclicBarrier;
++
++public class SerializationDeadlock {
++    public static void main(final String[] args) throws Exception {
++        // Test for Vector serialization deadlock
++        final Vector<Object> v1 = new Vector<Object>();
++        final Vector<Object> v2 = new Vector<Object>();
++        final TestBarrier testStart = new TestBarrier(3);
++
++        // Populate the vectors so that they refer to each other
++        v1.add(testStart);
++        v1.add(v2);
++        v2.add(testStart);
++        v2.add(v1);
++
++        final CyclicBarrier testEnd = new CyclicBarrier(3);
++        final TestThread t1 = new TestThread(v1, testEnd);
++        final TestThread t2 = new TestThread(v2, testEnd);
++
++        t1.start();
++        t2.start();
++
++        // Wait for both test threads to have initiated serialization
++        // of the 'testStart' object (and hence of both 'v1' and 'v2')
++        testStart.await();
++
++        // Wait for both test threads to successfully finish serialization
++        // of 'v1' and 'v2'.
++        System.out.println("Waiting for Vector serialization to complete ...");
++        System.out.println("(This test will hang if serialization deadlocks)");
++        testEnd.await();
++        System.out.println("Test PASSED: serialization completed successfully");
++
++        TestThread.handleExceptions();
++    }
++
++    static final class TestBarrier extends CyclicBarrier
++            implements Serializable {
++        public TestBarrier(final int count) {
++            super(count);
++        }
++
++        private void writeObject(final ObjectOutputStream oos)
++                throws IOException {
++            oos.defaultWriteObject();
++            // Wait until all test threads have started serializing data
++            try {
++                await();
++            } catch (final Exception e) {
++                throw new IOException("Test ERROR: Unexpected exception caught", e);
++            }
++        }
++    }
++
++    static final class TestThread extends Thread {
++        private static final List<Exception> exceptions = new ArrayList<Exception>();
++
++        private final Vector vector;
++        private final CyclicBarrier testEnd;
++
++        public TestThread(final Vector vector, final CyclicBarrier testEnd) {
++            this.vector = vector;
++            this.testEnd = testEnd;
++            setDaemon(true);
++        }
++
++        public void run() {
++            try {
++                final ByteArrayOutputStream baos = new ByteArrayOutputStream();
++                final ObjectOutputStream oos = new ObjectOutputStream(baos);
++
++                oos.writeObject(vector);
++                oos.close();
++            } catch (final IOException ioe) {
++                addException(ioe);
++            } finally {
++                try {
++                    testEnd.await();
++                } catch (Exception e) {
++                    addException(e);
++                }
++            }
++        }
++
++        private static synchronized void addException(final Exception exception) {
++            exceptions.add(exception);
++        }
++
++        public static synchronized void handleExceptions() {
++            if (false == exceptions.isEmpty()) {
++                throw new RuntimeException(getErrorText(exceptions));
++            }
++        }
++
++        private static String getErrorText(final List<Exception> exceptions) {
++            final StringWriter sw = new StringWriter();
++            final PrintWriter pw = new PrintWriter(sw);
++
++            pw.println("Test ERROR: Unexpected exceptions thrown on test threads:");
++            for (Exception exception : exceptions) {
++                pw.print("\t");
++                pw.println(exception);
++                for (StackTraceElement element : exception.getStackTrace()) {
++                    pw.print("\t\tat ");
++                    pw.println(element);
++                }
++            }
++
++            pw.close();
++            return sw.toString();
++        }
++    }
++}
++
+diff -r 21a1e86dedc2 -r 28037efa90a3 test/java/util/Vector/SimpleSerialization.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/java/util/Vector/SimpleSerialization.java	Mon Feb 14 10:38:51 2011 -0800
+@@ -0,0 +1,87 @@
++/*
++ * Copyright (c) 2010, 2011 Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/*
++ * Portions Copyright (c) 2010, 2011 IBM Corporation
++ */
++
++/*
++ * @test
++ * @bug 6934356
++ * @summary A serialized Vector can be successfully de-serialized.
++ * @author Neil Richards <neil.richards@ngmr.net>, <neil_richards@uk.ibm.com>
++ */
++
++import java.io.ByteArrayInputStream;
++import java.io.ByteArrayOutputStream;
++import java.io.IOException;
++import java.io.ObjectInputStream;
++import java.io.ObjectOutputStream;
++import java.io.PrintWriter;
++import java.io.StringWriter;
++import java.util.Vector;
++
++public class SimpleSerialization {
++    public static void main(final String[] args) throws Exception {
++        final Vector<String> v1 = new Vector<String>();
++
++        v1.add("entry1");
++        v1.add("entry2");
++
++        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
++        final ObjectOutputStream oos = new ObjectOutputStream(baos);
++
++        oos.writeObject(v1);
++        oos.close();
++
++        final byte[] data = baos.toByteArray();
++        final ByteArrayInputStream bais = new ByteArrayInputStream(data);
++        final ObjectInputStream ois = new ObjectInputStream(bais);
++
++        final Object deserializedObject = ois.readObject();
++        ois.close();
++
++        if (false == v1.equals(deserializedObject)) {
++            throw new RuntimeException(getFailureText(v1, deserializedObject));
++        }
++    }
++
++    private static String getFailureText(final Object orig, final Object copy) {
++        final StringWriter sw = new StringWriter();
++        final PrintWriter pw = new PrintWriter(sw);
++
++        pw.println("Test FAILED: Deserialized object is not equal to the original object");
++        pw.print("\tOriginal: ");
++        printObject(pw, orig).println();
++        pw.print("\tCopy:     ");
++        printObject(pw, copy).println();
++
++        pw.close();
++        return sw.toString();
++    }
++
++    private static PrintWriter printObject(final PrintWriter pw, final Object o) {
++        pw.printf("%s@%08x", o.getClass().getName(), System.identityHashCode(o));
++        return pw;
++    }
++}
