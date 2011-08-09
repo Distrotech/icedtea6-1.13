@@ -366,6 +366,10 @@ New in release 1.11 (2011-XX-XX):
   - S6934356: Vector.writeObject() serialization may deadlock
 * Allow selection of test suites using the jtreg_checks argument e.g. jtreg_checks="langtools"
 * CACAO
+  - CA159: Exception handler blocks / register mixup.
+  - Set thread to RUNNABLE during Thread.start.
+  - Removed state-setting function call that would be done by the thread itself,
+    creating a nasty race.
   - Threadlist & threadobject improvements.
 * JamVM
   - Remove empty clobber.
