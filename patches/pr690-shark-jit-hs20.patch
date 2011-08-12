@@ -1,0 +1,61 @@
+Index: openjdk/hotspot/src/share/vm/shark/sharkCompiler.hpp
+===================================================================
+--- openjdk.orig/hotspot/src/share/vm/shark/sharkCompiler.hpp	2011-04-15 14:48:22.175181000 +0200
++++ openjdk/hotspot/src/share/vm/shark/sharkCompiler.hpp	2011-04-15 16:19:28.915181000 +0200
+@@ -113,7 +113,7 @@
+   // Global access
+  public:
+   static SharkCompiler* compiler() {
+-    AbstractCompiler *compiler = CompileBroker::compiler(CompLevel_simple);
++    AbstractCompiler *compiler = CompileBroker::compiler(CompLevel_full_optimization);
+     assert(compiler->is_shark() && compiler->is_initialized(), "should be");
+     return (SharkCompiler *) compiler;
+   }
+Index: openjdk/hotspot/src/share/vm/utilities/globalDefinitions.hpp
+===================================================================
+--- openjdk.orig/hotspot/src/share/vm/utilities/globalDefinitions.hpp	2011-04-15 14:54:00.447181000 +0200
++++ openjdk/hotspot/src/share/vm/utilities/globalDefinitions.hpp	2011-04-15 15:02:25.851181000 +0200
+@@ -740,9 +740,9 @@
+   CompLevel_simple            = 1,         // C1
+   CompLevel_limited_profile   = 2,         // C1, invocation & backedge counters
+   CompLevel_full_profile      = 3,         // C1, invocation & backedge counters + mdo
+-  CompLevel_full_optimization = 4,         // C2
++  CompLevel_full_optimization = 4,         // C2 or Shark
+ 
+-#if defined(COMPILER2)
++#if defined(COMPILER2) || defined(SHARK)
+   CompLevel_highest_tier      = CompLevel_full_optimization,  // pure C2 and tiered
+ #elif defined(COMPILER1)
+   CompLevel_highest_tier      = CompLevel_simple,             // pure C1
+@@ -754,7 +754,7 @@
+   CompLevel_initial_compile   = CompLevel_full_profile        // tiered
+ #elif defined(COMPILER1)
+   CompLevel_initial_compile   = CompLevel_simple              // pure C1
+-#elif defined(COMPILER2)
++#elif defined(COMPILER2) || defined(SHARK)
+   CompLevel_initial_compile   = CompLevel_full_optimization   // pure C2
+ #else
+   CompLevel_initial_compile   = CompLevel_none
+Index: openjdk/hotspot/src/share/vm/compiler/compileBroker.cpp
+===================================================================
+--- openjdk.orig/hotspot/src/share/vm/compiler/compileBroker.cpp	2011-04-15 16:05:50.051181001 +0200
++++ openjdk/hotspot/src/share/vm/compiler/compileBroker.cpp	2011-04-15 16:08:46.127181000 +0200
+@@ -768,7 +768,9 @@
+ // Initialize the compilation queue
+ void CompileBroker::init_compiler_threads(int c1_compiler_count, int c2_compiler_count) {
+   EXCEPTION_MARK;
++#if !defined(ZERO) && !defined(SHARK)
+   assert(c2_compiler_count > 0 || c1_compiler_count > 0, "No compilers?");
++#endif // !ZERO && !SHARK
+   if (c2_compiler_count > 0) {
+     _c2_method_queue  = new CompileQueue("C2MethodQueue",  MethodCompileQueue_lock);
+   }
+@@ -1029,7 +1031,7 @@
+ 
+   assert(!HAS_PENDING_EXCEPTION, "No exception should be present");
+   // some prerequisites that are compiler specific
+-  if (compiler(comp_level)->is_c2()) {
++  if (compiler(comp_level)->is_c2() || compiler(comp_level)->is_shark()) {
+     method->constants()->resolve_string_constants(CHECK_0);
+     // Resolve all classes seen in the signature of the method
+     // we are compiling.

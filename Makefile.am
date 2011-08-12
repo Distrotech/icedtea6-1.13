@@ -372,7 +372,9 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/5047314-Collator_compare_runs_indefinitely.patch \
 	patches/openjdk/6669869-Beans_isDesignTime_should_be_per-AppContext.patch \
 	patches/openjdk/6934356-Vector_writeObject_serialization_DL.patch \
-	patches/openjdk/7036582-Improve_test_coverage_of_BigDecimal.patch
+	patches/openjdk/7036582-Improve_test_coverage_of_BigDecimal.patch \
+	patches/pr690-shark-jit-hs20.patch \
+	patches/pr696-zero-fast_aldc-hs20.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \

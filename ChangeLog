@@ -1,3 +1,15 @@
+2011-08-12  Xerxes Rånby  <xerxes@zafena.se>
+
+	Zero/Shark
+	- PR690: Shark fails to JIT using hs20.
+	- PR696: Zero fails to handle fast_aldc and fast_aldc_w in hs20.
+	* patches/pr690-shark-jit-hs20.patch: New patch backported from
+	  OpenJDK 7 bug 7032458.
+	* patches/pr696-zero-fast_aldc-hs20.patch: New patch backported from
+	  OpenJDK 7 bug 7032458 and 7030207.
+	* Makefile.am: Added new patches.
+	* NEWS: Updated.
+
 2011-08-11  Pavel Tisnovsky  <ptisnovs@redhat.com>
 
 	* Makefile.am: added new patch
