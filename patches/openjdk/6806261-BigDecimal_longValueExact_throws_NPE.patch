@@ -1,0 +1,398 @@
+# HG changeset patch
+# User xlu
+# Date 1243208132 25200
+# Node ID 3994c5c669cbc5d8da999449bf702ce3588e7a3a
+# Parent  8d2efec31d78546035943afd41f9bb07a89c7dca
+6806261: BigDecimal.longValueExact() method throws NullPointerException
+Summary: add various tests to test the change to 6622432
+Reviewed-by: darcy
+
+diff -r 8d2efec31d78 -r 3994c5c669cb test/java/math/BigDecimal/EqualsTests.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/java/math/BigDecimal/EqualsTests.java	Sun May 24 16:35:32 2009 -0700
+@@ -0,0 +1,91 @@
++/*
++ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/*
++ * @test
++ * @bug 6806261
++ * @summary Test BigDecimal.equals() method.
++ * @author xlu
++ */
++
++import java.math.*;
++import static java.math.BigDecimal.*;
++
++public class EqualsTests {
++
++    public static void main(String argv[]) {
++        int failures = 0;
++
++        BigDecimal[][] testValues = {
++            // The even index is supposed to return true for equals call and
++            // the odd index is supposed to return false, i.e. not equal.
++            {ZERO, ZERO},
++            {ONE, TEN},
++
++            {valueOf(Integer.MAX_VALUE), valueOf(Integer.MAX_VALUE)},
++            {valueOf(Long.MAX_VALUE), valueOf(-Long.MAX_VALUE)},
++
++            {valueOf(12345678), valueOf(12345678)},
++            {valueOf(123456789), valueOf(123456788)},
++
++            {new BigDecimal("123456789123456789123"),
++             new BigDecimal(new BigInteger("123456789123456789123"))},
++            {new BigDecimal("123456789123456789123"),
++             new BigDecimal(new BigInteger("123456789123456789124"))},
++
++            {valueOf(Long.MIN_VALUE), new BigDecimal("-9223372036854775808")},
++            {new BigDecimal("9223372036854775808"), valueOf(Long.MAX_VALUE)},
++
++            {valueOf(Math.round(Math.pow(2, 10))), new BigDecimal("1024")},
++            {new BigDecimal("1020"), valueOf(Math.pow(2, 11))},
++
++            {new BigDecimal(BigInteger.valueOf(2).pow(65)),
++             new BigDecimal("36893488147419103232")},
++            {new BigDecimal("36893488147419103231.81"),
++             new BigDecimal("36893488147419103231.811"),
++            }
++        };
++
++        boolean expected = Boolean.TRUE;
++        for (BigDecimal[] testValuePair : testValues) {
++            failures += equalsTest(testValuePair[0], testValuePair[1], expected);
++            expected = !expected;
++        }
++
++        if (failures > 0) {
++            throw new RuntimeException("Inccured " + failures +
++                                       " failures while testing equals.");
++        }
++    }
++
++    private static int equalsTest(BigDecimal l, BigDecimal r, boolean expected) {
++        boolean result = l.equals(r);
++        int failed = (result == expected) ? 0 : 1;
++
++        if (failed == 1) {
++            System.err.println(l + " .equals(" + r + ") => " + result +
++                               "\n\tExpected " + expected);
++        }
++        return failed;
++    }
++}
+diff -r 8d2efec31d78 -r 3994c5c669cb test/java/math/BigDecimal/LongValueExactTests.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/java/math/BigDecimal/LongValueExactTests.java	Sun May 24 16:35:32 2009 -0700
+@@ -0,0 +1,87 @@
++/*
++ * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/**
++ * @test
++ * @bug 6806261
++ * @summary Tests of BigDecimal.longValueExact
++ */
++import java.math.*;
++
++public class LongValueExactTests {
++
++    private static int longValueExactTests() {
++        int failures = 0;
++
++        String[] testStrings = {
++            "9223372036854775807",
++            "9223372036854775807.0",
++            "9223372036854775807.00",
++            "-9223372036854775808",
++            "-9223372036854775808.0",
++            "-9223372036854775808.00",
++        };
++
++        for (String longValue : testStrings) {
++            try {
++                BigDecimal bd = new BigDecimal(longValue);
++                long longValueExact = bd.longValueExact();
++            } catch (Exception e) {
++                failures++;
++            }
++        }
++
++        // The following Strings are supposed to make longValueExact throw
++        // ArithmeticException.
++        String[] testStrings2 = {
++            "9223372036854775808",
++            "9223372036854775808.0",
++            "9223372036854775808.00",
++            "-9223372036854775809",
++            "-9223372036854775808.1",
++            "-9223372036854775808.01",
++        };
++
++        for (String bigValue : testStrings2) {
++            try {
++                BigDecimal bd = new BigDecimal(bigValue);
++                long longValueExact = bd.longValueExact();
++                failures++;
++            } catch (ArithmeticException e) {
++                // Success;
++            }
++        }
++        return failures;
++    }
++
++    public static void main(String argv[]) {
++        int failures = 0;
++
++        failures += longValueExactTests();
++
++        if (failures > 0) {
++            throw new RuntimeException("Incurred " + failures +
++                                       " failures while testing longValueExact.");
++        }
++    }
++}
+diff -r 8d2efec31d78 -r 3994c5c669cb test/java/math/BigDecimal/PrecisionTests.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/java/math/BigDecimal/PrecisionTests.java	Sun May 24 16:35:32 2009 -0700
+@@ -0,0 +1,94 @@
++/*
++ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/*
++ * @test
++ * @bug 6806261
++ * @summary Test that precision() is computed properly.
++ * @author Joseph D. Darcy
++ */
++
++import java.math.*;
++import static java.math.BigDecimal.*;
++
++public class PrecisionTests {
++    private static BigDecimal NINE = valueOf(9);
++
++    public static void main(String argv[]) {
++        int failures = 0;
++
++        // Smallest and largest values of a given length
++        BigDecimal[] testValues = {
++            valueOf(1), valueOf(9),
++        };
++
++        failures += testPrecision(new BigDecimal(0), 1);
++
++        for(int i = 1; i < 100; i++) {
++            for(BigDecimal bd : testValues) {
++                failures += testPrecision(bd, i);
++                failures += testPrecision(bd.negate(), i);
++            }
++
++            testValues[0] = testValues[0].multiply(TEN);
++            testValues[1] = testValues[1].multiply(TEN).add(NINE);
++        }
++
++        // The following test tries to cover testings for precision of long values
++        BigDecimal[] randomTestValues = {
++            valueOf(2147483648L),          // 2^31:       10 digits
++            valueOf(-2147483648L),         // -2^31:      10 digits
++            valueOf(98893745455L),         // random:     11 digits
++            valueOf(3455436789887L),       // random:     13 digits
++            valueOf(140737488355328L),     // 2^47:       15 digits
++            valueOf(-140737488355328L),    // -2^47:      15 digits
++            valueOf(7564232235739573L),    // random:     16 digits
++            valueOf(25335434990002322L),   // random:     17 digits
++            valueOf(9223372036854775807L), // 2^63 - 1:   19 digits
++            valueOf(-9223372036854775807L) // -2^63 + 1:  19 digits
++        };
++        // The array below contains the expected precision of the above numbers
++        int[] expectedPrecision = {10, 10, 11, 13, 15, 15, 16, 17, 19, 19};
++        for (int i = 0; i < randomTestValues.length; i++) {
++            failures += testPrecision(randomTestValues[i], expectedPrecision[i]);
++        }
++
++        if (failures > 0) {
++            throw new RuntimeException("Incurred " + failures +
++                                       " failures while testing precision.");
++        }
++    }
++
++    private static int testPrecision(BigDecimal bd, int expected) {
++        int precision = bd.precision();
++
++        // System.out.printf("Testing %s, expected %d%n", bd, expected);
++
++        if (precision != expected) {
++            System.err.printf("For (%s).precision expected %d, got %d%n",
++                               bd, expected, precision);
++            return 1;
++        }
++        return 0;
++    }
++}
+diff -r 8d2efec31d78 -r 3994c5c669cb test/java/math/BigInteger/CompareToTests.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/java/math/BigInteger/CompareToTests.java	Sun May 24 16:35:32 2009 -0700
+@@ -0,0 +1,101 @@
++/*
++ * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/*
++ * @test
++ * @bug 6473768
++ * @summary Tests of BigDecimal.compareTo
++ * @author Joseph D. Darcy
++ */
++import java.math.*;
++import static java.math.BigDecimal.*;
++
++public class CompareToTests {
++    private static int compareToTests() {
++        int failures = 0;
++
++        final BigDecimal MINUS_ONE = BigDecimal.ONE.negate();
++
++        // First operand, second operand, expected compareTo result
++        BigDecimal [][] testCases = {
++            // Basics
++            {valueOf(0),        valueOf(0),     ZERO},
++            {valueOf(0),        valueOf(1),     MINUS_ONE},
++            {valueOf(1),        valueOf(2),     MINUS_ONE},
++            {valueOf(2),        valueOf(1),     ONE},
++            {valueOf(10),       valueOf(10),    ZERO},
++
++            // Significands would compare differently than scaled value
++            {valueOf(2,1),      valueOf(2),     MINUS_ONE},
++            {valueOf(2,-1),     valueOf(2),     ONE},
++            {valueOf(1,1),      valueOf(2),     MINUS_ONE},
++            {valueOf(1,-1),     valueOf(2),     ONE},
++            {valueOf(5,-1),     valueOf(2),     ONE},
++
++            // Boundary and near boundary values
++            {valueOf(Long.MAX_VALUE),   valueOf(Long.MAX_VALUE),        ZERO},
++            {valueOf(Long.MAX_VALUE-1), valueOf(Long.MAX_VALUE),        MINUS_ONE},
++            {valueOf(Long.MIN_VALUE),   valueOf(Long.MAX_VALUE),        MINUS_ONE},
++            {valueOf(Long.MIN_VALUE+1), valueOf(Long.MAX_VALUE),        MINUS_ONE},
++            {valueOf(Long.MIN_VALUE),   valueOf(Long.MIN_VALUE),        ZERO},
++            {valueOf(Long.MIN_VALUE+1), valueOf(Long.MAX_VALUE),        ONE},
++        };
++
++        for (BigDecimal[] testCase : testCases) {
++            BigDecimal a = testCase[0];
++            BigDecimal a_negate = a.negate();
++            BigDecimal b = testCase[1];
++            BigDecimal b_negate = b.negate();
++            int expected = testCase[2].intValue();
++
++            failures += compareToTest(a,        b,         expected);
++            failures += compareToTest(a_negate, b,        -1);
++            failures += compareToTest(a,        b_negate,  1);
++            failures += compareToTest(a_negate, b_negate, -expected);
++        }
++
++
++        return failures;
++    }
++
++    private static int compareToTest(BigDecimal a, BigDecimal b, int expected) {
++        int result = a.compareTo(b);
++        int failed = (result==expected) ? 0 : 1;
++        if (result == 1) {
++            System.err.println("(" + a + ").compareTo(" + b + ") => " + result +
++                               "\n\tExpected " + expected);
++        }
++        return result;
++    }
++
++    public static void main(String argv[]) {
++        int failures = 0;
++
++        failures += compareToTests();
++
++        if (failures > 0) {
++            throw new RuntimeException("Incurred " + failures +
++                                       " failures while testing exact compareTo.");
++        }
++    }
++}
