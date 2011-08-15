@@ -1,6 +1,15 @@
 2011-08-15  Xerxes Rånby  <xerxes@zafena.se>
 
 	JamVM
+	- Fix regression introduced by,  Intern strings when creating a StackTraceElement,
+	  changeset 4dbc2ee340a600fc17451dfbcfc09e1f9844fc59.
+	* NEWS: Updated.
+	* patches/jamvm/4dbc2ee340a600fc17451dfbcfc09e1f9844fc59-regression.patch: New patch.
+	* Makefile.am: Apply JamVM patch.
+
+2011-08-15  Xerxes Rånby  <xerxes@zafena.se>
+
+	JamVM
 	- Ignore assertions and verify options.
 	* NEWS: Updated.
 	* patches/jamvm/ignore-assertions-and-verify-options.patch: New patch.

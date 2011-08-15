@@ -1,0 +1,13 @@
+Index: jamvm/jamvm/src/excep.c
+===================================================================
+--- jamvm.orig/jamvm/src/excep.c	2011-08-15 14:19:32.757781965 +0200
++++ jamvm/jamvm/src/excep.c	2011-08-15 14:19:43.601836044 +0200
+@@ -311,7 +311,7 @@
+     executeMethod(ste, ste_init_mb,
+                   findInternedString(classname), 
+                   findInternedString(methodname), 
+-                  findInternedString(filename),
++                  filename,
+                   is_native ? -2 : mapPC2LineNo(mb, pc));
+ 
+     if(exceptionOccurred())

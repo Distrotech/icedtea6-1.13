@@ -398,7 +398,8 @@ endif
 if BUILD_JAMVM
 ICEDTEA_PATCHES += \
         patches/jamvm/jmm_GetLongAttribute_201.patch \
-        patches/jamvm/ignore-assertions-and-verify-options.patch
+        patches/jamvm/ignore-assertions-and-verify-options.patch \
+	patches/jamvm/4dbc2ee340a600fc17451dfbcfc09e1f9844fc59-regression.patch
 endif
 
 if ENABLE_PULSE_JAVA
