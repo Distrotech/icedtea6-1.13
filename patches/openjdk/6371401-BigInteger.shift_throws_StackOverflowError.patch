@@ -1,0 +1,111 @@
+# HG changeset patch
+# User darcy
+# Date 1256057488 25200
+# Node ID 0dd3d16e81836f39485d436e6e088bc23d4483da
+# Parent  052f056f7ba193b303f6c84a5523e40f58dd8c42
+6371401: java.math.BigInteger.shift(Integer.MIN_VALUE) throws StackOverflowError
+Reviewed-by: alanb
+
+diff -r 052f056f7ba1 -r 0dd3d16e8183 src/share/classes/java/math/BigInteger.java
+--- openjdk.orig/jdk/src/share/classes/java/math/BigInteger.java	Tue Oct 20 15:35:55 2009 +0100
++++ openjdk/jdk/src/share/classes/java/math/BigInteger.java	Tue Oct 20 09:51:28 2009 -0700
+@@ -2051,6 +2051,8 @@
+      *
+      * @param  n shift distance, in bits.
+      * @return {@code this << n}
++     * @throws ArithmeticException if the shift distance is {@code
++     *         Integer.MIN_VALUE}.
+      * @see #shiftRight
+      */
+     public BigInteger shiftLeft(int n) {
+@@ -2058,8 +2060,13 @@
+             return ZERO;
+         if (n==0)
+             return this;
+-        if (n<0)
+-            return shiftRight(-n);
++        if (n<0) {
++            if (n == Integer.MIN_VALUE) {
++                throw new ArithmeticException("Shift distance of Integer.MIN_VALUE not supported.");
++            } else {
++                return shiftRight(-n);
++            }
++        }
+ 
+         int nInts = n >>> 5;
+         int nBits = n & 0x1f;
+@@ -2097,13 +2104,20 @@
+      *
+      * @param  n shift distance, in bits.
+      * @return {@code this >> n}
++     * @throws ArithmeticException if the shift distance is {@code
++     *         Integer.MIN_VALUE}.
+      * @see #shiftLeft
+      */
+     public BigInteger shiftRight(int n) {
+         if (n==0)
+             return this;
+-        if (n<0)
+-            return shiftLeft(-n);
++        if (n<0) {
++            if (n == Integer.MIN_VALUE) {
++                throw new ArithmeticException("Shift distance of Integer.MIN_VALUE not supported.");
++            } else {
++                return shiftLeft(-n);
++            }
++        }
+ 
+         int nInts = n >>> 5;
+         int nBits = n & 0x1f;
+diff -r 052f056f7ba1 -r 0dd3d16e8183 test/java/math/BigInteger/ExtremeShiftingTests.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/java/math/BigInteger/ExtremeShiftingTests.java	Tue Oct 20 09:51:28 2009 -0700
+@@ -0,0 +1,48 @@
++/*
++ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/*
++ * @test
++ * @bug 6371401
++ * @summary Tests of shiftLeft and shiftRight on Integer.MIN_VALUE
++ * @author Joseph D. Darcy
++ */
++import static java.math.BigInteger.*;
++
++public class ExtremeShiftingTests {
++    public static void main(String... args) {
++        try {
++            ONE.shiftLeft(Integer.MIN_VALUE);
++            throw new RuntimeException("Should not reach here.");
++        } catch (ArithmeticException ae) {
++            ; // Expected
++        }
++
++        try {
++            ONE.shiftRight(Integer.MIN_VALUE);
++            throw new RuntimeException("Should not reach here.");
++        } catch (ArithmeticException ae) {
++            ; // Expected
++        }
++    }
++}

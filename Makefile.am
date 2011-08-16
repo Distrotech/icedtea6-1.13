@@ -375,7 +375,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7036582-Improve_test_coverage_of_BigDecimal.patch \
 	patches/pr690-shark-jit-hs20.patch \
 	patches/pr696-zero-fast_aldc-hs20.patch \
-	patches/openjdk/6806261-BigDecimal_longValueExact_throws_NPE.patch
+	patches/openjdk/6806261-BigDecimal_longValueExact_throws_NPE.patch \
+	patches/openjdk/6371401-BigInteger.shift_throws_StackOverflowError.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
