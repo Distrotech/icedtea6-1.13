@@ -11,8 +11,8 @@ CACAO_BASE_URL = http://icedtea.classpath.org/download/drops/cacao
 CACAO_URL = $(CACAO_BASE_URL)/$(CACAO_VERSION).tar.gz
 CACAO_SRC_ZIP = cacao-$(CACAO_VERSION).tar.gz
 
-JAMVM_VERSION = b8e5dbad856be3b3bb0309467264053d1e2c58a9
-JAMVM_SHA256SUM = 9178f7d85851f6c908de1e1114ec158dc5fbc4aa4025478cac16a12459ac9a51
+JAMVM_VERSION = 15f0fcf749071c7fa1bf0431e044e55143e94844
+JAMVM_SHA256SUM = af0213333302193f9eda0bd852b2d0419484160e1853235acdb83ed73829a1f8
 JAMVM_BASE_URL = http://icedtea.classpath.org/download/drops/jamvm
 JAMVM_URL = $(JAMVM_BASE_URL)/jamvm-$(JAMVM_VERSION).tar.gz
 JAMVM_SRC_ZIP = jamvm-$(JAMVM_VERSION).tar.gz
@@ -399,8 +399,7 @@ endif
 if BUILD_JAMVM
 ICEDTEA_PATCHES += \
         patches/jamvm/jmm_GetLongAttribute_201.patch \
-        patches/jamvm/ignore-assertions-and-verify-options.patch \
-	patches/jamvm/4dbc2ee340a600fc17451dfbcfc09e1f9844fc59-regression.patch
+	patches/jamvm/ignore-assertions-and-verify-options.patch
 endif
 
 if ENABLE_PULSE_JAVA

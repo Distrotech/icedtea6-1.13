@@ -1,3 +1,18 @@
+2011-08-19  Xerxes Rånby  <xerxes@zafena.se>
+
+	JamVM
+	- LP827463: Fix OpenJDK enclosingMethodInfo().
+	- "Fix" handling of CLI bootclasspath options.
+	- Fix for StackTraceElement checkin.
+	* NEWS: Updated.
+	* patches/jamvm/4dbc2ee340a600fc17451dfbcfc09e1f9844fc59-regression.patch:
+	  Replaced by upstream, Fix for StackTraceElement checkin,
+	  changeset 500a6c2f3b9769c73d872ea78de4237e427a443e.
+	* Makefile.am
+	(ICEDTEA_PATCHES): Remove upstreamed JamVM patch.
+	(JAMVM_VERSION): Updated JamVM to 2011-08-19 revision.
+	(JAMVM_SHA256SUM): Updated.
+
 2011-08-16  Pavel Tisnovsky  <ptisnovs@redhat.com>
 
 	* Makefile.am: added new patch
