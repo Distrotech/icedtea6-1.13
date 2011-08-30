@@ -1,0 +1,17 @@
+diff -ur openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWindowPeer.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XWindowPeer.java
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWindowPeer.java	2011-08-11 13:38:17.829462436 -0400
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XWindowPeer.java	2011-08-11 13:41:05.611491530 -0400
+@@ -149,6 +149,13 @@
+ 
+         params.put(OVERRIDE_REDIRECT, Boolean.valueOf(isOverrideRedirect()));
+ 
++        SunToolkit.awtLock();
++        try {
++            windows.add(this);
++        } finally {
++            SunToolkit.awtUnlock();
++        }
++
+         cachedFocusableWindow = isFocusableWindow();
+ 
+         Font f = target.getFont();
