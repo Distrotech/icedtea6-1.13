@@ -370,7 +370,11 @@ New in release 1.11 (2011-XX-XX):
   - S6371401: java.math.BigInteger.shift(Integer.MIN_VALUE) throws StackOverflowError
 * Allow selection of test suites using the jtreg_checks argument e.g. jtreg_checks="langtools"
 * CACAO
+  - CA149: Used wrong class loader.
   - CA159: Exception handler blocks / register mixup.
+  - src/vm/javaobjects.cpp (java_lang_reflect_Method::invoke): [OPENJDK] stack
+    index of caller was off by one, causing many apt
+    (Annotation Processing Tool) failures.
   - Set thread to RUNNABLE during Thread.start.
   - Removed state-setting function call that would be done by the thread itself,
     creating a nasty race.
