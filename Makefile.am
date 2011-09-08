@@ -377,7 +377,8 @@ ICEDTEA_PATCHES = \
 	patches/pr696-zero-fast_aldc-hs20.patch \
 	patches/openjdk/6806261-BigDecimal_longValueExact_throws_NPE.patch \
 	patches/openjdk/6371401-BigInteger.shift_throws_StackOverflowError.patch \
-	patches/openjdk/6826104-npe_on_app_and_toolkit_modal_dialog_click.patch
+	patches/openjdk/6826104-npe_on_app_and_toolkit_modal_dialog_click.patch \
+	patches/openjdk/5082756-ImageIO_plugins_metadata_boolean_attributes.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
