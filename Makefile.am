@@ -188,7 +188,6 @@ SECURITY_PATCHES =
 
 ICEDTEA_PATCHES = \
 	$(SECURITY_PATCHES) \
-	patches/openjdk/6578583-modality-broken-vista.patch \
 	patches/openjdk/6610244-modal-fatal-error-windows.patch \
 	patches/stdc-limit-macros.patch \
 	patches/openjdk/4993545-nativeinlightfixer.patch \
