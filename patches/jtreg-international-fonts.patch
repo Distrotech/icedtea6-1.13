@@ -1,8 +1,8 @@
---- /dev/null	2010-06-29 11:10:08.737208357 +0200
-+++ openjdk/jdk/test/java/awt/font/InternationalFonts/InternationalFontsRendering.java	2011-01-17 17:06:44.000000000 +0100
-@@ -0,0 +1,211 @@
+--- /dev/null	2011-07-20 10:54:36.268271016 +0200
++++ openjdk/jdk/test/java/awt/font/InternationalFonts/InternationalFontsRendering.java	2011-09-16 17:18:14.000000000 +0200
+@@ -0,0 +1,351 @@
 +/*
-+ * Copyright 2010 Red Hat, Inc. All Rights Reserved.
++ * Copyright 2010, 2011 Red Hat, Inc. All Rights Reserved.
 + * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 + *
 + * This code is free software; you can redistribute it and/or modify it
@@ -47,14 +47,19 @@
 + * When the font does not exists or font configuration is broken, only empty
 + * rectangle is rendered instead of the selected character shape. This rectangle
 + * is filtered and then the destination image is tested whether it is empty
-+ * (=white).
++ * (=white). Because all long horizontal and vertical lines are filtered, it's
++ * difficult to test some characters containing only these shapes, gor example:
++ * 'H', 'I', 'T' etc. (similar characters are included in Cyrillic and Green
++ * alphabets too).
 + *
 + * If test images with rendered characters needs to be created use following flag:
 + * -create-images
 + *
-+ * regression for bug: https://bugzilla.redhat.com/show_bug.cgi?id=643674
-+ * (Bug 643674 Misconfigured Path for Asian Font)
-+ *
++ * This test checks regression for bugs:
++ * -  https://bugzilla.redhat.com/show_bug.cgi?id=643674
++ *    (Bug 643674 Misconfigured Path for Asian Font)
++ * -  https://bugzilla.redhat.com/show_bug.cgi?id=727195
++ *    (Bug 727195 Japanese font mappings are broken)
 + */
 +public class InternationalFontsRendering
 +{
@@ -68,10 +73,64 @@
 +    private static final int BLACK_WHITE_THRESHOLD = 128;
 +    private static final int BLACK_PIXEL_COUNT_THRESHOLD = WIDTH * HEIGHT / 1000;
 +
++    /**
++      * Structure which represents range of characters in Unicode mapping
++      */
++    static class UnicodeRange
++    {
++        /**
++          * Name of a range (Latin, Green, etc. etc.)
++          */
++        private String name;
++
++        /**
++          * First character code in a range
++          */
++        private int code1;
++
++        /**
++          * Last character code in a range
++          */
++        private int code2;
++
++        /**
++          * Constructor
++          */
++        public UnicodeRange(String name, int code1, int code2) {
++            this.name = name;
++            this.code1 = code1;
++            this.code2 = code2;
++        }
++
++        /**
++          * Getter for an attribute 'name'
++          */
++        public String getName() {
++            return this.name;
++        }
++
++        /**
++          * Getter for an attribute 'code1'
++          */
++        public int getCode1() {
++            return this.code1;
++        }
++
++        /**
++          * Getter for an attribute 'code2'
++          */
++        public int getCode2() {
++            return this.code2;
++        }
++    }
++
++    /**
++      * Series of strings checked by this test
++      */
 +    private static final String[][] testedStrings = {
 +        {"Latin-1",    "abcdefABCDEF"},
 +        {"Latin-2",    "\u011b\u0161\u010d\u0159\u017e\u00fd\u00e1\u00ed\u00e9\u00fa\u016f\u013e\u0148"},
-+        {"Cyrilic",    "\u0414\u0417\u0418\u0472\u0424\u0425\u0470\u0460\u0426"},
++        {"Cyrillic",   "\u0414\u0417\u0418\u0472\u0424\u0425\u0470\u0460\u0426"},
 +        {"Greek",      "\u03b2\u03be\u03b3\u03b4\u03c0\u03b5\u03c1\u03b6\u03a3\u03c3\u03c2\u03b7\u03c4\u03b8\u03c5\u03a9"},
 +        {"Asia-Test1", "\u4f53\u4e2d\u6587\u7b26\u53f7"},
 +        {"Asia-Test2", "\u7e41\u9ad4\u4e2d\u6587\u7b26\u865f"},
@@ -80,11 +139,25 @@
 +    };
 +
 +    /**
++      * Series of Unicode ranges checked by this test
++      */
++    private static final UnicodeRange[] testedRanges = {
++        new UnicodeRange("Latin-ExtendedA1", 0x0100, 0x0130),           // see http://en.wikipedia.org/wiki/Latin_Extended-A
++        new UnicodeRange("Latin-ExtendedA2", 0x0132, 0x017f),           // see http://en.wikipedia.org/wiki/Latin_Extended-A
++        new UnicodeRange("Latin-ExtendedB1", 0x0180, 0x01bf),           // see http://en.wikipedia.org/wiki/Latin_Extended-B
++        new UnicodeRange("Latin-ExtendedB2", 0x01c2, 0x024f),           // see http://en.wikipedia.org/wiki/Latin_Extended-B
++        new UnicodeRange("Greek",  0x03b0, 0x03ce),           // see http://en.wikipedia.org/wiki/Greek_alphabet#Greek_in_Unicode
++        new UnicodeRange("Coptic", 0x03d0, 0x03ff),           // see http://en.wikipedia.org/wiki/Coptic_alphabet#Unicode
++        new UnicodeRange("Japan-Katakana", 0x30a1, 0x30fe),   // see http://en.wikipedia.org/wiki/Katakana#Unicode
++        new UnicodeRange("Japan-Hiragana", 0x3041, 0x308f),   // see http://en.wikipedia.org/wiki/HiraganaUnicode
++    };
++
++    /**
 +     * Creates test image a renders one big character to it.
-+     * @param testedString
-+     * @return
++     * @param code positon of character in Unicode
++     * @return image containing rendered character
 +     */
-+    private BufferedImage createTestImage(String str) {
++    private BufferedImage createTestImage(int code) {
 +        BufferedImage image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_BYTE_GRAY);
 +        Graphics2D gc = image.createGraphics();
 +        gc.setBackground(Color.WHITE);
@@ -93,6 +166,7 @@
 +        gc.clearRect(0, 0, WIDTH, HEIGHT);
 +        gc.setFont(new Font(Font.DIALOG, Font.PLAIN, FONT_SIZE));
 +        gc.setColor(Color.BLACK);
++        String str = Character.valueOf((char)code).toString();
 +        gc.drawString(str, 0, HEIGHT - 40);
 +        gc.dispose();
 +        return image;
@@ -100,8 +174,8 @@
 +
 +    /**
 +     * Creates destination image and then copies data from source image to it
-+     * @param src
-+     * @return
++     * @param src source image
++     * @return image containing rendered and filtered character
 +     */
 +    private BufferedImage createDestinationImage(BufferedImage src) {
 +        BufferedImage image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_BYTE_GRAY);
@@ -110,7 +184,7 @@
 +    }
 +
 +    /**
-+     * Removes long horizontal lines from image
++     * Filter which removes long horizontal lines from an image
 +     */
 +    private void removeHorizontalLines(BufferedImage image) {
 +        for (int y = 0; y < image.getHeight(); y++) {
@@ -136,7 +210,7 @@
 +    }
 +
 +    /**
-+     * Removes long vertical lines from image
++     * Filter which removes long vertical lines from an image
 +     */
 +    private void removeVerticalLines(BufferedImage image) {
 +        for (int x = 0; x < image.getWidth(); x++) {
@@ -162,8 +236,8 @@
 +
 +    /**
 +     * Test if image is almost empty (one large white area)
-+     * @param image
-+     * @return
++     * @param image image to be tested
++     * @return true if image is almost empty
 +     */
 +    private boolean isImageAlmostEmpty(BufferedImage image) {
 +        int blackPixelCount = 0;
@@ -177,7 +251,36 @@
 +        return blackPixelCount < BLACK_PIXEL_COUNT_THRESHOLD;
 +    }
 +
-+    public void runTest(boolean createImages) throws IOException
++    /**
++      * Test if given character is rendered correctly.
++      * @param code character code
++      * @param createImages if true, image with rendered character is stored to a fs
++      * @return true if character is rendered correctly, false instead
++      */
++    private boolean testRenderingOfCharacter(int code, boolean createImages)
++        throws IOException
++    {
++        System.out.print(code + "\t");
++        BufferedImage src = createTestImage(code);
++        BufferedImage dst = createDestinationImage(src);
++        removeHorizontalLines(dst);
++        removeVerticalLines(dst);
++
++        if (createImages /* || true*/) {
++            ImageIO.write(src, "png", new File(code + "_src.png"));
++            ImageIO.write(dst, "png", new File(code + "_dst.png"));
++        }
++        return !isImageAlmostEmpty(dst);
++    }
++
++    /**
++      * Test if all characters stored in a string are rendered correctly.
++      * @param testedStrings array of string containing tested characters
++      * @param createImages if true, image with rendered character is stored to a fs
++      * @return list of wrong rendered characters
++      */
++    private List<Integer> testCharactersStoredInAString(String[][] testedStrings, boolean createImages)
++        throws IOException
 +    {
 +        List<Integer> badCharacters = new ArrayList<Integer>();
 +        for (String[] testedString : testedStrings) {
@@ -185,23 +288,60 @@
 +            for (int i = 0; i < testedString[1].length(); i++) {
 +                String str = testedString[1].substring(i, 1+i);
 +                int code = str.charAt(0);
-+                System.out.print(code + "\t");
-+                BufferedImage src = createTestImage(str);
-+                BufferedImage dst = createDestinationImage(src);
-+                removeHorizontalLines(dst);
-+                removeVerticalLines(dst);
-+
-+                if (createImages /* || true*/) {
-+                    ImageIO.write(src, "png", new File(code + "_src.png"));
-+                    ImageIO.write(dst, "png", new File(code + "_dst.png"));
-+                }
-+
-+                if (isImageAlmostEmpty(dst)) {
++                if (!testRenderingOfCharacter(code, createImages)) {
 +                    System.err.println("Bad rendering of character with code: " + code);
 +                    badCharacters.add(Integer.valueOf(code));
 +                }
 +            }
 +        }
++        return badCharacters;
++    }
++
++    /**
++      * Test if all characters are rendered correctly.
++      * @param unicodeRanges array of Unicode ranges
++      * @param createImages if true, image with rendered character is stored to a fs
++      * @return list of wrong rendered characters
++      */
++    private List<Integer> testCharactersStoredAsUnicodeRanges(UnicodeRange[] unicodeRanges, boolean createImages)
++        throws IOException
++    {
++        List<Integer> badCharacters = new ArrayList<Integer>();
++        for (UnicodeRange unicodeRange : unicodeRanges) {
++            badCharacters.addAll(testCharactersSpecifiedByUnicodeRange(unicodeRange, createImages));
++        }
++        return badCharacters;
++    }
++
++    /**
++      * Test if all characters are rendered correctly.
++      * @param unicodeRange ranges of Unicode codes
++      * @param createImages if true, image with rendered character is stored to a fs
++      * @return list of wrong rendered characters
++      */
++    private List<Integer> testCharactersSpecifiedByUnicodeRange(UnicodeRange unicodeRange, boolean createImages)
++        throws IOException
++    {
++        List<Integer> badCharacters = new ArrayList<Integer>();
++        System.out.println("\nTesting " + unicodeRange.getName());
++        for (int code = unicodeRange.getCode1(); code <= unicodeRange.getCode2(); code++) {
++            if (!testRenderingOfCharacter(code, createImages)) {
++                System.err.format("Bad rendering of character with code: %d   hex: %x\n", code, code);
++                badCharacters.add(Integer.valueOf(code));
++            }
++        }
++        return badCharacters;
++    }
++
++    /**
++      * Entry point to the test.
++      * @param createImages if true, image with rendered character is stored to a fs
++      */
++    public void runTest(boolean createImages) throws IOException
++    {
++        List<Integer> badCharacters = new ArrayList<Integer>();
++        badCharacters.addAll(testCharactersStoredInAString(testedStrings, createImages));
++        badCharacters.addAll(testCharactersStoredAsUnicodeRanges(testedRanges, createImages));
 +        if (!badCharacters.isEmpty()) {
 +            throw new RuntimeException("Error in rendering of character(s) with code(s): " + badCharacters.toString());
 +        }
