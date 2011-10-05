@@ -46,6 +46,7 @@ SERVER_DIR = hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server
 BUILD_JRE_ARCH_DIR = $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
 BUILD_DEBUG_JRE_ARCH_DIR = $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
 FONTCONFIG_PATH = openjdk/jdk/src/solaris/classes/sun/awt/fontconfigs
+REWRITER_BUILD_DIR = $(abs_top_builddir)/rewriter.build
 
 # Source directories
 
@@ -178,7 +179,7 @@ OPENJDK_ECJ_TREE = stamps/patch-ecj.stamp
 
 # Sources list
 
-REWRITER_SRCS = $(abs_top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.java
+REWRITER_SRCS = $(top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.java
 
 # Patch list
 
@@ -600,7 +601,7 @@ ICEDTEA_ENV_ECJ = $(ICEDTEA_ENV) \
 # FIXME (distclean): Add pulseaudio sources
 
 EXTRA_DIST = generated \
-	$(abs_top_srcdir)/patches/* \
+	$(top_srcdir)/patches/* \
 	contrib overlays \
 	jconsole.desktop policytool.desktop \
 	test/jtreg \
@@ -1769,11 +1770,9 @@ endif
 
 stamps/rewriter.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP)
 if WITH_RHINO
-	mkdir -p $(abs_top_builddir)/rewriter.build && \
-	(cd $(abs_top_srcdir)/rewriter ; \
-	 $(BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) \
-	 -d $(abs_top_builddir)/rewriter.build $(REWRITER_SRCS) \
-	)
+	mkdir -p $(REWRITER_BUILD_DIR)
+	$(BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) \
+	 -d $(REWRITER_BUILD_DIR) $(REWRITER_SRCS)
 endif
 	mkdir -p stamps
 	touch stamps/rewriter.stamp

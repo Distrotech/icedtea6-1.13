@@ -1,5 +1,17 @@
 2011-10-05  Andrew John Hughes  <ahughes@redhat.com>
 
+	Fix make dist when a relative path is used to configure.
+	* Makefile.am:
+	(REWRITER_BUILD_DIR): Added.
+	(REWRITER_SRCS): Don't use absolute
+	path to source directory.
+	(EXTRA_DIST): Don't use absolute path to patches.
+	(rewriter): Use IcedTea7 version, which uses
+	REWRITER_BUILD_DIR and works with a relative
+	path in REWRITER_SRCS.
+
+2011-10-05  Andrew John Hughes  <ahughes@redhat.com>
+
 	* Makefile.am:
 	(EXTRA_DIST): Complete ARM port
 	removal by removing arm_port.
