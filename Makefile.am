@@ -168,6 +168,18 @@ else
   SRC_DIR_LINK = $(REFLINK)
 endif
 
+if !DISABLE_TESTS
+if !DISABLE_HOTSPOT_TESTS
+TEST_SUITES = hotspot
+endif
+if !DISABLE_JDK_TESTS
+TEST_SUITES = $(TEST_SUITES) jdk
+endif
+if !DISABLE_LANGTOOLS_TESTS
+TEST_SUITES = $(TEST_SUITES) langtools
+endif
+endif
+
 # Target to ensure a patched OpenJDK tree containing Zero & Shark
 # and any overlays is available in $(abs_top_builddir)/openjdk
 OPENJDK_TREE = stamps/overlay.stamp
@@ -629,7 +641,7 @@ clean-local: clean-jtreg clean-jtreg-reports $(PULSE_JAVA_CLEAN_TARGET) \
  clean-icedtea-against-ecj clean-extract-ecj clean-generated clean-replace-hotspot \
  clean-rewriter clean-rewrite-rhino clean-rt clean-bootstrap-directory \
  clean-bootstrap-directory-ecj clean-bootstrap-directory-symlink \
- clean-bootstrap-directory-symlink-ecj clean-fonts
+ clean-bootstrap-directory-symlink-ecj clean-fonts jtregcheck
 	if [ -e bootstrap ]; then \
 	  rmdir bootstrap ; \
 	fi
@@ -2152,10 +2164,8 @@ jtreg_processes = ps x -ww -o pid,ppid,args \
 jtreg_pids = ps x --no-headers -ww -o pid,ppid,args \
 	| awk '$$2 == 1 && $$3 ~ /^$(subst /,\/,$(CURDIR)/$(sdkimg))/ {print $$1}'
 
-jtreg_checks = hotspot langtools jdk
-
-jtregcheck: jtreg $(jtreg_checks:%=check-%)
-	for i in hotspot langtools jdk; do \
+jtregcheck: jtreg $(TEST_SUITES:%=check-%)
+	for i in $(TEST_SUITES); do \
 	  echo "--------------- jtreg console summary for $$i ---------------"; \
 	  egrep -v '^(Passed:|Directory|Re[a-z]+\ written\ to)' test/check-$$i.log; \
 	done | tee test/jtreg-summary.log
