@@ -601,8 +601,7 @@ ICEDTEA_ENV_ECJ = $(ICEDTEA_ENV) \
 
 EXTRA_DIST = generated \
 	$(abs_top_srcdir)/patches/* \
-	contrib arm_port \
-	overlays \
+	contrib overlays \
 	jconsole.desktop policytool.desktop \
 	test/jtreg \
 	HACKING pulseaudio fsg.sh \
