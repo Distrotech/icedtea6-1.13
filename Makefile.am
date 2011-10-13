@@ -47,6 +47,7 @@ BUILD_JRE_ARCH_DIR = $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
 BUILD_DEBUG_JRE_ARCH_DIR = $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
 FONTCONFIG_PATH = openjdk/jdk/src/solaris/classes/sun/awt/fontconfigs
 REWRITER_BUILD_DIR = $(abs_top_builddir)/rewriter.build
+GENERATED_BUILD_DIR = $(abs_top_builddir)/generated.build
 
 # Source directories
 
@@ -192,6 +193,7 @@ OPENJDK_ECJ_TREE = stamps/patch-ecj.stamp
 # Sources list
 
 REWRITER_SRCS = $(top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.java
+JTREG_SRCS = $(top_srcdir)/jtreg
 
 # Patch list
 
@@ -599,7 +601,7 @@ ICEDTEA_ENV_ECJ = $(ICEDTEA_ENV) \
 	BOOTCLASSPATH_RT_LIBGCJ="-bootclasspath $(RUNTIME)" \
 	CLASSPATH="" \
 	LD_LIBRARY_PATH="" \
-	GENSRCDIR="$(abs_top_builddir)/generated" \
+	GENSRCDIR="$(GENERATED_BUILD_DIR)" \
 	JAR_KNOWS_ATFILE="$(JAR_KNOWS_ATFILE)" \
 	JAR_KNOWS_J_OPTIONS="$(JAR_KNOWS_J_OPTIONS)" \
 	JAR_ACCEPTS_STDIN_LIST="$(JAR_ACCEPTS_STDIN_LIST)" \
@@ -616,8 +618,7 @@ EXTRA_DIST = generated \
 	$(top_srcdir)/patches/* \
 	contrib overlays \
 	jconsole.desktop policytool.desktop \
-	test/jtreg \
-	HACKING pulseaudio fsg.sh \
+	$(JTREG_SRCS) HACKING pulseaudio fsg.sh \
 	hotspot.map \
 	autogen.sh \
 	tapset/hotspot.stp.in \
@@ -1030,11 +1031,9 @@ clean-replace-hotspot:
 	rm -f stamps/replace-hotspot.stamp
 
 stamps/generated.stamp: stamps/replace-hotspot.stamp
-	set -e ; \
-	if [ ! -e $(abs_top_builddir)/generated ]; then \
-	  cp -a $(abs_top_srcdir)/generated $(abs_top_builddir); \
-	  find $(abs_top_builddir)/generated -type f -exec chmod 640 '{}' ';' \
-	    -o -type d -exec chmod 750 '{}' ';'; \
+	if [ ! -e $(GENERATED_BUILD_DIR) ]; then \
+	  cp -a $(abs_top_srcdir)/generated $(GENERATED_BUILD_DIR) && \
+	  chmod -R ug+rwX $(GENERATED_BUILD_DIR) ; \
 	fi
 	mkdir -p stamps
 	touch stamps/generated.stamp
@@ -1180,11 +1179,14 @@ clean-patch:
 #FIXME (clean): Missing clean-versioning
 
 stamps/overlay.stamp: stamps/patch.stamp
-	cp -r $(abs_top_srcdir)/overlays/openjdk/* openjdk/
+	cp -a $(abs_top_srcdir)/overlays overlays.build
+	chmod -R ug+rwX overlays.build
+	cp -a overlays.build/openjdk/* openjdk/
 if ENABLE_NIO2
-	cp -r $(abs_top_srcdir)/overlays/nio2/openjdk/* openjdk/
+	cp -a overlays.build/nio2/openjdk/* openjdk/
 endif
-	cp -r $(abs_top_srcdir)/overlays/jpeg/openjdk/* openjdk/
+	cp -a overlays.build/jpeg/openjdk/* openjdk/
+	rm -rf overlays.build
 	touch stamps/overlay.stamp
 
 clean-overlay:
@@ -1272,7 +1274,7 @@ stamps/native-ecj.stamp:
 
 clean-native-ecj:
 	rm -f native-ecj
-	rm -rf stamps/native-ecj.stamp
+	rm -f stamps/native-ecj.stamp
 
 # bootstrap/ecj.
 stamps/bootstrap-directory-ecj.stamp: stamps/native-ecj.stamp
@@ -1326,8 +1328,7 @@ clean-bootstrap-directory:
 	rm -f stamps/bootstrap-directory.stamp
 
 # bootstrap/jdk1.6.0 to bootstrap/ecj symlink.
-stamps/bootstrap-directory-symlink-ecj.stamp: \
-	stamps/bootstrap-directory-ecj.stamp
+stamps/bootstrap-directory-symlink-ecj.stamp: stamps/bootstrap-directory-ecj.stamp
 	rm -f $(BOOT_DIR)
 	ln -sf $(ECJ_BOOT_DIR) $(BOOT_DIR)
 	mkdir -p stamps
@@ -1772,7 +1773,9 @@ clean-pulse-java:
 	rm -rf $(PULSE_JAVA_NATIVE_BUILDDIR)
 	rm -rf $(PULSE_JAVA_CLASS_DIR)
 	rm -f $(PULSE_JAVA_BUILDDIR)/pulse-java.jar
-	rmdir $(PULSE_JAVA_BUILDDIR)
+	if [ -e $(PULSE_JAVA_BUILDDIR) ] ; then \
+	  rmdir $(PULSE_JAVA_BUILDDIR) ; \
+	fi
 	rm -f stamps/pulse-java*.stamp
 endif
 
@@ -2100,8 +2103,8 @@ stamps/jtreg.stamp: stamps/icedtea-against-icedtea.stamp
 	rm -rf test/jtreg/classes
 	mkdir -p test/jtreg/classes
 	$(BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) -d test/jtreg/classes \
-	   -encoding iso-8859-1 `find $(abs_top_srcdir)/test/jtreg/com -name '*.java'`
-	(cd $(abs_top_srcdir)/test/jtreg; \
+	   -encoding iso-8859-1 `find $(JTREG_SRCS) -name '*.java'`
+	(cd $(JTREG_SRCS); \
 	 $(BOOT_DIR)/bin/jar cfm $(abs_top_builddir)/test/jtreg.jar \
 	   META-INF/MANIFEST.MF \
 	   legal  README JavaTest.cmdMgrs.lst JavaTest.toolMgrs.lst \
@@ -2224,6 +2227,7 @@ clean-rt:
 	rm -f rt-source-files.txt
 if BOOTSTRAPPING
 	if [ -e $(ECJ_BOOT_DIR) ] ; then \
+	  mkdir -p $(ECJ_BOOT_DIR)/jre/lib ; \
 	  cp $(SYSTEM_JDK_DIR)/jre/lib/rt.jar $(ECJ_BOOT_DIR)/jre/lib/rt.jar ; \
 	fi
 endif
