@@ -2144,7 +2144,7 @@ check-jdk: stamps/jtreg.stamp
 		-w:test/jdk/JTwork -r:test/jdk/JTreport \
 		$${ICEDTEA_JTREG_OTHERVM:--samevm} \
 		-jdk:$(BUILD_OUTPUT_DIR)/j2sdk-image \
-		-exclude:jtreg/excludelist.jdk.jtx \
+		-exclude:$(JTREG_SRCS)/excludelist.jdk.jtx \
 		$(ICEDTEA_JTREG_OPTIONS) \
 		`pwd`/openjdk/jdk/test \
 	    | tee test/$@.log
