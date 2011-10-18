@@ -377,6 +377,12 @@ New in release 1.11 (2011-XX-XX):
 * CACAO
   - CA149: Used wrong class loader.
   - CA159: Exception handler blocks / register mixup.
+  - ARM: Remove broken support for float argument passing in registers.
+  - ARM: Remove hack for return value in float registers.
+  - ARM: Fixed use of uninitialized variable.
+  - ARM: removed unused ICMD_GETSTATIC branch.
+  - ARM: Designate function labels as such;
+    required for thumb interworking.
   - src/vm/javaobjects.cpp (java_lang_reflect_Method::invoke): [OPENJDK] stack
     index of caller was off by one, causing many apt
     (Annotation Processing Tool) failures.

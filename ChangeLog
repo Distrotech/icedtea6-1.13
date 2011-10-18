@@ -1,3 +1,17 @@
+2011-10-18  Xerxes Rånby  <xerxes@zafena.se>
+
+	CACAO
+	- ARM: Remove broken support for float argument passing in registers.
+	- ARM: Remove hack for return value in float registers.
+	- ARM: Fixed use of uninitialized variable.
+	- ARM: removed unused ICMD_GETSTATIC branch.
+	- ARM: Designate function labels as such;
+	required for thumb interworking.
+	* NEWS: Updated.
+	* Makefile.am:
+	(CACAO_VERSION): Updated CACAO to 2011-10-17 revision.
+	(CACAO_SHA256SUM): Updated.
+
 2011-10-14  Pavel Tisnovsky  <ptisnovs@redhat.com>
 
 	* Makefile.am: Third attempt to fix JTreg
