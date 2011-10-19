@@ -21,7 +21,7 @@ New in release 1.11 (2011-XX-XX):
   - PR752: ImageFormatException extends Exception not RuntimeException
   - PR732: Use xsltproc for bootstrap xslt in place of Xerces/Xalan
   - RH727195: Japanese font mappings are broken
-* Import of OpenJDK6 b22 including upgrade to HotSpot 20
+* Import of OpenJDK6 b23 including upgrade to HotSpot 20
   - S7023111: Add webrev script to make/scripts
   - S6909331: Add vsvars.sh to the jdk repository (handy cygwin way to get vcvars32.bat run)
   - S6896934: README: Document how the drop source bundles work for jaxp/jaxws
@@ -437,6 +437,72 @@ New in release 1.11 (2011-XX-XX):
 * Zero/Shark
   - PR690: Shark fails to JIT using hs20.
   - PR696: Zero fails to handle fast_aldc and fast_aldc_w in hs20.
+
+New in release 1.10.4 (2011-10-18):
+
+* Security fixes
+  - S7000600, CVE-2011-3547: InputStream skip() information leak
+  - S7019773, CVE-2011-3548: mutable static AWTKeyStroke.ctor
+  - S7023640, CVE-2011-3551: Java2D TransformHelper integer overflow
+  - S7032417, CVE-2011-3552: excessive default UDP socket limit under SecurityManager
+  - S7046794, CVE-2011-3553: JAX-WS stack-traces information leak
+  - S7046823, CVE-2011-3544: missing SecurityManager checks in scripting engine
+  - S7055902, CVE-2011-3521: IIOP deserialization code execution
+  - S7057857, CVE-2011-3554: insufficient pack200 JAR files uncompress error checks
+  - S7064341, CVE-2011-3389: HTTPS: block-wise chosen-plaintext attack against SSL/TLS (BEAST)
+  - S7070134, CVE-2011-3558: HotSpot crashes with sigsegv from PorterStemmer
+  - S7077466, CVE-2011-3556: RMI DGC server remote code execution
+  - S7083012, CVE-2011-3557: RMI registry privileged code execution
+  - S7096936, CVE-2011-3560: missing checkSetFactory calls in HttpsURLConnection
+* Bug fixes
+  - RH727195: Japanese font mappings are broken
+* Backports
+  - S6826104, RH730015: Getting a NullPointer exception when clicked on Application & Toolkit Modal dialog
+* Zero/Shark
+  - PR690: Shark fails to JIT using hs20.
+  - PR696: Zero fails to handle fast_aldc and fast_aldc_w in hs20.
+
+New in release 1.9.10 (2011-10-18):
+
+* Security fixes
+  - S7000600, CVE-2011-3547: InputStream skip() information leak
+  - S7019773, CVE-2011-3548: mutable static AWTKeyStroke.ctor
+  - S7023640, CVE-2011-3551: Java2D TransformHelper integer overflow
+  - S7032417, CVE-2011-3552: excessive default UDP socket limit under SecurityManager
+  - S7046794, CVE-2011-3553: JAX-WS stack-traces information leak
+  - S7046823, CVE-2011-3544: missing SecurityManager checks in scripting engine
+  - S7055902, CVE-2011-3521: IIOP deserialization code execution
+  - S7057857, CVE-2011-3554: insufficient pack200 JAR files uncompress error checks
+  - S7064341, CVE-2011-3389: HTTPS: block-wise chosen-plaintext attack against SSL/TLS (BEAST)
+  - S7070134, CVE-2011-3558: HotSpot crashes with sigsegv from PorterStemmer
+  - S7077466, CVE-2011-3556: RMI DGC server remote code execution
+  - S7083012, CVE-2011-3557: RMI registry privileged code execution
+  - S7096936, CVE-2011-3560: missing checkSetFactory calls in HttpsURLConnection
+* NetX
+  - PR794: javaws does not work if a Web Start app jar has a Class-Path element in the manifest
+* Fixes
+  - G356743: Support libpng 1.5.
+
+New in release 1.8.10 (2011-10-18):
+
+* Security fixes
+  - S7000600, CVE-2011-3547: InputStream skip() information leak
+  - S7019773, CVE-2011-3548: mutable static AWTKeyStroke.ctor
+  - S7023640, CVE-2011-3551: Java2D TransformHelper integer overflow
+  - S7032417, CVE-2011-3552: excessive default UDP socket limit under SecurityManager
+  - S7046794, CVE-2011-3553: JAX-WS stack-traces information leak
+  - S7046823, CVE-2011-3544: missing SecurityManager checks in scripting engine
+  - S7055902, CVE-2011-3521: IIOP deserialization code execution
+  - S7057857, CVE-2011-3554: insufficient pack200 JAR files uncompress error checks
+  - S7064341, CVE-2011-3389: HTTPS: block-wise chosen-plaintext attack against SSL/TLS (BEAST)
+  - S7077466, CVE-2011-3556: RMI DGC server remote code execution
+  - S7083012, CVE-2011-3557: RMI registry privileged code execution
+  - S7096936, CVE-2011-3560: missing checkSetFactory calls in HttpsURLConnection
+* NetX
+  - PR794: javaws does not work if a Web Start app jar has a Class-Path element in the manifest
+  - PR764: icedtea 1.8.9 fails to build in CachedJarFileCallback.java
+* Fixes
+  - G356743: Support libpng 1.5.
 
 New in release 1.10.2 (2011-06-07):
 
