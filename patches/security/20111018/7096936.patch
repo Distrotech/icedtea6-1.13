@@ -1,0 +1,52 @@
+# HG changeset patch
+# User coffeys
+# Date 1317840677 -3600
+# Node ID 4a17cd579c2b59a955e2dc7069e4c65778a3b47a
+# Parent  9a4fc5068e5f2d8e04facd272cc17900f54ef00c
+7096936: issue in jsse/runtime
+Reviewed-by: xuelei, wetmore
+
+diff --git a/src/share/classes/com/sun/net/ssl/HttpsURLConnection.java b/src/share/classes/com/sun/net/ssl/HttpsURLConnection.java
+--- openjdk/jdk/src/share/classes/com/sun/net/ssl/HttpsURLConnection.java
++++ openjdk/jdk/src/share/classes/com/sun/net/ssl/HttpsURLConnection.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2000, 2004, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -179,6 +179,12 @@ class HttpsURLConnection extends HttpURL
+             throw new IllegalArgumentException(
+                 "no SSLSocketFactory specified");
+         }
++
++        SecurityManager sm = System.getSecurityManager();
++        if (sm != null) {
++            sm.checkSetFactory();
++        }
++
+         sslSocketFactory = sf;
+     }
+ 
+diff --git a/src/share/classes/javax/net/ssl/HttpsURLConnection.java b/src/share/classes/javax/net/ssl/HttpsURLConnection.java
+--- openjdk/jdk/src/share/classes/javax/net/ssl/HttpsURLConnection.java
++++ openjdk/jdk/src/share/classes/javax/net/ssl/HttpsURLConnection.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1999, 2005, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -368,6 +368,10 @@ class HttpsURLConnection extends HttpURL
+                 "no SSLSocketFactory specified");
+         }
+ 
++        SecurityManager sm = System.getSecurityManager();
++        if (sm != null) {
++            sm.checkSetFactory();
++        }
+         sslSocketFactory = sf;
+     }
+ 

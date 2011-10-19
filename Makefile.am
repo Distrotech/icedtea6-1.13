@@ -199,7 +199,20 @@ JTREG_SRCS = $(top_srcdir)/jtreg
 
 ICEDTEA_FSG_PATCHES =
 
-SECURITY_PATCHES =
+SECURITY_PATCHES = \
+	patches/security/20111018/7000600.patch \
+	patches/security/20111018/7019773.patch \
+	patches/security/20111018/7023640.patch \
+	patches/security/20111018/7032417.patch \
+	patches/security/20111018/7046823.patch \
+	patches/security/20111018/7055902.patch \
+	patches/security/20111018/7057857.patch \
+	patches/security/20111018/7064341.patch \
+	patches/security/20111018/7070134.patch \
+	patches/security/20111018/7083012.patch \
+	patches/security/20111018/7096936.patch \
+	patches/security/20111018/7046794.patch \
+	patches/security/20111018/7077466.patch
 
 ICEDTEA_PATCHES = \
 	$(SECURITY_PATCHES) \

@@ -1,0 +1,486 @@
+# HG changeset patch
+# User coffeys
+# Date 1317840892 -3600
+# Node ID 0c65618b5ae189882a5b0716a83d958d78a93edc
+# Parent  4a17cd579c2b59a955e2dc7069e4c65778a3b47a
+7064341: Problem with jsse/runtime
+Reviewed-by: xuelei, wetmore
+
+diff --git a/src/share/classes/sun/security/ssl/AppOutputStream.java b/src/share/classes/sun/security/ssl/AppOutputStream.java
+--- openjdk/jdk/src/share/classes/sun/security/ssl/AppOutputStream.java
++++ openjdk/jdk/src/share/classes/sun/security/ssl/AppOutputStream.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1996, 2007, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1996, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -60,15 +60,44 @@ class AppOutputStream extends OutputStre
+             throws IOException {
+         // check if the Socket is invalid (error or closed)
+         c.checkWrite();
+-        //
+-        // Always flush at the end of each application level record.
+-        // This lets application synchronize read and write streams
+-        // however they like; if we buffered here, they couldn't.
+-        //
+-        // NOTE: *must* call c.writeRecord() even for len == 0
++
++        /*
++         * By default, we counter chosen plaintext issues on CBC mode
++         * ciphersuites in SSLv3/TLS1.0 by sending one byte of application
++         * data in the first record of every payload, and the rest in
++         * subsequent record(s). Note that the issues have been solved in
++         * TLS 1.1 or later.
++         *
++         * It is not necessary to split the very first application record of
++         * a freshly negotiated TLS session, as there is no previous
++         * application data to guess.  To improve compatibility, we will not
++         * split such records. 
++         *
++         * This avoids issues in the outbound direction.  For a full fix,
++         * the peer must have similar protections.
++         */
++        boolean isFirstRecordOfThePayload = true;
++
++        /*
++         * Always flush at the end of each application level record.
++         * This lets application synchronize read and write streams
++         * however they like; if we buffered here, they couldn't.
++         *
++         * NOTE: *must* call c.writeRecord() even for len == 0
++         */
++
+         try {
+             do {
+-                int howmuch = Math.min(len, r.availableDataBytes());
++                int howmuch;
++                if (isFirstRecordOfThePayload && c.needToSplitPayload()) {
++                    howmuch = Math.min(0x01, r.availableDataBytes());
++                } else {
++                    howmuch = Math.min(len, r.availableDataBytes());
++                }
++
++                if (isFirstRecordOfThePayload && howmuch != 0) {
++                    isFirstRecordOfThePayload = false;
++                }
+ 
+                 if (howmuch > 0) {
+                     r.write(b, off, howmuch);
+diff --git a/src/share/classes/sun/security/ssl/CipherBox.java b/src/share/classes/sun/security/ssl/CipherBox.java
+--- openjdk/jdk/src/share/classes/sun/security/ssl/CipherBox.java
++++ openjdk/jdk/src/share/classes/sun/security/ssl/CipherBox.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1996, 2007, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1996, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -76,11 +76,17 @@ final class CipherBox {
+     private int blockSize;
+ 
+     /**
++     * Is the cipher of CBC mode?
++     */
++     private final boolean isCBCMode;
++
++    /**
+      * NULL cipherbox. Identity operation, no encryption.
+      */
+     private CipherBox() {
+         this.protocolVersion = ProtocolVersion.DEFAULT;
+         this.cipher = null;
++        this.isCBCMode = false;
+     }
+ 
+     /**
+@@ -96,6 +102,7 @@ final class CipherBox {
+             this.protocolVersion = protocolVersion;
+             this.cipher = JsseJce.getCipher(bulkCipher.transformation);
+             int mode = encrypt ? Cipher.ENCRYPT_MODE : Cipher.DECRYPT_MODE;
++            this.isCBCMode = bulkCipher.isCBCMode;
+             cipher.init(mode, key, iv);
+             // do not call getBlockSize until after init()
+             // otherwise we would disrupt JCE delayed provider selection
+@@ -486,4 +493,13 @@ final class CipherBox {
+ 
+         return newlen;
+     }
++
++    /*
++     * Does the cipher use CBC mode?
++     *
++     * @return true if the cipher use CBC mode, false otherwise.
++     */
++    boolean isCBCMode() {
++        return isCBCMode;
++    }
+ }
+diff --git a/src/share/classes/sun/security/ssl/CipherSuite.java b/src/share/classes/sun/security/ssl/CipherSuite.java
+--- openjdk/jdk/src/share/classes/sun/security/ssl/CipherSuite.java
++++ openjdk/jdk/src/share/classes/sun/security/ssl/CipherSuite.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -340,10 +340,16 @@ final class CipherSuite implements Compa
+         // exportable under 512/40 bit rules
+         final boolean exportable;
+ 
++        // Is the cipher algorithm of Cipher Block Chaining (CBC) mode?
++        final boolean isCBCMode;
++
+         BulkCipher(String transformation, int keySize,
+                 int expandedKeySize, int ivSize, boolean allowed) {
+             this.transformation = transformation;
+-            this.algorithm = transformation.split("/")[0];
++            String[] splits = transformation.split("/");
++            this.algorithm = splits[0];
++            this.isCBCMode =
++                splits.length <= 1 ? false : "CBC".equalsIgnoreCase(splits[1]);
+             this.description = this.algorithm + "/" + (keySize << 3);
+             this.keySize = keySize;
+             this.ivSize = ivSize;
+@@ -356,7 +362,10 @@ final class CipherSuite implements Compa
+         BulkCipher(String transformation, int keySize,
+                 int ivSize, boolean allowed) {
+             this.transformation = transformation;
+-            this.algorithm = transformation.split("/")[0];
++            String[] splits = transformation.split("/");
++            this.algorithm = splits[0];
++            this.isCBCMode =
++                splits.length <= 1 ? false : "CBC".equalsIgnoreCase(splits[1]);
+             this.description = this.algorithm + "/" + (keySize << 3);
+             this.keySize = keySize;
+             this.ivSize = ivSize;
+diff --git a/src/share/classes/sun/security/ssl/EngineOutputRecord.java b/src/share/classes/sun/security/ssl/EngineOutputRecord.java
+--- openjdk/jdk/src/share/classes/sun/security/ssl/EngineOutputRecord.java
++++ openjdk/jdk/src/share/classes/sun/security/ssl/EngineOutputRecord.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, 2007, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -46,6 +46,7 @@ import sun.misc.HexDumpEncoder;
+  */
+ final class EngineOutputRecord extends OutputRecord {
+ 
++    private SSLEngineImpl engine;
+     private EngineWriter writer;
+ 
+     private boolean finishedMsg = false;
+@@ -62,6 +63,7 @@ final class EngineOutputRecord extends O
+      */
+     EngineOutputRecord(byte type, SSLEngineImpl engine) {
+         super(type, recordSize(type));
++        this.engine = engine;
+         writer = engine.writer;
+     }
+ 
+@@ -227,11 +229,50 @@ final class EngineOutputRecord extends O
+          * implementations are fragile and don't like to see empty
+          * records, so this increases robustness.
+          */
+-        int length = Math.min(ea.getAppRemaining(), maxDataSize);
+-        if (length == 0) {
++        if (ea.getAppRemaining() == 0) {
+             return;
+         }
+ 
++        /*
++         * By default, we counter chosen plaintext issues on CBC mode
++         * ciphersuites in SSLv3/TLS1.0 by sending one byte of application
++         * data in the first record of every payload, and the rest in
++         * subsequent record(s). Note that the issues have been solved in
++         * TLS 1.1 or later.
++         *
++         * It is not necessary to split the very first application record of
++         * a freshly negotiated TLS session, as there is no previous
++         * application data to guess.  To improve compatibility, we will not
++         * split such records.
++         *
++         * Because of the compatibility, we'd better produce no more than
++         * SSLSession.getPacketBufferSize() net data for each wrap. As we
++         * need a one-byte record at first, the 2nd record size should be
++         * equal to or less than Record.maxDataSizeMinusOneByteRecord.
++         *
++         * This avoids issues in the outbound direction.  For a full fix,
++         * the peer must have similar protections.
++         */
++        int length;
++        if (engine.needToSplitPayload(writeCipher, protocolVersion)) {
++            write(ea, writeMAC, writeCipher, 0x01);
++            ea.resetLim();      // reset application data buffer limit
++            length = Math.min(ea.getAppRemaining(),
++                        maxDataSizeMinusOneByteRecord);
++        } else {
++            length = Math.min(ea.getAppRemaining(), maxDataSize);
++        }
++
++        // Don't bother to really write empty records.
++        if (length > 0) {
++            write(ea, writeMAC, writeCipher, length);
++        }
++
++        return;
++    }
++
++    void write(EngineArgs ea, MAC writeMAC, CipherBox writeCipher,
++            int length) throws IOException {
+         /*
+          * Copy out existing buffer values.
+          */
+diff --git a/src/share/classes/sun/security/ssl/Record.java b/src/share/classes/sun/security/ssl/Record.java
+--- openjdk/jdk/src/share/classes/sun/security/ssl/Record.java
++++ openjdk/jdk/src/share/classes/sun/security/ssl/Record.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1996, 2007, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1996, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -65,6 +65,22 @@ interface Record {
+                                     + maxPadding        // padding
+                                     + trailerSize;      // MAC
+ 
++    static final boolean enableCBCProtection =
++            Debug.getBooleanProperty("jsse.enableCBCProtection", true);
++
++    /*
++     * For CBC protection in SSL3/TLS1, we break some plaintext into two
++     * packets.  Max application data size for the second packet. 
++     */
++    static final int    maxDataSizeMinusOneByteRecord =
++                                  maxDataSize       // max data size
++                                - (                 // max one byte record size
++                                      headerSize    // header
++                                    + 1             // one byte data
++                                    + maxPadding    // padding
++                                    + trailerSize   // MAC
++                                  );
++
+     /*
+      * The maximum large record size.
+      *
+diff --git a/src/share/classes/sun/security/ssl/SSLEngineImpl.java b/src/share/classes/sun/security/ssl/SSLEngineImpl.java
+--- openjdk/jdk/src/share/classes/sun/security/ssl/SSLEngineImpl.java
++++ openjdk/jdk/src/share/classes/sun/security/ssl/SSLEngineImpl.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -304,6 +304,11 @@ final public class SSLEngineImpl extends
+     private Object              wrapLock;
+     private Object              unwrapLock;
+     Object                      writeLock;
++
++    /*
++     * Is it the first application record to write?
++     */
++    private boolean isFirstAppOutputRecord = true;
+ 
+     /*
+      * Class and subclass dynamic debugging support
+@@ -595,6 +600,9 @@ final public class SSLEngineImpl extends
+             throw (SSLException)new SSLException
+                                 ("Algorithm missing:  ").initCause(e);
+         }
++
++        // reset the flag of the first application record
++        isFirstAppOutputRecord = true;
+     }
+ 
+     /*
+@@ -1212,7 +1220,36 @@ final public class SSLEngineImpl extends
+             EngineArgs ea) throws IOException {
+ 
+         // eventually compress as well.
+-        return writer.writeRecord(eor, ea, writeMAC, writeCipher);
++        HandshakeStatus hsStatus =
++                writer.writeRecord(eor, ea, writeMAC, writeCipher);
++
++        /*
++         * turn off the flag of the first application record if we really
++         * consumed at least byte.
++         */
++        if (isFirstAppOutputRecord && ea.deltaApp() > 0) {
++            isFirstAppOutputRecord = false;
++        }
++
++        return hsStatus;
++    }
++
++    /*
++     * Need to split the payload except the following cases:
++     *
++     * 1. protocol version is TLS 1.1 or later;
++     * 2. bulk cipher does not use CBC mode, including null bulk cipher suites.
++     * 3. the payload is the first application record of a freshly
++     *    negotiated TLS session.
++     * 4. the CBC protection is disabled;
++     *
++     * More details, please refer to
++     * EngineOutputRecord.write(EngineArgs, MAC, CipherBox).
++     */
++    boolean needToSplitPayload(CipherBox cipher, ProtocolVersion protocol) {
++        return (protocol.v <= ProtocolVersion.TLS10.v) &&
++                cipher.isCBCMode() && !isFirstAppOutputRecord &&
++                Record.enableCBCProtection;
+     }
+ 
+     /*
+diff --git a/src/share/classes/sun/security/ssl/SSLSocketImpl.java b/src/share/classes/sun/security/ssl/SSLSocketImpl.java
+--- openjdk/jdk/src/share/classes/sun/security/ssl/SSLSocketImpl.java
++++ openjdk/jdk/src/share/classes/sun/security/ssl/SSLSocketImpl.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1996, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -357,6 +357,11 @@ final public class SSLSocketImpl extends
+ 
+     /* Class and subclass dynamic debugging support */
+     private static final Debug debug = Debug.getInstance("ssl");
++
++    /*
++     * Is it the first application record to write?
++     */
++    private boolean isFirstAppOutputRecord = true;
+ 
+     //
+     // CONSTRUCTORS AND INITIALIZATION CODE
+@@ -761,8 +766,35 @@ final public class SSLSocketImpl extends
+         r.addMAC(writeMAC);
+         r.encrypt(writeCipher);
+         r.write(sockOutput);
++
++        // turn off the flag of the first application record
++        if (isFirstAppOutputRecord &&
++                r.contentType() == Record.ct_application_data) {
++            isFirstAppOutputRecord = false;
++        }
+     }
+-
++  
++    /*
++     * Need to split the payload except the following cases:
++     *
++     * 1. protocol version is TLS 1.1 or later;
++     * 2. bulk cipher does not use CBC mode, including null bulk cipher suites.
++     * 3. the payload is the first application record of a freshly
++     *    negotiated TLS session.
++     * 4. the CBC protection is disabled;
++     *
++     * More details, please refer to AppOutputStream.write(byte[], int, int).
++     */
++    boolean needToSplitPayload() {
++        writeLock.lock();
++        try {
++            return (protocolVersion.v <= ProtocolVersion.TLS10.v) &&
++                    writeCipher.isCBCMode() && !isFirstAppOutputRecord && 
++                    Record.enableCBCProtection;
++        } finally {
++            writeLock.unlock();
++        }
++    }
+ 
+     /*
+      * Read an application data record.  Alerts and handshake
+@@ -1829,6 +1861,9 @@ final public class SSLSocketImpl extends
+             throw (SSLException)new SSLException
+                                 ("Algorithm missing:  ").initCause(e);
+         }
++
++        // reset the flag of the first application record
++        isFirstAppOutputRecord = true;
+     }
+ 
+     /*
+diff --git a/test/sun/security/ssl/com/sun/net/ssl/internal/ssl/GenSSLConfigs/main.java b/test/sun/security/ssl/com/sun/net/ssl/internal/ssl/GenSSLConfigs/main.java
+--- openjdk/jdk/test/sun/security/ssl/com/sun/net/ssl/internal/ssl/GenSSLConfigs/main.java
++++ openjdk/jdk/test/sun/security/ssl/com/sun/net/ssl/internal/ssl/GenSSLConfigs/main.java
+@@ -1,12 +1,12 @@
+ /*
+  * @test
+  * @build TestThread Traffic Handler ServerHandler ServerThread ClientThread
+- * @run main/timeout=140 main
++ * @run main/othervm -Djsse.enableCBCProtection=false main
+  * @summary Make sure that different configurations of SSL sockets work
+  */
+ 
+ /*
+- * Copyright (c) 1997, 2005, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+diff --git a/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/CheckStatus.java b/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/CheckStatus.java
+--- openjdk/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/CheckStatus.java
++++ openjdk/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/CheckStatus.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -28,6 +28,8 @@
+  *
+  * This is a simple hack to test a bunch of conditions and check
+  * their return codes.
++ *
++ * @run main/othervm -Djsse.enableCBCProtection=false CheckStatus
+  *
+  * @author Brad Wetmore
+  */
+diff --git a/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/LargeBufs.java b/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/LargeBufs.java
+--- openjdk/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/LargeBufs.java
++++ openjdk/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/LargeBufs.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2004, 2006, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2004, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -29,6 +29,8 @@
+  *
+  * This is to test larger buffer arrays, and make sure the maximum
+  * is being passed.
++ *
++ * @run main/othervm -Djsse.enableCBCProtection=false LargeBufs
+  *
+  * @author Brad R. Wetmore
+  */
+diff --git a/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/LargePacket.java b/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/LargePacket.java
+--- openjdk/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/LargePacket.java
++++ openjdk/jdk/test/sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/LargePacket.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2006, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -27,6 +27,8 @@
+  * @bug 6388456
+  * @summary Need adjustable TLS max record size for interoperability
+  *      with non-compliant
++ *
++ * @run main/othervm -Djsse.enableCBCProtection=false LargePacket
+  *
+  * @author Xuelei Fan
+  */
