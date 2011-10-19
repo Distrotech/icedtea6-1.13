@@ -289,6 +289,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6959123-libpng_14.patch \
 	patches/applet_hole.patch \
 	patches/jtreg-httpTest.patch \
+	patches/arm.patch \
 	patches/debug-dir.patch \
 	patches/override-redirect-metacity.patch \
 	patches/openjdk/6967533-pre_epoch.patch \
@@ -644,7 +645,7 @@ all-local: icedtea-against-icedtea
 check-local: jtregcheck
 
 clean-local: clean-jtreg clean-jtreg-reports $(PULSE_JAVA_CLEAN_TARGET) \
- clean-icedtea clean-icedtea-debug clean-icedtea-ecj clean-extract \
+ clean-icedtea clean-icedtea-debug clean-icedtea-ecj clean-extract clean-ports \
  clean-overlay clean-native-ecj clean-icedtea-against-icedtea clean-icedtea-debug-against-icedtea \
  clean-icedtea-against-ecj clean-extract-ecj clean-generated clean-replace-hotspot \
  clean-rewriter clean-rewrite-rhino clean-rt clean-bootstrap-directory \
@@ -681,7 +682,7 @@ install:
 	clean-icedtea-against-ecj \
 	clean-jamvm clean-add-jamvm clean-add-jamvm-debug \
 	clean-cacao clean-add-cacao clean-add-cacao-debug \
-	clean-overlay clean-extract-ecj clean-extract clean-extract-openjdk \
+	clean-ports clean-overlay clean-extract-ecj clean-extract clean-extract-openjdk \
 	clean-replace-hotspot clean-generated clean-download clean-hgforest clean-download-openjdk \
 	clean-rewriter clean-rewrite-rhino clean-add-systemtap clean-add-systemtap-debug \
 	clean-add-pulseaudio clean-add-pulseaudio-debug clean-add-nss clean-add-nss-debug \
@@ -1037,7 +1038,27 @@ endif
 clean-replace-hotspot:
 	rm -f stamps/replace-hotspot.stamp
 
-stamps/generated.stamp: stamps/replace-hotspot.stamp
+# Copy ports sources into tree
+stamps/ports.stamp: stamps/replace-hotspot.stamp
+if !WITH_ALT_HSBUILD
+	for target in $(abs_top_srcdir)/arm_port/hotspot/tools \
+		      $(abs_top_srcdir)/arm_port/hotspot/src/*cpu/* ; do \
+	  link=$$(dirname $$target | sed 's/^.*arm_port/openjdk/'); \
+	  cp -rv $$target $$link; \
+	done
+endif
+	mkdir -p stamps
+	touch stamps/ports.stamp
+
+clean-ports:
+	for target in $(abs_top_srcdir)/arm_port/hotspot/tools \
+		      $(abs_top_srcdir)/arm_port/hotspot/src/*cpu/* ; do \
+	  link=$$(dirname $$target | sed 's/^.*arm_port/openjdk/'); \
+	  rm -rf $$link; \
+	done
+	rm -f stamps/ports.stamp
+
++stamps/generated.stamp: stamps/ports.stamp
 	if [ ! -e $(GENERATED_BUILD_DIR) ]; then \
 	  cp -a $(abs_top_srcdir)/generated $(GENERATED_BUILD_DIR) && \
 	  chmod -R ug+rwX $(GENERATED_BUILD_DIR) ; \
@@ -2288,6 +2309,8 @@ download-openjdk: stamps/download-openjdk.stamp
 extract: stamps/extract.stamp
 
 extract-ecj: stamps/extract-ecj.stamp
+
+hotspot-ports: stamps/ports.stamp
 
 icedtea: stamps/icedtea.stamp
 
