@@ -1,0 +1,40 @@
+# HG changeset patch
+# User mbankal
+# Date 1312898223 25200
+# Node ID 23f471142a033a47b6b60506c2749f9caad0a4f8
+# Parent  82557c6d8d453c417f699311bfc0c263fae6451a
+7055902: Oracle Java IIOP Deserialization Type Confusion Remote Code Execution Vulnerability
+Reviewed-by: coffeys
+
+diff --git a/src/share/classes/com/sun/corba/se/impl/io/IIOPInputStream.java b/src/share/classes/com/sun/corba/se/impl/io/IIOPInputStream.java
+--- openjdk/corba/src/share/classes/com/sun/corba/se/impl/io/IIOPInputStream.java
++++ openjdk/corba/src/share/classes/com/sun/corba/se/impl/io/IIOPInputStream.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -2239,6 +2239,10 @@ public class IIOPInputStream
+                 }
+ 
+                 try {
++                    Class fieldCl = fields[i].getClazz();
++                    if (objectValue != null && !fieldCl.isInstance(objectValue)) {
++                        throw new IllegalArgumentException();
++                    }
+                     bridge.putObject( o, fields[i].getFieldID(), objectValue ) ;
+                     // reflective code: fields[i].getField().set( o, objectValue ) ;
+                 } catch (IllegalArgumentException e) {
+@@ -2549,6 +2553,10 @@ public class IIOPInputStream
+     {
+         try {
+             Field fld = c.getDeclaredField( fieldName ) ;
++            Class fieldCl = fld.getType();
++            if(v != null && !fieldCl.isInstance(v)) {
++                throw new Exception();
++            }
+             long key = bridge.objectFieldOffset( fld ) ;
+             bridge.putObject( o, key, v ) ;
+         } catch (Exception e) {

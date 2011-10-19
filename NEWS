@@ -20,7 +20,8 @@ New in release 1.11 (2011-XX-XX):
   - PR744: icedtea6-1.10.2 : patching error
   - PR752: ImageFormatException extends Exception not RuntimeException
   - PR732: Use xsltproc for bootstrap xslt in place of Xerces/Xalan
-* Import of OpenJDK6 b22 including upgrade to HotSpot 20
+  - RH727195: Japanese font mappings are broken
+* Import of OpenJDK6 b23 including upgrade to HotSpot 20
   - S7023111: Add webrev script to make/scripts
   - S6909331: Add vsvars.sh to the jdk repository (handy cygwin way to get vcvars32.bat run)
   - S6896934: README: Document how the drop source bundles work for jaxp/jaxws
@@ -371,10 +372,17 @@ New in release 1.11 (2011-XX-XX):
   - S6826104, RH730015: Getting a NullPointer exception when clicked on Application & Toolkit Modal dialog
   - S5082756: Image I/O plug-ins set metadata boolean attributes to "true" or "false"
   - S6296893: BMP Writer handles TopDown property incorrectly for some of the compression types
+  - LP862286: Fix exception on trying to start PulseAudio playback
 * Allow selection of test suites using the jtreg_checks argument e.g. jtreg_checks="langtools"
 * CACAO
   - CA149: Used wrong class loader.
   - CA159: Exception handler blocks / register mixup.
+  - ARM: Remove broken support for float argument passing in registers.
+  - ARM: Remove hack for return value in float registers.
+  - ARM: Fixed use of uninitialized variable.
+  - ARM: removed unused ICMD_GETSTATIC branch.
+  - ARM: Designate function labels as such;
+    required for thumb interworking.
   - src/vm/javaobjects.cpp (java_lang_reflect_Method::invoke): [OPENJDK] stack
     index of caller was off by one, causing many apt
     (Annotation Processing Tool) failures.
@@ -386,6 +394,12 @@ New in release 1.11 (2011-XX-XX):
   - PR772: jtreg LocalOnlyTest sends SIGQUIT to all processes on exit.
   - LP827463: Fix OpenJDK enclosingMethodInfo().
   - Add support for armhf.
+  - Skip Java-reflection-related DelegatingClassLoaders, enables JamVM to run NetBeans.
+  - Generic JNI stubs for common JNI method signatures.
+  - Implement classlibCheckIfOnLoad().
+  - Make thread states JVMTI compatible.
+  - Add OpenBSD/sparc to list of recognised hosts.
+  - Handle 'g' when specifying memory + extra checks.
   - armhf: ensure stack is 8 byte aligned.
   - "Fix" handling of CLI bootclasspath options.
   - Fix for StackTraceElement checkin. 
@@ -423,6 +437,72 @@ New in release 1.11 (2011-XX-XX):
 * Zero/Shark
   - PR690: Shark fails to JIT using hs20.
   - PR696: Zero fails to handle fast_aldc and fast_aldc_w in hs20.
+
+New in release 1.10.4 (2011-10-18):
+
+* Security fixes
+  - S7000600, CVE-2011-3547: InputStream skip() information leak
+  - S7019773, CVE-2011-3548: mutable static AWTKeyStroke.ctor
+  - S7023640, CVE-2011-3551: Java2D TransformHelper integer overflow
+  - S7032417, CVE-2011-3552: excessive default UDP socket limit under SecurityManager
+  - S7046794, CVE-2011-3553: JAX-WS stack-traces information leak
+  - S7046823, CVE-2011-3544: missing SecurityManager checks in scripting engine
+  - S7055902, CVE-2011-3521: IIOP deserialization code execution
+  - S7057857, CVE-2011-3554: insufficient pack200 JAR files uncompress error checks
+  - S7064341, CVE-2011-3389: HTTPS: block-wise chosen-plaintext attack against SSL/TLS (BEAST)
+  - S7070134, CVE-2011-3558: HotSpot crashes with sigsegv from PorterStemmer
+  - S7077466, CVE-2011-3556: RMI DGC server remote code execution
+  - S7083012, CVE-2011-3557: RMI registry privileged code execution
+  - S7096936, CVE-2011-3560: missing checkSetFactory calls in HttpsURLConnection
+* Bug fixes
+  - RH727195: Japanese font mappings are broken
+* Backports
+  - S6826104, RH730015: Getting a NullPointer exception when clicked on Application & Toolkit Modal dialog
+* Zero/Shark
+  - PR690: Shark fails to JIT using hs20.
+  - PR696: Zero fails to handle fast_aldc and fast_aldc_w in hs20.
+
+New in release 1.9.10 (2011-10-18):
+
+* Security fixes
+  - S7000600, CVE-2011-3547: InputStream skip() information leak
+  - S7019773, CVE-2011-3548: mutable static AWTKeyStroke.ctor
+  - S7023640, CVE-2011-3551: Java2D TransformHelper integer overflow
+  - S7032417, CVE-2011-3552: excessive default UDP socket limit under SecurityManager
+  - S7046794, CVE-2011-3553: JAX-WS stack-traces information leak
+  - S7046823, CVE-2011-3544: missing SecurityManager checks in scripting engine
+  - S7055902, CVE-2011-3521: IIOP deserialization code execution
+  - S7057857, CVE-2011-3554: insufficient pack200 JAR files uncompress error checks
+  - S7064341, CVE-2011-3389: HTTPS: block-wise chosen-plaintext attack against SSL/TLS (BEAST)
+  - S7070134, CVE-2011-3558: HotSpot crashes with sigsegv from PorterStemmer
+  - S7077466, CVE-2011-3556: RMI DGC server remote code execution
+  - S7083012, CVE-2011-3557: RMI registry privileged code execution
+  - S7096936, CVE-2011-3560: missing checkSetFactory calls in HttpsURLConnection
+* NetX
+  - PR794: javaws does not work if a Web Start app jar has a Class-Path element in the manifest
+* Fixes
+  - G356743: Support libpng 1.5.
+
+New in release 1.8.10 (2011-10-18):
+
+* Security fixes
+  - S7000600, CVE-2011-3547: InputStream skip() information leak
+  - S7019773, CVE-2011-3548: mutable static AWTKeyStroke.ctor
+  - S7023640, CVE-2011-3551: Java2D TransformHelper integer overflow
+  - S7032417, CVE-2011-3552: excessive default UDP socket limit under SecurityManager
+  - S7046794, CVE-2011-3553: JAX-WS stack-traces information leak
+  - S7046823, CVE-2011-3544: missing SecurityManager checks in scripting engine
+  - S7055902, CVE-2011-3521: IIOP deserialization code execution
+  - S7057857, CVE-2011-3554: insufficient pack200 JAR files uncompress error checks
+  - S7064341, CVE-2011-3389: HTTPS: block-wise chosen-plaintext attack against SSL/TLS (BEAST)
+  - S7077466, CVE-2011-3556: RMI DGC server remote code execution
+  - S7083012, CVE-2011-3557: RMI registry privileged code execution
+  - S7096936, CVE-2011-3560: missing checkSetFactory calls in HttpsURLConnection
+* NetX
+  - PR794: javaws does not work if a Web Start app jar has a Class-Path element in the manifest
+  - PR764: icedtea 1.8.9 fails to build in CachedJarFileCallback.java
+* Fixes
+  - G356743: Support libpng 1.5.
 
 New in release 1.10.2 (2011-06-07):
 

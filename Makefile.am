@@ -5,14 +5,14 @@ OPENJDK_SHA256SUM = f36198920e84053d7bfa3599ee32477c1e2b911dba38d75a669b79e9ae53
 OPENJDK_VERSION = b23
 OPENJDK_URL = http://download.java.net/openjdk/jdk6/promoted/$(OPENJDK_VERSION)/
 
-CACAO_VERSION = 4549072ab2de
-CACAO_SHA256SUM = ec097ce96f047abbaeab4faab752c121d29f08bdeae358038a0b7cde03361d07
+CACAO_VERSION = f910ea5348aa
+CACAO_SHA256SUM = dcbd9ebb2e4180cdcb8d2f2019c09905a87f2dfa9fda9eee56836b25727c4d90
 CACAO_BASE_URL = http://icedtea.classpath.org/download/drops/cacao
 CACAO_URL = $(CACAO_BASE_URL)/$(CACAO_VERSION).tar.gz
 CACAO_SRC_ZIP = cacao-$(CACAO_VERSION).tar.gz
 
-JAMVM_VERSION = 12d05e620a9fda129925104bc848014f91d971db
-JAMVM_SHA256SUM = b7e3999f5b46cfddcf717b2d06460d34167fe9eb3b306a311f1df6d31b99ef32
+JAMVM_VERSION = 4617da717ecb05654ea5bb9572338061106a414d
+JAMVM_SHA256SUM = 47fce7bd556c1b1d29a93b8c45497e0d872b48b7f535066b303336f29d0f0d8d
 JAMVM_BASE_URL = http://icedtea.classpath.org/download/drops/jamvm
 JAMVM_URL = $(JAMVM_BASE_URL)/jamvm-$(JAMVM_VERSION).tar.gz
 JAMVM_SRC_ZIP = jamvm-$(JAMVM_VERSION).tar.gz
@@ -46,6 +46,8 @@ SERVER_DIR = hotspot/import/jre/lib/$(INSTALL_ARCH_DIR)/server
 BUILD_JRE_ARCH_DIR = $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
 BUILD_DEBUG_JRE_ARCH_DIR = $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
 FONTCONFIG_PATH = openjdk/jdk/src/solaris/classes/sun/awt/fontconfigs
+REWRITER_BUILD_DIR = $(abs_top_builddir)/rewriter.build
+GENERATED_BUILD_DIR = $(abs_top_builddir)/generated.build
 
 # Source directories
 
@@ -167,6 +169,18 @@ else
   SRC_DIR_LINK = $(REFLINK)
 endif
 
+if !DISABLE_TESTS
+if !DISABLE_HOTSPOT_TESTS
+TEST_SUITES = hotspot
+endif
+if !DISABLE_JDK_TESTS
+TEST_SUITES := $(TEST_SUITES) jdk
+endif
+if !DISABLE_LANGTOOLS_TESTS
+TEST_SUITES := $(TEST_SUITES) langtools
+endif
+endif
+
 # Target to ensure a patched OpenJDK tree containing Zero & Shark
 # and any overlays is available in $(abs_top_builddir)/openjdk
 OPENJDK_TREE = stamps/overlay.stamp
@@ -178,13 +192,27 @@ OPENJDK_ECJ_TREE = stamps/patch-ecj.stamp
 
 # Sources list
 
-REWRITER_SRCS = $(abs_top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.java
+REWRITER_SRCS = $(top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.java
+JTREG_SRCS = $(top_srcdir)/jtreg
 
 # Patch list
 
 ICEDTEA_FSG_PATCHES =
 
-SECURITY_PATCHES =
+SECURITY_PATCHES = \
+	patches/security/20111018/7000600.patch \
+	patches/security/20111018/7019773.patch \
+	patches/security/20111018/7023640.patch \
+	patches/security/20111018/7032417.patch \
+	patches/security/20111018/7046823.patch \
+	patches/security/20111018/7055902.patch \
+	patches/security/20111018/7057857.patch \
+	patches/security/20111018/7064341.patch \
+	patches/security/20111018/7070134.patch \
+	patches/security/20111018/7083012.patch \
+	patches/security/20111018/7096936.patch \
+	patches/security/20111018/7046794.patch \
+	patches/security/20111018/7077466.patch
 
 ICEDTEA_PATCHES = \
 	$(SECURITY_PATCHES) \
@@ -398,12 +426,6 @@ ICEDTEA_PATCHES += \
 	patches/cacao/ignore-tests.patch
 endif
 
-if BUILD_JAMVM
-ICEDTEA_PATCHES += \
-        patches/jamvm/jmm_GetLongAttribute_201.patch \
-	patches/jamvm/ignore-assertions-and-verify-options.patch
-endif
-
 if ENABLE_PULSE_JAVA
 ICEDTEA_PATCHES += \
 	patches/pulse-soundproperties.patch
@@ -585,7 +607,7 @@ ICEDTEA_ENV_ECJ = $(ICEDTEA_ENV) \
 	BOOTCLASSPATH_RT_LIBGCJ="-bootclasspath $(RUNTIME)" \
 	CLASSPATH="" \
 	LD_LIBRARY_PATH="" \
-	GENSRCDIR="$(abs_top_builddir)/generated" \
+	GENSRCDIR="$(GENERATED_BUILD_DIR)" \
 	JAR_KNOWS_ATFILE="$(JAR_KNOWS_ATFILE)" \
 	JAR_KNOWS_J_OPTIONS="$(JAR_KNOWS_J_OPTIONS)" \
 	JAR_ACCEPTS_STDIN_LIST="$(JAR_ACCEPTS_STDIN_LIST)" \
@@ -599,12 +621,10 @@ ICEDTEA_ENV_ECJ = $(ICEDTEA_ENV) \
 # FIXME (distclean): Add pulseaudio sources
 
 EXTRA_DIST = generated \
-	$(abs_top_srcdir)/patches/* \
-	contrib arm_port \
-	overlays \
+	$(top_srcdir)/patches/* \
+	contrib overlays \
 	jconsole.desktop policytool.desktop \
-	test/jtreg \
-	HACKING pulseaudio fsg.sh \
+	$(JTREG_SRCS) HACKING pulseaudio fsg.sh \
 	hotspot.map \
 	autogen.sh \
 	tapset/hotspot.stp.in \
@@ -628,7 +648,7 @@ clean-local: clean-jtreg clean-jtreg-reports $(PULSE_JAVA_CLEAN_TARGET) \
  clean-icedtea-against-ecj clean-extract-ecj clean-generated clean-replace-hotspot \
  clean-rewriter clean-rewrite-rhino clean-rt clean-bootstrap-directory \
  clean-bootstrap-directory-ecj clean-bootstrap-directory-symlink \
- clean-bootstrap-directory-symlink-ecj clean-fonts
+ clean-bootstrap-directory-symlink-ecj clean-fonts jtregcheck
 	if [ -e bootstrap ]; then \
 	  rmdir bootstrap ; \
 	fi
@@ -1017,11 +1037,9 @@ clean-replace-hotspot:
 	rm -f stamps/replace-hotspot.stamp
 
 stamps/generated.stamp: stamps/replace-hotspot.stamp
-	set -e ; \
-	if [ ! -e $(abs_top_builddir)/generated ]; then \
-	  cp -a $(abs_top_srcdir)/generated $(abs_top_builddir); \
-	  find $(abs_top_builddir)/generated -type f -exec chmod 640 '{}' ';' \
-	    -o -type d -exec chmod 750 '{}' ';'; \
+	if [ ! -e $(GENERATED_BUILD_DIR) ]; then \
+	  cp -a $(abs_top_srcdir)/generated $(GENERATED_BUILD_DIR) && \
+	  chmod -R ug+rwX $(GENERATED_BUILD_DIR) ; \
 	fi
 	mkdir -p stamps
 	touch stamps/generated.stamp
@@ -1167,11 +1185,14 @@ clean-patch:
 #FIXME (clean): Missing clean-versioning
 
 stamps/overlay.stamp: stamps/patch.stamp
-	cp -r $(abs_top_srcdir)/overlays/openjdk/* openjdk/
+	cp -a $(abs_top_srcdir)/overlays overlays.build
+	chmod -R ug+rwX overlays.build
+	cp -a overlays.build/openjdk/* openjdk/
 if ENABLE_NIO2
-	cp -r $(abs_top_srcdir)/overlays/nio2/openjdk/* openjdk/
+	cp -a overlays.build/nio2/openjdk/* openjdk/
 endif
-	cp -r $(abs_top_srcdir)/overlays/jpeg/openjdk/* openjdk/
+	cp -a overlays.build/jpeg/openjdk/* openjdk/
+	rm -rf overlays.build
 	touch stamps/overlay.stamp
 
 clean-overlay:
@@ -1259,7 +1280,7 @@ stamps/native-ecj.stamp:
 
 clean-native-ecj:
 	rm -f native-ecj
-	rm -rf stamps/native-ecj.stamp
+	rm -f stamps/native-ecj.stamp
 
 # bootstrap/ecj.
 stamps/bootstrap-directory-ecj.stamp: stamps/native-ecj.stamp
@@ -1313,8 +1334,7 @@ clean-bootstrap-directory:
 	rm -f stamps/bootstrap-directory.stamp
 
 # bootstrap/jdk1.6.0 to bootstrap/ecj symlink.
-stamps/bootstrap-directory-symlink-ecj.stamp: \
-	stamps/bootstrap-directory-ecj.stamp
+stamps/bootstrap-directory-symlink-ecj.stamp: stamps/bootstrap-directory-ecj.stamp
 	rm -f $(BOOT_DIR)
 	ln -sf $(ECJ_BOOT_DIR) $(BOOT_DIR)
 	mkdir -p stamps
@@ -1759,7 +1779,9 @@ clean-pulse-java:
 	rm -rf $(PULSE_JAVA_NATIVE_BUILDDIR)
 	rm -rf $(PULSE_JAVA_CLASS_DIR)
 	rm -f $(PULSE_JAVA_BUILDDIR)/pulse-java.jar
-	rmdir $(PULSE_JAVA_BUILDDIR)
+	if [ -e $(PULSE_JAVA_BUILDDIR) ] ; then \
+	  rmdir $(PULSE_JAVA_BUILDDIR) ; \
+	fi
 	rm -f stamps/pulse-java*.stamp
 endif
 
@@ -1769,11 +1791,9 @@ endif
 
 stamps/rewriter.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP)
 if WITH_RHINO
-	mkdir -p $(abs_top_builddir)/rewriter.build && \
-	(cd $(abs_top_srcdir)/rewriter ; \
-	 $(BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) \
-	 -d $(abs_top_builddir)/rewriter.build $(REWRITER_SRCS) \
-	)
+	mkdir -p $(REWRITER_BUILD_DIR)
+	$(BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) \
+	 -d $(REWRITER_BUILD_DIR) $(REWRITER_SRCS)
 endif
 	mkdir -p stamps
 	touch stamps/rewriter.stamp
@@ -2089,8 +2109,8 @@ stamps/jtreg.stamp: stamps/icedtea-against-icedtea.stamp
 	rm -rf test/jtreg/classes
 	mkdir -p test/jtreg/classes
 	$(BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) -d test/jtreg/classes \
-	   -encoding iso-8859-1 `find $(abs_top_srcdir)/test/jtreg/com -name '*.java'`
-	(cd $(abs_top_srcdir)/test/jtreg; \
+	   -encoding iso-8859-1 `find $(JTREG_SRCS) -name '*.java'`
+	(cd $(JTREG_SRCS); \
 	 $(BOOT_DIR)/bin/jar cfm $(abs_top_builddir)/test/jtreg.jar \
 	   META-INF/MANIFEST.MF \
 	   legal  README JavaTest.cmdMgrs.lst JavaTest.toolMgrs.lst \
@@ -2136,7 +2156,7 @@ check-jdk: stamps/jtreg.stamp
 		-w:test/jdk/JTwork -r:test/jdk/JTreport \
 		$${ICEDTEA_JTREG_OTHERVM:--samevm} \
 		-jdk:$(BUILD_OUTPUT_DIR)/j2sdk-image \
-		-exclude:$(abs_top_srcdir)/test/jtreg/excludelist.jdk.jtx \
+		-exclude:$(JTREG_SRCS)/excludelist.jdk.jtx \
 		$(ICEDTEA_JTREG_OPTIONS) \
 		`pwd`/openjdk/jdk/test \
 	    | tee test/$@.log
@@ -2153,10 +2173,8 @@ jtreg_processes = ps x -ww -o pid,ppid,args \
 jtreg_pids = ps x --no-headers -ww -o pid,ppid,args \
 	| awk '$$2 == 1 && $$3 ~ /^$(subst /,\/,$(CURDIR)/$(sdkimg))/ {print $$1}'
 
-jtreg_checks = hotspot langtools jdk
-
-jtregcheck: jtreg $(jtreg_checks:%=check-%)
-	for i in hotspot langtools jdk; do \
+jtregcheck: jtreg $(TEST_SUITES:%=check-%)
+	for i in $(TEST_SUITES); do \
 	  echo "--------------- jtreg console summary for $$i ---------------"; \
 	  egrep -v '^(Passed:|Directory|Re[a-z]+\ written\ to)' test/check-$$i.log; \
 	done | tee test/jtreg-summary.log
@@ -2215,6 +2233,7 @@ clean-rt:
 	rm -f rt-source-files.txt
 if BOOTSTRAPPING
 	if [ -e $(ECJ_BOOT_DIR) ] ; then \
+	  mkdir -p $(ECJ_BOOT_DIR)/jre/lib ; \
 	  cp $(SYSTEM_JDK_DIR)/jre/lib/rt.jar $(ECJ_BOOT_DIR)/jre/lib/rt.jar ; \
 	fi
 endif
