@@ -1,3 +1,12 @@
+2011-10-26  Omair Majid  <omajid@redhat.com>
+
+	S7103224: collision between __LEAF define in interfaceSupport.hpp and
+	/usr/include/sys/cdefs.h with gcc
+	* NEWS: Update with fix.
+	* patches/openjdk/7103224-glibc_name_collision.patch: New file. Export of
+	OpenJDK changeset.
+	* Makefile.am (ICEDTEA_PATCHES): Add the above.
+
 2011-10-21  Andrew John Hughes  <ahughes@redhat.com>
 
 	* patches/security/20111018/7083012.patch:
