@@ -267,6 +267,19 @@
 #endif
         .endm
 
+@------------------------------------------------
+@ Rewrite pairs of bytecodes
+@
+@ The fast bytecodes that replace pairs of codes improve performance,
+@ but they cause races between threads and incorrect operation in some
+@ other cases too.  REWRITE_PAIRS disables rewriting bytecode pairs.
+@	
+@ Usage:
+@	REWRITE_PAIRS	<instruction>
+@------------------------------------------------
+	.macro	REWRITE_PAIRS	p1, p2, p3, p4
+        .endm
+
 	.macro	Opcode	label
 	ALIGN_OPCODE
 do_\label:
@@ -314,6 +327,63 @@ do_\label:
   .endif
 	.endm
 
+	.macro POPF0
+#ifdef __ARM_PCS_VFP
+	flds s0, [stack, #4]
+	add stack, #4
+#else
+	POP r0
+#endif
+	.endm
+	
+	.macro POPF1
+#ifdef __ARM_PCS_VFP
+	flds s1, [stack, #4]
+	add stack, #4
+#else
+	POP r0
+#endif
+	.endm
+	
+	.macro POPD0
+#ifdef __ARM_PCS_VFP
+	flds s0, [stack, #4]
+	flds s1, [stack, #8]
+	add stack, #8
+#else
+	POP r0, r1
+#endif
+	.endm
+	
+	.macro POPD1
+#ifdef __ARM_PCS_VFP
+	flds s2, [stack, #4]
+	flds s3, [stack, #8]
+	add stack, #8
+#else
+	POP r2, r3
+#endif
+	.endm
+	
+	.macro PUSHF0
+#ifdef __ARM_PCS_VFP
+	add stack, #-4
+	fsts s0, [stack, #4]
+#else
+	PUSH r0
+#endif
+	.endm
+	
+	.macro PUSHD0
+#ifdef __ARM_PCS_VFP
+	add stack, #-8
+	fsts s0, [stack, #4]
+	fsts s1, [stack, #8]
+#else
+	POP r0, r1
+#endif
+	.endm
+	
 	.macro	CACHE_JPC
 	ldr	jpc, [istate, #ISTATE_BCP]
 	.endm
@@ -496,19 +566,29 @@ do_\label:
 #else
 	.arch armv7-a
 #endif
+
 #ifdef HW_FP
+
+#ifdef __ARM_PCS_VFP
+ 	.fpu vfpv3-d16
+	.eabi_attribute Tag_ABI_HardFP_use, 3
+	.eabi_attribute Tag_ABI_VFP_args, 1
+#else // __ARM_PCS_VFP
 	.fpu vfp
-#else
+#endif // __ARM_PCS_VFP
+
+#else // HW_FP
 	.fpu softvfp
-#endif
-	.eabi_attribute 20, 1
-	.eabi_attribute 21, 1
-	.eabi_attribute 23, 3
-	.eabi_attribute 24, 1
-	.eabi_attribute 25, 1
-	.eabi_attribute 26, 2
-	.eabi_attribute 30, 2
-	.eabi_attribute 18, 4
+#endif // HW_FP
+
+	.eabi_attribute Tag_ABI_FP_denormal, 1
+	.eabi_attribute Tag_ABI_FP_exceptions, 1
+	.eabi_attribute Tag_ABI_FP_number_model, 3
+	.eabi_attribute Tag_ABI_align8_needed, 1
+	.eabi_attribute Tag_ABI_align8_preserved, 1
+	.eabi_attribute Tag_ABI_enum_size, 2
+	.eabi_attribute Tag_ABI_optimization_goals, 2
+	.eabi_attribute Tag_ABI_PCS_wchar_t, 4
 
 	.text
 
@@ -623,6 +703,10 @@ asm_generate_method_entry:
 	mov	r3, r0
 	mov	r0, #0
 #ifdef PRODUCT
+	// These entry points can not be used when PRODUCT is
+	// undefined because the BytecodeInterpreter class is virtual
+	// so it has an extra word (the vtable pointer) at its
+	// beginning.
 	adrl	ip, dispatch_init_adcon
 	ldm	ip, {r1, r2}
 	add	r1, r1, ip
@@ -641,8 +725,8 @@ asm_generate_method_entry:
 	cmp	r3, #14
 	adrcc	ip, asm_method_table
 	ldrcc	r0, [ip, r3, lsl #2]
-1:
 #endif // PRODUCT
+1:
 	bx	lr
 asm_method_table:
 	.word	normal_entry
@@ -688,6 +772,7 @@ fast_empty_entry:
 	ldr	r1, [r2, #THREAD_JAVA_SP]
 	add	r1, r1, r3, lsl #2
 	str	r1, [r2, #THREAD_JAVA_SP]
+	mov	r0, #0	@ deoptimized_frames = 0
 	bx	lr
 .L1359:
 	.word	_GLOBAL_OFFSET_TABLE_-(.LPIC19+8)
@@ -829,7 +914,8 @@ abort_table:
 	ALIGN_CODE
 native_entry:
 	stmfd	arm_sp!, {regset, lr}
-	bl	fast_native_entry
+	bl	fast_native_entry	
+	mov	r0, #0	@ deoptimized_frames = 0
 	ldmia	sp!, {regset, pc}
 
 	ALIGN_CODE
@@ -872,6 +958,7 @@ fast_native_entry:
 	str	r7, [r9, #ISTATE_LOCALS]
 	str	r10, [r9, #ISTATE_CONSTANTS]
 	str	r11, [r9, #ISTATE_METHOD]
+	str     r9, [r9, #ISTATE_SELF_LINK]
 
 @	stmia	r9, {r2, r5, r7, r10, r11}
 	ldr	r1, [r2, #THREAD_STACK_SIZE]
@@ -886,12 +973,18 @@ fast_native_entry:
 	blt	.fast_native_entry_throw_stack_overflow
 	cmp	r5, #0
 	bne	.fast_native_entry_got_handleraddr
+	str	r5, [r9, #THREAD_LAST_JAVA_SP] @ r5 is zero at this point
+	str	r0, [r9, #THREAD_LAST_JAVA_FP]
+	ldr	r0, [r9, #THREAD_JAVA_SP]
 	str	r0, [r9, #THREAD_LAST_JAVA_SP]
 	mov	r0, r9
 	mov	r1, r11
 	bl	_ZN18InterpreterRuntime19prepare_native_callEP10JavaThreadP13methodOopDesc
 	ldr	r11, [r9, #THREAD_TOP_ZERO_FRAME]
 	ldr	r1, [r9, #THREAD_PENDING_EXC]
+	str	r5, [r9, #THREAD_LAST_JAVA_SP]  @ r5 is zero at this point
+	str	r5, [r9, #THREAD_LAST_JAVA_FP]
+	ldr	r5, [r9, #THREAD_JAVA_SP]
 	str	r5, [r9, #THREAD_LAST_JAVA_SP]
 	ldr	r11, [r11, #-72 + ISTATE_METHOD]
 	cmp	r1, #0
@@ -902,8 +995,13 @@ fast_native_entry:
 	cmp	r5, r2
 	bne	.fast_native_entry_get_handler
 	ldr	r3, [r9, #THREAD_TOP_ZERO_FRAME]
+	stmfd	sp!, {r2}
 	mov	r2, #0
+        str     r2, [r9, #THREAD_LAST_JAVA_SP]
+	ldmfd	sp!, {r2}
 	mov	r0, r9
+	str	r3, [r9, #THREAD_LAST_JAVA_FP]
+	ldr	r3, [r9, #THREAD_JAVA_SP]
 	str	r3, [r9, #THREAD_LAST_JAVA_SP]
 	mov	r3, r2
 	mov	r1, r11
@@ -914,6 +1012,7 @@ fast_native_entry:
 	ldr	r11, [r11, #-72 + ISTATE_METHOD]
 	cmp	r1, #0
 	str	r3, [r9, #THREAD_LAST_JAVA_SP]
+	str	r3, [r9, #THREAD_LAST_JAVA_FP]
 	mov	r5, r0
 	bne	.fast_native_entry_exception
 .fast_native_entry_get_handler:
@@ -928,7 +1027,7 @@ fast_native_entry:
 	sub	arm_sp, arm_sp, #16
 
 	bic	lr, lr, #1
-	add	r1, r5, #24
+	add	r1, r5, #SIZEOF_FFI_CIF
 
 	sub	arm_sp, arm_sp, lr, lsl #2
 	add	r2, r9, #THREAD_JNI_ENVIRONMENT
@@ -936,6 +1035,10 @@ fast_native_entry:
 	mov	lr, arm_sp
 	str	r2, [lr], #4
 
+#ifdef __ARM_PCS_VFP
+	mov	r10, #0xff	@ bitmap for floating-point register set
+	orr	r10, #0xff00
+#endif	
 	ldr	r2, [r11, #METHOD_ACCESSFLAGS]
 	add	r1, r1, #4
 	tst	r2, #JVM_ACC_STATIC
@@ -948,7 +1051,6 @@ fast_native_entry:
 	add	r1, r1, #4
 	str	r2, [r3]
 
-
 .do_fast_copy_args:
 	cmp	ip, #0
 	blt	.fast_no_args
@@ -956,9 +1058,12 @@ fast_native_entry:
 .fast_copy_args:
 	ldr	r0, [r1], #4
 	ldrh	r3, [r0, #6]
-	ldr	r2, [r7], #-4
 	cmp	r3, #FFI_TYPE_DOUBLE
-	cmpne	r3, #FFI_TYPE_SINT64
+	beq	.fast_copy_double
+	cmp	r3, #FFI_TYPE_FLOAT
+	beq	.fast_copy_float
+	ldr	r2, [r7], #-4
+	cmp	r3, #FFI_TYPE_SINT64
 	beq	.fast_copy_long
 
 	cmp	r3, #FFI_TYPE_POINTER
@@ -968,6 +1073,69 @@ fast_native_entry:
 	str	r2, [lr], #4
 	bge	.fast_copy_args
 	b	.fast_no_args
+
+#ifdef __ARM_PCS_VFP
+	// FIXME: These macros are very inefficient
+	.macro	FIND_LOWEST_BIT	rd, rs
+	mov	\rd, #0
+0:	tst	\rs, #1
+	lsr	\rs, #1
+	addeq	\rd, #1
+	beq	0b
+	lsl	\rs, \rd
+	lsl	\rs, #1
+	.endm
+	
+	.macro	FIND_LOWEST_BIT_PAIR rd, rs
+	stmfd	sp!, {r1}
+	stmfd	sp!, {\rs}
+	mov	\rd, #0
+0:	tst	\rs, #1
+	lsr	\rs, #2
+	addeq	\rd, #2
+	beq	0b
+	ldmfd	sp!, {\rs}
+	mov	r1, #3
+	lsl	r1, \rd
+	bic	\rs, r1
+	ldmfd	sp!, {r1}
+	.endm
+	
+.fast_copy_double:
+	orrs	r10, r10
+	ldreq	r2, [r7], #-4	
+	beq	vm_fatal_error
+	FIND_LOWEST_BIT_PAIR r0, r10
+	adrl	r2, .copy_double_table
+	add	pc, r2, r0, asl#5
+
+.fast_copy_float:
+	orrs	r10, r10
+	ldreq	r2, [r7], #-4	
+	beq	vm_fatal_error
+	FIND_LOWEST_BIT r0, r10
+	adr	r2, .copy_float_table
+	add	pc, r2, r0, asl#6
+#else
+
+.fast_copy_double:
+	ldr	r2, [r7], #-4
+	tst	lr, #4
+	ldr	r3, [r7], #-4
+	addne	lr, lr, #4
+	str	r2, [lr, #4]
+	subs	ip, ip, #2
+	str	r3, [lr], #8
+	bge	.fast_copy_args
+	b	.fast_no_args
+	
+.fast_copy_float:
+	ldr	r2, [r7], #-4
+	subs	ip, ip, #1
+	str	r2, [lr], #4
+	bge	.fast_copy_args
+
+#endif
 
 .fast_copy_long:
 	tst	lr, #4
@@ -990,8 +1158,14 @@ fast_native_entry:
 	ldr	r0, [r9, #THREAD_TOP_ZERO_FRAME]
 	mov	r2, #_thread_in_native
 
-	str	r0, [r9, #THREAD_LAST_JAVA_SP]
+	mov	ip, #0
+	str	ip, [r9, #THREAD_LAST_JAVA_SP]
+
+	str	r0, [r9, #THREAD_LAST_JAVA_FP]
 	str	r2, [r9, #THREAD_STATE]
+
+	ldr	r2, [r9, #THREAD_JAVA_SP]
+	str	r2, [r9, #THREAD_LAST_JAVA_SP]
 
 	ldr	ip, [r11, #METHOD_NATIVEHANDLER]
 	ldrh	r11, [r11, #METHOD_SIZEOFPARAMETERS]
@@ -1017,8 +1191,9 @@ fast_native_entry:
 
 	str	r3, [r9, #THREAD_STATE]
 	str	r2, [r9, #THREAD_LAST_JAVA_SP]
+	str	r2, [r9, #THREAD_LAST_JAVA_FP]
 
-	add	r2, r5, #24
+	add	r2, r5, #SIZEOF_FFI_CIF
 	ldr	r3, [r5, #4]
 
 	ldr	r5, [r9, #THREAD_TOP_ZERO_FRAME]
@@ -1039,8 +1214,13 @@ fast_native_entry:
 .return_type_table:
 	.word	.fast_native_return_void	@ FFI_TYPE_VOID	== 0
 	.word	0
+#ifdef __ARM_PCS_VFP
+	.word	.fast_native_return_float	@ FFI_TYPE_FLOAT == 2
+	.word	.fast_native_return_double	@ FFI_TYPE_DOUBLE == 3
+#else
 	.word	.fast_native_return_w		@ FFI_TYPE_FLOAT == 2
 	.word	.fast_native_return_dw		@ FFI_TYPE_DOUBLE == 3
+#endif
 	.word	0
 	.word	.fast_native_return_bool	@ FFI_TYPE_BOOL == 5
 	.word	.fast_native_return_byte	@ FFI_TYPE_SINT8 == 6
@@ -1053,6 +1233,25 @@ fast_native_entry:
 	.word	0
 	.word	.fast_native_return_obj		@ FFI_TYPE_POINTER == 14
 
+#ifdef __ARM_PCS_VFP
+.fast_native_return_double:
+	fsts	s0, [r5, #-8]
+	str	lr, [r9, #THREAD_TOP_ZERO_FRAME]
+	str	tmp1, [ip, #JNIHANDLEBLOCK_TOP]
+	fsts	s1, [r5, #-4]
+	add	r5, #-8
+	str	r5, [r9, #THREAD_JAVA_SP]
+	mov	r0, #0	@ deoptimized_frames = 0
+	ldmfd	arm_sp!, {fast_regset, pc}
+.fast_native_return_float:
+	fsts	s0, [r5, #-4]
+	str	lr, [r9, #THREAD_TOP_ZERO_FRAME]
+	str	tmp1, [ip, #JNIHANDLEBLOCK_TOP]
+	add	r5, #-4
+	str	r5, [r9, #THREAD_JAVA_SP]
+	mov	r0, #0	@ deoptimized_frames = 0
+	ldmfd	arm_sp!, {fast_regset, pc}
+#endif
 .fast_native_return_dw:
 	str	r0, [r5, #-8]!
 	str	lr, [r9, #THREAD_TOP_ZERO_FRAME]
@@ -1067,6 +1266,7 @@ fast_native_entry:
 	str	tmp1, [ip, #JNIHANDLEBLOCK_TOP]
 	str	r0, [r5, #-4]!
 	str	r5, [r9, #THREAD_JAVA_SP]
+	mov	r0, #0	@ deoptimized_frames = 0
 	ldmfd	arm_sp!, {fast_regset, pc}
 .fast_native_return_char:
 	mov	r0, r0, lsl #16
@@ -1075,6 +1275,7 @@ fast_native_entry:
 	str	tmp1, [ip, #JNIHANDLEBLOCK_TOP]
 	str	r0, [r5, #-4]!
 	str	r5, [r9, #THREAD_JAVA_SP]
+	mov	r0, #0	@ deoptimized_frames = 0
 	ldmfd	arm_sp!, {fast_regset, pc}
 .fast_native_return_bool:
 	ands	r0, r0, #255
@@ -1083,6 +1284,7 @@ fast_native_entry:
 	str	tmp1, [ip, #JNIHANDLEBLOCK_TOP]
 	str	r0, [r5, #-4]!
 	str	r5, [r9, #THREAD_JAVA_SP]
+	mov	r0, #0	@ deoptimized_frames = 0
 	ldmfd	arm_sp!, {fast_regset, pc}
 .fast_native_return_obj:
 	cmp	r0, #0
@@ -1091,6 +1293,7 @@ fast_native_entry:
 	str	lr, [r9, #THREAD_TOP_ZERO_FRAME]
 	str	tmp1, [ip, #JNIHANDLEBLOCK_TOP]
 	str	r5, [r9, #THREAD_JAVA_SP]
+	mov	r0, #0	@ deoptimized_frames = 0
 	ldmfd	arm_sp!, {fast_regset, pc}
 .fast_native_return_short:
 	mov	r0, r0, lsl #16
@@ -1102,14 +1305,16 @@ fast_native_entry:
 	str	tmp1, [ip, #JNIHANDLEBLOCK_TOP]
 .fast_native_exit:
 	str	r5, [r9, #THREAD_JAVA_SP]
+	mov	r0, #0	@ deoptimized_frames = 0
 	ldmfd	arm_sp!, {fast_regset, pc}
 
 .fast_native_entry_throw_stack_overflow:
-	str	r0, [r9, #THREAD_LAST_JAVA_SP]
+	str	r0, [r9, #THREAD_LAST_JAVA_FP]
 	mov	r0, r9
 	bl	_ZN18InterpreterRuntime24throw_StackOverflowErrorEP10JavaThread
 	mov	r3, #0
 	ldr	r1, [r9, #THREAD_PENDING_EXC]
+	str	r3, [r9, #THREAD_LAST_JAVA_FP]
 	str	r3, [r9, #THREAD_LAST_JAVA_SP]
 .fast_native_entry_exception:
 	ldr	r5, [r9, #THREAD_TOP_ZERO_FRAME]
@@ -1126,6 +1331,84 @@ fast_native_entry:
 	bl	_ZN10JavaThread40check_special_condition_for_native_transEPS_
 	ldmia	arm_sp!, {r0, r1}
 	b	.fast_native_entry_do_return
+
+
+	
+#ifdef __ARM_PCS_VFP
+
+	.macro	COPY_FLOAT rs, rd, rcount
+	.align	6
+	flds	\rd, [\rs]
+	add	\rs, #-4
+	subs	\rcount, #1
+	bge	.fast_copy_args
+	b	.fast_no_args
+	.endm
+
+	.align	6
+.copy_float_table:
+	COPY_FLOAT r7, s0, ip
+	COPY_FLOAT r7, s1, ip
+	COPY_FLOAT r7, s2, ip
+	COPY_FLOAT r7, s3, ip
+	COPY_FLOAT r7, s4, ip
+	COPY_FLOAT r7, s5, ip
+	COPY_FLOAT r7, s6, ip
+	COPY_FLOAT r7, s7, ip
+	COPY_FLOAT r7, s8, ip
+	COPY_FLOAT r7, s9, ip
+	COPY_FLOAT r7, s10, ip
+	COPY_FLOAT r7, s11, ip
+	COPY_FLOAT r7, s12, ip
+	COPY_FLOAT r7, s13, ip
+	COPY_FLOAT r7, s14, ip
+	COPY_FLOAT r7, s15, ip
+	COPY_FLOAT r7, s16, ip
+	COPY_FLOAT r7, s17, ip
+	COPY_FLOAT r7, s18, ip
+	COPY_FLOAT r7, s19, ip
+	COPY_FLOAT r7, s20, ip
+	COPY_FLOAT r7, s21, ip
+	COPY_FLOAT r7, s22, ip
+	COPY_FLOAT r7, s23, ip
+	COPY_FLOAT r7, s24, ip
+	COPY_FLOAT r7, s25, ip
+	COPY_FLOAT r7, s26, ip
+	COPY_FLOAT r7, s27, ip
+	COPY_FLOAT r7, s28, ip
+	COPY_FLOAT r7, s29, ip
+	COPY_FLOAT r7, s30, ip
+	COPY_FLOAT r7, s31, ip
+
+	.macro	COPY_DOUBLE rs, rdlo, rdhi, rcount
+	.align	6
+	flds	\rdhi, [\rs]
+	flds	\rdlo, [\rs, #-4]
+	add	\rs, #-8
+	subs	\rcount, #2
+	bge	.fast_copy_args
+	b	.fast_no_args
+	.endm
+
+	.align	6
+.copy_double_table:
+	COPY_DOUBLE r7, s0, s1, ip
+	COPY_DOUBLE r7, s2, s3, ip
+	COPY_DOUBLE r7, s4, s5, ip
+	COPY_DOUBLE r7, s6, s7, ip
+	COPY_DOUBLE r7, s8, s9, ip
+	COPY_DOUBLE r7, s10, s11, ip
+	COPY_DOUBLE r7, s12, s13, ip
+	COPY_DOUBLE r7, s14, s15, ip
+	COPY_DOUBLE r7, s16, s17, ip
+	COPY_DOUBLE r7, s18, s19, ip
+	COPY_DOUBLE r7, s20, s21, ip
+	COPY_DOUBLE r7, s22, s23, ip
+	COPY_DOUBLE r7, s24, s25, ip
+	COPY_DOUBLE r7, s26, s27, ip
+	COPY_DOUBLE r7, s28, s29, ip
+	COPY_DOUBLE r7, s30, s31, ip
+#endif
 
 #include "bytecodes_arm.s"
 
@@ -1337,6 +1620,7 @@ osr_migrate:
 	mov	lr, pc
 	ldr	pc, [tmp1]
 
+	mov	r0, #0	@ deoptimized_frames = 0
 	ldmfd	arm_sp!, {fast_regset, pc}
 
 #endif // THUMB2EE
@@ -1757,7 +2041,8 @@ resolve_invoke:
 	DISPATCH 3
 
 bytecode_interpreter_str:
-	.ascii  "[Bytecode Interpreter]\000"
+	.ascii  __FILE__
+	.byte 0
 	ALIGN_WORD
 
 	Opcode	newarray
@@ -1955,8 +2240,13 @@ bytecode_interpreter_str:
 	str	r3, [istate, #ISTATE_STACK_LIMIT]
 	str	r0, [r1, #4]
 	ldr	r1, [istate, #ISTATE_THREAD]
+
+	str	r0, [r1, #THREAD_LAST_JAVA_SP]  @ set SP to zero before setting FP
 	ldr	r3, [r1, #THREAD_TOP_ZERO_FRAME]
+	str	r3, [r1, #THREAD_LAST_JAVA_FP]
+	ldr	r3, [r1, #THREAD_JAVA_SP]	
 	str	r3, [r1, #THREAD_LAST_JAVA_SP]
+
 	CACHE_STACK
 	ldr	sl, [istate, #ISTATE_STACK_BASE]
 	ldr	r3, [stack, #4]
@@ -2268,10 +2558,11 @@ do_wide_iinc:
 	adrcs	ip, unknown_bytecode
 	ldrcc	ip, [r2, r3, asl #2]
 	adr	r2, unimplemented_opcode_msg
-	mov	r1, #99
+	ldr	r1, =__LINE__
 	str	ip, [arm_sp, #-8]!
-	bl	_Z19report_fatal_varargPKciS0_z
+	bl	Helper_report_fatal
 	b	breakpoint
+	.ltorg
 unimplemented_opcode_msg:
 	.ascii  "\011*** Unimplemented opcode: %d = %s\012\000"
 unknown_bytecode:
@@ -2300,6 +2591,7 @@ unknown_bytecode:
 normal_entry_synchronized:
 	stmfd	arm_sp!, {regset, lr}
 	bl	fast_normal_entry_synchronized
+	mov	r0, #0	@ deoptimized_frames = 0
 	ldmfd	arm_sp!, {regset, pc}
 
 	ALIGN_CODE
@@ -2347,15 +2639,23 @@ fast_normal_entry_synchronized:
 	bl	build_frame
 	mov	tmp_vvv, r0
 	ldr	r3, [tmp1, #THREAD_TOP_ZERO_FRAME]
-	sub	r0, r0, #72
+	sub	r0, r0, #72	@ This mysterious constant is actually the offset of
+				@ the next frame field.  Why is "ISTATE_NEXT_FRAME"
+				@ not used here?
 	mov	istate, r0
 	str	r3, [tmp_vvv, #0]
 	adrl	ip, dispatch_init_adcon
+	ldr	r1, [tmp1, #THREAD_JAVA_SP]
+	str	r1, [tmp1, #THREAD_LAST_JAVA_SP]
 	ldm	ip, {r0, r1}
 	add	r0, r0, ip
 	str	tmp_vvv, [tmp1, #THREAD_TOP_ZERO_FRAME]
 @	CACHE_JPC
-	str	tmp_vvv, [tmp1, #THREAD_LAST_JAVA_SP]
+	mov	r2, #0  @ set SP to zero before setting FP
+	str	r2, [tmp1, #THREAD_LAST_JAVA_SP]
+	str	tmp_vvv, [tmp1, #THREAD_LAST_JAVA_FP]
+	ldr	r3, [tmp1, #THREAD_JAVA_SP]
+	str	r3, [tmp1, #THREAD_LAST_JAVA_SP]
 	add	dispatch, r1, r0
 	ldr	r0, [istate, #ISTATE_METHOD]
 	ldr	r3, [r0, #METHOD_ACCESSFLAGS]
@@ -2500,6 +2800,7 @@ sync_method_entry_freq_count_overflow:
 	ldr	ip, [tmp2, #METHOD_FROM_INTERPRETED]
 	mov	r1, #0
 	str	ip, [istate, #36]
+	str	r1, [tmp1, #THREAD_LAST_JAVA_FP]
 	str	r1, [tmp1, #THREAD_LAST_JAVA_SP]
 
 	add	stack, stack, #4
@@ -2528,9 +2829,15 @@ sync_method_entry_freq_count_overflow:
 	ldr	r2, [istate, #ISTATE_STACK_LIMIT]
 	sub	stack, stack, #4
 
+	ldr	r1, [ip, #THREAD_JAVA_SP]
+	stmfd	arm_sp!, {r1}
+	mov	r1, #0
+	str	r1, [ip, #THREAD_LAST_JAVA_SP]
 	ldr	r1, [ip, #THREAD_TOP_ZERO_FRAME]
 	add	r2, r2, #4
 	str	r2, [ip, #THREAD_JAVA_SP]
+	str	r1, [ip, #THREAD_LAST_JAVA_FP]
+	ldmfd	arm_sp!, {r1}
 	str	r1, [ip, #THREAD_LAST_JAVA_SP]
 	DISPATCH_START	5
 	ldr	r3, [ip, #4]
@@ -2679,8 +2986,11 @@ normal_dispatch_and_return:
 
 	ldr	r1, [ip, #THREAD_TOP_ZERO_FRAME]
 	add	r2, r2, #4
+	mov	r3, #0
+	str	r3, [ip, #THREAD_LAST_JAVA_SP]
 	str	r2, [ip, #THREAD_JAVA_SP]
-	str	r1, [ip, #THREAD_LAST_JAVA_SP]
+	str	r1, [ip, #THREAD_LAST_JAVA_FP]
+	str	r2, [ip, #THREAD_LAST_JAVA_SP]
 	DISPATCH_START	3
 	ldr	r3, [ip, #4]
 	DISPATCH_NEXT
@@ -2717,6 +3027,7 @@ normal_dispatch_and_return:
 	ldr	tmp1, [istate, #ISTATE_THREAD]
 	str	r3, [istate, #36]
 	str	r1, [tmp1, #THREAD_LAST_JAVA_SP]
+	str	r1, [tmp1, #THREAD_LAST_JAVA_FP]
 
 	add	stack, stack, #4
 	str	stack, [tmp1, #THREAD_JAVA_SP]
@@ -2780,6 +3091,7 @@ normal_entry:
 
 	bl	fast_normal_entry
 
+	mov	r0, #0	@ deoptimized_frames = 0
 	ldmfd	arm_sp!, {regset, pc}
 
 	ALIGN_CODE
@@ -2810,7 +3122,7 @@ fast_normal_entry:
 
         subs    r5, r7, #2
         tst     r7, #1
-        strne   r1, [stack, #-4]!
+        strne   r1, [stack, #-4]!  // stack->push(0);
         bcc     3f
 1:
         str     r1, [stack, #-4]
@@ -2820,14 +3132,13 @@ fast_normal_entry:
 3:
 	ldr	r3, [tmp1, #THREAD_TOP_ZERO_FRAME]
 	mov	lr, #0
-        sub     istate, stack, #FRAME_SIZE
+        sub     istate, stack, #FRAME_SIZE     // stack->push(INTERPRETER_FRAME);
         sub     r2, istate, r2, lsl #2
         str     lr, [istate, #ISTATE_MSG]
 	str	r2, [tmp1, #THREAD_JAVA_SP]
         sub     r5, r2, #4                      @ stack limit = istate - stackwords - 4
 	str	r3, [istate, #ISTATE_NEXT_FRAME]
 	str	ip, [istate, #ISTATE_FRAME_TYPE]
-@	str	istate, [istate, #ISTATE_SELF_LINK]
 	str	istate, [istate, #ISTATE_MONITOR_BASE]
 	str	r5, [istate, #ISTATE_STACK_LIMIT]
 	str	istate, [istate, #ISTATE_STACK_BASE]
@@ -2842,6 +3153,10 @@ fast_normal_entry:
         ldr     constpool, [constpool, #CONSTANTPOOL_CACHE]
         str     ip, [tmp1, #THREAD_TOP_ZERO_FRAME]
   USEC	ldr	r3, [r10, #METHOD_INVOCATIONCOUNTER]
+	mov	r1, #0
+        str     r1, [tmp1, #THREAD_LAST_JAVA_SP]
+        str     ip, [tmp1, #THREAD_LAST_JAVA_FP]
+	ldr	ip, [tmp1, #THREAD_JAVA_SP]
         str     ip, [tmp1, #THREAD_LAST_JAVA_SP]
 	DISPATCH_NEXT
   USEC	ldr	lr, [dispatch, #InterpreterInvocationLimit_Address-XXX]
@@ -2857,6 +3172,7 @@ fast_normal_entry:
 	DISPATCH_NEXT
 	DISPATCH_NEXT
 	str	r10, [istate, #ISTATE_METHOD]
+ 	str	istate, [istate, #ISTATE_SELF_LINK]
 @	mov	lr, #0
 @        str     lr, [istate, #ISTATE_PREV_LINK]
 @	str	lr, [istate, #ISTATE_CALLEE]
@@ -2919,6 +3235,7 @@ handle_return:
 
 	ldr	r2, [tmp_xxx, #THREAD_TOP_ZERO_FRAME]
 	str	r3, [tmp_xxx, #THREAD_LAST_JAVA_SP]
+	str	r3, [tmp_xxx, #THREAD_LAST_JAVA_FP]
 	ldr	r0, [istate, #ISTATE_METHOD]
 	ldr	r3, [r2, #0]
 	ldrh	r0, [r0, #40]
@@ -2939,19 +3256,28 @@ handle_return:
 
 	str	r1, [tmp_xxx, #THREAD_JAVA_SP]
 
+	mov	r0, #0	@ deoptimized_frames = 0
 	ldmfd	arm_sp!, {fast_regset, pc}
 
 @ ----------------------------------------------------------------------------------------
 stack_overflow_no_frame:
 	mov	r0, tmp1
+	mov	ip, #0
+	str	ip, [r0, #THREAD_LAST_JAVA_SP]
 	ldr	ip, [r0, #THREAD_TOP_ZERO_FRAME]
+	str	ip, [r0, #THREAD_LAST_JAVA_FP]
+	ldr	ip, [r0, #THREAD_JAVA_SP]
 	str	ip, [r0, #THREAD_LAST_JAVA_SP]
 	bl	_ZN18InterpreterRuntime24throw_StackOverflowErrorEP10JavaThread
 	ldmfd	arm_sp!, {regset, pc}
 
 stack_overflow_before_frame:
 	mov	r0, tmp1
+	mov	ip, #0
+	str	ip, [r0, #THREAD_LAST_JAVA_SP]
 	ldr	ip, [r0, #THREAD_TOP_ZERO_FRAME]
+	str	ip, [r0, #THREAD_LAST_JAVA_FP]
+	ldr	ip, [r0, #THREAD_JAVA_SP]
 	str	ip, [r0, #THREAD_LAST_JAVA_SP]
 	bl	_ZN18InterpreterRuntime24throw_StackOverflowErrorEP10JavaThread
 	ldmfd	arm_sp!, {fast_regset, pc}
@@ -3049,6 +3375,7 @@ handle_exception_with_bcp:
 
 	str	r1, [tmp_xxx, #THREAD_JAVA_SP]
 
+	mov	r0, #0	@ deoptimized_frames = 0
 	ldmfd	arm_sp!, {fast_regset, pc}
 
 return_check_monitors:
@@ -3129,6 +3456,7 @@ slow_accessor_entry:
   USEC	bcs	normal_entry
 
 	ldr	r1, [r0, #METHOD_CONSTMETHOD]
+
 	ldrb	r3, [r1, #CONSTMETHOD_CODEOFFSET+2]
 	ldrb	r1, [r1, #CONSTMETHOD_CODEOFFSET+3]
 	ldr	ip, [r0, #METHOD_CONSTANTS]
@@ -3153,6 +3481,7 @@ slow_accessor_entry:
 
 	ldr	r0, [r3, r1]
 	str	r0, [ip, #0]
+	mov	r0, #0
 	bx	lr
 
 .fast_accessor_non_w:
@@ -4893,6 +5222,7 @@ istub_invoke:
 	mov	r1, #0
 	str	ip, [istate, #36]
 	str	r1, [Rthread, #THREAD_LAST_JAVA_SP]
+	str	r1, [Rthread, #THREAD_LAST_JAVA_FP]
 
 	add	stack, stack, #4
 	str	stack, [Rthread, #THREAD_JAVA_SP]
@@ -4914,8 +5244,11 @@ istub_invoke:
 
 	ldr	r1, [Rthread, #THREAD_TOP_ZERO_FRAME]
 	add	r2, r2, #4
+	mov	r0, #0
+	str	r0, [Rthread, #THREAD_LAST_JAVA_SP]
 	str	r2, [Rthread, #THREAD_JAVA_SP]
-	str	r1, [Rthread, #THREAD_LAST_JAVA_SP]
+	str	r1, [Rthread, #THREAD_LAST_JAVA_FP]
+	str	r2, [Rthread, #THREAD_LAST_JAVA_SP]
 	ldr	r3, [Rthread, #4]
 	cmp	r3, #0
 	bne	istub_exception
@@ -5011,6 +5344,7 @@ Thumb2_invokevirtual_stub:
 	mov	r1, #0
         ldr     ip, [tmp2, #METHOD_FROM_INTERPRETED]
         str     r1, [Rthread, #THREAD_LAST_JAVA_SP]
+        str     r1, [Rthread, #THREAD_LAST_JAVA_FP]
         str     ip, [istate, #36]
 
         add     stack, stack, #4
@@ -5031,10 +5365,13 @@ Thumb2_invokevirtual_stub:
 	ldr	stack, [Rthread, #THREAD_JAVA_SP]
 	ldr	r2, [istate, #ISTATE_STACK_LIMIT]
 
+	mov	r0, #0
+	str	r0, [Rthread, #THREAD_LAST_JAVA_SP]
 	ldr	r1, [Rthread, #THREAD_TOP_ZERO_FRAME]
 	add	r2, r2, #4
 	str	r2, [Rthread, #THREAD_JAVA_SP]
-	str	r1, [Rthread, #THREAD_LAST_JAVA_SP]
+	str	r1, [Rthread, #THREAD_LAST_JAVA_FP]
+	str	r2, [Rthread, #THREAD_LAST_JAVA_SP]
 	ldr	r3, [Rthread, #4]
 	cmp	r3, #0
 	bne	istub_exception
@@ -5099,11 +5436,15 @@ Thumb2_invokestatic_stub:
 
         ldr     r1, [Rthread, #THREAD_TOP_ZERO_FRAME]
         add     r2, r2, #4
+	mov	r3, #0
+	str	r3, [Rthread, #THREAD_LAST_JAVA_SP]	
+        str     r1, [Rthread, #THREAD_LAST_JAVA_FP]
         str     r2, [Rthread, #THREAD_JAVA_SP]
-        str     r1, [Rthread, #THREAD_LAST_JAVA_SP]
+        str     r2, [Rthread, #THREAD_LAST_JAVA_SP]
         ldr     r3, [Rthread, #4]
         cmp     r3, #0
         bne     istub_exception
+	mov	r0, #0
         ldmia   sp!, {ip, pc}
 
 isstub_resolve:
@@ -5172,7 +5513,8 @@ Thumb2_invokespecial_stub:
         ldr     r1, [Rthread, #THREAD_TOP_ZERO_FRAME]
         add     r2, r2, #4
         str     r2, [Rthread, #THREAD_JAVA_SP]
-        str     r1, [Rthread, #THREAD_LAST_JAVA_SP]
+        str     r2, [Rthread, #THREAD_LAST_JAVA_SP]
+        str     r1, [Rthread, #THREAD_LAST_JAVA_FP]
         ldr     r3, [Rthread, #4]
         cmp     r3, #0
         bne     istub_exception
@@ -6263,9 +6605,14 @@ Thumb2_NullPtr_Handler:
 
 Thumb2_Stack_Overflow:
 	mov	r0, r2
+	mov	r2, #0
+	str	r2, [r0, #THREAD_LAST_JAVA_SP]
 	ldr	ip, [r0, #THREAD_TOP_ZERO_FRAME]
-	str	ip, [r0, #THREAD_LAST_JAVA_SP]
+	ldr	r2, [r0, #THREAD_JAVA_SP]
+	str	ip, [r0, #THREAD_LAST_JAVA_FP]
+	str	r2, [r0, #THREAD_LAST_JAVA_SP]
 	bl	_ZN18InterpreterRuntime24throw_StackOverflowErrorEP10JavaThread
+	mov	r0, #0
 	ldmfd	arm_sp!, {fast_regset, pc}
 
 	.global	Thumb2_Exit_To_Interpreter

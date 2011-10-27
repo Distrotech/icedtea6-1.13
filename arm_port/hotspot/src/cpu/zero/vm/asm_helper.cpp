@@ -20,9 +20,27 @@
 #define ARCH_VFP	(1<<17)
 #define ARCH_CLZ	(1<<18)
 
-#ifndef STATIC_OFFSETS
+#include "precompiled.hpp"
+#include "asm/assembler.hpp"
+#include "interp_masm_zero.hpp"
+#include "interpreter/bytecodeInterpreter.hpp"
+#include "interpreter/bytecodeInterpreter.inline.hpp"
+#include "interpreter/interpreter.hpp"
+#include "interpreter/interpreterRuntime.hpp"
+#include "oops/methodDataOop.hpp"
+#include "oops/methodOop.hpp"
+#include "oops/oop.inline.hpp"
+#include "prims/jvmtiExport.hpp"
+#include "prims/jvmtiThreadState.hpp"
+#include "runtime/deoptimization.hpp"
+#include "runtime/frame.inline.hpp"
+#include "runtime/sharedRuntime.hpp"
+#include "runtime/stubRoutines.hpp"
+#include "runtime/synchronizer.hpp"
+#include "runtime/vframeArray.hpp"
+#include "utilities/debug.hpp"
 
-#include "incls/_bytecodeInterpreter.cpp.incl"
+#ifndef STATIC_OFFSETS
 
 #include <linux/auxvec.h>
 #include <asm/hwcap.h>
@@ -345,11 +363,16 @@ extern "C" address Helper_HandleException(interpreterState istate, JavaThread *t
     return 0;
 }
 
+extern "C" void Helper_report_fatal(char *filename, int line,
+				    char *msg, int opcode, char *name)
+{
+  report_fatal(filename, line,
+	       err_msg(msg, opcode, name));
+}
+
 #endif // STATIC_OFFSETS
 
 #ifdef STATIC_OFFSETS
-
-#include "incls/_precompiled.incl"
 
 class VMStructs {
 public:
@@ -410,7 +433,10 @@ void VMStructs::print_vm_offsets(void)
   print_def("THREAD_HANDLE_AREA", offset_of(JavaThread, _handle_area));
   print_def("THREAD_STACK_BASE", offset_of(JavaThread, _stack_base));
   print_def("THREAD_STACK_SIZE", offset_of(JavaThread, _stack_size));
-  print_def("THREAD_LAST_JAVA_SP", offset_of(JavaThread, _anchor) + offset_of(JavaFrameAnchor, _last_Java_sp));
+  print_def("THREAD_LAST_JAVA_SP", offset_of(JavaThread, _anchor)
+	    + offset_of(JavaFrameAnchor, _last_Java_sp));
+  print_def("THREAD_LAST_JAVA_FP", offset_of(JavaThread, _anchor)
+	    + offset_of(JavaFrameAnchor, _last_Java_fp));
   print_def("THREAD_JNI_ENVIRONMENT", offset_of(JavaThread, _jni_environment));
   print_def("THREAD_VM_RESULT", offset_of(JavaThread, _vm_result));
   print_def("THREAD_STATE", offset_of(JavaThread, _thread_state));
@@ -470,6 +496,7 @@ void VMStructs::print_vm_offsets(void)
   print_def("BASE_OFFSET_LONG", arrayOopDesc::base_offset_in_bytes(T_LONG));
   nl();
   print_def("SIZEOF_HANDLEMARK", sizeof(HandleMark));
+  print_def("SIZEOF_FFI_CIF", sizeof(ffi_cif));
 }
 
 int main(void)

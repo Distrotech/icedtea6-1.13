@@ -51,7 +51,8 @@ static char *t2ee_print_regusage;
 
 #include <sys/mman.h>
 
-#include "incls/_precompiled.incl"
+#include "precompiled.hpp"
+#include "interpreter/bytecodes.hpp"
 
 #ifdef T2EE_PRINT_DISASS
 #include "dis-asm.h"
@@ -282,32 +283,33 @@ static char *t2ee_print_regusage;
 #define opc_invokestaticresolved	0xe1
 #define opc_invokevfinal		0xe2
 #define opc_iload_iload			0xe3
-#define opc_iload_iload_N		0xe4
-#define opc_return_register_finalizer	0xe5
-#define opc_dmac			0xe6
-#define opc_iload_0_iconst_N		0xe7
-#define opc_iload_1_iconst_N		0xe8
-#define opc_iload_2_iconst_N		0xe9
-#define opc_iload_3_iconst_N		0xea
-#define opc_iload_iconst_N		0xeb
-#define opc_iadd_istore_N		0xec
-#define opc_isub_istore_N		0xed
-#define opc_iand_istore_N		0xee
-#define opc_ior_istore_N		0xef
-#define opc_ixor_istore_N		0xf0
-#define opc_iadd_u4store		0xf1
-#define opc_isub_u4store		0xf2
-#define opc_iand_u4store		0xf3
-#define opc_ior_u4store			0xf4
-#define opc_ixor_u4store		0xf5
-#define opc_iload_0_iload		0xf6
-#define opc_iload_1_iload		0xf7
-#define opc_iload_2_iload		0xf8
-#define opc_iload_3_iload		0xf9
-#define opc_iload_0_iload_N		0xfa
-#define opc_iload_1_iload_N		0xfb
-#define opc_iload_2_iload_N		0xfc
-#define opc_iload_3_iload_N		0xfd
+
+#define opc_return_register_finalizer   0xe7
+#define opc_dmac                        0xe8
+#define opc_iload_0_iconst_N            0xe9
+#define opc_iload_1_iconst_N            0xea
+#define opc_iload_2_iconst_N            0xeb
+#define opc_iload_3_iconst_N            0xec
+#define opc_iload_iconst_N              0xed
+#define opc_iadd_istore_N               0xee
+#define opc_isub_istore_N               0xef
+#define opc_iand_istore_N               0xf0
+#define opc_ior_istore_N                0xf1
+#define opc_ixor_istore_N               0xf2
+#define opc_iadd_u4store                0xf3
+#define opc_isub_u4store                0xf4
+#define opc_iand_u4store                0xf5
+#define opc_ior_u4store                 0xf6
+#define opc_ixor_u4store                0xf7
+#define opc_iload_0_iload               0xf8
+#define opc_iload_1_iload               0xf9
+#define opc_iload_2_iload               0xfa
+#define opc_iload_3_iload               0xfb
+#define opc_iload_0_iload_N             0xfc
+#define opc_iload_1_iload_N             0xfd
+#define opc_iload_2_iload_N             0xfe
+#define opc_iload_3_iload_N             0xff
+
 
 #define H_IREM				0
 #define H_IDIV				1
@@ -776,7 +778,12 @@ void Thumb2_disass(Thumb2_Info *jinfo)
 	    opcode = (unsigned)Bytecodes::java_code((Bytecodes::Code)opcode);
 	}
 	len = Bytecodes::length_for((Bytecodes::Code)opcode);
-	if (len <= 0) len = Bytecodes::special_length_at((address)(code_base+bci), (address)(code_base+code_size));
+	if (len <= 0) {
+	  Bytecodes::Code code = Bytecodes::code_at(NULL, (address)(code_base+bci));
+	  len = (Bytecodes::special_length_at
+		 (code,
+		  (address)(code_base+bci), (address)(code_base+code_size)));
+	}
 	switch (opcode) {
 	  case opc_tableswitch: {
 	    int nbci = (bci & ~3) + 4;
@@ -1150,6 +1157,8 @@ static const unsigned bcinfo[256] = {
 	BCI(3, 0, 0, 1, 0, 0, 0, 0, 0),	// invokevfinal
 	BCI(2, 0, 1, 0, 1, 0, 0, 0, BCI_TYPE_INT),	// iload_iload
 	BCI(2, 0, 1, 0, 1, 0, 0, 0, BCI_TYPE_INT),	// iload_iload_N
+	BCI(0, 0, 0, 1, 0, 0, 0, 0, 0),	// impdep1
+	BCI(0, 0, 0, 1, 0, 0, 0, 0, 0),	// impdep2
 	BCI(1, 0, 0, 1, 0, 0, 0, 0, 0),	// return_register_finalizer
 	BCI(1, 4, 2, 0, 0, 0, 0, 0, 0),	// dmac
 	BCI(1, 0, 1, 0, 1, 1, 0, 0, BCI_TYPE_INT),	// iload_0_iconst_N
@@ -1175,8 +1184,6 @@ static const unsigned bcinfo[256] = {
 	BCI(1, 0, 1, 0, 1, 1, 0, 1, BCI_TYPE_INT),	// iload_1_iload_N
 	BCI(1, 0, 1, 0, 1, 1, 0, 2, BCI_TYPE_INT),	// iload_2_iload_N
 	BCI(1, 0, 1, 0, 1, 1, 0, 3, BCI_TYPE_INT),	// iload_3_iload_N
-	BCI(0, 0, 0, 1, 0, 0, 0, 0, 0),	// impdep1
-	BCI(0, 0, 0, 1, 0, 0, 0, 0, 0),	// impdep2
 };
 
 void Thumb2_pass1(Thumb2_Info *jinfo, unsigned bci)
@@ -1369,7 +1376,7 @@ void Thumb2_pass1(Thumb2_Info *jinfo, unsigned bci)
 
       default:
 	opcode = code_base[bci];
-	fatal1("Undefined opcode %d\n", opcode);
+	fatal(err_msg("Undefined opcode %d\n", opcode));
 	break;
     }
   }
@@ -1492,7 +1499,7 @@ int Thumb2_is_zombie(Thumb2_Info *jinfo, unsigned bci)
 
 	default:
 	  opcode = code_base[bci];
-	  fatal1("Undefined opcode %d\n", opcode);
+	  fatal("Undefined opcode %d\n", opcode);
 	  break;
       }
     }
@@ -1725,7 +1732,7 @@ void Thumb2_pass2(Thumb2_Info *jinfo, unsigned stackdepth, unsigned bci)
       case opc_putstatic:
       case opc_getfield:
       case opc_putfield: {
-	int index = GET_JAVA_U2(code_base+bci+1);
+	int index = GET_NATIVE_U2(code_base+bci+1);
 	constantPoolOop pool = jinfo->method->constants();
 	symbolOop sig = pool->signature_ref_at(index);
 	jbyte *base = sig->base();
@@ -1753,7 +1760,7 @@ void Thumb2_pass2(Thumb2_Info *jinfo, unsigned stackdepth, unsigned bci)
       case opc_invokevirtual:
       case opc_invokespecial:
       case opc_invokestatic: {
-	int index = GET_JAVA_U2(code_base+bci+1);
+	int index = GET_NATIVE_U2(code_base+bci+1);
 	constantPoolOop pool = jinfo->method->constants();
 	//symbolOop name = pool->name_ref_at(index);
 	symbolOop sig = pool->signature_ref_at(index);
@@ -1791,13 +1798,13 @@ void Thumb2_pass2(Thumb2_Info *jinfo, unsigned stackdepth, unsigned bci)
 	  else if (opcode == opc_lstore || opcode == opc_dstore)
 	    stackdepth -= 2;
 	  else if (opcode != opc_ret)
-	    fatal1("Undefined wide opcode %d\n", opcode);
+	    fatal(err_msg("Undefined wide opcode %d\n", opcode));
 	}
 	break;
 
       default:
 	opcode = code_base[bci];
-	fatal1("Undefined opcode %d\n", opcode);
+	fatal(err_msg("Undefined opcode %d\n", opcode));
 	break;
     }
   }
@@ -4365,6 +4372,7 @@ void Thumb2_Return(Thumb2_Info *jinfo, unsigned opcode)
 
   mov_imm(jinfo->codebuf, ARM_LR, 0);
   str_imm(jinfo->codebuf, ARM_LR, Rthread, THREAD_LAST_JAVA_SP, 1, 0);
+  str_imm(jinfo->codebuf, ARM_LR, Rthread, THREAD_LAST_JAVA_FP, 1, 0);
   ldr_imm(jinfo->codebuf, Rstack, Rthread, THREAD_TOP_ZERO_FRAME, 1, 0);
   ldr_imm(jinfo->codebuf, ARM_LR, Rstack, 0, 1, 0);
 
@@ -4383,6 +4391,12 @@ void Thumb2_Return(Thumb2_Info *jinfo, unsigned opcode)
   str_imm(jinfo->codebuf, Rstack, Rthread, THREAD_JAVA_SP, 1, 0);
   Thumb2_Debug(jinfo, H_DEBUG_METHODEXIT);
 //  enter_leave(jinfo->codebuf, 0);
+
+  // deoptimized_frames = 0
+  // FIXME: This should be done in the slow entry, but only three
+  // words are allocated there for the instructions.
+  mov_imm(jinfo->codebuf, ARM_R0, 0);
+
   ldm(jinfo->codebuf, C_REGSET + (1<<ARM_PC), ARM_SP, POP_FD, 1);
 }
 
@@ -4655,8 +4669,13 @@ void Thumb2_Enter(Thumb2_Info *jinfo)
 
   str_imm(jinfo->codebuf, Ristate, Ristate, ISTATE_MONITOR_BASE, 1, 0);
 
+  mov_imm(jinfo->codebuf, ARM_R1, 0);   // set last SP to zero before
+                                        // setting FP
+  str_imm(jinfo->codebuf, ARM_R1, ARM_R2, THREAD_LAST_JAVA_SP, 1, 0);
   add_imm(jinfo->codebuf, ARM_R3, Ristate, ISTATE_NEXT_FRAME);
   str_imm(jinfo->codebuf, ARM_R3, ARM_R2, THREAD_TOP_ZERO_FRAME, 1, 0);
+  str_imm(jinfo->codebuf, ARM_R3, ARM_R2, THREAD_LAST_JAVA_FP, 1, 0);
+  ldr_imm(jinfo->codebuf, ARM_R3, ARM_R2, THREAD_JAVA_SP, 1, 0);
   str_imm(jinfo->codebuf, ARM_R3, ARM_R2, THREAD_LAST_JAVA_SP, 1, 0);
 
   ldr_imm(jinfo->codebuf, ARM_R3, ARM_IP, CONSTANTPOOL_CACHE, 1, 0);
@@ -4793,7 +4812,12 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
     }
 
     len = Bytecodes::length_for((Bytecodes::Code)opcode);
-    if (len <= 0) len = Bytecodes::special_length_at((address)(code_base+bci), (address)(code_base+code_size));
+    if (len <= 0) {
+      Bytecodes::Code code = Bytecodes::code_at(NULL, (address)(code_base+bci));
+      len = (Bytecodes::special_length_at
+	     (code,
+	      (address)(code_base+bci), (address)(code_base+code_size)));
+    }
 
     if (IS_DEAD(stackinfo) || IS_ZOMBIE(stackinfo)) {
       unsigned zlen = 0;
@@ -4820,7 +4844,12 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	}
 
 	len = Bytecodes::length_for((Bytecodes::Code)opcode);
-	if (len <= 0) len = Bytecodes::special_length_at((address)(code_base+bci), (address)(code_base+code_size));
+	if (len <= 0) {
+	  Bytecodes::Code code = Bytecodes::code_at(NULL, (address)(code_base+bci));
+	  len = (Bytecodes::special_length_at
+		 (code,
+		  (address)(code_base+bci), (address)(code_base+code_size)));
+	}
 
       } while (1);
 #ifdef T2EE_PRINT_DISASS
@@ -4853,7 +4882,12 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	}
 
 	len = Bytecodes::length_for((Bytecodes::Code)opcode);
-	if (len <= 0) len = Bytecodes::special_length_at((address)(code_base+bci), (address)(code_base+code_size));
+	if (len <= 0) {
+	  Bytecodes::Code code = Bytecodes::code_at(NULL, (address)(code_base+bci));
+	  len = (Bytecodes::special_length_at
+		 (code,
+		  (address)(code_base+bci), (address)(code_base+code_size)));
+	}
 
       } while (1);
 #ifdef T2EE_PRINT_DISASS
@@ -5524,7 +5558,7 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 
         cache = cp->entry_at(index);
         if (!cache->is_resolved((Bytecodes::Code)opcode)) {
-	  int java_index = GET_JAVA_U2(code_base+bci+1);
+ 	  int java_index = GET_NATIVE_U2(code_base+bci+1);
 	  constantPoolOop pool = jinfo->method->constants();
 	  symbolOop sig = pool->signature_ref_at(java_index);
 	  jbyte *base = sig->base();
@@ -5587,7 +5621,7 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 
         cache = cp->entry_at(index);
         if (!cache->is_resolved((Bytecodes::Code)opcode)) {
-	  int java_index = GET_JAVA_U2(code_base+bci+1);
+	  int java_index = GET_NATIVE_U2(code_base+bci+1);
 	  constantPoolOop pool = jinfo->method->constants();
 	  symbolOop sig = pool->signature_ref_at(java_index);
 	  jbyte *base = sig->base();
@@ -5645,7 +5679,7 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 
         cache = cp->entry_at(index);
         if (!cache->is_resolved((Bytecodes::Code)opcode)) {
-	  int java_index = GET_JAVA_U2(code_base+bci+1);
+	  int java_index = GET_NATIVE_U2(code_base+bci+1);
 	  constantPoolOop pool = jinfo->method->constants();
 	  symbolOop sig = pool->signature_ref_at(java_index);
 	  jbyte *base = sig->base();
@@ -5703,7 +5737,7 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 
         cache = cp->entry_at(index);
         if (!cache->is_resolved((Bytecodes::Code)opcode)) {
-	  int java_index = GET_JAVA_U2(code_base+bci+1);
+	  int java_index = GET_NATIVE_U2(code_base+bci+1);
 	  constantPoolOop pool = jinfo->method->constants();
 	  symbolOop sig = pool->signature_ref_at(java_index);
 	  jbyte *base = sig->base();
@@ -5833,6 +5867,7 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	if (opcode == opc_invokespecial)
 	  ldr_imm(jinfo->codebuf, ARM_R3, ARM_R3, 0, 1, 0); // Null pointer check - cbz better?
 	str_imm(jinfo->codebuf, ARM_R1, Rthread, THREAD_LAST_JAVA_SP, 1, 0);
+	str_imm(jinfo->codebuf, ARM_R1, Rthread, THREAD_LAST_JAVA_FP, 1, 0);
 	ldr_imm(jinfo->codebuf, ARM_R1, ARM_R0, METHOD_FROM_INTERPRETED, 1, 0);
   str_imm(jinfo->codebuf, ARM_R2, Ristate, ISTATE_BCP, 1, 0);
 	str_imm(jinfo->codebuf, Rstack, Rthread, THREAD_JAVA_SP, 1, 0);
@@ -5854,11 +5889,15 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
 	ldr_imm(jinfo->codebuf, ARM_R2, Ristate, ISTATE_STACK_LIMIT, 1, 0);
 	JASSERT(!(bc_stackinfo[bci+len] & BC_COMPILED), "code already compiled for this bytecode?");
 	Thumb2_invoke_restore(jinfo, bc_stackinfo[bci+len] & ~BC_FLAGS_MASK);
+	mov_imm(jinfo->codebuf, ARM_R0, 0);   // set last SP to zero
+					      // before setting FP
+	str_imm(jinfo->codebuf, ARM_R0, Rthread, THREAD_LAST_JAVA_SP, 1, 0);
 	ldr_imm(jinfo->codebuf, ARM_R1, Rthread, THREAD_TOP_ZERO_FRAME, 1, 0);
 	add_imm(jinfo->codebuf, ARM_R2, ARM_R2, 4);
 	ldr_imm(jinfo->codebuf, ARM_R3, Rthread, THREAD_PENDING_EXC, 1, 0);
 	str_imm(jinfo->codebuf, ARM_R2, Rthread, THREAD_JAVA_SP, 1, 0);
-	str_imm(jinfo->codebuf, ARM_R1, Rthread, THREAD_LAST_JAVA_SP, 1, 0);
+	str_imm(jinfo->codebuf, ARM_R1, Rthread, THREAD_LAST_JAVA_FP, 1, 0);
+	str_imm(jinfo->codebuf, ARM_R2, Rthread, THREAD_LAST_JAVA_SP, 1, 0);
 	cmp_imm(jinfo->codebuf, ARM_R3, 0);
 	it(jinfo->codebuf, COND_NE, IT_MASK_T);
 	bl(jinfo->codebuf, handlers[H_HANDLE_EXCEPTION_NO_REGS]);
@@ -5949,6 +5988,7 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
   ldr_imm(jinfo->codebuf, ARM_R2, ARM_R2, METHOD_CONSTMETHOD, 1, 0);
 	  ldr_imm(jinfo->codebuf, ARM_R3, ARM_R3, 0, 1, 0); // Null pointer check - cbz better?
 	  str_imm(jinfo->codebuf, ARM_R1, Rthread, THREAD_LAST_JAVA_SP, 1, 0);
+	  str_imm(jinfo->codebuf, ARM_R1, Rthread, THREAD_LAST_JAVA_FP, 1, 0);
 	  ldr_imm(jinfo->codebuf, ARM_R1, ARM_R0, METHOD_FROM_INTERPRETED, 1, 0);
   add_imm(jinfo->codebuf, ARM_R2, ARM_R2, bci+CONSTMETHOD_CODEOFFSET);
 	  str_imm(jinfo->codebuf, Rstack, Rthread, THREAD_JAVA_SP, 1, 0);
@@ -5975,7 +6015,8 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
 	  add_imm(jinfo->codebuf, ARM_R2, ARM_R2, 4);
 	  ldr_imm(jinfo->codebuf, ARM_R3, Rthread, THREAD_PENDING_EXC, 1, 0);
 	  str_imm(jinfo->codebuf, ARM_R2, Rthread, THREAD_JAVA_SP, 1, 0);
-	  str_imm(jinfo->codebuf, ARM_R1, Rthread, THREAD_LAST_JAVA_SP, 1, 0);
+	str_imm(jinfo->codebuf, ARM_R2, Rthread, THREAD_LAST_JAVA_SP, 1, 0);
+	str_imm(jinfo->codebuf, ARM_R1, Rthread, THREAD_LAST_JAVA_FP, 1, 0);
 	cmp_imm(jinfo->codebuf, ARM_R3, 0);
 	it(jinfo->codebuf, COND_NE, IT_MASK_T);
 	bl(jinfo->codebuf, handlers[H_HANDLE_EXCEPTION_NO_REGS]);
@@ -5989,6 +6030,7 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
 	  ldr_imm(jinfo->codebuf, ARM_R0, ARM_R3, INSTANCEKLASS_VTABLE_OFFSET + cache->f2() * 4, 1, 0);
   add_imm(jinfo->codebuf, ARM_R2, ARM_R2, bci+CONSTMETHOD_CODEOFFSET);
 	  str_imm(jinfo->codebuf, ARM_R1, Rthread, THREAD_LAST_JAVA_SP, 1, 0);
+	  str_imm(jinfo->codebuf, ARM_R1, Rthread, THREAD_LAST_JAVA_FP, 1, 0);
 	  ldr_imm(jinfo->codebuf, ARM_R1, ARM_R0, METHOD_FROM_INTERPRETED, 1, 0);
   str_imm(jinfo->codebuf, ARM_R2, Ristate, ISTATE_BCP, 1, 0);
 	  str_imm(jinfo->codebuf, Rstack, Rthread, THREAD_JAVA_SP, 1, 0);
@@ -6014,7 +6056,8 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
 	  add_imm(jinfo->codebuf, ARM_R2, ARM_R2, 4);
 	  ldr_imm(jinfo->codebuf, ARM_R3, Rthread, THREAD_PENDING_EXC, 1, 0);
 	  str_imm(jinfo->codebuf, ARM_R2, Rthread, THREAD_JAVA_SP, 1, 0);
-	  str_imm(jinfo->codebuf, ARM_R1, Rthread, THREAD_LAST_JAVA_SP, 1, 0);
+	  str_imm(jinfo->codebuf, ARM_R1, Rthread, THREAD_LAST_JAVA_FP, 1, 0);
+	  str_imm(jinfo->codebuf, ARM_R2, Rthread, THREAD_LAST_JAVA_SP, 1, 0);
 	cmp_imm(jinfo->codebuf, ARM_R3, 0);
 	it(jinfo->codebuf, COND_NE, IT_MASK_T);
 	bl(jinfo->codebuf, handlers[H_HANDLE_EXCEPTION_NO_REGS]);
@@ -6478,7 +6521,7 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
 	    Thumb2_Store(jinfo, local, stackdepth);
 	  else if (opcode == opc_lstore || opcode == opc_dstore)
 	    Thumb2_StoreX2(jinfo, local, stackdepth);
-	  else fatal1("Undefined wide opcode %d\n", opcode);
+	  else fatal(err_msg("Undefined wide opcode %d\n", opcode));
 	}
 	break;
       }
@@ -6611,7 +6654,12 @@ void Thumb2_tablegen(Compiled_Method *cmethod, Thumb2_Info *jinfo)
       continue;
     } else {
       int len = Bytecodes::length_for((Bytecodes::Code)opcode);
-      if (len <= 0) len = Bytecodes::special_length_at((address)(code_base+bci), (address)(code_base+code_size));
+      if (len <= 0) {
+	Bytecodes::Code code = Bytecodes::code_at(NULL, (address)(code_base+bci));
+	len = (Bytecodes::special_length_at
+	       (code,
+		(address)(code_base+bci), (address)(code_base+code_size)));
+      }
       bci += len;
     }
   }
@@ -7141,6 +7189,9 @@ extern "C" void Thumb2_Initialize(void)
 #if 1
   memcpy(cb->hp, Thumb2_stubs, STUBS_SIZE);
 
+  // fprintf(stderr, "Thumb2_stubs offset: 0x%x\n",
+  // 	  (char*)(cb->hp) - (char*)Thumb2_stubs);
+
   handlers[H_IDIV] = (unsigned)(cb->hp + IDIV_STUB);
   handlers[H_IREM] = (unsigned)(cb->hp + IREM_STUB);
   handlers[H_INVOKEINTERFACE] = (unsigned)(cb->hp + INVOKEINTERFACE_STUB);
@@ -7201,12 +7252,30 @@ extern "C" void Thumb2_Initialize(void)
   mov_reg(&codebuf, ARM_PC, ARM_R3);
 
   handlers[H_DREM] = out_pos(&codebuf);
+  stm(&codebuf, (1<<ARM_LR), ARM_SP, PUSH_FD, 1);
   mov_imm(&codebuf, ARM_IP, (u32)fmod);
-  mov_reg(&codebuf, ARM_PC, ARM_IP);
+#ifdef __ARM_PCS_VFP
+  vmov_reg_d_toVFP(&codebuf, VFP_D0, ARM_R0, ARM_R1);
+  vmov_reg_d_toVFP(&codebuf, VFP_D1, ARM_R2, ARM_R3);
+#endif
+  blx_reg(&codebuf, ARM_IP);
+#ifdef __ARM_PCS_VFP
+  vmov_reg_d_toARM(&codebuf, ARM_R0, ARM_R1, VFP_D0);
+#endif
+  ldm(&codebuf, (1<<ARM_PC), ARM_SP, POP_FD, 1);
 
   handlers[H_FREM] = out_pos(&codebuf);
+  stm(&codebuf, (1<<ARM_LR), ARM_SP, PUSH_FD, 1);
   mov_imm(&codebuf, ARM_R3, (u32)fmodf);
-  mov_reg(&codebuf, ARM_PC, ARM_R3);
+#ifdef __ARM_PCS_VFP
+  vmov_reg_s_toVFP(&codebuf, VFP_S0, ARM_R0);
+  vmov_reg_s_toVFP(&codebuf, VFP_S1, ARM_R1);
+#endif
+  blx_reg(&codebuf, ARM_R3);
+#ifdef __ARM_PCS_VFP
+  vmov_reg_s_toARM(&codebuf, ARM_R0, VFP_S0);
+#endif
+  ldm(&codebuf, (1<<ARM_PC), ARM_SP, POP_FD, 1);
 
   handlers[H_I2F] = out_pos(&codebuf);
   mov_imm(&codebuf, ARM_IP, (u32)__aeabi_i2f);
@@ -7226,10 +7295,16 @@ extern "C" void Thumb2_Initialize(void)
 
   handlers[H_F2I] = out_pos(&codebuf);
   mov_imm(&codebuf, ARM_IP, (u32)_ZN13SharedRuntime3f2iEf);
+#ifdef __ARM_PCS_VFP
+  vmov_reg_s_toVFP(&codebuf, VFP_S0, ARM_R0);
+#endif
   mov_reg(&codebuf, ARM_PC, ARM_IP);
 
   handlers[H_F2L] = out_pos(&codebuf);
   mov_imm(&codebuf, ARM_IP, (u32)_ZN13SharedRuntime3f2lEf);
+#ifdef __ARM_PCS_VFP
+  vmov_reg_s_toVFP(&codebuf, VFP_S0, ARM_R0);
+#endif
   mov_reg(&codebuf, ARM_PC, ARM_IP);
 
   handlers[H_F2D] = out_pos(&codebuf);
@@ -7238,10 +7313,16 @@ extern "C" void Thumb2_Initialize(void)
 
   handlers[H_D2I] = out_pos(&codebuf);
   mov_imm(&codebuf, ARM_IP, (u32)_ZN13SharedRuntime3d2iEd);
+#ifdef __ARM_PCS_VFP
+  vmov_reg_d_toVFP(&codebuf, VFP_S0, ARM_R0, ARM_R1);
+#endif
   mov_reg(&codebuf, ARM_PC, ARM_IP);
 
   handlers[H_D2L] = out_pos(&codebuf);
   mov_imm(&codebuf, ARM_IP, (u32)_ZN13SharedRuntime3d2lEd);
+#ifdef __ARM_PCS_VFP
+  vmov_reg_d_toVFP(&codebuf, VFP_S0, ARM_R0, ARM_R1);
+#endif
   mov_reg(&codebuf, ARM_PC, ARM_IP);
 
   handlers[H_D2F] = out_pos(&codebuf);

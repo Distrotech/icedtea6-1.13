@@ -625,7 +625,8 @@ ICEDTEA_ENV_ECJ = $(ICEDTEA_ENV) \
 
 EXTRA_DIST = generated \
 	$(top_srcdir)/patches/* \
-	contrib overlays \
+	contrib arm_port \
+	overlays \
 	jconsole.desktop policytool.desktop \
 	$(JTREG_SRCS) HACKING pulseaudio fsg.sh \
 	hotspot.map \
@@ -1045,7 +1046,7 @@ if !WITH_ALT_HSBUILD
 	for target in $(abs_top_srcdir)/arm_port/hotspot/tools \
 		      $(abs_top_srcdir)/arm_port/hotspot/src/*cpu/* ; do \
 	  link=$$(dirname $$target | sed 's/^.*arm_port/openjdk/'); \
-	  cp -rv $$target $$link; \
+	  cp -rlv $$target $$link; \
 	done
 endif
 	mkdir -p stamps
@@ -1059,7 +1060,7 @@ clean-ports:
 	done
 	rm -f stamps/ports.stamp
 
-+stamps/generated.stamp: stamps/ports.stamp
+stamps/generated.stamp: stamps/ports.stamp
 	if [ ! -e $(GENERATED_BUILD_DIR) ]; then \
 	  cp -a $(abs_top_srcdir)/generated $(GENERATED_BUILD_DIR) && \
 	  chmod -R ug+rwX $(GENERATED_BUILD_DIR) ; \

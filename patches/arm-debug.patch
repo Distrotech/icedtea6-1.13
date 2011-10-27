@@ -1,0 +1,41 @@
+--- openjdk/hotspot/src/share/vm/utilities/vmError.cpp	2011-09-16 19:04:00.000000000 +0100
++++ openjdk/hotspot/src/share/vm/utilities/vmError.cpp	2011-09-19 11:40:10.000000000 +0100
+@@ -238,6 +238,18 @@
+   return buf;
+ }
+ 
++extern "C" void ps() {
++  fdStream out(defaultStream::output_fd());
++  JavaThread* thread = JavaThread::active();
++  char *buf = new char[1024*1024];
++  VMError err(thread, "", 0, "", "");
++
++  err.print_stack_trace(&out, thread, buf, 1024*1024, true);
++
++  delete[] buf;
++}
++
++
+ void VMError::print_stack_trace(outputStream* st, JavaThread* jt,
+                                 char* buf, int buflen, bool verbose) {
+ #ifdef ZERO
+--- openjdk/hotspot/src/share/vm/utilities/vmError.hpp	2011-07-05 14:31:05.000000000 -0400
++++ openjdk/hotspot/src/share/vm/utilities/vmError.hpp	2011-09-19 13:38:35.000000000 -0400
+@@ -30,6 +30,8 @@
+ 
+ class VM_ReportJavaOutOfMemory;
+ 
++extern "C" void ps();
++
+ class VMError : public StackObj {
+   friend class VM_ReportJavaOutOfMemory;
+ 
+@@ -89,6 +91,8 @@
+   const char* detail_msg() const { return _detail_msg; }
+   bool should_report_bug(unsigned int id) { return id != oom_error; }
+ 
++  friend void ps();
++
+ public:
+   // Constructor for crashes
+   VMError(Thread* thread, unsigned int sig, address pc, void* siginfo,

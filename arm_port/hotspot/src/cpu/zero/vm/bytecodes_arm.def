@@ -265,35 +265,35 @@ invokevfinal 		= 0xe2, 3
 iload_iload	= 0xe3, 4
 iload_iload_N	= 0xe4, 3
 
-@return_register_finalizer = 0xe5, 1
+@return_register_finalizer = 0xe7, 1
 
-iload_0_iconst_N        = 0xe7, 2
-iload_1_iconst_N        = 0xe8, 2
-iload_2_iconst_N        = 0xe9, 2
-iload_3_iconst_N        = 0xea, 2
-iload_iconst_N          = 0xeb, 3
-iadd_istore_N		= 0xec, 2
-isub_istore_N		= 0xed, 2
-iand_istore_N		= 0xee, 2
-ior_istore_N		= 0xef, 2
-ixor_istore_N		= 0xf0, 2
-iadd_u4store		= 0xf1, 3
-isub_u4store		= 0xf2, 3
-iand_u4store		= 0xf3, 3
-ior_u4store		= 0xf4, 3
-ixor_u4store		= 0xf5, 3
-iload_0_iload		= 0xf6, 3
-iload_1_iload		= 0xf7, 3
-iload_2_iload		= 0xf8, 3
-iload_3_iload		= 0xf9, 3
-iload_0_iload_N		= 0xfa, 2
-iload_1_iload_N		= 0xfb, 2
-iload_2_iload_N		= 0xfc, 2
-iload_3_iload_N		= 0xfd, 2
+iload_0_iconst_N        = 0xe9, 2
+iload_1_iconst_N        = 0xea, 2
+iload_2_iconst_N        = 0xeb, 2
+iload_3_iconst_N        = 0xec, 2
+iload_iconst_N          = 0xed, 3
+iadd_istore_N           = 0xee, 2
+isub_istore_N           = 0xef, 2
+iand_istore_N           = 0xf0, 2
+ior_istore_N            = 0xf1, 2
+ixor_istore_N           = 0xf2, 2
+iadd_u4store            = 0xf3, 3
+isub_u4store            = 0xf4, 3
+iand_u4store            = 0xf5, 3
+ior_u4store             = 0xf6, 3
+ixor_u4store            = 0xf7, 3
+iload_0_iload           = 0xf8, 3
+iload_1_iload           = 0xf9, 3
+iload_2_iload           = 0xfa, 3
+iload_3_iload           = 0xfb, 3
+iload_0_iload_N         = 0xfc, 2
+iload_1_iload_N         = 0xfd, 2
+iload_2_iload_N         = 0xfe, 2
+iload_3_iload_N         = 0xff, 2
 
-#endif // FAST_BYTECODES
+#endif
 
-return_register_finalizer = 0xe5, 1
+return_register_finalizer = 0xe7, 1
 
 (nop) {
 	DISPATCH	\seq_len
@@ -965,24 +965,18 @@ return_register_finalizer = 0xe5, 1
 }
 
 (frem) frem {
-@ It must be possible to do better than this
-	POP	r0
-        bl      __aeabi_f2d
-	PUSH	r0, r1
-	GET_STACK	2, r0
-        bl      __aeabi_f2d
-	POP	r2, r3
-        bl      fmod
-        bl      __aeabi_d2f
-	PUT_STACK	0, r0
+	POPF1
+	POPF0
+        bl      fmodf
+	PUSHF0
 	DISPATCH	\seq_len
 }
 
 (drem) drem {
-	POP	r2, r3
-	POP	r0, r1
+	POPD1
+        POPD0
         bl      fmod
-	PUSH	r0, r1
+	PUSHD0
 	DISPATCH	\seq_len
 }
 
@@ -1241,14 +1235,14 @@ return_register_finalizer = 0xe5, 1
 }
 
 (f2i) f2i {
-	POP	r0
+	POPF0
         bl      _ZN13SharedRuntime3f2iEf
 	PUSH	r0
 	DISPATCH	\seq_len
 }
 
 (f2l) f2l {
-	POP	r0
+	POPF0
         bl      _ZN13SharedRuntime3f2lEf
 	PUSH	r0, r1
 	DISPATCH	\seq_len
@@ -1262,14 +1256,14 @@ return_register_finalizer = 0xe5, 1
 }
 
 (d2i) d2i {
-	POP	r0, r1
+	POPD0
         bl      _ZN13SharedRuntime3d2iEd
 	PUSH	r0
 	DISPATCH	\seq_len
 }
 
 (d2l) d2l {
-	POP	r0, r1
+	POPD0
         bl      _ZN13SharedRuntime3d2lEd
 	PUSH	r0, r1
 	DISPATCH	\seq_len
@@ -1825,6 +1819,7 @@ return_register_finalizer = 0xe5, 1
 
 	str	stack, [tmp_xxx, #THREAD_JAVA_SP]
 
+	mov	r0, #0	@ deoptimized_frames = 0
 	ldmfd	arm_sp!, {fast_regset, pc}
 1:
 	bl	return_check_monitors
@@ -1855,6 +1850,7 @@ return_register_finalizer = 0xe5, 1
 
 	str	stack, [tmp_xxx, #THREAD_JAVA_SP]
 
+	mov	r0, #0	@ deoptimized_frames = 0
 	ldmfd	arm_sp!, {fast_regset, pc}
 1:
 	bl	return_check_monitors
@@ -1886,6 +1882,7 @@ return_register_finalizer = 0xe5, 1
 
 	str	stack, [tmp_xxx, #THREAD_JAVA_SP]
 
+	mov	r0, #0	@ deoptimized_frames = 0
 	ldmfd	arm_sp!, {fast_regset, pc}
 1:
 	bl	return_check_monitors
@@ -2608,7 +2605,7 @@ return_register_finalizer = 0xe5, 1
 1:
 	ldrb	lr, [jpc, #-1]
 	add	lr, lr, #opc_iaccess_0-opc_aload_0
-	strb	lr, [jpc, #-1]
+	REWRITE_PAIRS	strb	lr, [jpc, #-1]
 	b	2b
 }
 
@@ -2617,7 +2614,7 @@ return_register_finalizer = 0xe5, 1
 (iload_0,iload_1,iload_2,iload_3)
 {
 	add	r0, r0, #opc_iload_0_iload_N-opc_iload_0
-	strb	r0, [jpc]
+	REWRITE_PAIRS	strb	r0, [jpc]
 	b	do_fast_iload_N_iload_N
 }
 
@@ -2659,7 +2656,7 @@ return_register_finalizer = 0xe5, 1
 (iload)
 {
 	add	r0, r0, #opc_iload_0_iload-opc_iload_0
-	strb	r0, [jpc]
+	REWRITE_PAIRS	strb	r0, [jpc]
 	b	do_fast_iload_N_iload
 }
 
@@ -2684,7 +2681,7 @@ return_register_finalizer = 0xe5, 1
 1:
 	ldrb	lr, [jpc, #-1]
 	add	lr, lr, #opc_iaccess_0-opc_aload_0
-	strb	lr, [jpc, #-1]
+	REWRITE_PAIRS	strb	lr, [jpc, #-1]
 	b	2b
 }
 
@@ -2710,7 +2707,7 @@ return_register_finalizer = 0xe5, 1
 (iload_0,iload_1,iload_2,iload_3)
 {
 	mov	r0, #opc_iload_iload_N
-	strb	r0, [jpc]
+	REWRITE_PAIRS	strb	r0, [jpc]
 	b	do_fast_iload_iload_N
 }
 
@@ -2731,7 +2728,7 @@ return_register_finalizer = 0xe5, 1
 
 (iload)(iload) {
 	mov	r0, #opc_iload_iload
-	strb	r0, [jpc]
+	REWRITE_PAIRS	strb	r0, [jpc]
 	b	do_fast_iload_iload
 }
 
@@ -2882,7 +2879,7 @@ return_register_finalizer = 0xe5, 1
 (iconst_m1,iconst_0,iconst_1,iconst_2,iconst_3,iconst_4,iconst_5)
 {
         add     r0, r0, #opc_iload_0_iconst_N-opc_iload_0
-        strb    r0, [jpc]
+        REWRITE_PAIRS	strb    r0, [jpc]
 	b	do_iload_0_iconst_N
 }
 
@@ -2903,7 +2900,8 @@ return_register_finalizer = 0xe5, 1
         DISPATCH_FINISH
 1:
         mov     tmp1, #opc_iload_iconst_N
-        strb    tmp1, [jpc, #-\seq_len]!
+        REWRITE_PAIRS	strb    tmp1, [jpc, #-\seq_len]
+	add	jpc, #-\seq_len
 	b	do_iload_iconst_N
 }
 
@@ -3859,6 +3857,7 @@ return_register_finalizer = 0xe5, 1
 
 	str	stack, [tmp_xxx, #THREAD_JAVA_SP]
 
+	mov	r0, #0	@ deoptimized_frames = 0
 	ldmfd	arm_sp!, {fast_regset, pc}
 1:
 	PUSH	r1
@@ -3888,6 +3887,7 @@ return_register_finalizer = 0xe5, 1
 
 	str	stack, [tmp_xxx, #THREAD_JAVA_SP]
 
+	mov	r0, #0	@ deoptimized_frames = 0
 	ldmfd	arm_sp!, {fast_regset, pc}
 1:
 	PUSH	r1
@@ -4069,7 +4069,7 @@ return_register_finalizer = 0xe5, 1
 (igetfield)
 {
 	add	r0, r0, #opc_iaccess_0-opc_aload_0
-	strb	r0, [jpc]
+	REWRITE_PAIRS	strb	r0, [jpc]
 	DISPATCH_BYTECODE
 }
 
@@ -4284,6 +4284,7 @@ return_register_finalizer = 0xe5, 1
 
 	str	stack, [tmp_xxx, #THREAD_JAVA_SP]
 
+	mov	r0, #0	@ deoptimized_frames = 0
 	ldmfd	arm_sp!, {fast_regset, pc}
 1:
 	PUSH	r1
@@ -4702,14 +4703,14 @@ return_register_finalizer = 0xe5, 1
 
 (iadd)(istore) {
 	mov	r0, #opc_iadd_u4store
-	strb	r0, [jpc]
+	REWRITE_PAIRS	strb	r0, [jpc]
 	b	do_iadd_u4store
 }
 
 (iadd)
 (istore_0,istore_1,istore_2,istore_3) {
 	mov	r0, #opc_iadd_istore_N
-	strb	r0, [jpc]
+	REWRITE_PAIRS	strb	r0, [jpc]
 	b	do_iadd_istore_N
 }
 
@@ -4824,14 +4825,14 @@ return_register_finalizer = 0xe5, 1
 
 (isub)(istore) {
 	mov	r0, #opc_isub_u4store
-	strb	r0, [jpc]
+	REWRITE_PAIRS	strb	r0, [jpc]
 	b	do_isub_u4store
 }
 
 (isub)
 (istore_0,istore_1,istore_2,istore_3) {
 	mov	r0, #opc_isub_istore_N
-	strb	r0, [jpc]
+	REWRITE_PAIRS	strb	r0, [jpc]
 	b	do_isub_istore_N
 }
 
@@ -4946,14 +4947,14 @@ return_register_finalizer = 0xe5, 1
 
 (iand)(istore) {
 	mov	r0, #opc_iand_u4store
-	strb	r0, [jpc]
+	REWRITE_PAIRS	strb	r0, [jpc]
 	b	do_iand_u4store
 }
 
 (iand)
 (istore_0,istore_1,istore_2,istore_3) {
 	mov	r0, #opc_iand_istore_N
-	strb	r0, [jpc]
+	REWRITE_PAIRS	strb	r0, [jpc]
 	b	do_iand_istore_N
 }
 
@@ -5068,14 +5069,14 @@ return_register_finalizer = 0xe5, 1
 
 (ior)(istore) {
 	mov	r0, #opc_ior_u4store
-	strb	r0, [jpc]
+	REWRITE_PAIRS	strb	r0, [jpc]
 	b	do_ior_u4store
 }
 
 (ior)
 (istore_0,istore_1,istore_2,istore_3) {
 	mov	r0, #opc_ior_istore_N
-	strb	r0, [jpc]
+	REWRITE_PAIRS	strb	r0, [jpc]
 	b	do_ior_istore_N
 }
 
@@ -5191,14 +5192,14 @@ return_register_finalizer = 0xe5, 1
 
 (ixor)(istore) {
 	mov	r0, #opc_ixor_u4store
-	strb	r0, [jpc]
+	REWRITE_PAIRS	strb	r0, [jpc]
 	b	do_ixor_u4store
 }
 
 (ixor)
 (istore_0,istore_1,istore_2,istore_3) {
 	mov	r0, #opc_ixor_istore_N
-	strb	r0, [jpc]
+	REWRITE_PAIRS	strb	r0, [jpc]
 	b	do_ixor_istore_N
 }
 

@@ -1,5 +1,79 @@
 2011-10-26  Andrew Haley  <aph@redhat.com>
 
+	* patches/arm.patch (CFLAGS): Enable the ARM assembler port.
+
+	PR icedtea/484:
+	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S
+	(fast_empty_entry, normal_entry_synchronized, normal_entry):
+	Return 0, #deoptimized_frames.
+	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp (Thumb2_Return):
+	Likewise.
+	* arm_port/hotspot/src/cpu/zero/vm/bytecodes_arm.def
+	(return_unsafe, ireturn_unsafe, lreturn_unsafe)
+	(ireturn,areturn,freturn): Return deoptimized_frames = 0.
+
+	PR icedtea/323:
+	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S: Replace
+	all stores to THREAD_LAST_JAVA_SP with stores to
+	THREAD_LAST_JAVA_FP.  Add stores to THREAD_LAST_JAVA_SP.
+	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp: Likewise.
+
+	* Makefile.am (ICEDTEA_PATCHES): Add patches/arm-debug.patch.
+	(stamps/ports.stamp): Use cp -l to link the ARM interpreter
+	sources into the target dir rather than copying them.
+	(EXTRA_DIST): Add arm_port.
+
+	Update to HS20:
+	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp: Replace all calls
+	to fatal1() (which no longer exists) with calls to fatal().
+	(Thumb2_is_zombie, Thumb2_pass2): invoke* and {get,put}* now take
+	native, not Java, byte ordered indexes.
+	(Thumb2_disass, Thumb2_codegen, Thumb2_tablegen):
+	Bytecodes::special_length_at() takes different arguments from the
+	previous version; adjust suitably.
+	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S: Replace
+	call to report_fatal_vararg(char const*, int, char const*, ...)
+	(which no longer exists) with call to Helper_report_fatal.
+	* arm_port/hotspot/src/cpu/zero/vm/bytecodes_arm.def (new):
+	Renumber the fast bytecodes iload_0_iconst_N to iload_3_iload_N.
+	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp: Likewise.
+	* patches/arm.patch: Likewise.
+	Add *.S to the list of source files.
+	* arm_port/hotspot/src/cpu/zero/vm/asm_helper.cpp (All #includes)
+	: Move to new OpenJDK include file format.
+	(Helper_report_fatal): New assember helper.
+	(print_vm_offsets): Add THREAD_LAST_JAVA_FP.
+
+	Hard FP port:
+	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp (Thumb2_Initialize):
+	Add hard FP variants for the stubs that need it.
+	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S
+	(POPF0, POPF1, POPD0, POPD1,PUSHF0, PUSHD0): New macros.
+	(.eabi_attribute): Use real names.  Add declaration for hard
+	FP ABI.
+	(.fast_native_return_double, .fast_native_return_float,
+	.fast_copy_double, .fast_copy_float): New.
+	(fast_native_entry): use SIZEOF_FFI_CIF, not 24.  Add logic to
+	handle args in FP registers.
+	(FIND_LOWEST_BIT, FIND_LOWEST_BIT_PAIR, COPY_DOUBLE, COPY_FLOAT):
+	New macros.
+	(.copy_float_table, .copy_double_table): New. 
+	* arm_port/hotspot/src/cpu/zero/vm/bytecodes_arm.def
+	(frem, drem, f2i, f2l, d2i, d2l): Add hardfp args.
+
+	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S
+	(REWRITE_PAIRS): New macro.
+	* arm_port/hotspot/src/cpu/zero/vm/bytecodes_arm.def: Use
+	REWRITE_PAIRS to prevent rewriting pairs of bytecodes in the
+	instruction stream.
+
+	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S (fast_native_entry):
+	Update ISTATE_SELF_LINK to get correct stack traces.
+
+	* patches/arm-debug.patch: New file.
+
+2011-10-26  Andrew Haley  <aph@redhat.com>
+
 	Reinstate the ARM assembler port.  Back out this patch:
 
   2011-07-11  Xerxes Rånby  <xerxes@zafena.se>

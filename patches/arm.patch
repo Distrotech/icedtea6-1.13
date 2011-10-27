@@ -1,0 +1,232 @@
+diff -Nru openjdk.orig/hotspot/make/linux/makefiles/zeroshark.make openjdk/hotspot/make/linux/makefiles/zeroshark.make
+--- openjdk.orig/hotspot/make/linux/makefiles/zeroshark.make	2010-05-28 11:09:25.000000000 +0100
++++ openjdk/hotspot/make/linux/makefiles/zeroshark.make	2010-06-17 17:28:03.000000000 +0100
+@@ -25,6 +25,41 @@
+ 
+ # Setup common to Zero (non-Shark) and Shark versions of VM
+ 
++ifeq ($(ZERO_LIBARCH),arm)
++
++Obj_Files += asm_helper.o
++Obj_Files += cppInterpreter_arm.o
++Obj_Files += thumb2.o
++
++CFLAGS += -DHOTSPOT_ASM
++
++%.o: %.S
++	@echo Assembling $<
++	$(QUIETLY) $(REMOVE_TARGET)
++	$(COMPILE.CC) -o $@ $< $(COMPILE_DONE)
++
++cppInterpreter_arm.o:	offsets_arm.s bytecodes_arm.s
++thumb2.o:		offsets_arm.s
++
++offsets_arm.s:	mkoffsets
++	@echo Generating assembler offsets
++	./mkoffsets > $@
++
++bytecodes_arm.s: bytecodes_arm.def mkbc
++	@echo Generatine ARM assembler bytecode sequences
++	$(CC_COMPILE) -E -x c++ - < $< | ./mkbc - $@ $(COMPILE_DONE)
++
++mkbc:	$(GAMMADIR)/tools/mkbc.c
++	@echo Compiling mkbc tool
++	$(CC_COMPILE) -o $@ $< $(COMPILE_DONE)
++
++mkoffsets:	asm_helper.cpp
++	@echo Compiling offset generator
++	$(QUIETLY) $(REMOVE_TARGET)
++	$(CC_COMPILE) -DSTATIC_OFFSETS -o $@ $< $(COMPILE_DONE)
++
++endif
++
+ # The copied fdlibm routines in sharedRuntimeTrig.o must not be optimized
+ OPT_CFLAGS/sharedRuntimeTrig.o = $(OPT_CFLAGS/NOOPT)
+ # The copied fdlibm routines in sharedRuntimeTrans.o must not be optimized
+diff -Nru openjdk.orig/hotspot/src/cpu/zero/vm/bytecodes_zero.cpp openjdk/hotspot/src/cpu/zero/vm/bytecodes_zero.cpp
+--- openjdk.orig/hotspot/src/cpu/zero/vm/bytecodes_zero.cpp	2010-05-28 11:10:30.000000000 +0100
++++ openjdk/hotspot/src/cpu/zero/vm/bytecodes_zero.cpp	2010-06-17 17:29:30.000000000 +0100
+@@ -1,6 +1,7 @@
+ /*
+  * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+  * Copyright 2007 Red Hat, Inc.
++ * Copyright 2009 Edward Nevill
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -27,5 +28,54 @@
+ #include "incls/_bytecodes_zero.cpp.incl"
+ 
+ void Bytecodes::pd_initialize() {
+-  // No zero specific initialization
++#ifdef HOTSPOT_ASM
++  // Because iaccess_N can trap, we must say aload_N can trap, otherwise
++  // we get an assertion failure
++  def(_aload_1, "aload_1", "b", NULL, T_OBJECT ,  1, true);
++  def(_aload_2, "aload_2", "b", NULL, T_OBJECT ,  1, true);
++  def(_aload_3, "aload_3", "b", NULL, T_OBJECT ,  1, true);
++
++  def(_iaccess_0, "_iaccess_0", "b_jj", NULL, T_INT,  1, true, _aload_0);
++  def(_iaccess_1, "_iaccess_1", "b_jj", NULL, T_INT,  1, true, _aload_1);
++  def(_iaccess_2, "_iaccess_2", "b_jj", NULL, T_INT,  1, true, _aload_2);
++  def(_iaccess_3, "_iaccess_3", "b_jj", NULL, T_INT,  1, true, _aload_3);
++
++  def(_invokeresolved,   "invokeresolved",   "bjj", NULL, T_ILLEGAL, -1, true, _invokevirtual);
++  def(_invokespecialresolved, "invokespecialresolved", "bjj", NULL, T_ILLEGAL, -1, true, _invokespecial);
++  def(_invokestaticresolved,  "invokestaticresolved",  "bjj", NULL, T_ILLEGAL,  0, true, _invokestatic);
++
++  def(_dmac,            "dmac",      "b_",  NULL, T_DOUBLE, -16, false, _dmul);
++
++  def(_iload_iload,      "iload_iload",      "bi_i",NULL, T_INT, 2, false, _iload);
++  def(_iload_iload_N,    "iload_iload_N",    "bi_", NULL, T_INT, 2, false, _iload);
++
++  def(_iload_0_iconst_N, "iload_0_iconst_N", "b_",  NULL, T_INT, 2, false, _iload_0);
++  def(_iload_1_iconst_N, "iload_1_iconst_N", "b_",  NULL, T_INT, 2, false, _iload_1);
++  def(_iload_2_iconst_N, "iload_2_iconst_N", "b_",  NULL, T_INT, 2, false, _iload_2);
++  def(_iload_3_iconst_N, "iload_3_iconst_N", "b_",  NULL, T_INT, 2, false, _iload_3);
++  def(_iload_iconst_N,   "iload_iconst_N",   "bi_", NULL, T_INT, 2, false, _iload);
++
++  def(_iadd_istore_N,    "iadd_istore_N",    "b_",  NULL, T_VOID, -2, false, _iadd);
++  def(_isub_istore_N,    "isub_istore_N",    "b_",  NULL, T_VOID, -2, false, _isub);
++  def(_iand_istore_N,    "iand_istore_N",    "b_",  NULL, T_VOID, -2, false, _iand);
++  def(_ior_istore_N,     "ior_istore_N",     "b_",  NULL, T_VOID, -2, false, _ior);
++  def(_ixor_istore_N,    "ixor_istore_N",    "b_",  NULL, T_VOID, -2, false, _ixor);
++
++  def(_iadd_u4store,     "iadd_u4store",     "b_i", NULL, T_VOID, -2, false, _iadd);
++  def(_isub_u4store,     "isub_u4store",     "b_i", NULL, T_VOID, -2, false, _isub);
++  def(_iand_u4store,     "iand_u4store",     "b_i", NULL, T_VOID, -2, false, _iand);
++  def(_ior_u4store,      "ior_u4store",      "b_i", NULL, T_VOID, -2, false, _ior);
++  def(_ixor_u4store,     "ixor_u4store",     "b_i", NULL, T_VOID, -2, false, _ixor);
++
++  def(_iload_0_iload,    "iload_0_iload",    "b_i", NULL, T_INT, 2, false, _iload_0);
++  def(_iload_1_iload,    "iload_1_iload",    "b_i", NULL, T_INT, 2, false, _iload_1);
++  def(_iload_2_iload,    "iload_2_iload",    "b_i", NULL, T_INT, 2, false, _iload_2);
++  def(_iload_3_iload,    "iload_3_iload",    "b_i", NULL, T_INT, 2, false, _iload_3);
++
++  def(_iload_0_iload_N,  "iload_0_iload_N",  "b_",  NULL, T_INT, 2, false, _iload_0);
++  def(_iload_1_iload_N,  "iload_1_iload_N",  "b_",  NULL, T_INT, 2, false, _iload_1);
++  def(_iload_2_iload_N,  "iload_2_iload_N",  "b_",  NULL, T_INT, 2, false, _iload_2);
++  def(_iload_3_iload_N,  "iload_3_iload_N",  "b_",  NULL, T_INT, 2, false, _iload_3);
++
++#endif // HOTSPOT_ASM
+ }
+diff -Nru openjdk.orig/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp
+--- openjdk.orig/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp	2010-06-16 14:11:07.000000000 +0100
++++ openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp	2010-06-17 17:30:02.000000000 +0100
+@@ -724,10 +724,21 @@
+   return generate_entry((address) CppInterpreter::normal_entry);
+ }
+ 
++#ifdef HOTSPOT_ASM
++extern "C" address asm_generate_method_entry(
++  AbstractInterpreter::MethodKind kind);
++#endif // HOTSPOT_ASM
++
+ address AbstractInterpreterGenerator::generate_method_entry(
+     AbstractInterpreter::MethodKind kind) {
+   address entry_point = NULL;
+ 
++#ifdef HOTSPOT_ASM
++    address asm_entry = asm_generate_method_entry(kind);
++    if (asm_entry)
++      return ((InterpreterGenerator*) this)->generate_entry(asm_entry);
++#endif // HOTSPOT_ASM
++
+   switch (kind) {
+   case Interpreter::zerolocals:
+   case Interpreter::zerolocals_synchronized:
+diff -Nru openjdk.orig/hotspot/src/os_cpu/linux_zero/vm/os_linux_zero.cpp openjdk/hotspot/src/os_cpu/linux_zero/vm/os_linux_zero.cpp
+--- openjdk.orig/hotspot/src/os_cpu/linux_zero/vm/os_linux_zero.cpp	2010-05-28 11:11:05.000000000 +0100
++++ openjdk/hotspot/src/os_cpu/linux_zero/vm/os_linux_zero.cpp	2010-06-17 17:27:35.000000000 +0100
+@@ -82,6 +82,10 @@
+   ShouldNotCallThis();
+ }
+ 
++#ifdef HOTSPOT_ASM
++extern "C" int asm_check_null_ptr(ucontext_t *uc);
++#endif // HOTSPOT_ASM
++
+ extern "C" int
+ JVM_handle_linux_signal(int sig,
+                         siginfo_t* info,
+@@ -89,6 +93,12 @@
+                         int abort_if_unrecognized) {
+   ucontext_t* uc = (ucontext_t*) ucVoid;
+ 
++#ifdef HOTSPOT_ASM
++  if (sig == SIGSEGV) {
++        if (asm_check_null_ptr(uc)) return 1;
++  }
++#endif // HOTSPOT_ASM
++
+   Thread* t = ThreadLocalStorage::get_thread_slow();
+ 
+   SignalHandlerMark shm(t);
+diff -Nru openjdk.orig/hotspot/src/cpu/zero/vm/bytecodes_zero.hpp openjdk/hotspot/src/cpu/zero/vm/bytecodes_zero.hpp
+--- openjdk.orig/hotspot/src/cpu/zero/vm/bytecodes_zero.hpp	2011-01-25 22:57:24.000000000 +0000
++++ openjdk/hotspot/src/cpu/zero/vm/bytecodes_zero.hpp	2011-01-28 01:46:18.769782690 +0000
+@@ -1,6 +1,7 @@
+ /*
+  * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+  * Copyright 2009 Red Hat, Inc.
++ * Copyright 2009 Edward Nevill
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -26,6 +27,44 @@
+ #ifndef CPU_ZERO_VM_BYTECODES_ZERO_HPP
+ #define CPU_ZERO_VM_BYTECODES_ZERO_HPP
+ 
+-// This file is intentionally empty
++#ifdef HOTSPOT_ASM
++#define _iaccess_0      ((Bytecodes::Code)0xdb)
++#define _iaccess_1      ((Bytecodes::Code)0xdc)
++#define _iaccess_2      ((Bytecodes::Code)0xdd)
++#define _iaccess_3      ((Bytecodes::Code)0xde)
++
++#define _invokeresolved         ((Bytecodes::Code)0xdf)
++#define _invokespecialresolved  ((Bytecodes::Code)0xe0)
++#define _invokestaticresolved   ((Bytecodes::Code)0xe1)
++
++#define _iload_iload    ((Bytecodes::Code)0xe3)
++#define _iload_iload_N  ((Bytecodes::Code)0xe4)
++
++#define _dmac           ((Bytecodes::Code)0xe8)
++
++      _iload_0_iconst_N   , // 233 0xe9
++      _iload_1_iconst_N   , // 234 0xea
++      _iload_2_iconst_N   , // 235 0xeb
++      _iload_3_iconst_N   , // 236 0xec
++      _iload_iconst_N     , // 237 0xed
++      _iadd_istore_N      , // 238 0xee
++      _isub_istore_N      , // 239 0xef
++      _iand_istore_N      , // 240 0xf0
++      _ior_istore_N       , // 241 0xf1
++      _ixor_istore_N      , // 242 0xf2
++      _iadd_u4store       , // 243 0xf3
++      _isub_u4store       , // 244 0xf4
++      _iand_u4store       , // 245 0xf5
++      _ior_u4store        , // 246 0xf6
++      _ixor_u4store       , // 247 0xf7
++      _iload_0_iload      , // 248 0xf8
++      _iload_1_iload      , // 249 0xf9
++      _iload_2_iload      , // 250 0xfa
++      _iload_3_iload      , // 251 0xfb
++      _iload_0_iload_N    , // 252 0xfc
++      _iload_1_iload_N    , // 253 0xfd
++      _iload_2_iload_N    , // 254 0xfe
++      _iload_3_iload_N    , // 255 0xff
++#endif // HOTSPOT_ASM
+ 
+ #endif // CPU_ZERO_VM_BYTECODES_ZERO_HPP
+--- openjdk/hotspot/make/linux/makefiles/vm.make	2011-09-16 14:22:51.000000000 +0100
++++ openjdk/hotspot/make/linux/makefiles/vm.make	2011-09-16 16:04:50.000000000 +0100
+@@ -183,7 +183,7 @@
+ # Locate all source files in the given directory, excluding files in Src_Files_EXCLUDE.
+ define findsrc
+ 	$(notdir $(shell find $(1)/. ! -name . -prune \
+-		-a \( -name \*.c -o -name \*.cpp -o -name \*.s \) \
++		-a \( -name \*.c -o -name \*.cpp -o -name \*.s -o -name \*.S \) \
+ 		-a ! \( -name DUMMY $(addprefix -o -name ,$(Src_Files_EXCLUDE)) \)))
+ endef
+ 
