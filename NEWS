@@ -21,6 +21,7 @@ New in release 1.11 (2011-XX-XX):
   - PR752: ImageFormatException extends Exception not RuntimeException
   - PR732: Use xsltproc for bootstrap xslt in place of Xerces/Xalan
   - RH727195: Japanese font mappings are broken
+  - LP862286: Fix exception on trying to start PulseAudio playback
 * Import of OpenJDK6 b23 including upgrade to HotSpot 20
   - S7023111: Add webrev script to make/scripts
   - S6909331: Add vsvars.sh to the jdk repository (handy cygwin way to get vcvars32.bat run)
@@ -372,7 +373,7 @@ New in release 1.11 (2011-XX-XX):
   - S6826104, RH730015: Getting a NullPointer exception when clicked on Application & Toolkit Modal dialog
   - S5082756: Image I/O plug-ins set metadata boolean attributes to "true" or "false"
   - S6296893: BMP Writer handles TopDown property incorrectly for some of the compression types
-  - LP862286: Fix exception on trying to start PulseAudio playback
+  - S7103224: collision between __LEAF define in interfaceSupport.hpp and /usr/include/sys/cdefs.h with gcc
 * Allow selection of test suites using the jtreg_checks argument e.g. jtreg_checks="langtools"
 * CACAO
   - CA149: Used wrong class loader.
