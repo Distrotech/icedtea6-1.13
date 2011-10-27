@@ -16,6 +16,8 @@
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#ifdef __arm__
+
 #define	ARCH_THUMBEE	(1<<16)
 #define ARCH_VFP	(1<<17)
 #define ARCH_CLZ	(1<<18)
@@ -608,3 +610,5 @@ int main(void)
 }
 
 #endif // STATIC_OFFSETS
+
+#endif // __arm__

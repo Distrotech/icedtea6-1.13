@@ -1,3 +1,11 @@
+2011-10-27  Andrew Haley  <aph@redhat.com>
+
+	* arm_port/hotspot/src/cpu/zero/vm/asm_helper.cpp (whole file):
+	Conditionalize on #ifdef __arm__.
+	* arm_port/hotspot/src/cpu/zero/vm/asm_helper.cpp: Likewise.
+	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp: Likewise.
+	* patches/arm.patch: Move %.S rule outside ARM conditional.
+
 2011-10-26  Andrew Haley  <aph@redhat.com>
 
 	* patches/arm.patch (CFLAGS): Enable the ARM assembler port.

@@ -13,11 +13,6 @@ diff -Nru openjdk.orig/hotspot/make/linux/makefiles/zeroshark.make openjdk/hotsp
 +
 +CFLAGS += -DHOTSPOT_ASM
 +
-+%.o: %.S
-+	@echo Assembling $<
-+	$(QUIETLY) $(REMOVE_TARGET)
-+	$(COMPILE.CC) -o $@ $< $(COMPILE_DONE)
-+
 +cppInterpreter_arm.o:	offsets_arm.s bytecodes_arm.s
 +thumb2.o:		offsets_arm.s
 +
@@ -39,6 +34,11 @@ diff -Nru openjdk.orig/hotspot/make/linux/makefiles/zeroshark.make openjdk/hotsp
 +	$(CC_COMPILE) -DSTATIC_OFFSETS -o $@ $< $(COMPILE_DONE)
 +
 +endif
++
++%.o: %.S
++	@echo Assembling $<
++	$(QUIETLY) $(REMOVE_TARGET)
++	$(COMPILE.CC) -o $@ $< $(COMPILE_DONE)
 +
  # The copied fdlibm routines in sharedRuntimeTrig.o must not be optimized
  OPT_CFLAGS/sharedRuntimeTrig.o = $(OPT_CFLAGS/NOOPT)
