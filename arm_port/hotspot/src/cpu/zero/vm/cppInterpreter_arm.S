@@ -382,7 +382,7 @@ do_\label:
 	fsts s0, [stack, #4]
 	fsts s1, [stack, #8]
 #else
-	POP r0, r1
+	PUSH r0, r1
 #endif
 	.endm
 	
