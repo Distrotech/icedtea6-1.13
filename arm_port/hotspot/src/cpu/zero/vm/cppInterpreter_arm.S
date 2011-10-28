@@ -1,3 +1,5 @@
+#ifdef __arm__
+
 @ Copyright 2009, 2010 Edward Nevill
 @ DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 @
@@ -6681,3 +6683,5 @@ opclabels_data:
 	.word	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 	.word	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 #endif
+
+#endif // __arm__
