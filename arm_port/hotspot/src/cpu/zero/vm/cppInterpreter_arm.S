@@ -1777,14 +1777,17 @@ accessor_non_w:
 accessor_sh:
 	ldrsh	r0, [r3, r1]
 	str	r0, [ip, #0]
+	mov	r0, #0	@ deoptimized_frames = 0
 	bx	lr
 accessor_h:
 	ldrh	r0, [r3, r1]
 	str	r0, [ip, #0]
+	mov	r0, #0	@ deoptimized_frames = 0
 	bx	lr
 accessor_sb:
 	ldrsb	r0, [r3, r1]
 	str	r0, [ip, #0]
+	mov	r0, #0	@ deoptimized_frames = 0
 	bx	lr
 accessor_dw:
 	add	r0, r3, r1
@@ -1792,6 +1795,7 @@ accessor_dw:
 	sub	ip, ip, #4
 	str	ip, [r2, #THREAD_JAVA_SP]
 	stmia	ip, {r0, r1}
+	mov	r0, #0	@ deoptimized_frames = 0
 	bx	lr
 
 	Opcode	getfield
