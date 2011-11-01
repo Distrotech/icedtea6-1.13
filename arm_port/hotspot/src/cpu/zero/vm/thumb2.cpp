@@ -4551,6 +4551,8 @@ int Thumb2_Accessor(Thumb2_Info *jinfo)
   else
     ldr_imm(jinfo->codebuf, ARM_R0, ARM_R0, field_offset, 1, 0);
   str_imm(jinfo->codebuf, ARM_R0, ARM_R1, 0, 1, 0);
+  // deoptimized_frames = 0
+  mov_imm(jinfo->codebuf, ARM_R0, 0);
   mov_reg(jinfo->codebuf, ARM_PC, ARM_LR);
 
   return 1;
