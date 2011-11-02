@@ -5848,7 +5848,7 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	    r = JSTACK_REG(jstack);
 	    PUSH(jstack, r);
 	    if (tos_type == btos)
-	      ldrb_imm(jinfo->codebuf, r, r_obj, field_offset, 1, 0);
+	      ldrsb_imm(jinfo->codebuf, r, r_obj, field_offset, 1, 0);
 	    else if (tos_type == ctos)
 	      ldrh_imm(jinfo->codebuf, r, r_obj, field_offset, 1, 0);
 	    else if (tos_type == stos)
@@ -5970,7 +5970,7 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
 	      r = JSTACK_REG(jstack);
 	      PUSH(jstack, r);
 	      if (tos_type == btos)
-		ldrb_imm(jinfo->codebuf, r, r_obj, field_offset, 1, 0);
+		ldrsb_imm(jinfo->codebuf, r, r_obj, field_offset, 1, 0);
 	      else if (tos_type == ctos)
 		ldrh_imm(jinfo->codebuf, r, r_obj, field_offset, 1, 0);
 	      else if (tos_type == stos)
