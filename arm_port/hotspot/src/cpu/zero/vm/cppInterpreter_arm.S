@@ -595,6 +595,7 @@ do_\label:
 	.text
 
 	.global	cmpxchg_ptr
+	.type cmpxchg_ptr, %function
 cmpxchg_ptr:
 	stmfd	sp!, {r4, r5, r6, r7, r8, lr}
 	mov	r6, #0xffffffc0
@@ -701,6 +702,7 @@ build_frame:
 
 	ALIGN_CODE
 	.global	asm_generate_method_entry
+	.type asm_generate_method_entry, %function
 asm_generate_method_entry:
 	mov	r3, r0
 	mov	r0, #0
@@ -783,6 +785,7 @@ fast_empty_entry:
 @ ---- START execute.s ---------------------------------------------------------------------
 
 	.global	asm_check_null_ptr
+	.type asm_check_null_ptr, %function
 asm_check_null_ptr:
 
 #ifdef HW_NULL_PTR_CHECK
@@ -3222,6 +3225,7 @@ call_thumb2:
 
 #endif // USE_COMPILER
 	.global	Thumb2_Install
+	.type Thumb2_Install, %function
 Thumb2_Install:
 @	ldr	r0, [r0]
 	str	r1, [r0, #METHOD_FROM_INTERPRETED]
@@ -4856,8 +4860,10 @@ safe_dispatch_table:
 
 	ALIGN_CODE
 	.global	Thumb2_stubs
+	.type Thumb2_stubs, %function
 Thumb2_stubs:
 	.global	Thumb2_idiv_stub
+	.type Thumb2_idiv_stub, %function
 Thumb2_idiv_stub:
 int_div:
 	cmp     r1, #0x21
@@ -5032,6 +5038,7 @@ int_div:
 	.word	jdiv_32
 	ALIGN_CODE
 	.global	Thumb2_irem_stub
+	.type Thumb2_irem_stub, %function
 Thumb2_irem_stub:
 int_rem:
 	cmp     r1, #0x21
@@ -5172,6 +5179,7 @@ int_rem:
 @ R1 = index
 #define Rthread	r9
 	.global	Thumb2_invokeinterface_stub
+	.type Thumb2_invokeinterface_stub, %function
 Thumb2_invokeinterface_stub:
 	stmdb	sp!, {ip, lr}
 	ldr	ip, [istate, #ISTATE_METHOD]
@@ -5315,6 +5323,7 @@ helper_aputfield_adcon:
 @ R0 = BCI
 @ R1 = index
 	.global	Thumb2_invokevirtual_stub
+	.type Thumb2_invokevirtual_stub, %function
 Thumb2_invokevirtual_stub:
 	stmdb	sp!, {ip, lr}
         ldr     ip, [istate, #ISTATE_METHOD]
@@ -5399,6 +5408,7 @@ ivstub_resolve:
 @ R0 = BCI
 @ R1 = index
 	.global	Thumb2_invokestatic_stub
+	.type Thumb2_invokestatic_stub, %function
 Thumb2_invokestatic_stub:
         stmdb   sp!, {ip, lr}
         ldr     ip, [istate, #ISTATE_METHOD]
@@ -5469,6 +5479,7 @@ isstub_resolve:
 @ R0 = BCI
 @ R1 = index
 	.global	Thumb2_invokespecial_stub
+	.type Thumb2_invokespecial_stub, %function
 Thumb2_invokespecial_stub:
         stmdb   sp!, {ip, lr}
         ldr     ip, [istate, #ISTATE_METHOD]
@@ -5542,6 +5553,7 @@ ispstub_resolve:
 @ R0 = BCI
 @ R1 = index
 	.global	Thumb2_getfield_word_stub
+	.type Thumb2_getfield_word_stub, %function
 Thumb2_getfield_word_stub:
 	ldr	r2, [istate, #ISTATE_CONSTANTS]
 	add	r2, r2, r1, lsl #4
@@ -5567,6 +5579,7 @@ Thumb2_getfield_word_stub:
 @ R0 = BCI
 @ R1 = index
 	.global	Thumb2_getfield_sh_stub
+	.type Thumb2_getfield_sh_stub, %function
 Thumb2_getfield_sh_stub:
 	ldr	r2, [istate, #ISTATE_CONSTANTS]
 	add	r2, r2, r1, lsl #4
@@ -5592,6 +5605,7 @@ Thumb2_getfield_sh_stub:
 @ R0 = BCI
 @ R1 = index
 	.global	Thumb2_getfield_h_stub
+	.type Thumb2_getfield_h_stub, %function
 Thumb2_getfield_h_stub:
 	ldr	r2, [istate, #ISTATE_CONSTANTS]
 	add	r2, r2, r1, lsl #4
@@ -5617,6 +5631,7 @@ Thumb2_getfield_h_stub:
 @ R0 = BCI
 @ R1 = index
 	.global	Thumb2_getfield_sb_stub
+	.type Thumb2_getfield_sb_stub, %function
 Thumb2_getfield_sb_stub:
 	ldr	r2, [istate, #ISTATE_CONSTANTS]
 	add	r2, r2, r1, lsl #4
@@ -5642,6 +5657,7 @@ Thumb2_getfield_sb_stub:
 @ R0 = BCI
 @ R1 = index
 	.global	Thumb2_getfield_dw_stub
+	.type Thumb2_getfield_dw_stub, %function
 Thumb2_getfield_dw_stub:
 	ldr	r2, [istate, #ISTATE_CONSTANTS]
 	add	r2, r2, r1, lsl #4
@@ -5712,6 +5728,7 @@ field_exception:
 @ R0 = BCI
 @ R1 = index
 	.global	Thumb2_putfield_word_stub
+	.type Thumb2_putfield_word_stub, %function
 Thumb2_putfield_word_stub:
 	ldr	r2, [istate, #ISTATE_CONSTANTS]
 	add	r2, r2, r1, lsl #4
@@ -5734,6 +5751,7 @@ Thumb2_putfield_word_stub:
 	b	2b
 
 	.global	Thumb2_putfield_h_stub
+	.type Thumb2_putfield_h_stub, %function
 Thumb2_putfield_h_stub:
 	ldr	r2, [istate, #ISTATE_CONSTANTS]
 	add	r2, r2, r1, lsl #4
@@ -5756,6 +5774,7 @@ Thumb2_putfield_h_stub:
 	b	2b
 
 	.global	Thumb2_putfield_b_stub
+	.type Thumb2_putfield_b_stub, %function
 Thumb2_putfield_b_stub:
 	ldr	r2, [istate, #ISTATE_CONSTANTS]
 	add	r2, r2, r1, lsl #4
@@ -5778,6 +5797,7 @@ Thumb2_putfield_b_stub:
 	b	2b
 
 	.global	Thumb2_putfield_a_stub
+	.type Thumb2_putfield_a_stub, %function
 Thumb2_putfield_a_stub:
 	ldr	r2, [istate, #ISTATE_CONSTANTS]
 	add	r2, r2, r1, lsl #4
@@ -5802,6 +5822,7 @@ Thumb2_putfield_a_stub:
 	b	2b
 
 	.global	Thumb2_putfield_dw_stub
+	.type Thumb2_putfield_dw_stub, %function
 Thumb2_putfield_dw_stub:
 	ldr	r2, [istate, #ISTATE_CONSTANTS]
 	add	r2, r2, r1, lsl #4
@@ -5826,6 +5847,7 @@ Thumb2_putfield_dw_stub:
 @ R0 = BCI
 @ R1 = index
 	.global	Thumb2_getstatic_word_stub
+	.type Thumb2_getstatic_word_stub, %function
 Thumb2_getstatic_word_stub:
 	ldr	r2, [istate, #ISTATE_CONSTANTS]
 	add	r2, r2, r1, lsl #4
@@ -5847,6 +5869,7 @@ Thumb2_getstatic_word_stub:
 	b	2b
 
 	.global	Thumb2_getstatic_h_stub
+	.type Thumb2_getstatic_h_stub, %function
 Thumb2_getstatic_h_stub:
 	ldr	r2, [istate, #ISTATE_CONSTANTS]
 	add	r2, r2, r1, lsl #4
@@ -5868,6 +5891,7 @@ Thumb2_getstatic_h_stub:
 	b	2b
 
 	.global	Thumb2_getstatic_sh_stub
+	.type Thumb2_getstatic_sh_stub, %function
 Thumb2_getstatic_sh_stub:
 	ldr	r2, [istate, #ISTATE_CONSTANTS]
 	add	r2, r2, r1, lsl #4
@@ -5889,6 +5913,7 @@ Thumb2_getstatic_sh_stub:
 	b	2b
 
 	.global	Thumb2_getstatic_sb_stub
+	.type Thumb2_getstatic_sb_stub, %function
 Thumb2_getstatic_sb_stub:
 	ldr	r2, [istate, #ISTATE_CONSTANTS]
 	add	r2, r2, r1, lsl #4
@@ -5910,6 +5935,7 @@ Thumb2_getstatic_sb_stub:
 	b	2b
 
 	.global	Thumb2_getstatic_dw_stub
+	.type Thumb2_getstatic_dw_stub, %function
 Thumb2_getstatic_dw_stub:
 	ldr	r2, [istate, #ISTATE_CONSTANTS]
 	add	r2, r2, r1, lsl #4
@@ -5933,6 +5959,7 @@ Thumb2_getstatic_dw_stub:
 @ R0 = BCI
 @ R1 = index
 	.global	Thumb2_putstatic_word_stub
+	.type Thumb2_putstatic_word_stub, %function
 Thumb2_putstatic_word_stub:
 	ldr	r2, [istate, #ISTATE_CONSTANTS]
 	add	r2, r2, r1, lsl #4
@@ -5956,6 +5983,7 @@ Thumb2_putstatic_word_stub:
 @ R0 = BCI
 @ R1 = index
 	.global	Thumb2_putstatic_h_stub
+	.type Thumb2_putstatic_h_stub, %function
 Thumb2_putstatic_h_stub:
 	ldr	r2, [istate, #ISTATE_CONSTANTS]
 	add	r2, r2, r1, lsl #4
@@ -5979,6 +6007,7 @@ Thumb2_putstatic_h_stub:
 @ R0 = BCI
 @ R1 = index
 	.global	Thumb2_putstatic_b_stub
+	.type Thumb2_putstatic_b_stub, %function
 Thumb2_putstatic_b_stub:
 	ldr	r2, [istate, #ISTATE_CONSTANTS]
 	add	r2, r2, r1, lsl #4
@@ -6002,6 +6031,7 @@ Thumb2_putstatic_b_stub:
 @ R0 = BCI
 @ R1 = index
 	.global	Thumb2_putstatic_dw_stub
+	.type Thumb2_putstatic_dw_stub, %function
 Thumb2_putstatic_dw_stub:
 	ldr	r2, [istate, #ISTATE_CONSTANTS]
 	add	r2, r2, r1, lsl #4
@@ -6025,6 +6055,7 @@ Thumb2_putstatic_dw_stub:
 @ R0 = BCI
 @ R1 = index
 	.global	Thumb2_putstatic_a_stub
+	.type Thumb2_putstatic_a_stub, %function
 Thumb2_putstatic_a_stub:
 	ldr	r2, [istate, #ISTATE_CONSTANTS]
 	add	r2, r2, r1, lsl #4
@@ -6050,6 +6081,7 @@ Thumb2_putstatic_a_stub:
 #endif // THUMB2EE
 
 	.global	Thumb2_stubs_end
+	.type Thumb2_stubs_end, %function
 Thumb2_stubs_end:
 
 	ALIGN_CODE
@@ -6510,6 +6542,7 @@ dc_18:
 #define TBIT 1
 
 	.global	Thumb2_DivZero_Handler
+	.type Thumb2_DivZero_Handler, %function
 Thumb2_DivZero_Handler:
 #ifdef THUMB2EE
 
@@ -6546,10 +6579,15 @@ Thumb2_DivZero_Handler:
 #ifdef THUMB2EE
 
 	.global	Thumb2_Handle_Exception
+	.type Thumb2_Handle_Exception, %function
 	.global	Thumb2_Handle_Exception_NoRegs
-	.global	Thumb2_ArrayBounds_Handler
-	.global	Thumb2_NullPtr_Handler
+	.type Thumb2_Handle_Exception_NoRegs, %function
+	.global Thumb2_ArrayBounds_Handler
+	.type Thumb2_ArrayBounds_Handler, %function
+	.global Thumb2_NullPtr_Handler
+	.type Thumb2_NullPtr_Handler, %function
 	.global Thumb2_Stack_Overflow
+	.type Thumb2_Stack_Overflow, %function
 Thumb2_ArrayBounds_Handler:
 	stmdb	sp!, {JAZ_REGSET}
 	bic	r0, lr, #TBIT
@@ -6622,6 +6660,7 @@ Thumb2_Stack_Overflow:
 	ldmfd	arm_sp!, {fast_regset, pc}
 
 	.global	Thumb2_Exit_To_Interpreter
+	.type Thumb2_Exit_To_Interpreter, %function
 Thumb2_Exit_To_Interpreter:
 	bl	load_dispatch
 	sub	stack, stack, #4
@@ -6630,6 +6669,7 @@ Thumb2_Exit_To_Interpreter:
 	DISPATCH	0
 
 	.global	Thumb2_Clear_Cache
+	.type Thumb2_Clear_Cache, %function
 Thumb2_Clear_Cache:
 	stmdb	sp!, {r7}
 	mov	r2, #0

@@ -1,3 +1,28 @@
+2011-11-03  Xerxes Rånby  <xerxes@zafena.se>
+
+	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S
+	(cmpxchg_ptr): Designate function label as such; required for
+	thumb interworking.
+	(asm_generate_method_entry, asm_check_null_ptr, Thumb2_Install
+	Thumb2_stubs, Thumb2_idiv_stub, Thumb2_irem_stub,
+	Thumb2_invokeinterface_stub, Thumb2_invokevirtual_stub,
+	Thumb2_invokestatic_stub, Thumb2_invokespecial_stub,
+	Thumb2_getfield_word_stub, Thumb2_getfield_sh_stub,
+	Thumb2_getfield_h_stub, Thumb2_getfield_sb_stub,
+	Thumb2_getfield_dw_stub, Thumb2_putfield_word_stub,
+	Thumb2_putfield_h_stub, Thumb2_putfield_b_stub,
+	Thumb2_putfield_a_stub, Thumb2_putfield_dw_stub,
+	Thumb2_getstatic_word_stub, Thumb2_getstatic_h_stub,
+	Thumb2_getstatic_sh_stub, Thumb2_getstatic_sb_stub,
+	Thumb2_getstatic_dw_stub, Thumb2_putstatic_word_stub,
+	Thumb2_putstatic_h_stub, Thumb2_putstatic_b_stub,
+	Thumb2_putstatic_dw_stub, Thumb2_putstatic_a_stub,
+	Thumb2_stubs_end, Thumb2_DivZero_Handler,
+	Thumb2_Handle_Exception, Thumb2_Handle_Exception_NoRegs,
+	Thumb2_ArrayBounds_Handler, Thumb2_NullPtr_Handler,
+	Thumb2_Stack_Overflow, Thumb2_Exit_To_Interpreter,
+	Thumb2_Clear_Cache): Likewise.
+
 2011-11-02  Andrew Haley  <aph@redhat.com>
 
 	* openjdk-ecj/hotspot/src/cpu/zero/vm/thumb2.cpp (Thumb2_codegen):
