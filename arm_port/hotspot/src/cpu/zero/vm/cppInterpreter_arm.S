@@ -24,7 +24,9 @@
 
 #ifdef HOTSPOT_ASM
 
+#if defined(__ARM_ARCH_4__) || defined(__ARM_ARCH_4T__)
 #define ARMv4
+#endif
 
 #if defined(SHARK) || defined(THUMB2EE)
 
