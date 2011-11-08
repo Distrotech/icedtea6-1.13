@@ -1,3 +1,9 @@
+2011-11-07  Andrew Haley  <aph@redhat.com>
+
+	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp (Thumb2_iOp): Mask
+	shift counts with 31.
+	(Thumb2_codegen): Mask double shift counts with 63.
+
 2011-11-04  Xerxes Rånby  <xerxes@zafena.se>
 
 	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S

@@ -4088,6 +4088,13 @@ void Thumb2_iOp(Thumb2_Info *jinfo, u32 opc)
   Thumb2_Spill(jinfo, 1, 0);
   r = JSTACK_REG(jstack);
   PUSH(jstack, r);
+  switch (opc) {
+  case opc_ishl:
+  case opc_ishr:
+  case opc_iushr:
+    and_imm(jinfo->codebuf, r_rho, r_rho, 31);
+    break;
+  }
   dop_reg(jinfo->codebuf, dOps[opc-opc_iadd], r, r_lho, r_rho, 0, 0);
 }
 
@@ -5157,6 +5164,7 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	res_lo = PUSH(jstack, JSTACK_PREFER(jstack, ~((1<<lho_lo)|(1<<lho_hi))));
 	JASSERT(res_lo != lho_lo && res_lo != lho_hi, "Spill failed");
 	JASSERT(res_hi != lho_lo && res_hi != lho_hi, "Spill failed");
+	and_imm(jinfo->codebuf, shift, shift, 63);
 	and_imm(jinfo->codebuf, ARM_IP, shift, 31);
 	tst_imm(jinfo->codebuf, shift, 32);
 	loc1 = forward_16(jinfo->codebuf);
@@ -5186,6 +5194,7 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	res_lo = PUSH(jstack, JSTACK_PREFER(jstack, ~((1<<lho_lo)|(1<<lho_hi))));
 	JASSERT(res_lo != lho_lo && res_lo != lho_hi, "Spill failed");
 	JASSERT(res_hi != lho_lo && res_hi != lho_hi, "Spill failed");
+	and_imm(jinfo->codebuf, shift, shift, 63);
 	and_imm(jinfo->codebuf, ARM_IP, shift, 31);
 	tst_imm(jinfo->codebuf, shift, 32);
 	loc1 = forward_16(jinfo->codebuf);
@@ -5215,6 +5224,7 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	res_lo = PUSH(jstack, JSTACK_PREFER(jstack, ~((1<<lho_lo)|(1<<lho_hi))));
 	JASSERT(res_lo != lho_lo && res_lo != lho_hi, "Spill failed");
 	JASSERT(res_hi != lho_lo && res_hi != lho_hi, "Spill failed");
+	and_imm(jinfo->codebuf, shift, shift, 63);
 	and_imm(jinfo->codebuf, ARM_IP, shift, 31);
 	tst_imm(jinfo->codebuf, shift, 32);
 	loc1 = forward_16(jinfo->codebuf);
