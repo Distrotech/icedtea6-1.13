@@ -410,7 +410,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/5082756-ImageIO_plugins_metadata_boolean_attributes.patch \
 	patches/openjdk/6296893-BMP_Writer_handles_TopDown_prop_incorrectly.patch \
 	patches/openjdk/7103224-glibc_name_collision.patch \
-	patches/arm-debug.patch
+	patches/arm-debug.patch \
+	patches/openjdk/683768-System-tray-icon.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
