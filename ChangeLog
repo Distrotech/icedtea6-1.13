@@ -1,3 +1,16 @@
+2011-11-11  Andrew John Hughes  <ahughes@redhat.com>
+
+	PR719: make distcheck work in IcedTea6
+	* Makefile.am:
+	(distclean-local): Depend on clean-local.
+	(ports): Remove inapplicable conditionals from
+	reversion and ensure copied files have correct
+	permissions.
+	(clean-generated): Replace hardcoded name with
+	$(GENERATED_BUILD_DIR).
+	(clean-jtreg): Remove all empty directories.
+	* NEWS: List this fix.
+
 2011-11-15    Andrew Haley  <aph@redhat.com>
 
 	* patches/arm-debug.patch: Surround all code in #ifdef PRODUCT
@@ -5,10 +18,10 @@
 
 2011-11-14  Danesh Dadachanji  <ddadacha@redhat.com>
 
-	* Makefile.am: 
-	(ICEDTEA_PATCHES): Add patches/openjdk/683768-System-tray-icon.patch 
-	* NEWS: Updated. 
-	* patches/openjdk/683768-System-tray-icon.patch: New file. Sets XAtoms 
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add patches/openjdk/683768-System-tray-icon.patch
+	* NEWS: Updated.
+	* patches/openjdk/683768-System-tray-icon.patch: New file. Sets XAtoms
 	_NET_WM_PID and WM_CLIENT_MACHINE for X windows.
 
 2011-11-07  Andrew Haley  <aph@redhat.com>

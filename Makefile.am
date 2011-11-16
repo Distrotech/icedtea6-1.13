@@ -662,7 +662,7 @@ clean-local: clean-jtreg clean-jtreg-reports $(PULSE_JAVA_CLEAN_TARGET) \
 	  rmdir lib ; \
 	fi
 
-distclean-local: clean-download clean-hgforest
+distclean-local: clean-local clean-download clean-hgforest
 	if [ $(abs_top_srcdir) != $(abs_top_builddir) ]; then \
 	  if [ -e tapset ] ; then \
 	    rmdir tapset ; \
@@ -1044,13 +1044,12 @@ clean-replace-hotspot:
 
 # Copy ports sources into tree
 stamps/ports.stamp: stamps/replace-hotspot.stamp
-if !WITH_ALT_HSBUILD
 	for target in $(abs_top_srcdir)/arm_port/hotspot/tools \
 		      $(abs_top_srcdir)/arm_port/hotspot/src/*cpu/* ; do \
 	  link=$$(dirname $$target | sed 's/^.*arm_port/openjdk/'); \
 	  cp -rlv $$target $$link; \
+	  chmod -R ug+rwX $$link; \
 	done
-endif
 	mkdir -p stamps
 	touch stamps/ports.stamp
 
@@ -1072,7 +1071,7 @@ stamps/generated.stamp: stamps/ports.stamp
 
 clean-generated:
 	if [ $(abs_top_srcdir) != $(abs_top_builddir) ]; then \
-	  rm -rf $(abs_top_builddir)/generated ; \
+	  rm -rf $(GENERATED_BUILD_DIR); \
 	fi
 	rm -f stamps/generated.stamp
 
@@ -2147,7 +2146,13 @@ stamps/jtreg.stamp: stamps/icedtea-against-icedtea.stamp
 
 clean-jtreg:
 	rm -rf test/jtreg/classes
+	if [ -e test/jtreg ] ; then \
+	  rmdir test/jtreg ; \
+	fi
 	rm -f test/jtreg.jar
+	if [ -e test ] ; then \
+	  rmdir test ; \
+	fi
 	rm -f stamps/jtreg.stamp
 
 check-hotspot: stamps/jtreg.stamp
