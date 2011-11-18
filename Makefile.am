@@ -5,8 +5,8 @@ OPENJDK_SHA256SUM = f36198920e84053d7bfa3599ee32477c1e2b911dba38d75a669b79e9ae53
 OPENJDK_VERSION = b23
 OPENJDK_URL = http://download.java.net/openjdk/jdk6/promoted/$(OPENJDK_VERSION)/
 
-CACAO_VERSION = f910ea5348aa
-CACAO_SHA256SUM = dcbd9ebb2e4180cdcb8d2f2019c09905a87f2dfa9fda9eee56836b25727c4d90
+CACAO_VERSION = 2204b08fcae9
+CACAO_SHA256SUM = bb6ce286fcdc7350ed9913acfe5177921f515e187e74e773f6e62adba005f0a3
 CACAO_BASE_URL = http://icedtea.classpath.org/download/drops/cacao
 CACAO_URL = $(CACAO_BASE_URL)/$(CACAO_VERSION).tar.gz
 CACAO_SRC_ZIP = cacao-$(CACAO_VERSION).tar.gz
@@ -288,6 +288,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6959123-libpng_14.patch \
 	patches/applet_hole.patch \
 	patches/jtreg-httpTest.patch \
+	patches/arm.patch \
 	patches/debug-dir.patch \
 	patches/override-redirect-metacity.patch \
 	patches/openjdk/6967533-pre_epoch.patch \
@@ -406,7 +407,10 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6371401-BigInteger.shift_throws_StackOverflowError.patch \
 	patches/openjdk/6826104-npe_on_app_and_toolkit_modal_dialog_click.patch \
 	patches/openjdk/5082756-ImageIO_plugins_metadata_boolean_attributes.patch \
-	patches/openjdk/6296893-BMP_Writer_handles_TopDown_prop_incorrectly.patch
+	patches/openjdk/6296893-BMP_Writer_handles_TopDown_prop_incorrectly.patch \
+	patches/openjdk/7103224-glibc_name_collision.patch \
+	patches/arm-debug.patch \
+	patches/openjdk/683768-System-tray-icon.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -622,7 +626,8 @@ ICEDTEA_ENV_ECJ = $(ICEDTEA_ENV) \
 
 EXTRA_DIST = generated \
 	$(top_srcdir)/patches/* \
-	contrib overlays \
+	contrib arm_port \
+	overlays \
 	jconsole.desktop policytool.desktop \
 	$(JTREG_SRCS) HACKING pulseaudio fsg.sh \
 	hotspot.map \
@@ -643,7 +648,7 @@ all-local: icedtea-against-icedtea
 check-local: jtregcheck
 
 clean-local: clean-jtreg clean-jtreg-reports $(PULSE_JAVA_CLEAN_TARGET) \
- clean-icedtea clean-icedtea-debug clean-icedtea-ecj clean-extract \
+ clean-icedtea clean-icedtea-debug clean-icedtea-ecj clean-extract clean-ports \
  clean-overlay clean-native-ecj clean-icedtea-against-icedtea clean-icedtea-debug-against-icedtea \
  clean-icedtea-against-ecj clean-extract-ecj clean-generated clean-replace-hotspot \
  clean-rewriter clean-rewrite-rhino clean-rt clean-bootstrap-directory \
@@ -656,7 +661,7 @@ clean-local: clean-jtreg clean-jtreg-reports $(PULSE_JAVA_CLEAN_TARGET) \
 	  rmdir lib ; \
 	fi
 
-distclean-local: clean-download clean-hgforest
+distclean-local: clean-local clean-download clean-hgforest
 	if [ $(abs_top_srcdir) != $(abs_top_builddir) ]; then \
 	  if [ -e tapset ] ; then \
 	    rmdir tapset ; \
@@ -680,7 +685,7 @@ install:
 	clean-icedtea-against-ecj \
 	clean-jamvm clean-add-jamvm clean-add-jamvm-debug \
 	clean-cacao clean-add-cacao clean-add-cacao-debug \
-	clean-overlay clean-extract-ecj clean-extract clean-extract-openjdk \
+	clean-ports clean-overlay clean-extract-ecj clean-extract clean-extract-openjdk \
 	clean-replace-hotspot clean-generated clean-download clean-hgforest clean-download-openjdk \
 	clean-rewriter clean-rewrite-rhino clean-add-systemtap clean-add-systemtap-debug \
 	clean-add-pulseaudio clean-add-pulseaudio-debug clean-add-nss clean-add-nss-debug \
@@ -1036,7 +1041,26 @@ endif
 clean-replace-hotspot:
 	rm -f stamps/replace-hotspot.stamp
 
-stamps/generated.stamp: stamps/replace-hotspot.stamp
+# Copy ports sources into tree
+stamps/ports.stamp: stamps/replace-hotspot.stamp
+	for target in $(abs_top_srcdir)/arm_port/hotspot/tools \
+		      $(abs_top_srcdir)/arm_port/hotspot/src/*cpu/* ; do \
+	  link=$$(dirname $$target | sed 's/^.*arm_port/openjdk/'); \
+	  cp -rlv $$target $$link; \
+	  chmod -R ug+rwX $$link; \
+	done
+	mkdir -p stamps
+	touch stamps/ports.stamp
+
+clean-ports:
+	for target in $(abs_top_srcdir)/arm_port/hotspot/tools \
+		      $(abs_top_srcdir)/arm_port/hotspot/src/*cpu/* ; do \
+	  link=$$(dirname $$target | sed 's/^.*arm_port/openjdk/'); \
+	  rm -rf $$link; \
+	done
+	rm -f stamps/ports.stamp
+
+stamps/generated.stamp: stamps/ports.stamp
 	if [ ! -e $(GENERATED_BUILD_DIR) ]; then \
 	  cp -a $(abs_top_srcdir)/generated $(GENERATED_BUILD_DIR) && \
 	  chmod -R ug+rwX $(GENERATED_BUILD_DIR) ; \
@@ -1046,7 +1070,7 @@ stamps/generated.stamp: stamps/replace-hotspot.stamp
 
 clean-generated:
 	if [ $(abs_top_srcdir) != $(abs_top_builddir) ]; then \
-	  rm -rf $(abs_top_builddir)/generated ; \
+	  rm -rf $(GENERATED_BUILD_DIR); \
 	fi
 	rm -f stamps/generated.stamp
 
@@ -2121,7 +2145,13 @@ stamps/jtreg.stamp: stamps/icedtea-against-icedtea.stamp
 
 clean-jtreg:
 	rm -rf test/jtreg/classes
+	if [ -e test/jtreg ] ; then \
+	  rmdir test/jtreg ; \
+	fi
 	rm -f test/jtreg.jar
+	if [ -e test ] ; then \
+	  rmdir test ; \
+	fi
 	rm -f stamps/jtreg.stamp
 
 check-hotspot: stamps/jtreg.stamp
@@ -2287,6 +2317,8 @@ download-openjdk: stamps/download-openjdk.stamp
 extract: stamps/extract.stamp
 
 extract-ecj: stamps/extract-ecj.stamp
+
+hotspot-ports: stamps/ports.stamp
 
 icedtea: stamps/icedtea.stamp
 

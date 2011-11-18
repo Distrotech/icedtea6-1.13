@@ -1,3 +1,211 @@
+2011-11-11  Andrew John Hughes  <ahughes@redhat.com>
+
+	PR719: make distcheck work in IcedTea6
+	* Makefile.am:
+	(distclean-local): Depend on clean-local.
+	(ports): Remove inapplicable conditionals from
+	reversion and ensure copied files have correct
+	permissions.
+	(clean-generated): Replace hardcoded name with
+	$(GENERATED_BUILD_DIR).
+	(clean-jtreg): Remove all empty directories.
+	* NEWS: List this fix.
+
+2011-11-15    Andrew Haley  <aph@redhat.com>
+
+	* patches/arm-debug.patch: Surround all code in #ifdef PRODUCT
+	in order to unbreak debug builds.
+
+2011-11-14  Danesh Dadachanji  <ddadacha@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add patches/openjdk/683768-System-tray-icon.patch
+	* NEWS: Updated.
+	* patches/openjdk/683768-System-tray-icon.patch: New file. Sets XAtoms
+	_NET_WM_PID and WM_CLIENT_MACHINE for X windows.
+
+2011-11-07  Andrew Haley  <aph@redhat.com>
+
+	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp (Thumb2_iOp): Mask
+	shift counts with 31.
+	(Thumb2_codegen): Mask double shift counts with 63.
+
+2011-11-04  Xerxes Rånby  <xerxes@zafena.se>
+
+	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S
+	(ARMv4): Only define it when optimizing for armv4 and armv4t.
+	This will make the asm interpreter slightly faster when optimized
+	for armv5 and later.
+
+2011-11-03  Xerxes Rånby  <xerxes@zafena.se>
+
+	CACAO:
+	- Fix FindClass called from JNI_OnLoad.
+	- Implemented jni_GetDirectBufferCapacity.
+	* Makefile.am:
+	(CACAO_VERSION): Updated CACAO to 2011-11-02 revision.
+	(CACAO_SHA256SUM): Updated.
+
+2011-11-03  Xerxes Rånby  <xerxes@zafena.se>
+
+	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S
+	(cmpxchg_ptr): Designate function label as such; required for
+	thumb interworking.
+	(asm_generate_method_entry, asm_check_null_ptr, Thumb2_Install
+	Thumb2_stubs, Thumb2_idiv_stub, Thumb2_irem_stub,
+	Thumb2_invokeinterface_stub, Thumb2_invokevirtual_stub,
+	Thumb2_invokestatic_stub, Thumb2_invokespecial_stub,
+	Thumb2_getfield_word_stub, Thumb2_getfield_sh_stub,
+	Thumb2_getfield_h_stub, Thumb2_getfield_sb_stub,
+	Thumb2_getfield_dw_stub, Thumb2_putfield_word_stub,
+	Thumb2_putfield_h_stub, Thumb2_putfield_b_stub,
+	Thumb2_putfield_a_stub, Thumb2_putfield_dw_stub,
+	Thumb2_getstatic_word_stub, Thumb2_getstatic_h_stub,
+	Thumb2_getstatic_sh_stub, Thumb2_getstatic_sb_stub,
+	Thumb2_getstatic_dw_stub, Thumb2_putstatic_word_stub,
+	Thumb2_putstatic_h_stub, Thumb2_putstatic_b_stub,
+	Thumb2_putstatic_dw_stub, Thumb2_putstatic_a_stub,
+	Thumb2_stubs_end, Thumb2_DivZero_Handler,
+	Thumb2_Handle_Exception, Thumb2_Handle_Exception_NoRegs,
+	Thumb2_ArrayBounds_Handler, Thumb2_NullPtr_Handler,
+	Thumb2_Stack_Overflow, Thumb2_Exit_To_Interpreter,
+	Thumb2_Clear_Cache): Likewise.
+
+2011-11-02  Andrew Haley  <aph@redhat.com>
+
+	* openjdk-ecj/hotspot/src/cpu/zero/vm/thumb2.cpp (Thumb2_codegen):
+	Sign extend byte loads in accessors.
+
+2011-11-01  Andrew Haley  <aph@redhat.com>
+
+	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp (Thumb2_Accessor):
+	Return 0, #deoptimized_frames.
+
+2011-10-31  Andrew Haley  <aph@redhat.com>
+
+	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S (accessor_sh):
+	Return 0, #deoptimized_frames.
+	(accessor{_h,_sb,_dw}): Likewise.
+
+2011-10-28  Andrew Haley  <aph@redhat.com>
+
+	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S (PUSHD0)
+	Use PUSH, not POP.
+
+2011-10-28  Andrew Haley  <aph@redhat.com>
+
+	* Makefile.am (ICEDTEA_PATCHES): Add patches/arm-debug.patch.
+
+2011-10-27  Andrew Haley  <aph@redhat.com>
+
+	* arm_port/hotspot/src/cpu/zero/vm/asm_helper.cpp (whole file):
+	Conditionalize on #ifdef __arm__.
+	* arm_port/hotspot/src/cpu/zero/vm/asm_helper.cpp: Likewise.
+	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp: Likewise.
+	* patches/arm.patch: Move %.S rule outside ARM conditional.
+
+2011-10-26  Andrew Haley  <aph@redhat.com>
+
+	* patches/arm.patch (CFLAGS): Enable the ARM assembler port.
+
+	PR icedtea/484:
+	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S
+	(fast_empty_entry, normal_entry_synchronized, normal_entry):
+	Return 0, #deoptimized_frames.
+	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp (Thumb2_Return):
+	Likewise.
+	* arm_port/hotspot/src/cpu/zero/vm/bytecodes_arm.def
+	(return_unsafe, ireturn_unsafe, lreturn_unsafe)
+	(ireturn,areturn,freturn): Return deoptimized_frames = 0.
+
+	PR icedtea/323:
+	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S: Replace
+	all stores to THREAD_LAST_JAVA_SP with stores to
+	THREAD_LAST_JAVA_FP.  Add stores to THREAD_LAST_JAVA_SP.
+	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp: Likewise.
+
+	* Makefile.am (ICEDTEA_PATCHES): Add patches/arm-debug.patch.
+	(stamps/ports.stamp): Use cp -l to link the ARM interpreter
+	sources into the target dir rather than copying them.
+	(EXTRA_DIST): Add arm_port.
+
+	Update to HS20:
+	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp: Replace all calls
+	to fatal1() (which no longer exists) with calls to fatal().
+	(Thumb2_is_zombie, Thumb2_pass2): invoke* and {get,put}* now take
+	native, not Java, byte ordered indexes.
+	(Thumb2_disass, Thumb2_codegen, Thumb2_tablegen):
+	Bytecodes::special_length_at() takes different arguments from the
+	previous version; adjust suitably.
+	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S: Replace
+	call to report_fatal_vararg(char const*, int, char const*, ...)
+	(which no longer exists) with call to Helper_report_fatal.
+	* arm_port/hotspot/src/cpu/zero/vm/bytecodes_arm.def (new):
+	Renumber the fast bytecodes iload_0_iconst_N to iload_3_iload_N.
+	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp: Likewise.
+	* patches/arm.patch: Likewise.
+	Add *.S to the list of source files.
+	* arm_port/hotspot/src/cpu/zero/vm/asm_helper.cpp (All #includes)
+	: Move to new OpenJDK include file format.
+	(Helper_report_fatal): New assember helper.
+	(print_vm_offsets): Add THREAD_LAST_JAVA_FP.
+
+	Hard FP port:
+	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp (Thumb2_Initialize):
+	Add hard FP variants for the stubs that need it.
+	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S
+	(POPF0, POPF1, POPD0, POPD1,PUSHF0, PUSHD0): New macros.
+	(.eabi_attribute): Use real names.  Add declaration for hard
+	FP ABI.
+	(.fast_native_return_double, .fast_native_return_float,
+	.fast_copy_double, .fast_copy_float): New.
+	(fast_native_entry): use SIZEOF_FFI_CIF, not 24.  Add logic to
+	handle args in FP registers.
+	(FIND_LOWEST_BIT, FIND_LOWEST_BIT_PAIR, COPY_DOUBLE, COPY_FLOAT):
+	New macros.
+	(.copy_float_table, .copy_double_table): New. 
+	* arm_port/hotspot/src/cpu/zero/vm/bytecodes_arm.def
+	(frem, drem, f2i, f2l, d2i, d2l): Add hardfp args.
+
+	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S
+	(REWRITE_PAIRS): New macro.
+	* arm_port/hotspot/src/cpu/zero/vm/bytecodes_arm.def: Use
+	REWRITE_PAIRS to prevent rewriting pairs of bytecodes in the
+	instruction stream.
+
+	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S (fast_native_entry):
+	Update ISTATE_SELF_LINK to get correct stack traces.
+
+	* patches/arm-debug.patch: New file.
+
+2011-10-26  Andrew Haley  <aph@redhat.com>
+
+	Reinstate the ARM assembler port.  Back out this patch:
+
+  2011-07-11  Xerxes Rånby  <xerxes@zafena.se>
+
+          Removal of the ARM assembler port, unbreaks Zero and Shark builds.
+          * Makefile.am:
+          (ICEDTEA_PATCHES): Remove patches/arm.patch.
+          (clean-ports): Removed.
+          (stamps/ports.stamp): Likewise.
+          (hotspot-ports): Likewise.
+          * arm_port/hotspot/src/cpu/zero/vm/asm_helper.cpp: Removed.
+          * arm_port/hotspot/src/cpu/zero/vm/bytecodes_arm.def: Likewise.
+          * arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S: Likewise.
+          * arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp: Likewise.
+          * arm_port/hotspot/tools/mkbc.c: Likewise.
+          * patches/arm.patch: Likewise.
+
+2011-10-26  Omair Majid  <omajid@redhat.com>
+
+	S7103224: collision between __LEAF define in interfaceSupport.hpp and
+	/usr/include/sys/cdefs.h with gcc
+	* NEWS: Update with fix.
+	* patches/openjdk/7103224-glibc_name_collision.patch: New file. Export of
+	OpenJDK changeset.
+	* Makefile.am (ICEDTEA_PATCHES): Add the above.
+
 2011-10-21  Andrew John Hughes  <ahughes@redhat.com>
 
 	* patches/security/20111018/7083012.patch:
