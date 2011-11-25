@@ -1,3 +1,27 @@
+2011-11-24  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/security/20111018/7000600.patch,
+	* patches/security/20111018/7019773.patch,
+	* patches/security/20111018/7023640.patch,
+	* patches/security/20111018/7032417.patch,
+	* patches/security/20111018/7046794.patch,
+	* patches/security/20111018/7046823.patch,
+	* patches/security/20111018/7055902.patch,
+	* patches/security/20111018/7057857.patch,
+	* patches/security/20111018/7064341.patch,
+	* patches/security/20111018/7070134.patch,
+	* patches/security/20111018/7077466.patch,
+	* patches/security/20111018/7083012.patch,
+	* patches/security/20111018/7096936.patch:
+	Drop patches applied upstream.
+	* Makefile.am:
+	(JAXWS_DROP_ZIP): Updated.
+	(JAXWS_DROP_SHA256SUM): Likewise.
+	(SECURITY_PATCHES): Set empty (upstream).
+	* patches/rhino.patch,
+	* patches/xjc.patch:
+	Rewritten to work with upstream security patches.
+
 2011-11-11  Andrew John Hughes  <ahughes@redhat.com>
 
 	PR719: make distcheck work in IcedTea6

@@ -18,8 +18,8 @@ JAMVM_URL = $(JAMVM_BASE_URL)/jamvm-$(JAMVM_VERSION).tar.gz
 JAMVM_SRC_ZIP = jamvm-$(JAMVM_VERSION).tar.gz
 
 JAXWS_DROP_URL = http://icedtea.classpath.org/download/drops
-JAXWS_DROP_ZIP = jdk6-jaxws2_1_6-2011_06_08.zip
-JAXWS_DROP_SHA256SUM = be95ff0ae05b474d0bbb3ad8bdb2a23f20cb8c48b1a21f16aa079e43a50c057f
+JAXWS_DROP_ZIP = jdk6-jaxws2_1_6-2011_06_13.zip
+JAXWS_DROP_SHA256SUM = 229040544e791f44906e8e7b6f6faf503c730a5d854275135f3925490d5c3be3
 JAF_DROP_URL = http://icedtea.classpath.org/download/drops
 JAF_DROP_ZIP = jdk6-jaf-b20.zip
 JAF_DROP_SHA256SUM = 78c7b5c9d6271e88ee46abadd018a61f1e9645f8936cc8df1617e5f4f5074012
@@ -199,20 +199,7 @@ JTREG_SRCS = $(top_srcdir)/jtreg
 
 ICEDTEA_FSG_PATCHES =
 
-SECURITY_PATCHES = \
-	patches/security/20111018/7000600.patch \
-	patches/security/20111018/7019773.patch \
-	patches/security/20111018/7023640.patch \
-	patches/security/20111018/7032417.patch \
-	patches/security/20111018/7046823.patch \
-	patches/security/20111018/7055902.patch \
-	patches/security/20111018/7057857.patch \
-	patches/security/20111018/7064341.patch \
-	patches/security/20111018/7070134.patch \
-	patches/security/20111018/7083012.patch \
-	patches/security/20111018/7096936.patch \
-	patches/security/20111018/7046794.patch \
-	patches/security/20111018/7077466.patch
+SECURITY_PATCHES =
 
 ICEDTEA_PATCHES = \
 	$(SECURITY_PATCHES) \
