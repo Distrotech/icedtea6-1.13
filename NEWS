@@ -24,6 +24,15 @@ New in release 1.11 (2011-XX-XX):
   - LP862286: Fix exception on trying to start PulseAudio playback
   - RH683768: Add a workaround for Java applications using tray icon for Gnome Shell
   - PR719: make distcheck should work in IcedTea6
+* Import of OpenJDK6 b24
+  - S7099148: increment build number of hs20.0 to b12
+  - S7108221: Backport to jdk6 Hotspot defaults for AMD Bulldozer processor
+  - S7080038: (ann) Serializable types in sun.reflect.annotation do not declare serialVersionUIDs
+  - S6578583: Regression: Modality is broken in windows vista home premium from jdk1.7 b02 onwards.
+  - S6815182: GSSAPI/SPNEGO does not work with server using MIT Kerberos library
+  - S6979329: CCacheInputStream fails to read ticket cache files from Kerberos 1.8.1
+  - S7092186: adjust package access in rmiregistry
+  - S7110373: krb5 test in openjdk6 without test infrastructure
 * Import of OpenJDK6 b23 including upgrade to HotSpot 20
   - S7023111: Add webrev script to make/scripts
   - S6909331: Add vsvars.sh to the jdk repository (handy cygwin way to get vcvars32.bat run)
@@ -340,7 +349,6 @@ New in release 1.11 (2011-XX-XX):
   - S7018387: Xrender pipeline may leak GC's
   - S7036754: Stroked quads sometimes contain NaN
   - S6769607, PR677: Modal frame hangs for a while.
-  - S6578583: Modality is broken in windows vista home premium from jdk1.7 b02 onwards.
   - S6610244: modal dialog closes with fatal error if -Xcheck:jni is set
   - S7037283, RH712211: Null Pointer Exception in SwingUtilities2.
   - S7008106: com/sun/awt/Translucency/WindowOpacity.java test fails.
