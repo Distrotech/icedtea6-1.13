@@ -489,6 +489,8 @@ void VMStructs::print_vm_offsets(void)
   print_def("CONSTANTPOOL_CACHE", offset_of(constantPoolOopDesc, _cache));
   print_def("CONSTANTPOOL_POOL_HOLDER", offset_of(constantPoolOopDesc, _pool_holder));
   print_def("CONSTANTPOOL_BASE", sizeof(constantPoolOopDesc));
+  print_def("CP_CACHE_VOLATILE_FIELD_FLAG_BIT", ConstantPoolCacheEntry::volatileField);
+  print_def("CP_CACHE_FLAGS", offset_of(ConstantPoolCacheEntry, _flags));
   nl();
   print_def("CP_OFFSET", in_bytes(constantPoolCacheOopDesc::base_offset()));
   nl();

@@ -1573,9 +1573,20 @@ return_register_finalizer = 0xe7, 1
 	DISPATCH_NEXT
 	SW_NPC	cmp	tmp1, #0
 	SW_NPC	beq	null_ptr_exception_jpc_3
+	GO_IF_VOLATILE	r3, tmp2, 3f
 	ldr	tmp2, [tmp2, #CP_OFFSET+8]
 	DISPATCH_NEXT
 .abortentry78:
+	ldr	tmp2, [tmp1, tmp2]
+	DISPATCH_NEXT
+	DISPATCH_NEXT
+	PUSH	tmp2
+	DISPATCH_FINISH
+3:
+	VOLATILE_VERSION
+	ldr	tmp2, [tmp2, #CP_OFFSET+8]
+	DISPATCH_NEXT
+.abortentry78_v:
 	ldr	tmp2, [tmp1, tmp2]
 	DISPATCH_NEXT
 	DISPATCH_NEXT
@@ -1592,9 +1603,20 @@ return_register_finalizer = 0xe7, 1
 	DISPATCH_NEXT
 	SW_NPC	cmp	tmp1, #0
 	SW_NPC	beq	null_ptr_exception_jpc_3
+	GO_IF_VOLATILE	r3, tmp2, 3f
 	ldr	tmp2, [tmp2, #CP_OFFSET+8]
 	DISPATCH_NEXT
 .abortentry79:
+	ldrsb	tmp2, [tmp1, tmp2]
+	DISPATCH_NEXT
+	DISPATCH_NEXT
+	PUSH	tmp2
+	DISPATCH_FINISH
+3:
+	VOLATILE_VERSION
+	ldr	tmp2, [tmp2, #CP_OFFSET+8]
+	DISPATCH_NEXT
+.abortentry79_v:
 	ldrsb	tmp2, [tmp1, tmp2]
 	DISPATCH_NEXT
 	DISPATCH_NEXT
@@ -1611,9 +1633,20 @@ return_register_finalizer = 0xe7, 1
 	DISPATCH_NEXT
 	SW_NPC	cmp	tmp1, #0
 	SW_NPC	beq	null_ptr_exception_jpc_3
+	GO_IF_VOLATILE	r3, tmp2, 3f
 	ldr	tmp2, [tmp2, #CP_OFFSET+8]
 	DISPATCH_NEXT
 .abortentry80:
+	ldrh	tmp2, [tmp1, tmp2]
+	DISPATCH_NEXT
+	DISPATCH_NEXT
+	PUSH	tmp2
+	DISPATCH_FINISH
+3:
+	VOLATILE_VERSION
+	ldr	tmp2, [tmp2, #CP_OFFSET+8]
+	DISPATCH_NEXT
+.abortentry80_v:
 	ldrh	tmp2, [tmp1, tmp2]
 	DISPATCH_NEXT
 	DISPATCH_NEXT
@@ -1630,9 +1663,20 @@ return_register_finalizer = 0xe7, 1
 	DISPATCH_NEXT
 	SW_NPC	cmp	tmp1, #0
 	SW_NPC	beq	null_ptr_exception_jpc_3
+	GO_IF_VOLATILE	r3, tmp2, 3f
 	ldr	tmp2, [tmp2, #CP_OFFSET+8]
 	DISPATCH_NEXT
 .abortentry81:
+	ldrsh	tmp2, [tmp1, tmp2]
+	DISPATCH_NEXT
+	DISPATCH_NEXT
+	PUSH	tmp2
+	DISPATCH_FINISH
+3:
+	VOLATILE_VERSION
+	ldr	tmp2, [tmp2, #CP_OFFSET+8]
+	DISPATCH_NEXT
+.abortentry81_v:
 	ldrsh	tmp2, [tmp1, tmp2]
 	DISPATCH_NEXT
 	DISPATCH_NEXT
@@ -1649,11 +1693,23 @@ return_register_finalizer = 0xe7, 1
 	DISPATCH_NEXT
 	SW_NPC	cmp	tmp1, #0
 	SW_NPC	beq	null_ptr_exception_jpc_3
+	GO_IF_VOLATILE	r3, tmp2, 3f
 	ldr	tmp2, [tmp2, #CP_OFFSET+8]
 	DISPATCH_NEXT
 	add	tmp2, tmp1, tmp2
 	DISPATCH_NEXT
 .abortentry82:
+	ldmia	tmp2, {tmp2, tmp1}
+	DISPATCH_NEXT
+	PUSH	tmp2, tmp1
+	DISPATCH_FINISH
+3:
+	VOLATILE_VERSION
+	ldr	tmp2, [tmp2, #CP_OFFSET+8]
+	DISPATCH_NEXT
+	add	tmp2, tmp1, tmp2
+	DISPATCH_NEXT
+.abortentry82_v:
 	ldmia	tmp2, {tmp2, tmp1}
 	DISPATCH_NEXT
 	PUSH	tmp2, tmp1
@@ -1669,11 +1725,21 @@ return_register_finalizer = 0xe7, 1
 	DISPATCH_NEXT
 	SW_NPC	cmp	tmp1, #0
 	SW_NPC	beq	null_ptr_exception_jpc_3
+	GO_IF_VOLATILE	r2, tmp2, 3f
 	ldr	tmp2, [tmp2, #CP_OFFSET+8]
 	DISPATCH_NEXT
 	DISPATCH_NEXT
 	DISPATCH_NEXT
 .abortentry83:
+	str	r3, [tmp1, tmp2]
+	DISPATCH_FINISH
+3:
+	VOLATILE_VERSION
+	ldr	tmp2, [tmp2, #CP_OFFSET+8]
+	DISPATCH_NEXT
+	DISPATCH_NEXT
+	DISPATCH_NEXT
+.abortentry83_v:
 	str	r3, [tmp1, tmp2]
 	DISPATCH_FINISH
 }
@@ -1687,11 +1753,21 @@ return_register_finalizer = 0xe7, 1
 	DISPATCH_NEXT
 	SW_NPC	cmp	tmp1, #0
 	SW_NPC	beq	null_ptr_exception_jpc_3
+	GO_IF_VOLATILE	r2, tmp2, 3f
 	ldr	tmp2, [tmp2, #CP_OFFSET+8]
 	DISPATCH_NEXT
 	DISPATCH_NEXT
 	DISPATCH_NEXT
 .abortentry84:
+	strh	r3, [tmp1, tmp2]
+	DISPATCH_FINISH
+3:
+	VOLATILE_VERSION
+	ldr	tmp2, [tmp2, #CP_OFFSET+8]
+	DISPATCH_NEXT
+	DISPATCH_NEXT
+	DISPATCH_NEXT
+.abortentry84_v:
 	strh	r3, [tmp1, tmp2]
 	DISPATCH_FINISH
 }
@@ -1705,11 +1781,21 @@ return_register_finalizer = 0xe7, 1
 	DISPATCH_NEXT
 	SW_NPC	cmp	tmp1, #0
 	SW_NPC	beq	null_ptr_exception_jpc_3
+	GO_IF_VOLATILE	r2, tmp2, 3f
 	ldr	tmp2, [tmp2, #CP_OFFSET+8]
 	DISPATCH_NEXT
 	DISPATCH_NEXT
 	DISPATCH_NEXT
 .abortentry85:
+	strb	r3, [tmp1, tmp2]
+	DISPATCH_FINISH
+3:
+	VOLATILE_VERSION
+	ldr	tmp2, [tmp2, #CP_OFFSET+8]
+	DISPATCH_NEXT
+	DISPATCH_NEXT
+	DISPATCH_NEXT
+.abortentry85_v:
 	strb	r3, [tmp1, tmp2]
 	DISPATCH_FINISH
 }
@@ -1721,8 +1807,17 @@ return_register_finalizer = 0xe7, 1
 	add	tmp2, tmp2, r2, lsl #4
 	SW_NPC	cmp	tmp1, #0
 	SW_NPC	beq	null_ptr_exception_jpc_3
+	GO_IF_VOLATILE	r2, tmp2, 3f
 	ldr	tmp2, [tmp2, #CP_OFFSET+8]
 .abortentry113:
+	str	r3, [tmp1, tmp2]
+	mov	r0, tmp1
+	bl	Helper_aputfield
+	DISPATCH 3
+3:
+	VOLATILE_VERSION
+	ldr	tmp2, [tmp2, #CP_OFFSET+8]
+.abortentry113_v:
 	str	r3, [tmp1, tmp2]
 	mov	r0, tmp1
 	bl	Helper_aputfield
@@ -1738,12 +1833,23 @@ return_register_finalizer = 0xe7, 1
 	DISPATCH_NEXT
 	SW_NPC	cmp	lr, #0
 	SW_NPC	beq	null_ptr_exception_jpc_3
+	GO_IF_VOLATILE	r2, tmp2, 3f
 	ldr	tmp2, [tmp2, #CP_OFFSET+8]
 	DISPATCH_NEXT
 	add	tmp2, lr, tmp2
 	DISPATCH_NEXT
 	DISPATCH_NEXT
 .abortentry86:
+	stm	tmp2, {r3, tmp1}
+	DISPATCH_FINISH
+3:
+	VOLATILE_VERSION
+	ldr	tmp2, [tmp2, #CP_OFFSET+8]
+	DISPATCH_NEXT
+	add	tmp2, lr, tmp2
+	DISPATCH_NEXT
+	DISPATCH_NEXT
+.abortentry86_v:
 	stm	tmp2, {r3, tmp1}
 	DISPATCH_FINISH
 }
@@ -1760,6 +1866,7 @@ return_register_finalizer = 0xe7, 1
 	and	r3, r3, #0x00ff0000
 	cmp	r3, #opc_getstatic << 16
 	blne	resolve_get_put
+	GO_IF_VOLATILE	r2, tmp2, 3f
 	ldr	r3, [tmp2, #CP_OFFSET+4]
 	ldr	r2, [tmp2, #CP_OFFSET+12]
         ldr     lr, [tmp2, #CP_OFFSET+8]
@@ -1770,6 +1877,18 @@ return_register_finalizer = 0xe7, 1
 	tst	r2, #2
 	bne	getstatic_dw
 	b	getstatic_sh
+3:
+	VOLATILE_VERSION
+	ldr	r3, [tmp2, #CP_OFFSET+4]
+	ldr	r2, [tmp2, #CP_OFFSET+12]
+        ldr     lr, [tmp2, #CP_OFFSET+8]
+        movs    r2, r2, lsr #29
+	bhi	getstatic_volatile_w		@ C = 1, Z = 0 => R2 == 3, 5, 7
+	bcs	getstatic_volatile_h		@ C = 1 => R2 = 1
+	beq	getstatic_volatile_sb		@ Z = 1 => R2 = 0
+	tst	r2, #2
+	bne	getstatic_volatile_dw
+	b	getstatic_volatile_sh
 }
 
 @ r2 = [jpc, #1]
@@ -1782,6 +1901,7 @@ return_register_finalizer = 0xe7, 1
         and     r3, r3, #0xff000000
         cmp     r3, #opc_putstatic << 24
 	blne	resolve_get_put
+	GO_IF_VOLATILE	r2, tmp2, 3f
 	ldr	r3, [tmp2, #CP_OFFSET+4]		@ r3 = object
         ldr     lr, [tmp2, #CP_OFFSET+12]           @ lr = tos_type
         ldr     r2, [tmp2, #CP_OFFSET+8]            @ r2 = offset
@@ -1792,6 +1912,18 @@ return_register_finalizer = 0xe7, 1
 	tst	lr, #2
 	bne	putstatic_dw
 	b	putstatic_sh
+3:
+	VOLATILE_VERSION
+	ldr	r3, [tmp2, #CP_OFFSET+4]		@ r3 = object
+        ldr     lr, [tmp2, #CP_OFFSET+12]           @ lr = tos_type
+        ldr     r2, [tmp2, #CP_OFFSET+8]            @ r2 = offset
+	movs	lr, lr, lsr #29
+	bhi	putstatic_volatile_w		@ C = 1, Z = 0 => R2 == 3, 5, 7
+	bcs	putstatic_volatile_h		@ C = 1 => R2 = 1
+	beq	putstatic_volatile_sb		@ Z = 1 => R2 = 0
+	tst	lr, #2
+	bne	putstatic_volatile_dw
+	b	putstatic_volatile_sh
 }
 
 #ifdef NOTICE_SAFEPOINTS
@@ -2216,10 +2348,21 @@ return_register_finalizer = 0xe7, 1
 	DISPATCH_NEXT
 	SW_NPC	cmp	tmp1, #0
 	SW_NPC	beq	null_ptr_exception_jpc_3
+	GO_IF_VOLATILE r3, tmp2, 3f
 	DISPATCH_NEXT
         ldr     tmp2, [tmp2, #CP_OFFSET+8]
 	DISPATCH_NEXT
 .abortentry87:
+	ldr	tmp2, [tmp1, tmp2]
+	DISPATCH_NEXT
+	PUSH	tmp2
+	DISPATCH_FINISH
+3:
+	VOLATILE_VERSION
+	DISPATCH_NEXT
+        ldr     tmp2, [tmp2, #CP_OFFSET+8]
+	DISPATCH_NEXT
+.abortentry87_v:
 	ldr	tmp2, [tmp1, tmp2]
 	DISPATCH_NEXT
 	PUSH	tmp2
@@ -4086,9 +4229,19 @@ return_register_finalizer = 0xe7, 1
 	SW_NPC	cmp	tmp1, #0
 	SW_NPC	beq	null_ptr_exception_jpc_3
 	DISPATCH_NEXT
+	GO_IF_VOLATILE r3, tmp2, 3f
         ldr     tmp2, [tmp2, #CP_OFFSET+8]
 	DISPATCH_NEXT
 .abortentry88:
+	ldr	tmp2, [tmp1, tmp2]
+	DISPATCH_NEXT
+	PUSH	tmp2
+	DISPATCH_FINISH
+3:
+	VOLATILE_VERSION
+        ldr     tmp2, [tmp2, #CP_OFFSET+8]
+	DISPATCH_NEXT
+.abortentry88_v:
 	ldr	tmp2, [tmp1, tmp2]
 	DISPATCH_NEXT
 	PUSH	tmp2

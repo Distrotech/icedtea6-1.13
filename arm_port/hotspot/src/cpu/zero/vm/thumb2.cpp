@@ -1,3 +1,5 @@
+#include <iostream>
+
 /*
  * Copyright 2009, 2010 Edward Nevill
  *
@@ -27,7 +29,7 @@
 
 #define T2EE_PRINT_COMPILATION
 #define T2EE_PRINT_STATISTICS
-//#define T2EE_PRINT_DISASS
+#define T2EE_PRINT_DISASS
 #define T2EE_PRINT_REGUSAGE
 
 #ifdef T2EE_PRINT_COMPILATION
@@ -717,6 +719,42 @@ static void Thumb2_local_info_from_sig(Thumb2_Info *jinfo, methodOop method, jby
 static const char *local_types[] = { "int", "long", "float", "double", "ref" };
 
 #ifdef T2EE_PRINT_DISASS
+
+class Opcodes {
+public:
+  typeof (::print_insn_little_arm) *print_insn_little_arm;
+  typeof (::init_disassemble_info) *init_disassemble_info;
+  typeof (::disassemble_init_for_target) *disassemble_init_for_target;
+
+  Opcodes()
+  {
+    void *lib;
+    if (t2ee_print_disass) {
+      if (lib = dlopen("libopcodes.so", RTLD_NOW)) {
+	print_insn_little_arm
+	  = (typeof print_insn_little_arm)dlsym(lib, "print_insn_little_arm");
+	init_disassemble_info
+	  = (typeof init_disassemble_info)dlsym(lib, "init_disassemble_info");
+	disassemble_init_for_target
+	  = (typeof disassemble_init_for_target)dlsym(lib, "disassemble_init_for_target");
+      }
+
+      if (! (print_insn_little_arm
+	     && init_disassemble_info
+	     && disassemble_init_for_target))
+	{
+	  fprintf (stderr, "The environment variable T2EE_PRINT_DISASS is set, but\n"
+		   "libopcodes.so has not been found or is invalid.  If you want to\n"
+		   "see a disassembly, please ensure that a valid copy of\n"
+		   "libopcodes.so is present somewhere in your library load path.\n");
+	  abort();
+	}
+    }
+  }
+};
+
+static Opcodes opcodes;
+
 void Thumb2_disass(Thumb2_Info *jinfo)
 {
   unsigned code_size = jinfo->code_size;
@@ -747,9 +785,9 @@ void Thumb2_disass(Thumb2_Info *jinfo)
   }
 #endif
 
-  init_disassemble_info(&info, stdout, (fprintf_ftype)fprintf);
+  opcodes.init_disassemble_info(&info, stdout, (fprintf_ftype)fprintf);
   info.arch = bfd_arch_arm;
-  disassemble_init_for_target(&info);
+  opcodes.disassemble_init_for_target(&info);
   info.endian = BFD_ENDIAN_LITTLE;
   info.endian_code = BFD_ENDIAN_LITTLE;
   info.buffer = (bfd_byte *)codebuf;
@@ -823,7 +861,7 @@ void Thumb2_disass(Thumb2_Info *jinfo)
 	    for (i = 0; i < 4; i++) {
 	      printf("0x%08x:\t", (int)codebuf+idx);
 	      {
-		int len = print_insn_little_arm((bfd_vma)codebuf+idx, &info);
+		int len = opcodes.print_insn_little_arm((bfd_vma)codebuf+idx, &info);
 		if (len == -1) len = 2;
 		idx += len;
 		putchar('\n');
@@ -898,7 +936,7 @@ void Thumb2_disass(Thumb2_Info *jinfo)
 	    len = 4;
 	  }
 	} else {
-	  len = print_insn_little_arm((bfd_vma)codebuf+idx, &info);
+	  len = opcodes.print_insn_little_arm((bfd_vma)codebuf+idx, &info);
 	  if (len == -1) len = 2;
 	  idx += len;
 	}
@@ -2058,7 +2096,9 @@ static const unsigned t_vop_ops[] = {
 
 #define T_CHKA(size, idx)		(0xca00 | (((size) & 8) << (7-3)) | ((idx) << 3) | ((size) & 7))
 #define T_HBL(handler)			(0xc300 | (handler))
-#define T_ENTER_LEAVE(enter)		(0xf3bf8f0f | ((enter)<<4))
+#define T_MISC_CONTROL(op, option)	(0xf3bf8f00 | ((op)<<4) | option)
+#define T_ENTER_LEAVE(enter)		(T_MISC_CONTROL(enter, 0xf))
+#define T_DMB(option)			(T_MISC_CONTROL(5, option))
 
 #define T1_ADD_IMM(dst, src, imm3)	(0x1c00 | ((imm3) << 6) | ((src) << 3) | (dst))
 #define T2_ADD_IMM(r, imm8)		(0x3000 | ((r) << 8) | (imm8))
@@ -2877,6 +2917,16 @@ int enter_leave(CodeBuf *codebuf, unsigned enter)
   J_Unimplemented();
 }
 #endif
+
+int fullBarrier(CodeBuf *codebuf)
+{
+  return out_16x2(codebuf, T_DMB(0xf));
+}
+
+int storeBarrier(CodeBuf *codebuf)
+{
+  return out_16x2(codebuf, T_DMB(0xe));
+}
 
 int tbh(CodeBuf *codebuf, Reg base, Reg idx)
 {
@@ -4558,6 +4608,10 @@ int Thumb2_Accessor(Thumb2_Info *jinfo)
   else
     ldr_imm(jinfo->codebuf, ARM_R0, ARM_R0, field_offset, 1, 0);
   str_imm(jinfo->codebuf, ARM_R0, ARM_R1, 0, 1, 0);
+
+  if (cache->is_volatile())
+    fullBarrier(jinfo->codebuf);
+
   // deoptimized_frames = 0
   mov_imm(jinfo->codebuf, ARM_R0, 0);
   mov_reg(jinfo->codebuf, ARM_PC, ARM_LR);
@@ -4694,6 +4748,8 @@ void Thumb2_Enter(Thumb2_Info *jinfo)
 
   str_imm(jinfo->codebuf, ARM_R2, Ristate, ISTATE_THREAD, 1, 0);
   str_imm(jinfo->codebuf, ARM_R0, Ristate, ISTATE_METHOD, 1, 0);
+
+  str_imm(jinfo->codebuf, Ristate, Ristate, ISTATE_SELF_LINK, 1, 0);
 
   mov_reg(jinfo->codebuf, Rthread, ARM_R2);
 
@@ -5589,6 +5645,7 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	  mov_imm(jinfo->codebuf, ARM_R1, index);
 	  blx(jinfo->codebuf, handlers[handler]);
 	  Thumb2_restore_locals(jinfo, bc_stackinfo[bci+len] & ~BC_FLAGS_MASK);
+
 	  break;
 	}
 
@@ -5620,6 +5677,10 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	  else
 	    ldr_imm(jinfo->codebuf, r, r_obj, field_offset, 1, 0);
 	}
+
+	if (cache->is_volatile())
+	  fullBarrier(jinfo->codebuf);
+
 	break;
       }
 
@@ -5652,6 +5713,7 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	  mov_imm(jinfo->codebuf, ARM_R1, index);
 	  blx(jinfo->codebuf, handlers[handler]);
 	  Thumb2_restore_locals(jinfo, bc_stackinfo[bci+len] & ~BC_FLAGS_MASK);
+
 	  break;
 	}
 
@@ -5682,6 +5744,10 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	  else
 	    ldr_imm(jinfo->codebuf, r, r, field_offset, 1, 0);
 	}
+
+	if (cache->is_volatile())
+	  fullBarrier(jinfo->codebuf);
+
 	break;
       }
 
@@ -5692,6 +5758,7 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	Reg r_obj;
 
         cache = cp->entry_at(index);
+
         if (!cache->is_resolved((Bytecodes::Code)opcode)) {
 	  int java_index = GET_NATIVE_U2(code_base+bci+1);
 	  constantPoolOop pool = jinfo->method->constants();
@@ -5703,15 +5770,19 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	  if (c == 'J' || c == 'D') handler = H_PUTFIELD_DW;
 	  if (c == 'B' || c == 'Z') handler = H_PUTFIELD_B;
 	  if (c == 'C' || c == 'S') handler = H_PUTFIELD_H;
-	  if (c == '[' || c == 'L') handler = H_PUTFIELD_A;
+ 	  if (c == '[' || c == 'L') handler = H_PUTFIELD_A;
 	  Thumb2_Flush(jinfo);
 	  Thumb2_save_locals(jinfo, stackdepth);
 	  mov_imm(jinfo->codebuf, ARM_R0, bci+CONSTMETHOD_CODEOFFSET);
 	  mov_imm(jinfo->codebuf, ARM_R1, index);
 	  blx(jinfo->codebuf, handlers[handler]);
 	  Thumb2_restore_locals(jinfo, bc_stackinfo[bci+len] & ~BC_FLAGS_MASK);
+
 	  break;
 	}
+
+	if (cache->is_volatile())
+	  storeBarrier(jinfo->codebuf);
 
 	TosState tos_type = cache->flag_state();
 	int field_offset = cache->f2();
@@ -5741,6 +5812,12 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	    }
 	  }
 	}
+
+	if (cache->is_volatile())
+	  fullBarrier(jinfo->codebuf);
+	else
+	  storeBarrier(jinfo->codebuf);
+
 	break;
       }
 
@@ -5750,6 +5827,7 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	int index = GET_NATIVE_U2(code_base+bci+1);
 
         cache = cp->entry_at(index);
+
         if (!cache->is_resolved((Bytecodes::Code)opcode)) {
 	  int java_index = GET_NATIVE_U2(code_base+bci+1);
 	  constantPoolOop pool = jinfo->method->constants();
@@ -5770,6 +5848,9 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	  Thumb2_restore_locals(jinfo, bc_stackinfo[bci+len] & ~BC_FLAGS_MASK);
 	  break;
 	}
+
+	if (cache->is_volatile())
+	  storeBarrier(jinfo->codebuf);
 
 	TosState tos_type = cache->flag_state();
 	int field_offset = cache->f2();
@@ -5808,6 +5889,12 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	    }
 	  }
 	}
+
+	if (cache->is_volatile())
+	  fullBarrier(jinfo->codebuf);
+	else
+	  storeBarrier(jinfo->codebuf);
+
 	break;
       }
 
@@ -5865,6 +5952,8 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	      ldrsh_imm(jinfo->codebuf, r, r_obj, field_offset, 1, 0);
 	    else
 	      ldr_imm(jinfo->codebuf, r, r_obj, field_offset, 1, 0);
+	    if (entry->is_volatile())
+	      fullBarrier(jinfo->codebuf);
 	    break;
 	  }
 	}
@@ -5987,6 +6076,8 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
 		ldrsh_imm(jinfo->codebuf, r, r_obj, field_offset, 1, 0);
 	      else
 		ldr_imm(jinfo->codebuf, r, r_obj, field_offset, 1, 0);
+	      if (entry->is_volatile())
+		fullBarrier(jinfo->codebuf);
 	      break;
 	    }
 	  }
@@ -7163,7 +7254,7 @@ extern "C" void Thumb2_Initialize(void)
   u32 loc_irem, loc_idiv, loc_ldiv;
   int rc;
 
-  if (!(CPUInfo & ARCH_THUMBEE)) {
+  if (!(CPUInfo & ARCH_THUMBEE) || !UseCompiler) {
     DisableCompiler = 1;
     return;
   }

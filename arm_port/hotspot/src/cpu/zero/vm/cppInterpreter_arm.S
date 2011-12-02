@@ -585,6 +585,29 @@ do_\label:
 	.fpu softvfp
 #endif // HW_FP
 
+#ifndef	__ARM_ARCH_7A__
+#	define dmb VOLATILE_BARRIER
+#endif
+
+	.macro	VOLATILE_BARRIER arg
+	stmfd	sp!, {r2, lr}
+	mov	r2, #0xfa0
+	movt    r2, #0xffff
+	blx	r2
+	ldmfd	sp!, {r2, lr}
+	.endm
+	
+	.macro	GO_IF_VOLATILE reg, cp_cache, label
+	ldr	\reg, [\cp_cache, #CP_OFFSET+CP_CACHE_FLAGS]
+	tst	\reg, #(1<<CP_CACHE_VOLATILE_FIELD_FLAG_BIT)
+	bne	\label
+	.set	dispatch_saved, dispatch_state
+	.endm
+
+	.macro VOLATILE_VERSION
+	.set	dispatch_state, dispatch_saved
+	.endm
+	
 	.eabi_attribute Tag_ABI_FP_denormal, 1
 	.eabi_attribute Tag_ABI_FP_exceptions, 1
 	.eabi_attribute Tag_ABI_FP_number_model, 3
@@ -2000,6 +2023,73 @@ putstatic_dw:
 	stm	r2, {r3, tmp2}
 	DISPATCH_FINISH
 putstatic_a:
+	POP	tmp2
+	str	tmp2, [r3, r2]
+	mov	r0, r3
+	bl	Helper_aputfield
+	DISPATCH 3
+
+getstatic_volatile_sh:
+	DISPATCH_START	3
+	ldrsh	tmp2, [r3, lr]
+	DISPATCH_NEXT
+	PUSH	tmp2
+	DISPATCH_FINISH
+getstatic_volatile_h:
+	DISPATCH_START	3
+	ldrh	tmp2, [r3, lr]
+	DISPATCH_NEXT
+	PUSH	tmp2
+	DISPATCH_FINISH
+getstatic_volatile_sb:
+	DISPATCH_START	3
+	ldrsb	tmp2, [r3, lr]
+	DISPATCH_NEXT
+	PUSH	tmp2
+	DISPATCH_FINISH
+getstatic_volatile_dw:
+	DISPATCH_START	3
+	add	r3, r3, lr
+	ldm	r3, {r2, tmp2}
+	DISPATCH_NEXT
+	PUSH	r2, tmp2
+	DISPATCH_FINISH
+getstatic_volatile_w:
+	DISPATCH_START	3
+	ldr	tmp2, [r3, lr]
+	DISPATCH_NEXT
+	PUSH	tmp2
+	DISPATCH_FINISH
+
+putstatic_volatile_sh:
+putstatic_volatile_h:
+	DISPATCH_START	3
+	POP	tmp2
+	DISPATCH_NEXT
+	strh	tmp2, [r3, r2]
+	DISPATCH_FINISH
+putstatic_volatile_w:
+	cmp	lr, #tos_atos >> 1	@ >> 1 due to lsr #29 above
+	beq	putstatic_volatile_a
+	DISPATCH_START	3
+	POP	tmp2
+	DISPATCH_NEXT
+	str	tmp2, [r3, r2]
+	DISPATCH_FINISH
+putstatic_volatile_sb:
+	DISPATCH_START	3
+	POP	tmp2
+	DISPATCH_NEXT
+	strb	tmp2, [r3, r2]
+	DISPATCH_FINISH
+putstatic_volatile_dw:
+	DISPATCH_START	3
+	add	r2, r2, r3
+	POP	r3, tmp2
+	DISPATCH_NEXT
+	stm	r2, {r3, tmp2}
+	DISPATCH_FINISH
+putstatic_volatile_a:
 	POP	tmp2
 	str	tmp2, [r3, r2]
 	mov	r0, r3
@@ -5569,6 +5659,12 @@ Thumb2_getfield_word_stub:
 	cmp	r3, #0
 	beq	field_null_ptr_exception
 
+	GO_IF_VOLATILE	r3, r2, 3f
+
+	ldr	r3, [r3, ip]
+	str	r3, [stack, #-4]!	@ PUSH r3
+	bx	lr
+3:
 	ldr	r3, [r3, ip]
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
@@ -5595,6 +5691,12 @@ Thumb2_getfield_sh_stub:
 	cmp	r3, #0
 	beq	field_null_ptr_exception
 
+	GO_IF_VOLATILE	r3, r2, 3f
+
+	ldrsh	r3, [r3, ip]
+	str	r3, [stack, #-4]!	@ PUSH r3
+	bx	lr
+3:
 	ldrsh	r3, [r3, ip]
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
@@ -5621,6 +5723,12 @@ Thumb2_getfield_h_stub:
 	cmp	r3, #0
 	beq	field_null_ptr_exception
 
+	GO_IF_VOLATILE	r3, r2, 3f
+
+	ldrh	r3, [r3, ip]
+	str	r3, [stack, #-4]!	@ PUSH r3
+	bx	lr
+3:
 	ldrh	r3, [r3, ip]
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
@@ -5647,6 +5755,12 @@ Thumb2_getfield_sb_stub:
 	cmp	r3, #0
 	beq	field_null_ptr_exception
 
+	GO_IF_VOLATILE	r3, r2, 3f
+
+	ldrsb	r3, [r3, ip]
+	str	r3, [stack, #-4]!	@ PUSH r3
+	bx	lr
+3:
 	ldrsb	r3, [r3, ip]
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
@@ -5673,6 +5787,12 @@ Thumb2_getfield_dw_stub:
 	cmp	r3, #0
 	beq	field_null_ptr_exception
 
+	GO_IF_VOLATILE	r2, r2, 3f
+
+	ldrd	r2, r3, [r3, ip]
+	stmdb	stack!, {r2, r3}	@ PUSH r2, r3
+	bx	lr
+3:
 	ldrd	r2, r3, [r3, ip]
 	stmdb	stack!, {r2, r3}	@ PUSH r2, r3
 	bx	lr
@@ -5739,6 +5859,16 @@ Thumb2_putfield_word_stub:
 	cmp	r3, #opc_putfield << 24
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
+	ldr	ip, [r2, #CP_OFFSET+8]
+	ldmia	stack!, {r2, r3}	@ r2 = value, r3 = obj
+	cmp	r3, #0
+	beq	field_null_ptr_exception
+
+	str	r2, [r3, ip]
+	bx	lr
+3:	
 	ldr	ip, [r2, #CP_OFFSET+8]
 	ldmia	stack!, {r2, r3}	@ r2 = value, r3 = obj
 	cmp	r3, #0
@@ -5762,6 +5892,16 @@ Thumb2_putfield_h_stub:
 	cmp	r3, #opc_putfield << 24
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
+	ldr	ip, [r2, #CP_OFFSET+8]
+	ldmia	stack!, {r2, r3}	@ r2 = value, r3 = obj
+	cmp	r3, #0
+	beq	field_null_ptr_exception
+
+	strh	r2, [r3, ip]
+	bx	lr
+3:
 	ldr	ip, [r2, #CP_OFFSET+8]
 	ldmia	stack!, {r2, r3}	@ r2 = value, r3 = obj
 	cmp	r3, #0
@@ -5785,6 +5925,16 @@ Thumb2_putfield_b_stub:
 	cmp	r3, #opc_putfield << 24
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
+	ldr	ip, [r2, #CP_OFFSET+8]
+	ldmia	stack!, {r2, r3}	@ r2 = value, r3 = obj
+	cmp	r3, #0
+	beq	field_null_ptr_exception
+
+	strb	r2, [r3, ip]
+	bx	lr
+3:
 	ldr	ip, [r2, #CP_OFFSET+8]
 	ldmia	stack!, {r2, r3}	@ r2 = value, r3 = obj
 	cmp	r3, #0
@@ -5808,6 +5958,18 @@ Thumb2_putfield_a_stub:
 	cmp	r3, #opc_putfield << 24
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
+	ldr	ip, [r2, #CP_OFFSET+8]
+	ldmia	stack!, {r2, r3}	@ r2 = value, r3 = obj
+	cmp	r3, #0
+	beq	field_null_ptr_exception
+
+	str	r2, [r3, ip]
+	ldr	ip, helper_aputfield_adcon
+	mov	r0, r3
+	bx	ip
+3:
 	ldr	ip, [r2, #CP_OFFSET+8]
 	ldmia	stack!, {r2, r3}	@ r2 = value, r3 = obj
 	cmp	r3, #0
@@ -5833,6 +5995,16 @@ Thumb2_putfield_dw_stub:
 	cmp	r3, #opc_putfield << 24
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
+	ldr	r1, [r2, #CP_OFFSET+8]
+	ldmia	stack!, {r2, r3, ip}	@ r2,r3 = value, ip = obj
+	cmp	ip, #0
+	beq	field_null_ptr_exception
+
+	strd	r2,r3, [ip, r1]
+	bx	lr
+3:
 	ldr	r1, [r2, #CP_OFFSET+8]
 	ldmia	stack!, {r2, r3, ip}	@ r2,r3 = value, ip = obj
 	cmp	ip, #0
@@ -5858,6 +6030,15 @@ Thumb2_getstatic_word_stub:
 	cmp	r3, #opc_getstatic << 16
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
+	ldr	r3, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+
+	ldr	r3, [r3, ip]
+	str	r3, [stack, #-4]!	@ PUSH r3
+	bx	lr
+3:
 	ldr	r3, [r2, #CP_OFFSET+4]
 	ldr	ip, [r2, #CP_OFFSET+8]
 
@@ -5880,6 +6061,15 @@ Thumb2_getstatic_h_stub:
 	cmp	r3, #opc_getstatic << 16
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
+	ldr	r3, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+
+	ldrh	r3, [r3, ip]
+	str	r3, [stack, #-4]!	@ PUSH r3
+	bx	lr
+3:
 	ldr	r3, [r2, #CP_OFFSET+4]
 	ldr	ip, [r2, #CP_OFFSET+8]
 
@@ -5902,6 +6092,15 @@ Thumb2_getstatic_sh_stub:
 	cmp	r3, #opc_getstatic << 16
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
+	ldr	r3, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+
+	ldrsh	r3, [r3, ip]
+	str	r3, [stack, #-4]!	@ PUSH r3
+	bx	lr
+3:
 	ldr	r3, [r2, #CP_OFFSET+4]
 	ldr	ip, [r2, #CP_OFFSET+8]
 
@@ -5924,6 +6123,15 @@ Thumb2_getstatic_sb_stub:
 	cmp	r3, #opc_getstatic << 16
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
+	ldr	r3, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+
+	ldrsb	r3, [r3, ip]
+	str	r3, [stack, #-4]!	@ PUSH r3
+	bx	lr
+3:
 	ldr	r3, [r2, #CP_OFFSET+4]
 	ldr	ip, [r2, #CP_OFFSET+8]
 
@@ -5946,6 +6154,15 @@ Thumb2_getstatic_dw_stub:
 	cmp	r3, #opc_getstatic << 16
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
+	ldr	r3, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+
+	ldrd	r2, r3, [r3, ip]
+	stmdb	stack!, {r2, r3}	@ PUSH r2, r3
+	bx	lr
+3:
 	ldr	r3, [r2, #CP_OFFSET+4]
 	ldr	ip, [r2, #CP_OFFSET+8]
 
@@ -5970,6 +6187,15 @@ Thumb2_putstatic_word_stub:
 	cmp	r3, #opc_putstatic << 24
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
+	ldr	r3, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+	ldr	r2, [stack], #4		@ POP r2
+
+	str	r2, [r3, ip]
+	bx	lr
+3:
 	ldr	r3, [r2, #CP_OFFSET+4]
 	ldr	ip, [r2, #CP_OFFSET+8]
 	ldr	r2, [stack], #4		@ POP r2
@@ -5994,6 +6220,15 @@ Thumb2_putstatic_h_stub:
 	cmp	r3, #opc_putstatic << 24
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
+	ldr	r3, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+	ldr	r2, [stack], #4		@ POP r2
+
+	strh	r2, [r3, ip]
+	bx	lr
+3:
 	ldr	r3, [r2, #CP_OFFSET+4]
 	ldr	ip, [r2, #CP_OFFSET+8]
 	ldr	r2, [stack], #4		@ POP r2
@@ -6018,6 +6253,15 @@ Thumb2_putstatic_b_stub:
 	cmp	r3, #opc_putstatic << 24
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
+	ldr	r3, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+	ldr	r2, [stack], #4		@ POP r2
+
+	strb	r2, [r3, ip]
+	bx	lr
+3:
 	ldr	r3, [r2, #CP_OFFSET+4]
 	ldr	ip, [r2, #CP_OFFSET+8]
 	ldr	r2, [stack], #4		@ POP r2
@@ -6042,6 +6286,15 @@ Thumb2_putstatic_dw_stub:
 	cmp	r3, #opc_putstatic << 24
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
+	ldr	r1, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+	ldmia	stack!, {r2, r3}
+
+	strd	r2,r3, [r1, ip]
+	bx	lr
+3:
 	ldr	r1, [r2, #CP_OFFSET+4]
 	ldr	ip, [r2, #CP_OFFSET+8]
 	ldmia	stack!, {r2, r3}
@@ -6066,6 +6319,17 @@ Thumb2_putstatic_a_stub:
 	cmp	r3, #opc_putstatic << 24
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
+	ldr	r3, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+	ldr	r2, [stack], #4		@ POP r2
+
+	str	r2, [r3, ip]
+	ldr	ip, helper_aputfield_adcon
+	mov	r0, r3
+	bx	ip
+3:
 	ldr	r3, [r2, #CP_OFFSET+4]
 	ldr	ip, [r2, #CP_OFFSET+8]
 	ldr	r2, [stack], #4		@ POP r2
