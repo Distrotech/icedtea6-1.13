@@ -587,6 +587,9 @@ do_\label:
 
 #ifndef	__ARM_ARCH_7A__
 #	define dmb VOLATILE_BARRIER
+#	define dmb_st VOLATILE_BARRIER
+#else
+#	define	dmb_st .word   0xf57ff05e
 #endif
 
 	.macro	VOLATILE_BARRIER arg
@@ -907,17 +910,28 @@ abort_table:
 		FBC	.word	.abortentry77, 1
 
 	    FBC		.word	.abortentry78, 3
+	    FBC		.word	.abortentry78_v, 3
 	    FBC		.word	.abortentry79, 3
+	    FBC		.word	.abortentry79_v, 3
 	    FBC		.word	.abortentry80, 3
+	    FBC		.word	.abortentry80_v, 3
 	    FBC		.word	.abortentry81, 3
+	    FBC		.word	.abortentry81_v, 3
 	    FBC		.word	.abortentry82, 3
+	    FBC		.word	.abortentry82_v, 3
 	    FBC		.word	.abortentry83, 3
+	    FBC		.word	.abortentry83_v, 3
 	    FBC		.word	.abortentry84, 3
+	    FBC		.word	.abortentry84_v, 3
 	    FBC		.word	.abortentry85, 3
+	    FBC		.word	.abortentry85_v, 3
 	    FBC		.word	.abortentry86, 3
+	    FBC		.word	.abortentry86_v, 3
 	    FBC		.word	.abortentry87, 3
+	    FBC		.word	.abortentry87_v, 3
 
 	    FBC    	.word	.abortentry88, 3
+	    FBC    	.word	.abortentry88_v, 3
 	    FBC	   	.word	.abortentry89, 5
 	    FBC	     	.word	.abortentry90, 4
 	    FBC	     	.word	.abortentry91, 4
@@ -933,6 +947,7 @@ abort_table:
 		FBC	.word	.abortentry112, 3
 
 		FBC	.word	.abortentry113, 0
+		FBC	.word	.abortentry113_v, 0
 			.word	.abortentry114, 1
 		FBC	.word	.abortentry117, 0
 			.word	.abortentry118, 0
@@ -2032,18 +2047,21 @@ putstatic_a:
 getstatic_volatile_sh:
 	DISPATCH_START	3
 	ldrsh	tmp2, [r3, lr]
+	dmb
 	DISPATCH_NEXT
 	PUSH	tmp2
 	DISPATCH_FINISH
 getstatic_volatile_h:
 	DISPATCH_START	3
 	ldrh	tmp2, [r3, lr]
+	dmb
 	DISPATCH_NEXT
 	PUSH	tmp2
 	DISPATCH_FINISH
 getstatic_volatile_sb:
 	DISPATCH_START	3
 	ldrsb	tmp2, [r3, lr]
+	dmb
 	DISPATCH_NEXT
 	PUSH	tmp2
 	DISPATCH_FINISH
@@ -2051,12 +2069,14 @@ getstatic_volatile_dw:
 	DISPATCH_START	3
 	add	r3, r3, lr
 	ldm	r3, {r2, tmp2}
+	dmb
 	DISPATCH_NEXT
 	PUSH	r2, tmp2
 	DISPATCH_FINISH
 getstatic_volatile_w:
 	DISPATCH_START	3
 	ldr	tmp2, [r3, lr]
+	dmb
 	DISPATCH_NEXT
 	PUSH	tmp2
 	DISPATCH_FINISH
@@ -2066,7 +2086,9 @@ putstatic_volatile_h:
 	DISPATCH_START	3
 	POP	tmp2
 	DISPATCH_NEXT
+	dmb_st
 	strh	tmp2, [r3, r2]
+	dmb
 	DISPATCH_FINISH
 putstatic_volatile_w:
 	cmp	lr, #tos_atos >> 1	@ >> 1 due to lsr #29 above
@@ -2074,23 +2096,30 @@ putstatic_volatile_w:
 	DISPATCH_START	3
 	POP	tmp2
 	DISPATCH_NEXT
+	dmb_st
 	str	tmp2, [r3, r2]
+	dmb
 	DISPATCH_FINISH
 putstatic_volatile_sb:
 	DISPATCH_START	3
 	POP	tmp2
 	DISPATCH_NEXT
+	dmb_st
 	strb	tmp2, [r3, r2]
+	dmb
 	DISPATCH_FINISH
 putstatic_volatile_dw:
 	DISPATCH_START	3
 	add	r2, r2, r3
 	POP	r3, tmp2
 	DISPATCH_NEXT
+	dmb_st
 	stm	r2, {r3, tmp2}
+	dmb
 	DISPATCH_FINISH
 putstatic_volatile_a:
 	POP	tmp2
+	dmb_st
 	str	tmp2, [r3, r2]
 	mov	r0, r3
 	bl	Helper_aputfield
@@ -3192,6 +3221,7 @@ normal_entry:
 
 	bl	fast_normal_entry
 
+	dmb_st
 	mov	r0, #0	@ deoptimized_frames = 0
 	ldmfd	arm_sp!, {regset, pc}
 
@@ -3358,6 +3388,7 @@ handle_return:
 
 	str	r1, [tmp_xxx, #THREAD_JAVA_SP]
 
+	dmb_st
 	mov	r0, #0	@ deoptimized_frames = 0
 	ldmfd	arm_sp!, {fast_regset, pc}
 
@@ -5614,6 +5645,8 @@ Thumb2_invokespecial_stub:
         mov     r2, Rthread
         blx     r3
 
+	dmb_st
+	
         ldr     Rthread, [istate, #ISTATE_THREAD]
 
         ldr     stack, [Rthread, #THREAD_JAVA_SP]
@@ -5665,7 +5698,9 @@ Thumb2_getfield_word_stub:
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
 3:
+	
 	ldr	r3, [r3, ip]
+	dmb
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
 1:
@@ -5698,6 +5733,7 @@ Thumb2_getfield_sh_stub:
 	bx	lr
 3:
 	ldrsh	r3, [r3, ip]
+	dmb
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
 1:
@@ -5730,6 +5766,7 @@ Thumb2_getfield_h_stub:
 	bx	lr
 3:
 	ldrh	r3, [r3, ip]
+	dmb
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
 1:
@@ -5762,6 +5799,7 @@ Thumb2_getfield_sb_stub:
 	bx	lr
 3:
 	ldrsb	r3, [r3, ip]
+	dmb
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
 1:
@@ -5794,6 +5832,7 @@ Thumb2_getfield_dw_stub:
 	bx	lr
 3:
 	ldrd	r2, r3, [r3, ip]
+	dmb
 	stmdb	stack!, {r2, r3}	@ PUSH r2, r3
 	bx	lr
 1:
@@ -5874,7 +5913,9 @@ Thumb2_putfield_word_stub:
 	cmp	r3, #0
 	beq	field_null_ptr_exception
 
+	dmb_st
 	str	r2, [r3, ip]
+	dmb
 	bx	lr
 1:
 	mov	ip, lr
@@ -5907,7 +5948,9 @@ Thumb2_putfield_h_stub:
 	cmp	r3, #0
 	beq	field_null_ptr_exception
 
+	dmb_st
 	strh	r2, [r3, ip]
+	dmb
 	bx	lr
 1:
 	mov	ip, lr
@@ -5940,7 +5983,9 @@ Thumb2_putfield_b_stub:
 	cmp	r3, #0
 	beq	field_null_ptr_exception
 
+	dmb_st
 	strb	r2, [r3, ip]
+	dmb
 	bx	lr
 1:
 	mov	ip, lr
@@ -5975,7 +6020,9 @@ Thumb2_putfield_a_stub:
 	cmp	r3, #0
 	beq	field_null_ptr_exception
 
+	dmb_st
 	str	r2, [r3, ip]
+	dmb
 	ldr	ip, helper_aputfield_adcon
 	mov	r0, r3
 	bx	ip
@@ -6010,7 +6057,9 @@ Thumb2_putfield_dw_stub:
 	cmp	ip, #0
 	beq	field_null_ptr_exception
 
+	dmb_st
 	strd	r2,r3, [ip, r1]
+	dmb
 	bx	lr
 1:
 	mov	ip, lr
@@ -6043,6 +6092,7 @@ Thumb2_getstatic_word_stub:
 	ldr	ip, [r2, #CP_OFFSET+8]
 
 	ldr	r3, [r3, ip]
+	dmb
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
 1:
@@ -6074,6 +6124,7 @@ Thumb2_getstatic_h_stub:
 	ldr	ip, [r2, #CP_OFFSET+8]
 
 	ldrh	r3, [r3, ip]
+	dmb
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
 1:
@@ -6105,6 +6156,7 @@ Thumb2_getstatic_sh_stub:
 	ldr	ip, [r2, #CP_OFFSET+8]
 
 	ldrsh	r3, [r3, ip]
+	dmb
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
 1:
@@ -6136,6 +6188,7 @@ Thumb2_getstatic_sb_stub:
 	ldr	ip, [r2, #CP_OFFSET+8]
 
 	ldrsb	r3, [r3, ip]
+	dmb
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
 1:
@@ -6167,6 +6220,7 @@ Thumb2_getstatic_dw_stub:
 	ldr	ip, [r2, #CP_OFFSET+8]
 
 	ldrd	r2, r3, [r3, ip]
+	dmb
 	stmdb	stack!, {r2, r3}	@ PUSH r2, r3
 	bx	lr
 1:
@@ -6200,7 +6254,9 @@ Thumb2_putstatic_word_stub:
 	ldr	ip, [r2, #CP_OFFSET+8]
 	ldr	r2, [stack], #4		@ POP r2
 
+	dmb_st
 	str	r2, [r3, ip]
+	dmb
 	bx	lr
 1:
 	mov	ip, lr
@@ -6233,7 +6289,9 @@ Thumb2_putstatic_h_stub:
 	ldr	ip, [r2, #CP_OFFSET+8]
 	ldr	r2, [stack], #4		@ POP r2
 
+	dmb_st
 	strh	r2, [r3, ip]
+	dmb
 	bx	lr
 1:
 	mov	ip, lr
@@ -6266,7 +6324,9 @@ Thumb2_putstatic_b_stub:
 	ldr	ip, [r2, #CP_OFFSET+8]
 	ldr	r2, [stack], #4		@ POP r2
 
+	dmb_st
 	strb	r2, [r3, ip]
+	dmb
 	bx	lr
 1:
 	mov	ip, lr
@@ -6299,7 +6359,9 @@ Thumb2_putstatic_dw_stub:
 	ldr	ip, [r2, #CP_OFFSET+8]
 	ldmia	stack!, {r2, r3}
 
+	dmb_st
 	strd	r2,r3, [r1, ip]
+	dmb
 	bx	lr
 1:
 	mov	ip, lr
@@ -6334,7 +6396,9 @@ Thumb2_putstatic_a_stub:
 	ldr	ip, [r2, #CP_OFFSET+8]
 	ldr	r2, [stack], #4		@ POP r2
 
+	dmb_st
 	str	r2, [r3, ip]
+	dmb
 	ldr	ip, helper_aputfield_adcon
 	mov	r0, r3
 	bx	ip
