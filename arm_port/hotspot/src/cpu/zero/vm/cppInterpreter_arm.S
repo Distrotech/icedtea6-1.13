@@ -3221,7 +3221,6 @@ normal_entry:
 
 	bl	fast_normal_entry
 
-	dmb_st
 	mov	r0, #0	@ deoptimized_frames = 0
 	ldmfd	arm_sp!, {regset, pc}
 
@@ -3388,7 +3387,6 @@ handle_return:
 
 	str	r1, [tmp_xxx, #THREAD_JAVA_SP]
 
-	dmb_st
 	mov	r0, #0	@ deoptimized_frames = 0
 	ldmfd	arm_sp!, {fast_regset, pc}
 

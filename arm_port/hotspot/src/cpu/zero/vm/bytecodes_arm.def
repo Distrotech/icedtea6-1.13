@@ -1967,7 +1967,6 @@ return_register_finalizer = 0xe7, 1
 
 	str	stack, [tmp_xxx, #THREAD_JAVA_SP]
 
-	dmb_st
 	mov	r0, #0	@ deoptimized_frames = 0
 	ldmfd	arm_sp!, {fast_regset, pc}
 1:

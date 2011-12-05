@@ -1,5 +1,3 @@
-#include <iostream>
-
 /*
  * Copyright 2009, 2010 Edward Nevill
  *
@@ -5815,8 +5813,6 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 
 	if (cache->is_volatile())
 	  fullBarrier(jinfo->codebuf);
-	else
-	  storeBarrier(jinfo->codebuf);
 
 	break;
       }
@@ -5892,8 +5888,6 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 
 	if (cache->is_volatile())
 	  fullBarrier(jinfo->codebuf);
-	else
-	  storeBarrier(jinfo->codebuf);
 
 	break;
       }
@@ -5952,8 +5946,6 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	      ldrsh_imm(jinfo->codebuf, r, r_obj, field_offset, 1, 0);
 	    else
 	      ldr_imm(jinfo->codebuf, r, r_obj, field_offset, 1, 0);
-	    if (entry->is_volatile())
-	      fullBarrier(jinfo->codebuf);
 	    break;
 	  }
 	}
@@ -6076,8 +6068,6 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
 		ldrsh_imm(jinfo->codebuf, r, r_obj, field_offset, 1, 0);
 	      else
 		ldr_imm(jinfo->codebuf, r, r_obj, field_offset, 1, 0);
-	      if (entry->is_volatile())
-		fullBarrier(jinfo->codebuf);
 	      break;
 	    }
 	  }
