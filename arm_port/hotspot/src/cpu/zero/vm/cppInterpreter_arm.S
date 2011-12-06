@@ -5690,7 +5690,7 @@ Thumb2_getfield_word_stub:
 	cmp	r3, #0
 	beq	field_null_ptr_exception
 
-	GO_IF_VOLATILE	r3, r2, 3f
+	GO_IF_VOLATILE	r2, r2, 3f
 
 	ldr	r3, [r3, ip]
 	str	r3, [stack, #-4]!	@ PUSH r3
@@ -5724,7 +5724,7 @@ Thumb2_getfield_sh_stub:
 	cmp	r3, #0
 	beq	field_null_ptr_exception
 
-	GO_IF_VOLATILE	r3, r2, 3f
+	GO_IF_VOLATILE	r2, r2, 3f
 
 	ldrsh	r3, [r3, ip]
 	str	r3, [stack, #-4]!	@ PUSH r3
@@ -5757,7 +5757,7 @@ Thumb2_getfield_h_stub:
 	cmp	r3, #0
 	beq	field_null_ptr_exception
 
-	GO_IF_VOLATILE	r3, r2, 3f
+	GO_IF_VOLATILE	r2, r2, 3f
 
 	ldrh	r3, [r3, ip]
 	str	r3, [stack, #-4]!	@ PUSH r3
@@ -5790,7 +5790,7 @@ Thumb2_getfield_sb_stub:
 	cmp	r3, #0
 	beq	field_null_ptr_exception
 
-	GO_IF_VOLATILE	r3, r2, 3f
+	GO_IF_VOLATILE	r2, r2, 3f
 
 	ldrsb	r3, [r3, ip]
 	str	r3, [stack, #-4]!	@ PUSH r3

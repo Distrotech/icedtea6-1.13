@@ -724,6 +724,7 @@ public:
   typeof (::init_disassemble_info) *init_disassemble_info;
   typeof (::disassemble_init_for_target) *disassemble_init_for_target;
 
+  // Load libopcodes.so lazily.
   Opcodes()
   {
     void *lib;
@@ -5643,7 +5644,6 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	  mov_imm(jinfo->codebuf, ARM_R1, index);
 	  blx(jinfo->codebuf, handlers[handler]);
 	  Thumb2_restore_locals(jinfo, bc_stackinfo[bci+len] & ~BC_FLAGS_MASK);
-
 	  break;
 	}
 
@@ -5711,7 +5711,6 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	  mov_imm(jinfo->codebuf, ARM_R1, index);
 	  blx(jinfo->codebuf, handlers[handler]);
 	  Thumb2_restore_locals(jinfo, bc_stackinfo[bci+len] & ~BC_FLAGS_MASK);
-
 	  break;
 	}
 
@@ -5823,7 +5822,6 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	int index = GET_NATIVE_U2(code_base+bci+1);
 
         cache = cp->entry_at(index);
-
         if (!cache->is_resolved((Bytecodes::Code)opcode)) {
 	  int java_index = GET_NATIVE_U2(code_base+bci+1);
 	  constantPoolOop pool = jinfo->method->constants();

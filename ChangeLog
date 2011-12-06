@@ -1,3 +1,29 @@
+2011-12-05  Andrew Haley  <aph@redhat.com>
+
+	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp
+	(Thumb2_disass): Use class Opcodes to do the disassembly.
+	(Thumb2_Enter): Update ISTATE_SELF_LINK.
+	(T_DMB): New.
+	(fullBarrier): New.
+	(storeBarrier): New.
+	(Thumb2_Accessor): Add volatile barriers.
+	(Thumb2_codegen): Likewise.
+	(Thumb2_Initialize): Check UseCompiler.
+	(class Opcodes): New.  Load libopcodes.so lazily.
+	* arm_port/hotspot/src/cpu/zero/vm/bytecodes_arm.def: For every
+	{get,put}field handler, add a test for volatility and duplicate
+	the code path into two parts, volatile and non-volatile.  Add
+	barriers to the volatile path.
+	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S (dmb)
+	(dmb_st): New macros.
+	(abort_table): Add entries for volatile versions of all the field
+	handlers.
+	({put,get}field_volatile_*): Add volatile versions of all handlers.
+	(Thumb2_{put,get}field_*_stub): Likewise.
+	* arm_port/hotspot/src/cpu/zero/vm/asm_helper.cpp
+	(print_vm_offsets): Add CP_CACHE_VOLATILE_FIELD_FLAG_BIT and
+	CP_CACHE_FLAGS.
+
 2011-11-28  Andrew John Hughes  <ahughes@redhat.com>
 
 	* NEWS:
