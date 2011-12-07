@@ -529,6 +529,7 @@ do_\label:
 	ldrb	r1, [jpc, lr]
         bic     ip, ip, #7
         ldr     pc, [ip, r1, lsl #2]
+	.ltorg
 	.endm
 
 #define FFI_TYPE_VOID		0
@@ -589,13 +590,16 @@ do_\label:
 #	define dmb VOLATILE_BARRIER
 #	define dmb_st VOLATILE_BARRIER
 #else
-#	define	dmb_st .word   0xf57ff05e
+#	define	dmb_st .inst   0xf57ff05e
 #endif
 
+#define StoreStoreBarrier dmb_st
+#define StoreLoadBarrier dmb
+#define FullBarrier dmb
+	
 	.macro	VOLATILE_BARRIER arg
 	stmfd	sp!, {r2, lr}
-	mov	r2, #0xfa0
-	movt    r2, #0xffff
+	ldr	r2, =0xffff0fa0 @ kernel_dmb
 	blx	r2
 	ldmfd	sp!, {r2, lr}
 	.endm
@@ -607,8 +611,18 @@ do_\label:
 	.set	dispatch_saved, dispatch_state
 	.endm
 
+	@ We have to save and restore the dispatch_state because
+	@ dispatching is done twice, once each for volatile and
+	@ non-volatile versions.  It's essential that dispatch_state
+	@ be correct at the entry to the volatile version of the
+	@ handler.
+
 	.macro VOLATILE_VERSION
+	.if dispatch_state == 0
 	.set	dispatch_state, dispatch_saved
+	.else
+	.error "VOLATILE_VERSION macro used before non-volatile DISPATCH_FINISH."
+	.endif
 	.endm
 	
 	.eabi_attribute Tag_ABI_FP_denormal, 1
@@ -2047,21 +2061,21 @@ putstatic_a:
 getstatic_volatile_sh:
 	DISPATCH_START	3
 	ldrsh	tmp2, [r3, lr]
-	dmb
+	FullBarrier
 	DISPATCH_NEXT
 	PUSH	tmp2
 	DISPATCH_FINISH
 getstatic_volatile_h:
 	DISPATCH_START	3
 	ldrh	tmp2, [r3, lr]
-	dmb
+	FullBarrier
 	DISPATCH_NEXT
 	PUSH	tmp2
 	DISPATCH_FINISH
 getstatic_volatile_sb:
 	DISPATCH_START	3
 	ldrsb	tmp2, [r3, lr]
-	dmb
+	FullBarrier
 	DISPATCH_NEXT
 	PUSH	tmp2
 	DISPATCH_FINISH
@@ -2069,14 +2083,14 @@ getstatic_volatile_dw:
 	DISPATCH_START	3
 	add	r3, r3, lr
 	ldm	r3, {r2, tmp2}
-	dmb
+	FullBarrier
 	DISPATCH_NEXT
 	PUSH	r2, tmp2
 	DISPATCH_FINISH
 getstatic_volatile_w:
 	DISPATCH_START	3
 	ldr	tmp2, [r3, lr]
-	dmb
+	FullBarrier
 	DISPATCH_NEXT
 	PUSH	tmp2
 	DISPATCH_FINISH
@@ -2086,9 +2100,9 @@ putstatic_volatile_h:
 	DISPATCH_START	3
 	POP	tmp2
 	DISPATCH_NEXT
-	dmb_st
+	StoreStoreBarrier
 	strh	tmp2, [r3, r2]
-	dmb
+	StoreLoadBarrier
 	DISPATCH_FINISH
 putstatic_volatile_w:
 	cmp	lr, #tos_atos >> 1	@ >> 1 due to lsr #29 above
@@ -2096,30 +2110,30 @@ putstatic_volatile_w:
 	DISPATCH_START	3
 	POP	tmp2
 	DISPATCH_NEXT
-	dmb_st
+	StoreStoreBarrier
 	str	tmp2, [r3, r2]
-	dmb
+	StoreLoadBarrier
 	DISPATCH_FINISH
 putstatic_volatile_sb:
 	DISPATCH_START	3
 	POP	tmp2
 	DISPATCH_NEXT
-	dmb_st
+	StoreStoreBarrier
 	strb	tmp2, [r3, r2]
-	dmb
+	StoreLoadBarrier
 	DISPATCH_FINISH
 putstatic_volatile_dw:
 	DISPATCH_START	3
 	add	r2, r2, r3
 	POP	r3, tmp2
 	DISPATCH_NEXT
-	dmb_st
+	StoreStoreBarrier
 	stm	r2, {r3, tmp2}
-	dmb
+	StoreLoadBarrier
 	DISPATCH_FINISH
 putstatic_volatile_a:
 	POP	tmp2
-	dmb_st
+	StoreStoreBarrier
 	str	tmp2, [r3, r2]
 	mov	r0, r3
 	bl	Helper_aputfield
@@ -5643,8 +5657,6 @@ Thumb2_invokespecial_stub:
         mov     r2, Rthread
         blx     r3
 
-	dmb_st
-	
         ldr     Rthread, [istate, #ISTATE_THREAD]
 
         ldr     stack, [Rthread, #THREAD_JAVA_SP]
@@ -5698,7 +5710,7 @@ Thumb2_getfield_word_stub:
 3:
 	
 	ldr	r3, [r3, ip]
-	dmb
+	FullBarrier
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
 1:
@@ -5731,7 +5743,7 @@ Thumb2_getfield_sh_stub:
 	bx	lr
 3:
 	ldrsh	r3, [r3, ip]
-	dmb
+	FullBarrier
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
 1:
@@ -5764,7 +5776,7 @@ Thumb2_getfield_h_stub:
 	bx	lr
 3:
 	ldrh	r3, [r3, ip]
-	dmb
+	FullBarrier
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
 1:
@@ -5797,7 +5809,7 @@ Thumb2_getfield_sb_stub:
 	bx	lr
 3:
 	ldrsb	r3, [r3, ip]
-	dmb
+	FullBarrier
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
 1:
@@ -5830,7 +5842,7 @@ Thumb2_getfield_dw_stub:
 	bx	lr
 3:
 	ldrd	r2, r3, [r3, ip]
-	dmb
+	FullBarrier
 	stmdb	stack!, {r2, r3}	@ PUSH r2, r3
 	bx	lr
 1:
@@ -5838,7 +5850,8 @@ Thumb2_getfield_dw_stub:
 	bl	getfield_stub_unresolved
 	mov	lr, ip
 	b	2b
-
+	.ltorg
+	
 @ R0 = BCI
 @ R1 = index
 putstatic_stub_unresolved:
@@ -5911,9 +5924,9 @@ Thumb2_putfield_word_stub:
 	cmp	r3, #0
 	beq	field_null_ptr_exception
 
-	dmb_st
+	StoreStoreBarrier
 	str	r2, [r3, ip]
-	dmb
+	StoreLoadBarrier
 	bx	lr
 1:
 	mov	ip, lr
@@ -5946,9 +5959,9 @@ Thumb2_putfield_h_stub:
 	cmp	r3, #0
 	beq	field_null_ptr_exception
 
-	dmb_st
+	StoreStoreBarrier
 	strh	r2, [r3, ip]
-	dmb
+	StoreLoadBarrier
 	bx	lr
 1:
 	mov	ip, lr
@@ -5981,9 +5994,9 @@ Thumb2_putfield_b_stub:
 	cmp	r3, #0
 	beq	field_null_ptr_exception
 
-	dmb_st
+	StoreStoreBarrier
 	strb	r2, [r3, ip]
-	dmb
+	StoreLoadBarrier
 	bx	lr
 1:
 	mov	ip, lr
@@ -6018,9 +6031,9 @@ Thumb2_putfield_a_stub:
 	cmp	r3, #0
 	beq	field_null_ptr_exception
 
-	dmb_st
+	StoreStoreBarrier
 	str	r2, [r3, ip]
-	dmb
+	StoreLoadBarrier
 	ldr	ip, helper_aputfield_adcon
 	mov	r0, r3
 	bx	ip
@@ -6055,9 +6068,9 @@ Thumb2_putfield_dw_stub:
 	cmp	ip, #0
 	beq	field_null_ptr_exception
 
-	dmb_st
+	StoreStoreBarrier
 	strd	r2,r3, [ip, r1]
-	dmb
+	StoreLoadBarrier
 	bx	lr
 1:
 	mov	ip, lr
@@ -6090,7 +6103,7 @@ Thumb2_getstatic_word_stub:
 	ldr	ip, [r2, #CP_OFFSET+8]
 
 	ldr	r3, [r3, ip]
-	dmb
+	FullBarrier
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
 1:
@@ -6122,7 +6135,7 @@ Thumb2_getstatic_h_stub:
 	ldr	ip, [r2, #CP_OFFSET+8]
 
 	ldrh	r3, [r3, ip]
-	dmb
+	FullBarrier
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
 1:
@@ -6154,7 +6167,7 @@ Thumb2_getstatic_sh_stub:
 	ldr	ip, [r2, #CP_OFFSET+8]
 
 	ldrsh	r3, [r3, ip]
-	dmb
+	FullBarrier
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
 1:
@@ -6186,7 +6199,7 @@ Thumb2_getstatic_sb_stub:
 	ldr	ip, [r2, #CP_OFFSET+8]
 
 	ldrsb	r3, [r3, ip]
-	dmb
+	FullBarrier
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
 1:
@@ -6218,7 +6231,7 @@ Thumb2_getstatic_dw_stub:
 	ldr	ip, [r2, #CP_OFFSET+8]
 
 	ldrd	r2, r3, [r3, ip]
-	dmb
+	FullBarrier
 	stmdb	stack!, {r2, r3}	@ PUSH r2, r3
 	bx	lr
 1:
@@ -6252,9 +6265,9 @@ Thumb2_putstatic_word_stub:
 	ldr	ip, [r2, #CP_OFFSET+8]
 	ldr	r2, [stack], #4		@ POP r2
 
-	dmb_st
+	StoreStoreBarrier
 	str	r2, [r3, ip]
-	dmb
+	StoreLoadBarrier
 	bx	lr
 1:
 	mov	ip, lr
@@ -6287,9 +6300,9 @@ Thumb2_putstatic_h_stub:
 	ldr	ip, [r2, #CP_OFFSET+8]
 	ldr	r2, [stack], #4		@ POP r2
 
-	dmb_st
+	StoreStoreBarrier
 	strh	r2, [r3, ip]
-	dmb
+	StoreLoadBarrier
 	bx	lr
 1:
 	mov	ip, lr
@@ -6322,9 +6335,9 @@ Thumb2_putstatic_b_stub:
 	ldr	ip, [r2, #CP_OFFSET+8]
 	ldr	r2, [stack], #4		@ POP r2
 
-	dmb_st
+	StoreStoreBarrier
 	strb	r2, [r3, ip]
-	dmb
+	StoreLoadBarrier
 	bx	lr
 1:
 	mov	ip, lr
@@ -6357,9 +6370,9 @@ Thumb2_putstatic_dw_stub:
 	ldr	ip, [r2, #CP_OFFSET+8]
 	ldmia	stack!, {r2, r3}
 
-	dmb_st
+	StoreStoreBarrier
 	strd	r2,r3, [r1, ip]
-	dmb
+	StoreLoadBarrier
 	bx	lr
 1:
 	mov	ip, lr
@@ -6394,9 +6407,9 @@ Thumb2_putstatic_a_stub:
 	ldr	ip, [r2, #CP_OFFSET+8]
 	ldr	r2, [stack], #4		@ POP r2
 
-	dmb_st
+	StoreStoreBarrier
 	str	r2, [r3, ip]
-	dmb
+	StoreLoadBarrier
 	ldr	ip, helper_aputfield_adcon
 	mov	r0, r3
 	bx	ip

@@ -1588,7 +1588,7 @@ return_register_finalizer = 0xe7, 1
 	DISPATCH_NEXT
 .abortentry78_v:
 	ldr	tmp2, [tmp1, tmp2]
-	dmb
+	FullBarrier
 	DISPATCH_NEXT
 	DISPATCH_NEXT
 	PUSH	tmp2
@@ -1619,7 +1619,7 @@ return_register_finalizer = 0xe7, 1
 	DISPATCH_NEXT
 .abortentry79_v:
 	ldrsb	tmp2, [tmp1, tmp2]
-	dmb
+	FullBarrier
 	DISPATCH_NEXT
 	DISPATCH_NEXT
 	PUSH	tmp2
@@ -1650,7 +1650,7 @@ return_register_finalizer = 0xe7, 1
 	DISPATCH_NEXT
 .abortentry80_v:
 	ldrh	tmp2, [tmp1, tmp2]
-	dmb
+	FullBarrier
 	DISPATCH_NEXT
 	DISPATCH_NEXT
 	PUSH	tmp2
@@ -1681,7 +1681,7 @@ return_register_finalizer = 0xe7, 1
 	DISPATCH_NEXT
 .abortentry81_v:
 	ldrsh	tmp2, [tmp1, tmp2]
-	dmb
+	FullBarrier
 	DISPATCH_NEXT
 	DISPATCH_NEXT
 	PUSH	tmp2
@@ -1713,10 +1713,9 @@ return_register_finalizer = 0xe7, 1
 	DISPATCH_NEXT
 	add	tmp2, tmp1, tmp2
 	DISPATCH_NEXT
-	dmb_st
 .abortentry82_v:
 	ldmia	tmp2, {tmp2, tmp1}
-	dmb
+	FullBarrier
 	DISPATCH_NEXT
 	PUSH	tmp2, tmp1
 	DISPATCH_FINISH
@@ -1745,10 +1744,10 @@ return_register_finalizer = 0xe7, 1
 	DISPATCH_NEXT
 	DISPATCH_NEXT
 	DISPATCH_NEXT
-	dmb_st
+	StoreStoreBarrier
 .abortentry83_v:
 	str	r3, [tmp1, tmp2]
-	dmb
+	StoreLoadBarrier
 	DISPATCH_FINISH
 }
 
@@ -1775,10 +1774,10 @@ return_register_finalizer = 0xe7, 1
 	DISPATCH_NEXT
 	DISPATCH_NEXT
 	DISPATCH_NEXT
-	dmb_st
+	StoreStoreBarrier
 .abortentry84_v:
 	strh	r3, [tmp1, tmp2]
-	dmb
+	StoreLoadBarrier
 	DISPATCH_FINISH
 }
 
@@ -1805,10 +1804,10 @@ return_register_finalizer = 0xe7, 1
 	DISPATCH_NEXT
 	DISPATCH_NEXT
 	DISPATCH_NEXT
-	dmb_st
+	StoreStoreBarrier
 .abortentry85_v:
 	strb	r3, [tmp1, tmp2]
-	dmb
+	StoreLoadBarrier
 	DISPATCH_FINISH
 }
 
@@ -1829,10 +1828,10 @@ return_register_finalizer = 0xe7, 1
 3:
 	VOLATILE_VERSION
 	ldr	tmp2, [tmp2, #CP_OFFSET+8]
-	dmb_st
+	StoreStoreBarrier
 .abortentry113_v:
 	str	r3, [tmp1, tmp2]
-	dmb
+	StoreLoadBarrier
 	mov	r0, tmp1
 	bl	Helper_aputfield
 	DISPATCH 3
@@ -1863,10 +1862,10 @@ return_register_finalizer = 0xe7, 1
 	add	tmp2, lr, tmp2
 	DISPATCH_NEXT
 	DISPATCH_NEXT
-	dmb_st
+	StoreStoreBarrier
 .abortentry86_v:
 	stm	tmp2, {r3, tmp1}
-	dmb
+	StoreLoadBarrier
 	DISPATCH_FINISH
 }
 

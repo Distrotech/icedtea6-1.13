@@ -1,4 +1,4 @@
-2011-12-05  Andrew Haley  <aph@redhat.com>
+2011-12-07  Andrew Haley  <aph@redhat.com>
 
 	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp
 	(Thumb2_disass): Use class Opcodes to do the disassembly.
@@ -15,7 +15,8 @@
 	the code path into two parts, volatile and non-volatile.  Add
 	barriers to the volatile path.
 	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S (dmb)
-	(dmb_st): New macros.
+	(dmb_st, FullBarrier, StoreLoadBarrier, StoreStoreBarrier): New
+	macros.
 	(abort_table): Add entries for volatile versions of all the field
 	handlers.
 	({put,get}field_volatile_*): Add volatile versions of all handlers.
