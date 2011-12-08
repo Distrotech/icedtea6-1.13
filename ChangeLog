@@ -25,6 +25,21 @@
 	(print_vm_offsets): Add CP_CACHE_VOLATILE_FIELD_FLAG_BIT and
 	CP_CACHE_FLAGS.
 
+2011-12-06  Xerxes Rånby  <xerxes@zafena.se>
+
+	CACAO:
+	- CA162: Make class init protection aware of multiple threads.
+	- CA163: descriptor_params_from_paramtypes is protected by a mutex now.
+	- Removed return value from descriptor_params_from_paramtypes.
+	- Removed fields from classinfo and related functions from
+	descriptor pool.
+	- src/vm/jit/jit.cpp: Eliminate one instance of useless cache flushing.
+	* NEWS:
+	Updated.
+	* Makefile.am:
+	(CACAO_VERSION): Updated CACAO to 2011-12-01 revision.
+	(CACAO_SHA256SUM): Updated.
+
 2011-11-28  Andrew John Hughes  <ahughes@redhat.com>
 
 	* NEWS:
