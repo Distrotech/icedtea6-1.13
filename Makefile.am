@@ -5,8 +5,8 @@ OPENJDK_SHA256SUM = f84e7f0938f4939660ff8f9c2aa164d301faa8a519f2324ceb05ad34b2e0
 OPENJDK_VERSION = b24
 OPENJDK_URL = http://download.java.net/openjdk/jdk6/promoted/$(OPENJDK_VERSION)/
 
-CACAO_VERSION = ea0e1b9ccf8d
-CACAO_SHA256SUM = cce66fecc290f3f7450a0463e460959028e6c81b0d7b130bb6c54bcbccf39efe
+CACAO_VERSION = cff92704c4e0
+CACAO_SHA256SUM = dc768c9d097fb056ad34fc6d5a57e8fd4f3b24bf515be92acc5ee4208160eb3f
 CACAO_BASE_URL = http://icedtea.classpath.org/download/drops/cacao
 CACAO_URL = $(CACAO_BASE_URL)/$(CACAO_VERSION).tar.gz
 CACAO_SRC_ZIP = cacao-$(CACAO_VERSION).tar.gz
