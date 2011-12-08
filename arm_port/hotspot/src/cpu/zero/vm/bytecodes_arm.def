@@ -2379,6 +2379,7 @@ return_register_finalizer = 0xe7, 1
 	DISPATCH_NEXT
 .abortentry87_v:
 	ldr	tmp2, [tmp1, tmp2]
+	FullBarrier
 	DISPATCH_NEXT
 	PUSH	tmp2
 	DISPATCH_FINISH
@@ -4258,6 +4259,7 @@ return_register_finalizer = 0xe7, 1
 	DISPATCH_NEXT
 .abortentry88_v:
 	ldr	tmp2, [tmp1, tmp2]
+	FullBarrier
 	DISPATCH_NEXT
 	PUSH	tmp2
 	DISPATCH_FINISH
