@@ -193,7 +193,7 @@ OPENJDK_ECJ_TREE = stamps/patch-ecj.stamp
 # Sources list
 
 REWRITER_SRCS = $(top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.java
-JTREG_SRCS = $(top_srcdir)/jtreg
+JTREG_SRCS = $(abs_top_srcdir)/jtreg
 
 # Patch list
 
