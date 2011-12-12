@@ -6905,7 +6905,6 @@ static clock_t total_compile_time = 0;
 #endif
 
 extern unsigned CPUInfo;
-static int DisableCompiler = 0;
 
 extern "C" unsigned long long Thumb2_Compile(JavaThread *thread, unsigned branch_pc)
 {
@@ -6934,7 +6933,7 @@ extern "C" unsigned long long Thumb2_Compile(JavaThread *thread, unsigned branch
   Thumb2_Entrypoint thumb_entry;
   int compiled_accessor;
 
-  if (DisableCompiler || method->is_not_compilable()) {
+  if (!UseCompiler || method->is_not_compilable()) {
 	ic->set(ic->state(), 1);
 	bc->set(ic->state(), 1);
 	return 0;
@@ -6991,7 +6990,7 @@ extern "C" unsigned long long Thumb2_Compile(JavaThread *thread, unsigned branch
     if (rc == COMPILER_RESULT_FAILED)
         method->set_not_compilable();
     if (rc == COMPILER_RESULT_FATAL)
-	DisableCompiler = 1;
+	UseCompiler = false;
     compiling = 0;
     return 0;
   }
@@ -7242,8 +7241,8 @@ extern "C" void Thumb2_Initialize(void)
   u32 loc_irem, loc_idiv, loc_ldiv;
   int rc;
 
-  if (!(CPUInfo & ARCH_THUMBEE) || !UseCompiler) {
-    DisableCompiler = 1;
+  if (!(CPUInfo & ARCH_THUMBEE)) {
+    UseCompiler = false;
     return;
   }
 
@@ -7262,7 +7261,7 @@ extern "C" void Thumb2_Initialize(void)
 
   cb = (Thumb2_CodeBuf *)mmap(0, THUMB2_CODEBUF_SIZE, PROT_EXEC|PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, 0, 0);
   if (cb == MAP_FAILED) {
-    DisableCompiler = 1;
+    UseCompiler = false;
     return;
   }
 
@@ -7275,7 +7274,7 @@ extern "C" void Thumb2_Initialize(void)
   codebuf.limit = (unsigned short *)cb->sp - (unsigned short *)cb->hp;
 
   if (rc = setjmp(compiler_error_env)) {
-    DisableCompiler = 1;
+    UseCompiler = false;
     return;
   }
 
