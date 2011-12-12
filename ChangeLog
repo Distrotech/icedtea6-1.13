@@ -1,3 +1,11 @@
+2011-12-12  Xerxes Rånby  <xerxes@zafena.se>
+
+	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S
+	(DISPATCH_FINISH): Add .ltorg at end of the macro to unbreak
+	armv5 build-bots.
+	(.eabi_attribute Tag_ABI_*): Replaced by numerical values
+	to stay compatible with GCC 4.3.3.
+
 2011-12-08  Matthias Klose  <doko@ubuntu.com>
 
 	* Makefile.am (JTREG_SRCS): Use abs_top_srcdir.

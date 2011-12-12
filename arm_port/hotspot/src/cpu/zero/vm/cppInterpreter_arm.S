@@ -506,6 +506,7 @@ do_\label:
         bic     ip, ip, #7
         ldr     pc, [ip, r1, lsl #2]
 	.set	dispatch_state, 0
+	.ltorg
 	.endm
 
 	.macro	DISPATCH_BYTECODE
@@ -625,14 +626,14 @@ do_\label:
 	.endif
 	.endm
 	
-	.eabi_attribute Tag_ABI_FP_denormal, 1
-	.eabi_attribute Tag_ABI_FP_exceptions, 1
-	.eabi_attribute Tag_ABI_FP_number_model, 3
-	.eabi_attribute Tag_ABI_align8_needed, 1
-	.eabi_attribute Tag_ABI_align8_preserved, 1
-	.eabi_attribute Tag_ABI_enum_size, 2
-	.eabi_attribute Tag_ABI_optimization_goals, 2
-	.eabi_attribute Tag_ABI_PCS_wchar_t, 4
+	.eabi_attribute 20, 1 @ Tag_ABI_FP_denormal
+	.eabi_attribute 21, 1 @ Tag_ABI_FP_exceptions
+	.eabi_attribute 23, 3 @ Tag_ABI_FP_number_model
+	.eabi_attribute 24, 1 @ Tag_ABI_align8_needed
+	.eabi_attribute 25, 1 @ Tag_ABI_align8_preserved
+	.eabi_attribute 26, 2 @ Tag_ABI_enum_size
+	.eabi_attribute 30, 2 @ Tag_ABI_optimization_goals
+	.eabi_attribute 18, 4 @ Tag_ABI_PCS_wchar_t
 
 	.text
 
