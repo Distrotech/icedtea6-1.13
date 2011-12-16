@@ -1318,6 +1318,7 @@ fast_native_entry:
 	str	tmp1, [ip, #JNIHANDLEBLOCK_TOP]
 	str	r1, [r5, #4]
 	str	r5, [r9, #THREAD_JAVA_SP]
+	mov     r0, #0  @ deoptimized_frames = 0
 	ldmfd	arm_sp!, {fast_regset, pc}
 .fast_native_return_byte:
 	mov	r0, r0, lsl #24
