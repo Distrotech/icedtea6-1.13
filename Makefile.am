@@ -192,8 +192,8 @@ OPENJDK_ECJ_TREE = stamps/patch-ecj.stamp
 
 # Sources list
 
-REWRITER_SRCS = rewriter/com/redhat/rewriter/ClassRewriter.java
-JTREG_SRCS = jtreg
+REWRITER_SRCS = $(top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.java
+JTREG_SRCS = $(abs_top_srcdir)/jtreg
 
 # Patch list
 
@@ -613,7 +613,7 @@ ICEDTEA_ENV_ECJ = $(ICEDTEA_ENV) \
 # FIXME (distclean): Add pulseaudio sources
 
 EXTRA_DIST = generated \
-	patches/* \
+	$(top_srcdir)/patches/* \
 	contrib arm_port \
 	overlays \
 	jconsole.desktop policytool.desktop \
@@ -1805,7 +1805,7 @@ stamps/rewriter.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP)
 if WITH_RHINO
 	mkdir -p $(REWRITER_BUILD_DIR)
 	$(BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) \
-	 -d $(REWRITER_BUILD_DIR) $(top_srcdir)/$(REWRITER_SRCS)
+	 -d $(REWRITER_BUILD_DIR) $(REWRITER_SRCS)
 endif
 	mkdir -p stamps
 	touch stamps/rewriter.stamp
@@ -2121,8 +2121,8 @@ stamps/jtreg.stamp: stamps/icedtea-against-icedtea.stamp
 	rm -rf test/jtreg/classes
 	mkdir -p test/jtreg/classes
 	$(BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) -d test/jtreg/classes \
-	   -encoding iso-8859-1 `find $(top_srcdir)/$(JTREG_SRCS) -name '*.java'`
-	(cd $(top_srcdir)/$(JTREG_SRCS); \
+	   -encoding iso-8859-1 `find $(JTREG_SRCS) -name '*.java'`
+	(cd $(JTREG_SRCS); \
 	 $(BOOT_DIR)/bin/jar cfm $(abs_top_builddir)/test/jtreg.jar \
 	   META-INF/MANIFEST.MF \
 	   legal  README JavaTest.cmdMgrs.lst JavaTest.toolMgrs.lst \
@@ -2174,7 +2174,7 @@ check-jdk: stamps/jtreg.stamp
 		-w:test/jdk/JTwork -r:test/jdk/JTreport \
 		$${ICEDTEA_JTREG_OTHERVM:--samevm} \
 		-jdk:$(BUILD_OUTPUT_DIR)/j2sdk-image \
-		-exclude:$(abs_top_srcdir)/$(JTREG_SRCS)/excludelist.jdk.jtx \
+		-exclude:$(JTREG_SRCS)/excludelist.jdk.jtx \
 		$(ICEDTEA_JTREG_OPTIONS) \
 		`pwd`/openjdk/jdk/test \
 	    | tee test/$@.log
