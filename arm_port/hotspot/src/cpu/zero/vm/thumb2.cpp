@@ -392,7 +392,11 @@ static char *t2ee_print_regusage;
 
 #define H_HANDLE_EXCEPTION_NO_REGS	60
 
-unsigned handlers[61];
+#define H_SAFEPOINT              	61
+
+#define H_LAST                          62  // Not used
+
+unsigned handlers[H_LAST];
 
 #define LEAF_STACK_SIZE			200
 #define STACK_SPARE			40
@@ -650,6 +654,9 @@ typedef struct Thumb2_Info {
 
 #define IS_INT_SIZE_BASE_TYPE(c) (c=='B' || c=='C' || c=='F' || c=='I' || c=='S' || c=='Z')
 #define IS_INT_SIZE_TYPE(c) (IS_INT_SIZE_BASE_TYPE(c) || c == 'L' || c == '[')
+
+void Thumb2_save_locals(Thumb2_Info *jinfo, unsigned stackdepth);
+void Thumb2_restore_locals(Thumb2_Info *jinfo, unsigned stackdepth);
 
 static int method_stackchange(jbyte *base)
 {
@@ -4314,7 +4321,24 @@ void Thumb2_Debug(Thumb2_Info *jinfo, unsigned handler)
 
 void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start);
 
-int Thumb2_Branch(Thumb2_Info *jinfo, unsigned bci, unsigned cond)
+// Insert code to poll the SafepointSynchronize state and call
+// Helper_SafePoint.
+void Thumb2_Safepoint(Thumb2_Info *jinfo, int stackdepth)
+{
+  int r_tmp = Thumb2_Tmp(jinfo, 0);
+  mov_imm(jinfo->codebuf, r_tmp, (u32)SafepointSynchronize::address_of_state());
+  ldr_imm(jinfo->codebuf, r_tmp, r_tmp, 0, 0, 0);
+  cmp_imm(jinfo->codebuf, r_tmp, SafepointSynchronize::_synchronizing);
+  {
+    unsigned loc = forward_16(jinfo->codebuf);
+  Thumb2_save_locals(jinfo, stackdepth);
+    bl(jinfo->codebuf, handlers[H_SAFEPOINT]);
+  Thumb2_restore_locals(jinfo, stackdepth);
+    bcc_patch(jinfo->codebuf, COND_NE, loc);
+  }
+}
+
+int Thumb2_Branch(Thumb2_Info *jinfo, unsigned bci, unsigned cond, int stackdepth)
 {
     int offset = GET_JAVA_S2(jinfo->code_base + bci + 1);
     unsigned dest_taken = bci + offset;
@@ -4322,7 +4346,10 @@ int Thumb2_Branch(Thumb2_Info *jinfo, unsigned bci, unsigned cond)
     unsigned loc;
 
     if (jinfo->bc_stackinfo[dest_taken] & BC_COMPILED) {
-      branch(jinfo->codebuf, cond, jinfo->bc_stackinfo[dest_taken] & ~BC_FLAGS_MASK);
+      loc = forward_16(jinfo->codebuf);
+      Thumb2_Safepoint(jinfo, stackdepth);
+      branch_uncond(jinfo->codebuf, jinfo->bc_stackinfo[dest_taken] & ~BC_FLAGS_MASK);
+      bcc_patch(jinfo->codebuf, NEG_COND(cond), loc);
       return dest_not_taken;
     }
     loc = forward_32(jinfo->codebuf);
@@ -4332,13 +4359,14 @@ int Thumb2_Branch(Thumb2_Info *jinfo, unsigned bci, unsigned cond)
     return -1;
 }
 
-int Thumb2_Goto(Thumb2_Info *jinfo, unsigned bci, int offset, int len)
+int Thumb2_Goto(Thumb2_Info *jinfo, unsigned bci, int offset, int len, int stackdepth)
 {
     unsigned dest_taken = bci + offset;
     unsigned dest_not_taken = bci + len;
     unsigned loc;
 
     if (jinfo->bc_stackinfo[dest_taken] & BC_COMPILED) {
+      Thumb2_Safepoint(jinfo, stackdepth);
       branch_uncond(jinfo->codebuf, jinfo->bc_stackinfo[dest_taken] & ~BC_FLAGS_MASK);
       return dest_not_taken;
     }
@@ -4449,6 +4477,8 @@ void Thumb2_Return(Thumb2_Info *jinfo, unsigned opcode)
   str_imm(jinfo->codebuf, Rstack, Rthread, THREAD_JAVA_SP, 1, 0);
   Thumb2_Debug(jinfo, H_DEBUG_METHODEXIT);
 //  enter_leave(jinfo->codebuf, 0);
+
+  Thumb2_Safepoint(jinfo, 0);
 
   // deoptimized_frames = 0
   // FIXME: This should be done in the slow entry, but only three
@@ -6176,7 +6206,7 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
       case opc_goto: {
 	int offset = GET_JAVA_S2(jinfo->code_base + bci + 1);
 	Thumb2_Flush(jinfo);
-	bci = Thumb2_Goto(jinfo, bci, offset, len);
+	bci = Thumb2_Goto(jinfo, bci, offset, len, stackdepth);
 	len = 0;
 	break;
       }
@@ -6184,7 +6214,7 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
       case opc_goto_w: {
 	int offset = GET_JAVA_U4(jinfo->code_base + bci + 1);
 	Thumb2_Flush(jinfo);
-	bci = Thumb2_Goto(jinfo, bci, offset, len);
+	bci = Thumb2_Goto(jinfo, bci, offset, len, stackdepth);
 	len = 0;
 	break;
       }
@@ -6204,7 +6234,7 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
 	r = POP(jstack);
 	Thumb2_Flush(jinfo);
 	cmp_imm(jinfo->codebuf, r, 0);
-	bci = Thumb2_Branch(jinfo, bci, cond);
+	bci = Thumb2_Branch(jinfo, bci, cond, stackdepth-1);
 	len = 0;
 	break;
       }
@@ -6225,7 +6255,7 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
 	r_lho = POP(jstack);
 	Thumb2_Flush(jinfo);
 	cmp_reg(jinfo->codebuf, r_lho, r_rho);
-	bci = Thumb2_Branch(jinfo, bci, cond);
+	bci = Thumb2_Branch(jinfo, bci, cond, stackdepth-2);
 	len = 0;
 	break;
       }
@@ -7150,6 +7180,7 @@ extern "C" void Helper_aastore(void);
 extern "C" void Helper_aputfield(void);
 extern "C" void Helper_synchronized_enter(void);
 extern "C" void Helper_synchronized_exit(void);
+extern "C" void Helper_SafePoint(void);
 
 extern "C" void _ZN13SharedRuntime3f2iEf(void);
 extern "C" void _ZN13SharedRuntime3f2lEf(void);
@@ -7618,6 +7649,22 @@ sub_imm(&codebuf, ARM_R0, Rstack, 4);
   ldr_imm(&codebuf, ARM_IP, ARM_R1, METHOD_CONSTMETHOD, 1, 0);
   add_reg(&codebuf, Rint_jpc, ARM_IP, ARM_R0);
   mov_imm(&codebuf, ARM_R3, (u32)Thumb2_Exit_To_Interpreter);
+  mov_reg(&codebuf, ARM_PC, ARM_R3);
+
+// H_SAFEPOINT
+  handlers[H_SAFEPOINT] = out_pos(&codebuf);
+  stm(&codebuf, (1<<ARM_LR), ARM_SP, PUSH_FD, 1);
+  mov_imm(&codebuf, ARM_IP, (u32)Helper_SafePoint);
+  mov_reg(&codebuf, ARM_R0, Rthread);
+  blx_reg(&codebuf, ARM_IP);
+  ldm(&codebuf, (1<<ARM_LR), ARM_SP, POP_FD, 1);
+  cmp_imm(&codebuf, ARM_R0, 0);
+  // The sequence here is delicate.  We need to seet things up so that
+  // it looks as though Thumb2_Handle_Exception_NoRegs was called
+  // directly from a compiled method.
+  it(&codebuf, COND_EQ, IT_MASK_T);
+  mov_reg(&codebuf, ARM_PC, ARM_LR);
+  mov_imm(&codebuf, ARM_R3, (u32)Thumb2_Handle_Exception_NoRegs);
   mov_reg(&codebuf, ARM_PC, ARM_R3);
 
   Thumb2_Clear_Cache(cb->hp, cb->hp + codebuf.idx * 2);
