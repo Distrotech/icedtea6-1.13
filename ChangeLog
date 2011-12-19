@@ -7,6 +7,26 @@
 	(Thumb2_Return): Likewise.
 	(Thumb2_Initialize): Add handler for H_SAFEPOINT.
 
+2011-12-16  Matthias Klose  <doko@ubuntu.com>
+
+	* Makefile.am (JTREG_SRCS, REWRITER_SRCS, EXTRA_DIST): Don't use any
+	prefixes.
+	(stamps/jtreg.stamp, check-jdk): Use JTREG_SRCS with srcdir prefix.
+	(stamps/rewriter.stamp): Use REWRITER_SRCS with srcdir prefix.
+
+2011-12-16  Xerxes Rånby  <xerxes@zafena.se>
+
+	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S
+	(.fast_native_return_dw): Add a missing PR484 return 0.
+
+2011-12-12  Omair Majid  <omajid@redhat.com>
+
+	S7102369, S7094468: remove java.rmi.server.codebase property parsing from
+	rmiregistry
+	* patches/openjdk/7102369-7094468-rmiregistry.patch: New file. Backport
+	from OpenJDK6.
+	* Makefile.am (ICEDTEA_PATCHES): Apply the patch.
+
 2011-12-12  Andrew Haley  <aph@redhat.com>
 
 	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp (DisableCompiler): Delete.
