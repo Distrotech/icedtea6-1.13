@@ -1710,11 +1710,19 @@ return_register_finalizer = 0xe7, 1
 3:
 	VOLATILE_VERSION
 	ldr	tmp2, [tmp2, #CP_OFFSET+8]
-	DISPATCH_NEXT
 	add	tmp2, tmp1, tmp2
-	DISPATCH_NEXT
+#ifndef	__ARM_ARCH_7A__
 .abortentry82_v:
 	ldmia	tmp2, {tmp2, tmp1}
+#else
+	mov	ip, tmp2
+.abortentry82_v:
+	ldrexd	tmp2, tmp1 , [ip]
+	strexd	r2 , tmp2, tmp1, [ip]
+	teq	r2, #0
+	bne	.abortentry82_v
+#endif
+	DISPATCH_NEXT
 	FullBarrier
 	DISPATCH_NEXT
 	PUSH	tmp2, tmp1
@@ -1858,13 +1866,23 @@ return_register_finalizer = 0xe7, 1
 3:
 	VOLATILE_VERSION
 	ldr	tmp2, [tmp2, #CP_OFFSET+8]
-	DISPATCH_NEXT
 	add	tmp2, lr, tmp2
-	DISPATCH_NEXT
-	DISPATCH_NEXT
 	StoreStoreBarrier
+#ifndef	__ARM_ARCH_7A__
 .abortentry86_v:
 	stm	tmp2, {r3, tmp1}
+#else
+	mov	ip, tmp2
+	mov	tmp2, r3
+	// Data in tmp1 & tmp2, address in ip, r2 & r3 scratch
+.abortentry86_v:
+	ldrexd	r2, r3, [ip]
+	strexd	r2, tmp2, tmp1, [ip]
+	teq	r2, #0
+	bne	.abortentry86_v
+#endif
+	DISPATCH_NEXT
+	DISPATCH_NEXT
 	StoreLoadBarrier
 	DISPATCH_FINISH
 }

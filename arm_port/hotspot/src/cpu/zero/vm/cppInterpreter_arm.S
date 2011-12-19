@@ -1318,7 +1318,7 @@ fast_native_entry:
 	str	tmp1, [ip, #JNIHANDLEBLOCK_TOP]
 	str	r1, [r5, #4]
 	str	r5, [r9, #THREAD_JAVA_SP]
-	mov     r0, #0  @ deoptimized_frames = 0
+	mov	r0, #0	@ deoptimized_frames = 0
 	ldmfd	arm_sp!, {fast_regset, pc}
 .fast_native_return_byte:
 	mov	r0, r0, lsl #24
@@ -2084,10 +2084,20 @@ getstatic_volatile_sb:
 getstatic_volatile_dw:
 	DISPATCH_START	3
 	add	r3, r3, lr
+#ifndef	__ARM_ARCH_7A__
 	ldm	r3, {r2, tmp2}
 	FullBarrier
 	DISPATCH_NEXT
 	PUSH	r2, tmp2
+#else
+0:	ldrexd	tmp2, tmp1 , [r3]
+	strexd	r2 , tmp2, tmp1, [r3]
+	teq	r2, #0
+	bne	0b
+	FullBarrier
+	DISPATCH_NEXT
+	PUSH	tmp2, tmp1
+#endif
 	DISPATCH_FINISH
 getstatic_volatile_w:
 	DISPATCH_START	3
@@ -2126,11 +2136,20 @@ putstatic_volatile_sb:
 	DISPATCH_FINISH
 putstatic_volatile_dw:
 	DISPATCH_START	3
-	add	r2, r2, r3
-	POP	r3, tmp2
+	add	ip, r2, r3
+	POP	tmp1, tmp2
 	DISPATCH_NEXT
 	StoreStoreBarrier
-	stm	r2, {r3, tmp2}
+#ifndef	__ARM_ARCH_7A__
+	stm	ip, {tmp1, tmp2}
+#else
+	// Data in tmp1 & tmp2, address in ip, r2 & r3 scratch
+0:	ldrexd	r2, r3, [ip]
+	strexd	r2, tmp2, tmp1, [ip]
+	teq	r2, #0
+	bne	0b
+#endif
+	DISPATCH_NEXT
 	StoreLoadBarrier
 	DISPATCH_FINISH
 putstatic_volatile_a:
