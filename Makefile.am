@@ -1034,7 +1034,7 @@ stamps/ports.stamp: stamps/replace-hotspot.stamp
 	for target in $(abs_top_srcdir)/arm_port/hotspot/tools \
 		      $(abs_top_srcdir)/arm_port/hotspot/src/*cpu/* ; do \
 	  link=$$(dirname $$target | sed 's/^.*arm_port/openjdk/'); \
-	  cp -rlv $$target $$link; \
+	  cp -rv $(SRC_DIR_LINK) $$target $$link; \
 	  chmod -R ug+rwX $$link; \
 	done
 	mkdir -p stamps
