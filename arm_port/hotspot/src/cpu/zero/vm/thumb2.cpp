@@ -2086,6 +2086,9 @@ static const unsigned t_vop_ops[] = {
 #define T_STREX(dst, src, base, off) (0xe8400000 | ((base) << 16) | \
 		((src) << 12) | ((dst) << 8) | ((off >> 2)))
 
+#define T_LDREXD(dst1, dst2, base) (0xe8d0007f | ((base) << 16) | ((dst1) << 12) | (dst2 << 8))
+#define T_STREXD(dst, src1, src2, base) (0xe8c00070 | ((base) << 16) | ((src1) << 12) | (src2 << 8) | dst)
+
 #define T_STM8(base, regset)		(0xc000 | ((base) << 8) | (regset))
 #define T_STM16(base, regset, st, wb)	(0xe8000000 | ((st) << 23) | ((wb) << 21) |	\
 		((base) << 16) | (regset))
@@ -2387,6 +2390,22 @@ int strex_imm(CodeBuf *codebuf, Reg dst, Reg src, Reg base, unsigned offset)
     if ((offset & 3) == 0 && offset < 256 * 4) {
       return out_16x2(codebuf, T_STREX(dst, src, base, offset));
     }
+  }
+  J_Unimplemented();
+}
+
+int ldrexd(CodeBuf *codebuf, Reg dst0, Reg dst1, Reg base)
+{
+  if (Thumb2) {
+    return out_16x2(codebuf, T_LDREXD(dst0, dst1, base));
+  }
+  J_Unimplemented();
+}
+
+int strexd(CodeBuf *codebuf, Reg dst, Reg src0, Reg src1, Reg base)
+{
+  if (Thumb2) {
+    return out_16x2(codebuf, T_STREXD(dst, src0, src1, base));
   }
   J_Unimplemented();
 }
@@ -4872,6 +4891,69 @@ unsigned opcode2handler[] = {
   H_D2F,
 };
 
+// Generate code for a load of a jlong.  If the operand is volatile,
+// generate a sequence of the form
+//
+// .Lsrc:
+// 	ldrexd r0, r1 , [src]
+// 	strexd r2 , r0, r1, [src]
+// 	cmp    r2, #0
+// 	bne    .Lsrc
+
+void Thumb2_load_long(Thumb2_Info *jinfo, Reg r_lo, Reg r_hi, Reg base,
+		      int field_offset,
+		      bool is_volatile = false)
+{
+  CodeBuf *codebuf = jinfo->codebuf;
+  if (is_volatile) {
+    Reg r_addr = base;
+    Reg tmp = Thumb2_Tmp(jinfo, (1<<r_lo) | (1<<r_hi) | (1<<base));
+    if (field_offset) {
+      r_addr = Thumb2_Tmp(jinfo, (1<<r_lo) | (1<<r_hi) | (1<<base) | (1<<tmp));
+      add_imm(jinfo->codebuf, r_addr, base, field_offset);
+    }
+    int loc = out_loc(codebuf);
+    ldrexd(codebuf, r_lo, r_hi, r_addr);
+    strexd(codebuf, tmp, r_lo, r_hi, r_addr);
+    cmp_imm(codebuf, tmp, 0);
+    branch(codebuf, COND_NE, loc);
+  } else {
+    ldrd_imm(codebuf, r_lo, r_hi, base, field_offset, 1, 0);
+  }
+}
+
+// Generate code for a load of a jlong.  If the operand is volatile,
+// generate a sequence of the form
+//
+// .Ldst
+// 	ldrexd 	r2, r3, [dst]
+// 	strexd 	r2, r0, r1, [dst]
+// 	cmp 	r2, #0
+// 	bne 	.Ldst
+
+void Thumb2_store_long(Thumb2_Info *jinfo, Reg r_lo, Reg r_hi, Reg base,
+		      int field_offset,
+		      bool is_volatile = false)
+{
+  CodeBuf *codebuf = jinfo->codebuf;
+  if (is_volatile) {
+    Reg r_addr = base;
+    Reg tmp1 = Thumb2_Tmp(jinfo, (1<<r_lo) | (1<<r_hi) | (1<<base));
+    Reg tmp2 = Thumb2_Tmp(jinfo, (1<<r_lo) | (1<<r_hi) | (1<<base) | (1<<tmp1));
+    if (field_offset) {
+      r_addr = Thumb2_Tmp(jinfo, (1<<r_lo) | (1<<r_hi) | (1<<base) | (1<<tmp1) | (1<<tmp2));
+      add_imm(jinfo->codebuf, r_addr, base, field_offset);
+    }
+    int loc = out_loc(codebuf);
+    ldrexd(codebuf, tmp1, tmp2, r_addr);
+    strexd(codebuf, tmp1, r_lo, r_hi, r_addr);
+    cmp_imm(codebuf, tmp1, 0);
+    branch(codebuf, COND_NE, loc);
+  } else {
+    strd_imm(codebuf, r_lo, r_hi, base, field_offset, 1, 0);
+  }
+}
+
 #define OPCODE2HANDLER(opc) (handlers[opcode2handler[(opc)-opc_idiv]])
 
 extern "C" void _ZN18InterpreterRuntime18register_finalizerEP10JavaThreadP7oopDesc(void);
@@ -5687,7 +5769,8 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	  Thumb2_Spill(jinfo, 2, 0);
 	  r_hi = PUSH(jstack, JSTACK_REG(jstack));
 	  r_lo = PUSH(jstack, JSTACK_REG(jstack));
-	  ldrd_imm(jinfo->codebuf, r_lo, r_hi, r_obj, field_offset, 1, 0);
+	  Thumb2_load_long(jinfo, r_lo, r_hi, r_obj, field_offset,
+			   cache->is_volatile());
 	} else {
 	  Reg r;
 
@@ -5748,13 +5831,15 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	int field_offset = cache->f2();
 
 	if (tos_type == ltos || tos_type == dtos) {
-	  Reg r_lo, r_hi;
+	  Reg r_lo, r_hi, r_addr;
 	  Thumb2_Spill(jinfo, 2, 0);
 	  r_hi = PUSH(jstack, JSTACK_REG(jstack));
 	  r_lo = PUSH(jstack, JSTACK_REG(jstack));
+	  r_addr = Thumb2_Tmp(jinfo, (1<<r_hi) | (1<<r_lo));
 	  ldr_imm(jinfo->codebuf, r_lo, Ristate, ISTATE_CONSTANTS, 1, 0);
-	  ldr_imm(jinfo->codebuf, r_lo, r_lo, CP_OFFSET + (index << 4) + 4, 1, 0);
-	  ldrd_imm(jinfo->codebuf, r_lo, r_hi, r_lo, field_offset, 1, 0);
+	  ldr_imm(jinfo->codebuf, r_addr, r_lo, CP_OFFSET + (index << 4) + 4, 1, 0);
+	  Thumb2_load_long(jinfo, r_lo, r_hi, r_addr, field_offset,
+			   cache->is_volatile());
 	} else {
 	  Reg r;
 	  Thumb2_Spill(jinfo, 1, 0);
@@ -5820,7 +5905,7 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	  r_lo = POP(jstack);
 	  r_hi = POP(jstack);
 	  r_obj = POP(jstack);
-	  strd_imm(jinfo->codebuf, r_lo, r_hi, r_obj, field_offset, 1, 0);
+	  Thumb2_store_long(jinfo, r_lo, r_hi, r_obj, field_offset, cache->is_volatile());
 	} else {
 	  Reg r;
 	  Thumb2_Fill(jinfo, 2);
@@ -5890,7 +5975,7 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	  JASSERT(r_obj != r_lo && r_obj != r_hi, "corruption in putstatic");
 	  ldr_imm(jinfo->codebuf, r_obj, Ristate, ISTATE_CONSTANTS, 1, 0);
 	  ldr_imm(jinfo->codebuf, r_obj, r_obj, CP_OFFSET + (index << 4) + 4, 1, 0);
-	  strd_imm(jinfo->codebuf, r_lo, r_hi, r_obj, field_offset, 1, 0);
+	  Thumb2_store_long(jinfo, r_lo, r_hi, r_obj, field_offset, cache->is_volatile());
 	} else {
 	  Reg r;
 	  Thumb2_Fill(jinfo, 1);

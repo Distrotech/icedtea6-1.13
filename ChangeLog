@@ -1,5 +1,14 @@
 2011-12-20  Andrew Haley  <aph@redhat.com>
 
+	* openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp (T_LDREXD, T_STREXD):
+	New instructions.
+	(ldrexd, strexd): Likewise.
+	(Thumb2_load_long, Thumb2_store_long): New functions.
+	(Thumb2_codegen): Use Thumb2_load_long and Thumb2_store_long for
+	all long field accesses.
+
+2011-12-20  Andrew Haley  <aph@redhat.com>
+
 	PR837:
 	* Makefile.am (stamps/ports.stamp): Replace "cp -l" with
 	"cp $(SRC_DIR_LINK)".
