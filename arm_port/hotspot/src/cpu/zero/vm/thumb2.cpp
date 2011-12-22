@@ -4344,6 +4344,8 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start);
 // Helper_SafePoint.
 void Thumb2_Safepoint(Thumb2_Info *jinfo, int stackdepth)
 {
+#if 0  // Causes maysterious segfaults
+  Thumb2_Flush(jinfo);
   int r_tmp = Thumb2_Tmp(jinfo, 0);
   mov_imm(jinfo->codebuf, r_tmp, (u32)SafepointSynchronize::address_of_state());
   ldr_imm(jinfo->codebuf, r_tmp, r_tmp, 0, 0, 0);
@@ -4355,6 +4357,7 @@ void Thumb2_Safepoint(Thumb2_Info *jinfo, int stackdepth)
   Thumb2_restore_locals(jinfo, stackdepth);
     bcc_patch(jinfo->codebuf, COND_NE, loc);
   }
+#endif
 }
 
 int Thumb2_Branch(Thumb2_Info *jinfo, unsigned bci, unsigned cond, int stackdepth)
