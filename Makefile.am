@@ -193,7 +193,7 @@ OPENJDK_ECJ_TREE = stamps/patch-ecj.stamp
 # Sources list
 
 REWRITER_SRCS = $(top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.java
-JTREG_SRCS = $(abs_top_srcdir)/jtreg
+JTREG_SRCS = $(top_srcdir)/src/jtreg
 
 # Patch list
 
@@ -2172,7 +2172,7 @@ check-jdk: stamps/jtreg.stamp
 	$${XVFB_RUN} \
 	$(BOOT_DIR)/bin/java -jar test/jtreg.jar -v1 -a -ignore:quiet \
 		-w:test/jdk/JTwork -r:test/jdk/JTreport \
-		$${ICEDTEA_JTREG_OTHERVM:--samevm} \
+		 \
 		-jdk:$(BUILD_OUTPUT_DIR)/j2sdk-image \
 		-exclude:$(JTREG_SRCS)/excludelist.jdk.jtx \
 		$(ICEDTEA_JTREG_OPTIONS) \
