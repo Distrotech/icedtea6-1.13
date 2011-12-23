@@ -398,7 +398,10 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7103224-glibc_name_collision.patch \
 	patches/arm-debug.patch \
 	patches/openjdk/683768-System-tray-icon.patch \
-	patches/openjdk/7102369-7094468-rmiregistry.patch
+	patches/openjdk/7102369-7094468-rmiregistry.patch \
+	patches/openjdk/6851973-kerberos.patch \
+	patches/openjdk/7091528-javadoc_class_files.patch \
+	patches/openjdk/7103725-ssl_beast_regression.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
