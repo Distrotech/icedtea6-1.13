@@ -193,7 +193,9 @@ OPENJDK_ECJ_TREE = stamps/patch-ecj.stamp
 # Sources list
 
 REWRITER_SRCS = $(top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.java
-JTREG_SRCS = $(top_srcdir)/src/jtreg
+# Relative path to JTreg tool
+JTREG_DIR = src/jtreg
+JTREG_SRCS = $(top_srcdir)/$(JTREG_DIR)
 
 # Patch list
 
@@ -2177,7 +2179,7 @@ check-jdk: stamps/jtreg.stamp
 		-w:test/jdk/JTwork -r:test/jdk/JTreport \
 		 \
 		-jdk:$(BUILD_OUTPUT_DIR)/j2sdk-image \
-		-exclude:$(JTREG_SRCS)/excludelist.jdk.jtx \
+		-exclude:$(abs_top_srcdir)/$(JTREG_DIR)/excludelist.jdk.jtx \
 		$(ICEDTEA_JTREG_OPTIONS) \
 		`pwd`/openjdk/jdk/test \
 	    | tee test/$@.log
