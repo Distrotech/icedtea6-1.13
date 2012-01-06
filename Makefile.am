@@ -434,10 +434,6 @@ ICEDTEA_PATCHES += patches/openjdk/6307603-xrender-01.patch \
 	patches/openjdk/7018387-xrender_gc_leak.patch
 endif
 
-if ENABLE_NIO2
-ICEDTEA_PATCHES += patches/nio2.patch
-endif
-
 if ENABLE_SYSTEMTAP
 ICEDTEA_PATCHES += patches/systemtap.patch \
 	patches/systemtap-gcc-4.5.patch \
@@ -1205,9 +1201,6 @@ stamps/overlay.stamp: stamps/patch.stamp
 	cp -a $(abs_top_srcdir)/overlays overlays.build
 	chmod -R ug+rwX overlays.build
 	cp -a overlays.build/openjdk/* openjdk/
-if ENABLE_NIO2
-	cp -a overlays.build/nio2/openjdk/* openjdk/
-endif
 	cp -a overlays.build/jpeg/openjdk/* openjdk/
 	rm -rf overlays.build
 	touch stamps/overlay.stamp
@@ -2266,11 +2259,6 @@ stamps/rt.stamp: stamps/rt-class-files.stamp
 if BOOTSTRAPPING
 	$(BOOT_DIR)/bin/jar uf $(RUNTIME) -C lib/rt com -C lib/rt java \
 	  -C lib/rt javax -C lib/rt sun 
-if ENABLE_NIO2
-	if [ -e lib/rt/org/classpath ] ; then \
-	    $(BOOT_DIR)/bin/jar uf $(RUNTIME) -C lib/rt org/classpath ; \
-	fi
-endif
 endif
 	touch stamps/rt.stamp
 
