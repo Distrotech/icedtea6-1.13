@@ -1,3 +1,15 @@
+2012-01-06  Jiri Vanek  <jvanek@redhat.com>
+
+	fixes rhbz#580478
+	* configure.ac: abs-install-dir block moved outside conditional ENABLE_SYSTEMTAP block
+	 Added policytool.desktop and jconsole.desktop as AC_CONFIG_FILES 
+	* jconsole.desktop:  removed, replaced by jconsole.desktop.in
+	* jconsole.desktop.in: new file, stub for desktop file, have variable
+	to be substitued during configure
+	* policytool.desktop:  removed, replaced by policytool.desktop.in
+	* policytool.desktop.in: new file, stub for desktop file, have variable
+	to be substituted during configure 
+
 2012-01-06  Andrew John Hughes  <ahughes@redhat.com>
 
 	* NEWS: Cleanup ARM entry, separating

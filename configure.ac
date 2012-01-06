@@ -257,6 +257,21 @@ Try installing libXrender-devel or configure --disable-xrender.])
   fi
 fi
 
+AC_MSG_CHECKING([for absolute java home install dir])
+AC_ARG_WITH([abs-install-dir],
+	    [AS_HELP_STRING([--with-abs-install-dir], 
+			    [The absolute path where the j2sdk-image dir will be installed])],
+	    [if test "x${withval}" = x; then
+		ABS_JAVA_HOME_DIR="${abs_top_builddir}/${OPENJDK_BUILD_DIR}/j2sdk-image"
+	     else
+		ABS_JAVA_HOME_DIR="${withval}"
+	     fi], [ABS_JAVA_HOME_DIR="${abs_top_builddir}/${OPENJDK_BUILD_DIR}/j2sdk-image"])
+AC_MSG_RESULT([${ABS_JAVA_HOME_DIR}])
+AC_SUBST(ABS_JAVA_HOME_DIR)
+
+AC_CONFIG_FILES([jconsole.desktop])
+AC_CONFIG_FILES([policytool.desktop])
+
 if test "x${ENABLE_SYSTEMTAP}" = xyes; then
 AC_CHECK_HEADER([sys/sdt.h], [SDT_H_FOUND='yes'],
                 [SDT_H_FOUND='no';
@@ -298,19 +313,8 @@ public:
 ]])], [AC_MSG_RESULT([yes])], [AC_MSG_ERROR([systemtap sdt.h or g++ too old])])
   AC_LANG_POP([C++])
 
-  AC_MSG_CHECKING([for absolute java home install dir])
-  AC_ARG_WITH([abs-install-dir],
-	      [AS_HELP_STRING([--with-abs-install-dir], 
-			      [The absolute path where the j2sdk-image dir will be installed])],
-	      [if test "x${withval}" = x; then
-		 ABS_JAVA_HOME_DIR="${abs_top_builddir}/${OPENJDK_BUILD_DIR}/j2sdk-image"
-	       else
-		 ABS_JAVA_HOME_DIR="${withval}"
-	       fi], [ABS_JAVA_HOME_DIR="${abs_top_builddir}/${OPENJDK_BUILD_DIR}/j2sdk-image"])
-  AC_MSG_RESULT([${ABS_JAVA_HOME_DIR}])
   ABS_CLIENT_LIBJVM_SO="${ABS_JAVA_HOME_DIR}/jre/lib/${INSTALL_ARCH_DIR}/client/libjvm.so"
   ABS_SERVER_LIBJVM_SO="${ABS_JAVA_HOME_DIR}/jre/lib/${INSTALL_ARCH_DIR}/server/libjvm.so"
-  AC_SUBST(ABS_JAVA_HOME_DIR)
   AC_SUBST(ABS_CLIENT_LIBJVM_SO)
   AC_SUBST(ABS_SERVER_LIBJVM_SO)
   AC_CONFIG_FILES([tapset/hotspot.stp])
