@@ -393,14 +393,10 @@ New in release 1.11 (2011-XX-XX):
   - ARM: Remove hack for return value in float registers.
   - ARM: Fixed use of uninitialized variable.
   - ARM: removed unused ICMD_GETSTATIC branch.
-  - ARM: Designate function labels as such;
-    required for thumb interworking.
-  - src/vm/javaobjects.cpp (java_lang_reflect_Method::invoke): [OPENJDK] stack
-    index of caller was off by one, causing many apt
-    (Annotation Processing Tool) failures.
+  - ARM: Designate function labels as such; required for thumb interworking.
+  - src/vm/javaobjects.cpp (java_lang_reflect_Method::invoke): stack index of caller was off by one, causing apt failures.
   - Set thread to RUNNABLE during Thread.start.
-  - Removed state-setting function call that would be done by the thread itself,
-    creating a nasty race.
+  - Removed state-setting function call that would be done by the thread itself, creating a nasty race.
   - Threadlist & threadobject improvements.
 * JamVM
   - PR772: jtreg LocalOnlyTest sends SIGQUIT to all processes on exit.
