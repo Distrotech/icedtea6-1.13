@@ -13,6 +13,8 @@ CVE-XXXX-YYYY: http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 New in release 1.11 (2011-XX-XX):
 
 * Use HotSpot 20 as the default virtual machine.
+* ARM assembly language port reinstated and updated; details below.
+* Allow selection of test suites using the jtreg_checks argument e.g. jtreg_checks="langtools"
 * Drop the outdated NIO2 backport.  Users who want NIO2 should use IcedTea 2.x.
 * Bug fixes
   - PR637: make check should exit with an error code if any regression test failed.
@@ -383,7 +385,10 @@ New in release 1.11 (2011-XX-XX):
   - S6851973: ignore incoming channel binding if acceptor does not set one
   - S7091528: javadoc attempts to parse .class files
   - S7103725, RH767129: REGRESSION - 6u29 breaks ssl connectivity using TLS_DH_anon_WITH_AES_128_CBC_SHA
-* Allow selection of test suites using the jtreg_checks argument e.g. jtreg_checks="langtools"
+* ARM Port
+  - Ported to the EABI hard-fp model
+  - Locking for multi-core operation added.
+  - Many minor bugs fixed.
 * CACAO
   - CA149: Used wrong class loader.
   - CA159: Exception handler blocks / register mixup.
