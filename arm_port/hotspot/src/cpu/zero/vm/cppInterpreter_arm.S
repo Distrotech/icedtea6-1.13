@@ -3371,6 +3371,7 @@ method_entry_freq_count_overflow:
 #ifdef THUMB2EE
 #define THUMB2_MAXLOCALS 1000
 call_thumb2:
+	str	istate, [istate, #ISTATE_SELF_LINK]
 	mov	ip, r1
 	sub	r1, locals, #THUMB2_MAXLOCALS * 4
 	ldr	r2, [istate, #ISTATE_THREAD]

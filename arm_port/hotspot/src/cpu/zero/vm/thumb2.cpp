@@ -791,6 +791,9 @@ void Thumb2_disass(Thumb2_Info *jinfo)
   }
 #endif
 
+  fflush(stdout);
+  fflush(stderr);
+
   opcodes.init_disassemble_info(&info, stdout, (fprintf_ftype)fprintf);
   info.arch = bfd_arch_arm;
   opcodes.disassemble_init_for_target(&info);
@@ -950,6 +953,7 @@ void Thumb2_disass(Thumb2_Info *jinfo)
       }
     }
   }
+  fflush(stdout);
 }
 #endif
 
@@ -4342,9 +4346,8 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start);
 
 // Insert code to poll the SafepointSynchronize state and call
 // Helper_SafePoint.
-void Thumb2_Safepoint(Thumb2_Info *jinfo, int stackdepth)
+void Thumb2_Safepoint(Thumb2_Info *jinfo, int stackdepth, int bci)
 {
-#if 0  // Causes maysterious segfaults
   Thumb2_Flush(jinfo);
   int r_tmp = Thumb2_Tmp(jinfo, 0);
   mov_imm(jinfo->codebuf, r_tmp, (u32)SafepointSynchronize::address_of_state());
@@ -4353,11 +4356,11 @@ void Thumb2_Safepoint(Thumb2_Info *jinfo, int stackdepth)
   {
     unsigned loc = forward_16(jinfo->codebuf);
   Thumb2_save_locals(jinfo, stackdepth);
+    mov_imm(jinfo->codebuf, ARM_R1, bci+CONSTMETHOD_CODEOFFSET);
     bl(jinfo->codebuf, handlers[H_SAFEPOINT]);
   Thumb2_restore_locals(jinfo, stackdepth);
     bcc_patch(jinfo->codebuf, COND_NE, loc);
   }
-#endif
 }
 
 int Thumb2_Branch(Thumb2_Info *jinfo, unsigned bci, unsigned cond, int stackdepth)
@@ -4369,7 +4372,7 @@ int Thumb2_Branch(Thumb2_Info *jinfo, unsigned bci, unsigned cond, int stackdept
 
     if (jinfo->bc_stackinfo[dest_taken] & BC_COMPILED) {
       loc = forward_16(jinfo->codebuf);
-      Thumb2_Safepoint(jinfo, stackdepth);
+      Thumb2_Safepoint(jinfo, stackdepth, bci);
       branch_uncond(jinfo->codebuf, jinfo->bc_stackinfo[dest_taken] & ~BC_FLAGS_MASK);
       bcc_patch(jinfo->codebuf, NEG_COND(cond), loc);
       return dest_not_taken;
@@ -4388,7 +4391,7 @@ int Thumb2_Goto(Thumb2_Info *jinfo, unsigned bci, int offset, int len, int stack
     unsigned loc;
 
     if (jinfo->bc_stackinfo[dest_taken] & BC_COMPILED) {
-      Thumb2_Safepoint(jinfo, stackdepth);
+      Thumb2_Safepoint(jinfo, stackdepth, bci);
       branch_uncond(jinfo->codebuf, jinfo->bc_stackinfo[dest_taken] & ~BC_FLAGS_MASK);
       return dest_not_taken;
     }
@@ -4399,7 +4402,7 @@ int Thumb2_Goto(Thumb2_Info *jinfo, unsigned bci, int offset, int len, int stack
     return -1;
 }
 
-void Thumb2_Return(Thumb2_Info *jinfo, unsigned opcode)
+void Thumb2_Return(Thumb2_Info *jinfo, unsigned opcode, int bci)
 {
   Reg r_lo, r;
   Thumb2_Stack *jstack = jinfo->jstack;
@@ -4467,6 +4470,8 @@ void Thumb2_Return(Thumb2_Info *jinfo, unsigned opcode)
     cbz_patch(jinfo->codebuf, ARM_R3, loc_success2);
   }
 
+  Thumb2_Safepoint(jinfo, 0, bci);
+
   if (opcode != opc_return) {
     if (opcode == opc_lreturn || opcode == opc_dreturn) {
       Thumb2_Fill(jinfo, 2);
@@ -4490,8 +4495,9 @@ void Thumb2_Return(Thumb2_Info *jinfo, unsigned opcode)
     if (opcode == opc_lreturn || opcode == opc_dreturn) {
       str_imm(jinfo->codebuf, r, Rstack, jinfo->method->max_locals() * sizeof(int), 1, 0);
       str_imm(jinfo->codebuf, r_lo, Rstack, jinfo->method->max_locals() * sizeof(int)-4, 1, 1);
-    } else
+    } else {
       str_imm(jinfo->codebuf, r, Rstack, jinfo->method->max_locals() * sizeof(int), 1, 1);
+    }
   }
 
 //  sub_imm(jinfo->codebuf, Ristate, ARM_LR, ISTATE_NEXT_FRAME);
@@ -4499,8 +4505,6 @@ void Thumb2_Return(Thumb2_Info *jinfo, unsigned opcode)
   str_imm(jinfo->codebuf, Rstack, Rthread, THREAD_JAVA_SP, 1, 0);
   Thumb2_Debug(jinfo, H_DEBUG_METHODEXIT);
 //  enter_leave(jinfo->codebuf, 0);
-
-  Thumb2_Safepoint(jinfo, 0);
 
   // deoptimized_frames = 0
   // FIXME: This should be done in the slow entry, but only three
@@ -6354,7 +6358,7 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
       case opc_ireturn:
       case opc_freturn:
       case opc_areturn:
-	Thumb2_Return(jinfo, opcode);
+	Thumb2_Return(jinfo, opcode, bci);
 	if (!jinfo->compiled_return) jinfo->compiled_return = bci;
 	break;
 
@@ -6389,7 +6393,7 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
 	it(jinfo->codebuf, COND_NE, IT_MASK_T);
 	bl(jinfo->codebuf, handlers[H_HANDLE_EXCEPTION]);
 	bcc_patch(jinfo->codebuf, COND_EQ, loc_eq);
-	Thumb2_Return(jinfo, opc_return);
+	Thumb2_Return(jinfo, opc_return, bci);
 	break;
       }
 
@@ -7742,11 +7746,20 @@ sub_imm(&codebuf, ARM_R0, Rstack, 4);
 // H_SAFEPOINT
   handlers[H_SAFEPOINT] = out_pos(&codebuf);
   stm(&codebuf, (1<<ARM_LR), ARM_SP, PUSH_FD, 1);
+
+  // Set up BytecodeInterpreter->_bcp for the GC
+  // bci+CONSTMETHOD_CODEOFFSET is passed in ARM_R1
+  ldr_imm(&codebuf, ARM_R0, Ristate, ISTATE_METHOD, 1, 0);
+  ldr_imm(&codebuf, ARM_R0, ARM_R0, METHOD_CONSTMETHOD, 1, 0);
+  add_reg(&codebuf, ARM_R0, ARM_R0, ARM_R1);
+  str_imm(&codebuf, ARM_R0, Ristate, ISTATE_BCP, 1, 0);
+
   mov_imm(&codebuf, ARM_IP, (u32)Helper_SafePoint);
   mov_reg(&codebuf, ARM_R0, Rthread);
   blx_reg(&codebuf, ARM_IP);
   ldm(&codebuf, (1<<ARM_LR), ARM_SP, POP_FD, 1);
   cmp_imm(&codebuf, ARM_R0, 0);
+
   // The sequence here is delicate.  We need to seet things up so that
   // it looks as though Thumb2_Handle_Exception_NoRegs was called
   // directly from a compiled method.
@@ -7759,6 +7772,29 @@ sub_imm(&codebuf, ARM_R0, Rstack, 4);
   cb->hp += codebuf.idx * 2;
 
   thumb2_codebuf = cb;
+
+#if 0 // Disassemble the codebuf we just created.  For debugging
+  Opcodes opcodes;
+  if (t2ee_print_disass) {
+    struct disassemble_info info;
+    info.arch = bfd_arch_arm;
+    opcodes.disassemble_init_for_target(&info);
+    opcodes.init_disassemble_info(&info, stdout, (fprintf_ftype)fprintf);
+    info.endian = BFD_ENDIAN_LITTLE;
+    info.endian_code = BFD_ENDIAN_LITTLE;
+    info.buffer = (bfd_byte *)codebuf.codebuf;
+    info.buffer_vma = (bfd_vma)codebuf.codebuf;
+    info.buffer_length = codebuf.idx * sizeof(short);
+    info.disassembler_options = (char *)"force-thumb";
+    int len;
+    for (unsigned int i = 0; i < codebuf.idx * sizeof(short); i += len) {
+      printf("0x%08x:\t", ((int)codebuf.codebuf)+i);
+      len = opcodes.print_insn_little_arm(((bfd_vma)codebuf.codebuf)+i, &info);
+      if (len == -1) len = 2;
+      putchar('\n');
+    }
+  }
+#endif
 }
 
 #endif // THUMB2EE

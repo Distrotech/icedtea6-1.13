@@ -1,3 +1,22 @@
+2012-01-09  Andrew Haley  <aph@redhat.com>
+
+	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp (Thumb2_disass):
+	Flush the output streams.
+	(Thumb2_Safepoint): Add the bci as a new argument.  Pass it to
+	the safepoint handler.
+	(Thumb2_Branch): Pass the bci to Thumb2_Safepoint().
+	(Thumb2_Goto): Likewise.
+	(Thumb2_Return):  Add the bci as a new argument.  Pass it to
+	Thumb2_Safepoint().
+	Add braces for clarity.
+	move call to Thumb2_Safepoint() to point before retval is popped.
+	(Thumb2_codegen): Pass the bci to Thumb2_Return().
+	(Thumb2_Initialize): Disassemble the codebuf we just created.
+
+	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S
+	(method_entry_freq_count_overflow): Make sure self_link is set
+	when re-entering JIT-compiled code.
+
 2011-12-22  Andrew Haley  <aph@redhat.com>
 
 	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp (Thumb2_Safepoint):
