@@ -10,13 +10,19 @@ LPX - https://bugs.launchpad.net/bugs/X
 
 CVE-XXXX-YYYY: http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
-New in release 1.11 (2011-XX-XX):
+New in release 1.12 (2012-XX-XX):
+
+* Backports
+  - 6706974: Add krb5 test infrastructure
+
+New in release 1.11 (2012-XX-XX):
 
 * Use HotSpot 20 as the default virtual machine.
+* ARM assembly language port reinstated and updated; details below.
+* Allow selection of test suites using the jtreg_checks argument e.g. jtreg_checks="langtools"
+* Drop the outdated NIO2 backport.  Users who want NIO2 should use IcedTea 2.x.
 * Bug fixes
   - PR637: make check should exit with an error code if any regression test failed.
-  - PR748: Icedtea6 fails to build with Linux 3.0.
-  - PR744: icedtea6-1.10.2 : patching error
   - PR752: ImageFormatException extends Exception not RuntimeException
   - PR732: Use xsltproc for bootstrap xslt in place of Xerces/Xalan
   - RH727195: Japanese font mappings are broken
@@ -27,7 +33,6 @@ New in release 1.11 (2011-XX-XX):
   - S7099148: increment build number of hs20.0 to b12
   - S7108221: Backport to jdk6 Hotspot defaults for AMD Bulldozer processor
   - S7080038: (ann) Serializable types in sun.reflect.annotation do not declare serialVersionUIDs
-  - S6578583: Regression: Modality is broken in windows vista home premium from jdk1.7 b02 onwards.
   - S6815182: GSSAPI/SPNEGO does not work with server using MIT Kerberos library
   - S6979329: CCacheInputStream fails to read ticket cache files from Kerberos 1.8.1
   - S7092186: adjust package access in rmiregistry
@@ -347,9 +352,6 @@ New in release 1.11 (2011-XX-XX):
   - S7037939: NUMA: Disable adaptive resizing if SHM large pages are used
   - S7018387: Xrender pipeline may leak GC's
   - S7036754: Stroked quads sometimes contain NaN
-  - S6769607, PR677: Modal frame hangs for a while.
-  - S6610244: modal dialog closes with fatal error if -Xcheck:jni is set
-  - S7037283, RH712211: Null Pointer Exception in SwingUtilities2.
   - S7008106: com/sun/awt/Translucency/WindowOpacity.java test fails.
   - S6956668: misbehavior of XOR operator (^) with int
   - S6699843: IllegalArgumentException when using Graphics.drawString( "", 0, 0 )
@@ -385,7 +387,13 @@ New in release 1.11 (2011-XX-XX):
   - S7103224: collision between __LEAF define in interfaceSupport.hpp and /usr/include/sys/cdefs.h with gcc
   - S7102369: remove java.rmi.server.codebase property parsing from registyimpl
   - S7094468: rmiregistry clean up
-* Allow selection of test suites using the jtreg_checks argument e.g. jtreg_checks="langtools"
+  - S6851973: ignore incoming channel binding if acceptor does not set one
+  - S7091528: javadoc attempts to parse .class files
+  - S7103725, RH767129: REGRESSION - 6u29 breaks ssl connectivity using TLS_DH_anon_WITH_AES_128_CBC_SHA
+* ARM Port
+  - Ported to the EABI hard-fp model
+  - Locking for multi-core operation added.
+  - Many minor bugs fixed.
 * CACAO
   - CA149: Used wrong class loader.
   - CA159: Exception handler blocks / register mixup.
@@ -396,14 +404,10 @@ New in release 1.11 (2011-XX-XX):
   - ARM: Remove hack for return value in float registers.
   - ARM: Fixed use of uninitialized variable.
   - ARM: removed unused ICMD_GETSTATIC branch.
-  - ARM: Designate function labels as such;
-    required for thumb interworking.
-  - src/vm/javaobjects.cpp (java_lang_reflect_Method::invoke): [OPENJDK] stack
-    index of caller was off by one, causing many apt
-    (Annotation Processing Tool) failures.
+  - ARM: Designate function labels as such; required for thumb interworking.
+  - src/vm/javaobjects.cpp (java_lang_reflect_Method::invoke): stack index of caller was off by one, causing apt failures.
   - Set thread to RUNNABLE during Thread.start.
-  - Removed state-setting function call that would be done by the thread itself,
-    creating a nasty race.
+  - Removed state-setting function call that would be done by the thread itself, creating a nasty race.
   - Threadlist & threadobject improvements.
 * JamVM
   - PR772: jtreg LocalOnlyTest sends SIGQUIT to all processes on exit.
@@ -452,6 +456,16 @@ New in release 1.11 (2011-XX-XX):
 * Zero/Shark
   - PR690: Shark fails to JIT using hs20.
   - PR696: Zero fails to handle fast_aldc and fast_aldc_w in hs20.
+
+New in release 1.9.11 (2011-11-08):
+
+* Security fixes
+  - RH742515, CVE-2011-3377: IcedTea-Web: second-level domain subdomains and suffix domain SOP bypass
+
+New in release 1.8.11 (2011-11-08):
+
+* Security fixes
+  - RH742515, CVE-2011-3377: IcedTea-Web: second-level domain subdomains and suffix domain SOP bypass
 
 New in release 1.10.4 (2011-10-18):
 
@@ -518,6 +532,35 @@ New in release 1.8.10 (2011-10-18):
   - PR764: icedtea 1.8.9 fails to build in CachedJarFileCallback.java
 * Fixes
   - G356743: Support libpng 1.5.
+
+New in release 1.10.3 (2011-07-21):
+
+* Bug fixes
+  - PR748: Icedtea6 fails to build with Linux 3.0.
+  - PR744: icedtea6-1.10.2 : patching error
+* Backports:
+  - S7037283, RH712211: Null Pointer Exception in SwingUtilities2.
+  - S6769607, PR677: Modal frame hangs for a while.
+  - S6578583: Modality is broken in windows vista home premium from jdk1.7 b02 onwards.
+  - S6610244: modal dialog closes with fatal error if -Xcheck:jni is set
+
+New in release 1.9.9 (2011-07-20):
+
+* Security fixes
+  - RH718164, CVE-2011-2513: Home directory path disclosure to untrusted apps
+* Bug Fixes
+  - PR744: icedtea6-1.10.2 : patching error
+  - PR748: Icedtea6 fails to build with Linux 3.0.
+* Shark
+  - PR632: patches/security/20110215/6878713.patch breaks shark zero build
+
+New in release 1.8.9 (2011-07-20):
+
+* Security fixes
+  - RH718164, CVE-2011-2513: Home directory path disclosure to untrusted apps
+* Bug fixes
+  - PR744: icedtea6-1.10.2 : patching error
+  - PR748: Icedtea6 fails to build with Linux 3.0.
 
 New in release 1.10.2 (2011-06-07):
 

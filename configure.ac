@@ -1,4 +1,4 @@
-AC_INIT([icedtea6],[1.11pre],[distro-pkg-dev@openjdk.java.net])
+AC_INIT([icedtea6],[1.12pre],[distro-pkg-dev@openjdk.java.net])
 AM_INIT_AUTOMAKE([1.9 tar-pax foreign])
 AC_CONFIG_FILES([Makefile])
 
@@ -111,14 +111,6 @@ AC_ARG_ENABLE([xrender],
 	      [ENABLE_XRENDER="${enableval}"], [ENABLE_XRENDER='yes'])
 AM_CONDITIONAL([ENABLE_XRENDER], [test x$ENABLE_XRENDER = xyes])
 AC_MSG_RESULT(${ENABLE_XRENDER})
-
-AC_MSG_CHECKING([whether to include NIO2 support])
-AC_ARG_ENABLE([nio2],
-	      [AS_HELP_STRING([--enable-nio2],
-	      		      [Enable inclusion of backported NIO2])],
-	      [ENABLE_NIO2="${enableval}"], [ENABLE_NIO2='no'])
-AM_CONDITIONAL([ENABLE_NIO2], [test x$ENABLE_NIO2 = xyes])
-AC_MSG_RESULT(${ENABLE_NIO2})
 
 AC_MSG_CHECKING([whether to include SystemTap tracing support])
 AC_ARG_ENABLE([systemtap],
@@ -265,6 +257,21 @@ Try installing libXrender-devel or configure --disable-xrender.])
   fi
 fi
 
+AC_MSG_CHECKING([for absolute java home install dir])
+AC_ARG_WITH([abs-install-dir],
+	    [AS_HELP_STRING([--with-abs-install-dir], 
+			    [The absolute path where the j2sdk-image dir will be installed])],
+	    [if test "x${withval}" = x; then
+		ABS_JAVA_HOME_DIR="${abs_top_builddir}/${OPENJDK_BUILD_DIR}/j2sdk-image"
+	     else
+		ABS_JAVA_HOME_DIR="${withval}"
+	     fi], [ABS_JAVA_HOME_DIR="${abs_top_builddir}/${OPENJDK_BUILD_DIR}/j2sdk-image"])
+AC_MSG_RESULT([${ABS_JAVA_HOME_DIR}])
+AC_SUBST(ABS_JAVA_HOME_DIR)
+
+AC_CONFIG_FILES([jconsole.desktop])
+AC_CONFIG_FILES([policytool.desktop])
+
 if test "x${ENABLE_SYSTEMTAP}" = xyes; then
 AC_CHECK_HEADER([sys/sdt.h], [SDT_H_FOUND='yes'],
                 [SDT_H_FOUND='no';
@@ -306,19 +313,8 @@ public:
 ]])], [AC_MSG_RESULT([yes])], [AC_MSG_ERROR([systemtap sdt.h or g++ too old])])
   AC_LANG_POP([C++])
 
-  AC_MSG_CHECKING([for absolute java home install dir])
-  AC_ARG_WITH([abs-install-dir],
-	      [AS_HELP_STRING([--with-abs-install-dir], 
-			      [The absolute path where the j2sdk-image dir will be installed])],
-	      [if test "x${withval}" = x; then
-		 ABS_JAVA_HOME_DIR="${abs_top_builddir}/${OPENJDK_BUILD_DIR}/j2sdk-image"
-	       else
-		 ABS_JAVA_HOME_DIR="${withval}"
-	       fi], [ABS_JAVA_HOME_DIR="${abs_top_builddir}/${OPENJDK_BUILD_DIR}/j2sdk-image"])
-  AC_MSG_RESULT([${ABS_JAVA_HOME_DIR}])
   ABS_CLIENT_LIBJVM_SO="${ABS_JAVA_HOME_DIR}/jre/lib/${INSTALL_ARCH_DIR}/client/libjvm.so"
   ABS_SERVER_LIBJVM_SO="${ABS_JAVA_HOME_DIR}/jre/lib/${INSTALL_ARCH_DIR}/server/libjvm.so"
-  AC_SUBST(ABS_JAVA_HOME_DIR)
   AC_SUBST(ABS_CLIENT_LIBJVM_SO)
   AC_SUBST(ABS_SERVER_LIBJVM_SO)
   AC_CONFIG_FILES([tapset/hotspot.stp])
