@@ -404,7 +404,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6851973-kerberos.patch \
 	patches/openjdk/7091528-javadoc_class_files.patch \
 	patches/openjdk/7103725-ssl_beast_regression.patch \
-	patches/openjdk/6706974-krb5_test_infrastructure.patch
+	patches/openjdk/6706974-krb5_test_infrastructure.patch \
+	patches/openjdk/6764553-IdResolver_is_not_thread_safe.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \

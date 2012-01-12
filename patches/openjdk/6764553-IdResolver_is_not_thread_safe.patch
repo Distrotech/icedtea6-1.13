@@ -1,0 +1,41 @@
+# HG changeset patch
+# User mullan
+# Date 1225401848 14400
+# Node ID 4ff842aee1fdf3e8302c0a5f4dcd511cfc8ccb5a
+# Parent  58e52eb46bd33e155ed4cbeaee7ce077a0459932
+6764553: com.sun.org.apache.xml.internal.security.utils.IdResolver is not thread safe
+Reviewed-by: valeriep
+
+diff -r 58e52eb46bd3 -r 4ff842aee1fd src/share/classes/com/sun/org/apache/xml/internal/security/utils/IdResolver.java
+--- openjdk.orig/jdk/src/share/classes/com/sun/org/apache/xml/internal/security/utils/IdResolver.java	Tue Oct 28 18:21:36 2008 +0100
++++ openjdk/jdk/src/share/classes/com/sun/org/apache/xml/internal/security/utils/IdResolver.java	Thu Oct 30 17:24:08 2008 -0400
+@@ -73,10 +73,13 @@
+     */
+    public static void registerElementById(Element element, String idValue) {
+       Document doc = element.getOwnerDocument();
+-      WeakHashMap elementMap = (WeakHashMap) docMap.get(doc);
+-      if(elementMap == null) {
+-          elementMap = new WeakHashMap();
+-          docMap.put(doc, elementMap);
++      WeakHashMap elementMap;
++      synchronized (docMap) {
++          elementMap = (WeakHashMap) docMap.get(doc);
++          if (elementMap == null) {
++              elementMap = new WeakHashMap();
++              docMap.put(doc, elementMap);
++          }
+       }
+       elementMap.put(idValue, new WeakReference(element));
+    }
+@@ -158,7 +161,10 @@
+    private static Element getElementByIdType(Document doc, String id) {
+           if (true)
+                 if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "getElementByIdType() Search for ID " + id);
+-       WeakHashMap elementMap = (WeakHashMap) docMap.get(doc);
++       WeakHashMap elementMap;
++       synchronized (docMap) {
++           elementMap = (WeakHashMap) docMap.get(doc);
++       }
+        if (elementMap != null) {
+            WeakReference weakReference = (WeakReference) elementMap.get(id);
+            if (weakReference != null)
