@@ -4404,6 +4404,8 @@ int Thumb2_Goto(Thumb2_Info *jinfo, unsigned bci, int offset, int len, int stack
 
 void Thumb2_Return(Thumb2_Info *jinfo, unsigned opcode, int bci)
 {
+  Thumb2_Safepoint(jinfo, 0, bci);
+
   Reg r_lo, r;
   Thumb2_Stack *jstack = jinfo->jstack;
 
@@ -4469,8 +4471,6 @@ void Thumb2_Return(Thumb2_Info *jinfo, unsigned opcode, int bci)
     cbz_patch(jinfo->codebuf, ARM_R0, loc_success1);
     cbz_patch(jinfo->codebuf, ARM_R3, loc_success2);
   }
-
-  Thumb2_Safepoint(jinfo, 0, bci);
 
   if (opcode != opc_return) {
     if (opcode == opc_lreturn || opcode == opc_dreturn) {

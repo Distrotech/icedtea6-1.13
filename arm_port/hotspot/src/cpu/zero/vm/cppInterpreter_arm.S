@@ -483,6 +483,19 @@ do_\label:
 	.set	dispatch_state, dispatch_state + 1
 	.endm
 
+	@ This macro calls a user-supplied my_trace routine.  It
+	@ passes the current JPC as argument zero.  It can be safely
+	@ inserted at any point in the interpreter.
+	.macro TRACE
+	stmfd	sp!, {r0, r1, r2, r3, r4, lr}
+	mrs	r4, cpsr
+	mov	r0, jpc
+	ldr	r2, =my_trace
+	blx	r2
+	msr	cpsr, r4
+	ldmfd	sp!, {r0, r1, r2, r3, r4, lr}	
+	.endm
+	
 	.macro	DISPATCH_FINISH
     .if dispatch_state == 0
 	.error	"DISPATCH_FINISH without a DISPATCH_START or DISPATCH_STATE"
@@ -4753,262 +4766,266 @@ main_dispatch_table:
 
 #ifdef NOTICE_SAFEPOINTS
 safe_dispatch_table:
-	.word	do_nop
-	.word	do_u4const_0
-	.word	do_iconst_N
-	.word	do_iconst_N
-	.word	do_iconst_N
-	.word	do_iconst_N
-	.word	do_iconst_N
-	.word	do_iconst_N
-	.word	do_iconst_N
-	.word	do_u8const_0
-	.word	do_lconst_1
-	.word	do_u4const_0
-	.word	do_fconst_1
-	.word	do_fconst_2
-	.word	do_u8const_0
-	.word	do_dconst_1
-	.word	do_bipush
-	.word	do_sipush
-	.word	do_ldc
-	.word	do_ldc_w
-	.word	do_ldc2_w
-	.word	do_u4load
-	.word	do_u8load
-	.word	do_u4load
-	.word	do_u8load
-	.word	do_u4load
-	.word	do_iload_0
-	.word	do_iload_0
-	.word	do_iload_0
-	.word	do_iload_0
-	.word	do_u8load_0
-	.word	do_u8load_1
-	.word	do_u8load_2
-	.word	do_u8load_3
-	.word	do_fload_0
-	.word	do_fload_0
-	.word	do_fload_0
-	.word	do_fload_0
-	.word	do_u8load_0
-	.word	do_u8load_1
-	.word	do_u8load_2
-	.word	do_u8load_3
-	.word	do_aload_0
-	.word	do_aload_0
-	.word	do_aload_0
-	.word	do_aload_0
-	.word	do_u4aload
-	.word	do_u8aload
-	.word	do_u4aload
-	.word	do_u8aload
-	.word	do_u4aload
-	.word	do_baload
-	.word	do_caload
-	.word	do_saload
-	.word	do_u4store
-	.word	do_u8store
-	.word	do_u4store
-	.word	do_u8store
-	.word	do_u4store
-	.word	do_u4store_0
-	.word	do_u4store_1
-	.word	do_u4store_2
-	.word	do_u4store_3
-	.word	do_u8store_0
-	.word	do_u8store_1
-	.word	do_u8store_2
-	.word	do_u8store_3
-	.word	do_u4store_0
-	.word	do_u4store_1
-	.word	do_u4store_2
-	.word	do_u4store_3
-	.word	do_u8store_0
-	.word	do_u8store_1
-	.word	do_u8store_2
-	.word	do_u8store_3
-	.word	do_u4store_0
-	.word	do_u4store_1
-	.word	do_u4store_2
-	.word	do_u4store_3
-	.word	do_u4astore
-	.word	do_u8astore
-	.word	do_u4astore
-	.word	do_u8astore
-	.word	do_aastore
-	.word	do_bastore
-	.word	do_u2astore
-	.word	do_u2astore
-	.word	do_jpop
-	.word	do_jpop2
-	.word	do_dup
-	.word	do_dup_x1
-	.word	do_dup_x2
-	.word	do_dup2
-	.word	do_dup2_x1
-	.word	do_dup2_x2
-	.word	do_swap
-	.word	do_iadd
-	.word	do_ladd
-	.word	do_fadd
-	.word	do_dadd
-	.word	do_isub
-	.word	do_lsub
-	.word	do_fsub
-	.word	do_dsub
-	.word	do_imul
-	.word	do_lmul
-	.word	do_fmul
-	.word	do_dmul
-	.word	do_idiv
-	.word	do_ldiv
-	.word	do_fdiv
-	.word	do_ddiv
-	.word	do_irem
-	.word	do_lrem
-	.word	do_frem
-	.word	do_drem
-	.word	do_ineg
-	.word	do_lneg
-	.word	do_fneg
-	.word	do_dneg
-	.word	do_ishl
-	.word	do_lshl
-	.word	do_ishr
-	.word	do_lshr
-	.word	do_iushr
-	.word	do_lushr
-	.word	do_iand
-	.word	do_land
-	.word	do_ior
-	.word	do_lor
-	.word	do_ixor
-	.word	do_lxor
-	.word	do_iinc
-	.word	do_i2l
-	.word	do_i2f
-	.word	do_i2d
-	.word	do_l2i
-	.word	do_l2f
-	.word	do_l2d
-	.word	do_f2i
-	.word	do_f2l
-	.word	do_f2d
-	.word	do_d2i
-	.word	do_d2l
-	.word	do_d2f
-	.word	do_i2b
-	.word	do_i2c
-	.word	do_i2s
-	.word	do_lcmp
-	.word	do_fcmpl
-	.word	do_fcmpg
-	.word	do_dcmpl
-	.word	do_dcmpg
-	.word	do_ifeq
-	.word	do_ifne
-	.word	do_iflt
-	.word	do_ifge
-	.word	do_ifgt
-	.word	do_ifle
-	.word	do_if_icmpeq
-	.word	do_if_icmpne
-	.word	do_if_icmplt
-	.word	do_if_icmpge
-	.word	do_if_icmpgt
-	.word	do_if_icmple
-	.word	do_if_icmpeq
-	.word	do_if_icmpne
-	.word	do_goto
-	.word	do_jsr
-	.word	do_ret
-	.word	do_tableswitch
-	.word	do_lookupswitch
-	.word	do_ireturn
-	.word	do_lreturn
-	.word	do_ireturn
-	.word	do_lreturn
-	.word	do_ireturn
-	.word	do_return
-	.word	do_getstatic
-	.word	do_putstatic
-	.word	do_getfield
-	.word	do_putfield
-	.word	do_invokevirtual
-	.word	do_invokespecial
-	.word	do_invokestatic
-	.word	do_invokeinterface
-	.word	do_undefined
-	.word	do_new
-	.word	do_newarray
-	.word	do_anewarray
-	.word	do_arraylength
-	.word	do_athrow
-	.word	do_checkcast
-	.word	do_instanceof
-	.word	do_monitorenter
-	.word	do_monitorexit
-	.word	do_wide
-	.word	do_multianewarray
-	.word	do_ifeq
-	.word	do_ifne
-	.word	do_goto_w
-	.word	do_jsr_w
-	.word	do_breakpoint
-	.word	do_undefined
-	.word	do_bgetfield
-	.word	do_cgetfield
-	.word	do_undefined
-	.word	do_undefined
-	.word	do_igetfield
-	.word	do_lgetfield
-	.word	do_sgetfield
-	.word	do_aputfield
-	.word	do_bputfield
-	.word	do_cputfield
-	.word	do_undefined
-	.word	do_undefined
-	.word	do_iputfield
-	.word	do_lputfield
-	.word	do_undefined
-	.word	do_iaccess_0
-	.word	do_iaccess_0
-	.word	do_iaccess_0
-	.word	do_iaccess_0
-	.word	do_invokeresolved
-	.word	do_invokespecialresolved
-	.word	do_invokestaticresolved
-	.word	do_invokevfinal
-	.word	do_fast_iload_iload
-	.word	do_fast_iload_iload_N
-	.word	do_return_register_finalizer
-	.word	do_undefined
-	.word	do_iload_0_iconst_N
-	.word	do_iload_0_iconst_N
-	.word	do_iload_0_iconst_N
-	.word	do_iload_0_iconst_N
-	.word	do_iload_iconst_N
-	.word	do_iadd_istore_N
-	.word	do_isub_istore_N
-	.word	do_iand_istore_N
-	.word	do_ior_istore_N
-	.word	do_ixor_istore_N
-	.word	do_iadd_u4store
-	.word	do_isub_u4store
-	.word	do_iand_u4store
-	.word	do_ior_u4store
-	.word	do_ixor_u4store
-	.word	do_fast_iload_N_iload
-	.word	do_fast_iload_N_iload
-	.word	do_fast_iload_N_iload
-	.word	do_fast_iload_N_iload
-	.word	do_fast_iload_N_iload_N
-	.word	do_fast_iload_N_iload_N
-	.word	do_fast_iload_N_iload_N
-	.word	do_fast_iload_N_iload_N
-	.word	do_undefined
-	.word	do_undefined
+
+/*  WARNING: If you change any of these bytecodes, you must also
+    change the table in bytecodes_arm.def to make it match.  */
+
+	.word	do_nop	@ 0 0x00
+	.word	do_u4const_0	@ 1 0x01
+	.word	do_iconst_N	@ 2 0x02
+	.word	do_iconst_N	@ 3 0x03
+	.word	do_iconst_N	@ 4 0x04
+	.word	do_iconst_N	@ 5 0x05
+	.word	do_iconst_N	@ 6 0x06
+	.word	do_iconst_N	@ 7 0x07
+	.word	do_iconst_N	@ 8 0x08
+	.word	do_u8const_0	@ 9 0x09
+	.word	do_lconst_1	@ 10 0x0a
+	.word	do_u4const_0	@ 11 0x0b
+	.word	do_fconst_1	@ 12 0x0c
+	.word	do_fconst_2	@ 13 0x0d
+	.word	do_u8const_0	@ 14 0x0e
+	.word	do_dconst_1	@ 15 0x0f
+	.word	do_bipush	@ 16 0x10
+	.word	do_sipush	@ 17 0x11
+	.word	do_ldc	@ 18 0x12
+	.word	do_ldc_w	@ 19 0x13
+	.word	do_ldc2_w	@ 20 0x14
+	.word	do_u4load	@ 21 0x15
+	.word	do_u8load	@ 22 0x16
+	.word	do_u4load	@ 23 0x17
+	.word	do_u8load	@ 24 0x18
+	.word	do_u4load	@ 25 0x19
+	.word	do_iload_0	@ 26 0x1a
+	.word	do_iload_0	@ 27 0x1b
+	.word	do_iload_0	@ 28 0x1c
+	.word	do_iload_0	@ 29 0x1d
+	.word	do_u8load_0	@ 30 0x1e
+	.word	do_u8load_1	@ 31 0x1f
+	.word	do_u8load_2	@ 32 0x20
+	.word	do_u8load_3	@ 33 0x21
+	.word	do_fload_0	@ 34 0x22
+	.word	do_fload_0	@ 35 0x23
+	.word	do_fload_0	@ 36 0x24
+	.word	do_fload_0	@ 37 0x25
+	.word	do_u8load_0	@ 38 0x26
+	.word	do_u8load_1	@ 39 0x27
+	.word	do_u8load_2	@ 40 0x28
+	.word	do_u8load_3	@ 41 0x29
+	.word	do_aload_0	@ 42 0x2a
+	.word	do_aload_0	@ 43 0x2b
+	.word	do_aload_0	@ 44 0x2c
+	.word	do_aload_0	@ 45 0x2d
+	.word	do_u4aload	@ 46 0x2e
+	.word	do_u8aload	@ 47 0x2f
+	.word	do_u4aload	@ 48 0x30
+	.word	do_u8aload	@ 49 0x31
+	.word	do_u4aload	@ 50 0x32
+	.word	do_baload	@ 51 0x33
+	.word	do_caload	@ 52 0x34
+	.word	do_saload	@ 53 0x35
+	.word	do_u4store	@ 54 0x36
+	.word	do_u8store	@ 55 0x37
+	.word	do_u4store	@ 56 0x38
+	.word	do_u8store	@ 57 0x39
+	.word	do_u4store	@ 58 0x3a
+	.word	do_u4store_0	@ 59 0x3b
+	.word	do_u4store_1	@ 60 0x3c
+	.word	do_u4store_2	@ 61 0x3d
+	.word	do_u4store_3	@ 62 0x3e
+	.word	do_u8store_0	@ 63 0x3f
+	.word	do_u8store_1	@ 64 0x40
+	.word	do_u8store_2	@ 65 0x41
+	.word	do_u8store_3	@ 66 0x42
+	.word	do_u4store_0	@ 67 0x43
+	.word	do_u4store_1	@ 68 0x44
+	.word	do_u4store_2	@ 69 0x45
+	.word	do_u4store_3	@ 70 0x46
+	.word	do_u8store_0	@ 71 0x47
+	.word	do_u8store_1	@ 72 0x48
+	.word	do_u8store_2	@ 73 0x49
+	.word	do_u8store_3	@ 74 0x4a
+	.word	do_u4store_0	@ 75 0x4b
+	.word	do_u4store_1	@ 76 0x4c
+	.word	do_u4store_2	@ 77 0x4d
+	.word	do_u4store_3	@ 78 0x4e
+	.word	do_u4astore	@ 79 0x4f
+	.word	do_u8astore	@ 80 0x50
+	.word	do_u4astore	@ 81 0x51
+	.word	do_u8astore	@ 82 0x52
+	.word	do_aastore	@ 83 0x53
+	.word	do_bastore	@ 84 0x54
+	.word	do_u2astore	@ 85 0x55
+	.word	do_u2astore	@ 86 0x56
+	.word	do_jpop	@ 87 0x57
+	.word	do_jpop2	@ 88 0x58
+	.word	do_dup	@ 89 0x59
+	.word	do_dup_x1	@ 90 0x5a
+	.word	do_dup_x2	@ 91 0x5b
+	.word	do_dup2	@ 92 0x5c
+	.word	do_dup2_x1	@ 93 0x5d
+	.word	do_dup2_x2	@ 94 0x5e
+	.word	do_swap	@ 95 0x5f
+	.word	do_iadd	@ 96 0x60
+	.word	do_ladd	@ 97 0x61
+	.word	do_fadd	@ 98 0x62
+	.word	do_dadd	@ 99 0x63
+	.word	do_isub	@ 100 0x64
+	.word	do_lsub	@ 101 0x65
+	.word	do_fsub	@ 102 0x66
+	.word	do_dsub	@ 103 0x67
+	.word	do_imul	@ 104 0x68
+	.word	do_lmul	@ 105 0x69
+	.word	do_fmul	@ 106 0x6a
+	.word	do_dmul	@ 107 0x6b
+	.word	do_idiv	@ 108 0x6c
+	.word	do_ldiv	@ 109 0x6d
+	.word	do_fdiv	@ 110 0x6e
+	.word	do_ddiv	@ 111 0x6f
+	.word	do_irem	@ 112 0x70
+	.word	do_lrem	@ 113 0x71
+	.word	do_frem	@ 114 0x72
+	.word	do_drem	@ 115 0x73
+	.word	do_ineg	@ 116 0x74
+	.word	do_lneg	@ 117 0x75
+	.word	do_fneg	@ 118 0x76
+	.word	do_dneg	@ 119 0x77
+	.word	do_ishl	@ 120 0x78
+	.word	do_lshl	@ 121 0x79
+	.word	do_ishr	@ 122 0x7a
+	.word	do_lshr	@ 123 0x7b
+	.word	do_iushr	@ 124 0x7c
+	.word	do_lushr	@ 125 0x7d
+	.word	do_iand	@ 126 0x7e
+	.word	do_land	@ 127 0x7f
+	.word	do_ior	@ 128 0x80
+	.word	do_lor	@ 129 0x81
+	.word	do_ixor	@ 130 0x82
+	.word	do_lxor	@ 131 0x83
+	.word	do_iinc	@ 132 0x84
+	.word	do_i2l	@ 133 0x85
+	.word	do_i2f	@ 134 0x86
+	.word	do_i2d	@ 135 0x87
+	.word	do_l2i	@ 136 0x88
+	.word	do_l2f	@ 137 0x89
+	.word	do_l2d	@ 138 0x8a
+	.word	do_f2i	@ 139 0x8b
+	.word	do_f2l	@ 140 0x8c
+	.word	do_f2d	@ 141 0x8d
+	.word	do_d2i	@ 142 0x8e
+	.word	do_d2l	@ 143 0x8f
+	.word	do_d2f	@ 144 0x90
+	.word	do_i2b	@ 145 0x91
+	.word	do_i2c	@ 146 0x92
+	.word	do_i2s	@ 147 0x93
+	.word	do_lcmp	@ 148 0x94
+	.word	do_fcmpl	@ 149 0x95
+	.word	do_fcmpg	@ 150 0x96
+	.word	do_dcmpl	@ 151 0x97
+	.word	do_dcmpg	@ 152 0x98
+	.word	do_ifeq	@ 153 0x99
+	.word	do_ifne	@ 154 0x9a
+	.word	do_iflt	@ 155 0x9b
+	.word	do_ifge	@ 156 0x9c
+	.word	do_ifgt	@ 157 0x9d
+	.word	do_ifle	@ 158 0x9e
+	.word	do_if_icmpeq	@ 159 0x9f
+	.word	do_if_icmpne	@ 160 0xa0
+	.word	do_if_icmplt	@ 161 0xa1
+	.word	do_if_icmpge	@ 162 0xa2
+	.word	do_if_icmpgt	@ 163 0xa3
+	.word	do_if_icmple	@ 164 0xa4
+	.word	do_if_icmpeq	@ 165 0xa5
+	.word	do_if_icmpne	@ 166 0xa6
+	.word	do_goto	@ 167 0xa7
+	.word	do_jsr	@ 168 0xa8
+	.word	do_ret	@ 169 0xa9
+	.word	do_tableswitch	@ 170 0xaa
+	.word	do_lookupswitch	@ 171 0xab
+	.word	do_ireturn	@ 172 0xac
+	.word	do_lreturn	@ 173 0xad
+	.word	do_ireturn	@ 174 0xae
+	.word	do_lreturn	@ 175 0xaf
+	.word	do_ireturn	@ 176 0xb0
+	.word	do_return	@ 177 0xb1
+	.word	do_getstatic	@ 178 0xb2
+	.word	do_putstatic	@ 179 0xb3
+	.word	do_getfield	@ 180 0xb4
+	.word	do_putfield	@ 181 0xb5
+	.word	do_invokevirtual	@ 182 0xb6
+	.word	do_invokespecial	@ 183 0xb7
+	.word	do_invokestatic	@ 184 0xb8
+	.word	do_invokeinterface	@ 185 0xb9
+	.word	do_undefined	@ 186 0xba
+	.word	do_new	@ 187 0xbb
+	.word	do_newarray	@ 188 0xbc
+	.word	do_anewarray	@ 189 0xbd
+	.word	do_arraylength	@ 190 0xbe
+	.word	do_athrow	@ 191 0xbf
+	.word	do_checkcast	@ 192 0xc0
+	.word	do_instanceof	@ 193 0xc1
+	.word	do_monitorenter	@ 194 0xc2
+	.word	do_monitorexit	@ 195 0xc3
+	.word	do_wide	@ 196 0xc4
+	.word	do_multianewarray	@ 197 0xc5
+	.word	do_ifeq	@ 198 0xc6
+	.word	do_ifne	@ 199 0xc7
+	.word	do_goto_w	@ 200 0xc8
+	.word	do_jsr_w	@ 201 0xc9
+	.word	do_breakpoint	@ 202 0xca
+	.word	do_undefined	@ 203 0xcb
+	.word	do_bgetfield	@ 204 0xcc
+	.word	do_cgetfield	@ 205 0xcd
+	.word	do_undefined	@ 206 0xce
+	.word	do_undefined	@ 207 0xcf
+	.word	do_igetfield	@ 208 0xd0
+	.word	do_lgetfield	@ 209 0xd1
+	.word	do_sgetfield	@ 210 0xd2
+	.word	do_aputfield	@ 211 0xd3
+	.word	do_bputfield	@ 212 0xd4
+	.word	do_cputfield	@ 213 0xd5
+	.word	do_undefined	@ 214 0xd6
+	.word	do_undefined	@ 215 0xd7
+	.word	do_iputfield	@ 216 0xd8
+	.word	do_lputfield	@ 217 0xd9
+	.word	do_undefined	@ 218 0xda
+	.word	do_iaccess_0	@ 219 0xdb
+	.word	do_iaccess_0	@ 220 0xdc
+	.word	do_iaccess_0	@ 221 0xdd
+	.word	do_iaccess_0	@ 222 0xde
+	.word	do_invokeresolved	@ 223 0xdf
+	.word	do_invokespecialresolved	@ 224 0xe0
+	.word	do_invokestaticresolved	@ 225 0xe1
+	.word	do_invokevfinal	@ 226 0xe2
+	.word	do_fast_iload_iload	@ 227 0xe3
+	.word	do_fast_iload_iload_N	@ 228 0xe4
+	.word	do_undefined	@ 229 0xe5
+	.word	do_undefined	@ 230 0xe6
+	.word	do_return_register_finalizer	@ 231 0xe7
+	.word	do_undefined	@ 232 0xe8
+	.word	do_iload_0_iconst_N	@ 233 0xe9
+	.word	do_iload_0_iconst_N	@ 234 0xea
+	.word	do_iload_0_iconst_N	@ 235 0xeb
+	.word	do_iload_0_iconst_N	@ 236 0xec
+	.word	do_iload_iconst_N	@ 237 0xed
+	.word	do_iadd_istore_N	@ 238 0xee
+	.word	do_isub_istore_N	@ 239 0xef
+	.word	do_iand_istore_N	@ 240 0xf0
+	.word	do_ior_istore_N	@ 241 0xf1
+	.word	do_ixor_istore_N	@ 242 0xf2
+	.word	do_iadd_u4store	@ 243 0xf3
+	.word	do_isub_u4store	@ 244 0xf4
+	.word	do_iand_u4store	@ 245 0xf5
+	.word	do_ior_u4store	@ 246 0xf6
+	.word	do_ixor_u4store	@ 247 0xf7
+	.word	do_fast_iload_N_iload	@ 248 0xf8
+	.word	do_fast_iload_N_iload	@ 249 0xf9
+	.word	do_fast_iload_N_iload	@ 250 0xfa
+	.word	do_fast_iload_N_iload	@ 251 0xfb
+	.word	do_fast_iload_N_iload_N	@ 252 0xfc
+	.word	do_fast_iload_N_iload_N	@ 253 0xfd
+	.word	do_fast_iload_N_iload_N	@ 254 0xfe
+	.word	do_fast_iload_N_iload_N	@ 255 0xff
 #endif
 
 	SUB_DISPATCH_TABLES

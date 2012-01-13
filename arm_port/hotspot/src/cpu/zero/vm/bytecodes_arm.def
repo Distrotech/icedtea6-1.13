@@ -29,6 +29,10 @@
 #define FAST_BYTECODES
 #endif
 
+/*  WARNING: If you change any of these bytecodes, you must also
+    change the safe_dispatch_table in cppInterpreter_arm.S to make it
+    match.  */
+
 nop                  = 0x00, 1
 aconst_null          = 0x01, 1
 iconst_m1            = 0x02, 1

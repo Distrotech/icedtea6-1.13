@@ -399,9 +399,9 @@ void writeouttable(TableEntry *table, int *table_indices, int depth)
 			fprintf(bci_f, "+%d\n", len);
 		} else {
 			if (table[i].impl_name)
-				fprintf(bci_f, "\t.word\t%s%s\n", prefix, table[i].impl_name);
+				fprintf(bci_f, "\t.word\t%s%s \t@ %d 0x%02x\n", prefix, table[i].impl_name, i, i);
 			else
-				fprintf(bci_f, "\t.word\t%s%s\n", prefix, table[i].def_name);
+				fprintf(bci_f, "\t.word\t%s%s \t@ %d 0x%02x\n", prefix, table[i].def_name, i, i);
 		}
 	}
 	if (depth == 0) {
@@ -416,7 +416,7 @@ void writeouttable(TableEntry *table, int *table_indices, int depth)
 				fputc('_', bci_f);
 				fputs(bytecodes[table_indices[j]].name, bci_f);
 			}
-			fputs(":\n", bci_f);
+			fprintf(bci_f, ":\t@ %d 0x%02x\n", i, i);
 			remove_duplicates(table, i, table_indices, depth);
 			writeouttable(table[i].subtable, table_indices, depth+1);
 		}
