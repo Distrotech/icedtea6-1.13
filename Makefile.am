@@ -399,7 +399,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6296893-BMP_Writer_handles_TopDown_prop_incorrectly.patch \
 	patches/openjdk/7103224-glibc_name_collision.patch \
 	patches/arm-debug.patch \
-	patches/openjdk/683768-System-tray-icon.patch \
+	patches/openjdk/7103610-_NET_WM_PID_and_WM_CLIENT_MACHINE_are_not_set.patch \
 	patches/openjdk/7102369-7094468-rmiregistry.patch \
 	patches/openjdk/6851973-kerberos.patch \
 	patches/openjdk/7091528-javadoc_class_files.patch \

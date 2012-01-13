@@ -1,3 +1,13 @@
+2012-01-12  Danesh Dadachanji  <ddadacha@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Replace patches/openjdk/683768-System-tray-icon.patch with
+	patches/openjdk/7103610-_NET_WM_PID_and_WM_CLIENT_MACHINE_are_not_set.patch
+	* NEWS: Moved RH683768 from Bug fixes to 1.11 Backports, added S7103610 to it.
+	* patches/openjdk/683768-System-tray-icon.patch: Removed.
+	* patches/openjdk/7103610-_NET_WM_PID_and_WM_CLIENT_MACHINE_are_not_set.patch: 
+	New file. Sets XAtoms	_NET_WM_PID and WM_CLIENT_MACHINE for X windows.
+
 2012-01-12  Andrew John Hughes  <ahughes@redhat.com>
 
 	* NEWS: Add 1.10.5, 1.9.12 and 1.8.12
