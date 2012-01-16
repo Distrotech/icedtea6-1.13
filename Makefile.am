@@ -2172,7 +2172,7 @@ check-jdk: stamps/jtreg.stamp
 	$${XVFB_RUN} \
 	$(BOOT_DIR)/bin/java -jar test/jtreg.jar -v1 -a -ignore:quiet \
 		-w:test/jdk/JTwork -r:test/jdk/JTreport \
-		 \
+		 $${ICEDTEA_JTREG_OTHERVM:--samevm} \
 		-jdk:$(BUILD_OUTPUT_DIR)/j2sdk-image \
 		-exclude:$(abs_top_srcdir)/$(JTREG_DIR)/excludelist.jdk.jtx \
 		$(ICEDTEA_JTREG_OPTIONS) \
