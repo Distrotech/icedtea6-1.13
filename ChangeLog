@@ -1,5 +1,13 @@
 2012-01-16  Andrew Haley  <aph@redhat.com>
 
+	* openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S (asm_method_table):
+	Add entry for java.dyn.MethodHandles::invoke.
+	(asm_generate_method_entry): Replace constant 14 with calculation
+	based on the size of asm_method_table.
+	Add some comments.
+
+2012-01-16  Andrew Haley  <aph@redhat.com>
+
 	* Makefile.am (check-jdk): Restore the --samevm line that was
 	deleted by mistake in an earlier merge.
 

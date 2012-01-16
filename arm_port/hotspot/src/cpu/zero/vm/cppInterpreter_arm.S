@@ -782,28 +782,33 @@ asm_generate_method_entry:
 	cmp	r2, #0
 	bne	1f
 
-	cmp	r3, #14
+	cmp	r3, #((3f-2f)/4) // i.e. sizeof asm_method_table
 	adrcc	ip, asm_method_table
 	ldrcc	r0, [ip, r3, lsl #2]
 #endif // PRODUCT
 1:
 	bx	lr
-asm_method_table:
-	.word	normal_entry
-	.word	normal_entry_synchronized
-	.word	native_entry
-	.word	native_entry_synchronized
-	.word	empty_entry
-	.word	accessor_entry
-	.word	normal_entry		@ abstract entry
-	.word	normal_entry		@ java_lang_math_sin
-	.word	normal_entry		@ java_lang_math_cos
-	.word	normal_entry		@ java_lang_math_tan
-	.word	normal_entry		@ java_lang_math_abs
-	.word	normal_entry		@ java_lang_math_sqrt
-	.word	normal_entry		@ java_lang_math_log
-	.word	normal_entry		@ java_lang_math_log10
 
+// This table must be kept in sync with AbstractInterpreter::MethodKind
+asm_method_table:
+2:
+        .word   normal_entry                    // method needs locals initialization
+        .word   normal_entry_synchronized       // method needs locals initialization & is synchronized
+        .word   native_entry                    // native method
+        .word   native_entry_synchronized       // native method & is synchronized
+        .word   empty_entry                     // empty method (code: _return)
+        .word   accessor_entry                  // accessor method (code: _aload_0, _getfield, _(a|i)return)
+        .word   normal_entry                    // abstract method (throws an AbstractMethodException)
+        .word   vm_fatal_error                  // java.dyn.MethodHandles::invoke
+        .word   normal_entry                    // implementation of java.lang.Math.sin   (x)
+        .word   normal_entry                    // implementation of java.lang.Math.cos   (x)
+        .word   normal_entry                    // implementation of java.lang.Math.tan   (x)
+        .word   normal_entry                    // implementation of java.lang.Math.abs   (x)
+        .word   normal_entry                    // implementation of java.lang.Math.sqrt  (x)
+        .word   normal_entry                    // implementation of java.lang.Math.log   (x)
+        .word   normal_entry                    // implementation of java.lang.Math.log10 (x)
+3:
+	
 	ALIGN_CODE
 native_entry_synchronized:
 	b	fast_native_entry_synchronized
