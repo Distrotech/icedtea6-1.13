@@ -789,7 +789,9 @@ asm_generate_method_entry:
 1:
 	bx	lr
 
-// This table must be kept in sync with AbstractInterpreter::MethodKind
+// This table must be kept in sync with
+// AbstractInterpreter::MethodKind.  Note that every entry must have a
+// corresponding fast entry point at addr + CODE_ALIGN_SIZE.
 asm_method_table:
 2:
         .word   normal_entry                    // method needs locals initialization
@@ -2155,7 +2157,7 @@ putstatic_volatile_sb:
 putstatic_volatile_dw:
 	DISPATCH_START	3
 	add	ip, r2, r3
-	POP	tmp1, tmp2
+	POP	tmp2, tmp1
 	DISPATCH_NEXT
 	StoreStoreBarrier
 #ifndef	__ARM_ARCH_7A__
@@ -2519,6 +2521,7 @@ bytecode_interpreter_str:
 	CACHE_CP
 	DISPATCH	1
 
+	ALIGN_CODE
 vm_fatal_error:
 	adr	r0, .fatal_filename
 	mov	r1, #99
@@ -2526,6 +2529,13 @@ vm_fatal_error:
 	b	breakpoint
 .fatal_filename:
 	.ascii	"[Optimsed Assembler Interpreter Loop]\000"
+
+// This extra entry point for vm_fatal_error (at vm_fatal_error +
+// CODE_ALIGN_SIZE) allows vm_fatal_error to be used as an entry point
+// in the asm_method_table.
+	ALIGN_CODE	
+	b	vm_fatal_error
+
 	ALIGN_WORD
 
 	Opcode	aastore

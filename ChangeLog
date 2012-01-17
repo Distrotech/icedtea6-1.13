@@ -1,3 +1,12 @@
+2012-01-17  Andrew Haley  <aph@redhat.com>
+
+	* openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S
+	(vm_fatal_error): Add an extra entry point at vm_fatal_error +
+	CODE_ALIGN_SIZE to allow vm_fatal_error to be used as an entry
+	point in asm_method_table.
+
+	(putstatic_volatile_dw): Re-order register operands to silence warning.
+
 2012-01-16  Andrew Haley  <aph@redhat.com>
 
 	* openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S (asm_method_table):
