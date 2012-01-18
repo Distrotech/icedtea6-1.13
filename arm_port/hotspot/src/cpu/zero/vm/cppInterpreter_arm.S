@@ -2161,7 +2161,7 @@ putstatic_volatile_dw:
 	DISPATCH_NEXT
 	StoreStoreBarrier
 #ifndef	__ARM_ARCH_7A__
-	stm	ip, {tmp1, tmp2}
+	stm	ip, {tmp2, tmp1}
 #else
 	// Data in tmp1 & tmp2, address in ip, r2 & r3 scratch
 0:	ldrexd	r2, r3, [ip]
