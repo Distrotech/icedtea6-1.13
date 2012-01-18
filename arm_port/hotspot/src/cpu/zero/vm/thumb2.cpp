@@ -27,7 +27,7 @@
 
 #define T2EE_PRINT_COMPILATION
 #define T2EE_PRINT_STATISTICS
-//#define T2EE_PRINT_DISASS
+#define T2EE_PRINT_DISASS
 #define T2EE_PRINT_REGUSAGE
 
 #ifdef T2EE_PRINT_COMPILATION
@@ -392,7 +392,11 @@ static char *t2ee_print_regusage;
 
 #define H_HANDLE_EXCEPTION_NO_REGS	60
 
-unsigned handlers[61];
+#define H_SAFEPOINT              	61
+
+#define H_LAST                          62  // Not used
+
+unsigned handlers[H_LAST];
 
 #define LEAF_STACK_SIZE			200
 #define STACK_SPARE			40
@@ -651,6 +655,9 @@ typedef struct Thumb2_Info {
 #define IS_INT_SIZE_BASE_TYPE(c) (c=='B' || c=='C' || c=='F' || c=='I' || c=='S' || c=='Z')
 #define IS_INT_SIZE_TYPE(c) (IS_INT_SIZE_BASE_TYPE(c) || c == 'L' || c == '[')
 
+void Thumb2_save_locals(Thumb2_Info *jinfo, unsigned stackdepth);
+void Thumb2_restore_locals(Thumb2_Info *jinfo, unsigned stackdepth);
+
 static int method_stackchange(jbyte *base)
 {
   jbyte c;
@@ -717,6 +724,43 @@ static void Thumb2_local_info_from_sig(Thumb2_Info *jinfo, methodOop method, jby
 static const char *local_types[] = { "int", "long", "float", "double", "ref" };
 
 #ifdef T2EE_PRINT_DISASS
+
+class Opcodes {
+public:
+  typeof (::print_insn_little_arm) *print_insn_little_arm;
+  typeof (::init_disassemble_info) *init_disassemble_info;
+  typeof (::disassemble_init_for_target) *disassemble_init_for_target;
+
+  // Load libopcodes.so lazily.
+  Opcodes()
+  {
+    void *lib;
+    if (t2ee_print_disass) {
+      if (lib = dlopen("libopcodes.so", RTLD_NOW)) {
+	print_insn_little_arm
+	  = (typeof print_insn_little_arm)dlsym(lib, "print_insn_little_arm");
+	init_disassemble_info
+	  = (typeof init_disassemble_info)dlsym(lib, "init_disassemble_info");
+	disassemble_init_for_target
+	  = (typeof disassemble_init_for_target)dlsym(lib, "disassemble_init_for_target");
+      }
+
+      if (! (print_insn_little_arm
+	     && init_disassemble_info
+	     && disassemble_init_for_target))
+	{
+	  fprintf (stderr, "The environment variable T2EE_PRINT_DISASS is set, but\n"
+		   "libopcodes.so has not been found or is invalid.  If you want to\n"
+		   "see a disassembly, please ensure that a valid copy of\n"
+		   "libopcodes.so is present somewhere in your library load path.\n");
+	  abort();
+	}
+    }
+  }
+};
+
+static Opcodes opcodes;
+
 void Thumb2_disass(Thumb2_Info *jinfo)
 {
   unsigned code_size = jinfo->code_size;
@@ -747,9 +791,12 @@ void Thumb2_disass(Thumb2_Info *jinfo)
   }
 #endif
 
-  init_disassemble_info(&info, stdout, (fprintf_ftype)fprintf);
+  fflush(stdout);
+  fflush(stderr);
+
+  opcodes.init_disassemble_info(&info, stdout, (fprintf_ftype)fprintf);
   info.arch = bfd_arch_arm;
-  disassemble_init_for_target(&info);
+  opcodes.disassemble_init_for_target(&info);
   info.endian = BFD_ENDIAN_LITTLE;
   info.endian_code = BFD_ENDIAN_LITTLE;
   info.buffer = (bfd_byte *)codebuf;
@@ -823,7 +870,7 @@ void Thumb2_disass(Thumb2_Info *jinfo)
 	    for (i = 0; i < 4; i++) {
 	      printf("0x%08x:\t", (int)codebuf+idx);
 	      {
-		int len = print_insn_little_arm((bfd_vma)codebuf+idx, &info);
+		int len = opcodes.print_insn_little_arm((bfd_vma)codebuf+idx, &info);
 		if (len == -1) len = 2;
 		idx += len;
 		putchar('\n');
@@ -898,7 +945,7 @@ void Thumb2_disass(Thumb2_Info *jinfo)
 	    len = 4;
 	  }
 	} else {
-	  len = print_insn_little_arm((bfd_vma)codebuf+idx, &info);
+	  len = opcodes.print_insn_little_arm((bfd_vma)codebuf+idx, &info);
 	  if (len == -1) len = 2;
 	  idx += len;
 	}
@@ -906,6 +953,7 @@ void Thumb2_disass(Thumb2_Info *jinfo)
       }
     }
   }
+  fflush(stdout);
 }
 #endif
 
@@ -2042,6 +2090,9 @@ static const unsigned t_vop_ops[] = {
 #define T_STREX(dst, src, base, off) (0xe8400000 | ((base) << 16) | \
 		((src) << 12) | ((dst) << 8) | ((off >> 2)))
 
+#define T_LDREXD(dst1, dst2, base) (0xe8d0007f | ((base) << 16) | ((dst1) << 12) | (dst2 << 8))
+#define T_STREXD(dst, src1, src2, base) (0xe8c00070 | ((base) << 16) | ((src1) << 12) | (src2 << 8) | dst)
+
 #define T_STM8(base, regset)		(0xc000 | ((base) << 8) | (regset))
 #define T_STM16(base, regset, st, wb)	(0xe8000000 | ((st) << 23) | ((wb) << 21) |	\
 		((base) << 16) | (regset))
@@ -2058,7 +2109,9 @@ static const unsigned t_vop_ops[] = {
 
 #define T_CHKA(size, idx)		(0xca00 | (((size) & 8) << (7-3)) | ((idx) << 3) | ((size) & 7))
 #define T_HBL(handler)			(0xc300 | (handler))
-#define T_ENTER_LEAVE(enter)		(0xf3bf8f0f | ((enter)<<4))
+#define T_MISC_CONTROL(op, option)	(0xf3bf8f00 | ((op)<<4) | option)
+#define T_ENTER_LEAVE(enter)		(T_MISC_CONTROL(enter, 0xf))
+#define T_DMB(option)			(T_MISC_CONTROL(5, option))
 
 #define T1_ADD_IMM(dst, src, imm3)	(0x1c00 | ((imm3) << 6) | ((src) << 3) | (dst))
 #define T2_ADD_IMM(r, imm8)		(0x3000 | ((r) << 8) | (imm8))
@@ -2341,6 +2394,22 @@ int strex_imm(CodeBuf *codebuf, Reg dst, Reg src, Reg base, unsigned offset)
     if ((offset & 3) == 0 && offset < 256 * 4) {
       return out_16x2(codebuf, T_STREX(dst, src, base, offset));
     }
+  }
+  J_Unimplemented();
+}
+
+int ldrexd(CodeBuf *codebuf, Reg dst0, Reg dst1, Reg base)
+{
+  if (Thumb2) {
+    return out_16x2(codebuf, T_LDREXD(dst0, dst1, base));
+  }
+  J_Unimplemented();
+}
+
+int strexd(CodeBuf *codebuf, Reg dst, Reg src0, Reg src1, Reg base)
+{
+  if (Thumb2) {
+    return out_16x2(codebuf, T_STREXD(dst, src0, src1, base));
   }
   J_Unimplemented();
 }
@@ -2877,6 +2946,16 @@ int enter_leave(CodeBuf *codebuf, unsigned enter)
   J_Unimplemented();
 }
 #endif
+
+int fullBarrier(CodeBuf *codebuf)
+{
+  return out_16x2(codebuf, T_DMB(0xf));
+}
+
+int storeBarrier(CodeBuf *codebuf)
+{
+  return out_16x2(codebuf, T_DMB(0xe));
+}
 
 int tbh(CodeBuf *codebuf, Reg base, Reg idx)
 {
@@ -4265,7 +4344,26 @@ void Thumb2_Debug(Thumb2_Info *jinfo, unsigned handler)
 
 void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start);
 
-int Thumb2_Branch(Thumb2_Info *jinfo, unsigned bci, unsigned cond)
+// Insert code to poll the SafepointSynchronize state and call
+// Helper_SafePoint.
+void Thumb2_Safepoint(Thumb2_Info *jinfo, int stackdepth, int bci)
+{
+  Thumb2_Flush(jinfo);
+  int r_tmp = Thumb2_Tmp(jinfo, 0);
+  mov_imm(jinfo->codebuf, r_tmp, (u32)SafepointSynchronize::address_of_state());
+  ldr_imm(jinfo->codebuf, r_tmp, r_tmp, 0, 0, 0);
+  cmp_imm(jinfo->codebuf, r_tmp, SafepointSynchronize::_synchronizing);
+  {
+    unsigned loc = forward_16(jinfo->codebuf);
+  Thumb2_save_locals(jinfo, stackdepth);
+    mov_imm(jinfo->codebuf, ARM_R1, bci+CONSTMETHOD_CODEOFFSET);
+    bl(jinfo->codebuf, handlers[H_SAFEPOINT]);
+  Thumb2_restore_locals(jinfo, stackdepth);
+    bcc_patch(jinfo->codebuf, COND_NE, loc);
+  }
+}
+
+int Thumb2_Branch(Thumb2_Info *jinfo, unsigned bci, unsigned cond, int stackdepth)
 {
     int offset = GET_JAVA_S2(jinfo->code_base + bci + 1);
     unsigned dest_taken = bci + offset;
@@ -4273,7 +4371,10 @@ int Thumb2_Branch(Thumb2_Info *jinfo, unsigned bci, unsigned cond)
     unsigned loc;
 
     if (jinfo->bc_stackinfo[dest_taken] & BC_COMPILED) {
-      branch(jinfo->codebuf, cond, jinfo->bc_stackinfo[dest_taken] & ~BC_FLAGS_MASK);
+      loc = forward_16(jinfo->codebuf);
+      Thumb2_Safepoint(jinfo, stackdepth, bci);
+      branch_uncond(jinfo->codebuf, jinfo->bc_stackinfo[dest_taken] & ~BC_FLAGS_MASK);
+      bcc_patch(jinfo->codebuf, NEG_COND(cond), loc);
       return dest_not_taken;
     }
     loc = forward_32(jinfo->codebuf);
@@ -4283,13 +4384,14 @@ int Thumb2_Branch(Thumb2_Info *jinfo, unsigned bci, unsigned cond)
     return -1;
 }
 
-int Thumb2_Goto(Thumb2_Info *jinfo, unsigned bci, int offset, int len)
+int Thumb2_Goto(Thumb2_Info *jinfo, unsigned bci, int offset, int len, int stackdepth)
 {
     unsigned dest_taken = bci + offset;
     unsigned dest_not_taken = bci + len;
     unsigned loc;
 
     if (jinfo->bc_stackinfo[dest_taken] & BC_COMPILED) {
+      Thumb2_Safepoint(jinfo, stackdepth, bci);
       branch_uncond(jinfo->codebuf, jinfo->bc_stackinfo[dest_taken] & ~BC_FLAGS_MASK);
       return dest_not_taken;
     }
@@ -4300,8 +4402,10 @@ int Thumb2_Goto(Thumb2_Info *jinfo, unsigned bci, int offset, int len)
     return -1;
 }
 
-void Thumb2_Return(Thumb2_Info *jinfo, unsigned opcode)
+void Thumb2_Return(Thumb2_Info *jinfo, unsigned opcode, int bci)
 {
+  Thumb2_Safepoint(jinfo, 0, bci);
+
   Reg r_lo, r;
   Thumb2_Stack *jstack = jinfo->jstack;
 
@@ -4391,8 +4495,9 @@ void Thumb2_Return(Thumb2_Info *jinfo, unsigned opcode)
     if (opcode == opc_lreturn || opcode == opc_dreturn) {
       str_imm(jinfo->codebuf, r, Rstack, jinfo->method->max_locals() * sizeof(int), 1, 0);
       str_imm(jinfo->codebuf, r_lo, Rstack, jinfo->method->max_locals() * sizeof(int)-4, 1, 1);
-    } else
+    } else {
       str_imm(jinfo->codebuf, r, Rstack, jinfo->method->max_locals() * sizeof(int), 1, 1);
+    }
   }
 
 //  sub_imm(jinfo->codebuf, Ristate, ARM_LR, ISTATE_NEXT_FRAME);
@@ -4558,6 +4663,10 @@ int Thumb2_Accessor(Thumb2_Info *jinfo)
   else
     ldr_imm(jinfo->codebuf, ARM_R0, ARM_R0, field_offset, 1, 0);
   str_imm(jinfo->codebuf, ARM_R0, ARM_R1, 0, 1, 0);
+
+  if (cache->is_volatile())
+    fullBarrier(jinfo->codebuf);
+
   // deoptimized_frames = 0
   mov_imm(jinfo->codebuf, ARM_R0, 0);
   mov_reg(jinfo->codebuf, ARM_PC, ARM_LR);
@@ -4695,6 +4804,8 @@ void Thumb2_Enter(Thumb2_Info *jinfo)
   str_imm(jinfo->codebuf, ARM_R2, Ristate, ISTATE_THREAD, 1, 0);
   str_imm(jinfo->codebuf, ARM_R0, Ristate, ISTATE_METHOD, 1, 0);
 
+  str_imm(jinfo->codebuf, Ristate, Ristate, ISTATE_SELF_LINK, 1, 0);
+
   mov_reg(jinfo->codebuf, Rthread, ARM_R2);
 
   if (jinfo->method->is_synchronized()) {
@@ -4786,6 +4897,69 @@ unsigned opcode2handler[] = {
   H_D2L,
   H_D2F,
 };
+
+// Generate code for a load of a jlong.  If the operand is volatile,
+// generate a sequence of the form
+//
+// .Lsrc:
+// 	ldrexd r0, r1 , [src]
+// 	strexd r2 , r0, r1, [src]
+// 	cmp    r2, #0
+// 	bne    .Lsrc
+
+void Thumb2_load_long(Thumb2_Info *jinfo, Reg r_lo, Reg r_hi, Reg base,
+		      int field_offset,
+		      bool is_volatile = false)
+{
+  CodeBuf *codebuf = jinfo->codebuf;
+  if (is_volatile) {
+    Reg r_addr = base;
+    Reg tmp = Thumb2_Tmp(jinfo, (1<<r_lo) | (1<<r_hi) | (1<<base));
+    if (field_offset) {
+      r_addr = Thumb2_Tmp(jinfo, (1<<r_lo) | (1<<r_hi) | (1<<base) | (1<<tmp));
+      add_imm(jinfo->codebuf, r_addr, base, field_offset);
+    }
+    int loc = out_loc(codebuf);
+    ldrexd(codebuf, r_lo, r_hi, r_addr);
+    strexd(codebuf, tmp, r_lo, r_hi, r_addr);
+    cmp_imm(codebuf, tmp, 0);
+    branch(codebuf, COND_NE, loc);
+  } else {
+    ldrd_imm(codebuf, r_lo, r_hi, base, field_offset, 1, 0);
+  }
+}
+
+// Generate code for a load of a jlong.  If the operand is volatile,
+// generate a sequence of the form
+//
+// .Ldst
+// 	ldrexd 	r2, r3, [dst]
+// 	strexd 	r2, r0, r1, [dst]
+// 	cmp 	r2, #0
+// 	bne 	.Ldst
+
+void Thumb2_store_long(Thumb2_Info *jinfo, Reg r_lo, Reg r_hi, Reg base,
+		      int field_offset,
+		      bool is_volatile = false)
+{
+  CodeBuf *codebuf = jinfo->codebuf;
+  if (is_volatile) {
+    Reg r_addr = base;
+    Reg tmp1 = Thumb2_Tmp(jinfo, (1<<r_lo) | (1<<r_hi) | (1<<base));
+    Reg tmp2 = Thumb2_Tmp(jinfo, (1<<r_lo) | (1<<r_hi) | (1<<base) | (1<<tmp1));
+    if (field_offset) {
+      r_addr = Thumb2_Tmp(jinfo, (1<<r_lo) | (1<<r_hi) | (1<<base) | (1<<tmp1) | (1<<tmp2));
+      add_imm(jinfo->codebuf, r_addr, base, field_offset);
+    }
+    int loc = out_loc(codebuf);
+    ldrexd(codebuf, tmp1, tmp2, r_addr);
+    strexd(codebuf, tmp1, r_lo, r_hi, r_addr);
+    cmp_imm(codebuf, tmp1, 0);
+    branch(codebuf, COND_NE, loc);
+  } else {
+    strd_imm(codebuf, r_lo, r_hi, base, field_offset, 1, 0);
+  }
+}
 
 #define OPCODE2HANDLER(opc) (handlers[opcode2handler[(opc)-opc_idiv]])
 
@@ -5602,7 +5776,8 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	  Thumb2_Spill(jinfo, 2, 0);
 	  r_hi = PUSH(jstack, JSTACK_REG(jstack));
 	  r_lo = PUSH(jstack, JSTACK_REG(jstack));
-	  ldrd_imm(jinfo->codebuf, r_lo, r_hi, r_obj, field_offset, 1, 0);
+	  Thumb2_load_long(jinfo, r_lo, r_hi, r_obj, field_offset,
+			   cache->is_volatile());
 	} else {
 	  Reg r;
 
@@ -5620,6 +5795,10 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	  else
 	    ldr_imm(jinfo->codebuf, r, r_obj, field_offset, 1, 0);
 	}
+
+	if (cache->is_volatile())
+	  fullBarrier(jinfo->codebuf);
+
 	break;
       }
 
@@ -5659,13 +5838,15 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	int field_offset = cache->f2();
 
 	if (tos_type == ltos || tos_type == dtos) {
-	  Reg r_lo, r_hi;
+	  Reg r_lo, r_hi, r_addr;
 	  Thumb2_Spill(jinfo, 2, 0);
 	  r_hi = PUSH(jstack, JSTACK_REG(jstack));
 	  r_lo = PUSH(jstack, JSTACK_REG(jstack));
+	  r_addr = Thumb2_Tmp(jinfo, (1<<r_hi) | (1<<r_lo));
 	  ldr_imm(jinfo->codebuf, r_lo, Ristate, ISTATE_CONSTANTS, 1, 0);
-	  ldr_imm(jinfo->codebuf, r_lo, r_lo, CP_OFFSET + (index << 4) + 4, 1, 0);
-	  ldrd_imm(jinfo->codebuf, r_lo, r_hi, r_lo, field_offset, 1, 0);
+	  ldr_imm(jinfo->codebuf, r_addr, r_lo, CP_OFFSET + (index << 4) + 4, 1, 0);
+	  Thumb2_load_long(jinfo, r_lo, r_hi, r_addr, field_offset,
+			   cache->is_volatile());
 	} else {
 	  Reg r;
 	  Thumb2_Spill(jinfo, 1, 0);
@@ -5682,6 +5863,10 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	  else
 	    ldr_imm(jinfo->codebuf, r, r, field_offset, 1, 0);
 	}
+
+	if (cache->is_volatile())
+	  fullBarrier(jinfo->codebuf);
+
 	break;
       }
 
@@ -5692,6 +5877,7 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	Reg r_obj;
 
         cache = cp->entry_at(index);
+
         if (!cache->is_resolved((Bytecodes::Code)opcode)) {
 	  int java_index = GET_NATIVE_U2(code_base+bci+1);
 	  constantPoolOop pool = jinfo->method->constants();
@@ -5703,15 +5889,19 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	  if (c == 'J' || c == 'D') handler = H_PUTFIELD_DW;
 	  if (c == 'B' || c == 'Z') handler = H_PUTFIELD_B;
 	  if (c == 'C' || c == 'S') handler = H_PUTFIELD_H;
-	  if (c == '[' || c == 'L') handler = H_PUTFIELD_A;
+ 	  if (c == '[' || c == 'L') handler = H_PUTFIELD_A;
 	  Thumb2_Flush(jinfo);
 	  Thumb2_save_locals(jinfo, stackdepth);
 	  mov_imm(jinfo->codebuf, ARM_R0, bci+CONSTMETHOD_CODEOFFSET);
 	  mov_imm(jinfo->codebuf, ARM_R1, index);
 	  blx(jinfo->codebuf, handlers[handler]);
 	  Thumb2_restore_locals(jinfo, bc_stackinfo[bci+len] & ~BC_FLAGS_MASK);
+
 	  break;
 	}
+
+	if (cache->is_volatile())
+	  storeBarrier(jinfo->codebuf);
 
 	TosState tos_type = cache->flag_state();
 	int field_offset = cache->f2();
@@ -5722,7 +5912,7 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	  r_lo = POP(jstack);
 	  r_hi = POP(jstack);
 	  r_obj = POP(jstack);
-	  strd_imm(jinfo->codebuf, r_lo, r_hi, r_obj, field_offset, 1, 0);
+	  Thumb2_store_long(jinfo, r_lo, r_hi, r_obj, field_offset, cache->is_volatile());
 	} else {
 	  Reg r;
 	  Thumb2_Fill(jinfo, 2);
@@ -5741,6 +5931,10 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	    }
 	  }
 	}
+
+	if (cache->is_volatile())
+	  fullBarrier(jinfo->codebuf);
+
 	break;
       }
 
@@ -5771,6 +5965,9 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	  break;
 	}
 
+	if (cache->is_volatile())
+	  storeBarrier(jinfo->codebuf);
+
 	TosState tos_type = cache->flag_state();
 	int field_offset = cache->f2();
 	Reg r_obj;
@@ -5785,7 +5982,7 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	  JASSERT(r_obj != r_lo && r_obj != r_hi, "corruption in putstatic");
 	  ldr_imm(jinfo->codebuf, r_obj, Ristate, ISTATE_CONSTANTS, 1, 0);
 	  ldr_imm(jinfo->codebuf, r_obj, r_obj, CP_OFFSET + (index << 4) + 4, 1, 0);
-	  strd_imm(jinfo->codebuf, r_lo, r_hi, r_obj, field_offset, 1, 0);
+	  Thumb2_store_long(jinfo, r_lo, r_hi, r_obj, field_offset, cache->is_volatile());
 	} else {
 	  Reg r;
 	  Thumb2_Fill(jinfo, 1);
@@ -5808,6 +6005,10 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	    }
 	  }
 	}
+
+	if (cache->is_volatile())
+	  fullBarrier(jinfo->codebuf);
+
 	break;
       }
 
@@ -6097,7 +6298,7 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
       case opc_goto: {
 	int offset = GET_JAVA_S2(jinfo->code_base + bci + 1);
 	Thumb2_Flush(jinfo);
-	bci = Thumb2_Goto(jinfo, bci, offset, len);
+	bci = Thumb2_Goto(jinfo, bci, offset, len, stackdepth);
 	len = 0;
 	break;
       }
@@ -6105,7 +6306,7 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
       case opc_goto_w: {
 	int offset = GET_JAVA_U4(jinfo->code_base + bci + 1);
 	Thumb2_Flush(jinfo);
-	bci = Thumb2_Goto(jinfo, bci, offset, len);
+	bci = Thumb2_Goto(jinfo, bci, offset, len, stackdepth);
 	len = 0;
 	break;
       }
@@ -6125,7 +6326,7 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
 	r = POP(jstack);
 	Thumb2_Flush(jinfo);
 	cmp_imm(jinfo->codebuf, r, 0);
-	bci = Thumb2_Branch(jinfo, bci, cond);
+	bci = Thumb2_Branch(jinfo, bci, cond, stackdepth-1);
 	len = 0;
 	break;
       }
@@ -6146,7 +6347,7 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
 	r_lho = POP(jstack);
 	Thumb2_Flush(jinfo);
 	cmp_reg(jinfo->codebuf, r_lho, r_rho);
-	bci = Thumb2_Branch(jinfo, bci, cond);
+	bci = Thumb2_Branch(jinfo, bci, cond, stackdepth-2);
 	len = 0;
 	break;
       }
@@ -6157,7 +6358,7 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
       case opc_ireturn:
       case opc_freturn:
       case opc_areturn:
-	Thumb2_Return(jinfo, opcode);
+	Thumb2_Return(jinfo, opcode, bci);
 	if (!jinfo->compiled_return) jinfo->compiled_return = bci;
 	break;
 
@@ -6192,7 +6393,7 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
 	it(jinfo->codebuf, COND_NE, IT_MASK_T);
 	bl(jinfo->codebuf, handlers[H_HANDLE_EXCEPTION]);
 	bcc_patch(jinfo->codebuf, COND_EQ, loc_eq);
-	Thumb2_Return(jinfo, opc_return);
+	Thumb2_Return(jinfo, opc_return, bci);
 	break;
       }
 
@@ -6826,7 +7027,6 @@ static clock_t total_compile_time = 0;
 #endif
 
 extern unsigned CPUInfo;
-static int DisableCompiler = 0;
 
 extern "C" unsigned long long Thumb2_Compile(JavaThread *thread, unsigned branch_pc)
 {
@@ -6855,7 +7055,7 @@ extern "C" unsigned long long Thumb2_Compile(JavaThread *thread, unsigned branch
   Thumb2_Entrypoint thumb_entry;
   int compiled_accessor;
 
-  if (DisableCompiler || method->is_not_compilable()) {
+  if (!UseCompiler || method->is_not_compilable()) {
 	ic->set(ic->state(), 1);
 	bc->set(ic->state(), 1);
 	return 0;
@@ -6912,7 +7112,7 @@ extern "C" unsigned long long Thumb2_Compile(JavaThread *thread, unsigned branch
     if (rc == COMPILER_RESULT_FAILED)
         method->set_not_compilable();
     if (rc == COMPILER_RESULT_FATAL)
-	DisableCompiler = 1;
+	UseCompiler = false;
     compiling = 0;
     return 0;
   }
@@ -7072,6 +7272,7 @@ extern "C" void Helper_aastore(void);
 extern "C" void Helper_aputfield(void);
 extern "C" void Helper_synchronized_enter(void);
 extern "C" void Helper_synchronized_exit(void);
+extern "C" void Helper_SafePoint(void);
 
 extern "C" void _ZN13SharedRuntime3f2iEf(void);
 extern "C" void _ZN13SharedRuntime3f2lEf(void);
@@ -7164,7 +7365,7 @@ extern "C" void Thumb2_Initialize(void)
   int rc;
 
   if (!(CPUInfo & ARCH_THUMBEE)) {
-    DisableCompiler = 1;
+    UseCompiler = false;
     return;
   }
 
@@ -7183,7 +7384,7 @@ extern "C" void Thumb2_Initialize(void)
 
   cb = (Thumb2_CodeBuf *)mmap(0, THUMB2_CODEBUF_SIZE, PROT_EXEC|PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, 0, 0);
   if (cb == MAP_FAILED) {
-    DisableCompiler = 1;
+    UseCompiler = false;
     return;
   }
 
@@ -7196,7 +7397,7 @@ extern "C" void Thumb2_Initialize(void)
   codebuf.limit = (unsigned short *)cb->sp - (unsigned short *)cb->hp;
 
   if (rc = setjmp(compiler_error_env)) {
-    DisableCompiler = 1;
+    UseCompiler = false;
     return;
   }
 
@@ -7542,10 +7743,58 @@ sub_imm(&codebuf, ARM_R0, Rstack, 4);
   mov_imm(&codebuf, ARM_R3, (u32)Thumb2_Exit_To_Interpreter);
   mov_reg(&codebuf, ARM_PC, ARM_R3);
 
+// H_SAFEPOINT
+  handlers[H_SAFEPOINT] = out_pos(&codebuf);
+  stm(&codebuf, (1<<ARM_LR), ARM_SP, PUSH_FD, 1);
+
+  // Set up BytecodeInterpreter->_bcp for the GC
+  // bci+CONSTMETHOD_CODEOFFSET is passed in ARM_R1
+  ldr_imm(&codebuf, ARM_R0, Ristate, ISTATE_METHOD, 1, 0);
+  ldr_imm(&codebuf, ARM_R0, ARM_R0, METHOD_CONSTMETHOD, 1, 0);
+  add_reg(&codebuf, ARM_R0, ARM_R0, ARM_R1);
+  str_imm(&codebuf, ARM_R0, Ristate, ISTATE_BCP, 1, 0);
+
+  mov_imm(&codebuf, ARM_IP, (u32)Helper_SafePoint);
+  mov_reg(&codebuf, ARM_R0, Rthread);
+  blx_reg(&codebuf, ARM_IP);
+  ldm(&codebuf, (1<<ARM_LR), ARM_SP, POP_FD, 1);
+  cmp_imm(&codebuf, ARM_R0, 0);
+
+  // The sequence here is delicate.  We need to seet things up so that
+  // it looks as though Thumb2_Handle_Exception_NoRegs was called
+  // directly from a compiled method.
+  it(&codebuf, COND_EQ, IT_MASK_T);
+  mov_reg(&codebuf, ARM_PC, ARM_LR);
+  mov_imm(&codebuf, ARM_R3, (u32)Thumb2_Handle_Exception_NoRegs);
+  mov_reg(&codebuf, ARM_PC, ARM_R3);
+
   Thumb2_Clear_Cache(cb->hp, cb->hp + codebuf.idx * 2);
   cb->hp += codebuf.idx * 2;
 
   thumb2_codebuf = cb;
+
+#if 0 // Disassemble the codebuf we just created.  For debugging
+  Opcodes opcodes;
+  if (t2ee_print_disass) {
+    struct disassemble_info info;
+    info.arch = bfd_arch_arm;
+    opcodes.disassemble_init_for_target(&info);
+    opcodes.init_disassemble_info(&info, stdout, (fprintf_ftype)fprintf);
+    info.endian = BFD_ENDIAN_LITTLE;
+    info.endian_code = BFD_ENDIAN_LITTLE;
+    info.buffer = (bfd_byte *)codebuf.codebuf;
+    info.buffer_vma = (bfd_vma)codebuf.codebuf;
+    info.buffer_length = codebuf.idx * sizeof(short);
+    info.disassembler_options = (char *)"force-thumb";
+    int len;
+    for (unsigned int i = 0; i < codebuf.idx * sizeof(short); i += len) {
+      printf("0x%08x:\t", ((int)codebuf.codebuf)+i);
+      len = opcodes.print_insn_little_arm(((bfd_vma)codebuf.codebuf)+i, &info);
+      if (len == -1) len = 2;
+      putchar('\n');
+    }
+  }
+#endif
 }
 
 #endif // THUMB2EE

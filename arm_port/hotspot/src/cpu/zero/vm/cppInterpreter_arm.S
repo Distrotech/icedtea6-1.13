@@ -483,6 +483,19 @@ do_\label:
 	.set	dispatch_state, dispatch_state + 1
 	.endm
 
+	@ This macro calls a user-supplied my_trace routine.  It
+	@ passes the current JPC as argument zero.  It can be safely
+	@ inserted at any point in the interpreter.
+	.macro TRACE
+	stmfd	sp!, {r0, r1, r2, r3, r4, lr}
+	mrs	r4, cpsr
+	mov	r0, jpc
+	ldr	r2, =my_trace
+	blx	r2
+	msr	cpsr, r4
+	ldmfd	sp!, {r0, r1, r2, r3, r4, lr}	
+	.endm
+	
 	.macro	DISPATCH_FINISH
     .if dispatch_state == 0
 	.error	"DISPATCH_FINISH without a DISPATCH_START or DISPATCH_STATE"
@@ -506,6 +519,7 @@ do_\label:
         bic     ip, ip, #7
         ldr     pc, [ip, r1, lsl #2]
 	.set	dispatch_state, 0
+	.ltorg
 	.endm
 
 	.macro	DISPATCH_BYTECODE
@@ -529,6 +543,7 @@ do_\label:
 	ldrb	r1, [jpc, lr]
         bic     ip, ip, #7
         ldr     pc, [ip, r1, lsl #2]
+	.ltorg
 	.endm
 
 #define FFI_TYPE_VOID		0
@@ -585,14 +600,53 @@ do_\label:
 	.fpu softvfp
 #endif // HW_FP
 
-	.eabi_attribute Tag_ABI_FP_denormal, 1
-	.eabi_attribute Tag_ABI_FP_exceptions, 1
-	.eabi_attribute Tag_ABI_FP_number_model, 3
-	.eabi_attribute Tag_ABI_align8_needed, 1
-	.eabi_attribute Tag_ABI_align8_preserved, 1
-	.eabi_attribute Tag_ABI_enum_size, 2
-	.eabi_attribute Tag_ABI_optimization_goals, 2
-	.eabi_attribute Tag_ABI_PCS_wchar_t, 4
+#ifndef	__ARM_ARCH_7A__
+#	define dmb VOLATILE_BARRIER
+#	define dmb_st VOLATILE_BARRIER
+#else
+#	define	dmb_st .inst   0xf57ff05e
+#endif
+
+#define StoreStoreBarrier dmb_st
+#define StoreLoadBarrier dmb
+#define FullBarrier dmb
+	
+	.macro	VOLATILE_BARRIER arg
+	stmfd	sp!, {r2, lr}
+	ldr	r2, =0xffff0fa0 @ kernel_dmb
+	blx	r2
+	ldmfd	sp!, {r2, lr}
+	.endm
+	
+	.macro	GO_IF_VOLATILE reg, cp_cache, label
+	ldr	\reg, [\cp_cache, #CP_OFFSET+CP_CACHE_FLAGS]
+	tst	\reg, #(1<<CP_CACHE_VOLATILE_FIELD_FLAG_BIT)
+	bne	\label
+	.set	dispatch_saved, dispatch_state
+	.endm
+
+	@ We have to save and restore the dispatch_state because
+	@ dispatching is done twice, once each for volatile and
+	@ non-volatile versions.  It's essential that dispatch_state
+	@ be correct at the entry to the volatile version of the
+	@ handler.
+
+	.macro VOLATILE_VERSION
+	.if dispatch_state == 0
+	.set	dispatch_state, dispatch_saved
+	.else
+	.error "VOLATILE_VERSION macro used before non-volatile DISPATCH_FINISH."
+	.endif
+	.endm
+	
+	.eabi_attribute 20, 1 @ Tag_ABI_FP_denormal
+	.eabi_attribute 21, 1 @ Tag_ABI_FP_exceptions
+	.eabi_attribute 23, 3 @ Tag_ABI_FP_number_model
+	.eabi_attribute 24, 1 @ Tag_ABI_align8_needed
+	.eabi_attribute 25, 1 @ Tag_ABI_align8_preserved
+	.eabi_attribute 26, 2 @ Tag_ABI_enum_size
+	.eabi_attribute 30, 2 @ Tag_ABI_optimization_goals
+	.eabi_attribute 18, 4 @ Tag_ABI_PCS_wchar_t
 
 	.text
 
@@ -728,28 +782,35 @@ asm_generate_method_entry:
 	cmp	r2, #0
 	bne	1f
 
-	cmp	r3, #14
+	cmp	r3, #((3f-2f)/4) // i.e. sizeof asm_method_table
 	adrcc	ip, asm_method_table
 	ldrcc	r0, [ip, r3, lsl #2]
 #endif // PRODUCT
 1:
 	bx	lr
-asm_method_table:
-	.word	normal_entry
-	.word	normal_entry_synchronized
-	.word	native_entry
-	.word	native_entry_synchronized
-	.word	empty_entry
-	.word	accessor_entry
-	.word	normal_entry		@ abstract entry
-	.word	normal_entry		@ java_lang_math_sin
-	.word	normal_entry		@ java_lang_math_cos
-	.word	normal_entry		@ java_lang_math_tan
-	.word	normal_entry		@ java_lang_math_abs
-	.word	normal_entry		@ java_lang_math_sqrt
-	.word	normal_entry		@ java_lang_math_log
-	.word	normal_entry		@ java_lang_math_log10
 
+// This table must be kept in sync with
+// AbstractInterpreter::MethodKind.  Note that every entry must have a
+// corresponding fast entry point at addr + CODE_ALIGN_SIZE.
+asm_method_table:
+2:
+        .word   normal_entry                    // method needs locals initialization
+        .word   normal_entry_synchronized       // method needs locals initialization & is synchronized
+        .word   native_entry                    // native method
+        .word   native_entry_synchronized       // native method & is synchronized
+        .word   empty_entry                     // empty method (code: _return)
+        .word   accessor_entry                  // accessor method (code: _aload_0, _getfield, _(a|i)return)
+        .word   normal_entry                    // abstract method (throws an AbstractMethodException)
+        .word   vm_fatal_error                  // java.dyn.MethodHandles::invoke
+        .word   normal_entry                    // implementation of java.lang.Math.sin   (x)
+        .word   normal_entry                    // implementation of java.lang.Math.cos   (x)
+        .word   normal_entry                    // implementation of java.lang.Math.tan   (x)
+        .word   normal_entry                    // implementation of java.lang.Math.abs   (x)
+        .word   normal_entry                    // implementation of java.lang.Math.sqrt  (x)
+        .word   normal_entry                    // implementation of java.lang.Math.log   (x)
+        .word   normal_entry                    // implementation of java.lang.Math.log10 (x)
+3:
+	
 	ALIGN_CODE
 native_entry_synchronized:
 	b	fast_native_entry_synchronized
@@ -884,17 +945,28 @@ abort_table:
 		FBC	.word	.abortentry77, 1
 
 	    FBC		.word	.abortentry78, 3
+	    FBC		.word	.abortentry78_v, 3
 	    FBC		.word	.abortentry79, 3
+	    FBC		.word	.abortentry79_v, 3
 	    FBC		.word	.abortentry80, 3
+	    FBC		.word	.abortentry80_v, 3
 	    FBC		.word	.abortentry81, 3
+	    FBC		.word	.abortentry81_v, 3
 	    FBC		.word	.abortentry82, 3
+	    FBC		.word	.abortentry82_v, 3
 	    FBC		.word	.abortentry83, 3
+	    FBC		.word	.abortentry83_v, 3
 	    FBC		.word	.abortentry84, 3
+	    FBC		.word	.abortentry84_v, 3
 	    FBC		.word	.abortentry85, 3
+	    FBC		.word	.abortentry85_v, 3
 	    FBC		.word	.abortentry86, 3
+	    FBC		.word	.abortentry86_v, 3
 	    FBC		.word	.abortentry87, 3
+	    FBC		.word	.abortentry87_v, 3
 
 	    FBC    	.word	.abortentry88, 3
+	    FBC    	.word	.abortentry88_v, 3
 	    FBC	   	.word	.abortentry89, 5
 	    FBC	     	.word	.abortentry90, 4
 	    FBC	     	.word	.abortentry91, 4
@@ -910,6 +982,7 @@ abort_table:
 		FBC	.word	.abortentry112, 3
 
 		FBC	.word	.abortentry113, 0
+		FBC	.word	.abortentry113_v, 0
 			.word	.abortentry114, 1
 		FBC	.word	.abortentry117, 0
 			.word	.abortentry118, 0
@@ -1265,6 +1338,7 @@ fast_native_entry:
 	str	tmp1, [ip, #JNIHANDLEBLOCK_TOP]
 	str	r1, [r5, #4]
 	str	r5, [r9, #THREAD_JAVA_SP]
+	mov	r0, #0	@ deoptimized_frames = 0
 	ldmfd	arm_sp!, {fast_regset, pc}
 .fast_native_return_byte:
 	mov	r0, r0, lsl #24
@@ -2006,6 +2080,106 @@ putstatic_a:
 	bl	Helper_aputfield
 	DISPATCH 3
 
+getstatic_volatile_sh:
+	DISPATCH_START	3
+	ldrsh	tmp2, [r3, lr]
+	FullBarrier
+	DISPATCH_NEXT
+	PUSH	tmp2
+	DISPATCH_FINISH
+getstatic_volatile_h:
+	DISPATCH_START	3
+	ldrh	tmp2, [r3, lr]
+	FullBarrier
+	DISPATCH_NEXT
+	PUSH	tmp2
+	DISPATCH_FINISH
+getstatic_volatile_sb:
+	DISPATCH_START	3
+	ldrsb	tmp2, [r3, lr]
+	FullBarrier
+	DISPATCH_NEXT
+	PUSH	tmp2
+	DISPATCH_FINISH
+getstatic_volatile_dw:
+	DISPATCH_START	3
+	add	r3, r3, lr
+#ifndef	__ARM_ARCH_7A__
+	ldm	r3, {r2, tmp2}
+	FullBarrier
+	DISPATCH_NEXT
+	PUSH	r2, tmp2
+#else
+0:	ldrexd	tmp2, tmp1 , [r3]
+	strexd	r2 , tmp2, tmp1, [r3]
+	teq	r2, #0
+	bne	0b
+	FullBarrier
+	DISPATCH_NEXT
+	PUSH	tmp2, tmp1
+#endif
+	DISPATCH_FINISH
+getstatic_volatile_w:
+	DISPATCH_START	3
+	ldr	tmp2, [r3, lr]
+	FullBarrier
+	DISPATCH_NEXT
+	PUSH	tmp2
+	DISPATCH_FINISH
+
+putstatic_volatile_sh:
+putstatic_volatile_h:
+	DISPATCH_START	3
+	POP	tmp2
+	DISPATCH_NEXT
+	StoreStoreBarrier
+	strh	tmp2, [r3, r2]
+	StoreLoadBarrier
+	DISPATCH_FINISH
+putstatic_volatile_w:
+	cmp	lr, #tos_atos >> 1	@ >> 1 due to lsr #29 above
+	beq	putstatic_volatile_a
+	DISPATCH_START	3
+	POP	tmp2
+	DISPATCH_NEXT
+	StoreStoreBarrier
+	str	tmp2, [r3, r2]
+	StoreLoadBarrier
+	DISPATCH_FINISH
+putstatic_volatile_sb:
+	DISPATCH_START	3
+	POP	tmp2
+	DISPATCH_NEXT
+	StoreStoreBarrier
+	strb	tmp2, [r3, r2]
+	StoreLoadBarrier
+	DISPATCH_FINISH
+putstatic_volatile_dw:
+	DISPATCH_START	3
+	add	ip, r2, r3
+	POP	tmp2, tmp1
+	DISPATCH_NEXT
+	StoreStoreBarrier
+#ifndef	__ARM_ARCH_7A__
+	stm	ip, {tmp2, tmp1}
+#else
+	// Data in tmp1 & tmp2, address in ip, r2 & r3 scratch
+0:	ldrexd	r2, r3, [ip]
+	strexd	r2, tmp2, tmp1, [ip]
+	teq	r2, #0
+	bne	0b
+#endif
+	DISPATCH_NEXT
+	StoreLoadBarrier
+	DISPATCH_FINISH
+putstatic_volatile_a:
+	POP	tmp2
+	StoreStoreBarrier
+	str	tmp2, [r3, r2]
+	mov	r0, r3
+	bl	Helper_aputfield
+	DISPATCH 3
+
 resolve_invokeinterface:
 	mov	r1, #opc_invokeinterface
 	b	resolve_invoke
@@ -2347,6 +2521,7 @@ bytecode_interpreter_str:
 	CACHE_CP
 	DISPATCH	1
 
+	ALIGN_CODE
 vm_fatal_error:
 	adr	r0, .fatal_filename
 	mov	r1, #99
@@ -2354,6 +2529,13 @@ vm_fatal_error:
 	b	breakpoint
 .fatal_filename:
 	.ascii	"[Optimsed Assembler Interpreter Loop]\000"
+
+// This extra entry point for vm_fatal_error (at vm_fatal_error +
+// CODE_ALIGN_SIZE) allows vm_fatal_error to be used as an entry point
+// in the asm_method_table.
+	ALIGN_CODE	
+	b	vm_fatal_error
+
 	ALIGN_WORD
 
 	Opcode	aastore
@@ -3217,6 +3399,7 @@ method_entry_freq_count_overflow:
 #ifdef THUMB2EE
 #define THUMB2_MAXLOCALS 1000
 call_thumb2:
+	str	istate, [istate, #ISTATE_SELF_LINK]
 	mov	ip, r1
 	sub	r1, locals, #THUMB2_MAXLOCALS * 4
 	ldr	r2, [istate, #ISTATE_THREAD]
@@ -4598,262 +4781,266 @@ main_dispatch_table:
 
 #ifdef NOTICE_SAFEPOINTS
 safe_dispatch_table:
-	.word	do_nop
-	.word	do_u4const_0
-	.word	do_iconst_N
-	.word	do_iconst_N
-	.word	do_iconst_N
-	.word	do_iconst_N
-	.word	do_iconst_N
-	.word	do_iconst_N
-	.word	do_iconst_N
-	.word	do_u8const_0
-	.word	do_lconst_1
-	.word	do_u4const_0
-	.word	do_fconst_1
-	.word	do_fconst_2
-	.word	do_u8const_0
-	.word	do_dconst_1
-	.word	do_bipush
-	.word	do_sipush
-	.word	do_ldc
-	.word	do_ldc_w
-	.word	do_ldc2_w
-	.word	do_u4load
-	.word	do_u8load
-	.word	do_u4load
-	.word	do_u8load
-	.word	do_u4load
-	.word	do_iload_0
-	.word	do_iload_0
-	.word	do_iload_0
-	.word	do_iload_0
-	.word	do_u8load_0
-	.word	do_u8load_1
-	.word	do_u8load_2
-	.word	do_u8load_3
-	.word	do_fload_0
-	.word	do_fload_0
-	.word	do_fload_0
-	.word	do_fload_0
-	.word	do_u8load_0
-	.word	do_u8load_1
-	.word	do_u8load_2
-	.word	do_u8load_3
-	.word	do_aload_0
-	.word	do_aload_0
-	.word	do_aload_0
-	.word	do_aload_0
-	.word	do_u4aload
-	.word	do_u8aload
-	.word	do_u4aload
-	.word	do_u8aload
-	.word	do_u4aload
-	.word	do_baload
-	.word	do_caload
-	.word	do_saload
-	.word	do_u4store
-	.word	do_u8store
-	.word	do_u4store
-	.word	do_u8store
-	.word	do_u4store
-	.word	do_u4store_0
-	.word	do_u4store_1
-	.word	do_u4store_2
-	.word	do_u4store_3
-	.word	do_u8store_0
-	.word	do_u8store_1
-	.word	do_u8store_2
-	.word	do_u8store_3
-	.word	do_u4store_0
-	.word	do_u4store_1
-	.word	do_u4store_2
-	.word	do_u4store_3
-	.word	do_u8store_0
-	.word	do_u8store_1
-	.word	do_u8store_2
-	.word	do_u8store_3
-	.word	do_u4store_0
-	.word	do_u4store_1
-	.word	do_u4store_2
-	.word	do_u4store_3
-	.word	do_u4astore
-	.word	do_u8astore
-	.word	do_u4astore
-	.word	do_u8astore
-	.word	do_aastore
-	.word	do_bastore
-	.word	do_u2astore
-	.word	do_u2astore
-	.word	do_jpop
-	.word	do_jpop2
-	.word	do_dup
-	.word	do_dup_x1
-	.word	do_dup_x2
-	.word	do_dup2
-	.word	do_dup2_x1
-	.word	do_dup2_x2
-	.word	do_swap
-	.word	do_iadd
-	.word	do_ladd
-	.word	do_fadd
-	.word	do_dadd
-	.word	do_isub
-	.word	do_lsub
-	.word	do_fsub
-	.word	do_dsub
-	.word	do_imul
-	.word	do_lmul
-	.word	do_fmul
-	.word	do_dmul
-	.word	do_idiv
-	.word	do_ldiv
-	.word	do_fdiv
-	.word	do_ddiv
-	.word	do_irem
-	.word	do_lrem
-	.word	do_frem
-	.word	do_drem
-	.word	do_ineg
-	.word	do_lneg
-	.word	do_fneg
-	.word	do_dneg
-	.word	do_ishl
-	.word	do_lshl
-	.word	do_ishr
-	.word	do_lshr
-	.word	do_iushr
-	.word	do_lushr
-	.word	do_iand
-	.word	do_land
-	.word	do_ior
-	.word	do_lor
-	.word	do_ixor
-	.word	do_lxor
-	.word	do_iinc
-	.word	do_i2l
-	.word	do_i2f
-	.word	do_i2d
-	.word	do_l2i
-	.word	do_l2f
-	.word	do_l2d
-	.word	do_f2i
-	.word	do_f2l
-	.word	do_f2d
-	.word	do_d2i
-	.word	do_d2l
-	.word	do_d2f
-	.word	do_i2b
-	.word	do_i2c
-	.word	do_i2s
-	.word	do_lcmp
-	.word	do_fcmpl
-	.word	do_fcmpg
-	.word	do_dcmpl
-	.word	do_dcmpg
-	.word	do_ifeq
-	.word	do_ifne
-	.word	do_iflt
-	.word	do_ifge
-	.word	do_ifgt
-	.word	do_ifle
-	.word	do_if_icmpeq
-	.word	do_if_icmpne
-	.word	do_if_icmplt
-	.word	do_if_icmpge
-	.word	do_if_icmpgt
-	.word	do_if_icmple
-	.word	do_if_icmpeq
-	.word	do_if_icmpne
-	.word	do_goto
-	.word	do_jsr
-	.word	do_ret
-	.word	do_tableswitch
-	.word	do_lookupswitch
-	.word	do_ireturn
-	.word	do_lreturn
-	.word	do_ireturn
-	.word	do_lreturn
-	.word	do_ireturn
-	.word	do_return
-	.word	do_getstatic
-	.word	do_putstatic
-	.word	do_getfield
-	.word	do_putfield
-	.word	do_invokevirtual
-	.word	do_invokespecial
-	.word	do_invokestatic
-	.word	do_invokeinterface
-	.word	do_undefined
-	.word	do_new
-	.word	do_newarray
-	.word	do_anewarray
-	.word	do_arraylength
-	.word	do_athrow
-	.word	do_checkcast
-	.word	do_instanceof
-	.word	do_monitorenter
-	.word	do_monitorexit
-	.word	do_wide
-	.word	do_multianewarray
-	.word	do_ifeq
-	.word	do_ifne
-	.word	do_goto_w
-	.word	do_jsr_w
-	.word	do_breakpoint
-	.word	do_undefined
-	.word	do_bgetfield
-	.word	do_cgetfield
-	.word	do_undefined
-	.word	do_undefined
-	.word	do_igetfield
-	.word	do_lgetfield
-	.word	do_sgetfield
-	.word	do_aputfield
-	.word	do_bputfield
-	.word	do_cputfield
-	.word	do_undefined
-	.word	do_undefined
-	.word	do_iputfield
-	.word	do_lputfield
-	.word	do_undefined
-	.word	do_iaccess_0
-	.word	do_iaccess_0
-	.word	do_iaccess_0
-	.word	do_iaccess_0
-	.word	do_invokeresolved
-	.word	do_invokespecialresolved
-	.word	do_invokestaticresolved
-	.word	do_invokevfinal
-	.word	do_fast_iload_iload
-	.word	do_fast_iload_iload_N
-	.word	do_return_register_finalizer
-	.word	do_undefined
-	.word	do_iload_0_iconst_N
-	.word	do_iload_0_iconst_N
-	.word	do_iload_0_iconst_N
-	.word	do_iload_0_iconst_N
-	.word	do_iload_iconst_N
-	.word	do_iadd_istore_N
-	.word	do_isub_istore_N
-	.word	do_iand_istore_N
-	.word	do_ior_istore_N
-	.word	do_ixor_istore_N
-	.word	do_iadd_u4store
-	.word	do_isub_u4store
-	.word	do_iand_u4store
-	.word	do_ior_u4store
-	.word	do_ixor_u4store
-	.word	do_fast_iload_N_iload
-	.word	do_fast_iload_N_iload
-	.word	do_fast_iload_N_iload
-	.word	do_fast_iload_N_iload
-	.word	do_fast_iload_N_iload_N
-	.word	do_fast_iload_N_iload_N
-	.word	do_fast_iload_N_iload_N
-	.word	do_fast_iload_N_iload_N
-	.word	do_undefined
-	.word	do_undefined
+
+/*  WARNING: If you change any of these bytecodes, you must also
+    change the table in bytecodes_arm.def to make it match.  */
+
+	.word	do_nop	@ 0 0x00
+	.word	do_u4const_0	@ 1 0x01
+	.word	do_iconst_N	@ 2 0x02
+	.word	do_iconst_N	@ 3 0x03
+	.word	do_iconst_N	@ 4 0x04
+	.word	do_iconst_N	@ 5 0x05
+	.word	do_iconst_N	@ 6 0x06
+	.word	do_iconst_N	@ 7 0x07
+	.word	do_iconst_N	@ 8 0x08
+	.word	do_u8const_0	@ 9 0x09
+	.word	do_lconst_1	@ 10 0x0a
+	.word	do_u4const_0	@ 11 0x0b
+	.word	do_fconst_1	@ 12 0x0c
+	.word	do_fconst_2	@ 13 0x0d
+	.word	do_u8const_0	@ 14 0x0e
+	.word	do_dconst_1	@ 15 0x0f
+	.word	do_bipush	@ 16 0x10
+	.word	do_sipush	@ 17 0x11
+	.word	do_ldc	@ 18 0x12
+	.word	do_ldc_w	@ 19 0x13
+	.word	do_ldc2_w	@ 20 0x14
+	.word	do_u4load	@ 21 0x15
+	.word	do_u8load	@ 22 0x16
+	.word	do_u4load	@ 23 0x17
+	.word	do_u8load	@ 24 0x18
+	.word	do_u4load	@ 25 0x19
+	.word	do_iload_0	@ 26 0x1a
+	.word	do_iload_0	@ 27 0x1b
+	.word	do_iload_0	@ 28 0x1c
+	.word	do_iload_0	@ 29 0x1d
+	.word	do_u8load_0	@ 30 0x1e
+	.word	do_u8load_1	@ 31 0x1f
+	.word	do_u8load_2	@ 32 0x20
+	.word	do_u8load_3	@ 33 0x21
+	.word	do_fload_0	@ 34 0x22
+	.word	do_fload_0	@ 35 0x23
+	.word	do_fload_0	@ 36 0x24
+	.word	do_fload_0	@ 37 0x25
+	.word	do_u8load_0	@ 38 0x26
+	.word	do_u8load_1	@ 39 0x27
+	.word	do_u8load_2	@ 40 0x28
+	.word	do_u8load_3	@ 41 0x29
+	.word	do_aload_0	@ 42 0x2a
+	.word	do_aload_0	@ 43 0x2b
+	.word	do_aload_0	@ 44 0x2c
+	.word	do_aload_0	@ 45 0x2d
+	.word	do_u4aload	@ 46 0x2e
+	.word	do_u8aload	@ 47 0x2f
+	.word	do_u4aload	@ 48 0x30
+	.word	do_u8aload	@ 49 0x31
+	.word	do_u4aload	@ 50 0x32
+	.word	do_baload	@ 51 0x33
+	.word	do_caload	@ 52 0x34
+	.word	do_saload	@ 53 0x35
+	.word	do_u4store	@ 54 0x36
+	.word	do_u8store	@ 55 0x37
+	.word	do_u4store	@ 56 0x38
+	.word	do_u8store	@ 57 0x39
+	.word	do_u4store	@ 58 0x3a
+	.word	do_u4store_0	@ 59 0x3b
+	.word	do_u4store_1	@ 60 0x3c
+	.word	do_u4store_2	@ 61 0x3d
+	.word	do_u4store_3	@ 62 0x3e
+	.word	do_u8store_0	@ 63 0x3f
+	.word	do_u8store_1	@ 64 0x40
+	.word	do_u8store_2	@ 65 0x41
+	.word	do_u8store_3	@ 66 0x42
+	.word	do_u4store_0	@ 67 0x43
+	.word	do_u4store_1	@ 68 0x44
+	.word	do_u4store_2	@ 69 0x45
+	.word	do_u4store_3	@ 70 0x46
+	.word	do_u8store_0	@ 71 0x47
+	.word	do_u8store_1	@ 72 0x48
+	.word	do_u8store_2	@ 73 0x49
+	.word	do_u8store_3	@ 74 0x4a
+	.word	do_u4store_0	@ 75 0x4b
+	.word	do_u4store_1	@ 76 0x4c
+	.word	do_u4store_2	@ 77 0x4d
+	.word	do_u4store_3	@ 78 0x4e
+	.word	do_u4astore	@ 79 0x4f
+	.word	do_u8astore	@ 80 0x50
+	.word	do_u4astore	@ 81 0x51
+	.word	do_u8astore	@ 82 0x52
+	.word	do_aastore	@ 83 0x53
+	.word	do_bastore	@ 84 0x54
+	.word	do_u2astore	@ 85 0x55
+	.word	do_u2astore	@ 86 0x56
+	.word	do_jpop	@ 87 0x57
+	.word	do_jpop2	@ 88 0x58
+	.word	do_dup	@ 89 0x59
+	.word	do_dup_x1	@ 90 0x5a
+	.word	do_dup_x2	@ 91 0x5b
+	.word	do_dup2	@ 92 0x5c
+	.word	do_dup2_x1	@ 93 0x5d
+	.word	do_dup2_x2	@ 94 0x5e
+	.word	do_swap	@ 95 0x5f
+	.word	do_iadd	@ 96 0x60
+	.word	do_ladd	@ 97 0x61
+	.word	do_fadd	@ 98 0x62
+	.word	do_dadd	@ 99 0x63
+	.word	do_isub	@ 100 0x64
+	.word	do_lsub	@ 101 0x65
+	.word	do_fsub	@ 102 0x66
+	.word	do_dsub	@ 103 0x67
+	.word	do_imul	@ 104 0x68
+	.word	do_lmul	@ 105 0x69
+	.word	do_fmul	@ 106 0x6a
+	.word	do_dmul	@ 107 0x6b
+	.word	do_idiv	@ 108 0x6c
+	.word	do_ldiv	@ 109 0x6d
+	.word	do_fdiv	@ 110 0x6e
+	.word	do_ddiv	@ 111 0x6f
+	.word	do_irem	@ 112 0x70
+	.word	do_lrem	@ 113 0x71
+	.word	do_frem	@ 114 0x72
+	.word	do_drem	@ 115 0x73
+	.word	do_ineg	@ 116 0x74
+	.word	do_lneg	@ 117 0x75
+	.word	do_fneg	@ 118 0x76
+	.word	do_dneg	@ 119 0x77
+	.word	do_ishl	@ 120 0x78
+	.word	do_lshl	@ 121 0x79
+	.word	do_ishr	@ 122 0x7a
+	.word	do_lshr	@ 123 0x7b
+	.word	do_iushr	@ 124 0x7c
+	.word	do_lushr	@ 125 0x7d
+	.word	do_iand	@ 126 0x7e
+	.word	do_land	@ 127 0x7f
+	.word	do_ior	@ 128 0x80
+	.word	do_lor	@ 129 0x81
+	.word	do_ixor	@ 130 0x82
+	.word	do_lxor	@ 131 0x83
+	.word	do_iinc	@ 132 0x84
+	.word	do_i2l	@ 133 0x85
+	.word	do_i2f	@ 134 0x86
+	.word	do_i2d	@ 135 0x87
+	.word	do_l2i	@ 136 0x88
+	.word	do_l2f	@ 137 0x89
+	.word	do_l2d	@ 138 0x8a
+	.word	do_f2i	@ 139 0x8b
+	.word	do_f2l	@ 140 0x8c
+	.word	do_f2d	@ 141 0x8d
+	.word	do_d2i	@ 142 0x8e
+	.word	do_d2l	@ 143 0x8f
+	.word	do_d2f	@ 144 0x90
+	.word	do_i2b	@ 145 0x91
+	.word	do_i2c	@ 146 0x92
+	.word	do_i2s	@ 147 0x93
+	.word	do_lcmp	@ 148 0x94
+	.word	do_fcmpl	@ 149 0x95
+	.word	do_fcmpg	@ 150 0x96
+	.word	do_dcmpl	@ 151 0x97
+	.word	do_dcmpg	@ 152 0x98
+	.word	do_ifeq	@ 153 0x99
+	.word	do_ifne	@ 154 0x9a
+	.word	do_iflt	@ 155 0x9b
+	.word	do_ifge	@ 156 0x9c
+	.word	do_ifgt	@ 157 0x9d
+	.word	do_ifle	@ 158 0x9e
+	.word	do_if_icmpeq	@ 159 0x9f
+	.word	do_if_icmpne	@ 160 0xa0
+	.word	do_if_icmplt	@ 161 0xa1
+	.word	do_if_icmpge	@ 162 0xa2
+	.word	do_if_icmpgt	@ 163 0xa3
+	.word	do_if_icmple	@ 164 0xa4
+	.word	do_if_icmpeq	@ 165 0xa5
+	.word	do_if_icmpne	@ 166 0xa6
+	.word	do_goto	@ 167 0xa7
+	.word	do_jsr	@ 168 0xa8
+	.word	do_ret	@ 169 0xa9
+	.word	do_tableswitch	@ 170 0xaa
+	.word	do_lookupswitch	@ 171 0xab
+	.word	do_ireturn	@ 172 0xac
+	.word	do_lreturn	@ 173 0xad
+	.word	do_ireturn	@ 174 0xae
+	.word	do_lreturn	@ 175 0xaf
+	.word	do_ireturn	@ 176 0xb0
+	.word	do_return	@ 177 0xb1
+	.word	do_getstatic	@ 178 0xb2
+	.word	do_putstatic	@ 179 0xb3
+	.word	do_getfield	@ 180 0xb4
+	.word	do_putfield	@ 181 0xb5
+	.word	do_invokevirtual	@ 182 0xb6
+	.word	do_invokespecial	@ 183 0xb7
+	.word	do_invokestatic	@ 184 0xb8
+	.word	do_invokeinterface	@ 185 0xb9
+	.word	do_undefined	@ 186 0xba
+	.word	do_new	@ 187 0xbb
+	.word	do_newarray	@ 188 0xbc
+	.word	do_anewarray	@ 189 0xbd
+	.word	do_arraylength	@ 190 0xbe
+	.word	do_athrow	@ 191 0xbf
+	.word	do_checkcast	@ 192 0xc0
+	.word	do_instanceof	@ 193 0xc1
+	.word	do_monitorenter	@ 194 0xc2
+	.word	do_monitorexit	@ 195 0xc3
+	.word	do_wide	@ 196 0xc4
+	.word	do_multianewarray	@ 197 0xc5
+	.word	do_ifeq	@ 198 0xc6
+	.word	do_ifne	@ 199 0xc7
+	.word	do_goto_w	@ 200 0xc8
+	.word	do_jsr_w	@ 201 0xc9
+	.word	do_breakpoint	@ 202 0xca
+	.word	do_undefined	@ 203 0xcb
+	.word	do_bgetfield	@ 204 0xcc
+	.word	do_cgetfield	@ 205 0xcd
+	.word	do_undefined	@ 206 0xce
+	.word	do_undefined	@ 207 0xcf
+	.word	do_igetfield	@ 208 0xd0
+	.word	do_lgetfield	@ 209 0xd1
+	.word	do_sgetfield	@ 210 0xd2
+	.word	do_aputfield	@ 211 0xd3
+	.word	do_bputfield	@ 212 0xd4
+	.word	do_cputfield	@ 213 0xd5
+	.word	do_undefined	@ 214 0xd6
+	.word	do_undefined	@ 215 0xd7
+	.word	do_iputfield	@ 216 0xd8
+	.word	do_lputfield	@ 217 0xd9
+	.word	do_undefined	@ 218 0xda
+	.word	do_iaccess_0	@ 219 0xdb
+	.word	do_iaccess_0	@ 220 0xdc
+	.word	do_iaccess_0	@ 221 0xdd
+	.word	do_iaccess_0	@ 222 0xde
+	.word	do_invokeresolved	@ 223 0xdf
+	.word	do_invokespecialresolved	@ 224 0xe0
+	.word	do_invokestaticresolved	@ 225 0xe1
+	.word	do_invokevfinal	@ 226 0xe2
+	.word	do_fast_iload_iload	@ 227 0xe3
+	.word	do_fast_iload_iload_N	@ 228 0xe4
+	.word	do_undefined	@ 229 0xe5
+	.word	do_undefined	@ 230 0xe6
+	.word	do_return_register_finalizer	@ 231 0xe7
+	.word	do_undefined	@ 232 0xe8
+	.word	do_iload_0_iconst_N	@ 233 0xe9
+	.word	do_iload_0_iconst_N	@ 234 0xea
+	.word	do_iload_0_iconst_N	@ 235 0xeb
+	.word	do_iload_0_iconst_N	@ 236 0xec
+	.word	do_iload_iconst_N	@ 237 0xed
+	.word	do_iadd_istore_N	@ 238 0xee
+	.word	do_isub_istore_N	@ 239 0xef
+	.word	do_iand_istore_N	@ 240 0xf0
+	.word	do_ior_istore_N	@ 241 0xf1
+	.word	do_ixor_istore_N	@ 242 0xf2
+	.word	do_iadd_u4store	@ 243 0xf3
+	.word	do_isub_u4store	@ 244 0xf4
+	.word	do_iand_u4store	@ 245 0xf5
+	.word	do_ior_u4store	@ 246 0xf6
+	.word	do_ixor_u4store	@ 247 0xf7
+	.word	do_fast_iload_N_iload	@ 248 0xf8
+	.word	do_fast_iload_N_iload	@ 249 0xf9
+	.word	do_fast_iload_N_iload	@ 250 0xfa
+	.word	do_fast_iload_N_iload	@ 251 0xfb
+	.word	do_fast_iload_N_iload_N	@ 252 0xfc
+	.word	do_fast_iload_N_iload_N	@ 253 0xfd
+	.word	do_fast_iload_N_iload_N	@ 254 0xfe
+	.word	do_fast_iload_N_iload_N	@ 255 0xff
 #endif
 
 	SUB_DISPATCH_TABLES
@@ -5569,7 +5756,15 @@ Thumb2_getfield_word_stub:
 	cmp	r3, #0
 	beq	field_null_ptr_exception
 
+	GO_IF_VOLATILE	r2, r2, 3f
+
 	ldr	r3, [r3, ip]
+	str	r3, [stack, #-4]!	@ PUSH r3
+	bx	lr
+3:
+	
+	ldr	r3, [r3, ip]
+	FullBarrier
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
 1:
@@ -5595,7 +5790,14 @@ Thumb2_getfield_sh_stub:
 	cmp	r3, #0
 	beq	field_null_ptr_exception
 
+	GO_IF_VOLATILE	r2, r2, 3f
+
 	ldrsh	r3, [r3, ip]
+	str	r3, [stack, #-4]!	@ PUSH r3
+	bx	lr
+3:
+	ldrsh	r3, [r3, ip]
+	FullBarrier
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
 1:
@@ -5621,7 +5823,14 @@ Thumb2_getfield_h_stub:
 	cmp	r3, #0
 	beq	field_null_ptr_exception
 
+	GO_IF_VOLATILE	r2, r2, 3f
+
 	ldrh	r3, [r3, ip]
+	str	r3, [stack, #-4]!	@ PUSH r3
+	bx	lr
+3:
+	ldrh	r3, [r3, ip]
+	FullBarrier
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
 1:
@@ -5647,7 +5856,14 @@ Thumb2_getfield_sb_stub:
 	cmp	r3, #0
 	beq	field_null_ptr_exception
 
+	GO_IF_VOLATILE	r2, r2, 3f
+
 	ldrsb	r3, [r3, ip]
+	str	r3, [stack, #-4]!	@ PUSH r3
+	bx	lr
+3:
+	ldrsb	r3, [r3, ip]
+	FullBarrier
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
 1:
@@ -5673,7 +5889,14 @@ Thumb2_getfield_dw_stub:
 	cmp	r3, #0
 	beq	field_null_ptr_exception
 
+	GO_IF_VOLATILE	r2, r2, 3f
+
 	ldrd	r2, r3, [r3, ip]
+	stmdb	stack!, {r2, r3}	@ PUSH r2, r3
+	bx	lr
+3:
+	ldrd	r2, r3, [r3, ip]
+	FullBarrier
 	stmdb	stack!, {r2, r3}	@ PUSH r2, r3
 	bx	lr
 1:
@@ -5681,7 +5904,8 @@ Thumb2_getfield_dw_stub:
 	bl	getfield_stub_unresolved
 	mov	lr, ip
 	b	2b
-
+	.ltorg
+	
 @ R0 = BCI
 @ R1 = index
 putstatic_stub_unresolved:
@@ -5739,12 +5963,24 @@ Thumb2_putfield_word_stub:
 	cmp	r3, #opc_putfield << 24
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
 	ldr	ip, [r2, #CP_OFFSET+8]
 	ldmia	stack!, {r2, r3}	@ r2 = value, r3 = obj
 	cmp	r3, #0
 	beq	field_null_ptr_exception
 
 	str	r2, [r3, ip]
+	bx	lr
+3:	
+	ldr	ip, [r2, #CP_OFFSET+8]
+	ldmia	stack!, {r2, r3}	@ r2 = value, r3 = obj
+	cmp	r3, #0
+	beq	field_null_ptr_exception
+
+	StoreStoreBarrier
+	str	r2, [r3, ip]
+	StoreLoadBarrier
 	bx	lr
 1:
 	mov	ip, lr
@@ -5762,12 +5998,24 @@ Thumb2_putfield_h_stub:
 	cmp	r3, #opc_putfield << 24
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
 	ldr	ip, [r2, #CP_OFFSET+8]
 	ldmia	stack!, {r2, r3}	@ r2 = value, r3 = obj
 	cmp	r3, #0
 	beq	field_null_ptr_exception
 
 	strh	r2, [r3, ip]
+	bx	lr
+3:
+	ldr	ip, [r2, #CP_OFFSET+8]
+	ldmia	stack!, {r2, r3}	@ r2 = value, r3 = obj
+	cmp	r3, #0
+	beq	field_null_ptr_exception
+
+	StoreStoreBarrier
+	strh	r2, [r3, ip]
+	StoreLoadBarrier
 	bx	lr
 1:
 	mov	ip, lr
@@ -5785,12 +6033,24 @@ Thumb2_putfield_b_stub:
 	cmp	r3, #opc_putfield << 24
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
 	ldr	ip, [r2, #CP_OFFSET+8]
 	ldmia	stack!, {r2, r3}	@ r2 = value, r3 = obj
 	cmp	r3, #0
 	beq	field_null_ptr_exception
 
 	strb	r2, [r3, ip]
+	bx	lr
+3:
+	ldr	ip, [r2, #CP_OFFSET+8]
+	ldmia	stack!, {r2, r3}	@ r2 = value, r3 = obj
+	cmp	r3, #0
+	beq	field_null_ptr_exception
+
+	StoreStoreBarrier
+	strb	r2, [r3, ip]
+	StoreLoadBarrier
 	bx	lr
 1:
 	mov	ip, lr
@@ -5808,12 +6068,26 @@ Thumb2_putfield_a_stub:
 	cmp	r3, #opc_putfield << 24
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
 	ldr	ip, [r2, #CP_OFFSET+8]
 	ldmia	stack!, {r2, r3}	@ r2 = value, r3 = obj
 	cmp	r3, #0
 	beq	field_null_ptr_exception
 
 	str	r2, [r3, ip]
+	ldr	ip, helper_aputfield_adcon
+	mov	r0, r3
+	bx	ip
+3:
+	ldr	ip, [r2, #CP_OFFSET+8]
+	ldmia	stack!, {r2, r3}	@ r2 = value, r3 = obj
+	cmp	r3, #0
+	beq	field_null_ptr_exception
+
+	StoreStoreBarrier
+	str	r2, [r3, ip]
+	StoreLoadBarrier
 	ldr	ip, helper_aputfield_adcon
 	mov	r0, r3
 	bx	ip
@@ -5833,12 +6107,24 @@ Thumb2_putfield_dw_stub:
 	cmp	r3, #opc_putfield << 24
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
 	ldr	r1, [r2, #CP_OFFSET+8]
 	ldmia	stack!, {r2, r3, ip}	@ r2,r3 = value, ip = obj
 	cmp	ip, #0
 	beq	field_null_ptr_exception
 
 	strd	r2,r3, [ip, r1]
+	bx	lr
+3:
+	ldr	r1, [r2, #CP_OFFSET+8]
+	ldmia	stack!, {r2, r3, ip}	@ r2,r3 = value, ip = obj
+	cmp	ip, #0
+	beq	field_null_ptr_exception
+
+	StoreStoreBarrier
+	strd	r2,r3, [ip, r1]
+	StoreLoadBarrier
 	bx	lr
 1:
 	mov	ip, lr
@@ -5858,10 +6144,20 @@ Thumb2_getstatic_word_stub:
 	cmp	r3, #opc_getstatic << 16
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
 	ldr	r3, [r2, #CP_OFFSET+4]
 	ldr	ip, [r2, #CP_OFFSET+8]
 
 	ldr	r3, [r3, ip]
+	str	r3, [stack, #-4]!	@ PUSH r3
+	bx	lr
+3:
+	ldr	r3, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+
+	ldr	r3, [r3, ip]
+	FullBarrier
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
 1:
@@ -5880,10 +6176,20 @@ Thumb2_getstatic_h_stub:
 	cmp	r3, #opc_getstatic << 16
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
 	ldr	r3, [r2, #CP_OFFSET+4]
 	ldr	ip, [r2, #CP_OFFSET+8]
 
 	ldrh	r3, [r3, ip]
+	str	r3, [stack, #-4]!	@ PUSH r3
+	bx	lr
+3:
+	ldr	r3, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+
+	ldrh	r3, [r3, ip]
+	FullBarrier
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
 1:
@@ -5902,10 +6208,20 @@ Thumb2_getstatic_sh_stub:
 	cmp	r3, #opc_getstatic << 16
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
 	ldr	r3, [r2, #CP_OFFSET+4]
 	ldr	ip, [r2, #CP_OFFSET+8]
 
 	ldrsh	r3, [r3, ip]
+	str	r3, [stack, #-4]!	@ PUSH r3
+	bx	lr
+3:
+	ldr	r3, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+
+	ldrsh	r3, [r3, ip]
+	FullBarrier
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
 1:
@@ -5924,10 +6240,20 @@ Thumb2_getstatic_sb_stub:
 	cmp	r3, #opc_getstatic << 16
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
 	ldr	r3, [r2, #CP_OFFSET+4]
 	ldr	ip, [r2, #CP_OFFSET+8]
 
 	ldrsb	r3, [r3, ip]
+	str	r3, [stack, #-4]!	@ PUSH r3
+	bx	lr
+3:
+	ldr	r3, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+
+	ldrsb	r3, [r3, ip]
+	FullBarrier
 	str	r3, [stack, #-4]!	@ PUSH r3
 	bx	lr
 1:
@@ -5946,10 +6272,20 @@ Thumb2_getstatic_dw_stub:
 	cmp	r3, #opc_getstatic << 16
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
 	ldr	r3, [r2, #CP_OFFSET+4]
 	ldr	ip, [r2, #CP_OFFSET+8]
 
 	ldrd	r2, r3, [r3, ip]
+	stmdb	stack!, {r2, r3}	@ PUSH r2, r3
+	bx	lr
+3:
+	ldr	r3, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+
+	ldrd	r2, r3, [r3, ip]
+	FullBarrier
 	stmdb	stack!, {r2, r3}	@ PUSH r2, r3
 	bx	lr
 1:
@@ -5970,11 +6306,22 @@ Thumb2_putstatic_word_stub:
 	cmp	r3, #opc_putstatic << 24
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
 	ldr	r3, [r2, #CP_OFFSET+4]
 	ldr	ip, [r2, #CP_OFFSET+8]
 	ldr	r2, [stack], #4		@ POP r2
 
 	str	r2, [r3, ip]
+	bx	lr
+3:
+	ldr	r3, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+	ldr	r2, [stack], #4		@ POP r2
+
+	StoreStoreBarrier
+	str	r2, [r3, ip]
+	StoreLoadBarrier
 	bx	lr
 1:
 	mov	ip, lr
@@ -5994,11 +6341,22 @@ Thumb2_putstatic_h_stub:
 	cmp	r3, #opc_putstatic << 24
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
 	ldr	r3, [r2, #CP_OFFSET+4]
 	ldr	ip, [r2, #CP_OFFSET+8]
 	ldr	r2, [stack], #4		@ POP r2
 
 	strh	r2, [r3, ip]
+	bx	lr
+3:
+	ldr	r3, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+	ldr	r2, [stack], #4		@ POP r2
+
+	StoreStoreBarrier
+	strh	r2, [r3, ip]
+	StoreLoadBarrier
 	bx	lr
 1:
 	mov	ip, lr
@@ -6018,11 +6376,22 @@ Thumb2_putstatic_b_stub:
 	cmp	r3, #opc_putstatic << 24
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
 	ldr	r3, [r2, #CP_OFFSET+4]
 	ldr	ip, [r2, #CP_OFFSET+8]
 	ldr	r2, [stack], #4		@ POP r2
 
 	strb	r2, [r3, ip]
+	bx	lr
+3:
+	ldr	r3, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+	ldr	r2, [stack], #4		@ POP r2
+
+	StoreStoreBarrier
+	strb	r2, [r3, ip]
+	StoreLoadBarrier
 	bx	lr
 1:
 	mov	ip, lr
@@ -6042,11 +6411,22 @@ Thumb2_putstatic_dw_stub:
 	cmp	r3, #opc_putstatic << 24
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
 	ldr	r1, [r2, #CP_OFFSET+4]
 	ldr	ip, [r2, #CP_OFFSET+8]
 	ldmia	stack!, {r2, r3}
 
 	strd	r2,r3, [r1, ip]
+	bx	lr
+3:
+	ldr	r1, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+	ldmia	stack!, {r2, r3}
+
+	StoreStoreBarrier
+	strd	r2,r3, [r1, ip]
+	StoreLoadBarrier
 	bx	lr
 1:
 	mov	ip, lr
@@ -6066,11 +6446,24 @@ Thumb2_putstatic_a_stub:
 	cmp	r3, #opc_putstatic << 24
 	bne	1f
 2:
+	GO_IF_VOLATILE	r3, r2, 3f
+	
 	ldr	r3, [r2, #CP_OFFSET+4]
 	ldr	ip, [r2, #CP_OFFSET+8]
 	ldr	r2, [stack], #4		@ POP r2
 
 	str	r2, [r3, ip]
+	ldr	ip, helper_aputfield_adcon
+	mov	r0, r3
+	bx	ip
+3:
+	ldr	r3, [r2, #CP_OFFSET+4]
+	ldr	ip, [r2, #CP_OFFSET+8]
+	ldr	r2, [stack], #4		@ POP r2
+
+	StoreStoreBarrier
+	str	r2, [r3, ip]
+	StoreLoadBarrier
 	ldr	ip, helper_aputfield_adcon
 	mov	r0, r3
 	bx	ip

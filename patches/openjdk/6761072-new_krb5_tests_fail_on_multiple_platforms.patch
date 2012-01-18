@@ -1,0 +1,94 @@
+# HG changeset patch
+# User weijun
+# Date 1224469953 -28800
+# Node ID 0bf6c9c6fdc55ec5867a9c892b6a9408b8253198
+# Parent  064e6a087f775f1850e68c569e7adf092bcb1c30
+6761072: new krb5 tests fail on multiple platforms
+Reviewed-by: xuelei
+
+diff -r 064e6a087f77 -r 0bf6c9c6fdc5 test/sun/security/krb5/auto/BasicKrb5Test.java
+--- openjdk.orig/jdk/test/sun/security/krb5/auto/BasicKrb5Test.java	Fri Oct 17 00:51:59 2008 -0700
++++ openjdk/jdk/test/sun/security/krb5/auto/BasicKrb5Test.java	Mon Oct 20 10:32:33 2008 +0800
+@@ -49,14 +49,17 @@
+         if (args.length > 0) {
+             etype = args[0];
+         }
++
++        // Creates and starts the KDC. This line must be put ahead of etype check
++        // since the check needs a krb5.conf.
++        new OneKDC(etype).writeJAASConf();
++
+         System.out.println("Testing etype " + etype);
+         if (etype != null && !EType.isSupported(Config.getInstance().getType(etype))) {
+             System.out.println("Not supported.");
+             System.exit(0);
+         }
+ 
+-        // Creates and starts the KDC
+-        new OneKDC(etype).writeJAASConf();
+         new BasicKrb5Test().go(OneKDC.SERVER, OneKDC.BACKEND);
+     }
+ 
+diff -r 064e6a087f77 -r 0bf6c9c6fdc5 test/sun/security/krb5/auto/KDC.java
+--- openjdk.orig/jdk/test/sun/security/krb5/auto/KDC.java	Fri Oct 17 00:51:59 2008 -0700
++++ openjdk/jdk/test/sun/security/krb5/auto/KDC.java	Mon Oct 20 10:32:33 2008 +0800
+@@ -152,12 +152,19 @@
+                 return;
+             }
+         }
++        String localhost = "localhost";
++        try {
++            localhost = InetAddress.getByName(localhost)
++                    .getCanonicalHostName();
++        } catch (UnknownHostException uhe) {
++            ;   // Ignore, localhost is still "localhost"
++        }
+         KDC kdc = create("RABBIT.HOLE", 8888, false);
+         kdc.addPrincipal("dummy", "bogus".toCharArray());
+         kdc.addPrincipal("foo", "bar".toCharArray());
+         kdc.addPrincipalRandKey("krbtgt/" + kdc.realm);
+-        kdc.addPrincipalRandKey("server/localhost");
+-        kdc.addPrincipalRandKey("backend/localhost");
++        kdc.addPrincipalRandKey("server/" + localhost);
++        kdc.addPrincipalRandKey("backend/" + localhost);
+     }
+ 
+     /**
+diff -r 064e6a087f77 -r 0bf6c9c6fdc5 test/sun/security/krb5/auto/OneKDC.java
+--- openjdk.orig/jdk/test/sun/security/krb5/auto/OneKDC.java	Fri Oct 17 00:51:59 2008 -0700
++++ openjdk/jdk/test/sun/security/krb5/auto/OneKDC.java	Mon Oct 20 10:32:33 2008 +0800
+@@ -24,6 +24,8 @@
+ import java.io.File;
+ import java.io.FileOutputStream;
+ import java.io.IOException;
++import java.net.InetAddress;
++import java.net.UnknownHostException;
+ import java.security.Security;
+ import javax.security.auth.callback.Callback;
+ import javax.security.auth.callback.CallbackHandler;
+@@ -44,10 +46,23 @@
+  */
+ public class OneKDC extends KDC {
+ 
++    // The krb5 codes would try to canonicalize hostnames before creating
++    // a service principal name, so let's find out the canonicalized form
++    // of localhost first. The following codes mimic the process inside
++    // PrincipalName.java.
++    static String localhost = "localhost";
++    static {
++        try {
++            localhost = InetAddress.getByName(localhost)
++                    .getCanonicalHostName();
++        } catch (UnknownHostException uhe) {
++            ;   // Ignore, localhost is still "localhost"
++        }
++    }
+     public static final String USER = "dummy";
+     public static final char[] PASS = "bogus".toCharArray();
+-    public static final String SERVER = "server/localhost";
+-    public static final String BACKEND = "backend/localhost";
++    public static String SERVER = "server/" + localhost;
++    public static String BACKEND = "backend/" + localhost;
+     public static final String KRB5_CONF = "localkdc-krb5.conf";
+     public static final String KTAB = "localkdc.ktab";
+     public static final String JAAS_CONF = "localkdc-jaas.conf";

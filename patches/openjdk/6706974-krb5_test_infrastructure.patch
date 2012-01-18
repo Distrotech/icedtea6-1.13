@@ -1,0 +1,2090 @@
+# HG changeset patch
+# User weijun
+# Date 1224219720 -28800
+# Node ID 3f051f3ba5bba355ddd6df6d0cb1528aef631a2d
+# Parent  8b2d7e577d4a89fab8a892623cb4dff4e6fca0a6
+6706974: Add krb5 test infrastructure
+Reviewed-by: valeriep
+
+diff -r 8b2d7e577d4a -r 3f051f3ba5bb test/sun/security/krb5/auto/Action.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/sun/security/krb5/auto/Action.java	Fri Oct 17 13:02:00 2008 +0800
+@@ -0,0 +1,33 @@
++/*
++ * Copyright 2008 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/**
++ * Action used in Context.doAs
++ */
++public interface Action {
++    /**
++     * This method always reads a byte block and emits another one
++     */
++    byte[] run(Context s, byte[] input) throws Exception;
++}
++
+diff -r 8b2d7e577d4a -r 3f051f3ba5bb test/sun/security/krb5/auto/BasicKrb5Test.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/sun/security/krb5/auto/BasicKrb5Test.java	Fri Oct 17 13:02:00 2008 +0800
+@@ -0,0 +1,111 @@
++/*
++ * Copyright 2008 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/*
++ * @test
++ * @bug 6706974
++ * @summary Add krb5 test infrastructure
++ */
++
++import org.ietf.jgss.GSSName;
++import sun.security.jgss.GSSUtil;
++import sun.security.krb5.Config;
++import sun.security.krb5.internal.crypto.EType;
++
++/**
++ * Basic JGSS/krb5 test with 3 parties: client, server, backend server. Each
++ * party uses JAAS login to get subjects and executes JGSS calls using
++ * Subject.doAs.
++ */
++public class BasicKrb5Test {
++
++    /**
++     * @param args empty or etype
++     */
++    public static void main(String[] args)
++            throws Exception {
++
++        String etype = null;
++        if (args.length > 0) {
++            etype = args[0];
++        }
++        System.out.println("Testing etype " + etype);
++        if (etype != null && !EType.isSupported(Config.getInstance().getType(etype))) {
++            System.out.println("Not supported.");
++            System.exit(0);
++        }
++
++        // Creates and starts the KDC
++        new OneKDC(etype).writeJAASConf();
++        new BasicKrb5Test().go(OneKDC.SERVER, OneKDC.BACKEND);
++    }
++
++    void go(final String server, final String backend) throws Exception {
++        Context c, s, s2, b;
++        c = Context.fromJAAS("client");
++        s = Context.fromJAAS("server");
++        b = Context.fromJAAS("backend");
++
++        c.startAsClient(server, GSSUtil.GSS_KRB5_MECH_OID);
++        c.x().requestCredDeleg(true);
++        s.startAsServer(GSSUtil.GSS_KRB5_MECH_OID);
++
++        c.status();
++        s.status();
++
++        Context.handshake(c, s);
++        GSSName client = c.x().getSrcName();
++
++        c.status();
++        s.status();
++
++        Context.transmit("i say high --", c, s);
++        Context.transmit("   you say low", s, c);
++
++        s2 = s.delegated();
++        s.dispose();
++        s = null;
++
++        s2.startAsClient(backend, GSSUtil.GSS_KRB5_MECH_OID);
++        b.startAsServer(GSSUtil.GSS_KRB5_MECH_OID);
++
++        s2.status();
++        b.status();
++
++        Context.handshake(s2, b);
++        GSSName client2 = b.x().getSrcName();
++
++        if (!client.equals(client2)) {
++            throw new Exception("Delegation failed");
++        }
++
++        s2.status();
++        b.status();
++
++        Context.transmit("you say hello --", s2, b);
++        Context.transmit("   i say goodbye", b, s2);
++
++        s2.dispose();
++        b.dispose();
++    }
++}
+diff -r 8b2d7e577d4a -r 3f051f3ba5bb test/sun/security/krb5/auto/CleanState.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/sun/security/krb5/auto/CleanState.java	Fri Oct 17 13:02:00 2008 +0800
+@@ -0,0 +1,75 @@
++/*
++ * Copyright 2008 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/*
++ * @test
++ * @bug 6716534
++ * @summary Krb5LoginModule has not cleaned temp info between authentication attempts
++ */
++import com.sun.security.auth.module.Krb5LoginModule;
++import java.util.HashMap;
++import java.util.Map;
++import javax.security.auth.Subject;
++import javax.security.auth.callback.Callback;
++import javax.security.auth.callback.CallbackHandler;
++import javax.security.auth.callback.NameCallback;
++import javax.security.auth.callback.PasswordCallback;
++
++public class CleanState {
++    public static void main(String[] args) throws Exception {
++        CleanState x = new CleanState();
++        new OneKDC(null);
++        x.go();
++    }
++
++    void go() throws Exception {
++        Krb5LoginModule krb5 = new Krb5LoginModule();
++
++        final String name = OneKDC.USER;
++        final char[] password = OneKDC.PASS;
++        char[] badpassword = "hellokitty".toCharArray();
++
++        Map<String,String> map = new HashMap<String,String>();
++        map.put("useTicketCache", "false");
++        map.put("doNotPrompt", "false");
++        map.put("tryFirstPass", "true");
++        Map<String,Object> shared = new HashMap<String,Object>();
++        shared.put("javax.security.auth.login.name", name);
++        shared.put("javax.security.auth.login.password", badpassword);
++
++        krb5.initialize(new Subject(), new CallbackHandler() {
++            @Override
++            public void handle(Callback[] callbacks) {
++                for(Callback callback: callbacks) {
++                    if (callback instanceof NameCallback) {
++                        ((NameCallback)callback).setName(name);
++                    }
++                    if (callback instanceof PasswordCallback) {
++                        ((PasswordCallback)callback).setPassword(password);
++                    }
++                }
++            }
++        }, shared, map);
++        krb5.login();
++    }
++}
+diff -r 8b2d7e577d4a -r 3f051f3ba5bb test/sun/security/krb5/auto/Context.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/sun/security/krb5/auto/Context.java	Fri Oct 17 13:02:00 2008 +0800
+@@ -0,0 +1,386 @@
++/*
++ * Copyright 2008 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++import com.sun.security.auth.module.Krb5LoginModule;
++import java.security.PrivilegedActionException;
++import java.security.PrivilegedExceptionAction;
++import java.util.Arrays;
++import java.util.HashMap;
++import java.util.Map;
++import javax.security.auth.Subject;
++import javax.security.auth.kerberos.KerberosKey;
++import javax.security.auth.kerberos.KerberosTicket;
++import javax.security.auth.login.LoginContext;
++import org.ietf.jgss.GSSContext;
++import org.ietf.jgss.GSSCredential;
++import org.ietf.jgss.GSSException;
++import org.ietf.jgss.GSSManager;
++import org.ietf.jgss.GSSName;
++import org.ietf.jgss.MessageProp;
++import org.ietf.jgss.Oid;
++
++/**
++ * Context of a JGSS subject, encapsulating Subject and GSSContext.
++ *
++ * Three "constructors", which acquire the (private) credentials and fill
++ * it into the Subject:
++ *
++ * 1. static fromJAAS(): Creates a Context using a JAAS login config entry
++ * 2. static fromUserPass(): Creates a Context using a username and a password
++ * 3. delegated(): A new context which uses the delegated credentials from a
++ *    previously established acceptor Context
++ *
++ * Two context initiators, which create the GSSContext object inside:
++ *
++ * 1. startAsClient()
++ * 2. startAsServer()
++ *
++ * Privileged action:
++ *    doAs(): Performs an action in the name of the Subject
++ *
++ * Handshake process:
++ *    static handShake(initiator, acceptor)
++ *
++ * A four-phase typical data communication which includes all four GSS
++ * actions (wrap, unwrap, getMic and veryfyMiC):
++ *    static transmit(message, from, to)
++ */
++public class Context {
++
++    private Subject s;
++    private GSSContext x;
++    private boolean f;      // context established?
++    private String name;
++    private GSSCredential cred;     // see static method delegated().
++
++    private Context() {}
++
++    /**
++     * Using the delegated credentials from a previous acceptor
++     * @param c
++     */
++    public Context delegated() throws Exception {
++        Context out = new Context();
++        out.s = s;
++        out.cred = x.getDelegCred();
++        out.name = name + " as " + out.cred.getName().toString();
++        return out;
++    }
++
++    /**
++     * Logins with a JAAS login config entry name
++     */
++    public static Context fromJAAS(final String name) throws Exception {
++        Context out = new Context();
++        out.name = name;
++        LoginContext lc = new LoginContext(name);
++        lc.login();
++        out.s = lc.getSubject();
++        return out;
++    }
++
++    /**
++     * Logins with a username and a password, using Krb5LoginModule directly
++     * @param storeKey true if key should be saved, used on acceptor side
++     */
++    public static Context fromUserPass(String user, char[] pass, boolean storeKey) throws Exception {
++        Context out = new Context();
++        out.name = user;
++        out.s = new Subject();
++        Krb5LoginModule krb5 = new Krb5LoginModule();
++        Map<String, String> map = new HashMap<String, String>();
++        map.put("tryFirstPass", "true");
++        if (storeKey) {
++            map.put("storeKey", "true");
++        }
++        Map<String, Object> shared = new HashMap<String, Object>();
++        shared.put("javax.security.auth.login.name", user);
++        shared.put("javax.security.auth.login.password", pass);
++
++        krb5.initialize(out.s, null, shared, map);
++        krb5.login();
++        krb5.commit();
++        return out;
++    }
++
++    /**
++     * Starts as a client
++     * @param target communication peer
++     * @param mech GSS mech
++     * @throws java.lang.Exception
++     */
++    public void startAsClient(final String target, final Oid mech) throws Exception {
++        doAs(new Action() {
++            @Override
++            public byte[] run(Context me, byte[] dummy) throws Exception {
++                GSSManager m = GSSManager.getInstance();
++                me.x = m.createContext(
++                        target.indexOf('@') < 0 ?
++                            m.createName(target, null) :
++                            m.createName(target, GSSName.NT_HOSTBASED_SERVICE),
++                        mech,
++                        cred,
++                        GSSContext.DEFAULT_LIFETIME);
++                return null;
++            }
++        }, null);
++        f = false;
++    }
++
++    /**
++     * Starts as a server
++     * @param mech GSS mech
++     * @throws java.lang.Exception
++     */
++    public void startAsServer(final Oid mech) throws Exception {
++        doAs(new Action() {
++            @Override
++            public byte[] run(Context me, byte[] dummy) throws Exception {
++                GSSManager m = GSSManager.getInstance();
++                me.x = m.createContext(m.createCredential(
++                        null,
++                        GSSCredential.INDEFINITE_LIFETIME,
++                        mech,
++                        GSSCredential.ACCEPT_ONLY));
++                return null;
++            }
++        }, null);
++        f = false;
++    }
++
++    /**
++     * Accesses the internal GSSContext object. Currently it's used for --
++     *
++     * 1. calling requestXXX() before handshake
++     * 2. accessing source name
++     *
++     * Note: If the application needs to do any privileged call on this
++     * object, please use doAs(). Otherwise, it can be done directly. The
++     * methods listed above are all non-privileged calls.
++     *
++     * @return the GSSContext object
++     */
++    public GSSContext x() {
++        return x;
++    }
++
++    /**
++     * Disposes the GSSContext within
++     * @throws org.ietf.jgss.GSSException
++     */
++    public void dispose() throws GSSException {
++        x.dispose();
++    }
++
++    /**
++     * Does something using the Subject inside
++     * @param action the action
++     * @param in the input byte
++     * @return the output byte
++     * @throws java.lang.Exception
++     */
++    public byte[] doAs(final Action action, final byte[] in) throws Exception {
++        try {
++            return Subject.doAs(s, new PrivilegedExceptionAction<byte[]>() {
++
++                @Override
++                public byte[] run() throws Exception {
++                    return action.run(Context.this, in);
++                }
++            });
++        } catch (PrivilegedActionException pae) {
++            throw pae.getException();
++        }
++    }
++
++    /**
++     * Prints status of GSSContext and Subject
++     * @throws java.lang.Exception
++     */
++    public void status() throws Exception {
++        System.out.println("STATUS OF " + name.toUpperCase());
++        try {
++            StringBuffer sb = new StringBuffer();
++            if (x.getAnonymityState()) {
++                sb.append("anon, ");
++            }
++            if (x.getConfState()) {
++                sb.append("conf, ");
++            }
++            if (x.getCredDelegState()) {
++                sb.append("deleg, ");
++            }
++            if (x.getIntegState()) {
++                sb.append("integ, ");
++            }
++            if (x.getMutualAuthState()) {
++                sb.append("mutual, ");
++            }
++            if (x.getReplayDetState()) {
++                sb.append("rep det, ");
++            }
++            if (x.getSequenceDetState()) {
++                sb.append("seq det, ");
++            }
++            System.out.println("Context status of " + name + ": " + sb.toString());
++            System.out.println(x.getSrcName() + " -> " + x.getTargName());
++        } catch (Exception e) {
++            ;// Don't care
++        }
++        System.out.println("=====================================");
++        for (Object o : s.getPrivateCredentials()) {
++            System.out.println("    " + o.getClass());
++            if (o instanceof KerberosTicket) {
++                KerberosTicket kt = (KerberosTicket) o;
++                System.out.println("        " + kt.getServer() + " for " + kt.getClient());
++            } else if (o instanceof KerberosKey) {
++                KerberosKey kk = (KerberosKey) o;
++                System.out.print("        " + kk.getKeyType() + " " + kk.getVersionNumber() + " " + kk.getAlgorithm() + " ");
++                for (byte b : kk.getEncoded()) {
++                    System.out.printf("%02X", b & 0xff);
++                }
++                System.out.println();
++            } else if (o instanceof Map) {
++                Map map = (Map) o;
++                for (Object k : map.keySet()) {
++                    System.out.println("        " + k + ": " + map.get(k));
++                }
++            }
++        }
++    }
++
++    /**
++     * Transmits a message from one Context to another. The sender wraps the
++     * message and sends it to the receiver. The receiver unwraps it, creates
++     * a MIC of the clear text and sends it back to the sender. The sender
++     * verifies the MIC against the message sent earlier.
++     * @param message the message
++     * @param s1 the sender
++     * @param s2 the receiver
++     * @throws java.lang.Exception If anything goes wrong
++     */
++    static public void transmit(final String message, final Context s1,
++            final Context s2) throws Exception {
++        final byte[] messageBytes = message.getBytes();
++        System.out.printf("-------------------- TRANSMIT from %s to %s------------------------\n",
++                s1.name, s2.name);
++
++        byte[] t = s1.doAs(new Action() {
++            @Override
++            public byte[] run(Context me, byte[] dummy) throws Exception {
++                System.out.println("wrap");
++                MessageProp p1 = new MessageProp(0, true);
++                byte[] out = me.x.wrap(messageBytes, 0, messageBytes.length, p1);
++                System.out.println(printProp(p1));
++                return out;
++            }
++        }, null);
++
++        t = s2.doAs(new Action() {
++            @Override
++            public byte[] run(Context me, byte[] input) throws Exception {
++                MessageProp p1 = new MessageProp(0, true);
++                byte[] bytes = me.x.unwrap(input, 0, input.length, p1);
++                if (!Arrays.equals(messageBytes, bytes))
++                    throw new Exception("wrap/unwrap mismatch");
++                System.out.println("unwrap");
++                System.out.println(printProp(p1));
++                p1 = new MessageProp(0, true);
++                System.out.println("getMIC");
++                bytes = me.x.getMIC(bytes, 0, bytes.length, p1);
++                System.out.println(printProp(p1));
++                return bytes;
++            }
++        }, t);
++        // Re-unwrap should make p2.isDuplicateToken() returns true
++        s1.doAs(new Action() {
++            @Override
++            public byte[] run(Context me, byte[] input) throws Exception {
++                MessageProp p1 = new MessageProp(0, true);
++                System.out.println("verifyMIC");
++                me.x.verifyMIC(input, 0, input.length,
++                        messageBytes, 0, messageBytes.length,
++                        p1);
++                System.out.println(printProp(p1));
++                return null;
++            }
++        }, t);
++    }
++
++    /**
++     * Returns a string description of a MessageProp object
++     * @param prop the object
++     * @return the description
++     */
++    static public String printProp(MessageProp prop) {
++        StringBuffer sb = new StringBuffer();
++        sb.append("MessagePop: ");
++        sb.append("QOP="+ prop.getQOP() + ", ");
++        sb.append(prop.getPrivacy()?"privacy, ":"");
++        sb.append(prop.isDuplicateToken()?"dup, ":"");
++        sb.append(prop.isGapToken()?"gap, ":"");
++        sb.append(prop.isOldToken()?"old, ":"");
++        sb.append(prop.isUnseqToken()?"unseq, ":"");
++        sb.append(prop.getMinorString()+ "(" + prop.getMinorStatus()+")");
++        return sb.toString();
++    }
++
++    /**
++     * Handshake (security context establishment process) between two Contexts
++     * @param c the initiator
++     * @param s the acceptor
++     * @throws java.lang.Exception
++     */
++    static public void handshake(final Context c, final Context s) throws Exception {
++        byte[] t = new byte[0];
++        while (!c.f || !s.f) {
++            t = c.doAs(new Action() {
++                @Override
++                public byte[] run(Context me, byte[] input) throws Exception {
++                    if (me.x.isEstablished()) {
++                        me.f = true;
++                        System.out.println(c.name + " side established");
++                        return null;
++                    } else {
++                        System.out.println(c.name + " call initSecContext");
++                        return me.x.initSecContext(input, 0, input.length);
++                    }
++                }
++            }, t);
++
++            t = s.doAs(new Action() {
++                @Override
++                public byte[] run(Context me, byte[] input) throws Exception {
++                    if (me.x.isEstablished()) {
++                        me.f = true;
++                        System.out.println(s.name + " side established");
++                        return null;
++                    } else {
++                        System.out.println(s.name + " called acceptSecContext");
++                        return me.x.acceptSecContext(input, 0, input.length);
++                    }
++                }
++            }, t);
++        }
++    }
++}
+diff -r 8b2d7e577d4a -r 3f051f3ba5bb test/sun/security/krb5/auto/CrossRealm.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/sun/security/krb5/auto/CrossRealm.java	Fri Oct 17 13:02:00 2008 +0800
+@@ -0,0 +1,101 @@
++/*
++ * Copyright 2008 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/*
++ * @test
++ * @bug 6706974
++ * @summary Add krb5 test infrastructure
++ */
++import java.io.FileOutputStream;
++import java.io.IOException;
++import java.security.Security;
++import javax.security.auth.callback.Callback;
++import javax.security.auth.callback.CallbackHandler;
++import javax.security.auth.callback.NameCallback;
++import javax.security.auth.callback.PasswordCallback;
++import javax.security.auth.callback.UnsupportedCallbackException;
++import org.ietf.jgss.GSSContext;
++import org.ietf.jgss.GSSManager;
++import org.ietf.jgss.GSSName;
++import sun.security.jgss.GSSUtil;
++
++public class CrossRealm implements CallbackHandler {
++    public static void main(String[] args) throws Exception {
++        startKDCs();
++        xRealmAuth();
++    }
++
++    static void startKDCs() throws Exception {
++        // Create and start the KDC
++        KDC kdc1 = KDC.create("RABBIT.HOLE");
++        kdc1.addPrincipal("dummy", "bogus".toCharArray());
++        kdc1.addPrincipalRandKey("krbtgt/RABBIT.HOLE");
++        kdc1.addPrincipal("krbtgt/SNAKE.HOLE", "sharedsec".toCharArray());
++
++        KDC kdc2 = KDC.create("SNAKE.HOLE");
++        kdc2.addPrincipalRandKey("krbtgt/SNAKE.HOLE");
++        kdc2.addPrincipal("krbtgt/RABBIT.HOLE", "sharedsec".toCharArray());
++        kdc2.addPrincipalRandKey("host/www.snake.hole");
++
++        KDC.saveConfig("krb5-localkdc.conf", kdc1, kdc2,
++                "forwardable=true",
++                "[domain_realm]",
++                ".snake.hole=SNAKE.HOLE");
++        System.setProperty("java.security.krb5.conf", "krb5-localkdc.conf");
++    }
++
++    static void xRealmAuth() throws Exception {
++        Security.setProperty("auth.login.defaultCallbackHandler", "CrossRealm");
++        System.setProperty("java.security.auth.login.config", "jaas-localkdc.conf");
++        System.setProperty("javax.security.auth.useSubjectCredsOnly", "false");
++        FileOutputStream fos = new FileOutputStream("jaas-localkdc.conf");
++        fos.write(("com.sun.security.jgss.krb5.initiate {\n" +
++                "    com.sun.security.auth.module.Krb5LoginModule\n" +
++                "    required\n" +
++                "    principal=dummy\n" +
++                "    doNotPrompt=false\n" +
++                "    useTicketCache=false\n" +
++                "    ;\n" +
++                "};").getBytes());
++        fos.close();
++
++        GSSManager m = GSSManager.getInstance();
++        m.createContext(
++                m.createName("host@www.snake.hole", GSSName.NT_HOSTBASED_SERVICE),
++                GSSUtil.GSS_KRB5_MECH_OID,
++                null,
++                GSSContext.DEFAULT_LIFETIME).initSecContext(new byte[0], 0, 0);
++    }
++
++    @Override
++    public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
++        for (Callback callback : callbacks) {
++            if (callback instanceof NameCallback) {
++                ((NameCallback) callback).setName("dummy");
++            }
++            if (callback instanceof PasswordCallback) {
++                ((PasswordCallback) callback).setPassword("bogus".toCharArray());
++            }
++        }
++    }
++}
+diff -r 8b2d7e577d4a -r 3f051f3ba5bb test/sun/security/krb5/auto/KDC.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/sun/security/krb5/auto/KDC.java	Fri Oct 17 13:02:00 2008 +0800
+@@ -0,0 +1,962 @@
++/*
++ * Copyright 2008 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++import java.lang.reflect.Constructor;
++import java.lang.reflect.Field;
++import java.lang.reflect.InvocationTargetException;
++import java.net.*;
++import java.io.*;
++import java.lang.reflect.Method;
++import java.security.SecureRandom;
++import java.util.*;
++import java.util.concurrent.*;
++import sun.security.krb5.*;
++import sun.security.krb5.internal.*;
++import sun.security.krb5.internal.crypto.KeyUsage;
++import sun.security.krb5.internal.ktab.KeyTab;
++import sun.security.util.DerInputStream;
++import sun.security.util.DerOutputStream;
++import sun.security.util.DerValue;
++
++/**
++ * A KDC server.
++ * <p>
++ * Features:
++ * <ol>
++ * <li> Supports TCP and UDP
++ * <li> Supports AS-REQ and TGS-REQ
++ * <li> Principal db and other settings hard coded in application
++ * <li> Options, say, request preauth or not
++ * </ol>
++ * Side effects:
++ * <ol>
++ * <li> The Sun-internal class <code>sun.security.krb5.Config</code> is a
++ * singleton and initialized according to Kerberos settings (krb5.conf and
++ * java.security.krb5.* system properties). This means once it's initialized
++ * it will not automatically notice any changes to these settings (or file
++ * changes of krb5.conf). The KDC class normally does not touch these
++ * settings (except for the <code>writeKtab()</code> method). However, to make
++ * sure nothing ever goes wrong, if you want to make any changes to these
++ * settings after calling a KDC method, call <code>Config.refresh()</code> to
++ * make sure your changes are reflected in the <code>Config</code> object.
++ * </ol>
++ * Issues and TODOs:
++ * <ol>
++ * <li> Generates krb5.conf to be used on another machine, currently the kdc is
++ * always localhost
++ * <li> More options to KDC, say, error output, say, response nonce !=
++ * request nonce
++ * </ol>
++ * Note: This program uses internal krb5 classes (including reflection to
++ * access private fields and methods).
++ * <p>
++ * Usages:
++ * <p>
++ * 1. Init and start the KDC:
++ * <pre>
++ * KDC kdc = KDC.create("REALM.NAME", port, isDaemon);
++ * KDC kdc = KDC.create("REALM.NAME");
++ * </pre>
++ * Here, <code>port</code> is the UDP and TCP port number the KDC server
++ * listens on. If zero, a random port is chosen, which you can use getPort()
++ * later to retrieve the value.
++ * <p>
++ * If <code>isDaemon</code> is true, the KDC worker threads will be daemons.
++ * <p>
++ * The shortcut <code>KDC.create("REALM.NAME")</code> has port=0 and
++ * isDaemon=false, and is commonly used in an embedded KDC.
++ * <p>
++ * 2. Adding users:
++ * <pre>
++ * kdc.addPrincipal(String principal_name, char[] password);
++ * kdc.addPrincipalRandKey(String principal_name);
++ * </pre>
++ * A service principal's name should look like "host/f.q.d.n". The second form
++ * generates a random key. To expose this key, call <code>writeKtab()</code> to
++ * save the keys into a keytab file.
++ * <p>
++ * Note that you need to add the principal name krbtgt/REALM.NAME yourself.
++ * <p>
++ * Note that you can safely add a principal at any time after the KDC is
++ * started and before a user requests info on this principal.
++ * <p>
++ * 3. Other public methods:
++ * <ul>
++ * <li> <code>getPort</code>: Returns the port number the KDC uses
++ * <li> <code>getRealm</code>: Returns the realm name
++ * <li> <code>writeKtab</code>: Writes all principals' keys into a keytab file
++ * <li> <code>saveConfig</code>: Saves a krb5.conf file to access this KDC
++ * <li> <code>setOption</code>: Sets various options
++ * </ul>
++ * Read the javadoc for details. Lazy developer can use <code>OneKDC</code>
++ * directly.
++ */
++public class KDC {
++
++    // Under the hood.
++
++    // The random generator to generate random keys (including session keys)
++    private static SecureRandom secureRandom = new SecureRandom();
++    // Principal db
++    private Map<String,char[]> passwords = new HashMap<String,char[]>();
++    // Realm name
++    private String realm;
++    // The request/response job queue
++    private BlockingQueue<Job> q = new ArrayBlockingQueue<Job>(100);
++    // Service port number
++    private int port;
++    // Options
++    private Map<Option,Object> options = new HashMap<Option,Object>();
++
++    /**
++     * Option names, to be expanded forever.
++     */
++    public static enum Option {
++        /**
++         * Whether pre-authentication is required. Default Boolean.TRUE
++         */
++        PREAUTH_REQUIRED,
++    };
++
++    /**
++     * A standalone KDC server.
++     * @param args
++     * @throws java.lang.Exception
++     */
++    public static void main(String[] args) throws Exception {
++        if (args.length > 0) {
++            if (args[0].equals("-help") || args[0].equals("--help")) {
++                System.out.println("Usage:");
++                System.out.println("   java " + KDC.class + "       " +
++                        "Start KDC on port 8888");
++                return;
++            }
++        }
++        KDC kdc = create("RABBIT.HOLE", 8888, false);
++        kdc.addPrincipal("dummy", "bogus".toCharArray());
++        kdc.addPrincipal("foo", "bar".toCharArray());
++        kdc.addPrincipalRandKey("krbtgt/" + kdc.realm);
++        kdc.addPrincipalRandKey("server/localhost");
++        kdc.addPrincipalRandKey("backend/localhost");
++    }
++
++    /**
++     * Creates and starts a KDC running as a daemon on a random port.
++     * @param realm the realm name
++     * @return the running KDC instance
++     * @throws java.io.IOException for any socket creation error
++     */
++    public static KDC create(String realm) throws IOException {
++        return create(realm, 0, true);
++    }
++
++    /**
++     * Creates and starts a KDC server.
++     * @param realm the realm name
++     * @param port the TCP and UDP port to listen to. A random port will to
++     *        chosen if zero.
++     * @param asDaemon if true, KDC threads will be daemons. Otherwise, not.
++     * @return the running KDC instance
++     * @throws java.io.IOException for any socket creation error
++     */
++    public static KDC create(String realm, int port, boolean asDaemon) throws IOException {
++        return new KDC(realm, port, asDaemon);
++    }
++
++    /**
++     * Sets an option
++     * @param key the option name
++     * @param obj the value
++     */
++    public void setOption(Option key, Object value) {
++        options.put(key, value);
++    }
++
++    /**
++     * Write all principals' keys into a keytab file. Note that the keys for
++     * the krbtgt principal for this realm will not be written.
++     * <p>
++     * Attention: This method references krb5.conf settings. If you need to
++     * setup krb5.conf later, please call <code>Config.refresh()</code> after
++     * the new setting. For example:
++     * <pre>
++     * kdc.writeKtab("/etc/kdc/ktab");  // Config is initialized,
++     * System.setProperty("java.security.krb5.conf", "/home/mykrb5.conf");
++     * Config.refresh();
++     * </pre>
++     *
++     * Inside this method there are 2 places krb5.conf is used:
++     * <ol>
++     * <li> (Fatal) Generating keys: EncryptionKey.acquireSecretKeys
++     * <li> (Has workaround) Creating PrincipalName
++     * </ol>
++     * @param tab The keytab filename to write to.
++     * @throws java.io.IOException for any file output error
++     * @throws sun.security.krb5.KrbException for any realm and/or principal
++     *         name error.
++     */
++    public void writeKtab(String tab) throws IOException, KrbException {
++        KeyTab ktab = KeyTab.create(tab);
++        for (String name : passwords.keySet()) {
++            if (name.equals("krbtgt/" + realm)) {
++                continue;
++            }
++            ktab.addEntry(new PrincipalName(name + "@" + realm,
++                    name.indexOf('/') < 0 ?
++                        PrincipalName.KRB_NT_UNKNOWN :
++                        PrincipalName.KRB_NT_SRV_HST), passwords.get(name));
++        }
++        ktab.save();
++    }
++
++    /**
++     * Adds a new principal to this realm with a given password.
++     * @param user the principal's name. For a service principal, use the
++     *        form of host/f.q.d.n
++     * @param pass the password for the principal
++     */
++    public void addPrincipal(String user, char[] pass) {
++        passwords.put(user, pass);
++    }
++
++    /**
++     * Adds a new principal to this realm with a random password
++     * @param user the principal's name. For a service principal, use the
++     *        form of host/f.q.d.n
++     */
++    public void addPrincipalRandKey(String user) {
++        passwords.put(user, randomPassword());
++    }
++
++    /**
++     * Returns the name of this realm
++     * @return the name of this realm
++     */
++    public String getRealm() {
++        return realm;
++    }
++
++    /**
++     * Writes a krb5.conf for one or more KDC that includes KDC locations for
++     * each realm and the default realm name. You can also add extra strings
++     * into the file. The method should be called like:
++     * <pre>
++     *   KDC.saveConfig("krb5.conf", kdc1, kdc2, ..., line1, line2, ...);
++     * </pre>
++     * Here you can provide one or more kdc# and zero or more line# arguments.
++     * The line# will be put after [libdefaults] and before [realms]. Therefore
++     * you can append new lines into [libdefaults] and/or create your new
++     * stanzas as well. Note that a newline character will be appended to
++     * each line# argument.
++     * <p>
++     * For example:
++     * <pre>
++     * KDC.saveConfig("krb5.conf", this);
++     * </pre>
++     * generates:
++     * <pre>
++     * [libdefaults]
++     * default_realm = REALM.NAME
++     *
++     * [realms]
++     *   REALM.NAME = {
++     *     kdc = localhost:port_number
++     *   }
++     * </pre>
++     *
++     * Another example:
++     * <pre>
++     * KDC.saveConfig("krb5.conf", kdc1, kdc2, "forwardable = true", "",
++     *         "[domain_realm]",
++     *         ".kdc1.com = KDC1.NAME");
++     * </pre>
++     * generates:
++     * <pre>
++     * [libdefaults]
++     * default_realm = KDC1.NAME
++     * forwardable = true
++     *
++     * [domain_realm]
++     * .kdc1.com = KDC1.NAME
++     *
++     * [realms]
++     *   KDC1.NAME = {
++     *     kdc = localhost:port1
++     *   }
++     *   KDC2.NAME = {
++     *     kdc = localhost:port2
++     *   }
++     * </pre>
++     * @param file the name of the file to write into
++     * @param kdc the first (and default) KDC
++     * @param more more KDCs or extra lines (in their appearing order) to
++     * insert into the krb5.conf file. This method reads each argument's type
++     * to determine what it's for. This argument can be empty.
++     * @throws java.io.IOException for any file output error
++     */
++    public static void saveConfig(String file, KDC kdc, Object... more)
++            throws IOException {
++        File f = new File(file);
++        StringBuffer sb = new StringBuffer();
++        sb.append("[libdefaults]\ndefault_realm = ");
++        sb.append(kdc.realm);
++        sb.append("\n");
++        for (Object o: more) {
++            if (o instanceof String) {
++                sb.append(o);
++                sb.append("\n");
++            }
++        }
++        sb.append("\n[realms]\n");
++        sb.append(realmLineForKDC(kdc));
++        for (Object o: more) {
++            if (o instanceof KDC) {
++                sb.append(realmLineForKDC((KDC)o));
++            }
++        }
++        FileOutputStream fos = new FileOutputStream(f);
++        fos.write(sb.toString().getBytes());
++        fos.close();
++    }
++
++    /**
++     * Returns the service port of the KDC server.
++     * @return the KDC service port
++     */
++    public int getPort() {
++        return port;
++    }
++
++    // Private helper methods
++
++    /**
++     * Private constructor, cannot be called outside.
++     * @param realm
++     */
++    private KDC(String realm) {
++        this.realm = realm;
++    }
++
++    /**
++     * A constructor that starts the KDC service also.
++     */
++    protected KDC(String realm, int port, boolean asDaemon)
++            throws IOException {
++        this(realm);
++        startServer(port, asDaemon);
++    }
++    /**
++     * Generates a 32-char random password
++     * @return the password
++     */
++    private static char[] randomPassword() {
++        char[] pass = new char[32];
++        for (int i=0; i<32; i++)
++            pass[i] = (char)secureRandom.nextInt();
++        return pass;
++    }
++
++    /**
++     * Generates a random key for the given encryption type.
++     * @param eType the encryption type
++     * @return the generated key
++     * @throws sun.security.krb5.KrbException for unknown/unsupported etype
++     */
++    private static EncryptionKey generateRandomKey(int eType)
++            throws KrbException  {
++        // Is 32 enough for AES256? I should have generated the keys directly
++        // but different cryptos have different rules on what keys are valid.
++        char[] pass = randomPassword();
++        String algo;
++        switch (eType) {
++            case EncryptedData.ETYPE_DES_CBC_MD5: algo = "DES"; break;
++            case EncryptedData.ETYPE_DES3_CBC_HMAC_SHA1_KD: algo = "DESede"; break;
++            case EncryptedData.ETYPE_AES128_CTS_HMAC_SHA1_96: algo = "AES128"; break;
++            case EncryptedData.ETYPE_ARCFOUR_HMAC: algo = "ArcFourHMAC"; break;
++            case EncryptedData.ETYPE_AES256_CTS_HMAC_SHA1_96: algo = "AES256"; break;
++            default: algo = "DES"; break;
++        }
++        return new EncryptionKey(pass, "NOTHING", algo);    // Silly
++    }
++
++    /**
++     * Returns the password for a given principal
++     * @param p principal
++     * @return the password
++     * @throws sun.security.krb5.KrbException when the principal is not inside
++     *         the database.
++     */
++    private char[] getPassword(PrincipalName p) throws KrbException {
++        char[] pass = passwords.get(p.getNameString());
++        if (pass == null) {
++            throw new KrbException(Krb5.KDC_ERR_C_PRINCIPAL_UNKNOWN);
++        }
++        return pass;
++    }
++
++    /**
++     * Returns the salt string for the principal. For normal users, the
++     * concatenation for the realm name and the sections of the principal;
++     * for krgtgt/A@B and krbtgt/B@A, always return AB (so that inter-realm
++     * principals have the same key).
++     * @param p principal
++     * @return the salt
++     */
++    private String getSalt(PrincipalName p) {
++        String[] ns = p.getNameStrings();
++        if (ns[0].equals("krbtgt") && ns.length > 1) {
++            // Shared cross-realm keys must be the same
++            if (ns[1].compareTo(realm) < 0) {
++                return ns[1] + realm;
++            } else {
++                return realm + ns[1];
++            }
++        } else {
++            String s = getRealm();
++            for (String n: p.getNameStrings()) {
++                s += n;
++            }
++            return s;
++        }
++    }
++
++    /**
++     * Returns the key for a given principal of the given encryption type
++     * @param p the principal
++     * @param etype the encryption type
++     * @return the key
++     * @throws sun.security.krb5.KrbException for unknown/unsupported etype
++     */
++    private EncryptionKey keyForUser(PrincipalName p, int etype) throws KrbException {
++        try {
++            // Do not call EncryptionKey.acquireSecretKeys(), otherwise
++            // the krb5.conf config file would be loaded.
++            Method stringToKey = EncryptionKey.class.getDeclaredMethod("stringToKey", char[].class, String.class, byte[].class, Integer.TYPE);
++            stringToKey.setAccessible(true);
++            return new EncryptionKey((byte[]) stringToKey.invoke(null, getPassword(p), getSalt(p), null, etype), etype, null);
++        } catch (InvocationTargetException ex) {
++            KrbException ke = (KrbException)ex.getCause();
++            throw ke;
++        } catch (Exception e) {
++            throw new RuntimeException(e);  // should not happen
++        }
++    }
++
++    /**
++     * Processes an incoming request and generates a response.
++     * @param in the request
++     * @return the response
++     * @throws java.lang.Exception for various errors
++     */
++    private byte[] processMessage(byte[] in) throws Exception {
++        if ((in[0] & 0x1f) == Krb5.KRB_AS_REQ)
++            return processAsReq(in);
++        else
++            return processTgsReq(in);
++    }
++
++    /**
++     * Processes a TGS_REQ and generates a TGS_REP (or KRB_ERROR)
++     * @param in the request
++     * @return the response
++     * @throws java.lang.Exception for various errors
++     */
++    private byte[] processTgsReq(byte[] in) throws Exception {
++        TGSReq tgsReq = new TGSReq(in);
++        try {
++            System.out.println(realm + "> " + tgsReq.reqBody.cname +
++                    " sends TGS-REQ for " +
++                    tgsReq.reqBody.sname);
++            KDCReqBody body = tgsReq.reqBody;
++            int etype = 0;
++
++            // Reflection: PAData[] pas = tgsReq.pAData;
++            Field f = KDCReq.class.getDeclaredField("pAData");
++            f.setAccessible(true);
++            PAData[] pas = (PAData[])f.get(tgsReq);
++
++            Ticket tkt = null;
++            EncTicketPart etp = null;
++            if (pas == null || pas.length == 0) {
++                throw new KrbException(Krb5.KDC_ERR_PADATA_TYPE_NOSUPP);
++            } else {
++                for (PAData pa: pas) {
++                    if (pa.getType() == Krb5.PA_TGS_REQ) {
++                        APReq apReq = new APReq(pa.getValue());
++                        EncryptedData ed = apReq.authenticator;
++                        tkt = apReq.ticket;
++                        etype = tkt.encPart.getEType();
++                        EncryptionKey kkey = null;
++                        if (!tkt.realm.toString().equals(realm)) {
++                            if (tkt.sname.getNameString().equals("krbtgt/" + realm)) {
++                                kkey = keyForUser(new PrincipalName("krbtgt/" + tkt.realm.toString(), realm), etype);
++                            }
++                        } else {
++                            kkey = keyForUser(tkt.sname, etype);
++                        }
++                        byte[] bb = tkt.encPart.decrypt(kkey, KeyUsage.KU_TICKET);
++                        DerInputStream derIn = new DerInputStream(bb);
++                        DerValue der = derIn.getDerValue();
++                        etp = new EncTicketPart(der.toByteArray());
++                    }
++                }
++                if (tkt == null) {
++                    throw new KrbException(Krb5.KDC_ERR_PADATA_TYPE_NOSUPP);
++                }
++            }
++            EncryptionKey skey = keyForUser(body.sname, etype);
++            if (skey == null) {
++                throw new KrbException(Krb5.KDC_ERR_SUMTYPE_NOSUPP); // TODO
++            }
++
++            // Session key for original ticket, TGT
++            EncryptionKey ckey = etp.key;
++
++            // Session key for session with the service
++            EncryptionKey key = generateRandomKey(etype);
++
++            // Check time, TODO
++            KerberosTime till = body.till;
++            if (till == null) {
++                throw new KrbException(Krb5.KDC_ERR_NEVER_VALID); // TODO
++            } else if (till.isZero()) {
++                till = new KerberosTime(new Date().getTime() + 1000 * 3600 * 11);
++            }
++
++            boolean[] bFlags = new boolean[Krb5.TKT_OPTS_MAX+1];
++            if (body.kdcOptions.get(KDCOptions.FORWARDABLE)) {
++                bFlags[Krb5.TKT_OPTS_FORWARDABLE] = true;
++            }
++            if (body.kdcOptions.get(KDCOptions.FORWARDED) ||
++                    etp.flags.get(Krb5.TKT_OPTS_FORWARDED)) {
++                bFlags[Krb5.TKT_OPTS_FORWARDED] = true;
++            }
++            if (body.kdcOptions.get(KDCOptions.RENEWABLE)) {
++                bFlags[Krb5.TKT_OPTS_RENEWABLE] = true;
++                //renew = new KerberosTime(new Date().getTime() + 1000 * 3600 * 24 * 7);
++            }
++            if (body.kdcOptions.get(KDCOptions.PROXIABLE)) {
++                bFlags[Krb5.TKT_OPTS_PROXIABLE] = true;
++            }
++            if (body.kdcOptions.get(KDCOptions.POSTDATED)) {
++                bFlags[Krb5.TKT_OPTS_POSTDATED] = true;
++            }
++            if (body.kdcOptions.get(KDCOptions.ALLOW_POSTDATE)) {
++                bFlags[Krb5.TKT_OPTS_MAY_POSTDATE] = true;
++            }
++            bFlags[Krb5.TKT_OPTS_INITIAL] = true;
++
++            TicketFlags tFlags = new TicketFlags(bFlags);
++            EncTicketPart enc = new EncTicketPart(
++                    tFlags,
++                    key,
++                    etp.crealm,
++                    etp.cname,
++                    new TransitedEncoding(1, new byte[0]),  // TODO
++                    new KerberosTime(new Date()),
++                    body.from,
++                    till, body.rtime,
++                    body.addresses,
++                    null);
++            Ticket t = new Ticket(
++                    body.crealm,
++                    body.sname,
++                    new EncryptedData(skey, enc.asn1Encode(), KeyUsage.KU_TICKET)
++            );
++            EncTGSRepPart enc_part = new EncTGSRepPart(
++                    key,
++                    new LastReq(new LastReqEntry[]{
++                        new LastReqEntry(0, new KerberosTime(new Date().getTime() - 10000))
++                    }),
++                    body.getNonce(),    // TODO: detect replay
++                    new KerberosTime(new Date().getTime() + 1000 * 3600 * 24),
++                    // Next 5 and last MUST be same with ticket
++                    tFlags,
++                    new KerberosTime(new Date()),
++                    body.from,
++                    till, body.rtime,
++                    body.crealm,
++                    body.sname,
++                    body.addresses
++                    );
++            EncryptedData edata = new EncryptedData(ckey, enc_part.asn1Encode(), KeyUsage.KU_ENC_TGS_REP_PART_SESSKEY);
++            TGSRep tgsRep = new TGSRep(null,
++                    etp.crealm,
++                    etp.cname,
++                    t,
++                    edata);
++            System.out.println("     Return " + tgsRep.cname
++                    + " ticket for " + tgsRep.ticket.sname);
++
++            DerOutputStream out = new DerOutputStream();
++            out.write(DerValue.createTag(DerValue.TAG_APPLICATION,
++                    true, (byte)Krb5.KRB_TGS_REP), tgsRep.asn1Encode());
++            return out.toByteArray();
++        } catch (KrbException ke) {
++            ke.printStackTrace(System.out);
++            KRBError kerr = ke.getError();
++            KDCReqBody body = tgsReq.reqBody;
++            System.out.println("     Error " + ke.returnCode()
++                    + " " +ke.returnCodeMessage());
++            if (kerr == null) {
++                kerr = new KRBError(null, null, null,
++                        new KerberosTime(new Date()),
++                        0,
++                        ke.returnCode(),
++                        body.crealm, body.cname,
++                        new Realm(getRealm()), body.sname,
++                        KrbException.errorMessage(ke.returnCode()),
++                        null);
++            }
++            return kerr.asn1Encode();
++        }
++    }
++
++    /**
++     * Processes a AS_REQ and generates a AS_REP (or KRB_ERROR)
++     * @param in the request
++     * @return the response
++     * @throws java.lang.Exception for various errors
++     */
++    private byte[] processAsReq(byte[] in) throws Exception {
++        ASReq asReq = new ASReq(in);
++        int[] eTypes = null;
++        try {
++            System.out.println(realm + "> " + asReq.reqBody.cname +
++                    " sends AS-REQ for " +
++                    asReq.reqBody.sname);
++
++            KDCReqBody body = asReq.reqBody;
++
++            // Reflection: int[] eType = body.eType;
++            Field f = KDCReqBody.class.getDeclaredField("eType");
++            f.setAccessible(true);
++            eTypes = (int[])f.get(body);
++            int eType = eTypes[0];
++
++            EncryptionKey ckey = keyForUser(body.cname, eType);
++            EncryptionKey skey = keyForUser(body.sname, eType);
++            if (ckey == null) {
++                throw new KrbException(Krb5.KDC_ERR_ETYPE_NOSUPP);
++            }
++            if (skey == null) {
++                throw new KrbException(Krb5.KDC_ERR_SUMTYPE_NOSUPP); // TODO
++            }
++
++            // Session key
++            EncryptionKey key = generateRandomKey(eType);
++            // Check time, TODO
++            KerberosTime till = body.till;
++            if (till == null) {
++                throw new KrbException(Krb5.KDC_ERR_NEVER_VALID); // TODO
++            } else if (till.isZero()) {
++                till = new KerberosTime(new Date().getTime() + 1000 * 3600 * 11);
++            }
++            //body.from
++            boolean[] bFlags = new boolean[Krb5.TKT_OPTS_MAX+1];
++            if (body.kdcOptions.get(KDCOptions.FORWARDABLE)) {
++                bFlags[Krb5.TKT_OPTS_FORWARDABLE] = true;
++            }
++            if (body.kdcOptions.get(KDCOptions.RENEWABLE)) {
++                bFlags[Krb5.TKT_OPTS_RENEWABLE] = true;
++                //renew = new KerberosTime(new Date().getTime() + 1000 * 3600 * 24 * 7);
++            }
++            if (body.kdcOptions.get(KDCOptions.PROXIABLE)) {
++                bFlags[Krb5.TKT_OPTS_PROXIABLE] = true;
++            }
++            if (body.kdcOptions.get(KDCOptions.POSTDATED)) {
++                bFlags[Krb5.TKT_OPTS_POSTDATED] = true;
++            }
++            if (body.kdcOptions.get(KDCOptions.ALLOW_POSTDATE)) {
++                bFlags[Krb5.TKT_OPTS_MAY_POSTDATE] = true;
++            }
++            bFlags[Krb5.TKT_OPTS_INITIAL] = true;
++
++            f = KDCReq.class.getDeclaredField("pAData");
++            f.setAccessible(true);
++            PAData[] pas = (PAData[])f.get(asReq);
++            if (pas == null || pas.length == 0) {
++                Object preauth = options.get(Option.PREAUTH_REQUIRED);
++                if (preauth == null || preauth.equals(Boolean.TRUE)) {
++                    throw new KrbException(Krb5.KDC_ERR_PREAUTH_REQUIRED);
++                }
++            } else {
++                try {
++                    Constructor<EncryptedData> ctor = EncryptedData.class.getDeclaredConstructor(DerValue.class);
++                    ctor.setAccessible(true);
++                    EncryptedData data = ctor.newInstance(new DerValue(pas[0].getValue()));
++                    data.decrypt(ckey, KeyUsage.KU_PA_ENC_TS);
++                } catch (Exception e) {
++                    throw new KrbException(Krb5.KDC_ERR_PREAUTH_FAILED);
++                }
++                bFlags[Krb5.TKT_OPTS_PRE_AUTHENT] = true;
++            }
++
++            TicketFlags tFlags = new TicketFlags(bFlags);
++            EncTicketPart enc = new EncTicketPart(
++                    tFlags,
++                    key,
++                    body.crealm,
++                    body.cname,
++                    new TransitedEncoding(1, new byte[0]),
++                    new KerberosTime(new Date()),
++                    body.from,
++                    till, body.rtime,
++                    body.addresses,
++                    null);
++            Ticket t = new Ticket(
++                    body.crealm,
++                    body.sname,
++                    new EncryptedData(skey, enc.asn1Encode(), KeyUsage.KU_TICKET)
++            );
++            EncASRepPart enc_part = new EncASRepPart(
++                    key,
++                    new LastReq(new LastReqEntry[]{
++                        new LastReqEntry(0, new KerberosTime(new Date().getTime() - 10000))
++                    }),
++                    body.getNonce(),    // TODO: detect replay?
++                    new KerberosTime(new Date().getTime() + 1000 * 3600 * 24),
++                    // Next 5 and last MUST be same with ticket
++                    tFlags,
++                    new KerberosTime(new Date()),
++                    body.from,
++                    till, body.rtime,
++                    body.crealm,
++                    body.sname,
++                    body.addresses
++                    );
++            EncryptedData edata = new EncryptedData(ckey, enc_part.asn1Encode(), KeyUsage.KU_ENC_AS_REP_PART);
++            ASRep asRep = new ASRep(null,
++                    body.crealm,
++                    body.cname,
++                    t,
++                    edata);
++
++            System.out.println("     Return " + asRep.cname
++                    + " ticket for " + asRep.ticket.sname);
++
++            DerOutputStream out = new DerOutputStream();
++            out.write(DerValue.createTag(DerValue.TAG_APPLICATION,
++                    true, (byte)Krb5.KRB_AS_REP), asRep.asn1Encode());
++            return out.toByteArray();
++        } catch (KrbException ke) {
++            ke.printStackTrace(System.out);
++            KRBError kerr = ke.getError();
++            KDCReqBody body = asReq.reqBody;
++            System.out.println("     Error " + ke.returnCode()
++                    + " " +ke.returnCodeMessage());
++            byte[] eData = null;
++            if (kerr == null) {
++                if (ke.returnCode() == Krb5.KDC_ERR_PREAUTH_REQUIRED ||
++                        ke.returnCode() == Krb5.KDC_ERR_PREAUTH_FAILED) {
++                    PAData pa;
++
++                    ETypeInfo2 ei2 = new ETypeInfo2(eTypes[0], null, null);
++                    DerOutputStream eid = new DerOutputStream();
++                    eid.write(DerValue.tag_Sequence, ei2.asn1Encode());
++
++                    pa = new PAData(Krb5.PA_ETYPE_INFO2, eid.toByteArray());
++
++                    DerOutputStream bytes = new DerOutputStream();
++                    bytes.write(new PAData(Krb5.PA_ENC_TIMESTAMP, new byte[0]).asn1Encode());
++                    bytes.write(pa.asn1Encode());
++
++                    boolean allOld = true;
++                    for (int i: eTypes) {
++                        if (i == EncryptedData.ETYPE_AES128_CTS_HMAC_SHA1_96 ||
++                                i == EncryptedData.ETYPE_AES256_CTS_HMAC_SHA1_96) {
++                            allOld = false;
++                            break;
++                        }
++                    }
++                    if (allOld) {
++                        ETypeInfo ei = new ETypeInfo(eTypes[0], null);
++                        eid = new DerOutputStream();
++                        eid.write(DerValue.tag_Sequence, ei.asn1Encode());
++                        pa = new PAData(Krb5.PA_ETYPE_INFO, eid.toByteArray());
++                        bytes.write(pa.asn1Encode());
++                    }
++                    DerOutputStream temp = new DerOutputStream();
++                    temp.write(DerValue.tag_Sequence, bytes);
++                    eData = temp.toByteArray();
++                }
++                kerr = new KRBError(null, null, null,
++                        new KerberosTime(new Date()),
++                        0,
++                        ke.returnCode(),
++                        body.crealm, body.cname,
++                        new Realm(getRealm()), body.sname,
++                        KrbException.errorMessage(ke.returnCode()),
++                        eData);
++            }
++            return kerr.asn1Encode();
++        }
++    }
++
++    /**
++     * Generates a line for a KDC to put inside [realms] of krb5.conf
++     * @param kdc the KDC
++     * @return REALM.NAME = { kdc = localhost:port }
++     */
++    private static String realmLineForKDC(KDC kdc) {
++        return String.format("  %s = {\n    kdc = localhost:%d\n  }\n", kdc.realm, kdc.port);
++    }
++
++    /**
++     * Start the KDC service. This server listens on both UDP and TCP using
++     * the same port number. It uses three threads to deal with requests.
++     * They can be set to daemon threads if requested.
++     * @param port the port number to listen to. If zero, a random available
++     *  port no less than 8000 will be chosen and used.
++     * @param asDaemon true if the KDC threads should be daemons
++     * @throws java.io.IOException for any communication error
++     */
++    protected void startServer(int port, boolean asDaemon) throws IOException {
++        DatagramSocket u1 = null;
++        ServerSocket t1 = null;
++        if (port > 0) {
++            u1 = new DatagramSocket(port, InetAddress.getByName("127.0.0.1"));
++            t1 = new ServerSocket(port);
++        } else {
++            while (true) {
++                // Try to find a port number that's both TCP and UDP free
++                try {
++                    port = 8000 + new java.util.Random().nextInt(10000);
++                    u1 = null;
++                    u1 = new DatagramSocket(port, InetAddress.getByName("127.0.0.1"));
++                    t1 = new ServerSocket(port);
++                    break;
++                } catch (Exception e) {
++                    if (u1 != null) u1.close();
++                }
++            }
++        }
++        final DatagramSocket udp = u1;
++        final ServerSocket tcp = t1;
++        System.out.println("Start KDC on " + port);
++
++        this.port = port;
++
++        // The UDP consumer
++        Thread thread = new Thread() {
++            public void run() {
++                while (true) {
++                    try {
++                        byte[] inbuf = new byte[8192];
++                        DatagramPacket p = new DatagramPacket(inbuf, inbuf.length);
++                        udp.receive(p);
++                        System.out.println("-----------------------------------------------");
++                        System.out.println(">>>>> UDP packet received");
++                        q.put(new Job(processMessage(Arrays.copyOf(inbuf, p.getLength())), udp, p));
++                    } catch (Exception e) {
++                        e.printStackTrace();
++                    }
++                }
++            }
++        };
++        thread.setDaemon(asDaemon);
++        thread.start();
++
++        // The TCP consumer
++        thread = new Thread() {
++            public void run() {
++                while (true) {
++                    try {
++                        Socket socket = tcp.accept();
++                        System.out.println("-----------------------------------------------");
++                        System.out.println(">>>>> TCP connection established");
++                        DataInputStream in = new DataInputStream(socket.getInputStream());
++                        DataOutputStream out = new DataOutputStream(socket.getOutputStream());
++                        byte[] token = new byte[in.readInt()];
++                        in.readFully(token);
++                        q.put(new Job(processMessage(token), socket, out));
++                    } catch (Exception e) {
++                        e.printStackTrace();
++                    }
++                }
++            }
++        };
++        thread.setDaemon(asDaemon);
++        thread.start();
++
++        // The dispatcher
++        thread = new Thread() {
++            public void run() {
++                while (true) {
++                    try {
++                        q.take().send();
++                    } catch (Exception e) {
++                    }
++                }
++            }
++        };
++        thread.setDaemon(true);
++        thread.start();
++    }
++
++    /**
++     * Helper class to encapsulate a job in a KDC.
++     */
++    private static class Job {
++        byte[] token;           // The received request at creation time and
++                                // the response at send time
++        Socket s;               // The TCP socket from where the request comes
++        DataOutputStream out;   // The OutputStream of the TCP socket
++        DatagramSocket s2;      // The UDP socket from where the request comes
++        DatagramPacket dp;      // The incoming UDP datagram packet
++        boolean useTCP;         // Whether TCP or UDP is used
++
++        // Creates a job object for TCP
++        Job(byte[] token, Socket s, DataOutputStream out) {
++            useTCP = true;
++            this.token = token;
++            this.s = s;
++            this.out = out;
++        }
++
++        // Creates a job object for UDP
++        Job(byte[] token, DatagramSocket s2, DatagramPacket dp) {
++            useTCP = false;
++            this.token = token;
++            this.s2 = s2;
++            this.dp = dp;
++        }
++
++        // Sends the output back to the client
++        void send() {
++            try {
++                if (useTCP) {
++                    System.out.println(">>>>> TCP request honored");
++                    out.writeInt(token.length);
++                    out.write(token);
++                    s.close();
++                } else {
++                    System.out.println(">>>>> UDP request honored");
++                    s2.send(new DatagramPacket(token, token.length, dp.getAddress(), dp.getPort()));
++                }
++            } catch (Exception e) {
++                e.printStackTrace();
++            }
++        }
++    }
++}
+diff -r 8b2d7e577d4a -r 3f051f3ba5bb test/sun/security/krb5/auto/KerberosHashEqualsTest.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/sun/security/krb5/auto/KerberosHashEqualsTest.java	Fri Oct 17 13:02:00 2008 +0800
+@@ -0,0 +1,173 @@
++/*
++ * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/*
++ * @test
++ * @bug 4641821
++ * @summary hashCode() and equals() for KerberosKey and KerberosTicket
++ */
++
++import java.net.InetAddress;
++import java.util.Date;
++import javax.security.auth.kerberos.KerberosKey;
++import javax.security.auth.kerberos.KerberosPrincipal;
++import javax.security.auth.kerberos.KerberosTicket;
++
++public class KerberosHashEqualsTest {
++    public static void main(String[] args) throws Exception {
++        new OneKDC(null);
++        new KerberosHashEqualsTest().check();
++    }
++
++    void checkSame(Object o1, Object o2) {
++        if(!o1.equals(o2)) {
++            throw new RuntimeException("equals() fails");
++        }
++        if(o1.hashCode() != o2.hashCode()) {
++            throw new RuntimeException("hashCode() not same");
++        }
++    }
++
++    void checkNotSame(Object o1, Object o2) {
++        if(o1.equals(o2)) {
++            throw new RuntimeException("equals() succeeds");
++        }
++    }
++
++    void check() throws Exception {
++
++        // The key part:
++        // new KerberosKey(principal, bytes, keyType, version)
++
++        KerberosKey k1, k2;
++        KerberosPrincipal CLIENT = new KerberosPrincipal("client");
++        KerberosPrincipal SERVER = new KerberosPrincipal("server");
++        byte[] PASS = "pass".getBytes();
++
++        k1 = new KerberosKey(CLIENT, PASS, 1, 1);
++        k2 = new KerberosKey(CLIENT, PASS, 1, 1);
++        checkSame(k1, k1);  // me is me
++        checkSame(k1, k2);  // same
++
++        // A destroyed key doesn't equal to any key
++        k2.destroy();
++        checkNotSame(k1, k2);
++        checkNotSame(k2, k1);
++        k1.destroy();
++        checkNotSame(k1, k2);   // even if they are both destroyed
++        checkNotSame(k2, k1);
++        checkSame(k2, k2);
++
++        // a little difference means not equal
++        k1 = new KerberosKey(CLIENT, PASS, 1, 1);
++        k2 = new KerberosKey(SERVER, PASS, 1, 1);
++        checkNotSame(k1, k2);   // Different principal name
++
++        k2 = new KerberosKey(CLIENT, "ssap".getBytes(), 1, 1);
++        checkNotSame(k1, k2);   // Different password
++
++        k2 = new KerberosKey(CLIENT, PASS, 2, 1);
++        checkNotSame(k1, k2);   // Different keytype
++
++        k2 = new KerberosKey(CLIENT, PASS, 1, 2);
++        checkNotSame(k1, k2);   // Different version
++
++        k2 = new KerberosKey(null, PASS, 1, 2);
++        checkNotSame(k1, k2);   // null is not non-null
++
++        k1 = new KerberosKey(null, PASS, 1, 2);
++        checkSame(k1, k2);      // null is null
++
++        checkNotSame(k1, "Another Object");
++
++        // The ticket part:
++        // new KerberosTicket(asn1 bytes, client, server, session key, type, flags,
++        //      auth, start, end, renewUntil times, address)
++
++        KerberosTicket t1, t2;
++
++        byte[] ASN1 = "asn1".getBytes();
++        boolean[] FORWARDABLE = new boolean[] {true, true};
++        boolean[] ALLTRUE = new boolean[] {true, true, true, true, true, true, true, true, true, true};
++        Date D0 = new Date(0);
++
++        t1 = new KerberosTicket(ASN1, CLIENT, SERVER, PASS, 1, FORWARDABLE, D0, D0, D0, D0, null);
++        t2 = new KerberosTicket(ASN1, CLIENT, SERVER, PASS, 1, FORWARDABLE, D0, D0, D0, D0, null);
++        checkSame(t1, t1);
++        checkSame(t1, t2);
++
++        // destroyed tickets doesn't equal to each other
++        t1.destroy();
++        checkNotSame(t1, t2);
++        checkNotSame(t2, t1);
++
++        t2.destroy();
++        checkNotSame(t1, t2);   // even if they are both destroyed
++        checkNotSame(t2, t1);
++
++        checkSame(t2, t2);  // unless they are the same object
++
++        // a little difference means not equal
++        t1 = new KerberosTicket(ASN1, CLIENT, SERVER, PASS, 1, FORWARDABLE, D0, D0, D0, D0, null);
++        t2 = new KerberosTicket("asn11".getBytes(), CLIENT, SERVER, PASS, 1, FORWARDABLE, D0, D0, D0, D0, null);
++        checkNotSame(t1, t2);   // Different ASN1 encoding
++
++        t2 = new KerberosTicket(ASN1, new KerberosPrincipal("client1"), SERVER, PASS, 1, FORWARDABLE, D0, D0, D0, D0, null);
++        checkNotSame(t1, t2);   // Different client
++
++        t2 = new KerberosTicket(ASN1, CLIENT, new KerberosPrincipal("server1"), PASS, 1, FORWARDABLE, D0, D0, D0, D0, null);
++        checkNotSame(t1, t2);   // Different server
++
++        t2 = new KerberosTicket(ASN1, CLIENT, SERVER, "pass1".getBytes(), 1, FORWARDABLE, D0, D0, D0, D0, null);
++        checkNotSame(t1, t2);   // Different session key
++
++        t2 = new KerberosTicket(ASN1, CLIENT, SERVER, PASS, 2, FORWARDABLE, D0, D0, D0, D0, null);
++        checkNotSame(t1, t2);   // Different key type
++
++        t2 = new KerberosTicket(ASN1, CLIENT, SERVER, PASS, 1, new boolean[] {true, false}, D0, D0, D0, D0, null);
++        checkNotSame(t1, t2);   // Different flags, not FORWARDABLE
++
++        t2 = new KerberosTicket(ASN1, CLIENT, SERVER, PASS, 1, FORWARDABLE, new Date(1), D0, D0, D0, null);
++        checkNotSame(t1, t2);   // Different authtime
++
++        t2 = new KerberosTicket(ASN1, CLIENT, SERVER, PASS, 1, FORWARDABLE, D0, new Date(1), D0, D0, null);
++        checkNotSame(t1, t2);   // Different starttime
++
++        t2 = new KerberosTicket(ASN1, CLIENT, SERVER, PASS, 1, FORWARDABLE, D0, D0, new Date(1), D0, null);
++        checkNotSame(t1, t2);   // Different endtime
++
++        t2 = new KerberosTicket(ASN1, CLIENT, SERVER, PASS, 1, FORWARDABLE, D0, D0, D0, D0, new InetAddress[2]);
++        checkNotSame(t1, t2);   // Different client addresses
++
++        t2 = new KerberosTicket(ASN1, CLIENT, SERVER, PASS, 1, FORWARDABLE, D0, D0, D0, new Date(1), null);
++        t1 = new KerberosTicket(ASN1, CLIENT, SERVER, PASS, 1, FORWARDABLE, D0, D0, D0, new Date(2), null);
++        checkSame(t1, t2);      // renewtill is ignored when RENEWABLE ticket flag is not set.
++
++        t2 = new KerberosTicket(ASN1, CLIENT, SERVER, PASS, 1, ALLTRUE, D0, D0, D0, new Date(1), null);
++        t1 = new KerberosTicket(ASN1, CLIENT, SERVER, PASS, 1, ALLTRUE, D0, D0, D0, new Date(2), null);
++        checkNotSame(t1, t2);   // renewtill is used when RENEWABLE is set.
++
++        checkNotSame(t1, "Another Object");
++        System.out.println("Good!");
++    }
++}
+diff -r 8b2d7e577d4a -r 3f051f3ba5bb test/sun/security/krb5/auto/OneKDC.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/sun/security/krb5/auto/OneKDC.java	Fri Oct 17 13:02:00 2008 +0800
+@@ -0,0 +1,140 @@
++/*
++ * Copyright 2008 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++import java.io.File;
++import java.io.FileOutputStream;
++import java.io.IOException;
++import java.security.Security;
++import javax.security.auth.callback.Callback;
++import javax.security.auth.callback.CallbackHandler;
++import javax.security.auth.callback.NameCallback;
++import javax.security.auth.callback.PasswordCallback;
++import sun.security.krb5.Config;
++
++/**
++ * This class starts a simple KDC with one realm, several typical principal
++ * names, generates delete-on-exit krb5.conf and keytab files, and setup
++ * system properties for them. There's also a helper method to generate a
++ * JAAS login config file that can be used for JAAS or JGSS apps.
++ * <p>
++ * Just call this line to start everything:
++ * <pre>
++ * new OneKDC(null).writeJaasConf();
++ * </pre>
++ */
++public class OneKDC extends KDC {
++
++    public static final String USER = "dummy";
++    public static final char[] PASS = "bogus".toCharArray();
++    public static final String SERVER = "server/localhost";
++    public static final String BACKEND = "backend/localhost";
++    public static final String KRB5_CONF = "localkdc-krb5.conf";
++    public static final String KTAB = "localkdc.ktab";
++    public static final String JAAS_CONF = "localkdc-jaas.conf";
++    public static final String REALM = "RABBIT.HOLE";
++
++    /**
++     * Creates the KDC and starts it.
++     * @param etype Encryption type, null if not specified
++     * @throws java.lang.Exception if there's anything wrong
++     */
++    public OneKDC(String etype) throws Exception {
++        super(REALM, 0, true);
++        addPrincipal(USER, PASS);
++        addPrincipalRandKey("krbtgt/" + REALM);
++        addPrincipalRandKey(SERVER);
++        addPrincipalRandKey(BACKEND);
++        KDC.saveConfig(KRB5_CONF, this,
++                "forwardable = true",
++                "default_keytab_name = " + KTAB,
++                etype == null ? "" : "default_tkt_enctypes=" + etype + "\ndefault_tgs_enctypes=" + etype);
++        System.setProperty("java.security.krb5.conf", KRB5_CONF);
++        // Whatever krb5.conf had been loaded before, we reload ours now.
++        Config.refresh();
++
++        writeKtab(KTAB);
++        new File(KRB5_CONF).deleteOnExit();
++        new File(KTAB).deleteOnExit();
++    }
++
++    /**
++     * Writes a JAAS login config file, which contains as many as useful
++     * entries, including JGSS style initiator/acceptor and normal JAAS
++     * entries with names using existing OneKDC principals.
++     * @throws java.lang.Exception if anything goes wrong
++     */
++    public void writeJAASConf() throws IOException {
++        System.setProperty("java.security.auth.login.config", JAAS_CONF);
++        File f = new File(JAAS_CONF);
++        FileOutputStream fos = new FileOutputStream(f);
++        fos.write((
++                "com.sun.security.jgss.krb5.initiate {\n" +
++                "    com.sun.security.auth.module.Krb5LoginModule required;\n};\n" +
++                "com.sun.security.jgss.krb5.accept {\n" +
++                "    com.sun.security.auth.module.Krb5LoginModule required\n" +
++                "    principal=\"" + SERVER + "\"\n" +
++                "    useKeyTab=true\n" +
++                "    isInitiator=false\n" +
++                "    storeKey=true;\n};\n" +
++                "client {\n" +
++                "    com.sun.security.auth.module.Krb5LoginModule required;\n};\n" +
++                "server {\n" +
++                "    com.sun.security.auth.module.Krb5LoginModule required\n" +
++                "    principal=\"" + SERVER + "\"\n" +
++                "    useKeyTab=true\n" +
++                "    storeKey=true;\n};\n" +
++                "backend {\n" +
++                "    com.sun.security.auth.module.Krb5LoginModule required\n" +
++                "    principal=\"" + BACKEND + "\"\n" +
++                "    useKeyTab=true\n" +
++                "    storeKey=true\n" +
++                "    isInitiator=false;\n};\n"
++                ).getBytes());
++        fos.close();
++        f.deleteOnExit();
++        Security.setProperty("auth.login.defaultCallbackHandler", "OneKDC$CallbackForClient");
++    }
++
++    /**
++     * The default callback handler for JAAS login. Note that this handler is
++     * hard coded to provide only info for USER1. If you need to provide info
++     * for another principal, please use Context.fromUserPass() instead.
++     */
++    public static class CallbackForClient implements CallbackHandler {
++        public void handle(Callback[] callbacks) {
++            String user = OneKDC.USER;
++            char[] pass = OneKDC.PASS;
++            for (Callback callback : callbacks) {
++                if (callback instanceof NameCallback) {
++                    System.out.println("Callback for name: " + user);
++                    ((NameCallback) callback).setName(user);
++                }
++                if (callback instanceof PasswordCallback) {
++                    System.out.println("Callback for pass: "
++                            + new String(pass));
++                    ((PasswordCallback) callback).setPassword(pass);
++                }
++            }
++        }
++    }
++}
+diff -r 8b2d7e577d4a -r 3f051f3ba5bb test/sun/security/krb5/auto/basic.sh
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/sun/security/krb5/auto/basic.sh	Fri Oct 17 13:02:00 2008 +0800
+@@ -0,0 +1,65 @@
++#
++# Copyright 2008 Sun Microsystems, Inc.  All Rights Reserved.
++# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++#
++# This code is free software; you can redistribute it and/or modify it
++# under the terms of the GNU General Public License version 2 only, as
++# published by the Free Software Foundation.
++#
++# This code is distributed in the hope that it will be useful, but WITHOUT
++# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++# version 2 for more details (a copy is included in the LICENSE file that
++# accompanied this code).
++#
++# You should have received a copy of the GNU General Public License version
++# 2 along with this work; if not, write to the Free Software Foundation,
++# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++#
++# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++# CA 95054 USA or visit www.sun.com if you need additional information or
++# have any questions.
++#
++
++# @test
++# @bug 6706974
++# @summary Add krb5 test infrastructure
++# @run shell/timeout=300 basic.sh
++#
++
++if [ "${TESTSRC}" = "" ] ; then
++  TESTSRC="."
++fi
++if [ "${TESTJAVA}" = "" ] ; then
++  echo "TESTJAVA not set.  Test cannot execute."
++  echo "FAILED!!!"
++  exit 1
++fi
++
++# set platform-dependent variables
++OS=`uname -s`
++case "$OS" in
++  Windows_* )
++    FS="\\"
++    ;;
++  * )
++    FS="/"
++    ;;
++esac
++
++${TESTJAVA}${FS}bin${FS}javac -d . \
++    ${TESTSRC}${FS}BasicKrb5Test.java \
++    ${TESTSRC}${FS}KDC.java \
++    ${TESTSRC}${FS}OneKDC.java \
++    ${TESTSRC}${FS}Action.java \
++    ${TESTSRC}${FS}Context.java \
++    || exit 10
++${TESTJAVA}${FS}bin${FS}java -Dtest.src=$TESTSRC BasicKrb5Test || exit 100
++${TESTJAVA}${FS}bin${FS}java -Dtest.src=$TESTSRC BasicKrb5Test des-cbc-crc || exit 1
++${TESTJAVA}${FS}bin${FS}java -Dtest.src=$TESTSRC BasicKrb5Test des-cbc-md5 || exit 3
++${TESTJAVA}${FS}bin${FS}java -Dtest.src=$TESTSRC BasicKrb5Test des3-cbc-sha1 || exit 16
++${TESTJAVA}${FS}bin${FS}java -Dtest.src=$TESTSRC BasicKrb5Test aes128-cts || exit 17
++${TESTJAVA}${FS}bin${FS}java -Dtest.src=$TESTSRC BasicKrb5Test aes256-cts || exit 18
++${TESTJAVA}${FS}bin${FS}java -Dtest.src=$TESTSRC BasicKrb5Test rc4-hmac || exit 23
++
++exit 0

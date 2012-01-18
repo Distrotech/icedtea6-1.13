@@ -1,0 +1,96 @@
+# HG changeset patch
+# User anthony
+# Date 1321013871 -10800
+# Node ID f614bcada2a992a2db8dfc7510cd8d82386ac1f0
+# Parent  16327765859cebadeadaad9a4b61469c510c7a6e
+7103610: _NET_WM_PID and WM_CLIENT_MACHINE are not set
+Summary: Set the properties to all top-level windows
+Reviewed-by: anthony
+Contributed-by: Danesh Dadachanji <ddadacha@redhat.com>
+
+diff -r 16327765859c -r f614bcada2a9 make/sun/xawt/mapfile-vers
+--- openjdk.orig/jdk/make/sun/xawt/mapfile-vers	Thu Nov 10 17:37:29 2011 +0400
++++ openjdk/jdk/make/sun/xawt/mapfile-vers	Fri Nov 11 15:17:51 2011 +0300
+@@ -322,6 +322,8 @@
+         Java_sun_awt_X11_XlibWrapper_XSynchronize;
+         Java_java_awt_FileDialog_initIDs;
+         Java_sun_awt_X11_XWindow_initIDs;
++        Java_sun_awt_X11_XWindowPeer_getLocalHostname;
++        Java_sun_awt_X11_XWindowPeer_getJvmPID;
+ 
+         Java_sun_java2d_opengl_OGLContext_getOGLIdString;
+         Java_sun_java2d_opengl_OGLMaskFill_maskFill;
+diff -r 16327765859c -r f614bcada2a9 src/solaris/classes/sun/awt/X11/XWindowPeer.java
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWindowPeer.java	Thu Nov 10 17:37:29 2011 +0400
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XWindowPeer.java	Fri Nov 11 15:17:51 2011 +0300
+@@ -208,12 +208,19 @@
+         return name;
+     }
+ 
++    private static native String getLocalHostname();
++    private static native int getJvmPID();
++
+     void postInit(XCreateWindowParams params) {
+         super.postInit(params);
+ 
+         // Init WM_PROTOCOLS atom
+         initWMProtocols();
+ 
++        // Set _NET_WM_PID and WM_CLIENT_MACHINE using this JVM
++        XAtom.get("WM_CLIENT_MACHINE").setProperty(getWindow(), getLocalHostname());
++        XAtom.get("_NET_WM_PID").setCard32Property(getWindow(), getJvmPID());
++
+         // Set WM_TRANSIENT_FOR and group_leader
+         Window t_window = (Window)target;
+         Window owner = t_window.getOwner();
+diff -r 16327765859c -r f614bcada2a9 src/solaris/native/sun/xawt/XToolkit.c
+--- openjdk.orig/jdk/src/solaris/native/sun/xawt/XToolkit.c	Thu Nov 10 17:37:29 2011 +0400
++++ openjdk/jdk/src/solaris/native/sun/xawt/XToolkit.c	Fri Nov 11 15:17:51 2011 +0300
+@@ -47,6 +47,8 @@
+ #include "java_awt_TrayIcon.h"
+ #include <X11/extensions/XTest.h>
+ 
++#include <unistd.h>
++
+ uint32_t awt_NumLockMask = 0;
+ Boolean  awt_ModLockIsShiftLock = False;
+ 
+@@ -1087,3 +1089,38 @@
+ 
+     return local_num_buttons;
+ }
++
++/*
++ * Class:     sun_awt_X11_XWindowPeer
++ * Method:    getJvmPID
++ * Signature: ()I
++ */
++JNIEXPORT jint JNICALL Java_sun_awt_X11_XWindowPeer_getJvmPID
++(JNIEnv *env, jclass cls)
++{
++    /* Return the JVM's PID. */
++    return getpid();
++}
++
++#ifndef HOST_NAME_MAX
++#define HOST_NAME_MAX 1024 /* Overestimated */
++#endif
++
++/*
++ * Class:     sun_awt_X11_XWindowPeer
++ * Method:    getLocalHostname
++ * Signature: ()Ljava/lang/String;
++ */
++JNIEXPORT jstring JNICALL Java_sun_awt_X11_XWindowPeer_getLocalHostname
++(JNIEnv *env, jclass cls)
++{
++    /* Return the machine's FQDN. */
++    char hostname[HOST_NAME_MAX + 1];
++    if (gethostname(hostname, HOST_NAME_MAX + 1) == 0) {
++        hostname[HOST_NAME_MAX] = '\0';
++        jstring res = (*env)->NewStringUTF(env, hostname);
++        return res;
++    }
++
++    return (jstring)NULL;
++}

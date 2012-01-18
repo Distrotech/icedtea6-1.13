@@ -5,8 +5,8 @@ OPENJDK_SHA256SUM = f84e7f0938f4939660ff8f9c2aa164d301faa8a519f2324ceb05ad34b2e0
 OPENJDK_VERSION = b25
 OPENJDK_URL = http://download.java.net/openjdk/jdk6/promoted/$(OPENJDK_VERSION)/
 
-CACAO_VERSION = 2204b08fcae9
-CACAO_SHA256SUM = bb6ce286fcdc7350ed9913acfe5177921f515e187e74e773f6e62adba005f0a3
+CACAO_VERSION = cff92704c4e0
+CACAO_SHA256SUM = dc768c9d097fb056ad34fc6d5a57e8fd4f3b24bf515be92acc5ee4208160eb3f
 CACAO_BASE_URL = http://icedtea.classpath.org/download/drops/cacao
 CACAO_URL = $(CACAO_BASE_URL)/$(CACAO_VERSION).tar.gz
 CACAO_SRC_ZIP = cacao-$(CACAO_VERSION).tar.gz
@@ -193,7 +193,9 @@ OPENJDK_ECJ_TREE = stamps/patch-ecj.stamp
 # Sources list
 
 REWRITER_SRCS = $(top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.java
-JTREG_SRCS = $(top_srcdir)/jtreg
+# Relative path to JTreg tool
+JTREG_DIR = src/jtreg
+JTREG_SRCS = $(top_srcdir)/$(JTREG_DIR)
 
 # Patch list
 
@@ -397,7 +399,14 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6296893-BMP_Writer_handles_TopDown_prop_incorrectly.patch \
 	patches/openjdk/7103224-glibc_name_collision.patch \
 	patches/arm-debug.patch \
-	patches/openjdk/683768-System-tray-icon.patch
+	patches/openjdk/7103610-_NET_WM_PID_and_WM_CLIENT_MACHINE_are_not_set.patch \
+	patches/openjdk/7102369-7094468-rmiregistry.patch \
+	patches/openjdk/6851973-kerberos.patch \
+	patches/openjdk/7091528-javadoc_class_files.patch \
+	patches/openjdk/7103725-ssl_beast_regression.patch \
+	patches/openjdk/6706974-krb5_test_infrastructure.patch \
+	patches/openjdk/6764553-IdResolver_is_not_thread_safe.patch \
+	patches/openjdk/6761072-new_krb5_tests_fail_on_multiple_platforms.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -426,10 +435,6 @@ if ENABLE_XRENDER
 ICEDTEA_PATCHES += patches/openjdk/6307603-xrender-01.patch \
 	patches/openjdk/6961633-xrender-02.patch \
 	patches/openjdk/7018387-xrender_gc_leak.patch
-endif
-
-if ENABLE_NIO2
-ICEDTEA_PATCHES += patches/nio2.patch
 endif
 
 if ENABLE_SYSTEMTAP
@@ -1033,7 +1038,7 @@ stamps/ports.stamp: stamps/replace-hotspot.stamp
 	for target in $(abs_top_srcdir)/arm_port/hotspot/tools \
 		      $(abs_top_srcdir)/arm_port/hotspot/src/*cpu/* ; do \
 	  link=$$(dirname $$target | sed 's/^.*arm_port/openjdk/'); \
-	  cp -rlv $$target $$link; \
+	  cp -rv $(SRC_DIR_LINK) $$target $$link; \
 	  chmod -R ug+rwX $$link; \
 	done
 	mkdir -p stamps
@@ -1199,9 +1204,6 @@ stamps/overlay.stamp: stamps/patch.stamp
 	cp -a $(abs_top_srcdir)/overlays overlays.build
 	chmod -R ug+rwX overlays.build
 	cp -a overlays.build/openjdk/* openjdk/
-if ENABLE_NIO2
-	cp -a overlays.build/nio2/openjdk/* openjdk/
-endif
 	cp -a overlays.build/jpeg/openjdk/* openjdk/
 	rm -rf overlays.build
 	touch stamps/overlay.stamp
@@ -2171,9 +2173,9 @@ check-jdk: stamps/jtreg.stamp
 	$${XVFB_RUN} \
 	$(BOOT_DIR)/bin/java -jar test/jtreg.jar -v1 -a -ignore:quiet \
 		-w:test/jdk/JTwork -r:test/jdk/JTreport \
-		$${ICEDTEA_JTREG_OTHERVM:--samevm} \
+		 $${ICEDTEA_JTREG_OTHERVM:--samevm} \
 		-jdk:$(BUILD_OUTPUT_DIR)/j2sdk-image \
-		-exclude:$(JTREG_SRCS)/excludelist.jdk.jtx \
+		-exclude:$(abs_top_srcdir)/$(JTREG_DIR)/excludelist.jdk.jtx \
 		$(ICEDTEA_JTREG_OPTIONS) \
 		`pwd`/openjdk/jdk/test \
 	    | tee test/$@.log
@@ -2260,11 +2262,6 @@ stamps/rt.stamp: stamps/rt-class-files.stamp
 if BOOTSTRAPPING
 	$(BOOT_DIR)/bin/jar uf $(RUNTIME) -C lib/rt com -C lib/rt java \
 	  -C lib/rt javax -C lib/rt sun 
-if ENABLE_NIO2
-	if [ -e lib/rt/org/classpath ] ; then \
-	    $(BOOT_DIR)/bin/jar uf $(RUNTIME) -C lib/rt org/classpath ; \
-	fi
-endif
 endif
 	touch stamps/rt.stamp
 
