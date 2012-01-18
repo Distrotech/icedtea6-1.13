@@ -15,6 +15,7 @@ New in release 1.12 (2012-XX-XX):
 * Backports
   - 6706974: Add krb5 test infrastructure
   - 6764553: com.sun.org.apache.xml.internal.security.utils.IdResolver is not thread safe
+  - 6761072: new krb5 tests fail on multiple platforms
 
 New in release 1.11 (2012-XX-XX):
 
@@ -28,7 +29,6 @@ New in release 1.11 (2012-XX-XX):
   - PR732: Use xsltproc for bootstrap xslt in place of Xerces/Xalan
   - RH727195: Japanese font mappings are broken
   - LP862286: Fix exception on trying to start PulseAudio playback
-  - RH683768: Add a workaround for Java applications using tray icon for Gnome Shell
   - PR719: make distcheck should work in IcedTea6
 * Import of OpenJDK6 b24
   - S7099148: increment build number of hs20.0 to b12
@@ -384,6 +384,7 @@ New in release 1.11 (2012-XX-XX):
   - S5082756: Image I/O plug-ins set metadata boolean attributes to "true" or "false"
   - S6296893: BMP Writer handles TopDown property incorrectly for some of the compression types
   - S7103224: collision between __LEAF define in interfaceSupport.hpp and /usr/include/sys/cdefs.h with gcc
+  - S7103610, RH683768: _NET_WM_PID and WM_CLIENT_MACHINE are not set
 * ARM Port
   - Ported to the EABI hard-fp model
   - Locking for multi-core operation added.
