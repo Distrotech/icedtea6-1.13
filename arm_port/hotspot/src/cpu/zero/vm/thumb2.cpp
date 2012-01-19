@@ -7059,6 +7059,9 @@ extern "C" unsigned long long Thumb2_Compile(JavaThread *thread, unsigned branch
   Thumb2_Entrypoint thumb_entry;
   int compiled_accessor;
 
+  if (!(CPUInfo & ARCH_THUMBEE))
+	UseCompiler = false;
+
   if (!UseCompiler || method->is_not_compilable()) {
 	ic->set(ic->state(), 1);
 	bc->set(ic->state(), 1);
