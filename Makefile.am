@@ -400,10 +400,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7103224-glibc_name_collision.patch \
 	patches/arm-debug.patch \
 	patches/openjdk/7103610-_NET_WM_PID_and_WM_CLIENT_MACHINE_are_not_set.patch \
-	patches/openjdk/7102369-7094468-rmiregistry.patch \
-	patches/openjdk/6851973-kerberos.patch \
-	patches/openjdk/7091528-javadoc_class_files.patch \
-	patches/openjdk/7103725-ssl_beast_regression.patch \
 	patches/openjdk/6706974-krb5_test_infrastructure.patch \
 	patches/openjdk/6764553-IdResolver_is_not_thread_safe.patch \
 	patches/openjdk/6761072-new_krb5_tests_fail_on_multiple_platforms.patch
