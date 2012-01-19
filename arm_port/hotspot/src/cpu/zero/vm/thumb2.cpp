@@ -4354,6 +4354,10 @@ void Thumb2_Safepoint(Thumb2_Info *jinfo, int stackdepth, int bci)
   ldr_imm(jinfo->codebuf, r_tmp, r_tmp, 0, 0, 0);
   cmp_imm(jinfo->codebuf, r_tmp, SafepointSynchronize::_synchronizing);
   {
+    // FIXME: If we are at a return instruction there is no point
+    // saving and restoring locals: no-one cares about them any more
+    // and we could safely ignore them.  However, this generic
+    // safepoint code also handles branches within a method.
     unsigned loc = forward_16(jinfo->codebuf);
   Thumb2_save_locals(jinfo, stackdepth);
     mov_imm(jinfo->codebuf, ARM_R1, bci+CONSTMETHOD_CODEOFFSET);
@@ -4402,9 +4406,9 @@ int Thumb2_Goto(Thumb2_Info *jinfo, unsigned bci, int offset, int len, int stack
     return -1;
 }
 
-void Thumb2_Return(Thumb2_Info *jinfo, unsigned opcode, int bci)
+void Thumb2_Return(Thumb2_Info *jinfo, unsigned opcode, int bci, int stackdepth)
 {
-  Thumb2_Safepoint(jinfo, 0, bci);
+  Thumb2_Safepoint(jinfo, stackdepth, bci);
 
   Reg r_lo, r;
   Thumb2_Stack *jstack = jinfo->jstack;
@@ -6358,7 +6362,7 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
       case opc_ireturn:
       case opc_freturn:
       case opc_areturn:
-	Thumb2_Return(jinfo, opcode, bci);
+	Thumb2_Return(jinfo, opcode, bci, stackdepth);
 	if (!jinfo->compiled_return) jinfo->compiled_return = bci;
 	break;
 
@@ -6393,7 +6397,7 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
 	it(jinfo->codebuf, COND_NE, IT_MASK_T);
 	bl(jinfo->codebuf, handlers[H_HANDLE_EXCEPTION]);
 	bcc_patch(jinfo->codebuf, COND_EQ, loc_eq);
-	Thumb2_Return(jinfo, opc_return, bci);
+	Thumb2_Return(jinfo, opc_return, bci, stackdepth);
 	break;
       }
 
