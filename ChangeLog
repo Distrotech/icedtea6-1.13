@@ -4,6 +4,18 @@
 	* openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
 	(Thumb2_Compile): Disable T2-JIT on unsupported targets like armv5.
 
+2012-01-20  Andrew Haley  <aph@redhat.com>
+
+	* openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
+	(Whole file): use PrintAssembly rather than t2ee_print_disass.
+	(t2ee_print_disass): Delete.
+	(class Hsdis):Rename.  (Was class Opcodes.)
+	Rewrite to use the OpenJDK hsdis framework.
+	(Thumb2_disass): move Hsdis here from global scope.
+	Rewrite to use the OpenJDK hsdis framework.
+	* patches/arm-hsdis.patch: New file.
+	* Makefile.am (ICEDTEA_PATCHES): Add patches/arm-hsdis.patch.
+
 2012-01-19  Andrew Haley  <aph@redhat.com>
 
 	* openjdk-ecj/hotspot/src/cpu/zero/vm/thumb2.cpp

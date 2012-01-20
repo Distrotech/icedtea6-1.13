@@ -38,10 +38,6 @@ static char *t2ee_print_compilation;
 static char *t2ee_print_statistics;
 #endif
 
-#ifdef T2EE_PRINT_DISASS
-static char *t2ee_print_disass;
-#endif
-
 #ifdef T2EE_PRINT_REGUSAGE
 static char *t2ee_print_regusage;
 #endif
@@ -55,11 +51,6 @@ static char *t2ee_print_regusage;
 
 #include "precompiled.hpp"
 #include "interpreter/bytecodes.hpp"
-
-#ifdef T2EE_PRINT_DISASS
-#include "dis-asm.h"
-#include "bfd.h"
-#endif
 
 #define opc_nop			0x00
 #define opc_aconst_null		0x01
@@ -725,41 +716,44 @@ static const char *local_types[] = { "int", "long", "float", "double", "ref" };
 
 #ifdef T2EE_PRINT_DISASS
 
-class Opcodes {
+class Hsdis {
 public:
-  typeof (::print_insn_little_arm) *print_insn_little_arm;
-  typeof (::init_disassemble_info) *init_disassemble_info;
-  typeof (::disassemble_init_for_target) *disassemble_init_for_target;
 
-  // Load libopcodes.so lazily.
-  Opcodes()
+  typedef void* (*decode_instructions_event_callback_ftype)  (void*, const char*, void*);
+
+  typedef void* (*decode_instructions_ftype)
+    (void* start, void* end,
+     decode_instructions_event_callback_ftype event_callback,
+     void* event_stream,
+     void* printf_callback,
+     void* printf_stream,
+     const char* options);
+
+  decode_instructions_ftype decode_instructions;
+
+  void *lib;
+
+  // Load hsdis-arm.so lazily.
+  Hsdis()
   {
-    void *lib;
-    if (t2ee_print_disass) {
-      if (lib = dlopen("libopcodes.so", RTLD_NOW)) {
-	print_insn_little_arm
-	  = (typeof print_insn_little_arm)dlsym(lib, "print_insn_little_arm");
-	init_disassemble_info
-	  = (typeof init_disassemble_info)dlsym(lib, "init_disassemble_info");
-	disassemble_init_for_target
-	  = (typeof disassemble_init_for_target)dlsym(lib, "disassemble_init_for_target");
+    if (PrintAssembly) {
+      if (lib = dlopen("hsdis-arm.so", RTLD_NOW)) {
+	decode_instructions
+	  = (typeof decode_instructions)dlsym(lib, "decode_instructions");
       }
 
-      if (! (print_insn_little_arm
-	     && init_disassemble_info
-	     && disassemble_init_for_target))
-	{
-	  fprintf (stderr, "The environment variable T2EE_PRINT_DISASS is set, but\n"
-		   "libopcodes.so has not been found or is invalid.  If you want to\n"
-		   "see a disassembly, please ensure that a valid copy of\n"
-		   "libopcodes.so is present somewhere in your library load path.\n");
-	  abort();
-	}
+      if (! (decode_instructions)) {
+	fprintf (stderr, "PrintAssembly (or T2EE_PRINT_DISASS) is set, but\n"
+		 "hsdis-arm.so has not been found or is invalid.  If you want to\n"
+		 "see a disassembly, please ensure that a valid copy of\n"
+		 "hsdis-arm.so is present somewhere in your library load path.\n");
+	abort();
+      }
     }
   }
 };
 
-static Opcodes opcodes;
+static void *print_address(void *stream, const char *tag, void *data);
 
 void Thumb2_disass(Thumb2_Info *jinfo)
 {
@@ -773,9 +767,10 @@ void Thumb2_disass(Thumb2_Info *jinfo)
   int start_b, end_b;
   unsigned nodisass;
 
-  struct disassemble_info info;
   unsigned short *codebuf = jinfo->codebuf->codebuf;
   unsigned idx, compiled_len;
+
+  static Hsdis hsdis;
 
 #if 0
   printf("Local Variable Usage\n");
@@ -793,16 +788,6 @@ void Thumb2_disass(Thumb2_Info *jinfo)
 
   fflush(stdout);
   fflush(stderr);
-
-  opcodes.init_disassemble_info(&info, stdout, (fprintf_ftype)fprintf);
-  info.arch = bfd_arch_arm;
-  opcodes.disassemble_init_for_target(&info);
-  info.endian = BFD_ENDIAN_LITTLE;
-  info.endian_code = BFD_ENDIAN_LITTLE;
-  info.buffer = (bfd_byte *)codebuf;
-  info.buffer_vma = (bfd_vma)codebuf;
-  info.buffer_length = jinfo->codebuf->idx * sizeof(short);
-  info.disassembler_options = (char *)"force-thumb";
 
   compiled_len = jinfo->codebuf->idx * 2;
   for (idx = 0; idx < compiled_len; ) {
@@ -867,13 +852,14 @@ void Thumb2_disass(Thumb2_Info *jinfo)
 	      low++;
 	    }
 	    bci += len;
-	    for (i = 0; i < 4; i++) {
+	    {
 	      printf("0x%08x:\t", (int)codebuf+idx);
 	      {
-		int len = opcodes.print_insn_little_arm((bfd_vma)codebuf+idx, &info);
-		if (len == -1) len = 2;
-		idx += len;
-		putchar('\n');
+		unsigned short *p = codebuf + idx/2;
+		hsdis.decode_instructions((char*)p, (char *)p + 14,
+					  print_address, NULL, NULL, stdout,
+					  "force-thumb");
+		idx += 14;
 	      }
 	    }
 	    for (i = 0; i < n; i++) {
@@ -929,7 +915,6 @@ void Thumb2_disass(Thumb2_Info *jinfo)
       }
     }
     if (!nodisass) {
-      printf("0x%08x:\t", (int)codebuf+idx);
       {
 	int len;
 	unsigned s1, s2;
@@ -945,15 +930,25 @@ void Thumb2_disass(Thumb2_Info *jinfo)
 	    len = 4;
 	  }
 	} else {
-	  len = opcodes.print_insn_little_arm((bfd_vma)codebuf+idx, &info);
-	  if (len == -1) len = 2;
-	  idx += len;
+	  char *p = (char*)codebuf + idx;
+	  len = 2;
+	  while (len + idx < compiled_len
+		 && start_bci[(len + idx)/2] == -1)
+	    len += 2;
+	  hsdis.decode_instructions((char*)p, (char*)p + len,
+				      print_address, NULL, NULL, stdout,
+				      "force-thumb");
 	}
-	putchar('\n');
+	idx += len;
       }
     }
   }
   fflush(stdout);
+}
+// where
+static void *print_address(void *, const char *tag, void *data) {
+  if (strcmp(tag, "insn") == 0)
+    printf("0x%08x:\t", data);
 }
 #endif
 
@@ -7131,7 +7126,7 @@ extern "C" unsigned long long Thumb2_Compile(JavaThread *thread, unsigned branch
 #endif
 
 #ifdef T2EE_PRINT_COMPILATION
-  if (t2ee_print_compilation) {
+  if (t2ee_print_compilation || PrintAssembly) {
     fprintf(stderr, "Compiling %d %c%c %s\n",
 	compiled_methods,
 	method->is_synchronized() ? 'S' : ' ',
@@ -7208,7 +7203,7 @@ extern "C" unsigned long long Thumb2_Compile(JavaThread *thread, unsigned branch
 
 #ifdef T2EE_PRINT_DISASS
   if (DISASS_AFTER == 0 || compiled_methods >= DISASS_AFTER)
-    if (t2ee_print_disass)
+    if (PrintAssembly)
 	Thumb2_disass(&jinfo_str);
 #endif
 
@@ -7383,7 +7378,7 @@ extern "C" void Thumb2_Initialize(void)
   t2ee_print_statistics = getenv("T2EE_PRINT_STATISTICS");
 #endif
 #ifdef T2EE_PRINT_DISASS
-  t2ee_print_disass = getenv("T2EE_PRINT_DISASS");
+  PrintAssembly |= getenv("T2EE_PRINT_DISASS") != NULL;
 #endif
 #ifdef T2EE_PRINT_REGUSAGE
   t2ee_print_regusage = getenv("T2EE_PRINT_REGUSAGE");
@@ -7775,33 +7770,19 @@ sub_imm(&codebuf, ARM_R0, Rstack, 4);
   mov_imm(&codebuf, ARM_R3, (u32)Thumb2_Handle_Exception_NoRegs);
   mov_reg(&codebuf, ARM_PC, ARM_R3);
 
+  // Disassemble the codebuf we just created.  For debugging
+  if (PrintAssembly) {
+    Hsdis hsdis;
+    hsdis.decode_instructions(cb->hp, cb->hp + codebuf.idx * 2,
+			      print_address, NULL, NULL, stdout,
+			      "force-thumb");
+    putchar('\n');
+  }
+
   Thumb2_Clear_Cache(cb->hp, cb->hp + codebuf.idx * 2);
   cb->hp += codebuf.idx * 2;
 
   thumb2_codebuf = cb;
-
-#if 0 // Disassemble the codebuf we just created.  For debugging
-  Opcodes opcodes;
-  if (t2ee_print_disass) {
-    struct disassemble_info info;
-    info.arch = bfd_arch_arm;
-    opcodes.disassemble_init_for_target(&info);
-    opcodes.init_disassemble_info(&info, stdout, (fprintf_ftype)fprintf);
-    info.endian = BFD_ENDIAN_LITTLE;
-    info.endian_code = BFD_ENDIAN_LITTLE;
-    info.buffer = (bfd_byte *)codebuf.codebuf;
-    info.buffer_vma = (bfd_vma)codebuf.codebuf;
-    info.buffer_length = codebuf.idx * sizeof(short);
-    info.disassembler_options = (char *)"force-thumb";
-    int len;
-    for (unsigned int i = 0; i < codebuf.idx * sizeof(short); i += len) {
-      printf("0x%08x:\t", ((int)codebuf.codebuf)+i);
-      len = opcodes.print_insn_little_arm(((bfd_vma)codebuf.codebuf)+i, &info);
-      if (len == -1) len = 2;
-      putchar('\n');
-    }
-  }
-#endif
 }
 
 #endif // THUMB2EE
