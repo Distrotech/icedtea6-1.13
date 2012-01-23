@@ -950,7 +950,7 @@ void Thumb2_disass(Thumb2_Info *jinfo)
 // where
 static void *print_address(void *, const char *tag, void *data) {
   if (strcmp(tag, "insn") == 0)
-    printf("0x%08x:\t", data);
+    printf("0x%08x:\t", (unsigned int)data);
   return NULL;
 }
 #endif
