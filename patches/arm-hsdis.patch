@@ -54,7 +54,7 @@ diff -u openjdk/hotspot/src/share/tools/hsdis/Makefile openjdk/hotspot/src/share
  CONFIGURE_ARGS= --host=$(MINGW) --target=$(MINGW)
  else
  CPU             = $(shell uname -m)
-+ifeq		($(CPU),armv7l)
++ifneq		 ($(findstring arm,$(CPU)),)
 +ARCH=arm
 +else
  ARCH1=$(CPU:x86_64=amd64)
