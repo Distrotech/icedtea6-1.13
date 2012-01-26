@@ -4365,7 +4365,17 @@ void Thumb2_Safepoint(Thumb2_Info *jinfo, int stackdepth, int bci)
   }
 }
 
-int Thumb2_Branch(Thumb2_Info *jinfo, unsigned bci, unsigned cond, int stackdepth)
+// If this is a backward branch, compile a safepoint check
+void Thumb2_Cond_Safepoint(Thumb2_Info *jinfo, int stackdepth, int bci) {
+  int offset = GET_JAVA_S2(jinfo->code_base + bci + 1);
+  unsigned dest_taken = bci + offset;
+
+  if (jinfo->bc_stackinfo[dest_taken] & BC_COMPILED) {
+    Thumb2_Safepoint(jinfo, stackdepth, bci);
+  }
+}
+
+int Thumb2_Branch(Thumb2_Info *jinfo, unsigned bci, unsigned cond)
 {
     int offset = GET_JAVA_S2(jinfo->code_base + bci + 1);
     unsigned dest_taken = bci + offset;
@@ -4373,10 +4383,7 @@ int Thumb2_Branch(Thumb2_Info *jinfo, unsigned bci, unsigned cond, int stackdept
     unsigned loc;
 
     if (jinfo->bc_stackinfo[dest_taken] & BC_COMPILED) {
-      loc = forward_16(jinfo->codebuf);
-      Thumb2_Safepoint(jinfo, stackdepth, bci);
-      branch_uncond(jinfo->codebuf, jinfo->bc_stackinfo[dest_taken] & ~BC_FLAGS_MASK);
-      bcc_patch(jinfo->codebuf, NEG_COND(cond), loc);
+      branch(jinfo->codebuf, cond, jinfo->bc_stackinfo[dest_taken] & ~BC_FLAGS_MASK);
       return dest_not_taken;
     }
     loc = forward_32(jinfo->codebuf);
@@ -6323,12 +6330,13 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
       case opc_ifnonnull: {
 	Reg r;
 	unsigned cond = opcode - opc_ifeq;
+	Thumb2_Cond_Safepoint(jinfo, stackdepth, bci);
 	if (opcode >= opc_ifnull) cond = opcode - opc_ifnull;
 	Thumb2_Fill(jinfo, 1);
 	r = POP(jstack);
 	Thumb2_Flush(jinfo);
 	cmp_imm(jinfo->codebuf, r, 0);
-	bci = Thumb2_Branch(jinfo, bci, cond, stackdepth-1);
+	bci = Thumb2_Branch(jinfo, bci, cond);
 	len = 0;
 	break;
       }
@@ -6343,13 +6351,14 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
       case opc_if_acmpne: {
 	Reg r_lho, r_rho;
 	unsigned cond = opcode - opc_if_icmpeq;
+	Thumb2_Cond_Safepoint(jinfo, stackdepth, bci);
 	if (opcode >= opc_if_acmpeq) cond = opcode - opc_if_acmpeq;
 	Thumb2_Fill(jinfo, 2);
 	r_rho = POP(jstack);
 	r_lho = POP(jstack);
 	Thumb2_Flush(jinfo);
 	cmp_reg(jinfo->codebuf, r_lho, r_rho);
-	bci = Thumb2_Branch(jinfo, bci, cond, stackdepth-2);
+	bci = Thumb2_Branch(jinfo, bci, cond);
 	len = 0;
 	break;
       }

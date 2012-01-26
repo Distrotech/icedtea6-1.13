@@ -1,3 +1,10 @@
+2012-01-25  Andrew Haley  <aph@redhat.com>
+
+	* openjdk-ecj/hotspot/src/cpu/zero/vm/thumb2.cpp (Thumb2_Branch):
+	Remove safepoint code.
+	(Thumb2_Cond_Safepoint): New function.
+	(Thumb2_codegen): Call Thumb2_Cond_Safepoint() from two places.
+
 2012-01-23  Andrew Haley  <aph@redhat.com>
 
 	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp (print_address): Add
