@@ -1,3 +1,12 @@
+2012-01-30  Deepak Bhole <dbhole@redhat.com>
+
+	Added patches to fix building with GCC 4.7
+	* patches/openjdk/7140882-dont-return-booleans-from-methods-returning-pointers.patch:
+	New patch. Makes methods return NULL instead of boolean when they return a
+	pointer.
+	* patches/openjdk/remove-mimpure-option-to-gcc.patch: New patch. Removes
+	the invalid -mimpure-text option to GCC.
+
 2012-01-25  Andrew Haley  <aph@redhat.com>
 
 	* openjdk-ecj/hotspot/src/cpu/zero/vm/thumb2.cpp (Thumb2_Branch):
