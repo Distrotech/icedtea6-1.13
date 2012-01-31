@@ -3576,6 +3576,7 @@ handle_exception_with_bcp:
 return_check_monitors:
 	stmdb	arm_sp!, {r4, lr}
 
+	DECACHE_JPC
 	ldr	r2, [istate, #ISTATE_METHOD]
 	ldr	r4, [r2, #METHOD_ACCESSFLAGS]
 	tst	r4, #1<<5
