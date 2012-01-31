@@ -4,6 +4,15 @@
 	(return_check_monitors): DECACHE_JPC so that the saved bytecode
 	pointer is correct for the GC.
 
+2012-01-30  Deepak Bhole <dbhole@redhat.com>
+
+	Added patches to fix building with GCC 4.7
+	* patches/openjdk/7140882-dont-return-booleans-from-methods-returning-pointers.patch:
+	New patch. Makes methods return NULL instead of boolean when they return a
+	pointer.
+	* patches/openjdk/remove-mimpure-option-to-gcc.patch: New patch. Removes
+	the invalid -mimpure-text option to GCC.
+
 2012-01-27  Andrew Haley  <aph@redhat.com>
 
 	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp (class Hsdis): Set

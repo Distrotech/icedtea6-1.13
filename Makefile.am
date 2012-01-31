@@ -407,7 +407,9 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7103725-ssl_beast_regression.patch \
 	patches/openjdk/6706974-krb5_test_infrastructure.patch \
 	patches/openjdk/6764553-IdResolver_is_not_thread_safe.patch \
-	patches/openjdk/6761072-new_krb5_tests_fail_on_multiple_platforms.patch
+	patches/openjdk/6761072-new_krb5_tests_fail_on_multiple_platforms.patch \
+	patches/openjdk/7140882-dont-return-booleans-from-methods-returning-pointers.patch \
+	patches/openjdk/remove-mimpure-option-to-gcc.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
