@@ -736,6 +736,8 @@ public:
   // Load hsdis-arm.so lazily.
   Hsdis()
   {
+    decode_instructions = NULL;
+
     if (PrintAssembly) {
       if (lib = dlopen("hsdis-arm.so", RTLD_NOW)) {
 	decode_instructions
