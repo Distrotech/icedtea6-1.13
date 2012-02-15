@@ -12,17 +12,81 @@ CVE-XXXX-YYYY: http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
 New in release 1.12 (2012-XX-XX):
 
+* Bug fixes
+  - PR865: Patching fails with patches/ecj/jaxws-getdtdtype.patch
 * Backports
-  - 6706974: Add krb5 test infrastructure
-  - 6764553: com.sun.org.apache.xml.internal.security.utils.IdResolver is not thread safe
-  - 6761072: new krb5 tests fail on multiple platforms
+  - S6706974: Add krb5 test infrastructure
+  - S6764553: com.sun.org.apache.xml.internal.security.utils.IdResolver is not thread safe
+  - S6761072: new krb5 tests fail on multiple platforms
 
-New in release 1.11 (2012-XX-XX):
+New in release 1.10.6 (2012-02-14):
+
+* Security fixes
+  - S7082299, CVE-2011-3571: Fix in AtomicReferenceArray
+  - S7088367, CVE-2011-3563: Fix issues in java sound
+  - S7110683, CVE-2012-0502: Issues with some KeyboardFocusManager method
+  - S7110687, CVE-2012-0503: Issues with TimeZone class
+  - S7110700, CVE-2012-0505: Enhance exception throwing mechanism in ObjectStreamClass
+  - S7110704, CVE-2012-0506: Issues with some method in corba
+  - S7112642, CVE-2012-0497: Incorrect checking for graphics rendering object
+  - S7118283, CVE-2012-0501: Better input parameter checking in zip file processing
+  - S7126960, CVE-2011-5035: Add property to limit number of request headers to the HTTP Server
+* Bug fixes
+  - RH580478: Desktop files should not use hardcoded path
+
+New in release 1.9.13 (2012-02-14):
+
+* Security fixes
+  - S7082299, CVE-2011-3571: Fix in AtomicReferenceArray
+  - S7088367, CVE-2011-3563: Fix issues in java sound
+  - S7110683, CVE-2012-0502: Issues with some KeyboardFocusManager method
+  - S7110687, CVE-2012-0503: Issues with TimeZone class
+  - S7110700, CVE-2012-0505: Enhance exception throwing mechanism in ObjectStreamClass
+  - S7110704, CVE-2012-0506: Issues with some method in corba
+  - S7112642, CVE-2012-0497: Incorrect checking for graphics rendering object
+  - S7118283, CVE-2012-0501: Better input parameter checking in zip file processing
+  - S7126960, CVE-2011-5035: Add property to limit number of request headers to the HTTP Server
+* Bug fixes
+  - RH580478: Desktop files should not use hardcoded path
+
+New in release 1.8.13 (2012-02-14):
+
+* Security fixes
+  - S7082299, CVE-2011-3571: Fix in AtomicReferenceArray
+  - S7088367, CVE-2011-3563: Fix issues in java sound
+  - S7110683, CVE-2012-0502: Issues with some KeyboardFocusManager method
+  - S7110687, CVE-2012-0503: Issues with TimeZone class
+  - S7110700, CVE-2012-0505: Enhance exception throwing mechanism in ObjectStreamClass
+  - S7110704, CVE-2012-0506: Issues with some method in corba
+  - S7112642, CVE-2012-0497: Incorrect checking for graphics rendering object
+  - S7118283, CVE-2012-0501: Better input parameter checking in zip file processing
+  - S7126960, CVE-2011-5035: Add property to limit number of request headers to the HTTP Server
+* Bug fixes
+  - RH580478: Desktop files should not use hardcoded path
+
+New in release 1.11.1 (2012-02-14):
+
+* Security fixes
+  - S7082299, CVE-2011-3571: Fix in AtomicReferenceArray
+  - S7088367, CVE-2011-3563: Fix issues in java sound
+  - S7110683, CVE-2012-0502: Issues with some KeyboardFocusManager method
+  - S7110687, CVE-2012-0503: Issues with TimeZone class
+  - S7110700, CVE-2012-0505: Enhance exception throwing mechanism in ObjectStreamClass
+  - S7110704, CVE-2012-0506: Issues with some method in corba
+  - S7112642, CVE-2012-0497: Incorrect checking for graphics rendering object
+  - S7118283, CVE-2012-0501: Better input parameter checking in zip file processing
+  - S7126960, CVE-2011-5035: (httpserver) Add property to limit number of request headers to the HTTP Server
+* Bug fixes
+  - PR865: Patching fails with patches/ecj/jaxws-getdtdtype.patch
+
+New in release 1.11 (2012-01-30):
 
 * Use HotSpot 20 as the default virtual machine.
 * ARM assembly language port reinstated and updated; details below.
 * Allow selection of test suites using the jtreg_checks argument e.g. jtreg_checks="langtools"
 * Drop the outdated NIO2 backport.  Users who want NIO2 should use IcedTea 2.x.
+* Shark has been disabled
+* Fixed build with GCC 4.7
 * Bug fixes
   - PR637: make check should exit with an error code if any regression test failed.
   - PR752: ImageFormatException extends Exception not RuntimeException
@@ -385,6 +449,7 @@ New in release 1.11 (2012-XX-XX):
   - S6296893: BMP Writer handles TopDown property incorrectly for some of the compression types
   - S7103224: collision between __LEAF define in interfaceSupport.hpp and /usr/include/sys/cdefs.h with gcc
   - S7103610, RH683768: _NET_WM_PID and WM_CLIENT_MACHINE are not set
+  - S7140882: Don't return booleans from methods returning pointers
 * ARM Port
   - Ported to the EABI hard-fp model
   - Locking for multi-core operation added.

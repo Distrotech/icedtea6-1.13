@@ -1,0 +1,27 @@
+# HG changeset patch
+# User asaha
+# Date 1323826839 28800
+# Node ID 71ca2b40fdc9fd542d565ccd9f2f14861556a417
+# Parent  ee0f12b18cb8d20c3fb61e96817bde6318a29221
+7118283: Better input parameter checking in zip file processing
+Reviewed-by: sherman
+
+diff --git a/src/share/native/java/util/zip/zip_util.c b/src/share/native/java/util/zip/zip_util.c
+--- openjdk/jdk/src/share/native/java/util/zip/zip_util.c
++++ openjdk/jdk/src/share/native/java/util/zip/zip_util.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1995, 2006, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1995, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -450,7 +450,7 @@ countCENHeaders(unsigned char *beg, unsi
+ {
+     jint count = 0;
+     ptrdiff_t i;
+-    for (i = 0; i + CENHDR < end - beg; i += CENSIZE(beg + i))
++    for (i = 0; i + CENHDR <= end - beg; i += CENSIZE(beg + i))
+         count++;
+     return count;
+ }

@@ -201,7 +201,17 @@ JTREG_SRCS = $(top_srcdir)/$(JTREG_DIR)
 
 ICEDTEA_FSG_PATCHES =
 
-SECURITY_PATCHES =
+SECURITY_PATCHES = \
+	patches/security/20120214/7082299.patch \
+	patches/security/20120214/7088367.patch \
+	patches/security/20120214/7110683.patch \
+	patches/security/20120214/7110687.patch \
+	patches/security/20120214/7110700.patch \
+	patches/security/20120214/7110704.patch \
+	patches/security/20120214/7118283.patch \
+	patches/security/20120214/7126960.patch
+
+SPECIAL_SECURITY_PATCH = patches/security/20120214/7112642.patch
 
 ICEDTEA_PATCHES = \
 	$(SECURITY_PATCHES) \
@@ -218,6 +228,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6725214-direct3d-01.patch \
 	patches/openjdk/6748082-isDisplayLocal.patch \
 	patches/openjdk/6633275-shaped_translucent_windows.patch \
+	$(SPECIAL_SECURITY_PATCH) \
 	patches/openjdk/6769607-modal-hangs.patch \
 	patches/openjdk/6791612-opengl-jni-fix.patch \
 	patches/openjdk/6755274-glgetstring-crash.patch \
@@ -399,10 +410,13 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6296893-BMP_Writer_handles_TopDown_prop_incorrectly.patch \
 	patches/openjdk/7103224-glibc_name_collision.patch \
 	patches/arm-debug.patch \
+	patches/arm-hsdis.patch	\
 	patches/openjdk/7103610-_NET_WM_PID_and_WM_CLIENT_MACHINE_are_not_set.patch \
 	patches/openjdk/6706974-krb5_test_infrastructure.patch \
 	patches/openjdk/6764553-IdResolver_is_not_thread_safe.patch \
-	patches/openjdk/6761072-new_krb5_tests_fail_on_multiple_platforms.patch
+	patches/openjdk/6761072-new_krb5_tests_fail_on_multiple_platforms.patch \
+	patches/openjdk/7140882-dont-return-booleans-from-methods-returning-pointers.patch \
+	patches/openjdk/remove-mimpure-option-to-gcc.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \

@@ -1,3 +1,107 @@
+2012-02-15  Andrew John Hughes  <ahughes@redhat.com>
+
+	* NEWS: Bring in 1.8.13, 1.9.13 and 1.10.6
+	release notes.
+
+2012-02-08  Omair Majid  <omajid@redhat.com>
+
+	* NEWS: Update with security fixes.
+	* Makefile.am
+	(SECURITY_PATCHES): Add security patches.
+	(SPECIAL_SECURITY_PATCH): Add new variable.
+	(ICEDTEA_PATCHES): Add security patch that epends on backport.
+	* patches/security/20120214/7082299.patch,
+	* patches/security/20120214/7088367.patch,
+	* patches/security/20120214/7110683.patch,
+	* patches/security/20120214/7110687.patch,
+	* patches/security/20120214/7110700.patch,
+	* patches/security/20120214/7110704.patch,
+	* patches/security/20120214/7112642.patch,
+	* patches/security/20120214/7118283.patch,
+	* patches/security/20120214/7126960.patch: New security fixes.
+
+2012-02-14  Omair Majid  <omajid@redhat.com>
+
+	* NEWS: Update with 1.11.1 changes.
+
+2012-02-02  Omair Majid  <omajid@redhat.com>
+
+	PR865 - Patching fails with patches/ecj/jaxws-getdtdtype.patch
+	* NEWS: Update with fix.
+	* patches/ecj/jaxws-getdtdtype.patch: Update to apply correctly.
+
+2012-02-01  Andrew John Hughes  <ahughes@redhat.com>
+
+	* NEWS: Sync with 1.11 branch.
+
+2012-01-31  Andrew Haley  <aph@redhat.com>
+
+	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S
+	(return_check_monitors): DECACHE_JPC so that the saved bytecode
+	pointer is correct for the GC.
+
+2012-01-30  Deepak Bhole <dbhole@redhat.com>
+
+	Added patches to fix building with GCC 4.7
+	* patches/openjdk/7140882-dont-return-booleans-from-methods-returning-pointers.patch:
+	New patch. Makes methods return NULL instead of boolean when they return a
+	pointer.
+	* patches/openjdk/remove-mimpure-option-to-gcc.patch: New patch. Removes
+	the invalid -mimpure-text option to GCC.
+
+2012-01-27  Andrew Haley  <aph@redhat.com>
+
+	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp (class Hsdis): Set
+	decode_instructions = NULL.
+
+2012-01-25  Andrew Haley  <aph@redhat.com>
+
+	* openjdk-ecj/hotspot/src/cpu/zero/vm/thumb2.cpp (Thumb2_Branch):
+	Remove safepoint code.
+	(Thumb2_Cond_Safepoint): New function.
+	(Thumb2_codegen): Call Thumb2_Cond_Safepoint() from two places.
+
+2012-01-23  Andrew Haley  <aph@redhat.com>
+
+	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp (print_address): Add
+	cast to silence warning.
+
+2012-01-19  Xerxes Rånby  <xerxes@zafena.se>
+	    Andrew Haley  <aph@redhat.com>
+
+	* openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
+	(Thumb2_Compile): Disable T2-JIT on unsupported targets like armv5.
+
+2012-01-23  Andrew Haley  <aph@redhat.com>
+
+	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp (Thumb2_disass):
+	Minor tidying.
+	* patches/arm-hsdis.patch: Make test for ARM more generic.
+
+2012-01-20  Andrew Haley  <aph@redhat.com>
+
+	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp (print_address):
+	Return NULL;
+
+2012-01-20  Andrew Haley  <aph@redhat.com>
+
+	* openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
+	(Whole file): use PrintAssembly rather than t2ee_print_disass.
+	(t2ee_print_disass): Delete.
+	(class Hsdis):Rename.  (Was class Opcodes.)
+	Rewrite to use the OpenJDK hsdis framework.
+	(Thumb2_disass): move Hsdis here from global scope.
+	Rewrite to use the OpenJDK hsdis framework.
+	* patches/arm-hsdis.patch: New file.
+	* Makefile.am (ICEDTEA_PATCHES): Add patches/arm-hsdis.patch.
+
+2012-01-19  Andrew Haley  <aph@redhat.com>
+
+	* openjdk-ecj/hotspot/src/cpu/zero/vm/thumb2.cpp
+	(Thumb2_Safepoint): Add comment.
+	(Thumb2_Return): Pass stackdepth to Thumb2_Safepoint.
+	(Thumb2_codegen): Pass stackdepth to Thumb2_Return.
+
 2012-01-18  Andrew John Hughes  <ahughes@redhat.com>
 
 	* patches/openjdk/6851973-kerberos.patch,
