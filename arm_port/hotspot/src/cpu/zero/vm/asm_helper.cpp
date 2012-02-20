@@ -141,7 +141,7 @@ extern "C" oop Helper_new(interpreterState istate, unsigned index)
 	if (UseTLAB) {
 	  result = (oop) thread->tlab().allocate(obj_size);
 	}
-	if (result == NULL) {
+	if (result == NULL && !CMSIncrementalMode) {
 	  need_zero = true;
 	  // Try allocate in shared eden
     retry:
