@@ -1,3 +1,13 @@
+2012-02-22  Andrew Haley  <aph@redhat.com>
+
+	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp
+        (handle_special_method, jstack_to_vfp, vfp_to_jstack): New
+        functions.
+        (Thumb2_codegen): Call handle_special_method.
+        (t_vop_ops): Add VSQRT.
+        (T_VMOVD_VFP_TOVFP): New macro.
+        (vmov_reg_d_VFP_to_VFP): New function.
+
 2012-02-20  Andrew Haley  <aph@redhat.com>
 
 	PR584:
