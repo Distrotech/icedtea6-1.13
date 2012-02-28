@@ -1,3 +1,15 @@
+2012-02-28  Andrew Haley  <aph@redhat.com>
+
+	* openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp (IT_MASK_TT)
+	(IT_MASK_TE, IT_MASK_TTT, IT_MASK_TEE): Add a few new IT
+	encodings.
+	(Thumb2_dUnaryOp): Generalize Thumb2_dNeg.
+	(Thumb2_dNeg, Thumb2_dAbs): Specializations of Thumb2_dUnaryOp.
+	(handle_special_method): Use intrinsic_id instead of method_kind.
+	Add handlers for _compareAndSwapInt and _compareAndSwapLong.
+	(Thumb2_codegen): Call handle_special_method() for invokevirtual.
+	Pass stackdepth to handle_special_method().
+
 2012-02-22  Andrew Haley  <aph@redhat.com>
 
 	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp

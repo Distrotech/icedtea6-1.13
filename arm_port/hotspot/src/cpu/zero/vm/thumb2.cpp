@@ -385,9 +385,7 @@ static char *t2ee_print_regusage;
 
 #define H_SAFEPOINT              	61
 
-#define H_DEBUG_THINGY		62
-
-#define H_LAST                          63  // Not used
+#define H_LAST                          62  // Not used
 
 unsigned handlers[H_LAST];
 
@@ -4364,9 +4362,8 @@ void Thumb2_Handler(Thumb2_Info *jinfo, unsigned handler, unsigned opcode, unsig
 void Thumb2_Debug(Thumb2_Info *jinfo, unsigned handler)
 {
 #if 0
-  if (handler == H_DEBUG_METHODCALL || handler == H_DEBUG_THINGY) {
-    bl(jinfo->codebuf, handlers[handler]);
-  }
+  Thumb2_Flush(jinfo);
+  bl(jinfo->codebuf, handlers[handler]);
 #endif
 }
 
@@ -5037,7 +5034,7 @@ static bool handle_special_method(methodOop callee, Thumb2_Info *jinfo,
   case vmIntrinsics::_dabs:
    {
      Thumb2_dAbs(jinfo);
-      return true;
+     return true;
     }
 
 #ifdef __ARM_PCS_VFP
@@ -5072,16 +5069,16 @@ static bool handle_special_method(methodOop callee, Thumb2_Info *jinfo,
       // blx Java_java_lang_StrictMath_sqrt
       // 0:
       jstack_to_vfp(jinfo, VFP_D1);
-      vop_reg_d(codebuf, VP_SQRT, VFP_D0, 0, VFP_D1);
-      vcmp_reg_d(codebuf, VFP_D0, VFP_D0, 0);
-      vmrs(codebuf, ARM_PC);
-      int loc = forward_16(codebuf);
-      vmov_reg_d_VFP_to_VFP(codebuf, VFP_D0, VFP_D1);
+      vop_reg_d(jinfo->codebuf, VP_SQRT, VFP_D0, 0, VFP_D1);
+      vcmp_reg_d(jinfo->codebuf, VFP_D0, VFP_D0, 0);
+      vmrs(jinfo->codebuf, ARM_PC);
+      int loc = forward_16(jinfo->codebuf);
+      vmov_reg_d_VFP_to_VFP(jinfo->codebuf, VFP_D0, VFP_D1);
       // FIXME: The JNI StrictMath routines don't use the JNIEnv *env
       // parameter, so it's arguably pointless to pass it here.
-      add_imm(codebuf, ARM_R0, Rthread, THREAD_JNI_ENVIRONMENT);
-      blx(codebuf, (unsigned)entry_point);
-      bcc_patch(codebuf, COND_EQ, loc);
+      add_imm(jinfo->codebuf, ARM_R0, Rthread, THREAD_JNI_ENVIRONMENT);
+      blx(jinfo->codebuf, (unsigned)entry_point);
+      bcc_patch(jinfo->codebuf, COND_EQ, loc);
       vfp_to_jstack(jinfo, VFP_D0);
 
       return true;
@@ -5097,7 +5094,6 @@ static bool handle_special_method(methodOop callee, Thumb2_Info *jinfo,
 #endif // __ARM_PCS_VFP
 
   case vmIntrinsics::_compareAndSwapInt:
-  case vmIntrinsics::_compareAndSwapObject:
    {
       Thumb2_Fill(jinfo, 4);
 
@@ -5109,11 +5105,7 @@ static bool handle_special_method(methodOop callee, Thumb2_Info *jinfo,
       // unsigned object = POP(jstack);
       // unsigned unsafe = POP(jstack);  // Initially an instance of java.lang.Unsafe
 
-      // Although there are only 4 stack registers, jstack->depth at
-      // the start of this invocation might be larger than 4 if some
-      // stack items are the result of loads from locals.
       Thumb2_Flush(jinfo);
-
       // Get ourself a result reg that's not one of the inputs
       unsigned exclude = (1<<update)|(1<<expect)|(1<<offset);
       unsigned result = JSTACK_PREFER(jstack, ~exclude);
@@ -5152,7 +5144,7 @@ static bool handle_special_method(methodOop callee, Thumb2_Info *jinfo,
       unsigned expect_hi = POP(jstack);
 
       Thumb2_Flush(jinfo);
-      Thumb2_save_locals(jinfo, stackdepth);
+      Thumb2_save_locals(jinfo, stackdepth - 4); // 4 args popped above
 
       // instance of java.lang.Unsafe:
       ldr_imm(jinfo->codebuf, ARM_LR, Rstack, 3 * wordSize, 1, 0);
@@ -5185,8 +5177,6 @@ static bool handle_special_method(methodOop callee, Thumb2_Info *jinfo,
       mov_imm(codebuf, result, 1);
       fullBarrier(codebuf);
 
-      Thumb2_Debug(jinfo, H_DEBUG_THINGY);
-
       Thumb2_restore_locals(jinfo, stackdepth - 4); // 4 args popped above
       add_imm(codebuf, Rstack, Rstack, 4 * wordSize);
       PUSH(jstack, result);
@@ -5201,13 +5191,11 @@ static bool handle_special_method(methodOop callee, Thumb2_Info *jinfo,
   if (! entry_point)
     return false;
 
-  unsigned r_lo, r_hi, r_res_lo, r_res_hi;
-
   jstack_to_vfp(jinfo, VFP_D0);
   // FIXME: The JNI StrictMath routines don't use the JNIEnv *env
   // parameter, so it's arguably pointless to pass it here.
-  add_imm(codebuf, ARM_R0, Rthread, THREAD_JNI_ENVIRONMENT);
-  blx(codebuf, (unsigned)entry_point);
+  add_imm(jinfo->codebuf, ARM_R0, Rthread, THREAD_JNI_ENVIRONMENT);
+  blx(jinfo->codebuf, (unsigned)entry_point);
   vfp_to_jstack(jinfo, VFP_D0);
 
   return true;
@@ -6337,8 +6325,8 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	str_imm(jinfo->codebuf, ARM_R1, Rthread, THREAD_LAST_JAVA_FP, 1, 0);
 	ldr_imm(jinfo->codebuf, ARM_R1, ARM_R0, METHOD_FROM_INTERPRETED, 1, 0);
   str_imm(jinfo->codebuf, ARM_R2, Ristate, ISTATE_BCP, 1, 0);
-	  Thumb2_Debug(jinfo, H_DEBUG_METHODCALL);
 	str_imm(jinfo->codebuf, Rstack, Rthread, THREAD_JAVA_SP, 1, 0);
+	  Thumb2_Debug(jinfo, H_DEBUG_METHODCALL);
 	Thumb2_invoke_save(jinfo, stackdepth);
   sub_imm(jinfo->codebuf, Rstack, Rstack, 4);
 	ldr_imm(jinfo->codebuf, ARM_R3, ARM_R1, 0, 1, 0);
@@ -6462,8 +6450,8 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
 	  str_imm(jinfo->codebuf, ARM_R1, Rthread, THREAD_LAST_JAVA_FP, 1, 0);
 	  ldr_imm(jinfo->codebuf, ARM_R1, ARM_R0, METHOD_FROM_INTERPRETED, 1, 0);
   add_imm(jinfo->codebuf, ARM_R2, ARM_R2, bci+CONSTMETHOD_CODEOFFSET);
-	  Thumb2_Debug(jinfo, H_DEBUG_METHODCALL);
 	  str_imm(jinfo->codebuf, Rstack, Rthread, THREAD_JAVA_SP, 1, 0);
+	  Thumb2_Debug(jinfo, H_DEBUG_METHODCALL);
 	Thumb2_invoke_save(jinfo, stackdepth);
   sub_imm(jinfo->codebuf, Rstack, Rstack, 4);
 	  ldr_imm(jinfo->codebuf, ARM_R3, ARM_R1, 0, 1, 0);
@@ -6474,12 +6462,10 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
 //	  enter_leave(jinfo->codebuf, 0);
 	  blx_reg(jinfo->codebuf, ARM_R3);
 //	  enter_leave(jinfo->codebuf, 1);
-	  // Thumb2_Debug(jinfo, H_DEBUG_THINGY);
   ldr_imm(jinfo->codebuf, Rthread, Ristate, ISTATE_THREAD, 1, 0);
 #ifdef USE_RLOCAL
   ldr_imm(jinfo->codebuf, Rlocals, Ristate, ISTATE_LOCALS, 1, 0);
 #endif
-  mov_imm(jinfo->codebuf, ARM_R0, 0);
 	  ldr_imm(jinfo->codebuf, Rstack, Rthread, THREAD_JAVA_SP, 1, 0);
 	  ldr_imm(jinfo->codebuf, ARM_R2, Ristate, ISTATE_STACK_LIMIT, 1, 0);
 	JASSERT(!(bc_stackinfo[bci+len] & BC_COMPILED), "code already compiled for this bytecode?");
@@ -7235,10 +7221,10 @@ extern "C" void Debug_MethodExit(interpreterState istate, intptr_t *stack)
   }
 }
 
-
 extern "C" void Debug_MethodCall(interpreterState istate, intptr_t *stack, methodOop callee)
 {
-  if (DebugSwitch && istate) {
+#if 0
+  if (DebugSwitch) {
     methodOop method = istate->method();
     tty->print("Calling ");
     callee->print_short_name(tty);
@@ -7247,18 +7233,8 @@ extern "C" void Debug_MethodCall(interpreterState istate, intptr_t *stack, metho
     tty->cr();
     Debug_Stack(stack);
     tty->flush();
-  } else {
-    tty->print("Leaving ");
-    tty->cr();
-    tty->flush();
   }
-}
-
-static int poo;
-
-extern "C" void Debug_Thingy(interpreterState istate, intptr_t *stack, methodOop callee)
-{
-  __sync_fetch_and_add(&poo, 1);
+#endif
 }
 
 extern "C" int Debug_irem_Handler(int a, int b)
@@ -8004,16 +7980,6 @@ sub_imm(&codebuf, ARM_R0, Rstack, 4);
   mov_reg(&codebuf, ARM_R0, ARM_R8);
   mov_reg(&codebuf, ARM_R1, ARM_R4);
   mov_imm(&codebuf, ARM_IP, (u32)Debug_MethodCall);
-  blx_reg(&codebuf, ARM_IP);
-  ldm(&codebuf, DEBUG_REGSET | (1<<ARM_PC), ARM_SP, POP_FD, 1);
-
-// DEBUG_THINGY
-  handlers[H_DEBUG_THINGY] = out_pos(&codebuf);
-  stm(&codebuf, DEBUG_REGSET | (1<<ARM_LR), ARM_SP, PUSH_FD, 1);
-  mov_reg(&codebuf, ARM_R2, ARM_R0);
-  mov_reg(&codebuf, ARM_R0, ARM_R8);
-  mov_reg(&codebuf, ARM_R1, ARM_R4);
-  mov_imm(&codebuf, ARM_IP, (u32)Debug_Thingy);
   blx_reg(&codebuf, ARM_IP);
   ldm(&codebuf, DEBUG_REGSET | (1<<ARM_PC), ARM_SP, POP_FD, 1);
 
