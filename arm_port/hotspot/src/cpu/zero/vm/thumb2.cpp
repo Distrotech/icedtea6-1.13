@@ -5026,20 +5026,21 @@ static void jstack_to_vfp(Thumb2_Info *jinfo, int vfp_reg) {
 
 // Expand a call to a "special" method.  These are usually inlines of
 // java.lang.Math methods.  Return true if the inlining succeeded.
-static bool handle_special_method(methodOop callee, Thumb2_Info *jinfo) {
+static bool handle_special_method(methodOop callee, Thumb2_Info *jinfo,
+				  unsigned stackdepth) {
   Thumb2_Stack *jstack = jinfo->jstack;
   CodeBuf *codebuf = jinfo->codebuf;
 
   const char *entry_name;
 
   switch (callee->intrinsic_id()) {
-#ifdef __ARM_PCS_VFP
   case vmIntrinsics::_dabs:
    {
      Thumb2_dAbs(jinfo);
       return true;
     }
 
+#ifdef __ARM_PCS_VFP
   case vmIntrinsics::_dsin:
     entry_name = "Java_java_lang_StrictMath_sin";
     break;
@@ -5096,8 +5097,8 @@ static bool handle_special_method(methodOop callee, Thumb2_Info *jinfo) {
 #endif // __ARM_PCS_VFP
 
   case vmIntrinsics::_compareAndSwapInt:
-    {
-Thumb2_Debug(jinfo, H_DEBUG_THINGY);
+  case vmIntrinsics::_compareAndSwapObject:
+   {
       Thumb2_Fill(jinfo, 4);
 
       unsigned update = POP(jstack);
@@ -5137,6 +5138,57 @@ Thumb2_Debug(jinfo, H_DEBUG_THINGY);
       mov_imm(codebuf, result, 1);
       fullBarrier(codebuf);
 
+      PUSH(jstack, result);
+    }
+    return true;
+
+  case vmIntrinsics::_compareAndSwapLong:
+    {
+      Thumb2_Fill(jinfo, 4);
+
+      unsigned update_lo = POP(jstack);
+      unsigned update_hi = POP(jstack);
+      unsigned expect_lo = POP(jstack);
+      unsigned expect_hi = POP(jstack);
+
+      Thumb2_Flush(jinfo);
+      Thumb2_save_locals(jinfo, stackdepth);
+
+      // instance of java.lang.Unsafe:
+      ldr_imm(jinfo->codebuf, ARM_LR, Rstack, 3 * wordSize, 1, 0);
+      ldr_imm(codebuf, ARM_LR, ARM_LR, 0, 0, 0);  // Security check
+
+      // Object:
+      ldr_imm(jinfo->codebuf, ARM_LR, Rstack, 2 * wordSize, 1, 0);
+      // Offset:
+      ldr_imm(jinfo->codebuf, ARM_IP, Rstack, 0 * wordSize, 1, 0);
+      add_reg(codebuf, ARM_LR, ARM_LR, ARM_IP); // ARM_LR now points to word
+
+      fullBarrier(codebuf);
+
+      int retry = out_loc(codebuf);
+      ldrexd(codebuf, JAZ_V2, JAZ_V3, ARM_LR);
+      cmp_reg(codebuf, JAZ_V2, expect_lo);
+      it(jinfo->codebuf, COND_EQ, IT_MASK_T);
+      cmp_reg(codebuf, JAZ_V3, expect_hi);
+
+      int loc_failed = forward_16(codebuf);
+      strexd(codebuf, JAZ_V1, update_lo, update_hi, ARM_LR);
+      cmp_imm(codebuf, JAZ_V1, 0);
+      branch(codebuf, COND_NE, retry);
+      bcc_patch(jinfo->codebuf, COND_NE, loc_failed);
+
+      unsigned result = JSTACK_REG(jinfo->jstack);
+
+      it(codebuf, COND_NE, IT_MASK_TEE);
+      mov_imm(codebuf, result, 0);
+      mov_imm(codebuf, result, 1);
+      fullBarrier(codebuf);
+
+      Thumb2_Debug(jinfo, H_DEBUG_THINGY);
+
+      Thumb2_restore_locals(jinfo, stackdepth - 4); // 4 args popped above
+      add_imm(codebuf, Rstack, Rstack, 4 * wordSize);
       PUSH(jstack, result);
     }
     return true;
@@ -6230,7 +6282,7 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 
 	callee = (methodOop)cache->f1();
 
-	if (handle_special_method(callee, jinfo))
+	if (handle_special_method(callee, jinfo, stackdepth))
 	  break;
 
 	if (callee->is_accessor()) {
@@ -6356,7 +6408,7 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
 	if (cache->is_vfinal()) {
 	  methodOop callee = (methodOop)cache->f2();
 
-	  if (handle_special_method(callee, jinfo))
+	  if (handle_special_method(callee, jinfo, stackdepth))
 	    break;
 
 	  if (callee->is_accessor()) {
