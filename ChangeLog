@@ -1,13 +1,12 @@
-2012-02-29  Andrew Haley  <aph@redhat.com>
+2012-03-02  Andrew Haley  <aph@redhat.com>
 
+	* arm_port/hotspot/src/cpu/zero/vm/arm_cas.S: New file.
 	* patches/arm.patch (void get_processor_features): New function
 	that enables compareAndSwap on jlongs.
 	(atomic_linux_zero.inline.hpp: arm_val_compare_and_swap): New
 	function.
 	(atomic_linux_zero.inline.hpp: Atomic::store): Use
 	arm_val_compare_and_swap.
-	
-2012-02-28  Andrew Haley  <aph@redhat.com>
 
 	* openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp (IT_MASK_TT)
 	(IT_MASK_TE, IT_MASK_TTT, IT_MASK_TEE): Add a few new IT
