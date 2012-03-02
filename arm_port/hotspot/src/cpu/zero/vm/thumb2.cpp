@@ -5099,7 +5099,8 @@ static bool handle_special_method(methodOop callee, Thumb2_Info *jinfo) {
   // FIXME: The JNI StrictMath routines don't use the JNIEnv *env
   // parameter, so it's arguably pointless to pass it here.
   add_imm(jinfo->codebuf, ARM_R0, Rthread, THREAD_JNI_ENVIRONMENT);
-  blx(jinfo->codebuf, (unsigned)entry_point);
+  mov_imm(jinfo->codebuf, ARM_IP, (unsigned)entry_point);
+  blx_reg(jinfo->codebuf, ARM_IP);
   vfp_to_jstack(jinfo, VFP_D0);
 
   return true;
