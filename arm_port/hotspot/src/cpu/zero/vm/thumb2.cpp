@@ -1557,7 +1557,7 @@ int Thumb2_is_zombie(Thumb2_Info *jinfo, unsigned bci)
   } while (!(bc_stackinfo[bci] & BC_BRANCH_TARGET));
   return 0;
 }
-#endif // ZOMBIT_DETECTION
+#endif // ZOMBIE_DETECTION
 
 void Thumb2_RegAlloc(Thumb2_Info *jinfo)
 {
@@ -1991,12 +1991,14 @@ static const unsigned t_dop_ops[] = {
 #define VP_SUB	1
 #define VP_MUL	2
 #define VP_DIV	3
+#define VP_SQRT 4
 
 static const unsigned t_vop_ops[] = {
 	0xee300a00,			// VADD
 	0xee300a40,			// VSUB
 	0xee200a00,			// VMUL
 	0xee800a00,			// VDIV
+	0xeeb10bc0			// VSQRT
 };
 
 #define VP_REG(op)	t_vop_ops[op]
@@ -2161,6 +2163,9 @@ static const unsigned t_vop_ops[] = {
   (0xec500b10 | ((dst_lo) << 12) | ((dst_hi) << 16) | (((src) & 0x10)<<(5-4)) | ((src) & 0x0f))
 #define T_VMOVD_TOVFP(dst, src_lo, src_hi) \
   (0xec400b10 | ((src_lo) << 12) | ((src_hi) << 16) | (((dst) & 0x10)<<(5-4)) | ((dst) & 0x0f))
+
+// VFP reg to VFP re move.
+#define T_VMOVD_VFP_TOVFP(dst, src) (0xeeb00b40 | (((dst) & 0x0f) << 12) | ((src) & 0x0f))
 
 #define T_VOP_REG_S(op, dst, lho, rho)	((op) |				\
 		(((dst) & 1) << 22) | (((dst) & 0x1e) << (12-1)) | 	\
@@ -2728,6 +2733,11 @@ int vmov_reg_s_toARM(CodeBuf *codebuf, u32 dst, u32 src)
 int vmov_reg_d_toVFP(CodeBuf *codebuf, u32 dst, u32 src_lo, u32 src_hi)
 {
   return out_16x2(codebuf, T_VMOVD_TOVFP(dst, src_lo, src_hi));
+}
+
+int vmov_reg_d_VFP_to_VFP(CodeBuf *codebuf, u32 dst, u32 src)
+{
+  return out_16x2(codebuf, T_VMOVD_VFP_TOVFP(dst, src));
 }
 
 int vmov_reg_d_toARM(CodeBuf *codebuf, u32 dst_lo, u32 dst_hi, u32 src)
@@ -4976,6 +4986,129 @@ void Thumb2_store_long(Thumb2_Info *jinfo, Reg r_lo, Reg r_hi, Reg base,
 
 extern "C" void _ZN18InterpreterRuntime18register_finalizerEP10JavaThreadP7oopDesc(void);
 
+// Push VFP_REG to the java stack.
+static void vfp_to_jstack(Thumb2_Info *jinfo, int vfp_reg) {
+  Thumb2_Stack *jstack = jinfo->jstack;
+  unsigned r_lo, r_hi;
+  r_hi = PUSH(jstack, JSTACK_REG(jstack));
+  r_lo = PUSH(jstack, JSTACK_REG(jstack));
+  vmov_reg_d_toARM(jinfo->codebuf, r_lo, r_hi, vfp_reg);
+}
+
+// Pop the java stack to VFP_REG .
+static void jstack_to_vfp(Thumb2_Info *jinfo, int vfp_reg) {
+  Thumb2_Stack *jstack = jinfo->jstack;
+  unsigned r_lo, r_hi;
+  Thumb2_Fill(jinfo, 2);
+  r_lo = POP(jstack);
+  r_hi = POP(jstack);
+  vmov_reg_d_toVFP(jinfo->codebuf, vfp_reg, r_lo, r_hi);
+  Thumb2_Flush(jinfo);
+}
+
+// Expand a call to a "special" method.  These are usually inlines of
+// java.lang.Math methods.  Return true if the inlining succeeded.
+static bool handle_special_method(methodOop callee, Thumb2_Info *jinfo) {
+#ifdef __ARM_PCS_VFP
+  Thumb2_Stack *jstack = jinfo->jstack;
+
+  const char *entry_name;
+
+  unsigned loc1 = 0;
+
+  switch (Interpreter::method_kind(callee)) {
+  case Interpreter::java_lang_math_abs:
+   {
+      unsigned r_lo, r_hi;
+
+      Thumb2_Fill(jinfo, 2);
+      r_lo = POP(jstack);
+      r_hi = POP(jstack);
+      dop_imm_s(jinfo->codebuf, DP_BIC, r_hi, r_hi, 0x80000000, 0);
+      PUSH(jstack, r_hi);
+      PUSH(jstack, r_lo);
+
+      return true;
+    }
+
+  case Interpreter::java_lang_math_sin:
+    entry_name = "Java_java_lang_StrictMath_sin";
+    break;
+
+  case Interpreter::java_lang_math_cos:
+    entry_name = "Java_java_lang_StrictMath_cos";
+    break;
+
+  case Interpreter::java_lang_math_tan:
+    entry_name = "Java_java_lang_StrictMath_tan";
+    break;
+
+  case Interpreter::java_lang_math_sqrt:
+    {
+      void *entry_point = dlsym(NULL, "Java_java_lang_StrictMath_sqrt");
+      if (! entry_point)
+	return false;
+
+      unsigned r_lo, r_hi, r_res_lo, r_res_hi;
+
+      // Make sure that canonical NaNs are returned, as per the spec.
+      //
+      // Generate:
+      // vsqrt.f64 d0, d1
+      // vcmp.f64 d0, d0
+      // vmrs APSR_nzcv, fpscr
+      // beq.n 0f
+      // vmov.f64 d0, d1
+      // blx Java_java_lang_StrictMath_sqrt
+      // 0:
+      jstack_to_vfp(jinfo, VFP_D1);
+      vop_reg_d(jinfo->codebuf, VP_SQRT, VFP_D0, 0, VFP_D1);
+      vcmp_reg_d(jinfo->codebuf, VFP_D0, VFP_D0, 0);
+      vmrs(jinfo->codebuf, ARM_PC);
+      int loc = forward_16(jinfo->codebuf);
+      vmov_reg_d_VFP_to_VFP(jinfo->codebuf, VFP_D0, VFP_D1);
+      // FIXME: The JNI StrictMath routines don't use the JNIEnv *env
+      // parameter, so it's arguably pointless to pass it here.
+      add_imm(jinfo->codebuf, ARM_R0, Rthread, THREAD_JNI_ENVIRONMENT);
+      blx(jinfo->codebuf, (unsigned)entry_point);
+      bcc_patch(jinfo->codebuf, COND_EQ, loc);
+      vfp_to_jstack(jinfo, VFP_D0);
+
+      return true;
+    }
+
+  case Interpreter::java_lang_math_log:
+    entry_name = "Java_java_lang_StrictMath_log";
+    break;
+
+  case Interpreter::java_lang_math_log10:
+    entry_name = "Java_java_lang_StrictMath_log10";
+    break;
+
+  default:
+    return false;
+  }
+
+  void *entry_point = dlsym(NULL, entry_name);
+  if (! entry_point)
+    return false;
+
+  unsigned r_lo, r_hi, r_res_lo, r_res_hi;
+
+  jstack_to_vfp(jinfo, VFP_D0);
+  // FIXME: The JNI StrictMath routines don't use the JNIEnv *env
+  // parameter, so it's arguably pointless to pass it here.
+  add_imm(jinfo->codebuf, ARM_R0, Rthread, THREAD_JNI_ENVIRONMENT);
+  mov_imm(jinfo->codebuf, ARM_IP, (unsigned)entry_point);
+  blx_reg(jinfo->codebuf, ARM_IP);
+  vfp_to_jstack(jinfo, VFP_D0);
+
+  return true;
+#else
+  return false;
+#endif // __ARM_PCS_VFP
+}
+
 void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 {
   unsigned code_size = jinfo->code_size;
@@ -6044,6 +6177,10 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	}
 
 	callee = (methodOop)cache->f1();
+
+	if (handle_special_method(callee, jinfo))
+	  break;
+
 	if (callee->is_accessor()) {
 	  u1 *code = callee->code_base();
 	  int index = GET_NATIVE_U2(&code[2]);

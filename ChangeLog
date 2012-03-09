@@ -1,3 +1,49 @@
+2012-03-02  Xerxes Rånby  <xerxes@zafena.se>
+	    Andrew Haley  <aph@redhat.com>
+
+	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp:
+	(handle_special_method): Fix a off by one byte SIGILL crash
+	during BLX call to thumb compiled StrictMath intrinsics for
+	--with-float=hard --with-mode=thumb ARM builds.
+
+2012-02-27  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: Add new patch.
+	* NEWS: Mention backport.
+	* patches/openjdk/4465490-Suspicious_double-check_locking_idiom.patch:
+	Backport of S4465490: Suspicious about double-check locking idiom being
+	used in the code.
+
+2012-02-27  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am: Add new patch.
+	* NEWS: Mention backport.
+	* patches/openjdk/6883983-JarVerifier_removed_dependency_sun_security_pkcs.patch:
+	Backport of S6883983: JarVerifier dependency on
+	sun.security.pkcs should be removed
+
+2012-02-24  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* patches/ScriptEngineManager-doc.patch:
+	Added patch with JavaDoc fixes for ScriptEngineManager class.
+	* Makefile.am: updated
+
+2012-02-22  Andrew Haley  <aph@redhat.com>
+
+	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp
+	(handle_special_method, jstack_to_vfp, vfp_to_jstack): New
+	functions.
+	(Thumb2_codegen): Call handle_special_method.
+	(t_vop_ops): Add VSQRT.
+	(T_VMOVD_VFP_TOVFP): New macro.
+	(vmov_reg_d_VFP_to_VFP): New function.
+
+2012-02-20  Andrew Haley  <aph@redhat.com>
+
+	PR584:
+	* arm_port/hotspot/src/cpu/zero/vm/asm_helper.cpp (Helper_new):
+	Don't use shared Eden in incremental mode.
+
 2012-02-15  Andrew John Hughes  <ahughes@redhat.com>
 
 	* NEWS: Bring in 1.8.13, 1.9.13 and 1.10.6
