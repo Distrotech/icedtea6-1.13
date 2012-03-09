@@ -201,15 +201,7 @@ JTREG_SRCS = $(top_srcdir)/$(JTREG_DIR)
 
 ICEDTEA_FSG_PATCHES =
 
-SECURITY_PATCHES = \
-	patches/security/20120214/7082299.patch \
-	patches/security/20120214/7088367.patch \
-	patches/security/20120214/7110683.patch \
-	patches/security/20120214/7110687.patch \
-	patches/security/20120214/7110700.patch \
-	patches/security/20120214/7110704.patch \
-	patches/security/20120214/7118283.patch \
-	patches/security/20120214/7126960.patch
+SECURITY_PATCHES =
 
 SPECIAL_SECURITY_PATCH = patches/security/20120214/7112642.patch
 
