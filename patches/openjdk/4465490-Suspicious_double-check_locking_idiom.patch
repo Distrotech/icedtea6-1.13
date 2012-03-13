@@ -1,0 +1,21 @@
+# HG changeset patch
+# User sherman
+# Date 1274070127 25200
+# Node ID 91bcd8fc04f27338ef31d18a7cc3b25f536015ef
+# Parent  2fb3d7dbaa32ed1846551c1301530c74c80d9f36
+4465490: Suspicious about double-check locking idiom being used in the code
+Summary: to use volatile for the double-checked object
+Reviewed-by: weijun
+
+diff -r 2fb3d7dbaa32 -r 91bcd8fc04f2 src/share/classes/java/util/jar/JarVerifier.java
+--- openjdk.orig/jdk/src/share/classes/java/util/jar/JarVerifier.java	Fri May 14 13:46:53 2010 -0700
++++ openjdk/jdk/src/share/classes/java/util/jar/JarVerifier.java	Sun May 16 21:22:07 2010 -0700
+@@ -76,7 +76,7 @@
+     private ByteArrayOutputStream baos;
+ 
+     /** The ManifestDigester object */
+-    private ManifestDigester manDig;
++    private volatile ManifestDigester manDig;
+ 
+     /** the bytes for the manDig object */
+     byte manifestRawBytes[] = null;

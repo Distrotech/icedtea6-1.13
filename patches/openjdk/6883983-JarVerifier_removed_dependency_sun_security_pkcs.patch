@@ -1,0 +1,23 @@
+# HG changeset patch
+# User alanb
+# Date 1255604044 -3600
+# Node ID f6833a276c1d74a51bcf6ac99f21aab317c7535b
+# Parent  16b33372af1c8555012d4b8dde6e12226f0d866a
+6883983: JarVerifier dependency on sun.security.pkcs should be removed
+Reviewed-by: sherman, wetmore
+
+diff -r 16b33372af1c -r f6833a276c1d src/share/classes/java/util/jar/JarVerifier.java
+--- openjdk.orig/jdk/src/share/classes/java/util/jar/JarVerifier.java	Wed Oct 14 20:16:02 2009 -0700
++++ openjdk/jdk/src/share/classes/java/util/jar/JarVerifier.java	Thu Oct 15 11:54:04 2009 +0100
+@@ -293,10 +293,8 @@
+                 }
+                 sfv.process(sigFileSigners);
+ 
+-            } catch (sun.security.pkcs.ParsingException pe) {
+-                if (debug != null) debug.println("processEntry caught: "+pe);
+-                // ignore and treat as unsigned
+             } catch (IOException ioe) {
++                // e.g. sun.security.pkcs.ParsingException
+                 if (debug != null) debug.println("processEntry caught: "+ioe);
+                 // ignore and treat as unsigned
+             } catch (SignatureException se) {
