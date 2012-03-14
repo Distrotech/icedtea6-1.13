@@ -1,3 +1,11 @@
+2012-03-14  Andrew Haley  <aph@redhat.com>
+
+	* arm_port/hotspot/src/cpu/zero/vm/bytecodes_arm.def (ldc, ldc_w):
+	Replace numeric constants for constant pool with symbols.
+	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S (build_frame):
+	Likewise.
+	(fast_native_entry): Likewise.
+
 2012-03-02  Andrew Haley  <aph@redhat.com>
 
 	* arm_port/hotspot/src/cpu/zero/vm/arm_cas.S: New file.

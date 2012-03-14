@@ -737,8 +737,8 @@ build_frame:
 	tst	r2, #JVM_ACC_STATIC
 	ldrne	r2, [r1, #METHOD_CONSTANTS]
 	ldreq	r2, [r6, #0]
-	ldrne	r2, [r2, #16]
-	ldrne	r2, [r2, #60]
+	ldrne	r2, [r2, #CONSTANTPOOL_POOL_HOLDER]
+	ldrne	r2, [r2, #KLASS_PART + KLASS_JAVA_MIRROR]
 	str	r2, [r7, #4]
 .L10:
 	ldr	r2, [r3, #8]
@@ -1125,9 +1125,9 @@ fast_native_entry:
 	beq	.do_fast_copy_args
 
 	ldr	r2, [r11, #METHOD_CONSTANTS]
-	ldr	r2, [r2, #16]
+	ldr	r2, [r2, #CONSTANTPOOL_POOL_HOLDER]
 	str	r3, [lr], #4
-	ldr	r2, [r2, #60]
+	ldr	r2, [r2, #KLASS_PART + KLASS_JAVA_MIRROR]
 	add	r1, r1, #4
 	str	r2, [r3]
 
@@ -2861,9 +2861,9 @@ fast_normal_entry_synchronized:
 	tst	r3, #JVM_ACC_STATIC
 	ldrne	r3, [r0, #METHOD_CONSTANTS]
 	ldreq	sl, [locals, #0]
-	ldrne	r2, [r3, #16]
+	ldrne	r2, [r3, #CONSTANTPOOL_POOL_HOLDER]
 	ldr	tmp1, [istate, #ISTATE_MONITOR_BASE]
-	ldrne	sl, [r2, #60]
+	ldrne	sl, [r2, #KLASS_PART + KLASS_JAVA_MIRROR]
 	ldr	r3, [sl, #0]
 	orr	tmp_xxx, r3, #1
 	str	tmp_xxx, [tmp1, #-8]!
