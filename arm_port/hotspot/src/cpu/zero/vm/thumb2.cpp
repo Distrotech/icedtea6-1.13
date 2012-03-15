@@ -3042,10 +3042,7 @@ static unsigned conds[] = {
 #define T_IT(cond, mask) (0xbf00 | (conds[cond] << 4) | (mask))
 
 #define IT_MASK_T	8
-#define IT_MASK_TE	0x14
-#define IT_MASK_TT	0x1e
-#define IT_MASK_TTT	0x1e
-#define IT_MASK_TEE	0x12
+#define IT_MASK_TEE	0x0e
 
 #define PATCH(loc)	do {						\
 	  unsigned oldidx = codebuf->idx;				\
@@ -3071,6 +3068,28 @@ int forward_32(CodeBuf *codebuf)
 
 int it(CodeBuf *codebuf, unsigned cond, unsigned mask)
 {
+  if (cond & 1) {
+    // If this is a negated condition, flip all the bits above the
+    // least significant bit that is 1.  Note that at least one bit is
+    // always 1 in mask
+    switch (mask & (-mask)) {
+    case 8:
+      break;
+    case 4:
+      mask ^= 8;
+      break;
+    case 2:
+      mask ^= 0x0c;
+      break;
+    case 1:
+      mask ^= 0x0e;
+      break;
+    default:
+      // Impossible unless someone specified an incorrect mask
+      longjmp(compiler_error_env, COMPILER_RESULT_FAILED);
+    }
+  }
+
   return out_16(codebuf, T_IT(cond, mask));
 }
 
@@ -5077,7 +5096,8 @@ static bool handle_special_method(methodOop callee, Thumb2_Info *jinfo,
       // FIXME: The JNI StrictMath routines don't use the JNIEnv *env
       // parameter, so it's arguably pointless to pass it here.
       add_imm(jinfo->codebuf, ARM_R0, Rthread, THREAD_JNI_ENVIRONMENT);
-      blx(jinfo->codebuf, (unsigned)entry_point);
+      mov_imm(jinfo->codebuf, ARM_IP, (unsigned)entry_point);
+      blx_reg(jinfo->codebuf, ARM_IP);
       bcc_patch(jinfo->codebuf, COND_EQ, loc);
       vfp_to_jstack(jinfo, VFP_D0);
 
