@@ -643,6 +643,7 @@ EXTRA_DIST = generated \
 	autogen.sh \
 	tapset/hotspot.stp.in \
 	tapset/hotspot_jni.stp.in \
+	tapset/jstack.stp.in \
 	scripts/jni_create_stap.c \
 	scripts/jni_desc \
 	rewriter/agpl-3.0.txt \
