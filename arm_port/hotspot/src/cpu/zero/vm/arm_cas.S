@@ -6,6 +6,7 @@
 	.pushsection .text
 	.global arm_val_compare_and_swap_long
 #ifdef __thumb__
+	.syntax	unified
 	.thumb_func
 #endif
 	.type arm_val_compare_and_swap_long, %function
