@@ -1,57 +1,27 @@
-<<<<<<< local
 2012-03-16  Andrew Haley  <aph@redhat.com>
-=======
-2012-03-14  Mark Wielaard  <mjw@redhat.com>
->>>>>>> other
 
-<<<<<<< local
 	* arm_port/hotspot/src/cpu/zero/vm/arm_cas.S: Use unified syntax
 	for thumb code.
-=======
-	* Makefile.am (EXTRA_DIST): Add tapset/jstack.stp.in.
->>>>>>> other
 
-<<<<<<< local
 2012-03-15  Andrew Haley  <aph@redhat.com>
-=======
-2012-03-13  Mark Wielaard  <mjw@redhat.com>
->>>>>>> other
 
-<<<<<<< local
 	* openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp (it): Add code to
 	handle negated conditions.
 	(handle_special_method): Use blx_reg rather than blx in case the
 	target is thumb code.
-=======
-	* tapset/jstack.stp.in: Wrap heap accessors in try-catch block to be
-	able to report unusual frames.
->>>>>>> other
+	(IT_MASK_TE, IT_MASK_TT, IT_MASK_TTT): Delete.
+ 	(IT_MASK_TEE): Correct.
 
-<<<<<<< local
 2012-03-14  Andrew Haley  <aph@redhat.com>
-=======
-2012-03-13  Mark Wielaard  <mjw@redhat.com>
->>>>>>> other
 
-<<<<<<< local
 	* arm_port/hotspot/src/cpu/zero/vm/bytecodes_arm.def (ldc, ldc_w):
 	Replace numeric constants for constant pool with symbols.
 	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S (build_frame):
 	Likewise.
 	(fast_native_entry): Likewise.
-=======
-	* tapset/jstack.stp.in: Use @var construct if available to pick
-	target variable from the right CU (needed by newer DWARF/gcc
-	versions).
->>>>>>> other
 
-<<<<<<< local
 2012-03-02  Andrew Haley  <aph@redhat.com>
-=======
-2012-03-13  Mark Wielaard  <mjw@redhat.com>
->>>>>>> other
 
-<<<<<<< local
 	* arm_port/hotspot/src/cpu/zero/vm/arm_cas.S: New file.
 	* patches/arm.patch (void get_processor_features): New function
 	that enables compareAndSwap on jlongs.
@@ -59,12 +29,7 @@
 	function.
 	(atomic_linux_zero.inline.hpp: Atomic::store): Use
 	arm_val_compare_and_swap.
-=======
-	* tapset/jstack.stp.in: Index globals on pid() to support multiple
-	running hotspot jstacks at the same time.
->>>>>>> other
 
-<<<<<<< local
 	* openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp (IT_MASK_TT)
 	(IT_MASK_TE, IT_MASK_TTT, IT_MASK_TEE): Add a few new IT
 	encodings.
@@ -74,15 +39,31 @@
 	Add handlers for _compareAndSwapInt and _compareAndSwapLong.
 	(Thumb2_codegen): Call handle_special_method() for invokevirtual.
 	Pass stackdepth to handle_special_method().
-=======
-2012-03-13  Mark Wielaard  <mjw@redhat.com>
->>>>>>> other
 
-<<<<<<< local
-=======
+2012-03-14  Mark Wielaard  <mjw@redhat.com>
+
+	* Makefile.am (EXTRA_DIST): Add tapset/jstack.stp.in.
+
+2012-03-13  Mark Wielaard  <mjw@redhat.com>
+
+	* tapset/jstack.stp.in: Wrap heap accessors in try-catch block to be
+	able to report unusual frames.
+
+2012-03-13  Mark Wielaard  <mjw@redhat.com>
+
+	* tapset/jstack.stp.in: Use @var construct if available to pick
+	target variable from the right CU (needed by newer DWARF/gcc
+	versions).
+
+2012-03-13  Mark Wielaard  <mjw@redhat.com>
+
+	* tapset/jstack.stp.in: Index globals on pid() to support multiple
+	running hotspot jstacks at the same time.
+
+2012-03-13  Mark Wielaard  <mjw@redhat.com>
+
 	* tapset/jstack.stp.in: Don't hard code constantPoolOopDesc_size.
 
->>>>>>> other
 2012-03-02  Xerxes Rånby  <xerxes@zafena.se>
 	    Andrew Haley  <aph@redhat.com>
 
