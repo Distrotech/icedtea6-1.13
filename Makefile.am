@@ -332,7 +332,6 @@ ICEDTEA_PATCHES = \
 	patches/jtreg-LastErrorString.patch \
 	patches/openjdk/6663040-com.sun.awt.patch \
 	patches/openjdk/6775317-non-AA-simple-shape-performance.patch \
-	patches/pr600-arm-jvm.cfg.patch \
 	patches/openjdk/6887494-NPE-in-pisces.patch \
 	patches/openjdk/6967436-6967433-floating-pt-conversion.patch \
 	patches/openjdk/6976265-stroke-control.patch \
@@ -981,6 +980,10 @@ else
 	  sh $(abs_top_srcdir)/fsg.sh ; \
 	fi
 endif
+endif
+if ENABLE_CACAO
+	mkdir -p openjdk/jdk/src/solaris/bin/$(JRE_ARCH_DIR)
+	cp jvm.cacao.cfg openjdk/jdk/src/solaris/bin/$(JRE_ARCH_DIR)/jvm.cfg
 endif
 	mkdir -p stamps
 	touch stamps/extract-openjdk.stamp

@@ -1,3 +1,13 @@
+2012-03-16  Andrew John Hughes  <ahughes@redhat.com>
+
+	PR600, 886:
+	* patches/pr600-arm-jvm.cfg.patch: Removed.
+	* Makefile.am:
+	(extract-openjdk): Copy jvm.cfg over if building cacao.
+	* acinclude.m4:
+	(IT_ENABLE_CACAO): Generat jvm.cacao.cfg.
+	* jvm.cacao.cfg.in: Copied from jvm.cfg.in.
+
 2012-03-16  Andrew Haley  <aph@redhat.com>
 
 	* arm_port/hotspot/src/cpu/zero/vm/arm_cas.S: Use unified syntax
