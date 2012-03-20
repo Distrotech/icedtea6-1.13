@@ -2157,7 +2157,7 @@ stamps/jtreg.stamp: stamps/icedtea-against-icedtea.stamp
 	mkdir -p stamps
 	touch $@
 
-clean-jtreg:
+clean-jtreg: clean-jtreg-reports
 	rm -rf test/jtreg/classes
 	if [ -e test/jtreg ] ; then \
 	  rmdir test/jtreg ; \
