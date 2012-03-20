@@ -1,3 +1,21 @@
+2012-03-20  Andrew John Hughes  <ahughes@redhat.com>
+
+	* acinclude.m4:
+	(IT_FIND_COMPILER): Define only once and
+	rename from IT_FIND_JAVAC.
+	(IT_FIND_ECJ): Use same form as detection
+	for java, javah, jar and rmic.
+	(IT_FIND_JAVAC): Likewise.
+	(IT_CHECK_JAVA_AND_JAVAC_WORK): New macro to check
+	java and javac actually work together to compile code
+	before running other tests such as the dtdtype one.
+	(IT_CHECK_FOR_CLASS): Depend on java/javac working.
+	(IT_CHECK_IF_INSTANTIABLE): Likewise.
+	(IT_GETDTDTYPE_CHECK): Likewise.  Add -target 5.
+	(IT_JAVAH): Depend on java/javac working.
+	* configure.ac: Invoke IT_FIND_COMPILER rather than
+	IT_FIND_JAVAC.
+
 2012-03-19  Andrew John Hughes  <ahughes@redhat.com>
 
 	* acinclude.m4:
