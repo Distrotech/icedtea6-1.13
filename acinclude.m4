@@ -1142,9 +1142,9 @@ AC_DEFUN([IT_CHECK_FOR_JDK],
     if test "x${enable_bootstrap}" = "xyes"; then
       BOOTSTRAP_VMS="/usr/lib/jvm/java-gcj /usr/lib/jvm/gcj-jdk /usr/lib/jvm/cacao";
     fi
-    for dir in ${BOOTSTRAP_VMS} /usr/lib/jvm/java-openjdk \
+    for dir in ${BOOTSTRAP_VMS} /usr/lib/jvm/java-1.6.0 \
               /usr/lib/jvm/icedtea6 /usr/lib/jvm/java-6-openjdk \
-              /usr/lib/jvm/openjdk /usr/lib/jvm/java-icedtea ; do
+              /usr/lib/jvm/java-1.6.0-openjdk /usr/lib/jvm/icedtea-6 ; do
        if test -d $dir; then
          SYSTEM_JDK_DIR=$dir
 	 break
