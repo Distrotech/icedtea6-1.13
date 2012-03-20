@@ -985,6 +985,10 @@ if ENABLE_CACAO
 	mkdir -p openjdk/jdk/src/solaris/bin/$(JRE_ARCH_DIR)
 	cp jvm.cacao.cfg openjdk/jdk/src/solaris/bin/$(JRE_ARCH_DIR)/jvm.cfg
 endif
+if ENABLE_JAMVM
+	mkdir -p openjdk/jdk/src/solaris/bin/$(JRE_ARCH_DIR)
+	cp jvm.jamvm.cfg openjdk/jdk/src/solaris/bin/$(JRE_ARCH_DIR)/jvm.cfg
+endif
 	mkdir -p stamps
 	touch stamps/extract-openjdk.stamp
 
