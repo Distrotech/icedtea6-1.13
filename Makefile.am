@@ -423,7 +423,8 @@ ICEDTEA_PATCHES = \
 	patches/ScriptEngineManager-doc.patch \
 	patches/openjdk/6883983-JarVerifier_removed_dependency_sun_security_pkcs.patch \
 	patches/openjdk/4465490-Suspicious_double-check_locking_idiom.patch \
-	patches/idresolver_fix.patch
+	patches/idresolver_fix.patch \
+	patches/apache-xml-internal-fix-bug-38655.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
