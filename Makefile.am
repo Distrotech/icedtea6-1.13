@@ -422,7 +422,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/remove-mimpure-option-to-gcc.patch \
 	patches/ScriptEngineManager-doc.patch \
 	patches/openjdk/6883983-JarVerifier_removed_dependency_sun_security_pkcs.patch \
-	patches/openjdk/4465490-Suspicious_double-check_locking_idiom.patch
+	patches/openjdk/4465490-Suspicious_double-check_locking_idiom.patch \
+	patches/idresolver_fix.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
