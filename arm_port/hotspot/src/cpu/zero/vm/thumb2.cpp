@@ -3042,6 +3042,7 @@ static unsigned conds[] = {
 #define T_IT(cond, mask) (0xbf00 | (conds[cond] << 4) | (mask))
 
 #define IT_MASK_T	8
+#define IT_MASK_TEE	0x0e
 
 #define PATCH(loc)	do {						\
 	  unsigned oldidx = codebuf->idx;				\
@@ -3067,6 +3068,28 @@ int forward_32(CodeBuf *codebuf)
 
 int it(CodeBuf *codebuf, unsigned cond, unsigned mask)
 {
+  if (cond & 1) {
+    // If this is a negated condition, flip all the bits above the
+    // least significant bit that is 1.  Note that at least one bit is
+    // always 1 in mask
+    switch (mask & (-mask)) {
+    case 8:
+      break;
+    case 4:
+      mask ^= 8;
+      break;
+    case 2:
+      mask ^= 0x0c;
+      break;
+    case 1:
+      mask ^= 0x0e;
+      break;
+    default:
+      // Impossible unless someone specified an incorrect mask
+      longjmp(compiler_error_env, COMPILER_RESULT_FAILED);
+    }
+  }
+
   return out_16(codebuf, T_IT(cond, mask));
 }
 
@@ -4233,7 +4256,8 @@ void Thumb2_fNeg(Thumb2_Info *jinfo, u32 opc)
   eor_imm(jinfo->codebuf, r_result, r, 0x80000000);
 }
 
-void Thumb2_dNeg(Thumb2_Info *jinfo, u32 opc)
+// arm_op is either DP_EOR (for dnegate) or DP_BIC (for dabs)
+static void Thumb2_dUnaryOp(Thumb2_Info *jinfo, u32 arm_op)
 {
   Thumb2_Stack *jstack = jinfo->jstack;
   unsigned r_lo, r_hi, r_res_lo, r_res_hi;
@@ -4248,7 +4272,17 @@ void Thumb2_dNeg(Thumb2_Info *jinfo, u32 opc)
   JASSERT(r_res_lo != r_res_hi, "oops");
   JASSERT(r_res_lo != r_hi, "r_res_lo != r_hi");
   mov_reg(jinfo->codebuf, r_res_lo, r_lo);
-  eor_imm(jinfo->codebuf, r_res_hi, r_hi, 0x80000000);
+  dop_imm(jinfo->codebuf, arm_op, r_res_hi, r_hi, 0x80000000);
+}
+
+void Thumb2_dNeg(Thumb2_Info *jinfo)
+{
+  Thumb2_dUnaryOp(jinfo, DP_EOR);
+}
+
+void Thumb2_dAbs(Thumb2_Info *jinfo)
+{
+  Thumb2_dUnaryOp(jinfo, DP_BIC);
 }
 
 void Thumb2_lOp(Thumb2_Info *jinfo, u32 opc)
@@ -5008,42 +5042,34 @@ static void jstack_to_vfp(Thumb2_Info *jinfo, int vfp_reg) {
 
 // Expand a call to a "special" method.  These are usually inlines of
 // java.lang.Math methods.  Return true if the inlining succeeded.
-static bool handle_special_method(methodOop callee, Thumb2_Info *jinfo) {
-#ifdef __ARM_PCS_VFP
+static bool handle_special_method(methodOop callee, Thumb2_Info *jinfo,
+				  unsigned stackdepth) {
   Thumb2_Stack *jstack = jinfo->jstack;
+  CodeBuf *codebuf = jinfo->codebuf;
 
   const char *entry_name;
 
-  unsigned loc1 = 0;
-
-  switch (Interpreter::method_kind(callee)) {
-  case Interpreter::java_lang_math_abs:
+  switch (callee->intrinsic_id()) {
+  case vmIntrinsics::_dabs:
    {
-      unsigned r_lo, r_hi;
-
-      Thumb2_Fill(jinfo, 2);
-      r_lo = POP(jstack);
-      r_hi = POP(jstack);
-      dop_imm_s(jinfo->codebuf, DP_BIC, r_hi, r_hi, 0x80000000, 0);
-      PUSH(jstack, r_hi);
-      PUSH(jstack, r_lo);
-
-      return true;
+     Thumb2_dAbs(jinfo);
+     return true;
     }
 
-  case Interpreter::java_lang_math_sin:
+#ifdef __ARM_PCS_VFP
+  case vmIntrinsics::_dsin:
     entry_name = "Java_java_lang_StrictMath_sin";
     break;
 
-  case Interpreter::java_lang_math_cos:
+  case vmIntrinsics::_dcos:
     entry_name = "Java_java_lang_StrictMath_cos";
     break;
 
-  case Interpreter::java_lang_math_tan:
+  case vmIntrinsics::_dtan:
     entry_name = "Java_java_lang_StrictMath_tan";
     break;
 
-  case Interpreter::java_lang_math_sqrt:
+  case vmIntrinsics::_dsqrt:
     {
       void *entry_point = dlsym(NULL, "Java_java_lang_StrictMath_sqrt");
       if (! entry_point)
@@ -5070,20 +5096,112 @@ static bool handle_special_method(methodOop callee, Thumb2_Info *jinfo) {
       // FIXME: The JNI StrictMath routines don't use the JNIEnv *env
       // parameter, so it's arguably pointless to pass it here.
       add_imm(jinfo->codebuf, ARM_R0, Rthread, THREAD_JNI_ENVIRONMENT);
-      blx(jinfo->codebuf, (unsigned)entry_point);
+      mov_imm(jinfo->codebuf, ARM_IP, (unsigned)entry_point);
+      blx_reg(jinfo->codebuf, ARM_IP);
       bcc_patch(jinfo->codebuf, COND_EQ, loc);
       vfp_to_jstack(jinfo, VFP_D0);
 
       return true;
     }
 
-  case Interpreter::java_lang_math_log:
+  case vmIntrinsics::_dlog:
     entry_name = "Java_java_lang_StrictMath_log";
     break;
 
-  case Interpreter::java_lang_math_log10:
+  case vmIntrinsics::_dlog10:
     entry_name = "Java_java_lang_StrictMath_log10";
     break;
+#endif // __ARM_PCS_VFP
+
+  case vmIntrinsics::_compareAndSwapInt:
+   {
+      Thumb2_Fill(jinfo, 4);
+
+      unsigned update = POP(jstack);
+      unsigned expect = POP(jstack);
+      unsigned offset = POP(jstack);
+      POP(jstack);  // Actually the high part of the offset
+
+      // unsigned object = POP(jstack);
+      // unsigned unsafe = POP(jstack);  // Initially an instance of java.lang.Unsafe
+
+      Thumb2_Flush(jinfo);
+      // Get ourself a result reg that's not one of the inputs
+      unsigned exclude = (1<<update)|(1<<expect)|(1<<offset);
+      unsigned result = JSTACK_PREFER(jstack, ~exclude);
+
+      ldm(codebuf, (1<<ARM_IP)|(1<<ARM_LR), Rstack, POP_FD, 1); // Object addr
+      add_reg(codebuf, result, offset, ARM_IP); // result now points to word
+      ldr_imm(codebuf, ARM_LR, ARM_LR, 0, 0, 0);  // Security check
+
+      fullBarrier(codebuf);
+
+      int retry = out_loc(codebuf);
+      ldrex_imm(codebuf, ARM_LR, result, 0);
+      cmp_reg(codebuf, ARM_LR, expect);
+      int loc_failed = forward_16(codebuf);
+      strex_imm(codebuf, ARM_IP, update, result, 0);
+      cmp_imm(codebuf, ARM_IP, 0);
+      branch(codebuf, COND_NE, retry);
+      bcc_patch(jinfo->codebuf, COND_NE, loc_failed);
+
+      it(codebuf, COND_NE, IT_MASK_TEE);
+      mov_imm(codebuf, result, 0);
+      mov_imm(codebuf, result, 1);
+      fullBarrier(codebuf);
+
+      PUSH(jstack, result);
+    }
+    return true;
+
+  case vmIntrinsics::_compareAndSwapLong:
+    {
+      Thumb2_Fill(jinfo, 4);
+
+      unsigned update_lo = POP(jstack);
+      unsigned update_hi = POP(jstack);
+      unsigned expect_lo = POP(jstack);
+      unsigned expect_hi = POP(jstack);
+
+      Thumb2_Flush(jinfo);
+      Thumb2_save_locals(jinfo, stackdepth - 4); // 4 args popped above
+
+      // instance of java.lang.Unsafe:
+      ldr_imm(jinfo->codebuf, ARM_LR, Rstack, 3 * wordSize, 1, 0);
+      ldr_imm(codebuf, ARM_LR, ARM_LR, 0, 0, 0);  // Security check
+
+      // Object:
+      ldr_imm(jinfo->codebuf, ARM_LR, Rstack, 2 * wordSize, 1, 0);
+      // Offset:
+      ldr_imm(jinfo->codebuf, ARM_IP, Rstack, 0 * wordSize, 1, 0);
+      add_reg(codebuf, ARM_LR, ARM_LR, ARM_IP); // ARM_LR now points to word
+
+      fullBarrier(codebuf);
+
+      int retry = out_loc(codebuf);
+      ldrexd(codebuf, JAZ_V2, JAZ_V3, ARM_LR);
+      cmp_reg(codebuf, JAZ_V2, expect_lo);
+      it(jinfo->codebuf, COND_EQ, IT_MASK_T);
+      cmp_reg(codebuf, JAZ_V3, expect_hi);
+
+      int loc_failed = forward_16(codebuf);
+      strexd(codebuf, JAZ_V1, update_lo, update_hi, ARM_LR);
+      cmp_imm(codebuf, JAZ_V1, 0);
+      branch(codebuf, COND_NE, retry);
+      bcc_patch(jinfo->codebuf, COND_NE, loc_failed);
+
+      unsigned result = JSTACK_REG(jinfo->jstack);
+
+      it(codebuf, COND_NE, IT_MASK_TEE);
+      mov_imm(codebuf, result, 0);
+      mov_imm(codebuf, result, 1);
+      fullBarrier(codebuf);
+
+      Thumb2_restore_locals(jinfo, stackdepth - 4); // 4 args popped above
+      add_imm(codebuf, Rstack, Rstack, 4 * wordSize);
+      PUSH(jstack, result);
+    }
+    return true;
 
   default:
     return false;
@@ -5092,8 +5210,6 @@ static bool handle_special_method(methodOop callee, Thumb2_Info *jinfo) {
   void *entry_point = dlsym(NULL, entry_name);
   if (! entry_point)
     return false;
-
-  unsigned r_lo, r_hi, r_res_lo, r_res_hi;
 
   jstack_to_vfp(jinfo, VFP_D0);
   // FIXME: The JNI StrictMath routines don't use the JNIEnv *env
@@ -5104,9 +5220,6 @@ static bool handle_special_method(methodOop callee, Thumb2_Info *jinfo) {
   vfp_to_jstack(jinfo, VFP_D0);
 
   return true;
-#else
-  return false;
-#endif // __ARM_PCS_VFP
 }
 
 void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
@@ -5767,7 +5880,7 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 	break;
 
       case opc_dneg:
-	Thumb2_dNeg(jinfo, opcode);
+	Thumb2_dNeg(jinfo);
 	break;
 
       case opc_i2l: {
@@ -6178,7 +6291,7 @@ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start)
 
 	callee = (methodOop)cache->f1();
 
-	if (handle_special_method(callee, jinfo))
+	if (handle_special_method(callee, jinfo, stackdepth))
 	  break;
 
 	if (callee->is_accessor()) {
@@ -6303,6 +6416,10 @@ add_imm(jinfo->codebuf, ARM_R3, ARM_R3, CODE_ALIGN_SIZE);
 
 	if (cache->is_vfinal()) {
 	  methodOop callee = (methodOop)cache->f2();
+
+	  if (handle_special_method(callee, jinfo, stackdepth))
+	    break;
+
 	  if (callee->is_accessor()) {
 	    u1 *code = callee->code_base();
 	    int index = GET_NATIVE_U2(&code[2]);
@@ -7858,7 +7975,7 @@ sub_imm(&codebuf, ARM_R0, Rstack, 4);
 
 #define DEBUG_REGSET ((1<<ARM_R0)|(1<<ARM_R1)|(1<<ARM_R2)|(1<<ARM_R3)|(1<<ARM_IP))
 
-// DEBUG_METHODENTRY
+// DEBUG_METHDENTRY
   handlers[H_DEBUG_METHODENTRY] = out_pos(&codebuf);
   stm(&codebuf, DEBUG_REGSET | (1<<ARM_LR), ARM_SP, PUSH_FD, 1);
   mov_reg(&codebuf, ARM_R2, ARM_R0);

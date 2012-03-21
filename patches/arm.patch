@@ -230,3 +230,57 @@ diff -Nru openjdk.orig/hotspot/src/cpu/zero/vm/bytecodes_zero.hpp openjdk/hotspo
  		-a ! \( -name DUMMY $(addprefix -o -name ,$(Src_Files_EXCLUDE)) \)))
  endef
  
+diff -r -uw icedtea6.pristine/openjdk/hotspot/src/cpu/zero/vm/vm_version_zero.hpp icedtea6/openjdk/hotspot/src/cpu/zero/vm/vm_version_zero.hpp
+--- openjdk.orig/hotspot/src/cpu/zero/vm/vm_version_zero.hpp	2011-11-14 22:07:31.000000000 +0000
++++ openjdk/hotspot/src/cpu/zero/vm/vm_version_zero.hpp	2012-02-29 17:27:11.472996427 +0000
+@@ -30,7 +30,18 @@
+ #include "runtime/vm_version.hpp"
+ 
+ class VM_Version : public Abstract_VM_Version {
++
+  public:
++  static void get_processor_features() {
++#ifdef __ARM_ARCH_7A__
++    Abstract_VM_Version::_supports_cx8 = true;
++#endif
++  }
++
++  static void initialize() {
++    get_processor_features();
++  }
++
+   static const char* cpu_features() {
+     return "";
+   }
+diff -r -uw openjdk.orig/hotspot/src/os_cpu/linux_zero/vm/atomic_linux_zero.inline.hpp openjdk/hotspot/src/os_cpu/linux_zero/vm/atomic_linux_zero.inline.hpp
+--- openjdk.orig/hotspot/src/os_cpu/linux_zero/vm/atomic_linux_zero.inline.hpp	2011-11-14 22:07:32.000000000 +0000
++++ openjdk/hotspot/src/os_cpu/linux_zero/vm/atomic_linux_zero.inline.hpp	2012-02-29 16:57:28.412360724 +0000
+@@ -160,6 +160,16 @@
+         return prev;
+     }
+ }
++
++#ifdef __ARM_ARCH_7A__
++/* Perform an atomic compare and swap: if the current value of `*PTR'
++   is OLDVAL, then write NEWVAL into `*PTR'.  Return the contents of
++   `*PTR' before the operation.*/
++extern "C" jlong arm_val_compare_and_swap_long(volatile void *ptr,
++					       jlong oldval,
++					       jlong newval);
++
++#endif	// __ARM_ARCH_7A__
+ #endif // ARM
+ 
+ inline void Atomic::store(jint store_value, volatile jint* dest) {
+@@ -274,7 +322,11 @@
+                              volatile jlong* dest,
+                              jlong compare_value) {
+ 
++#ifndef	__ARM_ARCH_7A__
+   return __sync_val_compare_and_swap(dest, compare_value, exchange_value);
++#else
++  return arm_val_compare_and_swap_long(dest, compare_value, exchange_value);
++#endif
+ }
+ 
+ inline intptr_t Atomic::cmpxchg_ptr(intptr_t exchange_value,

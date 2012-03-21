@@ -1,3 +1,118 @@
+2012-03-20  Mark Wielaard  <mjw@redhat.com>
+
+	* Makefile.am (clean-jtreg): Depend on clean-jtreg-reports.
+
+2012-03-20  Andrew John Hughes  <ahughes@redhat.com>
+
+	* acinclude.m4:
+	(IT_FIND_COMPILER): Define only once and
+	rename from IT_FIND_JAVAC.
+	(IT_FIND_ECJ): Use same form as detection
+	for java, javah, jar and rmic.
+	(IT_FIND_JAVAC): Likewise.
+	(IT_CHECK_JAVA_AND_JAVAC_WORK): New macro to check
+	java and javac actually work together to compile code
+	before running other tests such as the dtdtype one.
+	(IT_CHECK_FOR_CLASS): Depend on java/javac working.
+	(IT_CHECK_IF_INSTANTIABLE): Likewise.
+	(IT_GETDTDTYPE_CHECK): Likewise.  Add -target 5.
+	(IT_JAVAH): Depend on java/javac working.
+	* configure.ac: Invoke IT_FIND_COMPILER rather than
+	IT_FIND_JAVAC.
+
+2012-03-19  Andrew John Hughes  <ahughes@redhat.com>
+
+	* acinclude.m4:
+	(IT_CHECK_FOR_JDK): Update JDK home directory
+	check list, adding some missing 1.6 entries
+	and removing generic ones which may now pick
+	up an unwanted 1.7 installation.
+
+2012-03-16  Andrew John Hughes  <ahughes@redhat.com>
+
+	PR600, 886:
+	* Makefile.am:
+	(extract-openjdk): Copy jvm.cfg over if building JamVM.
+	* acinclude.m4:
+	(IT_ENABLE_JAMVM): Generate jvm.jamvm.cfg.
+	* jvm.jamvm.cfg.in: Copied from jvm.cfg.in.
+
+2012-03-16  Andrew John Hughes  <ahughes@redhat.com>
+
+	PR600, 886:
+	* patches/pr600-arm-jvm.cfg.patch: Removed.
+	* Makefile.am:
+	(extract-openjdk): Copy jvm.cfg over if building cacao.
+	* acinclude.m4:
+	(IT_ENABLE_CACAO): Generate jvm.cacao.cfg.
+	* jvm.cacao.cfg.in: Copied from jvm.cfg.in.
+
+2012-03-16  Andrew Haley  <aph@redhat.com>
+
+	* arm_port/hotspot/src/cpu/zero/vm/arm_cas.S: Use unified syntax
+	for thumb code.
+
+2012-03-15  Andrew Haley  <aph@redhat.com>
+
+	* openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp (it): Add code to
+	handle negated conditions.
+	(handle_special_method): Use blx_reg rather than blx in case the
+	target is thumb code.
+	(IT_MASK_TE, IT_MASK_TT, IT_MASK_TTT): Delete.
+ 	(IT_MASK_TEE): Correct.
+
+2012-03-14  Andrew Haley  <aph@redhat.com>
+
+	* arm_port/hotspot/src/cpu/zero/vm/bytecodes_arm.def (ldc, ldc_w):
+	Replace numeric constants for constant pool with symbols.
+	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S (build_frame):
+	Likewise.
+	(fast_native_entry): Likewise.
+
+2012-03-02  Andrew Haley  <aph@redhat.com>
+
+	* arm_port/hotspot/src/cpu/zero/vm/arm_cas.S: New file.
+	* patches/arm.patch (void get_processor_features): New function
+	that enables compareAndSwap on jlongs.
+	(atomic_linux_zero.inline.hpp: arm_val_compare_and_swap): New
+	function.
+	(atomic_linux_zero.inline.hpp: Atomic::store): Use
+	arm_val_compare_and_swap.
+
+	* openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp (IT_MASK_TT)
+	(IT_MASK_TE, IT_MASK_TTT, IT_MASK_TEE): Add a few new IT
+	encodings.
+	(Thumb2_dUnaryOp): Generalize Thumb2_dNeg.
+	(Thumb2_dNeg, Thumb2_dAbs): Specializations of Thumb2_dUnaryOp.
+	(handle_special_method): Use intrinsic_id instead of method_kind.
+	Add handlers for _compareAndSwapInt and _compareAndSwapLong.
+	(Thumb2_codegen): Call handle_special_method() for invokevirtual.
+	Pass stackdepth to handle_special_method().
+
+2012-03-14  Mark Wielaard  <mjw@redhat.com>
+
+	* Makefile.am (EXTRA_DIST): Add tapset/jstack.stp.in.
+
+2012-03-13  Mark Wielaard  <mjw@redhat.com>
+
+	* tapset/jstack.stp.in: Wrap heap accessors in try-catch block to be
+	able to report unusual frames.
+
+2012-03-13  Mark Wielaard  <mjw@redhat.com>
+
+	* tapset/jstack.stp.in: Use @var construct if available to pick
+	target variable from the right CU (needed by newer DWARF/gcc
+	versions).
+
+2012-03-13  Mark Wielaard  <mjw@redhat.com>
+
+	* tapset/jstack.stp.in: Index globals on pid() to support multiple
+	running hotspot jstacks at the same time.
+
+2012-03-13  Mark Wielaard  <mjw@redhat.com>
+
+	* tapset/jstack.stp.in: Don't hard code constantPoolOopDesc_size.
+
 2012-03-09  Andrew John Hughes  <ahughes@redhat.com>
 
 	* patches/security/20120214/7082299.patch,

@@ -324,7 +324,6 @@ ICEDTEA_PATCHES = \
 	patches/jtreg-LastErrorString.patch \
 	patches/openjdk/6663040-com.sun.awt.patch \
 	patches/openjdk/6775317-non-AA-simple-shape-performance.patch \
-	patches/pr600-arm-jvm.cfg.patch \
 	patches/openjdk/6887494-NPE-in-pisces.patch \
 	patches/openjdk/6967436-6967433-floating-pt-conversion.patch \
 	patches/openjdk/6976265-stroke-control.patch \
@@ -631,6 +630,7 @@ EXTRA_DIST = generated \
 	autogen.sh \
 	tapset/hotspot.stp.in \
 	tapset/hotspot_jni.stp.in \
+	tapset/jstack.stp.in \
 	scripts/jni_create_stap.c \
 	scripts/jni_desc \
 	rewriter/agpl-3.0.txt \
@@ -968,6 +968,14 @@ else
 	  sh $(abs_top_srcdir)/fsg.sh ; \
 	fi
 endif
+endif
+if ENABLE_CACAO
+	mkdir -p openjdk/jdk/src/solaris/bin/$(JRE_ARCH_DIR)
+	cp jvm.cacao.cfg openjdk/jdk/src/solaris/bin/$(JRE_ARCH_DIR)/jvm.cfg
+endif
+if ENABLE_JAMVM
+	mkdir -p openjdk/jdk/src/solaris/bin/$(JRE_ARCH_DIR)
+	cp jvm.jamvm.cfg openjdk/jdk/src/solaris/bin/$(JRE_ARCH_DIR)/jvm.cfg
 endif
 	mkdir -p stamps
 	touch stamps/extract-openjdk.stamp
@@ -2137,7 +2145,7 @@ stamps/jtreg.stamp: stamps/icedtea-against-icedtea.stamp
 	mkdir -p stamps
 	touch $@
 
-clean-jtreg:
+clean-jtreg: clean-jtreg-reports
 	rm -rf test/jtreg/classes
 	if [ -e test/jtreg ] ; then \
 	  rmdir test/jtreg ; \

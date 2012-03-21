@@ -2091,7 +2091,7 @@ return_register_finalizer = 0xe7, 1
 	bne	2f
 	add	r0, tmp1, #CONSTANTPOOL_BASE
 	ldr	r0, [r0, lr, lsl #2]
-	ldr	r1, [r0, #60]
+	ldr	r1, [r0, #KLASS_PART + KLASS_JAVA_MIRROR]
 	PUSH	r1
 	DISPATCH	0
 2:
@@ -2147,7 +2147,7 @@ return_register_finalizer = 0xe7, 1
 	bne	2f
 	add	r0, r2, #CONSTANTPOOL_BASE
 	ldr	r0, [r0, lr, lsl #2]
-	ldr	r1, [r0, #60]
+	ldr	r1, [r0, #KLASS_PART + KLASS_JAVA_MIRROR]
 	PUSH	r1
 	DISPATCH	0
 2:
