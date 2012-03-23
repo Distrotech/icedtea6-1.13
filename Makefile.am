@@ -654,9 +654,16 @@ EXTRA_DIST = generated \
 
 all-local: icedtea-against-icedtea
 
-check-local: jtregcheck
+check-local: jtregcheck check-tapset
 
-clean-local: clean-jtreg clean-jtreg-reports $(PULSE_JAVA_CLEAN_TARGET) \
+clean-tests: clean-jtreg clean-tapset-report
+	if [ $(abs_top_srcdir) != $(abs_top_builddir) ] ; then \
+	  if [ -e test ] ; then \
+	    rmdir test ; \
+	  fi \
+	fi
+
+clean-local: clean-tests $(PULSE_JAVA_CLEAN_TARGET) \
  clean-icedtea clean-icedtea-debug clean-icedtea-ecj clean-extract clean-ports \
  clean-overlay clean-native-ecj clean-icedtea-against-icedtea clean-icedtea-debug-against-icedtea \
  clean-icedtea-against-ecj clean-extract-ecj clean-generated clean-replace-hotspot \
@@ -700,7 +707,7 @@ install:
 	clean-add-pulseaudio clean-add-pulseaudio-debug clean-add-nss clean-add-nss-debug \
 	clean-add-tzdata-support clean-add-tzdata-support-debug clean-add-systemtap-ecj \
 	clean-add-pulseaudio-ecj clean-add-nss-ecj clean-add-tzdata-support-ecj clean-fonts \
-	clean-download-hotspot jtregcheck
+	clean-download-hotspot clean-tests clean-tapset-report jtregcheck
 
 env:
 	@echo 'unset JAVA_HOME'
@@ -2163,9 +2170,6 @@ clean-jtreg: clean-jtreg-reports
 	  rmdir test/jtreg ; \
 	fi
 	rm -f test/jtreg.jar
-	if [ -e test ] ; then \
-	  rmdir test ; \
-	fi
 	rm -f stamps/jtreg.stamp
 
 check-hotspot: stamps/jtreg.stamp
@@ -2245,6 +2249,19 @@ jtregcheck: jtreg $(TEST_SUITES:%=check-%)
 	  echo "leftover processes..."; \
 	  $(jtreg_processes); \
 	fi
+
+check-tapset: 
+if ENABLE_SYSTEMTAP
+	$(abs_top_srcdir)/test/tapset/jstaptest.pl \
+	  -B $(BUILD_OUTPUT_DIR) -A $(BUILD_ARCH_DIR) \
+	  -S $(abs_top_srcdir)/test/tapset \
+	  -o test/check-stap.log
+endif
+
+clean-tapset-report:
+if ENABLE_SYSTEMTAP
+	rm -f test/check-stap.log
+endif
 
 # Support classes for non-OpenJDK bootstraps
 
