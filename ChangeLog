@@ -1,3 +1,16 @@
+2012-03-21  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* patches/apache-xml-internal-fix-bug-38655.patch:
+	Added patch which fixes the Apache XML security bug #38655
+	* Makefile.am: Updated
+
+2012-03-21  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	PR881: Sign tests (wsse.policy.basic) failures with OpenJDK6
+	* Makefile.am: Updated
+	* patches/idresolver_fix.patch: added patch for a class
+	IdResolver.
+
 2012-03-26  Mark Wielaard  <mjw@redhat.com>
 
 	* test/tapset/jstaptest.pl: thread_start and thread_stop thread id
@@ -40,6 +53,24 @@
 2012-03-20  Mark Wielaard  <mjw@redhat.com>
 
 	* Makefile.am (clean-jtreg): Depend on clean-jtreg-reports.
+
+2012-03-20  Andrew John Hughes  <ahughes@redhat.com>
+
+	* acinclude.m4:
+	(IT_FIND_COMPILER): Define only once and
+	rename from IT_FIND_JAVAC.
+	(IT_FIND_ECJ): Use same form as detection
+	for java, javah, jar and rmic.
+	(IT_FIND_JAVAC): Likewise.
+	(IT_CHECK_JAVA_AND_JAVAC_WORK): New macro to check
+	java and javac actually work together to compile code
+	before running other tests such as the dtdtype one.
+	(IT_CHECK_FOR_CLASS): Depend on java/javac working.
+	(IT_CHECK_IF_INSTANTIABLE): Likewise.
+	(IT_GETDTDTYPE_CHECK): Likewise.  Add -target 5.
+	(IT_JAVAH): Depend on java/javac working.
+	* configure.ac: Invoke IT_FIND_COMPILER rather than
+	IT_FIND_JAVAC.
 
 2012-03-19  Andrew John Hughes  <ahughes@redhat.com>
 
