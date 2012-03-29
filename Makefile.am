@@ -345,7 +345,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7027667-AAShapePipeRegTest.patch \
 	patches/openjdk/7019861-AA-regression-fix.patch \
 	patches/g356743-libpng-1.5.patch \
-	patches/revert-6885123.patch \
 	patches/openjdk/7032388-work_without_cmov_instruction.patch \
 	patches/openjdk/7031385-gcc-register-allocation-fix.patch \
 	patches/openjdk/6986968-crash_on_xim_restart.patch \
