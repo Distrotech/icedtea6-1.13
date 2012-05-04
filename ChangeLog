@@ -1,3 +1,17 @@
+2012-05-04  Andrew John Hughes  <ahughes@redhat.com>
+
+	Backport cryptography tests from 7.
+	* Makefile.am: Add new patches.
+	* patches/generalise_crypto_tests.patch:
+	IcedTea7 patch to generalise crypto tests.
+	* patches/openjdk/7088989-ucrypto_tests.patch:
+	Backport of 7088989.
+	* patches/remove-gcm-test.patch:
+	Remove GCM testing as not part of 6.
+	* patches/skip_wrap_mode.patch:
+	IcedTea7 patch to skip wrap mode tests when mode
+	is not available.
+
 2012-04-20  Pavel Tisnovsky  <ptisnovs@redhat.com>
 
 	* NEWS: Mention bugfix PR797 (the same as bugfig RH789154).

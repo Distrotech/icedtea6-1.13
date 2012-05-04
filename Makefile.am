@@ -424,7 +424,11 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/4465490-Suspicious_double-check_locking_idiom.patch \
 	patches/idresolver_fix.patch \
 	patches/apache-xml-internal-fix-bug-38655.patch \
-	patches/openjdk/6792400-Avoid_loading_Normalizer_resources.patch
+	patches/openjdk/6792400-Avoid_loading_Normalizer_resources.patch \
+	patches/openjdk/7088989-ucrypto_tests.patch \
+	patches/generalise_crypto_tests.patch \
+	patches/remove-gcm-test.patch \
+	patches/skip_wrap_mode.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
