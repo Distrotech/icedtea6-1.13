@@ -1,3 +1,14 @@
+2012-05-09  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(MEMORY_LIMIT): Always set this.
+	* javac.in:
+	Split out '-J' prefixed options and pass them
+	to the VM rather than ecj.  Filter out
+	'-J-Xbootclasspath/p:', which makes no sense
+	as there's nothing to prepend, and confuses
+	the VM.
+
 2012-05-09  Pavel Tisnovsky  <ptisnovs@redhat.com>
 
 	* patches/remove_multicatch_in_testrsa.patch:

@@ -89,6 +89,7 @@ ICEDTEA_BOOTSTRAP_CLASSES = \
 	$(SHARE)/com/sun/java/swing/plaf/nimbus/NimbusLookAndFeel.java
 
 # Flags
+MEMORY_LIMIT = -J-Xmx1024m
 IT_CFLAGS=$(CFLAGS) $(ARCHFLAG)
 IT_JAVAC_SETTINGS=-g -encoding utf-8 $(JAVACFLAGS) $(MEMORY_LIMIT) $(PREFER_SOURCE)
 IT_LANGUAGE_SOURCE_VERSION=6
@@ -118,15 +119,6 @@ PULSE_JAVA_JAVA_SRCDIR = $(PULSE_JAVA_DIR)/src/java
 PULSE_JAVA_CLASS_DIR = $(PULSE_JAVA_BUILDDIR)/classes
 PULSE_JAVA_TARGET = stamps/pulse-java.stamp
 PULSE_JAVA_CLEAN_TARGET = clean-pulse-java
-endif
-
-# FIXME: This should not depend on bootstrapping
-# but on whether MEMORY_LIMIT is accepted
-# as an argument to javac
-if BOOTSTRAPPING
-  MEMORY_LIMIT =
-else
-  MEMORY_LIMIT = -J-Xmx1024m
 endif
 
 if ENABLE_CACAO
