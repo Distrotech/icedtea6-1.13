@@ -1605,19 +1605,25 @@ clean-add-pulseaudio-debug:
 stamps/add-nss.stamp: stamps/icedtea.stamp
 	cp $(abs_top_builddir)/nss.cfg \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security
+	cp $(abs_top_builddir)/nss.cfg \
+	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/security
 	touch stamps/add-nss.stamp
 
 clean-add-nss:
 	rm -f $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/nss.cfg
+	rm -f $(BUILD_OUTPUT_DIR)/j2re-image/lib/security/nss.cfg
 	rm -f stamps/add-nss.stamp
 
 stamps/add-nss-debug.stamp: stamps/icedtea-debug.stamp
 	cp $(abs_top_builddir)/nss.cfg \
 	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security;
+	cp $(abs_top_builddir)/nss.cfg \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/security;
 	touch stamps/add-nss-debug.stamp
 
 clean-add-nss-debug:
 	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/nss.cfg
+	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/security/nss.cfg
 	rm -f stamps/add-nss-debug.stamp
 
 stamps/add-tzdata-support.stamp: stamps/icedtea.stamp
@@ -1722,10 +1728,13 @@ clean-add-pulseaudio-ecj:
 stamps/add-nss-ecj.stamp: stamps/icedtea-ecj.stamp
 	cp $(abs_top_builddir)/nss.cfg \
 	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security;
+	cp $(abs_top_builddir)/nss.cfg \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/security;
 	touch stamps/add-nss-ecj.stamp
 
 clean-add-nss-ecj:
 	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/nss.cfg
+	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/security/nss.cfg
 	rm -f stamps/add-nss-ecj.stamp
 
 stamps/add-tzdata-support-ecj.stamp: stamps/icedtea-ecj.stamp
