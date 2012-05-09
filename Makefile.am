@@ -428,7 +428,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7088989-ucrypto_tests.patch \
 	patches/generalise_crypto_tests.patch \
 	patches/remove-gcm-test.patch \
-	patches/skip_wrap_mode.patch
+	patches/skip_wrap_mode.patch \
+	patches/remove_multicatch_in_testrsa.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
