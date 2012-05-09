@@ -1,0 +1,109 @@
+--- openjdk/jdk/test/com/oracle/security/ucrypto/TestRSA.java
++++ openjdk/jdk/test/com/oracle/security/ucrypto/TestRSA.java
+@@ -189,7 +189,10 @@
+ 		  new BigInteger(CRT_COEFF)));
+ 	    PublicKey pubKey = kf.generatePublic(new RSAPublicKeySpec(mod, pub));
+ 	    return new KeyPair(pubKey, privKey);
+-	} catch (NoSuchAlgorithmException|InvalidKeySpecException ex) {
++	} catch (NoSuchAlgorithmException ex) {
++	    System.err.println("Couldn't generate predefined key pair: " + ex);
++	    return null;
++	} catch (InvalidKeySpecException ex) {
+ 	    System.err.println("Couldn't generate predefined key pair: " + ex);
+ 	    return null;
+ 	}
+@@ -256,7 +259,11 @@
+             String algo = CIP_ALGOS[i];
+             try {
+                 c1 = Cipher.getInstance(algo, prov);
+-            } catch (NoSuchAlgorithmException|NoSuchPaddingException nsae) {
++            } catch (NoSuchAlgorithmException nsae) {
++                System.err.println("Skip unsupported Cipher algo: " + algo);
++		results[i] = true;
++                continue;
++            } catch (NoSuchPaddingException nsae) {
+                 System.err.println("Skip unsupported Cipher algo: " + algo);
+ 		results[i] = true;
+                 continue;
+@@ -268,7 +275,15 @@
+ 		} else {
+ 		    c2 = Cipher.getInstance(algo, prov);
+ 		}
+-            } catch (NoSuchAlgorithmException|NoSuchPaddingException|NoSuchProviderException nsae) {
++            } catch (NoSuchAlgorithmException nsae) {
++                System.err.println("Skip unsupported Cipher algo: " + algo);
++		results[i] = true;
++                continue;
++            } catch (NoSuchPaddingException nsae) {
++                System.err.println("Skip unsupported Cipher algo: " + algo);
++		results[i] = true;
++                continue;
++            } catch (NoSuchProviderException nsae) {
+                 System.err.println("Skip unsupported Cipher algo: " + algo);
+ 		results[i] = true;
+                 continue;
+@@ -299,7 +314,10 @@
+ 	    results[i] = true;
+             try {
+                 c1 = Cipher.getInstance(algo, prov);
+-            } catch (NoSuchAlgorithmException|NoSuchPaddingException nsae) {
++            } catch (NoSuchAlgorithmException nsae) {
++                System.err.println("Skip unsupported Cipher algo: " + algo);
++                continue;
++            } catch (NoSuchPaddingException nsae) {
+                 System.err.println("Skip unsupported Cipher algo: " + algo);
+                 continue;
+             }
+@@ -310,7 +328,13 @@
+ 		} else {
+ 		    c2 = Cipher.getInstance(algo, prov);
+ 		}
+-            } catch (NoSuchAlgorithmException|NoSuchPaddingException|NoSuchProviderException nsae) {
++            } catch (NoSuchAlgorithmException nsae) {
++                System.err.println("Skip unsupported Cipher algo: " + algo);
++                continue;
++            } catch (NoSuchPaddingException nsae) {
++                System.err.println("Skip unsupported Cipher algo: " + algo);
++                continue;
++            } catch (NoSuchProviderException nsae) {
+                 System.err.println("Skip unsupported Cipher algo: " + algo);
+                 continue;
+             }
+@@ -411,7 +435,11 @@
+ 		} else {
+ 		    sig2 = Signature.getInstance(algo, prov);
+ 		}
+-	    } catch (NoSuchAlgorithmException|NoSuchProviderException nsae) {
++	    } catch (NoSuchAlgorithmException nsae) {
++		System.err.println("Skip unsupported interop Signature algo: " + algo);
++		results[i] = true;
++		continue;
++	    } catch (NoSuchProviderException nsae) {
+ 		System.err.println("Skip unsupported interop Signature algo: " + algo);
+ 		results[i] = true;
+ 		continue;
+@@ -445,7 +473,10 @@
+ 		} else {
+ 		    sig2 = Signature.getInstance(algo, prov);
+ 		}
+-            } catch (NoSuchAlgorithmException|NoSuchProviderException nsae) {
++            } catch (NoSuchAlgorithmException nsae) {
++                System.err.println("Skip unsupported Signature algo: " + algo);
++                continue;
++            } catch (NoSuchProviderException nsae) {
+                 System.err.println("Skip unsupported Signature algo: " + algo);
+                 continue;
+             }
+@@ -494,7 +525,11 @@
+ 	    sig2.initSign(kp.getPrivate());
+ 	    sig2.update(data);
+ 	    out2 = sig2.sign();
+-	} catch (InvalidKeyException|SignatureException ex) {
++	} catch (InvalidKeyException ex) {
++	    System.err.println("SIGN ERROR: unexpected exception " + ex);
++	    ex.printStackTrace();
++	    testInit2 = false;
++	} catch (SignatureException ex) {
+ 	    System.err.println("SIGN ERROR: unexpected exception " + ex);
+ 	    ex.printStackTrace();
+ 	    testInit2 = false;
