@@ -1,0 +1,22 @@
+# HG changeset patch
+# User valeriep
+# Date 1207005372 25200
+# Node ID c063b7fb55f754c3acfab7590a072ddaa8a08920
+# Parent  17e93b7fb97d4ffdc00bc3df56038de9eb990ea1
+6682417: JCK test failed w/ ProviderException when decrypted data is not multiple of blocks
+Summary: Check for CKR_ENCRYPTED_DATA_LEN_RANGE and throw IllegalBlockSizeException
+Reviewed-by: wetmore
+
+diff --git a/src/share/classes/sun/security/pkcs11/P11Cipher.java b/src/share/classes/sun/security/pkcs11/P11Cipher.java
+--- openjdk/jdk/src/share/classes/sun/security/pkcs11/P11Cipher.java
++++ openjdk/jdk/src/share/classes/sun/security/pkcs11/P11Cipher.java
+@@ -817,7 +817,8 @@
+         if (errorCode == CKR_BUFFER_TOO_SMALL) {
+             throw (ShortBufferException)
+                     (new ShortBufferException().initCause(e));
+-        } else if (errorCode == CKR_DATA_LEN_RANGE) {
++        } else if (errorCode == CKR_DATA_LEN_RANGE ||
++                   errorCode == CKR_ENCRYPTED_DATA_LEN_RANGE) {
+             throw (IllegalBlockSizeException)
+                     (new IllegalBlockSizeException(e.toString()).initCause(e));
+         }

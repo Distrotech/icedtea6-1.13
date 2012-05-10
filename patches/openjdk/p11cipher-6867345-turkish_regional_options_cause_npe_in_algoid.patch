@@ -1,0 +1,328 @@
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/krb5/Credentials.java openjdk/jdk/src/share/classes/sun/security/krb5/Credentials.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/krb5/Credentials.java	2011-11-14 22:12:05.000000000 +0000
++++ openjdk/jdk/src/share/classes/sun/security/krb5/Credentials.java	2012-05-10 00:33:46.400831829 +0100
+@@ -38,6 +38,7 @@
+ import java.io.File;
+ import java.io.IOException;
+ import java.util.Date;
++import java.util.Locale;
+ import java.util.Vector;
+ import java.io.BufferedReader;
+ import java.io.InputStreamReader;
+@@ -261,7 +262,7 @@
+             // The default ticket cache on Windows is not a file.
+             String os = java.security.AccessController.doPrivileged(
+                         new sun.security.action.GetPropertyAction("os.name"));
+-            if (os.toUpperCase().startsWith("WINDOWS")) {
++            if (os.toUpperCase(Locale.ENGLISH).startsWith("WINDOWS")) {
+                 Credentials creds = acquireDefaultCreds();
+                 if (creds == null) {
+                     if (DEBUG) {
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs/PKCS9Attribute.java openjdk/jdk/src/share/classes/sun/security/pkcs/PKCS9Attribute.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/pkcs/PKCS9Attribute.java	2011-11-14 22:12:05.000000000 +0000
++++ openjdk/jdk/src/share/classes/sun/security/pkcs/PKCS9Attribute.java	2012-05-10 00:33:27.400535064 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1997, 2006, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -28,6 +28,7 @@
+ import java.io.IOException;
+ import java.io.OutputStream;
+ import java.security.cert.CertificateException;
++import java.util.Locale;
+ import java.util.Date;
+ import java.util.Hashtable;
+ import sun.security.x509.CertificateExtensions;
+@@ -742,7 +743,7 @@
+      * the name.
+      */
+     public static ObjectIdentifier getOID(String name) {
+-        return NAME_OID_TABLE.get(name.toLowerCase());
++        return NAME_OID_TABLE.get(name.toLowerCase(Locale.ENGLISH));
+     }
+ 
+     /**
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11Cipher.java openjdk/jdk/src/share/classes/sun/security/pkcs11/P11Cipher.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11Cipher.java	2012-05-09 23:52:55.654306629 +0100
++++ openjdk/jdk/src/share/classes/sun/security/pkcs11/P11Cipher.java	2012-05-10 00:33:27.412535252 +0100
+@@ -26,6 +26,7 @@
+ 
+ import java.nio.ByteBuffer;
+ import java.util.Arrays;
++import java.util.Locale;
+ 
+ import java.security.*;
+ import java.security.spec.*;
+@@ -200,7 +201,7 @@
+     }
+ 
+     private int parseMode(String mode) throws NoSuchAlgorithmException {
+-        mode = mode.toUpperCase();
++        mode = mode.toUpperCase(Locale.ENGLISH);
+         int result;
+         if (mode.equals("ECB")) {
+             result = MODE_ECB;
+@@ -221,7 +222,7 @@
+             throws NoSuchPaddingException {
+         paddingObj = null;
+         padBuffer = null;
+-        padding = padding.toUpperCase();
++        padding = padding.toUpperCase(Locale.ENGLISH);
+         if (padding.equals("NOPADDING")) {
+             paddingType = PAD_NONE;
+         } else if (padding.equals("PKCS5PADDING")) {
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11RSACipher.java openjdk/jdk/src/share/classes/sun/security/pkcs11/P11RSACipher.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11RSACipher.java	2011-11-14 22:12:05.000000000 +0000
++++ openjdk/jdk/src/share/classes/sun/security/pkcs11/P11RSACipher.java	2012-05-10 00:33:27.412535252 +0100
+@@ -29,6 +29,8 @@
+ import java.security.spec.AlgorithmParameterSpec;
+ import java.security.spec.*;
+ 
++import java.util.Locale;
++
+ import javax.crypto.*;
+ import javax.crypto.spec.*;
+ 
+@@ -110,7 +112,7 @@
+ 
+     protected void engineSetPadding(String padding)
+             throws NoSuchPaddingException {
+-        String lowerPadding = padding.toLowerCase();
++        String lowerPadding = padding.toLowerCase(Locale.ENGLISH);
+         if (lowerPadding.equals("pkcs1Padding")) {
+             // empty
+         } else {
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/provider/certpath/URICertStore.java openjdk/jdk/src/share/classes/sun/security/provider/certpath/URICertStore.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/provider/certpath/URICertStore.java	2011-11-14 22:12:06.000000000 +0000
++++ openjdk/jdk/src/share/classes/sun/security/provider/certpath/URICertStore.java	2012-05-10 00:34:30.061514202 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2006, 2010 Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -50,6 +50,7 @@
+ import java.util.Collection;
+ import java.util.Collections;
+ import java.util.List;
++import java.util.Locale;
+ import sun.security.x509.AccessDescription;
+ import sun.security.x509.GeneralNameInterface;
+ import sun.security.x509.URIName;
+@@ -134,7 +135,7 @@
+         }
+         this.uri = ((URICertStoreParameters) params).uri;
+         // if ldap URI, use an LDAPCertStore to fetch certs and CRLs
+-        if (uri.getScheme().toLowerCase().equals("ldap")) {
++        if (uri.getScheme().toLowerCase(Locale.ENGLISH).equals("ldap")) {
+             ldap = true;
+             ldapCertStore =
+                 LDAPCertStore.getInstance(LDAPCertStore.getParameters(uri));
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/util/Debug.java openjdk/jdk/src/share/classes/sun/security/util/Debug.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/util/Debug.java	2011-11-14 22:12:06.000000000 +0000
++++ openjdk/jdk/src/share/classes/sun/security/util/Debug.java	2012-05-10 00:33:27.412535252 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1998, 2007, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -28,6 +28,7 @@
+ import java.math.BigInteger;
+ import java.util.regex.Pattern;
+ import java.util.regex.Matcher;
++import java.util.Locale;
+ 
+ /**
+  * A utility class for debuging.
+@@ -262,7 +263,7 @@
+             source = left;
+ 
+             // convert the rest to lower-case characters
+-            target.append(source.toString().toLowerCase());
++            target.append(source.toString().toLowerCase(Locale.ENGLISH));
+ 
+             return target.toString();
+         }
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/x509/AlgorithmId.java openjdk/jdk/src/share/classes/sun/security/x509/AlgorithmId.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/x509/AlgorithmId.java	2011-11-14 22:12:06.000000000 +0000
++++ openjdk/jdk/src/share/classes/sun/security/x509/AlgorithmId.java	2012-05-10 00:33:58.949027881 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1996, 2006, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -541,9 +541,10 @@
+                 for (Enumeration<Object> enum_ = provs[i].keys();
+                      enum_.hasMoreElements(); ) {
+                     String alias = (String)enum_.nextElement();
++                    String upperCaseAlias = alias.toUpperCase(Locale.ENGLISH);
+                     int index;
+-                    if (alias.toUpperCase().startsWith("ALG.ALIAS") &&
+-                        (index=alias.toUpperCase().indexOf("OID.", 0)) != -1) {
++                    if (upperCaseAlias.startsWith("ALG.ALIAS") &&
++                            (index=upperCaseAlias.indexOf("OID.", 0)) != -1) {
+                         index += "OID.".length();
+                         if (index == alias.length()) {
+                             // invalid alias entry
+@@ -553,19 +554,26 @@
+                             oidTable = new HashMap<String,ObjectIdentifier>();
+                         }
+                         oidString = alias.substring(index);
+-                        String stdAlgName
+-                            = provs[i].getProperty(alias).toUpperCase();
+-                        if (oidTable.get(stdAlgName) == null) {
++                        String stdAlgName = provs[i].getProperty(alias);
++                        if (stdAlgName != null) {
++                            stdAlgName = stdAlgName.toUpperCase(Locale.ENGLISH);
++                        }
++                        if (stdAlgName != null &&
++                                oidTable.get(stdAlgName) == null) {
+                             oidTable.put(stdAlgName,
+                                          new ObjectIdentifier(oidString));
+                         }
+                     }
+                 }
+             }
++
++            if (oidTable == null) {
++                oidTable = new HashMap<String,ObjectIdentifier>(1);
++            }
+             initOidTable = true;
+         }
+ 
+-        return oidTable.get(name.toUpperCase());
++        return oidTable.get(name.toUpperCase(Locale.ENGLISH));
+     }
+ 
+     private static ObjectIdentifier oid(int ... values) {
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/x509/AVA.java openjdk/jdk/src/share/classes/sun/security/x509/AVA.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/x509/AVA.java	2011-11-14 22:12:06.000000000 +0000
++++ openjdk/jdk/src/share/classes/sun/security/x509/AVA.java	2012-05-10 00:34:07.773165778 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1996, 2006, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -1222,7 +1222,7 @@
+         (String keyword, int standard, Map<String, String> extraKeywordMap)
+             throws IOException {
+ 
+-        keyword = keyword.toUpperCase();
++        keyword = keyword.toUpperCase(Locale.ENGLISH);
+         if (standard == AVA.RFC2253) {
+             if (keyword.startsWith(" ") || keyword.endsWith(" ")) {
+                 throw new IOException("Invalid leading or trailing space " +
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/x509/DNSName.java openjdk/jdk/src/share/classes/sun/security/x509/DNSName.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/x509/DNSName.java	2011-11-14 22:12:07.000000000 +0000
++++ openjdk/jdk/src/share/classes/sun/security/x509/DNSName.java	2012-05-10 00:33:27.412535252 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1997, 2000, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -26,6 +26,7 @@
+ package sun.security.x509;
+ 
+ import java.io.IOException;
++import java.util.Locale;
+ 
+ import sun.security.util.*;
+ 
+@@ -198,8 +199,9 @@
+         else if (inputName.getType() != NAME_DNS)
+             constraintType = NAME_DIFF_TYPE;
+         else {
+-            String inName = (((DNSName)inputName).getName()).toLowerCase();
+-            String thisName = name.toLowerCase();
++            String inName =
++                (((DNSName)inputName).getName()).toLowerCase(Locale.ENGLISH);
++            String thisName = name.toLowerCase(Locale.ENGLISH);
+             if (inName.equals(thisName))
+                 constraintType = NAME_MATCH;
+             else if (thisName.endsWith(inName)) {
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/x509/RFC822Name.java openjdk/jdk/src/share/classes/sun/security/x509/RFC822Name.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/x509/RFC822Name.java	2011-11-14 22:12:07.000000000 +0000
++++ openjdk/jdk/src/share/classes/sun/security/x509/RFC822Name.java	2012-05-10 00:33:27.412535252 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1997, 2000, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -26,6 +26,7 @@
+ package sun.security.x509;
+ 
+ import java.io.IOException;
++import java.util.Locale;
+ 
+ import sun.security.util.*;
+ 
+@@ -187,8 +188,9 @@
+             constraintType = NAME_DIFF_TYPE;
+         } else {
+             //RFC2459 specifies that case is not significant in RFC822Names
+-            String inName = (((RFC822Name)inputName).getName()).toLowerCase();
+-            String thisName = name.toLowerCase();
++            String inName =
++                (((RFC822Name)inputName).getName()).toLowerCase(Locale.ENGLISH);
++            String thisName = name.toLowerCase(Locale.ENGLISH);
+             if (inName.equals(thisName)) {
+                 constraintType = NAME_MATCH;
+             } else if (thisName.endsWith(inName)) {
+diff -Nru openjdk.orig/jdk/test/sun/security/x509/AlgorithmId/TurkishRegion.java openjdk/jdk/test/sun/security/x509/AlgorithmId/TurkishRegion.java
+--- openjdk.orig/jdk/test/sun/security/x509/AlgorithmId/TurkishRegion.java	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/jdk/test/sun/security/x509/AlgorithmId/TurkishRegion.java	2012-05-10 00:33:27.412535252 +0100
+@@ -0,0 +1,40 @@
++/*
++ * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/*
++ * @test
++ * @bug 6867345
++ * @summary Turkish regional options cause NPE in
++ *     sun.security.x509.AlgorithmId.algOID
++ * @run main/othervm -Duser.language=tr -Duser.region=TR TurkishRegion
++ * @author Xuelei Fan
++ */
++
++import sun.security.x509.*;
++
++public class TurkishRegion {
++
++    public static void main(String[] args) throws Exception {
++        AlgorithmId algId = AlgorithmId.get("PBEWITHMD5ANDDES");
++    }
++}

@@ -1,3 +1,16 @@
+2012-05-10  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am: Add new patches.
+	* patches/openjdk/p11cipher-4898461-support_ecb_and_cbc.patch,
+	* patches/openjdk/p11cipher-6604496-support_ckm_aes_ctr.patch,
+	* patches/openjdk/p11cipher-6682411-fix_indexoutofboundsexception.patch,
+	* patches/openjdk/p11cipher-6682417-fix_decrypted_data_not_multiple_of_blocks.patch,
+	* patches/openjdk/p11cipher-6687725-throw_illegalblocksizeexception.patch,
+	* patches/openjdk/p11cipher-6812738-native_cleanup.patch,
+	* patches/openjdk/p11cipher-6867345-turkish_regional_options_cause_npe_in_algoid.patch,
+	* patches/openjdk/p11cipher-6924489-ckr_operation_not_initialized.patch:
+	Backports from 7 to improve P11Cipher.
+
 2012-05-09  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:

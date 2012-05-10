@@ -421,7 +421,15 @@ ICEDTEA_PATCHES = \
 	patches/generalise_crypto_tests.patch \
 	patches/remove-gcm-test.patch \
 	patches/skip_wrap_mode.patch \
-	patches/remove_multicatch_in_testrsa.patch
+	patches/remove_multicatch_in_testrsa.patch \
+	patches/openjdk/p11cipher-4898461-support_ecb_and_cbc.patch \
+	patches/openjdk/p11cipher-6682411-fix_indexoutofboundsexception.patch \
+	patches/openjdk/p11cipher-6682417-fix_decrypted_data_not_multiple_of_blocks.patch \
+	patches/openjdk/p11cipher-6812738-native_cleanup.patch \
+	patches/openjdk/p11cipher-6867345-turkish_regional_options_cause_npe_in_algoid.patch \
+	patches/openjdk/p11cipher-6687725-throw_illegalblocksizeexception.patch \
+	patches/openjdk/p11cipher-6924489-ckr_operation_not_initialized.patch \
+	patches/openjdk/p11cipher-6604496-support_ckm_aes_ctr.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \

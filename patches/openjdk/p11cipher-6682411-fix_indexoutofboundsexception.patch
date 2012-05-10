@@ -1,0 +1,60 @@
+# HG changeset patch
+# User valeriep
+# Date 1207005157 25200
+# Node ID 17e93b7fb97d4ffdc00bc3df56038de9eb990ea1
+# Parent  8805ae9d160c7849af3dc7971d620977baa1f335
+6682411: JCK test failed w/ ArrayIndexOutOfBoundException (-1) when decrypting with no data
+Summary: Fixed PKCS5Padding class with additional check and throw BadPaddingException if the check failed
+Reviewed-by: wetmore
+
+diff --git a/src/share/classes/sun/security/pkcs11/P11Cipher.java b/src/share/classes/sun/security/pkcs11/P11Cipher.java
+--- openjdk/jdk/src/share/classes/sun/security/pkcs11/P11Cipher.java
++++ openjdk/jdk/src/share/classes/sun/security/pkcs11/P11Cipher.java
+@@ -72,7 +72,7 @@
+ 
+         // DEC: return the length of trailing padding bytes given the specified
+         // padded data
+-        int unpad(byte[] paddedData, int ofs, int len)
++        int unpad(byte[] paddedData, int len)
+                 throws BadPaddingException;
+     }
+ 
+@@ -94,14 +94,17 @@
+             return padLen;
+         }
+ 
+-        public int unpad(byte[] paddedData, int ofs, int len)
++        public int unpad(byte[] paddedData, int len)
+                 throws BadPaddingException {
+-            byte padValue = paddedData[ofs + len - 1];
++            if (len < 1 || len > paddedData.length) {
++                throw new BadPaddingException("Invalid pad array length!");
++            }
++            byte padValue = paddedData[len - 1];
+             if (padValue < 1 || padValue > blockSize) {
+                 throw new BadPaddingException("Invalid pad value!");
+             }
+             // sanity check padding bytes
+-            int padStartIndex = ofs + len - padValue;
++            int padStartIndex = len - padValue;
+             for (int i = padStartIndex; i < len; i++) {
+                 if (paddedData[i] != padValue) {
+                     throw new BadPaddingException("Invalid pad bytes!");
+@@ -712,7 +715,7 @@
+                     }
+                     k += token.p11.C_DecryptFinal(session.id(), 0, padBuffer, k,
+                             padBuffer.length - k);
+-                    int actualPadLen = paddingObj.unpad(padBuffer, 0, k);
++                    int actualPadLen = paddingObj.unpad(padBuffer, k);
+                     k -= actualPadLen;
+                     System.arraycopy(padBuffer, 0, out, outOfs, k);
+                 } else {
+@@ -781,7 +784,7 @@
+                     }
+                     k += token.p11.C_DecryptFinal(session.id(),
+                             0, padBuffer, k, padBuffer.length - k);
+-                    int actualPadLen = paddingObj.unpad(padBuffer, 0, k);
++                    int actualPadLen = paddingObj.unpad(padBuffer, k);
+                     k -= actualPadLen;
+                     outArray = padBuffer;
+                     outOfs = 0;
