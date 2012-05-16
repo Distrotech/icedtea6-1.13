@@ -12,15 +12,39 @@ CVE-XXXX-YYYY: http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
 New in release 1.12 (2012-XX-XX):
 
-* Bug fixes
-  - PR865: Patching fails with patches/ecj/jaxws-getdtdtype.patch
-  - PR886: 6-1.11.1 fails to build CACAO on ppc
 * Backports
   - S6706974: Add krb5 test infrastructure
   - S6764553: com.sun.org.apache.xml.internal.security.utils.IdResolver is not thread safe
   - S6761072: new krb5 tests fail on multiple platforms
   - S6883983: JarVerifier dependency on sun.security.pkcs should be removed
   - S4465490: Suspicious about double-check locking idiom being used in the code
+
+New in release 1.11.2 (2012-05-11):
+
+* Bug fixes
+  - RH789154: javac error messages no longer contain the full path to the offending file:
+  - PR797: Compiler error message does not display entire file name and path
+  - PR881: Sign tests (wsse.policy.basic) failures with OpenJDK6
+  - PR886: 6-1.11.1 fails to build CACAO on ppc
+  - Specify both source and target in IT_GET_DTDTYPE_CHECK.
+  - Install nss.cfg into j2re-image too.
+  - PR584: Don't use shared Eden in incremental mode.
+* Backports
+  - S6792400: Avoid loading of Normalizer resources for simple uses
+
+New in release 1.10.7 (2012-05-11):
+
+* Fixed build with GCC 4.7
+* Bug fixes
+  - PR732: Use xsltproc for bootstrap xslt in place of Xerces/Xalan
+  - PR881: Sign tests (wsse.policy.basic) failures with OpenJDK6
+  - Specify both source and target in IT_GET_DTDTYPE_CHECK.
+  - PR758: [regression] javah from 6hg/b23 generates `jlong' from `private int'
+  - Install nss.cfg into j2re-image too.
+* Backports
+  - S6792400: Avoid loading of Normalizer resources for simple uses
+  - S7103224: collision between __LEAF define in interfaceSupport.hpp and /usr/include/sys/cdefs.h with gcc
+  - S7140882: Don't return booleans from methods returning pointers
 
 New in release 1.10.6 (2012-02-14):
 

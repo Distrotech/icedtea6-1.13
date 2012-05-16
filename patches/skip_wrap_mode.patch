@@ -1,0 +1,24 @@
+# HG changeset patch
+# User andrew
+# Date 1336091783 -3600
+# Node ID 5f96377cf55e0233ef502e77c29e5510ea8c5a4e
+# Parent  9b7558b91244fd890631aa8c150a9bc1d55dc37b
+Skip wrap mode tests if wrap mode is not available.
+
+diff --git a/test/com/oracle/security/ucrypto/TestAES.java b/test/com/oracle/security/ucrypto/TestAES.java
+--- openjdk/jdk/test/com/oracle/security/ucrypto/TestAES.java
++++ openjdk/jdk/test/com/oracle/security/ucrypto/TestAES.java
+@@ -219,7 +219,12 @@
+                     System.err.println("Skipping Unsupported CIP algo: " + algos[i]);
+                     continue;
+                 }
+-                c1.init(Cipher.WRAP_MODE, key, (AlgorithmParameters)null, null);
++		try {
++		    c1.init(Cipher.WRAP_MODE, key, (AlgorithmParameters)null, null);
++		} catch (InvalidAlgorithmParameterException e) {
++		    System.err.println("Skipping due to lack of WRAP_MODE support.");
++		    continue;
++		}
+                 AlgorithmParameters params = c1.getParameters();
+                 Cipher c2 = Cipher.getInstance(algos[i], interopP);
+                 c2.init(Cipher.UNWRAP_MODE, key, params, null);

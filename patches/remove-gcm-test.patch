@@ -1,0 +1,77 @@
+diff -Nru openjdk.orig/jdk/test/com/oracle/security/ucrypto/TestAES.java openjdk/jdk/test/com/oracle/security/ucrypto/TestAES.java
+--- openjdk.orig/jdk/test/com/oracle/security/ucrypto/TestAES.java	2012-05-04 16:02:03.540283990 +0100
++++ openjdk/jdk/test/com/oracle/security/ucrypto/TestAES.java	2012-05-04 16:06:45.548942983 +0100
+@@ -67,9 +67,8 @@
+         boolean result4 = testCipherOffset(PADDEDCIPHER_ALGOS, CIPHER_KEY, prov);
+ 
+         boolean result5 = testCipherKeyWrapping(PADDEDCIPHER_ALGOS, CIPHER_KEY, prov, sunJCEProv);
+-        boolean result6 = testCipherGCM(CIPHER_KEY, prov);
+ 
+-	return result1 && result2 && result3 && result4 && result5 && result6;
++	return result1 && result2 && result3 && result4 && result5;
+     }
+ 
+     private static boolean testCipherInterop(String[] algos, SecretKey key,
+@@ -258,62 +257,6 @@
+         }
+ 
+ 	return testPassed;
+-    }
+-
+-
+-    private static boolean testCipherGCM(SecretKey key,
+-					 Provider p) {
+-        boolean testPassed = true;
+-        byte[] in = new byte[16];
+-        (new SecureRandom()).nextBytes(in);
+-
+-        byte[] iv = new byte[16];
+-        (new SecureRandom()).nextBytes(iv);
+-
+-
+-        String algo = "AES/GCM/NoPadding";
+-        int tagLen[] = { 128, 120, 112, 104, 96, 64, 32 };
+-
+-        try {
+-            Cipher c;
+-            try {
+-                c = Cipher.getInstance(algo, p);
+-            } catch (NoSuchAlgorithmException nsae) {
+-                System.err.println("Skipping Unsupported CIP algo: " + algo);
+-                return true;
+-            }
+-            for (int i = 0; i < tagLen.length; i++) {
+-                AlgorithmParameterSpec paramSpec = new GCMParameterSpec(tagLen[i], iv);
+-                // check ENC
+-                c.init(Cipher.ENCRYPT_MODE, key, paramSpec, null);
+-                c.updateAAD(iv);
+-                byte[] eout = c.doFinal(in, 0, in.length);
+-
+-                AlgorithmParameters param = c.getParameters();
+-                // check DEC
+-                c.init(Cipher.DECRYPT_MODE, key, param, null);
+-                c.updateAAD(iv);
+-                byte[] dout = c.doFinal(eout, 0, eout.length);
+-
+-                if (!Arrays.equals(dout, in)) {
+-                    System.err.println(algo + ": PT and RT DIFF FAILED");
+-                    testPassed = false;
+-                } else {
+-                    System.err.println(algo + ": tagLen " + tagLen[i] + " done");
+-                }
+-            }
+-        } catch(Exception ex) {
+-            System.err.println("Unexpected Exception: " + algo);
+-            ex.printStackTrace();
+-            testPassed = false;
+-        }
+-        if (testPassed) {
+-            System.err.println("CIPHER GCM Tests Passed");
+-        } else {
+-            System.err.println("One or more CIPHER GCM tests failed!");
+-        }
+-
+-	return testPassed;
+     }
+ 
+     private static boolean checkArrays(byte[] a1, int a1Len, byte[] a2, int a2Len) {

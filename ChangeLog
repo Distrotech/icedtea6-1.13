@@ -1,3 +1,133 @@
+2012-05-16  Andrew John Hughes  <ahughes@redhat.com>
+
+	* NEWS: Add latest releases, 1.10.7 & 1.11.2
+
+2012-05-10  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am: Add new patches.
+	* patches/openjdk/p11cipher-4898461-support_ecb_and_cbc.patch,
+	* patches/openjdk/p11cipher-6604496-support_ckm_aes_ctr.patch,
+	* patches/openjdk/p11cipher-6682411-fix_indexoutofboundsexception.patch,
+	* patches/openjdk/p11cipher-6682417-fix_decrypted_data_not_multiple_of_blocks.patch,
+	* patches/openjdk/p11cipher-6687725-throw_illegalblocksizeexception.patch,
+	* patches/openjdk/p11cipher-6812738-native_cleanup.patch,
+	* patches/openjdk/p11cipher-6867345-turkish_regional_options_cause_npe_in_algoid.patch,
+	* patches/openjdk/p11cipher-6924489-ckr_operation_not_initialized.patch:
+	Backports from 7 to improve P11Cipher.
+
+2012-05-09  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(MEMORY_LIMIT): Always set this.
+	* javac.in:
+	Split out '-J' prefixed options and pass them
+	to the VM rather than ecj.  Filter out
+	'-J-Xbootclasspath/p:', which makes no sense
+	as there's nothing to prepend, and confuses
+	the VM.
+
+2012-05-09  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* patches/remove_multicatch_in_testrsa.patch:
+	Make the test TestRSA compatible with JDK6 syntax.
+	* Makefile.am: Updated.
+
+2012-05-09  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(add-nss): Copy nss.cfg to j2re-image as well.
+	(clean-add-nss): Remove nss.cfg from j2re-image.
+	(add-nss-debug): Same as for add-nss.
+	(clean-add-nss-debug): Same as for clean-add-nss.
+	(add-nss-ecj): Same as for add-nss.
+	(clean-add-nss-ecj): Same as for clean-add-nss.
+
+2012-05-04  Andrew John Hughes  <ahughes@redhat.com>
+
+	Backport cryptography tests from 7.
+	* Makefile.am: Add new patches.
+	* patches/generalise_crypto_tests.patch:
+	IcedTea7 patch to generalise crypto tests.
+	* patches/openjdk/7088989-ucrypto_tests.patch:
+	Backport of 7088989.
+	* patches/remove-gcm-test.patch:
+	Remove GCM testing as not part of 6.
+	* patches/skip_wrap_mode.patch:
+	IcedTea7 patch to skip wrap mode tests when mode
+	is not available.
+
+2012-04-20  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* NEWS: Mention bugfix PR797 (the same as bugfig RH789154).
+
+2012-03-29  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* patches/revert-6885123.patch: Removed to fix
+	  RH bug #789154 - javac error messages no longer
+	  contain the full path to the offending file.
+	* NEWS: Mention bugfix.
+	* Makefile.am: Updated.
+
+2012-03-27  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* patches/openjdk/6792400-Avoid_loading_Normalizer_resources.patch:
+	Backport of: 6792400: Avoid loading of Normalizer resources
+	for simple uses
+	* NEWS: Mention backport.
+	* Makefile.am: Updated
+
+2012-03-21  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* patches/apache-xml-internal-fix-bug-38655.patch:
+	Added patch which fixes the Apache XML security bug #38655
+	* Makefile.am: Updated
+
+2012-03-21  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	PR881: Sign tests (wsse.policy.basic) failures with OpenJDK6
+	* Makefile.am: Updated
+	* patches/idresolver_fix.patch: added patch for a class
+	IdResolver.
+
+2012-03-26  Mark Wielaard  <mjw@redhat.com>
+
+	* test/tapset/jstaptest.pl: thread_start and thread_stop thread id
+	can be any positive number.
+
+2012-03-23  Mark Wielaard  <mjw@redhat.com>
+
+	* test/tapset/jstaptest.pl: Add jstack tests.
+
+2012-03-23  Jon VanAlten  <jon.vanalten@redhat.com>
+
+	* Makefile.am:
+	Add target to run tapset tests.
+	* tapset/hotspot_jni.stp.in:
+	Add notes regarding required JVM option to Get<PrimitiveType>Field
+	family of probe aliases.
+	* test/tapset/ClassUnloadedProbeTester.java:
+	Part of test coverage for hotspot.stp and hotspot_jni.stp tapsets.
+	* test/tapset/JNIStapTest.c:
+	Likewise.
+	* test/tapset/JNITestClass.c:
+	Likewise.
+	* test/tapset/JNITestClass.h:
+	Likewise.
+	* test/tapset/JNITestClass.java:
+	Likewise.
+	* test/tapset/RunWrapper.java:
+	Likewise.
+	* test/tapset/StapJNIClassLoader.java:
+	Likewise.
+	* test/tapset/StapURLClassLoader.java:
+	Likewise.
+	* test/tapset/SystemtapTester.java:
+	Likewise.
+	* test/tapset/TestingRunner.java:
+	Likewise.
+	* test/tapset/jstaptest.pl:
+	Wrapper script, compiles and runs tests for tapsets.
+
 2012-03-20  Mark Wielaard  <mjw@redhat.com>
 
 	* Makefile.am (clean-jtreg): Depend on clean-jtreg-reports.

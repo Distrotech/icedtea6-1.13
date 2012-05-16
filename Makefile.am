@@ -89,6 +89,7 @@ ICEDTEA_BOOTSTRAP_CLASSES = \
 	$(SHARE)/com/sun/java/swing/plaf/nimbus/NimbusLookAndFeel.java
 
 # Flags
+MEMORY_LIMIT = -J-Xmx1024m
 IT_CFLAGS=$(CFLAGS) $(ARCHFLAG)
 IT_JAVAC_SETTINGS=-g -encoding utf-8 $(JAVACFLAGS) $(MEMORY_LIMIT) $(PREFER_SOURCE)
 IT_LANGUAGE_SOURCE_VERSION=6
@@ -118,15 +119,6 @@ PULSE_JAVA_JAVA_SRCDIR = $(PULSE_JAVA_DIR)/src/java
 PULSE_JAVA_CLASS_DIR = $(PULSE_JAVA_BUILDDIR)/classes
 PULSE_JAVA_TARGET = stamps/pulse-java.stamp
 PULSE_JAVA_CLEAN_TARGET = clean-pulse-java
-endif
-
-# FIXME: This should not depend on bootstrapping
-# but on whether MEMORY_LIMIT is accepted
-# as an argument to javac
-if BOOTSTRAPPING
-  MEMORY_LIMIT =
-else
-  MEMORY_LIMIT = -J-Xmx1024m
 endif
 
 if ENABLE_CACAO
@@ -337,7 +329,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7027667-AAShapePipeRegTest.patch \
 	patches/openjdk/7019861-AA-regression-fix.patch \
 	patches/g356743-libpng-1.5.patch \
-	patches/revert-6885123.patch \
 	patches/openjdk/7032388-work_without_cmov_instruction.patch \
 	patches/openjdk/7031385-gcc-register-allocation-fix.patch \
 	patches/openjdk/6986968-crash_on_xim_restart.patch \
@@ -410,7 +401,23 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/remove-mimpure-option-to-gcc.patch \
 	patches/ScriptEngineManager-doc.patch \
 	patches/openjdk/6883983-JarVerifier_removed_dependency_sun_security_pkcs.patch \
-	patches/openjdk/4465490-Suspicious_double-check_locking_idiom.patch
+	patches/openjdk/4465490-Suspicious_double-check_locking_idiom.patch \
+	patches/idresolver_fix.patch \
+	patches/apache-xml-internal-fix-bug-38655.patch \
+	patches/openjdk/6792400-Avoid_loading_Normalizer_resources.patch \
+	patches/openjdk/7088989-ucrypto_tests.patch \
+	patches/generalise_crypto_tests.patch \
+	patches/remove-gcm-test.patch \
+	patches/skip_wrap_mode.patch \
+	patches/remove_multicatch_in_testrsa.patch \
+	patches/openjdk/p11cipher-4898461-support_ecb_and_cbc.patch \
+	patches/openjdk/p11cipher-6682411-fix_indexoutofboundsexception.patch \
+	patches/openjdk/p11cipher-6682417-fix_decrypted_data_not_multiple_of_blocks.patch \
+	patches/openjdk/p11cipher-6812738-native_cleanup.patch \
+	patches/openjdk/p11cipher-6867345-turkish_regional_options_cause_npe_in_algoid.patch \
+	patches/openjdk/p11cipher-6687725-throw_illegalblocksizeexception.patch \
+	patches/openjdk/p11cipher-6924489-ckr_operation_not_initialized.patch \
+	patches/openjdk/p11cipher-6604496-support_ckm_aes_ctr.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -642,9 +649,16 @@ EXTRA_DIST = generated \
 
 all-local: icedtea-against-icedtea
 
-check-local: jtregcheck
+check-local: jtregcheck check-tapset
 
-clean-local: clean-jtreg clean-jtreg-reports $(PULSE_JAVA_CLEAN_TARGET) \
+clean-tests: clean-jtreg clean-tapset-report
+	if [ $(abs_top_srcdir) != $(abs_top_builddir) ] ; then \
+	  if [ -e test ] ; then \
+	    rmdir test ; \
+	  fi \
+	fi
+
+clean-local: clean-tests $(PULSE_JAVA_CLEAN_TARGET) \
  clean-icedtea clean-icedtea-debug clean-icedtea-ecj clean-extract clean-ports \
  clean-overlay clean-native-ecj clean-icedtea-against-icedtea clean-icedtea-debug-against-icedtea \
  clean-icedtea-against-ecj clean-extract-ecj clean-generated clean-replace-hotspot \
@@ -688,7 +702,7 @@ install:
 	clean-add-pulseaudio clean-add-pulseaudio-debug clean-add-nss clean-add-nss-debug \
 	clean-add-tzdata-support clean-add-tzdata-support-debug clean-add-systemtap-ecj \
 	clean-add-pulseaudio-ecj clean-add-nss-ecj clean-add-tzdata-support-ecj clean-fonts \
-	clean-download-hotspot jtregcheck
+	clean-download-hotspot clean-tests clean-tapset-report jtregcheck
 
 env:
 	@echo 'unset JAVA_HOME'
@@ -1580,19 +1594,25 @@ clean-add-pulseaudio-debug:
 stamps/add-nss.stamp: stamps/icedtea.stamp
 	cp $(abs_top_builddir)/nss.cfg \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security
+	cp $(abs_top_builddir)/nss.cfg \
+	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/security
 	touch stamps/add-nss.stamp
 
 clean-add-nss:
 	rm -f $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/nss.cfg
+	rm -f $(BUILD_OUTPUT_DIR)/j2re-image/lib/security/nss.cfg
 	rm -f stamps/add-nss.stamp
 
 stamps/add-nss-debug.stamp: stamps/icedtea-debug.stamp
 	cp $(abs_top_builddir)/nss.cfg \
 	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security;
+	cp $(abs_top_builddir)/nss.cfg \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/security;
 	touch stamps/add-nss-debug.stamp
 
 clean-add-nss-debug:
 	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/nss.cfg
+	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/security/nss.cfg
 	rm -f stamps/add-nss-debug.stamp
 
 stamps/add-tzdata-support.stamp: stamps/icedtea.stamp
@@ -1697,10 +1717,13 @@ clean-add-pulseaudio-ecj:
 stamps/add-nss-ecj.stamp: stamps/icedtea-ecj.stamp
 	cp $(abs_top_builddir)/nss.cfg \
 	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security;
+	cp $(abs_top_builddir)/nss.cfg \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/security;
 	touch stamps/add-nss-ecj.stamp
 
 clean-add-nss-ecj:
 	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/nss.cfg
+	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/security/nss.cfg
 	rm -f stamps/add-nss-ecj.stamp
 
 stamps/add-tzdata-support-ecj.stamp: stamps/icedtea-ecj.stamp
@@ -2151,9 +2174,6 @@ clean-jtreg: clean-jtreg-reports
 	  rmdir test/jtreg ; \
 	fi
 	rm -f test/jtreg.jar
-	if [ -e test ] ; then \
-	  rmdir test ; \
-	fi
 	rm -f stamps/jtreg.stamp
 
 check-hotspot: stamps/jtreg.stamp
@@ -2233,6 +2253,19 @@ jtregcheck: jtreg $(TEST_SUITES:%=check-%)
 	  echo "leftover processes..."; \
 	  $(jtreg_processes); \
 	fi
+
+check-tapset: 
+if ENABLE_SYSTEMTAP
+	$(abs_top_srcdir)/test/tapset/jstaptest.pl \
+	  -B $(BUILD_OUTPUT_DIR) -A $(BUILD_ARCH_DIR) \
+	  -S $(abs_top_srcdir)/test/tapset \
+	  -o test/check-stap.log
+endif
+
+clean-tapset-report:
+if ENABLE_SYSTEMTAP
+	rm -f test/check-stap.log
+endif
 
 # Support classes for non-OpenJDK bootstraps
 
