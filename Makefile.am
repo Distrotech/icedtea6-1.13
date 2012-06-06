@@ -199,7 +199,6 @@ SPECIAL_SECURITY_PATCH = patches/security/20120214/7112642.patch
 
 ICEDTEA_PATCHES = \
 	$(SECURITY_PATCHES) \
-	patches/openjdk/6610244-modal-fatal-error-windows.patch \
 	patches/stdc-limit-macros.patch \
 	patches/openjdk/4993545-nativeinlightfixer.patch \
 	patches/openjdk/6637796-set_bounds.patch \
