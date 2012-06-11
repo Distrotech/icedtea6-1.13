@@ -354,7 +354,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6699843-IllegalArgumentException_drawString.patch \
 	patches/openjdk/6918065-Crash_in_Java2D_blit_loop.patch \
 	patches/openjdk/6623219-Font_canDisplayUpTo_does_not_work.patch \
-	patches/support_linux_3.patch \
 	patches/openjdk/6783910-java_awt_Color_brighter_darker_fix.patch \
 	patches/openjdk/6785424-SecurityException_locating_physical_fonts.patch \
 	patches/openjdk/7047069-Array_can_dynamically_change_size.patch \
@@ -389,14 +388,12 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6826104-npe_on_app_and_toolkit_modal_dialog_click.patch \
 	patches/openjdk/5082756-ImageIO_plugins_metadata_boolean_attributes.patch \
 	patches/openjdk/6296893-BMP_Writer_handles_TopDown_prop_incorrectly.patch \
-	patches/openjdk/7103224-glibc_name_collision.patch \
 	patches/arm-debug.patch \
 	patches/arm-hsdis.patch	\
 	patches/openjdk/7103610-_NET_WM_PID_and_WM_CLIENT_MACHINE_are_not_set.patch \
 	patches/openjdk/6706974-krb5_test_infrastructure.patch \
 	patches/openjdk/6764553-IdResolver_is_not_thread_safe.patch \
 	patches/openjdk/6761072-new_krb5_tests_fail_on_multiple_platforms.patch \
-	patches/openjdk/7140882-dont-return-booleans-from-methods-returning-pointers.patch \
 	patches/openjdk/remove-mimpure-option-to-gcc.patch \
 	patches/ScriptEngineManager-doc.patch \
 	patches/openjdk/6883983-JarVerifier_removed_dependency_sun_security_pkcs.patch \
