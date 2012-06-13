@@ -1,0 +1,129 @@
+# HG changeset patch
+# User kamg
+# Date 1339076892 -3600
+# Node ID aaf8f12b1e038cfe25ed41afb9f91a10dc4ff584
+# Parent  c1fc713e41d83d8872775fb4b76597a806ed9ce2
+7110720: Issue with vm config file loadingIssue with vm config file loading
+Summary: disabling default config files if -XX:-ReadDefaultConfigFiles
+Reviewed-by: phh, jrose, dcubed, dholmes
+
+diff --git a/src/share/vm/compiler/compilerOracle.cpp b/src/share/vm/compiler/compilerOracle.cpp
+--- openjdk/hotspot/src/share/vm/compiler/compilerOracle.cpp
++++ openjdk/hotspot/src/share/vm/compiler/compilerOracle.cpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -551,13 +551,22 @@
+ }
+ 
+ static const char* cc_file() {
+-  if (CompileCommandFile == NULL)
++#ifdef ASSERT
++  if (CompileCommandFile == NULL) {
+     return ".hotspot_compiler";
++  }
++#endif
+   return CompileCommandFile;
+ }
++
++bool CompilerOracle::has_command_file() {
++  return cc_file() != NULL;
++}
++
+ bool CompilerOracle::_quiet = false;
+ 
+ void CompilerOracle::parse_from_file() {
++  assert(has_command_file(), "command file must be specified");
+   FILE* stream = fopen(cc_file(), "rt");
+   if (stream == NULL) return;
+ 
+@@ -600,6 +609,7 @@
+ }
+ 
+ void CompilerOracle::append_comment_to_file(const char* message) {
++  assert(has_command_file(), "command file must be specified");
+   fileStream stream(fopen(cc_file(), "at"));
+   stream.print("# ");
+   for (int index = 0; message[index] != '\0'; index++) {
+@@ -610,6 +620,7 @@
+ }
+ 
+ void CompilerOracle::append_exclude_to_file(methodHandle method) {
++  assert(has_command_file(), "command file must be specified");
+   fileStream stream(fopen(cc_file(), "at"));
+   stream.print("exclude ");
+   Klass::cast(method->method_holder())->name()->print_symbol_on(&stream);
+@@ -624,7 +635,9 @@
+ void compilerOracle_init() {
+   CompilerOracle::parse_from_string(CompileCommand, CompilerOracle::parse_from_line);
+   CompilerOracle::parse_from_string(CompileOnly, CompilerOracle::parse_compile_only);
+-  CompilerOracle::parse_from_file();
++  if (CompilerOracle::has_command_file()) {
++    CompilerOracle::parse_from_file();
++  }
+   if (lists[PrintCommand] != NULL) {
+     if (PrintAssembly) {
+       warning("CompileCommand and/or .hotspot_compiler file contains 'print' commands, but PrintAssembly is also enabled");
+diff --git a/src/share/vm/compiler/compilerOracle.hpp b/src/share/vm/compiler/compilerOracle.hpp
+--- openjdk/hotspot/src/share/vm/compiler/compilerOracle.hpp
++++ openjdk/hotspot/src/share/vm/compiler/compilerOracle.hpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -38,6 +38,10 @@
+   static bool _quiet;
+ 
+  public:
++
++  // True if the command file has been specified or is implicit
++  static bool has_command_file();
++
+   // Reads from file and adds to lists
+   static void parse_from_file();
+ 
+diff --git a/src/share/vm/opto/runtime.cpp b/src/share/vm/opto/runtime.cpp
+--- openjdk/hotspot/src/share/vm/opto/runtime.cpp
++++ openjdk/hotspot/src/share/vm/opto/runtime.cpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -804,7 +804,8 @@
+       methodOop method = ((nmethod*)n)->method();
+       tty->print_cr("# Method where it happened %s.%s ", Klass::cast(method->method_holder())->name()->as_C_string(), method->name()->as_C_string());
+       tty->print_cr("#");
+-      if (ShowMessageBoxOnError && UpdateHotSpotCompilerFileOnError) {
++      if (ShowMessageBoxOnError && UpdateHotSpotCompilerFileOnError &&
++          CompilerOracle::has_command_file()) {
+         const char* title    = "HotSpot Runtime Error";
+         const char* question = "Do you want to exclude compilation of this method in future runs?";
+         if (os::message_box(title, question)) {
+diff --git a/src/share/vm/runtime/arguments.cpp b/src/share/vm/runtime/arguments.cpp
+--- openjdk/hotspot/src/share/vm/runtime/arguments.cpp
++++ openjdk/hotspot/src/share/vm/runtime/arguments.cpp
+@@ -2956,12 +2956,14 @@
+     }
+   }
+ 
++#ifdef ASSERT
+   // Parse default .hotspotrc settings file
+   if (!settings_file_specified) {
+     if (!process_settings_file(".hotspotrc", false, args->ignoreUnrecognized)) {
+       return JNI_EINVAL;
+     }
+   }
++#endif
+ 
+   if (PrintVMOptions) {
+     for (index = 0; index < args->nOptions; index++) {

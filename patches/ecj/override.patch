@@ -207,3 +207,25 @@ diff -r 697e3f8cac33 src/share/classes/sun/net/www/protocol/https/HttpsClient.ja
      public void handshakeCompleted(HandshakeCompletedEvent event)
      {
          session = event.getSession();
+diff --git a/src/share/classes/sun/security/x509/X509CRLEntryImpl.java b/src/share/classes/sun/security/x509/X509CRLEntryImpl.java
+--- openjdk-ecj/jdk/src/share/classes/sun/security/x509/X509CRLEntryImpl.java
++++ openjdk-ecj/jdk/src/share/classes/sun/security/x509/X509CRLEntryImpl.java
+@@ -464,7 +464,6 @@
+             getExtension(PKIXExtensions.CertificateIssuer_Id);
+     }
+ 
+-    @Override
+     public int compareTo(X509CRLEntryImpl that) {
+         int compSerial = getSerialNumber().compareTo(that.getSerialNumber());
+         if (compSerial != 0) {
+diff --git a/src/share/classes/sun/security/x509/X509CRLImpl.java b/src/share/classes/sun/security/x509/X509CRLImpl.java
+--- openjdk-ecj/jdk/src/share/classes/sun/security/x509/X509CRLImpl.java
++++ openjdk-ecj/jdk/src/share/classes/sun/security/x509/X509CRLImpl.java
+@@ -1276,7 +1276,6 @@
+             return hashcode;
+         }
+ 
+-        @Override
+         public int compareTo(X509IssuerSerial another) {
+             int cissuer = issuer.toString()
+                     .compareTo(another.issuer.toString());
