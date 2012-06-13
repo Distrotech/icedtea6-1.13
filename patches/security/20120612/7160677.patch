@@ -1,0 +1,19 @@
+# HG changeset patch
+# User never
+# Date 1334191100 25200
+# Node ID 17aa937e8207323719df4dac99cea86da5d4833f
+# Parent  d998d70cb0e855ba7d867adc6410aaa5777b17ca
+7160677: missing else in fix for 7152811
+Reviewed-by: kvn
+
+diff --git a/src/share/vm/ci/ciField.cpp b/src/share/vm/ci/ciField.cpp
+--- openjdk/hotspot/src/share/vm/ci/ciField.cpp
++++ openjdk/hotspot/src/share/vm/ci/ciField.cpp
+@@ -335,6 +335,7 @@
+     if (_known_to_link_with_put == accessing_klass) {
+       return true;
+     }
++  } else {
+     if (_known_to_link_with_get == accessing_klass) {
+       return true;
+     }
