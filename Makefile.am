@@ -429,7 +429,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/p11cipher-6867345-turkish_regional_options_cause_npe_in_algoid.patch \
 	patches/openjdk/p11cipher-6687725-throw_illegalblocksizeexception.patch \
 	patches/openjdk/p11cipher-6924489-ckr_operation_not_initialized.patch \
-	patches/openjdk/p11cipher-6604496-support_ckm_aes_ctr.patch
+	patches/openjdk/p11cipher-6604496-support_ckm_aes_ctr.patch \
+	patches/openjdk/p11cipher-6414899-p11digest_should_support_cloning.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
