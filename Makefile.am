@@ -1020,8 +1020,8 @@ if USE_ALT_CACAO_SRC_DIR
 	set -e ; \
 	if ! test -d cacao ; \
 	then \
-	  mkdir -p cacao/cacao ; \
-	  cp -r $(ALT_CACAO_SRC_DIR)/* cacao/cacao/ ; \
+	  mkdir cacao ; \
+	  cp -rL $(ALT_CACAO_SRC_DIR) cacao/cacao ; \
 	fi
 else
 	set -e ; \
