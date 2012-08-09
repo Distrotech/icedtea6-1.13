@@ -468,9 +468,9 @@ ICEDTEA_PATCHES += patches/systemtap.patch \
 endif
 
 if ENABLE_NSS
-ICEDTEA_PATCHES += patches/nss-config.patch
+NSS_PATCHES = patches/nss-config.patch
 else
-ICEDTEA_PATCHES += patches/nss-not-enabled-config.patch
+NSS_PATCHES = patches/nss-not-enabled-config.patch
 endif
 
 if HAS_PAX
@@ -1605,15 +1605,50 @@ clean-add-pulseaudio-debug:
 	rm -f stamps/add-pulseaudio-debug.stamp
 
 stamps/add-nss.stamp: stamps/icedtea.stamp
-	cp $(abs_top_builddir)/nss.cfg \
+	cp -v $(abs_top_builddir)/nss.cfg \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security
-	cp $(abs_top_builddir)/nss.cfg \
+	cp -v $(abs_top_builddir)/nss.cfg \
 	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/security
-	touch stamps/add-nss.stamp
+	rm -f stamps/add-nss.stamp.tmp
+	touch stamps/add-nss.stamp.tmp
+	all_patches_ok=yes; \
+	for dir in $(BUILD_OUTPUT_DIR)/{j2sdk-image/jre,j2re-image} ; \
+	do \
+	  pushd $$dir ; \
+	  cp -v $$dir/lib/security/java.security{,.old} ; \
+	  for p in $(NSS_PATCHES) ; \
+	  do \
+	    if test x$${all_patches_ok} = "xyes" \
+	      && echo Checking $$p \
+	      && $(PATCH) -l -p0 --dry-run -s -t -f -F0 \
+	        < $(abs_top_srcdir)/$$p ; \
+	    then \
+	      echo Applying $$p ; \
+	      $(PATCH) -l -p0 -F0 < $(abs_top_srcdir)/$$p ; \
+	      if ! grep "^\* $$(basename $$p)" $(abs_top_srcdir)/HACKING \
+	        >> $(abs_top_builddir)/stamps/add-nss.stamp.tmp ; \
+	      then \
+	        echo "* $$(basename $$p): UNDOCUMENTED" \
+	          >> $(abs_top_builddir)/stamps/add-nss.stamp.tmp ; \
+	      fi ; \
+	    else \
+	      test x$${all_patches_ok} = "xyes" && all_patches_ok=$$p ; \
+	    fi ; \
+	  done ; \
+	  popd ; \
+	done ; \
+	mv stamps/add-nss.stamp.tmp stamps/add-nss.stamp ; \
+	if ! test x$${all_patches_ok} = "xyes"; then \
+	  echo ERROR patch $${all_patches_ok} FAILED! ; \
+	  echo WARNING make clean-add-nss before retrying a fix ; \
+	  exit 2; \
+	fi
 
 clean-add-nss:
-	rm -f $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/nss.cfg
-	rm -f $(BUILD_OUTPUT_DIR)/j2re-image/lib/security/nss.cfg
+	rm -vf $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/nss.cfg
+	rm -vf $(BUILD_OUTPUT_DIR)/j2re-image/lib/security/nss.cfg
+	mv -vf $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/java.security{.old,}
+	mv -vf $(BUILD_OUTPUT_DIR)/j2re-image/lib/security/java.security{.old,}
 	rm -f stamps/add-nss.stamp
 
 stamps/add-nss-debug.stamp: stamps/icedtea-debug.stamp
@@ -1621,11 +1656,46 @@ stamps/add-nss-debug.stamp: stamps/icedtea-debug.stamp
 	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security;
 	cp $(abs_top_builddir)/nss.cfg \
 	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/security;
-	touch stamps/add-nss-debug.stamp
+	rm -f stamps/add-nss-debug.stamp.tmp
+	touch stamps/add-nss-debug.stamp.tmp
+	all_patches_ok=yes; \
+	for dir in $(ECJ_BUILD_OUTPUT_DIR)/{j2sdk-image/jre,j2re-image} ; \
+	do \
+	  pushd $$dir ; \
+	  cp -v $$dir/lib/security/java.security{,.old} ; \
+	  for p in $(NSS_PATCHES) ; \
+	  do \
+	    if test x$${all_patches_ok} = "xyes" \
+	      && echo Checking $$p \
+	      && $(PATCH) -l -p0 --dry-run -s -t -f -F0 \
+	        < $(abs_top_srcdir)/$$p ; \
+	    then \
+	      echo Applying $$p ; \
+	      $(PATCH) -l -p0 -F0 < $(abs_top_srcdir)/$$p ; \
+	      if ! grep "^\* $$(basename $$p)" $(abs_top_srcdir)/HACKING \
+	        >> $(abs_top_builddir)/stamps/add-nss-debug.stamp.tmp ; \
+	      then \
+	        echo "* $$(basename $$p): UNDOCUMENTED" \
+	          >> $(abs_top_builddir)/stamps/add-nss-debug.stamp.tmp ; \
+	      fi ; \
+	    else \
+	      test x$${all_patches_ok} = "xyes" && all_patches_ok=$$p ; \
+	    fi ; \
+	  done ; \
+	  popd ; \
+	done ; \
+	mv stamps/add-nss-debug.stamp.tmp stamps/add-nss-debug.stamp ; \
+	if ! test x$${all_patches_ok} = "xyes"; then \
+	  echo ERROR patch $${all_patches_ok} FAILED! ; \
+	  echo WARNING make clean-add-nss-debug before retrying a fix ; \
+	  exit 2; \
+	fi
 
 clean-add-nss-debug:
-	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/nss.cfg
-	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/security/nss.cfg
+	rm -vf $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/nss.cfg
+	rm -vf $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/security/nss.cfg
+	mv -vf $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/java.security{.old,}
+	mv -vf $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/security/java.security{.old,}
 	rm -f stamps/add-nss-debug.stamp
 
 stamps/add-tzdata-support.stamp: stamps/icedtea.stamp
@@ -1728,15 +1798,50 @@ clean-add-pulseaudio-ecj:
 	rm -f stamps/add-pulseaudio-ecj.stamp
 
 stamps/add-nss-ecj.stamp: stamps/icedtea-ecj.stamp
-	cp $(abs_top_builddir)/nss.cfg \
+	cp -v $(abs_top_builddir)/nss.cfg \
 	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security;
-	cp $(abs_top_builddir)/nss.cfg \
+	cp -v $(abs_top_builddir)/nss.cfg \
 	  $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/security;
-	touch stamps/add-nss-ecj.stamp
+	rm -f stamps/add-nss-ecj.stamp.tmp
+	touch stamps/add-nss-ecj.stamp.tmp
+	all_patches_ok=yes; \
+	for dir in $(ECJ_BUILD_OUTPUT_DIR)/{j2sdk-image/jre,j2re-image} ; \
+	do \
+	  pushd $$dir ; \
+	  cp -v $$dir/lib/security/java.security{,.old} ; \
+	  for p in $(NSS_PATCHES) ; \
+	  do \
+	    if test x$${all_patches_ok} = "xyes" \
+	      && echo Checking $$p \
+	      && $(PATCH) -l -p0 --dry-run -s -t -f -F0 \
+	        < $(abs_top_srcdir)/$$p ; \
+	    then \
+	      echo Applying $$p ; \
+	      $(PATCH) -l -p0 -F0 < $(abs_top_srcdir)/$$p ; \
+	      if ! grep "^\* $$(basename $$p)" $(abs_top_srcdir)/HACKING \
+	        >> $(abs_top_builddir)/stamps/add-nss-ecj.stamp.tmp ; \
+	      then \
+	        echo "* $$(basename $$p): UNDOCUMENTED" \
+	          >> $(abs_top_builddir)/stamps/add-nss-ecj.stamp.tmp ; \
+	      fi ; \
+	    else \
+	      test x$${all_patches_ok} = "xyes" && all_patches_ok=$$p ; \
+	    fi ; \
+	  done ; \
+	  popd ; \
+	done ; \
+	mv stamps/add-nss-ecj.stamp.tmp stamps/add-nss-ecj.stamp ; \
+	if ! test x$${all_patches_ok} = "xyes"; then \
+	  echo ERROR patch $${all_patches_ok} FAILED! ; \
+	  echo WARNING make clean-add-nss-ecj before retrying a fix ; \
+	  exit 2; \
+	fi
 
 clean-add-nss-ecj:
-	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/nss.cfg
-	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/security/nss.cfg
+	rm -vf $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/nss.cfg
+	rm -vf $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/security/nss.cfg
+	mv -vf $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/java.security{.old,}
+	mv -vf $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/security/java.security{.old,}
 	rm -f stamps/add-nss-ecj.stamp
 
 stamps/add-tzdata-support-ecj.stamp: stamps/icedtea-ecj.stamp

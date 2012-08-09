@@ -1,3 +1,17 @@
+2012-08-09  Andrew John Hughes  <ahughes@redhat.com>
+
+	Apply NSS changes to java.security after
+	build.
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Don't add NSS config patches.
+	(NSS_PATCHES): Add here instead.
+	(add-nss): Apply NSS_PATCHES.
+	(clean-add-nss): Revert java.security.
+	(add-nss-debug): Apply NSS_PATCHES to debug build.
+	(clean-add-nss-debug): Revert java.security for debug build.
+	(add-nss-ecj): Apply NSS_PATCHES to bootstrap build.
+	(clean-add-nss-ecj): Revert java.security for bootstrap build.
+
 2012-08-08  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am: Add new patch.
