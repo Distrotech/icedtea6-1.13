@@ -62,31 +62,18 @@ OPENJDK_SOURCEPATH_DIRS = \
 SOURCEPATH_DIRS = $(abs_top_srcdir)/generated:$(OPENJDK_SOURCEPATH_DIRS)
 
 # Sources used from OpenJDK.
-ICEDTEA_BOOTSTRAP_DIRS = \
-	$(SHARE)/com/sun/jdi \
-	$(SHARE)/com/sun/net/httpserver \
-	$(SHARE)/com/sun/tools/jdi \
-	$(SHARE)/java/io \
-	$(SHARE)/java/security/cert \
-	$(SHARE)/java/util \
-	$(SHARE)/java/rmi \
-	$(SHARE)/sun/awt/ \
-	$(SHARE)/sun/nio/cs \
-	$(SHARE)/sun/rmi/rmic \
-	$(SHARE)/sun/tools/java \
-	$(SHARE)/javax/net/ssl \
-	$(SHARE)/javax/script \
-	$(SHARE)/javax/security/auth/kerberos \
-	$(SHARE)/javax/security/sasl \
-	$(LANGTOOLS)/com/sun/mirror \
-	$(LANGTOOLS)/com/sun/tools/apt
 
 # PR42003 - javax.swing.plaf.basic.BasicDirectoryModel
 # PR43389 - javax.management.StandardMBean
+# PR54274 - sun.security.other requires missing X509CRLSelector methods
+# PR54275 - sun.security.sasl requires missing Sasl.CREDENTIALS field
 ICEDTEA_BOOTSTRAP_CLASSES = \
 	$(SHARE)/javax/swing/plaf/basic/BasicDirectoryModel.java \
 	$(SHARE)/javax/management/StandardMBean.java \
-	$(SHARE)/com/sun/java/swing/plaf/nimbus/NimbusLookAndFeel.java
+	$(SHARE)/com/sun/java/swing/plaf/nimbus/NimbusLookAndFeel.java \
+	$(SHARE)/java/security/cert/X509CRLSelector.java \
+	$(SHARE)/java/security/cert/X509CertSelector.java \
+	$(SHARE)/javax/security/sasl/Sasl.java
 
 # Flags
 MEMORY_LIMIT = -J-Xmx1024m
@@ -493,8 +480,9 @@ ICEDTEA_PATCHES += $(DISTRIBUTION_PATCHES)
 
 # Bootstrapping patches
 
-ICEDTEA_ECJ_PATCHES = patches/ecj/icedtea.patch \
-	patches/ecj/hotspot.patch \
+ICEDTEA_ECJ_PATCHES = \
+	patches/ecj/7010849-make_sa-jdi_build_with_1.5.patch \
+	patches/ecj/icedtea.patch \
 	patches/ecj/javafiles.patch \
 	patches/ecj/spp.patch \
 	patches/ecj/jopt.patch \
@@ -502,7 +490,11 @@ ICEDTEA_ECJ_PATCHES = patches/ecj/icedtea.patch \
 	patches/ecj/bootver.patch \
 	patches/ecj/getannotation-cast.patch \
 	patches/ecj/override.patch \
-	patches/ecj/xsltproc.patch
+	patches/ecj/xsltproc.patch \
+	patches/ecj/corba-dependencies.patch \
+	patches/ecj/jaxws-langtools-dependency.patch \
+	patches/ecj/jaxws-jdk-dependency.patch \
+	patches/ecj/hotspot-jdk-dependency.patch
 
 if DTDTYPE_QNAME
 ICEDTEA_ECJ_PATCHES += \
@@ -2422,10 +2414,6 @@ endif
 
 # rt.jar additional class files.
 rt-source-files.txt: $(OPENJDK_ECJ_TREE)
-	for dir in $(ICEDTEA_BOOTSTRAP_DIRS) ; \
-	do \
-	  $(FIND) $(abs_top_builddir)/$$dir -name '*.java' >> $@; \
-	done
 	for files in $(ICEDTEA_BOOTSTRAP_CLASSES) ; \
 	do \
 	  echo $$files >> $@ ; \

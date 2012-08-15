@@ -1,3 +1,44 @@
+2012-08-15  Andrew John Hughes  <ahughes@redhat.com>
+
+	PR1117: IcedTea6 prebuilds far too many classes on bootstrap
+	* patches/ecj/hotspot.patch:
+	Removed; replaced by hotspot-jdk-dependency
+	We don't need to add rt.jar on the classpath
+	as well as the bootclasspath.
+	* Makefile.am:
+	(ICEDTEA_BOOTSTRAP_DIRS): Removed.
+	(ICEDTEA_BOOTSTRAP_CLASSES): Extend with new
+	cases found through building without
+	ICEDTEA_BOOTSTRAP_DIRS.
+	(ICEDTEA_ECJ_PATCHES): Add new patches, remove
+	hotspot.patch.
+	(rt-source-files.txt): Remove use of
+	ICEDTEA_BOOTSTRAP_CLASSES.
+	* NEWS: Updated.
+	* patches/ecj/7010849-make_sa-jdi_build_with_1.5.patch:
+	Backport from OpenJDK7.  Allows the serviceability
+	agent to be compiled with 1.5.  Added to bootstrap
+	only to reduce potential issues with the API change.
+	* patches/ecj/corba-dependencies.patch:
+	Point the CORBA build at the JDK sources as it
+	requires sun.tools.java.
+	* patches/ecj/hotspot-jdk-dependency.patch:
+	Point the HotSpot build at the JDK sources as it
+	requires com.sun.jdi for the serviceability agent.
+	Building com.sun.jdi requires 1.5+ source code and
+	thus 7010849 is necessary.
+	* patches/ecj/icedtea.patch:
+	Extend CORBA Defs-java changes so that it uses the
+	just-built langtools instead of the boot jdk's
+	tools.jar.
+	* patches/ecj/jaxws-jdk-dependency.patch:
+	Point the JAXWS build at the JDK sources as it
+	depends on com.sun.net.httpserver.
+	* patches/ecj/jaxws-langtools-dependency.patch:
+	Point the JAXWS build at the full langtools
+	distribution, rather than just javac/javah/javadoc
+	as it requires com.sun.mirror.
+
 2012-08-14  Andrew John Hughes  <ahughes@redhat.com>
 
 	PR1113: Include tapset tests in distribution.
