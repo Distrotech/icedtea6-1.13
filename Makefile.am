@@ -188,6 +188,18 @@ REWRITER_SRCS = $(top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.java
 # Relative path to JTreg tool
 JTREG_DIR = src/jtreg
 JTREG_SRCS = $(top_srcdir)/$(JTREG_DIR)
+TAPSET_TEST_SRCS = \
+	$(top_srcdir)/test/tapset/ClassUnloadedProbeTester.java \
+	$(top_srcdir)/test/tapset/JNIStapTest.c \
+	$(top_srcdir)/test/tapset/JNITestClass.c \
+	$(top_srcdir)/test/tapset/JNITestClass.h \
+	$(top_srcdir)/test/tapset/JNITestClass.java \
+	$(top_srcdir)/test/tapset/jstaptest.pl \
+	$(top_srcdir)/test/tapset/RunWrapper.java \
+	$(top_srcdir)/test/tapset/StapJNIClassLoader.java \
+	$(top_srcdir)/test/tapset/StapURLClassLoader.java \
+	$(top_srcdir)/test/tapset/SystemtapTester.java \
+	$(top_srcdir)/test/tapset/TestingRunner.java
 
 # Patch list
 
@@ -655,7 +667,8 @@ EXTRA_DIST = generated \
 	scripts/jni_desc \
 	rewriter/agpl-3.0.txt \
 	$(REWRITER_SRCS) \
-	THANKYOU
+	THANKYOU \
+	$(TAPSET_TEST_SRCS)
 
 # Top-Level Targets
 # =================
