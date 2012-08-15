@@ -62,6 +62,18 @@
 	distribution, rather than just javac/javah/javadoc
 	as it requires com.sun.mirror.
 
+2012-08-15  Mark Wielaard  <mjw@redhat.com>
+
+	* Makefile.am (ICEDTEA_PATCHES): Remove systemtap.patch, add
+	individual sdt-*.patches.
+	* patches/systemtap.patch: Removed.
+	* patches/sdt-arguments.patch: Added.
+	* patches/sdt-dtrace-hpp.patch: Added.
+	* patches/sdt-jni.patch: Added.
+	* patches/sdt-make.patch: Added.
+	* overlays/openjdk/hotspot/test/serviceability/SDTProbesGNULinuxTest.sh:
+	New testcase.
+
 2012-08-14  Andrew John Hughes  <ahughes@redhat.com>
 
 	PR1113: Include tapset tests in distribution.

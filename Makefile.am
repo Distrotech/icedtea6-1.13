@@ -462,7 +462,10 @@ ICEDTEA_PATCHES += patches/openjdk/6307603-xrender-01.patch \
 endif
 
 if ENABLE_SYSTEMTAP
-ICEDTEA_PATCHES += patches/systemtap.patch \
+ICEDTEA_PATCHES += patches/sdt-jni.patch \
+	patches/sdt-dtrace-hpp.patch \
+	patches/sdt-make.patch \
+	patches/sdt-arguments.patch \
 	patches/systemtap-gcc-4.5.patch \
 	patches/systemtap-alloc-size-workaround.patch
 endif
