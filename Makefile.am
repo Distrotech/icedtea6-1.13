@@ -1647,8 +1647,12 @@ stamps/add-nss.stamp: stamps/icedtea.stamp
 clean-add-nss:
 	rm -vf $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/nss.cfg
 	rm -vf $(BUILD_OUTPUT_DIR)/j2re-image/lib/security/nss.cfg
-	mv -vf $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/java.security{.old,}
-	mv -vf $(BUILD_OUTPUT_DIR)/j2re-image/lib/security/java.security{.old,}
+	if [ -e $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/java.security.old ] ; then \
+	  mv -vf $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/java.security{.old,} ; \
+	fi
+	if [ -e $(BUILD_OUTPUT_DIR)/j2re-image/lib/security/java.security.old ] ; then \
+	  mv -vf $(BUILD_OUTPUT_DIR)/j2re-image/lib/security/java.security{.old,} ; \
+	fi
 	rm -f stamps/add-nss.stamp
 
 stamps/add-nss-debug.stamp: stamps/icedtea-debug.stamp
@@ -1694,8 +1698,12 @@ stamps/add-nss-debug.stamp: stamps/icedtea-debug.stamp
 clean-add-nss-debug:
 	rm -vf $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/nss.cfg
 	rm -vf $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/security/nss.cfg
-	mv -vf $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/java.security{.old,}
-	mv -vf $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/security/java.security{.old,}
+	if [ -e $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/java.security.old ] ; then \
+	  mv -vf $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/java.security{.old,} ; \
+	fi
+	if [ -e $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/security/java.security.old ] ; then \
+	  mv -vf $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/security/java.security{.old,} ; \
+	fi
 	rm -f stamps/add-nss-debug.stamp
 
 stamps/add-tzdata-support.stamp: stamps/icedtea.stamp
@@ -1840,8 +1848,12 @@ stamps/add-nss-ecj.stamp: stamps/icedtea-ecj.stamp
 clean-add-nss-ecj:
 	rm -vf $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/nss.cfg
 	rm -vf $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/security/nss.cfg
-	mv -vf $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/java.security{.old,}
-	mv -vf $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/security/java.security{.old,}
+	if [ -e $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/java.security.old ] ; then \
+	  mv -vf $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/java.security{.old,} ; \
+	fi
+	if [ -e $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/security/java.security.old ] ; then \
+	  mv -vf $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/security/java.security{.old,} ; \
+	fi
 	rm -f stamps/add-nss-ecj.stamp
 
 stamps/add-tzdata-support-ecj.stamp: stamps/icedtea-ecj.stamp
