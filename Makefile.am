@@ -2198,7 +2198,8 @@ if ADD_ZERO_BUILD
 
 	cd zerovm && \
 	    $(ADD_ZERO_EXTRA_BUILD_ENV) \
-		$(ARCH_PREFIX) $(abs_top_srcdir)/configure $(ADD_ZERO_CONFIGURE_ARGS)
+		$(ARCH_PREFIX) $(abs_top_srcdir)/configure $(ADD_ZERO_CONFIGURE_ARGS) && \
+	    ln -s ../drops
 
 	: # create directories which are expected by icedtea components,
 	: # implicitly assumed to be created by the jdk build.
@@ -2257,7 +2258,8 @@ if ADD_ZERO_BUILD
 
 	cd zerovm && \
 	    $(ADD_ZERO_EXTRA_BUILD_ENV) \
-		$(ARCH_PREFIX) $(abs_top_srcdir)/configure $(ADD_ZERO_CONFIGURE_ARGS)
+		$(ARCH_PREFIX) $(abs_top_srcdir)/configure $(ADD_ZERO_CONFIGURE_ARGS) && \
+	    ln -s ../drops
 
 	$(ADD_ZERO_EXTRA_BUILD_ENV) \
 		$(ARCH_PREFIX) $(MAKE) -C zerovm $(ICEDTEA_DEBUG_BUILD_TARGET)
