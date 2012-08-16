@@ -73,7 +73,8 @@ ICEDTEA_BOOTSTRAP_CLASSES = \
 	$(SHARE)/com/sun/java/swing/plaf/nimbus/NimbusLookAndFeel.java \
 	$(SHARE)/java/security/cert/X509CRLSelector.java \
 	$(SHARE)/java/security/cert/X509CertSelector.java \
-	$(SHARE)/javax/security/sasl/Sasl.java
+	$(SHARE)/javax/security/sasl/Sasl.java \
+	$(SHARE)/javax/security/auth/kerberos/KerberosTicket.java
 
 # Flags
 MEMORY_LIMIT = -J-Xmx1024m
