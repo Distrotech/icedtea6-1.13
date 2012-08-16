@@ -1611,43 +1611,47 @@ clean-add-pulseaudio-debug:
 	rm -f stamps/add-pulseaudio-debug.stamp
 
 stamps/add-nss.stamp: stamps/icedtea.stamp
-	cp -v $(abs_top_builddir)/nss.cfg \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security
-	cp -v $(abs_top_builddir)/nss.cfg \
-	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/security
-	rm -f stamps/add-nss.stamp.tmp
-	touch stamps/add-nss.stamp.tmp
-	all_patches_ok=yes; \
-	for dir in $(BUILD_OUTPUT_DIR)/{j2sdk-image/jre,j2re-image} ; \
-	do \
-	  pushd $$dir ; \
-	  cp -v $$dir/lib/security/java.security{,.old} ; \
-	  for p in $(NSS_PATCHES) ; \
+	if [ -d $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security ] ; then \
+	  cp -v $(abs_top_builddir)/nss.cfg \
+	    $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security; \
+	  cp -v $(abs_top_builddir)/nss.cfg \
+	    $(BUILD_OUTPUT_DIR)/j2re-image/lib/security; \
+	  rm -f stamps/add-nss.stamp.tmp; \
+	  touch stamps/add-nss.stamp.tmp; \
+	  all_patches_ok=yes; \
+	  for dir in $(BUILD_OUTPUT_DIR)/{j2sdk-image/jre,j2re-image} ; \
 	  do \
-	    if test x$${all_patches_ok} = "xyes" \
-	      && echo Checking $$p \
-	      && $(PATCH) -l -p0 --dry-run -s -t -f -F0 \
-	        < $(abs_top_srcdir)/$$p ; \
-	    then \
-	      echo Applying $$p ; \
-	      $(PATCH) -l -p0 -F0 < $(abs_top_srcdir)/$$p ; \
-	      if ! grep "^\* $$(basename $$p)" $(abs_top_srcdir)/HACKING \
-	        >> $(abs_top_builddir)/stamps/add-nss.stamp.tmp ; \
+	    pushd $$dir ; \
+	    cp -v $$dir/lib/security/java.security{,.old} ; \
+	    for p in $(NSS_PATCHES) ; \
+	    do \
+	      if test x$${all_patches_ok} = "xyes" \
+	        && echo Checking $$p \
+	        && $(PATCH) -l -p0 --dry-run -s -t -f -F0 \
+	          < $(abs_top_srcdir)/$$p ; \
 	      then \
-	        echo "* $$(basename $$p): UNDOCUMENTED" \
+	        echo Applying $$p ; \
+	        $(PATCH) -l -p0 -F0 < $(abs_top_srcdir)/$$p ; \
+	        if ! grep "^\* $$(basename $$p)" $(abs_top_srcdir)/HACKING \
 	          >> $(abs_top_builddir)/stamps/add-nss.stamp.tmp ; \
+	        then \
+	          echo "* $$(basename $$p): UNDOCUMENTED" \
+	            >> $(abs_top_builddir)/stamps/add-nss.stamp.tmp ; \
+	        fi ; \
+	      else \
+	        test x$${all_patches_ok} = "xyes" && all_patches_ok=$$p ; \
 	      fi ; \
-	    else \
-	      test x$${all_patches_ok} = "xyes" && all_patches_ok=$$p ; \
-	    fi ; \
+	    done ; \
+	    popd ; \
 	  done ; \
-	  popd ; \
-	done ; \
-	mv stamps/add-nss.stamp.tmp stamps/add-nss.stamp ; \
-	if ! test x$${all_patches_ok} = "xyes"; then \
-	  echo ERROR patch $${all_patches_ok} FAILED! ; \
-	  echo WARNING make clean-add-nss before retrying a fix ; \
-	  exit 2; \
+	  mv stamps/add-nss.stamp.tmp stamps/add-nss.stamp ; \
+	  if ! test x$${all_patches_ok} = "xyes"; then \
+	    echo ERROR patch $${all_patches_ok} FAILED! ; \
+	    echo WARNING make clean-add-nss before retrying a fix ; \
+	    exit 2; \
+	  fi \
+	else \
+	  echo "NO $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security dir"; \
 	fi
 
 clean-add-nss:
