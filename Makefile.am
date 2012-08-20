@@ -11,8 +11,8 @@ CACAO_BASE_URL = http://icedtea.classpath.org/download/drops/cacao
 CACAO_URL = $(CACAO_BASE_URL)/$(CACAO_VERSION).tar.gz
 CACAO_SRC_ZIP = cacao-$(CACAO_VERSION).tar.gz
 
-JAMVM_VERSION = 77f2ce1a5d1a1d6795be26b81f1cca6d2a057ce7
-JAMVM_SHA256SUM = ee676b26e7e35b93add471b6b58b7d9e746dbc9933ea1ebe6204f5b9fbfcc7bc
+JAMVM_VERSION = e70f2450890b82c37422616cc85e1a23385f03cd
+JAMVM_SHA256SUM = 3ca7e297ef4daa56c3dd733e21bce795d57ab071243369aa9400c0384ada8a4c
 JAMVM_BASE_URL = http://icedtea.classpath.org/download/drops/jamvm
 JAMVM_URL = $(JAMVM_BASE_URL)/jamvm-$(JAMVM_VERSION).tar.gz
 JAMVM_SRC_ZIP = jamvm-$(JAMVM_VERSION).tar.gz
@@ -2031,7 +2031,7 @@ stamps/jamvm.stamp: $(OPENJDK_TREE) stamps/rt.stamp
 if BUILD_JAMVM
 	cd jamvm/jamvm && \
 	LDFLAGS="-Xlinker -z -Xlinker noexecstack" \
-	./autogen.sh --with-java-runtime-library=openjdk \
+	./autogen.sh --with-java-runtime-library=openjdk6 \
 	  --prefix=$(abs_top_builddir)/jamvm/install ; \
 	$(MAKE) ; \
 	$(MAKE) install
