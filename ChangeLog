@@ -1,6 +1,19 @@
 2012-08-31  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:
+	(ICEDTEA_PATCHES): Rename patches.
+	* patches/openjdk/7034464-hugepage.patch:
+	Renamed to...
+	* patches/openjdk/7034464-transparent_huge_pages.patch:
+	this.
+	* patches/openjdk/7037939-hugepage.patch:
+	Renamed to...
+	* patches/openjdk/7037939-disable_adaptive_resizing_with_large_pages.patch
+	this.
+
+2012-08-31  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
 	(SECURITY_PATCHES): Add 7162476, 7163201 & 7182135.
 	(ICEDTEA_PATCHES): Add 7185678.
 	* patches/merge_fix.patch: Patch to fix merge issues
