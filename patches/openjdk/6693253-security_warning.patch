@@ -1,16 +1,6 @@
-# HG changeset patch
-# User anthony
-# Date 1297956979 0
-# Node ID 2c9218aed28a5706c062eac8c5e7db1ec3dc9dfc
-# Parent  119b67260c33358c5a34dddf69b709b78b39e590
-6693253: Security Warning appearance requires enhancements
-6779717: A Window does not show applet security warning icon on X platforms
-6785058: Parent don't get the focus after dialog is closed if security warning is applied
-Summary: Forward-port from 6u10-6u14
-Reviewed-by: art, dcherepanov
 diff -Nru openjdk.orig/jdk/make/sun/awt/Depend.mak openjdk/jdk/make/sun/awt/Depend.mak
---- openjdk.orig/jdk/make/sun/awt/Depend.mak	2011-01-20 23:54:06.000000000 +0000
-+++ openjdk/jdk/make/sun/awt/Depend.mak	2011-02-17 15:50:10.704058433 +0000
+--- openjdk.orig/jdk/make/sun/awt/Depend.mak	2011-11-14 22:11:40.000000000 +0000
++++ openjdk/jdk/make/sun/awt/Depend.mak	2012-08-31 11:58:18.814482833 +0100
 @@ -71,6 +71,7 @@
  	$(STUBDIR)/Ole2.h \
  	$(STUBDIR)/Zmouse.h \
@@ -20,8 +10,8 @@ diff -Nru openjdk.orig/jdk/make/sun/awt/Depend.mak openjdk/jdk/make/sun/awt/Depe
  	$(STUBDIR)/direct.h \
  	$(STUBDIR)/d3dcom.h \
 diff -Nru openjdk.orig/jdk/make/sun/awt/FILES_c_windows.gmk openjdk/jdk/make/sun/awt/FILES_c_windows.gmk
---- openjdk.orig/jdk/make/sun/awt/FILES_c_windows.gmk	2011-02-17 15:43:31.000000000 +0000
-+++ openjdk/jdk/make/sun/awt/FILES_c_windows.gmk	2011-02-17 15:50:10.712057805 +0000
+--- openjdk.orig/jdk/make/sun/awt/FILES_c_windows.gmk	2012-08-31 11:52:02.717392762 +0100
++++ openjdk/jdk/make/sun/awt/FILES_c_windows.gmk	2012-08-31 11:58:18.826482996 +0100
 @@ -202,6 +202,7 @@
  	ShellFolder2.cpp \
  	ThemeReader.cpp \
@@ -31,8 +21,8 @@ diff -Nru openjdk.orig/jdk/make/sun/awt/FILES_c_windows.gmk openjdk/jdk/make/sun
  	awt_dlls.cpp \
  	UnicowsLoader.cpp \
 diff -Nru openjdk.orig/jdk/make/sun/awt/make.depend openjdk/jdk/make/sun/awt/make.depend
---- openjdk.orig/jdk/make/sun/awt/make.depend	2011-02-17 15:43:31.000000000 +0000
-+++ openjdk/jdk/make/sun/awt/make.depend	2011-02-17 15:50:10.720057177 +0000
+--- openjdk.orig/jdk/make/sun/awt/make.depend	2012-08-31 11:52:02.717392762 +0100
++++ openjdk/jdk/make/sun/awt/make.depend	2012-08-31 11:58:18.834483106 +0100
 @@ -14,145 +14,145 @@
  
  $(OBJDIR)/AnyShort.obj::	$(CLASSHDRDIR)/java_awt_AlphaComposite.h ../../../src/share/javavm/export/jni.h ../../../src/share/native/common/gdefs.h ../../../src/share/native/sun/java2d/loops/AlphaMath.h ../../../src/share/native/sun/java2d/loops/AnyShort.h ../../../src/share/native/sun/java2d/loops/GlyphImageRef.h ../../../src/share/native/sun/java2d/loops/GraphicsPrimitiveMgr.h ../../../src/share/native/sun/java2d/loops/LineUtils.h ../../../src/share/native/sun/java2d/loops/LoopMacros.h ../../../src/share/native/sun/java2d/pipe/SpanIterator.h ../../../src/share/native/sun/java2d/SurfaceData.h ../../../src/windows/javavm/export/jni_md.h ../../../src/windows/native/common/gdefs_md.h ../../../src/windows/native/sun/java2d/j2d_md.h
@@ -487,16 +477,16 @@ diff -Nru openjdk.orig/jdk/make/sun/awt/make.depend openjdk/jdk/make/sun/awt/mak
 -$(OBJDIR)/WPrinterJob.obj::	$(CLASSHDRDIR)/java_awt_AWTEvent.h $(CLASSHDRDIR)/java_awt_Component.h $(CLASSHDRDIR)/java_awt_Dialog.h $(CLASSHDRDIR)/java_awt_Dimension.h $(CLASSHDRDIR)/java_awt_Event.h $(CLASSHDRDIR)/java_awt_event_FocusEvent.h $(CLASSHDRDIR)/java_awt_event_KeyEvent.h $(CLASSHDRDIR)/java_awt_event_MouseEvent.h $(CLASSHDRDIR)/java_awt_event_WindowEvent.h $(CLASSHDRDIR)/java_awt_FileDialog.h $(CLASSHDRDIR)/java_awt_Font.h $(CLASSHDRDIR)/java_awt_FontMetrics.h $(CLASSHDRDIR)/java_awt_Frame.h $(CLASSHDRDIR)/java_awt_Menu.h $(CLASSHDRDIR)/java_awt_MenuBar.h $(CLASSHDRDIR)/java_awt_MenuComponent.h $(CLASSHDRDIR)/java_awt_MenuItem.h $(CLASSHDRDIR)/java_awt_peer_MenuComponentPeer.h $(CLASSHDRDIR)/java_awt_Window.h $(CLASSHDRDIR)/sun_awt_FontDescriptor.h $(CLASSHDRDIR)/sun_awt_PlatformFont.h $(CLASSHDRDIR)/sun_awt_windows_WCanvasPeer.h $(CLASSHDRDIR)/sun_awt_windows_WComponentPeer.h $(CLASSHDRDIR)/sun_awt_windows_WDialogPeer.h $(CLASSHDRDIR)/sun_awt_windows_WFileDialogPeer.h $(CLASSHDRDIR)/sun_awt_windows_WFontMetrics.h $(CLASSHDRDIR)/sun_awt_windows_WFramePeer.h $(CLASSHDRDIR)/sun_awt_windows_WMenuBarPeer.h $(CLASSHDRDIR)/sun_awt_windows_WMenuItemPeer.h $(CLASSHDRDIR)/sun_awt_windows_WMenuPeer.h $(CLASSHDRDIR)/sun_awt_windows_WObjectPeer.h $(CLASSHDRDIR)/sun_awt_windows_WToolkit.h $(CLASSHDRDIR)/sun_awt_windows_WWindowPeer.h ../../../src/share/javavm/export/jni.h ../../../src/share/javavm/export/jvm.h ../../../src/share/native/common/jlong.h ../../../src/share/native/common/jni_util.h ../../../src/share/native/sun/awt/debug/debug_assert.h ../../../src/share/native/sun/awt/debug/debug_mem.h ../../../src/share/native/sun/awt/debug/debug_trace.h ../../../src/share/native/sun/awt/debug/debug_util.h ../../../src/share/native/sun/awt/image/cvutils/img_globals.h ../../../src/share/native/sun/java2d/SurfaceData.h ../../../src/share/native/sun/java2d/Trace.h ../../../src/windows/javavm/export/jni_md.h ../../../src/windows/javavm/export/jvm_md.h ../../../src/windows/native/common/jlong_md.h ../../../src/windows/native/sun/java2d/windows/GDIWindowSurfaceData.h ../../../src/windows/native/sun/windows/alloc.h ../../../src/windows/native/sun/windows/awt.h ../../../src/windows/native/sun/windows/awtmsg.h ../../../src/windows/native/sun/windows/awt_Brush.h ../../../src/windows/native/sun/windows/awt_Canvas.h ../../../src/windows/native/sun/windows/awt_Component.h ../../../src/windows/native/sun/windows/awt_Debug.h ../../../src/windows/native/sun/windows/awt_Dialog.h ../../../src/windows/native/sun/windows/awt_dlls.h ../../../src/windows/native/sun/windows/awt_FileDialog.h ../../../src/windows/native/sun/windows/awt_Font.h ../../../src/windows/native/sun/windows/awt_Frame.h ../../../src/windows/native/sun/windows/awt_GDIObject.h ../../../src/windows/native/sun/windows/awt_Menu.h ../../../src/windows/native/sun/windows/awt_MenuBar.h ../../../src/windows/native/sun/windows/awt_MenuItem.h ../../../src/windows/native/sun/windows/awt_MMStub.h ../../../src/windows/native/sun/windows/awt_Multimon.h ../../../src/windows/native/sun/windows/awt_Object.h ../../../src/windows/native/sun/windows/awt_Palette.h ../../../src/windows/native/sun/windows/awt_Pen.h ../../../src/windows/native/sun/windows/awt_PrintControl.h ../../../src/windows/native/sun/windows/awt_PrintDialog.h ../../../src/windows/native/sun/windows/awt_Toolkit.h ../../../src/windows/native/sun/windows/awt_Unicode.h ../../../src/windows/native/sun/windows/awt_Win32GraphicsDevice.h ../../../src/windows/native/sun/windows/awt_Window.h ../../../src/windows/native/sun/windows/colordata.h ../../../src/windows/native/sun/windows/Devices.h ../../../src/windows/native/sun/windows/GDIHashtable.h ../../../src/windows/native/sun/windows/Hashtable.h ../../../src/windows/native/sun/windows/ObjectList.h ../../../src/windows/native/sun/windows/stdhdrs.h ../../../src/windows/native/sun/windows/UnicowsLoader.h
 +$(OBJDIR)/WPrinterJob.obj::	$(CLASSHDRDIR)/java_awt_AWTEvent.h $(CLASSHDRDIR)/java_awt_Component.h $(CLASSHDRDIR)/java_awt_Dialog.h $(CLASSHDRDIR)/java_awt_Dimension.h $(CLASSHDRDIR)/java_awt_event_FocusEvent.h $(CLASSHDRDIR)/java_awt_Event.h $(CLASSHDRDIR)/java_awt_event_KeyEvent.h $(CLASSHDRDIR)/java_awt_event_MouseEvent.h $(CLASSHDRDIR)/java_awt_event_WindowEvent.h $(CLASSHDRDIR)/java_awt_FileDialog.h $(CLASSHDRDIR)/java_awt_Font.h $(CLASSHDRDIR)/java_awt_FontMetrics.h $(CLASSHDRDIR)/java_awt_Frame.h $(CLASSHDRDIR)/java_awt_MenuBar.h $(CLASSHDRDIR)/java_awt_MenuComponent.h $(CLASSHDRDIR)/java_awt_Menu.h $(CLASSHDRDIR)/java_awt_MenuItem.h $(CLASSHDRDIR)/java_awt_peer_MenuComponentPeer.h $(CLASSHDRDIR)/java_awt_Window.h $(CLASSHDRDIR)/sun_awt_FontDescriptor.h $(CLASSHDRDIR)/sun_awt_PlatformFont.h $(CLASSHDRDIR)/sun_awt_windows_WCanvasPeer.h $(CLASSHDRDIR)/sun_awt_windows_WComponentPeer.h $(CLASSHDRDIR)/sun_awt_windows_WDialogPeer.h $(CLASSHDRDIR)/sun_awt_windows_WFileDialogPeer.h $(CLASSHDRDIR)/sun_awt_windows_WFontMetrics.h $(CLASSHDRDIR)/sun_awt_windows_WFramePeer.h $(CLASSHDRDIR)/sun_awt_windows_WMenuBarPeer.h $(CLASSHDRDIR)/sun_awt_windows_WMenuItemPeer.h $(CLASSHDRDIR)/sun_awt_windows_WMenuPeer.h $(CLASSHDRDIR)/sun_awt_windows_WObjectPeer.h $(CLASSHDRDIR)/sun_awt_windows_WToolkit.h $(CLASSHDRDIR)/sun_awt_windows_WWindowPeer.h ../../../src/share/javavm/export/jni.h ../../../src/share/javavm/export/jvm.h ../../../src/share/native/common/jlong.h ../../../src/share/native/common/jni_util.h ../../../src/share/native/sun/awt/debug/debug_assert.h ../../../src/share/native/sun/awt/debug/debug_mem.h ../../../src/share/native/sun/awt/debug/debug_trace.h ../../../src/share/native/sun/awt/debug/debug_util.h ../../../src/share/native/sun/awt/image/cvutils/img_globals.h ../../../src/share/native/sun/java2d/SurfaceData.h ../../../src/share/native/sun/java2d/Trace.h ../../../src/windows/javavm/export/jni_md.h ../../../src/windows/javavm/export/jvm_md.h ../../../src/windows/native/common/jlong_md.h ../../../src/windows/native/sun/java2d/windows/GDIWindowSurfaceData.h ../../../src/windows/native/sun/windows/alloc.h ../../../src/windows/native/sun/windows/awt_Brush.h ../../../src/windows/native/sun/windows/awt_Canvas.h ../../../src/windows/native/sun/windows/awt_Component.h ../../../src/windows/native/sun/windows/awt_Debug.h ../../../src/windows/native/sun/windows/awt_Dialog.h ../../../src/windows/native/sun/windows/awt_dlls.h ../../../src/windows/native/sun/windows/awt_FileDialog.h ../../../src/windows/native/sun/windows/awt_Font.h ../../../src/windows/native/sun/windows/awt_Frame.h ../../../src/windows/native/sun/windows/awt_GDIObject.h ../../../src/windows/native/sun/windows/awt.h ../../../src/windows/native/sun/windows/awt_MenuBar.h ../../../src/windows/native/sun/windows/awt_Menu.h ../../../src/windows/native/sun/windows/awt_MenuItem.h ../../../src/windows/native/sun/windows/awt_MMStub.h ../../../src/windows/native/sun/windows/awtmsg.h ../../../src/windows/native/sun/windows/awt_Multimon.h ../../../src/windows/native/sun/windows/awt_Object.h ../../../src/windows/native/sun/windows/awt_Palette.h ../../../src/windows/native/sun/windows/awt_Pen.h ../../../src/windows/native/sun/windows/awt_PrintControl.h ../../../src/windows/native/sun/windows/awt_PrintDialog.h ../../../src/windows/native/sun/windows/awt_Toolkit.h ../../../src/windows/native/sun/windows/awt_Unicode.h ../../../src/windows/native/sun/windows/awt_Win32GraphicsDevice.h ../../../src/windows/native/sun/windows/awt_Window.h ../../../src/windows/native/sun/windows/colordata.h ../../../src/windows/native/sun/windows/Devices.h ../../../src/windows/native/sun/windows/GDIHashtable.h ../../../src/windows/native/sun/windows/Hashtable.h ../../../src/windows/native/sun/windows/ObjectList.h ../../../src/windows/native/sun/windows/stdhdrs.h ../../../src/windows/native/sun/windows/UnicowsLoader.h
 diff -Nru openjdk.orig/jdk/make/sun/awt/Makefile openjdk/jdk/make/sun/awt/Makefile
---- openjdk.orig/jdk/make/sun/awt/Makefile	2011-02-17 15:43:31.000000000 +0000
-+++ openjdk/jdk/make/sun/awt/Makefile	2011-02-17 15:50:10.712057805 +0000
+--- openjdk.orig/jdk/make/sun/awt/Makefile	2012-08-31 11:52:02.733392977 +0100
++++ openjdk/jdk/make/sun/awt/Makefile	2012-08-31 11:58:18.842483214 +0100
 @@ -551,3 +551,4 @@
  
  .PHONY: dgalibs dgalib.clean fontconfigs fontconfigs.clean
  
 +# DO NOT DELETE
 diff -Nru openjdk.orig/jdk/make/sun/awt/README openjdk/jdk/make/sun/awt/README
---- openjdk.orig/jdk/make/sun/awt/README	2011-01-20 23:54:06.000000000 +0000
-+++ openjdk/jdk/make/sun/awt/README	2011-02-17 15:50:10.712057805 +0000
+--- openjdk.orig/jdk/make/sun/awt/README	2011-11-14 22:11:40.000000000 +0000
++++ openjdk/jdk/make/sun/awt/README	2012-08-31 11:58:18.842483214 +0100
 @@ -6,11 +6,9 @@
  
  Included in this project is a generated file, make.depend, which lists
@@ -511,8 +501,8 @@ diff -Nru openjdk.orig/jdk/make/sun/awt/README openjdk/jdk/make/sun/awt/README
  This step only needs to be run when new files are added to the project,
  or include statements are changed.
 diff -Nru openjdk.orig/jdk/make/sun/xawt/FILES_c_unix.gmk openjdk/jdk/make/sun/xawt/FILES_c_unix.gmk
---- openjdk.orig/jdk/make/sun/xawt/FILES_c_unix.gmk	2011-01-20 23:54:06.000000000 +0000
-+++ openjdk/jdk/make/sun/xawt/FILES_c_unix.gmk	2011-02-17 15:50:10.720057177 +0000
+--- openjdk.orig/jdk/make/sun/xawt/FILES_c_unix.gmk	2011-11-14 22:11:41.000000000 +0000
++++ openjdk/jdk/make/sun/xawt/FILES_c_unix.gmk	2012-08-31 11:58:18.842483214 +0100
 @@ -78,4 +78,5 @@
  	awt_Plugin.c \
  	gtk2_interface.c \
@@ -521,8 +511,8 @@ diff -Nru openjdk.orig/jdk/make/sun/xawt/FILES_c_unix.gmk openjdk/jdk/make/sun/x
 +        swing_GTKStyle.c \
 +        rect.c
 diff -Nru openjdk.orig/jdk/make/sun/xawt/Makefile openjdk/jdk/make/sun/xawt/Makefile
---- openjdk.orig/jdk/make/sun/xawt/Makefile	2011-01-20 23:54:06.000000000 +0000
-+++ openjdk/jdk/make/sun/xawt/Makefile	2011-02-17 15:50:10.720057177 +0000
+--- openjdk.orig/jdk/make/sun/xawt/Makefile	2011-11-14 22:11:41.000000000 +0000
++++ openjdk/jdk/make/sun/xawt/Makefile	2012-08-31 11:58:18.846483269 +0100
 @@ -79,6 +79,7 @@
  vpath %.c   $(SHARE_SRC)/native/sun/java2d/loops
  vpath %.c   $(SHARE_SRC)/native/sun/java2d/pipe
@@ -556,8 +546,8 @@ diff -Nru openjdk.orig/jdk/make/sun/xawt/Makefile openjdk/jdk/make/sun/xawt/Make
  
  $(TEMPDIR_CLASSES)/sun/awt/X11/ToBin.class: ToBin.java
 diff -Nru openjdk.orig/jdk/make/sun/xawt/mapfile-vers openjdk/jdk/make/sun/xawt/mapfile-vers
---- openjdk.orig/jdk/make/sun/xawt/mapfile-vers	2011-02-17 15:43:31.000000000 +0000
-+++ openjdk/jdk/make/sun/xawt/mapfile-vers	2011-02-17 15:50:10.720057177 +0000
+--- openjdk.orig/jdk/make/sun/xawt/mapfile-vers	2012-08-31 11:52:02.881394964 +0100
++++ openjdk/jdk/make/sun/xawt/mapfile-vers	2012-08-31 11:58:18.846483269 +0100
 @@ -93,6 +93,8 @@
          Java_sun_awt_X11_XlibWrapper_XGetWMHints;
          Java_sun_awt_X11_XlibWrapper_XShapeQueryExtension;
@@ -569,7 +559,7 @@ diff -Nru openjdk.orig/jdk/make/sun/xawt/mapfile-vers openjdk/jdk/make/sun/xawt/
          Java_sun_awt_X11_XWindow_getWMInsets;
 diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/awt/SecurityWarning.java openjdk/jdk/src/share/classes/com/sun/awt/SecurityWarning.java
 --- openjdk.orig/jdk/src/share/classes/com/sun/awt/SecurityWarning.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/src/share/classes/com/sun/awt/SecurityWarning.java	2011-02-17 15:50:10.720057177 +0000
++++ openjdk/jdk/src/share/classes/com/sun/awt/SecurityWarning.java	2012-08-31 11:58:18.846483269 +0100
 @@ -0,0 +1,169 @@
 +/*
 + * Copyright (c) 2008, 2009, Oracle and/or its affiliates. All rights reserved.
@@ -741,9 +731,9 @@ diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/awt/SecurityWarning.java op
 +}
 +
 diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Component.java openjdk/jdk/src/share/classes/java/awt/Component.java
---- openjdk.orig/jdk/src/share/classes/java/awt/Component.java	2011-02-17 15:43:31.000000000 +0000
-+++ openjdk/jdk/src/share/classes/java/awt/Component.java	2011-02-17 15:50:10.724056863 +0000
-@@ -855,6 +855,10 @@
+--- openjdk.orig/jdk/src/share/classes/java/awt/Component.java	2012-08-31 11:52:02.745393138 +0100
++++ openjdk/jdk/src/share/classes/java/awt/Component.java	2012-08-31 11:58:18.846483269 +0100
+@@ -979,6 +979,10 @@
                      }
                  }
              }
@@ -755,8 +745,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Component.java openjdk/jdk
      }
  
 diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/peer/WindowPeer.java openjdk/jdk/src/share/classes/java/awt/peer/WindowPeer.java
---- openjdk.orig/jdk/src/share/classes/java/awt/peer/WindowPeer.java	2011-02-17 15:43:31.000000000 +0000
-+++ openjdk/jdk/src/share/classes/java/awt/peer/WindowPeer.java	2011-02-17 15:50:10.724056863 +0000
+--- openjdk.orig/jdk/src/share/classes/java/awt/peer/WindowPeer.java	2012-08-31 11:52:02.769393460 +0100
++++ openjdk/jdk/src/share/classes/java/awt/peer/WindowPeer.java	2012-08-31 11:58:18.846483269 +0100
 @@ -67,4 +67,9 @@
       * @see Window#setBackground(Color)
       */
@@ -768,8 +758,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/peer/WindowPeer.java openj
 +    void repositionSecurityWarning();
  }
 diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Window.java openjdk/jdk/src/share/classes/java/awt/Window.java
---- openjdk.orig/jdk/src/share/classes/java/awt/Window.java	2011-02-17 15:43:31.000000000 +0000
-+++ openjdk/jdk/src/share/classes/java/awt/Window.java	2011-02-17 15:50:10.724056863 +0000
+--- openjdk.orig/jdk/src/share/classes/java/awt/Window.java	2012-08-31 11:52:02.861394695 +0100
++++ openjdk/jdk/src/share/classes/java/awt/Window.java	2012-08-31 11:58:18.846483269 +0100
 @@ -26,6 +26,7 @@
  
  import java.applet.Applet;
@@ -778,7 +768,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Window.java openjdk/jdk/sr
  import java.awt.im.InputContext;
  import java.awt.image.BufferStrategy;
  import java.awt.image.BufferedImage;
-@@ -326,6 +327,23 @@
+@@ -327,6 +328,23 @@
  
      transient boolean isTrayIconWindow = false;
  
@@ -802,7 +792,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Window.java openjdk/jdk/sr
      static {
          /* ensure that the necessary native libraries are loaded */
          Toolkit.loadLibraries();
-@@ -2789,6 +2807,13 @@
+@@ -2790,6 +2808,13 @@
           shape = (Shape)f.get("shape", null);
           opacity = (Float)f.get("opacity", 1.0f);
  
@@ -816,7 +806,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Window.java openjdk/jdk/sr
           deserializeResources(s);
      }
  
-@@ -3463,6 +3488,18 @@
+@@ -3462,6 +3487,18 @@
  
      // ****************** END OF MIXING CODE ********************************
  
@@ -834,8 +824,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Window.java openjdk/jdk/sr
 +
      static {
          AWTAccessor.setWindowAccessor(new AWTAccessor.WindowAccessor() {
-             public float getOpacity(Window window) {
-@@ -3496,6 +3533,39 @@
+             public void setLWRequestStatus(Window changed, boolean status) {
+@@ -3515,6 +3552,39 @@
              public void updateWindow(Window window, BufferedImage backBuffer) {
                  window.updateWindow(backBuffer);
              }
@@ -876,12 +866,12 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Window.java openjdk/jdk/sr
      } // static
  
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/AWTAccessor.java openjdk/jdk/src/share/classes/sun/awt/AWTAccessor.java
---- openjdk.orig/jdk/src/share/classes/sun/awt/AWTAccessor.java	2011-02-17 15:43:31.000000000 +0000
-+++ openjdk/jdk/src/share/classes/sun/awt/AWTAccessor.java	2011-02-17 15:50:40.725701922 +0000
-@@ -88,6 +88,12 @@
-          * Returns the acc this component was constructed with.
+--- openjdk.orig/jdk/src/share/classes/sun/awt/AWTAccessor.java	2012-08-31 11:52:02.781393621 +0100
++++ openjdk/jdk/src/share/classes/sun/awt/AWTAccessor.java	2012-08-31 11:59:33.967509445 +0100
+@@ -243,6 +243,12 @@
+          * Requests that this Component get the input focus, providing the cause
           */
-         AccessControlContext getAccessControlContext(Component comp);
+         void requestFocus(Component comp, CausedFocusEvent.Cause cause);
 +
 +        /**
 +         * Returns whether the component is visible without invoking
@@ -891,7 +881,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/AWTAccessor.java openjdk/jd
      }
  
      /*
-@@ -123,6 +129,26 @@
+@@ -283,6 +289,26 @@
           * Update the image of a non-opaque (translucent) window.
           */
          void updateWindow(Window window, BufferedImage backBuffer);
@@ -917,11 +907,11 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/AWTAccessor.java openjdk/jd
 +                double x, double y, double w, double h);
      }
  
-     /*
+     /**
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/EmbeddedFrame.java openjdk/jdk/src/share/classes/sun/awt/EmbeddedFrame.java
---- openjdk.orig/jdk/src/share/classes/sun/awt/EmbeddedFrame.java	2011-02-17 15:43:31.000000000 +0000
-+++ openjdk/jdk/src/share/classes/sun/awt/EmbeddedFrame.java	2011-02-17 15:50:10.724056863 +0000
-@@ -586,5 +586,7 @@
+--- openjdk.orig/jdk/src/share/classes/sun/awt/EmbeddedFrame.java	2012-08-31 11:52:02.781393621 +0100
++++ openjdk/jdk/src/share/classes/sun/awt/EmbeddedFrame.java	2012-08-31 11:58:18.846483269 +0100
+@@ -523,5 +523,7 @@
          }
          public void updateWindow(BufferedImage backBuffer) {
          }
@@ -931,7 +921,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/EmbeddedFrame.java openjdk/
  } // class EmbeddedFrame
 diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/InfoWindow.java openjdk/jdk/src/solaris/classes/sun/awt/X11/InfoWindow.java
 --- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/InfoWindow.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/src/solaris/classes/sun/awt/X11/InfoWindow.java	2011-02-17 15:50:10.724056863 +0000
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/InfoWindow.java	2012-08-31 11:58:18.846483269 +0100
 @@ -0,0 +1,495 @@
 +/*
 + * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
@@ -1429,8 +1419,8 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/InfoWindow.java openj
 +}
 +
 diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XDecoratedPeer.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XDecoratedPeer.java
---- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XDecoratedPeer.java	2011-01-20 23:54:40.000000000 +0000
-+++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XDecoratedPeer.java	2011-02-17 15:50:10.724056863 +0000
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XDecoratedPeer.java	2011-11-14 22:12:14.000000000 +0000
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XDecoratedPeer.java	2012-08-31 11:58:18.850483324 +0100
 @@ -451,7 +451,7 @@
  
      public Insets getInsets() {
@@ -1450,9 +1440,9 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XDecoratedPeer.java o
  
      private void checkShellRectSize(Rectangle shellRect) {
 diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XKeyboardFocusManagerPeer.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XKeyboardFocusManagerPeer.java
---- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XKeyboardFocusManagerPeer.java	2011-02-17 15:43:30.000000000 +0000
-+++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XKeyboardFocusManagerPeer.java	2011-02-17 15:50:10.724056863 +0000
-@@ -62,8 +62,25 @@
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XKeyboardFocusManagerPeer.java	2012-08-31 11:52:02.037383633 +0100
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XKeyboardFocusManagerPeer.java	2012-08-31 11:58:18.850483324 +0100
+@@ -63,8 +63,25 @@
  
      static void setCurrentNativeFocusedWindow(Window win) {
          if (focusLog.isLoggable(Level.FINER)) focusLog.finer("Setting current native focused window " + win);
@@ -1479,9 +1469,9 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XKeyboardFocusManager
      }
  
 diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XlibWrapper.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XlibWrapper.java
---- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XlibWrapper.java	2011-01-20 23:54:40.000000000 +0000
-+++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XlibWrapper.java	2011-02-17 15:50:10.728056549 +0000
-@@ -157,6 +157,8 @@
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XlibWrapper.java	2012-08-31 11:52:01.949382452 +0100
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XlibWrapper.java	2012-08-31 11:58:18.850483324 +0100
+@@ -158,6 +158,8 @@
  
      static native void XLowerWindow(long display, long window);
      static native void XRestackWindows(long display, long windows, int length);
@@ -1490,7 +1480,7 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XlibWrapper.java open
      static native void XSetInputFocus(long display, long window);
      static native void XSetInputFocus2(long display, long window, long time);
      static native long XGetInputFocus(long display);
-@@ -533,6 +535,11 @@
+@@ -534,6 +536,11 @@
      static native void SetRectangularShape(long display, long window,
              int lox, int loy, int hix, int hiy,
              sun.java2d.pipe.Region region);
@@ -1503,8 +1493,8 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XlibWrapper.java open
  /* Global memory area used for X lib parameter passing */
  
 diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XNETProtocol.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XNETProtocol.java
---- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XNETProtocol.java	2011-02-17 15:43:31.000000000 +0000
-+++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XNETProtocol.java	2011-02-17 15:50:10.724056863 +0000
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XNETProtocol.java	2012-08-31 11:52:02.785393675 +0100
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XNETProtocol.java	2012-08-31 11:58:18.850483324 +0100
 @@ -178,6 +178,34 @@
          return ((layer == LAYER_ALWAYS_ON_TOP) || (layer == LAYER_NORMAL)) && doLayerProtocol();
      }
@@ -1575,9 +1565,9 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XNETProtocol.java ope
              XAtomList net_wm_state = window.getNETWMState();
              if (log.isLoggable(Level.FINE)) {
 diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XTrayIconPeer.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XTrayIconPeer.java
---- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XTrayIconPeer.java	2011-01-20 23:54:40.000000000 +0000
-+++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XTrayIconPeer.java	2011-02-17 15:50:10.724056863 +0000
-@@ -41,15 +41,18 @@
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XTrayIconPeer.java	2012-08-31 11:52:01.949382452 +0100
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XTrayIconPeer.java	2012-08-31 11:58:18.850483324 +0100
+@@ -39,15 +39,18 @@
  import java.security.PrivilegedAction;
  import java.lang.reflect.InvocationTargetException;
  
@@ -1599,7 +1589,7 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XTrayIconPeer.java op
      PopupMenu popup;
      String tooltipString;
      boolean isTrayIconDisplayed;
-@@ -263,8 +266,8 @@
+@@ -261,8 +264,8 @@
          eframe.setVisible(true);
          updateImage();
  
@@ -1610,7 +1600,7 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XTrayIconPeer.java op
  
          addListeners();
      }
-@@ -308,6 +311,10 @@
+@@ -306,6 +309,10 @@
          tooltipString = tooltip;
      }
  
@@ -1621,7 +1611,7 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XTrayIconPeer.java op
      public void updateImage() {
          Runnable r = new Runnable() {
                  public void run() {
-@@ -393,7 +400,7 @@
+@@ -391,7 +398,7 @@
          return eframe.getLocationOnScreen();
      }
  
@@ -1630,7 +1620,7 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XTrayIconPeer.java op
          Point loc = getLocationOnScreen();
          return new Rectangle(loc.x, loc.y, loc.x + TRAY_ICON_WIDTH, loc.y + TRAY_ICON_HEIGHT);
      }
-@@ -407,10 +414,14 @@
+@@ -405,10 +412,14 @@
          return ((XEmbeddedFramePeer)eframe.getPeer()).getWindow();
      }
  
@@ -1646,7 +1636,7 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XTrayIconPeer.java op
      static class TrayIconEventProxy implements MouseListener, MouseMotionListener {
          XTrayIconPeer xtiPeer;
  
-@@ -482,8 +493,8 @@
+@@ -480,8 +491,8 @@
      }
  
      static boolean isTrayIconStuffWindow(Window w) {
@@ -1657,7 +1647,7 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XTrayIconPeer.java op
                 (w instanceof XTrayIconEmbeddedFrame);
      }
  
-@@ -538,7 +549,7 @@
+@@ -536,7 +547,7 @@
          }
      }
  
@@ -1666,7 +1656,7 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XTrayIconPeer.java op
          volatile Image image;
          IconObserver observer;
          int width, height;
-@@ -617,427 +628,4 @@
+@@ -615,427 +626,4 @@
          }
      }
  
@@ -2095,8 +2085,8 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XTrayIconPeer.java op
 -    }
  }
 diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWarningWindow.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XWarningWindow.java
---- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWarningWindow.java	2011-01-20 23:54:40.000000000 +0000
-+++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XWarningWindow.java	2011-02-17 15:50:10.728056549 +0000
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWarningWindow.java	2011-11-14 22:12:14.000000000 +0000
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XWarningWindow.java	2012-08-31 11:58:18.850483324 +0100
 @@ -25,16 +25,194 @@
  package sun.awt.X11;
  
@@ -2514,25 +2504,9 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWarningWindow.java o
 +    }
  }
 diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWindow.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XWindow.java
---- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWindow.java	2011-01-20 23:54:40.000000000 +0000
-+++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XWindow.java	2011-02-17 15:50:10.728056549 +0000
-@@ -68,6 +68,15 @@
-     int oldWidth = -1;
-     int oldHeight = -1;
- 
-+    protected PropMwmHints mwm_hints;
-+    protected static XAtom wm_protocols;
-+    protected static XAtom wm_delete_window;
-+    protected static XAtom wm_take_focus;
-+
-+    private boolean stateChanged; // Indicates whether the value on savedState is valid
-+    private int savedState; // Holds last known state of the top-level window
-+
-+    XWindowAttributesData winAttr;
- 
-     protected X11GraphicsConfig graphicsConfig;
-     protected AwtGraphicsConfigData graphicsConfigData;
-@@ -208,6 +217,20 @@
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWindow.java	2012-08-31 11:52:01.949382452 +0100
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XWindow.java	2012-08-31 11:58:59.327035867 +0100
+@@ -207,6 +207,20 @@
          }
  
          params.putIfNull(BACKING_STORE, XToolkit.getBackingStoreType());
@@ -2553,7 +2527,23 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWindow.java openjdk/
      }
  
      void postInit(XCreateWindowParams params) {
-@@ -801,12 +824,42 @@
+@@ -267,6 +281,15 @@
+         else return 0;
+     }
+ 
++    protected PropMwmHints mwm_hints;
++    protected static XAtom wm_protocols;
++    protected static XAtom wm_delete_window;
++    protected static XAtom wm_take_focus;
++
++    private boolean stateChanged; // Indicates whether the value on savedState is valid
++    private int savedState; // Holds last known state of the top-level window
++
++    XWindowAttributesData winAttr;
+ 
+     static XWindow getParentXWindowObject(Component target) {
+         if (target == null) return null;
+@@ -791,12 +814,42 @@
      public native boolean x11inputMethodLookupString(long event, long [] keysymArray);
      native boolean haveCurrentX11InputMethodInstance();
  
@@ -2596,7 +2586,7 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWindow.java openjdk/
          // Skip event If it was caused by a grab
          // This is needed because on displays with focus-follows-mouse on MousePress X system generates
          // two XCrossing events with mode != NormalNotify. First of them notifies that the mouse has left
-@@ -1110,6 +1163,55 @@
+@@ -1100,6 +1153,55 @@
  
      }
  
@@ -2652,7 +2642,7 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWindow.java openjdk/
      public void reshape(Rectangle bounds) {
          reshape(bounds.x, bounds.y, bounds.width, bounds.height);
      }
-@@ -1278,4 +1380,40 @@
+@@ -1260,4 +1362,40 @@
  
      static native int getAWTKeyCodeForKeySym(int keysym);
      static native int getKeySymForAWTKeyCode(int keycode);
@@ -2694,8 +2684,8 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWindow.java openjdk/
 +
  }
 diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWindowPeer.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XWindowPeer.java
---- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWindowPeer.java	2011-02-17 15:43:31.000000000 +0000
-+++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XWindowPeer.java	2011-02-17 15:50:10.728056549 +0000
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWindowPeer.java	2012-08-31 11:52:02.789393729 +0100
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XWindowPeer.java	2012-08-31 11:58:18.850483324 +0100
 @@ -66,17 +66,11 @@
      // should be synchronized on awtLock
      private static Set<XWindowPeer> windows = new HashSet<XWindowPeer>();
@@ -2998,8 +2988,8 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWindowPeer.java open
  
      boolean isWithdrawn() {
 diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWM.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XWM.java
---- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWM.java	2011-01-20 23:54:40.000000000 +0000
-+++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XWM.java	2011-02-17 15:50:10.724056863 +0000
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWM.java	2011-11-14 22:12:14.000000000 +0000
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XWM.java	2012-08-31 11:58:18.850483324 +0100
 @@ -889,7 +889,7 @@
      /*
       * Set MWM decorations.  Set MWM functions depending on resizability.
@@ -3010,8 +3000,8 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWM.java openjdk/jdk/
          if ((decorations & MWM_DECOR_ALL) != 0
              && (decorations != MWM_DECOR_ALL))
 diff -Nru openjdk.orig/jdk/src/solaris/native/sun/awt/utility/rect.h openjdk/jdk/src/solaris/native/sun/awt/utility/rect.h
---- openjdk.orig/jdk/src/solaris/native/sun/awt/utility/rect.h	2011-01-20 23:54:42.000000000 +0000
-+++ openjdk/jdk/src/solaris/native/sun/awt/utility/rect.h	2011-02-17 15:50:10.728056549 +0000
+--- openjdk.orig/jdk/src/solaris/native/sun/awt/utility/rect.h	2011-11-14 22:12:16.000000000 +0000
++++ openjdk/jdk/src/solaris/native/sun/awt/utility/rect.h	2012-08-31 11:58:18.850483324 +0100
 @@ -43,4 +43,15 @@
  
  #define RECT_INC_HEIGHT(r)      (r).height++
@@ -3029,8 +3019,8 @@ diff -Nru openjdk.orig/jdk/src/solaris/native/sun/awt/utility/rect.h openjdk/jdk
 +
  #endif // _AWT_RECT_H
 diff -Nru openjdk.orig/jdk/src/solaris/native/sun/xawt/XlibWrapper.c openjdk/jdk/src/solaris/native/sun/xawt/XlibWrapper.c
---- openjdk.orig/jdk/src/solaris/native/sun/xawt/XlibWrapper.c	2011-02-17 15:43:30.000000000 +0000
-+++ openjdk/jdk/src/solaris/native/sun/xawt/XlibWrapper.c	2011-02-17 15:50:10.728056549 +0000
+--- openjdk.orig/jdk/src/solaris/native/sun/xawt/XlibWrapper.c	2012-08-31 11:52:02.181385566 +0100
++++ openjdk/jdk/src/solaris/native/sun/xawt/XlibWrapper.c	2012-08-31 11:58:18.854483378 +0100
 @@ -42,6 +42,7 @@
  #include <jvm.h>
  
@@ -3111,9 +3101,9 @@ diff -Nru openjdk.orig/jdk/src/solaris/native/sun/xawt/XlibWrapper.c openjdk/jdk
 +}
 +
 diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java openjdk/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java
---- openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java	2011-02-17 15:43:31.000000000 +0000
-+++ openjdk/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java	2011-02-17 15:50:10.728056549 +0000
-@@ -499,8 +499,10 @@
+--- openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java	2012-08-31 11:52:02.801393890 +0100
++++ openjdk/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java	2012-08-31 11:58:18.854483378 +0100
+@@ -498,8 +498,10 @@
       private volatile int sysH = 0;
  
       Rectangle constrainBounds(int x, int y, int width, int height) {
@@ -3125,7 +3115,7 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java 
               return new Rectangle(x, y, width, height);
           }
  
-@@ -509,24 +511,24 @@
+@@ -508,24 +510,24 @@
           int newW = width;
           int newH = height;
  
@@ -3155,7 +3145,7 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java 
               if (newH > screenH) {
                   newH = screenH;
               }
-@@ -537,7 +539,6 @@
+@@ -536,7 +538,6 @@
               } else if (newX + newW > screenX + screenW) {
                   newX = screenX + screenW - newW;
               }
@@ -3163,7 +3153,7 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java 
               if (newY < screenY) {
                   newY = screenY;
               } else if (newY + newH > screenY + screenH) {
-@@ -552,7 +553,6 @@
+@@ -551,7 +552,6 @@
               if (newW > maxW) {
                   newW = maxW;
               }
@@ -3171,7 +3161,7 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java 
               if (newH > maxH) {
                   newH = maxH;
               }
-@@ -561,6 +561,8 @@
+@@ -560,6 +560,8 @@
           return new Rectangle(newX, newY, newW, newH);
       }
  
@@ -3181,8 +3171,8 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java 
       public void setBounds(int x, int y, int width, int height, int op) {
           Rectangle newBounds = constrainBounds(x, y, width, height);
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.cpp openjdk/jdk/src/windows/native/sun/windows/awt_Component.cpp
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.cpp	2011-02-17 15:43:31.000000000 +0000
-+++ openjdk/jdk/src/windows/native/sun/windows/awt_Component.cpp	2011-02-17 15:50:10.728056549 +0000
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.cpp	2012-08-31 11:52:02.805393943 +0100
++++ openjdk/jdk/src/windows/native/sun/windows/awt_Component.cpp	2012-08-31 11:58:18.854483378 +0100
 @@ -282,8 +282,7 @@
       * the native one anymore. So we can safely destroy component's
       * handle.
@@ -3229,7 +3219,7 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.cpp open
  
      if (hwndTarget == GetHWnd()) {
          SendKeyEvent(id, when, raw, cooked, modifiers, keyLocation, msg);
-@@ -6355,6 +6365,14 @@
+@@ -6361,6 +6371,14 @@
      }
  }
  
@@ -3245,8 +3235,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.cpp open
   * Component native methods
   */
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.h openjdk/jdk/src/windows/native/sun/windows/awt_Component.h
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.h	2011-02-17 15:43:31.000000000 +0000
-+++ openjdk/jdk/src/windows/native/sun/windows/awt_Component.h	2011-02-17 15:50:10.732056235 +0000
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.h	2012-08-31 11:52:02.809393997 +0100
++++ openjdk/jdk/src/windows/native/sun/windows/awt_Component.h	2012-08-31 11:58:18.854483378 +0100
 @@ -127,12 +127,13 @@
      virtual void RegisterClass();
      virtual void UnregisterClass();
@@ -3278,9 +3268,9 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.h openjd
      static BOOL m_isWin2000;
      static BOOL m_isWinNT;
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Dialog.cpp openjdk/jdk/src/windows/native/sun/windows/awt_Dialog.cpp
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Dialog.cpp	2011-01-20 23:54:44.000000000 +0000
-+++ openjdk/jdk/src/windows/native/sun/windows/awt_Dialog.cpp	2011-02-17 15:50:10.732056235 +0000
-@@ -310,15 +310,20 @@
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Dialog.cpp	2012-08-31 11:52:02.861394695 +0100
++++ openjdk/jdk/src/windows/native/sun/windows/awt_Dialog.cpp	2012-08-31 11:58:18.854483378 +0100
+@@ -311,15 +311,20 @@
          // no beep/flash if the mouse was clicked in the taskbar menu
          // or the dialog is currently inactive
          if (!isModalHook && !onTaskbar && (dialog == prevFGWindow)) {
@@ -3305,8 +3295,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Dialog.cpp openjdk
                                                  WPARAM wParam, LPARAM lParam)
  {
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Dialog.h openjdk/jdk/src/windows/native/sun/windows/awt_Dialog.h
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Dialog.h	2011-01-20 23:54:44.000000000 +0000
-+++ openjdk/jdk/src/windows/native/sun/windows/awt_Dialog.h	2011-02-17 15:50:10.732056235 +0000
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Dialog.h	2012-08-31 11:52:02.861394695 +0100
++++ openjdk/jdk/src/windows/native/sun/windows/awt_Dialog.h	2012-08-31 11:58:18.854483378 +0100
 @@ -76,7 +76,7 @@
       * Thus we don't have to perform any transitive (a blocker of a blocker) checks.
       */
@@ -3316,7 +3306,7 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Dialog.h openjdk/j
      }
  
      // finds and activates some window after the modal dialog is hidden
-@@ -129,6 +129,8 @@
+@@ -132,6 +132,8 @@
      // example on browser's thread when running in Java Plugin
      static LRESULT CALLBACK MouseHookProc_NonTT(int code,
                                                  WPARAM wParam, LPARAM lParam);
@@ -3326,8 +3316,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Dialog.h openjdk/j
  
  #endif /* AWT_DIALOG_H */
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Frame.cpp openjdk/jdk/src/windows/native/sun/windows/awt_Frame.cpp
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Frame.cpp	2011-01-20 23:54:44.000000000 +0000
-+++ openjdk/jdk/src/windows/native/sun/windows/awt_Frame.cpp	2011-02-17 15:50:10.732056235 +0000
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Frame.cpp	2011-11-14 22:12:18.000000000 +0000
++++ openjdk/jdk/src/windows/native/sun/windows/awt_Frame.cpp	2012-08-31 11:58:18.854483378 +0100
 @@ -551,11 +551,6 @@
      return AwtWindow::WmNcMouseDown(hitTest, x, y, button);
  }
@@ -3407,8 +3397,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Frame.cpp openjdk/
      }
      return TRUE;
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Frame.h openjdk/jdk/src/windows/native/sun/windows/awt_Frame.h
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Frame.h	2011-01-20 23:54:44.000000000 +0000
-+++ openjdk/jdk/src/windows/native/sun/windows/awt_Frame.h	2011-02-17 15:50:10.732056235 +0000
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Frame.h	2011-11-14 22:12:18.000000000 +0000
++++ openjdk/jdk/src/windows/native/sun/windows/awt_Frame.h	2012-08-31 11:58:18.854483378 +0100
 @@ -108,7 +108,6 @@
      MsgRouting WmNcMouseDown(WPARAM hitTest, int x, int y, int button);
      MsgRouting WmNcMouseUp(WPARAM hitTest, int x, int y, int button);
@@ -3418,8 +3408,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Frame.h openjdk/jd
      virtual MsgRouting WmSysCommand(UINT uCmdType, int xPos, int yPos);
  
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt.rc openjdk/jdk/src/windows/native/sun/windows/awt.rc
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt.rc	2011-01-20 23:54:44.000000000 +0000
-+++ openjdk/jdk/src/windows/native/sun/windows/awt.rc	2011-02-17 15:50:10.728056549 +0000
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt.rc	2011-11-14 22:12:18.000000000 +0000
++++ openjdk/jdk/src/windows/native/sun/windows/awt.rc	2012-08-31 11:58:18.854483378 +0100
 @@ -35,6 +35,13 @@
  AWT_ICON     ICON    DISCARDABLE "awt.ico"
  CHECK_BITMAP BITMAP  DISCARDABLE "check.bmp"
@@ -3435,8 +3425,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt.rc openjdk/jdk/src
  //
  // Version
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Toolkit.cpp openjdk/jdk/src/windows/native/sun/windows/awt_Toolkit.cpp
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Toolkit.cpp	2011-02-17 15:43:31.000000000 +0000
-+++ openjdk/jdk/src/windows/native/sun/windows/awt_Toolkit.cpp	2011-02-17 15:50:10.732056235 +0000
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Toolkit.cpp	2012-08-31 11:52:02.569390775 +0100
++++ openjdk/jdk/src/windows/native/sun/windows/awt_Toolkit.cpp	2012-08-31 11:58:18.854483378 +0100
 @@ -56,6 +56,7 @@
  #include "debug_mem.h"
  
@@ -3691,8 +3681,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Toolkit.cpp openjd
  
      if (safe_ExceptionOccurred(env)) {
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Toolkit.h openjdk/jdk/src/windows/native/sun/windows/awt_Toolkit.h
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Toolkit.h	2011-01-20 23:54:44.000000000 +0000
-+++ openjdk/jdk/src/windows/native/sun/windows/awt_Toolkit.h	2011-02-17 15:50:10.732056235 +0000
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Toolkit.h	2011-11-14 22:12:18.000000000 +0000
++++ openjdk/jdk/src/windows/native/sun/windows/awt_Toolkit.h	2012-08-31 11:58:18.854483378 +0100
 @@ -244,6 +244,8 @@
                                               LPARAM lParam);
      static LRESULT CALLBACK ForegroundIdleFilter(int code, WPARAM wParam,
@@ -3767,8 +3757,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Toolkit.h openjdk/
  
  /*
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Win32GraphicsEnv.cpp openjdk/jdk/src/windows/native/sun/windows/awt_Win32GraphicsEnv.cpp
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Win32GraphicsEnv.cpp	2011-02-17 15:43:31.000000000 +0000
-+++ openjdk/jdk/src/windows/native/sun/windows/awt_Win32GraphicsEnv.cpp	2011-02-17 15:50:10.732056235 +0000
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Win32GraphicsEnv.cpp	2012-08-31 11:52:02.573390829 +0100
++++ openjdk/jdk/src/windows/native/sun/windows/awt_Win32GraphicsEnv.cpp	2012-08-31 11:58:18.858483433 +0100
 @@ -31,6 +31,7 @@
  #include "awt_Win32GraphicsDevice.h"
  #include "Devices.h"
@@ -3837,8 +3827,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Win32GraphicsEnv.c
  
      dwmIsCompositionEnabled = bRes;
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.cpp openjdk/jdk/src/windows/native/sun/windows/awt_Window.cpp
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.cpp	2011-02-17 15:43:31.000000000 +0000
-+++ openjdk/jdk/src/windows/native/sun/windows/awt_Window.cpp	2011-02-17 15:50:10.732056235 +0000
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.cpp	2012-08-31 11:52:02.809393997 +0100
++++ openjdk/jdk/src/windows/native/sun/windows/awt_Window.cpp	2012-08-31 11:58:18.858483433 +0100
 @@ -30,6 +30,7 @@
  #include "awt_Component.h"
  #include "awt_Container.h"
@@ -3867,16 +3857,15 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.cpp openjdk
  
  /************************************************************************
   * AwtWindow fields
-@@ -138,6 +145,8 @@
+@@ -138,17 +145,23 @@
  jfieldID AwtWindow::warningStringID;
  jfieldID AwtWindow::locationByPlatformID;
  jfieldID AwtWindow::autoRequestFocusID;
 +jfieldID AwtWindow::securityWarningWidthID;
 +jfieldID AwtWindow::securityWarningHeightID;
  
- jclass AwtWindow::wwindowPeerCls;
- jmethodID AwtWindow::getActiveWindowsMID;
-@@ -147,11 +156,15 @@
+ jfieldID AwtWindow::sysXID;
+ jfieldID AwtWindow::sysYID;
  jfieldID AwtWindow::sysWID;
  jfieldID AwtWindow::sysHID;
  
@@ -3892,7 +3881,7 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.cpp openjdk
  
  /************************************************************************
   * AwtWindow class methods
-@@ -186,11 +199,30 @@
+@@ -183,11 +196,30 @@
      m_opaque = TRUE;
      m_opacity = 0xff;
  
@@ -3923,7 +3912,7 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.cpp openjdk
  }
  
  void AwtWindow::Dispose()
-@@ -230,10 +262,10 @@
+@@ -226,10 +258,10 @@
      }
      m_grabbed = TRUE;
      m_grabbedWindow = this;
@@ -3936,7 +3925,7 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.cpp openjdk
          _ToFront(env->NewGlobalRef(GetPeer(env)));
          // Global ref was deleted in _ToFront
      }
-@@ -327,12 +359,40 @@
+@@ -323,12 +355,40 @@
      return mrDoDefault;
  }
  
@@ -3978,7 +3967,7 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.cpp openjdk
      return mrDoDefault;
  }
  
-@@ -352,18 +412,591 @@
+@@ -348,18 +408,591 @@
      lpwc->cbWndExtra = DLGWINDOWEXTRA;
  }
  
@@ -4573,7 +4562,7 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.cpp openjdk
  /* Create a new AwtWindow object and window.   */
  AwtWindow* AwtWindow::Create(jobject self, jobject parent)
  {
-@@ -672,23 +1305,6 @@
+@@ -668,23 +1301,6 @@
      ::GetClientRect(GetHWnd(), &inside);
      ::GetWindowRect(GetHWnd(), &outside);
  
@@ -4597,7 +4586,7 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.cpp openjdk
      /* Update our inset member */
      if (outside.right - outside.left > 0 && outside.bottom - outside.top > 0) {
          ::MapWindowPoints(GetHWnd(), 0, (LPPOINT)&inside, 2);
-@@ -926,13 +1542,13 @@
+@@ -922,13 +1538,13 @@
          type = java_awt_event_WindowEvent_WINDOW_GAINED_FOCUS;
          AwtToolkit::GetInstance().
              InvokeFunctionLater(BounceActivation, this);
@@ -4613,7 +4602,7 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.cpp openjdk
      }
  
      SendWindowEvent(type, opposite);
-@@ -984,7 +1600,7 @@
+@@ -980,7 +1596,7 @@
      HWND hwndSelf = GetHWnd();
      HWND hwndParent = ::GetParent(hwndSelf);
  
@@ -4622,7 +4611,7 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.cpp openjdk
          hwndParent != NULL && ::IsWindowVisible(hwndParent))
      {
          ::PostMessage(hwndParent, WM_ACTIVATE, (WPARAM)WA_ACTIVE, (LPARAM)hwndSelf);
-@@ -1086,7 +1702,10 @@
+@@ -1082,7 +1698,10 @@
   */
  MsgRouting AwtWindow::WmSize(UINT type, int w, int h)
  {
@@ -4633,7 +4622,7 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.cpp openjdk
          return mrDoDefault;
      }
  
-@@ -1150,102 +1769,18 @@
+@@ -1146,102 +1765,18 @@
      if (env->EnsureLocalCapacity(2) < 0) {
          return mrConsume;
      }
@@ -4744,7 +4733,7 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.cpp openjdk
  MsgRouting AwtWindow::WmNcHitTest(UINT x, UINT y, LRESULT& retVal)
  {
      // If this window is blocked by modal dialog, return HTCLIENT for any point of it.
-@@ -1474,6 +2009,19 @@
+@@ -1467,6 +2002,19 @@
      }
  }
  
@@ -4764,7 +4753,7 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.cpp openjdk
  void AwtWindow::FlashWindowEx(HWND hWnd, UINT count, DWORD timeout, DWORD flags) {
      FLASHWINFO fi;
      fi.cbSize = sizeof(fi);
-@@ -2353,8 +2901,16 @@
+@@ -2346,8 +2894,16 @@
          env->GetFieldID(cls, "warningString", "Ljava/lang/String;");
      AwtWindow::locationByPlatformID =
          env->GetFieldID(cls, "locationByPlatform", "Z");
@@ -4781,7 +4770,7 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.cpp openjdk
  
      CATCH_BAD_ALLOC;
  }
-@@ -2880,5 +3436,27 @@
+@@ -2873,5 +3429,27 @@
  
      CATCH_BAD_ALLOC;
  }
@@ -4810,18 +4799,18 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.cpp openjdk
  
  } /* extern "C" */
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.h openjdk/jdk/src/windows/native/sun/windows/awt_Window.h
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.h	2011-02-17 15:43:31.000000000 +0000
-+++ openjdk/jdk/src/windows/native/sun/windows/awt_Window.h	2011-02-17 15:50:10.732056235 +0000
-@@ -57,6 +57,8 @@
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.h	2012-08-31 11:52:02.809393997 +0100
++++ openjdk/jdk/src/windows/native/sun/windows/awt_Window.h	2012-08-31 11:58:18.858483433 +0100
+@@ -56,6 +56,8 @@
      static jfieldID locationByPlatformID;
      static jfieldID screenID; /* screen number passed over from WindowPeer */
      static jfieldID autoRequestFocusID;
 +    static jfieldID securityWarningWidthID;
 +    static jfieldID securityWarningHeightID;
  
-     /* WWindowPeer class */
-     static jclass wwindowPeerCls;
-@@ -69,6 +71,9 @@
+     // The coordinates at the peer.
+     static jfieldID sysXID;
+@@ -63,6 +65,9 @@
      static jfieldID sysWID;
      static jfieldID sysHID;
  
@@ -4831,7 +4820,7 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.h openjdk/j
      AwtWindow();
      virtual ~AwtWindow();
  
-@@ -158,6 +163,8 @@
+@@ -152,6 +157,8 @@
      static void SetModalBlocker(HWND window, HWND blocker);
      static void SetAndActivateModalBlocker(HWND window, HWND blocker);
  
@@ -4840,7 +4829,7 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.h openjdk/j
      /*
       * Windows message handler functions
       */
-@@ -175,13 +182,13 @@
+@@ -169,13 +176,13 @@
      virtual MsgRouting WmSettingChange(UINT wFlag, LPCTSTR pszSection);
      virtual MsgRouting WmNcCalcSize(BOOL fCalcValidRects,
                                      LPNCCALCSIZE_PARAMS lpncsp, LRESULT& retVal);
@@ -4855,7 +4844,7 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.h openjdk/j
  
      virtual MsgRouting HandleEvent(MSG *msg, BOOL synthetic);
      virtual void WindowResized();
-@@ -216,11 +223,22 @@
+@@ -210,11 +217,22 @@
      static void _SetOpacity(void* param);
      static void _SetOpaque(void* param);
      static void _UpdateWindow(void* param);
@@ -4878,7 +4867,7 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.h openjdk/j
  private:
      static int ms_instanceCounter;
      static HHOOK ms_hCBTFilter;
-@@ -262,9 +280,56 @@
+@@ -256,9 +274,56 @@
      UINT contentWidth;
      UINT contentHeight;
  
@@ -4936,7 +4925,7 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.h openjdk/j
  
  protected:
      BOOL m_isResizable;
-@@ -279,6 +344,12 @@
+@@ -273,6 +338,12 @@
      virtual void FillBackground(HDC hMemoryDC, SIZE &size);
      virtual void FillAlpha(void *bitmapBits, SIZE &size, BYTE alpha);
  
@@ -4950,8 +4939,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.h openjdk/j
      int m_screenNum;
  
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/ComCtl32Util.cpp openjdk/jdk/src/windows/native/sun/windows/ComCtl32Util.cpp
---- openjdk.orig/jdk/src/windows/native/sun/windows/ComCtl32Util.cpp	2011-01-20 23:54:44.000000000 +0000
-+++ openjdk/jdk/src/windows/native/sun/windows/ComCtl32Util.cpp	2011-02-17 15:50:10.728056549 +0000
+--- openjdk.orig/jdk/src/windows/native/sun/windows/ComCtl32Util.cpp	2011-11-14 22:12:18.000000000 +0000
++++ openjdk/jdk/src/windows/native/sun/windows/ComCtl32Util.cpp	2012-08-31 11:58:18.858483433 +0100
 @@ -32,6 +32,7 @@
      m_lpfnSetWindowSubclass = NULL;
      m_lpfnRemoveWindowSubclass = NULL;
@@ -4969,8 +4958,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/ComCtl32Util.cpp openj
  
  void ComCtl32Util::FreeLibraries() {
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/ComCtl32Util.h openjdk/jdk/src/windows/native/sun/windows/ComCtl32Util.h
---- openjdk.orig/jdk/src/windows/native/sun/windows/ComCtl32Util.h	2011-01-20 23:54:44.000000000 +0000
-+++ openjdk/jdk/src/windows/native/sun/windows/ComCtl32Util.h	2011-02-17 15:50:10.728056549 +0000
+--- openjdk.orig/jdk/src/windows/native/sun/windows/ComCtl32Util.h	2011-11-14 22:12:18.000000000 +0000
++++ openjdk/jdk/src/windows/native/sun/windows/ComCtl32Util.h	2012-08-31 11:58:18.858483433 +0100
 @@ -63,6 +63,10 @@
              return m_bNewSubclassing;
          }
@@ -4993,7 +4982,7 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/ComCtl32Util.h openjdk
                                                   WPARAM wParam, LPARAM lParam,
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/DllUtil.cpp openjdk/jdk/src/windows/native/sun/windows/DllUtil.cpp
 --- openjdk.orig/jdk/src/windows/native/sun/windows/DllUtil.cpp	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/src/windows/native/sun/windows/DllUtil.cpp	2011-02-17 15:50:10.728056549 +0000
++++ openjdk/jdk/src/windows/native/sun/windows/DllUtil.cpp	2012-08-31 11:58:18.858483433 +0100
 @@ -0,0 +1,87 @@
 +/*
 + * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
@@ -5084,7 +5073,7 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/DllUtil.cpp openjdk/jd
 +
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/DllUtil.h openjdk/jdk/src/windows/native/sun/windows/DllUtil.h
 --- openjdk.orig/jdk/src/windows/native/sun/windows/DllUtil.h	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/src/windows/native/sun/windows/DllUtil.h	2011-02-17 15:50:10.728056549 +0000
++++ openjdk/jdk/src/windows/native/sun/windows/DllUtil.h	2012-08-31 11:58:18.858483433 +0100
 @@ -0,0 +1,97 @@
 +/*
 + * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
@@ -5185,7 +5174,7 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/DllUtil.h openjdk/jdk/
 +
 diff -Nru openjdk.orig/jdk/test/java/awt/Focus/CloseDialogActivateOwnerTest/CloseDialogActivateOwnerTest.java openjdk/jdk/test/java/awt/Focus/CloseDialogActivateOwnerTest/CloseDialogActivateOwnerTest.java
 --- openjdk.orig/jdk/test/java/awt/Focus/CloseDialogActivateOwnerTest/CloseDialogActivateOwnerTest.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/test/java/awt/Focus/CloseDialogActivateOwnerTest/CloseDialogActivateOwnerTest.java	2011-02-17 15:50:10.732056235 +0000
++++ openjdk/jdk/test/java/awt/Focus/CloseDialogActivateOwnerTest/CloseDialogActivateOwnerTest.java	2012-08-31 11:58:18.858483433 +0100
 @@ -0,0 +1,114 @@
 +/*
 + * Copyright (c) 2008, 2009, Oracle and/or its affiliates. All rights reserved.
@@ -5303,14 +5292,14 @@ diff -Nru openjdk.orig/jdk/test/java/awt/Focus/CloseDialogActivateOwnerTest/Clos
 +
 diff -Nru openjdk.orig/jdk/test/java/awt/Focus/CloseDialogActivateOwnerTest/java.policy openjdk/jdk/test/java/awt/Focus/CloseDialogActivateOwnerTest/java.policy
 --- openjdk.orig/jdk/test/java/awt/Focus/CloseDialogActivateOwnerTest/java.policy	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/test/java/awt/Focus/CloseDialogActivateOwnerTest/java.policy	2011-02-17 15:50:10.732056235 +0000
++++ openjdk/jdk/test/java/awt/Focus/CloseDialogActivateOwnerTest/java.policy	2012-08-31 11:58:18.858483433 +0100
 @@ -0,0 +1,3 @@
 +grant {
 +	permission java.awt.AWTPermission "createRobot";
 +};
 diff -Nru openjdk.orig/jdk/test/java/awt/Focus/OwnedWindowFocusIMECrashTest/OwnedWindowFocusIMECrashTest.java openjdk/jdk/test/java/awt/Focus/OwnedWindowFocusIMECrashTest/OwnedWindowFocusIMECrashTest.java
 --- openjdk.orig/jdk/test/java/awt/Focus/OwnedWindowFocusIMECrashTest/OwnedWindowFocusIMECrashTest.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/test/java/awt/Focus/OwnedWindowFocusIMECrashTest/OwnedWindowFocusIMECrashTest.java	2011-02-17 15:50:10.736055921 +0000
++++ openjdk/jdk/test/java/awt/Focus/OwnedWindowFocusIMECrashTest/OwnedWindowFocusIMECrashTest.java	2012-08-31 11:58:18.858483433 +0100
 @@ -0,0 +1,88 @@
 +/*
 + * Copyright (c) 2008, 2009, Oracle and/or its affiliates. All rights reserved.

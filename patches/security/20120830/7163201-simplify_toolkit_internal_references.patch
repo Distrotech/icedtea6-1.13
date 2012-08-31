@@ -1,0 +1,3713 @@
+diff --git a/src/share/classes/java/awt/AWTEvent.java b/src/share/classes/java/awt/AWTEvent.java
+--- openjdk/jdk/src/share/classes/java/awt/AWTEvent.java
++++ openjdk/jdk/src/share/classes/java/awt/AWTEvent.java
+@@ -260,6 +260,10 @@
+             initIDs();
+         }
+         AWTAccessor.setAWTEventAccessor(new AWTAccessor.AWTEventAccessor() {
++                public void setPosted(AWTEvent ev) {
++                    ev.isPosted = true;
++                }
++
+                 public void setSystemGenerated(AWTEvent ev) {
+                     ev.isSystemGenerated = true;
+                 }
+@@ -271,6 +275,15 @@
+                 public AccessControlContext getAccessControlContext(AWTEvent ev) {
+                     return ev.getAccessControlContext();
+                 }
++
++                public byte[] getBData(AWTEvent ev) {
++                    return ev.bdata;
++                }
++
++                public void setBData(AWTEvent ev, byte[] bdata) {
++                    ev.bdata = bdata;
++                }
++
+         });
+     }
+ 
+@@ -607,7 +620,7 @@
+         }
+     }
+ 
+-    private void readObject(ObjectInputStream in) 
++    private void readObject(ObjectInputStream in)
+         throws ClassNotFoundException, IOException
+     {
+         this.acc = AccessController.getContext();
+diff --git a/src/share/classes/java/awt/CheckboxMenuItem.java b/src/share/classes/java/awt/CheckboxMenuItem.java
+--- openjdk/jdk/src/share/classes/java/awt/CheckboxMenuItem.java
++++ openjdk/jdk/src/share/classes/java/awt/CheckboxMenuItem.java
+@@ -31,6 +31,7 @@
+ import java.io.ObjectInputStream;
+ import java.io.IOException;
+ import javax.accessibility.*;
++import sun.awt.AWTAccessor;
+ 
+ 
+ /**
+@@ -68,6 +69,13 @@
+         if (!GraphicsEnvironment.isHeadless()) {
+             initIDs();
+         }
++
++        AWTAccessor.setCheckboxMenuItemAccessor(
++            new AWTAccessor.CheckboxMenuItemAccessor() {
++                public boolean getState(CheckboxMenuItem cmi) {
++                    return cmi.state;
++                }
++            });
+     }
+ 
+    /**
+diff --git a/src/share/classes/java/awt/Component.java b/src/share/classes/java/awt/Component.java
+--- openjdk/jdk/src/share/classes/java/awt/Component.java
++++ openjdk/jdk/src/share/classes/java/awt/Component.java
+@@ -798,10 +798,129 @@
+ 
+     static {
+         AWTAccessor.setComponentAccessor(new AWTAccessor.ComponentAccessor() {
++                public void setX(Component comp, int x) {
++                    comp.x = x;
++                }
++
++                public void setY(Component comp, int y) {
++                    comp.y = y;
++                }
++
++                public void setWidth(Component comp, int width) {
++                    comp.width = width;
++                }
++
++                public void setHeight(Component comp, int height) {
++                    comp.height = height;
++                }
++
++                public int getX(Component comp) {
++                    return comp.x;
++                }
++
++                public int getY(Component comp) {
++                    return comp.y;
++                }
++
++                public int getWidth(Component comp) {
++                    return comp.width;
++                }
++
++                public int getHeight(Component comp) {
++                    return comp.height;
++                }
++
++                public boolean isPacked(Component comp) {
++                    return comp.isPacked;
++                }
++
++                public Container getParent(Component comp) {
++                    return comp.getParent_NoClientCode();
++                }
++
++                public Font getFont_NoClientCode(Component comp) {
++                    return comp.getFont_NoClientCode();
++                }
++
++                public void processEvent(Component comp, AWTEvent event) {
++                    comp.processEvent(event);
++                }
++
++                public void enableEvents(Component comp, long eventMask) {
++                    comp.enableEvents(eventMask);
++                }
++
++                public void setParent(Component comp, Container parent) {
++                    comp.parent = parent;
++                }
++
++                public Color getForeground(Component comp) {
++                    return comp.foreground;
++                }
++
++                public Color getBackground(Component comp) {
++                    return comp.background;
++                }
++
++                public void setBackground(Component comp, Color c) {
++                    comp.background = c;
++                }
++
++                public Font getFont(Component comp) {
++                    return comp.font;
++                }
++
++                public ComponentPeer getPeer(Component comp) {
++                    return comp.peer;
++                }
++
++                public void setPeer(Component comp, ComponentPeer peer) {
++                    comp.peer = peer;
++                }
++
++                public boolean getIgnoreRepaint(Component comp) {
++                    return comp.ignoreRepaint;
++                }
++
++                public void resetGC(Component comp) {
++                    comp.resetGC();
++                }
++
++                public boolean isVisible(Component comp) {
++                    return comp.visible;
++                }
++
++                public boolean isEnabled(Component comp) {
++                    return comp.isEnabledImpl();
++                }
++
++                public Cursor getCursor(Component comp) {
++                    return comp.getCursor_NoClientCode();
++                }
++
++                public Point getLocation(Component comp) {
++                    return comp.location_NoClientCode();
++                }
++
+                 public AccessControlContext getAccessControlContext(Component comp) {
+                     return comp.getAccessControlContext();
+                 }
+ 
++                public boolean requestFocusInWindow(Component comp, CausedFocusEvent.Cause cause) {
++                    return comp.requestFocusInWindow(cause);
++                }
++
++                public void requestFocus(Component comp, CausedFocusEvent.Cause cause) {
++                    comp.requestFocus(cause);
++                }
++
++                public void setAppContext(Component comp, AppContext ctx) {
++                    comp.appContext = ctx;
++                }
++
++                public AppContext getAppContext(Component comp) {
++                    return comp.appContext;
++                }
+             });
+     }
+ 
+diff --git a/src/share/classes/java/awt/Cursor.java b/src/share/classes/java/awt/Cursor.java
+--- openjdk/jdk/src/share/classes/java/awt/Cursor.java
++++ openjdk/jdk/src/share/classes/java/awt/Cursor.java
+@@ -24,10 +24,6 @@
+  */
+ package java.awt;
+ 
+-import java.awt.AWTException;
+-import java.awt.Point;
+-import java.awt.Toolkit;
+-
+ import java.io.File;
+ import java.io.FileInputStream;
+ 
+@@ -39,6 +35,8 @@
+ 
+ import java.security.AccessController;
+ 
++import sun.awt.AWTAccessor;
++
+ /**
+  * A class to encapsulate the bitmap representation of the mouse cursor.
+  *
+@@ -193,6 +191,21 @@
+         if (!GraphicsEnvironment.isHeadless()) {
+             initIDs();
+         }
++
++        AWTAccessor.setCursorAccessor(
++            new AWTAccessor.CursorAccessor() {
++                public long getPData(Cursor cursor) {
++                    return cursor.pData;
++                }
++
++                public void setPData(Cursor cursor, long pData) {
++                    cursor.pData = pData;
++                }
++
++                public int getType(Cursor cursor) {
++                    return cursor.type;
++                }
++            });
+     }
+ 
+     /**
+diff --git a/src/share/classes/java/awt/DefaultKeyboardFocusManager.java b/src/share/classes/java/awt/DefaultKeyboardFocusManager.java
+--- openjdk/jdk/src/share/classes/java/awt/DefaultKeyboardFocusManager.java
++++ openjdk/jdk/src/share/classes/java/awt/DefaultKeyboardFocusManager.java
+@@ -40,6 +40,7 @@
+ 
+ import sun.awt.AppContext;
+ import sun.awt.SunToolkit;
++import sun.awt.AWTAccessor;
+ import sun.awt.CausedFocusEvent;
+ 
+ /**
+@@ -76,6 +77,15 @@
+         typeAheadMarkers = new LinkedList();
+     private boolean consumeNextKeyTyped;
+ 
++    static {
++        AWTAccessor.setDefaultKeyboardFocusManagerAccessor(
++            new AWTAccessor.DefaultKeyboardFocusManagerAccessor() {
++                public void consumeNextKeyTyped(DefaultKeyboardFocusManager dkfm, KeyEvent e) {
++                    dkfm.consumeNextKeyTyped(e);
++                }
++            });
++    }
++
+     private static class TypeAheadMarker {
+         long after;
+         Component untilFocused;
+diff --git a/src/share/classes/java/awt/Dialog.java b/src/share/classes/java/awt/Dialog.java
+--- openjdk/jdk/src/share/classes/java/awt/Dialog.java
++++ openjdk/jdk/src/share/classes/java/awt/Dialog.java
+@@ -34,6 +34,7 @@
+ import java.security.PrivilegedAction;
+ import javax.accessibility.*;
+ import sun.awt.AppContext;
++import sun.awt.AWTAccessor;
+ import sun.awt.SunToolkit;
+ import sun.awt.PeerEvent;
+ import sun.awt.util.IdentityArrayList;
+@@ -1696,4 +1697,13 @@
+         }
+ 
+     } // inner class AccessibleAWTDialog
++
++    static {
++        AWTAccessor.setDialogAccessor(new AWTAccessor.DialogAccessor() {
++            public ModalExclusionType getDefaultModalExclusionType() {
++                return DEFAULT_MODAL_EXCLUSION_TYPE;
++            }
++        });
++    }
++
+ }
+diff --git a/src/share/classes/java/awt/EventQueue.java b/src/share/classes/java/awt/EventQueue.java
+--- openjdk/jdk/src/share/classes/java/awt/EventQueue.java
++++ openjdk/jdk/src/share/classes/java/awt/EventQueue.java
+@@ -39,12 +39,12 @@
+ import java.util.logging.*;
+ 
+ import sun.awt.AppContext;
++import sun.awt.AWTAccessor;
+ import sun.awt.AWTAutoShutdown;
+ import sun.awt.PeerEvent;
+ import sun.awt.SunToolkit;
+ 
+ import java.security.AccessControlContext;
+-import java.security.ProtectionDomain;
+ 
+ import sun.misc.SharedSecrets;
+ import sun.misc.JavaSecurityAccess;
+@@ -157,6 +157,29 @@
+ 
+     private final String name = "AWT-EventQueue-" + nextThreadNum();
+ 
++    static {
++        AWTAccessor.setEventQueueAccessor(
++            new AWTAccessor.EventQueueAccessor() {
++                public Thread getDispatchThread(EventQueue eventQueue) {
++                    return eventQueue.dispatchThread;
++                }
++                public EventQueue getNextQueue(EventQueue eventQueue) {
++                    return eventQueue.nextQueue;
++                }
++                public void removeSourceEvents(EventQueue eventQueue,
++                                               Object source,
++                                               boolean removeAllEvents) {
++                    eventQueue.removeSourceEvents(source, removeAllEvents);
++                }
++                public boolean noEvents(EventQueue eventQueue) {
++                    return eventQueue.noEvents();
++                }
++                public void wakeup(EventQueue eventQueue, boolean isShutdown) {
++                    eventQueue.wakeup(isShutdown);
++                }
++            });
++    }
++
+     private static final Logger eventLog = Logger.getLogger("java.awt.event.EventQueue");
+ 
+     public EventQueue() {
+@@ -637,7 +660,7 @@
+     }
+ 
+     /**
+-     * Called from dispatchEvent() under a correct AccessControlContext  
++     * Called from dispatchEvent() under a correct AccessControlContext
+      */
+     private void dispatchEventImpl(final AWTEvent event, final Object src) {
+         event.isPosted = true;
+diff --git a/src/share/classes/java/awt/KeyboardFocusManager.java b/src/share/classes/java/awt/KeyboardFocusManager.java
+--- openjdk/jdk/src/share/classes/java/awt/KeyboardFocusManager.java
++++ openjdk/jdk/src/share/classes/java/awt/KeyboardFocusManager.java
+@@ -60,6 +60,7 @@
+ import sun.awt.HeadlessToolkit;
+ import sun.awt.SunToolkit;
+ import sun.awt.CausedFocusEvent;
++import sun.awt.AWTAccessor;
+ 
+ /**
+  * The KeyboardFocusManager is responsible for managing the active and focused
+@@ -117,6 +118,40 @@
+         if (!GraphicsEnvironment.isHeadless()) {
+             initIDs();
+         }
++        AWTAccessor.setKeyboardFocusManagerAccessor(
++            new AWTAccessor.KeyboardFocusManagerAccessor() {
++                public int shouldNativelyFocusHeavyweight(Component heavyweight,
++                                                   Component descendant,
++                                                   boolean temporary,
++                                                   boolean focusedWindowChangeAllowed,
++                                                   long time,
++                                                   CausedFocusEvent.Cause cause)
++                {
++                    return KeyboardFocusManager.shouldNativelyFocusHeavyweight(
++                        heavyweight, descendant, temporary, focusedWindowChangeAllowed, time, cause);
++                }
++                public boolean processSynchronousLightweightTransfer(Component heavyweight,
++                                                              Component descendant,
++                                                              boolean temporary,
++                                                              boolean focusedWindowChangeAllowed,
++                                                              long time)
++                {
++                    return KeyboardFocusManager.processSynchronousLightweightTransfer(
++                        heavyweight, descendant, temporary, focusedWindowChangeAllowed, time);
++                }
++                public void setMostRecentFocusOwner(Window window, Component component) {
++                    KeyboardFocusManager.setMostRecentFocusOwner(window, component);
++                }
++
++                public void removeLastFocusRequest(Component heavyweight) {
++                    KeyboardFocusManager.removeLastFocusRequest(heavyweight);
++                }
++
++                public Container getCurrentFocusCycleRoot() {
++                    return KeyboardFocusManager.currentFocusCycleRoot;
++                }
++            }
++        );
+     }
+ 
+     transient KeyboardFocusManagerPeer peer;
+@@ -563,7 +598,7 @@
+     public void clearGlobalFocusOwner() {
+         synchronized (KeyboardFocusManager.class) {
+              checkCurrentKFMSecurity();
+-        } 
++        }
+ 
+         if (!GraphicsEnvironment.isHeadless()) {
+             // Toolkit must be fully initialized, otherwise
+diff --git a/src/share/classes/java/awt/Menu.java b/src/share/classes/java/awt/Menu.java
+--- openjdk/jdk/src/share/classes/java/awt/Menu.java
++++ openjdk/jdk/src/share/classes/java/awt/Menu.java
+@@ -31,6 +31,7 @@
+ import java.awt.peer.MenuPeer;
+ import java.awt.event.KeyEvent;
+ import javax.accessibility.*;
++import sun.awt.AWTAccessor;
+ 
+ /**
+  * A <code>Menu</code> object is a pull-down menu component
+@@ -62,6 +63,13 @@
+         if (!GraphicsEnvironment.isHeadless()) {
+             initIDs();
+         }
++
++        AWTAccessor.setMenuAccessor(
++            new AWTAccessor.MenuAccessor() {
++                public Vector getItems(Menu menu) {
++                    return menu.items;
++                }
++            });
+     }
+ 
+     /**
+diff --git a/src/share/classes/java/awt/MenuBar.java b/src/share/classes/java/awt/MenuBar.java
+--- openjdk/jdk/src/share/classes/java/awt/MenuBar.java
++++ openjdk/jdk/src/share/classes/java/awt/MenuBar.java
+@@ -28,6 +28,7 @@
+ import java.io.ObjectInputStream;
+ import java.util.Vector;
+ import java.util.Enumeration;
++import sun.awt.AWTAccessor;
+ import java.awt.peer.MenuBarPeer;
+ import java.awt.event.KeyEvent;
+ import javax.accessibility.*;
+@@ -74,6 +75,16 @@
+         if (!GraphicsEnvironment.isHeadless()) {
+             initIDs();
+         }
++        AWTAccessor.setMenuBarAccessor(
++            new AWTAccessor.MenuBarAccessor() {
++                public Menu getHelpMenu(MenuBar menuBar) {
++                    return menuBar.helpMenu;
++                }
++
++                public Vector getMenus(MenuBar menuBar) {
++                    return menuBar.menus;
++                }
++            });
+     }
+ 
+     /**
+diff --git a/src/share/classes/java/awt/MenuComponent.java b/src/share/classes/java/awt/MenuComponent.java
+--- openjdk/jdk/src/share/classes/java/awt/MenuComponent.java
++++ openjdk/jdk/src/share/classes/java/awt/MenuComponent.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1995, 2011, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1995, 2012, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -29,7 +29,7 @@
+ import java.io.IOException;
+ import java.io.ObjectInputStream;
+ import sun.awt.AppContext;
+-import sun.awt.SunToolkit;
++import sun.awt.AWTAccessor;
+ import javax.accessibility.*;
+ 
+ import java.security.AccessControlContext;
+@@ -106,7 +106,7 @@
+      */
+     private transient volatile AccessControlContext acc =
+             AccessController.getContext();
+-    
++
+     /*
+      * Returns the acc this menu component was constructed with.
+      */
+@@ -129,6 +129,24 @@
+      */
+     private static final long serialVersionUID = -4536902356223894379L;
+ 
++    static {
++        AWTAccessor.setMenuComponentAccessor(
++            new AWTAccessor.MenuComponentAccessor() {
++                public MenuContainer getParent(MenuComponent menuComp) {
++                    return menuComp.parent;
++                }
++                public Font getFont_NoClientCode(MenuComponent menuComp) {
++                    return menuComp.getFont_NoClientCode();
++                }
++                public void setAppContext(MenuComponent menuComp, AppContext ctx) {
++                    menuComp.appContext = ctx;
++                }
++                public AppContext getAppContext(MenuComponent menuComp) {
++                    return menuComp.appContext;
++                }
++            });
++     }
++
+     /**
+      * Creates a <code>MenuComponent</code>.
+      * @exception HeadlessException if
+diff --git a/src/share/classes/java/awt/MenuItem.java b/src/share/classes/java/awt/MenuItem.java
+--- openjdk/jdk/src/share/classes/java/awt/MenuItem.java
++++ openjdk/jdk/src/share/classes/java/awt/MenuItem.java
+@@ -31,7 +31,7 @@
+ import java.io.ObjectInputStream;
+ import java.io.IOException;
+ import javax.accessibility.*;
+-
++import sun.awt.AWTAccessor;
+ 
+ /**
+  * All items in a menu must belong to the class
+@@ -76,6 +76,29 @@
+         if (!GraphicsEnvironment.isHeadless()) {
+             initIDs();
+         }
++
++        AWTAccessor.setMenuItemAccessor(
++            new AWTAccessor.MenuItemAccessor() {
++                public boolean isEnabled(MenuItem item) {
++                    return item.enabled;
++                }
++
++                public String getLabel(MenuItem item) {
++                    return item.label;
++                }
++
++                public MenuShortcut getShortcut(MenuItem item) {
++                    return item.shortcut;
++                }
++
++                public String getActionCommandImpl(MenuItem item) {
++                    return item.getActionCommandImpl();
++                }
++
++                public boolean isItemEnabled(MenuItem item) {
++                    return item.isItemEnabled();
++                }
++            });
+     }
+ 
+     /**
+diff --git a/src/share/classes/java/awt/PopupMenu.java b/src/share/classes/java/awt/PopupMenu.java
+--- openjdk/jdk/src/share/classes/java/awt/PopupMenu.java
++++ openjdk/jdk/src/share/classes/java/awt/PopupMenu.java
+@@ -28,6 +28,7 @@
+ import java.awt.peer.PopupMenuPeer;
+ import javax.accessibility.*;
+ 
++import sun.awt.AWTAccessor;
+ 
+ /**
+  * A class that implements a menu which can be dynamically popped up
+@@ -48,6 +49,15 @@
+ 
+     transient boolean isTrayIconPopup = false;
+ 
++    static {
++        AWTAccessor.setPopupMenuAccessor(
++            new AWTAccessor.PopupMenuAccessor() {
++                public boolean isTrayIconPopup(PopupMenu popupMenu) {
++                    return popupMenu.isTrayIconPopup;
++                }
++            });
++    }
++
+     /*
+      * JDK 1.1 serialVersionUID
+      */
+diff --git a/src/share/classes/java/awt/ScrollPaneAdjustable.java b/src/share/classes/java/awt/ScrollPaneAdjustable.java
+--- openjdk/jdk/src/share/classes/java/awt/ScrollPaneAdjustable.java
++++ openjdk/jdk/src/share/classes/java/awt/ScrollPaneAdjustable.java
+@@ -24,6 +24,8 @@
+  */
+ package java.awt;
+ 
++import sun.awt.AWTAccessor;
++
+ import java.awt.event.AdjustmentEvent;
+ import java.awt.event.AdjustmentListener;
+ import java.awt.peer.ScrollPanePeer;
+@@ -156,6 +158,13 @@
+         if (!GraphicsEnvironment.isHeadless()) {
+             initIDs();
+         }
++        AWTAccessor.setScrollPaneAdjustableAccessor(
++                new AWTAccessor.ScrollPaneAdjustableAccessor() {
++            public void setTypedValue(final ScrollPaneAdjustable adj,
++                                      final int v, final int type) {
++                adj.setTypedValue(v, type);
++            }
++        });
+     }
+ 
+     /**
+diff --git a/src/share/classes/java/awt/SystemTray.java b/src/share/classes/java/awt/SystemTray.java
+--- openjdk/jdk/src/share/classes/java/awt/SystemTray.java
++++ openjdk/jdk/src/share/classes/java/awt/SystemTray.java
+@@ -33,6 +33,7 @@
+ import sun.awt.SunToolkit;
+ import sun.awt.HeadlessToolkit;
+ import sun.security.util.SecurityConstants;
++import sun.awt.AWTAccessor;
+ 
+ /**
+  * The <code>SystemTray</code> class represents the system tray for a
+@@ -125,6 +126,18 @@
+ 
+     transient private SystemTrayPeer peer;
+ 
++    static {
++        AWTAccessor.setSystemTrayAccessor(
++            new AWTAccessor.SystemTrayAccessor() {
++                public void firePropertyChange(SystemTray tray,
++                                               String propertyName,
++                                               Object oldValue,
++                                               Object newValue) {
++                    tray.firePropertyChange(propertyName, oldValue, newValue);
++                }
++            });
++    }
++
+     /**
+      * Private <code>SystemTray</code> constructor.
+      *
+diff --git a/src/share/classes/java/awt/TrayIcon.java b/src/share/classes/java/awt/TrayIcon.java
+--- openjdk/jdk/src/share/classes/java/awt/TrayIcon.java
++++ openjdk/jdk/src/share/classes/java/awt/TrayIcon.java
+@@ -25,18 +25,11 @@
+ 
+ package java.awt;
+ 
+-import java.awt.Point;
+-import java.awt.Toolkit;
+-import java.awt.GraphicsEnvironment;
+ import java.awt.event.*;
+-import java.awt.AWTEvent;
+-import java.awt.AWTEventMulticaster;
+-import java.awt.EventQueue;
+-import java.awt.PopupMenu;
+-import java.awt.Image;
+ import java.util.EventListener;
+ import java.awt.peer.TrayIconPeer;
+ import sun.awt.AppContext;
++import sun.awt.AWTAccessor;
+ import sun.awt.SunToolkit;
+ import java.util.EventObject;
+ import java.security.AccessControlContext;
+@@ -112,7 +105,7 @@
+      * because TrayIcon is not serializable.
+      */
+     private final AccessControlContext acc = AccessController.getContext();
+-    
++
+     /*
+      * Returns the acc this tray icon was constructed with.
+      */
+@@ -128,6 +121,16 @@
+         if (!GraphicsEnvironment.isHeadless()) {
+             initIDs();
+         }
++
++        AWTAccessor.setTrayIconAccessor(
++            new AWTAccessor.TrayIconAccessor() {
++                public void addNotify(TrayIcon trayIcon) throws AWTException {
++                    trayIcon.addNotify();
++                }
++                public void removeNotify(TrayIcon trayIcon) {
++                    trayIcon.removeNotify();
++                }
++            });
+     }
+ 
+     private TrayIcon()
+diff --git a/src/share/classes/java/awt/Window.java b/src/share/classes/java/awt/Window.java
+--- openjdk/jdk/src/share/classes/java/awt/Window.java
++++ openjdk/jdk/src/share/classes/java/awt/Window.java
+@@ -51,6 +51,7 @@
+ import java.util.concurrent.atomic.AtomicBoolean;
+ import javax.accessibility.*;
+ import sun.awt.AppContext;
++import sun.awt.AWTAccessor;
+ import sun.awt.CausedFocusEvent;
+ import sun.awt.SunToolkit;
+ import sun.awt.util.IdentityArrayList;
+@@ -3221,6 +3222,26 @@
+ 
+     // ****************** END OF MIXING CODE ********************************
+ 
++    static {
++        AWTAccessor.setWindowAccessor(new AWTAccessor.WindowAccessor() {
++            public void setLWRequestStatus(Window changed, boolean status) {
++                changed.syncLWRequests = status;
++            }
++
++            public boolean isAutoRequestFocus(Window w) {
++                return w.autoRequestFocus;
++            }
++
++            public boolean isTrayIconWindow(Window window) {
++                return window.isTrayIconWindow;
++            }
++
++            public void setTrayIconWindow(Window window, boolean state) {
++                window.isTrayIconWindow = state;
++            }
++         });
++     }
++
+ } // class Window
+ 
+ 
+diff --git a/src/share/classes/java/awt/event/KeyEvent.java b/src/share/classes/java/awt/event/KeyEvent.java
+--- openjdk/jdk/src/share/classes/java/awt/event/KeyEvent.java
++++ openjdk/jdk/src/share/classes/java/awt/event/KeyEvent.java
+@@ -25,12 +25,12 @@
+ 
+ package java.awt.event;
+ 
+-import java.awt.Event;
+ import java.awt.Component;
+ import java.awt.GraphicsEnvironment;
+ import java.awt.Toolkit;
+ import java.io.IOException;
+ import java.io.ObjectInputStream;
++import sun.awt.AWTAccessor;
+ 
+ /**
+  * An event which indicates that a keystroke occurred in a component.
+diff --git a/src/share/classes/javax/swing/ClientPropertyKey.java b/src/share/classes/javax/swing/ClientPropertyKey.java
+--- openjdk/jdk/src/share/classes/javax/swing/ClientPropertyKey.java
++++ openjdk/jdk/src/share/classes/javax/swing/ClientPropertyKey.java
+@@ -25,6 +25,8 @@
+ 
+ package javax.swing;
+ 
++import sun.awt.AWTAccessor;
++
+ /**
+  * An enumeration for keys used as client properties within the Swing
+  * implementation.
+@@ -86,6 +88,15 @@
+      */
+     private final boolean reportValueNotSerializable;
+ 
++    static {
++        AWTAccessor.setClientPropertyKeyAccessor(
++            new AWTAccessor.ClientPropertyKeyAccessor() {
++                public Object getJComponent_TRANSFER_HANDLER() {
++                    return JComponent_TRANSFER_HANDLER;
++                }
++            });
++    }
++
+     /**
+      * Constructs a key with the {@code reportValueNotSerializable} property
+      * set to {@code false}.
+diff --git a/src/share/classes/javax/swing/JComponent.java b/src/share/classes/javax/swing/JComponent.java
+--- openjdk/jdk/src/share/classes/javax/swing/JComponent.java
++++ openjdk/jdk/src/share/classes/javax/swing/JComponent.java
+@@ -53,6 +53,7 @@
+ import static javax.swing.ClientPropertyKey.*;
+ import javax.accessibility.*;
+ 
++import sun.awt.AWTAccessor;
+ import sun.swing.SwingUtilities2;
+ import sun.swing.UIClientPropertyKey;
+ 
+diff --git a/src/share/classes/sun/awt/AWTAccessor.java b/src/share/classes/sun/awt/AWTAccessor.java
+--- openjdk/jdk/src/share/classes/sun/awt/AWTAccessor.java
++++ openjdk/jdk/src/share/classes/sun/awt/AWTAccessor.java
+@@ -27,15 +27,18 @@
+ 
+ import java.awt.*;
+ import java.awt.event.InputEvent;
++import java.awt.event.KeyEvent;
+ import java.awt.geom.Point2D;
+-import java.awt.image.BufferedImage;
+ 
+ import sun.misc.Unsafe;
+ import java.awt.peer.ComponentPeer;
+ 
+-import java.security.AccessController;
+ import java.security.AccessControlContext;
+ 
++import java.util.Vector;
++
++import static java.awt.Dialog.ModalExclusionType;
++
+ /**
+  * The AWTAccessor utility class.
+  * The main purpose of this class is to enable accessing
+@@ -59,17 +62,183 @@
+      * An interface of accessor for the java.awt.Component class.
+      */
+     public interface ComponentAccessor {
++        /**
++         * Set the horizontal position of the component.
++         */
++        void setX(Component comp, int x);
++
++        /**
++         * Set the vertical position of the component.
++         */
++        void setY(Component comp, int y);
++
++        /**
++         * Set the width of the component.
++         */
++        void setWidth(Component comp, int width);
++
++        /**
++         * Set the height of the component.
++         */
++        void setHeight(Component comp, int height);
++
++        /**
++         * Gets the horizontal position of the component.
++         */
++        int getX(Component comp);
++
++        /**
++         * Gets the vertical position of the component.
++         */
++        int getY(Component comp);
++
++        /**
++         * Gets the width of the component.
++         */
++        int getWidth(Component comp);
++
++        /**
++         * Gets the height of the component.
++         */
++        int getHeight(Component comp);
++
++        /**
++         * Returns true if the component is packed.
++         */
++        boolean isPacked(Component comp);
++
++        /**
++         * Returns the appContext of the component.
++         */
++        AppContext getAppContext(Component comp);
++
++        /**
++         * Sets the appContext of the component.
++         */
++        void setAppContext(Component comp, AppContext appContext);
++
++        /**
++         * Returns the parent component.
++         */
++        Container getParent(Component comp);
++
++        /**
++         * Returns the font of the component.
++         */
++        Font getFont_NoClientCode(Component comp);
++
++        /**
++         * Processes the given event.
++         */
++        void processEvent(Component comp, AWTEvent event);
++
++        /**
++         * Enable the events given by the specified mask.
++         */
++        void enableEvents(Component comp, long eventMask);
++
++        /**
++         * Sets the parent of the component.
++         */
++        void setParent(Component comp, Container parent);
++
++        /**
++         * Gets the foreground colour of the component.
++         */
++        Color getForeground(Component comp);
++
++        /**
++         * Gets the background colour of the component.
++         */
++        Color getBackground(Component comp);
++
++        /**
++         * Sets the background colour of the component.
++         */
++        void setBackground(Component comp, Color c);
++
++        /**
++         * Gets the font of the component.
++         */
++        Font getFont(Component comp);
++
++        /**
++         * Gets the peer of the component.
++         */
++        ComponentPeer getPeer(Component comp);
++
++        /**
++         * Sets the peer of the component.
++         */
++        void setPeer(Component comp, ComponentPeer peer);
++
++        /**
++         * Gets the ignoreRepaint setting.
++         */
++        boolean getIgnoreRepaint(Component comp);
++
++        /**
++         * Call resetGC.
++         */
++        void resetGC(Component comp);
++
++        /**
++         * Returns true if the component is visible.
++         */
++        boolean isVisible(Component comp);
++
++        /**
++         * Returns true if the component is enabled.
++         */
++        boolean isEnabled(Component comp);
++
++        /**
++         * Gets the cursor set in the component.
++         */
++        Cursor getCursor(Component comp);
++
++        /**
++         * Returns the location of the component.
++         */
++        Point getLocation(Component comp);
++
+         /*
+          * Returns the acc this component was constructed with.
+          */
+         AccessControlContext getAccessControlContext(Component comp);
++
++        /**
++         * Requests that this Component get the input focus, if this
++         * Component's top-level ancestor is already the focused Window
++         */
++        boolean requestFocusInWindow(Component comp, CausedFocusEvent.Cause cause);
++
++        /**
++         * Requests that this Component get the input focus, providing the cause
++         */
++        void requestFocus(Component comp, CausedFocusEvent.Cause cause);
+     }
+ 
+     /*
++     * An interface of accessor for java.awt.Window class.
++     */
++    public interface WindowAccessor {
++        /** Sets the synchronous status of focus requests on lightweight
++         * components in the specified window to the specified value.
++         */
++        void setLWRequestStatus(Window changed, boolean status);
++    }
++
++    /**
+      * An accessor for the AWTEvent class.
+      */
+     public interface AWTEventAccessor {
+         /**
++         * Marks the event as posted.
++         */
++        void setPosted(AWTEvent ev);
++
++        /**
+          * Sets the flag on this AWTEvent indicating that it was
+          * generated by the system.
+          */
+@@ -80,12 +249,270 @@
+          */
+         boolean isSystemGenerated(AWTEvent ev);
+ 
+-
+-        /*
++        /**
+          * Returns the acc this event was constructed with.
+          */
+         AccessControlContext getAccessControlContext(AWTEvent ev);
+ 
++        /**
++         * Returns binary data associated with this event;
++         */
++        byte[] getBData(AWTEvent ev);
++
++        /**
++         * Associates binary data with this event;
++         */
++        void setBData(AWTEvent ev, byte[] bdata);
++    }
++
++    /*
++     * An accessor for the MenuComponent class.
++     */
++    public interface MenuComponentAccessor {
++        /**
++         * Returns the appContext of the menu component.
++         */
++        AppContext getAppContext(MenuComponent menuComp);
++
++        /**
++         * Sets the appContext of the menu component.
++         */
++        void setAppContext(MenuComponent menuComp, AppContext ctx);
++
++        /**
++         * Returns the menu container of the menu component
++         */
++        MenuContainer getParent(MenuComponent menuComp);
++
++        /**
++         * Gets the font used for this menu component.
++         */
++        Font getFont_NoClientCode(MenuComponent menuComp);
++    }
++
++    /** An accessor for the EventQueue class
++     */
++    public interface EventQueueAccessor {
++        /**
++         * Returns whether an event is pending on any of the separate Queues.
++         */
++        boolean noEvents(EventQueue eventQueue);
++        /**
++         * Returns dispatch thread for the given EventQueue which has private access
++         */
++        Thread getDispatchThread(EventQueue eventQueue);
++        /**
++         * Returns next queue for the given EventQueue which has private access
++         */
++        EventQueue getNextQueue(EventQueue eventQueue);
++        /**
++         * Removes any pending events for the specified source object.
++         */
++        void removeSourceEvents(EventQueue eventQueue, Object source,
++                                boolean removeAllEvents);
++
++        /**
++         * Called from PostEventQueue.postEvent to notify that a new event
++         * appeared.
++         */
++        void wakeup(EventQueue eventQueue, boolean isShutdown);
++    }
++
++    /** An accessor for the PopupMenu class
++     */
++    public interface PopupMenuAccessor {
++        /**
++         * Returns whether the popup menu is attached to a tray
++         */
++        boolean isTrayIconPopup(PopupMenu popupMenu);
++    }
++
++    /**
++     * An accessor for the ScrollPaneAdjustable class.
++     */
++    public interface ScrollPaneAdjustableAccessor {
++        /**
++         * Sets the value of this scrollbar to the specified value.
++         */
++        void setTypedValue(final ScrollPaneAdjustable adj, final int v,
++                           final int type);
++    }
++
++    /**
++     * An accessor for the CheckboxMenuItem class
++     */
++    public interface CheckboxMenuItemAccessor {
++        /**
++         * Returns whether menu item is checked
++         */
++        boolean getState(CheckboxMenuItem cmi);
++    }
++
++    /**
++     * An accessor for the Cursor class
++     */
++    public interface CursorAccessor {
++        /**
++         * Returns pData of the Cursor class
++         */
++        long getPData(Cursor cursor);
++
++        /**
++         * Sets pData to the Cursor class
++         */
++        void setPData(Cursor cursor, long pData);
++
++        /**
++         * Return type of the Cursor class
++         */
++        int getType(Cursor cursor);
++    }
++
++    /**
++     * An accessor for the MenuBar class
++     */
++    public interface MenuBarAccessor {
++        /**
++         * Returns help menu
++         */
++        Menu getHelpMenu(MenuBar menuBar);
++
++        /**
++         * Returns menus
++         */
++        Vector getMenus(MenuBar menuBar);
++    }
++
++    /**
++     * An accessor for the MenuItem class
++     */
++    public interface MenuItemAccessor {
++        /**
++         * Returns whether menu item is enabled
++         */
++        boolean isEnabled(MenuItem item);
++
++        /**
++         * Gets the command name of the action event that is fired
++         * by this menu item.
++         */
++        String getActionCommandImpl(MenuItem item);
++
++        /**
++         * Returns true if the item and all its ancestors are
++         * enabled, false otherwise
++         */
++        boolean isItemEnabled(MenuItem item);
++
++        /**
++         * Returns label
++         */
++        String getLabel(MenuItem item);
++
++        /**
++         * Returns shortcut
++         */
++        MenuShortcut getShortcut(MenuItem item);
++    }
++
++    /**
++     * An accessor for the Menu class
++     */
++    public interface MenuAccessor {
++        /**
++         * Returns vector of the items that are part of the Menu
++         */
++        Vector getItems(Menu menu);
++    }
++
++    /**
++     * An accessor for the KeyEvent class
++     */
++    public interface KeyEventAccessor {
++        /**
++         * Sets rawCode field for KeyEvent
++         */
++        void setRawCode(KeyEvent ev, long rawCode);
++
++        /**
++         * Sets primaryLevelUnicode field for KeyEvent
++         */
++        void setPrimaryLevelUnicode(KeyEvent ev, long primaryLevelUnicode);
++
++        /**
++         * Sets extendedKeyCode field for KeyEvent
++         */
++        void setExtendedKeyCode(KeyEvent ev, long extendedKeyCode);
++    }
++
++    /**
++     * An accessor for the ClientPropertyKey class
++     */
++    public interface ClientPropertyKeyAccessor {
++        /**
++         * Retrieves JComponent_TRANSFER_HANDLER enum object
++         */
++        Object getJComponent_TRANSFER_HANDLER();
++    }
++
++    /**
++     * An accessor for the SystemTray class
++     */
++    public interface SystemTrayAccessor {
++        /**
++         * Support for reporting bound property changes for Object properties.
++         */
++        void firePropertyChange(SystemTray tray, String propertyName, Object oldValue, Object newValue);
++    }
++
++    /**
++     * An accessor for the TrayIcon class
++     */
++    public interface TrayIconAccessor {
++        void addNotify(TrayIcon trayIcon) throws AWTException;
++        void removeNotify(TrayIcon trayIcon);
++    }
++
++    /**
++     * An accessor for the DefaultKeyboardFocusManager class
++     */
++    public interface DefaultKeyboardFocusManagerAccessor {
++        public void consumeNextKeyTyped(DefaultKeyboardFocusManager dkfm, KeyEvent e);
++    }
++
++    /** An interface of accessor for the KeyboardFocusManager class.
++     */
++    public interface KeyboardFocusManagerAccessor {
++        /**
++         * Indicates whether the native implementation should
++         * proceed with a pending focus request for the heavyweight.
++         */
++        int shouldNativelyFocusHeavyweight(Component heavyweight,
++                                           Component descendant,
++                                           boolean temporary,
++                                           boolean focusedWindowChangeAllowed,
++                                           long time,
++                                           CausedFocusEvent.Cause cause);
++        /*
++         * Delivers focus for the lightweight descendant of the heavyweight
++         * synchronously.
++         */
++        boolean processSynchronousLightweightTransfer(Component heavyweight,
++                                                      Component descendant,
++                                                      boolean temporary,
++                                                      boolean focusedWindowChangeAllowed,
++                                                      long time);
++        /**
++         * Sets the most recent focus owner in the window.
++         */
++        void setMostRecentFocusOwner(Window window, Component component);
++
++        void removeLastFocusRequest(Component heavyweight);
++        Container getCurrentFocusCycleRoot();
++    }
++
++    public interface DialogAccessor {
++        ModalExclusionType getDefaultModalExclusionType();
+     }
+ 
+     /*
+@@ -93,8 +520,73 @@
+      * corresponding AWT classes by using setters defined below.
+      */
+     private static ComponentAccessor componentAccessor;
++
++    /* The java.awt.KeyboardFocusManager class accessor object.
++     */
++    private static KeyboardFocusManagerAccessor kfmAccessor;
++
++    private static WindowAccessor windowAccessor;
++
+     private static AWTEventAccessor awtEventAccessor;
+ 
++    private static MenuComponentAccessor menuComponentAccessor;
++
++    /* The java.awt.EventQueue class accessor object.
++     */
++    private static EventQueueAccessor eventQueueAccessor;
++
++    /* The java.awt.PopupMenu class accessor object.
++     */
++    private static PopupMenuAccessor popupMenuAccessor;
++
++    /* The java.awt.ScrollPaneAdjustable class accessor object.
++     */
++    private static ScrollPaneAdjustableAccessor scrollPaneAdjustableAccessor;
++
++    /* The java.awt.CheckboxMenuItem class accessor object.
++     */
++    private static CheckboxMenuItemAccessor checkboxMenuItemAccessor;
++
++    /* The java.awt.Cursor class accessor object.
++     */
++    private static CursorAccessor cursorAccessor;
++
++    /* The java.awt.MenuBar class accessor object.
++     */
++    private static MenuBarAccessor menuBarAccessor;
++
++    /* The java.awt.MenuItem class accessor object.
++     */
++    private static MenuItemAccessor menuItemAccessor;
++
++    /* The java.awt.Menu class accessor object.
++     */
++    private static MenuAccessor menuAccessor;
++
++    /* The java.awt.KeyEvent class accessor object.
++     */
++    private static KeyEventAccessor keyEventAccessor;
++
++    /* The javax.swing.JComponent class accessor object.
++     */
++    private static ClientPropertyKeyAccessor clientPropertyKeyAccessor;
++
++    /* The java.awt.SystemTray class accessor object.
++     */
++    private static SystemTrayAccessor systemTrayAccessor;
++
++    /* The java.awt.TrayIcon class accessor object.
++     */
++    private static TrayIconAccessor trayIconAccessor;
++
++    /* The java.awt.DefaultKeyboardFocusManager class accessor object.
++     */
++    private static DefaultKeyboardFocusManagerAccessor defaultKeyboardFocusManagerAccessor;
++
++    /* The java.awt.Dialog class accessor object.
++     */
++    private static DialogAccessor dialogAccessor;
++
+     /*
+      * Set an accessor object for the java.awt.Component class.
+      */
+@@ -113,6 +605,55 @@
+         return componentAccessor;
+     }
+ 
++    /** Set an accessor object for the java.awt.KeyboardFocusManager class.
++     */
++    public static void setKeyboardFocusManagerAccessor(KeyboardFocusManagerAccessor kfma) {
++        kfmAccessor = kfma;
++    }
++
++    /** Retrieve the accessor object for the java.awt.KeyboardFocusManager class.
++     */
++    public static KeyboardFocusManagerAccessor getKeyboardFocusManagerAccessor() {
++        if (kfmAccessor == null) {
++            unsafe.ensureClassInitialized(KeyboardFocusManager.class);
++        }
++        return kfmAccessor;
++    }
++
++    /*
++     * Set an accessor object for the java.awt.MenuComponent class.
++     */
++    public static void setMenuComponentAccessor(MenuComponentAccessor mca) {
++        menuComponentAccessor = mca;
++    }
++
++    /*
++     * Retrieve the accessor object for the java.awt.MenuComponent class.
++     */
++    public static MenuComponentAccessor getMenuComponentAccessor() {
++        if (menuComponentAccessor == null) {
++            unsafe.ensureClassInitialized(MenuComponent.class);
++        }
++        return menuComponentAccessor;
++    }
++
++    /*
++     * Set an accessor object for the java.awt.Window class.
++     */
++    public static void setWindowAccessor(WindowAccessor wa) {
++        windowAccessor = wa;
++    }
++
++    /*
++     * Retrieve the accessor object for the java.awt.Window class.
++     */
++    public static WindowAccessor getWindowAccessor() {
++        if (windowAccessor == null) {
++            unsafe.ensureClassInitialized(Window.class);
++        }
++        return windowAccessor;
++    }
++
+     /*
+      * Set an accessor object for the java.awt.AWTEvent class.
+      */
+@@ -120,6 +661,224 @@
+         awtEventAccessor = aea;
+     }
+ 
++    /** Set an accessor object for the java.awt.EventQueue class.
++     */
++    public static void setEventQueueAccessor(EventQueueAccessor eqa) {
++        eventQueueAccessor = eqa;
++    }
++
++    /** Retrieve the accessor object for the java.awt.EventQueue class.
++     */
++    public static EventQueueAccessor getEventQueueAccessor() {
++        if (eventQueueAccessor == null) {
++            unsafe.ensureClassInitialized(EventQueue.class);
++        }
++        return eventQueueAccessor;
++    }
++
++    /** Set an accessor object for the java.awt.PopupMenu class.
++     */
++    public static void setPopupMenuAccessor(PopupMenuAccessor pma) {
++        popupMenuAccessor = pma;
++    }
++
++    /** Retrieve the accessor object for the java.awt.PopupMenu class.
++     */
++    public static PopupMenuAccessor getPopupMenuAccessor() {
++        if (popupMenuAccessor == null) {
++            unsafe.ensureClassInitialized(PopupMenu.class);
++        }
++        return popupMenuAccessor;
++    }
++
++    /**
++     * Set an accessor object for the java.awt.ScrollPaneAdjustable class.
++     */
++    public static void setScrollPaneAdjustableAccessor(ScrollPaneAdjustableAccessor adj) {
++        scrollPaneAdjustableAccessor = adj;
++    }
++
++    /**
++     * Retrieve the accessor object for the java.awt.ScrollPaneAdjustable
++     * class.
++     */
++    public static ScrollPaneAdjustableAccessor getScrollPaneAdjustableAccessor() {
++        if (scrollPaneAdjustableAccessor == null) {
++            unsafe.ensureClassInitialized(ScrollPaneAdjustable.class);
++        }
++        return scrollPaneAdjustableAccessor;
++    }
++
++    /**
++     * Set an accessor object for the java.awt.CheckboxMenuItem class.
++     */
++    public static void setCheckboxMenuItemAccessor(CheckboxMenuItemAccessor cmia) {
++        checkboxMenuItemAccessor = cmia;
++    }
++
++    /**
++     * Retrieve the accessor object for the java.awt.CheckboxMenuItem class.
++     */
++    public static CheckboxMenuItemAccessor getCheckboxMenuItemAccessor() {
++        if (checkboxMenuItemAccessor == null) {
++            unsafe.ensureClassInitialized(CheckboxMenuItemAccessor.class);
++        }
++        return checkboxMenuItemAccessor;
++    }
++
++    /**
++     * Set an accessor object for the java.awt.Cursor class.
++     */
++    public static void setCursorAccessor(CursorAccessor ca) {
++        cursorAccessor = ca;
++    }
++
++    /**
++     * Retrieve the accessor object for the java.awt.Cursor class.
++     */
++    public static CursorAccessor getCursorAccessor() {
++        if (cursorAccessor == null) {
++            unsafe.ensureClassInitialized(CursorAccessor.class);
++        }
++        return cursorAccessor;
++    }
++
++    /**
++     * Set an accessor object for the java.awt.MenuBar class.
++     */
++    public static void setMenuBarAccessor(MenuBarAccessor mba) {
++        menuBarAccessor = mba;
++    }
++
++    /**
++     * Retrieve the accessor object for the java.awt.MenuBar class.
++     */
++    public static MenuBarAccessor getMenuBarAccessor() {
++        if (menuBarAccessor == null) {
++            unsafe.ensureClassInitialized(MenuBarAccessor.class);
++        }
++        return menuBarAccessor;
++    }
++
++    /**
++     * Set an accessor object for the java.awt.MenuItem class.
++     */
++    public static void setMenuItemAccessor(MenuItemAccessor mia) {
++        menuItemAccessor = mia;
++    }
++
++    /**
++     * Retrieve the accessor object for the java.awt.MenuItem class.
++     */
++    public static MenuItemAccessor getMenuItemAccessor() {
++        if (menuItemAccessor == null) {
++            unsafe.ensureClassInitialized(MenuItemAccessor.class);
++        }
++        return menuItemAccessor;
++    }
++
++    /**
++     * Set an accessor object for the java.awt.Menu class.
++     */
++    public static void setMenuAccessor(MenuAccessor ma) {
++        menuAccessor = ma;
++    }
++
++    /**
++     * Retrieve the accessor object for the java.awt.Menu class.
++     */
++    public static MenuAccessor getMenuAccessor() {
++        if (menuAccessor == null) {
++            unsafe.ensureClassInitialized(MenuAccessor.class);
++        }
++        return menuAccessor;
++    }
++
++    /**
++     * Set an accessor object for the java.awt.event.KeyEvent class.
++     */
++    public static void setKeyEventAccessor(KeyEventAccessor kea) {
++        keyEventAccessor = kea;
++    }
++
++    /**
++     * Retrieve the accessor object for the java.awt.event.KeyEvent class.
++     */
++    public static KeyEventAccessor getKeyEventAccessor() {
++        if (keyEventAccessor == null) {
++            unsafe.ensureClassInitialized(KeyEventAccessor.class);
++        }
++        return keyEventAccessor;
++    }
++
++    /**
++     * Set an accessor object for the javax.swing.ClientPropertyKey class.
++     */
++    public static void setClientPropertyKeyAccessor(ClientPropertyKeyAccessor cpka) {
++        clientPropertyKeyAccessor = cpka;
++    }
++
++    /**
++     * Retrieve the accessor object for the javax.swing.ClientPropertyKey class.
++     */
++    public static ClientPropertyKeyAccessor getClientPropertyKeyAccessor() {
++        if (clientPropertyKeyAccessor == null) {
++            unsafe.ensureClassInitialized(ClientPropertyKeyAccessor.class);
++        }
++        return clientPropertyKeyAccessor;
++    }
++
++    /**
++     * Set an accessor object for the java.awt.SystemTray class.
++     */
++    public static void setSystemTrayAccessor(SystemTrayAccessor sta) {
++        systemTrayAccessor = sta;
++    }
++
++    /**
++     * Retrieve the accessor object for the java.awt.SystemTray class.
++     */
++    public static SystemTrayAccessor getSystemTrayAccessor() {
++        if (systemTrayAccessor == null) {
++            unsafe.ensureClassInitialized(SystemTrayAccessor.class);
++        }
++        return systemTrayAccessor;
++    }
++
++    /**
++     * Set an accessor object for the java.awt.TrayIcon class.
++     */
++    public static void setTrayIconAccessor(TrayIconAccessor tia) {
++        trayIconAccessor = tia;
++    }
++
++    /**
++     * Retrieve the accessor object for the java.awt.TrayIcon class.
++     */
++    public static TrayIconAccessor getTrayIconAccessor() {
++        if (trayIconAccessor == null) {
++            unsafe.ensureClassInitialized(TrayIconAccessor.class);
++        }
++        return trayIconAccessor;
++    }
++
++    /**
++     * Set an accessor object for the java.awt.DefaultKeyboardFocusManager class.
++     */
++    public static void setDefaultKeyboardFocusManagerAccessor(DefaultKeyboardFocusManagerAccessor dkfma) {
++        defaultKeyboardFocusManagerAccessor = dkfma;
++    }
++
++    /**
++     * Retrieve the accessor object for the java.awt.DefaultKeyboardFocusManager class.
++     */
++    public static DefaultKeyboardFocusManagerAccessor getDefaultKeyboardFocusManagerAccessor() {
++        if (defaultKeyboardFocusManagerAccessor == null) {
++            unsafe.ensureClassInitialized(DefaultKeyboardFocusManagerAccessor.class);
++        }
++        return defaultKeyboardFocusManagerAccessor;
++    }
++
+     /*
+      * Retrieve the accessor object for the java.awt.AWTEvent class.
+      */
+@@ -129,4 +888,22 @@
+         }
+         return awtEventAccessor;
+     }
++
++    /*
++     * Retrieve the accessor object for the java.awt.Dialog class.
++     */
++    public static DialogAccessor getDialogAccessor() {
++        if (dialogAccessor == null) {
++            unsafe.ensureClassInitialized(Dialog.class);
++        }
++        return dialogAccessor;
++    }
++
++    /**
++     * Set an accessor object for the java.awt.Dialog class.
++     */
++    public static void setDialogAccessor(DialogAccessor accessDialog) {
++        dialogAccessor = accessDialog;
++    }
++
+ }
+diff --git a/src/share/classes/sun/awt/ComponentAccessor.java b/src/share/classes/sun/awt/ComponentAccessor.java
+--- openjdk/jdk/src/share/classes/sun/awt/ComponentAccessor.java
++++ openjdk/jdk/src/share/classes/sun/awt/ComponentAccessor.java
+@@ -57,443 +57,129 @@
+ 
+ public class ComponentAccessor
+ {
+-    private static Class componentClass;
+-    private static Field fieldX;
+-    private static Field fieldY;
+-    private static Field fieldWidth;
+-    private static Field fieldHeight;
+-    private static Method methodGetParentNoClientCode;
+-    private static Method methodGetFontNoClientCode;
+-    private static Method methodProcessEvent;
+-    private static Method methodEnableEvents;
+-    private static Field fieldParent;
+-    private static Field fieldBackground;
+-    private static Field fieldForeground;
+-    private static Field fieldFont;
+-    private static Field fieldPacked;
+-    private static Field fieldIgnoreRepaint;
+-    private static Field fieldPeer;
+-    private static Method methodResetGC;
+-    private static Field fieldVisible;
+-    private static Method methodIsEnabledImpl;
+-    private static Method methodGetCursorNoClientCode;
+-    private static Method methodLocationNoClientCode;
+ 
+-    private static final Logger log = Logger.getLogger("sun.awt.ComponentAccessor");
++    private static final AWTAccessor.ComponentAccessor ca = AWTAccessor.getComponentAccessor();
+ 
+     private ComponentAccessor() {
+     }
+ 
+-    static {
+-        AccessController.doPrivileged( new PrivilegedAction() {
+-                public Object run() {
+-                    try {
+-                        componentClass = Class.forName("java.awt.Component");
+-                        fieldX  = componentClass.getDeclaredField("x");
+-                        fieldX.setAccessible(true);
+-                        fieldY  = componentClass.getDeclaredField("y");
+-                        fieldY.setAccessible(true);
+-                        fieldWidth  = componentClass.getDeclaredField("width");
+-                        fieldWidth.setAccessible(true);
+-                        fieldHeight  = componentClass.getDeclaredField("height");
+-                        fieldHeight.setAccessible(true);
+-                        fieldForeground  = componentClass.getDeclaredField("foreground");
+-                        fieldForeground.setAccessible(true);
+-                        fieldBackground  = componentClass.getDeclaredField("background");
+-                        fieldBackground.setAccessible(true);
+-                        fieldFont = componentClass.getDeclaredField("font");
+-                        fieldFont.setAccessible(true);
+-                        methodGetParentNoClientCode = componentClass.getDeclaredMethod("getParent_NoClientCode", (Class[]) null);
+-                        methodGetParentNoClientCode.setAccessible(true);
+-                        methodGetFontNoClientCode = componentClass.getDeclaredMethod("getFont_NoClientCode", (Class[]) null);
+-                        methodGetFontNoClientCode.setAccessible(true);
+-                        Class[] argTypes = { AWTEvent.class };
+-                        methodProcessEvent = componentClass.getDeclaredMethod("processEvent",argTypes);
+-                        methodProcessEvent.setAccessible(true);
+-                        Class[] argTypesForMethodEnableEvents = { Long.TYPE };
+-                        methodEnableEvents = componentClass.getDeclaredMethod("enableEvents",argTypesForMethodEnableEvents);
+-                        methodEnableEvents.setAccessible(true);
+-
+-                        fieldParent  = componentClass.getDeclaredField("parent");
+-                        fieldParent.setAccessible(true);
+-                        fieldPacked = componentClass.getDeclaredField("isPacked");
+-                        fieldPacked.setAccessible(true);
+-                        fieldIgnoreRepaint = componentClass.getDeclaredField("ignoreRepaint");
+-                        fieldIgnoreRepaint.setAccessible(true);
+-
+-                        fieldPeer = componentClass.getDeclaredField("peer");
+-                        fieldPeer.setAccessible(true);
+-
+-                        methodResetGC = componentClass.getDeclaredMethod("resetGC", (Class[]) null);
+-                        methodResetGC.setAccessible(true);
+-
+-                        fieldVisible = componentClass.getDeclaredField("visible");
+-                        fieldVisible.setAccessible(true);
+-
+-                        methodIsEnabledImpl = componentClass.getDeclaredMethod("isEnabledImpl", (Class[]) null);
+-                        methodIsEnabledImpl.setAccessible(true);
+-
+-                        methodGetCursorNoClientCode = componentClass.getDeclaredMethod("getCursor_NoClientCode", (Class[]) null);
+-                        methodGetCursorNoClientCode.setAccessible(true);
+-
+-                        methodLocationNoClientCode = componentClass.getDeclaredMethod("location_NoClientCode", (Class[]) null);
+-                        methodLocationNoClientCode.setAccessible(true);
+-                    }
+-                    catch (NoSuchFieldException e) {
+-                        log.log(Level.FINE, "Unable to initialize ComponentAccessor", e);
+-                    }
+-                    catch (ClassNotFoundException e) {
+-                        log.log(Level.FINE, "Unable to initialize ComponentAccessor", e);
+-                    }
+-                    catch (NoSuchMethodException e) {
+-                        log.log(Level.FINE, "Unable to initialize ComponentAccessor", e);
+-                    }
+-                    // to please javac
+-                    return null;
+-                }
+-            });
+-    }
+-
+     public static void setX(Component c, int x)
+     {
+-        try {
+-            fieldX.setInt(c,x);
+-        }
+-        catch (IllegalAccessException e)
+-        {
+-            log.log(Level.FINE, "Unable to access the Component object", e);
+-        }
++        ca.setX(c, x);
+     }
+ 
+     public static void setY(Component c, int y)
+     {
+-        try {
+-            fieldY.setInt(c,y);
+-        }
+-        catch (IllegalAccessException e)
+-        {
+-            log.log(Level.FINE, "Unable to access the Component object", e);
+-        }
++        ca.setY(c, y);
+     }
+ 
+     public static void setWidth(Component c, int width)
+     {
+-        try {
+-            fieldWidth.setInt(c,width);
+-        }
+-        catch (IllegalAccessException e)
+-        {
+-            log.log(Level.FINE, "Unable to access the Component object", e);
+-        }
++        ca.setWidth(c, width);
+     }
+ 
+     public static void setHeight(Component c, int height)
+     {
+-        try {
+-            fieldHeight.setInt(c,height);
+-        }
+-        catch (IllegalAccessException e)
+-        {
+-            log.log(Level.FINE, "Unable to access the Component object", e);
+-        }
++        ca.setHeight(c, height);
+     }
+ 
+     public static void setBounds(Component c, int x, int y, int width, int height)
+     {
+-        try {
+-            fieldX.setInt(c,x);
+-            fieldY.setInt(c,y);
+-            fieldWidth.setInt(c,width);
+-            fieldHeight.setInt(c,height);
+-        }
+-        catch (IllegalAccessException e)
+-        {
+-            log.log(Level.FINE, "Unable to access the Component object", e);
+-        }
++        ca.setX(c, x);
++        ca.setY(c, y);
++        ca.setWidth(c, width);
++        ca.setHeight(c, height);
+     }
+ 
+     public static int getX(Component c) {
+-        try {
+-            return fieldX.getInt(c);
+-        }
+-        catch (IllegalAccessException e)
+-        {
+-            log.log(Level.FINE, "Unable to access the Component object", e);
+-        }
+-        return 0;
++        return ca.getX(c);
+     }
+ 
+     public static int getY(Component c) {
+-        try {
+-            return fieldY.getInt(c);
+-        }
+-        catch (IllegalAccessException e)
+-        {
+-            log.log(Level.FINE, "Unable to access the Component object", e);
+-        }
+-        return 0;
++        return ca.getY(c);
+     }
+ 
+     public static int getWidth(Component c) {
+-        try {
+-            return fieldWidth.getInt(c);
+-        }
+-        catch (IllegalAccessException e)
+-        {
+-            log.log(Level.FINE, "Unable to access the Component object", e);
+-        }
+-        return 0;
++        return ca.getWidth(c);
+     }
+ 
+     public static int getHeight(Component c) {
+-        try {
+-            return fieldHeight.getInt(c);
+-        }
+-        catch (IllegalAccessException e)
+-        {
+-            log.log(Level.FINE, "Unable to access the Component object", e);
+-        }
+-        return 0;
++        return ca.getHeight(c);
+     }
+ 
+     public static boolean getIsPacked(Component c) {
+-        try {
+-            return fieldPacked.getBoolean(c);
+-        }
+-        catch (IllegalAccessException e)
+-        {
+-            log.log(Level.FINE, "Unable to access the Component object", e);
+-        }
+-        return false;
++        return ca.isPacked(c);
+     }
+ 
+     public static Container getParent_NoClientCode(Component c) {
+-        Container parent=null;
+-
+-        try {
+-            parent = (Container) methodGetParentNoClientCode.invoke(c, (Object[]) null);
+-        }
+-        catch (IllegalAccessException e)
+-        {
+-            log.log(Level.FINE, "Unable to access the Component object", e);
+-        }
+-        catch (InvocationTargetException e) {
+-            log.log(Level.FINE, "Unable to invoke on the Component object", e);
+-        }
+-
+-        return parent;
++        return ca.getParent(c);
+     }
+ 
+     public static Font getFont_NoClientCode(Component c) {
+-        Font font=null;
+-
+-        try {
+-            font = (Font) methodGetFontNoClientCode.invoke(c, (Object[]) null);
+-        }
+-        catch (IllegalAccessException e)
+-        {
+-            log.log(Level.FINE, "Unable to access the Component object", e);
+-        }
+-        catch (InvocationTargetException e) {
+-            log.log(Level.FINE, "Unable to invoke on the Component object", e);
+-        }
+-
+-        return font;
++        return ca.getFont_NoClientCode(c);
+     }
+ 
+     public static void processEvent(Component c, AWTEvent event) {
+-        Font font=null;
+-
+-        try {
+-            Object[] args = new Object[1];
+-            args[0] = event;
+-            methodProcessEvent.invoke(c,args);
+-        }
+-        catch (IllegalAccessException e)
+-        {
+-            log.log(Level.FINE, "Unable to access the Component object", e);
+-        }
+-        catch (InvocationTargetException e) {
+-            log.log(Level.FINE, "Unable to invoke on the Component object", e);
+-        }
++        ca.processEvent(c, event);
+     }
+ 
+     public static void enableEvents(Component c, long event_mask) {
+-        try {
+-            Object[] args = new Object[1];
+-            args[0] = Long.valueOf(event_mask);
+-            methodEnableEvents.invoke(c,args);
+-        }
+-        catch (IllegalAccessException e)
+-        {
+-            log.log(Level.FINE, "Unable to access the Component object", e);
+-        }
+-        catch (InvocationTargetException e) {
+-            log.log(Level.FINE, "Unable to invoke on the Component object", e);
+-        }
++        ca.enableEvents(c, event_mask);
+     }
+ 
+     public static void setParent(Component c, Container parent)
+     {
+-        try {
+-            fieldParent.set(c,parent);
+-        }
+-        catch (IllegalAccessException e)
+-        {
+-            log.log(Level.FINE, "Unable to access the Component object", e);
+-        }
++        ca.setParent(c, parent);
+     }
+ 
+     public static Color getForeground(Component c)
+     {
+-        Color color = null;
+-        try {
+-            color = (Color) fieldForeground.get(c);
+-        }
+-        catch (IllegalAccessException e)
+-        {
+-            log.log(Level.FINE, "Unable to access the Component object", e);
+-        }
+-        return color;
++        return ca.getForeground(c);
+     }
+ 
+     public static Color getBackground(Component c)
+     {
+-        Color color = null;
+-        try {
+-            color = (Color) fieldBackground.get(c);
+-        }
+-        catch (IllegalAccessException e)
+-        {
+-            log.log(Level.FINE, "Unable to access the Component object", e);
+-        }
+-        return color;
++        return ca.getBackground(c);
+     }
+ 
+     public static void setBackground(Component c, Color color) {
+-        try {
+-            fieldBackground.set(c, color);
+-        }
+-        catch (IllegalAccessException e)
+-        {
+-            log.log(Level.FINE, "Unable to access the Component object", e);
+-        }
++        ca.setBackground(c, color);
+     }
+ 
+     public static Font getFont(Component c)
+     {
+-        Font f = null;
+-        try {
+-            f = (Font) fieldFont.get(c);
+-        }
+-        catch (IllegalAccessException e)
+-        {
+-            log.log(Level.FINE, "Unable to access the Component object", e);
+-        }
+-        return f;
++        return ca.getFont(c);
+     }
+ 
+     public static ComponentPeer getPeer(Component c) {
+-        ComponentPeer peer = null;
+-        try {
+-            peer = (ComponentPeer)fieldPeer.get(c);
+-        }
+-        catch (IllegalAccessException e)
+-        {
+-            log.log(Level.FINE, "Unable to access the Component object", e);
+-        }
+-        return peer;
++        return ca.getPeer(c);
+     }
+ 
+     public static void setPeer(Component c, ComponentPeer peer) {
+-        try {
+-            fieldPeer.set(c, peer);
+-        } catch (IllegalAccessException e)
+-        {
+-            log.log(Level.FINE, "Unable to access the Component object", e);
+-        }
++        ca.setPeer(c, peer);
+     }
+ 
+     public static boolean getIgnoreRepaint(Component comp) {
+-        try {
+-            return fieldIgnoreRepaint.getBoolean(comp);
+-        }
+-        catch (IllegalAccessException e) {
+-            log.log(Level.FINE, "Unable to access the Component object", e);
+-        }
+-
+-        return false;
++        return ca.getIgnoreRepaint(comp);
+     }
+ 
+     public static void resetGC(Component c) {
+-        try {
+-            methodResetGC.invoke(c, (Object[]) null);
+-        }
+-        catch (IllegalAccessException e) {
+-            log.log(Level.FINE, "Unable to access the Component object", e);
+-        }
+-        catch (InvocationTargetException e) {
+-            log.log(Level.FINE, "Unable to invoke on the Component object", e);
+-        }
++        ca.resetGC(c);
+     }
+ 
+     public static boolean getVisible(Component c) {
+-        try {
+-            return fieldVisible.getBoolean(c);
+-        }
+-        catch (IllegalAccessException e)
+-        {
+-            log.log(Level.FINE, "Unable to access the Component object", e);
+-        }
+-        return false;
++        return ca.isVisible(c);
+     }
+ 
+     public static boolean isEnabledImpl(Component c) {
+-        boolean enabled = true;
+-        try {
+-            enabled = (Boolean) methodIsEnabledImpl.invoke(c, (Object[]) null);
+-        }
+-        catch (IllegalAccessException e)
+-        {
+-            log.log(Level.FINE, "Unable to access the Component object", e);
+-        }
+-        catch (InvocationTargetException e) {
+-            log.log(Level.FINE, "Unable to invoke on the Component object", e);
+-        }
+-        return enabled;
++        return ca.isEnabled(c);
+     }
+ 
+     public static Cursor getCursor_NoClientCode(Component c) {
+-        Cursor cursor = null;
+-
+-        try {
+-            cursor = (Cursor) methodGetCursorNoClientCode.invoke(c, (Object[]) null);
+-        }
+-        catch (IllegalAccessException e)
+-        {
+-            log.log(Level.FINE, "Unable to access the Component object", e);
+-        }
+-        catch (InvocationTargetException e) {
+-            log.log(Level.FINE, "Unable to invoke on the Component object", e);
+-        }
+-
+-        return cursor;
++        return ca.getCursor(c);
+     }
+ 
+     public static Point getLocation_NoClientCode(Component c) {
+-        Point loc = null;
+-
+-        try {
+-            loc = (Point) methodLocationNoClientCode.invoke(c, (Object[]) null);
+-        }
+-        catch (IllegalAccessException e)
+-        {
+-            log.log(Level.FINE, "Unable to access the Component object", e);
+-        }
+-        catch (InvocationTargetException e) {
+-            log.log(Level.FINE, "Unable to invoke on the Component object", e);
+-        }
+-
+-        return loc;
++        return ca.getLocation(c);
+     }
+ }
+diff --git a/src/share/classes/sun/awt/EmbeddedFrame.java b/src/share/classes/sun/awt/EmbeddedFrame.java
+--- openjdk/jdk/src/share/classes/sun/awt/EmbeddedFrame.java
++++ openjdk/jdk/src/share/classes/sun/awt/EmbeddedFrame.java
+@@ -29,12 +29,6 @@
+ import java.awt.event.*;
+ import java.awt.image.*;
+ import java.awt.peer.*;
+-import java.security.AccessController;
+-import java.security.PrivilegedAction;
+-import java.lang.reflect.Constructor;
+-import java.lang.reflect.InvocationTargetException;
+-import java.lang.reflect.Modifier;
+-import java.lang.reflect.Field;
+ import java.beans.PropertyChangeListener;
+ import java.beans.PropertyChangeEvent;
+ import java.util.Set;
+@@ -63,8 +57,6 @@
+                           implements KeyEventDispatcher, PropertyChangeListener {
+ 
+     private boolean isCursorAllowed = true;
+-    private static Field fieldPeer;
+-    private static Field currentCycleRoot;
+     private boolean supportsXEmbed = false;
+     private KeyboardFocusManager appletKFM;
+     // JDK 1.1 compatibility
+@@ -205,39 +197,8 @@
+      */
+     public boolean dispatchKeyEvent(KeyEvent e) {
+ 
+-        // We can't guarantee that this is called on the same AppContext as EmbeddedFrame
+-        // belongs to. That's why we can't use public methods to find current focus cycle
+-        // root. Instead, we access KFM's private field directly.
+-        if (currentCycleRoot == null) {
+-            currentCycleRoot = (Field)AccessController.doPrivileged(new PrivilegedAction() {
+-                public Object run() {
+-                    try {
+-                        Field unaccessibleRoot = KeyboardFocusManager.class.
+-                                                     getDeclaredField("currentFocusCycleRoot");
+-                        if (unaccessibleRoot != null) {
+-                            unaccessibleRoot.setAccessible(true);
+-                        }
+-                        return unaccessibleRoot;
+-                    } catch (NoSuchFieldException e1) {
+-                        assert false;
+-                    } catch (SecurityException e2) {
+-                        assert false;
+-                    }
+-                    return null;
+-                }
+-            });
+-        }
+-
+-        Container currentRoot = null;
+-        if (currentCycleRoot != null) {
+-            try {
+-                // The field is static, so we can pass null to Field.get() as the argument.
+-                currentRoot = (Container)currentCycleRoot.get(null);
+-            } catch (IllegalAccessException e3) {
+-                // This is impossible: currentCycleRoot would be null if setAccessible failed.
+-                assert false;
+-            }
+-        }
++        Container currentRoot = AWTAccessor.getKeyboardFocusManagerAccessor()
++                                    .getCurrentFocusCycleRoot();
+ 
+         // if we are not in EmbeddedFrame's cycle, we should not try to leave.
+         if (this != currentRoot) {
+@@ -337,32 +298,8 @@
+     }
+ 
+     protected  void setPeer(final ComponentPeer p){
+-        if (fieldPeer == null) {
+-            fieldPeer = (Field)AccessController.doPrivileged(new PrivilegedAction() {
+-                    public Object run() {
+-                        try {
+-                            Field lnkPeer = Component.class.getDeclaredField("peer");
+-                            if (lnkPeer != null) {
+-                                lnkPeer.setAccessible(true);
+-                            }
+-                            return lnkPeer;
+-                        } catch (NoSuchFieldException e) {
+-                            assert false;
+-                        } catch (SecurityException e) {
+-                            assert false;
+-                        }
+-                        return null;
+-                    }//run
+-                });
+-        }
+-        try{
+-            if (fieldPeer !=null){
+-                fieldPeer.set(EmbeddedFrame.this, p);
+-            }
+-        } catch (IllegalAccessException e) {
+-            assert false;
+-        }
+-    };  //setPeer method ends
++        AWTAccessor.getComponentAccessor().setPeer(EmbeddedFrame.this, p);
++    };
+ 
+     /**
+      * Synthesize native message to activate or deactivate EmbeddedFrame window
+diff --git a/src/share/classes/sun/awt/KeyboardFocusManagerPeerImpl.java b/src/share/classes/sun/awt/KeyboardFocusManagerPeerImpl.java
+--- openjdk/jdk/src/share/classes/sun/awt/KeyboardFocusManagerPeerImpl.java
++++ openjdk/jdk/src/share/classes/sun/awt/KeyboardFocusManagerPeerImpl.java
+@@ -30,8 +30,6 @@
+ 
+ import java.awt.peer.KeyboardFocusManagerPeer;
+ 
+-import java.lang.reflect.InvocationTargetException;
+-import java.lang.reflect.Method;
+ 
+ 
+ public class KeyboardFocusManagerPeerImpl implements KeyboardFocusManagerPeer {
+@@ -56,18 +54,7 @@
+         clearNativeGlobalFocusOwner(activeWindow);
+     }
+ 
+-    static Method m_removeLastFocusRequest = null;
+     public static void removeLastFocusRequest(Component heavyweight) {
+-        try {
+-            if (m_removeLastFocusRequest == null) {
+-                m_removeLastFocusRequest = SunToolkit.getMethod(KeyboardFocusManager.class, "removeLastFocusRequest",
+-                                                              new Class[] {Component.class});
+-            }
+-            m_removeLastFocusRequest.invoke(null, new Object[]{heavyweight});
+-        } catch (InvocationTargetException ite) {
+-            ite.printStackTrace();
+-        } catch (IllegalAccessException ex) {
+-            ex.printStackTrace();
+-        }
++        AWTAccessor.getKeyboardFocusManagerAccessor().removeLastFocusRequest(heavyweight);
+     }
+ }
+diff --git a/src/share/classes/sun/awt/SunToolkit.java b/src/share/classes/sun/awt/SunToolkit.java
+--- openjdk/jdk/src/share/classes/sun/awt/SunToolkit.java
++++ openjdk/jdk/src/share/classes/sun/awt/SunToolkit.java
+@@ -37,6 +37,7 @@
+ import java.awt.geom.AffineTransform;
+ import java.awt.TrayIcon;
+ import java.awt.SystemTray;
++import java.lang.reflect.Constructor;
+ import java.io.*;
+ import java.net.URL;
+ import java.net.JarURLConnection;
+@@ -53,14 +54,8 @@
+ import sun.awt.image.*;
+ import sun.security.action.GetPropertyAction;
+ import sun.security.action.GetBooleanAction;
+-import java.lang.reflect.Field;
+-import java.lang.reflect.Method;
+-import java.lang.reflect.Constructor;
+ import java.lang.reflect.InvocationTargetException;
+ import java.security.AccessController;
+-import java.security.PrivilegedAction;
+-import java.security.PrivilegedActionException;
+-import java.security.PrivilegedExceptionAction;
+ 
+ public abstract class SunToolkit extends Toolkit
+     implements WindowClosingSupport, WindowClosingListener,
+@@ -82,14 +77,6 @@
+      */
+     public static final int GRAB_EVENT_MASK = 0x80000000;
+ 
+-    private static Field syncLWRequestsField;
+-    private static Method  wakeupMethod;
+-    private static Field componentKeyField;
+-    private static Field menuComponentKeyField;
+-    private static Field trayIconKeyField;
+-    private static Field componentAppContextField;
+-    private static Field menuComponentAppContextField;
+-    private static Field isPostedField;
+     /* The key to put()/get() the PostEventQueue into/from the AppContext.
+      */
+     private static final String POST_EVENT_QUEUE_KEY = "PostEventQueue";
+@@ -225,7 +212,8 @@
+     public abstract RobotPeer createRobot(Robot target, GraphicsDevice screen)
+         throws AWTException;
+ 
+-    public KeyboardFocusManagerPeer createKeyboardFocusManagerPeer(KeyboardFocusManager manager) throws HeadlessException {
++    public KeyboardFocusManagerPeer createKeyboardFocusManagerPeer(
++            KeyboardFocusManager manager) throws HeadlessException {
+         KeyboardFocusManagerPeerImpl peer = new KeyboardFocusManagerPeerImpl(manager);
+         return peer;
+     }
+@@ -326,52 +314,8 @@
+         return appContext;
+     }
+ 
+-    public static Field getField(final Class klass, final String fieldName) {
+-        return AccessController.doPrivileged(new PrivilegedAction<Field>() {
+-            public Field run() {
+-                try {
+-                    Field field = klass.getDeclaredField(fieldName);
+-                    assert (field != null);
+-                    field.setAccessible(true);
+-                    return field;
+-                } catch (SecurityException e) {
+-                    assert false;
+-                } catch (NoSuchFieldException e) {
+-                    assert false;
+-                }
+-                return null;
+-            }//run
+-        });
+-    }
+-
+     static void wakeupEventQueue(EventQueue q, boolean isShutdown){
+-        if (wakeupMethod == null){
+-            wakeupMethod = (Method)AccessController.doPrivileged(new PrivilegedAction(){
+-                    public Object run(){
+-                        try {
+-                            Method method  = EventQueue.class.getDeclaredMethod("wakeup",new Class [] {Boolean.TYPE} );
+-                            if (method != null) {
+-                                method.setAccessible(true);
+-                            }
+-                            return method;
+-                        } catch (NoSuchMethodException e) {
+-                            assert false;
+-                        } catch (SecurityException e) {
+-                            assert false;
+-                        }
+-                        return null;
+-                    }//run
+-                });
+-        }
+-        try{
+-            if (wakeupMethod != null){
+-                wakeupMethod.invoke(q, new Object[]{Boolean.valueOf(isShutdown)});
+-            }
+-        } catch (InvocationTargetException e){
+-            assert false;
+-        } catch (IllegalAccessException e) {
+-            assert false;
+-        }
++        AWTAccessor.getEventQueueAccessor().wakeup(q, isShutdown);
+     }
+ 
+     /*
+@@ -420,20 +364,12 @@
+         if (!(target instanceof Component) && !(target instanceof MenuComponent)) {
+             return false;
+         }
+-        try{
+-            if (target instanceof Component){
+-                if (componentAppContextField == null) {
+-                    componentAppContextField = getField(Component.class, "appContext");
+-                }
+-                componentAppContextField.set(target, context);
+-            } else if (target instanceof MenuComponent) {
+-                if (menuComponentAppContextField == null) {
+-                    menuComponentAppContextField = getField(MenuComponent.class, "appContext");
+-                }
+-                menuComponentAppContextField.set(target, context);
+-            }
+-        } catch( IllegalAccessException e){
+-            assert false;
++        if (target instanceof Component){
++            Component comp = (Component) target;
++            AWTAccessor.getComponentAccessor().setAppContext(comp, context);
++        } else if (target instanceof MenuComponent) {
++            MenuComponent menuComp = (MenuComponent) target;
++            AWTAccessor.getMenuComponentAccessor().setAppContext(menuComp, context);
+         }
+ 
+         return true;
+@@ -445,20 +381,12 @@
+      */
+     private static AppContext getAppContext(Object target) {
+         AppContext retObj = null;
+-        try{
+-            if (target instanceof Component){
+-                if (componentAppContextField == null) {
+-                    componentAppContextField = getField(Component.class, "appContext");
+-                }
+-                retObj = (AppContext) componentAppContextField.get(target);
+-            } else if (target instanceof MenuComponent) {
+-                if (menuComponentAppContextField == null) {
+-                    menuComponentAppContextField = getField(MenuComponent.class, "appContext");
+-                }
+-                retObj = (AppContext) menuComponentAppContextField.get(target);
+-            }
+-        } catch( IllegalAccessException e){
+-            assert false;
++        if (target instanceof Component){
++            Component comp = (Component) target;
++            retObj = AWTAccessor.getComponentAccessor().getAppContext(comp);
++        } else if (target instanceof MenuComponent) {
++            MenuComponent menuComp = (MenuComponent) target;
++            retObj = AWTAccessor.getMenuComponentAccessor().getAppContext(menuComp);
+         }
+         return retObj;
+     }
+@@ -508,17 +436,8 @@
+       */
+ 
+     public static void setLWRequestStatus(Window changed,boolean status){
+-        if (syncLWRequestsField == null){
+-            syncLWRequestsField = getField(Window.class, "syncLWRequests");
+-        }
+-        try{
+-            if (syncLWRequestsField != null){
+-                syncLWRequestsField.setBoolean(changed, status);
+-            }
+-        } catch( IllegalAccessException e){
+-            assert false;
+-        }
+-    };
++        AWTAccessor.getWindowAccessor().setLWRequestStatus(changed, status);
++    }
+ 
+     public static void checkAndSetPolicy(Container cont, boolean isSwingCont)
+     {
+@@ -625,18 +544,9 @@
+      * Post AWTEvent of high priority.
+      */
+     public static void postPriorityEvent(final AWTEvent e) {
+-        if (isPostedField == null) {
+-            isPostedField = getField(AWTEvent.class, "isPosted");
+-        }
+         PeerEvent pe = new PeerEvent(Toolkit.getDefaultToolkit(), new Runnable() {
+                 public void run() {
+-                    try {
+-                        isPostedField.setBoolean(e, true);
+-                    } catch (IllegalArgumentException e) {
+-                        assert(false);
+-                    } catch (IllegalAccessException e) {
+-                        assert(false);
+-                    }
++                    AWTAccessor.getAWTEventAccessor().setPosted(e);
+                     ((Component)e.getSource()).dispatchEvent(e);
+                 }
+             }, PeerEvent.ULTIMATE_PRIORITY_EVENT);
+@@ -745,36 +655,6 @@
+     }
+ 
+     /*
+-     * Returns next queue for the given EventQueue which has private access
+-     */
+-    private static EventQueue getNextQueue(final Object o) {
+-        EventQueue result = null;
+-        try{
+-            Field nextQueueField = getField(EventQueue.class,
+-                                            "nextQueue");
+-            result = (EventQueue)nextQueueField.get(o);
+-        } catch( IllegalAccessException e){
+-            assert false;
+-        }
+-        return result;
+-    }
+-
+-    /*
+-     * Returns dispatch thread for the given EventQueue which has private access
+-     */
+-    private static Thread getDispatchThread(final Object o) {
+-        Thread result = null;
+-        try{
+-            Field dispatchThreadField = getField(EventQueue.class,
+-                                                 "dispatchThread");
+-            result = (Thread)dispatchThreadField.get(o);
+-        } catch( IllegalAccessException e){
+-            assert false;
+-        }
+-        return result;
+-    }
+-
+-    /*
+      * Returns true if the calling thread is the event dispatch thread
+      * contained within AppContext which associated with the given target.
+      * Use this call to ensure that a given task is being executed
+@@ -784,13 +664,14 @@
+         AppContext appContext = targetToAppContext(target);
+         EventQueue eq = (EventQueue)appContext.get(AppContext.EVENT_QUEUE_KEY);
+ 
+-        EventQueue next = getNextQueue(eq);
++        EventQueue next = AWTAccessor.getEventQueueAccessor().getNextQueue(eq);
+         while (next != null) {
+             eq = next;
+-            next = getNextQueue(eq);
++            next = AWTAccessor.getEventQueueAccessor().getNextQueue(eq);
+         }
+ 
+-        return (Thread.currentThread() == getDispatchThread(eq));
++        return (Thread.currentThread() == AWTAccessor.getEventQueueAccessor()
++                                              .getDispatchThread(eq));
+     }
+ 
+     public Dimension getScreenSize() {
+@@ -841,7 +722,8 @@
+      * value is {@code false}.
+      */
+     public static boolean getSunAwtNoerasebackground() {
+-        return AccessController.doPrivileged(new GetBooleanAction("sun.awt.noerasebackground"));
++        return AccessController.doPrivileged(
++                new GetBooleanAction("sun.awt.noerasebackground"));
+     }
+ 
+     /**
+@@ -849,7 +731,8 @@
+      * value is {@code false}.
+      */
+     public static boolean getSunAwtErasebackgroundonresize() {
+-        return AccessController.doPrivileged(new GetBooleanAction("sun.awt.erasebackgroundonresize"));
++        return AccessController.doPrivileged(
++                new GetBooleanAction("sun.awt.erasebackgroundonresize"));
+     }
+ 
+ 
+@@ -1332,18 +1215,7 @@
+     private static Dialog.ModalExclusionType DEFAULT_MODAL_EXCLUSION_TYPE;
+ 
+     static {
+-        DEFAULT_MODAL_EXCLUSION_TYPE = (Dialog.ModalExclusionType)AccessController.doPrivileged(new PrivilegedAction() {
+-            public Object run() {
+-                Dialog.ModalExclusionType defaultType = Dialog.ModalExclusionType.NO_EXCLUDE;
+-                try {
+-                    java.lang.reflect.Field f = Dialog.class.getDeclaredField("DEFAULT_MODAL_EXCLUSION_TYPE");
+-                    f.setAccessible(true);
+-                    defaultType = (Dialog.ModalExclusionType)f.get(null);
+-                } catch (Exception e) {
+-                }
+-                return defaultType;
+-            }
+-        });
++        DEFAULT_MODAL_EXCLUSION_TYPE = AWTAccessor.getDialogAccessor().getDefaultModalExclusionType();
+     }
+ 
+     /**
+@@ -1524,22 +1396,6 @@
+             || comp instanceof Window);
+     }
+ 
+-    public static Method getMethod(final Class clz, final String methodName, final Class[] params) {
+-        Method res = null;
+-        try {
+-            res = AccessController.doPrivileged(new PrivilegedExceptionAction<Method>() {
+-                    public Method run() throws Exception {
+-                        Method m = clz.getDeclaredMethod(methodName, params);
+-                        m.setAccessible(true);
+-                        return m;
+-                    }
+-                });
+-        } catch (PrivilegedActionException ex) {
+-            ex.printStackTrace();
+-        }
+-        return res;
+-    }
+-
+     public static class OperationTimedOut extends RuntimeException {
+         public OperationTimedOut(String msg) {
+             super(msg);
+@@ -1682,21 +1538,9 @@
+     private boolean queueEmpty = false;
+     private final Object waitLock = "Wait Lock";
+ 
+-    static Method eqNoEvents;
+-
+     private boolean isEQEmpty() {
+         EventQueue queue = getSystemEventQueueImpl();
+-        synchronized(SunToolkit.class) {
+-            if (eqNoEvents == null) {
+-                eqNoEvents = getMethod(java.awt.EventQueue.class, "noEvents", null);
+-            }
+-        }
+-        try {
+-            return (Boolean)eqNoEvents.invoke(queue);
+-        } catch (Exception e) {
+-            e.printStackTrace();
+-            return false;
+-        }
++        return AWTAccessor.getEventQueueAccessor().noEvents(queue);
+     }
+ 
+     /**
+@@ -1951,20 +1795,14 @@
+      * consumeNextKeyTyped() method is not currently used,
+      * however Swing could use it in the future.
+      */
+-    private static Method consumeNextKeyTypedMethod = null;
+     public static synchronized void consumeNextKeyTyped(KeyEvent keyEvent) {
+-        if (consumeNextKeyTypedMethod == null) {
+-            consumeNextKeyTypedMethod = getMethod(DefaultKeyboardFocusManager.class,
+-                                                  "consumeNextKeyTyped",
+-                                                  new Class[] {KeyEvent.class});
+-        }
+         try {
+-            consumeNextKeyTypedMethod.invoke(KeyboardFocusManager.getCurrentKeyboardFocusManager(),
+-                                             keyEvent);
+-        } catch (IllegalAccessException iae) {
+-            iae.printStackTrace();
+-        } catch (InvocationTargetException ite) {
+-            ite.printStackTrace();
++            AWTAccessor.getDefaultKeyboardFocusManagerAccessor().consumeNextKeyTyped(
++                (DefaultKeyboardFocusManager)KeyboardFocusManager.
++                    getCurrentKeyboardFocusManager(),
++                keyEvent);
++        } catch (ClassCastException cce) {
++             cce.printStackTrace();
+         }
+     }
+ 
+diff --git a/src/solaris/classes/sun/awt/X11/XCheckboxMenuItemPeer.java b/src/solaris/classes/sun/awt/X11/XCheckboxMenuItemPeer.java
+--- openjdk/jdk/src/solaris/classes/sun/awt/X11/XCheckboxMenuItemPeer.java
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XCheckboxMenuItemPeer.java
+@@ -29,27 +29,12 @@
+ import java.awt.peer.*;
+ import java.awt.event.*;
+ 
+-import java.lang.reflect.Field;
+-import sun.awt.SunToolkit;
++import sun.awt.AWTAccessor;
+ 
+ class XCheckboxMenuItemPeer extends XMenuItemPeer implements CheckboxMenuItemPeer {
+ 
+     /************************************************
+      *
+-     * Data members
+-     *
+-     ************************************************/
+-
+-    /*
+-     * CheckboxMenuItem's fields
+-     */
+-    private final static Field f_state;
+-    static {
+-        f_state = SunToolkit.getField(CheckboxMenuItem.class, "state");
+-    }
+-
+-    /************************************************
+-     *
+      * Construction
+      *
+      ************************************************/
+@@ -74,16 +59,8 @@
+      *
+      ************************************************/
+     boolean getTargetState() {
+-        MenuItem target = getTarget();
+-        if (target == null) {
+-            return false;
+-        }
+-        try {
+-            return f_state.getBoolean(target);
+-        } catch (IllegalAccessException e) {
+-            e.printStackTrace();
+-        }
+-        return false;
++        return AWTAccessor.getCheckboxMenuItemAccessor()
++                   .getState((CheckboxMenuItem)getTarget());
+     }
+ 
+     /************************************************
+diff --git a/src/solaris/classes/sun/awt/X11/XComponentPeer.java b/src/solaris/classes/sun/awt/X11/XComponentPeer.java
+--- openjdk/jdk/src/solaris/classes/sun/awt/X11/XComponentPeer.java
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XComponentPeer.java
+@@ -31,17 +31,13 @@
+ import java.awt.Component;
+ import java.awt.Container;
+ import java.awt.Cursor;
+-import java.awt.DefaultKeyboardFocusManager;
+ import java.awt.Dimension;
+-import java.awt.Event;
+ import java.awt.Font;
+ import java.awt.FontMetrics;
+ import java.awt.Graphics;
+ import java.awt.Image;
+ import java.awt.Insets;
+ import java.awt.KeyboardFocusManager;
+-import java.awt.MenuBar;
+-import java.awt.Point;
+ import java.awt.Rectangle;
+ import java.awt.SystemColor;
+ import java.awt.Toolkit;
+@@ -60,12 +56,9 @@
+ import java.awt.image.ImageObserver;
+ import java.awt.image.ImageProducer;
+ import java.awt.image.VolatileImage;
+-import java.awt.peer.CanvasPeer;
+ import java.awt.peer.ComponentPeer;
+ import java.awt.peer.ContainerPeer;
+ import java.awt.peer.LightweightPeer;
+-import java.awt.peer.PanelPeer;
+-import java.awt.peer.WindowPeer;
+ import java.lang.reflect.*;
+ import java.security.*;
+ import java.util.Collection;
+@@ -352,64 +345,16 @@
+         return (Window)comp;
+     }
+ 
+-    static Method processSynchronousLightweightTransferMethod;
+     static boolean processSynchronousLightweightTransfer(Component heavyweight, Component descendant,
+                                                   boolean temporary, boolean focusedWindowChangeAllowed,
+                                                   long time)
+     {
+-        try {
+-            if (processSynchronousLightweightTransferMethod == null) {
+-                processSynchronousLightweightTransferMethod =
+-                    (Method)AccessController.doPrivileged(
+-                        new PrivilegedExceptionAction() {
+-                                public Object run() throws IllegalAccessException, NoSuchMethodException
+-                                {
+-                                    Method m = KeyboardFocusManager.class.
+-                                        getDeclaredMethod("processSynchronousLightweightTransfer",
+-                                                          new Class[] {Component.class, Component.class,
+-                                                                       Boolean.TYPE, Boolean.TYPE,
+-                                                                       Long.TYPE});
+-                                    m.setAccessible(true);
+-                                    return m;
+-                                }
+-                            });
+-            }
+-            Object[] params = new Object[] {
+-                        heavyweight,
+-                        descendant,
+-                        Boolean.valueOf(temporary),
+-                        Boolean.valueOf(focusedWindowChangeAllowed),
+-                        Long.valueOf(time)
+-                    };
+-            return ((Boolean)processSynchronousLightweightTransferMethod.invoke(null, params)).booleanValue();
+-        } catch (PrivilegedActionException pae) {
+-            pae.printStackTrace();
+-            return false;
+-        } catch (IllegalAccessException iae) {
+-            iae.printStackTrace();
+-            return false;
+-        } catch (IllegalArgumentException iaee) {
+-            iaee.printStackTrace();
+-            return false;
+-        } catch (InvocationTargetException ite) {
+-            ite.printStackTrace();
+-            return false;
+-        }
++        return AWTAccessor.getKeyboardFocusManagerAccessor().processSynchronousLightweightTransfer(
++            heavyweight, descendant, temporary, focusedWindowChangeAllowed, time);
+     }
+ 
+-    static Method requestFocusWithCause;
+-
+     static void callRequestFocus(Component target, CausedFocusEvent.Cause cause) {
+-        if (requestFocusWithCause == null) {
+-            requestFocusWithCause = SunToolkit.getMethod(Component.class, "requestFocus", new Class[] {CausedFocusEvent.Cause.class});
+-        }
+-        if (requestFocusWithCause != null) {
+-            try {
+-                requestFocusWithCause.invoke(target, new Object[] {cause});
+-            } catch (Exception e) {
+-                e.printStackTrace();
+-            }
+-        }
++        AWTAccessor.getComponentAccessor().requestFocus(target, cause);
+     }
+ 
+     final public boolean requestFocus(Component lightweightChild, boolean temporary,
+diff --git a/src/solaris/classes/sun/awt/X11/XEmbedCanvasPeer.java b/src/solaris/classes/sun/awt/X11/XEmbedCanvasPeer.java
+--- openjdk/jdk/src/solaris/classes/sun/awt/X11/XEmbedCanvasPeer.java
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XEmbedCanvasPeer.java
+@@ -29,14 +29,7 @@
+ import java.awt.dnd.DropTarget;
+ import java.awt.dnd.DropTargetListener;
+ import java.awt.event.*;
+-import java.awt.image.ColorModel;
+-import java.awt.image.ImageObserver;
+-import java.awt.image.ImageProducer;
+-import java.awt.image.VolatileImage;
+-import java.awt.peer.*;
+ import sun.awt.*;
+-import sun.awt.motif.X11FontMetrics;
+-import java.lang.reflect.*;
+ import java.util.logging.*;
+ import java.util.*;
+ import static sun.awt.X11.XEmbedHelper.*;
+@@ -455,16 +448,8 @@
+         }
+     }
+ 
+-    static Field bdataField;
+     static byte[] getBData(KeyEvent e) {
+-        try {
+-            if (bdataField == null) {
+-                bdataField = SunToolkit.getField(java.awt.AWTEvent.class, "bdata");
+-            }
+-            return (byte[])bdataField.get(e);
+-        } catch (IllegalAccessException ex) {
+-            return null;
+-        }
++        return AWTAccessor.getAWTEventAccessor().getBData(e);
+     }
+ 
+     void forwardKeyEvent(KeyEvent e) {
+diff --git a/src/solaris/classes/sun/awt/X11/XEmbeddingContainer.java b/src/solaris/classes/sun/awt/X11/XEmbeddingContainer.java
+--- openjdk/jdk/src/solaris/classes/sun/awt/X11/XEmbeddingContainer.java
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XEmbeddingContainer.java
+@@ -29,7 +29,7 @@
+ import java.util.HashMap;
+ import java.awt.event.KeyEvent;
+ import java.lang.reflect.*;
+-import sun.awt.SunToolkit;
++import sun.awt.AWTAccessor;
+ 
+ public class XEmbeddingContainer extends XEmbedHelper implements XEventDispatcher {
+     HashMap children = new HashMap();
+@@ -127,20 +127,8 @@
+         }
+     }
+ 
+-    static Field bdata;
+-    byte[] getBData(KeyEvent e) {
+-        try {
+-            if (bdata == null) {
+-                bdata = SunToolkit.getField(java.awt.AWTEvent.class, "bdata");
+-            }
+-            return (byte[])bdata.get(e);
+-        } catch (IllegalAccessException ex) {
+-            return null;
+-        }
+-    }
+-
+     void forwardKeyEvent(long child, KeyEvent e) {
+-        byte[] bdata = getBData(e);
++        byte[] bdata = AWTAccessor.getAWTEventAccessor().getBData(e);
+         long data = Native.toData(bdata);
+         if (data == 0) {
+             return;
+diff --git a/src/solaris/classes/sun/awt/X11/XGlobalCursorManager.java b/src/solaris/classes/sun/awt/X11/XGlobalCursorManager.java
+--- openjdk/jdk/src/solaris/classes/sun/awt/X11/XGlobalCursorManager.java
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XGlobalCursorManager.java
+@@ -29,8 +29,7 @@
+ import java.awt.peer.ComponentPeer;
+ import java.awt.peer.LightweightPeer;
+ import java.lang.ref.WeakReference;
+-import java.lang.reflect.Field;
+-import java.lang.reflect.Method;
++import sun.awt.AWTAccessor;
+ import sun.awt.ComponentAccessor;
+ 
+ import sun.awt.GlobalCursorManager;
+@@ -38,23 +37,6 @@
+ 
+ public final class XGlobalCursorManager extends GlobalCursorManager {
+ 
+-    private static Field  field_pData;
+-    private static Field  field_type;
+-    private static Class  cursorClass;
+-    private static Method method_setPData;
+-    static {
+-        cursorClass = java.awt.Cursor.class;
+-        field_pData = SunToolkit.getField(cursorClass, "pData");
+-        field_type  = SunToolkit.getField(cursorClass, "type");
+-        method_setPData = SunToolkit.getMethod(cursorClass, "setPData", new Class[] {long.class});
+-        if (field_pData == null || field_type == null || method_setPData == null) {
+-            System.out.println("Unable to initialize XGlobalCursorManager: ");
+-            Thread.dumpStack();
+-
+-        }
+-    }
+-
+-
+     // cached nativeContainer
+     private WeakReference<Component> nativeContainer;
+ 
+@@ -216,8 +198,8 @@
+         long pData = 0;
+         int type = 0;
+         try {
+-            pData = field_pData.getLong(c);
+-            type = field_type.getInt(c);
++            pData = AWTAccessor.getCursorAccessor().getPData(c);
++            type = AWTAccessor.getCursorAccessor().getType(c);
+         }
+         catch (Exception e)
+         {
+@@ -287,7 +269,7 @@
+ 
+     static void setPData(Cursor c, long pData) {
+         try {
+-            method_setPData.invoke(c, pData);
++            AWTAccessor.getCursorAccessor().setPData(c, pData);
+         }
+         catch (Exception e)
+         {
+diff --git a/src/solaris/classes/sun/awt/X11/XKeyboardFocusManagerPeer.java b/src/solaris/classes/sun/awt/X11/XKeyboardFocusManagerPeer.java
+--- openjdk/jdk/src/solaris/classes/sun/awt/X11/XKeyboardFocusManagerPeer.java
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XKeyboardFocusManagerPeer.java
+@@ -38,6 +38,7 @@
+ import java.util.logging.Level;
+ import java.util.logging.Logger;
+ 
++import sun.awt.AWTAccessor;
+ import sun.awt.CausedFocusEvent;
+ import sun.awt.SunToolkit;
+ 
+@@ -130,46 +131,16 @@
+         return true;
+     }
+ 
+-    static Method shouldNativelyFocusHeavyweightMethod;
+-
+     static int shouldNativelyFocusHeavyweight(Component heavyweight,
+          Component descendant, boolean temporary,
+          boolean focusedWindowChangeAllowed, long time, CausedFocusEvent.Cause cause)
+     {
+-        if (shouldNativelyFocusHeavyweightMethod == null) {
+-            Class[] arg_types =
+-                new Class[] { Component.class,
+-                              Component.class,
+-                              Boolean.TYPE,
+-                              Boolean.TYPE,
+-                              Long.TYPE,
+-                              CausedFocusEvent.Cause.class
+-            };
+-
+-            shouldNativelyFocusHeavyweightMethod =
+-                SunToolkit.getMethod(KeyboardFocusManager.class,
+-                                   "shouldNativelyFocusHeavyweight",
+-                                   arg_types);
+-        }
+-        Object[] args = new Object[] { heavyweight,
+-                                       descendant,
+-                                       Boolean.valueOf(temporary),
+-                                       Boolean.valueOf(focusedWindowChangeAllowed),
+-                                       Long.valueOf(time), cause};
+-
+-        int result = XComponentPeer.SNFH_FAILURE;
+-        if (shouldNativelyFocusHeavyweightMethod != null) {
+-            try {
+-                result = ((Integer) shouldNativelyFocusHeavyweightMethod.invoke(null, args)).intValue();
+-            }
+-            catch (IllegalAccessException e) {
+-                assert false;
+-            }
+-            catch (InvocationTargetException e) {
+-                assert false;
+-            }
+-        }
+-
+-        return result;
++         return AWTAccessor.getKeyboardFocusManagerAccessor()
++                 .shouldNativelyFocusHeavyweight(heavyweight,
++                                                 descendant,
++                                                 temporary,
++                                                 focusedWindowChangeAllowed,
++                                                 time,
++                                                 cause);
+     }
+ }
+diff --git a/src/solaris/classes/sun/awt/X11/XMenuBarPeer.java b/src/solaris/classes/sun/awt/X11/XMenuBarPeer.java
+--- openjdk/jdk/src/solaris/classes/sun/awt/X11/XMenuBarPeer.java
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XMenuBarPeer.java
+@@ -31,6 +31,7 @@
+ import java.lang.reflect.Field;
+ import java.util.Vector;
+ import java.util.logging.*;
++import sun.awt.AWTAccessor;
+ import sun.awt.SunToolkit;
+ 
+ public class XMenuBarPeer extends XBaseMenuWindow implements MenuBarPeer {
+@@ -67,15 +68,6 @@
+     private final static int BAR_ITEM_MARGIN_TOP = 2;
+     private final static int BAR_ITEM_MARGIN_BOTTOM = 2;
+ 
+-    //fields
+-    private static Field f_helpMenu;
+-    private static Field f_menus;
+-
+-    static {
+-        f_helpMenu = SunToolkit.getField(MenuBar.class, "helpMenu");
+-        f_menus = SunToolkit.getField(MenuBar.class, "menus");
+-    }
+-
+     /************************************************
+      *
+      * Mapping data
+@@ -204,16 +196,12 @@
+      */
+     void postInit(XCreateWindowParams params) {
+         super.postInit(params);
+-        Vector targetMenuVector = null;
+-        Menu targetHelpMenu = null;
+-        try {
+-            // Get menus from the target.
+-            targetMenuVector = (Vector)f_menus.get(menuBarTarget);
+-            targetHelpMenu = (Menu)f_helpMenu.get(menuBarTarget);
+-            reloadItems(targetMenuVector);
+-        } catch (IllegalAccessException iae) {
+-            iae.printStackTrace();
+-        }
++        // Get menus from the target.
++        Vector targetMenuVector = AWTAccessor.getMenuBarAccessor()
++                                      .getMenus(menuBarTarget);
++        Menu targetHelpMenu = AWTAccessor.getMenuBarAccessor()
++                                  .getHelpMenu(menuBarTarget);
++        reloadItems(targetMenuVector);
+         if (targetHelpMenu != null) {
+             addHelpMenu(targetHelpMenu);
+         }
+diff --git a/src/solaris/classes/sun/awt/X11/XMenuItemPeer.java b/src/solaris/classes/sun/awt/X11/XMenuItemPeer.java
+--- openjdk/jdk/src/solaris/classes/sun/awt/X11/XMenuItemPeer.java
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XMenuItemPeer.java
+@@ -30,10 +30,7 @@
+ 
+ import java.util.logging.*;
+ 
+-import java.lang.reflect.Field;
+-import java.lang.reflect.Method;
+-import java.lang.reflect.InvocationTargetException;
+-import sun.awt.SunToolkit;
++import sun.awt.AWTAccessor;
+ 
+ public class XMenuItemPeer implements MenuItemPeer {
+ 
+@@ -83,24 +80,6 @@
+     private final static int SEPARATOR_WIDTH = 20;
+     private final static int SEPARATOR_HEIGHT = 5;
+ 
+-    /*
+-     * MenuItem's fields & methods
+-     */
+-    private final static Field f_enabled;
+-    private final static Field f_label;
+-    private final static Field f_shortcut;
+-    private final static Method m_getFont;
+-    private final static Method m_isItemEnabled;
+-    private final static Method m_getActionCommand;
+-    static {
+-        f_enabled = SunToolkit.getField(MenuItem.class, "enabled");
+-        f_label = SunToolkit.getField(MenuItem.class, "label");
+-        f_shortcut = SunToolkit.getField(MenuItem.class, "shortcut");
+-
+-        m_getFont = SunToolkit.getMethod(MenuComponent.class, "getFont_NoClientCode", null);
+-        m_getActionCommand = SunToolkit.getMethod(MenuItem.class, "getActionCommandImpl", null);
+-        m_isItemEnabled = SunToolkit.getMethod(MenuItem.class, "isItemEnabled", null);
+-    }
+     /************************************************
+      *
+      * Text Metrics
+@@ -218,39 +197,21 @@
+         if (target == null) {
+             return XWindow.defaultFont;
+         }
+-        try {
+-            return (Font)m_getFont.invoke(target, new Object[0]);
+-        } catch (IllegalAccessException e) {
+-            e.printStackTrace();
+-        } catch (InvocationTargetException e) {
+-            e.printStackTrace();
+-        }
+-        return XWindow.defaultFont;
++        return AWTAccessor.getMenuComponentAccessor().getFont_NoClientCode(target);
+     }
+ 
+     String getTargetLabel() {
+         if (target == null) {
+             return "";
+         }
+-        try {
+-            String label = (String)f_label.get(target);
+-            return (label == null) ? "" : label;
+-        } catch (IllegalAccessException e) {
+-            e.printStackTrace();
+-        }
+-        return "";
++        return AWTAccessor.getMenuItemAccessor().getLabel(target);
+     }
+ 
+     boolean isTargetEnabled() {
+         if (target == null) {
+             return false;
+         }
+-        try {
+-            return f_enabled.getBoolean(target);
+-        } catch (IllegalAccessException e) {
+-            e.printStackTrace();
+-        }
+-        return false;
++        return AWTAccessor.getMenuItemAccessor().isEnabled(target);
+     }
+ 
+     /**
+@@ -262,40 +223,21 @@
+         if (target == null) {
+             return false;
+         }
+-        try {
+-            return ((Boolean)m_isItemEnabled.invoke(target, new Object[0])).booleanValue();
+-        } catch (IllegalAccessException e) {
+-            e.printStackTrace();
+-        } catch (InvocationTargetException e) {
+-            e.printStackTrace();
+-        }
+-        return false;
++        return AWTAccessor.getMenuItemAccessor().isItemEnabled(target);
+     }
+ 
+     String getTargetActionCommand() {
+         if (target == null) {
+             return "";
+         }
+-        try {
+-            return (String) m_getActionCommand.invoke(target,(Object[]) null);
+-        } catch (IllegalAccessException e) {
+-            e.printStackTrace();
+-        } catch (InvocationTargetException e) {
+-            e.printStackTrace();
+-        }
+-        return "";
++        return AWTAccessor.getMenuItemAccessor().getActionCommandImpl(target);
+     }
+ 
+     MenuShortcut getTargetShortcut() {
+         if (target == null) {
+             return null;
+         }
+-        try {
+-            return (MenuShortcut)f_shortcut.get(target);
+-        } catch (IllegalAccessException e) {
+-            e.printStackTrace();
+-        }
+-        return null;
++        return AWTAccessor.getMenuItemAccessor().getShortcut(target);
+     }
+ 
+     String getShortcutText() {
+diff --git a/src/solaris/classes/sun/awt/X11/XMenuPeer.java b/src/solaris/classes/sun/awt/X11/XMenuPeer.java
+--- openjdk/jdk/src/solaris/classes/sun/awt/X11/XMenuPeer.java
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XMenuPeer.java
+@@ -30,6 +30,7 @@
+ import java.lang.reflect.Field;
+ import java.util.Vector;
+ import java.util.logging.*;
++import sun.awt.AWTAccessor;
+ import sun.awt.SunToolkit;
+ 
+ public class XMenuPeer extends XMenuItemPeer implements MenuPeer {
+@@ -46,16 +47,6 @@
+      */
+     XMenuWindow menuWindow;
+ 
+-
+-    /*
+-     * Menu's fields & methods
+-     */
+-    private final static Field f_items;
+-
+-    static {
+-        f_items = SunToolkit.getField(Menu.class, "items");
+-    }
+-
+     /************************************************
+      *
+      * Construction
+@@ -153,12 +144,7 @@
+      *
+      ************************************************/
+     Vector getTargetItems() {
+-        try {
+-            return (Vector)f_items.get(getTarget());
+-        } catch (IllegalAccessException iae) {
+-            iae.printStackTrace();
+-            return null;
+-        }
++        return AWTAccessor.getMenuAccessor().getItems((Menu)getTarget());
+     }
+ 
+     /************************************************
+diff --git a/src/solaris/classes/sun/awt/X11/XPopupMenuPeer.java b/src/solaris/classes/sun/awt/X11/XPopupMenuPeer.java
+--- openjdk/jdk/src/solaris/classes/sun/awt/X11/XPopupMenuPeer.java
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XPopupMenuPeer.java
+@@ -28,11 +28,8 @@
+ import java.awt.peer.*;
+ import java.awt.event.*;
+ 
+-import java.lang.reflect.Field;
+-import java.lang.reflect.Method;
+-import java.lang.reflect.InvocationTargetException;
+-
+ import java.util.Vector;
++import sun.awt.AWTAccessor;
+ import java.util.logging.*;
+ 
+ import sun.awt.SunToolkit;
+@@ -66,24 +63,6 @@
+     private final static int CAPTION_MARGIN_TOP = 4;
+     private final static int CAPTION_SEPARATOR_HEIGHT = 6;
+ 
+-    /*
+-     * Menu's fields & methods
+-     */
+-    //Fix for 6184485: Popup menu is not disabled on XToolkit even when calling setEnabled (false)
+-    private final static Field f_enabled;
+-    //Fix for 6267144: PIT: Popup menu label is not shown, XToolkit
+-    private final static Field f_label;
+-    private final static Method m_getFont;
+-    private final static Field f_items;
+-
+-    static {
+-        f_enabled = SunToolkit.getField(MenuItem.class, "enabled");
+-        f_label = SunToolkit.getField(MenuItem.class, "label");
+-        f_items = SunToolkit.getField(Menu.class, "items");
+-        m_getFont = SunToolkit.getMethod(MenuComponent.class, "getFont_NoClientCode", null);
+-    }
+-
+-
+     /************************************************
+      *
+      * Construction
+@@ -96,7 +75,7 @@
+ 
+     /************************************************
+      *
+-     * Implementaion of interface methods
++     * Implementation of interface methods
+      *
+      ************************************************/
+     /*
+@@ -189,27 +168,16 @@
+         if (popupMenuTarget == null) {
+             return XWindow.defaultFont;
+         }
+-        try {
+-            return (Font)m_getFont.invoke(popupMenuTarget, new Object[0]);
+-        } catch (IllegalAccessException e) {
+-            e.printStackTrace();
+-        } catch (InvocationTargetException e) {
+-            e.printStackTrace();
+-        }
+-        return XWindow.defaultFont;
++        return AWTAccessor.getMenuComponentAccessor()
++                   .getFont_NoClientCode(popupMenuTarget);
+     }
+ 
++    //Fix for 6267144: PIT: Popup menu label is not shown, XToolkit
+     String getTargetLabel() {
+         if (target == null) {
+             return "";
+         }
+-        try {
+-            String label = (String)f_label.get(popupMenuTarget);
+-            return (label == null) ? "" : label;
+-        } catch (IllegalAccessException e) {
+-            e.printStackTrace();
+-        }
+-        return "";
++        return AWTAccessor.getMenuItemAccessor().getLabel(popupMenuTarget);
+     }
+ 
+     //Fix for 6184485: Popup menu is not disabled on XToolkit even when calling setEnabled (false)
+@@ -217,21 +185,14 @@
+         if (popupMenuTarget == null) {
+             return false;
+         }
+-        try {
+-            return f_enabled.getBoolean(popupMenuTarget);
+-        } catch (IllegalAccessException e) {
+-            e.printStackTrace();
+-        }
+-        return false;
++        return AWTAccessor.getMenuItemAccessor().isEnabled(popupMenuTarget);
+     }
+ 
+     Vector getMenuTargetItems() {
+-        try {
+-            return (Vector)f_items.get(popupMenuTarget);
+-        } catch (IllegalAccessException iae) {
+-            iae.printStackTrace();
++        if (popupMenuTarget == null) {
+             return null;
+         }
++        return AWTAccessor.getMenuAccessor().getItems(popupMenuTarget);
+     }
+ 
+     /************************************************
+diff --git a/src/solaris/classes/sun/awt/X11/XScrollPanePeer.java b/src/solaris/classes/sun/awt/X11/XScrollPanePeer.java
+--- openjdk/jdk/src/solaris/classes/sun/awt/X11/XScrollPanePeer.java
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XScrollPanePeer.java
+@@ -29,7 +29,7 @@
+ import java.awt.event.*;
+ import java.awt.peer.*;
+ import java.lang.reflect.*;
+-import sun.awt.SunToolkit;
++import sun.awt.AWTAccessor;
+ 
+ class XScrollPanePeer extends XComponentPeer implements ScrollPanePeer, XScrollbarClient {
+ 
+@@ -41,9 +41,7 @@
+     public final static int     VERTICAL = 1 << 0;
+     public final static int     HORIZONTAL = 1 << 1;
+ 
+-    private static Method m_setValue;
+     static {
+-        m_setValue = SunToolkit.getMethod(ScrollPaneAdjustable.class, "setTypedValue", new Class[] {Integer.TYPE, Integer.TYPE});
+         SCROLLBAR = XToolkit.getUIDefaults().getInt("ScrollBar.defaultWidth");
+     }
+ 
+@@ -316,19 +314,9 @@
+     }
+ 
+     void setAdjustableValue(ScrollPaneAdjustable adj, int value, int type) {
+-        try {
+-            m_setValue.invoke(adj, new Object[] {Integer.valueOf(value), Integer.valueOf(type)});
+-        } catch (IllegalAccessException iae) {
+-            adj.setValue(value);
+-        } catch (IllegalArgumentException iae2) {
+-            adj.setValue(value);
+-        } catch (InvocationTargetException ite) {
+-            adj.setValue(value);
+-            ite.getCause().printStackTrace();
+-        }
++        AWTAccessor.getScrollPaneAdjustableAccessor().setTypedValue(adj, value, type);
+     }
+ 
+-
+     public void paint(Graphics g) {
+         paintComponent(g);
+     }
+diff --git a/src/solaris/classes/sun/awt/X11/XTextAreaPeer.java b/src/solaris/classes/sun/awt/X11/XTextAreaPeer.java
+--- openjdk/jdk/src/solaris/classes/sun/awt/X11/XTextAreaPeer.java
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XTextAreaPeer.java
+@@ -59,6 +59,7 @@
+ 
+ import javax.swing.plaf.BorderUIResource;
+ import java.awt.im.InputMethodRequests;
++import sun.awt.AWTAccessor;
+ import sun.awt.CausedFocusEvent;
+ import sun.awt.ComponentAccessor;
+ 
+@@ -985,8 +986,10 @@
+         // loading SystemFlavorMap and associated classes.
+         public void setTransferHandler(TransferHandler newHandler) {
+             TransferHandler oldHandler = (TransferHandler)
+-                getClientProperty(XTextTransferHelper.getTransferHandlerKey());
+-            putClientProperty(XTextTransferHelper.getTransferHandlerKey(),
++                getClientProperty(AWTAccessor.getClientPropertyKeyAccessor()
++                                      .getJComponent_TRANSFER_HANDLER());
++            putClientProperty(AWTAccessor.getClientPropertyKeyAccessor()
++                                  .getJComponent_TRANSFER_HANDLER(),
+                               newHandler);
+ 
+             firePropertyChange("transferHandler", oldHandler, newHandler);
+diff --git a/src/solaris/classes/sun/awt/X11/XTextFieldPeer.java b/src/solaris/classes/sun/awt/X11/XTextFieldPeer.java
+--- openjdk/jdk/src/solaris/classes/sun/awt/X11/XTextFieldPeer.java
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XTextFieldPeer.java
+@@ -53,6 +53,7 @@
+ import java.awt.im.InputMethodRequests;
+ 
+ import java.util.logging.*;
++import sun.awt.AWTAccessor;
+ import sun.awt.CausedFocusEvent;
+ import sun.awt.ComponentAccessor;
+ 
+@@ -714,8 +715,10 @@
+         // loading SystemFlavorMap and associated classes.
+         public void setTransferHandler(TransferHandler newHandler) {
+             TransferHandler oldHandler = (TransferHandler)
+-                getClientProperty(XTextTransferHelper.getTransferHandlerKey());
+-            putClientProperty(XTextTransferHelper.getTransferHandlerKey(),
++                getClientProperty(AWTAccessor.getClientPropertyKeyAccessor()
++                                      .getJComponent_TRANSFER_HANDLER());
++            putClientProperty(AWTAccessor.getClientPropertyKeyAccessor()
++                                  .getJComponent_TRANSFER_HANDLER(),
+                               newHandler);
+ 
+             firePropertyChange("transferHandler", oldHandler, newHandler);
+diff --git a/src/solaris/classes/sun/awt/X11/XToolkit.java b/src/solaris/classes/sun/awt/X11/XToolkit.java
+--- openjdk/jdk/src/solaris/classes/sun/awt/X11/XToolkit.java
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XToolkit.java
+@@ -48,6 +48,7 @@
+ import sun.font.FontManager;
+ import sun.misc.PerformanceLogger;
+ import sun.print.PrintJob2D;
++import sun.security.action.GetPropertyAction;
+ import sun.security.action.GetBooleanAction;
+ import java.lang.reflect.*;
+ 
+@@ -102,7 +103,6 @@
+     private static int screenWidth = -1, screenHeight = -1; // Dimensions of default screen
+     static long awt_defaultFg; // Pixel
+     private static XMouseInfoPeer xPeer;
+-    private static Method m_removeSourceEvents;
+ 
+     static {
+         initSecurityWarning();
+@@ -120,8 +120,6 @@
+             initIDs();
+             setBackingStoreType();
+         }
+-        m_removeSourceEvents = SunToolkit.getMethod(EventQueue.class, "removeSourceEvents", new Class[] {Object.class, Boolean.TYPE}) ;
+-
+         noisyAwtHandler = AccessController.doPrivileged(new GetBooleanAction("sun.awt.noisyerrorhandler"));
+     }
+ 
+@@ -203,7 +201,8 @@
+ 
+     static void initSecurityWarning() {
+         // Enable warning only for internal builds
+-        String runtime = getSystemProperty("java.runtime.version");
++        String runtime = AccessController.doPrivileged(
++                             new GetPropertyAction("java.runtime.version"));
+         securityWarningEnabled = (runtime != null && runtime.contains("internal"));
+     }
+ 
+@@ -1126,14 +1125,6 @@
+         }
+     }
+ 
+-    static String getSystemProperty(final String name) {
+-        return (String)AccessController.doPrivileged(new PrivilegedAction() {
+-                public Object run() {
+-                    return System.getProperty(name);
+-                }
+-            });
+-    }
+-
+     public PrintJob getPrintJob(final Frame frame, final String doctitle,
+                                 final Properties props) {
+ 
+@@ -1893,17 +1884,11 @@
+         return null;
+     }
+ 
+-    static void removeSourceEvents(EventQueue queue, Object source, boolean removeAllEvents) {
+-        try {
+-            m_removeSourceEvents.invoke(queue, source, removeAllEvents);
+-        }
+-        catch (IllegalAccessException e)
+-        {
+-            e.printStackTrace();
+-        }
+-        catch (InvocationTargetException e) {
+-            e.printStackTrace();
+-        }
++    static void removeSourceEvents(EventQueue queue,
++                                   Object source,
++                                   boolean removeAllEvents) {
++        AWTAccessor.getEventQueueAccessor()
++            .removeSourceEvents(queue, source, removeAllEvents);
+     }
+ 
+     public boolean isAlwaysOnTopSupported() {
+diff --git a/src/solaris/classes/sun/awt/X11/XTrayIconPeer.java b/src/solaris/classes/sun/awt/X11/XTrayIconPeer.java
+--- openjdk/jdk/src/solaris/classes/sun/awt/X11/XTrayIconPeer.java
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XTrayIconPeer.java
+@@ -32,10 +32,8 @@
+ import java.awt.image.*;
+ import java.text.BreakIterator;
+ import java.util.Vector;
+-import java.lang.reflect.Field;
+ import java.util.logging.Logger;
+ import java.util.logging.Level;
+-import java.util.AbstractQueue;
+ import java.util.concurrent.ArrayBlockingQueue;
+ import java.security.AccessController;
+ import java.security.PrivilegedAction;
+diff --git a/src/solaris/classes/sun/awt/X11/XWindow.java b/src/solaris/classes/sun/awt/X11/XWindow.java
+--- openjdk/jdk/src/solaris/classes/sun/awt/X11/XWindow.java
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XWindow.java
+@@ -68,7 +68,6 @@
+     int oldWidth = -1;
+     int oldHeight = -1;
+ 
+-
+     protected X11GraphicsConfig graphicsConfig;
+     protected AwtGraphicsConfigData graphicsConfigData;
+ 
+@@ -363,18 +362,9 @@
+ 
+     static Method m_sendMessage;
+     static void sendEvent(final AWTEvent e) {
+-        if (isPostedField == null) {
+-            isPostedField = SunToolkit.getField(AWTEvent.class, "isPosted");
+-        }
+         PeerEvent pe = new PeerEvent(Toolkit.getDefaultToolkit(), new Runnable() {
+                 public void run() {
+-                    try {
+-                        isPostedField.setBoolean(e, true);
+-                    } catch (IllegalArgumentException e) {
+-                        assert(false);
+-                    } catch (IllegalAccessException e) {
+-                        assert(false);
+-                    }
++                    AWTAccessor.getAWTEventAccessor().setPosted(e);
+                     ((Component)e.getSource()).dispatchEvent(e);
+                 }
+             }, PeerEvent.ULTIMATE_PRIORITY_EVENT);
+@@ -1250,16 +1240,8 @@
+     }
+ 
+ 
+-    static Field bdata;
+     static void setBData(KeyEvent e, byte[] data) {
+-        try {
+-            if (bdata == null) {
+-                bdata = SunToolkit.getField(java.awt.AWTEvent.class, "bdata");
+-            }
+-            bdata.set(e, data);
+-        } catch (IllegalAccessException ex) {
+-            assert false;
+-        }
++        AWTAccessor.getAWTEventAccessor().setBData(e, data);
+     }
+ 
+     public void postKeyEvent(int id, long when, int keyCode, char keyChar,
+diff --git a/src/solaris/classes/sun/awt/X11/XlibWrapper.java b/src/solaris/classes/sun/awt/X11/XlibWrapper.java
+--- openjdk/jdk/src/solaris/classes/sun/awt/X11/XlibWrapper.java
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XlibWrapper.java
+@@ -27,6 +27,7 @@
+ 
+ import java.security.AccessController;
+ import java.security.PrivilegedAction;
++import sun.security.action.GetPropertyAction;
+ import sun.misc.*;
+ 
+ public class XlibWrapper implements XConstants, XUtilConstants, XProtocolConstants,
+@@ -562,12 +563,8 @@
+     static final boolean isBuildInternal;
+ 
+     static {
+-        String dataModelProp = (String)AccessController.doPrivileged(
+-            new PrivilegedAction() {
+-                    public Object run() {
+-                        return System.getProperty("sun.arch.data.model");
+-                    }
+-                });
++        String dataModelProp = AccessController.doPrivileged(
++            new GetPropertyAction("sun.arch.data.model"));
+         try {
+             dataModel = Integer.parseInt(dataModelProp);
+         } catch (Exception e) {
+@@ -610,7 +607,8 @@
+     }
+ 
+     private static boolean getBuildInternal() {
+-        String javaVersion = XToolkit.getSystemProperty("java.version");
++        String javaVersion = AccessController.doPrivileged(
++                                 new GetPropertyAction("java.version"));
+         return javaVersion != null && javaVersion.contains("internal");
+     }
+ 
+diff --git a/src/solaris/classes/sun/awt/motif/MComponentPeer.java b/src/solaris/classes/sun/awt/motif/MComponentPeer.java
+--- openjdk/jdk/src/solaris/classes/sun/awt/motif/MComponentPeer.java
++++ openjdk/jdk/src/solaris/classes/sun/awt/motif/MComponentPeer.java
+@@ -397,19 +397,8 @@
+         }
+     }
+ 
+-    static Method requestFocusWithCause;
+-
+     static void callRequestFocusInWindow(Component target, CausedFocusEvent.Cause cause) {
+-        if (requestFocusWithCause == null) {
+-            requestFocusWithCause = SunToolkit.getMethod(Component.class, "requestFocusInWindow", new Class[] {CausedFocusEvent.Cause.class});
+-        }
+-        if (requestFocusWithCause != null) {
+-            try {
+-                requestFocusWithCause.invoke(target, new Object[] {cause});
+-            } catch (Exception e) {
+-                e.printStackTrace();
+-            }
+-        }
++        AWTAccessor.getComponentAccessor().requestFocusInWindow(target, cause);
+     }
+ 
+     public void handleEvent(AWTEvent e) {
+diff --git a/src/windows/classes/sun/awt/windows/WCanvasPeer.java b/src/windows/classes/sun/awt/windows/WCanvasPeer.java
+--- openjdk/jdk/src/windows/classes/sun/awt/windows/WCanvasPeer.java
++++ openjdk/jdk/src/windows/classes/sun/awt/windows/WCanvasPeer.java
+@@ -27,7 +27,6 @@
+ import java.awt.*;
+ import java.awt.peer.*;
+ import java.lang.ref.WeakReference;
+-import java.lang.reflect.Method;
+ import sun.awt.ComponentAccessor;
+ import sun.awt.SunToolkit;
+ import sun.awt.Win32GraphicsDevice;
+diff --git a/src/windows/classes/sun/awt/windows/WMouseDragGestureRecognizer.java b/src/windows/classes/sun/awt/windows/WMouseDragGestureRecognizer.java
+--- openjdk/jdk/src/windows/classes/sun/awt/windows/WMouseDragGestureRecognizer.java
++++ openjdk/jdk/src/windows/classes/sun/awt/windows/WMouseDragGestureRecognizer.java
+@@ -39,8 +39,6 @@
+ import java.awt.event.MouseListener;
+ import java.awt.event.MouseMotionListener;
+ 
+-import java.lang.reflect.*;
+-
+ import sun.awt.dnd.SunDragSourceContextPeer;
+ 
+ /**
+diff --git a/src/windows/classes/sun/awt/windows/WPopupMenuPeer.java b/src/windows/classes/sun/awt/windows/WPopupMenuPeer.java
+--- openjdk/jdk/src/windows/classes/sun/awt/windows/WPopupMenuPeer.java
++++ openjdk/jdk/src/windows/classes/sun/awt/windows/WPopupMenuPeer.java
+@@ -28,34 +28,23 @@
+ import java.awt.peer.*;
+ import java.lang.reflect.Field;
+ 
++import sun.awt.AWTAccessor;
+ import sun.awt.SunToolkit;
+ 
+ public class WPopupMenuPeer extends WMenuPeer implements PopupMenuPeer {
+     // We can't use target.getParent() for TrayIcon popup
+     // because this method should return null for the TrayIcon
+     // popup regardless of that whether it has parent or not.
+-    private static Field f_parent;
+-    private static Field f_isTrayIconPopup;
+-
+-    static {
+-        f_parent = SunToolkit.getField(MenuComponent.class, "parent");
+-        f_isTrayIconPopup = SunToolkit.getField(PopupMenu.class, "isTrayIconPopup");
+-    }
+ 
+     public WPopupMenuPeer(PopupMenu target) {
+         this.target = target;
+         MenuContainer parent = null;
+         boolean isTrayIconPopup = false;
+-        try {
+-            isTrayIconPopup = ((Boolean)f_isTrayIconPopup.get(target)).booleanValue();
+-            if (isTrayIconPopup) {
+-                parent = (MenuContainer)f_parent.get(target);
+-            } else {
+-                parent = target.getParent();
+-            }
+-        } catch (IllegalAccessException iae) {
+-            iae.printStackTrace();
+-            return;
++        isTrayIconPopup = AWTAccessor.getPopupMenuAccessor().isTrayIconPopup(target);
++        if (isTrayIconPopup) {
++            parent = AWTAccessor.getMenuComponentAccessor().getParent(target);
++        } else {
++            parent = target.getParent();
+         }
+ 
+         if (parent instanceof Component) {
+diff --git a/src/windows/classes/sun/awt/windows/WWindowPeer.java b/src/windows/classes/sun/awt/windows/WWindowPeer.java
+--- openjdk/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java
++++ openjdk/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java
+@@ -32,8 +32,6 @@
+ import java.beans.*;
+ 
+ import java.lang.ref.*;
+-import java.lang.reflect.*;
+-
+ import java.security.*;
+ 
+ import java.util.*;
+--- openjdk/jdk/src/solaris/classes/sun/awt/X11/XTextTransferHelper.java	Wed Aug 29 13:27:33 2012
++++ /dev/null	Wed Aug 29 13:27:34 2012
+@@ -1,47 +0,0 @@
+-/*
+- * Copyright (c) 2003, 2007, Oracle and/or its affiliates. All rights reserved.
+- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+- *
+- * This code is free software; you can redistribute it and/or modify it
+- * under the terms of the GNU General Public License version 2 only, as
+- * published by the Free Software Foundation.  Oracle designates this
+- * particular file as subject to the "Classpath" exception as provided
+- * by Oracle in the LICENSE file that accompanied this code.
+- *
+- * This code is distributed in the hope that it will be useful, but WITHOUT
+- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+- * version 2 for more details (a copy is included in the LICENSE file that
+- * accompanied this code).
+- *
+- * You should have received a copy of the GNU General Public License version
+- * 2 along with this work; if not, write to the Free Software Foundation,
+- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+- *
+- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+- * or visit www.oracle.com if you need additional information or have any
+- * questions.
+- */
+-
+-package sun.awt.X11;
+-
+-import java.lang.reflect.Field;
+-import sun.awt.SunToolkit;
+-
+-class XTextTransferHelper {
+-    private static Object transferHandlerKey = null;
+-    static Object getTransferHandlerKey() {
+-        if (transferHandlerKey == null) {
+-            try {
+-                Class clazz = Class.forName("javax.swing.ClientPropertyKey");
+-                Field field = SunToolkit.getField(clazz, "JComponent_TRANSFER_HANDLER");
+-                transferHandlerKey = field.get(null);
+-            } catch (IllegalAccessException ex) {
+-                return null;
+-            } catch (ClassNotFoundException cnfe) {
+-                cnfe.printStackTrace();
+-            }
+-        }
+-        return transferHandlerKey;
+-    }
+-}

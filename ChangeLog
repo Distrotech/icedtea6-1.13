@@ -1,3 +1,26 @@
+2012-08-31  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(SECURITY_PATCHES): Add 7162476, 7163201 & 7182135.
+	(ICEDTEA_PATCHES): Add 7185678.
+	* patches/merge_fix.patch: Patch to fix merge issues
+	between new security fixes and previous backports.
+	* patches/gcc-suffix.patch,
+	* patches/libraries.patch,
+	* patches/version-hotspot.patch:
+	Regenerate to remove fuzz.
+	* patches/nomotif-6706121.patch,
+	* patches/openjdk/6633275-shaped_translucent_windows.patch,
+	* patches/openjdk/6693253-security_warning.patch,
+	* patches/openjdk/6797195-hw_lw_mixing.patch:
+	Regenerated post-security patches.
+	* patches/openjdk/7185678-xmenuitem_peer_npe.patch,
+	* patches/security/20120830/7162476-xmldecoder_via_classfinder.patch,
+	* patches/security/20120830/7163201-simplify_toolkit_internal_references.patch:
+	New patches from 6u35/7u7 security release.
+	* patches/security/20120830/7182135-impossible_to_use_some_editors_directly.patch:
+	Regression fix for 7162476.
+
 2012-08-20  Xerxes Rånby  <xerxes@zafena.se>
 	    Robert Lougher  <rob@jamvm.org.uk>
 
