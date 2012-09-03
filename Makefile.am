@@ -349,7 +349,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6986968-crash_on_xim_restart.patch \
 	patches/openjdk/7036754-stroker-nan.patch \
 	patches/openjdk/pgram-pipe-regression.patch \
-	patches/openjdk/7034464-transparent_huge_pages.patch
+	patches/openjdk/7034464-transparent_huge_pages.patch \
 	patches/openjdk/7037939-disable_adaptive_resizing_with_large_pages.patch \
 	patches/openjdk/7043564-hugepage.patch \
 	patches/openjdk/mutter.patch \
