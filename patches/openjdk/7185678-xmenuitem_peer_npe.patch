@@ -1,0 +1,21 @@
+# HG changeset patch
+# User bagiras
+# Date 1344257258 -14400
+# Node ID b3f231f73076617e11b4538d746e8e3733d817ed
+# Parent  94d09decd35e887c353d59c37823a5ece6a71176
+7185678: java/awt/Menu/NullMenuLabelTest/NullMenuLabelTest.java failed with NPE
+Reviewed-by: art, ahgross
+
+diff --git a/src/solaris/classes/sun/awt/X11/XMenuItemPeer.java b/src/solaris/classes/sun/awt/X11/XMenuItemPeer.java
+--- openjdk/jdk/src/solaris/classes/sun/awt/X11/XMenuItemPeer.java
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XMenuItemPeer.java
+@@ -202,7 +202,8 @@
+         if (target == null) {
+             return "";
+         }
+-        return AWTAccessor.getMenuItemAccessor().getLabel(target);
++        String label = AWTAccessor.getMenuItemAccessor().getLabel(target);
++        return (label == null) ? "" : label;
+     }
+ 
+     boolean isTargetEnabled() {

@@ -1,3 +1,256 @@
+2012-09-03  Andrew John Hughes  <ahughes@redhat.com>
+
+	* NEWS: Add 1.10.9 & 1.11.4.
+
+2012-08-31  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(JAXP_DROP_ZIP): Update to security fixed version.
+	(JAXP_DROP_SHA256SUM): Likewise.
+	(SECURITY_PATCHES): Drop; upstream.
+	(ICEDTEA_PATCHES): Drop mimpure-text patch; upstream.
+	* patches/ecj/override.patch: Regenerate
+	against Oracle version of security patches.
+
+	(ICEDTEA_PATCHES): Rename patches.
+	* patches/openjdk/7034464-hugepage.patch:
+	Renamed to...
+	* patches/openjdk/7034464-transparent_huge_pages.patch:
+	this.
+	* patches/openjdk/7037939-hugepage.patch:
+	Renamed to...
+	* patches/openjdk/7037939-disable_adaptive_resizing_with_large_pages.patch
+	this.
+
+2012-08-31  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(SECURITY_PATCHES): Add 7162476, 7163201 & 7182135.
+	(ICEDTEA_PATCHES): Add 7185678.
+	* patches/merge_fix.patch: Patch to fix merge issues
+	between new security fixes and previous backports.
+	* patches/gcc-suffix.patch,
+	* patches/libraries.patch,
+	* patches/version-hotspot.patch:
+	Regenerate to remove fuzz.
+	* patches/nomotif-6706121.patch,
+	* patches/openjdk/6633275-shaped_translucent_windows.patch,
+	* patches/openjdk/6693253-security_warning.patch,
+	* patches/openjdk/6797195-hw_lw_mixing.patch:
+	Regenerated post-security patches.
+	* patches/openjdk/7185678-xmenuitem_peer_npe.patch,
+	* patches/security/20120830/7162476-xmldecoder_via_classfinder.patch,
+	* patches/security/20120830/7163201-simplify_toolkit_internal_references.patch:
+	New patches from 6u35/7u7 security release.
+	* patches/security/20120830/7182135-impossible_to_use_some_editors_directly.patch:
+	Regression fix for 7162476.
+
+2012-08-20  Xerxes Rånby  <xerxes@zafena.se>
+	    Robert Lougher  <rob@jamvm.org.uk>
+
+	JamVM: Sync with IcedTea7
+	* Makefile.am
+	(JAMVM_VERSION): Updated JamVM to 2012-08-15 revision.
+	(JAMVM_SHA256SUM): Updated.
+	(stamps/jamvm.stamp): Use --with-java-runtime-library=openjdk6
+
+2012-08-17  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* patches/ecj/hotspot.patch:
+	Make this patch file compatible with patch tool 2.5.4
+
+2012-08-16  Mark Wielaard  <mark@klomp.org>
+
+	* Makefile.am (add-zero.stamp): Setup drops directory by symlinking.
+	(add-zero-debug.stamp): Likewise.
+
+2012-08-16  Mark Wielaard  <mark@klomp.org>
+
+	* Makefile.am (stamps/add-nss.stamp): Only try patching the
+	security files if they actually exist.
+
+2012-08-16  Andrew John Hughes  <ahughes@redhat.com>
+
+	PR1121: Old installs still suffer from GCC PR41686
+	* Makefile.am:
+	(ICEDTEA_BOOTSTRAP_CLASSES):
+	Add javax.security.auth.kerberos.KerberosTicket
+	* NEWS: Updated.
+
+2012-08-15  Andrew John Hughes  <ahughes@redhat.com>
+
+	PR1117: IcedTea6 prebuilds far too many classes on bootstrap
+	* patches/ecj/hotspot.patch:
+	Removed; replaced by hotspot-jdk-dependency
+	We don't need to add rt.jar on the classpath
+	as well as the bootclasspath.
+	* Makefile.am:
+	(ICEDTEA_BOOTSTRAP_DIRS): Removed.
+	(ICEDTEA_BOOTSTRAP_CLASSES): Extend with new
+	cases found through building without
+	ICEDTEA_BOOTSTRAP_DIRS.
+	(ICEDTEA_ECJ_PATCHES): Add new patches, remove
+	hotspot.patch.
+	(rt-source-files.txt): Remove use of
+	ICEDTEA_BOOTSTRAP_CLASSES.
+	* NEWS: Updated.
+	* patches/ecj/7010849-make_sa-jdi_build_with_1.5.patch:
+	Backport from OpenJDK7.  Allows the serviceability
+	agent to be compiled with 1.5.  Added to bootstrap
+	only to reduce potential issues with the API change.
+	* patches/ecj/corba-dependencies.patch:
+	Point the CORBA build at the JDK sources as it
+	requires sun.tools.java.
+	* patches/ecj/hotspot-jdk-dependency.patch:
+	Point the HotSpot build at the JDK sources as it
+	requires com.sun.jdi for the serviceability agent.
+	Building com.sun.jdi requires 1.5+ source code and
+	thus 7010849 is necessary.
+	* patches/ecj/icedtea.patch:
+	Extend CORBA Defs-java changes so that it uses the
+	just-built langtools instead of the boot jdk's
+	tools.jar.
+	* patches/ecj/jaxws-jdk-dependency.patch:
+	Point the JAXWS build at the JDK sources as it
+	depends on com.sun.net.httpserver.
+	* patches/ecj/jaxws-langtools-dependency.patch:
+	Point the JAXWS build at the full langtools
+	distribution, rather than just javac/javah/javadoc
+	as it requires com.sun.mirror.
+
+2012-08-15  Mark Wielaard  <mjw@redhat.com>
+
+	* Makefile.am (ICEDTEA_PATCHES): Remove systemtap.patch, add
+	individual sdt-*.patches.
+	* patches/systemtap.patch: Removed.
+	* patches/sdt-arguments.patch: Added.
+	* patches/sdt-dtrace-hpp.patch: Added.
+	* patches/sdt-jni.patch: Added.
+	* patches/sdt-make.patch: Added.
+	* overlays/openjdk/hotspot/test/serviceability/SDTProbesGNULinuxTest.sh:
+	New testcase.
+
+2012-08-14  Andrew John Hughes  <ahughes@redhat.com>
+
+	PR1113: Include tapset tests in distribution.
+	* Makefile.am:
+	(TAPSET_TEST_SRCS): Like tapset test sources.
+	(EXTRA_DIST): Add TAPSET_TEST_SRCS.
+	* NEWS: Updated.
+
+2012-08-14  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(clean-add-nss): Only move java.security.old
+	if it exists.
+	(clean-add-nss-debug): Likewise.
+	(clean-add-nss-ecj): Likewise.
+
+2012-08-13  Xerxes Rånby  <xerxes@zafena.se>
+
+	JamVM
+	- ARMv6 armhf: Changes for Raspbian (Raspberry Pi)
+	- PPC: Don't use lwsync if it isn't supported
+	- X86: Generate machine-dependent stubs for i386
+	- When suspending, ignore detached threads that have died, this prevents
+	a user caused deadlock when an external thread has been attached to the
+	VM via JNI and it has exited without detaching
+	- Add missing REF_TO_OBJs for references passed from JNI,
+	this enable JamVM to run Qt-Jambi
+	* NEWS: Updated.
+	* Makefile.am
+	(JAMVM_VERSION): Updated JamVM to 2012-07-25 revision.
+	(JAMVM_SHA256SUM): Updated.
+
+2012-08-10  Stefan Ring  <stefan@complang.tuwien.ac.at>
+
+	* README: Fix CACAO URL.
+
+2012-08-06  Mark Wielaard  <mjw@redhat.com>
+
+	* test/tapset/jstaptest.pl (probestrings): Expect non-zero value
+	for hotspot.jni.NewObjectA.return.
+
+2012-08-03  Mark Wielaard  <mjw@redhat.com>
+
+	* Makefile.am (check-tapset-probes): New target.
+	(check-tapset-jstack): Likewise.
+	(check-tapset): Depend on check-tapset-probes check-tapset-jstack.
+	* test/tapset/jstaptest.pl (process_args): Add -p [$run_test_probes]
+	and -j [$run_test_jstack].
+	(test_jstack): Takes argument to pass to java process.
+	Pass -XX:+UseCompressedOops and/or -Xmx5G.
+
+2012-08-03  Yasumasa Suenaga  <suenaga.yasumasa@lab.ntt.co.jp>
+
+	* tapset/jstack.stp.in (NarrowOopStruct): New global.
+	(hotspot.vm_init_end): Initialize NarrowOopStruct.
+	(hotspot.vm_shutdown): Delete NarrowOopStruct for pid.
+	(jstack_call): Use NarrowOopStruct to calculate methodOopKlass.
+
+2012-08-09  Stefan Ring  <stefan@complang.tuwien.ac.at>
+
+	* Makefile.am: copy entire CACAO directory, including .hg
+
+2012-08-09  Andrew John Hughes  <ahughes@redhat.com>
+
+	Apply NSS changes to java.security after
+	build.
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Don't add NSS config patches.
+	(NSS_PATCHES): Add here instead.
+	(add-nss): Apply NSS_PATCHES.
+	(clean-add-nss): Revert java.security.
+	(add-nss-debug): Apply NSS_PATCHES to debug build.
+	(clean-add-nss-debug): Revert java.security for debug build.
+	(add-nss-ecj): Apply NSS_PATCHES to bootstrap build.
+	(clean-add-nss-ecj): Revert java.security for bootstrap build.
+
+2012-08-08  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am: Add new patch.
+	* patches/openjdk/p11cipher-6414899-p11digest_should_support_cloning.patch:
+	Backport of OpenJDK patch to make
+	com.oracle.security.ucrypto.TestDigest test
+	work on NSS.
+
+2012-06-28  Omair Majid  <omajid@redhat.com>
+
+	* pulseaudio/src/java/org/classpath/icedtea/pulseaudio/PulseAudioClip.java
+	(getMicrosecondLength, getMicrosecondPosition)
+	(setMicrosecondPosition): Use correct factor to convert seconds to
+	microseconds.
+	* pulseaudio/src/java/org/classpath/icedtea/pulseaudio/PulseAudioSourceDataLine.java
+	(getMicrosecondPosition): Likewise.
+	* pulseaudio/src/java/org/classpath/icedtea/pulseaudio/PulseAudioPlaybackLine.java:
+	Define SECONDS_TO_MICROSECONDS.
+
+2012-06-28  Omair Majid  <omajid@redhat.com>
+
+	* pulseaudio/src/java/org/classpath/icedtea/pulseaudio/PulseAudioSourceDataLine.java
+	(write): Synchronize access to writeInterrupted flag.
+
+2012-06-28  Omair Majid  <omajid@redhat.com>
+
+	PR1050: Stream objects not garbage collected
+	* NEWS: Update with fix.
+	* pulseaudio/src/java/org/classpath/icedtea/pulseaudio/Stream.java:
+	Add new member variable contextPointer.
+	* pulseaudio/src/native/org_classpath_icedtea_pulseaudio_Stream.c
+	(Java_org_classpath_icedtea_pulseaudio_Stream_native_1pa_1stream_1new):
+	Save j_context as contextPointer.
+	(Java_org_classpath_icedtea_pulseaudio_Stream_native_1pa_1stream_1unref):
+	Delete the global ref and dellocate the java context.
+	(cork_callback): Don't check userdata. It is NULL.
+	(Java_org_classpath_icedtea_pulseaudio_Stream_native_1pa_1stream_1cork):
+	Dont allocate and pass a java_context to pa_stream_cork. It is not needed.
+	* pulseaudio/unittests/org/classpath/icedtea/pulseaudio/PulseAudioClipTest.java
+	(testOpenCloseLotsOfTimes): New method.
+
+2012-06-26  Omair Majid  <omajid@redhat.com>
+
+	* test/tapset/jstaptest.pl (get_arch_dir): Fix dir for x86.
+
 2012-06-13  Andrew John Hughes  <ahughes@redhat.com>
 
 	* patches/openjdk/remove-mimpure-option-to-gcc.patch:

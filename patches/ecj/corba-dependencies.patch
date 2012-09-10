@@ -1,0 +1,17 @@
+diff -Nru openjdk.orig/corba/make/common/Rules.gmk openjdk/corba/make/common/Rules.gmk
+--- openjdk-ecj.orig/corba/make/common/Rules.gmk	2012-08-15 16:52:40.749869095 +0100
++++ openjdk-ecj/corba/make/common/Rules.gmk	2012-08-15 16:59:16.800640493 +0100
+@@ -202,9 +202,11 @@
+ 	  $(CAT) $(JAVA_SOURCE_LIST); \
+ 	  $(ECHO) "# Running javac:"; \
+ 	  $(ECHO) $(JAVAC_CMD) $(JAVAC_PREFER_SOURCE) -bootclasspath $(ICEDTEA_RT):$(CLASSBINDIR) \
+-	    -sourcepath "$(SOURCEPATH)" -d $(CLASSDESTDIR) @$(JAVA_SOURCE_LIST); \
++	    -sourcepath "$(SOURCEPATH):$(JDK_TOPDIR)/src/share/classes:$(JDK_TOPDIR)/src/solaris/classes" \
++	    -d $(CLASSDESTDIR) @$(JAVA_SOURCE_LIST); \
+ 	  $(JAVAC_CMD) $(JAVAC_PREFER_SOURCE) -bootclasspath $(ICEDTEA_RT):$(CLASSBINDIR) \
+-	    -sourcepath "$(SOURCEPATH)" -d $(CLASSDESTDIR) @$(JAVA_SOURCE_LIST); \
++	    -sourcepath "$(SOURCEPATH):$(JDK_TOPDIR)/src/share/classes:$(JDK_TOPDIR)/src/solaris/classes" \
++	    -d $(CLASSDESTDIR) @$(JAVA_SOURCE_LIST); \
+ 	fi
+ 	@$(java-vm-cleanup)
+ 

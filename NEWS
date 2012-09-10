@@ -18,6 +18,42 @@ New in release 1.12 (2012-XX-XX):
   - S6761072: new krb5 tests fail on multiple platforms
   - S6883983: JarVerifier dependency on sun.security.pkcs should be removed
   - S4465490: Suspicious about double-check locking idiom being used in the code
+* Bug fixes
+  - PR902: PulseAudioClip getMicrosecondsLength() returns length in milliseconds, not microseconds
+  - PR1050: Stream objects not garbage collected
+  - PR1113: Add tapset tests to distribution.
+  - PR1117: IcedTea6 prebuilds far too many classes on bootstrap
+  - PR1119: Old installs still suffer from GCC PR41686
+* JamVM
+  - ARMv6 armhf: Changes for Raspbian (Raspberry Pi)
+  - PPC: Don't use lwsync if it isn't supported
+  - X86: Generate machine-dependent stubs for i386
+  - When suspending, ignore detached threads that have died, this prevents
+    a user caused deadlock when an external thread has been attached to the VM
+    via JNI and it has exited without detaching
+  - Add missing REF_TO_OBJs for references passed from JNI, this enable JamVM
+    to run Qt-Jambi
+
+New in release 1.11.4 (2012-08-31):
+
+* Security fixes
+  - S7162476, CVE-2012-1682: XMLDecoder security issue via ClassFinder
+  - S7163201, CVE-2012-0547: Simplify toolkit internals references
+* OpenJDK
+  - S7182135: Impossible to use some editors directly
+  - S7185678: java/awt/Menu/NullMenuLabelTest/NullMenuLabelTest.java failed with NPE
+
+New in release 1.10.9 (2012-08-31):
+
+* Security fixes
+  - S7162476, CVE-2012-1682: XMLDecoder security issue via ClassFinder
+  - S7163201, CVE-2012-0547: Simplify toolkit internals references
+* OpenJDK
+  - S7182135: Impossible to use some editors directly
+  - S7185678: java/awt/Menu/NullMenuLabelTest/NullMenuLabelTest.java failed with NPE
+  - S6815182: GSSAPI/SPNEGO does not work with server using MIT Kerberos library
+  - S6979329: CCacheInputStream fails to read ticket cache files from Kerberos 1.8.1
+  - S7110373: krb5 test in openjdk6 without test infrastructure
 
 New in release 1.11.3 (2012-06-12):
 

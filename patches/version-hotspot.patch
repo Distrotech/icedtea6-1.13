@@ -1,7 +1,7 @@
 diff -Nru openjdk.orig/hotspot/make/linux/makefiles/vm.make openjdk/hotspot/make/linux/makefiles/vm.make
---- openjdk.orig/hotspot/make/linux/makefiles/vm.make	2010-01-18 22:58:55.000000000 +0000
-+++ openjdk/hotspot/make/linux/makefiles/vm.make	2010-01-20 17:26:22.000000000 +0000
-@@ -86,6 +86,14 @@
+--- openjdk.orig/hotspot/make/linux/makefiles/vm.make	2012-05-01 22:15:06.000000000 +0100
++++ openjdk/hotspot/make/linux/makefiles/vm.make	2012-08-31 14:21:31.563516886 +0100
+@@ -91,6 +91,14 @@
    ${JRE_VERSION}     \
    ${VM_DISTRO}
  
@@ -17,11 +17,11 @@ diff -Nru openjdk.orig/hotspot/make/linux/makefiles/vm.make openjdk/hotspot/make
  CFLAGS += $(CFLAGS_WARN/BYFILE)
  
 diff -Nru openjdk.orig/hotspot/src/share/vm/runtime/arguments.cpp openjdk/hotspot/src/share/vm/runtime/arguments.cpp
---- openjdk.orig/hotspot/src/share/vm/runtime/arguments.cpp	2010-01-18 23:00:22.000000000 +0000
-+++ openjdk/hotspot/src/share/vm/runtime/arguments.cpp	2010-01-20 17:24:22.000000000 +0000
-@@ -25,7 +25,7 @@
- #include "incls/_precompiled.incl"
- #include "incls/_arguments.cpp.incl"
+--- openjdk.orig/hotspot/src/share/vm/runtime/arguments.cpp	2012-08-31 14:11:31.969647165 +0100
++++ openjdk/hotspot/src/share/vm/runtime/arguments.cpp	2012-08-31 14:21:52.011853424 +0100
+@@ -59,7 +59,7 @@
+ #include "gc_implementation/concurrentMarkSweep/compactibleFreeListSpace.hpp"
+ #endif
  
 -#define DEFAULT_VENDOR_URL_BUG "http://java.sun.com/webapps/bugreport/crash.jsp"
 +#define DEFAULT_VENDOR_URL_BUG "http://icedtea.classpath.org/bugzilla"
@@ -29,9 +29,9 @@ diff -Nru openjdk.orig/hotspot/src/share/vm/runtime/arguments.cpp openjdk/hotspo
  
  char**  Arguments::_jvm_flags_array             = NULL;
 diff -Nru openjdk.orig/hotspot/src/share/vm/utilities/vmError.cpp openjdk/hotspot/src/share/vm/utilities/vmError.cpp
---- openjdk.orig/hotspot/src/share/vm/utilities/vmError.cpp	2010-01-18 22:56:40.000000000 +0000
-+++ openjdk/hotspot/src/share/vm/utilities/vmError.cpp	2010-01-20 17:25:15.000000000 +0000
-@@ -165,7 +165,8 @@
+--- openjdk.orig/hotspot/src/share/vm/utilities/vmError.cpp	2012-05-01 22:15:14.000000000 +0100
++++ openjdk/hotspot/src/share/vm/utilities/vmError.cpp	2012-08-31 14:21:31.575517090 +0100
+@@ -185,7 +185,8 @@
  
  static void print_bug_submit_message(outputStream *out, Thread *thread) {
    if (out == NULL) return;
@@ -41,7 +41,7 @@ diff -Nru openjdk.orig/hotspot/src/share/vm/utilities/vmError.cpp openjdk/hotspo
    out->print_raw   ("#   ");
    out->print_raw_cr(Arguments::java_vendor_url_bug());
    // If the crash is in native code, encourage user to submit a bug to the
-@@ -341,6 +342,12 @@
+@@ -441,6 +442,12 @@
                     Abstract_VM_Version::vm_platform_string(),
                     UseCompressedOops ? "compressed oops" : ""
                   );

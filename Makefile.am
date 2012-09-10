@@ -11,8 +11,8 @@ CACAO_BASE_URL = http://icedtea.classpath.org/download/drops/cacao
 CACAO_URL = $(CACAO_BASE_URL)/$(CACAO_VERSION).tar.gz
 CACAO_SRC_ZIP = cacao-$(CACAO_VERSION).tar.gz
 
-JAMVM_VERSION = 4617da717ecb05654ea5bb9572338061106a414d
-JAMVM_SHA256SUM = 47fce7bd556c1b1d29a93b8c45497e0d872b48b7f535066b303336f29d0f0d8d
+JAMVM_VERSION = e70f2450890b82c37422616cc85e1a23385f03cd
+JAMVM_SHA256SUM = 3ca7e297ef4daa56c3dd733e21bce795d57ab071243369aa9400c0384ada8a4c
 JAMVM_BASE_URL = http://icedtea.classpath.org/download/drops/jamvm
 JAMVM_URL = $(JAMVM_BASE_URL)/jamvm-$(JAMVM_VERSION).tar.gz
 JAMVM_SRC_ZIP = jamvm-$(JAMVM_VERSION).tar.gz
@@ -62,31 +62,19 @@ OPENJDK_SOURCEPATH_DIRS = \
 SOURCEPATH_DIRS = $(abs_top_srcdir)/generated:$(OPENJDK_SOURCEPATH_DIRS)
 
 # Sources used from OpenJDK.
-ICEDTEA_BOOTSTRAP_DIRS = \
-	$(SHARE)/com/sun/jdi \
-	$(SHARE)/com/sun/net/httpserver \
-	$(SHARE)/com/sun/tools/jdi \
-	$(SHARE)/java/io \
-	$(SHARE)/java/security/cert \
-	$(SHARE)/java/util \
-	$(SHARE)/java/rmi \
-	$(SHARE)/sun/awt/ \
-	$(SHARE)/sun/nio/cs \
-	$(SHARE)/sun/rmi/rmic \
-	$(SHARE)/sun/tools/java \
-	$(SHARE)/javax/net/ssl \
-	$(SHARE)/javax/script \
-	$(SHARE)/javax/security/auth/kerberos \
-	$(SHARE)/javax/security/sasl \
-	$(LANGTOOLS)/com/sun/mirror \
-	$(LANGTOOLS)/com/sun/tools/apt
 
 # PR42003 - javax.swing.plaf.basic.BasicDirectoryModel
 # PR43389 - javax.management.StandardMBean
+# PR54274 - sun.security.other requires missing X509CRLSelector methods
+# PR54275 - sun.security.sasl requires missing Sasl.CREDENTIALS field
 ICEDTEA_BOOTSTRAP_CLASSES = \
 	$(SHARE)/javax/swing/plaf/basic/BasicDirectoryModel.java \
 	$(SHARE)/javax/management/StandardMBean.java \
-	$(SHARE)/com/sun/java/swing/plaf/nimbus/NimbusLookAndFeel.java
+	$(SHARE)/com/sun/java/swing/plaf/nimbus/NimbusLookAndFeel.java \
+	$(SHARE)/java/security/cert/X509CRLSelector.java \
+	$(SHARE)/java/security/cert/X509CertSelector.java \
+	$(SHARE)/javax/security/sasl/Sasl.java \
+	$(SHARE)/javax/security/auth/kerberos/KerberosTicket.java
 
 # Flags
 MEMORY_LIMIT = -J-Xmx1024m
@@ -188,12 +176,27 @@ REWRITER_SRCS = $(top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.java
 # Relative path to JTreg tool
 JTREG_DIR = src/jtreg
 JTREG_SRCS = $(top_srcdir)/$(JTREG_DIR)
+TAPSET_TEST_SRCS = \
+	$(top_srcdir)/test/tapset/ClassUnloadedProbeTester.java \
+	$(top_srcdir)/test/tapset/JNIStapTest.c \
+	$(top_srcdir)/test/tapset/JNITestClass.c \
+	$(top_srcdir)/test/tapset/JNITestClass.h \
+	$(top_srcdir)/test/tapset/JNITestClass.java \
+	$(top_srcdir)/test/tapset/jstaptest.pl \
+	$(top_srcdir)/test/tapset/RunWrapper.java \
+	$(top_srcdir)/test/tapset/StapJNIClassLoader.java \
+	$(top_srcdir)/test/tapset/StapURLClassLoader.java \
+	$(top_srcdir)/test/tapset/SystemtapTester.java \
+	$(top_srcdir)/test/tapset/TestingRunner.java
 
 # Patch list
 
 ICEDTEA_FSG_PATCHES =
 
-SECURITY_PATCHES =
+SECURITY_PATCHES = \
+	patches/security/20120830/7162476-xmldecoder_via_classfinder.patch \
+	patches/security/20120830/7163201-simplify_toolkit_internal_references.patch \
+	patches/security/20120830/7182135-impossible_to_use_some_editors_directly.patch
 
 SPECIAL_SECURITY_PATCH = patches/security/20120214/7112642.patch
 
@@ -333,8 +336,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6986968-crash_on_xim_restart.patch \
 	patches/openjdk/7036754-stroker-nan.patch \
 	patches/openjdk/pgram-pipe-regression.patch \
-	patches/openjdk/7034464-hugepage.patch \
-	patches/openjdk/7037939-hugepage.patch \
+	patches/openjdk/7034464-transparent_huge_pages.patch
+	patches/openjdk/7037939-disable_adaptive_resizing_with_large_pages.patch \
 	patches/openjdk/7043564-hugepage.patch \
 	patches/openjdk/mutter.patch \
 	patches/fonts-rhel-version.patch \
@@ -412,7 +415,10 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/p11cipher-6867345-turkish_regional_options_cause_npe_in_algoid.patch \
 	patches/openjdk/p11cipher-6687725-throw_illegalblocksizeexception.patch \
 	patches/openjdk/p11cipher-6924489-ckr_operation_not_initialized.patch \
-	patches/openjdk/p11cipher-6604496-support_ckm_aes_ctr.patch
+	patches/openjdk/p11cipher-6604496-support_ckm_aes_ctr.patch \
+	patches/openjdk/p11cipher-6414899-p11digest_should_support_cloning.patch \
+	patches/openjdk/7185678-xmenuitem_peer_npe.patch \
+	patches/merge_fix.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -444,15 +450,18 @@ ICEDTEA_PATCHES += patches/openjdk/6307603-xrender-01.patch \
 endif
 
 if ENABLE_SYSTEMTAP
-ICEDTEA_PATCHES += patches/systemtap.patch \
+ICEDTEA_PATCHES += patches/sdt-jni.patch \
+	patches/sdt-dtrace-hpp.patch \
+	patches/sdt-make.patch \
+	patches/sdt-arguments.patch \
 	patches/systemtap-gcc-4.5.patch \
 	patches/systemtap-alloc-size-workaround.patch
 endif
 
 if ENABLE_NSS
-ICEDTEA_PATCHES += patches/nss-config.patch
+NSS_PATCHES = patches/nss-config.patch
 else
-ICEDTEA_PATCHES += patches/nss-not-enabled-config.patch
+NSS_PATCHES = patches/nss-not-enabled-config.patch
 endif
 
 if HAS_PAX
@@ -463,8 +472,9 @@ ICEDTEA_PATCHES += $(DISTRIBUTION_PATCHES)
 
 # Bootstrapping patches
 
-ICEDTEA_ECJ_PATCHES = patches/ecj/icedtea.patch \
-	patches/ecj/hotspot.patch \
+ICEDTEA_ECJ_PATCHES = \
+	patches/ecj/7010849-make_sa-jdi_build_with_1.5.patch \
+	patches/ecj/icedtea.patch \
 	patches/ecj/javafiles.patch \
 	patches/ecj/spp.patch \
 	patches/ecj/jopt.patch \
@@ -472,7 +482,11 @@ ICEDTEA_ECJ_PATCHES = patches/ecj/icedtea.patch \
 	patches/ecj/bootver.patch \
 	patches/ecj/getannotation-cast.patch \
 	patches/ecj/override.patch \
-	patches/ecj/xsltproc.patch
+	patches/ecj/xsltproc.patch \
+	patches/ecj/corba-dependencies.patch \
+	patches/ecj/jaxws-langtools-dependency.patch \
+	patches/ecj/jaxws-jdk-dependency.patch \
+	patches/ecj/hotspot-jdk-dependency.patch
 
 if DTDTYPE_QNAME
 ICEDTEA_ECJ_PATCHES += \
@@ -637,7 +651,8 @@ EXTRA_DIST = generated \
 	scripts/jni_desc \
 	rewriter/agpl-3.0.txt \
 	$(REWRITER_SRCS) \
-	THANKYOU
+	THANKYOU \
+	$(TAPSET_TEST_SRCS)
 
 # Top-Level Targets
 # =================
@@ -1002,8 +1017,8 @@ if USE_ALT_CACAO_SRC_DIR
 	set -e ; \
 	if ! test -d cacao ; \
 	then \
-	  mkdir -p cacao/cacao ; \
-	  cp -r $(ALT_CACAO_SRC_DIR)/* cacao/cacao/ ; \
+	  mkdir cacao ; \
+	  cp -rL $(ALT_CACAO_SRC_DIR) cacao/cacao ; \
 	fi
 else
 	set -e ; \
@@ -1587,15 +1602,58 @@ clean-add-pulseaudio-debug:
 	rm -f stamps/add-pulseaudio-debug.stamp
 
 stamps/add-nss.stamp: stamps/icedtea.stamp
-	cp $(abs_top_builddir)/nss.cfg \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security
-	cp $(abs_top_builddir)/nss.cfg \
-	  $(BUILD_OUTPUT_DIR)/j2re-image/lib/security
-	touch stamps/add-nss.stamp
+	if [ -d $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security ] ; then \
+	  cp -v $(abs_top_builddir)/nss.cfg \
+	    $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security; \
+	  cp -v $(abs_top_builddir)/nss.cfg \
+	    $(BUILD_OUTPUT_DIR)/j2re-image/lib/security; \
+	  rm -f stamps/add-nss.stamp.tmp; \
+	  touch stamps/add-nss.stamp.tmp; \
+	  all_patches_ok=yes; \
+	  for dir in $(BUILD_OUTPUT_DIR)/{j2sdk-image/jre,j2re-image} ; \
+	  do \
+	    pushd $$dir ; \
+	    cp -v $$dir/lib/security/java.security{,.old} ; \
+	    for p in $(NSS_PATCHES) ; \
+	    do \
+	      if test x$${all_patches_ok} = "xyes" \
+	        && echo Checking $$p \
+	        && $(PATCH) -l -p0 --dry-run -s -t -f -F0 \
+	          < $(abs_top_srcdir)/$$p ; \
+	      then \
+	        echo Applying $$p ; \
+	        $(PATCH) -l -p0 -F0 < $(abs_top_srcdir)/$$p ; \
+	        if ! grep "^\* $$(basename $$p)" $(abs_top_srcdir)/HACKING \
+	          >> $(abs_top_builddir)/stamps/add-nss.stamp.tmp ; \
+	        then \
+	          echo "* $$(basename $$p): UNDOCUMENTED" \
+	            >> $(abs_top_builddir)/stamps/add-nss.stamp.tmp ; \
+	        fi ; \
+	      else \
+	        test x$${all_patches_ok} = "xyes" && all_patches_ok=$$p ; \
+	      fi ; \
+	    done ; \
+	    popd ; \
+	  done ; \
+	  mv stamps/add-nss.stamp.tmp stamps/add-nss.stamp ; \
+	  if ! test x$${all_patches_ok} = "xyes"; then \
+	    echo ERROR patch $${all_patches_ok} FAILED! ; \
+	    echo WARNING make clean-add-nss before retrying a fix ; \
+	    exit 2; \
+	  fi \
+	else \
+	  echo "NO $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security dir"; \
+	fi
 
 clean-add-nss:
-	rm -f $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/nss.cfg
-	rm -f $(BUILD_OUTPUT_DIR)/j2re-image/lib/security/nss.cfg
+	rm -vf $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/nss.cfg
+	rm -vf $(BUILD_OUTPUT_DIR)/j2re-image/lib/security/nss.cfg
+	if [ -e $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/java.security.old ] ; then \
+	  mv -vf $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/java.security{.old,} ; \
+	fi
+	if [ -e $(BUILD_OUTPUT_DIR)/j2re-image/lib/security/java.security.old ] ; then \
+	  mv -vf $(BUILD_OUTPUT_DIR)/j2re-image/lib/security/java.security{.old,} ; \
+	fi
 	rm -f stamps/add-nss.stamp
 
 stamps/add-nss-debug.stamp: stamps/icedtea-debug.stamp
@@ -1603,11 +1661,50 @@ stamps/add-nss-debug.stamp: stamps/icedtea-debug.stamp
 	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security;
 	cp $(abs_top_builddir)/nss.cfg \
 	  $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/security;
-	touch stamps/add-nss-debug.stamp
+	rm -f stamps/add-nss-debug.stamp.tmp
+	touch stamps/add-nss-debug.stamp.tmp
+	all_patches_ok=yes; \
+	for dir in $(ECJ_BUILD_OUTPUT_DIR)/{j2sdk-image/jre,j2re-image} ; \
+	do \
+	  pushd $$dir ; \
+	  cp -v $$dir/lib/security/java.security{,.old} ; \
+	  for p in $(NSS_PATCHES) ; \
+	  do \
+	    if test x$${all_patches_ok} = "xyes" \
+	      && echo Checking $$p \
+	      && $(PATCH) -l -p0 --dry-run -s -t -f -F0 \
+	        < $(abs_top_srcdir)/$$p ; \
+	    then \
+	      echo Applying $$p ; \
+	      $(PATCH) -l -p0 -F0 < $(abs_top_srcdir)/$$p ; \
+	      if ! grep "^\* $$(basename $$p)" $(abs_top_srcdir)/HACKING \
+	        >> $(abs_top_builddir)/stamps/add-nss-debug.stamp.tmp ; \
+	      then \
+	        echo "* $$(basename $$p): UNDOCUMENTED" \
+	          >> $(abs_top_builddir)/stamps/add-nss-debug.stamp.tmp ; \
+	      fi ; \
+	    else \
+	      test x$${all_patches_ok} = "xyes" && all_patches_ok=$$p ; \
+	    fi ; \
+	  done ; \
+	  popd ; \
+	done ; \
+	mv stamps/add-nss-debug.stamp.tmp stamps/add-nss-debug.stamp ; \
+	if ! test x$${all_patches_ok} = "xyes"; then \
+	  echo ERROR patch $${all_patches_ok} FAILED! ; \
+	  echo WARNING make clean-add-nss-debug before retrying a fix ; \
+	  exit 2; \
+	fi
 
 clean-add-nss-debug:
-	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/nss.cfg
-	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/security/nss.cfg
+	rm -vf $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/nss.cfg
+	rm -vf $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/security/nss.cfg
+	if [ -e $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/java.security.old ] ; then \
+	  mv -vf $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/java.security{.old,} ; \
+	fi
+	if [ -e $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/security/java.security.old ] ; then \
+	  mv -vf $(DEBUG_BUILD_OUTPUT_DIR)/j2re-image/lib/security/java.security{.old,} ; \
+	fi
 	rm -f stamps/add-nss-debug.stamp
 
 stamps/add-tzdata-support.stamp: stamps/icedtea.stamp
@@ -1710,15 +1807,54 @@ clean-add-pulseaudio-ecj:
 	rm -f stamps/add-pulseaudio-ecj.stamp
 
 stamps/add-nss-ecj.stamp: stamps/icedtea-ecj.stamp
-	cp $(abs_top_builddir)/nss.cfg \
+	cp -v $(abs_top_builddir)/nss.cfg \
 	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security;
-	cp $(abs_top_builddir)/nss.cfg \
+	cp -v $(abs_top_builddir)/nss.cfg \
 	  $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/security;
-	touch stamps/add-nss-ecj.stamp
+	rm -f stamps/add-nss-ecj.stamp.tmp
+	touch stamps/add-nss-ecj.stamp.tmp
+	all_patches_ok=yes; \
+	for dir in $(ECJ_BUILD_OUTPUT_DIR)/{j2sdk-image/jre,j2re-image} ; \
+	do \
+	  pushd $$dir ; \
+	  cp -v $$dir/lib/security/java.security{,.old} ; \
+	  for p in $(NSS_PATCHES) ; \
+	  do \
+	    if test x$${all_patches_ok} = "xyes" \
+	      && echo Checking $$p \
+	      && $(PATCH) -l -p0 --dry-run -s -t -f -F0 \
+	        < $(abs_top_srcdir)/$$p ; \
+	    then \
+	      echo Applying $$p ; \
+	      $(PATCH) -l -p0 -F0 < $(abs_top_srcdir)/$$p ; \
+	      if ! grep "^\* $$(basename $$p)" $(abs_top_srcdir)/HACKING \
+	        >> $(abs_top_builddir)/stamps/add-nss-ecj.stamp.tmp ; \
+	      then \
+	        echo "* $$(basename $$p): UNDOCUMENTED" \
+	          >> $(abs_top_builddir)/stamps/add-nss-ecj.stamp.tmp ; \
+	      fi ; \
+	    else \
+	      test x$${all_patches_ok} = "xyes" && all_patches_ok=$$p ; \
+	    fi ; \
+	  done ; \
+	  popd ; \
+	done ; \
+	mv stamps/add-nss-ecj.stamp.tmp stamps/add-nss-ecj.stamp ; \
+	if ! test x$${all_patches_ok} = "xyes"; then \
+	  echo ERROR patch $${all_patches_ok} FAILED! ; \
+	  echo WARNING make clean-add-nss-ecj before retrying a fix ; \
+	  exit 2; \
+	fi
 
 clean-add-nss-ecj:
-	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/nss.cfg
-	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/security/nss.cfg
+	rm -vf $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/nss.cfg
+	rm -vf $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/security/nss.cfg
+	if [ -e $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/java.security.old ] ; then \
+	  mv -vf $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/security/java.security{.old,} ; \
+	fi
+	if [ -e $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/security/java.security.old ] ; then \
+	  mv -vf $(ECJ_BUILD_OUTPUT_DIR)/j2re-image/lib/security/java.security{.old,} ; \
+	fi
 	rm -f stamps/add-nss-ecj.stamp
 
 stamps/add-tzdata-support-ecj.stamp: stamps/icedtea-ecj.stamp
@@ -1883,7 +2019,7 @@ stamps/jamvm.stamp: $(OPENJDK_TREE) stamps/rt.stamp
 if BUILD_JAMVM
 	cd jamvm/jamvm && \
 	LDFLAGS="-Xlinker -z -Xlinker noexecstack" \
-	./autogen.sh --with-java-runtime-library=openjdk \
+	./autogen.sh --with-java-runtime-library=openjdk6 \
 	  --prefix=$(abs_top_builddir)/jamvm/install ; \
 	$(MAKE) ; \
 	$(MAKE) install
@@ -2053,7 +2189,8 @@ if ADD_ZERO_BUILD
 
 	cd zerovm && \
 	    $(ADD_ZERO_EXTRA_BUILD_ENV) \
-		$(ARCH_PREFIX) $(abs_top_srcdir)/configure $(ADD_ZERO_CONFIGURE_ARGS)
+		$(ARCH_PREFIX) $(abs_top_srcdir)/configure $(ADD_ZERO_CONFIGURE_ARGS) && \
+	    ln -s ../drops
 
 	: # create directories which are expected by icedtea components,
 	: # implicitly assumed to be created by the jdk build.
@@ -2112,7 +2249,8 @@ if ADD_ZERO_BUILD
 
 	cd zerovm && \
 	    $(ADD_ZERO_EXTRA_BUILD_ENV) \
-		$(ARCH_PREFIX) $(abs_top_srcdir)/configure $(ADD_ZERO_CONFIGURE_ARGS)
+		$(ARCH_PREFIX) $(abs_top_srcdir)/configure $(ADD_ZERO_CONFIGURE_ARGS) && \
+	    ln -s ../drops
 
 	$(ADD_ZERO_EXTRA_BUILD_ENV) \
 		$(ARCH_PREFIX) $(MAKE) -C zerovm $(ICEDTEA_DEBUG_BUILD_TARGET)
@@ -2249,13 +2387,21 @@ jtregcheck: jtreg $(TEST_SUITES:%=check-%)
 	  $(jtreg_processes); \
 	fi
 
-check-tapset: 
+check-tapset-probes: 
 if ENABLE_SYSTEMTAP
 	$(abs_top_srcdir)/test/tapset/jstaptest.pl \
 	  -B $(BUILD_OUTPUT_DIR) -A $(BUILD_ARCH_DIR) \
 	  -S $(abs_top_srcdir)/test/tapset \
-	  -o test/check-stap.log
+	  -a test/check-stap.log -p
 endif
+check-tapset-jstack: 
+if ENABLE_SYSTEMTAP
+	$(abs_top_srcdir)/test/tapset/jstaptest.pl \
+	  -B $(BUILD_OUTPUT_DIR) -A $(BUILD_ARCH_DIR) \
+	  -S $(abs_top_srcdir)/test/tapset \
+	  -a test/check-stap.log -j
+endif
+check-tapset: check-tapset-probes check-tapset-jstack
 
 clean-tapset-report:
 if ENABLE_SYSTEMTAP
@@ -2266,10 +2412,6 @@ endif
 
 # rt.jar additional class files.
 rt-source-files.txt: $(OPENJDK_ECJ_TREE)
-	for dir in $(ICEDTEA_BOOTSTRAP_DIRS) ; \
-	do \
-	  $(FIND) $(abs_top_builddir)/$$dir -name '*.java' >> $@; \
-	done
 	for files in $(ICEDTEA_BOOTSTRAP_CLASSES) ; \
 	do \
 	  echo $$files >> $@ ; \

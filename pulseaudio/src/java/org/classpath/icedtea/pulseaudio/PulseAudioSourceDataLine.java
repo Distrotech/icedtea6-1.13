@@ -179,8 +179,10 @@ public final class PulseAudioSourceDataLine extends PulseAudioDataLine
             synchronized (eventLoop.threadLock) {
 
                 do {
-                    if (writeInterrupted) {
-                        return sizeWritten;
+                    synchronized (this) {
+                        if (writeInterrupted) {
+                            return sizeWritten;
+                        }
                     }
 
                     if (availableSize == -1) {
@@ -257,7 +259,7 @@ public final class PulseAudioSourceDataLine extends PulseAudioDataLine
 
         float frameRate = currentFormat.getFrameRate();
         float time = framesSinceOpen / frameRate; // seconds
-        long microseconds = (long) (time * 1000);
+        long microseconds = (long) (time * SECONDS_TO_MICROSECONDS);
         return microseconds;
     }
 

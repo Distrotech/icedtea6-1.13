@@ -1,0 +1,26 @@
+diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Window.java openjdk/jdk/src/share/classes/java/awt/Window.java
+--- openjdk.orig/jdk/src/share/classes/java/awt/Window.java	2012-08-31 12:37:54.732223754 +0100
++++ openjdk/jdk/src/share/classes/java/awt/Window.java	2012-08-31 12:40:01.526031381 +0100
+@@ -3516,11 +3516,7 @@
+             public void setTrayIconWindow(Window window, boolean state) {
+                 window.isTrayIconWindow = state;
+             }
+-         });
+-     }
+ 
+-    static {
+-        AWTAccessor.setWindowAccessor(new AWTAccessor.WindowAccessor() {
+             public float getOpacity(Window window) {
+                 return window.opacity;
+             }
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/AWTAccessor.java openjdk/jdk/src/share/classes/sun/awt/AWTAccessor.java
+--- openjdk.orig/jdk/src/share/classes/sun/awt/AWTAccessor.java	2012-08-31 12:38:42.276918679 +0100
++++ openjdk/jdk/src/share/classes/sun/awt/AWTAccessor.java	2012-08-31 12:39:28.277567706 +0100
+@@ -29,6 +29,7 @@
+ import java.awt.event.InputEvent;
+ import java.awt.event.KeyEvent;
+ import java.awt.geom.Point2D;
++import java.awt.image.BufferedImage;
+ 
+ import sun.misc.Unsafe;
+ import java.awt.peer.ComponentPeer;
