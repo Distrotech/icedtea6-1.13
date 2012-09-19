@@ -1,3 +1,26 @@
+2012-09-19  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	PR1119: Only add classes to rt-source-files.txt if the class (or one or more of its methods/fields)
+	are actually missing from the boot JDK
+	* Makefile.am:
+	(ICEDTEA_BOOTSTRAP_CLASSES): Only include
+	javax.swing.plaf.basic.BasicDirectoryModel if
+	PR42003 is present in the boot JDK.
+	* NEWS: List PR1119.  Correct previous use of
+	PR1119 which should be PR1121.
+	* acinclude.m4:
+	(IT_FIND_JAVAC): Add missing requirement of
+	IT_CHECK_FOR_JDK.
+	(IT_FIND_JAVA): Likewise.
+	(IT_FIND_JAVAH): Likewise.
+	(IT_FIND_JAR): Likewise.
+	(IT_FIND_RMIC): Likewise.
+	(IT_FIND_NATIVE2ASCII): Likewise.
+	(IT_CHECK_FOR_METHOD): New macro to check
+	for a method both at build-time and run-time.
+	* configure.ac: Call IT_CHECK_FOR_METHOD
+	for javax.swing.plaf.basic.BasicDirectoryModel.addPropertyChangeListener.
+
 2012-09-03  Mark Wielaard  <mark@klomp.org>
 
 	* Makefile.am (ICEDTEA_PATCHES): Add missing backslash after

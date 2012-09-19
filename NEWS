@@ -23,7 +23,9 @@ New in release 1.12 (2012-XX-XX):
   - PR1050: Stream objects not garbage collected
   - PR1113: Add tapset tests to distribution.
   - PR1117: IcedTea6 prebuilds far too many classes on bootstrap
-  - PR1119: Old installs still suffer from GCC PR41686
+  - PR1121: Old installs still suffer from GCC PR41686
+  - PR1119: Only add classes to rt-source-files.txt if the class (or one or more of its methods/fields)
+    are actually missing from the boot JDK
 * JamVM
   - ARMv6 armhf: Changes for Raspbian (Raspberry Pi)
   - PPC: Don't use lwsync if it isn't supported

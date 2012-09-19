@@ -68,13 +68,18 @@ SOURCEPATH_DIRS = $(abs_top_srcdir)/generated:$(OPENJDK_SOURCEPATH_DIRS)
 # PR54274 - sun.security.other requires missing X509CRLSelector methods
 # PR54275 - sun.security.sasl requires missing Sasl.CREDENTIALS field
 ICEDTEA_BOOTSTRAP_CLASSES = \
-	$(SHARE)/javax/swing/plaf/basic/BasicDirectoryModel.java \
 	$(SHARE)/javax/management/StandardMBean.java \
 	$(SHARE)/com/sun/java/swing/plaf/nimbus/NimbusLookAndFeel.java \
 	$(SHARE)/java/security/cert/X509CRLSelector.java \
 	$(SHARE)/java/security/cert/X509CertSelector.java \
 	$(SHARE)/javax/security/sasl/Sasl.java \
 	$(SHARE)/javax/security/auth/kerberos/KerberosTicket.java
+
+#PR42003 - Missing javax.swing.plaf.basic.BasicDirectoryModel methods cause OpenJDK build failure 
+if LACKS_JAVAX_SWING_PLAF_BASIC_BASICDIRECTORYMODEL_ADDPROPERTYCHANGELISTENER
+ICEDTEA_BOOTSTRAP_CLASSES += \
+	$(SHARE)/javax/swing/plaf/basic/BasicDirectoryModel.java
+endif
 
 # Flags
 MEMORY_LIMIT = -J-Xmx1024m

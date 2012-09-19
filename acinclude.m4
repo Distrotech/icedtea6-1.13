@@ -187,6 +187,7 @@ AC_DEFUN_ONCE([IT_FIND_ECJ],
 
 AC_DEFUN_ONCE([IT_FIND_JAVAC],
 [
+  AC_REQUIRE([IT_CHECK_FOR_JDK])
   JAVAC_DEFAULT=${SYSTEM_JDK_DIR}/bin/javac
   AC_MSG_CHECKING([if a javac binary was specified])
   AC_ARG_WITH([javac],
@@ -219,6 +220,7 @@ AC_DEFUN_ONCE([IT_FIND_JAVAC],
 
 AC_DEFUN_ONCE([IT_FIND_JAVA],
 [
+  AC_REQUIRE([IT_CHECK_FOR_JDK])
   JAVA_DEFAULT=${SYSTEM_JDK_DIR}/bin/java
   AC_MSG_CHECKING([if a java binary was specified])
   AC_ARG_WITH([java],
@@ -372,6 +374,7 @@ AC_DEFUN([IT_CHECK_GCC_VERSION],
 
 AC_DEFUN([IT_FIND_JAVAH],
 [
+  AC_REQUIRE([IT_CHECK_FOR_JDK])
   JAVAH_DEFAULT=${SYSTEM_JDK_DIR}/bin/javah
   AC_MSG_CHECKING([if a javah binary was specified])
   AC_ARG_WITH([javah],
@@ -409,6 +412,7 @@ AC_DEFUN([IT_FIND_JAVAH],
 
 AC_DEFUN([IT_FIND_JAR],
 [
+  AC_REQUIRE([IT_CHECK_FOR_JDK])
   JAR_DEFAULT=${SYSTEM_JDK_DIR}/bin/jar
   AC_MSG_CHECKING([if a jar binary was specified])
   AC_ARG_WITH([jar],
@@ -479,6 +483,7 @@ EOF
 
 AC_DEFUN([IT_FIND_RMIC],
 [
+  AC_REQUIRE([IT_CHECK_FOR_JDK])
   RMIC_DEFAULT=${SYSTEM_JDK_DIR}/bin/rmic
   AC_MSG_CHECKING([if a rmic binary was specified])
   AC_ARG_WITH([rmic],
@@ -516,6 +521,7 @@ AC_DEFUN([IT_FIND_RMIC],
 
 AC_DEFUN([IT_FIND_NATIVE2ASCII],
 [
+  AC_REQUIRE([IT_CHECK_FOR_JDK])
   NATIVE2ASCII_DEFAULT=${SYSTEM_JDK_DIR}/bin/native2ascii
   AC_MSG_CHECKING([if a native2ascii binary was specified])
   AC_ARG_WITH([native2ascii],
@@ -1768,5 +1774,63 @@ cd ..
 rmdir tmp.$$
 AM_CONDITIONAL([CP39408_JAVAH], test x"${it_cv_cp39408_javah}" = "xyes")
 AM_CONDITIONAL([CP40188_JAVAH], test x"${it_cv_cp40188_javah}" = "xyes")
+AC_PROVIDE([$0])dnl
+])
+
+dnl Generic macro to check for a Java method
+dnl Takes four arguments: the name of the macro,
+dnl the name of the class, the method signature
+dnl and an example call to the method.  The macro name
+dnl is usually the name of the class with '.'
+dnl replaced by '_' and all letters capitalised.
+dnl e.g. IT_CHECK_FOR_METHOD([JAVA_UTIL_REGEX_MATCHER_QUOTEREPLACEMENT],[java.util.regex.Matcher.quoteReplacement],[java.util.rgex.Matcher],["quoteReplacement",String.class],java.util.regex.Matcher.quoteReplacement("Blah"))
+AC_DEFUN([IT_CHECK_FOR_METHOD],[
+AC_REQUIRE([IT_CHECK_JAVA_AND_JAVAC_WORK])
+AC_CACHE_CHECK([if $2 is missing], it_cv_$1, [
+CLASS=Test.java
+BYTECODE=$(echo $CLASS|sed 's#\.java##')
+mkdir tmp.$$
+cd tmp.$$
+cat << \EOF > $CLASS
+[/* [#]line __oline__ "configure" */
+import java.lang.reflect.Method;
+
+public class Test
+{
+  public static void main(String[] args)
+  {
+    Class<?> cl = $3.class;
+    try
+      {
+        Method m = cl.getDeclaredMethod($4);
+      }
+    catch (NoSuchMethodException e)
+      {
+        System.exit(-1);
+      }
+  }
+
+  public void dontRun()
+  {
+    $5;
+  }
+
+}
+]
+EOF
+if $JAVAC -cp . $JAVACFLAGS -source 5 -target 5 -nowarn $CLASS >&AS_MESSAGE_LOG_FD 2>&1; then
+  if $JAVA -classpath . $BYTECODE >&AS_MESSAGE_LOG_FD 2>&1; then
+      it_cv_$1=no;
+  else
+      it_cv_$1=yes;
+  fi
+else
+  it_cv_$1=yes;
+fi
+])
+rm -f $CLASS *.class
+cd ..
+rmdir tmp.$$
+AM_CONDITIONAL([LACKS_$1], test x"${it_cv_$1}" = "xyes")
 AC_PROVIDE([$0])dnl
 ])

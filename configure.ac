@@ -57,6 +57,13 @@ IT_DISABLE_HOTSPOT_TESTS
 IT_DISABLE_LANGTOOLS_TESTS
 IT_DISABLE_JDK_TESTS
 
+IT_CHECK_FOR_METHOD([JAVAX_SWING_PLAF_BASIC_BASICDIRECTORYMODEL_ADDPROPERTYCHANGELISTENER],
+  [javax.swing.plaf.basic.BasicDirectoryModel.addPropertyChangeListener],
+  [javax.swing.plaf.basic.BasicDirectoryModel],
+  ["addPropertyChangeListener",java.beans.PropertyChangeListener.class],
+  [javax.swing.plaf.basic.BasicDirectoryModel model = new javax.swing.plaf.basic.BasicDirectoryModel(new javax.swing.JFileChooser()); model.addPropertyChangeListener(model)]
+)
+
 # Use xvfb-run if found to run gui tests (check-jdk).
 AC_CHECK_PROG(XVFB_RUN_CMD, xvfb-run, [xvfb-run -a -e xvfb-errors], [])
 AC_SUBST(XVFB_RUN_CMD)
@@ -142,7 +149,6 @@ OPENJDK_BUILD_DIR=openjdk.build
 AC_SUBST(OPENJDK_BUILD_DIR)
 
 IT_CHECK_IF_BOOTSTRAPPING
-IT_CHECK_FOR_JDK
 IT_FIND_JAVA
 IT_FIND_COMPILER
 IT_FIND_JAVAH
