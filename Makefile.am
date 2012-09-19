@@ -194,8 +194,6 @@ TAPSET_TEST_SRCS = \
 ICEDTEA_FSG_PATCHES =
 
 SECURITY_PATCHES = \
-	patches/security/20120830/7162476-xmldecoder_via_classfinder.patch \
-	patches/security/20120830/7163201-simplify_toolkit_internal_references.patch \
 	patches/security/20120830/7182135-impossible_to_use_some_editors_directly.patch
 
 SPECIAL_SECURITY_PATCH = patches/security/20120214/7112642.patch
@@ -417,7 +415,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/p11cipher-6924489-ckr_operation_not_initialized.patch \
 	patches/openjdk/p11cipher-6604496-support_ckm_aes_ctr.patch \
 	patches/openjdk/p11cipher-6414899-p11digest_should_support_cloning.patch \
-	patches/openjdk/7185678-xmenuitem_peer_npe.patch \
 	patches/merge_fix.patch
 
 if WITH_RHINO

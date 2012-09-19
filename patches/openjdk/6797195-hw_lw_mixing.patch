@@ -1,6 +1,6 @@
 diff -Nru openjdk.orig/jdk/make/sun/awt/Makefile openjdk/jdk/make/sun/awt/Makefile
---- openjdk.orig/jdk/make/sun/awt/Makefile	2011-11-14 22:11:40.000000000 +0000
-+++ openjdk/jdk/make/sun/awt/Makefile	2012-08-31 11:33:55.782065771 +0100
+--- openjdk.orig/jdk/make/sun/awt/Makefile	2011-01-07 21:32:51.000000000 +0000
++++ openjdk/jdk/make/sun/awt/Makefile	2012-09-19 14:14:56.113507317 +0100
 @@ -51,7 +51,7 @@
  # sun/awt/resources       handled by java/awt/Makefile
  # sun/java2d/pisces       handled by sun/pisces/Makefile
@@ -11,8 +11,8 @@ diff -Nru openjdk.orig/jdk/make/sun/awt/Makefile openjdk/jdk/make/sun/awt/Makefi
  
  ifeq ($(PLATFORM), windows)
 diff -Nru openjdk.orig/jdk/make/tools/sharing/classlist.linux openjdk/jdk/make/tools/sharing/classlist.linux
---- openjdk.orig/jdk/make/tools/sharing/classlist.linux	2011-11-14 22:11:41.000000000 +0000
-+++ openjdk/jdk/make/tools/sharing/classlist.linux	2012-08-31 11:33:55.786065852 +0100
+--- openjdk.orig/jdk/make/tools/sharing/classlist.linux	2011-01-07 21:32:51.000000000 +0000
++++ openjdk/jdk/make/tools/sharing/classlist.linux	2012-09-19 14:14:56.129507570 +0100
 @@ -1718,6 +1718,7 @@
  sun/awt/color/CMM
  java/applet/Applet
@@ -22,8 +22,8 @@ diff -Nru openjdk.orig/jdk/make/tools/sharing/classlist.linux openjdk/jdk/make/t
  sun/awt/EmbeddedFrame
  sun/awt/im/InputMethodContext
 diff -Nru openjdk.orig/jdk/make/tools/sharing/classlist.solaris openjdk/jdk/make/tools/sharing/classlist.solaris
---- openjdk.orig/jdk/make/tools/sharing/classlist.solaris	2011-11-14 22:11:41.000000000 +0000
-+++ openjdk/jdk/make/tools/sharing/classlist.solaris	2012-08-31 11:33:55.790065932 +0100
+--- openjdk.orig/jdk/make/tools/sharing/classlist.solaris	2011-01-07 21:32:51.000000000 +0000
++++ openjdk/jdk/make/tools/sharing/classlist.solaris	2012-09-19 14:14:56.129507570 +0100
 @@ -961,6 +961,7 @@
  javax/swing/SystemEventQueueUtilities$ComponentWorkRequest
  java/applet/Applet
@@ -33,8 +33,8 @@ diff -Nru openjdk.orig/jdk/make/tools/sharing/classlist.solaris openjdk/jdk/make
  java/util/jar/Manifest
  java/io/ByteArrayInputStream
 diff -Nru openjdk.orig/jdk/make/tools/sharing/classlist.windows openjdk/jdk/make/tools/sharing/classlist.windows
---- openjdk.orig/jdk/make/tools/sharing/classlist.windows	2011-11-14 22:11:41.000000000 +0000
-+++ openjdk/jdk/make/tools/sharing/classlist.windows	2012-08-31 11:33:55.790065932 +0100
+--- openjdk.orig/jdk/make/tools/sharing/classlist.windows	2011-01-07 21:32:51.000000000 +0000
++++ openjdk/jdk/make/tools/sharing/classlist.windows	2012-09-19 14:14:56.129507570 +0100
 @@ -1621,6 +1621,7 @@
  sun/font/FontDesignMetrics$MetricsKey
  java/applet/Applet
@@ -45,7 +45,7 @@ diff -Nru openjdk.orig/jdk/make/tools/sharing/classlist.windows openjdk/jdk/make
  java/awt/im/spi/InputMethodContext
 diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/awt/AWTUtilities.java openjdk/jdk/src/share/classes/com/sun/awt/AWTUtilities.java
 --- openjdk.orig/jdk/src/share/classes/com/sun/awt/AWTUtilities.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/src/share/classes/com/sun/awt/AWTUtilities.java	2012-08-31 11:33:55.790065932 +0100
++++ openjdk/jdk/src/share/classes/com/sun/awt/AWTUtilities.java	2012-09-19 14:14:56.129507570 +0100
 @@ -0,0 +1,104 @@
 +/*
 + * Copyright (c) 2008, 2009, Oracle and/or its affiliates. All rights reserved.
@@ -152,8 +152,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/awt/AWTUtilities.java openj
 +}
 +
 diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Component.java openjdk/jdk/src/share/classes/java/awt/Component.java
---- openjdk.orig/jdk/src/share/classes/java/awt/Component.java	2012-08-31 11:30:58.838483405 +0100
-+++ openjdk/jdk/src/share/classes/java/awt/Component.java	2012-08-31 11:33:55.790065932 +0100
+--- openjdk.orig/jdk/src/share/classes/java/awt/Component.java	2012-09-19 13:58:34.041760415 +0100
++++ openjdk/jdk/src/share/classes/java/awt/Component.java	2012-09-19 14:14:56.129507570 +0100
 @@ -66,8 +66,10 @@
  
  import sun.security.action.GetPropertyAction;
@@ -199,7 +199,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Component.java openjdk/jdk
      /**
       * Should only be used in subclass getBounds to check that part of bounds
       * is actualy changing
-@@ -925,6 +931,39 @@
+@@ -821,6 +827,39 @@
      }
  
  
@@ -239,7 +239,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Component.java openjdk/jdk
      /**
       * Constructs a new component. Class <code>Component</code> can be
       * extended directly to create a lightweight component that does not
-@@ -6693,7 +6732,6 @@
+@@ -6589,7 +6628,6 @@
              }
  
              if (!isAddNotifyComplete) {
@@ -247,7 +247,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Component.java openjdk/jdk
                  mixOnShowing();
              }
  
-@@ -6785,9 +6823,11 @@
+@@ -6681,9 +6719,11 @@
                  p.dispose();
  
                  mixOnHiding(isLightweight);
@@ -260,7 +260,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Component.java openjdk/jdk
              }
  
              if (hierarchyListener != null ||
-@@ -9453,10 +9493,9 @@
+@@ -9349,10 +9389,9 @@
       * Null-layout of the container or absence of the container mean
       * the bounds of the component are final and can be trusted.
       */
@@ -273,7 +273,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Component.java openjdk/jdk
      }
  
      /**
-@@ -9465,6 +9504,14 @@
+@@ -9361,6 +9400,14 @@
       */
      void applyCompoundShape(Region shape) {
          checkTreeLock();
@@ -288,7 +288,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Component.java openjdk/jdk
          if (!isLightweight()) {
              ComponentPeer peer = getPeer();
              if (peer != null) {
-@@ -9474,22 +9521,31 @@
+@@ -9370,22 +9417,31 @@
                  // with some incorrect Region object with loX being
                  // greater than the hiX for instance.
                  if (shape.isEmpty()) {
@@ -327,7 +327,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Component.java openjdk/jdk
                      peer.applyShape(shape.getTranslatedRegion(-compAbsolute.x, -compAbsolute.y));
                  }
              }
-@@ -9512,7 +9568,7 @@
+@@ -9408,7 +9464,7 @@
          Point curLocation = getLocation();
  
          for (Container parent = getContainer();
@@ -336,7 +336,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Component.java openjdk/jdk
                  parent = parent.getContainer())
          {
              curLocation.x += parent.getX();
-@@ -9538,7 +9594,28 @@
+@@ -9434,7 +9490,28 @@
              );
      }
  
@@ -366,7 +366,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Component.java openjdk/jdk
          checkTreeLock();
          Container parent = getContainer();
          if (parent == null) {
-@@ -9550,7 +9627,7 @@
+@@ -9446,7 +9523,7 @@
          return nextAbove < 0 ? -1 : nextAbove;
      }
  
@@ -375,7 +375,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Component.java openjdk/jdk
          checkTreeLock();
          Container parent = getContainer();
          if (parent == null) {
-@@ -9562,6 +9639,11 @@
+@@ -9458,6 +9535,11 @@
          return nextBelow >= parent.getComponentCount() ? -1 : nextBelow;
      }
  
@@ -387,7 +387,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Component.java openjdk/jdk
      private Region calculateCurrentShape() {
          checkTreeLock();
          Region s = getNormalShape();
-@@ -9584,8 +9666,8 @@
+@@ -9480,8 +9562,8 @@
                       * implementation of the Container class.
                       */
                      Component c = cont.getComponent(index);
@@ -398,7 +398,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Component.java openjdk/jdk
                      }
                  }
  
-@@ -9610,6 +9692,9 @@
+@@ -9506,6 +9588,9 @@
      void applyCurrentShape() {
          checkTreeLock();
          if (!areBoundsValid()) {
@@ -408,7 +408,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Component.java openjdk/jdk
              return; // Because applyCompoundShape() ignores such components anyway
          }
          if (mixingLog.isLoggable(Level.FINE)) {
-@@ -9628,16 +9713,54 @@
+@@ -9524,16 +9609,54 @@
          applyCompoundShape(getAppliedShape().getDifference(s));
      }
  
@@ -467,7 +467,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Component.java openjdk/jdk
              } else {
                  applyCurrentShape();
              }
-@@ -9651,12 +9774,12 @@
+@@ -9547,12 +9670,12 @@
              if (mixingLog.isLoggable(Level.FINE)) {
                  mixingLog.fine("this = " + this + "; isLightweight = " + isLightweight);
              }
@@ -485,7 +485,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Component.java openjdk/jdk
          }
      }
  
-@@ -9665,11 +9788,11 @@
+@@ -9561,11 +9684,11 @@
              if (mixingLog.isLoggable(Level.FINE)) {
                  mixingLog.fine("this = " + this);
              }
@@ -501,7 +501,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Component.java openjdk/jdk
              } else {
                  applyCurrentShape();
              }
-@@ -9685,11 +9808,13 @@
+@@ -9581,11 +9704,13 @@
                  mixingLog.fine("this = " + this +
                      "; oldZorder=" + oldZorder + "; newZorder=" + newZorder + "; parent=" + parent);
              }
@@ -518,7 +518,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Component.java openjdk/jdk
                      }
                  } else {
                      if (parent != null) {
-@@ -9705,8 +9830,8 @@
+@@ -9601,8 +9726,8 @@
  
                          for (int index = oldZorder; index < newZorder; index++) {
                              Component c = parent.getComponent(index);
@@ -529,7 +529,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Component.java openjdk/jdk
                              }
                          }
                          applyCompoundShape(shape);
-@@ -9716,21 +9841,42 @@
+@@ -9612,21 +9737,42 @@
          }
      }
  
@@ -584,8 +584,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Component.java openjdk/jdk
      // ****************** END OF MIXING CODE ********************************
  }
 diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Container.java openjdk/jdk/src/share/classes/java/awt/Container.java
---- openjdk.orig/jdk/src/share/classes/java/awt/Container.java	2012-08-31 11:30:58.842483486 +0100
-+++ openjdk/jdk/src/share/classes/java/awt/Container.java	2012-08-31 11:33:55.790065932 +0100
+--- openjdk.orig/jdk/src/share/classes/java/awt/Container.java	2012-09-19 13:58:34.045760479 +0100
++++ openjdk/jdk/src/share/classes/java/awt/Container.java	2012-09-19 14:14:56.133507636 +0100
 @@ -569,7 +569,7 @@
       * @return true if there is at least one heavyweight children in a container, false otherwise
       * @since 1.5
@@ -740,8 +740,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Container.java openjdk/jdk
          }
      }
 diff -Nru openjdk.orig/jdk/src/share/classes/javax/swing/JRootPane.java openjdk/jdk/src/share/classes/javax/swing/JRootPane.java
---- openjdk.orig/jdk/src/share/classes/javax/swing/JRootPane.java	2011-11-14 22:11:56.000000000 +0000
-+++ openjdk/jdk/src/share/classes/javax/swing/JRootPane.java	2012-08-31 11:33:55.790065932 +0100
+--- openjdk.orig/jdk/src/share/classes/javax/swing/JRootPane.java	2011-01-07 21:32:57.000000000 +0000
++++ openjdk/jdk/src/share/classes/javax/swing/JRootPane.java	2012-09-19 14:14:56.133507636 +0100
 @@ -34,6 +34,7 @@
  import java.util.Vector;
  import java.io.Serializable;
@@ -761,8 +761,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/javax/swing/JRootPane.java openjdk/
          if (glassPane != null && glassPane.getParent() == this) {
              this.remove(glassPane);
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/AWTAccessor.java openjdk/jdk/src/share/classes/sun/awt/AWTAccessor.java
---- openjdk.orig/jdk/src/share/classes/sun/awt/AWTAccessor.java	2012-08-31 11:30:58.638479343 +0100
-+++ openjdk/jdk/src/share/classes/sun/awt/AWTAccessor.java	2012-08-31 11:34:42.907016063 +0100
+--- openjdk.orig/jdk/src/share/classes/sun/awt/AWTAccessor.java	2012-08-31 11:18:57.951637289 +0100
++++ openjdk/jdk/src/share/classes/sun/awt/AWTAccessor.java	2012-09-19 14:15:53.698430036 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
@@ -770,9 +770,9 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/AWTAccessor.java openjdk/jd
   * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
   *
   * This code is free software; you can redistribute it and/or modify it
-@@ -202,6 +202,13 @@
+@@ -79,6 +79,13 @@
           */
-         Point getLocation(Component comp);
+         void setAppContext(Component comp, AppContext appContext);
  
 +        // See 6797587
 +        // Also see: 6776743, 6768307, and 6768332.
@@ -784,19 +784,19 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/AWTAccessor.java openjdk/jd
          /*
           * Returns the acc this component was constructed with.
           */
-@@ -519,6 +526,8 @@
-      * Accessor instances are initialized in the static initializers of
+@@ -330,6 +337,8 @@
       * corresponding AWT classes by using setters defined below.
       */
+     private static WindowAccessor windowAccessor;
 +    /* The java.awt.Component class accessor object.
 +     */
      private static ComponentAccessor componentAccessor;
- 
-     /* The java.awt.KeyboardFocusManager class accessor object.
+     private static KeyboardFocusManagerAccessor kfmAccessor;
+     private static AWTEventAccessor awtEventAccessor;
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/SunToolkit.java openjdk/jdk/src/share/classes/sun/awt/SunToolkit.java
---- openjdk.orig/jdk/src/share/classes/sun/awt/SunToolkit.java	2012-08-31 11:30:58.638479343 +0100
-+++ openjdk/jdk/src/share/classes/sun/awt/SunToolkit.java	2012-08-31 11:33:55.794066013 +0100
-@@ -1810,6 +1810,21 @@
+--- openjdk.orig/jdk/src/share/classes/sun/awt/SunToolkit.java	2012-08-31 11:18:57.951637289 +0100
++++ openjdk/jdk/src/share/classes/sun/awt/SunToolkit.java	2012-09-19 14:14:56.133507636 +0100
+@@ -1840,6 +1840,21 @@
          AWTAutoShutdown.getInstance().dumpPeers(aLog);
      }
  
@@ -819,8 +819,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/SunToolkit.java openjdk/jdk
       * Returns true if the native GTK libraries are available.  The
       * default implementation returns false, but UNIXToolkit overrides this
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/java2d/pipe/Region.java openjdk/jdk/src/share/classes/sun/java2d/pipe/Region.java
---- openjdk.orig/jdk/src/share/classes/sun/java2d/pipe/Region.java	2011-11-14 22:12:00.000000000 +0000
-+++ openjdk/jdk/src/share/classes/sun/java2d/pipe/Region.java	2012-08-31 11:33:55.794066013 +0100
+--- openjdk.orig/jdk/src/share/classes/sun/java2d/pipe/Region.java	2011-01-07 21:33:02.000000000 +0000
++++ openjdk/jdk/src/share/classes/sun/java2d/pipe/Region.java	2012-09-19 14:14:56.133507636 +0100
 @@ -28,6 +28,7 @@
  import java.awt.Rectangle;
  import java.awt.Shape;
@@ -896,9 +896,9 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/java2d/pipe/Region.java openjdk
              return false;
          }
 diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XComponentPeer.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XComponentPeer.java
---- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XComponentPeer.java	2012-08-31 11:30:58.642479424 +0100
-+++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XComponentPeer.java	2012-08-31 11:33:55.794066013 +0100
-@@ -1481,13 +1481,23 @@
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XComponentPeer.java	2012-08-31 11:18:57.967637622 +0100
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XComponentPeer.java	2012-09-19 14:14:56.133507636 +0100
+@@ -1518,13 +1518,23 @@
              }
              XToolkit.awtLock();
              try {
@@ -930,8 +930,8 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XComponentPeer.java o
                  XToolkit.awtUnlock();
              }
 diff -Nru openjdk.orig/jdk/src/solaris/native/sun/xawt/XlibWrapper.c openjdk/jdk/src/solaris/native/sun/xawt/XlibWrapper.c
---- openjdk.orig/jdk/src/solaris/native/sun/xawt/XlibWrapper.c	2011-11-14 22:12:16.000000000 +0000
-+++ openjdk/jdk/src/solaris/native/sun/xawt/XlibWrapper.c	2012-08-31 11:33:55.794066013 +0100
+--- openjdk.orig/jdk/src/solaris/native/sun/xawt/XlibWrapper.c	2011-01-07 21:33:07.000000000 +0000
++++ openjdk/jdk/src/solaris/native/sun/xawt/XlibWrapper.c	2012-09-19 14:14:56.133507636 +0100
 @@ -1933,19 +1933,30 @@
   jint x1, jint y1, jint x2, jint y2,
   jobject region)
@@ -973,8 +973,8 @@ diff -Nru openjdk.orig/jdk/src/solaris/native/sun/xawt/XlibWrapper.c openjdk/jdk
      }
  }
 diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WComponentPeer.java openjdk/jdk/src/windows/classes/sun/awt/windows/WComponentPeer.java
---- openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WComponentPeer.java	2011-11-14 22:12:17.000000000 +0000
-+++ openjdk/jdk/src/windows/classes/sun/awt/windows/WComponentPeer.java	2012-08-31 11:33:55.794066013 +0100
+--- openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WComponentPeer.java	2011-01-07 21:33:07.000000000 +0000
++++ openjdk/jdk/src/windows/classes/sun/awt/windows/WComponentPeer.java	2012-09-19 14:14:56.133507636 +0100
 @@ -878,8 +878,12 @@
                      + "; SHAPE: " + shape);
          }
@@ -991,8 +991,8 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WComponentPeer.ja
  
  }
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.cpp openjdk/jdk/src/windows/native/sun/windows/awt_Component.cpp
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.cpp	2012-08-31 11:30:58.762481861 +0100
-+++ openjdk/jdk/src/windows/native/sun/windows/awt_Component.cpp	2012-08-31 11:33:55.794066013 +0100
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.cpp	2012-09-19 13:58:33.877757783 +0100
++++ openjdk/jdk/src/windows/native/sun/windows/awt_Component.cpp	2012-09-19 14:14:56.133507636 +0100
 @@ -6321,30 +6321,36 @@
      c = (AwtComponent *)pData;
      if (::IsWindow(c->GetHWnd()))
@@ -1052,7 +1052,7 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.cpp open
      }
 diff -Nru openjdk.orig/jdk/test/java/awt/Mixing/HWDisappear.java openjdk/jdk/test/java/awt/Mixing/HWDisappear.java
 --- openjdk.orig/jdk/test/java/awt/Mixing/HWDisappear.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/test/java/awt/Mixing/HWDisappear.java	2012-08-31 11:33:55.794066013 +0100
++++ openjdk/jdk/test/java/awt/Mixing/HWDisappear.java	2012-09-19 14:14:56.137507701 +0100
 @@ -0,0 +1,426 @@
 +/*
 + * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
@@ -1482,7 +1482,7 @@ diff -Nru openjdk.orig/jdk/test/java/awt/Mixing/HWDisappear.java openjdk/jdk/tes
 +}// TestDialog  class
 diff -Nru openjdk.orig/jdk/test/java/awt/Mixing/JButtonInGlassPane.java openjdk/jdk/test/java/awt/Mixing/JButtonInGlassPane.java
 --- openjdk.orig/jdk/test/java/awt/Mixing/JButtonInGlassPane.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/test/java/awt/Mixing/JButtonInGlassPane.java	2012-08-31 11:33:55.794066013 +0100
++++ openjdk/jdk/test/java/awt/Mixing/JButtonInGlassPane.java	2012-09-19 14:14:56.137507701 +0100
 @@ -0,0 +1,430 @@
 +/*
 + * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
@@ -1916,7 +1916,7 @@ diff -Nru openjdk.orig/jdk/test/java/awt/Mixing/JButtonInGlassPane.java openjdk/
 +
 diff -Nru openjdk.orig/jdk/test/java/awt/Mixing/LWComboBox.java openjdk/jdk/test/java/awt/Mixing/LWComboBox.java
 --- openjdk.orig/jdk/test/java/awt/Mixing/LWComboBox.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/test/java/awt/Mixing/LWComboBox.java	2012-08-31 11:33:55.794066013 +0100
++++ openjdk/jdk/test/java/awt/Mixing/LWComboBox.java	2012-09-19 14:14:56.137507701 +0100
 @@ -0,0 +1,425 @@
 +/*
 + * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
@@ -2345,7 +2345,7 @@ diff -Nru openjdk.orig/jdk/test/java/awt/Mixing/LWComboBox.java openjdk/jdk/test
 +
 diff -Nru openjdk.orig/jdk/test/java/awt/Mixing/MixingOnShrinkingHWButton.java openjdk/jdk/test/java/awt/Mixing/MixingOnShrinkingHWButton.java
 --- openjdk.orig/jdk/test/java/awt/Mixing/MixingOnShrinkingHWButton.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/test/java/awt/Mixing/MixingOnShrinkingHWButton.java	2012-08-31 11:33:55.798066094 +0100
++++ openjdk/jdk/test/java/awt/Mixing/MixingOnShrinkingHWButton.java	2012-09-19 14:14:56.137507701 +0100
 @@ -0,0 +1,429 @@
 +/*
 + * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
@@ -2778,7 +2778,7 @@ diff -Nru openjdk.orig/jdk/test/java/awt/Mixing/MixingOnShrinkingHWButton.java o
 +
 diff -Nru openjdk.orig/jdk/test/java/awt/Mixing/NonOpaqueInternalFrame.java openjdk/jdk/test/java/awt/Mixing/NonOpaqueInternalFrame.java
 --- openjdk.orig/jdk/test/java/awt/Mixing/NonOpaqueInternalFrame.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/test/java/awt/Mixing/NonOpaqueInternalFrame.java	2012-08-31 11:33:55.798066094 +0100
++++ openjdk/jdk/test/java/awt/Mixing/NonOpaqueInternalFrame.java	2012-09-19 14:14:56.137507701 +0100
 @@ -0,0 +1,434 @@
 +/*
 + * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
@@ -3215,8 +3215,8 @@ diff -Nru openjdk.orig/jdk/test/java/awt/Mixing/NonOpaqueInternalFrame.java open
 +
 +
 diff -Nru openjdk.orig/jdk/test/java/awt/Mixing/OpaqueTest.java openjdk/jdk/test/java/awt/Mixing/OpaqueTest.java
---- openjdk.orig/jdk/test/java/awt/Mixing/OpaqueTest.java	2011-11-14 22:12:20.000000000 +0000
-+++ openjdk/jdk/test/java/awt/Mixing/OpaqueTest.java	2012-08-31 11:33:55.798066094 +0100
+--- openjdk.orig/jdk/test/java/awt/Mixing/OpaqueTest.java	2011-01-07 21:33:08.000000000 +0000
++++ openjdk/jdk/test/java/awt/Mixing/OpaqueTest.java	2012-09-19 14:14:56.137507701 +0100
 @@ -42,6 +42,7 @@
  import java.awt.event.*;
  import javax.swing.*;
@@ -3257,8 +3257,8 @@ diff -Nru openjdk.orig/jdk/test/java/awt/Mixing/OpaqueTest.java openjdk/jdk/test
  
              robot.mousePress(InputEvent.BUTTON1_MASK);
 diff -Nru openjdk.orig/jdk/test/java/awt/Mixing/OverlappingButtons.java openjdk/jdk/test/java/awt/Mixing/OverlappingButtons.java
---- openjdk.orig/jdk/test/java/awt/Mixing/OverlappingButtons.java	2011-11-14 22:12:20.000000000 +0000
-+++ openjdk/jdk/test/java/awt/Mixing/OverlappingButtons.java	2012-08-31 11:33:55.798066094 +0100
+--- openjdk.orig/jdk/test/java/awt/Mixing/OverlappingButtons.java	2011-01-07 21:33:08.000000000 +0000
++++ openjdk/jdk/test/java/awt/Mixing/OverlappingButtons.java	2012-09-19 14:14:56.137507701 +0100
 @@ -78,6 +78,7 @@
                  {
                      public void actionPerformed(java.awt.event.ActionEvent e) {
