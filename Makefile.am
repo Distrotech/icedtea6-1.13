@@ -69,7 +69,6 @@ SOURCEPATH_DIRS = $(abs_top_srcdir)/generated:$(OPENJDK_SOURCEPATH_DIRS)
 # PR54275 - sun.security.sasl requires missing Sasl.CREDENTIALS field
 ICEDTEA_BOOTSTRAP_CLASSES = \
 	$(SHARE)/javax/management/StandardMBean.java \
-	$(SHARE)/com/sun/java/swing/plaf/nimbus/NimbusLookAndFeel.java \
 	$(SHARE)/java/security/cert/X509CRLSelector.java \
 	$(SHARE)/java/security/cert/X509CertSelector.java \
 	$(SHARE)/javax/security/sasl/Sasl.java \
