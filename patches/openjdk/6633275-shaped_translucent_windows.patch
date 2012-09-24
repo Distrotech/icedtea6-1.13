@@ -1,6 +1,6 @@
 diff -Nru openjdk.orig/jdk/make/sun/awt/FILES_c_windows.gmk openjdk/jdk/make/sun/awt/FILES_c_windows.gmk
---- openjdk.orig/jdk/make/sun/awt/FILES_c_windows.gmk	2012-08-31 14:06:57.313124970 +0100
-+++ openjdk/jdk/make/sun/awt/FILES_c_windows.gmk	2012-08-31 14:08:04.130225180 +0100
+--- openjdk.orig/jdk/make/sun/awt/FILES_c_windows.gmk	2012-09-19 14:18:01.684480621 +0100
++++ openjdk/jdk/make/sun/awt/FILES_c_windows.gmk	2012-09-19 14:18:34.309003281 +0100
 @@ -1,5 +1,5 @@
  #
 -# Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.
@@ -19,8 +19,8 @@ diff -Nru openjdk.orig/jdk/make/sun/awt/FILES_c_windows.gmk openjdk/jdk/make/sun
  FILES_cpp = \
  	CmdIDList.cpp \
 diff -Nru openjdk.orig/jdk/make/sun/awt/make.depend openjdk/jdk/make/sun/awt/make.depend
---- openjdk.orig/jdk/make/sun/awt/make.depend	2012-08-31 14:06:57.325125168 +0100
-+++ openjdk/jdk/make/sun/awt/make.depend	2012-08-31 14:08:04.138225311 +0100
+--- openjdk.orig/jdk/make/sun/awt/make.depend	2012-09-19 14:18:01.692480748 +0100
++++ openjdk/jdk/make/sun/awt/make.depend	2012-09-19 14:18:34.321003473 +0100
 @@ -16,7 +16,7 @@
  
  $(OBJDIR)/awt_AWTEvent.obj::	$(CLASSHDRDIR)/java_awt_AWTEvent.h $(CLASSHDRDIR)/java_awt_Component.h $(CLASSHDRDIR)/java_awt_Dimension.h $(CLASSHDRDIR)/java_awt_Event.h $(CLASSHDRDIR)/java_awt_event_FocusEvent.h $(CLASSHDRDIR)/java_awt_event_KeyEvent.h $(CLASSHDRDIR)/java_awt_event_MouseEvent.h $(CLASSHDRDIR)/java_awt_event_WindowEvent.h $(CLASSHDRDIR)/java_awt_Font.h $(CLASSHDRDIR)/sun_awt_FontDescriptor.h $(CLASSHDRDIR)/sun_awt_PlatformFont.h $(CLASSHDRDIR)/sun_awt_windows_WComponentPeer.h $(CLASSHDRDIR)/sun_awt_windows_WFontMetrics.h $(CLASSHDRDIR)/sun_awt_windows_WObjectPeer.h $(CLASSHDRDIR)/sun_awt_windows_WToolkit.h ../../../src/share/javavm/export/jni.h ../../../src/share/javavm/export/jvm.h ../../../src/share/native/common/jlong.h ../../../src/share/native/common/jni_util.h ../../../src/share/native/sun/awt/debug/debug_assert.h ../../../src/share/native/sun/awt/debug/debug_mem.h ../../../src/share/native/sun/awt/debug/debug_trace.h ../../../src/share/native/sun/awt/debug/debug_util.h ../../../src/share/native/sun/awt/image/cvutils/img_globals.h ../../../src/share/native/sun/java2d/SurfaceData.h ../../../src/share/native/sun/java2d/Trace.h ../../../src/windows/javavm/export/jni_md.h ../../../src/windows/javavm/export/jvm_md.h ../../../src/windows/native/common/jlong_md.h ../../../src/windows/native/sun/java2d/windows/GDIWindowSurfaceData.h ../../../src/windows/native/sun/windows/alloc.h ../../../src/windows/native/sun/windows/awt.h ../../../src/windows/native/sun/windows/awtmsg.h ../../../src/windows/native/sun/windows/awt_AWTEvent.h ../../../src/windows/native/sun/windows/awt_Brush.h ../../../src/windows/native/sun/windows/awt_Component.h ../../../src/windows/native/sun/windows/awt_Debug.h ../../../src/windows/native/sun/windows/awt_Font.h ../../../src/windows/native/sun/windows/awt_GDIObject.h ../../../src/windows/native/sun/windows/awt_MMStub.h ../../../src/windows/native/sun/windows/awt_Multimon.h ../../../src/windows/native/sun/windows/awt_Object.h ../../../src/windows/native/sun/windows/awt_Palette.h ../../../src/windows/native/sun/windows/awt_Pen.h ../../../src/windows/native/sun/windows/awt_Toolkit.h ../../../src/windows/native/sun/windows/awt_Unicode.h ../../../src/windows/native/sun/windows/awt_Win32GraphicsDevice.h ../../../src/windows/native/sun/windows/colordata.h ../../../src/windows/native/sun/windows/Devices.h ../../../src/windows/native/sun/windows/GDIHashtable.h ../../../src/windows/native/sun/windows/Hashtable.h ../../../src/windows/native/sun/windows/ObjectList.h ../../../src/windows/native/sun/windows/stdhdrs.h ../../../src/windows/native/sun/windows/UnicowsLoader.h
@@ -107,8 +107,8 @@ diff -Nru openjdk.orig/jdk/make/sun/awt/make.depend openjdk/jdk/make/sun/awt/mak
  $(OBJDIR)/UnicowsLoader.obj::	../../../src/share/javavm/export/jni.h ../../../src/share/native/common/jlong.h ../../../src/share/native/common/jni_util.h ../../../src/windows/javavm/export/jni_md.h ../../../src/windows/native/common/jlong_md.h ../../../src/windows/native/sun/windows/alloc.h ../../../src/windows/native/sun/windows/stdhdrs.h ../../../src/windows/native/sun/windows/UnicowsLoader.h
  
 diff -Nru openjdk.orig/jdk/make/sun/awt/Makefile openjdk/jdk/make/sun/awt/Makefile
---- openjdk.orig/jdk/make/sun/awt/Makefile	2012-08-31 14:06:57.317125036 +0100
-+++ openjdk/jdk/make/sun/awt/Makefile	2012-08-31 14:08:04.138225311 +0100
+--- openjdk.orig/jdk/make/sun/awt/Makefile	2012-09-19 14:18:01.684480621 +0100
++++ openjdk/jdk/make/sun/awt/Makefile	2012-09-19 14:18:34.321003473 +0100
 @@ -1,5 +1,5 @@
  #
 -# Copyright (c) 1995, 2008, Oracle and/or its affiliates. All rights reserved.
@@ -125,8 +125,8 @@ diff -Nru openjdk.orig/jdk/make/sun/awt/Makefile openjdk/jdk/make/sun/awt/Makefi
  vpath %.c   $(SHARE_SRC)/native/$(PKGDIR)/../java2d/loops
  vpath %.c   $(SHARE_SRC)/native/$(PKGDIR)/../java2d/pipe
 diff -Nru openjdk.orig/jdk/make/sun/awt/mapfile-mawt-vers openjdk/jdk/make/sun/awt/mapfile-mawt-vers
---- openjdk.orig/jdk/make/sun/awt/mapfile-mawt-vers	2012-08-31 14:06:57.329125234 +0100
-+++ openjdk/jdk/make/sun/awt/mapfile-mawt-vers	2012-08-31 14:08:04.138225311 +0100
+--- openjdk.orig/jdk/make/sun/awt/mapfile-mawt-vers	2012-09-19 14:18:01.692480748 +0100
++++ openjdk/jdk/make/sun/awt/mapfile-mawt-vers	2012-09-19 14:18:34.321003473 +0100
 @@ -291,6 +291,7 @@
  		Java_sun_awt_X11GraphicsConfig_createBackBuffer;
  		Java_sun_awt_X11GraphicsConfig_destroyBackBuffer;
@@ -136,8 +136,8 @@ diff -Nru openjdk.orig/jdk/make/sun/awt/mapfile-mawt-vers openjdk/jdk/make/sun/a
  		Java_sun_awt_X11GraphicsDevice_getDisplay;
  		Java_sun_awt_X11GraphicsDevice_getDoubleBufferVisuals;
 diff -Nru openjdk.orig/jdk/make/sun/awt/mapfile-vers-linux openjdk/jdk/make/sun/awt/mapfile-vers-linux
---- openjdk.orig/jdk/make/sun/awt/mapfile-vers-linux	2012-08-31 14:06:57.329125234 +0100
-+++ openjdk/jdk/make/sun/awt/mapfile-vers-linux	2012-08-31 14:08:04.138225311 +0100
+--- openjdk.orig/jdk/make/sun/awt/mapfile-vers-linux	2012-09-19 14:18:01.692480748 +0100
++++ openjdk/jdk/make/sun/awt/mapfile-vers-linux	2012-09-19 14:18:34.321003473 +0100
 @@ -406,6 +406,7 @@
  		Java_sun_awt_X11GraphicsConfig_getNumColors;
  		Java_sun_awt_X11GraphicsConfig_getXResolution;
@@ -147,8 +147,8 @@ diff -Nru openjdk.orig/jdk/make/sun/awt/mapfile-vers-linux openjdk/jdk/make/sun/
  		Java_sun_awt_X11GraphicsDevice_getDisplay;
  		Java_sun_awt_X11GraphicsDevice_getDoubleBufferVisuals;
 diff -Nru openjdk.orig/jdk/make/sun/xawt/mapfile-vers openjdk/jdk/make/sun/xawt/mapfile-vers
---- openjdk.orig/jdk/make/sun/xawt/mapfile-vers	2012-08-31 14:06:57.329125234 +0100
-+++ openjdk/jdk/make/sun/xawt/mapfile-vers	2012-08-31 14:08:04.142225377 +0100
+--- openjdk.orig/jdk/make/sun/xawt/mapfile-vers	2012-09-19 14:18:01.696480812 +0100
++++ openjdk/jdk/make/sun/xawt/mapfile-vers	2012-09-19 14:18:34.321003473 +0100
 @@ -216,6 +216,7 @@
          Java_sun_awt_X11GraphicsConfig_createBackBuffer;
  	Java_sun_awt_X11GraphicsConfig_destroyBackBuffer;
@@ -158,8 +158,8 @@ diff -Nru openjdk.orig/jdk/make/sun/xawt/mapfile-vers openjdk/jdk/make/sun/xawt/
          Java_java_awt_KeyboardFocusManager_initIDs;
          Java_java_awt_Font_initIDs;
 diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/awt/AWTUtilities.java openjdk/jdk/src/share/classes/com/sun/awt/AWTUtilities.java
---- openjdk.orig/jdk/src/share/classes/com/sun/awt/AWTUtilities.java	2012-08-31 14:06:57.049120623 +0100
-+++ openjdk/jdk/src/share/classes/com/sun/awt/AWTUtilities.java	2012-08-31 14:08:04.142225377 +0100
+--- openjdk.orig/jdk/src/share/classes/com/sun/awt/AWTUtilities.java	2012-09-19 14:17:58.168424291 +0100
++++ openjdk/jdk/src/share/classes/com/sun/awt/AWTUtilities.java	2012-09-19 14:18:34.325003537 +0100
 @@ -26,17 +26,37 @@
  package com.sun.awt;
  
@@ -545,9 +545,9 @@ diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/awt/AWTUtilities.java openj
       * Sets a 'mixing-cutout' shape for the given component.
       *
 diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Component.java openjdk/jdk/src/share/classes/java/awt/Component.java
---- openjdk.orig/jdk/src/share/classes/java/awt/Component.java	2012-08-31 14:06:57.333125300 +0100
-+++ openjdk/jdk/src/share/classes/java/awt/Component.java	2012-08-31 14:08:04.142225377 +0100
-@@ -806,137 +806,148 @@
+--- openjdk.orig/jdk/src/share/classes/java/awt/Component.java	2012-09-19 14:18:01.696480812 +0100
++++ openjdk/jdk/src/share/classes/java/awt/Component.java	2012-09-19 14:24:33.686884140 +0100
+@@ -806,6 +806,13 @@
              }
      }
  
@@ -560,241 +560,91 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Component.java openjdk/jdk
 +
      static {
          AWTAccessor.setComponentAccessor(new AWTAccessor.ComponentAccessor() {
--                public void setX(Component comp, int x) {
--                    comp.x = x;
--                }
--
--                public void setY(Component comp, int y) {
--                    comp.y = y;
--                }
-+            public void setX(Component comp, int x) {
-+                comp.x = x;
-+            }
+                 public AppContext getAppContext(Component comp) {
+@@ -820,6 +827,18 @@
+                     return comp.getAccessControlContext();
+                 }
  
--                public void setWidth(Component comp, int width) {
--                    comp.width = width;
--                }
-+            public void setY(Component comp, int y) {
-+                comp.y = y;
-+            }
- 
--                public void setHeight(Component comp, int height) {
--                    comp.height = height;
--                }
-+            public void setWidth(Component comp, int width) {
-+                comp.width = width;
-+            }
- 
--                public int getX(Component comp) {
--                    return comp.x;
--                }
-+            public void setHeight(Component comp, int height) {
-+                comp.height = height;
-+            }
- 
--                public int getY(Component comp) {
--                    return comp.y;
--                }
-+            public int getX(Component comp) {
-+                return comp.x;
-+            }
- 
--                public int getWidth(Component comp) {
--                    return comp.width;
--                }
-+            public int getY(Component comp) {
-+                return comp.y;
-+            }
- 
--                public int getHeight(Component comp) {
--                    return comp.height;
--                }
-+            public int getWidth(Component comp) {
-+                return comp.width;
-+            }
- 
--                public boolean isPacked(Component comp) {
--                    return comp.isPacked;
--                }
-+            public int getHeight(Component comp) {
-+                return comp.height;
-+            }
- 
--                public Container getParent(Component comp) {
--                    return comp.getParent_NoClientCode();
--                }
-+            public boolean isPacked(Component comp) {
-+                return comp.isPacked;
-+            }
- 
--                public Font getFont_NoClientCode(Component comp) {
--                    return comp.getFont_NoClientCode();
--                }
-+            public Container getParent(Component comp) {
-+                return comp.getParent_NoClientCode();
-+            }
- 
--                public void processEvent(Component comp, AWTEvent event) {
--                    comp.processEvent(event);
--                }
-+            public Font getFont_NoClientCode(Component comp) {
-+                return comp.getFont_NoClientCode();
-+            }
- 
--                public void enableEvents(Component comp, long eventMask) {
--                    comp.enableEvents(eventMask);
--                }
-+            public void processEvent(Component comp, AWTEvent event) {
-+                comp.processEvent(event);
-+            }
- 
--                public void setParent(Component comp, Container parent) {
--                    comp.parent = parent;
--                }
-+            public void enableEvents(Component comp, long eventMask) {
-+                comp.enableEvents(eventMask);
-+            }
- 
--                public Color getForeground(Component comp) {
--                    return comp.foreground;
--                }
-+            public void setParent(Component comp, Container parent) {
-+                comp.parent = parent;
-+            }
- 
--                public Color getBackground(Component comp) {
--                    return comp.background;
--                }
-+            public Color getForeground(Component comp) {
-+                return comp.foreground;
-+            }
- 
--                public void setBackground(Component comp, Color c) {
--                    comp.background = c;
--                }
-+            public Color getBackground(Component comp) {
-+                return comp.background;
-+            }
- 
--                public Font getFont(Component comp) {
--                    return comp.font;
--                }
-+            public void setBackground(Component comp, Color c) {
-+                comp.background = c;
-+            }
- 
--                public ComponentPeer getPeer(Component comp) {
--                    return comp.peer;
--                }
-+            public Font getFont(Component comp) {
-+                return comp.font;
-+            }
- 
--                public void setPeer(Component comp, ComponentPeer peer) {
--                    comp.peer = peer;
--                }
-+            public ComponentPeer getPeer(Component comp) {
-+                return comp.peer;
-+            }
- 
--                public boolean getIgnoreRepaint(Component comp) {
--                    return comp.ignoreRepaint;
--                }
-+            public void setPeer(Component comp, ComponentPeer peer) {
-+                comp.peer = peer;
-+            }
- 
--                public void resetGC(Component comp) {
--                    comp.resetGC();
--                }
-+            public boolean getIgnoreRepaint(Component comp) {
-+                return comp.ignoreRepaint;
-+            }
- 
--                public boolean isVisible(Component comp) {
--                    return comp.visible;
--                }
-+            public void resetGC(Component comp) {
-+                comp.resetGC();
-+            }
- 
--                public boolean isEnabled(Component comp) {
--                    return comp.isEnabledImpl();
--                }
-+            public boolean isVisible(Component comp) {
-+                return comp.visible;
-+            }
- 
--                public Cursor getCursor(Component comp) {
--                    return comp.getCursor_NoClientCode();
--                }
-+            public boolean isEnabled(Component comp) {
-+                return comp.isEnabledImpl();
-+            }
- 
--                public Point getLocation(Component comp) {
--                    return comp.location_NoClientCode();
--                }
-+            public Cursor getCursor(Component comp) {
-+                return comp.getCursor_NoClientCode();
-+            }
- 
--                public AccessControlContext getAccessControlContext(Component comp) {
--                    return comp.getAccessControlContext();
--                }
-+            public Point getLocation(Component comp) {
-+                return comp.location_NoClientCode();
-+            }
- 
--                public boolean requestFocusInWindow(Component comp, CausedFocusEvent.Cause cause) {
--                    return comp.requestFocusInWindow(cause);
--                }
-+            public AccessControlContext getAccessControlContext(Component comp) {
-+                return comp.getAccessControlContext();
-+            }
- 
--                public void requestFocus(Component comp, CausedFocusEvent.Cause cause) {
--                    comp.requestFocus(cause);
--                }
-+            public boolean requestFocusInWindow(Component comp, CausedFocusEvent.Cause cause) {
-+                return comp.requestFocusInWindow(cause);
-+            }
- 
--                public void setAppContext(Component comp, AppContext ctx) {
--                    comp.appContext = ctx;
--                }
-+            public void requestFocus(Component comp, CausedFocusEvent.Cause cause) {
-+                comp.requestFocus(cause);
-+            }
- 
--                public AppContext getAppContext(Component comp) {
--                    return comp.appContext;
--                }
++                public void setBackgroundEraseDisabled(Component comp, boolean disabled) {
++                    comp.backgroundEraseDisabled = disabled;
++                }
++
++                public boolean getBackgroundEraseDisabled(Component comp) {
++                    return comp.backgroundEraseDisabled;
++                }
++
++                public Rectangle getBounds(Component comp) {
++                    return new Rectangle(comp.x, comp.y, comp.width, comp.height);
++                }
++
+                 public boolean requestFocusInWindow(Component comp, CausedFocusEvent.Cause cause) {
+                     return comp.requestFocusInWindow(cause);
+                 }
+@@ -827,41 +846,36 @@
+                 public void requestFocus(Component comp, CausedFocusEvent.Cause cause) {
+                     comp.requestFocus(cause);
+                 }
 -            });
 -    }
-+            public void setAppContext(Component comp, AppContext ctx) {
-+                comp.appContext = ctx;
-+            }
- 
-+            public AppContext getAppContext(Component comp) {
-+                return comp.appContext;
-+            }
- 
+-
+-
 -    static {
 -        AWTAccessor.setComponentAccessor(new AWTAccessor.ComponentAccessor() {
-+            public void setBackgroundEraseDisabled(Component comp, boolean disabled) {
-+                comp.backgroundEraseDisabled = disabled;
-+            }
-+            public boolean getBackgroundEraseDisabled(Component comp) {
-+                return comp.backgroundEraseDisabled;
-+            }
-+            public Rectangle getBounds(Component comp) {
-+                return new Rectangle(comp.x, comp.y, comp.width, comp.height);
-+            }
-             public void setMixingCutoutShape(Component comp, Shape shape) {
-                 Region region = shape == null ?  null :
-                     Region.getInstance(shape, null);
-@@ -7573,7 +7584,7 @@
+-            public void setMixingCutoutShape(Component comp, Shape shape) {
+-                Region region = shape == null ?  null :
+-                    Region.getInstance(shape, null);
+ 
+-                synchronized (comp.getTreeLock()) {
+-                    boolean needShowing = false;
+-                    boolean needHiding = false;
++                public void setMixingCutoutShape(Component comp, Shape shape) {
++                    Region region = shape == null ?  null :
++                        Region.getInstance(shape, null);
++
++                    synchronized (comp.getTreeLock()) {
++                        boolean needShowing = false;
++                        boolean needHiding = false;
+ 
+-                    if (!comp.isNonOpaqueForMixing()) {
+-                        needHiding = true;
+-                    }
+-
+-                    comp.mixingCutoutRegion = region;
++                        if (!comp.isNonOpaqueForMixing()) {
++                            needHiding = true;
++                        }
+ 
+-                    if (!comp.isNonOpaqueForMixing()) {
+-                        needShowing = true;
+-                    }
++                        comp.mixingCutoutRegion = region;
+ 
+-                    if (comp.isMixingNeeded()) {
+-                        if (needHiding) {
+-                            comp.mixOnHiding(comp.isLightweight());
++                        if (!comp.isNonOpaqueForMixing()) {
++                            needShowing = true;
+                         }
+-                        if (needShowing) {
+-                            comp.mixOnShowing();
++
++                        if (comp.isMixingNeeded()) {
++                            if (needHiding) {
++                                comp.mixOnHiding(comp.isLightweight());
++                            }
++                            if (needShowing) {
++                                comp.mixOnShowing();
++                            }
+                         }
+                     }
+                 }
+-            }
+-        });
++            });
+     }
+ 
+     /**
+@@ -7469,7 +7483,7 @@
              // sometimes most recent focus owner may be null, but focus owner is not
              // e.g. we reset most recent focus owner if user removes focus owner
              focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
@@ -803,7 +653,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Component.java openjdk/jdk
                  focusOwner = null;
              }
          }
-@@ -8808,31 +8819,9 @@
+@@ -8704,31 +8718,9 @@
       *         null, if component is not a part of window hierarchy
       */
      Window getContainingWindow() {
@@ -836,7 +686,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Component.java openjdk/jdk
      /**
       * Initialize JNI field and method IDs
       */
-@@ -9946,4 +9935,29 @@
+@@ -9842,4 +9834,29 @@
      }
  
      // ****************** END OF MIXING CODE ********************************
@@ -867,8 +717,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Component.java openjdk/jdk
 +    }
  }
 diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Container.java openjdk/jdk/src/share/classes/java/awt/Container.java
---- openjdk.orig/jdk/src/share/classes/java/awt/Container.java	2012-08-31 14:06:57.057120755 +0100
-+++ openjdk/jdk/src/share/classes/java/awt/Container.java	2012-08-31 14:08:04.142225377 +0100
+--- openjdk.orig/jdk/src/share/classes/java/awt/Container.java	2012-09-19 14:17:58.172424355 +0100
++++ openjdk/jdk/src/share/classes/java/awt/Container.java	2012-09-19 14:18:34.325003537 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1995, 2008, Oracle and/or its affiliates. All rights reserved.
@@ -887,9 +737,9 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Container.java openjdk/jdk
       * JDK 1.1 serialVersionUID
       */
 diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/DefaultKeyboardFocusManager.java openjdk/jdk/src/share/classes/java/awt/DefaultKeyboardFocusManager.java
---- openjdk.orig/jdk/src/share/classes/java/awt/DefaultKeyboardFocusManager.java	2012-08-31 14:06:56.949118976 +0100
-+++ openjdk/jdk/src/share/classes/java/awt/DefaultKeyboardFocusManager.java	2012-08-31 14:08:04.142225377 +0100
-@@ -490,7 +490,7 @@
+--- openjdk.orig/jdk/src/share/classes/java/awt/DefaultKeyboardFocusManager.java	2012-09-19 14:17:58.116423459 +0100
++++ openjdk/jdk/src/share/classes/java/awt/DefaultKeyboardFocusManager.java	2012-09-19 14:18:34.325003537 +0100
+@@ -491,7 +491,7 @@
                  // that a Component outside of the focused Window receives a
                  // FOCUS_GAINED event. We synthesize a WINDOW_GAINED_FOCUS
                  // event in that case.
@@ -899,8 +749,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/DefaultKeyboardFocusManage
                  if (newFocusedWindow != null &&
                      newFocusedWindow != currentFocusedWindow)
 diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/GraphicsConfiguration.java openjdk/jdk/src/share/classes/java/awt/GraphicsConfiguration.java
---- openjdk.orig/jdk/src/share/classes/java/awt/GraphicsConfiguration.java	2012-05-01 22:18:08.000000000 +0100
-+++ openjdk/jdk/src/share/classes/java/awt/GraphicsConfiguration.java	2012-08-31 14:08:04.142225377 +0100
+--- openjdk.orig/jdk/src/share/classes/java/awt/GraphicsConfiguration.java	2011-01-07 21:32:53.000000000 +0000
++++ openjdk/jdk/src/share/classes/java/awt/GraphicsConfiguration.java	2012-09-19 14:18:34.325003537 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.
@@ -930,8 +780,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/GraphicsConfiguration.java
      }
 +}
 diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/GraphicsDevice.java openjdk/jdk/src/share/classes/java/awt/GraphicsDevice.java
---- openjdk.orig/jdk/src/share/classes/java/awt/GraphicsDevice.java	2012-08-31 14:06:57.337125365 +0100
-+++ openjdk/jdk/src/share/classes/java/awt/GraphicsDevice.java	2012-08-31 14:08:04.142225377 +0100
+--- openjdk.orig/jdk/src/share/classes/java/awt/GraphicsDevice.java	2012-09-19 14:18:01.696480812 +0100
++++ openjdk/jdk/src/share/classes/java/awt/GraphicsDevice.java	2012-09-19 14:18:34.325003537 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.
@@ -1100,9 +950,9 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/GraphicsDevice.java openjd
 +    }
  }
 diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/KeyboardFocusManager.java openjdk/jdk/src/share/classes/java/awt/KeyboardFocusManager.java
---- openjdk.orig/jdk/src/share/classes/java/awt/KeyboardFocusManager.java	2012-08-31 14:06:56.925118581 +0100
-+++ openjdk/jdk/src/share/classes/java/awt/KeyboardFocusManager.java	2012-08-31 14:08:04.146225443 +0100
-@@ -2224,7 +2224,7 @@
+--- openjdk.orig/jdk/src/share/classes/java/awt/KeyboardFocusManager.java	2012-09-19 14:17:58.084422944 +0100
++++ openjdk/jdk/src/share/classes/java/awt/KeyboardFocusManager.java	2012-09-19 14:18:34.329003600 +0100
+@@ -2208,7 +2208,7 @@
                                                    boolean temporary, boolean focusedWindowChangeAllowed,
                                                    long time)
      {
@@ -1111,7 +961,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/KeyboardFocusManager.java 
          if (parentWindow == null || !parentWindow.syncLWRequests) {
              return false;
          }
-@@ -2558,7 +2558,7 @@
+@@ -2542,7 +2542,7 @@
                  (HeavyweightFocusRequest.CLEAR_GLOBAL_FOCUS_OWNER);
  
              Component activeWindow = ((hwFocusRequest != null)
@@ -1120,7 +970,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/KeyboardFocusManager.java 
                  : nativeFocusedWindow);
              while (activeWindow != null &&
                     !((activeWindow instanceof Frame) ||
-@@ -3029,8 +3029,8 @@
+@@ -3013,8 +3013,8 @@
      }
  
      private static boolean focusedWindowChanged(Component to, Component from) {
@@ -1131,7 +981,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/KeyboardFocusManager.java 
          if (wto == null && wfrom == null) {
              return true;
          }
-@@ -3044,8 +3044,8 @@
+@@ -3028,8 +3028,8 @@
      }
  
      private static boolean isTemporary(Component to, Component from) {
@@ -1143,8 +993,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/KeyboardFocusManager.java 
              return false;
          }
 diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/peer/WindowPeer.java openjdk/jdk/src/share/classes/java/awt/peer/WindowPeer.java
---- openjdk.orig/jdk/src/share/classes/java/awt/peer/WindowPeer.java	2012-05-01 22:18:09.000000000 +0100
-+++ openjdk/jdk/src/share/classes/java/awt/peer/WindowPeer.java	2012-08-31 14:08:04.146225443 +0100
+--- openjdk.orig/jdk/src/share/classes/java/awt/peer/WindowPeer.java	2011-01-07 21:32:53.000000000 +0000
++++ openjdk/jdk/src/share/classes/java/awt/peer/WindowPeer.java	2012-09-19 14:18:34.329003600 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1995, 2007, Oracle and/or its affiliates. All rights reserved.
@@ -1189,8 +1039,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/peer/WindowPeer.java openj
 +    void updateWindow(BufferedImage backBuffer);
  }
 diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Window.java openjdk/jdk/src/share/classes/java/awt/Window.java
---- openjdk.orig/jdk/src/share/classes/java/awt/Window.java	2012-08-31 14:06:56.949118976 +0100
-+++ openjdk/jdk/src/share/classes/java/awt/Window.java	2012-08-31 14:08:04.146225443 +0100
+--- openjdk.orig/jdk/src/share/classes/java/awt/Window.java	2012-09-19 14:17:58.116423459 +0100
++++ openjdk/jdk/src/share/classes/java/awt/Window.java	2012-09-19 14:18:34.329003600 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1995, 2007, Oracle and/or its affiliates. All rights reserved.
@@ -1206,15 +1056,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Window.java openjdk/jdk/sr
  import java.awt.peer.ComponentPeer;
  import java.awt.peer.WindowPeer;
  import java.beans.PropertyChangeListener;
-@@ -50,6 +51,7 @@
- import java.util.logging.Logger;
- import java.util.concurrent.atomic.AtomicBoolean;
- import javax.accessibility.*;
-+import sun.awt.AWTAccessor;
- import sun.awt.AppContext;
- import sun.awt.AWTAccessor;
- import sun.awt.CausedFocusEvent;
-@@ -292,6 +294,25 @@
+@@ -292,6 +293,25 @@
       */
      transient boolean isInShow = false;
  
@@ -1240,7 +1082,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Window.java openjdk/jdk/sr
      private static final String base = "win";
      private static int nameCounter = 0;
  
-@@ -662,9 +683,9 @@
+@@ -668,9 +688,9 @@
              }
              if (peer == null) {
                  peer = getToolkit().createWindow(this);
@@ -1253,7 +1095,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Window.java openjdk/jdk/sr
              }
              super.addNotify();
          }
-@@ -2766,6 +2787,8 @@
+@@ -2772,6 +2792,8 @@
           if(aot) {
               setAlwaysOnTop(aot); // since 1.5; subject to permission check
           }
@@ -1262,7 +1104,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Window.java openjdk/jdk/sr
  
           deserializeResources(s);
      }
-@@ -3183,6 +3206,225 @@
+@@ -3189,6 +3211,225 @@
      }
  
  
@@ -1488,9 +1330,9 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Window.java openjdk/jdk/sr
      // ************************** MIXING CODE *******************************
  
      // A window has a parent, but it does NOT have a container
-@@ -3240,6 +3482,42 @@
-          });
-      }
+@@ -3226,6 +3467,42 @@
+ 
+     // ****************** END OF MIXING CODE ********************************
  
 +    static {
 +        AWTAccessor.setWindowAccessor(new AWTAccessor.WindowAccessor() {
@@ -1532,8 +1374,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Window.java openjdk/jdk/sr
  
  
 diff -Nru openjdk.orig/jdk/src/share/classes/javax/swing/RepaintManager.java openjdk/jdk/src/share/classes/javax/swing/RepaintManager.java
---- openjdk.orig/jdk/src/share/classes/javax/swing/RepaintManager.java	2012-05-01 22:18:16.000000000 +0100
-+++ openjdk/jdk/src/share/classes/javax/swing/RepaintManager.java	2012-08-31 14:08:04.146225443 +0100
+--- openjdk.orig/jdk/src/share/classes/javax/swing/RepaintManager.java	2011-01-07 21:32:57.000000000 +0000
++++ openjdk/jdk/src/share/classes/javax/swing/RepaintManager.java	2012-09-19 14:18:34.329003600 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.
@@ -1606,11 +1448,11 @@ diff -Nru openjdk.orig/jdk/src/share/classes/javax/swing/RepaintManager.java ope
  
          for (Component dirty : tmpDirtyComponents.keySet()) {
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/AWTAccessor.java openjdk/jdk/src/share/classes/sun/awt/AWTAccessor.java
---- openjdk.orig/jdk/src/share/classes/sun/awt/AWTAccessor.java	2012-08-31 14:06:57.077121084 +0100
-+++ openjdk/jdk/src/share/classes/sun/awt/AWTAccessor.java	2012-08-31 14:08:04.146225443 +0100
-@@ -202,10 +202,29 @@
+--- openjdk.orig/jdk/src/share/classes/sun/awt/AWTAccessor.java	2012-09-19 14:17:58.172424355 +0100
++++ openjdk/jdk/src/share/classes/sun/awt/AWTAccessor.java	2012-09-19 14:21:45.168060548 +0100
+@@ -79,10 +79,29 @@
           */
-         Point getLocation(Component comp);
+         void setAppContext(Component comp, AppContext appContext);
  
 -        // See 6797587
 -        // Also see: 6776743, 6768307, and 6768332.
@@ -1641,11 +1483,13 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/AWTAccessor.java openjdk/jd
           */
          void setMixingCutoutShape(Component comp, Shape shape);
  
-@@ -234,6 +253,36 @@
-          * components in the specified window to the specified value.
-          */
-         void setLWRequestStatus(Window changed, boolean status);
-+
+@@ -122,6 +141,41 @@
+     }
+ 
+     /*
++     * An interface of accessor for java.awt.Window class.
++     */
++    public interface WindowAccessor {
 +        /*
 +         * Get opacity level of the given window.
 +         */
@@ -1675,27 +1519,35 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/AWTAccessor.java openjdk/jd
 +         * Update the image of a non-opaque (translucent) window.
 +         */
 +        void updateWindow(Window window, BufferedImage backBuffer);
-     }
- 
-     /**
-@@ -534,8 +583,14 @@
++    }
++
++    /*
+      * An accessor for the AWTEvent class.
       */
+     public interface AWTEventAccessor {
+@@ -336,11 +390,18 @@
+      * Accessor instances are initialized in the static initializers of
+      * corresponding AWT classes by using setters defined below.
+      */
+-    private static WindowAccessor windowAccessor;
+     /* The java.awt.Component class accessor object.
+      */
+     private static ComponentAccessor componentAccessor;
      private static KeyboardFocusManagerAccessor kfmAccessor;
- 
 +    /*
 +     * The java.awt.Window class accessor object.
 +     */
-     private static WindowAccessor windowAccessor;
- 
++    private static WindowAccessor windowAccessor;
++
 +    /*
 +     * The java.awt.AWTEvent class accessor object.
 +     */
      private static AWTEventAccessor awtEventAccessor;
- 
      private static MenuComponentAccessor menuComponentAccessor;
+     private static EventQueueAccessor eventQueueAccessor;
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/EmbeddedFrame.java openjdk/jdk/src/share/classes/sun/awt/EmbeddedFrame.java
---- openjdk.orig/jdk/src/share/classes/sun/awt/EmbeddedFrame.java	2012-08-31 14:06:56.813116737 +0100
-+++ openjdk/jdk/src/share/classes/sun/awt/EmbeddedFrame.java	2012-08-31 14:08:04.146225443 +0100
+--- openjdk.orig/jdk/src/share/classes/sun/awt/EmbeddedFrame.java	2011-01-07 21:32:58.000000000 +0000
++++ openjdk/jdk/src/share/classes/sun/awt/EmbeddedFrame.java	2012-09-19 14:18:34.329003600 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1996, 2006, Oracle and/or its affiliates. All rights reserved.
@@ -1703,7 +1555,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/EmbeddedFrame.java openjdk/
   * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
   *
   * This code is free software; you can redistribute it and/or modify it
-@@ -516,5 +516,12 @@
+@@ -579,5 +579,12 @@
          }
          public void updateMinimumSize() {
          }
@@ -1718,40 +1570,9 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/EmbeddedFrame.java openjdk/
 +     }
  } // class EmbeddedFrame
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/SunToolkit.java openjdk/jdk/src/share/classes/sun/awt/SunToolkit.java
---- openjdk.orig/jdk/src/share/classes/sun/awt/SunToolkit.java	2012-08-31 14:06:57.077121084 +0100
-+++ openjdk/jdk/src/share/classes/sun/awt/SunToolkit.java	2012-08-31 14:10:08.928279978 +0100
-@@ -1,5 +1,5 @@
- /*
-- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
-+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
-  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
-  *
-  * This code is free software; you can redistribute it and/or modify it
-@@ -32,15 +32,11 @@
- import java.awt.peer.*;
- import java.awt.event.WindowEvent;
- import java.awt.event.KeyEvent;
--import java.awt.im.spi.InputMethodDescriptor;
- import java.awt.image.*;
--import java.awt.geom.AffineTransform;
- import java.awt.TrayIcon;
- import java.awt.SystemTray;
- import java.lang.reflect.Constructor;
--import java.io.*;
- import java.net.URL;
--import java.net.JarURLConnection;
- import java.util.*;
- import java.util.concurrent.TimeUnit;
- import java.util.concurrent.locks.Condition;
-@@ -50,7 +46,6 @@
- import sun.misc.SoftCache;
- import sun.font.FontDesignMetrics;
- import sun.awt.im.InputContext;
--import sun.awt.im.SimpleInputMethodWindow;
- import sun.awt.image.*;
- import sun.security.action.GetPropertyAction;
- import sun.security.action.GetBooleanAction;
-@@ -705,16 +700,31 @@
+--- openjdk.orig/jdk/src/share/classes/sun/awt/SunToolkit.java	2012-09-19 14:17:58.172424355 +0100
++++ openjdk/jdk/src/share/classes/sun/awt/SunToolkit.java	2012-09-19 14:20:35.646947001 +0100
+@@ -726,16 +726,31 @@
      }
  
      /**
@@ -1791,7 +1612,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/SunToolkit.java openjdk/jdk
      }
  
      /**
-@@ -1810,6 +1820,18 @@
+@@ -1840,6 +1855,18 @@
          AWTAutoShutdown.getInstance().dumpPeers(aLog);
      }
  
@@ -1810,12 +1631,12 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/SunToolkit.java openjdk/jdk
      private static Boolean sunAwtDisableMixing = null;
  
      /**
-@@ -1833,6 +1855,73 @@
+@@ -1863,6 +1890,73 @@
      public boolean isNativeGTKAvailable() {
          return false;
      }
 +
-+    // Cosntant alpha
++    // Constant alpha
 +    public boolean isWindowOpacitySupported() {
 +        return false;
 +    }
@@ -1886,7 +1707,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/SunToolkit.java openjdk/jdk
  
 diff -Nru openjdk.orig/jdk/src/share/native/sun/awt/utility/rect.c openjdk/jdk/src/share/native/sun/awt/utility/rect.c
 --- openjdk.orig/jdk/src/share/native/sun/awt/utility/rect.c	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/src/share/native/sun/awt/utility/rect.c	2012-08-31 14:08:04.146225443 +0100
++++ openjdk/jdk/src/share/native/sun/awt/utility/rect.c	2012-09-19 14:18:34.329003600 +0100
 @@ -0,0 +1,102 @@
 +/*
 + * Copyright (c) 2008, 2009, Oracle and/or its affiliates. All rights reserved.
@@ -1991,8 +1812,8 @@ diff -Nru openjdk.orig/jdk/src/share/native/sun/awt/utility/rect.c openjdk/jdk/s
 +}
 +#endif
 diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/generator/WrapperGenerator.java openjdk/jdk/src/solaris/classes/sun/awt/X11/generator/WrapperGenerator.java
---- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/generator/WrapperGenerator.java	2012-05-01 22:18:34.000000000 +0100
-+++ openjdk/jdk/src/solaris/classes/sun/awt/X11/generator/WrapperGenerator.java	2012-08-31 14:08:04.146225443 +0100
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/generator/WrapperGenerator.java	2011-01-07 21:33:04.000000000 +0000
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/generator/WrapperGenerator.java	2012-09-19 14:18:34.329003600 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2003, 2007, Oracle and/or its affiliates. All rights reserved.
@@ -2018,8 +1839,8 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/generator/WrapperGene
                          pw.println("\t\tlog.finest(\"Creating\");");
                      }
 diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/generator/xlibtypes.txt openjdk/jdk/src/solaris/classes/sun/awt/X11/generator/xlibtypes.txt
---- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/generator/xlibtypes.txt	2012-05-01 22:18:34.000000000 +0100
-+++ openjdk/jdk/src/solaris/classes/sun/awt/X11/generator/xlibtypes.txt	2012-08-31 14:08:04.146225443 +0100
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/generator/xlibtypes.txt	2011-01-07 21:33:04.000000000 +0000
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/generator/xlibtypes.txt	2012-09-19 14:18:34.329003600 +0100
 @@ -750,6 +750,7 @@
      pixelStride int
      color_data pointer ColorData
@@ -2029,8 +1850,8 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/generator/xlibtypes.t
  AwtScreenData
      numConfigs int
 diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XNETProtocol.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XNETProtocol.java
---- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XNETProtocol.java	2012-05-01 22:18:34.000000000 +0100
-+++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XNETProtocol.java	2012-08-31 14:08:04.146225443 +0100
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XNETProtocol.java	2011-01-07 21:33:04.000000000 +0000
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XNETProtocol.java	2012-09-19 14:18:34.329003600 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2003, 2007, Oracle and/or its affiliates. All rights reserved.
@@ -2061,9 +1882,9 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XNETProtocol.java ope
          if (!active()) {
              return false;
 diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XToolkit.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XToolkit.java
---- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XToolkit.java	2012-08-31 14:06:56.825116935 +0100
-+++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XToolkit.java	2012-08-31 14:08:04.150225509 +0100
-@@ -2166,4 +2166,35 @@
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XToolkit.java	2012-08-31 11:18:57.971637707 +0100
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XToolkit.java	2012-09-19 14:18:34.333003664 +0100
+@@ -2164,4 +2164,35 @@
          return new XDesktopPeer();
      }
  
@@ -2100,8 +1921,8 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XToolkit.java openjdk
 +    }
  }
 diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWindowPeer.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XWindowPeer.java
---- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWindowPeer.java	2012-05-01 22:18:34.000000000 +0100
-+++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XWindowPeer.java	2012-08-31 14:08:04.150225509 +0100
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWindowPeer.java	2011-01-07 21:33:04.000000000 +0000
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XWindowPeer.java	2012-09-19 14:18:34.333003664 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2002, 2007, Oracle and/or its affiliates. All rights reserved.
@@ -2215,8 +2036,8 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWindowPeer.java open
 +    }
  }
 diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11GraphicsConfig.java openjdk/jdk/src/solaris/classes/sun/awt/X11GraphicsConfig.java
---- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11GraphicsConfig.java	2012-08-31 14:06:57.369125892 +0100
-+++ openjdk/jdk/src/solaris/classes/sun/awt/X11GraphicsConfig.java	2012-08-31 14:08:04.150225509 +0100
+--- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11GraphicsConfig.java	2012-09-19 14:18:01.708481004 +0100
++++ openjdk/jdk/src/solaris/classes/sun/awt/X11GraphicsConfig.java	2012-09-19 14:18:34.333003664 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.
@@ -2239,8 +2060,8 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11GraphicsConfig.java op
 +    private native boolean isTranslucencyCapable(long x11ConfigData);
  }
 diff -Nru openjdk.orig/jdk/src/solaris/native/sun/awt/awt_GraphicsEnv.c openjdk/jdk/src/solaris/native/sun/awt/awt_GraphicsEnv.c
---- openjdk.orig/jdk/src/solaris/native/sun/awt/awt_GraphicsEnv.c	2012-05-01 22:18:36.000000000 +0100
-+++ openjdk/jdk/src/solaris/native/sun/awt/awt_GraphicsEnv.c	2012-08-31 14:08:04.150225509 +0100
+--- openjdk.orig/jdk/src/solaris/native/sun/awt/awt_GraphicsEnv.c	2011-01-07 21:33:07.000000000 +0000
++++ openjdk/jdk/src/solaris/native/sun/awt/awt_GraphicsEnv.c	2012-09-19 14:18:34.333003664 +0100
 @@ -323,6 +323,48 @@
      return NULL;
  }
@@ -2377,8 +2198,8 @@ diff -Nru openjdk.orig/jdk/src/solaris/native/sun/awt/awt_GraphicsEnv.c openjdk/
   * Method:    isDBESupported
   * Signature: ()Z
 diff -Nru openjdk.orig/jdk/src/solaris/native/sun/awt/awt_p.h openjdk/jdk/src/solaris/native/sun/awt/awt_p.h
---- openjdk.orig/jdk/src/solaris/native/sun/awt/awt_p.h	2012-05-01 22:18:36.000000000 +0100
-+++ openjdk/jdk/src/solaris/native/sun/awt/awt_p.h	2012-08-31 14:08:04.150225509 +0100
+--- openjdk.orig/jdk/src/solaris/native/sun/awt/awt_p.h	2011-01-07 21:33:07.000000000 +0000
++++ openjdk/jdk/src/solaris/native/sun/awt/awt_p.h	2012-09-19 14:18:34.333003664 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1995, 2005, Oracle and/or its affiliates. All rights reserved.
@@ -2395,8 +2216,8 @@ diff -Nru openjdk.orig/jdk/src/solaris/native/sun/awt/awt_p.h openjdk/jdk/src/so
  
  typedef AwtGraphicsConfigData* AwtGraphicsConfigDataPtr;
 diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/Win32GraphicsConfig.java openjdk/jdk/src/windows/classes/sun/awt/Win32GraphicsConfig.java
---- openjdk.orig/jdk/src/windows/classes/sun/awt/Win32GraphicsConfig.java	2012-08-31 14:06:57.373125958 +0100
-+++ openjdk/jdk/src/windows/classes/sun/awt/Win32GraphicsConfig.java	2012-08-31 14:08:04.150225509 +0100
+--- openjdk.orig/jdk/src/windows/classes/sun/awt/Win32GraphicsConfig.java	2012-09-19 14:18:01.712481068 +0100
++++ openjdk/jdk/src/windows/classes/sun/awt/Win32GraphicsConfig.java	2012-09-19 14:18:34.333003664 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.
@@ -2418,8 +2239,8 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/Win32GraphicsConfig.java 
 +    }
  }
 diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/Win32GraphicsEnvironment.java openjdk/jdk/src/windows/classes/sun/awt/Win32GraphicsEnvironment.java
---- openjdk.orig/jdk/src/windows/classes/sun/awt/Win32GraphicsEnvironment.java	2012-08-31 14:06:57.485127803 +0100
-+++ openjdk/jdk/src/windows/classes/sun/awt/Win32GraphicsEnvironment.java	2012-08-31 14:08:04.150225509 +0100
+--- openjdk.orig/jdk/src/windows/classes/sun/awt/Win32GraphicsEnvironment.java	2012-09-19 14:18:01.884483824 +0100
++++ openjdk/jdk/src/windows/classes/sun/awt/Win32GraphicsEnvironment.java	2012-09-19 14:18:34.333003664 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.
@@ -2441,7 +2262,7 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/Win32GraphicsEnvironment.
  }
 diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/TranslucentWindowPainter.java openjdk/jdk/src/windows/classes/sun/awt/windows/TranslucentWindowPainter.java
 --- openjdk.orig/jdk/src/windows/classes/sun/awt/windows/TranslucentWindowPainter.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/src/windows/classes/sun/awt/windows/TranslucentWindowPainter.java	2012-08-31 14:08:04.150225509 +0100
++++ openjdk/jdk/src/windows/classes/sun/awt/windows/TranslucentWindowPainter.java	2012-09-19 14:18:34.333003664 +0100
 @@ -0,0 +1,398 @@
 +/*
 + * Copyright (c) 2008, 2009, Oracle and/or its affiliates. All rights reserved.
@@ -2842,8 +2663,8 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/TranslucentWindow
 +    }
 +}
 diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WCanvasPeer.java openjdk/jdk/src/windows/classes/sun/awt/windows/WCanvasPeer.java
---- openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WCanvasPeer.java	2012-08-31 14:06:56.825116935 +0100
-+++ openjdk/jdk/src/windows/classes/sun/awt/windows/WCanvasPeer.java	2012-08-31 14:08:04.150225509 +0100
+--- openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WCanvasPeer.java	2011-01-07 21:33:07.000000000 +0000
++++ openjdk/jdk/src/windows/classes/sun/awt/windows/WCanvasPeer.java	2012-09-19 14:18:34.333003664 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1996, 2007, Oracle and/or its affiliates. All rights reserved.
@@ -2851,15 +2672,15 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WCanvasPeer.java 
   * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
   *
   * This code is free software; you can redistribute it and/or modify it
-@@ -27,6 +27,7 @@
- import java.awt.*;
+@@ -28,6 +28,7 @@
  import java.awt.peer.*;
  import java.lang.ref.WeakReference;
+ import java.lang.reflect.Method;
 +import sun.awt.AWTAccessor;
  import sun.awt.ComponentAccessor;
  import sun.awt.SunToolkit;
  import sun.awt.Win32GraphicsDevice;
-@@ -109,16 +110,20 @@
+@@ -110,16 +111,20 @@
      }
  
      public void print(Graphics g) {
@@ -2891,8 +2712,8 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WCanvasPeer.java 
          super.print(g);
      }
 diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WComponentPeer.java openjdk/jdk/src/windows/classes/sun/awt/windows/WComponentPeer.java
---- openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WComponentPeer.java	2012-08-31 14:06:57.377126024 +0100
-+++ openjdk/jdk/src/windows/classes/sun/awt/windows/WComponentPeer.java	2012-08-31 14:08:04.150225509 +0100
+--- openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WComponentPeer.java	2012-09-19 14:18:01.712481068 +0100
++++ openjdk/jdk/src/windows/classes/sun/awt/windows/WComponentPeer.java	2012-09-19 14:18:34.333003664 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1996, 2008, Oracle and/or its affiliates. All rights reserved.
@@ -3019,8 +2840,8 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WComponentPeer.ja
              shapeLog.finer(
                      "*** INFO: Setting shape: PEER: " + this
 diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WFileDialogPeer.java openjdk/jdk/src/windows/classes/sun/awt/windows/WFileDialogPeer.java
---- openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WFileDialogPeer.java	2012-05-01 22:18:37.000000000 +0100
-+++ openjdk/jdk/src/windows/classes/sun/awt/windows/WFileDialogPeer.java	2012-08-31 14:08:04.150225509 +0100
+--- openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WFileDialogPeer.java	2011-01-07 21:33:07.000000000 +0000
++++ openjdk/jdk/src/windows/classes/sun/awt/windows/WFileDialogPeer.java	2012-09-19 14:18:34.333003664 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1996, 2007, Oracle and/or its affiliates. All rights reserved.
@@ -3040,8 +2861,8 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WFileDialogPeer.j
 +    public void updateWindow(java.awt.image.BufferedImage backBuffer) {}
  }
 diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WPrintDialogPeer.java openjdk/jdk/src/windows/classes/sun/awt/windows/WPrintDialogPeer.java
---- openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WPrintDialogPeer.java	2012-05-01 22:18:37.000000000 +0100
-+++ openjdk/jdk/src/windows/classes/sun/awt/windows/WPrintDialogPeer.java	2012-08-31 14:08:04.150225509 +0100
+--- openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WPrintDialogPeer.java	2011-01-07 21:33:07.000000000 +0000
++++ openjdk/jdk/src/windows/classes/sun/awt/windows/WPrintDialogPeer.java	2012-09-19 14:18:34.333003664 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1999, 2007, Oracle and/or its affiliates. All rights reserved.
@@ -3061,8 +2882,8 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WPrintDialogPeer.
 +    public void updateWindow(java.awt.image.BufferedImage backBuffer) {}
  }
 diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WToolkit.java openjdk/jdk/src/windows/classes/sun/awt/windows/WToolkit.java
---- openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WToolkit.java	2012-08-31 14:06:57.377126024 +0100
-+++ openjdk/jdk/src/windows/classes/sun/awt/windows/WToolkit.java	2012-08-31 14:08:04.150225509 +0100
+--- openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WToolkit.java	2012-09-19 14:18:01.712481068 +0100
++++ openjdk/jdk/src/windows/classes/sun/awt/windows/WToolkit.java	2012-09-19 14:18:34.333003664 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1996, 2008, Oracle and/or its affiliates. All rights reserved.
@@ -3106,8 +2927,8 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WToolkit.java ope
 +    }
  }
 diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java openjdk/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java
---- openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java	2012-08-31 14:06:56.829117000 +0100
-+++ openjdk/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java	2012-08-31 14:08:04.150225509 +0100
+--- openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java	2011-01-07 21:33:07.000000000 +0000
++++ openjdk/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java	2012-09-19 14:18:34.333003664 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1996, 2007, Oracle and/or its affiliates. All rights reserved.
@@ -3115,10 +2936,13 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java 
   * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
   *
   * This code is free software; you can redistribute it and/or modify it
-@@ -32,14 +32,13 @@
+@@ -31,17 +31,15 @@
+ 
  import java.beans.*;
  
- import java.lang.ref.*;
+-import java.lang.ref.*;
+ import java.lang.reflect.*;
+ 
 -import java.security.*;
 -
  import java.util.*;
@@ -3132,7 +2956,7 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java 
  
  public class WWindowPeer extends WPanelPeer implements WindowPeer {
  
-@@ -50,6 +49,10 @@
+@@ -52,6 +50,10 @@
      // extends WWindowPeer, not WDialogPeer
      private WWindowPeer modalBlocker = null;
  
@@ -3143,7 +2967,7 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java 
      /*
       * A key used for storing a list of active windows in AppContext. The value
       * is a list of windows, sorted by the time of activation: later a window is
-@@ -88,9 +91,18 @@
+@@ -90,9 +92,18 @@
                  l.remove(this);
              }
          }
@@ -3162,7 +2986,7 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java 
          super.disposeImpl();
      }
  
-@@ -162,6 +174,10 @@
+@@ -164,6 +175,10 @@
          }
  
          updateIconImages();
@@ -3173,7 +2997,7 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java 
      }
  
      native void createAwtWindow(WComponentPeer parent);
-@@ -195,6 +211,8 @@
+@@ -197,6 +212,8 @@
          if (((Window)target).isAlwaysOnTopSupported() && alwaysOnTop) {
              setAlwaysOnTop(alwaysOnTop);
          }
@@ -3182,7 +3006,7 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java 
      }
  
      // Synchronize the insets members (here & in helper) with actual window
-@@ -277,6 +295,31 @@
+@@ -279,6 +296,31 @@
          }
      }
  
@@ -3214,7 +3038,7 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java 
      native void setMinSize(int width, int height);
  
  /*
-@@ -529,6 +572,135 @@
+@@ -531,6 +573,135 @@
           super.setBounds(newBounds.x, newBounds.y, newBounds.width, newBounds.height, op);
       }
  
@@ -3351,8 +3175,8 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java 
       * Static inner class, listens for 'activeWindow' KFM property changes and
       * updates the list of active windows per AppContext, so the latest active
 diff -Nru openjdk.orig/jdk/src/windows/classes/sun/java2d/opengl/WGLSurfaceData.java openjdk/jdk/src/windows/classes/sun/java2d/opengl/WGLSurfaceData.java
---- openjdk.orig/jdk/src/windows/classes/sun/java2d/opengl/WGLSurfaceData.java	2012-08-31 14:06:57.393126288 +0100
-+++ openjdk/jdk/src/windows/classes/sun/java2d/opengl/WGLSurfaceData.java	2012-08-31 14:08:04.150225509 +0100
+--- openjdk.orig/jdk/src/windows/classes/sun/java2d/opengl/WGLSurfaceData.java	2012-09-19 14:18:01.716481132 +0100
++++ openjdk/jdk/src/windows/classes/sun/java2d/opengl/WGLSurfaceData.java	2012-09-19 14:18:34.333003664 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2004, 2008, Oracle and/or its affiliates. All rights reserved.
@@ -3385,8 +3209,8 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/java2d/opengl/WGLSurfaceData.
              return null;
          }
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/awt/utility/rect.h openjdk/jdk/src/windows/native/sun/awt/utility/rect.h
---- openjdk.orig/jdk/src/windows/native/sun/awt/utility/rect.h	2012-05-01 22:18:38.000000000 +0100
-+++ openjdk/jdk/src/windows/native/sun/awt/utility/rect.h	2012-08-31 14:08:04.150225509 +0100
+--- openjdk.orig/jdk/src/windows/native/sun/awt/utility/rect.h	2011-01-07 21:33:08.000000000 +0000
++++ openjdk/jdk/src/windows/native/sun/awt/utility/rect.h	2012-09-19 14:18:34.333003664 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
@@ -3411,8 +3235,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/awt/utility/rect.h openjdk/jdk
  
  #endif // _AWT_RECT_H
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/java2d/d3d/D3DSurfaceData.cpp openjdk/jdk/src/windows/native/sun/java2d/d3d/D3DSurfaceData.cpp
---- openjdk.orig/jdk/src/windows/native/sun/java2d/d3d/D3DSurfaceData.cpp	2012-08-31 14:06:57.429126880 +0100
-+++ openjdk/jdk/src/windows/native/sun/java2d/d3d/D3DSurfaceData.cpp	2012-08-31 14:08:04.150225509 +0100
+--- openjdk.orig/jdk/src/windows/native/sun/java2d/d3d/D3DSurfaceData.cpp	2012-09-19 14:18:01.736481452 +0100
++++ openjdk/jdk/src/windows/native/sun/java2d/d3d/D3DSurfaceData.cpp	2012-09-19 14:18:34.337003728 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2007, 2008, Oracle and/or its affiliates. All rights reserved.
@@ -3444,8 +3268,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/java2d/d3d/D3DSurfaceData.cpp 
      // hBitmap is released in UpdateWindow
  
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/java2d/opengl/WGLSurfaceData.c openjdk/jdk/src/windows/native/sun/java2d/opengl/WGLSurfaceData.c
---- openjdk.orig/jdk/src/windows/native/sun/java2d/opengl/WGLSurfaceData.c	2012-08-31 14:06:57.437127012 +0100
-+++ openjdk/jdk/src/windows/native/sun/java2d/opengl/WGLSurfaceData.c	2012-08-31 14:08:04.154225575 +0100
+--- openjdk.orig/jdk/src/windows/native/sun/java2d/opengl/WGLSurfaceData.c	2012-09-19 14:18:01.740481516 +0100
++++ openjdk/jdk/src/windows/native/sun/java2d/opengl/WGLSurfaceData.c	2012-09-19 14:18:34.337003728 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2004, 2008, Oracle and/or its affiliates. All rights reserved.
@@ -3475,8 +3299,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/java2d/opengl/WGLSurfaceData.c
      // hBitmap is released in UpdateWindow
  
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_BitmapUtil.cpp openjdk/jdk/src/windows/native/sun/windows/awt_BitmapUtil.cpp
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt_BitmapUtil.cpp	2012-05-01 22:18:38.000000000 +0100
-+++ openjdk/jdk/src/windows/native/sun/windows/awt_BitmapUtil.cpp	2012-08-31 14:08:04.154225575 +0100
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_BitmapUtil.cpp	2011-01-07 21:33:08.000000000 +0000
++++ openjdk/jdk/src/windows/native/sun/windows/awt_BitmapUtil.cpp	2012-09-19 14:18:34.337003728 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
@@ -3723,8 +3547,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_BitmapUtil.cpp ope
 +                bitmapBitsPtr, NULL, 0);
 +}
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_BitmapUtil.h openjdk/jdk/src/windows/native/sun/windows/awt_BitmapUtil.h
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt_BitmapUtil.h	2012-05-01 22:18:38.000000000 +0100
-+++ openjdk/jdk/src/windows/native/sun/windows/awt_BitmapUtil.h	2012-08-31 14:08:04.154225575 +0100
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_BitmapUtil.h	2011-01-07 21:33:08.000000000 +0000
++++ openjdk/jdk/src/windows/native/sun/windows/awt_BitmapUtil.h	2012-09-19 14:18:34.337003728 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
@@ -3766,8 +3590,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_BitmapUtil.h openj
  
  #endif
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.cpp openjdk/jdk/src/windows/native/sun/windows/awt_Component.cpp
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.cpp	2012-08-31 14:06:57.449127210 +0100
-+++ openjdk/jdk/src/windows/native/sun/windows/awt_Component.cpp	2012-08-31 14:08:04.154225575 +0100
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.cpp	2012-09-19 14:18:01.748481647 +0100
++++ openjdk/jdk/src/windows/native/sun/windows/awt_Component.cpp	2012-09-19 14:18:34.337003728 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1996, 2007, Oracle and/or its affiliates. All rights reserved.
@@ -3830,8 +3654,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.cpp open
              // If all the params are zeros, the shape must be simply reset.
              // Otherwise, convert it into a region.
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.h openjdk/jdk/src/windows/native/sun/windows/awt_Component.h
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.h	2012-08-31 14:06:57.453127276 +0100
-+++ openjdk/jdk/src/windows/native/sun/windows/awt_Component.h	2012-08-31 14:08:04.154225575 +0100
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.h	2012-09-19 14:18:01.748481647 +0100
++++ openjdk/jdk/src/windows/native/sun/windows/awt_Component.h	2012-09-19 14:18:34.337003728 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1996, 2008, Oracle and/or its affiliates. All rights reserved.
@@ -3863,15 +3687,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.h openjd
  private:
      BOOL m_bSubclassed;
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.cpp openjdk/jdk/src/windows/native/sun/windows/awt_Window.cpp
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.cpp	2012-08-31 14:06:57.457127341 +0100
-+++ openjdk/jdk/src/windows/native/sun/windows/awt_Window.cpp	2012-08-31 14:08:04.154225575 +0100
-@@ -1,5 +1,5 @@
- /*
-- * Copyright (c) 1996, 2007, Oracle and/or its affiliates. All rights reserved.
-+ * Copyright (c) 1996, 2009, Oracle and/or its affiliates. All rights reserved.
-  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
-  *
-  * This code is free software; you can redistribute it and/or modify it
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.cpp	2012-09-19 14:18:01.752481711 +0100
++++ openjdk/jdk/src/windows/native/sun/windows/awt_Window.cpp	2012-09-19 14:18:34.337003728 +0100
 @@ -25,6 +25,8 @@
  
  #include <windowsx.h>
@@ -4242,7 +4059,7 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.cpp openjdk
  extern "C" {
  
  /*
-@@ -2519,5 +2784,94 @@
+@@ -2514,5 +2779,94 @@
  
      CATCH_BAD_ALLOC;
  }
@@ -4338,8 +4155,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.cpp openjdk
  
  } /* extern "C" */
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.h openjdk/jdk/src/windows/native/sun/windows/awt_Window.h
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.h	2012-08-31 14:06:57.457127341 +0100
-+++ openjdk/jdk/src/windows/native/sun/windows/awt_Window.h	2012-08-31 14:08:04.154225575 +0100
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.h	2012-09-19 14:18:01.752481711 +0100
++++ openjdk/jdk/src/windows/native/sun/windows/awt_Window.h	2012-09-19 14:18:34.337003728 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1996, 2007, Oracle and/or its affiliates. All rights reserved.
@@ -4413,7 +4230,7 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.h openjdk/j
      int m_screenNum;
 diff -Nru openjdk.orig/jdk/test/com/sun/awt/Translucency/TranslucentJAppletTest/TranslucentJAppletTest.java openjdk/jdk/test/com/sun/awt/Translucency/TranslucentJAppletTest/TranslucentJAppletTest.java
 --- openjdk.orig/jdk/test/com/sun/awt/Translucency/TranslucentJAppletTest/TranslucentJAppletTest.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/test/com/sun/awt/Translucency/TranslucentJAppletTest/TranslucentJAppletTest.java	2012-08-31 14:08:04.154225575 +0100
++++ openjdk/jdk/test/com/sun/awt/Translucency/TranslucentJAppletTest/TranslucentJAppletTest.java	2012-09-19 14:18:34.337003728 +0100
 @@ -0,0 +1,103 @@
 +/*
 + * Copyright (c) 2008, 2009, Oracle and/or its affiliates. All rights reserved.
@@ -4520,7 +4337,7 @@ diff -Nru openjdk.orig/jdk/test/com/sun/awt/Translucency/TranslucentJAppletTest/
 +}
 diff -Nru openjdk.orig/jdk/test/com/sun/awt/Translucency/TranslucentShapedFrameTest/TranslucentShapedFrameTest.form openjdk/jdk/test/com/sun/awt/Translucency/TranslucentShapedFrameTest/TranslucentShapedFrameTest.form
 --- openjdk.orig/jdk/test/com/sun/awt/Translucency/TranslucentShapedFrameTest/TranslucentShapedFrameTest.form	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/test/com/sun/awt/Translucency/TranslucentShapedFrameTest/TranslucentShapedFrameTest.form	2012-08-31 14:08:04.154225575 +0100
++++ openjdk/jdk/test/com/sun/awt/Translucency/TranslucentShapedFrameTest/TranslucentShapedFrameTest.form	2012-09-19 14:18:34.337003728 +0100
 @@ -0,0 +1,230 @@
 +<?xml version="1.0" encoding="UTF-8" ?>
 +
@@ -4754,7 +4571,7 @@ diff -Nru openjdk.orig/jdk/test/com/sun/awt/Translucency/TranslucentShapedFrameT
 +</Form>
 diff -Nru openjdk.orig/jdk/test/com/sun/awt/Translucency/TranslucentShapedFrameTest/TranslucentShapedFrameTest.java openjdk/jdk/test/com/sun/awt/Translucency/TranslucentShapedFrameTest/TranslucentShapedFrameTest.java
 --- openjdk.orig/jdk/test/com/sun/awt/Translucency/TranslucentShapedFrameTest/TranslucentShapedFrameTest.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/test/com/sun/awt/Translucency/TranslucentShapedFrameTest/TranslucentShapedFrameTest.java	2012-08-31 14:08:04.154225575 +0100
++++ openjdk/jdk/test/com/sun/awt/Translucency/TranslucentShapedFrameTest/TranslucentShapedFrameTest.java	2012-09-19 14:18:34.337003728 +0100
 @@ -0,0 +1,359 @@
 +/*
 + * Copyright (c) 2008, 2009, Oracle and/or its affiliates. All rights reserved.
@@ -5117,7 +4934,7 @@ diff -Nru openjdk.orig/jdk/test/com/sun/awt/Translucency/TranslucentShapedFrameT
 +}
 diff -Nru openjdk.orig/jdk/test/com/sun/awt/Translucency/TranslucentShapedFrameTest/TSFrame.java openjdk/jdk/test/com/sun/awt/Translucency/TranslucentShapedFrameTest/TSFrame.java
 --- openjdk.orig/jdk/test/com/sun/awt/Translucency/TranslucentShapedFrameTest/TSFrame.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/test/com/sun/awt/Translucency/TranslucentShapedFrameTest/TSFrame.java	2012-08-31 14:08:04.154225575 +0100
++++ openjdk/jdk/test/com/sun/awt/Translucency/TranslucentShapedFrameTest/TSFrame.java	2012-09-19 14:18:34.341003792 +0100
 @@ -0,0 +1,306 @@
 +/*
 + * Copyright (c) 2008, 2009, Oracle and/or its affiliates. All rights reserved.
@@ -5427,7 +5244,7 @@ diff -Nru openjdk.orig/jdk/test/com/sun/awt/Translucency/TranslucentShapedFrameT
 +}
 diff -Nru openjdk.orig/jdk/test/com/sun/awt/Translucency/WindowOpacity.java openjdk/jdk/test/com/sun/awt/Translucency/WindowOpacity.java
 --- openjdk.orig/jdk/test/com/sun/awt/Translucency/WindowOpacity.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/test/com/sun/awt/Translucency/WindowOpacity.java	2012-08-31 14:08:04.158225641 +0100
++++ openjdk/jdk/test/com/sun/awt/Translucency/WindowOpacity.java	2012-09-19 14:18:34.341003792 +0100
 @@ -0,0 +1,461 @@
 +/*
 + * Copyright (c) 2008, 2009, Oracle and/or its affiliates. All rights reserved.
@@ -5892,7 +5709,7 @@ diff -Nru openjdk.orig/jdk/test/com/sun/awt/Translucency/WindowOpacity.java open
 +}// TestDialog  class
 diff -Nru openjdk.orig/jdk/test/sun/java2d/pipe/RegionOps.java openjdk/jdk/test/sun/java2d/pipe/RegionOps.java
 --- openjdk.orig/jdk/test/sun/java2d/pipe/RegionOps.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/test/sun/java2d/pipe/RegionOps.java	2012-08-31 14:08:04.158225641 +0100
++++ openjdk/jdk/test/sun/java2d/pipe/RegionOps.java	2012-09-19 14:18:34.341003792 +0100
 @@ -0,0 +1,533 @@
 +/*
 + * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.

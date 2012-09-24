@@ -1,6 +1,6 @@
-diff -Nru openjdk.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthComboBoxUI.java openjdk/jdk/src/share/classes/javax/swing/plaf/synth/SynthComboBoxUI.java
---- openjdk-ecj.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthComboBoxUI.java	2009-12-15 00:04:14.000000000 +0000
-+++ openjdk-ecj/jdk/src/share/classes/javax/swing/plaf/synth/SynthComboBoxUI.java	2009-12-15 00:09:04.000000000 +0000
+diff -Nru openjdk-ecj.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthComboBoxUI.java openjdk-ecj/jdk/src/share/classes/javax/swing/plaf/synth/SynthComboBoxUI.java
+--- openjdk-ecj.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthComboBoxUI.java	2011-01-07 21:32:58.000000000 +0000
++++ openjdk-ecj/jdk/src/share/classes/javax/swing/plaf/synth/SynthComboBoxUI.java	2012-06-13 17:39:06.613931192 +0100
 @@ -200,7 +200,6 @@
          super.uninstallListeners();
      }
@@ -121,10 +121,10 @@ diff -Nru openjdk.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthComboBo
          public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {}
      }
  
-diff -Nru openjdk.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthLookAndFeel.java openjdk/jdk/src/share/classes/javax/swing/plaf/synth/SynthLookAndFeel.java
---- openjdk-ecj.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthLookAndFeel.java	2009-12-09 16:38:59.000000000 +0000
-+++ openjdk-ecj/jdk/src/share/classes/javax/swing/plaf/synth/SynthLookAndFeel.java	2009-12-09 16:38:39.000000000 +0000
-@@ -832,7 +832,6 @@
+diff -Nru openjdk-ecj.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthLookAndFeel.java openjdk-ecj/jdk/src/share/classes/javax/swing/plaf/synth/SynthLookAndFeel.java
+--- openjdk-ecj.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthLookAndFeel.java	2012-06-13 17:24:23.771126209 +0100
++++ openjdk-ecj/jdk/src/share/classes/javax/swing/plaf/synth/SynthLookAndFeel.java	2012-06-13 17:39:06.625931390 +0100
+@@ -839,7 +839,6 @@
              tk.addPropertyChangeListener(key, this);
          }
  
@@ -132,7 +132,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthLookAnd
          public void propertyChange(PropertyChangeEvent pce) {
              UIDefaults defaults = UIManager.getLookAndFeelDefaults();
              if (defaults.getBoolean("Synth.doNotSetTextAA")) {
-@@ -901,7 +900,6 @@
+@@ -908,7 +907,6 @@
              if (!isUpdatePending()) {
                  setUpdatePending(true);
                  Runnable uiUpdater = new Runnable() {
@@ -140,7 +140,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthLookAnd
                      public void run() {
                          updateAllUIs();
                          setUpdatePending(false);
-@@ -918,7 +916,6 @@
+@@ -925,7 +923,6 @@
      }
  
      private class Handler implements PropertyChangeListener {
@@ -148,9 +148,9 @@ diff -Nru openjdk.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthLookAnd
          public void propertyChange(PropertyChangeEvent evt) {
              String propertyName = evt.getPropertyName();
              Object newValue = evt.getNewValue();
-diff -Nru openjdk.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthTreeUI.java openjdk/jdk/src/share/classes/javax/swing/plaf/synth/SynthTreeUI.java
---- openjdk-ecj.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthTreeUI.java	2009-12-15 00:31:41.000000000 +0000
-+++ openjdk-ecj/jdk/src/share/classes/javax/swing/plaf/synth/SynthTreeUI.java	2009-12-15 00:32:03.000000000 +0000
+diff -Nru openjdk-ecj.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthTreeUI.java openjdk-ecj/jdk/src/share/classes/javax/swing/plaf/synth/SynthTreeUI.java
+--- openjdk-ecj.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthTreeUI.java	2011-01-07 21:32:58.000000000 +0000
++++ openjdk-ecj/jdk/src/share/classes/javax/swing/plaf/synth/SynthTreeUI.java	2012-06-13 17:39:06.625931390 +0100
 @@ -154,7 +154,6 @@
          tree.addPropertyChangeListener(this);
      }
@@ -159,20 +159,20 @@ diff -Nru openjdk.orig/jdk/src/share/classes/javax/swing/plaf/synth/SynthTreeUI.
      public SynthContext getContext(JComponent c) {
          return getContext(c, getComponentState(c));
      }
-diff -Nru openjdk.orig/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java openjdk/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java
---- openjdk-ecj.orig/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java	2009-12-15 00:44:58.000000000 +0000
-+++ openjdk-ecj/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java	2009-12-15 00:45:15.000000000 +0000
-@@ -701,7 +701,6 @@
-             this.delegate = delegate;
-         }
- 
--        @Override
-         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-             Component c = delegate.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
- 
-diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/provider/certpath/OCSPResponse.java openjdk/jdk/src/share/classes/sun/security/provider/certpath/OCSPResponse.java
---- openjdk-ecj.orig/jdk/src/share/classes/sun/security/provider/certpath/OCSPResponse.java	2010-01-16 03:11:22.000000000 +0000
-+++ openjdk-ecj/jdk/src/share/classes/sun/security/provider/certpath/OCSPResponse.java	2010-01-16 03:11:57.000000000 +0000
+diff -Nru openjdk-ecj.orig/jdk/src/share/classes/sun/net/www/protocol/https/HttpsClient.java openjdk-ecj/jdk/src/share/classes/sun/net/www/protocol/https/HttpsClient.java
+--- openjdk-ecj.orig/jdk/src/share/classes/sun/net/www/protocol/https/HttpsClient.java	2011-01-07 21:33:02.000000000 +0000
++++ openjdk-ecj/jdk/src/share/classes/sun/net/www/protocol/https/HttpsClient.java	2012-06-13 17:39:06.625931390 +0100
+@@ -624,7 +624,6 @@
+      * a given connection may change.  When sessions change, so may
+      * peer identities and cipher suites.
+      */
+-    @Override
+     public void handshakeCompleted(HandshakeCompletedEvent event)
+     {
+         session = event.getSession();
+diff -Nru openjdk-ecj.orig/jdk/src/share/classes/sun/security/provider/certpath/OCSPResponse.java openjdk-ecj/jdk/src/share/classes/sun/security/provider/certpath/OCSPResponse.java
+--- openjdk-ecj.orig/jdk/src/share/classes/sun/security/provider/certpath/OCSPResponse.java	2011-01-07 21:33:03.000000000 +0000
++++ openjdk-ecj/jdk/src/share/classes/sun/security/provider/certpath/OCSPResponse.java	2012-06-13 17:39:06.625931390 +0100
 @@ -572,7 +572,7 @@
          /*
           * Return the certificate's revocation status code
@@ -196,32 +196,22 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/provider/certpath/OCSP
              return revocationReason;
          }
  
-diff -r 697e3f8cac33 src/share/classes/sun/net/www/protocol/https/HttpsClient.java
---- openjdk-ecj.orig/jdk/src/share/classes/sun/net/www/protocol/https/HttpsClient.java	Wed Mar 24 17:05:49 2010 +0000
-+++ openjdk-ecj/jdk/src/share/classes/sun/net/www/protocol/https/HttpsClient.java	Sun Mar 28 12:55:34 2010 +0100
-@@ -624,7 +624,6 @@
-      * a given connection may change.  When sessions change, so may
-      * peer identities and cipher suites.
-      */
--    @Override
-     public void handshakeCompleted(HandshakeCompletedEvent event)
-     {
-         session = event.getSession();
-diff --git a/src/share/classes/sun/security/x509/X509CRLEntryImpl.java b/src/share/classes/sun/security/x509/X509CRLEntryImpl.java
---- openjdk-ecj/jdk/src/share/classes/sun/security/x509/X509CRLEntryImpl.java
-+++ openjdk-ecj/jdk/src/share/classes/sun/security/x509/X509CRLEntryImpl.java
-@@ -464,7 +464,6 @@
+diff -Nru openjdk-ecj.orig/jdk/src/share/classes/sun/security/x509/X509CRLEntryImpl.java openjdk-ecj/jdk/src/share/classes/sun/security/x509/X509CRLEntryImpl.java
+--- openjdk-ecj.orig/jdk/src/share/classes/sun/security/x509/X509CRLEntryImpl.java	2012-06-13 17:24:23.775126276 +0100
++++ openjdk-ecj/jdk/src/share/classes/sun/security/x509/X509CRLEntryImpl.java	2012-06-13 17:39:26.934270733 +0100
+@@ -463,7 +463,7 @@
+         return (CertificateIssuerExtension)
              getExtension(PKIXExtensions.CertificateIssuer_Id);
      }
- 
 -    @Override
++
      public int compareTo(X509CRLEntryImpl that) {
          int compSerial = getSerialNumber().compareTo(that.getSerialNumber());
          if (compSerial != 0) {
-diff --git a/src/share/classes/sun/security/x509/X509CRLImpl.java b/src/share/classes/sun/security/x509/X509CRLImpl.java
---- openjdk-ecj/jdk/src/share/classes/sun/security/x509/X509CRLImpl.java
-+++ openjdk-ecj/jdk/src/share/classes/sun/security/x509/X509CRLImpl.java
-@@ -1276,7 +1276,6 @@
+diff -Nru openjdk-ecj.orig/jdk/src/share/classes/sun/security/x509/X509CRLImpl.java openjdk-ecj/jdk/src/share/classes/sun/security/x509/X509CRLImpl.java
+--- openjdk-ecj.orig/jdk/src/share/classes/sun/security/x509/X509CRLImpl.java	2012-06-13 17:24:23.779126343 +0100
++++ openjdk-ecj/jdk/src/share/classes/sun/security/x509/X509CRLImpl.java	2012-06-13 17:39:06.625931390 +0100
+@@ -1277,7 +1277,6 @@
              return hashcode;
          }
  
@@ -229,3 +219,14 @@ diff --git a/src/share/classes/sun/security/x509/X509CRLImpl.java b/src/share/cl
          public int compareTo(X509IssuerSerial another) {
              int cissuer = issuer.toString()
                      .compareTo(another.issuer.toString());
+diff -Nru openjdk-ecj.orig/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java openjdk-ecj/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java
+--- openjdk-ecj.orig/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java	2011-01-07 21:33:03.000000000 +0000
++++ openjdk-ecj/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java	2012-06-13 17:39:06.625931390 +0100
+@@ -701,7 +701,6 @@
+             this.delegate = delegate;
+         }
+ 
+-        @Override
+         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+             Component c = delegate.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+ 

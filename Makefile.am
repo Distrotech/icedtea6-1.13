@@ -2,7 +2,7 @@
 
 OPENJDK_DATE = 01_may_2012
 OPENJDK_SHA256SUM = 42db988b436593017e29d6543ac09168a901027817e41dc1be5c795b85d53b05
-OPENJDK_VERSION = b25
+OPENJDK_VERSION = b26
 OPENJDK_URL = http://download.java.net/openjdk/jdk6/promoted/$(OPENJDK_VERSION)/
 
 CACAO_VERSION = cff92704c4e0
@@ -24,8 +24,8 @@ JAF_DROP_URL = http://icedtea.classpath.org/download/drops
 JAF_DROP_ZIP = jdk6-jaf-b20.zip
 JAF_DROP_SHA256SUM = 78c7b5c9d6271e88ee46abadd018a61f1e9645f8936cc8df1617e5f4f5074012
 JAXP_DROP_URL = http://icedtea.classpath.org/download/drops
-JAXP_DROP_ZIP = jaxp144_03.zip
-JAXP_DROP_SHA256SUM = c1a5348e17b330a7e4b18431e61a40efd2ba99a7da71102cf2c604478ef96012
+JAXP_DROP_ZIP = jaxp144_04.zip
+JAXP_DROP_SHA256SUM = 490f696218c1fed9cb180680af883fe309b414fec232e9cec19645e12ad0b43c
 OPENJDK_HG_URL = http://hg.openjdk.java.net/jdk6/jdk6
 
 HOTSPOT_SRC_ZIP = hotspot.tar.gz
@@ -198,27 +198,12 @@ TAPSET_TEST_SRCS = \
 ICEDTEA_FSG_PATCHES =
 
 SECURITY_PATCHES = \
-	patches/security/20120612/7079902.patch \
-	patches/security/20120612/7110720.patch \
-	patches/security/20120612/7143606.patch \
-	patches/security/20120612/7143614.patch \
-	patches/security/20120612/7143617.patch \
-	patches/security/20120612/7143851.patch \
-	patches/security/20120612/7143872.patch \
-	patches/security/20120612/7145239.patch \
-	patches/security/20120612/7152811.patch \
-	patches/security/20120612/7157609.patch \
-	patches/security/20120612/7160677.patch \
-	patches/security/20120612/7160757.patch \
-	patches/security/20120830/7162476-xmldecoder_via_classfinder.patch \
-	patches/security/20120830/7163201-simplify_toolkit_internal_references.patch \
 	patches/security/20120830/7182135-impossible_to_use_some_editors_directly.patch
 
 SPECIAL_SECURITY_PATCH = patches/security/20120214/7112642.patch
 
 ICEDTEA_PATCHES = \
 	$(SECURITY_PATCHES) \
-	patches/openjdk/6610244-modal-fatal-error-windows.patch \
 	patches/stdc-limit-macros.patch \
 	patches/openjdk/4993545-nativeinlightfixer.patch \
 	patches/openjdk/6637796-set_bounds.patch \
@@ -374,7 +359,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6699843-IllegalArgumentException_drawString.patch \
 	patches/openjdk/6918065-Crash_in_Java2D_blit_loop.patch \
 	patches/openjdk/6623219-Font_canDisplayUpTo_does_not_work.patch \
-	patches/support_linux_3.patch \
 	patches/openjdk/6783910-java_awt_Color_brighter_darker_fix.patch \
 	patches/openjdk/6785424-SecurityException_locating_physical_fonts.patch \
 	patches/openjdk/7047069-Array_can_dynamically_change_size.patch \
@@ -409,15 +393,12 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6826104-npe_on_app_and_toolkit_modal_dialog_click.patch \
 	patches/openjdk/5082756-ImageIO_plugins_metadata_boolean_attributes.patch \
 	patches/openjdk/6296893-BMP_Writer_handles_TopDown_prop_incorrectly.patch \
-	patches/openjdk/7103224-glibc_name_collision.patch \
 	patches/arm-debug.patch \
 	patches/arm-hsdis.patch	\
 	patches/openjdk/7103610-_NET_WM_PID_and_WM_CLIENT_MACHINE_are_not_set.patch \
 	patches/openjdk/6706974-krb5_test_infrastructure.patch \
 	patches/openjdk/6764553-IdResolver_is_not_thread_safe.patch \
 	patches/openjdk/6761072-new_krb5_tests_fail_on_multiple_platforms.patch \
-	patches/openjdk/7140882-dont-return-booleans-from-methods-returning-pointers.patch \
-	patches/openjdk/remove-mimpure-option-to-gcc.patch \
 	patches/ScriptEngineManager-doc.patch \
 	patches/openjdk/6883983-JarVerifier_removed_dependency_sun_security_pkcs.patch \
 	patches/openjdk/4465490-Suspicious_double-check_locking_idiom.patch \
@@ -438,7 +419,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/p11cipher-6924489-ckr_operation_not_initialized.patch \
 	patches/openjdk/p11cipher-6604496-support_ckm_aes_ctr.patch \
 	patches/openjdk/p11cipher-6414899-p11digest_should_support_cloning.patch \
-	patches/openjdk/7185678-xmenuitem_peer_npe.patch \
 	patches/merge_fix.patch
 
 if WITH_RHINO

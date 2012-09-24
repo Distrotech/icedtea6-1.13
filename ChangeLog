@@ -4,6 +4,21 @@
 	(ICEDTEA_BOOTSTRAP_CLASSES):
 	Remove com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel.
 
+2012-09-19  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/openjdk/7185678-xmenuitem_peer_npe.patch,
+	* patches/security/20120830/7162476-xmldecoder_via_classfinder.patch,
+	* patches/security/20120830/7163201-simplify_toolkit_internal_references.patch:
+	Removed; upstream.
+	* Makefile.am:
+	(SECURITY_PATCHES): Drop patches available upstream.
+	(ICEDTEA_PATCHES): Likewise.
+	* patches/merge_fix.patch,
+	* patches/nomotif-6706121.patch,
+	* patches/openjdk/6633275-shaped_translucent_windows.patch,
+	* patches/openjdk/6797195-hw_lw_mixing.patch:
+	Regenerated against upstream.
+
 2012-09-19  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	PR1119: Only add classes to rt-source-files.txt if the class (or one or more of its methods/fields)
@@ -39,6 +54,15 @@
 2012-08-31  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:
+	(JAXP_DROP_ZIP): Update to security fixed version.
+	(JAXP_DROP_SHA256SUM): Likewise.
+	(SECURITY_PATCHES): Drop; upstream.
+	(ICEDTEA_PATCHES): Drop mimpure-text patch; upstream.
+	* patches/ecj/override.patch: Regenerate
+	against Oracle version of security patches.
+
+2012-08-31  Andrew John Hughes  <ahughes@redhat.com>
+
 	(ICEDTEA_PATCHES): Rename patches.
 	* patches/openjdk/7034464-hugepage.patch:
 	Renamed to...
@@ -278,6 +302,31 @@
 
 	* test/tapset/jstaptest.pl (get_arch_dir): Fix dir for x86.
 
+2012-06-13  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/openjdk/remove-mimpure-option-to-gcc.patch:
+	Dropped; upstreamed.
+	* patches/security/20120612/7079902.patch,
+	* patches/security/20120612/7110720.patch,
+	* patches/security/20120612/7143606.patch,
+	* patches/security/20120612/7143614.patch,
+	* patches/security/20120612/7143617.patch,
+	* patches/security/20120612/7143851.patch,
+	* patches/security/20120612/7143872.patch,
+	* patches/security/20120612/7145239.patch,
+	* patches/security/20120612/7152811.patch,
+	* patches/security/20120612/7157609.patch,
+	* patches/security/20120612/7160677.patch,
+	* patches/security/20120612/7160757.patch:
+	Dropped; provided by Oracle upstream.
+	* Makefile.am:
+	(JAXP_DROP_ZIP): Update to security fixed version.
+	(JAXP_DROP_SHA256SUM): Likewise.
+	(SECURITY_PATCHES): Drop; upstream.
+	(ICEDTEA_PATCHES): Drop mimpure-text patch; upstream.
+	* patches/ecj/override.patch: Regenerate
+	against Oracle version of security patches.
+
 2012-06-07  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am,
@@ -300,6 +349,30 @@
 2012-06-12  Andrew John Hughes  <ahughes@redhat.com>
 
 	* NEWS: Add 1.10.8 & 1.11.3 releases.
+
+2012-06-11  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/openjdk/7103224-glibc_name_collision.patch,
+	* patches/openjdk/7140882-dont-return-booleans-from-methods-returning-pointers.patch,
+	* patches/support_linux_3.patch:
+	Drop upstreamed patches.
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Removed above patches.
+	* patches/openjdk/6633275-shaped_translucent_windows.patch:
+	Regenerated due to copyright header change by Oracle.
+
+2012-06-06  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/openjdk/6610244-modal-fatal-error-windows.patch:
+	Removed.
+	* Makefile.am,
+	Remove upstreamed patch.
+
+2012-05-16  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am:
+	(OPENJDK_VERSION): Move to b26, ready
+	for next release.
 
 2012-05-16  Andrew John Hughes  <ahughes@redhat.com>
 
