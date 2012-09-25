@@ -762,7 +762,7 @@ endif
 	if ! echo "$(JAXP_DROP_SHA256SUM)  drops/$(JAXP_DROP_ZIP)" \
 	  | $(SHA256SUM) --check ; \
 	then \
-	  if test "x$${enable_downloading}" = "xyes"; then \
+	  if test "x$(enable_downloading)" = "xyes"; then \
 	    if [ -f drops/$(JAXP_DROP_ZIP) ] ; \
 	    then \
 	      mv drops/$(JAXP_DROP_ZIP) drops/$(JAXP_DROP_ZIP).old ; \
@@ -791,7 +791,7 @@ endif
 	if ! echo "$(JAF_DROP_SHA256SUM)  drops/$(JAF_DROP_ZIP)" \
 	  | $(SHA256SUM) --check ; \
 	then \
-	  if test "x$${enable_downloading}" = "xyes"; then \
+	  if test "x$(enable_downloading)" = "xyes"; then \
 	    if [ -f drops/$(JAF_DROP_ZIP) ] ; \
 	    then \
 	      mv drops/$(JAF_DROP_ZIP) drops/$(JAF_DROP_ZIP).old ; \
@@ -820,7 +820,7 @@ endif
 	if ! echo "$(JAXWS_DROP_SHA256SUM)  drops/$(JAXWS_DROP_ZIP)" \
 	  | $(SHA256SUM) --check ; \
 	then \
-	  if test "x$${enable_downloading}" = "xyes"; then \
+	  if test "x$(enable_downloading)" = "xyes"; then \
 	    if [ -f drops/$(JAXWS_DROP_ZIP) ] ; \
 	    then \
 	      mv drops/$(JAXWS_DROP_ZIP) drops/$(JAXWS_DROP_ZIP).old ; \
@@ -856,7 +856,7 @@ endif
 	if ! echo "$(CACAO_SHA256SUM)  $(CACAO_SRC_ZIP)" \
 	 | $(SHA256SUM) --check ; \
 	then \
-	 if test "x$${enable_downloading}" = "xyes"; then \
+	 if test "x$(enable_downloading)" = "xyes"; then \
 	   if [ -e $(CACAO_SRC_ZIP) ] ; then \
 	     mv $(CACAO_SRC_ZIP) $(CACAO_SRC_ZIP).old ; \
 	   fi ; \
@@ -887,7 +887,7 @@ endif
 	if ! echo "$(JAMVM_SHA256SUM)  $(JAMVM_SRC_ZIP)" \
 	 | $(SHA256SUM) --check ; \
 	then \
-	  if test "x$${enable_downloading}" = "xyes"; then \
+	  if test "x$(enable_downloading)" = "xyes"; then \
 	    if [ -e $(JAMVM_SRC_ZIP) ] ; then \
 	      mv $(JAMVM_SRC_ZIP) $(JAMVM_SRC_ZIP).old ; \
 	    fi ; \
@@ -932,7 +932,7 @@ else
 	if ! echo "$(OPENJDK_SHA256SUM)  $(OPENJDK_SRC_ZIP)" \
 	  | $(SHA256SUM) --check ; \
 	then \
-	  if test "x$${enable_downloading}" = "xyes"; then \
+	  if test "x$(enable_downloading)" = "xyes"; then \
 	    if [ -e $(OPENJDK_SRC_ZIP) ] ; then \
 	      mv $(OPENJDK_SRC_ZIP) $(OPENJDK_SRC_ZIP).old ; \
 	    fi ; \
@@ -966,7 +966,7 @@ endif
 	if ! echo "$${hotspot_sha256sum}  $(HOTSPOT_SRC_ZIP)" \
 	  | $(SHA256SUM) --check ; \
 	then \
-	  if test "x$${enable_downloading}" = "xyes"; then \
+	  if test "x$(enable_downloading)" = "xyes"; then \
 	    if [ -e $(HOTSPOT_SRC_ZIP) ] ; then \
 	      mv $(HOTSPOT_SRC_ZIP) $(HOTSPOT_SRC_ZIP).old ; \
 	    fi ; \
