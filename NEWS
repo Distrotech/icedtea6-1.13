@@ -12,6 +12,31 @@ CVE-XXXX-YYYY: http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
 New in release 1.12 (2012-XX-XX):
 
+* Import of OpenJDK6 b26
+  - S7071826: Avoid benign race condition in initialization of UUID
+  - S7123896: Unexpected behavior due to Solaris using separate IPv4 and IPv6 port spaces
+  - S7142509: Cipher.doFinal(ByteBuffer,ByteBuffer) fails to process when in.remaining() == 0
+  - S7157903: JSSE client sockets are very slow
+  - S7174440: JDK6-open build breakage
+  - S7175845: "jar uf" changes file permissions unexpectedly
+  - S7175845: JSSE client sockets are very slow
+  - S7176477: TEST: Remove testcase test/java/lang/SecurityManager/CheckPackageDefinition.java from jdk6-open
+  - S7177216: native2ascii changes file permissions of input file
+  - S7184700: Backout changes with wrong id for 7157903
+  - S7199153: TEST_BUG: try-with-resources syntax pushed to 6-open repo
+* Import of OpenJDK6 b25
+  - S6790292: BOOTDIR of jdk6 u12 will not work with jdk7 builds
+  - S6967036: Need to fix links with // in Javadoc comments
+  - S7007299: FileFontStrike appears not to be threadsafe
+  - S7022473: JDK7 still runs /etc/prtconf to find memory size
+  - S7058133: Javah should use the freshly built classes instead of those from the BOOTDIR jdk
+  - S7107919: Remove hotspot assertion due to Solaris 8 kstat "unimplemented".
+  - S7123519: problems with certification path
+  - S7126889: Incorrect SSLEngine debug output
+  - S7127104: Build issue with prtconf and zones, also using := to avoid extra execs
+  - S7128474: Update source copyright years
+  - S7128505: Building on em64t system does not work
+  - S7149751: another krb5 test in openjdk6 without test infrastructure
 * Backports
   - S6706974: Add krb5 test infrastructure
   - S6764553: com.sun.org.apache.xml.internal.security.utils.IdResolver is not thread safe
@@ -108,7 +133,7 @@ New in release 1.11.2 (2012-05-11):
 
 New in release 1.10.7 (2012-05-11):
 
-* Fixed build with GCC 4.7
+* S7150392: Fixed build with GCC 4.7
 * Bug fixes
   - PR732: Use xsltproc for bootstrap xslt in place of Xerces/Xalan
   - PR881: Sign tests (wsse.policy.basic) failures with OpenJDK6
@@ -187,7 +212,7 @@ New in release 1.11 (2012-01-30):
 * Allow selection of test suites using the jtreg_checks argument e.g. jtreg_checks="langtools"
 * Drop the outdated NIO2 backport.  Users who want NIO2 should use IcedTea 2.x.
 * Shark has been disabled
-* Fixed build with GCC 4.7
+* S7150392: Fixed build with GCC 4.7
 * Bug fixes
   - PR637: make check should exit with an error code if any regression test failed.
   - PR752: ImageFormatException extends Exception not RuntimeException
@@ -724,7 +749,7 @@ New in release 1.8.10 (2011-10-18):
 New in release 1.10.3 (2011-07-21):
 
 * Bug fixes
-  - PR748: Icedtea6 fails to build with Linux 3.0.
+  - PR748, S7072341: Icedtea6 fails to build with Linux 3.0.
   - PR744: icedtea6-1.10.2 : patching error
 * Backports:
   - S7037283, RH712211: Null Pointer Exception in SwingUtilities2.
@@ -738,7 +763,7 @@ New in release 1.9.9 (2011-07-20):
   - RH718164, CVE-2011-2513: Home directory path disclosure to untrusted apps
 * Bug Fixes
   - PR744: icedtea6-1.10.2 : patching error
-  - PR748: Icedtea6 fails to build with Linux 3.0.
+  - PR748, S7072341: Icedtea6 fails to build with Linux 3.0.
 * Shark
   - PR632: patches/security/20110215/6878713.patch breaks shark zero build
 
@@ -748,7 +773,7 @@ New in release 1.8.9 (2011-07-20):
   - RH718164, CVE-2011-2513: Home directory path disclosure to untrusted apps
 * Bug fixes
   - PR744: icedtea6-1.10.2 : patching error
-  - PR748: Icedtea6 fails to build with Linux 3.0.
+  - PR748, S7072341: Icedtea6 fails to build with Linux 3.0.
 
 New in release 1.10.2 (2011-06-07):
 
