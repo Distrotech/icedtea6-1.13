@@ -1,3 +1,22 @@
+2012-09-25  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* NEWS: List PR1176.
+
+2012-09-25  Stefan Ring  <stefan@complang.tuwien.ac.at>
+
+	* patches/cacao/ignore-jdi-tests.patch: Removed.
+	* patches/cacao/ignore-tests.patch: Likewise.
+	* Makefile.am:
+	Synchronize CACAO sections with icedtea7,
+	removing test-disabling patches.
+	(cacao): Pass -j$(PARALLEL_JOBS) to make.
+
+2009-11-02  Andrew John Hughes  <ahughes@redhat.com>
+
+	(extract-cacao): Test the actual CACAO source
+	directory exists, not just the directory above.
+	Use $@ to create stamp.
+
 2012-04-12  Andrew John Hughes  <ahughes@redhat.com>
 
 	* Makefile.am:

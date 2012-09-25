@@ -433,12 +433,6 @@ ICEDTEA_PATCHES += \
 	patches/cacao/memory.patch
 endif
 
-if ENABLE_CACAO
-ICEDTEA_PATCHES += \
-	patches/cacao/ignore-jdi-tests.patch \
-	patches/cacao/ignore-tests.patch
-endif
-
 if ENABLE_PULSE_JAVA
 ICEDTEA_PATCHES += \
 	patches/pulse-soundproperties.patch
@@ -1048,14 +1042,14 @@ if BUILD_CACAO
 if !USE_SYSTEM_CACAO
 if USE_ALT_CACAO_SRC_DIR
 	set -e ; \
-	if ! test -d cacao ; \
+	if ! test -d cacao/cacao ; \
 	then \
 	  mkdir cacao ; \
 	  cp -rL $(ALT_CACAO_SRC_DIR) cacao/cacao ; \
 	fi
 else
 	set -e ; \
-	if ! test -d cacao ; \
+	if ! test -d cacao/cacao ; \
 	then \
 	  mkdir cacao ; \
 	  $(TAR) xf $(CACAO_SRC_ZIP) -C cacao ; \
@@ -1066,7 +1060,7 @@ endif
 endif
 endif
 	mkdir -p stamps
-	touch stamps/extract-cacao.stamp
+	touch $@
 
 stamps/extract-jamvm.stamp:
 if BUILD_JAMVM
@@ -2124,7 +2118,7 @@ if !USE_SYSTEM_CACAO
 	  --with-java-runtime-library-prefix=$(abs_top_builddir)/openjdk \
 	  --with-java-runtime-library-classes=$(RUNTIME) \
 	  --enable-jre-layout $(CACAO_CONFIGURE_ARGS); \
-	$(ARCH_PREFIX) $(MAKE) install
+	$(ARCH_PREFIX) $(MAKE) -j$(PARALLEL_JOBS) install
 	ln -s server $(abs_top_builddir)/cacao/install/jre/lib/$(INSTALL_ARCH_DIR)/client
 endif
 endif
