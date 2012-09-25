@@ -1834,3 +1834,26 @@ rmdir tmp.$$
 AM_CONDITIONAL([LACKS_$1], test x"${it_cv_$1}" = "xyes")
 AC_PROVIDE([$0])dnl
 ])
+
+AC_DEFUN([IT_CHECK_IF_DOWNLOADING],
+[
+  AC_MSG_CHECKING([whether to download tarballs])
+  AC_ARG_ENABLE([downloading],
+	      [AS_HELP_STRING(--disable-downloading,don't download tarballs [[default=no]])],
+  [
+    case "${enableval}" in
+      no)
+	enable_downloading=no
+        ;;
+      *)
+        enable_downloading=yes
+        ;;
+    esac
+  ],
+  [
+        enable_downloading=yes
+  ])
+  AC_MSG_RESULT([${enable_downloading}])
+  AM_CONDITIONAL([DOWNLOADING], test x"${enable_downloading}" = "xyes")
+  AC_SUBST([enable_downloading])
+])

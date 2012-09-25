@@ -762,15 +762,19 @@ endif
 	if ! echo "$(JAXP_DROP_SHA256SUM)  drops/$(JAXP_DROP_ZIP)" \
 	  | $(SHA256SUM) --check ; \
 	then \
-	  if [ -f drops/$(JAXP_DROP_ZIP) ] ; \
-	  then \
-	    mv drops/$(JAXP_DROP_ZIP) drops/$(JAXP_DROP_ZIP).old ; \
+	  if test "x$${enable_downloading}" = "xyes"; then \
+	    if [ -f drops/$(JAXP_DROP_ZIP) ] ; \
+	    then \
+	      mv drops/$(JAXP_DROP_ZIP) drops/$(JAXP_DROP_ZIP).old ; \
+	    fi ; \
+	    $(WGET) $(JAXP_DROP_URL)/$(JAXP_DROP_ZIP) -O drops/$(JAXP_DROP_ZIP); \
+	    if ! echo "$(JAXP_DROP_SHA256SUM)  drops/$(JAXP_DROP_ZIP)" \
+	      | $(SHA256SUM) --check ; \
+	      then echo "ERROR: Bad download of jaxp drop zip"; false; \
+	    fi; \
+	  else \
+	    echo "ERROR: No up-to-date JAXP drop zip available"; exit -1; \
 	  fi ; \
-	  $(WGET) $(JAXP_DROP_URL)/$(JAXP_DROP_ZIP) -O drops/$(JAXP_DROP_ZIP); \
-	  if ! echo "$(JAXP_DROP_SHA256SUM)  drops/$(JAXP_DROP_ZIP)" \
-	    | $(SHA256SUM) --check ; \
-	  then echo "ERROR: Bad download of jaxp drop zip"; false; \
-	  fi; \
 	fi ;
 	mkdir -p stamps
 	touch $@
@@ -787,14 +791,18 @@ endif
 	if ! echo "$(JAF_DROP_SHA256SUM)  drops/$(JAF_DROP_ZIP)" \
 	  | $(SHA256SUM) --check ; \
 	then \
-	  if [ -f drops/$(JAF_DROP_ZIP) ] ; \
-	  then \
-	    mv drops/$(JAF_DROP_ZIP) drops/$(JAF_DROP_ZIP).old ; \
-	  fi ; \
-	  $(WGET) $(JAF_DROP_URL)/$(JAF_DROP_ZIP) -O drops/$(JAF_DROP_ZIP); \
-	  if ! echo "$(JAF_DROP_SHA256SUM)  drops/$(JAF_DROP_ZIP)" \
-	    | $(SHA256SUM) --check ; \
-	  then echo "ERROR: Bad download of jaf drop zip"; false; \
+	  if test "x$${enable_downloading}" = "xyes"; then \
+	    if [ -f drops/$(JAF_DROP_ZIP) ] ; \
+	    then \
+	      mv drops/$(JAF_DROP_ZIP) drops/$(JAF_DROP_ZIP).old ; \
+	    fi ; \
+	    $(WGET) $(JAF_DROP_URL)/$(JAF_DROP_ZIP) -O drops/$(JAF_DROP_ZIP); \
+	    if ! echo "$(JAF_DROP_SHA256SUM)  drops/$(JAF_DROP_ZIP)" \
+	      | $(SHA256SUM) --check ; \
+	      then echo "ERROR: Bad download of jaf drop zip"; false; \
+	    fi; \
+	  else \
+	    echo "ERROR: No up-to-date JAF drop zip available"; exit -1; \
 	  fi; \
 	fi ;
 	mkdir -p stamps
@@ -812,14 +820,18 @@ endif
 	if ! echo "$(JAXWS_DROP_SHA256SUM)  drops/$(JAXWS_DROP_ZIP)" \
 	  | $(SHA256SUM) --check ; \
 	then \
-	  if [ -f drops/$(JAXWS_DROP_ZIP) ] ; \
-	  then \
-	    mv drops/$(JAXWS_DROP_ZIP) drops/$(JAXWS_DROP_ZIP).old ; \
-	  fi ; \
-	  $(WGET) $(JAXWS_DROP_URL)/$(JAXWS_DROP_ZIP) -O drops/$(JAXWS_DROP_ZIP); \
-	  if ! echo "$(JAXWS_DROP_SHA256SUM)  drops/$(JAXWS_DROP_ZIP)" \
-	    | $(SHA256SUM) --check ; \
-	  then echo "ERROR: Bad download of jaxws drop zip"; false; \
+	  if test "x$${enable_downloading}" = "xyes"; then \
+	    if [ -f drops/$(JAXWS_DROP_ZIP) ] ; \
+	    then \
+	      mv drops/$(JAXWS_DROP_ZIP) drops/$(JAXWS_DROP_ZIP).old ; \
+	    fi ; \
+	    $(WGET) $(JAXWS_DROP_URL)/$(JAXWS_DROP_ZIP) -O drops/$(JAXWS_DROP_ZIP); \
+	    if ! echo "$(JAXWS_DROP_SHA256SUM)  drops/$(JAXWS_DROP_ZIP)" \
+	      | $(SHA256SUM) --check ; \
+	      then echo "ERROR: Bad download of jaxws drop zip"; false; \
+	    fi; \
+	  else \
+	    echo "ERROR: No up-to-date JAXWS drop zip available"; exit -1; \
 	  fi; \
 	fi ;
 	mkdir -p stamps
@@ -844,15 +856,18 @@ endif
 	if ! echo "$(CACAO_SHA256SUM)  $(CACAO_SRC_ZIP)" \
 	 | $(SHA256SUM) --check ; \
 	then \
-	 if [ -e $(CACAO_SRC_ZIP) ] ; \
-	 then \
-	   mv $(CACAO_SRC_ZIP) $(CACAO_SRC_ZIP).old ; \
+	 if test "x$${enable_downloading}" = "xyes"; then \
+	   if [ -e $(CACAO_SRC_ZIP) ] ; then \
+	     mv $(CACAO_SRC_ZIP) $(CACAO_SRC_ZIP).old ; \
+	   fi ; \
+	   $(WGET) $(CACAO_URL) -O $(CACAO_SRC_ZIP); \
+	   if ! echo "$(CACAO_SHA256SUM)  $(CACAO_SRC_ZIP)" \
+	     | $(SHA256SUM) --check ; then \
+	     echo "ERROR: Bad download of CACAO zip"; false; \
+	   fi; \
+	 else \
+	   echo "ERROR: No up-to-date CACAO zip available"; exit -1; \
 	 fi ; \
-	 $(WGET) $(CACAO_URL) -O $(CACAO_SRC_ZIP); \
-	 if ! echo "$(CACAO_SHA256SUM)  $(CACAO_SRC_ZIP)" \
-	   | $(SHA256SUM) --check ; \
-	 then echo "ERROR: Bad download of CACAO zip"; false; \
-	 fi; \
 	fi
 endif
 endif
@@ -872,15 +887,18 @@ endif
 	if ! echo "$(JAMVM_SHA256SUM)  $(JAMVM_SRC_ZIP)" \
 	 | $(SHA256SUM) --check ; \
 	then \
-	 if [ -e $(JAMVM_SRC_ZIP) ] ; \
-	 then \
-	   mv $(JAMVM_SRC_ZIP) $(JAMVM_SRC_ZIP).old ; \
-	 fi ; \
-	 $(WGET) $(JAMVM_URL) -O $(JAMVM_SRC_ZIP); \
-	 if ! echo "$(JAMVM_SHA256SUM)  $(JAMVM_SRC_ZIP)" \
-	  | $(SHA256SUM) --check ; \
-	 then echo "ERROR: Bad download of JamVM zip"; false; \
-	 fi; \
+	  if test "x$${enable_downloading}" = "xyes"; then \
+	    if [ -e $(JAMVM_SRC_ZIP) ] ; then \
+	      mv $(JAMVM_SRC_ZIP) $(JAMVM_SRC_ZIP).old ; \
+	    fi ; \
+	    $(WGET) $(JAMVM_URL) -O $(JAMVM_SRC_ZIP); \
+	    if ! echo "$(JAMVM_SHA256SUM)  $(JAMVM_SRC_ZIP)" \
+	      | $(SHA256SUM) --check ; then \
+	      echo "ERROR: Bad download of JamVM zip"; false; \
+	    fi; \
+	  else \
+	    echo "ERROR: No up-to-date JamVM zip available"; exit -1; \
+	  fi ; \
 	fi
 endif
 	mkdir -p stamps
@@ -914,11 +932,18 @@ else
 	if ! echo "$(OPENJDK_SHA256SUM)  $(OPENJDK_SRC_ZIP)" \
 	  | $(SHA256SUM) --check ; \
 	then \
-	  if [ -e $(OPENJDK_SRC_ZIP) ] ; \
-	  then \
-	    mv $(OPENJDK_SRC_ZIP) $(OPENJDK_SRC_ZIP).old ; \
+	  if test "x$${enable_downloading}" = "xyes"; then \
+	    if [ -e $(OPENJDK_SRC_ZIP) ] ; then \
+	      mv $(OPENJDK_SRC_ZIP) $(OPENJDK_SRC_ZIP).old ; \
+	    fi ; \
+	    $(WGET) $(OPENJDK_URL)$(OPENJDK_SRC_ZIP) -O $(OPENJDK_SRC_ZIP); \
+	    if ! echo "$(OPENJDK_SHA256SUM)  $(OPENJDK_SRC_ZIP)" \
+	      | $(SHA256SUM) --check ; then \
+	      echo "ERROR: Bad download of OpenJDK zip"; false; \
+	    fi; \
+	  else \
+	    echo "ERROR: No up-to-date OpenJDK zip available"; exit -1; \
 	  fi ; \
-	  $(WGET) $(OPENJDK_URL)$(OPENJDK_SRC_ZIP) -O $(OPENJDK_SRC_ZIP); \
 	fi
 endif
 endif
@@ -941,13 +966,20 @@ endif
 	if ! echo "$${hotspot_sha256sum}  $(HOTSPOT_SRC_ZIP)" \
 	  | $(SHA256SUM) --check ; \
 	then \
-	  if [ -e $(HOTSPOT_SRC_ZIP) ] ; \
-	  then \
-	    mv $(HOTSPOT_SRC_ZIP) $(HOTSPOT_SRC_ZIP).old ; \
+	  if test "x$${enable_downloading}" = "xyes"; then \
+	    if [ -e $(HOTSPOT_SRC_ZIP) ] ; then \
+	      mv $(HOTSPOT_SRC_ZIP) $(HOTSPOT_SRC_ZIP).old ; \
+	    fi ; \
+	    hotspot_url="`$(AWK) 'version==$$1 {print $$2 "/archive/" $$3 ".tar.gz"}' \
+	      version=$(HSBUILD) $(abs_top_srcdir)/hotspot.map`"; \
+	    $(WGET) $${hotspot_url} -O $(HOTSPOT_SRC_ZIP) ; \
+	    if ! echo "$${hotspot_sha256sum}  $(HOTSPOT_SRC_ZIP)" \
+	      | $(SHA256SUM) --check ; then \
+	      echo "ERROR: Bad download of HotSpot zip"; false; \
+	    fi; \
+	  else \
+	    echo "ERROR: No up-to-date HotSpot zip available"; exit -1; \
 	  fi ; \
-	  hotspot_url="`$(AWK) 'version==$$1 {print $$2 "/archive/" $$3 ".tar.gz"}' \
-	    version=$(HSBUILD) $(abs_top_srcdir)/hotspot.map`"; \
-	  $(WGET) $${hotspot_url} -O $(HOTSPOT_SRC_ZIP) ; \
 	fi
 endif
 	mkdir -p stamps
