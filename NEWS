@@ -63,6 +63,69 @@ New in release 1.12 (2012-XX-XX):
   - Add missing REF_TO_OBJs for references passed from JNI, this enable JamVM
     to run Qt-Jambi
 
+New in release 1.11.5 (2012-10-16):
+
+* Security fixes
+  - S6631398, CVE-2012-3216: FilePermission improved path checking
+  - S7093490: adjust package access in rmiregistry
+  - S7143535, CVE-2012-5068: ScriptEngine corrected permissions
+  - S7167656, CVE-2012-5077: Multiple Seeders are being created
+  - S7169884, CVE-2012-5073: LogManager checks do not work correctly for sub-types
+  - S7169888, CVE-2012-5075: Narrowing resource definitions in JMX RMI connector
+  - S7172522, CVE-2012-5072: Improve DomainCombiner checking
+  - S7186286, CVE-2012-5081: TLS implementation to better adhere to RFC
+  - S7189103, CVE-2012-5069: Executors needs to maintain state
+  - S7189490: More improvements to DomainCombiner checking
+  - S7189567, CVE-2012-5085: java net obselete protocol
+  - S7192975, CVE-2012-5071: Conditional usage check is wrong
+  - S7195194, CVE-2012-5084: Better data validation for Swing
+  - S7195917, CVE-2012-5086: XMLDecoder parsing at close-time should be improved
+  - S7195919, CVE-2012-5979: (sl) ServiceLoader can throw CCE without needing to create instance
+  - S7198296, CVE-2012-5089: Refactor classloader usage
+  - S7158800: Improve storage of symbol tables
+  - S7158801: Improve VM CompileOnly option
+  - S7158804: Improve config file parsing
+  - S7176337: Additional changes needed for 7158801 fix
+  - S7198606, CVE-2012-4416: Improve VM optimization
+* Backports
+  - S7175845: "jar uf" changes file permissions unexpectedly
+  - S7177216: native2ascii changes file permissions of input file
+  - S7199153: TEST_BUG: try-with-resources syntax pushed to 6-open repo
+* Bug fixes
+  - PR1194: IcedTea tries to build with /usr/lib/jvm/java-openjdk (now a 1.7 VM) by default
+
+New in release 1.10.10 (2012-10-16):
+
+* Security fixes
+  - S6631398, CVE-2012-3216: FilePermission improved path checking
+  - S7093490: adjust package access in rmiregistry
+  - S7143535, CVE-2012-5068: ScriptEngine corrected permissions
+  - S7167656, CVE-2012-5077: Multiple Seeders are being created
+  - S7169884, CVE-2012-5073: LogManager checks do not work correctly for sub-types
+  - S7169888, CVE-2012-5075: Narrowing resource definitions in JMX RMI connector
+  - S7172522, CVE-2012-5072: Improve DomainCombiner checking
+  - S7186286, CVE-2012-5081: TLS implementation to better adhere to RFC
+  - S7189103, CVE-2012-5069: Executors needs to maintain state
+  - S7189490: More improvements to DomainCombiner checking
+  - S7189567, CVE-2012-5085: java net obselete protocol
+  - S7192975, CVE-2012-5071: Conditional usage check is wrong
+  - S7195194, CVE-2012-5084: Better data validation for Swing
+  - S7195917, CVE-2012-5086: XMLDecoder parsing at close-time should be improved
+  - S7195919, CVE-2012-5979: (sl) ServiceLoader can throw CCE without needing to create instance
+  - S7198296, CVE-2012-5089: Refactor classloader usage
+  - S7158800: Improve storage of symbol tables
+  - S7158801: Improve VM CompileOnly option
+  - S7158804: Improve config file parsing
+  - S7176337: Additional changes needed for 7158801 fix
+  - S7198606, CVE-2012-4416: Improve VM optimization
+* Backports
+  - S7092186: adjust package access in rmiregistry
+* Bug fixes
+  - PR1194: IcedTea tries to build with /usr/lib/jvm/java-openjdk (now a 1.7 VM) by default
+  - S7175845: "jar uf" changes file permissions unexpectedly
+  - S7177216: native2ascii changes file permissions of input file
+  - S7199153: TEST_BUG: try-with-resources syntax pushed to 6-open repo
+
 New in release 1.11.4 (2012-08-31):
 
 * Security fixes
