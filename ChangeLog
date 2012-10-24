@@ -1,3 +1,36 @@
+2012-10-11  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(SECURITY_PATCHES): Add new patches.
+	* patches/ecj/override.patch:
+	Add new cases in P11Key and RMIConnectionImpl
+	introduced by security patches.
+	* patches/openjdk/p11cipher-4898461-support_ecb_and_cbc.patch,
+	* patches/openjdk/p11cipher-6604496-support_ckm_aes_ctr.patch:
+	Regenerated to still apply after security patches.
+	* patches/security/20121016/6631398.patch,
+	* patches/security/20121016/7093490.patch,
+	* patches/security/20121016/7143535.patch,
+	* patches/security/20121016/7158800.patch,
+	* patches/security/20121016/7158801.patch,
+	* patches/security/20121016/7158804.patch,
+	* patches/security/20121016/7167656.patch,
+	* patches/security/20121016/7169884.patch,
+	* patches/security/20121016/7169888.patch,
+	* patches/security/20121016/7172522.patch,
+	* patches/security/20121016/7176337.patch,
+	* patches/security/20121016/7186286.patch,
+	* patches/security/20121016/7189103.patch,
+	* patches/security/20121016/7189490.patch,
+	* patches/security/20121016/7189567.patch,
+	* patches/security/20121016/7192975.patch,
+	* patches/security/20121016/7195194.patch,
+	* patches/security/20121016/7195917.patch,
+	* patches/security/20121016/7195919.patch,
+	* patches/security/20121016/7198296.patch,
+	* patches/security/20121016/7198606.patch:
+	New patches.
+
 2012-09-25  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* NEWS: List PR1176.

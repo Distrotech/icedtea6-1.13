@@ -219,6 +219,28 @@ diff -Nru openjdk-ecj.orig/jdk/src/share/classes/sun/security/x509/X509CRLImpl.j
          public int compareTo(X509IssuerSerial another) {
              int cissuer = issuer.toString()
                      .compareTo(another.issuer.toString());
+diff -Nru openjdk-ecj.orig/jdk/src/share/classes/javax/management/remote/rmi/RMIConnectionImpl.java openjdk-ecj/jdk/src/share/classes/javax/management/remote/rmi/RMIConnectionImpl.java
+--- openjdk-ecj.orig/jdk/src/share/classes/javax/management/remote/rmi/RMIConnectionImpl.java	2012-10-11 19:58:37.130814619 +0100
++++ openjdk-ecj/jdk/src/share/classes/javax/management/remote/rmi/RMIConnectionImpl.java	2012-10-11 19:59:39.699829277 +0100
+@@ -168,7 +168,6 @@
+         this.defaultContextClassLoader =
+             AccessController.doPrivileged(
+                 new PrivilegedAction<ClassLoader>() {
+-                    @Override
+                     public ClassLoader run() {
+                         return new CombinedClassLoader(Thread.currentThread().getContextClassLoader(),
+                                 dcl);
+diff -Nru openjdk-ecj.orig/jdk/src/share/classes/sun/security/pkcs11/P11Key.java openjdk-ecj/jdk/src/share/classes/sun/security/pkcs11/P11Key.java
+--- openjdk-ecj.orig/jdk/src/share/classes/sun/security/pkcs11/P11Key.java	2012-10-11 20:18:07.340676704 +0100
++++ openjdk-ecj/jdk/src/share/classes/sun/security/pkcs11/P11Key.java	2012-10-11 20:17:40.092039288 +0100
+@@ -216,7 +216,6 @@
+     /**
+      * Return bit length of the key.
+      */
+-    @Override
+     public int length() { 
+         return keyLength;
+     }
 diff -Nru openjdk-ecj.orig/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java openjdk-ecj/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java
 --- openjdk-ecj.orig/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java	2011-01-07 21:33:03.000000000 +0000
 +++ openjdk-ecj/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java	2012-06-13 17:39:06.625931390 +0100
