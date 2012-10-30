@@ -1,0 +1,12 @@
+diff --git a/make/tools/src/build/tools/generatebreakiteratordata/GenerateBreakIteratorData.java b/make/tools/src/build/tools/generatebreakiteratordata/GenerateBreakIteratorData.java
+--- openjdk/jdk/make/tools/src/build/tools/generatebreakiteratordata/GenerateBreakIteratorData.java
++++ openjdk/jdk/make/tools/src/build/tools/generatebreakiteratordata/GenerateBreakIteratorData.java
+@@ -115,7 +115,7 @@
+             }
+         }
+         catch (Exception e) {
+-            throw new InternalError(e.toString());
++	    throw (Error) new InternalError(e.toString()).initCause(e);
+         }
+     }
+ 

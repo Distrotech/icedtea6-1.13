@@ -43,6 +43,10 @@ New in release 1.12 (2012-XX-XX):
   - S6761072: new krb5 tests fail on multiple platforms
   - S6883983: JarVerifier dependency on sun.security.pkcs should be removed
   - S4465490: Suspicious about double-check locking idiom being used in the code
+  - S6763340: memory leak in com.sun.corba.se.* classes
+  - S6873605: Missing finishedDispatch() call in ORBImpl causes test failures after 5u20 b04
+  - S6980681: CORBA deadlock in Java SE believed to be related to CR 6238477
+  - S7162902: Umbrella port of a number of corba bug fixes from JDK 6 to jdk7u/8
 * Bug fixes
   - PR902: PulseAudioClip getMicrosecondsLength() returns length in milliseconds, not microseconds
   - PR1050: Stream objects not garbage collected

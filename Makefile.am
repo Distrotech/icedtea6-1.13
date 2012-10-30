@@ -440,7 +440,11 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/p11cipher-6924489-ckr_operation_not_initialized.patch \
 	patches/openjdk/p11cipher-6604496-support_ckm_aes_ctr.patch \
 	patches/openjdk/p11cipher-6414899-p11digest_should_support_cloning.patch \
-	patches/merge_fix.patch
+	patches/merge_fix.patch \
+	patches/openjdk/6763340-corba_memory_leak.patch \
+	patches/openjdk/6980681-corba_deadlock.patch \
+	patches/openjdk/7162902-corba_fixes.patch \
+	patches/traceable.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \

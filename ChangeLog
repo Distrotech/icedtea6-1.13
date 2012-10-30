@@ -1,3 +1,16 @@
+2012-10-30  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am: Add new patches.
+	* NEWS: List new backports.
+	* patches/openjdk/6763340-corba_memory_leak.patch,
+	* patches/openjdk/6980681-corba_deadlock.patch,
+	* patches/openjdk/7162902-corba_fixes.patch:
+	Add a series of CORBA backports, already applied
+	to the proprietary JDK6 release.
+	* patches/traceable.patch: Fix
+	GenerateBreakIteratorData tool so that crashes
+	have stack traces.
+
 2012-10-24  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* NEWS: Add 1.10.10 & 1.11.5 releases.
