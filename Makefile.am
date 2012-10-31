@@ -2,7 +2,7 @@
 
 OPENJDK_DATE = 21_sep_2012
 OPENJDK_SHA256SUM = 9635d8563b9ba811f1d6e333861f235a2d8835c623451abc44791891d40d8b09
-OPENJDK_VERSION = b26
+OPENJDK_VERSION = b27
 OPENJDK_URL = http://download.java.net/openjdk/jdk6/promoted/$(OPENJDK_VERSION)/
 
 CACAO_VERSION = cff92704c4e0
@@ -198,28 +198,7 @@ TAPSET_TEST_SRCS = \
 ICEDTEA_FSG_PATCHES =
 
 SECURITY_PATCHES = \
-	patches/security/20120830/7182135-impossible_to_use_some_editors_directly.patch \
-	patches/security/20121016/6631398.patch \
-	patches/security/20121016/7093490.patch \
-	patches/security/20121016/7143535.patch \
-	patches/security/20121016/7158800.patch \
-	patches/security/20121016/7158801.patch \
-	patches/security/20121016/7158804.patch \
-	patches/security/20121016/7167656.patch \
-	patches/security/20121016/7169884.patch \
-	patches/security/20121016/7169888.patch \
-	patches/security/20121016/7172522.patch \
-	patches/security/20121016/7176337.patch \
-	patches/security/20121016/7186286.patch \
-	patches/security/20121016/7189103.patch \
-	patches/security/20121016/7189490.patch \
-	patches/security/20121016/7189567.patch \
-	patches/security/20121016/7192975.patch \
-	patches/security/20121016/7195194.patch \
-	patches/security/20121016/7195917.patch \
-	patches/security/20121016/7195919.patch \
-	patches/security/20121016/7198296.patch \
-	patches/security/20121016/7198606.patch
+	patches/security/20120830/7182135-impossible_to_use_some_editors_directly.patch
 
 SPECIAL_SECURITY_PATCH = patches/security/20120214/7112642.patch
 
