@@ -453,6 +453,7 @@ ICEDTEA_PATCHES += patches/sdt-jni.patch \
 	patches/sdt-dtrace-hpp.patch \
 	patches/sdt-make.patch \
 	patches/sdt-arguments.patch \
+	patches/systemtap_gc.patch
 	patches/systemtap-gcc-4.5.patch \
 	patches/systemtap-alloc-size-workaround.patch
 endif
@@ -646,6 +647,7 @@ EXTRA_DIST = generated \
 	tapset/hotspot.stp.in \
 	tapset/hotspot_jni.stp.in \
 	tapset/jstack.stp.in \
+	tapset/hotspot_gc.stp.in \
 	scripts/jni_create_stap.c \
 	scripts/jni_desc \
 	rewriter/agpl-3.0.txt \
@@ -1543,6 +1545,9 @@ if ENABLE_SYSTEMTAP
 	    < $(abs_top_builddir)/tapset/hotspot.stp \
 	    > $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
 	  sed -e '/\/client\/libjvm.so/d' \
+	    < $(abs_top_builddir)/tapset/hotspot_gc.stp \
+	    > $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_gc.stp; \
+	  sed -e '/\/client\/libjvm.so/d' \
 	    < $(abs_top_builddir)/tapset/hotspot_jni.stp \
 	    > $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_jni.stp; \
 	else \
@@ -1574,6 +1579,8 @@ if ENABLE_SYSTEMTAP
 	else \
 	  cp $(abs_top_builddir)/tapset/hotspot.stp \
 	    $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
+	  cp $(abs_top_builddir)/tapset/hotspot_gc.stp \
+	    $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_gc.stp; \
 	  cp $(abs_top_builddir)/tapset/hotspot_jni.stp \
 	    $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_jni.stp; \
 	fi
@@ -1797,11 +1804,16 @@ if ENABLE_SYSTEMTAP
 	    < $(abs_top_builddir)/tapset/hotspot.stp \
 	    > $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
 	  sed -e '/\/client\/libjvm.so/d' \
+	    < $(abs_top_builddir)/tapset/hotspot_gc.stp \
+	    > $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_gc.stp; \
+	  sed -e '/\/client\/libjvm.so/d' \
 	    < $(abs_top_builddir)/tapset/hotspot_jni.stp \
 	    > $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_jni.stp; \
 	else \
 	  cp $(abs_top_builddir)/tapset/hotspot.stp \
 	    $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
+	  cp $(abs_top_builddir)/tapset/hotspot_gc.stp \
+	    $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_gc.stp; \
 	  cp $(abs_top_builddir)/tapset/hotspot_jni.stp \
 	    $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_jni.stp; \
 	fi
