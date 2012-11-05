@@ -5,8 +5,8 @@ OPENJDK_SHA256SUM = 044c3877b15940ff04f8aa817337f2878a00cc89674854557f1a02f15b18
 OPENJDK_VERSION = b27
 OPENJDK_URL = http://download.java.net/openjdk/jdk6/promoted/$(OPENJDK_VERSION)/
 
-CACAO_VERSION = cff92704c4e0
-CACAO_SHA256SUM = dc768c9d097fb056ad34fc6d5a57e8fd4f3b24bf515be92acc5ee4208160eb3f
+CACAO_VERSION = 9968abd511a3
+CACAO_SHA256SUM = 3b1ce9d2205d2afba4614a194484341758ee2cb340396310ac2c00e5a2a20955
 CACAO_BASE_URL = http://icedtea.classpath.org/download/drops/cacao
 CACAO_URL = $(CACAO_BASE_URL)/$(CACAO_VERSION).tar.gz
 CACAO_SRC_ZIP = cacao-$(CACAO_VERSION).tar.gz
@@ -433,7 +433,6 @@ endif
 if BUILD_CACAO
 ICEDTEA_PATCHES += \
 	patches/cacao/launcher.patch \
-	patches/cacao/jsig.patch \
 	patches/cacao/memory.patch
 endif
 
@@ -2136,6 +2135,8 @@ if !USE_SYSTEM_CACAO
 	  --enable-jre-layout $(CACAO_CONFIGURE_ARGS); \
 	$(ARCH_PREFIX) $(MAKE) -j$(PARALLEL_JOBS) install
 	ln -s server $(abs_top_builddir)/cacao/install/jre/lib/$(INSTALL_ARCH_DIR)/client
+	touch $(abs_top_builddir)/cacao/install/jre/lib/$(INSTALL_ARCH_DIR)/server/Xusage.txt
+	ln -sf client/libjvm.so $(abs_top_builddir)/cacao/install/jre/lib/$(INSTALL_ARCH_DIR)/libjsig.so
 endif
 endif
 	mkdir -p stamps
