@@ -56,6 +56,13 @@ New in release 1.12 (2012-XX-XX):
     are actually missing from the boot JDK
   - PR1114: Provide option to turn off downloading of tarballs (--disable-downloading)
   - PR1176: Synchronise CACAO rules between IcedTea6/7/8 where possible
+* CACAO
+  - PR1120: Unified version for icedtea6/7
+  - CA166, CA167: check-langtools fixes for icedtea6
+  - Implemented sun.misc.Perf.highResCounter
+  - CACAO now identifies by its own Mercurial revision
+  - Some memory barrier maintenance
+  - Ability to run when compiled as Thumb on armv5 (no Thumb JIT though) 
 * JamVM
   - ARMv6 armhf: Changes for Raspbian (Raspberry Pi)
   - PPC: Don't use lwsync if it isn't supported
