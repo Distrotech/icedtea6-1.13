@@ -1514,25 +1514,27 @@ clean-icedtea-debug:
 
 stamps/icedtea-against-icedtea.stamp: stamps/icedtea.stamp \
  stamps/add-jamvm.stamp stamps/add-cacao.stamp stamps/add-zero.stamp \
- stamps/add-systemtap.stamp stamps/add-pulseaudio.stamp stamps/add-nss.stamp stamps/add-tzdata-support.stamp
+ stamps/add-systemtap.stamp stamps/add-pulseaudio.stamp stamps/add-nss.stamp stamps/add-tzdata-support.stamp \
+ stamps/add-archive.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-against-icedtea.stamp
 
 clean-icedtea-against-icedtea: clean-add-jamvm clean-add-zero clean-add-cacao \
- clean-add-systemtap clean-add-pulseaudio \
- clean-add-nss clean-add-tzdata-support
+ clean-add-systemtap clean-add-pulseaudio clean-add-nss clean-add-tzdata-support \
+ clean-add-archive
 	rm -f stamps/icedtea-against-icedtea.stamp
 
 stamps/icedtea-debug-against-icedtea.stamp: stamps/icedtea-debug.stamp \
  stamps/add-jamvm-debug.stamp stamps/add-cacao-debug.stamp \
  stamps/add-zero-debug.stamp stamps/add-systemtap-debug.stamp stamps/add-pulseaudio-debug.stamp \
- stamps/add-nss-debug.stamp stamps/add-tzdata-support-debug.stamp
+ stamps/add-nss-debug.stamp stamps/add-tzdata-support-debug.stamp stamps/add-archive-debug.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-debug-against-icedtea.stamp
 
 clean-icedtea-debug-against-icedtea: clean-add-zero-debug \
  clean-add-jamvm-debug clean-add-cacao-debug clean-add-systemtap-debug \
- clean-add-pulseaudio-debug clean-add-nss-debug clean-add-tzdata-support-debug
+ clean-add-pulseaudio-debug clean-add-nss-debug clean-add-tzdata-support-debug \
+ clean-add-archive-debug
 	rm -f stamps/icedtea-debug-against-icedtea.stamp
 
 stamps/add-systemtap.stamp: stamps/icedtea.stamp
@@ -1766,6 +1768,20 @@ clean-add-tzdata-support-debug:
 	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties
 	rm -f stamps/add-tzdata-support-debug.stamp
 
+stamps/add-archive.stamp: stamps/icedtea.stamp
+	$(BUILD_OUTPUT_DIR)/j2sdk-image/bin/java -Xshare:dump
+	touch stamps/add-archive.stamp
+
+clean-add-archive:
+	rm -f stamps/add-archive.stamp
+
+stamps/add-archive-debug.stamp: stamps/icedtea-debug.stamp
+	$(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/bin/java -Xshare:dump
+	touch stamps/add-archive-debug.stamp
+
+clean-add-archive-debug:
+	rm -f stamps/add-archive-debug.stamp
+
 # OpenJDK ecj Targets
 # ===================
 
@@ -1786,12 +1802,13 @@ clean-icedtea-ecj:
 	rm -f stamps/icedtea-ecj.stamp
 
 stamps/icedtea-against-ecj.stamp: stamps/icedtea-ecj.stamp stamps/add-systemtap-ecj.stamp \
- stamps/add-pulseaudio-ecj.stamp stamps/add-nss-ecj.stamp stamps/add-tzdata-support-ecj.stamp
+ stamps/add-pulseaudio-ecj.stamp stamps/add-nss-ecj.stamp stamps/add-tzdata-support-ecj.stamp \
+ stamps/add-archive-ecj.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-against-ecj.stamp
 
 clean-icedtea-against-ecj: clean-add-systemtap-ecj clean-add-pulseaudio-ecj clean-add-nss-ecj \
- clean-add-tzdata-support-ecj
+ clean-add-tzdata-support-ecj clean-add-archive-ecj
 	rm -f stamps/icedtea-against-ecj.stamp
 
 stamps/add-systemtap-ecj.stamp: stamps/icedtea-ecj.stamp
@@ -1909,6 +1926,13 @@ endif
 clean-add-tzdata-support-ecj:
 	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties
 	rm -f stamps/add-tzdata-support-ecj.stamp
+
+stamps/add-archive-ecj.stamp: stamps/icedtea-ecj.stamp
+	$(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/bin/java -Xshare:dump
+	touch stamps/add-archive-ecj.stamp
+
+clean-add-archive-ecj:
+	rm -f stamps/add-archive-ecj.stamp
 
 # Rebuild targets
 
@@ -2494,6 +2518,12 @@ endif
 
 # Target Aliases
 # ===============
+
+add-archive: stamps/add-archive.stamp
+
+add-archive-debug: stamps/add-archive-debug.stamp
+
+add-archive-ecj: stamps/add-archive-ecj.stamp
 
 bootstrap-directory-ecj: stamps/bootstrap-directory-ecj.stamp
 

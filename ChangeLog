@@ -1,3 +1,22 @@
+2012-11-20  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	RH513605: Updating/Installing OpenJDK should recreate
+	the shared class-data archive
+	* Makefile.am:
+	(icedtea-against-icedtea): Depend on add-archive.
+	(clean-icedtea-against-icedtea): Depend on clean-add-archive.
+	(icedtea-debug-against-icedtea): Depend on add-archive-debug.
+	(clean-icedtea-against-icedtea): Depend on clean-add-archive-debug.
+	(add-archive): Run -Xshare:dump on the newly built JDK.
+	(clean-add-archive): Delete stamp.
+	(add-archive-debug): Same as add-archive for icedtea-debug.
+	(clean-add-archive-debug): Same as clean-add-archive for icedtea-debug.
+	(icedtea-ecj-against-icedtea): Depend on add-archive-ecj.
+	(clean-icedtea-against-icedtea): Depend on clean-add-archive-ecj.
+	(add-archive-ecj): Same as add-archive for icedtea-ecj.
+	(clean-add-archive-ecj): Same as clean-add-archive for icedtea-ecj.
+	* NEWS: Mention.
+
 2012-11-06  Xerxes Rånby  <xerxes@zafena.se>
 	    Stefan Ring  <stefan@complang.tuwien.ac.at>
 
@@ -20,7 +39,7 @@
 	Add Garbage Collection dtrace/systemtap probes to hotspot.
 	* tapset/hotspot_gc.stp.in:
 	Systemtap tapset allowing use of GC probes more comfortablely.
-										
+
 2012-10-31  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* NEWS: Correct bad CVE number given by Oracle.
