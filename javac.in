@@ -55,8 +55,8 @@ elsif ( -e "@JAVAC@" )
 {
     if ("@USING_ECJ@" eq "yes")
     {
-	my @ecj_args = gen_ecj_opts( \@ARGV );
-	exec '@JAVAC@', @ecj_parms, @ecj_args ;
+	my $ecj_args = gen_ecj_opts( \@ARGV );
+	exec '@JAVAC@', @ecj_parms, @$ecj_args ;
     }
     else
     {
