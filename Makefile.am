@@ -80,6 +80,14 @@ ICEDTEA_BOOTSTRAP_CLASSES += \
 	$(SHARE)/javax/swing/plaf/basic/BasicDirectoryModel.java
 endif
 
+# Workaround for old OpenJDK versions with older CORBA classes
+if !LACKS_ORBUTILSYSTEMEXCEPTION
+if LACKS_ORBUTILSYSTEMEXCEPTION_IOEXCEPTIONONCLOSE_THROWABLE
+ICEDTEA_BOOTSTRAP_CLASSES += \
+	$(abs_top_srcdir)/generated/com/sun/corba/se/impl/logging/ORBUtilSystemException.java
+endif
+endif
+
 # Flags
 MEMORY_LIMIT = -J-Xmx1024m
 IT_CFLAGS=$(CFLAGS) $(ARCHFLAG)

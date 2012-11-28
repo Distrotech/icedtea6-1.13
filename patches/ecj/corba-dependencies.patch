@@ -1,15 +1,16 @@
-diff -Nru openjdk.orig/corba/make/common/Rules.gmk openjdk/corba/make/common/Rules.gmk
---- openjdk-ecj.orig/corba/make/common/Rules.gmk	2012-08-15 16:52:40.749869095 +0100
-+++ openjdk-ecj/corba/make/common/Rules.gmk	2012-08-15 16:59:16.800640493 +0100
-@@ -202,9 +202,11 @@
+diff -Nru openjdk-ecj.orig/corba/make/common/Rules.gmk openjdk-ecj/corba/make/common/Rules.gmk
+--- openjdk-ecj.orig/corba/make/common/Rules.gmk	2012-10-26 19:21:47.000000000 +0100
++++ openjdk-ecj/corba/make/common/Rules.gmk	2012-11-28 00:38:06.787628798 +0000
+@@ -201,8 +201,12 @@
+ 	  $(ECHO) "# Java sources to be compiled: (listed in file $(JAVA_SOURCE_LIST))"; \
  	  $(CAT) $(JAVA_SOURCE_LIST); \
  	  $(ECHO) "# Running javac:"; \
- 	  $(ECHO) $(JAVAC_CMD) $(JAVAC_PREFER_SOURCE) -bootclasspath $(ICEDTEA_RT):$(CLASSBINDIR) \
--	    -sourcepath "$(SOURCEPATH)" -d $(CLASSDESTDIR) @$(JAVA_SOURCE_LIST); \
+-	  $(ECHO) $(JAVAC_CMD) $(JAVAC_PREFER_SOURCE) -sourcepath "$(SOURCEPATH)" -d $(CLASSDESTDIR) @$(JAVA_SOURCE_LIST); \
+-	  $(JAVAC_CMD) $(JAVAC_PREFER_SOURCE) -sourcepath "$(SOURCEPATH)" -d $(CLASSDESTDIR) @$(JAVA_SOURCE_LIST); \
++	  $(ECHO) $(JAVAC_CMD) $(JAVAC_PREFER_SOURCE) \
 +	    -sourcepath "$(SOURCEPATH):$(JDK_TOPDIR)/src/share/classes:$(JDK_TOPDIR)/src/solaris/classes" \
 +	    -d $(CLASSDESTDIR) @$(JAVA_SOURCE_LIST); \
- 	  $(JAVAC_CMD) $(JAVAC_PREFER_SOURCE) -bootclasspath $(ICEDTEA_RT):$(CLASSBINDIR) \
--	    -sourcepath "$(SOURCEPATH)" -d $(CLASSDESTDIR) @$(JAVA_SOURCE_LIST); \
++	  $(JAVAC_CMD) $(JAVAC_PREFER_SOURCE) \
 +	    -sourcepath "$(SOURCEPATH):$(JDK_TOPDIR)/src/share/classes:$(JDK_TOPDIR)/src/solaris/classes" \
 +	    -d $(CLASSDESTDIR) @$(JAVA_SOURCE_LIST); \
  	fi

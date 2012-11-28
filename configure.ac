@@ -58,10 +58,19 @@ IT_DISABLE_LANGTOOLS_TESTS
 IT_DISABLE_JDK_TESTS
 
 IT_CHECK_FOR_METHOD([JAVAX_SWING_PLAF_BASIC_BASICDIRECTORYMODEL_ADDPROPERTYCHANGELISTENER],
-  [javax.swing.plaf.basic.BasicDirectoryModel.addPropertyChangeListener],
+  [javax.swing.plaf.basic.BasicDirectoryModel.addPropertyChangeListener(PropertyChangeListener)],
   [javax.swing.plaf.basic.BasicDirectoryModel],
   ["addPropertyChangeListener",java.beans.PropertyChangeListener.class],
   [javax.swing.plaf.basic.BasicDirectoryModel model = new javax.swing.plaf.basic.BasicDirectoryModel(new javax.swing.JFileChooser()); model.addPropertyChangeListener(model)]
+)
+
+# Workaround issue with old CORBA classes in old OpenJDK builds
+IT_CHECK_FOR_CLASS([ORBUTILSYSTEMEXCEPTION],[com.sun.corba.se.impl.logging.ORBUtilSystemException])
+IT_CHECK_FOR_METHOD([ORBUTILSYSTEMEXCEPTION_IOEXCEPTIONONCLOSE_THROWABLE],
+  [com.sun.corba.se.impl.logging.ORBUtilSystemException.ioExceptionOnClose(Throwable)],
+  [com.sun.corba.se.impl.logging.ORBUtilSystemException],
+  ["ioExceptionOnClose",java.lang.Throwable.class],
+  [new com.sun.corba.se.impl.logging.ORBUtilSystemException(null).ioExceptionOnClose(new InternalError())]
 )
 
 # Use xvfb-run if found to run gui tests (check-jdk).

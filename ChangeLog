@@ -1,3 +1,17 @@
+2012-11-28  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_BOOTSTRAP_CLASSES): Add the generated
+	file ORBUtilSystemException.java if the build JDK
+	has the old version.
+	* configure.ac:
+	Add checks for com.sun.corba.se.impl.logging.ORBUtilSystemException
+	and the method ioExceptionOnClose(Throwable).
+	* patches/ecj/corba-dependencies.patch:
+	Regenerated against new version of icedtea.patch.
+	* patches/ecj/icedtea.patch:
+	Remove unneeded addition of bootclasspath.
+
 2012-11-20  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	RH513605: Updating/Installing OpenJDK should recreate
