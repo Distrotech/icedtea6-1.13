@@ -1,5 +1,13 @@
 2012-11-28  Andrew John Hughes  <gnu.andrew@redhat.com>
 
+	* Makefile.am:
+	(add-archive): Only run -Xshare:dump when java
+	exists and we aren't building CACAO or JamVM.
+	(add-archive-debug): Likewise.
+	(add-archive-ecj): Likewise.
+
+2012-11-28  Andrew John Hughes  <gnu.andrew@redhat.com>
+
 	* acinclude.m4:
 	(IT_FIND_COMPILER): Invoke IT_USING_ECJ.
 	* javac.in:
