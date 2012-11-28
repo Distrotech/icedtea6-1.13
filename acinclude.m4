@@ -139,6 +139,9 @@ AC_DEFUN_ONCE([IT_FIND_COMPILER],
       JAVAC="${ECJ} -nowarn"
     fi
   fi
+
+  IT_USING_ECJ
+
   AC_SUBST(ECJ)
   AC_SUBST(JAVAC)
 ])
@@ -1856,4 +1859,17 @@ AC_DEFUN([IT_CHECK_IF_DOWNLOADING],
   AC_MSG_RESULT([${enable_downloading}])
   AM_CONDITIONAL([DOWNLOADING], test x"${enable_downloading}" = "xyes")
   AC_SUBST([enable_downloading])
+])
+
+AC_DEFUN([IT_USING_ECJ],[
+AC_CACHE_CHECK([if we are using ecj as javac], it_cv_ecj, [
+if $JAVAC -version 2>&1| grep '^Eclipse' >&AS_MESSAGE_LOG_FD ; then
+  it_cv_ecj=yes;
+else
+  it_cv_ecj=no;
+fi
+])
+USING_ECJ=$it_cv_ecj
+AC_SUBST(USING_ECJ)
+AC_PROVIDE([$0])dnl
 ])

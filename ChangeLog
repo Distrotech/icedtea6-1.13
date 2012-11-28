@@ -1,3 +1,31 @@
+2012-11-28  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* acinclude.m4:
+	(IT_FIND_COMPILER): Invoke IT_USING_ECJ.
+	* javac.in:
+	Add final else block which exits with an error.
+
+2011-07-05  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* javac.in: Add -XDignore.symbol.file=true
+	when using javac to avoid numerous proprietary
+	warnings.
+
+2010-12-08  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* javac.in:
+	Pass -Xprefer:source (if javac is used) to
+	pick up local OpenJDK versions of classes
+	prior to those in the boot JDK.
+
+2009-07-21  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* acinclude.m4:
+	(IT_USING_ECJ): Work out whether javac is ecj or not.
+	* javac.in:
+	Run @JAVAC@ rather than @ECJ@ and vary arguments as
+	needed depending on @USING_ECJ@.
+
 2009-07-09  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* Makefile.am:
