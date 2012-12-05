@@ -5,8 +5,8 @@ OPENJDK_SHA256SUM = 044c3877b15940ff04f8aa817337f2878a00cc89674854557f1a02f15b18
 OPENJDK_VERSION = b28
 OPENJDK_URL = http://download.java.net/openjdk/jdk6/promoted/$(OPENJDK_VERSION)/
 
-CACAO_VERSION = cff92704c4e0
-CACAO_SHA256SUM = dc768c9d097fb056ad34fc6d5a57e8fd4f3b24bf515be92acc5ee4208160eb3f
+CACAO_VERSION = 9968abd511a3
+CACAO_SHA256SUM = 3b1ce9d2205d2afba4614a194484341758ee2cb340396310ac2c00e5a2a20955
 CACAO_BASE_URL = http://icedtea.classpath.org/download/drops/cacao
 CACAO_URL = $(CACAO_BASE_URL)/$(CACAO_VERSION).tar.gz
 CACAO_SRC_ZIP = cacao-$(CACAO_VERSION).tar.gz
@@ -78,6 +78,14 @@ ICEDTEA_BOOTSTRAP_CLASSES = \
 if LACKS_JAVAX_SWING_PLAF_BASIC_BASICDIRECTORYMODEL_ADDPROPERTYCHANGELISTENER
 ICEDTEA_BOOTSTRAP_CLASSES += \
 	$(SHARE)/javax/swing/plaf/basic/BasicDirectoryModel.java
+endif
+
+# Workaround for old OpenJDK versions with older CORBA classes
+if !LACKS_ORBUTILSYSTEMEXCEPTION
+if LACKS_ORBUTILSYSTEMEXCEPTION_IOEXCEPTIONONCLOSE_THROWABLE
+ICEDTEA_BOOTSTRAP_CLASSES += \
+	$(abs_top_srcdir)/generated/com/sun/corba/se/impl/logging/ORBUtilSystemException.java
+endif
 endif
 
 # Flags
@@ -433,7 +441,6 @@ endif
 if BUILD_CACAO
 ICEDTEA_PATCHES += \
 	patches/cacao/launcher.patch \
-	patches/cacao/jsig.patch \
 	patches/cacao/memory.patch
 endif
 
@@ -453,6 +460,7 @@ ICEDTEA_PATCHES += patches/sdt-jni.patch \
 	patches/sdt-dtrace-hpp.patch \
 	patches/sdt-make.patch \
 	patches/sdt-arguments.patch \
+	patches/systemtap_gc.patch
 	patches/systemtap-gcc-4.5.patch \
 	patches/systemtap-alloc-size-workaround.patch
 endif
@@ -561,6 +569,7 @@ ICEDTEA_ENV = \
 	JAVAC="" \
 	JAVA_HOME="" \
 	JDK_HOME="" \
+	ANT_RESPECT_JAVA_HOME="TRUE" \
 	DISTRIBUTION_ID="$(DIST_ID)" \
 	DERIVATIVE_ID="$(ICEDTEA_NAME) $(PACKAGE_VERSION)$(ICEDTEA_REV)" \
 	DEBUG_CLASSFILES="true" \
@@ -646,6 +655,7 @@ EXTRA_DIST = generated \
 	tapset/hotspot.stp.in \
 	tapset/hotspot_jni.stp.in \
 	tapset/jstack.stp.in \
+	tapset/hotspot_gc.stp.in \
 	scripts/jni_create_stap.c \
 	scripts/jni_desc \
 	rewriter/agpl-3.0.txt \
@@ -1513,25 +1523,27 @@ clean-icedtea-debug:
 
 stamps/icedtea-against-icedtea.stamp: stamps/icedtea.stamp \
  stamps/add-jamvm.stamp stamps/add-cacao.stamp stamps/add-zero.stamp \
- stamps/add-systemtap.stamp stamps/add-pulseaudio.stamp stamps/add-nss.stamp stamps/add-tzdata-support.stamp
+ stamps/add-systemtap.stamp stamps/add-pulseaudio.stamp stamps/add-nss.stamp stamps/add-tzdata-support.stamp \
+ stamps/add-archive.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-against-icedtea.stamp
 
 clean-icedtea-against-icedtea: clean-add-jamvm clean-add-zero clean-add-cacao \
- clean-add-systemtap clean-add-pulseaudio \
- clean-add-nss clean-add-tzdata-support
+ clean-add-systemtap clean-add-pulseaudio clean-add-nss clean-add-tzdata-support \
+ clean-add-archive
 	rm -f stamps/icedtea-against-icedtea.stamp
 
 stamps/icedtea-debug-against-icedtea.stamp: stamps/icedtea-debug.stamp \
  stamps/add-jamvm-debug.stamp stamps/add-cacao-debug.stamp \
  stamps/add-zero-debug.stamp stamps/add-systemtap-debug.stamp stamps/add-pulseaudio-debug.stamp \
- stamps/add-nss-debug.stamp stamps/add-tzdata-support-debug.stamp
+ stamps/add-nss-debug.stamp stamps/add-tzdata-support-debug.stamp stamps/add-archive-debug.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-debug-against-icedtea.stamp
 
 clean-icedtea-debug-against-icedtea: clean-add-zero-debug \
  clean-add-jamvm-debug clean-add-cacao-debug clean-add-systemtap-debug \
- clean-add-pulseaudio-debug clean-add-nss-debug clean-add-tzdata-support-debug
+ clean-add-pulseaudio-debug clean-add-nss-debug clean-add-tzdata-support-debug \
+ clean-add-archive-debug
 	rm -f stamps/icedtea-debug-against-icedtea.stamp
 
 stamps/add-systemtap.stamp: stamps/icedtea.stamp
@@ -1542,6 +1554,9 @@ if ENABLE_SYSTEMTAP
 	  sed -e '/\/client\/libjvm.so/d' \
 	    < $(abs_top_builddir)/tapset/hotspot.stp \
 	    > $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
+	  sed -e '/\/client\/libjvm.so/d' \
+	    < $(abs_top_builddir)/tapset/hotspot_gc.stp \
+	    > $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_gc.stp; \
 	  sed -e '/\/client\/libjvm.so/d' \
 	    < $(abs_top_builddir)/tapset/hotspot_jni.stp \
 	    > $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_jni.stp; \
@@ -1574,6 +1589,8 @@ if ENABLE_SYSTEMTAP
 	else \
 	  cp $(abs_top_builddir)/tapset/hotspot.stp \
 	    $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
+	  cp $(abs_top_builddir)/tapset/hotspot_gc.stp \
+	    $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_gc.stp; \
 	  cp $(abs_top_builddir)/tapset/hotspot_jni.stp \
 	    $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_jni.stp; \
 	fi
@@ -1760,6 +1777,32 @@ clean-add-tzdata-support-debug:
 	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties
 	rm -f stamps/add-tzdata-support-debug.stamp
 
+stamps/add-archive.stamp: stamps/icedtea.stamp
+if !ENABLE_JAMVM
+if !ENABLE_CACAO
+	if [ -e $(BUILD_OUTPUT_DIR)/j2sdk-image/bin/java ] ; then \
+	  $(BUILD_OUTPUT_DIR)/j2sdk-image/bin/java -Xshare:dump ; \
+	fi
+endif
+endif
+	touch stamps/add-archive.stamp
+
+clean-add-archive:
+	rm -f stamps/add-archive.stamp
+
+stamps/add-archive-debug.stamp: stamps/icedtea-debug.stamp
+if !ENABLE_JAMVM
+if !ENABLE_CACAO
+	if [ -e $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/bin/java ] ; then \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/bin/java -Xshare:dump ; \
+	fi
+endif
+endif
+	touch stamps/add-archive-debug.stamp
+
+clean-add-archive-debug:
+	rm -f stamps/add-archive-debug.stamp
+
 # OpenJDK ecj Targets
 # ===================
 
@@ -1780,12 +1823,13 @@ clean-icedtea-ecj:
 	rm -f stamps/icedtea-ecj.stamp
 
 stamps/icedtea-against-ecj.stamp: stamps/icedtea-ecj.stamp stamps/add-systemtap-ecj.stamp \
- stamps/add-pulseaudio-ecj.stamp stamps/add-nss-ecj.stamp stamps/add-tzdata-support-ecj.stamp
+ stamps/add-pulseaudio-ecj.stamp stamps/add-nss-ecj.stamp stamps/add-tzdata-support-ecj.stamp \
+ stamps/add-archive-ecj.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-against-ecj.stamp
 
 clean-icedtea-against-ecj: clean-add-systemtap-ecj clean-add-pulseaudio-ecj clean-add-nss-ecj \
- clean-add-tzdata-support-ecj
+ clean-add-tzdata-support-ecj clean-add-archive-ecj
 	rm -f stamps/icedtea-against-ecj.stamp
 
 stamps/add-systemtap-ecj.stamp: stamps/icedtea-ecj.stamp
@@ -1797,11 +1841,16 @@ if ENABLE_SYSTEMTAP
 	    < $(abs_top_builddir)/tapset/hotspot.stp \
 	    > $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
 	  sed -e '/\/client\/libjvm.so/d' \
+	    < $(abs_top_builddir)/tapset/hotspot_gc.stp \
+	    > $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_gc.stp; \
+	  sed -e '/\/client\/libjvm.so/d' \
 	    < $(abs_top_builddir)/tapset/hotspot_jni.stp \
 	    > $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_jni.stp; \
 	else \
 	  cp $(abs_top_builddir)/tapset/hotspot.stp \
 	    $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot.stp; \
+	  cp $(abs_top_builddir)/tapset/hotspot_gc.stp \
+	    $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_gc.stp; \
 	  cp $(abs_top_builddir)/tapset/hotspot_jni.stp \
 	    $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/hotspot_jni.stp; \
 	fi
@@ -1898,6 +1947,19 @@ endif
 clean-add-tzdata-support-ecj:
 	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties
 	rm -f stamps/add-tzdata-support-ecj.stamp
+
+stamps/add-archive-ecj.stamp: stamps/icedtea-ecj.stamp
+if !ENABLE_JAMVM
+if !ENABLE_CACAO
+	if [ -e $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/bin/java ] ; then \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/bin/java -Xshare:dump ; \
+	fi
+endif
+endif
+	touch stamps/add-archive-ecj.stamp
+
+clean-add-archive-ecj:
+	rm -f stamps/add-archive-ecj.stamp
 
 # Rebuild targets
 
@@ -2124,6 +2186,8 @@ if !USE_SYSTEM_CACAO
 	  --enable-jre-layout $(CACAO_CONFIGURE_ARGS); \
 	$(ARCH_PREFIX) $(MAKE) -j$(PARALLEL_JOBS) install
 	ln -s server $(abs_top_builddir)/cacao/install/jre/lib/$(INSTALL_ARCH_DIR)/client
+	touch $(abs_top_builddir)/cacao/install/jre/lib/$(INSTALL_ARCH_DIR)/server/Xusage.txt
+	ln -sf client/libjvm.so $(abs_top_builddir)/cacao/install/jre/lib/$(INSTALL_ARCH_DIR)/libjsig.so
 endif
 endif
 	mkdir -p stamps
@@ -2481,6 +2545,12 @@ endif
 
 # Target Aliases
 # ===============
+
+add-archive: stamps/add-archive.stamp
+
+add-archive-debug: stamps/add-archive-debug.stamp
+
+add-archive-ecj: stamps/add-archive-ecj.stamp
 
 bootstrap-directory-ecj: stamps/bootstrap-directory-ecj.stamp
 

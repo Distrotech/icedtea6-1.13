@@ -89,9 +89,6 @@ The following patches are currently applied before the building of OpenJDK or Op
 * icedtea-java2d-mitre-join.patch: Backport fix for mitre join decoration (S6812600).
 * icedtea-java2d-stroker-internal-joint.patch: Fix penultimate joint created by GeneralPath.closePath().
 * icedtea-java2d-stroker-internal-close-joint.patch: Fix final joint created by GeneralPath.closePath().
-* icedtea-cacao.patch: For the 'java' command, create new thread depending on the current VM.
-* icedtea-cacao-no-mmap-first-page.patch: Don't mmap the first memory page.
-* cacao/no-strict-aliasing.patch: Turn off strict aliasing which causes an issue with the verifier when building with GCC 4.4 (cacao PR129).
 * icedtea-shark.patch: Add support for the Shark JIT.
 * icedtea-xshm.patch: Support newer X11 headers for awt_GraphicsEnv.h.
 
@@ -137,6 +134,9 @@ The following patches are only applied when building with the plugin support:
 * icedtea-liveconnect.patch: Add LiveConnect support to plugin.
 
 The following patches are only applied when building with the CACAO virtual machine:
+
+* cacao/launcher.patch: For the 'java' command, create new thread depending on the current VM.
+* cacao/memory.patch: Increase memory while building langtools for cacao builds.
 
 The following patches are to support Xrender pipeline (-Dsun.java2d.xrender):
 

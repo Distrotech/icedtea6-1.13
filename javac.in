@@ -4,11 +4,13 @@ use constant NO_DUP_ARGS => qw(-source -target -d -encoding);
 use constant STRIP_ARGS => qw(-Werror -implicit:none -J-Xbootclasspath/p:);
 
 my $ECJ_WARNINGS="-nowarn";
+my $JAVAC_WARNINGS="-nowarn";
 
 my @bcoption;
 push @bcoption, '-bootclasspath', glob '@abs_top_builddir@/bootstrap/jdk1.6.0/jre/lib/rt.jar'
     unless grep {$_ eq '-bootclasspath'} @ARGV;
 my @ecj_parms = ($ECJ_WARNINGS, @bcoption);
+my @javac_parms = ($JAVAC_WARNINGS, '-Xprefer:source', '-XDignore.symbol.file=true');
 
 # Work around ecj's inability to handle duplicate command-line
 # options and unknown javac options.
@@ -49,6 +51,18 @@ if ( -e "@abs_top_builddir@/native-ecj" )
     my $ecj_args = gen_ecj_opts( \@ARGV );
     exec '@abs_top_builddir@/native-ecj', @ecj_parms, @$ecj_args ;
 }
+elsif ( -e "@JAVAC@" )
+{
+    if ("@USING_ECJ@" eq "yes")
+    {
+	my $ecj_args = gen_ecj_opts( \@ARGV );
+	exec '@JAVAC@', @ecj_parms, @$ecj_args ;
+    }
+    else
+    {
+	exec '@JAVAC@', @javac_parms, @ARGV ;
+    }
+}
 elsif ( -e "@ECJ_JAR@" )
 {
     my ($vm_args, $javac_args) = split_vm_args (gen_ecj_opts( \@ARGV ));
@@ -59,6 +73,6 @@ elsif ( -e "@ECJ_JAR@" )
 }
 else
 {
-    my $ecj_args = gen_ecj_opts( \@ARGV );
-    exec '@ECJ@', @ecj_parms, @$ecj_args ;
+    print STDERR "No Java compiler to run";
+    exit -1;
 }

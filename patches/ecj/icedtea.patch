@@ -327,22 +327,6 @@ diff -Nru openjdk-ecj.orig/corba/make/common/Defs-linux.gmk openjdk-ecj/corba/ma
  
  #
  # We want to privatize JVM symbols on Solaris. This is so the user can
-diff -Nru openjdk-ecj.orig/corba/make/common/Rules.gmk openjdk-ecj/corba/make/common/Rules.gmk
---- openjdk-ecj.orig/corba/make/common/Rules.gmk	2012-01-18 14:06:25.120768497 +0000
-+++ openjdk-ecj/corba/make/common/Rules.gmk	2012-01-18 21:44:43.635816486 +0000
-@@ -201,8 +201,10 @@
- 	  $(ECHO) "# Java sources to be compiled: (listed in file $(JAVA_SOURCE_LIST))"; \
- 	  $(CAT) $(JAVA_SOURCE_LIST); \
- 	  $(ECHO) "# Running javac:"; \
--	  $(ECHO) $(JAVAC_CMD) $(JAVAC_PREFER_SOURCE) -sourcepath "$(SOURCEPATH)" -d $(CLASSDESTDIR) @$(JAVA_SOURCE_LIST); \
--	  $(JAVAC_CMD) $(JAVAC_PREFER_SOURCE) -sourcepath "$(SOURCEPATH)" -d $(CLASSDESTDIR) @$(JAVA_SOURCE_LIST); \
-+	  $(ECHO) $(JAVAC_CMD) $(JAVAC_PREFER_SOURCE) -bootclasspath $(ICEDTEA_RT):$(CLASSBINDIR) \
-+	    -sourcepath "$(SOURCEPATH)" -d $(CLASSDESTDIR) @$(JAVA_SOURCE_LIST); \
-+	  $(JAVAC_CMD) $(JAVAC_PREFER_SOURCE) -bootclasspath $(ICEDTEA_RT):$(CLASSBINDIR) \
-+	    -sourcepath "$(SOURCEPATH)" -d $(CLASSDESTDIR) @$(JAVA_SOURCE_LIST); \
- 	fi
- 	@$(java-vm-cleanup)
- 
 diff -Nru openjdk-ecj.orig/corba/make/common/shared/Defs-java.gmk openjdk-ecj/corba/make/common/shared/Defs-java.gmk
 --- openjdk-ecj.orig/corba/make/common/shared/Defs-java.gmk	2012-01-18 16:50:57.569109033 +0000
 +++ openjdk-ecj/corba/make/common/shared/Defs-java.gmk	2012-01-18 21:43:04.150185964 +0000

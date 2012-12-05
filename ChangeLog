@@ -1,3 +1,106 @@
+2012-11-28  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* javac.in:
+	Restore deferencing of ecj arguments
+	lost when backporting from 7.
+
+2012-11-28  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(add-archive): Only run -Xshare:dump when java
+	exists and we aren't building CACAO or JamVM.
+	(add-archive-debug): Likewise.
+	(add-archive-ecj): Likewise.
+
+2012-11-28  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* acinclude.m4:
+	(IT_FIND_COMPILER): Invoke IT_USING_ECJ.
+	* javac.in:
+	Add final else block which exits with an error.
+
+2011-07-05  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* javac.in: Add -XDignore.symbol.file=true
+	when using javac to avoid numerous proprietary
+	warnings.
+
+2010-12-08  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* javac.in:
+	Pass -Xprefer:source (if javac is used) to
+	pick up local OpenJDK versions of classes
+	prior to those in the boot JDK.
+
+2009-07-21  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* acinclude.m4:
+	(IT_USING_ECJ): Work out whether javac is ecj or not.
+	* javac.in:
+	Run @JAVAC@ rather than @ECJ@ and vary arguments as
+	needed depending on @USING_ECJ@.
+
+2009-07-09  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	Add ANT_RESPECT_JAVA_HOME for Gentoo ant support.
+
+2012-11-28  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_BOOTSTRAP_CLASSES): Add the generated
+	file ORBUtilSystemException.java if the build JDK
+	has the old version.
+	* configure.ac:
+	Add checks for com.sun.corba.se.impl.logging.ORBUtilSystemException
+	and the method ioExceptionOnClose(Throwable).
+	* patches/ecj/corba-dependencies.patch:
+	Regenerated against new version of icedtea.patch.
+	* patches/ecj/icedtea.patch:
+	Remove unneeded addition of bootclasspath.
+
+2012-11-20  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	RH513605: Updating/Installing OpenJDK should recreate
+	the shared class-data archive
+	* Makefile.am:
+	(icedtea-against-icedtea): Depend on add-archive.
+	(clean-icedtea-against-icedtea): Depend on clean-add-archive.
+	(icedtea-debug-against-icedtea): Depend on add-archive-debug.
+	(clean-icedtea-against-icedtea): Depend on clean-add-archive-debug.
+	(add-archive): Run -Xshare:dump on the newly built JDK.
+	(clean-add-archive): Delete stamp.
+	(add-archive-debug): Same as add-archive for icedtea-debug.
+	(clean-add-archive-debug): Same as clean-add-archive for icedtea-debug.
+	(icedtea-ecj-against-icedtea): Depend on add-archive-ecj.
+	(clean-icedtea-against-icedtea): Depend on clean-add-archive-ecj.
+	(add-archive-ecj): Same as add-archive for icedtea-ecj.
+	(clean-add-archive-ecj): Same as clean-add-archive for icedtea-ecj.
+	* NEWS: Mention.
+
+2012-11-06  Xerxes Rånby  <xerxes@zafena.se>
+	    Stefan Ring  <stefan@complang.tuwien.ac.at>
+
+	* Makefile.am (CACAO_VERSION, CACAO_SHA256SUM): Updated.
+	(ICEDTEA_PATCHES): Removed patches/cacao/jsig.patch.
+	(stamps/cacao.stamp): Create Xusage.txt and libjsig.so as for JamVM.
+	* patches/cacao/jsig.patch: Removed.
+	* HACKING: Updated.
+	* NEWS: Updated.
+
+2012-11-01  Lukas Berk  <lberk@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add patches/systemtap.patch.
+	(EXTRA_DIST): Add tapset/hotspot_gc.stp.in.
+	(stamps/icedtea.stamp): Build tapset/hotspot_gc.stp.
+	(stamps/icedtea-debug.stamp): Likewise.
+	* configure.ac: Generate tapset/hotspot_gc.stp.
+	* patches/systemtap_gc.patch:
+	Add Garbage Collection dtrace/systemtap probes to hotspot.
+	* tapset/hotspot_gc.stp.in:
+	Systemtap tapset allowing use of GC probes more comfortablely.
+
 2012-10-31  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* NEWS: Correct bad CVE number given by Oracle.
