@@ -57,6 +57,7 @@ IT_DISABLE_HOTSPOT_TESTS
 IT_DISABLE_LANGTOOLS_TESTS
 IT_DISABLE_JDK_TESTS
 
+#PR42003 - Missing javax.swing.plaf.basic.BasicDirectoryModel methods cause OpenJDK build failure 
 IT_CHECK_FOR_METHOD([JAVAX_SWING_PLAF_BASIC_BASICDIRECTORYMODEL_ADDPROPERTYCHANGELISTENER],
   [javax.swing.plaf.basic.BasicDirectoryModel.addPropertyChangeListener(PropertyChangeListener)],
   [javax.swing.plaf.basic.BasicDirectoryModel],
@@ -72,6 +73,10 @@ IT_CHECK_FOR_METHOD([ORBUTILSYSTEMEXCEPTION_IOEXCEPTIONONCLOSE_THROWABLE],
   ["ioExceptionOnClose",java.lang.Throwable.class],
   [new com.sun.corba.se.impl.logging.ORBUtilSystemException(null).ioExceptionOnClose(new InternalError())]
 )
+
+# PR43389 - javax.management.StandardMBean
+IT_CHECK_FOR_CONSTRUCTOR([JAVAX_MANAGEMENT_STANDARDMBEAN_MXBEAN_TWO_ARG],[javax.management.StandardMBean],[Class.class,Boolean.TYPE],[Object.class, true])
+IT_CHECK_FOR_CONSTRUCTOR([JAVAX_MANAGEMENT_STANDARDMBEAN_MXBEAN_THREE_ARG],[javax.management.StandardMBean],[Object.class,Class.class,Boolean.TYPE],[new Object(), Object.class, true])
 
 # Use xvfb-run if found to run gui tests (check-jdk).
 AC_CHECK_PROG(XVFB_RUN_CMD, xvfb-run, [xvfb-run -a -e xvfb-errors], [])

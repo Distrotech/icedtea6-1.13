@@ -1306,7 +1306,7 @@ public class Test
 {
   public static void main(String[] args)
   {
-    $2.class.toString();
+    System.err.println("Class found: " + $2.class);
   }
 }
 ]
@@ -1781,11 +1781,12 @@ AC_PROVIDE([$0])dnl
 ])
 
 dnl Generic macro to check for a Java method
-dnl Takes four arguments: the name of the macro,
-dnl the name of the class, the method signature
-dnl and an example call to the method.  The macro name
-dnl is usually the name of the class with '.'
-dnl replaced by '_' and all letters capitalised.
+dnl Takes five arguments: the name of the macro,
+dnl the name of the method, the name of the class,
+dnl the method signature and an example call to the
+dnl method.  The macro name is usually the name of
+dnl the class with '.' replaced by '_' and all letters
+dnl capitalised.
 dnl e.g. IT_CHECK_FOR_METHOD([JAVA_UTIL_REGEX_MATCHER_QUOTEREPLACEMENT],[java.util.regex.Matcher.quoteReplacement],[java.util.rgex.Matcher],["quoteReplacement",String.class],java.util.regex.Matcher.quoteReplacement("Blah"))
 AC_DEFUN([IT_CHECK_FOR_METHOD],[
 AC_REQUIRE([IT_CHECK_JAVA_AND_JAVAC_WORK])
@@ -1806,6 +1807,7 @@ public class Test
     try
       {
         Method m = cl.getDeclaredMethod($4);
+	System.err.println("Method found: " + m);
       }
     catch (NoSuchMethodException e)
       {
@@ -1871,5 +1873,68 @@ fi
 ])
 USING_ECJ=$it_cv_ecj
 AC_SUBST(USING_ECJ)
+AC_PROVIDE([$0])dnl
+])
+
+dnl Generic macro to check for a Java constructor
+dnl Takes four arguments: the name of the macro,
+dnl the name of the class, the method signature
+dnl and an example call to the method.  The macro name
+dnl is usually the name of the class with '.'
+dnl replaced by '_' and all letters capitalised.
+dnl e.g. IT_CHECK_FOR_CONSTRUCTOR([JAVAX_MANAGEMENT_STANDARDMBEAN_MXBEAN_TWO_ARG],[javax.management.StandardMBean],[Class.class,Boolean.TYPE],[Object.class, true])
+AC_DEFUN([IT_CHECK_FOR_CONSTRUCTOR],[
+AC_REQUIRE([IT_CHECK_JAVA_AND_JAVAC_WORK])
+AC_CACHE_CHECK([if $2($3) is missing], it_cv_$1, [
+CLASS=Test.java
+BYTECODE=$(echo $CLASS|sed 's#\.java##')
+mkdir tmp.$$
+cd tmp.$$
+cat << \EOF > $CLASS
+[/* [#]line __oline__ "configure" */
+import java.lang.reflect.Constructor;
+
+public class Test
+{
+  public static void main(String[] args)
+  {
+    Class<?> cl = $2.class;
+    try
+      {
+      	Constructor<?> cons = cl.getDeclaredConstructor($3);
+	System.err.println("Constructor found: " + cons);
+      }
+    catch (NoSuchMethodException e)
+      {
+        System.exit(-1);
+      }
+  }
+
+  private class TestCons extends $2
+  {
+     TestCons()
+     {
+       super($4);
+     }
+  }
+
+}
+
+]
+EOF
+if $JAVAC -cp . $JAVACFLAGS -source 5 -target 5 -nowarn $CLASS >&AS_MESSAGE_LOG_FD 2>&1; then
+  if $JAVA -classpath . $BYTECODE >&AS_MESSAGE_LOG_FD 2>&1; then
+      it_cv_$1=no;
+  else
+      it_cv_$1=yes;
+  fi
+else
+  it_cv_$1=yes;
+fi
+])
+rm -f $CLASS *.class
+cd ..
+rmdir tmp.$$
+AM_CONDITIONAL([LACKS_$1], test x"${it_cv_$1}" = "xyes")
 AC_PROVIDE([$0])dnl
 ])

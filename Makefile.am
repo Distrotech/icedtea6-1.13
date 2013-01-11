@@ -63,12 +63,9 @@ SOURCEPATH_DIRS = $(abs_top_srcdir)/generated:$(OPENJDK_SOURCEPATH_DIRS)
 
 # Sources used from OpenJDK.
 
-# PR42003 - javax.swing.plaf.basic.BasicDirectoryModel
-# PR43389 - javax.management.StandardMBean
 # PR54274 - sun.security.other requires missing X509CRLSelector methods
 # PR54275 - sun.security.sasl requires missing Sasl.CREDENTIALS field
 ICEDTEA_BOOTSTRAP_CLASSES = \
-	$(SHARE)/javax/management/StandardMBean.java \
 	$(SHARE)/java/security/cert/X509CRLSelector.java \
 	$(SHARE)/java/security/cert/X509CertSelector.java \
 	$(SHARE)/javax/security/sasl/Sasl.java \
@@ -85,6 +82,17 @@ if !LACKS_ORBUTILSYSTEMEXCEPTION
 if LACKS_ORBUTILSYSTEMEXCEPTION_IOEXCEPTIONONCLOSE_THROWABLE
 ICEDTEA_BOOTSTRAP_CLASSES += \
 	$(abs_top_srcdir)/generated/com/sun/corba/se/impl/logging/ORBUtilSystemException.java
+endif
+endif
+
+# PR43389 - javax.management.StandardMBean
+if LACKS_JAVAX_MANAGEMENT_STANDARDMBEAN_MXBEAN_TWO_ARG
+ICEDTEA_BOOTSTRAP_CLASSES += \
+	$(SHARE)/javax/management/StandardMBean.java
+else
+if LACKS_JAVAX_MANAGEMENT_STANDARDMBEAN_MXBEAN_THREE_ARG
+ICEDTEA_BOOTSTRAP_CLASSES += \
+	$(SHARE)/javax/management/StandardMBean.java
 endif
 endif
 

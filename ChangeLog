@@ -1,3 +1,24 @@
+2013-01-11  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_BOOTSTRAP_CLASSES): Make the inclusion
+	of javax.management.StandardMBean dependent on
+	the 1.6 constructors being missing.
+	* acinclude.m4:
+	(IT_CHECK_FOR_CLASS): Write class toString() output
+	to System.err rather than throwing it away.  It then
+	appears in config.log and may be useful in debugging.
+	(IT_CHECK_FOR_METHOD): Fix documentation and add
+	System.err output as for IT_CHECK_FOR_CLASS.
+	(IT_CHECK_FOR_CONSTRUCTOR): New macro to test for
+	the presence of a specific constructor.  Works
+	with both private & protected constructors by
+	using a subclass for the compile test.
+	* configure.ac:
+	Add IT_CHECK_FOR_CONSTRUCTOR calls for the
+	two javax.management.StandardMBean constructors
+	added in 1.6.
+
 2012-11-28  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* javac.in:
