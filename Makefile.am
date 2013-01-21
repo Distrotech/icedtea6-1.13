@@ -1765,24 +1765,32 @@ clean-add-nss-debug:
 
 stamps/add-tzdata-support.stamp: stamps/icedtea.stamp
 if WITH_TZDATA_DIR
-	cp $(abs_top_builddir)/tz.properties \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib
+	if [ -e $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib ] ; then \
+	  cp -v $(abs_top_builddir)/tz.properties \
+	    $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib ; \
+	fi
 endif
 	touch stamps/add-tzdata-support.stamp
 
 clean-add-tzdata-support:
-	rm -f $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties
+	if [ -e $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties ] ; then \
+	  rm -vf $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties ; \
+	fi
 	rm -f stamps/add-tzdata-support.stamp
 
 stamps/add-tzdata-support-debug.stamp: stamps/icedtea-debug.stamp
 if WITH_TZDATA_DIR
-	cp $(abs_top_builddir)/tz.properties \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib;
+	if [ -e $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib ] ; then \
+	  cp -v $(abs_top_builddir)/tz.properties \
+	    $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib; \
+	fi
 endif
 	touch stamps/add-tzdata-support-debug.stamp
 
 clean-add-tzdata-support-debug:
-	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties
+	if [ -e $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties ] ; then \
+	  rm -vf $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties ; \
+	fi
 	rm -f stamps/add-tzdata-support-debug.stamp
 
 stamps/add-archive.stamp: stamps/icedtea.stamp
@@ -1947,13 +1955,17 @@ clean-add-nss-ecj:
 
 stamps/add-tzdata-support-ecj.stamp: stamps/icedtea-ecj.stamp
 if WITH_TZDATA_DIR
-	cp $(abs_top_builddir)/tz.properties \
-	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib;
+	if [ -e $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib ] ; then \
+	  cp -v $(abs_top_builddir)/tz.properties \
+	    $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib; \
+	fi
 endif
 	touch stamps/add-tzdata-support-ecj.stamp
 
 clean-add-tzdata-support-ecj:
-	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties
+	if [ -e $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties ] ; then \
+	  rm -vf $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties ; \
+	fi
 	rm -f stamps/add-tzdata-support-ecj.stamp
 
 stamps/add-archive-ecj.stamp: stamps/icedtea-ecj.stamp

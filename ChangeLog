@@ -1,3 +1,19 @@
+2013-01-14  Andrew John Hughes  <gnu_andrew@member.fsf.org>
+
+	* Makefile.am:
+	(add-tzdata-support): Only copy tz.properties if
+	destination exists.  Do it verbosely.
+	(clean-add-tzdata-support): Only remove tz.properties
+	if present and do so verbosely.
+	(add-tzdata-support-debug): Same as add-tzdata-support
+	but for debug.
+	(clean-add-tzdata-support-debug): Same as
+	clean-add-tzdata-support but for debug.
+	(add-tzdata-support-ecj): Same as add-tzdata-support
+	but for bootstrap.
+	(clean-add-tzdata-support-ecj): Same as
+	clean-add-tzdata-support but for bootstrap.
+
 2013-01-11  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* Makefile.am:
