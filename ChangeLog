@@ -1,3 +1,14 @@
+2013-01-21  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_BOOTSTRAP_CLASSES): Make the inclusion
+	of java.security.cert.X509{Cert,CRL}Selector
+	dependent on the necessary methods being missing.
+	* configure.ac:
+	Add IT_CHECK_FOR_METHOD calls for the
+	missing java.security.cert.X509{Cert,CRL}Selector
+	methods added in 1.5.
+
 2013-01-14  Andrew John Hughes  <gnu_andrew@member.fsf.org>
 
 	* Makefile.am:

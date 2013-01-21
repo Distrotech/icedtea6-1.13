@@ -78,6 +78,38 @@ IT_CHECK_FOR_METHOD([ORBUTILSYSTEMEXCEPTION_IOEXCEPTIONONCLOSE_THROWABLE],
 IT_CHECK_FOR_CONSTRUCTOR([JAVAX_MANAGEMENT_STANDARDMBEAN_MXBEAN_TWO_ARG],[javax.management.StandardMBean],[Class.class,Boolean.TYPE],[Object.class, true])
 IT_CHECK_FOR_CONSTRUCTOR([JAVAX_MANAGEMENT_STANDARDMBEAN_MXBEAN_THREE_ARG],[javax.management.StandardMBean],[Object.class,Class.class,Boolean.TYPE],[new Object(), Object.class, true])
 
+# PR54274 - sun.security.other requires missing X509CRLSelector methods
+IT_CHECK_FOR_METHOD([JAVA_SECURITY_CERT_X509CRLSELECTOR_ADDISSUER],
+  [java.security.cert.X509CRLSelector.addIssuer(X500Principal)],
+  [java.security.cert.X509CRLSelector],
+  ["addIssuer",javax.security.auth.x500.X500Principal.class],
+  [new java.security.cert.X509CRLSelector().addIssuer(null)]
+)
+IT_CHECK_FOR_METHOD([JAVA_SECURITY_CERT_X509CERTSELECTOR_SETSUBJECT],
+  [java.security.cert.X509CertSelector.setSubject(X500Principal)],
+  [java.security.cert.X509CertSelector],
+  ["setSubject",javax.security.auth.x500.X500Principal.class],
+  [new java.security.cert.X509CertSelector().setSubject(new javax.security.auth.x500.X500Principal(""))]
+)
+IT_CHECK_FOR_METHOD([JAVA_SECURITY_CERT_X509CERTSELECTOR_GETSUBJECT],
+  [java.security.cert.X509CertSelector.getSubject()],
+  [java.security.cert.X509CertSelector],
+  ["getSubject"],
+  [new java.security.cert.X509CertSelector().getSubject()]
+)
+IT_CHECK_FOR_METHOD([JAVA_SECURITY_CERT_X509CERTSELECTOR_SETISSUER],
+  [java.security.cert.X509CertSelector.setIssuer(X500Principal)],
+  [java.security.cert.X509CertSelector],
+  ["setIssuer",javax.security.auth.x500.X500Principal.class],
+  [new java.security.cert.X509CertSelector().setIssuer(new javax.security.auth.x500.X500Principal(""))]
+)
+IT_CHECK_FOR_METHOD([JAVA_SECURITY_CERT_X509CRLSELECTOR_SETISSUERS],
+  [java.security.cert.X509CRLSelector.setIssuers(Collection<X500Principal>)],
+  [java.security.cert.X509CRLSelector],
+  ["setIssuers",java.util.Collection.class],
+  [new java.security.cert.X509CRLSelector().setIssuers(new java.util.ArrayList<javax.security.auth.x500.X500Principal>())]
+)
+
 # Use xvfb-run if found to run gui tests (check-jdk).
 AC_CHECK_PROG(XVFB_RUN_CMD, xvfb-run, [xvfb-run -a -e xvfb-errors], [])
 AC_SUBST(XVFB_RUN_CMD)

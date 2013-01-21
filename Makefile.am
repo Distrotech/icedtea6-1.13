@@ -63,11 +63,8 @@ SOURCEPATH_DIRS = $(abs_top_srcdir)/generated:$(OPENJDK_SOURCEPATH_DIRS)
 
 # Sources used from OpenJDK.
 
-# PR54274 - sun.security.other requires missing X509CRLSelector methods
 # PR54275 - sun.security.sasl requires missing Sasl.CREDENTIALS field
 ICEDTEA_BOOTSTRAP_CLASSES = \
-	$(SHARE)/java/security/cert/X509CRLSelector.java \
-	$(SHARE)/java/security/cert/X509CertSelector.java \
 	$(SHARE)/javax/security/sasl/Sasl.java \
 	$(SHARE)/javax/security/auth/kerberos/KerberosTicket.java
 
@@ -93,6 +90,31 @@ else
 if LACKS_JAVAX_MANAGEMENT_STANDARDMBEAN_MXBEAN_THREE_ARG
 ICEDTEA_BOOTSTRAP_CLASSES += \
 	$(SHARE)/javax/management/StandardMBean.java
+endif
+endif
+
+# PR54274 - sun.security.other requires missing X509CRLSelector methods
+if LACKS_JAVA_SECURITY_CERT_X509CERTSELECTOR_GETSUBJECT
+ICEDTEA_BOOTSTRAP_CLASSES += \
+	$(SHARE)/java/security/cert/X509CertSelector.java
+else
+if LACKS_JAVA_SECURITY_CERT_X509CERTSELECTOR_SETISSUER
+ICEDTEA_BOOTSTRAP_CLASSES += \
+	$(SHARE)/java/security/cert/X509CertSelector.java
+else
+if LACKS_JAVA_SECURITY_CERT_X509CERTSELECTOR_SETSUBJECT
+ICEDTEA_BOOTSTRAP_CLASSES += \
+	$(SHARE)/java/security/cert/X509CertSelector.java
+endif
+endif
+endif
+if LACKS_JAVA_SECURITY_CERT_X509CRLSELECTOR_ADDISSUER
+ICEDTEA_BOOTSTRAP_CLASSES += \
+	$(SHARE)/java/security/cert/X509CRLSelector.java
+if LACKS_JAVA_SECURITY_CERT_X509CRLSELECTOR_SETISSUERS
+else
+ICEDTEA_BOOTSTRAP_CLASSES += \
+	$(SHARE)/java/security/cert/X509CRLSelector.java
 endif
 endif
 
