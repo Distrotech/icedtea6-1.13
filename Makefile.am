@@ -65,8 +65,7 @@ SOURCEPATH_DIRS = $(abs_top_srcdir)/generated:$(OPENJDK_SOURCEPATH_DIRS)
 
 # PR54275 - sun.security.sasl requires missing Sasl.CREDENTIALS field
 ICEDTEA_BOOTSTRAP_CLASSES = \
-	$(SHARE)/javax/security/sasl/Sasl.java \
-	$(SHARE)/javax/security/auth/kerberos/KerberosTicket.java
+	$(SHARE)/javax/security/sasl/Sasl.java
 
 #PR42003 - Missing javax.swing.plaf.basic.BasicDirectoryModel methods cause OpenJDK build failure 
 if LACKS_JAVAX_SWING_PLAF_BASIC_BASICDIRECTORYMODEL_ADDPROPERTYCHANGELISTENER
@@ -116,6 +115,12 @@ else
 ICEDTEA_BOOTSTRAP_CLASSES += \
 	$(SHARE)/java/security/cert/X509CRLSelector.java
 endif
+endif
+
+# PR41686 - Building sun.security.jgss.GSSUtil requires javax.security.auth.kerberos.KerberosTicket.getSessionKeyType()
+if LACKS_JAVAX_SECURITY_AUTH_KERBEROS_KERBEROSTICKET_GETSESSIONKEYTYPE
+ICEDTEA_BOOTSTRAP_CLASSES += \
+	$(SHARE)/javax/security/auth/kerberos/KerberosTicket.java
 endif
 
 # Flags

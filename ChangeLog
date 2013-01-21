@@ -2,6 +2,17 @@
 
 	* Makefile.am:
 	(ICEDTEA_BOOTSTRAP_CLASSES): Make the inclusion
+	of javax.security.auth.kerberos.KerberosTicket
+	dependent on getSessionKeyType() being missing.
+	* configure.ac:
+	Add IT_CHECK_FOR_METHOD calls for
+	getSessionKeyType() which is missing in some
+	older versions of GCJ and GNU Classpath (<0.99).
+
+2013-01-21  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_BOOTSTRAP_CLASSES): Make the inclusion
 	of java.security.cert.X509{Cert,CRL}Selector
 	dependent on the necessary methods being missing.
 	* configure.ac:

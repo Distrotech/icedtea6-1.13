@@ -109,6 +109,12 @@ IT_CHECK_FOR_METHOD([JAVA_SECURITY_CERT_X509CRLSELECTOR_SETISSUERS],
   ["setIssuers",java.util.Collection.class],
   [new java.security.cert.X509CRLSelector().setIssuers(new java.util.ArrayList<javax.security.auth.x500.X500Principal>())]
 )
+IT_CHECK_FOR_METHOD([JAVAX_SECURITY_AUTH_KERBEROS_KERBEROSTICKET_GETSESSIONKEYTYPE],
+  [javax.security.auth.kerberos.KerberosTicket.getSessionKeyType()],
+  [javax.security.auth.kerberos.KerberosTicket],
+  ["getSessionKeyType"],
+  [new javax.security.auth.kerberos.KerberosTicket(null,null,null,null,0,null,null,null,null,null,null).getSessionKeyType()]
+)
 
 # Use xvfb-run if found to run gui tests (check-jdk).
 AC_CHECK_PROG(XVFB_RUN_CMD, xvfb-run, [xvfb-run -a -e xvfb-errors], [])
