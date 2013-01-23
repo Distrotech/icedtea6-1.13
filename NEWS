@@ -58,12 +58,22 @@ New in release 1.12 (2012-XX-XX):
   - PR1176: Synchronise CACAO rules between IcedTea6/7/8 where possible
   - RH513605: Updating/Installing OpenJDK should recreate the shared class-data archive
 * CACAO
-  - PR1120: Unified version for icedtea6/7
+  - CA1120: Unified version for icedtea6/7
   - CA166, CA167: check-langtools fixes for icedtea6
   - Implemented sun.misc.Perf.highResCounter
   - CACAO now identifies by its own Mercurial revision
   - Some memory barrier maintenance
   - Ability to run when compiled as Thumb on armv5 (no Thumb JIT though) 
+  - Stop creating pseudo files for OpenJDK (libjsig.so, Xusage.txt)
+  - Clang fix for the i386 backend
+  - CONTRIBUTE: Reference code submission process wiki instructions.
+  - INSTALL.CACAO: Update, so following the instruction actually works.
+  - Make doxygen work
+  - CA172, PR1266, G453612: ARM hardfloat support
+  - src/scripts/java.in: Look for cacao executable in install path, not in PATH.
+  - src/vm/jit/alpha/asmpart.S: Fix copyright header.
+  - src/vm/jit/alpha/asmpart.S: Properly set up GP in asm_abstractmethoderror
+  - Use @abs_top_builddir@ for support scripts
 * JamVM
   - ARMv6 armhf: Changes for Raspbian (Raspberry Pi)
   - PPC: Don't use lwsync if it isn't supported
