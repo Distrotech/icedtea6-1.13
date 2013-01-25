@@ -1938,3 +1938,59 @@ rmdir tmp.$$
 AM_CONDITIONAL([LACKS_$1], test x"${it_cv_$1}" = "xyes")
 AC_PROVIDE([$0])dnl
 ])
+
+dnl Generic macro to check for a Java field
+dnl Takes five arguments: the name of the macro,
+dnl the name of the field and the name of the class.
+dnl The macro name is usually the name of the class
+dnl with '.' replaced by '_' and all letters
+dnl capitalised.
+dnl e.g. IT_CHECK_FOR_FIELD([JAVAX_SECURITY_SASL_SASL_CREDENTIALS],
+dnl [CREDENTIALS], [javax.security.sasl.Sasl])
+AC_DEFUN([IT_CHECK_FOR_STATIC_FIELD],[
+AC_REQUIRE([IT_CHECK_JAVA_AND_JAVAC_WORK])
+AC_CACHE_CHECK([if $3.$2 is missing], it_cv_$1, [
+CLASS=Test.java
+BYTECODE=$(echo $CLASS|sed 's#\.java##')
+mkdir tmp.$$
+cd tmp.$$
+cat << \EOF > $CLASS
+[/* [#]line __oline__ "configure" */
+import java.lang.reflect.Field;
+
+public class Test
+{
+  public static void main(String[] args)
+  {
+    Class<?> cl = $3.class;
+    try
+      {
+        Field f = cl.getDeclaredField("$2");
+	System.err.println("Field found: " + f);
+	System.err.println("Field value: " + $3.$2);
+      }
+    catch (NoSuchFieldException e)
+      {
+        System.exit(-1);
+      }
+  }
+
+}
+]
+EOF
+if $JAVAC -cp . $JAVACFLAGS -source 5 -target 5 -nowarn $CLASS >&AS_MESSAGE_LOG_FD 2>&1; then
+  if $JAVA -classpath . $BYTECODE >&AS_MESSAGE_LOG_FD 2>&1; then
+      it_cv_$1=no;
+  else
+      it_cv_$1=yes;
+  fi
+else
+  it_cv_$1=yes;
+fi
+])
+rm -f $CLASS *.class
+cd ..
+rmdir tmp.$$
+AM_CONDITIONAL([LACKS_$1], test x"${it_cv_$1}" = "xyes")
+AC_PROVIDE([$0])dnl
+])

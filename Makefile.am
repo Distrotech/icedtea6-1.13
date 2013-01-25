@@ -63,9 +63,7 @@ SOURCEPATH_DIRS = $(abs_top_srcdir)/generated:$(OPENJDK_SOURCEPATH_DIRS)
 
 # Sources used from OpenJDK.
 
-# PR54275 - sun.security.sasl requires missing Sasl.CREDENTIALS field
-ICEDTEA_BOOTSTRAP_CLASSES = \
-	$(SHARE)/javax/security/sasl/Sasl.java
+ICEDTEA_BOOTSTRAP_CLASSES =
 
 #PR42003 - Missing javax.swing.plaf.basic.BasicDirectoryModel methods cause OpenJDK build failure 
 if LACKS_JAVAX_SWING_PLAF_BASIC_BASICDIRECTORYMODEL_ADDPROPERTYCHANGELISTENER
@@ -121,6 +119,12 @@ endif
 if LACKS_JAVAX_SECURITY_AUTH_KERBEROS_KERBEROSTICKET_GETSESSIONKEYTYPE
 ICEDTEA_BOOTSTRAP_CLASSES += \
 	$(SHARE)/javax/security/auth/kerberos/KerberosTicket.java
+endif
+
+# PR54275 - sun.security.sasl requires missing Sasl.CREDENTIALS field
+if LACKS_JAVAX_SECURITY_SASL_SASL_CREDENTIALS
+ICEDTEA_BOOTSTRAP_CLASSES += \
+	$(SHARE)/javax/security/sasl/Sasl.java
 endif
 
 # Flags
@@ -2555,18 +2559,22 @@ endif
 
 # rt.jar additional class files.
 rt-source-files.txt: $(OPENJDK_ECJ_TREE)
+	rm -f $@
 	for files in $(ICEDTEA_BOOTSTRAP_CLASSES) ; \
 	do \
 	  echo $$files >> $@ ; \
 	done
+	touch $@
 
 stamps/rt-class-files.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) rt-source-files.txt
 if BOOTSTRAPPING
 	mkdir -p lib/rt
-	$(BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) -d lib/rt \
-          -sourcepath $(SOURCEPATH_DIRS) -bootclasspath \'\' \
-          -classpath $(SYSTEM_JDK_DIR)/jre/lib/rt.jar \
-	  @rt-source-files.txt ;
+	if echo $(ICEDTEA_BOOTSTRAP_CLASSES) | grep '\S' &> /dev/null ; then \
+	  $(BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) -d lib/rt \
+            -classpath $(SYSTEM_JDK_DIR)/jre/lib/rt.jar \
+            -sourcepath $(SOURCEPATH_DIRS) \
+	    -bootclasspath \'\' @rt-source-files.txt ; \
+	fi
 endif
 	mkdir -p stamps
 	touch stamps/rt-class-files.stamp
@@ -2586,8 +2594,10 @@ endif
 stamps/rt.stamp: stamps/rt-class-files.stamp
 	mkdir -p stamps
 if BOOTSTRAPPING
-	$(BOOT_DIR)/bin/jar uf $(RUNTIME) -C lib/rt com -C lib/rt java \
-	  -C lib/rt javax -C lib/rt sun 
+	if echo $(ICEDTEA_BOOTSTRAP_CLASSES) | grep '\S' &> /dev/null ; then \
+	  $(BOOT_DIR)/bin/jar uf $(RUNTIME) -C lib/rt com -C lib/rt java \
+	    -C lib/rt javax -C lib/rt sun ; \
+	fi 
 endif
 	touch stamps/rt.stamp
 
