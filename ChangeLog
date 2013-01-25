@@ -1,3 +1,34 @@
+2013-01-25  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(.PHONY): Add clean-pax-mark-vm,
+	clean-pax-mark-vm-debug, clean-pax-mark-vm-ecj.
+	(icedtea): Move pax-mark-vm invocation to
+	its own rule.
+	(icedtea-against-icedtea): Depend on pax-mark-vm.
+	(clean-icedtea-against-icedtea): Likewise for
+	clean-pax-mark-vm.
+	(icedtea-debug-against-icedtea): Likewise for
+	pax-mark-vm-debug.
+	(clean-icedtea-debug-against-icedtea): Likewise for
+	clean-pax-mark-vm-debug.
+	(clean-add-archive): Delete the archive.
+	(clean-add-archive-debug): Likewise for debug.
+	(pax-mark-vm): Move pax marking to here.
+	(clean-pax-mark-vm): And remove stamp here.
+	(pax-mark-vm-debug): Pax marking for debug build.
+	(clean-pax-mark-vm-debug): And remove stamp here.
+	(icedtea-ecj): Move pax-mark-vm to its own rule.
+	(icedtea-against-icedtea): Depend on pax-mark-vm-ecj.
+	(clean-icedtea-against-icedtea): Likewise for
+	clean-pax-mark-vm-ecj.
+	(clean-add-archive-ecj): Delete the archive.
+	(pax-mark-vm-ecj): Move ecj pax marking to here.
+	(clean-pax-mark-vm-ecj): And remove stamp here.
+	* acinclude.m4:
+	(IT_CHECK_FOR_PAX): Remove now unused macro.
+	* NEWS: Mention pax marking fixes.
+
 2012-06-24  Ralph Sennhauser  <sera@gentoo.org>
 
 	* Makefile.am:

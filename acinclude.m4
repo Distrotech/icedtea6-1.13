@@ -1708,18 +1708,6 @@ AC_SUBST(NSS_LIBDIR)
 AC_CONFIG_FILES([nss.cfg])
 ])
 
-AC_DEFUN_ONCE([IT_CHECK_FOR_PAX],[
-AC_CACHE_CHECK([if a PaX-enabled kernel is running], it_cv_pax, [
-if grep '^PaX:' /proc/self/status >&AS_MESSAGE_LOG_FD 2>&1; then
-  it_cv_pax=yes;
-else
-  it_cv_pax=no;
-fi
-])
-AM_CONDITIONAL([HAS_PAX], test x"${it_cv_pax}" = "xyes")
-AC_PROVIDE([$0])dnl
-])
-
 AC_DEFUN([IT_JAVAH],[
 AC_REQUIRE([IT_CHECK_JAVA_AND_JAVAC_WORK])
 AC_CACHE_CHECK([if $JAVAH exhibits Classpath bug 39408], it_cv_cp39408_javah, [

@@ -763,7 +763,8 @@ install:
 	clean-add-pulseaudio clean-add-pulseaudio-debug clean-add-nss clean-add-nss-debug \
 	clean-add-tzdata-support clean-add-tzdata-support-debug clean-add-systemtap-ecj \
 	clean-add-pulseaudio-ecj clean-add-nss-ecj clean-add-tzdata-support-ecj clean-fonts \
-	clean-download-hotspot clean-tests clean-tapset-report jtregcheck
+	clean-download-hotspot clean-tests clean-tapset-report jtregcheck clean-pax-mark-vm \
+	clean-pax-mark-vm-debug clean-pax-mark-vm-ecj
 
 env:
 	@echo 'unset JAVA_HOME'
@@ -1507,7 +1508,6 @@ stamps/icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
 	  $(ICEDTEA_ENV) \
 	  -C openjdk \
 	  $(ICEDTEA_BUILD_TARGET)
-	$(abs_top_builddir)/pax-mark-vm $(BUILD_OUTPUT_DIR)/j2sdk-image
 	mkdir -p $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
 	mkdir -p $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
 	mkdir -p $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/ext
@@ -1566,27 +1566,28 @@ clean-icedtea-debug:
 
 stamps/icedtea-against-icedtea.stamp: stamps/icedtea.stamp \
  stamps/add-jamvm.stamp stamps/add-cacao.stamp stamps/add-zero.stamp \
- stamps/add-systemtap.stamp stamps/add-pulseaudio.stamp stamps/add-nss.stamp stamps/add-tzdata-support.stamp \
- stamps/add-archive.stamp
+ stamps/add-systemtap.stamp stamps/add-pulseaudio.stamp stamps/add-nss.stamp \
+ stamps/add-tzdata-support.stamp stamps/add-archive.stamp stamps/pax-mark-vm.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-against-icedtea.stamp
 
 clean-icedtea-against-icedtea: clean-add-jamvm clean-add-zero clean-add-cacao \
  clean-add-systemtap clean-add-pulseaudio clean-add-nss clean-add-tzdata-support \
- clean-add-archive
+ clean-add-archive clean-pax-mark-vm
 	rm -f stamps/icedtea-against-icedtea.stamp
 
 stamps/icedtea-debug-against-icedtea.stamp: stamps/icedtea-debug.stamp \
  stamps/add-jamvm-debug.stamp stamps/add-cacao-debug.stamp \
  stamps/add-zero-debug.stamp stamps/add-systemtap-debug.stamp stamps/add-pulseaudio-debug.stamp \
- stamps/add-nss-debug.stamp stamps/add-tzdata-support-debug.stamp stamps/add-archive-debug.stamp
+ stamps/add-nss-debug.stamp stamps/add-tzdata-support-debug.stamp stamps/add-archive-debug.stamp \
+ stamps/pax-mark-vm-debug.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-debug-against-icedtea.stamp
 
 clean-icedtea-debug-against-icedtea: clean-add-zero-debug \
  clean-add-jamvm-debug clean-add-cacao-debug clean-add-systemtap-debug \
  clean-add-pulseaudio-debug clean-add-nss-debug clean-add-tzdata-support-debug \
- clean-add-archive-debug
+ clean-add-archive-debug clean-pax-mark-vm-debug
 	rm -f stamps/icedtea-debug-against-icedtea.stamp
 
 stamps/add-systemtap.stamp: stamps/icedtea.stamp
@@ -1839,6 +1840,7 @@ endif
 	touch stamps/add-archive.stamp
 
 clean-add-archive:
+	rm -vf $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/*/*.jsa
 	rm -f stamps/add-archive.stamp
 
 stamps/add-archive-debug.stamp: stamps/icedtea-debug.stamp
@@ -1852,7 +1854,26 @@ endif
 	touch stamps/add-archive-debug.stamp
 
 clean-add-archive-debug:
+	rm -vf $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/*/*.jsa
 	rm -f stamps/add-archive-debug.stamp
+
+stamps/pax-mark-vm.stamp: stamps/icedtea.stamp
+if WITH_PAX
+	$(abs_top_builddir)/pax-mark-vm $(BUILD_OUTPUT_DIR)/j2sdk-image
+endif
+	touch $@
+
+clean-pax-mark-vm:
+	rm -f stamps/pax-mark-vm.stamp
+
+stamps/pax-mark-vm-debug.stamp: stamps/icedtea-debug.stamp
+if WITH_PAX
+	$(abs_top_builddir)/pax-mark-vm $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image
+endif
+	touch $@
+
+clean-pax-mark-vm-debug:
+	rm -f stamps/pax-mark-vm-debug.stamp
 
 # OpenJDK ecj Targets
 # ===================
@@ -1864,7 +1885,6 @@ stamps/icedtea-ecj.stamp: stamps/bootstrap-directory-symlink-ecj.stamp \
 	  $(ICEDTEA_ENV_ECJ) \
 	  -C openjdk-ecj/ \
 	  $(ICEDTEA_BUILD_TARGET)
-	$(abs_top_builddir)/pax-mark-vm $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image
 	@echo "ecj-poured IcedTea is served:" \
 	  $(ECJ_BUILD_OUTPUT_DIR)
 	mkdir -p stamps
@@ -1876,12 +1896,12 @@ clean-icedtea-ecj:
 
 stamps/icedtea-against-ecj.stamp: stamps/icedtea-ecj.stamp stamps/add-systemtap-ecj.stamp \
  stamps/add-pulseaudio-ecj.stamp stamps/add-nss-ecj.stamp stamps/add-tzdata-support-ecj.stamp \
- stamps/add-archive-ecj.stamp
+ stamps/add-archive-ecj.stamp stamps/pax-mark-vm-ecj.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-against-ecj.stamp
 
 clean-icedtea-against-ecj: clean-add-systemtap-ecj clean-add-pulseaudio-ecj clean-add-nss-ecj \
- clean-add-tzdata-support-ecj clean-add-archive-ecj
+ clean-add-tzdata-support-ecj clean-add-archive-ecj clean-pax-mark-vm-ecj
 	rm -f stamps/icedtea-against-ecj.stamp
 
 stamps/add-systemtap-ecj.stamp: stamps/icedtea-ecj.stamp
@@ -2015,7 +2035,17 @@ endif
 	touch stamps/add-archive-ecj.stamp
 
 clean-add-archive-ecj:
+	rm -vf $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/*/*.jsa
 	rm -f stamps/add-archive-ecj.stamp
+
+stamps/pax-mark-vm-ecj.stamp: stamps/icedtea-ecj.stamp
+if WITH_PAX
+	$(abs_top_builddir)/pax-mark-vm $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image
+endif
+	touch $@
+
+clean-pax-mark-vm-ecj:
+	rm -f stamps/pax-mark-vm-ecj.stamp
 
 # Rebuild targets
 
@@ -2679,6 +2709,12 @@ patch: stamps/patch.stamp
 patch-ecj: stamps/patch-ecj.stamp
 
 patch-fsg: stamps/patch-fsg.stamp
+
+pax-mark-vm: stamps/pax-mark-vm.stamp
+
+pax-mark-vm-debug: stamps/pax-mark-vm-debug.stamp
+
+pax-mark-vm-ecj: stamps/pax-mark-vm-ecj.stamp
 
 pulse-java: stamps/pulse-java.stamp
 
