@@ -511,8 +511,10 @@ else
 NSS_PATCHES = patches/nss-not-enabled-config.patch
 endif
 
-if HAS_PAX
-ICEDTEA_PATCHES += patches/no-test_gamma.patch
+if WITH_PAX
+ICEDTEA_PATCHES += \
+	patches/no-test_gamma.patch \
+	patches/pax-mark-rmic-java.patch
 endif
 
 ICEDTEA_PATCHES += $(DISTRIBUTION_PATCHES)
@@ -547,7 +549,7 @@ ICEDTEA_ECJ_PATCHES += patches/ecj/cp40188-opengl.patch
 endif
 endif
 
-if !HAS_PAX
+if !WITH_PAX
 ICEDTEA_ECJ_PATCHES += patches/ecj/no-test_gamma.patch
 endif
 
@@ -1505,6 +1507,7 @@ stamps/icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
 	  $(ICEDTEA_ENV) \
 	  -C openjdk \
 	  $(ICEDTEA_BUILD_TARGET)
+	$(abs_top_builddir)/pax-mark-vm $(BUILD_OUTPUT_DIR)/j2sdk-image
 	mkdir -p $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)
 	mkdir -p $(BUILD_OUTPUT_DIR)/j2re-image/lib/$(INSTALL_ARCH_DIR)
 	mkdir -p $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/ext
@@ -1861,6 +1864,7 @@ stamps/icedtea-ecj.stamp: stamps/bootstrap-directory-symlink-ecj.stamp \
 	  $(ICEDTEA_ENV_ECJ) \
 	  -C openjdk-ecj/ \
 	  $(ICEDTEA_BUILD_TARGET)
+	$(abs_top_builddir)/pax-mark-vm $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image
 	@echo "ecj-poured IcedTea is served:" \
 	  $(ECJ_BUILD_OUTPUT_DIR)
 	mkdir -p stamps

@@ -1994,3 +1994,49 @@ rmdir tmp.$$
 AM_CONDITIONAL([LACKS_$1], test x"${it_cv_$1}" = "xyes")
 AC_PROVIDE([$0])dnl
 ])
+
+AC_DEFUN_ONCE([IT_WITH_PAX],
+[
+  AC_MSG_CHECKING([for pax utility to use])
+  AC_ARG_WITH([pax],
+              [AS_HELP_STRING(--with-pax=COMMAND,the command used for pax marking)],
+  [
+    PAX_COMMAND=${withval}
+    if test "x${PAX_COMMAND}" = "xno"; then
+      PAX_COMMAND="not specified"
+    fi
+  ],
+  [ 
+    PAX_COMMAND="not specified"
+  ])
+  case "x${PAX_COMMAND}" in
+    xchpax)
+      case "${host_cpu}" in
+        i?86)
+          PAX_COMMAND_ARGS="-msp"
+          ;;
+        *)
+          PAX_COMMAND_ARGS="-m"
+          ;;
+      esac
+      ;;
+    xpaxctl)
+      case "${host_cpu}" in
+        i?86)
+          PAX_COMMAND_ARGS="-msp"
+          ;;
+        *)
+          PAX_COMMAND_ARGS="-m"
+          ;;
+      esac
+      ;;
+    *)
+      PAX_COMMAND="not specified"
+      PAX_COMMAND_ARGS="not specified"
+      ;;
+  esac
+  AM_CONDITIONAL(WITH_PAX, test "x${PAX_COMMAND}" != "xnot specified")
+  AC_MSG_RESULT(${PAX_COMMAND})
+  AC_SUBST(PAX_COMMAND)
+  AC_SUBST(PAX_COMMAND_ARGS)
+])

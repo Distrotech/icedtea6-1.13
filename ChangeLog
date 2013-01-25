@@ -1,3 +1,18 @@
+2012-06-24  Ralph Sennhauser  <sera@gentoo.org>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Replace HAS_PAX with
+	WITH_PAX.  Add RMIC patch.
+	(icedtea): Invoke pax-mark-vm on built image.
+	(icedtea-ecj): Likewise.
+	* acinclude.m4:
+	(IT_WITH_PAX): New macro to specify pax utility.
+	* configure.ac:
+	Call IT_WITH_PAX instead of IT_CHECK_FOR_PAX.
+	* patches/pax-mark-rmic-java.patch:
+	New patch to PaX mark VM before running just-built
+	rmic.
+
 2013-01-25  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* configure.ac: Set to 1.12.0.
