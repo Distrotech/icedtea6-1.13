@@ -214,6 +214,7 @@ if test "x$enable_bootstrap" = "xyes"; then
   IT_FIND_ECJ_JAR
   IT_FIND_TOOL([XSLTPROC], [xsltproc])
 fi
+IT_USING_CACAO
 AC_CONFIG_FILES([javac], [chmod +x javac])
 AC_CONFIG_FILES([javap], [chmod +x javap])
 

@@ -1,3 +1,23 @@
+2013-01-28  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* patches/cacao/memory.patch:
+	Extend with additional cases in HotSpot and
+	JAXWS.
+
+2012-06-12  Andrew John Hughes  <gnu_andrew@member.fsf.org>
+
+	PR986
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add memory patch when
+	building using CACAO as well, even if the
+	result is not a CACAO build.
+	* acinclude.m4:
+	(IT_USING_CACAO): New macro; detects use of
+	CACAO as the build VM so memory limits can
+	be raised accordingly.
+	* configure.ac: Call IT_USING_CACAO.
+	* NEWS: Updated.
+
 2013-01-25  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* pax-mark-vm.in: Add template for pax mark
