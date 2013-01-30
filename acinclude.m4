@@ -1306,7 +1306,7 @@ public class Test
 {
   public static void main(String[] args)
   {
-    $2.class.toString();
+    System.err.println("Class found: " + $2.class);
   }
 }
 ]
@@ -1708,18 +1708,6 @@ AC_SUBST(NSS_LIBDIR)
 AC_CONFIG_FILES([nss.cfg])
 ])
 
-AC_DEFUN_ONCE([IT_CHECK_FOR_PAX],[
-AC_CACHE_CHECK([if a PaX-enabled kernel is running], it_cv_pax, [
-if grep '^PaX:' /proc/self/status >&AS_MESSAGE_LOG_FD 2>&1; then
-  it_cv_pax=yes;
-else
-  it_cv_pax=no;
-fi
-])
-AM_CONDITIONAL([HAS_PAX], test x"${it_cv_pax}" = "xyes")
-AC_PROVIDE([$0])dnl
-])
-
 AC_DEFUN([IT_JAVAH],[
 AC_REQUIRE([IT_CHECK_JAVA_AND_JAVAC_WORK])
 AC_CACHE_CHECK([if $JAVAH exhibits Classpath bug 39408], it_cv_cp39408_javah, [
@@ -1781,11 +1769,12 @@ AC_PROVIDE([$0])dnl
 ])
 
 dnl Generic macro to check for a Java method
-dnl Takes four arguments: the name of the macro,
-dnl the name of the class, the method signature
-dnl and an example call to the method.  The macro name
-dnl is usually the name of the class with '.'
-dnl replaced by '_' and all letters capitalised.
+dnl Takes five arguments: the name of the macro,
+dnl the name of the method, the name of the class,
+dnl the method signature and an example call to the
+dnl method.  The macro name is usually the name of
+dnl the class with '.' replaced by '_' and all letters
+dnl capitalised.
 dnl e.g. IT_CHECK_FOR_METHOD([JAVA_UTIL_REGEX_MATCHER_QUOTEREPLACEMENT],[java.util.regex.Matcher.quoteReplacement],[java.util.rgex.Matcher],["quoteReplacement",String.class],java.util.regex.Matcher.quoteReplacement("Blah"))
 AC_DEFUN([IT_CHECK_FOR_METHOD],[
 AC_REQUIRE([IT_CHECK_JAVA_AND_JAVAC_WORK])
@@ -1806,6 +1795,7 @@ public class Test
     try
       {
         Method m = cl.getDeclaredMethod($4);
+	System.err.println("Method found: " + m);
       }
     catch (NoSuchMethodException e)
       {
@@ -1872,4 +1862,184 @@ fi
 USING_ECJ=$it_cv_ecj
 AC_SUBST(USING_ECJ)
 AC_PROVIDE([$0])dnl
+])
+
+dnl Generic macro to check for a Java constructor
+dnl Takes four arguments: the name of the macro,
+dnl the name of the class, the method signature
+dnl and an example call to the method.  The macro name
+dnl is usually the name of the class with '.'
+dnl replaced by '_' and all letters capitalised.
+dnl e.g. IT_CHECK_FOR_CONSTRUCTOR([JAVAX_MANAGEMENT_STANDARDMBEAN_MXBEAN_TWO_ARG],[javax.management.StandardMBean],[Class.class,Boolean.TYPE],[Object.class, true])
+AC_DEFUN([IT_CHECK_FOR_CONSTRUCTOR],[
+AC_REQUIRE([IT_CHECK_JAVA_AND_JAVAC_WORK])
+AC_CACHE_CHECK([if $2($3) is missing], it_cv_$1, [
+CLASS=Test.java
+BYTECODE=$(echo $CLASS|sed 's#\.java##')
+mkdir tmp.$$
+cd tmp.$$
+cat << \EOF > $CLASS
+[/* [#]line __oline__ "configure" */
+import java.lang.reflect.Constructor;
+
+public class Test
+{
+  public static void main(String[] args)
+  {
+    Class<?> cl = $2.class;
+    try
+      {
+      	Constructor<?> cons = cl.getDeclaredConstructor($3);
+	System.err.println("Constructor found: " + cons);
+      }
+    catch (NoSuchMethodException e)
+      {
+        System.exit(-1);
+      }
+  }
+
+  private class TestCons extends $2
+  {
+     TestCons()
+     {
+       super($4);
+     }
+  }
+
+}
+
+]
+EOF
+if $JAVAC -cp . $JAVACFLAGS -source 5 -target 5 -nowarn $CLASS >&AS_MESSAGE_LOG_FD 2>&1; then
+  if $JAVA -classpath . $BYTECODE >&AS_MESSAGE_LOG_FD 2>&1; then
+      it_cv_$1=no;
+  else
+      it_cv_$1=yes;
+  fi
+else
+  it_cv_$1=yes;
+fi
+])
+rm -f $CLASS *.class
+cd ..
+rmdir tmp.$$
+AM_CONDITIONAL([LACKS_$1], test x"${it_cv_$1}" = "xyes")
+AC_PROVIDE([$0])dnl
+])
+
+dnl Generic macro to check for a Java field
+dnl Takes five arguments: the name of the macro,
+dnl the name of the field and the name of the class.
+dnl The macro name is usually the name of the class
+dnl with '.' replaced by '_' and all letters
+dnl capitalised.
+dnl e.g. IT_CHECK_FOR_FIELD([JAVAX_SECURITY_SASL_SASL_CREDENTIALS],
+dnl [CREDENTIALS], [javax.security.sasl.Sasl])
+AC_DEFUN([IT_CHECK_FOR_STATIC_FIELD],[
+AC_REQUIRE([IT_CHECK_JAVA_AND_JAVAC_WORK])
+AC_CACHE_CHECK([if $3.$2 is missing], it_cv_$1, [
+CLASS=Test.java
+BYTECODE=$(echo $CLASS|sed 's#\.java##')
+mkdir tmp.$$
+cd tmp.$$
+cat << \EOF > $CLASS
+[/* [#]line __oline__ "configure" */
+import java.lang.reflect.Field;
+
+public class Test
+{
+  public static void main(String[] args)
+  {
+    Class<?> cl = $3.class;
+    try
+      {
+        Field f = cl.getDeclaredField("$2");
+	System.err.println("Field found: " + f);
+	System.err.println("Field value: " + $3.$2);
+      }
+    catch (NoSuchFieldException e)
+      {
+        System.exit(-1);
+      }
+  }
+
+}
+]
+EOF
+if $JAVAC -cp . $JAVACFLAGS -source 5 -target 5 -nowarn $CLASS >&AS_MESSAGE_LOG_FD 2>&1; then
+  if $JAVA -classpath . $BYTECODE >&AS_MESSAGE_LOG_FD 2>&1; then
+      it_cv_$1=no;
+  else
+      it_cv_$1=yes;
+  fi
+else
+  it_cv_$1=yes;
+fi
+])
+rm -f $CLASS *.class
+cd ..
+rmdir tmp.$$
+AM_CONDITIONAL([LACKS_$1], test x"${it_cv_$1}" = "xyes")
+AC_PROVIDE([$0])dnl
+])
+
+AC_DEFUN_ONCE([IT_WITH_PAX],
+[
+  AC_MSG_CHECKING([for pax utility to use])
+  AC_ARG_WITH([pax],
+              [AS_HELP_STRING(--with-pax=COMMAND,the command used for pax marking)],
+  [
+    PAX_COMMAND=${withval}
+    if test "x${PAX_COMMAND}" = "xno"; then
+      PAX_COMMAND="not specified"
+    fi
+  ],
+  [ 
+    PAX_COMMAND="not specified"
+  ])
+  case "x${PAX_COMMAND}" in
+    xchpax)
+      case "${host_cpu}" in
+        i?86)
+          PAX_COMMAND_ARGS="-msp"
+          ;;
+        *)
+          PAX_COMMAND_ARGS="-m"
+          ;;
+      esac
+      ;;
+    xpaxctl)
+      case "${host_cpu}" in
+        i?86)
+          PAX_COMMAND_ARGS="-msp"
+          ;;
+        *)
+          PAX_COMMAND_ARGS="-m"
+          ;;
+      esac
+      ;;
+    *)
+      PAX_COMMAND="not specified"
+      PAX_COMMAND_ARGS="not specified"
+      ;;
+  esac
+  AM_CONDITIONAL(WITH_PAX, test "x${PAX_COMMAND}" != "xnot specified")
+  AC_MSG_RESULT(${PAX_COMMAND})
+  AC_SUBST(PAX_COMMAND)
+  AC_SUBST(PAX_COMMAND_ARGS)
+])
+
+AC_DEFUN([IT_USING_CACAO],[
+  AC_REQUIRE([IT_FIND_JAVA])
+  AC_CACHE_CHECK([if we are using CACAO as the build VM], it_cv_cacao, [
+  if $JAVA -version 2>&1| grep '^CACAO' >&AS_MESSAGE_LOG_FD ; then
+    it_cv_cacao=yes;
+  else
+    it_cv_cacao=no;
+  fi
+  ])
+  USING_CACAO=$it_cv_cacao
+  AC_SUBST(USING_CACAO)
+  AM_CONDITIONAL(USING_CACAO, test "x${USING_CACAO}" = "xyes")
+  AC_PROVIDE([$0])dnl
 ])

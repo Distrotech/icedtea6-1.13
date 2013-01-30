@@ -1,3 +1,211 @@
+2013-01-29  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* NEWS: Add missing bug ID.
+
+2013-01-29  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* NEWS: Use the correct year; it is
+	no longer 2012.
+
+2013-01-29  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* configure.ac: Bump to 1.13.0pre.
+	* NEWS: Add 1.13.0 section.
+
+2013-01-29  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* NEWS: Update to match announcement.
+
+2013-01-28  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* patches/cacao/memory.patch:
+	Extend with additional cases in HotSpot and
+	JAXWS.
+
+2012-06-12  Andrew John Hughes  <gnu_andrew@member.fsf.org>
+
+	PR986
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add memory patch when
+	building using CACAO as well, even if the
+	result is not a CACAO build.
+	* acinclude.m4:
+	(IT_USING_CACAO): New macro; detects use of
+	CACAO as the build VM so memory limits can
+	be raised accordingly.
+	* configure.ac: Call IT_USING_CACAO.
+	* NEWS: Updated.
+
+2013-01-25  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* pax-mark-vm.in: Add template for pax mark
+	script.
+
+2013-01-25  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(.PHONY): Add clean-pax-mark-vm,
+	clean-pax-mark-vm-debug, clean-pax-mark-vm-ecj.
+	(icedtea): Move pax-mark-vm invocation to
+	its own rule.
+	(icedtea-against-icedtea): Depend on pax-mark-vm.
+	(clean-icedtea-against-icedtea): Likewise for
+	clean-pax-mark-vm.
+	(icedtea-debug-against-icedtea): Likewise for
+	pax-mark-vm-debug.
+	(clean-icedtea-debug-against-icedtea): Likewise for
+	clean-pax-mark-vm-debug.
+	(clean-add-archive): Delete the archive.
+	(clean-add-archive-debug): Likewise for debug.
+	(pax-mark-vm): Move pax marking to here.
+	(clean-pax-mark-vm): And remove stamp here.
+	(pax-mark-vm-debug): Pax marking for debug build.
+	(clean-pax-mark-vm-debug): And remove stamp here.
+	(icedtea-ecj): Move pax-mark-vm to its own rule.
+	(icedtea-against-icedtea): Depend on pax-mark-vm-ecj.
+	(clean-icedtea-against-icedtea): Likewise for
+	clean-pax-mark-vm-ecj.
+	(clean-add-archive-ecj): Delete the archive.
+	(pax-mark-vm-ecj): Move ecj pax marking to here.
+	(clean-pax-mark-vm-ecj): And remove stamp here.
+	* acinclude.m4:
+	(IT_CHECK_FOR_PAX): Remove now unused macro.
+	* NEWS: Mention pax marking fixes.
+
+2012-06-24  Ralph Sennhauser  <sera@gentoo.org>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Replace HAS_PAX with
+	WITH_PAX.  Add RMIC patch.
+	(icedtea): Invoke pax-mark-vm on built image.
+	(icedtea-ecj): Likewise.
+	* acinclude.m4:
+	(IT_WITH_PAX): New macro to specify pax utility.
+	* configure.ac:
+	Call IT_WITH_PAX instead of IT_CHECK_FOR_PAX.
+	* patches/pax-mark-rmic-java.patch:
+	New patch to PaX mark VM before running just-built
+	rmic.
+
+2013-01-25  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* configure.ac: Set to 1.12.0.
+	* NEWS: Add release date.
+
+2013-01-25  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* NEWS: Fix bad bug reference caught by
+	Stefan Ring.
+
+2013-01-25  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	PR1119: Only add classes to rt-source-files.txt if
+	the class, or one or more of its methods/fields,
+	are actually missing from the boot JDK
+	* Makefile.am:
+	(ICEDTEA_BOOTSTRAP_CLASSES):  Initialise to
+	empty.  Make the inclusion of
+	javax.security.sasl.Sasl dependent on the
+	CREDENTIALS field being missing.
+	* acinclude.m4:
+	(IT_CHECK_FOR_STATIC_FIELD): New method to
+	check for a static field.
+	* configure.ac: Invoke IT_CHECK_FOR_STATIC_FIELD
+	for javax.security.sasl.Sasl.CREDENTIALS.
+
+2012-08-16  Andrew John Hughes  <gnu_andrew@member.fsf.org>
+
+	* Makefile.am:
+	(rt-class-files.stamp): Add test of contents of
+	ICEDTEA_BOOTSTRAP_CLASSES.  Note; need to use grep as
+	field contains whitespace.
+	(rt.stamp): Likewise.
+
+2010-09-14  Andrew John Hughes  <ahughes@redhat.com>
+
+	* Makefile.am,
+	(rt-source-files.txt): Remove any existing
+	version prior to generation to avoid duplication
+	of source files.
+
+2013-01-23  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	CA172, PR1266: Add ARM hardfloat support to CACAO.
+	* Makefile.am:
+	(CACAO_VERSION): Updated to latest head.
+	(CACAO_SHA256SUM): Likewise.
+	* NEWS: List changes in CACAO since last revision.
+	* patches/cacao/armhf.patch:
+	Patch to enable hardfloat on triplet used by Gentoo.
+
+2012-09-25  Xerxes Rånby  <xerxes@zafena.se>
+
+	JamVM
+	PR1155: Do not put version number in libjvm.so SONAME
+	* NEWS: Updated.
+	* Makefile.am
+	(JAMVM_VERSION): Updated JamVM to 2012-09-25 revision.
+	(JAMVM_SHA256SUM): Updated.
+
+2013-01-21  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_BOOTSTRAP_CLASSES): Make the inclusion
+	of javax.security.auth.kerberos.KerberosTicket
+	dependent on getSessionKeyType() being missing.
+	* configure.ac:
+	Add IT_CHECK_FOR_METHOD calls for
+	getSessionKeyType() which is missing in some
+	older versions of GCJ and GNU Classpath (<0.99).
+
+2013-01-21  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_BOOTSTRAP_CLASSES): Make the inclusion
+	of java.security.cert.X509{Cert,CRL}Selector
+	dependent on the necessary methods being missing.
+	* configure.ac:
+	Add IT_CHECK_FOR_METHOD calls for the
+	missing java.security.cert.X509{Cert,CRL}Selector
+	methods added in 1.5.
+
+2013-01-14  Andrew John Hughes  <gnu_andrew@member.fsf.org>
+
+	* Makefile.am:
+	(add-tzdata-support): Only copy tz.properties if
+	destination exists.  Do it verbosely.
+	(clean-add-tzdata-support): Only remove tz.properties
+	if present and do so verbosely.
+	(add-tzdata-support-debug): Same as add-tzdata-support
+	but for debug.
+	(clean-add-tzdata-support-debug): Same as
+	clean-add-tzdata-support but for debug.
+	(add-tzdata-support-ecj): Same as add-tzdata-support
+	but for bootstrap.
+	(clean-add-tzdata-support-ecj): Same as
+	clean-add-tzdata-support but for bootstrap.
+
+2013-01-11  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_BOOTSTRAP_CLASSES): Make the inclusion
+	of javax.management.StandardMBean dependent on
+	the 1.6 constructors being missing.
+	* acinclude.m4:
+	(IT_CHECK_FOR_CLASS): Write class toString() output
+	to System.err rather than throwing it away.  It then
+	appears in config.log and may be useful in debugging.
+	(IT_CHECK_FOR_METHOD): Fix documentation and add
+	System.err output as for IT_CHECK_FOR_CLASS.
+	(IT_CHECK_FOR_CONSTRUCTOR): New macro to test for
+	the presence of a specific constructor.  Works
+	with both private & protected constructors by
+	using a subclass for the compile test.
+	* configure.ac:
+	Add IT_CHECK_FOR_CONSTRUCTOR calls for the
+	two javax.management.StandardMBean constructors
+	added in 1.6.
+
 2012-11-28  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* javac.in:

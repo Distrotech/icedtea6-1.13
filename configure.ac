@@ -1,4 +1,4 @@
-AC_INIT([icedtea6],[1.12pre],[distro-pkg-dev@openjdk.java.net])
+AC_INIT([icedtea6],[1.13.0pre],[distro-pkg-dev@openjdk.java.net])
 AM_INIT_AUTOMAKE([1.9 tar-pax foreign])
 AC_CONFIG_FILES([Makefile])
 
@@ -50,13 +50,13 @@ IT_CHECK_GCC_VERSION
 IT_CHECK_NUMBER_OF_PARALLEL_JOBS
 IT_CP_SUPPORTS_REFLINK
 IT_CAN_HARDLINK_TO_SOURCE_TREE
-IT_CHECK_FOR_PAX
 IT_LOCATE_NSS
 IT_DISABLE_TESTS
 IT_DISABLE_HOTSPOT_TESTS
 IT_DISABLE_LANGTOOLS_TESTS
 IT_DISABLE_JDK_TESTS
 
+#PR42003 - Missing javax.swing.plaf.basic.BasicDirectoryModel methods cause OpenJDK build failure 
 IT_CHECK_FOR_METHOD([JAVAX_SWING_PLAF_BASIC_BASICDIRECTORYMODEL_ADDPROPERTYCHANGELISTENER],
   [javax.swing.plaf.basic.BasicDirectoryModel.addPropertyChangeListener(PropertyChangeListener)],
   [javax.swing.plaf.basic.BasicDirectoryModel],
@@ -72,6 +72,51 @@ IT_CHECK_FOR_METHOD([ORBUTILSYSTEMEXCEPTION_IOEXCEPTIONONCLOSE_THROWABLE],
   ["ioExceptionOnClose",java.lang.Throwable.class],
   [new com.sun.corba.se.impl.logging.ORBUtilSystemException(null).ioExceptionOnClose(new InternalError())]
 )
+
+# PR43389 - javax.management.StandardMBean
+IT_CHECK_FOR_CONSTRUCTOR([JAVAX_MANAGEMENT_STANDARDMBEAN_MXBEAN_TWO_ARG],[javax.management.StandardMBean],[Class.class,Boolean.TYPE],[Object.class, true])
+IT_CHECK_FOR_CONSTRUCTOR([JAVAX_MANAGEMENT_STANDARDMBEAN_MXBEAN_THREE_ARG],[javax.management.StandardMBean],[Object.class,Class.class,Boolean.TYPE],[new Object(), Object.class, true])
+
+# PR54274 - sun.security.other requires missing X509CRLSelector methods
+IT_CHECK_FOR_METHOD([JAVA_SECURITY_CERT_X509CRLSELECTOR_ADDISSUER],
+  [java.security.cert.X509CRLSelector.addIssuer(X500Principal)],
+  [java.security.cert.X509CRLSelector],
+  ["addIssuer",javax.security.auth.x500.X500Principal.class],
+  [new java.security.cert.X509CRLSelector().addIssuer(null)]
+)
+IT_CHECK_FOR_METHOD([JAVA_SECURITY_CERT_X509CERTSELECTOR_SETSUBJECT],
+  [java.security.cert.X509CertSelector.setSubject(X500Principal)],
+  [java.security.cert.X509CertSelector],
+  ["setSubject",javax.security.auth.x500.X500Principal.class],
+  [new java.security.cert.X509CertSelector().setSubject(new javax.security.auth.x500.X500Principal(""))]
+)
+IT_CHECK_FOR_METHOD([JAVA_SECURITY_CERT_X509CERTSELECTOR_GETSUBJECT],
+  [java.security.cert.X509CertSelector.getSubject()],
+  [java.security.cert.X509CertSelector],
+  ["getSubject"],
+  [new java.security.cert.X509CertSelector().getSubject()]
+)
+IT_CHECK_FOR_METHOD([JAVA_SECURITY_CERT_X509CERTSELECTOR_SETISSUER],
+  [java.security.cert.X509CertSelector.setIssuer(X500Principal)],
+  [java.security.cert.X509CertSelector],
+  ["setIssuer",javax.security.auth.x500.X500Principal.class],
+  [new java.security.cert.X509CertSelector().setIssuer(new javax.security.auth.x500.X500Principal(""))]
+)
+IT_CHECK_FOR_METHOD([JAVA_SECURITY_CERT_X509CRLSELECTOR_SETISSUERS],
+  [java.security.cert.X509CRLSelector.setIssuers(Collection<X500Principal>)],
+  [java.security.cert.X509CRLSelector],
+  ["setIssuers",java.util.Collection.class],
+  [new java.security.cert.X509CRLSelector().setIssuers(new java.util.ArrayList<javax.security.auth.x500.X500Principal>())]
+)
+IT_CHECK_FOR_METHOD([JAVAX_SECURITY_AUTH_KERBEROS_KERBEROSTICKET_GETSESSIONKEYTYPE],
+  [javax.security.auth.kerberos.KerberosTicket.getSessionKeyType()],
+  [javax.security.auth.kerberos.KerberosTicket],
+  ["getSessionKeyType"],
+  [new javax.security.auth.kerberos.KerberosTicket(null,null,null,null,0,null,null,null,null,null,null).getSessionKeyType()]
+)
+
+# PR54275 - sun.security.sasl requires missing Sasl.CREDENTIALS field
+IT_CHECK_FOR_STATIC_FIELD([JAVAX_SECURITY_SASL_SASL_CREDENTIALS],[CREDENTIALS],[javax.security.sasl.Sasl])
 
 # Use xvfb-run if found to run gui tests (check-jdk).
 AC_CHECK_PROG(XVFB_RUN_CMD, xvfb-run, [xvfb-run -a -e xvfb-errors], [])
@@ -169,6 +214,7 @@ if test "x$enable_bootstrap" = "xyes"; then
   IT_FIND_ECJ_JAR
   IT_FIND_TOOL([XSLTPROC], [xsltproc])
 fi
+IT_USING_CACAO
 AC_CONFIG_FILES([javac], [chmod +x javac])
 AC_CONFIG_FILES([javap], [chmod +x javap])
 
@@ -197,6 +243,9 @@ IT_WITH_HG_REVISION
 IT_WITH_TZDATA_DIR
 IT_GETDTDTYPE_CHECK
 IT_JAVAH
+
+IT_WITH_PAX
+AC_CONFIG_FILES([pax-mark-vm], [chmod +x pax-mark-vm])
 
 dnl pkgconfig cannot be used to find these headers and libraries.
 AC_CHECK_HEADERS([cups/cups.h cups/ppd.h],[]

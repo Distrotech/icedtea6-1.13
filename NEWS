@@ -10,7 +10,9 @@ LPX - https://bugs.launchpad.net/bugs/X
 
 CVE-XXXX-YYYY: http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
-New in release 1.12 (2012-XX-XX):
+New in release 1.13.0 (201X-XX-XX):
+
+New in release 1.12.0 (2013-01-29):
 
 * Import of OpenJDK6 b27 (all changes already in security updates)
 * Import of OpenJDK6 b26
@@ -46,6 +48,16 @@ New in release 1.12 (2012-XX-XX):
   - S6873605: Missing finishedDispatch() call in ORBImpl causes test failures after 5u20 b04
   - S6980681: CORBA deadlock in Java SE believed to be related to CR 6238477
   - S7162902: Umbrella port of a number of corba bug fixes from JDK 6 to jdk7u/8
+  - S6414899: P11Digest should support cloning
+  - S4898461: Support for ECB and CBC/PKCS5Padding
+  - S6604496: Support for CKM_AES_CTR (counter mode)
+  - S6682411: JCK test failed w/ ArrayIndexOutOfBoundException (-1) when decrypting with no data
+  - S6682417: JCK test failed w/ ProviderException when decrypted data is not multiple of blocks
+  - S6687725: Internal PKCS5Padding impl should throw IllegalBlockSizeException and not BadPaddingException
+  - S6812738: SSL stress test with GF leads to 32 bit max process size in less than 5 minutes with PCKS11 provider
+  - S6867345: Turkish regional options cause NPE in sun.security.x509.AlgorithmId.algOID
+  - S6924489: sun.security.pkcs11.wrapper.PKCS11Exception: CKR_OPERATION_NOT_INITIALIZED
+  - S7088989: Improve the performance for T4 by utilizing the newly provided crypto APIs
 * Bug fixes
   - PR902: PulseAudioClip getMicrosecondsLength() returns length in milliseconds, not microseconds
   - PR1050: Stream objects not garbage collected
@@ -56,7 +68,9 @@ New in release 1.12 (2012-XX-XX):
     are actually missing from the boot JDK
   - PR1114: Provide option to turn off downloading of tarballs (--disable-downloading)
   - PR1176: Synchronise CACAO rules between IcedTea6/7/8 where possible
-  - RH513605: Updating/Installing OpenJDK should recreate the shared class-data archive
+  - RH513605, PR1171: Updating/Installing OpenJDK should recreate the shared class-data archive
+  - G422525: Apply pax markings before using a freshly built JVM.
+  - PR986: IcedTea7 fails to build with IcedTea6 CACAO due to low max heap size
 * CACAO
   - PR1120: Unified version for icedtea6/7
   - CA166, CA167: check-langtools fixes for icedtea6
@@ -64,6 +78,16 @@ New in release 1.12 (2012-XX-XX):
   - CACAO now identifies by its own Mercurial revision
   - Some memory barrier maintenance
   - Ability to run when compiled as Thumb on armv5 (no Thumb JIT though) 
+  - Stop creating pseudo files for OpenJDK (libjsig.so, Xusage.txt)
+  - Clang fix for the i386 backend
+  - CONTRIBUTE: Reference code submission process wiki instructions.
+  - INSTALL.CACAO: Update, so following the instruction actually works.
+  - Make doxygen work
+  - CA172, PR1266, G453612: ARM hardfloat support
+  - src/scripts/java.in: Look for cacao executable in install path, not in PATH.
+  - src/vm/jit/alpha/asmpart.S: Fix copyright header.
+  - src/vm/jit/alpha/asmpart.S: Properly set up GP in asm_abstractmethoderror
+  - Use @abs_top_builddir@ for support scripts
 * JamVM
   - ARMv6 armhf: Changes for Raspbian (Raspberry Pi)
   - PPC: Don't use lwsync if it isn't supported
@@ -73,6 +97,9 @@ New in release 1.12 (2012-XX-XX):
     via JNI and it has exited without detaching
   - Add missing REF_TO_OBJs for references passed from JNI, this enable JamVM
     to run Qt-Jambi
+  - PR1155: Do not put version number in libjvm.so SONAME
+* SystemTap
+  - Addition of garbage collection probes
 
 New in release 1.11.5 (2012-10-16):
 

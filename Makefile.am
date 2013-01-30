@@ -5,14 +5,14 @@ OPENJDK_SHA256SUM = 044c3877b15940ff04f8aa817337f2878a00cc89674854557f1a02f15b18
 OPENJDK_VERSION = b28
 OPENJDK_URL = http://download.java.net/openjdk/jdk6/promoted/$(OPENJDK_VERSION)/
 
-CACAO_VERSION = 9968abd511a3
-CACAO_SHA256SUM = 3b1ce9d2205d2afba4614a194484341758ee2cb340396310ac2c00e5a2a20955
+CACAO_VERSION = 68fe50ac34ec
+CACAO_SHA256SUM = b8230f20d7022f9230bbfea13b2f3f179b2f42db40138ac6d32c82fc418ffc3a
 CACAO_BASE_URL = http://icedtea.classpath.org/download/drops/cacao
 CACAO_URL = $(CACAO_BASE_URL)/$(CACAO_VERSION).tar.gz
 CACAO_SRC_ZIP = cacao-$(CACAO_VERSION).tar.gz
 
-JAMVM_VERSION = e70f2450890b82c37422616cc85e1a23385f03cd
-JAMVM_SHA256SUM = 3ca7e297ef4daa56c3dd733e21bce795d57ab071243369aa9400c0384ada8a4c
+JAMVM_VERSION = 0972452d441544f7dd29c55d64f1ce3a5db90d82
+JAMVM_SHA256SUM = bfa706402ac934d24f7119eb78f6be65e91439a4b2e49dbcc21e288137808f03
 JAMVM_BASE_URL = http://icedtea.classpath.org/download/drops/jamvm
 JAMVM_URL = $(JAMVM_BASE_URL)/jamvm-$(JAMVM_VERSION).tar.gz
 JAMVM_SRC_ZIP = jamvm-$(JAMVM_VERSION).tar.gz
@@ -63,16 +63,7 @@ SOURCEPATH_DIRS = $(abs_top_srcdir)/generated:$(OPENJDK_SOURCEPATH_DIRS)
 
 # Sources used from OpenJDK.
 
-# PR42003 - javax.swing.plaf.basic.BasicDirectoryModel
-# PR43389 - javax.management.StandardMBean
-# PR54274 - sun.security.other requires missing X509CRLSelector methods
-# PR54275 - sun.security.sasl requires missing Sasl.CREDENTIALS field
-ICEDTEA_BOOTSTRAP_CLASSES = \
-	$(SHARE)/javax/management/StandardMBean.java \
-	$(SHARE)/java/security/cert/X509CRLSelector.java \
-	$(SHARE)/java/security/cert/X509CertSelector.java \
-	$(SHARE)/javax/security/sasl/Sasl.java \
-	$(SHARE)/javax/security/auth/kerberos/KerberosTicket.java
+ICEDTEA_BOOTSTRAP_CLASSES =
 
 #PR42003 - Missing javax.swing.plaf.basic.BasicDirectoryModel methods cause OpenJDK build failure 
 if LACKS_JAVAX_SWING_PLAF_BASIC_BASICDIRECTORYMODEL_ADDPROPERTYCHANGELISTENER
@@ -86,6 +77,54 @@ if LACKS_ORBUTILSYSTEMEXCEPTION_IOEXCEPTIONONCLOSE_THROWABLE
 ICEDTEA_BOOTSTRAP_CLASSES += \
 	$(abs_top_srcdir)/generated/com/sun/corba/se/impl/logging/ORBUtilSystemException.java
 endif
+endif
+
+# PR43389 - javax.management.StandardMBean
+if LACKS_JAVAX_MANAGEMENT_STANDARDMBEAN_MXBEAN_TWO_ARG
+ICEDTEA_BOOTSTRAP_CLASSES += \
+	$(SHARE)/javax/management/StandardMBean.java
+else
+if LACKS_JAVAX_MANAGEMENT_STANDARDMBEAN_MXBEAN_THREE_ARG
+ICEDTEA_BOOTSTRAP_CLASSES += \
+	$(SHARE)/javax/management/StandardMBean.java
+endif
+endif
+
+# PR54274 - sun.security.other requires missing X509CRLSelector methods
+if LACKS_JAVA_SECURITY_CERT_X509CERTSELECTOR_GETSUBJECT
+ICEDTEA_BOOTSTRAP_CLASSES += \
+	$(SHARE)/java/security/cert/X509CertSelector.java
+else
+if LACKS_JAVA_SECURITY_CERT_X509CERTSELECTOR_SETISSUER
+ICEDTEA_BOOTSTRAP_CLASSES += \
+	$(SHARE)/java/security/cert/X509CertSelector.java
+else
+if LACKS_JAVA_SECURITY_CERT_X509CERTSELECTOR_SETSUBJECT
+ICEDTEA_BOOTSTRAP_CLASSES += \
+	$(SHARE)/java/security/cert/X509CertSelector.java
+endif
+endif
+endif
+if LACKS_JAVA_SECURITY_CERT_X509CRLSELECTOR_ADDISSUER
+ICEDTEA_BOOTSTRAP_CLASSES += \
+	$(SHARE)/java/security/cert/X509CRLSelector.java
+if LACKS_JAVA_SECURITY_CERT_X509CRLSELECTOR_SETISSUERS
+else
+ICEDTEA_BOOTSTRAP_CLASSES += \
+	$(SHARE)/java/security/cert/X509CRLSelector.java
+endif
+endif
+
+# PR41686 - Building sun.security.jgss.GSSUtil requires javax.security.auth.kerberos.KerberosTicket.getSessionKeyType()
+if LACKS_JAVAX_SECURITY_AUTH_KERBEROS_KERBEROSTICKET_GETSESSIONKEYTYPE
+ICEDTEA_BOOTSTRAP_CLASSES += \
+	$(SHARE)/javax/security/auth/kerberos/KerberosTicket.java
+endif
+
+# PR54275 - sun.security.sasl requires missing Sasl.CREDENTIALS field
+if LACKS_JAVAX_SECURITY_SASL_SASL_CREDENTIALS
+ICEDTEA_BOOTSTRAP_CLASSES += \
+	$(SHARE)/javax/security/sasl/Sasl.java
 endif
 
 # Flags
@@ -441,7 +480,13 @@ endif
 if BUILD_CACAO
 ICEDTEA_PATCHES += \
 	patches/cacao/launcher.patch \
+	patches/cacao/memory.patch \
+	patches/cacao/armhf.patch
+else
+if USING_CACAO
+ICEDTEA_PATCHES += \
 	patches/cacao/memory.patch
+endif
 endif
 
 if ENABLE_PULSE_JAVA
@@ -471,8 +516,10 @@ else
 NSS_PATCHES = patches/nss-not-enabled-config.patch
 endif
 
-if HAS_PAX
-ICEDTEA_PATCHES += patches/no-test_gamma.patch
+if WITH_PAX
+ICEDTEA_PATCHES += \
+	patches/no-test_gamma.patch \
+	patches/pax-mark-rmic-java.patch
 endif
 
 ICEDTEA_PATCHES += $(DISTRIBUTION_PATCHES)
@@ -507,7 +554,7 @@ ICEDTEA_ECJ_PATCHES += patches/ecj/cp40188-opengl.patch
 endif
 endif
 
-if !HAS_PAX
+if !WITH_PAX
 ICEDTEA_ECJ_PATCHES += patches/ecj/no-test_gamma.patch
 endif
 
@@ -721,7 +768,8 @@ install:
 	clean-add-pulseaudio clean-add-pulseaudio-debug clean-add-nss clean-add-nss-debug \
 	clean-add-tzdata-support clean-add-tzdata-support-debug clean-add-systemtap-ecj \
 	clean-add-pulseaudio-ecj clean-add-nss-ecj clean-add-tzdata-support-ecj clean-fonts \
-	clean-download-hotspot clean-tests clean-tapset-report jtregcheck
+	clean-download-hotspot clean-tests clean-tapset-report jtregcheck clean-pax-mark-vm \
+	clean-pax-mark-vm-debug clean-pax-mark-vm-ecj
 
 env:
 	@echo 'unset JAVA_HOME'
@@ -1523,27 +1571,28 @@ clean-icedtea-debug:
 
 stamps/icedtea-against-icedtea.stamp: stamps/icedtea.stamp \
  stamps/add-jamvm.stamp stamps/add-cacao.stamp stamps/add-zero.stamp \
- stamps/add-systemtap.stamp stamps/add-pulseaudio.stamp stamps/add-nss.stamp stamps/add-tzdata-support.stamp \
- stamps/add-archive.stamp
+ stamps/add-systemtap.stamp stamps/add-pulseaudio.stamp stamps/add-nss.stamp \
+ stamps/add-tzdata-support.stamp stamps/add-archive.stamp stamps/pax-mark-vm.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-against-icedtea.stamp
 
 clean-icedtea-against-icedtea: clean-add-jamvm clean-add-zero clean-add-cacao \
  clean-add-systemtap clean-add-pulseaudio clean-add-nss clean-add-tzdata-support \
- clean-add-archive
+ clean-add-archive clean-pax-mark-vm
 	rm -f stamps/icedtea-against-icedtea.stamp
 
 stamps/icedtea-debug-against-icedtea.stamp: stamps/icedtea-debug.stamp \
  stamps/add-jamvm-debug.stamp stamps/add-cacao-debug.stamp \
  stamps/add-zero-debug.stamp stamps/add-systemtap-debug.stamp stamps/add-pulseaudio-debug.stamp \
- stamps/add-nss-debug.stamp stamps/add-tzdata-support-debug.stamp stamps/add-archive-debug.stamp
+ stamps/add-nss-debug.stamp stamps/add-tzdata-support-debug.stamp stamps/add-archive-debug.stamp \
+ stamps/pax-mark-vm-debug.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-debug-against-icedtea.stamp
 
 clean-icedtea-debug-against-icedtea: clean-add-zero-debug \
  clean-add-jamvm-debug clean-add-cacao-debug clean-add-systemtap-debug \
  clean-add-pulseaudio-debug clean-add-nss-debug clean-add-tzdata-support-debug \
- clean-add-archive-debug
+ clean-add-archive-debug clean-pax-mark-vm-debug
 	rm -f stamps/icedtea-debug-against-icedtea.stamp
 
 stamps/add-systemtap.stamp: stamps/icedtea.stamp
@@ -1757,24 +1806,32 @@ clean-add-nss-debug:
 
 stamps/add-tzdata-support.stamp: stamps/icedtea.stamp
 if WITH_TZDATA_DIR
-	cp $(abs_top_builddir)/tz.properties \
-	  $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib
+	if [ -e $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib ] ; then \
+	  cp -v $(abs_top_builddir)/tz.properties \
+	    $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib ; \
+	fi
 endif
 	touch stamps/add-tzdata-support.stamp
 
 clean-add-tzdata-support:
-	rm -f $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties
+	if [ -e $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties ] ; then \
+	  rm -vf $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties ; \
+	fi
 	rm -f stamps/add-tzdata-support.stamp
 
 stamps/add-tzdata-support-debug.stamp: stamps/icedtea-debug.stamp
 if WITH_TZDATA_DIR
-	cp $(abs_top_builddir)/tz.properties \
-	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib;
+	if [ -e $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib ] ; then \
+	  cp -v $(abs_top_builddir)/tz.properties \
+	    $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib; \
+	fi
 endif
 	touch stamps/add-tzdata-support-debug.stamp
 
 clean-add-tzdata-support-debug:
-	rm -f $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties
+	if [ -e $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties ] ; then \
+	  rm -vf $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties ; \
+	fi
 	rm -f stamps/add-tzdata-support-debug.stamp
 
 stamps/add-archive.stamp: stamps/icedtea.stamp
@@ -1788,6 +1845,7 @@ endif
 	touch stamps/add-archive.stamp
 
 clean-add-archive:
+	rm -vf $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/*/*.jsa
 	rm -f stamps/add-archive.stamp
 
 stamps/add-archive-debug.stamp: stamps/icedtea-debug.stamp
@@ -1801,7 +1859,26 @@ endif
 	touch stamps/add-archive-debug.stamp
 
 clean-add-archive-debug:
+	rm -vf $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/*/*.jsa
 	rm -f stamps/add-archive-debug.stamp
+
+stamps/pax-mark-vm.stamp: stamps/icedtea.stamp
+if WITH_PAX
+	$(abs_top_builddir)/pax-mark-vm $(BUILD_OUTPUT_DIR)/j2sdk-image
+endif
+	touch $@
+
+clean-pax-mark-vm:
+	rm -f stamps/pax-mark-vm.stamp
+
+stamps/pax-mark-vm-debug.stamp: stamps/icedtea-debug.stamp
+if WITH_PAX
+	$(abs_top_builddir)/pax-mark-vm $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image
+endif
+	touch $@
+
+clean-pax-mark-vm-debug:
+	rm -f stamps/pax-mark-vm-debug.stamp
 
 # OpenJDK ecj Targets
 # ===================
@@ -1824,12 +1901,12 @@ clean-icedtea-ecj:
 
 stamps/icedtea-against-ecj.stamp: stamps/icedtea-ecj.stamp stamps/add-systemtap-ecj.stamp \
  stamps/add-pulseaudio-ecj.stamp stamps/add-nss-ecj.stamp stamps/add-tzdata-support-ecj.stamp \
- stamps/add-archive-ecj.stamp
+ stamps/add-archive-ecj.stamp stamps/pax-mark-vm-ecj.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-against-ecj.stamp
 
 clean-icedtea-against-ecj: clean-add-systemtap-ecj clean-add-pulseaudio-ecj clean-add-nss-ecj \
- clean-add-tzdata-support-ecj clean-add-archive-ecj
+ clean-add-tzdata-support-ecj clean-add-archive-ecj clean-pax-mark-vm-ecj
 	rm -f stamps/icedtea-against-ecj.stamp
 
 stamps/add-systemtap-ecj.stamp: stamps/icedtea-ecj.stamp
@@ -1939,13 +2016,17 @@ clean-add-nss-ecj:
 
 stamps/add-tzdata-support-ecj.stamp: stamps/icedtea-ecj.stamp
 if WITH_TZDATA_DIR
-	cp $(abs_top_builddir)/tz.properties \
-	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib;
+	if [ -e $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib ] ; then \
+	  cp -v $(abs_top_builddir)/tz.properties \
+	    $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib; \
+	fi
 endif
 	touch stamps/add-tzdata-support-ecj.stamp
 
 clean-add-tzdata-support-ecj:
-	rm -f $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties
+	if [ -e $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties ] ; then \
+	  rm -vf $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties ; \
+	fi
 	rm -f stamps/add-tzdata-support-ecj.stamp
 
 stamps/add-archive-ecj.stamp: stamps/icedtea-ecj.stamp
@@ -1959,7 +2040,17 @@ endif
 	touch stamps/add-archive-ecj.stamp
 
 clean-add-archive-ecj:
+	rm -vf $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/*/*.jsa
 	rm -f stamps/add-archive-ecj.stamp
+
+stamps/pax-mark-vm-ecj.stamp: stamps/icedtea-ecj.stamp
+if WITH_PAX
+	$(abs_top_builddir)/pax-mark-vm $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image
+endif
+	touch $@
+
+clean-pax-mark-vm-ecj:
+	rm -f stamps/pax-mark-vm-ecj.stamp
 
 # Rebuild targets
 
@@ -2507,18 +2598,22 @@ endif
 
 # rt.jar additional class files.
 rt-source-files.txt: $(OPENJDK_ECJ_TREE)
+	rm -f $@
 	for files in $(ICEDTEA_BOOTSTRAP_CLASSES) ; \
 	do \
 	  echo $$files >> $@ ; \
 	done
+	touch $@
 
 stamps/rt-class-files.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP) rt-source-files.txt
 if BOOTSTRAPPING
 	mkdir -p lib/rt
-	$(BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) -d lib/rt \
-          -sourcepath $(SOURCEPATH_DIRS) -bootclasspath \'\' \
-          -classpath $(SYSTEM_JDK_DIR)/jre/lib/rt.jar \
-	  @rt-source-files.txt ;
+	if echo $(ICEDTEA_BOOTSTRAP_CLASSES) | grep '\S' &> /dev/null ; then \
+	  $(BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) -d lib/rt \
+            -classpath $(SYSTEM_JDK_DIR)/jre/lib/rt.jar \
+            -sourcepath $(SOURCEPATH_DIRS) \
+	    -bootclasspath \'\' @rt-source-files.txt ; \
+	fi
 endif
 	mkdir -p stamps
 	touch stamps/rt-class-files.stamp
@@ -2538,8 +2633,10 @@ endif
 stamps/rt.stamp: stamps/rt-class-files.stamp
 	mkdir -p stamps
 if BOOTSTRAPPING
-	$(BOOT_DIR)/bin/jar uf $(RUNTIME) -C lib/rt com -C lib/rt java \
-	  -C lib/rt javax -C lib/rt sun 
+	if echo $(ICEDTEA_BOOTSTRAP_CLASSES) | grep '\S' &> /dev/null ; then \
+	  $(BOOT_DIR)/bin/jar uf $(RUNTIME) -C lib/rt com -C lib/rt java \
+	    -C lib/rt javax -C lib/rt sun ; \
+	fi 
 endif
 	touch stamps/rt.stamp
 
@@ -2617,6 +2714,12 @@ patch: stamps/patch.stamp
 patch-ecj: stamps/patch-ecj.stamp
 
 patch-fsg: stamps/patch-fsg.stamp
+
+pax-mark-vm: stamps/pax-mark-vm.stamp
+
+pax-mark-vm-debug: stamps/pax-mark-vm-debug.stamp
+
+pax-mark-vm-ecj: stamps/pax-mark-vm-ecj.stamp
 
 pulse-java: stamps/pulse-java.stamp
 
