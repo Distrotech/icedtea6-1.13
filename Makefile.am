@@ -499,7 +499,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6763340-corba_memory_leak.patch \
 	patches/openjdk/6980681-corba_deadlock.patch \
 	patches/openjdk/7162902-corba_fixes.patch \
-	patches/traceable.patch
+	patches/traceable.patch \
+	patches/openjdk/7010849-modernise_sa.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -556,7 +557,6 @@ ICEDTEA_PATCHES += $(DISTRIBUTION_PATCHES)
 # Bootstrapping patches
 
 ICEDTEA_ECJ_PATCHES = \
-	patches/ecj/7010849-make_sa-jdi_build_with_1.5.patch \
 	patches/ecj/icedtea.patch \
 	patches/ecj/javafiles.patch \
 	patches/ecj/spp.patch \
