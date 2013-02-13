@@ -245,7 +245,36 @@ TAPSET_TEST_SRCS = \
 ICEDTEA_FSG_PATCHES =
 
 SECURITY_PATCHES = \
-	patches/security/20120830/7182135-impossible_to_use_some_editors_directly.patch
+	patches/security/20120830/7182135-impossible_to_use_some_editors_directly.patch \
+	patches/security/20130201/7201068.patch \
+	patches/security/20130201/6563318.patch \
+	patches/security/20130201/6664509.patch \
+	patches/security/20130201/6776941.patch \
+	patches/security/20130201/7141694.patch \
+	patches/security/20130201/7173145.patch \
+	patches/security/20130201/7186945.patch \
+	patches/security/20130201/7186948.patch \
+	patches/security/20130201/7186952.patch \
+	patches/security/20130201/7186954.patch \
+	patches/security/20130201/7192392.patch \
+	patches/security/20130201/7192393.patch \
+	patches/security/20130201/7192977.patch \
+	patches/security/20130201/7197546.patch \
+	patches/security/20130201/7200491.patch \
+	patches/security/20130201/7200500.patch \
+	patches/security/20130201/7201064.patch \
+	patches/security/20130201/7201066.patch \
+	patches/security/20130201/7201070.patch \
+	patches/security/20130201/7201071.patch \
+	patches/security/20130201/8000210.patch \
+	patches/security/20130201/8000537.patch \
+	patches/security/20130201/8000540.patch \
+	patches/security/20130201/8000631.patch \
+	patches/security/20130201/8001242.patch \
+	patches/security/20130201/8001307.patch \
+	patches/security/20130201/8001972.patch \
+	patches/security/20130201/8002325.patch \
+	patches/security/20130201/8001235.patch
 
 SPECIAL_SECURITY_PATCH = patches/security/20120214/7112642.patch
 
