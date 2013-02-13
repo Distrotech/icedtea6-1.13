@@ -1,0 +1,26 @@
+# HG changeset patch
+# User denis
+# Date 1355221156 -14400
+# Node ID 090b35175a91906d75050f12a5f3e54c7da199e9
+# Parent  52029bcc00e103876c5149d7f95d9246e73d3435
+8004341: Two JCK tests fails with 7u11 b06
+Reviewed-by: serb, skoivu
+
+diff --git a/src/share/classes/java/awt/Dialog.java b/src/share/classes/java/awt/Dialog.java
+--- openjdk/jdk/src/share/classes/java/awt/Dialog.java
++++ openjdk/jdk/src/share/classes/java/awt/Dialog.java
+@@ -1631,12 +1631,13 @@
+         if (localModalityType == null) {
+             this.modal = fields.get("modal", false);
+             setModal(modal);
++        } else {
++            this.modalityType = localModalityType;
+         }
+ 
+         this.resizable = fields.get("resizable", true);
+         this.undecorated = fields.get("undecorated", false);
+         this.title = (String)fields.get("title", "");
+-        this.modalityType = localModalityType;
+ 
+         blockedWindows = new IdentityArrayList();
+ 

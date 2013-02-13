@@ -8,8 +8,8 @@ Summary: Make code changes necessary to get rid of the '-source 1.4 -target 1.4'
 Reviewed-by: dholmes, dcubed
 
 diff --git a/agent/src/share/classes/sun/jvm/hotspot/HelloWorld.java b/agent/src/share/classes/sun/jvm/hotspot/HelloWorld.java
---- openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/HelloWorld.java
-+++ openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/HelloWorld.java
+--- openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/HelloWorld.java
++++ openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/HelloWorld.java
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2000, 2001, Oracle and/or its affiliates. All rights reserved.
@@ -27,8 +27,8 @@ diff --git a/agent/src/share/classes/sun/jvm/hotspot/HelloWorld.java b/agent/src
            return result.intValue();
          }
 diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/ByteValueImpl.java b/agent/src/share/classes/sun/jvm/hotspot/jdi/ByteValueImpl.java
---- openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/ByteValueImpl.java
-+++ openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/ByteValueImpl.java
+--- openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/ByteValueImpl.java
++++ openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/ByteValueImpl.java
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
@@ -52,8 +52,8 @@ diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/ByteValueImpl.java b/ag
          return vm.theByteType();
      }
 diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/CharValueImpl.java b/agent/src/share/classes/sun/jvm/hotspot/jdi/CharValueImpl.java
---- openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/CharValueImpl.java
-+++ openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/CharValueImpl.java
+--- openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/CharValueImpl.java
++++ openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/CharValueImpl.java
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
@@ -74,8 +74,8 @@ diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/CharValueImpl.java b/ag
  
      public Type type() {
 diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/ConnectorImpl.java b/agent/src/share/classes/sun/jvm/hotspot/jdi/ConnectorImpl.java
---- openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/ConnectorImpl.java
-+++ openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/ConnectorImpl.java
+--- openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/ConnectorImpl.java
++++ openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/ConnectorImpl.java
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2002, 2004, Oracle and/or its affiliates. All rights reserved.
@@ -93,8 +93,8 @@ diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/ConnectorImpl.java b/ag
  
      /** If the causal chain has a sun.jvm.hotspot.runtime.VMVersionMismatchException,
 diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/DoubleValueImpl.java b/agent/src/share/classes/sun/jvm/hotspot/jdi/DoubleValueImpl.java
---- openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/DoubleValueImpl.java
-+++ openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/DoubleValueImpl.java
+--- openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/DoubleValueImpl.java
++++ openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/DoubleValueImpl.java
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
@@ -114,8 +114,8 @@ diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/DoubleValueImpl.java b/
              return -1;
          } else if (value() == other) {
 diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/FieldImpl.java b/agent/src/share/classes/sun/jvm/hotspot/jdi/FieldImpl.java
---- openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/FieldImpl.java
-+++ openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/FieldImpl.java
+--- openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/FieldImpl.java
++++ openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/FieldImpl.java
 @@ -145,8 +145,7 @@
      }
  
@@ -127,8 +127,8 @@ diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/FieldImpl.java b/agent/
          int rc = declaringType.compareTo(field.declaringType());
          if (rc == 0) {
 diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/FloatValueImpl.java b/agent/src/share/classes/sun/jvm/hotspot/jdi/FloatValueImpl.java
---- openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/FloatValueImpl.java
-+++ openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/FloatValueImpl.java
+--- openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/FloatValueImpl.java
++++ openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/FloatValueImpl.java
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
@@ -148,8 +148,8 @@ diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/FloatValueImpl.java b/a
              return -1;
          } else if (value() == other) {
 diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/IntegerValueImpl.java b/agent/src/share/classes/sun/jvm/hotspot/jdi/IntegerValueImpl.java
---- openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/IntegerValueImpl.java
-+++ openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/IntegerValueImpl.java
+--- openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/IntegerValueImpl.java
++++ openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/IntegerValueImpl.java
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
@@ -170,8 +170,8 @@ diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/IntegerValueImpl.java b
  
      public Type type() {
 diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/LocalVariableImpl.java b/agent/src/share/classes/sun/jvm/hotspot/jdi/LocalVariableImpl.java
---- openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/LocalVariableImpl.java
-+++ openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/LocalVariableImpl.java
+--- openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/LocalVariableImpl.java
++++ openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/LocalVariableImpl.java
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2002, 2004, Oracle and/or its affiliates. All rights reserved.
@@ -191,8 +191,8 @@ diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/LocalVariableImpl.java 
          if (rc == 0) {
              rc = slot() - other.slot();
 diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/LocationImpl.java b/agent/src/share/classes/sun/jvm/hotspot/jdi/LocationImpl.java
---- openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/LocationImpl.java
-+++ openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/LocationImpl.java
+--- openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/LocationImpl.java
++++ openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/LocationImpl.java
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
@@ -211,8 +211,8 @@ diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/LocationImpl.java b/age
          if (rc == 0) {
              long diff = codeIndex() - other.codeIndex();
 diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/LongValueImpl.java b/agent/src/share/classes/sun/jvm/hotspot/jdi/LongValueImpl.java
---- openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/LongValueImpl.java
-+++ openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/LongValueImpl.java
+--- openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/LongValueImpl.java
++++ openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/LongValueImpl.java
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
@@ -232,8 +232,8 @@ diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/LongValueImpl.java b/ag
              return -1;
          } else if (value() == other) {
 diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/MethodImpl.java b/agent/src/share/classes/sun/jvm/hotspot/jdi/MethodImpl.java
---- openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/MethodImpl.java
-+++ openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/MethodImpl.java
+--- openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/MethodImpl.java
++++ openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/MethodImpl.java
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2002, 2005, Oracle and/or its affiliates. All rights reserved.
@@ -252,8 +252,8 @@ diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/MethodImpl.java b/agent
           int rc = declaringType.compareTo(method.declaringType());
           if (rc == 0) {
 diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/ReferenceTypeImpl.java b/agent/src/share/classes/sun/jvm/hotspot/jdi/ReferenceTypeImpl.java
---- openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/ReferenceTypeImpl.java
-+++ openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/ReferenceTypeImpl.java
+--- openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/ReferenceTypeImpl.java
++++ openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/ReferenceTypeImpl.java
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2002, 2005, Oracle and/or its affiliates. All rights reserved.
@@ -280,8 +280,8 @@ diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/ReferenceTypeImpl.java 
          if (comp == 0) {
              Oop rf1 = ref();
 diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/ShortValueImpl.java b/agent/src/share/classes/sun/jvm/hotspot/jdi/ShortValueImpl.java
---- openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/ShortValueImpl.java
-+++ openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/ShortValueImpl.java
+--- openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/ShortValueImpl.java
++++ openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/ShortValueImpl.java
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
@@ -302,8 +302,8 @@ diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/ShortValueImpl.java b/a
  
      public Type type() {
 diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/VirtualMachineImpl.java b/agent/src/share/classes/sun/jvm/hotspot/jdi/VirtualMachineImpl.java
---- openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/VirtualMachineImpl.java
-+++ openjdk-ecj/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/VirtualMachineImpl.java
+--- openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/VirtualMachineImpl.java
++++ openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/VirtualMachineImpl.java
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2002, 2006, Oracle and/or its affiliates. All rights reserved.
@@ -328,8 +328,8 @@ diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/VirtualMachineImpl.java
  
      public String version() {
 diff --git a/make/linux/makefiles/sa.make b/make/linux/makefiles/sa.make
---- openjdk-ecj/hotspot/make/linux/makefiles/sa.make
-+++ openjdk-ecj/hotspot/make/linux/makefiles/sa.make
+--- openjdk/hotspot/make/linux/makefiles/sa.make
++++ openjdk/hotspot/make/linux/makefiles/sa.make
 @@ -1,5 +1,5 @@
  #
 -# Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
@@ -349,8 +349,8 @@ diff --git a/make/linux/makefiles/sa.make b/make/linux/makefiles/sa.make
  	$(QUIETLY) $(REMOTE) $(COMPILE.RMIC)  -classpath $(SA_CLASSDIR) -d $(SA_CLASSDIR) sun.jvm.hotspot.debugger.remote.RemoteDebuggerServer
  	$(QUIETLY) echo "$(SA_BUILD_VERSION_PROP)" > $(SA_PROPERTIES)
 diff --git a/make/solaris/makefiles/sa.make b/make/solaris/makefiles/sa.make
---- openjdk-ecj/hotspot/make/solaris/makefiles/sa.make
-+++ openjdk-ecj/hotspot/make/solaris/makefiles/sa.make
+--- openjdk/hotspot/make/solaris/makefiles/sa.make
++++ openjdk/hotspot/make/solaris/makefiles/sa.make
 @@ -1,5 +1,5 @@
  #
 -# Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
@@ -370,8 +370,8 @@ diff --git a/make/solaris/makefiles/sa.make b/make/solaris/makefiles/sa.make
  	$(QUIETLY) $(COMPILE.RMIC)  -classpath $(SA_CLASSDIR) -d $(SA_CLASSDIR) sun.jvm.hotspot.debugger.remote.RemoteDebuggerServer
  	$(QUIETLY) echo "$(SA_BUILD_VERSION_PROP)" > $(SA_PROPERTIES)
 diff --git a/make/windows/makefiles/sa.make b/make/windows/makefiles/sa.make
---- openjdk-ecj/hotspot/make/windows/makefiles/sa.make
-+++ openjdk-ecj/hotspot/make/windows/makefiles/sa.make
+--- openjdk/hotspot/make/windows/makefiles/sa.make
++++ openjdk/hotspot/make/windows/makefiles/sa.make
 @@ -1,5 +1,5 @@
  #
 -# Copyright (c) 2003, 2009, Oracle and/or its affiliates. All rights reserved.
