@@ -1868,9 +1868,11 @@ clean-add-tzdata-support-debug:
 stamps/add-archive.stamp: stamps/icedtea.stamp
 if !ENABLE_JAMVM
 if !ENABLE_CACAO
+if !ZERO_BUILD
 	if [ -e $(BUILD_OUTPUT_DIR)/j2sdk-image/bin/java ] ; then \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/bin/java -Xshare:dump ; \
 	fi
+endif
 endif
 endif
 	touch stamps/add-archive.stamp
@@ -1882,9 +1884,11 @@ clean-add-archive:
 stamps/add-archive-debug.stamp: stamps/icedtea-debug.stamp
 if !ENABLE_JAMVM
 if !ENABLE_CACAO
+if !ZERO_BUILD
 	if [ -e $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/bin/java ] ; then \
 	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/bin/java -Xshare:dump ; \
 	fi
+endif
 endif
 endif
 	touch stamps/add-archive-debug.stamp
@@ -2063,9 +2067,11 @@ clean-add-tzdata-support-ecj:
 stamps/add-archive-ecj.stamp: stamps/icedtea-ecj.stamp
 if !ENABLE_JAMVM
 if !ENABLE_CACAO
+if !ZERO_BUILD
 	if [ -e $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/bin/java ] ; then \
 	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/bin/java -Xshare:dump ; \
 	fi
+endif
 endif
 endif
 	touch stamps/add-archive-ecj.stamp

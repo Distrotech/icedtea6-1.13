@@ -1,5 +1,14 @@
 2013-02-08  Andrew John Hughes  <gnu.andrew@redhat.com>
 
+	PR1301: PR1171 causes Zero builds to fail
+	* Makefile.am:
+	(add-archive): Don't run -Xshare:dump if building
+	Zero.
+	(add-archive-debug): Likewise.
+	(add-archive-ecj): Likewise.
+
+2013-02-08  Andrew John Hughes  <gnu.andrew@redhat.com>
+
 	PR1297: cacao and jamvm parallel unpack failures
 	* Makefile.am:
 	Add aliases for extract-cacao and extract-jamvm.
