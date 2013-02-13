@@ -1130,7 +1130,7 @@ clean-extract-openjdk:
 	rm -f stamps/patch-fsg.stamp
 	rm -f stamps/patch.stamp
 
-stamps/extract-cacao.stamp:
+stamps/extract-cacao.stamp: stamps/download-cacao.stamp
 if BUILD_CACAO
 if !USE_SYSTEM_CACAO
 if USE_ALT_CACAO_SRC_DIR
@@ -1155,7 +1155,7 @@ endif
 	mkdir -p stamps
 	touch $@
 
-stamps/extract-jamvm.stamp:
+stamps/extract-jamvm.stamp: stamps/download-jamvm.stamp
 if BUILD_JAMVM
 	set -e ; \
 	if ! test -d jamvm ; \
@@ -2712,7 +2712,11 @@ download-openjdk: stamps/download-openjdk.stamp
 
 extract: stamps/extract.stamp
 
+extract-cacao: stamps/extract-cacao.stamp
+
 extract-ecj: stamps/extract-ecj.stamp
+
+extract-jamvm: stamps/extract-jamvm.stamp
 
 hotspot-ports: stamps/ports.stamp
 

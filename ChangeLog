@@ -1,5 +1,13 @@
 2013-02-08  Andrew John Hughes  <gnu.andrew@redhat.com>
 
+	PR1297: cacao and jamvm parallel unpack failures
+	* Makefile.am:
+	Add aliases for extract-cacao and extract-jamvm.
+	(extract-cacao): Depend on download-cacao.
+	(extract-jamvm): Depend on download-jamvm.
+
+2013-02-08  Andrew John Hughes  <gnu.andrew@redhat.com>
+
 	* Makefile.am:
 	(ICEDTEA_PATCHES): Add additional patches to
 	fix regressions introduced by security fixes
