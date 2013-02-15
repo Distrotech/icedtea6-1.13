@@ -1,5 +1,51 @@
 2013-02-14  Andrew John Hughes  <gnu.andrew@redhat.com>
 
+	PR1317: Provide an option to build with a more up-to-date HotSpot
+	* patches/no-static-linking.patch:
+	Dropped; unneeded if STATIC_CXX is set to false.
+	* INSTALL: Update HotSpot build documentation.
+	* Makefile.am:
+	(SECURITY_PATCHES): Exclude patches in hs23 HotSpot
+	if building with it.
+	(ICEDTEA_PATCHES): Likewise, and exclude the ARM32
+	port which doesn't work with hs23.  Also specialise
+	some patches which differ depending on HotSpot version.
+	(ICEDTEA_ECJ_PATCHES): Specialise hotspot-jdk-dependency.patch
+	depending on version of HotSpot being built.
+	(ICEDTEA_ENV): Pass STATIC_CXX=false to avoid patching.
+	Pass BUILD_GCC and BUILD_CXX in place of suffix patch if
+	building hs23.
+	* NEWS:
+	List this new feature and also the bug fix, PR1318.
+	* acinclude.m4:
+	(IT_ENABLE_ZERO_BUILD): Define only once.  Depend on
+	CACAO, Zero and Shark.
+	(IT_SET_SHARK_BUILD): Define only once.
+	(IT_ENABLE_JAMVM): Likewise.
+	(IT_ENABLE_CACAO): Likewise.
+	(IT_WITH_HOTSPOT_BUILD): Likewise.  Set ALTERNATE_BUILD
+	to hs23.  Depend on Zero build determination and use to
+	pick default.  Error out if hs23 is enabled with Zero.
+	* hotspot.map: Add reference to hs23 from the 2.3 tree.
+	* patches/ecj/hotspot/hs23/hotspot-jdk-dependency.patch:
+	Added for hs23 build.
+	* patches/ecj/hotspot/original/hotspot-jdk-dependency.patch:
+	Moved from patches/ecj/hotspot-jdk-dependency.patch.
+	* patches/gcc-suffix-hotspot.patch:
+	Split out for original HotSpot builds.
+	* patches/gcc-suffix.patch: Original version minus HotSpot
+	chunk.
+	* patches/hotspot/hs23/arm-hsdis.patch,
+	* patches/hotspot/hs23/pr639-broken_shark_build.patch:
+	hs23 versions of these patches which don't appear upstream.
+	* patches/hotspot/original/arm-hsdis.patch,
+	* patches/hotspot/original/pr639-broken_shark_build.patch:
+	Moved from patches.
+	* patches/hotspot/hs23/remove_jsr292_tests.patch:
+	Remove JSR292 tests from hs23 HotSpot when building on 6.
+
+2013-02-14  Andrew John Hughes  <gnu.andrew@redhat.com>
+
 	* NEWS: Add 1.11.6, 1.11.7, 1.12.1 & 1.12.2
 	releases.
 

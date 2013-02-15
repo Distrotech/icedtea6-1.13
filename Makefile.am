@@ -271,16 +271,19 @@ SECURITY_PATCHES = \
 	patches/security/20130201/8000540.patch \
 	patches/security/20130201/8000631.patch \
 	patches/security/20130201/8001242.patch \
-	patches/security/20130201/8001307.patch \
 	patches/security/20130201/8001972.patch \
 	patches/security/20130201/8002325.patch \
 	patches/security/20130201/8001235.patch
+
+if !WITH_ALT_HSBUILD
+SECURITY_PATCHES += \
+	patches/security/20130201/8001307.patch
+endif
 
 SPECIAL_SECURITY_PATCH = patches/security/20120214/7112642.patch
 
 ICEDTEA_PATCHES = \
 	$(SECURITY_PATCHES) \
-	patches/stdc-limit-macros.patch \
 	patches/openjdk/4993545-nativeinlightfixer.patch \
 	patches/openjdk/6637796-set_bounds.patch \
 	patches/openjdk/6607660-treelock.patch \
@@ -303,27 +306,20 @@ ICEDTEA_PATCHES = \
 	patches/parisc-opt.patch \
 	patches/lucene-crash.patch \
 	patches/version.patch \
-	patches/version-hotspot.patch \
-	patches/text-relocations.patch \
 	patches/openjdk/7043921-java_rmi_cgi.patch \
 	patches/use-system-tzdata.patch \
 	patches/headers.patch \
 	patches/gcc-suffix.patch \
-	patches/memory-limits.patch \
 	patches/libraries.patch \
 	patches/jvmtiEnv.patch \
 	patches/lcms.patch \
-	patches/print_lsb_release.patch \
 	patches/uname.patch \
 	patches/freetypeversion.patch \
 	patches/nomotif-6706121.patch \
 	patches/nomotif.patch \
 	patches/nomotif-mtoolkit.patch \
-	patches/alpha-fixes.patch \
 	patches/alt-jar.patch \
 	patches/jdk-use-ssize_t.patch \
-	patches/use-idx_t.patch \
-	patches/params-cast-size_t.patch \
 	patches/clean-crypto.patch \
 	patches/arch.patch \
 	patches/lc_ctype.patch \
@@ -334,8 +330,6 @@ ICEDTEA_PATCHES = \
 	patches/pr261.patch \
 	patches/sparc-buildfixes.patch \
 	patches/sparc64-linux.patch \
-	patches/sparc-ptracefix.patch \
-	patches/sparc-trapsfix.patch \
 	patches/jtreg-6592792.patch \
 	patches/s390-noinline.patch \
 	patches/jtreg-dnd.patch \
@@ -344,15 +338,11 @@ ICEDTEA_PATCHES = \
 	patches/dnd-filelists.patch \
 	patches/disable-cc-incompatible-sanity-checks.patch \
 	patches/explicit-target-arch.patch \
-	patches/openjdk/7019808-stack_noexec.patch \
 	patches/parisc.patch \
-	patches/sh4-support.patch \
 	patches/policy-evaluation.patch \
-	patches/update-bootclasspath.patch \
 	patches/openjdk/6959123-libpng_14.patch \
 	patches/applet_hole.patch \
 	patches/jtreg-httpTest.patch \
-	patches/arm.patch \
 	patches/debug-dir.patch \
 	patches/override-redirect-metacity.patch \
 	patches/openjdk/6967533-pre_epoch.patch \
@@ -363,18 +353,15 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6510892-httpserver_test.patch \
 	patches/openjdk/6638712-wildcard_types.patch \
 	patches/openjdk/6650759-missing_inference.patch \
-	patches/numa_on_early_glibc.patch \
 	patches/jtreg-international-fonts.patch \
 	patches/f14-fonts.patch \
 	patches/jtreg-T6638712-fix.patch \
 	patches/jtreg-T6650759m-fix.patch \
 	patches/openjdk/7003777-bad-html-entity-parse.patch \
-	patches/jtreg-6929067-fix.patch \
 	patches/rendering-engine-tests.patch \
 	patches/openjdk/6800846-printing-quality.patch \
 	patches/rh661505-jpeg.patch \
 	patches/6703377-freetypescaler.patch \
-	patches/ia64-fix.patch \
 	patches/openjdk/6642612-filechooser_button_sizes.patch \
 	patches/jtreg-international-fonts-styles.patch \
 	patches/openjdk/6736649-text_bearings.patch \
@@ -384,8 +371,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/4724552-CubicCurve2D.patch \
 	patches/openjdk/4493128-CubicCurve2D.patch \
 	patches/openjdk/4645692-CubicCurve2D.solveCubic.patch \
-	patches/no-static-linking.patch \
-	patches/openjdk/7041156-gcc_export_dynamic.patch \
 	patches/g344659-sparc_fix.patch \
 	patches/openjdk/6728834-blurred-lcd-aa-text.patch \
 	patches/openjdk/6749060-bad-lcd-aa-non-opaque-dest.patch \
@@ -409,14 +394,9 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7027667-AAShapePipeRegTest.patch \
 	patches/openjdk/7019861-AA-regression-fix.patch \
 	patches/g356743-libpng-1.5.patch \
-	patches/openjdk/7032388-work_without_cmov_instruction.patch \
-	patches/openjdk/7031385-gcc-register-allocation-fix.patch \
 	patches/openjdk/6986968-crash_on_xim_restart.patch \
 	patches/openjdk/7036754-stroker-nan.patch \
 	patches/openjdk/pgram-pipe-regression.patch \
-	patches/openjdk/7034464-transparent_huge_pages.patch \
-	patches/openjdk/7037939-disable_adaptive_resizing_with_large_pages.patch \
-	patches/openjdk/7043564-hugepage.patch \
 	patches/openjdk/mutter.patch \
 	patches/fonts-rhel-version.patch \
 	patches/openjdk/7036148-npe-null-jmenu-name.patch \
@@ -431,30 +411,21 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6818312-com.sun.awt.SecurityWarning.getSize.patch \
 	patches/jtreg-MappedByteBuffer-Basic.patch \
 	patches/openjdk/7008106-WindowOpacity.patch \
-	patches/openjdk/6956668-misbehavior_of_XOR_operator_with_int.patch \
 	patches/openjdk/6699843-IllegalArgumentException_drawString.patch \
 	patches/openjdk/6918065-Crash_in_Java2D_blit_loop.patch \
 	patches/openjdk/6623219-Font_canDisplayUpTo_does_not_work.patch \
 	patches/openjdk/6783910-java_awt_Color_brighter_darker_fix.patch \
 	patches/openjdk/6785424-SecurityException_locating_physical_fonts.patch \
-	patches/openjdk/7047069-Array_can_dynamically_change_size.patch \
-	patches/openjdk/6796786-invalid_FP_identity_transform.patch \
-	patches/openjdk/7042070-Typo_in_Test6796786.patch \
 	patches/openjdk/6679308-Poor_text_rendering_on_translucent_image.patch \
 	patches/openjdk/6842838-64-bit_failure_in_handling_invalid_manifest.patch \
 	patches/openjdk/6882768-test_for_6842838_is_broken.patch \
-	patches/pr639-broken_shark_build.patch \
+	patches/hotspot/$(HSBUILD)/pr639-broken_shark_build.patch \
 	patches/powerpc-stacksize.patch \
-	patches/jtreg-remove-test-6987555.patch \
-	patches/jtreg-remove-test-6991596.patch \
-	patches/openjdk/7036220-shark_llvm_29_headers.patch \
-	patches/openjdk/7029152-String_intrinsics_miss_optimization.patch \
 	patches/openjdk/6711682-JCheckBox_in_JTable_does_not_respond_to_click.patch \
 	patches/openjdk/6758179-D3D_AlphaComposite_is_applied_incorrectly.patch \
 	patches/jtreg-ConstructDeflaterInput-fix.patch \
 	patches/openjdk/6613904-GroupLayout_createParallelGroup_null_arg.patch \
 	patches/openjdk/7049339-anyblit-broken.patch \
-	patches/jtreg-hotspot-Test7020373-fix.patch \
 	patches/openjdk/4917091-javac_rejects_array_over_128_in_length.patch \
 	patches/openjdk/6390045-error_cannot_access_java_lang_void.patch \
 	patches/openjdk/6752638-preferLocaleFonts_throws_NPE.patch \
@@ -462,15 +433,12 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6669869-Beans_isDesignTime_should_be_per-AppContext.patch \
 	patches/openjdk/6934356-Vector_writeObject_serialization_DL.patch \
 	patches/openjdk/7036582-Improve_test_coverage_of_BigDecimal.patch \
-	patches/pr690-shark-jit-hs20.patch \
-	patches/pr696-zero-fast_aldc-hs20.patch \
 	patches/openjdk/6806261-BigDecimal_longValueExact_throws_NPE.patch \
 	patches/openjdk/6371401-BigInteger.shift_throws_StackOverflowError.patch \
 	patches/openjdk/6826104-npe_on_app_and_toolkit_modal_dialog_click.patch \
 	patches/openjdk/5082756-ImageIO_plugins_metadata_boolean_attributes.patch \
 	patches/openjdk/6296893-BMP_Writer_handles_TopDown_prop_incorrectly.patch \
-	patches/arm-debug.patch \
-	patches/arm-hsdis.patch	\
+	patches/hotspot/$(HSBUILD)/arm-hsdis.patch \
 	patches/openjdk/7103610-_NET_WM_PID_and_WM_CLIENT_MACHINE_are_not_set.patch \
 	patches/openjdk/6706974-krb5_test_infrastructure.patch \
 	patches/openjdk/6764553-IdResolver_is_not_thread_safe.patch \
@@ -500,9 +468,55 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6980681-corba_deadlock.patch \
 	patches/openjdk/7162902-corba_fixes.patch \
 	patches/traceable.patch \
-	patches/openjdk/7010849-modernise_sa.patch \
 	patches/openjdk/8005615-failure_to_load_logger_implementation.patch \
 	patches/openjdk/8004341-jck_dialog_failure.patch
+
+if WITH_ALT_HSBUILD
+ICEDTEA_PATCHES += \
+	patches/hotspot/hs23/remove_jsr292_tests.patch
+else
+# stdc-limit-macros is part of 7032458
+# pr690-shark-jit-hs20.patch is part of 7032458
+# pr696-zero-fast_aldc-hs20.patch is 7030207 & part of 7032458
+ICEDTEA_PATCHES += \
+	patches/stdc-limit-macros.patch \
+	patches/version-hotspot.patch \
+	patches/text-relocations.patch \
+	patches/gcc-suffix-hotspot.patch \
+	patches/memory-limits.patch \
+	patches/print_lsb_release.patch \
+	patches/alpha-fixes.patch \
+	patches/use-idx_t.patch \
+	patches/params-cast-size_t.patch \
+	patches/sparc-ptracefix.patch \
+	patches/sparc-trapsfix.patch \
+	patches/openjdk/7019808-stack_noexec.patch \
+	patches/sh4-support.patch \
+	patches/update-bootclasspath.patch \
+	patches/arm.patch \
+	patches/numa_on_early_glibc.patch \
+	patches/jtreg-6929067-fix.patch \
+	patches/ia64-fix.patch \
+	patches/openjdk/7041156-gcc_export_dynamic.patch \
+	patches/openjdk/7032388-work_without_cmov_instruction.patch \
+	patches/openjdk/7031385-gcc-register-allocation-fix.patch \
+	patches/openjdk/7034464-transparent_huge_pages.patch \
+	patches/openjdk/7037939-disable_adaptive_resizing_with_large_pages.patch \
+	patches/openjdk/7043564-hugepage.patch \
+	patches/openjdk/6956668-misbehavior_of_XOR_operator_with_int.patch \
+	patches/openjdk/7047069-Array_can_dynamically_change_size.patch \
+	patches/openjdk/6796786-invalid_FP_identity_transform.patch \
+	patches/openjdk/7042070-Typo_in_Test6796786.patch \
+	patches/jtreg-remove-test-6987555.patch \
+	patches/jtreg-remove-test-6991596.patch \
+	patches/openjdk/7036220-shark_llvm_29_headers.patch \
+	patches/openjdk/7029152-String_intrinsics_miss_optimization.patch \
+	patches/jtreg-hotspot-Test7020373-fix.patch \
+	patches/pr690-shark-jit-hs20.patch \
+	patches/pr696-zero-fast_aldc-hs20.patch \
+	patches/arm-debug.patch \
+	patches/openjdk/7010849-modernise_sa.patch
+endif
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -571,7 +585,7 @@ ICEDTEA_ECJ_PATCHES = \
 	patches/ecj/corba-dependencies.patch \
 	patches/ecj/jaxws-langtools-dependency.patch \
 	patches/ecj/jaxws-jdk-dependency.patch \
-	patches/ecj/hotspot-jdk-dependency.patch
+	patches/ecj/hotspot/$(HSBUILD)/hotspot-jdk-dependency.patch
 
 if DTDTYPE_QNAME
 ICEDTEA_ECJ_PATCHES += \
@@ -654,7 +668,14 @@ ICEDTEA_ENV = \
 	DEBUG_BINARIES="true" \
 	ALT_DROPS_DIR="$(abs_top_builddir)/drops" \
 	VERBOSE="$(VERBOSE)" \
-	ALT_OUTPUTDIR="$(BUILD_OUTPUT_DIR)"
+	ALT_OUTPUTDIR="$(BUILD_OUTPUT_DIR)" \
+	STATIC_CXX="false"
+
+if WITH_ALT_HSBUILD
+ICEDTEA_ENV += \
+	BUILD_GCC=gcc$(GCC_SUFFIX) \
+	BUILD_CXX=g++$(GCC_SUFFIX)
+endif
 
 if ENABLE_CACAO
 ICEDTEA_ENV += \

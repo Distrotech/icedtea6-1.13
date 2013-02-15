@@ -23,37 +23,6 @@ diff -Nru openjdk.orig/corba/make/common/shared/Compiler-gcc.gmk openjdk/corba/m
    endif
    ifeq ($(ZERO_BUILD), true)
      # zero
-diff -Nru openjdk.orig/hotspot/agent/src/os/linux/Makefile openjdk/hotspot/agent/src/os/linux/Makefile
---- openjdk.orig/hotspot/agent/src/os/linux/Makefile	2012-05-01 22:15:02.000000000 +0100
-+++ openjdk/hotspot/agent/src/os/linux/Makefile	2012-08-31 14:23:17.249256215 +0100
-@@ -23,7 +23,7 @@
- #
- 
- ARCH := $(shell if ([ `uname -m` = "ia64" ])  ; then echo ia64 ; elif ([ `uname -m` = "x86_64" ]) ; then echo amd64; elif ([ `uname -m` = "sparc64" ]) ; then echo sparc; else echo i386 ; fi )
--GCC      = gcc
-+GCC      = gcc$(GCC_SUFFIX)
- 
- JAVAH    = ${JAVA_HOME}/bin/javah
- 
-diff -Nru openjdk.orig/hotspot/make/linux/makefiles/gcc.make openjdk/hotspot/make/linux/makefiles/gcc.make
---- openjdk.orig/hotspot/make/linux/makefiles/gcc.make	2012-08-31 14:22:45.464733130 +0100
-+++ openjdk/hotspot/make/linux/makefiles/gcc.make	2012-08-31 14:23:17.249256215 +0100
-@@ -28,11 +28,11 @@
- # When cross-compiling the ALT_COMPILER_PATH points
- # to the cross-compilation toolset
- ifdef CROSS_COMPILE_ARCH
--CPP = $(ALT_COMPILER_PATH)/g++
--CC  = $(ALT_COMPILER_PATH)/gcc
-+CPP = $(ALT_COMPILER_PATH)/g++$(GCC_SUFFIX)
-+CC  = $(ALT_COMPILER_PATH)/gcc$(GCC_SUFFIX)
- else
--CPP = g++
--CC  = gcc
-+CPP = g++$(GCC_SUFFIX)
-+CC  = gcc$(GCC_SUFFIX)
- endif
- 
- AS  = $(CC) -c
 diff -Nru openjdk.orig/jdk/make/common/shared/Compiler-gcc.gmk openjdk/jdk/make/common/shared/Compiler-gcc.gmk
 --- openjdk.orig/jdk/make/common/shared/Compiler-gcc.gmk	2012-05-01 22:17:59.000000000 +0100
 +++ openjdk/jdk/make/common/shared/Compiler-gcc.gmk	2012-08-31 14:23:17.241256083 +0100

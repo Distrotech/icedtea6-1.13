@@ -1,0 +1,27 @@
+diff -Nru openjdk.orig/hotspot/make/linux/makefiles/launcher.make openjdk/hotspot/make/linux/makefiles/launcher.make
+--- openjdk.orig/hotspot/make/linux/makefiles/launcher.make	2013-02-11 23:08:47.000000000 +0000
++++ openjdk/hotspot/make/linux/makefiles/launcher.make	2013-02-14 17:26:56.322081018 +0000
+@@ -52,6 +52,10 @@
+   LAUNCHER.o                 = launcher.o
+   LFLAGS_LAUNCHER           += -L `pwd`
+   LIBS_LAUNCHER             += -l$(JVM) $(LIBS)
++  ifeq ($(SHARK_BUILD), true)
++    LFLAGS_LAUNCHER += $(LLVM_LDFLAGS)
++    LIBS_LAUNCHER   += $(LLVM_LIBS)
++  endif
+ endif
+ 
+ LINK_LAUNCHER = $(LINK.CC)
+diff -Nru openjdk.orig/hotspot/src/share/vm/ci/ciTypeFlow.cpp openjdk/hotspot/src/share/vm/ci/ciTypeFlow.cpp
+--- openjdk.orig/hotspot/src/share/vm/ci/ciTypeFlow.cpp	2013-02-11 23:08:47.000000000 +0000
++++ openjdk/hotspot/src/share/vm/ci/ciTypeFlow.cpp	2013-02-14 17:26:10.377344366 +0000
+@@ -37,6 +37,9 @@
+ #include "memory/allocation.inline.hpp"
+ #include "runtime/deoptimization.hpp"
+ #include "utilities/growableArray.hpp"
++#ifdef SHARK
++#include "shark/shark_globals.hpp"
++#endif
+ 
+ // ciTypeFlow::JsrSet
+ //

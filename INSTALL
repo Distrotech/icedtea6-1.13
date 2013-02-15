@@ -319,12 +319,18 @@ download stage and just verifies that the zip's MD5 sum matches that
 of the requested build.
 
 At present, IcedTea6 supports the 'original' HotSpot 20 provided as
-part of the upstream tarball.  Note that the norm. is for up to one
-alternate (non-default) build to be supported and just passing
---with-hotspot-build (equivalent to --with-hotspot-build=yes) will
-always provide the alternate build.  Conversely, passing
---without-hotspot-build (equivalent to --with-hotspot-build=no)
-provides the original build from the OpenJDK tarball.
+part of the upstream tarball and 'hs23', the HotSpot used by the IcedTea
+2.3.x series.  Note that the norm. is for up to one alternate (non-default)
+build to be supported and just passing --with-hotspot-build
+(equivalent to --with-hotspot-build=yes) will always provide the alternate
+build.  Conversely, passing --without-hotspot-build (equivalent to
+--with-hotspot-build=no) provides the original build from the OpenJDK tarball.
+
+When no option is specified, the default build is used.  At present,
+this is 'hs23' unless the user is building Zero or Shark (either by
+choice, or because the build has default to this on architectures
+other than x86/x86_64/sparc).  As 'hs23' is known not to work with
+Zero or Shark, 'original' is still the default for these builds.
 
 Javascript Support
 ==================
