@@ -528,11 +528,13 @@ if BUILD_CACAO
 ICEDTEA_PATCHES += \
 	patches/cacao/launcher.patch \
 	patches/cacao/memory.patch \
+	patches/cacao/hotspot/$(HSBUILD)/memory.patch \
 	patches/cacao/armhf.patch
 else
 if USING_CACAO
 ICEDTEA_PATCHES += \
-	patches/cacao/memory.patch
+	patches/cacao/memory.patch \
+	patches/cacao/hotspot/$(HSBUILD)/memory.patch
 endif
 endif
 
@@ -548,13 +550,18 @@ ICEDTEA_PATCHES += patches/openjdk/6307603-xrender-01.patch \
 endif
 
 if ENABLE_SYSTEMTAP
-ICEDTEA_PATCHES += patches/sdt-jni.patch \
-	patches/sdt-dtrace-hpp.patch \
-	patches/sdt-make.patch \
-	patches/sdt-arguments.patch \
-	patches/systemtap_gc.patch
-	patches/systemtap-gcc-4.5.patch \
-	patches/systemtap-alloc-size-workaround.patch
+if WITH_ALT_HSBUILD
+ICEDTEA_PATCHES += patches/hotspot/hs23/systemtap.patch
+else
+ICEDTEA_PATCHES += patches/hotspot/original/sdt-jni.patch \
+	patches/hotspot/original/sdt-dtrace-hpp.patch \
+	patches/hotspot/original/sdt-make.patch \
+	patches/hotspot/original/sdt-arguments.patch \
+	patches/systemtap-gcc-4.5.patch
+endif
+ICEDTEA_PATCHES += \
+	patches/hotspot/$(HSBUILD)/systemtap_gc.patch \
+	patches/hotspot/$(HSBUILD)/systemtap-alloc-size-workaround.patch
 endif
 
 if ENABLE_NSS

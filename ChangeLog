@@ -1,3 +1,33 @@
+2013-02-15  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Specialise HotSpot segment of
+	CACAO memory patch and some SystemTap patches.
+	Split remaining SystemTap patches between hs23
+	and original builds.
+	* patches/cacao/memory.patch:
+	Remove HotSpot fragments.
+	* patches/hotspot/hs23/systemtap-alloc-size-workaround.patch:
+	hs23 version of existing patch.
+	* patches/hotspot/hs23/systemtap.patch:
+	Taken from IcedTea7 2.3.
+	* patches/hotspot/hs23/systemtap_gc.patch:
+	hs23 version of existing patch.
+	* patches/hotspot/original/sdt-arguments.patch
+	* patches/hotspot/original/sdt-dtrace-hpp.patch
+	* patches/hotspot/original/sdt-jni.patch
+	* patches/hotspot/original/sdt-make.patch:
+	* patches/hotspot/original/systemtap-alloc-size-workaround.patch
+	* patches/hotspot/original/systemtap_gc.patch:
+	Moved from....
+	* patches/sdt-arguments.patch
+	* patches/sdt-dtrace-hpp.patch
+	* patches/sdt-jni.patch
+	* patches/sdt-make.patch
+	* patches/systemtap-alloc-size-workaround.patch
+	* patches/systemtap_gc.patch:
+	...here.
+
 2013-02-14  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	PR1319: Support GIF lib v5.
