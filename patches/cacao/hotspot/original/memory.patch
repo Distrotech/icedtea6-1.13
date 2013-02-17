@@ -1,0 +1,36 @@
+diff -Nru openjdk.orig/hotspot/make/linux/makefiles/rules.make openjdk-ecj/hotspot/make/linux/makefiles/rules.make
+--- openjdk.orig/hotspot/make/linux/makefiles/rules.make	2013-01-26 13:32:42.117831617 +0000
++++ openjdk/hotspot/make/linux/makefiles/rules.make	2013-01-26 13:33:29.934595340 +0000
+@@ -133,7 +133,7 @@
+ # Settings for javac
+ BOOT_SOURCE_LANGUAGE_VERSION = 5
+ BOOT_TARGET_CLASS_VERSION = 5
+-JAVAC_FLAGS = -g -encoding ascii
++JAVAC_FLAGS = -g -encoding ascii -J-Xmx512m
+ BOOTSTRAP_JAVAC_FLAGS = $(JAVAC_FLAGS) -source $(BOOT_SOURCE_LANGUAGE_VERSION) -target $(BOOT_TARGET_CLASS_VERSION)
+ 
+ # With parallel makes, print a message at the end of compilation.
+diff -Nru openjdk.orig/hotspot/make/solaris/makefiles/rules.make openjdk-ecj/hotspot/make/solaris/makefiles/rules.make
+--- openjdk.orig/hotspot/make/solaris/makefiles/rules.make	2013-01-26 13:32:42.137831936 +0000
++++ openjdk/hotspot/make/solaris/makefiles/rules.make	2013-01-26 13:33:41.934787007 +0000
+@@ -133,7 +133,7 @@
+ # Settings for javac
+ BOOT_SOURCE_LANGUAGE_VERSION = 5
+ BOOT_TARGET_CLASS_VERSION = 5
+-JAVAC_FLAGS = -g -encoding ascii
++JAVAC_FLAGS = -g -encoding ascii -J-Xmx512m
+ BOOTSTRAP_JAVAC_FLAGS = $(JAVAC_FLAGS) -source $(BOOT_SOURCE_LANGUAGE_VERSION) -target $(BOOT_TARGET_CLASS_VERSION)
+ 
+ # With parallel makes, print a message at the end of compilation.
+diff -Nru openjdk.orig/hotspot/make/windows/makefiles/rules.make openjdk-ecj/hotspot/make/windows/makefiles/rules.make
+--- openjdk.orig/hotspot/make/windows/makefiles/rules.make	2013-01-26 13:32:42.153832191 +0000
++++ openjdk/hotspot/make/windows/makefiles/rules.make	2013-01-26 13:34:12.419273915 +0000
+@@ -45,7 +45,7 @@
+ # Settings for javac
+ BOOT_SOURCE_LANGUAGE_VERSION=5
+ BOOT_TARGET_CLASS_VERSION=5
+-JAVAC_FLAGS=-g -encoding ascii
++JAVAC_FLAGS=-g -encoding ascii -J-Xmx512m
+ BOOTSTRAP_JAVAC_FLAGS=$(JAVAC_FLAGS) -source $(BOOT_SOURCE_LANGUAGE_VERSION) -target $(BOOT_TARGET_CLASS_VERSION)
+ 
+ ProjectFile=jvm.vcproj
