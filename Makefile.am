@@ -473,7 +473,9 @@ ICEDTEA_PATCHES = \
 	patches/traceable.patch \
 	patches/openjdk/8005615-failure_to_load_logger_implementation.patch \
 	patches/openjdk/8004341-jck_dialog_failure.patch \
-	patches/pr1319-support_giflib_5.patch
+	patches/pr1319-support_giflib_5.patch \
+	patches/openjdk/8007393.patch \
+	patches/openjdk/8007611.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
