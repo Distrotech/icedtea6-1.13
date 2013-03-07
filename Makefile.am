@@ -276,7 +276,10 @@ SECURITY_PATCHES = \
 	patches/security/20130201/8001235.patch \
 	patches/security/20130219/8006446.patch \
 	patches/security/20130219/8006777.patch \
-	patches/security/20130219/8007688.patch
+	patches/security/20130219/8007688.patch \
+	patches/security/20130304/8007014.patch \
+	patches/security/20130304/8007675.patch \
+	patches/security/20130304/declaration_correction.patch
 
 if !WITH_ALT_HSBUILD
 SECURITY_PATCHES += \
