@@ -279,7 +279,7 @@ SECURITY_PATCHES = \
 	patches/security/20130219/8007688.patch \
 	patches/security/20130304/8007014.patch \
 	patches/security/20130304/8007675.patch \
-	patches/security/20130304/declaration_correction.patch
+	patches/openjdk/8009641-8007675_build_fix.patch
 
 if !WITH_ALT_HSBUILD
 SECURITY_PATCHES += \
