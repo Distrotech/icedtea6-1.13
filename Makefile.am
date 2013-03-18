@@ -482,7 +482,8 @@ ICEDTEA_PATCHES = \
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
-	patches/hotspot/hs23/remove_jsr292_tests.patch
+	patches/hotspot/hs23/remove_jsr292_tests.patch \
+	patches/hotspot/hs23/revert-7017193.patch
 else
 # stdc-limit-macros is part of 7032458
 # pr690-shark-jit-hs20.patch is part of 7032458
@@ -524,7 +525,9 @@ ICEDTEA_PATCHES += \
 	patches/pr690-shark-jit-hs20.patch \
 	patches/pr696-zero-fast_aldc-hs20.patch \
 	patches/arm-debug.patch \
-	patches/openjdk/7010849-modernise_sa.patch
+	patches/openjdk/7010849-modernise_sa.patch \
+	patches/hotspot/original/7197906-handle_32_bit_shifts.patch \
+	patches/hotspot/original/fix_get_stack_bounds_leak.patch
 endif
 
 if WITH_RHINO

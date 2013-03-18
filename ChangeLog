@@ -1,5 +1,23 @@
 2013-03-18  Andrew John Hughes  <gnu.andrew@redhat.com>
 
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add new patches to appropriate
+	HotSpot builds.
+	* patches/hotspot/hs23/revert-7017193.patch:
+	Backport from 2.x series.  Revert the upstream
+	fix for 7017193 and add a much simpler fix using
+	free which doesn't suffer from performance issues.
+	https://bugzilla.redhat.com/show_bug.cgi?id=902004
+	For HotSpot 23 only.
+	* patches/hotspot/original/7197906-handle_32_bit_shifts.patch:
+	Backport from OpenJDK 7 for bundled HotSpot only.
+	* patches/hotspot/original/fix_get_stack_bounds_leak.patch:
+	Same fix for 7017193 as in patch above, but for bundled HotSpot,
+	which doesn't have the upstream fix.
+	* NEWS: Updated.
+
+2013-03-18  Andrew John Hughes  <gnu.andrew@redhat.com>
+
 	* hotspot.map: Sync with IcedTea7 2.3 tree
 	again following u17b02 sync.
 

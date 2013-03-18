@@ -1,0 +1,12 @@
+diff --git a/src/os/linux/vm/os_linux.cpp b/src/os/linux/vm/os_linux.cpp
+--- openjdk/hotspot/src/os/linux/vm/os_linux.cpp
++++ openjdk/hotspot/src/os/linux/vm/os_linux.cpp
+@@ -2650,6 +2650,8 @@
+     ssize_t len = getline(&str, &dummy, f);
+     if (len == -1) {
+       fclose(f);
++      if (str != NULL)
++	free(str);
+       return false;
+     }
+ 
