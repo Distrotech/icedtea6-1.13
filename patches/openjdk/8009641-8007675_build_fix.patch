@@ -1,0 +1,49 @@
+# HG changeset patch
+# User bae
+# Date 1362669637 -10800
+# Node ID c73944a23b44ead9aa552ffaa4346bda08940ed3
+# Parent  9714f53ef17344fbcb6dc2249a7b238e6292f726
+8009641: OpenJDK 6 build broken via 8007675 fix
+Reviewed-by: andrew
+
+diff --git a/src/share/classes/sun/java2d/cmm/lcms/LCMSTransform.java b/src/share/classes/sun/java2d/cmm/lcms/LCMSTransform.java
+--- openjdk/jdk/src/share/classes/sun/java2d/cmm/lcms/LCMSTransform.java
++++ openjdk/jdk/src/share/classes/sun/java2d/cmm/lcms/LCMSTransform.java
+@@ -572,14 +572,14 @@
+                 dst, dst.length/getNumOutComponents(),
+                 LCMSImageLayout.CHANNELS_SH(getNumOutComponents()) |
+                 LCMSImageLayout.BYTES_SH(2), getNumOutComponents()*2);
++
++            synchronized(this) {
++                LCMS.colorConvert(this, srcIL, dstIL);
++            }
+         } catch (ImageLayoutException e) {
+             throw new CMMException("Unable to convert data");
+         }
+ 
+-        synchronized(this) {
+-            LCMS.colorConvert(this, srcIL, dstIL);
+-        }
+-
+         return dst;
+     }
+ 
+@@ -598,14 +598,14 @@
+                 dst, dst.length/getNumOutComponents(),
+                 LCMSImageLayout.CHANNELS_SH(getNumOutComponents()) |
+                 LCMSImageLayout.BYTES_SH(1), getNumOutComponents());
++
++            synchronized(this) {
++                LCMS.colorConvert(this, srcIL, dstIL);
++            }
+         } catch (ImageLayoutException e) {
+             throw new CMMException("Unable to convert data");
+         }
+ 
+-        synchronized(this) {
+-            LCMS.colorConvert(this, srcIL, dstIL);
+-        }
+-
+         return dst;
+     }
+ }

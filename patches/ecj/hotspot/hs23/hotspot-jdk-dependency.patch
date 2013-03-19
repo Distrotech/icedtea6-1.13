@@ -1,0 +1,23 @@
+diff -Nru openjdk-ecj.orig/hotspot/make/linux/makefiles/sa.make openjdk-ecj/hotspot/make/linux/makefiles/sa.make
+--- openjdk-ecj.orig/hotspot/make/linux/makefiles/sa.make	2013-02-11 23:08:47.000000000 +0000
++++ openjdk-ecj/hotspot/make/linux/makefiles/sa.make	2013-02-14 18:25:27.487892901 +0000
+@@ -91,7 +91,7 @@
+ # are in AGENT_FILES, so use the shell to expand them.
+ # Be extra carefull to not produce too long command lines in the shell!
+ 	$(foreach file,$(AGENT_FILES),$(shell ls -1 $(file) >> $(AGENT_FILES_LIST)))
+-	$(QUIETLY) $(REMOTE) $(COMPILE.JAVAC) -classpath $(SA_CLASSPATH) -sourcepath $(AGENT_SRC_DIR) -d $(SA_CLASSDIR) @$(AGENT_FILES_LIST)
++	$(QUIETLY) $(REMOTE) $(COMPILE.JAVAC) -classpath $(SA_CLASSPATH) -sourcepath $(AGENT_SRC_DIR):$(JDK_TOPDIR)/src/share/classes:$(JDK_TOPDIR)/src/solaris/classes:$(GENSRCDIR) -d $(SA_CLASSDIR) @$(AGENT_FILES_LIST)
+ 	$(QUIETLY) $(REMOTE) $(COMPILE.RMIC)  -classpath $(SA_CLASSDIR) -d $(SA_CLASSDIR) sun.jvm.hotspot.debugger.remote.RemoteDebuggerServer
+ 	$(QUIETLY) echo "$(SA_BUILD_VERSION_PROP)" > $(SA_PROPERTIES)
+ 	$(QUIETLY) rm -f $(SA_CLASSDIR)/sun/jvm/hotspot/utilities/soql/sa.js
+diff -Nru openjdk-ecj.orig/make/hotspot-rules.gmk openjdk-ecj/make/hotspot-rules.gmk
+--- openjdk-ecj.orig/make/hotspot-rules.gmk	2012-10-26 19:21:39.000000000 +0100
++++ openjdk-ecj/make/hotspot-rules.gmk	2013-02-14 18:24:27.622929395 +0000
+@@ -83,6 +83,7 @@
+ HOTSPOT_BUILD_ARGUMENTS += $(COMMON_BUILD_ARGUMENTS)
+ HOTSPOT_BUILD_ARGUMENTS += ALT_OUTPUTDIR=$(HOTSPOT_OUTPUTDIR)
+ HOTSPOT_BUILD_ARGUMENTS += ALT_EXPORT_PATH=$(HOTSPOT_EXPORT_PATH)
++HOTSPOT_BUILD_ARGUMENTS += GENSRCDIR=$(GENSRCDIR)
+ 
+ # Why do these need to be passed in? Because of windows nmake? and MAKEFLAGS=?
+ #   Or is there something wrong with hotspot/make/Makefile?

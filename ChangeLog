@@ -1,3 +1,175 @@
+2013-03-18  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add new patches to appropriate
+	HotSpot builds.
+	* patches/hotspot/hs23/revert-7017193.patch:
+	Backport from 2.x series.  Revert the upstream
+	fix for 7017193 and add a much simpler fix using
+	free which doesn't suffer from performance issues.
+	https://bugzilla.redhat.com/show_bug.cgi?id=902004
+	For HotSpot 23 only.
+	* patches/hotspot/original/7197906-handle_32_bit_shifts.patch:
+	Backport from OpenJDK 7 for bundled HotSpot only.
+	* patches/hotspot/original/fix_get_stack_bounds_leak.patch:
+	Same fix for 7017193 as in patch above, but for bundled HotSpot,
+	which doesn't have the upstream fix.
+	* NEWS: Updated.
+
+2013-03-18  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* hotspot.map: Sync with IcedTea7 2.3 tree
+	again following u17b02 sync.
+
+2013-03-07  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* hotspot.map: Sync with IcedTea7 2.3 tree;
+	only changes are new release tags.
+
+2013-03-07  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* patches/security/20130304/declaration_correction.patch:
+	Remove local patch...
+	* Makefile.am: Swap patches.
+	* NEWS: Updated.
+	* patches/openjdk/8009641-8007675_build_fix.patch:
+	...replaced by this from upstream.
+
+2013-03-07  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* NEWS:
+	Add 1.11.9 & 1.12.4 release notes.
+
+2013-03-07  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(SECURITY_PATCHES): List new patches.
+	* patches/security/20130304/8007014.patch,
+	* patches/security/20130304/8007675.patch:
+	Patches from upstream.
+	* patches/security/20130304/declaration_correction.patch:
+	Correct bad code added to LCMSTransform.java
+	which fails with ecj.
+
+2013-02-17  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add new patches.
+	* patches/openjdk/8007393.patch,
+	* patches/openjdk/8007611.patch:
+	Regression fixes for LogManager.
+
+2013-02-15  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(SECURITY_PATCHES): Add latest security patches.
+	* patches/security/20130219/8006446.patch,
+	* patches/security/20130219/8006777.patch,
+	* patches/security/20130219/8007688.patch:
+	New patches for next security update.
+
+2013-02-20  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* NEWS:
+	Add 1.11.8 & 1.12.3 release notes.
+
+2013-02-17  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* .hgignore: Fix so the cacao patches directory
+	isn't hidden.
+	* patches/cacao/hotspot/hs23/memory.patch,
+	* patches/cacao/hotspot/original/memory.patch:
+	Add patches missed from last commit.
+
+2013-02-15  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Specialise HotSpot segment of
+	CACAO memory patch and some SystemTap patches.
+	Split remaining SystemTap patches between hs23
+	and original builds.
+	* patches/cacao/memory.patch:
+	Remove HotSpot fragments.
+	* patches/hotspot/hs23/systemtap-alloc-size-workaround.patch:
+	hs23 version of existing patch.
+	* patches/hotspot/hs23/systemtap.patch:
+	Taken from IcedTea7 2.3.
+	* patches/hotspot/hs23/systemtap_gc.patch:
+	hs23 version of existing patch.
+	* patches/hotspot/original/sdt-arguments.patch
+	* patches/hotspot/original/sdt-dtrace-hpp.patch
+	* patches/hotspot/original/sdt-jni.patch
+	* patches/hotspot/original/sdt-make.patch:
+	* patches/hotspot/original/systemtap-alloc-size-workaround.patch
+	* patches/hotspot/original/systemtap_gc.patch:
+	Moved from....
+	* patches/sdt-arguments.patch
+	* patches/sdt-dtrace-hpp.patch
+	* patches/sdt-jni.patch
+	* patches/sdt-make.patch
+	* patches/systemtap-alloc-size-workaround.patch
+	* patches/systemtap_gc.patch:
+	...here.
+
+2013-02-14  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	PR1319: Support GIF lib v5.
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add new patch.
+	* patches/pr1319-support_giflib_5.patch:
+	Support building with giflib 5.x.
+
+2013-02-14  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	PR1317: Provide an option to build with a more up-to-date HotSpot
+	* patches/no-static-linking.patch:
+	Dropped; unneeded if STATIC_CXX is set to false.
+	* INSTALL: Update HotSpot build documentation.
+	* Makefile.am:
+	(SECURITY_PATCHES): Exclude patches in hs23 HotSpot
+	if building with it.
+	(ICEDTEA_PATCHES): Likewise, and exclude the ARM32
+	port which doesn't work with hs23.  Also specialise
+	some patches which differ depending on HotSpot version.
+	(ICEDTEA_ECJ_PATCHES): Specialise hotspot-jdk-dependency.patch
+	depending on version of HotSpot being built.
+	(ICEDTEA_ENV): Pass STATIC_CXX=false to avoid patching.
+	Pass BUILD_GCC and BUILD_CXX in place of suffix patch if
+	building hs23.
+	* NEWS:
+	List this new feature and also the bug fix, PR1318.
+	* acinclude.m4:
+	(IT_ENABLE_ZERO_BUILD): Define only once.  Depend on
+	CACAO, Zero and Shark.
+	(IT_SET_SHARK_BUILD): Define only once.
+	(IT_ENABLE_JAMVM): Likewise.
+	(IT_ENABLE_CACAO): Likewise.
+	(IT_WITH_HOTSPOT_BUILD): Likewise.  Set ALTERNATE_BUILD
+	to hs23.  Depend on Zero build determination and use to
+	pick default.  Error out if hs23 is enabled with Zero.
+	* hotspot.map: Add reference to hs23 from the 2.3 tree.
+	* patches/ecj/hotspot/hs23/hotspot-jdk-dependency.patch:
+	Added for hs23 build.
+	* patches/ecj/hotspot/original/hotspot-jdk-dependency.patch:
+	Moved from patches/ecj/hotspot-jdk-dependency.patch.
+	* patches/gcc-suffix-hotspot.patch:
+	Split out for original HotSpot builds.
+	* patches/gcc-suffix.patch: Original version minus HotSpot
+	chunk.
+	* patches/hotspot/hs23/arm-hsdis.patch,
+	* patches/hotspot/hs23/pr639-broken_shark_build.patch:
+	hs23 versions of these patches which don't appear upstream.
+	* patches/hotspot/original/arm-hsdis.patch,
+	* patches/hotspot/original/pr639-broken_shark_build.patch:
+	Moved from patches.
+	* patches/hotspot/hs23/remove_jsr292_tests.patch:
+	Remove JSR292 tests from hs23 HotSpot when building on 6.
+
+2013-02-14  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* NEWS: Add 1.11.6, 1.11.7, 1.12.1 & 1.12.2
+	releases.
+
 2013-02-08  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	PR1301: PR1171 causes Zero builds to fail

@@ -1,0 +1,29 @@
+# HG changeset patch
+# User andrew
+# Date 1360886106 0
+# Node ID fd2187713a998a312ee76405f58df3719ec04db1
+# Parent  bbfd732ae37d02301b065722f9c7a930118adde3
+PR1319: Support building with giflib 5
+
+diff --git a/src/share/native/sun/awt/splashscreen/splashscreen_gif.c b/src/share/native/sun/awt/splashscreen/splashscreen_gif.c
+--- openjdk/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c
++++ openjdk/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c
+@@ -316,9 +316,18 @@
+ int
+ SplashDecodeGifStream(Splash * splash, SplashStream * stream)
+ {
++#ifdef GIFLIB_MAJOR >= 5
++    int error = 0;
++    GifFileType *gif = DGifOpen((void *) stream, SplashStreamGifInputFunc, &error);
++
++    if (error)
++	return 0;
++#else
+     GifFileType *gif = DGifOpen((void *) stream, SplashStreamGifInputFunc);
+ 
+     if (!gif)
+         return 0;
++#endif
++
+     return SplashDecodeGif(splash, gif);
+ }

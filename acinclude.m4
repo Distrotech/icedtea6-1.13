@@ -716,9 +716,12 @@ AC_DEFUN([IT_FIND_TOOL],
  AC_SUBST([$1])
 ])
 
-AC_DEFUN([IT_ENABLE_ZERO_BUILD],
+AC_DEFUN_ONCE([IT_ENABLE_ZERO_BUILD],
 [
   AC_REQUIRE([IT_SET_ARCH_SETTINGS])
+  AC_REQUIRE([IT_ENABLE_CACAO])
+  AC_REQUIRE([IT_ENABLE_JAMVM])
+  AC_REQUIRE([IT_SET_SHARK_BUILD])
   AC_MSG_CHECKING([whether to use the zero-assembler port])
   use_zero=no
   AC_ARG_ENABLE([zero],
@@ -794,7 +797,7 @@ AC_DEFUN([IT_ENABLE_ZERO_BUILD],
   AC_CONFIG_FILES([ergo.c])
 ])
 
-AC_DEFUN([IT_SET_SHARK_BUILD],
+AC_DEFUN_ONCE([IT_SET_SHARK_BUILD],
 [
   AC_MSG_CHECKING(whether to use the Shark JIT)
   shark_selected=no
@@ -818,7 +821,7 @@ AC_DEFUN([IT_SET_SHARK_BUILD],
   AM_CONDITIONAL(SHARK_BUILD, test "x${use_shark}" = xyes)
 ])
 
-AC_DEFUN([IT_ENABLE_JAMVM],
+AC_DEFUN_ONCE([IT_ENABLE_JAMVM],
 [
   AC_MSG_CHECKING(whether to use JamVM as VM)
   AC_ARG_ENABLE([jamvm],
@@ -857,7 +860,7 @@ AC_DEFUN([IT_WITH_JAMVM_SRC_ZIP],
   AC_SUBST(ALT_JAMVM_SRC_ZIP)
 ])
 
-AC_DEFUN([IT_ENABLE_CACAO],
+AC_DEFUN_ONCE([IT_ENABLE_CACAO],
 [
   AC_MSG_CHECKING(whether to use CACAO as VM)
   AC_ARG_ENABLE([cacao],
@@ -956,11 +959,16 @@ AC_DEFUN([IT_WITH_GCJ],
   AC_SUBST([GCJ])
 ])
 
-AC_DEFUN([IT_WITH_HOTSPOT_BUILD],
+AC_DEFUN_ONCE([IT_WITH_HOTSPOT_BUILD],
 [
+  AC_REQUIRE([IT_ENABLE_ZERO_BUILD])
   ORIGINAL_BUILD="original"
-  ALTERNATE_BUILD="original"
-  DEFAULT_BUILD=${ORIGINAL_BUILD}
+  ALTERNATE_BUILD="hs23"
+  if test "x${use_zero}" = "xyes"; then
+    DEFAULT_BUILD=${ORIGINAL_BUILD}
+  else
+    DEFAULT_BUILD=${ALTERNATE_BUILD}
+  fi
   AC_MSG_CHECKING([which HotSpot build to use])
   AC_ARG_WITH([hotspot-build],
 	      [AS_HELP_STRING(--with-hotspot-build,the HotSpot build to use (see hotspot.map))],
@@ -978,6 +986,11 @@ AC_DEFUN([IT_WITH_HOTSPOT_BUILD],
   AC_MSG_RESULT([${HSBUILD}])
   AC_SUBST([HSBUILD])
   AM_CONDITIONAL(WITH_ALT_HSBUILD, test "x${HSBUILD}" != "x${ORIGINAL_BUILD}")
+  if test "x${HSBUILD}" = "x${ALTERNATE_BUILD}" ; then
+    if test "x${use_zero}" = "xyes"; then
+      AC_MSG_ERROR([The ${ALTERNATE_BUILD} build of HotSpot is known not to work with Zero or Shark.])
+    fi
+  fi
 ])
 
 AC_DEFUN([IT_WITH_HOTSPOT_SRC_ZIP],
