@@ -24,8 +24,8 @@ JAF_DROP_URL = http://icedtea.classpath.org/download/drops
 JAF_DROP_ZIP = jdk6-jaf-b20.zip
 JAF_DROP_SHA256SUM = 78c7b5c9d6271e88ee46abadd018a61f1e9645f8936cc8df1617e5f4f5074012
 JAXP_DROP_URL = http://icedtea.classpath.org/download/drops
-JAXP_DROP_ZIP = jaxp144_04.zip
-JAXP_DROP_SHA256SUM = 490f696218c1fed9cb180680af883fe309b414fec232e9cec19645e12ad0b43c
+JAXP_DROP_ZIP = jaxp144_05.zip
+JAXP_DROP_SHA256SUM = c1a8a5a219fa55ecbf2ad43b66514335a3e96ccad40bd2ec9165a821343b2bff
 OPENJDK_HG_URL = http://hg.openjdk.java.net/jdk6/jdk6
 
 HOTSPOT_SRC_ZIP = hotspot.tar.gz
@@ -245,46 +245,7 @@ TAPSET_TEST_SRCS = \
 ICEDTEA_FSG_PATCHES =
 
 SECURITY_PATCHES = \
-	patches/security/20120830/7182135-impossible_to_use_some_editors_directly.patch \
-	patches/security/20130201/7201068.patch \
-	patches/security/20130201/6563318.patch \
-	patches/security/20130201/6664509.patch \
-	patches/security/20130201/6776941.patch \
-	patches/security/20130201/7141694.patch \
-	patches/security/20130201/7173145.patch \
-	patches/security/20130201/7186945.patch \
-	patches/security/20130201/7186948.patch \
-	patches/security/20130201/7186952.patch \
-	patches/security/20130201/7186954.patch \
-	patches/security/20130201/7192392.patch \
-	patches/security/20130201/7192393.patch \
-	patches/security/20130201/7192977.patch \
-	patches/security/20130201/7197546.patch \
-	patches/security/20130201/7200491.patch \
-	patches/security/20130201/7200500.patch \
-	patches/security/20130201/7201064.patch \
-	patches/security/20130201/7201066.patch \
-	patches/security/20130201/7201070.patch \
-	patches/security/20130201/7201071.patch \
-	patches/security/20130201/8000210.patch \
-	patches/security/20130201/8000537.patch \
-	patches/security/20130201/8000540.patch \
-	patches/security/20130201/8000631.patch \
-	patches/security/20130201/8001242.patch \
-	patches/security/20130201/8001972.patch \
-	patches/security/20130201/8002325.patch \
-	patches/security/20130201/8001235.patch \
-	patches/security/20130219/8006446.patch \
-	patches/security/20130219/8006777.patch \
-	patches/security/20130219/8007688.patch \
-	patches/security/20130304/8007014.patch \
-	patches/security/20130304/8007675.patch \
-	patches/openjdk/8009641-8007675_build_fix.patch
-
-if !WITH_ALT_HSBUILD
-SECURITY_PATCHES += \
-	patches/security/20130201/8001307.patch
-endif
+	patches/security/20120830/7182135-impossible_to_use_some_editors_directly.patch
 
 SPECIAL_SECURITY_PATCH = patches/security/20120214/7112642.patch
 
@@ -474,11 +435,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6980681-corba_deadlock.patch \
 	patches/openjdk/7162902-corba_fixes.patch \
 	patches/traceable.patch \
-	patches/openjdk/8005615-failure_to_load_logger_implementation.patch \
-	patches/openjdk/8004341-jck_dialog_failure.patch \
-	patches/pr1319-support_giflib_5.patch \
-	patches/openjdk/8007393.patch \
-	patches/openjdk/8007611.patch
+	patches/pr1319-support_giflib_5.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \

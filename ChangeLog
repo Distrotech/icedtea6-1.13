@@ -1,3 +1,59 @@
+2013-03-19  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* patches/openjdk/8004341-jck_dialog_failure.patch,
+	* patches/openjdk/8005615-failure_to_load_logger_implementation.patch,
+	* patches/openjdk/8007393.patch,
+	* patches/openjdk/8007611.patch,
+	* patches/openjdk/8009641-8007675_build_fix.patch,
+	* patches/security/20130201/6563318.patch,
+	* patches/security/20130201/6664509.patch,
+	* patches/security/20130201/6776941.patch,
+	* patches/security/20130201/7141694.patch,
+	* patches/security/20130201/7173145.patch,
+	* patches/security/20130201/7186945.patch,
+	* patches/security/20130201/7186948.patch,
+	* patches/security/20130201/7186952.patch,
+	* patches/security/20130201/7186954.patch,
+	* patches/security/20130201/7192392.patch,
+	* patches/security/20130201/7192393.patch,
+	* patches/security/20130201/7192977.patch,
+	* patches/security/20130201/7197546.patch,
+	* patches/security/20130201/7200491.patch,
+	* patches/security/20130201/7200500.patch,
+	* patches/security/20130201/7201064.patch,
+	* patches/security/20130201/7201066.patch,
+	* patches/security/20130201/7201068.patch,
+	* patches/security/20130201/7201070.patch,
+	* patches/security/20130201/7201071.patch,
+	* patches/security/20130201/8000210.patch,
+	* patches/security/20130201/8000537.patch,
+	* patches/security/20130201/8000540.patch,
+	* patches/security/20130201/8000631.patch,
+	* patches/security/20130201/8001235.patch,
+	* patches/security/20130201/8001242.patch,
+	* patches/security/20130201/8001307.patch,
+	* patches/security/20130201/8001972.patch,
+	* patches/security/20130201/8002325.patch,
+	* patches/security/20130219/8006446.patch,
+	* patches/security/20130219/8006777.patch,
+	* patches/security/20130219/8007688.patch,
+	* patches/security/20130304/8007014.patch,
+	* patches/security/20130304/8007675.patch:
+	Remove patches available upstream.
+	* Makefile.am:
+	(JAXP_DROP_ZIP): Update to jaxp144_05.zip
+	with latest security fix included.
+	(JAXP_DROP_SHA256SUM): Likewise.
+	(SECURITY_PATCHES): Remove ones available
+	upstream (all from 2013/02/01, 2013/02/19
+	and 2013/03/04).
+	(ICEDTEA_PATCHES): Remove patches for
+	8005615, 8004341, 8007393 & 8007611
+	available upstream.
+	* patches/ecj/override.patch:
+	Add new case introduced by upstream version
+	of security patches (sigh...)
+
 2013-03-18  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* Makefile.am:

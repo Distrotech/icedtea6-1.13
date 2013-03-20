@@ -252,3 +252,54 @@ diff -Nru openjdk-ecj.orig/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileC
          public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
              Component c = delegate.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
  
+diff -Nru openjdk.orig/jdk/src/share/classes/javax/management/modelmbean/RequiredModelMBean.java openjdk/jdk/src/share/classes/javax/management/modelmbean/RequiredModelMBean.java
+--- openjdk-ecj.orig/jdk/src/share/classes/javax/management/modelmbean/RequiredModelMBean.java	2013-03-19 13:40:24.027496931 +0000
++++ openjdk-ecj/jdk/src/share/classes/javax/management/modelmbean/RequiredModelMBean.java	2013-03-19 13:40:56.968026902 +0000
+@@ -1040,7 +1040,6 @@
+                     
+                     targetClass = javaSecurityAccess.doIntersectionPrivilege(new PrivilegedAction<Class<?>>() {
+ 
+-                        @Override
+                         public Class<?> run() {
+                             try {
+                                 ReflectUtil.checkPackageAccess(className);
+@@ -1114,7 +1113,6 @@
+             
+             javaSecurityAccess.doIntersectionPrivilege(new PrivilegedAction<Void>() {
+ 
+-                @Override
+                 public Void run() {
+                     for (int i = 0; i < sig.length; i++) {
+                         if (tracing) {
+@@ -1203,7 +1201,6 @@
+             final String className = opClassName;
+             targetClass = javaSecurityAccess.doIntersectionPrivilege(new PrivilegedAction<Class<?>>() {
+ 
+-                @Override
+                 public Class<?> run() {
+                     try {
+                         ReflectUtil.checkPackageAccess(className);
+@@ -1239,7 +1236,6 @@
+             AccessControlContext stack = AccessController.getContext();
+             Object rslt = javaSecurityAccess.doIntersectionPrivilege(new PrivilegedAction<Object>() {
+ 
+-                @Override
+                 public Object run() {
+                     try {
+                         ReflectUtil.checkPackageAccess(method.getDeclaringClass());
+@@ -1676,7 +1672,6 @@
+                                 
+                                 Class c = javaSecurityAccess.doIntersectionPrivilege(new PrivilegedAction<Class<?>>() {
+ 
+-                                    @Override
+                                     public Class<?> run() {
+                                         try {
+                                             ReflectUtil.checkPackageAccess(respType);
+@@ -2854,7 +2849,6 @@
+ 
+         Class c = javaSecurityAccess.doIntersectionPrivilege(new PrivilegedAction<Class<?>>() {
+ 
+-            @Override
+             public Class<?> run() {
+                 try {
+                     ReflectUtil.checkPackageAccess(className);
