@@ -1,3 +1,15 @@
+2013-03-22  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add new patch.  Move
+	jvmtiEnv.patch to bundled HotSpot build only.
+	* NEWS: Update with new patch, add OpenJDK 6
+	JIRA URLs.
+	* patches/copy_memory.patch: New patch to
+	add sun.misc.Unsafe.copyMemory method from 7.
+	* patches/jvmtiEnv.patch: Moved to...
+	* patches/hotspot/original/jvmtiEnv.patch: here.
+	
 2013-03-18  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* Makefile.am:

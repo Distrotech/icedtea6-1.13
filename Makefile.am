@@ -317,7 +317,6 @@ ICEDTEA_PATCHES = \
 	patches/headers.patch \
 	patches/gcc-suffix.patch \
 	patches/libraries.patch \
-	patches/jvmtiEnv.patch \
 	patches/lcms.patch \
 	patches/uname.patch \
 	patches/freetypeversion.patch \
@@ -478,7 +477,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/8004341-jck_dialog_failure.patch \
 	patches/pr1319-support_giflib_5.patch \
 	patches/openjdk/8007393.patch \
-	patches/openjdk/8007611.patch
+	patches/openjdk/8007611.patch \
+	patches/copy_memory.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
@@ -527,7 +527,8 @@ ICEDTEA_PATCHES += \
 	patches/arm-debug.patch \
 	patches/openjdk/7010849-modernise_sa.patch \
 	patches/hotspot/original/7197906-handle_32_bit_shifts.patch \
-	patches/hotspot/original/fix_get_stack_bounds_leak.patch
+	patches/hotspot/original/fix_get_stack_bounds_leak.patch \
+	patches/hotspot/original/jvmtiEnv.patch
 endif
 
 if WITH_RHINO

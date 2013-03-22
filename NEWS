@@ -7,6 +7,7 @@ DX  - http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=X
 GX  - http://bugs.gentoo.org/show_bug.cgi?id=X
 CAX - http://server.complang.tuwien.ac.at/cgi-bin/bugzilla/show_bug.cgi?id=X
 LPX - https://bugs.launchpad.net/bugs/X 
+OJX - http://java.net/jira/browse/OPENJDK6-X
 
 CVE-XXXX-YYYY: http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
@@ -17,10 +18,11 @@ New in release 1.13.0 (201X-XX-XX):
 * Backports
   - S8009641: OpenJDK 6 build broken via 8007675 fix
   - S7197906: BlockOffsetArray::power_to_cards_back() needs to handle > 32 bit shifts (bundled HotSpot only)
+  - OJ3: Fix get_stack_bounds memory leak (alternate fix for S7197906, bundled HotSpot only)
+  - OJ4: Backport the new version of copyMemory from OpenJDK 7 to allow Snappy to build
 * Bug fixes
   - PR1318: Fix automatic enabling of the Zero build on non-JIT architectures which don't use CACAO or JamVM.
   - RH902004: very bad performance with E-Porto Add-In für OpenOffice Writer installed (hs23 only)
-  - Fix get_stack_bounds memory leak (alternate fix for S7197906, bundled HotSpot only)
 
 New in release 1.12.4 (2013-03-04):
 
