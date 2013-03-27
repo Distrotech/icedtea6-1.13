@@ -478,7 +478,13 @@ ICEDTEA_PATCHES = \
 	patches/pr1319-support_giflib_5.patch \
 	patches/openjdk/8007393.patch \
 	patches/openjdk/8007611.patch \
-	patches/copy_memory.patch
+	patches/copy_memory.patch \
+	patches/openjdk/6718364-inference_failure.patch \
+	patches/openjdk/6682380-foreach_crash.patch \
+	patches/openjdk/7046929-fix_t6397104_test_failure.patch
+	patches/openjdk/7024568-long_method_resolution_oom_error.patch \
+	patches/openjdk/7003595-incompatibleclasschangeerror.patch \
+	patches/openjdk/6500343-bad_code_from_conditionals.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
@@ -528,7 +534,8 @@ ICEDTEA_PATCHES += \
 	patches/openjdk/7010849-modernise_sa.patch \
 	patches/hotspot/original/7197906-handle_32_bit_shifts.patch \
 	patches/hotspot/original/fix_get_stack_bounds_leak.patch \
-	patches/hotspot/original/jvmtiEnv.patch
+	patches/hotspot/original/jvmtiEnv.patch \
+	patches/hotspot/original/6840152-jvm_crashes_with_heavyweight_monitors.patch
 endif
 
 if WITH_RHINO

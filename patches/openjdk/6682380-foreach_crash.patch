@@ -1,0 +1,97 @@
+# HG changeset patch
+# User mcimadamore
+# Date 1208967003 -3600
+# Node ID ec29a1a284ca0b0be1b3b44b1643e7eb6acefb69
+# Parent  627deea1ea4fba84a0e9182fbdc24110d4f5448c
+6682380: Foreach loop with generics inside finally block crashes javac with -target 1.5
+Summary: A missing type-erasure in Lower.java causes the compiler to crash since JDK6
+Reviewed-by: jjg
+
+diff --git a/src/share/classes/com/sun/tools/javac/comp/Lower.java b/src/share/classes/com/sun/tools/javac/comp/Lower.java
+--- openjdk/langtools/src/share/classes/com/sun/tools/javac/comp/Lower.java
++++ openjdk/langtools/src/share/classes/com/sun/tools/javac/comp/Lower.java
+@@ -2863,13 +2863,15 @@
+             JCExpressionStatement step = make.Exec(makeUnary(JCTree.PREINC, make.Ident(index)));
+ 
+             Type elemtype = types.elemtype(tree.expr.type);
+-            JCStatement loopvarinit = make.
+-                VarDef(tree.var.sym,
+-                       make.
+-                       Indexed(make.Ident(arraycache), make.Ident(index)).
+-                       setType(elemtype));
++            JCExpression loopvarinit = make.Indexed(make.Ident(arraycache),
++                                                    make.Ident(index)).setType(elemtype);
++            JCVariableDecl loopvardef = (JCVariableDecl)make.VarDef(tree.var.mods,
++                                                  tree.var.name,
++                                                  tree.var.vartype,
++                                                  loopvarinit).setType(tree.var.type);
++            loopvardef.sym = tree.var.sym;
+             JCBlock body = make.
+-                Block(0, List.of(loopvarinit, tree.body));
++                Block(0, List.of(loopvardef, tree.body));
+ 
+             result = translate(make.
+                                ForLoop(loopinit,
+@@ -2944,7 +2946,11 @@
+             JCExpression vardefinit = make.App(make.Select(make.Ident(itvar), next));
+             if (iteratorTarget != syms.objectType)
+                 vardefinit = make.TypeCast(iteratorTarget, vardefinit);
+-            JCVariableDecl indexDef = make.VarDef(tree.var.sym, vardefinit);
++            JCVariableDecl indexDef = (JCVariableDecl)make.VarDef(tree.var.mods,
++                                                  tree.var.name,
++                                                  tree.var.vartype,
++                                                  vardefinit).setType(tree.var.type);
++            indexDef.sym = tree.var.sym;
+             JCBlock body = make.Block(0, List.of(indexDef, tree.body));
+             result = translate(make.
+                 ForLoop(List.of(init),
+diff --git a/test/tools/javac/foreach/T6682380.java b/test/tools/javac/foreach/T6682380.java
+new file mode 100644
+--- /dev/null
++++ openjdk/langtools/test/tools/javac/foreach/T6682380.java
+@@ -0,0 +1,45 @@
++/*
++ * Copyright 2008 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/*
++ * @test
++ * @bug 6682380 6679509
++ * @summary Foreach loop with generics inside finally block crashes javac with -target 1.5
++ * @author Jan Lahoda, Maurizio Cimadamore
++ * @compile -target 1.5 T6682380.java
++ */
++
++import java.util.List;
++
++public class T6682380<X> {
++
++    public static void main(String[] args) {
++        try {
++        } finally {
++            List<T6682380<?>> l = null;
++            T6682380<?>[] a = null;
++            for (T6682380<?> e1 : l);
++            for (T6682380<?> e2 : a);
++        }
++    }
++}

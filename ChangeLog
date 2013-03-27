@@ -1,3 +1,19 @@
+2013-03-26  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add new backports (HotSpot
+	one only to bundled HotSpot build).
+	* patches/hotspot/original/6840152-jvm_crashes_with_heavyweight_monitors.patch:
+	Backport suggested by Xerxes for hs20.
+	* patches/openjdk/6500343-bad_code_from_conditionals.patch,
+	* patches/openjdk/6682380-foreach_crash.patch,
+	* patches/openjdk/6718364-inference_failure.patch,
+	* patches/openjdk/7003595-incompatibleclasschangeerror.patch,
+	* patches/openjdk/7024568-long_method_resolution_oom_error.patch,
+	* patches/openjdk/7046929-fix_t6397104_test_failure.patch:
+	Langtools backports present in the proprietary JDK 6 tree,
+	as listed by Joe Darcy.
+
 2013-03-22  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* Makefile.am:
@@ -9,7 +25,7 @@
 	add sun.misc.Unsafe.copyMemory method from 7.
 	* patches/jvmtiEnv.patch: Moved to...
 	* patches/hotspot/original/jvmtiEnv.patch: here.
-	
+
 2013-03-18  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* Makefile.am:

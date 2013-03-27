@@ -1,0 +1,129 @@
+# HG changeset patch
+# User mcimadamore
+# Date 1222684483 -3600
+# Node ID ddd110646d215c6f504b1908d501ab964bf75574
+# Parent  1e83972f53fb28e27ea3ec762b8c33d0684443c1
+6500343: compiler generates bad code when translating conditional expressions
+Summary: TransTypes needs to deal with intersection types coming from conditional expressions
+Reviewed-by: jjg
+
+diff --git a/src/share/classes/com/sun/tools/javac/comp/TransTypes.java b/src/share/classes/com/sun/tools/javac/comp/TransTypes.java
+--- openjdk/langtools/src/share/classes/com/sun/tools/javac/comp/TransTypes.java
++++ openjdk/langtools/src/share/classes/com/sun/tools/javac/comp/TransTypes.java
+@@ -534,7 +534,7 @@
+         tree.truepart = translate(tree.truepart, erasure(tree.type));
+         tree.falsepart = translate(tree.falsepart, erasure(tree.type));
+         tree.type = erasure(tree.type);
+-        result = tree;
++        result = retype(tree, tree.type, pt);
+     }
+ 
+    public void visitIf(JCIf tree) {
+diff --git a/test/tools/javac/conditional/6500343/T6500343a.java b/test/tools/javac/conditional/6500343/T6500343a.java
+new file mode 100644
+--- /dev/null
++++ openjdk/langtools/test/tools/javac/conditional/6500343/T6500343a.java
+@@ -0,0 +1,50 @@
++/*
++ * Copyright 2008 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/*
++ * @test
++ * @bug 6500343
++ * @summary compiler generates bad code when translating conditional expressions
++ * @author Maurizio Cimadamore
++ *
++ */
++
++public class T6500343a {
++    static class Base {}
++    static interface I {}
++    static class A1 extends Base implements I {}
++    static class A2 extends Base implements I {}
++
++    static Object crash(I i, A1 a1, A2 a2, boolean b1, boolean b2) {
++        return b1 ? i : b2 ? a2 : a1;
++        // lub(I, lub(A1, A2)) ==> lub(I, Base&I) ==> I (doesn't compile on 1.4 ok >1.5)
++    }
++
++    public static void main(String[] args) {
++        T6500343a.crash(new A1(), new A1(), new A2(), true, false);
++        T6500343a.crash(new A1(), new A1(), new A2(), false, true);
++        T6500343a.crash(new A1(), new A1(), new A2(), false, false);
++        T6500343a.crash(new A1(), new A1(), new A2(), true, true);
++    }
++}
++
+diff --git a/test/tools/javac/conditional/6500343/T6500343b.java b/test/tools/javac/conditional/6500343/T6500343b.java
+new file mode 100644
+--- /dev/null
++++ openjdk/langtools/test/tools/javac/conditional/6500343/T6500343b.java
+@@ -0,0 +1,48 @@
++/*
++ * Copyright 2008 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/*
++ * @test
++ * @bug 6500343
++ * @summary compiler generates bad code when translating conditional expressions
++ * @author Maurizio Cimadamore
++ *
++ */
++
++public class T6500343b {
++
++    final static int i1 = 0;
++    final static int i2 = 1;
++
++    static void crash(int i) {
++        switch (i) {
++            case (true ? 0 : 1):
++            case (i1 == 5 ? 1 : 2):
++            case (i1 == i2 ? 2 : 3):
++        }
++    }
++
++    public static void main(String[] args) {
++        T6500343b.crash(0);
++    }
++}
