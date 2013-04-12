@@ -1,3 +1,19 @@
+2013-04-12  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* NEWS: Add PR1362 from last commit.
+	* ChangeLog: Add missing entry for last
+	commit.
+
+2013-04-05  Chris Phillips  <chphilli@redhat.com>
+
+	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp:
+	Fix failure in the register allocation logic,
+	diagnosed by Andrew Haley to be an issue with
+	PUSH/POP macro's and assumption of order of
+	evaluation of arguments.  The fix includes
+	detection of the condition and bailing from the
+	compilation if a similar failure is detected.
+
 2013-03-26  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* Makefile.am:
