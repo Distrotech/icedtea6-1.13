@@ -118,6 +118,9 @@ IT_CHECK_FOR_METHOD([JAVAX_SECURITY_AUTH_KERBEROS_KERBEROSTICKET_GETSESSIONKEYTY
 # PR54275 - sun.security.sasl requires missing Sasl.CREDENTIALS field
 IT_CHECK_FOR_STATIC_FIELD([JAVAX_SECURITY_SASL_SASL_CREDENTIALS],[CREDENTIALS],[javax.security.sasl.Sasl])
 
+# PR 56553 - SSLParameters support missing
+IT_CHECK_FOR_CLASS([SSLPARAMETERS],[javax.net.ssl.SSLParameters])
+
 # Use xvfb-run if found to run gui tests (check-jdk).
 AC_CHECK_PROG(XVFB_RUN_CMD, xvfb-run, [xvfb-run -a -e xvfb-errors], [])
 AC_SUBST(XVFB_RUN_CMD)

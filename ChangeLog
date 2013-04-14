@@ -1,5 +1,13 @@
 2013-04-12  Andrew John Hughes  <gnu.andrew@redhat.com>
 
+	PR1336: Bootstrap failure on Fedora 17/18
+	* Makefile.am:
+	(ICEDTEA_BOOTSTRAP_CLASSES): Add SSLParameters
+	if needed.
+	* configure.ac: Check for javax.net.ssl.SSLParameters.
+
+2013-04-12  Andrew John Hughes  <gnu.andrew@redhat.com>
+
 	* NEWS: Add PR1362 from last commit.
 	* ChangeLog: Add missing entry for last
 	commit.

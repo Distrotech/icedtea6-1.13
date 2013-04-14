@@ -127,6 +127,12 @@ ICEDTEA_BOOTSTRAP_CLASSES += \
 	$(SHARE)/javax/security/sasl/Sasl.java
 endif
 
+# PR 56553 - SSLParameters support missing
+if LACKS_SSLPARAMETERS
+ICEDTEA_BOOTSTRAP_CLASSES += \
+	$(SHARE)/javax/net/ssl/SSLParameters.java
+endif
+
 # Flags
 MEMORY_LIMIT = -J-Xmx1024m
 IT_CFLAGS=$(CFLAGS) $(ARCHFLAG)
