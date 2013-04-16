@@ -487,7 +487,7 @@ ICEDTEA_PATCHES = \
 	patches/copy_memory.patch \
 	patches/openjdk/6718364-inference_failure.patch \
 	patches/openjdk/6682380-foreach_crash.patch \
-	patches/openjdk/7046929-fix_t6397104_test_failure.patch
+	patches/openjdk/7046929-fix_t6397104_test_failure.patch \
 	patches/openjdk/7024568-long_method_resolution_oom_error.patch \
 	patches/openjdk/7003595-incompatibleclasschangeerror.patch \
 	patches/openjdk/6500343-bad_code_from_conditionals.patch
