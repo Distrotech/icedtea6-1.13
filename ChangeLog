@@ -1,3 +1,10 @@
+2013-03-11  Andrew John Hughes  <gnu.andrew@member.fsf.org>
+
+	PR1339: Simplify the rewriter, avoiding concurrency.
+	* rewriter/com/redhat/rewriter/ClassRewriter.java:
+	Always use the single threaded executor.
+	* NEWS: Updated with this and previous fix.
+
 2013-04-16  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	PR1338: Remove dependence on libXp
