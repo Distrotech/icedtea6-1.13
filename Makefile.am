@@ -795,7 +795,6 @@ EXTRA_DIST = generated \
 	scripts/jni_desc \
 	rewriter/agpl-3.0.txt \
 	$(REWRITER_SRCS) \
-	THANKYOU \
 	$(TAPSET_TEST_SRCS)
 
 # Top-Level Targets
