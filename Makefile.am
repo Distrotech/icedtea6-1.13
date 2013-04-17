@@ -544,6 +544,9 @@ ICEDTEA_PATCHES += \
 	patches/hotspot/original/6840152-jvm_crashes_with_heavyweight_monitors.patch
 endif
 
+# Needs to be after the addition of SH support to the original HotSpot
+ICEDTEA_PATCHES += patches/aarch64.patch
+
 if WITH_RHINO
 ICEDTEA_PATCHES += \
 	patches/rhino.patch
