@@ -1,6 +1,6 @@
-diff -ur openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/parsers/FactoryFinder.java openjdk.new/jaxp/openjdk/jaxp/drop_included_included/jaxp_src/src/javax/xml/parsers/FactoryFinder.java
---- openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/parsers/FactoryFinder.java	2013-04-19 12:18:45.225000000 -0400
-+++ openjdk.new/jaxp/openjdk/jaxp/drop_included_included/jaxp_src/src/javax/xml/parsers/FactoryFinder.java	2013-04-19 11:53:01.791879226 -0400
+diff -ur openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/parsers/FactoryFinder.java openjdk.new/jaxp/drop_included/jaxp_src/src/javax/xml/parsers/FactoryFinder.java
+--- openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/parsers/FactoryFinder.java	2013-04-22 12:37:39.305820912 -0400
++++ openjdk.new/jaxp/drop_included/jaxp_src/src/javax/xml/parsers/FactoryFinder.java	2013-04-22 12:28:52.947388255 -0400
 @@ -25,15 +25,12 @@
  
  package javax.xml.parsers;
@@ -19,18 +19,14 @@ diff -ur openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/parsers/FactoryFinder
  
  /**
   * <p>Implements pluggable Datatypes.</p>
-@@ -42,9 +39,10 @@
+@@ -42,6 +39,7 @@
   * sync.  It is package private for secure class loading.</p>
   *
   * @author Santiago.PericasGeertsen@sun.com
 + * @author Huizhe.Wang@oracle.com
   */
  class FactoryFinder {
--    
-+    private static final String DEFAULT_PACKAGE = "com.sun.org.apache.xerces.internal";
-     /**
-      * Internal debug flag.
-      */
+     
 @@ -95,18 +93,24 @@
       * If the class loader supplied is <code>null</code>, first try using the
       * context class loader followed by the current (i.e. bootstrap) class
@@ -74,7 +70,7 @@ diff -ur openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/parsers/FactoryFinder
       *
       * @param doFallback True if the current ClassLoader should be tried as
       * a fallback if the class is not found using cl
-@@ -140,8 +144,38 @@
+@@ -140,8 +144,30 @@
      static Object newInstance(String className, ClassLoader cl, boolean doFallback)
          throws ConfigurationError
      {
@@ -100,21 +96,13 @@ diff -ur openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/parsers/FactoryFinder
 +    static Object newInstance(String className, ClassLoader cl, boolean doFallback, boolean useBSClsLoader)
 +        throws ConfigurationError
 +    {
-+        // make sure we have access to restricted packages
-+        if (System.getSecurityManager() != null) {
-+            if (className != null && className.startsWith(DEFAULT_PACKAGE)) {
-+                cl = null;
-+                useBSClsLoader = true;
-+            }
-+        }
-+
          try {
 -            Class providerClass = getProviderClass(className, cl, doFallback);                        
 +            Class providerClass = getProviderClass(className, cl, doFallback, useBSClsLoader);
              Object instance = providerClass.newInstance();
              if (debug) {    // Extra check to avoid computing cl strings
                  dPrint("created new instance of " + providerClass +
-@@ -244,6 +278,7 @@
+@@ -244,6 +270,7 @@
          
          // First try the Context ClassLoader
          ClassLoader cl = ss.getContextClassLoader();
@@ -122,7 +110,7 @@ diff -ur openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/parsers/FactoryFinder
          if (cl != null) {
              is = ss.getResourceAsStream(cl, serviceId);
              
-@@ -251,11 +286,13 @@
+@@ -251,11 +278,13 @@
              if (is == null) {
                  cl = FactoryFinder.class.getClassLoader();                
                  is = ss.getResourceAsStream(cl, serviceId);
@@ -136,7 +124,7 @@ diff -ur openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/parsers/FactoryFinder
          }
          
          if (is == null) {
-@@ -293,7 +330,7 @@
+@@ -293,7 +322,7 @@
              // ClassLoader because we want to avoid the case where the
              // resource file was found using one ClassLoader and the
              // provider class was instantiated using a different one.
@@ -145,21 +133,36 @@ diff -ur openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/parsers/FactoryFinder
          }
          
          // No provider found
-diff -ur openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/transform/FactoryFinder.java openjdk.new/jaxp/openjdk/jaxp/drop_included_included/jaxp_src/src/javax/xml/transform/FactoryFinder.java
---- openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/transform/FactoryFinder.java	2013-04-19 12:18:45.225000000 -0400
-+++ openjdk.new/jaxp/openjdk/jaxp/drop_included_included/jaxp_src/src/javax/xml/transform/FactoryFinder.java	2013-04-19 12:13:52.618746094 -0400
-@@ -42,8 +42,10 @@
+diff -ur openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/transform/FactoryFinder.java openjdk.new/jaxp/drop_included/jaxp_src/src/javax/xml/transform/FactoryFinder.java
+--- openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/transform/FactoryFinder.java	2013-04-22 12:37:39.312820966 -0400
++++ openjdk.new/jaxp/drop_included/jaxp_src/src/javax/xml/transform/FactoryFinder.java	2013-04-22 12:35:08.715478293 -0400
+@@ -25,15 +25,12 @@
+ 
+ package javax.xml.transform;
+ 
+-import java.io.File;
+-import java.io.FileInputStream;
+-
+-import java.util.Properties;
+ import java.io.BufferedReader;
++import java.io.File;
+ import java.io.IOException;
+ import java.io.InputStream;
+ import java.io.InputStreamReader;
+-import java.net.URL;
++import java.util.Properties;
+ 
+ /**
+  * <p>Implements pluggable Datatypes.</p>
+@@ -42,6 +39,7 @@
   * sync.  It is package private for secure class loading.</p>
   *
   * @author Santiago.PericasGeertsen@sun.com
 + * @author Huizhe.Wang@oracle.com
   */
  class FactoryFinder {
-+    private static final String DEFAULT_PACKAGE = "com.sun.org.apache.xalan.internal.";
      
-     /**
-      * Internal debug flag.
-@@ -95,18 +97,24 @@
+@@ -95,18 +93,24 @@
       * If the class loader supplied is <code>null</code>, first try using the
       * context class loader followed by the current (i.e. bootstrap) class
       * loader. 
@@ -191,7 +194,7 @@ diff -ur openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/transform/FactoryFind
                  }
              } 
              else {
-@@ -131,8 +139,8 @@
+@@ -131,8 +135,8 @@
       * @param className Name of the concrete class corresponding to the
       * service provider
       *
@@ -202,7 +205,7 @@ diff -ur openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/transform/FactoryFind
       *
       * @param doFallback True if the current ClassLoader should be tried as
       * a fallback if the class is not found using cl
-@@ -140,8 +148,38 @@
+@@ -140,8 +144,30 @@
      static Object newInstance(String className, ClassLoader cl, boolean doFallback)
          throws ConfigurationError
      {
@@ -228,21 +231,13 @@ diff -ur openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/transform/FactoryFind
 +    static Object newInstance(String className, ClassLoader cl, boolean doFallback, boolean useBSClsLoader)
 +        throws ConfigurationError
 +    {
-+        // make sure we have access to restricted packages
-+        if (System.getSecurityManager() != null) {
-+            if (className != null && className.startsWith(DEFAULT_PACKAGE)) {
-+                cl = null;
-+                useBSClsLoader = true;
-+            }
-+        }
-+
          try {
 -            Class providerClass = getProviderClass(className, cl, doFallback);                        
-+            Class providerClass = getProviderClass(className, cl, doFallback, useBSClsLoader);                        
++            Class providerClass = getProviderClass(className, cl, doFallback, useBSClsLoader);
              Object instance = providerClass.newInstance();
              if (debug) {    // Extra check to avoid computing cl strings
                  dPrint("created new instance of " + providerClass +
-@@ -182,7 +220,7 @@
+@@ -182,7 +208,7 @@
              String systemProp = ss.getSystemProperty(factoryId);
              if (systemProp != null) {                
                  dPrint("found system property, value=" + systemProp);
@@ -251,7 +246,7 @@ diff -ur openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/transform/FactoryFind
              }
          } 
          catch (SecurityException se) {
-@@ -210,7 +248,7 @@
+@@ -210,7 +236,7 @@
  
              if (factoryClassName != null) {
                  dPrint("found in $java.home/jaxp.properties, value=" + factoryClassName);
@@ -260,7 +255,7 @@ diff -ur openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/transform/FactoryFind
              }
          } 
          catch (Exception ex) {
-@@ -228,7 +266,7 @@
+@@ -228,7 +254,7 @@
          }
  
          dPrint("loaded from fallback value: " + fallbackClassName);
@@ -269,7 +264,7 @@ diff -ur openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/transform/FactoryFind
      }
      
      /*
-@@ -244,6 +282,7 @@
+@@ -244,6 +270,7 @@
          
          // First try the Context ClassLoader
          ClassLoader cl = ss.getContextClassLoader();
@@ -277,7 +272,7 @@ diff -ur openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/transform/FactoryFind
          if (cl != null) {
              is = ss.getResourceAsStream(cl, serviceId);
              
-@@ -251,11 +290,13 @@
+@@ -251,11 +278,13 @@
              if (is == null) {
                  cl = FactoryFinder.class.getClassLoader();                
                  is = ss.getResourceAsStream(cl, serviceId);
@@ -292,7 +287,7 @@ diff -ur openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/transform/FactoryFind
          }
          
          if (is == null) {
-@@ -293,7 +334,7 @@
+@@ -293,7 +322,7 @@
              // ClassLoader because we want to avoid the case where the
              // resource file was found using one ClassLoader and the
              // provider class was instantiated using a different one.
