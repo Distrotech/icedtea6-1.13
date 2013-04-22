@@ -56,7 +56,7 @@ IT_DISABLE_HOTSPOT_TESTS
 IT_DISABLE_LANGTOOLS_TESTS
 IT_DISABLE_JDK_TESTS
 
-#PR42003 - Missing javax.swing.plaf.basic.BasicDirectoryModel methods cause OpenJDK build failure 
+dnl PR42003 - Missing javax.swing.plaf.basic.BasicDirectoryModel methods cause OpenJDK build failure 
 IT_CHECK_FOR_METHOD([JAVAX_SWING_PLAF_BASIC_BASICDIRECTORYMODEL_ADDPROPERTYCHANGELISTENER],
   [javax.swing.plaf.basic.BasicDirectoryModel.addPropertyChangeListener(PropertyChangeListener)],
   [javax.swing.plaf.basic.BasicDirectoryModel],
@@ -64,7 +64,7 @@ IT_CHECK_FOR_METHOD([JAVAX_SWING_PLAF_BASIC_BASICDIRECTORYMODEL_ADDPROPERTYCHANG
   [javax.swing.plaf.basic.BasicDirectoryModel model = new javax.swing.plaf.basic.BasicDirectoryModel(new javax.swing.JFileChooser()); model.addPropertyChangeListener(model)]
 )
 
-# Workaround issue with old CORBA classes in old OpenJDK builds
+dnl Workaround issue with old CORBA classes in old OpenJDK builds
 IT_CHECK_FOR_CLASS([ORBUTILSYSTEMEXCEPTION],[com.sun.corba.se.impl.logging.ORBUtilSystemException])
 IT_CHECK_FOR_METHOD([ORBUTILSYSTEMEXCEPTION_IOEXCEPTIONONCLOSE_THROWABLE],
   [com.sun.corba.se.impl.logging.ORBUtilSystemException.ioExceptionOnClose(Throwable)],
@@ -73,11 +73,11 @@ IT_CHECK_FOR_METHOD([ORBUTILSYSTEMEXCEPTION_IOEXCEPTIONONCLOSE_THROWABLE],
   [new com.sun.corba.se.impl.logging.ORBUtilSystemException(null).ioExceptionOnClose(new InternalError())]
 )
 
-# PR43389 - javax.management.StandardMBean
+dnl PR43389 - javax.management.StandardMBean
 IT_CHECK_FOR_CONSTRUCTOR([JAVAX_MANAGEMENT_STANDARDMBEAN_MXBEAN_TWO_ARG],[javax.management.StandardMBean],[Class.class,Boolean.TYPE],[Object.class, true])
 IT_CHECK_FOR_CONSTRUCTOR([JAVAX_MANAGEMENT_STANDARDMBEAN_MXBEAN_THREE_ARG],[javax.management.StandardMBean],[Object.class,Class.class,Boolean.TYPE],[new Object(), Object.class, true])
 
-# PR54274 - sun.security.other requires missing X509CRLSelector methods
+dnl PR54274 - sun.security.other requires missing X509CRLSelector methods
 IT_CHECK_FOR_METHOD([JAVA_SECURITY_CERT_X509CRLSELECTOR_ADDISSUER],
   [java.security.cert.X509CRLSelector.addIssuer(X500Principal)],
   [java.security.cert.X509CRLSelector],
@@ -115,11 +115,44 @@ IT_CHECK_FOR_METHOD([JAVAX_SECURITY_AUTH_KERBEROS_KERBEROSTICKET_GETSESSIONKEYTY
   [new javax.security.auth.kerberos.KerberosTicket(null,null,null,null,0,null,null,null,null,null,null).getSessionKeyType()]
 )
 
-# PR54275 - sun.security.sasl requires missing Sasl.CREDENTIALS field
+dnl PR54275 - sun.security.sasl requires missing Sasl.CREDENTIALS field
 IT_CHECK_FOR_STATIC_FIELD([JAVAX_SECURITY_SASL_SASL_CREDENTIALS],[CREDENTIALS],[javax.security.sasl.Sasl])
 
-# PR 56553 - SSLParameters support missing
-IT_CHECK_FOR_CLASS([SSLPARAMETERS],[javax.net.ssl.SSLParameters])
+dnl PR56553 - SSLParameters support missing
+IT_CHECK_FOR_METHOD([JAVAX_NET_SSL_SSLCONTEXT_GETDEFAULTSSLPARAMETERS],
+  [javax.net.ssl.SSLContext.getDefaultSSLParameters],
+  [javax.net.ssl.SSLContext],
+  ["getDefaultSSLParameters"],
+  [try { javax.net.ssl.SSLContext.getDefault().getDefaultSSLParameters(); } catch (Exception e) {}]
+)
+IT_CHECK_FOR_METHOD([JAVAX_NET_SSL_SSLENGINE_SETSSLPARAMETERS],
+  [javax.net.ssl.SSLEngine.setSSLParameters],
+  [javax.net.ssl.SSLEngine],
+  ["setSSLParameters", javax.net.ssl.SSLParameters.class],
+  [try { javax.net.ssl.SSLContext.getDefault().createSSLEngine().setSSLParameters(new javax.net.ssl.SSLParameters()); }
+   catch (Exception e) {}]
+)
+
+dnl PR57030 - Add missing TrustAnchor methods
+IT_CHECK_FOR_CONSTRUCTOR([JAVA_SECURITY_CERT_TRUSTANCHOR_X500_CONS],
+  [java.security.cert.TrustAnchor],
+  [javax.security.auth.x500.X500Principal.class, java.security.PublicKey.class, byte@<:@@:>@.class],
+  [new javax.security.auth.x500.X500Principal("bob"),null,null]
+)
+IT_CHECK_FOR_METHOD([JAVA_SECURITY_CERT_TRUSTANCHOR_GETCA],
+  [java.security.cert.TrustAnchor.getCA],
+  [java.security.cert.TrustAnchor],
+  ["getCA"],
+  [new java.security.cert.TrustAnchor("", null, null).getCA()]
+)
+
+dnl PR57031 - Add missing getParameters() method in KeyStoreBuilderParameters
+IT_CHECK_FOR_METHOD([JAVAX_NET_SSL_KEYSTOREBUILDERPARAMETERS_GETPARAMETERS],
+  [javax.net.ssl.KeyStoreBuilderParameters.getParameters],
+  [javax.net.ssl.KeyStoreBuilderParameters],
+  ["getParameters"],
+  [new javax.net.ssl.KeyStoreBuilderParameters(new java.util.ArrayList<java.security.KeyStore.Builder>()).getParameters()]
+)
 
 # Use xvfb-run if found to run gui tests (check-jdk).
 AC_CHECK_PROG(XVFB_RUN_CMD, xvfb-run, [xvfb-run -a -e xvfb-errors], [])

@@ -1,3 +1,16 @@
+2013-04-22  Andrew John Hughes  <gnu.andrew@member.fsf.org>
+
+	PR1336: Bootstrap failure on Fedora 17/18
+	* Makefile.am:
+	(ICEDTEA_BOOTSTRAP_CLASSES): Add SSLContext,
+	SSLEngine, TrustAnchor and KeyStoreBuilderParameters
+	depending on if methods are missing.
+	* NEWS: Updated.
+	* configure.ac: Mention bugs in comments.
+	Add tests for getDefaultSSLParameters/setSSLParameters,
+	new TrustAnchor constructor, TrustAnchor.getCA() and
+	KeyStoreBuilderParameters.getParameters().
+
 2013-04-17  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* Makefile.am:

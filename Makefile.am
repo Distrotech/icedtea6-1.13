@@ -127,10 +127,26 @@ ICEDTEA_BOOTSTRAP_CLASSES += \
 	$(SHARE)/javax/security/sasl/Sasl.java
 endif
 
-# PR 56553 - SSLParameters support missing
-if LACKS_SSLPARAMETERS
+#PR56553 - SSLParameters support missing
+if LACKS_JAVAX_NET_SSL_SSLCONTEXT_GETDEFAULTSSLPARAMETERS
 ICEDTEA_BOOTSTRAP_CLASSES += \
-	$(SHARE)/javax/net/ssl/SSLParameters.java
+	$(SHARE)/javax/net/ssl/SSLContext.java
+endif
+if LACKS_JAVAX_NET_SSL_SSLENGINE_SETSSLPARAMETERS
+ICEDTEA_BOOTSTRAP_CLASSES += \
+	$(SHARE)/javax/net/ssl/SSLEngine.java
+endif
+
+#PR57030 - Add missing TrustAnchor methods
+if LACKS_JAVA_SECURITY_CERT_TRUSTANCHOR_X500_CONS
+ICEDTEA_BOOTSTRAP_CLASSES += \
+	$(SHARE)/java/security/cert/TrustAnchor.java
+endif
+
+#PR57031 - Add missing getParameters() method in KeyStoreBuilderParameters
+if LACKS_JAVAX_NET_SSL_KEYSTOREBUILDERPARAMETERS_GETPARAMETERS
+ICEDTEA_BOOTSTRAP_CLASSES += \
+	$(SHARE)/javax/net/ssl/KeyStoreBuilderParameters.java
 endif
 
 # Flags
