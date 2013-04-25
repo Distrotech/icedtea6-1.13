@@ -559,11 +559,9 @@ ICEDTEA_PATCHES += \
 	patches/hotspot/original/7197906-handle_32_bit_shifts.patch \
 	patches/hotspot/original/fix_get_stack_bounds_leak.patch \
 	patches/hotspot/original/jvmtiEnv.patch \
-	patches/hotspot/original/6840152-jvm_crashes_with_heavyweight_monitors.patch
+	patches/hotspot/original/6840152-jvm_crashes_with_heavyweight_monitors.patch \
+	patches/aarch64.patch
 endif
-
-# Needs to be after the addition of SH support to the original HotSpot
-ICEDTEA_PATCHES += patches/aarch64.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
