@@ -1,3 +1,20 @@
+2013-04-12  Andrew John Hughes  <gnu.andrew@member.fsf.org>
+
+	* Makefile.am:
+	(SECURITY_PATCHES): Correct path to 7036559; not
+	a security patch but a backport to enable one to
+	be applied.
+	* patches/security/20130416/7036559.patch: Moved to...
+	* patches/openjdk/7036559-concurrenthashmap_improvements.patch:
+	...here.
+
+2013-04-11  Jon VanAlten  <jon.vanalten@redhat.com>
+
+	* Makefile.am:
+	(SECURITY_PATCHES): Add new patches.
+	* patches/security/20130416/7036559.patch: Add backport.
+	* patches/security/20130416/8009063.patch: Add security fix.
+
 2013-04-22  Andrew John Hughes  <gnu.andrew@member.fsf.org>
 
 	PR1336: Bootstrap failure on Fedora 17/18
