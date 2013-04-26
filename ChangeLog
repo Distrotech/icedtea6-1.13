@@ -1,3 +1,15 @@
+2013-04-17  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* patches/aarch64.patch:
+	Fix to apply against older HotSpot.
+
+2013-04-17  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	PR1402: Support glibc < 2.17 with AArch64 patch
+	* patches/aarch64.patch:
+	Define EM_AARCH64 for legacy systems
+	with glibc earlier than 2.17.
+
 2013-04-17  Andrew John Hughes  <gnu.andrew@member.fsf.org>
 
 	* patches/openjdk/6669869-Beans_isDesignTime_should_be_per-AppContext.patch:
@@ -32,8 +44,6 @@
 	(clean-drops): Likewise.
 	(download): Don't depend on download-drops.
 	(clean-download): Likewise for clean-drops.
-	* NEWS: Add security issues, backports and
-	mention drop move.
 	* acinclude.m4:
 	(IT_WITH_JAXP_DROP_ZIP): Removed.
 	(IT_WITH_JAF_DROP_ZIP): Likewise.
