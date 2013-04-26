@@ -596,7 +596,8 @@ ICEDTEA_PATCHES += \
 	patches/hotspot/original/fix_get_stack_bounds_leak.patch \
 	patches/hotspot/original/jvmtiEnv.patch \
 	patches/hotspot/original/6840152-jvm_crashes_with_heavyweight_monitors.patch \
-	patches/aarch64.patch
+	patches/hotspot/original/aarch64.patch \
+	patches/hotspot/original/7022999-fastlocking_compiler1_only.patch
 endif
 
 if WITH_RHINO

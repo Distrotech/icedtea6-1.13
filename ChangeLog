@@ -1,5 +1,17 @@
 2013-04-26  Andrew John Hughes  <gnu.andrew@redhat.com>
 
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Fix naming of aarch64 patch
+	and add new one.
+	* NEWS: Updated.
+	* patches/hotspot/original/7022999-fastlocking_compiler1_only.patch:
+	Backport fix to make Zero build work following
+	6840152.
+	* patches/aarch64.patch: Moved to...
+	* patches/hotspot/original/aarch64.patch: ...here.
+
+2013-04-26  Andrew John Hughes  <gnu.andrew@redhat.com>
+
 	* NEWS: Add release notes for 1.11.10, 1.11.11
 	and 1.12.5 and remove features listed under 1.13.0
 	that were provided in those releases.
