@@ -301,8 +301,8 @@ SECURITY_PATCHES = \
 	patches/openjdk/8004302-soap_test_failure.patch \
 	patches/security/20130416/6657673.patch \
 	patches/security/20130416/6657673-fixup.patch \
-	patches/openjdk/7133220-factory-finder-parser-transform-useBSClassLoader.patch \
-	patches/openjdk/6657673-factory-finder-parser-transform-internal-packages.patch \
+	patches/openjdk/7133220-factory_finder_parser_transform_useBSClassLoader.patch \
+	patches/security/20130416/6657673-factory_finder.patch \
 	patches/openjdk/6669869-queries_per_appcontext.patch \
 	patches/openjdk/5102804-memory_leak.patch \
 	patches/openjdk/6963811-deadlock_fix.patch \
