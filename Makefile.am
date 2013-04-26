@@ -301,6 +301,7 @@ SECURITY_PATCHES = \
 	patches/openjdk/8004302-soap_test_failure.patch \
 	patches/security/20130416/6657673.patch \
 	patches/security/20130416/6657673-fixup.patch \
+	patches/security/20130416/6657673-jaxp-backport-factoryfinder.patch \
 	patches/openjdk/6669869-queries_per_appcontext.patch \
 	patches/openjdk/5102804-memory_leak.patch \
 	patches/openjdk/6963811-deadlock_fix.patch \

@@ -8630,32 +8630,6 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/javax/xml/datatype/Factor
          }
          
          // No provider found
-diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/javax/xml/parsers/FactoryFinder.java openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/parsers/FactoryFinder.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/javax/xml/parsers/FactoryFinder.java	2013-04-16 14:28:09.788157518 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/parsers/FactoryFinder.java	2013-04-16 14:29:26.569394704 +0100
-@@ -44,7 +44,7 @@
-  * @author Santiago.PericasGeertsen@sun.com
-  */
- class FactoryFinder {
--    
-+    private static final String DEFAULT_PACKAGE = "com.sun.org.apache.xerces.internal";
-     /**
-      * Internal debug flag.
-      */
-@@ -140,6 +140,13 @@
-     static Object newInstance(String className, ClassLoader cl, boolean doFallback)
-         throws ConfigurationError
-     {
-+        // make sure we have access to restricted packages
-+        if (System.getSecurityManager() != null) {
-+            if (className != null && className.startsWith(DEFAULT_PACKAGE)) {
-+                cl = null;
-+            }
-+        }
-+
-         try {
-             Class providerClass = getProviderClass(className, cl, doFallback);                        
-             Object instance = providerClass.newInstance();
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/javax/xml/stream/FactoryFinder.java openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/stream/FactoryFinder.java
 --- openjdk.orig/jaxp/drop_included/jaxp_src/src/javax/xml/stream/FactoryFinder.java	2013-04-16 14:28:09.788157518 +0100
 +++ openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/stream/FactoryFinder.java	2013-04-16 14:29:26.569394704 +0100
@@ -8815,31 +8789,6 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/javax/xml/stream/FactoryF
          }
  
          // No provider found
-diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/javax/xml/transform/FactoryFinder.java openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/transform/FactoryFinder.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/javax/xml/transform/FactoryFinder.java	2013-04-16 14:28:09.792157582 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/transform/FactoryFinder.java	2013-04-16 14:29:26.569394704 +0100
-@@ -44,6 +44,7 @@
-  * @author Santiago.PericasGeertsen@sun.com
-  */
- class FactoryFinder {
-+    private static final String DEFAULT_PACKAGE = "com.sun.org.apache.xalan.internal.";
-     
-     /**
-      * Internal debug flag.
-@@ -140,6 +141,13 @@
-     static Object newInstance(String className, ClassLoader cl, boolean doFallback)
-         throws ConfigurationError
-     {
-+        // make sure we have access to restricted packages
-+        if (System.getSecurityManager() != null) {
-+            if (className != null && className.startsWith(DEFAULT_PACKAGE)) {
-+                cl = null;
-+            }
-+        }
-+
-         try {
-             Class providerClass = getProviderClass(className, cl, doFallback);                        
-             Object instance = providerClass.newInstance();
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/javax/xml/validation/SchemaFactoryFinder.java openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/validation/SchemaFactoryFinder.java
 --- openjdk.orig/jaxp/drop_included/jaxp_src/src/javax/xml/validation/SchemaFactoryFinder.java	2013-04-16 14:28:09.800157711 +0100
 +++ openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/validation/SchemaFactoryFinder.java	2013-04-16 14:29:26.569394704 +0100
