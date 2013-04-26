@@ -1,5 +1,23 @@
 2013-04-17  Andrew John Hughes  <gnu.andrew@redhat.com>
 
+	* ChangeLog:
+	Move Elliott's entry to correct position.
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Fix path to previous patch.
+	* patches/openjdk/jaxws-tempfiles-ioutils-6.patch:
+	Moved from here to...
+	* patches/jaxws-tempfiles-ioutils-6.patch:
+	...here as not an upstream OpenJDK patch.
+
+2013-04-17  Elliott Baron  <ebaron@redhat.com>
+
+	* patches/openjdk/jaxws-tempfiles-ioutils-6.patch:
+	Restrict temp file permissions.
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Added new patch.
+
+2013-04-17  Andrew John Hughes  <gnu.andrew@redhat.com>
+
 	* patches/aarch64.patch:
 	Fix to apply against older HotSpot.
 

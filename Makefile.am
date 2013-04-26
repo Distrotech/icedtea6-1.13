@@ -539,7 +539,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7046929-fix_t6397104_test_failure.patch \
 	patches/openjdk/7024568-long_method_resolution_oom_error.patch \
 	patches/openjdk/7003595-incompatibleclasschangeerror.patch \
-	patches/openjdk/6500343-bad_code_from_conditionals.patch
+	patches/openjdk/6500343-bad_code_from_conditionals.patch \
+	patches/jaxws-tempfiles-ioutils-6.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
