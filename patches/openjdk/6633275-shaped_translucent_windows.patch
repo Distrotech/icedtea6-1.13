@@ -995,13 +995,6 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/KeyboardFocusManager.java 
 diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/peer/WindowPeer.java openjdk/jdk/src/share/classes/java/awt/peer/WindowPeer.java
 --- openjdk.orig/jdk/src/share/classes/java/awt/peer/WindowPeer.java	2012-10-26 19:25:50.000000000 +0100
 +++ openjdk/jdk/src/share/classes/java/awt/peer/WindowPeer.java	2013-02-13 16:44:00.191490234 +0000
-@@ -1,5 +1,5 @@
- /*
-- * Copyright (c) 1995, 2007, Oracle and/or its affiliates. All rights reserved.
-+ * Copyright (c) 1995, 2009, Oracle and/or its affiliates. All rights reserved.
-  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
-  *
-  * This code is free software; you can redistribute it and/or modify it
 @@ -27,6 +27,8 @@
  
  import java.awt.*;
@@ -1041,13 +1034,6 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/peer/WindowPeer.java openj
 diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/Window.java openjdk/jdk/src/share/classes/java/awt/Window.java
 --- openjdk.orig/jdk/src/share/classes/java/awt/Window.java	2013-02-13 16:42:59.862520534 +0000
 +++ openjdk/jdk/src/share/classes/java/awt/Window.java	2013-02-13 16:44:00.195490298 +0000
-@@ -1,5 +1,5 @@
- /*
-- * Copyright (c) 1995, 2007, Oracle and/or its affiliates. All rights reserved.
-+ * Copyright (c) 1995, 2009, Oracle and/or its affiliates. All rights reserved.
-  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
-  *
-  * This code is free software; you can redistribute it and/or modify it
 @@ -28,6 +28,7 @@
  import java.awt.event.*;
  import java.awt.im.InputContext;
@@ -1548,13 +1534,6 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/AWTAccessor.java openjdk/jd
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/EmbeddedFrame.java openjdk/jdk/src/share/classes/sun/awt/EmbeddedFrame.java
 --- openjdk.orig/jdk/src/share/classes/sun/awt/EmbeddedFrame.java	2012-10-26 19:25:59.000000000 +0100
 +++ openjdk/jdk/src/share/classes/sun/awt/EmbeddedFrame.java	2013-02-13 16:44:00.195490298 +0000
-@@ -1,5 +1,5 @@
- /*
-- * Copyright (c) 1996, 2006, Oracle and/or its affiliates. All rights reserved.
-+ * Copyright (c) 1996, 2009, Oracle and/or its affiliates. All rights reserved.
-  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
-  *
-  * This code is free software; you can redistribute it and/or modify it
 @@ -579,5 +579,12 @@
          }
          public void updateMinimumSize() {
@@ -1923,13 +1902,6 @@ diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XToolkit.java openjdk
 diff -Nru openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWindowPeer.java openjdk/jdk/src/solaris/classes/sun/awt/X11/XWindowPeer.java
 --- openjdk.orig/jdk/src/solaris/classes/sun/awt/X11/XWindowPeer.java	2012-10-26 19:26:15.000000000 +0100
 +++ openjdk/jdk/src/solaris/classes/sun/awt/X11/XWindowPeer.java	2013-02-13 16:44:00.199490361 +0000
-@@ -1,5 +1,5 @@
- /*
-- * Copyright (c) 2002, 2007, Oracle and/or its affiliates. All rights reserved.
-+ * Copyright (c) 2002, 2009, Oracle and/or its affiliates. All rights reserved.
-  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
-  *
-  * This code is free software; you can redistribute it and/or modify it
 @@ -30,6 +30,8 @@
  import java.awt.event.FocusEvent;
  import java.awt.event.WindowEvent;
@@ -2842,13 +2814,6 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WComponentPeer.ja
 diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WFileDialogPeer.java openjdk/jdk/src/windows/classes/sun/awt/windows/WFileDialogPeer.java
 --- openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WFileDialogPeer.java	2012-10-26 19:26:17.000000000 +0100
 +++ openjdk/jdk/src/windows/classes/sun/awt/windows/WFileDialogPeer.java	2013-02-13 16:44:00.199490361 +0000
-@@ -1,5 +1,5 @@
- /*
-- * Copyright (c) 1996, 2007, Oracle and/or its affiliates. All rights reserved.
-+ * Copyright (c) 1996, 2009, Oracle and/or its affiliates. All rights reserved.
-  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
-  *
-  * This code is free software; you can redistribute it and/or modify it
 @@ -244,4 +244,10 @@
      public boolean isRestackSupported() {
          return false;
@@ -2863,13 +2828,6 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WFileDialogPeer.j
 diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WPrintDialogPeer.java openjdk/jdk/src/windows/classes/sun/awt/windows/WPrintDialogPeer.java
 --- openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WPrintDialogPeer.java	2012-10-26 19:26:17.000000000 +0100
 +++ openjdk/jdk/src/windows/classes/sun/awt/windows/WPrintDialogPeer.java	2013-02-13 16:44:00.199490361 +0000
-@@ -1,5 +1,5 @@
- /*
-- * Copyright (c) 1999, 2007, Oracle and/or its affiliates. All rights reserved.
-+ * Copyright (c) 1999, 2009, Oracle and/or its affiliates. All rights reserved.
-  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
-  *
-  * This code is free software; you can redistribute it and/or modify it
 @@ -156,4 +156,10 @@
      public boolean isRestackSupported() {
          return false;
@@ -2929,13 +2887,6 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WToolkit.java ope
 diff -Nru openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java openjdk/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java
 --- openjdk.orig/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java	2012-10-26 19:26:17.000000000 +0100
 +++ openjdk/jdk/src/windows/classes/sun/awt/windows/WWindowPeer.java	2013-02-13 16:44:00.203490426 +0000
-@@ -1,5 +1,5 @@
- /*
-- * Copyright (c) 1996, 2007, Oracle and/or its affiliates. All rights reserved.
-+ * Copyright (c) 1996, 2009, Oracle and/or its affiliates. All rights reserved.
-  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
-  *
-  * This code is free software; you can redistribute it and/or modify it
 @@ -31,17 +31,15 @@
  
  import java.beans.*;

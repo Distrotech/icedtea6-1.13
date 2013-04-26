@@ -1014,69 +1014,6 @@ AC_DEFUN([IT_WITH_HOTSPOT_SRC_ZIP],
   AC_SUBST(ALT_HOTSPOT_SRC_ZIP)
 ])
 
-AC_DEFUN([IT_WITH_JAXP_DROP_ZIP],
-[
-  AC_MSG_CHECKING([for a JAXP drop zip])
-  AC_ARG_WITH([jaxp-drop-zip],
-              [AS_HELP_STRING(--with-jaxp-drop-zip,specify the location of the JAXP drop zip)],
-  [
-    ALT_JAXP_DROP_ZIP=${withval}
-    if test "x${ALT_JAXP_DROP_ZIP}" = "xno"; then
-      ALT_JAXP_DROP_ZIP="not specified"
-    elif ! test -f ${ALT_JAXP_DROP_ZIP} ; then
-      AC_MSG_ERROR([Invalid JAXP drop zip specified: ${ALT_JAXP_DROP_ZIP}])
-    fi
-  ],
-  [ 
-    ALT_JAXP_DROP_ZIP="not specified"
-  ])
-  AM_CONDITIONAL(USE_ALT_JAXP_DROP_ZIP, test "x${ALT_JAXP_DROP_ZIP}" != "xnot specified")
-  AC_MSG_RESULT(${ALT_JAXP_DROP_ZIP})
-  AC_SUBST(ALT_JAXP_DROP_ZIP)
-])
-
-AC_DEFUN([IT_WITH_JAF_DROP_ZIP],
-[
-  AC_MSG_CHECKING([for a JAF drop zip])
-  AC_ARG_WITH([jaf-drop-zip],
-              [AS_HELP_STRING(--with-jaf-drop-zip,specify the location of the JAF drop zip)],
-  [
-    ALT_JAF_DROP_ZIP=${withval}
-    if test "x${ALT_JAF_DROP_ZIP}" = "xno"; then
-      ALT_JAF_DROP_ZIP="not specified"
-    elif ! test -f ${ALT_JAF_DROP_ZIP} ; then
-      AC_MSG_ERROR([Invalid JAF drop zip specified: ${ALT_JAF_DROP_ZIP}])
-    fi
-  ],
-  [ 
-    ALT_JAF_DROP_ZIP="not specified"
-  ])
-  AM_CONDITIONAL(USE_ALT_JAF_DROP_ZIP, test "x${ALT_JAF_DROP_ZIP}" != "xnot specified")
-  AC_MSG_RESULT(${ALT_JAF_DROP_ZIP})
-  AC_SUBST(ALT_JAF_DROP_ZIP)
-])
-
-AC_DEFUN([IT_WITH_JAXWS_DROP_ZIP],
-[
-  AC_MSG_CHECKING([for a JAXWS drop zip])
-  AC_ARG_WITH([jaxws-drop-zip],
-              [AS_HELP_STRING(--with-jaxws-drop-zip,specify the location of the JAXWS drop zip)],
-  [
-    ALT_JAXWS_DROP_ZIP=${withval}
-    if test "x${ALT_JAXWS_DROP_ZIP}" = "xno"; then
-      ALT_JAXWS_DROP_ZIP="not specified"
-    elif ! test -f ${ALT_JAXWS_DROP_ZIP} ; then
-      AC_MSG_ERROR([Invalid JAXWS drop zip specified: ${ALT_JAXWS_DROP_ZIP}])
-    fi
-  ],
-  [ 
-    ALT_JAXWS_DROP_ZIP="not specified"
-  ])
-  AM_CONDITIONAL(USE_ALT_JAXWS_DROP_ZIP, test "x${ALT_JAXWS_DROP_ZIP}" != "xnot specified")
-  AC_MSG_RESULT(${ALT_JAXWS_DROP_ZIP})
-  AC_SUBST(ALT_JAXWS_DROP_ZIP)
-])
-
 AC_DEFUN([IT_ENABLE_HG],
 [
   AC_MSG_CHECKING(whether to retrieve the source code from Mercurial)

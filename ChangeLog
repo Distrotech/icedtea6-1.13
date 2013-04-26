@@ -1,3 +1,102 @@
+2013-04-17  Andrew John Hughes  <gnu.andrew@member.fsf.org>
+
+	* patches/openjdk/6669869-Beans_isDesignTime_should_be_per-AppContext.patch:
+	Reapplied as a security patch pre-requisite.
+	* patches/security/20130201/8001235.patch:
+	Dropped as included in JAXP tarball used.
+	* INSTALL: Remove --with-{jaxp,jaf,jaxws}-drop-zip documentation.
+	* Makefile.am:
+	(JAXWS_DROP_URL): Removed.
+	(JAXWS_DROP_ZIP): Likewise.
+	(JAXWS_DROP_SHA256SUM): Likewise.
+	(JAF_DROP_URL): Likewise.
+	(JAF_DROP_ZIP): Likewise.
+	(JAF_DROP_SHA256SUM): Likewise.
+	(JAF_DROP_URL): Likewise.
+	(JAXP_DROP_URL): Likewise.
+	(JAXP_DROP_ZIP): Likewise.
+	(JAXP_DROP_SHA256SUM): Likewise.
+	(DROP_PATCHES): Add patches providing code
+	previously provided by drop zips.
+	(SECURITY_PATCHES): Updated.
+	(ICEDTEA_PATCHES): Add DROP_PATCHES.  Remove
+	6669869 duplicate.
+	(ICEDTEA_ENV): Remove ALT_DROPS_DIR.
+	(download-jaxp-drop): Removed.
+	(clean-download-jaxp-drop): Likewise.
+	(download-jaf-drop): Likewise.
+	(clean-download-jaf-drop): Likewise.
+	(download-jaxws-drop): Likewise.
+	(clean-download-jaxws-drop): Likewise.
+	(download-drops): Likewise.
+	(clean-drops): Likewise.
+	(download): Don't depend on download-drops.
+	(clean-download): Likewise for clean-drops.
+	* NEWS: Add security issues, backports and
+	mention drop move.
+	* acinclude.m4:
+	(IT_WITH_JAXP_DROP_ZIP): Removed.
+	(IT_WITH_JAF_DROP_ZIP): Likewise.
+	(IT_WITH_JAXWS_DROP_ZIP): Likewise.
+	* configure.ac: Don't call removed macros above.
+	* patches/ecj/override.patch: Add new cases introduced
+	by security patches (sigh).
+	* patches/libraries.patch,
+	* patches/nomotif-6706121.patch:
+	Regenerated against security patches.
+	* patches/openjdk/5102804-memory_leak.patch,
+	* patches/openjdk/6501644-icu_sync.patch:
+	Backports for security patches.
+	* patches/openjdk/6633275-shaped_translucent_windows.patch:
+	Remove copyright notice changes broken by 8006790 security patch.
+	* patches/openjdk/6669869-queries_per_appcontext.patch,
+	* patches/openjdk/6886358-layout_update.patch,
+	* patches/openjdk/6963811-deadlock_fix.patch,
+	* patches/openjdk/7017324-kerning_crash.patch,
+	* patches/openjdk/7064279-fixup.patch,
+	* patches/openjdk/7064279-resource_release.patch,
+	* patches/openjdk/8004302-soap_test_failure.patch:
+	More backports for security patches.
+	* patches/openjdk/jaf-b20_jaxws2-1_6_2011_06_13.patch,
+	* patches/openjdk/jaxp144_05.patch:
+	Add drop zips in patch form.
+	* patches/security/20130416/6657673-fixup.patch,
+	* patches/security/20130416/6657673.patch,
+	* patches/security/20130416/7200507.patch,
+	* patches/security/20130416/8000724.patch,
+	* patches/security/20130416/8001031.patch,
+	* patches/security/20130416/8001040.patch,
+	* patches/security/20130416/8001322.patch,
+	* patches/security/20130416/8001329.patch,
+	* patches/security/20130416/8003335.patch,
+	* patches/security/20130416/8003445.patch,
+	* patches/security/20130416/8003543.patch,
+	* patches/security/20130416/8004261.patch,
+	* patches/security/20130416/8004336.patch,
+	* patches/security/20130416/8004986.patch,
+	* patches/security/20130416/8005432.patch,
+	* patches/security/20130416/8005943.patch,
+	* patches/security/20130416/8006309.patch,
+	* patches/security/20130416/8006435.patch,
+	* patches/security/20130416/8006790.patch,
+	* patches/security/20130416/8006795.patch,
+	* patches/security/20130416/8007406.patch,
+	* patches/security/20130416/8007617.patch,
+	* patches/security/20130416/8009699.patch:
+	Add security patches.
+	* patches/xjc.patch:
+	Regenerate JAXWS patch against sources, not
+	drop system.
+
+2013-04-12  Omair Majid  <omajid@redhat.com>
+
+	* patches/security/20130416/8007667.patch,
+	* patches/security/20130416/8007918.patch,
+	* patches/security/20130416/8009305.patch,
+	* patches/security/20130416/8009814.patch,
+	* patches/security/20130416/8009857.patch:
+	Add security patches.
+
 2013-04-25  Andrew John Hughes  <gnu.andrew@member.fsf.org>
 
 	* Makefile.am:

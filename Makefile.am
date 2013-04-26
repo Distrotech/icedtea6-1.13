@@ -17,15 +17,6 @@ JAMVM_BASE_URL = http://icedtea.classpath.org/download/drops/jamvm
 JAMVM_URL = $(JAMVM_BASE_URL)/jamvm-$(JAMVM_VERSION).tar.gz
 JAMVM_SRC_ZIP = jamvm-$(JAMVM_VERSION).tar.gz
 
-JAXWS_DROP_URL = http://icedtea.classpath.org/download/drops
-JAXWS_DROP_ZIP = jdk6-jaxws2_1_6-2011_06_13.zip
-JAXWS_DROP_SHA256SUM = 229040544e791f44906e8e7b6f6faf503c730a5d854275135f3925490d5c3be3
-JAF_DROP_URL = http://icedtea.classpath.org/download/drops
-JAF_DROP_ZIP = jdk6-jaf-b20.zip
-JAF_DROP_SHA256SUM = 78c7b5c9d6271e88ee46abadd018a61f1e9645f8936cc8df1617e5f4f5074012
-JAXP_DROP_URL = http://icedtea.classpath.org/download/drops
-JAXP_DROP_ZIP = jaxp144_04.zip
-JAXP_DROP_SHA256SUM = 490f696218c1fed9cb180680af883fe309b414fec232e9cec19645e12ad0b43c
 OPENJDK_HG_URL = http://hg.openjdk.java.net/jdk6/jdk6
 
 HOTSPOT_SRC_ZIP = hotspot.tar.gz
@@ -266,6 +257,10 @@ TAPSET_TEST_SRCS = \
 
 ICEDTEA_FSG_PATCHES =
 
+DROP_PATCHES = \
+	patches/openjdk/jaf-b20_jaxws2-1_6_2011_06_13.patch \
+	patches/openjdk/jaxp144_05.patch
+
 SECURITY_PATCHES = \
 	patches/security/20120830/7182135-impossible_to_use_some_editors_directly.patch \
 	patches/security/20130201/7201068.patch \
@@ -295,7 +290,6 @@ SECURITY_PATCHES = \
 	patches/security/20130201/8001242.patch \
 	patches/security/20130201/8001972.patch \
 	patches/security/20130201/8002325.patch \
-	patches/security/20130201/8001235.patch \
 	patches/security/20130219/8006446.patch \
 	patches/security/20130219/8006777.patch \
 	patches/security/20130219/8007688.patch \
@@ -303,16 +297,54 @@ SECURITY_PATCHES = \
 	patches/security/20130304/8007675.patch \
 	patches/openjdk/8009641-8007675_build_fix.patch \
 	patches/openjdk/7036559-concurrenthashmap_improvements.patch \
-        patches/security/20130416/8009063.patch
+	patches/security/20130416/8009063.patch \
+	patches/openjdk/8004302-soap_test_failure.patch \
+	patches/security/20130416/6657673.patch \
+	patches/security/20130416/6657673-fixup.patch \
+	patches/openjdk/6669869-queries_per_appcontext.patch \
+	patches/openjdk/5102804-memory_leak.patch \
+	patches/openjdk/6963811-deadlock_fix.patch \
+	patches/openjdk/7064279-resource_release.patch \
+	patches/openjdk/7064279-fixup.patch \
+	patches/security/20130416/7200507.patch \
+	patches/security/20130416/8000724.patch \
+	patches/security/20130416/8004986.patch \
+	patches/openjdk/6501644-icu_sync.patch \
+	patches/openjdk/6886358-layout_update.patch \
+	patches/security/20130416/8001031.patch \
+	patches/openjdk/7017324-kerning_crash.patch \
+	patches/security/20130416/8001040.patch \
+	patches/security/20130416/8001322.patch \
+	patches/security/20130416/8001329.patch \
+	patches/security/20130416/8003335.patch \
+	patches/security/20130416/8003445.patch \
+	patches/security/20130416/8003543.patch \
+	patches/security/20130416/8004261.patch \
+	patches/security/20130416/8005432.patch \
+	patches/security/20130416/8005943.patch \
+	patches/security/20130416/8006435.patch \
+	patches/security/20130416/8006790.patch \
+	patches/security/20130416/8006795.patch \
+	patches/security/20130416/8007406.patch \
+	patches/security/20130416/8007617.patch \
+	patches/security/20130416/8007667.patch \
+	patches/security/20130416/8007918.patch \
+	patches/security/20130416/8009305.patch \
+	patches/security/20130416/8009814.patch \
+	patches/security/20130416/8009857.patch
 
 if !WITH_ALT_HSBUILD
 SECURITY_PATCHES += \
-	patches/security/20130201/8001307.patch
+	patches/security/20130201/8001307.patch \
+	patches/security/20130416/8004336.patch \
+	patches/security/20130416/8006309.patch \
+	patches/security/20130416/8009699.patch
 endif
 
 SPECIAL_SECURITY_PATCH = patches/security/20120214/7112642.patch
 
 ICEDTEA_PATCHES = \
+	$(DROP_PATCHES) \
 	$(SECURITY_PATCHES) \
 	patches/openjdk/4993545-nativeinlightfixer.patch \
 	patches/openjdk/6637796-set_bounds.patch \
@@ -459,7 +491,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6390045-error_cannot_access_java_lang_void.patch \
 	patches/openjdk/6752638-preferLocaleFonts_throws_NPE.patch \
 	patches/openjdk/5047314-Collator_compare_runs_indefinitely.patch \
-	patches/openjdk/6669869-Beans_isDesignTime_should_be_per-AppContext.patch \
 	patches/openjdk/6934356-Vector_writeObject_serialization_DL.patch \
 	patches/openjdk/7036582-Improve_test_coverage_of_BigDecimal.patch \
 	patches/openjdk/6806261-BigDecimal_longValueExact_throws_NPE.patch \
@@ -718,7 +749,6 @@ ICEDTEA_ENV = \
 	DERIVATIVE_ID="$(ICEDTEA_NAME) $(PACKAGE_VERSION)$(ICEDTEA_REV)" \
 	DEBUG_CLASSFILES="true" \
 	DEBUG_BINARIES="true" \
-	ALT_DROPS_DIR="$(abs_top_builddir)/drops" \
 	VERBOSE="$(VERBOSE)" \
 	ALT_OUTPUTDIR="$(BUILD_OUTPUT_DIR)" \
 	STATIC_CXX="false"
@@ -913,98 +943,6 @@ endif
 clean-hgforest:
 	rm -f stamps/hgforest.stamp
 
-stamps/download-jaxp-drop.stamp:
-	mkdir -p drops
-if USE_ALT_JAXP_DROP_ZIP
-	ln -sf $(ALT_JAXP_DROP_ZIP) drops/$(JAXP_DROP_ZIP)
-endif
-	if ! echo "$(JAXP_DROP_SHA256SUM)  drops/$(JAXP_DROP_ZIP)" \
-	  | $(SHA256SUM) --check ; \
-	then \
-	  if test "x$(enable_downloading)" = "xyes"; then \
-	    if [ -f drops/$(JAXP_DROP_ZIP) ] ; \
-	    then \
-	      mv drops/$(JAXP_DROP_ZIP) drops/$(JAXP_DROP_ZIP).old ; \
-	    fi ; \
-	    $(WGET) $(JAXP_DROP_URL)/$(JAXP_DROP_ZIP) -O drops/$(JAXP_DROP_ZIP); \
-	    if ! echo "$(JAXP_DROP_SHA256SUM)  drops/$(JAXP_DROP_ZIP)" \
-	      | $(SHA256SUM) --check ; \
-	      then echo "ERROR: Bad download of jaxp drop zip"; false; \
-	    fi; \
-	  else \
-	    echo "ERROR: No up-to-date JAXP drop zip available"; exit -1; \
-	  fi ; \
-	fi ;
-	mkdir -p stamps
-	touch $@
-
-clean-download-jaxp-drop:
-	rm -f drops/$(JAXP_DROP_ZIP)
-	rm -f stamps/download-jaxp-drop.stamp
-
-stamps/download-jaf-drop.stamp:
-	mkdir -p drops
-if USE_ALT_JAF_DROP_ZIP
-	ln -sf $(ALT_JAF_DROP_ZIP) drops/$(JAF_DROP_ZIP)
-endif
-	if ! echo "$(JAF_DROP_SHA256SUM)  drops/$(JAF_DROP_ZIP)" \
-	  | $(SHA256SUM) --check ; \
-	then \
-	  if test "x$(enable_downloading)" = "xyes"; then \
-	    if [ -f drops/$(JAF_DROP_ZIP) ] ; \
-	    then \
-	      mv drops/$(JAF_DROP_ZIP) drops/$(JAF_DROP_ZIP).old ; \
-	    fi ; \
-	    $(WGET) $(JAF_DROP_URL)/$(JAF_DROP_ZIP) -O drops/$(JAF_DROP_ZIP); \
-	    if ! echo "$(JAF_DROP_SHA256SUM)  drops/$(JAF_DROP_ZIP)" \
-	      | $(SHA256SUM) --check ; \
-	      then echo "ERROR: Bad download of jaf drop zip"; false; \
-	    fi; \
-	  else \
-	    echo "ERROR: No up-to-date JAF drop zip available"; exit -1; \
-	  fi; \
-	fi ;
-	mkdir -p stamps
-	touch $@
-
-clean-download-jaf-drop:
-	rm -f drops/$(JAF_DROP_ZIP)
-	rm -f stamps/download-jaf-drop.stamp
-
-stamps/download-jaxws-drop.stamp:
-	mkdir -p drops
-if USE_ALT_JAXWS_DROP_ZIP
-	ln -sf $(ALT_JAXWS_DROP_ZIP) drops/$(JAXWS_DROP_ZIP)
-endif
-	if ! echo "$(JAXWS_DROP_SHA256SUM)  drops/$(JAXWS_DROP_ZIP)" \
-	  | $(SHA256SUM) --check ; \
-	then \
-	  if test "x$(enable_downloading)" = "xyes"; then \
-	    if [ -f drops/$(JAXWS_DROP_ZIP) ] ; \
-	    then \
-	      mv drops/$(JAXWS_DROP_ZIP) drops/$(JAXWS_DROP_ZIP).old ; \
-	    fi ; \
-	    $(WGET) $(JAXWS_DROP_URL)/$(JAXWS_DROP_ZIP) -O drops/$(JAXWS_DROP_ZIP); \
-	    if ! echo "$(JAXWS_DROP_SHA256SUM)  drops/$(JAXWS_DROP_ZIP)" \
-	      | $(SHA256SUM) --check ; \
-	      then echo "ERROR: Bad download of jaxws drop zip"; false; \
-	    fi; \
-	  else \
-	    echo "ERROR: No up-to-date JAXWS drop zip available"; exit -1; \
-	  fi; \
-	fi ;
-	mkdir -p stamps
-	touch $@
-
-clean-download-jaxws-drop:
-	rm -f drops/$(JAXWS_DROP_ZIP)
-	rm -f stamps/download-jaxws-drop.stamp
-
-stamps/download-drops.stamp: stamps/download-jaxp-drop.stamp \
- stamps/download-jaxws-drop.stamp stamps/download-jaf-drop.stamp
-	mkdir -p stamps
-	touch $@
-
 stamps/download-cacao.stamp:
 if BUILD_CACAO
 if !USE_SYSTEM_CACAO
@@ -1066,14 +1004,6 @@ endif
 clean-download-jamvm:
 	rm -f $(JAMVM_SRC_ZIP)
 	rm -f stamps/download-jamvm.stamp
-
-clean-drops: clean-download-jaxp-drop clean-download-jaf-drop \
- clean-download-jaxws-drop
-	if [ -e drops ] ; then \
-	  rm -f drops/*.old ; \
-	  rmdir drops ; \
-	fi
-	rm -f stamps/download-drops.stamp
 
 stamps/download-openjdk.stamp: stamps/hgforest.stamp
 if USE_HG
@@ -1148,11 +1078,11 @@ clean-download-hotspot:
 	rm -f $(HOTSPOT_SRC_ZIP)
 	rm -f stamps/download-hotspot.stamp
 
-stamps/download.stamp: stamps/download-drops.stamp stamps/download-cacao.stamp \
- stamps/download-jamvm.stamp stamps/download-openjdk.stamp stamps/download-hotspot.stamp
+stamps/download.stamp: stamps/download-cacao.stamp stamps/download-jamvm.stamp \
+ stamps/download-openjdk.stamp stamps/download-hotspot.stamp
 	touch stamps/download.stamp
 
-clean-download: clean-drops clean-download-cacao clean-download-jamvm \
+clean-download: clean-download-cacao clean-download-jamvm \
  clean-download-openjdk clean-download-hotspot
 	rm -f stamps/download.stamp
 
@@ -2774,17 +2704,9 @@ download: stamps/download.stamp
 
 download-cacao: stamps/download-cacao.stamp
 
-download-drops: stamps/download-drops.stamp
-
 download-hotspot: stamps/download-hotspot.stamp
 
 download-jamvm: stamps/download-jamvm.stamp
-
-download-jaf-drop: stamps/download-jaf-drop.stamp
-
-download-jaxp-drop: stamps/download-jaxp-drop.stamp
-
-download-jaxws-drop: stamps/download-jaxws-drop.stamp
 
 download-openjdk: stamps/download-openjdk.stamp
 
