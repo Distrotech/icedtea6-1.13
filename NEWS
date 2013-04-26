@@ -15,19 +15,135 @@ New in release 1.13.0 (201X-XX-XX):
 
 * New features
   - PR1317: Provide an option to build with a more up-to-date HotSpot
-  - PR1380: Add AArch64 support to Zero
 * Backports
   - S8009641: OpenJDK 6 build broken via 8007675 fix
-  - S7197906: BlockOffsetArray::power_to_cards_back() needs to handle > 32 bit shifts (bundled HotSpot only)
-  - OJ3: Fix get_stack_bounds memory leak (alternate fix for S7197906, bundled HotSpot only)
   - OJ4: Backport the new version of copyMemory from OpenJDK 7 to allow Snappy to build
 * Bug fixes
   - PR1318: Fix automatic enabling of the Zero build on non-JIT architectures which don't use CACAO or JamVM.
   - RH902004: very bad performance with E-Porto Add-In für OpenOffice Writer installed (hs23 only)
+
+New in release 1.12.5 (2013-04-24):
+
+* New features
+  - JAXP, JAXWS & JAF supplied as patches rather than drops to aid subsequent patching.
+  - PR1380: Add AArch64 support to Zero
+* Security fixes
+  - S6657673, CVE-2013-1518: Issues with JAXP
+  - S7200507: Refactor Introspector internals
+  - S8000724, CVE-2013-2417: Improve networking serialization
+  - S8001031, CVE-2013-2419: Better font processing
+  - S8001040, CVE-2013-1537: Rework RMI model
+  - S8001322: Refactor deserialization
+  - S8001329, CVE-2013-1557: Augment RMI logging
+  - S8003335: Better handling of Finalizer thread
+  - S8003445: Adjust JAX-WS to focus on API
+  - S8003543, CVE-2013-2415: Improve processing of MTOM attachments
+  - S8004261: Improve input validation
+  - S8004336, CVE-2013-2431: Better handling of method handle intrinsic frames
+  - S8004986, CVE-2013-2383: Better handling of glyph table
+  - S8004987, CVE-2013-2384: Improve font layout
+  - S8004994, CVE-2013-1569: Improve checking of glyph table
+  - S8005432: Update access to JAX-WS
+  - S8005943: (process) Improved Runtime.exec
+  - S8006309: More reliable control panel operation
+  - S8006435, CVE-2013-2424: Improvements in JMX
+  - S8006790: Improve checking for windows
+  - S8006795: Improve font warning messages
+  - S8007406: Improve accessibility of AccessBridge
+  - S8007617, CVE-2013-2420: Better validation of images
+  - S8007667, CVE-2013-2430: Better image reading
+  - S8007918, CVE-2013-2429: Better image writing
+  - S8009063, CVE-2013-2426: Improve reliability of ConcurrentHashMap
+  - S8009305, CVE-2013-0401: Improve AWT data transfer
+  - S8009699, CVE-2013-2421: Methodhandle lookup
+  - S8009814, CVE-2013-1488: Better driver management
+  - S8009857, CVE-2013-2422: Problem with plugin
+  - RH952389: Temporary files created with insecure permissions
+* Backports
+  - S7197906: BlockOffsetArray::power_to_cards_back() needs to handle > 32 bit shifts
+  - S7036559: ConcurrentHashMap footprint and contention improvements
+  - S5102804: Memory leak in Introspector.getBeanInfo(Class) for custom BeanInfo: Class param (with WeakCache from S6397609)
+  - S6501644: sync LayoutEngine *code* structure to match ICU
+  - S6886358: layout code update
+  - S6963811: Deadlock-prone locking changes in Introspector
+  - S7017324: Kerning crash in JDK 7 since ICU layout update
+  - S7064279: Introspector.getBeanInfo() should release some resources in timely manner
+  - S8004302: javax/xml/soap/Test7013971.java fails since jdk6u39b01
+  - S7133220: Additional patches to JAXP 1.4.5 update 1 for 7u4 (partial for S6657673)
+  - S8009530: ICU Kern table support broken
+* Bug fixes
+  - OJ3: Fix get_stack_bounds memory leak (alternate fix for S7017193)
   - PR1362: Fedora 19 / rawhide FTBFS SIGILL
   - PR1338: Remove dependence on libXp
   - PR1339: Simplify the rhino class rewriter to avoid use of concurrency
   - PR1336: Bootstrap failure on Fedora 17/18
+  - PR1319: Correct #ifdef to #if
+  - PR1402: Support glibc < 2.17 with AArch64 patch
+  - Give xalan/xerces access to their own internal packages.
+
+New in release 1.11.11 (2013-04-24):
+
+* Security fixes
+  - RH952389: Temporary files created with insecure permissions
+* Backports
+  - S7133220: Additional patches to JAXP 1.4.5 update 1 for 7u4 (partial for S6657673)
+  - S6657673: Issues with JAXP (include fragment dependent on S7133220)
+  - S8009530: ICU Kern table support broken
+* Bug fixes
+  - PR1402: Support glibc < 2.17 with AArch64 patch
+  - Give xalan/xerces access to their own internal packages.
+
+New in release 1.11.10 (2013-04-17):
+
+* New features
+  - JAXP, JAXWS & JAF supplied as patches rather than drops to aid subsequent patching.
+  - PR1380: Add AArch64 support to Zero
+* Security fixes
+  - S6657673, CVE-2013-1518: Issues with JAXP
+  - S7200507: Refactor Introspector internals
+  - S8000724, CVE-2013-2417: Improve networking serialization
+  - S8001031, CVE-2013-2419: Better font processing
+  - S8001040, CVE-2013-1537: Rework RMI model
+  - S8001322: Refactor deserialization
+  - S8001329, CVE-2013-1557: Augment RMI logging
+  - S8003335: Better handling of Finalizer thread
+  - S8003445: Adjust JAX-WS to focus on API
+  - S8003543, CVE-2013-2415: Improve processing of MTOM attachments
+  - S8004261: Improve input validation
+  - S8004336, CVE-2013-2431: Better handling of method handle intrinsic frames
+  - S8004986, CVE-2013-2383: Better handling of glyph table
+  - S8004987, CVE-2013-2384: Improve font layout
+  - S8004994, CVE-2013-1569: Improve checking of glyph table
+  - S8005432: Update access to JAX-WS
+  - S8005943: (process) Improved Runtime.exec
+  - S8006309: More reliable control panel operation
+  - S8006435, CVE-2013-2424: Improvements in JMX
+  - S8006790: Improve checking for windows
+  - S8006795: Improve font warning messages
+  - S8007406: Improve accessibility of AccessBridge
+  - S8007617, CVE-2013-2420: Better validation of images
+  - S8007667, CVE-2013-2430: Better image reading
+  - S8007918, CVE-2013-2429: Better image writing
+  - S8009063, CVE-2013-2426: Improve reliability of ConcurrentHashMap
+  - S8009305, CVE-2013-0401: Improve AWT data transfer
+  - S8009699, CVE-2013-2421: Methodhandle lookup
+  - S8009814, CVE-2013-1488: Better driver management
+  - S8009857, CVE-2013-2422: Problem with plugin
+* Backports
+  - S7197906: BlockOffsetArray::power_to_cards_back() needs to handle > 32 bit shifts
+  - S7036559: ConcurrentHashMap footprint and contention improvements
+  - S5102804: Memory leak in Introspector.getBeanInfo(Class) for custom BeanInfo: Class param (with WeakCache from S6397609)
+  - S6501644: sync LayoutEngine *code* structure to match ICU
+  - S6886358: layout code update
+  - S6963811: Deadlock-prone locking changes in Introspector
+  - S7017324: Kerning crash in JDK 7 since ICU layout update
+  - S7064279: Introspector.getBeanInfo() should release some resources in timely manner
+  - S8004302: javax/xml/soap/Test7013971.java fails since jdk6u39b01
+* Bug fixes
+  - OJ3: Fix get_stack_bounds memory leak (alternate fix for S7017193)
+  - PR1362: Fedora 19 / rawhide FTBFS SIGILL
+  - PR1319: Correct #ifdef to #if
+  - PR1339: Simplify the rhino class rewriter to avoid use of concurrency
 
 New in release 1.12.4 (2013-03-04):
 
@@ -278,6 +394,7 @@ New in release 1.11.5 (2012-10-16):
   - S7199153: TEST_BUG: try-with-resources syntax pushed to 6-open repo
 * Bug fixes
   - PR1194: IcedTea tries to build with /usr/lib/jvm/java-openjdk (now a 1.7 VM) by default
+  - PR1338: Remove dependence on libXp
 
 New in release 1.10.10 (2012-10-16):
 
