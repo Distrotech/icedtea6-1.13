@@ -543,7 +543,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7003595-incompatibleclasschangeerror.patch \
 	patches/openjdk/6500343-bad_code_from_conditionals.patch \
 	patches/jaxws-tempfiles-ioutils-6.patch \
-	patches/object-factory-cl-internal.patch
+	patches/object-factory-cl-internal.patch \
+	patches/openjdk/8009530-icu_kern_table_support_broken.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
