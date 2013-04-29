@@ -1,0 +1,49 @@
+--- ./openjdk-old/jdk/test/java/awt/font/TextLayout/TextLayoutLimits.java	2013-04-26 11:51:19.000000000 +0200
++++ ./openjdk/jdk/test/java/awt/font/TextLayout/TextLayoutLimits.java	2013-04-26 11:51:19.000000000 +0200
+@@ -0,0 +1,46 @@
++/*
++ * Copyright 2013 Red Hat, Inc. All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ */
++
++import java.awt.Font;
++import java.awt.font.TextLayout;
++import java.awt.font.FontRenderContext;
++
++/**
++ * @test
++ * @run main TextLayoutLimits
++ * @author Pavel Tisnovsky
++ *
++ * Test if TextLayout's method getBounds() works properly.
++ */
++public class TextLayoutLimits {
++    public static void main(String []args) {
++        Font font = new Font("Times New Roman", Font.BOLD, 10);
++        TextLayout tl = new TextLayout("JAVA", font, new FontRenderContext(null, false, false));
++
++        int width = (int) tl.getBounds().getWidth();
++        int height = (int) tl.getBounds().getHeight();
++        if (width <= 0) {
++            throw new RuntimeException("Width " + width + " is <=0");
++        }
++        if (height <= 0) {
++            throw new RuntimeException("Height " + height + " is <=0");
++        }
++    }
++}
++
