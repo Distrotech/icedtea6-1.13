@@ -546,7 +546,8 @@ ICEDTEA_PATCHES = \
 	patches/object-factory-cl-internal.patch \
 	patches/openjdk/8009530-icu_kern_table_support_broken.patch \
 	patches/textLayoutGetCharacterCount.patch \
-	patches/textLayoutLimits.patch
+	patches/textLayoutLimits.patch \
+	patches/componentOrientationTests.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
