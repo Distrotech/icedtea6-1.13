@@ -1,5 +1,6 @@
 /*
  * Copyright 2009, 2010 Edward Nevill
+ * Copyright 2013 Red Hat
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -398,6 +399,8 @@ unsigned handlers[H_LAST];
 #include <setjmp.h>
 
 static jmp_buf compiler_error_env;
+
+#define J_BogusImplementation() longjmp(compiler_error_env, COMPILER_RESULT_FAILED)
 
 #ifdef PRODUCT
 
@@ -3505,8 +3508,6 @@ int mov_multiple(CodeBuf *codebuf, Reg *dst, Reg *src, unsigned nregs)
 #define TOSM2(jstack)	((jstack)->stack[(jstack)->depth-3])
 #define TOSM3(jstack)	((jstack)->stack[(jstack)->depth-4])
 
-#define POP(jstack)		((jstack)->stack[--(jstack)->depth])
-#define PUSH(jstack, r)		((jstack)->stack[(jstack)->depth++] = (r))
 #define SWAP(jstack) do { \
 		      Reg r = (jstack)->stack[(jstack)->depth-1]; \
 		      (jstack)->stack[(jstack)->depth-1] = (jstack)->stack[(jstack)->depth-2]; \
@@ -3515,6 +3516,17 @@ int mov_multiple(CodeBuf *codebuf, Reg *dst, Reg *src, unsigned nregs)
 
 #define JSTACK_REG(jstack)		jstack_reg(jstack)
 #define JSTACK_PREFER(jstack, prefer)	jstack_prefer(jstack, prefer)
+
+int PUSH(Thumb2_Stack *jstack, unsigned reg) {
+  jstack->stack[jstack->depth] = reg;
+  jstack->depth++;
+  return reg;
+}
+
+int POP(Thumb2_Stack *jstack) {
+  jstack->depth--;
+  return jstack->stack[jstack->depth];
+}
 
 static const unsigned last_clear_bit[] = {
 	3,	//	0000
@@ -3532,10 +3544,12 @@ static const unsigned last_clear_bit[] = {
 	1,	//	1100
 	1,	//	1101
 	0,	//	1110
-	0,	//	1111
+	0,	//	1111 // No registers available...
 };
 
 #define LAST_CLEAR_BIT(mask) last_clear_bit[mask]
+
+unsigned long thumb2_register_allocation_failures = 0;
 
 unsigned jstack_reg(Thumb2_Stack *jstack)
 {
@@ -3547,7 +3561,10 @@ unsigned jstack_reg(Thumb2_Stack *jstack)
 
   for (i = 0; i < depth; i++) mask |= 1 << stack[i];
   mask &= (1 << STACK_REGS) - 1;
-  JASSERT(mask != (1 << STACK_REGS) - 1, "No free reg in push");
+  if (mask >= (1 << STACK_REGS) - 1)  { // No free registers
+    thumb2_register_allocation_failures++;
+    J_BogusImplementation();
+  }
   r = LAST_CLEAR_BIT(mask);
   return r;
 }
@@ -3563,7 +3580,10 @@ unsigned jstack_prefer(Thumb2_Stack *jstack, Reg prefer)
   for (i = 0; i < depth; i++) mask |= 1 << stack[i];
   mask &= (1 << STACK_REGS) - 1;
   if ((prefer & ~mask) & 0x0f) mask |= (~prefer & ((1 << STACK_REGS) - 1));
-  JASSERT(mask != (1 << STACK_REGS) - 1, "No free reg in push");
+  if (mask >= (1 << STACK_REGS) - 1)  { // No free registers
+    thumb2_register_allocation_failures++;
+    J_BogusImplementation();
+  }
   r = LAST_CLEAR_BIT(mask);
   return r;
 }

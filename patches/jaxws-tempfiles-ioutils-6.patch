@@ -1,0 +1,176 @@
+diff -ru openjdk/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/org/jvnet/mimepull/TempFiles.java openjdk.new/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/org/jvnet/mimepull/TempFiles.java
+--- openjdk/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/org/jvnet/mimepull/TempFiles.java	2013-04-17 13:14:56.952315541 -0400
++++ openjdk.new/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/org/jvnet/mimepull/TempFiles.java	2013-04-17 13:14:20.578155775 -0400
+@@ -44,25 +44,47 @@
+     private static final Class<?> CLASS_PATH;
+     private static final Class<?> CLASS_FILE_ATTRIBUTE;
+     private static final Class<?> CLASS_FILE_ATTRIBUTES;
++    private static final Class<?> CLASS_IOUTILS;
+     private static final Method METHOD_FILE_TO_PATH;
+     private static final Method METHOD_FILES_CREATE_TEMP_FILE;
+     private static final Method METHOD_FILES_CREATE_TEMP_FILE_WITHPATH;
+-
++    private static final Method METHOD_IOUTILS_CREATE_TEMP_FILE;
++    private static final Method METHOD_IOUTILS_CREATE_TEMP_FILE_WITHDIR;
+     private static final Method METHOD_PATH_TO_FILE;
+ 
+     private static boolean useJdk6API;
++    private static boolean useFileAPI;
+ 
+     static {
+         useJdk6API = isJdk6();
+-
+-        CLASS_FILES = safeGetClass("java.nio.file.Files");
+-        CLASS_PATH = safeGetClass("java.nio.file.Path");
+-        CLASS_FILE_ATTRIBUTE = safeGetClass("java.nio.file.attribute.FileAttribute");
+-        CLASS_FILE_ATTRIBUTES = safeGetClass("[Ljava.nio.file.attribute.FileAttribute;");
+-        METHOD_FILE_TO_PATH = safeGetMethod(File.class, "toPath");
+-        METHOD_FILES_CREATE_TEMP_FILE = safeGetMethod(CLASS_FILES, "createTempFile", String.class, String.class, CLASS_FILE_ATTRIBUTES);
+-        METHOD_FILES_CREATE_TEMP_FILE_WITHPATH = safeGetMethod(CLASS_FILES, "createTempFile", CLASS_PATH, String.class, String.class, CLASS_FILE_ATTRIBUTES);
+-        METHOD_PATH_TO_FILE = safeGetMethod(CLASS_PATH, "toFile");
++        useFileAPI = false;
++        
++        if (useJdk6API) {
++            CLASS_IOUTILS = safeGetClass("sun.misc.IOUtils");
++            METHOD_IOUTILS_CREATE_TEMP_FILE = safeGetMethod(CLASS_IOUTILS, "createTempFile", String.class, String.class);
++            METHOD_IOUTILS_CREATE_TEMP_FILE_WITHDIR = safeGetMethod(CLASS_IOUTILS, "createTempFile", String.class, String.class, File.class);
++            CLASS_FILES = null;
++            CLASS_PATH = null;
++            CLASS_FILE_ATTRIBUTE = null;
++            CLASS_FILE_ATTRIBUTES = null;
++            METHOD_FILE_TO_PATH = null;
++            METHOD_FILES_CREATE_TEMP_FILE = null;
++            METHOD_FILES_CREATE_TEMP_FILE_WITHPATH = null;
++            METHOD_PATH_TO_FILE = null;
++        }
++        else {
++            CLASS_FILES = safeGetClass("java.nio.file.Files");
++            CLASS_PATH = safeGetClass("java.nio.file.Path");
++            CLASS_FILE_ATTRIBUTE = safeGetClass("java.nio.file.attribute.FileAttribute");
++            CLASS_FILE_ATTRIBUTES = safeGetClass("[Ljava.nio.file.attribute.FileAttribute;");
++            METHOD_FILE_TO_PATH = safeGetMethod(File.class, "toPath");
++            METHOD_FILES_CREATE_TEMP_FILE = safeGetMethod(CLASS_FILES, "createTempFile", String.class, String.class, CLASS_FILE_ATTRIBUTES);
++            METHOD_FILES_CREATE_TEMP_FILE_WITHPATH = safeGetMethod(CLASS_FILES, "createTempFile", CLASS_PATH, String.class, String.class, CLASS_FILE_ATTRIBUTES);
++            METHOD_PATH_TO_FILE = safeGetMethod(CLASS_PATH, "toFile");
++            CLASS_IOUTILS = null;
++            METHOD_IOUTILS_CREATE_TEMP_FILE = null;
++            METHOD_IOUTILS_CREATE_TEMP_FILE_WITHDIR = null;
++        }
+     }
+ 
+     private static boolean isJdk6() {
+@@ -72,27 +94,27 @@
+     }
+ 
+     private static Class<?> safeGetClass(String className) {
+-        // it is jdk 6 or something failed already before
+-        if (useJdk6API) return null;
++        // Something failed already before
++        if (useFileAPI) return null;
+         try {
+             return Class.forName(className);
+         } catch (ClassNotFoundException e) {
+             LOGGER.log(Level.SEVERE, "Exception cought", e);
+             LOGGER.log(Level.WARNING, "Class {0} not found. Temp files will be created using old java.io API.", className);
+-            useJdk6API = true;
++            useFileAPI = true;
+             return null;
+         }
+     }
+ 
+     private static Method safeGetMethod(Class<?> clazz, String methodName, Class<?>... parameterTypes) {
+-        // it is jdk 6 or something failed already before
+-        if (useJdk6API) return null;
++        // Something failed already before
++        if (useFileAPI) return null;
+         try {
+             return clazz.getMethod(methodName, parameterTypes);
+         } catch (NoSuchMethodException e) {
+             LOGGER.log(Level.SEVERE, "Exception cought", e);
+             LOGGER.log(Level.WARNING, "Method {0} not found. Temp files will be created using old java.io API.", methodName);
+-            useJdk6API = true;
++            useFileAPI = true;
+             return null;
+         }
+     }
+@@ -107,37 +129,53 @@
+     }
+ 
+     static File createTempFile(String prefix, String suffix, File dir) throws IOException {
+-
+-        if (useJdk6API) {
+-            LOGGER.log(Level.FINEST, "Jdk6 detected, temp file (prefix:{0}, suffix:{1}) being created using old java.io API.", new Object[]{prefix, suffix});
+-            return File.createTempFile(prefix, suffix, dir);
+-
+-        } else {
+-
+-            try {
+-                if (dir != null) {
+-                    Object path = toPath(dir);
+-                    LOGGER.log(Level.FINEST, "Temp file (path: {0}, prefix:{1}, suffix:{2}) being created using NIO API.", new Object[]{dir.getAbsolutePath(), prefix, suffix});
+-                    return toFile(METHOD_FILES_CREATE_TEMP_FILE_WITHPATH.invoke(null, path, prefix, suffix, Array.newInstance(CLASS_FILE_ATTRIBUTE, 0)));
+-                } else {
+-                    LOGGER.log(Level.FINEST, "Temp file (prefix:{0}, suffix:{1}) being created using NIO API.", new Object[]{prefix, suffix});
+-                    return toFile(METHOD_FILES_CREATE_TEMP_FILE.invoke(null, prefix, suffix, Array.newInstance(CLASS_FILE_ATTRIBUTE, 0)));
++        if (!useFileAPI) {
++            if (useJdk6API) { // Use IOUtils
++                LOGGER.log(Level.FINEST, "Jdk6 detected, temp file (prefix:{0}, suffix:{1}) being created using sun.misc.IOUtils.", new Object[]{prefix, suffix});
++                try {
++                    if (dir != null) {
++                        LOGGER.log(Level.FINEST, "Temp file (path: {0}, prefix:{1}, suffix:{2}) being created using sun.misc.IOUtils.", new Object[]{dir.getAbsolutePath(), prefix, suffix});
++                        return (File) METHOD_IOUTILS_CREATE_TEMP_FILE_WITHDIR.invoke(null, prefix, suffix, dir);
++                    }
++                    else {
++                        LOGGER.log(Level.FINEST, "Temp file (prefix:{0}, suffix:{1}) being created using sun.misc.IOUtils.", new Object[]{prefix, suffix});
++                        return (File) METHOD_IOUTILS_CREATE_TEMP_FILE.invoke(null, prefix, suffix);
++                    }
++                } catch (IllegalAccessException e) {
++                    LOGGER.log(Level.SEVERE, "Exception caught", e);
++                    LOGGER.log(Level.WARNING, "Error invoking sun.misc.IOUtils.createTempFile, temp file (path: {0}, prefix:{1}, suffix:{2}) being created using old java.io API.",
++                            new Object[]{dir != null ? dir.getAbsolutePath() : null, prefix, suffix});
++                } catch (InvocationTargetException e) {
++                    LOGGER.log(Level.SEVERE, "Exception caught", e);
++                    LOGGER.log(Level.WARNING, "Error invoking sun.misc.IOUtils.createTempFile, temp file (path: {0}, prefix:{1}, suffix:{2}) being created using old java.io API.",
++                            new Object[]{dir != null ? dir.getAbsolutePath() : null, prefix, suffix});
+                 }
++            } else { // Use NIO API
+ 
+-            } catch (IllegalAccessException e) {
+-                LOGGER.log(Level.SEVERE, "Exception caught", e);
+-                LOGGER.log(Level.WARNING, "Error invoking java.nio API, temp file (path: {0}, prefix:{1}, suffix:{2}) being created using old java.io API.",
+-                        new Object[]{dir != null ? dir.getAbsolutePath() : null, prefix, suffix});
+-                return File.createTempFile(prefix, suffix, dir);
+-
+-            } catch (InvocationTargetException e) {
+-                LOGGER.log(Level.SEVERE, "Exception caught", e);
+-                LOGGER.log(Level.WARNING, "Error invoking java.nio API, temp file (path: {0}, prefix:{1}, suffix:{2}) being created using old java.io API.",
+-                        new Object[]{dir != null ? dir.getAbsolutePath() : null, prefix, suffix});
+-                return File.createTempFile(prefix, suffix, dir);
++                try {
++                    if (dir != null) {
++                        Object path = toPath(dir);
++                        LOGGER.log(Level.FINEST, "Temp file (path: {0}, prefix:{1}, suffix:{2}) being created using NIO API.", new Object[]{dir.getAbsolutePath(), prefix, suffix});
++                        return toFile(METHOD_FILES_CREATE_TEMP_FILE_WITHPATH.invoke(null, path, prefix, suffix, Array.newInstance(CLASS_FILE_ATTRIBUTE, 0)));
++                    } else {
++                        LOGGER.log(Level.FINEST, "Temp file (prefix:{0}, suffix:{1}) being created using NIO API.", new Object[]{prefix, suffix});
++                        return toFile(METHOD_FILES_CREATE_TEMP_FILE.invoke(null, prefix, suffix, Array.newInstance(CLASS_FILE_ATTRIBUTE, 0)));
++                    }
++
++                } catch (IllegalAccessException e) {
++                    LOGGER.log(Level.SEVERE, "Exception caught", e);
++                    LOGGER.log(Level.WARNING, "Error invoking java.nio API, temp file (path: {0}, prefix:{1}, suffix:{2}) being created using old java.io API.",
++                            new Object[]{dir != null ? dir.getAbsolutePath() : null, prefix, suffix});
++                } catch (InvocationTargetException e) {
++                    LOGGER.log(Level.SEVERE, "Exception caught", e);
++                    LOGGER.log(Level.WARNING, "Error invoking java.nio API, temp file (path: {0}, prefix:{1}, suffix:{2}) being created using old java.io API.",
++                            new Object[]{dir != null ? dir.getAbsolutePath() : null, prefix, suffix});
++                }
+             }
+         }
+-
++        
++        // Use IO API
++        return File.createTempFile(prefix, suffix, dir);
+     }
+ 
+ 

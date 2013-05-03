@@ -241,6 +241,65 @@ diff -Nru openjdk-ecj.orig/jdk/src/share/classes/sun/security/pkcs11/P11Key.java
      public int length() { 
          return keyLength;
      }
+diff -Nru openjdk-ecj.orig/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/org/jvnet/mimepull/MemoryData.java openjdk-ecj/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/org/jvnet/mimepull/MemoryData.java
+--- openjdk-ecj.orig/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/org/jvnet/mimepull/MemoryData.java	2013-04-16 16:35:02.573376655 +0100
++++ openjdk-ecj/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/org/jvnet/mimepull/MemoryData.java	2013-04-16 16:37:00.267265360 +0100
+@@ -50,17 +50,14 @@
+     }
+ 
+     // size of the chunk given by the parser
+-    @Override
+     public int size() {
+         return len;
+     }
+ 
+-    @Override
+     public byte[] read() {
+         return data;
+     }
+ 
+-    @Override
+     public long writeTo(DataFile file) {
+         return file.writeTo(data, 0, len);
+     }
+@@ -70,7 +67,6 @@
+      * @param buf
+      * @return
+      */
+-    @Override
+     public Data createNext(DataHead dataHead, ByteBuffer buf) {
+         if (!config.isOnlyMemory() && dataHead.inMemory >= config.memoryThreshold) {
+             try {
+diff -Nru openjdk-ecj.orig/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/ws/client/WSServiceDelegate.java openjdk-ecj/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/ws/client/WSServiceDelegate.java
+--- openjdk-ecj.orig/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/ws/client/WSServiceDelegate.java	2013-04-16 16:35:53.298190677 +0100
++++ openjdk-ecj/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/ws/client/WSServiceDelegate.java	2013-04-16 16:36:17.818584168 +0100
+@@ -644,7 +644,6 @@
+ 
+         return AccessController.doPrivileged(
+                 new PrivilegedAction<T>() {
+-                    @Override
+                     public T run() {
+                         Object proxy = Proxy.newProxyInstance(portInterface.getClassLoader(),
+                                 new Class[]{portInterface, WSBindingProvider.class, Closeable.class}, pis);
+diff -Nru openjdk-ecj.orig/jdk/src/share/classes/com/sun/media/sound/AbstractMidiDevice.java openjdk-ecj/jdk/src/share/classes/com/sun/media/sound/AbstractMidiDevice.java
+--- openjdk-ecj.orig/jdk/src/share/classes/com/sun/media/sound/AbstractMidiDevice.java	2013-04-16 17:23:26.739938611 +0100
++++ openjdk-ecj/jdk/src/share/classes/com/sun/media/sound/AbstractMidiDevice.java	2013-04-16 17:24:03.072520033 +0100
+@@ -483,7 +483,6 @@
+             Receiver. Therefore, subclasses should not override this method.
+             Instead, they should implement implSend().
+         */
+-        @Override
+         public final synchronized void send(final MidiMessage message,
+                                             final long timeStamp) {
+             if (!open) {
+@@ -499,7 +498,6 @@
+          * Therefore, subclasses that override this method must call
+          * 'super.close()'.
+          */
+-        @Override
+         public final void close() {
+             open = false;
+             synchronized (AbstractMidiDevice.this.traRecLock) {
 diff -Nru openjdk-ecj.orig/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java openjdk-ecj/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java
 --- openjdk-ecj.orig/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java	2011-01-07 21:33:03.000000000 +0000
 +++ openjdk-ecj/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java	2012-06-13 17:39:06.625931390 +0100

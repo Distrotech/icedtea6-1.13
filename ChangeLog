@@ -1,3 +1,353 @@
+2013-04-30  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Added new patch.
+	* patches/componentOrientationTests.patch:
+	Patch containing three new JTreg tests ComponentOrientationTest.java,
+	ComponentPlacementTest.java and ComponentSizeTest.java. These tests
+	check if ComponentOrientation subsystem behaviour is correct even
+	when right-to-left orientation is used.
+
+2013-04-29  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add two new patches.
+	* patches/textLayoutGetCharacterCount.patch:
+	* patches/textLayoutLimits.patch:
+	Two JTreg tests for checking TextLayout class behaviour.
+
+2013-04-26  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Fix naming of aarch64 patch
+	and add new one.
+	* NEWS: Updated.
+	* patches/hotspot/original/7022999-fastlocking_compiler1_only.patch:
+	Backport fix to make Zero build work following
+	6840152.
+	* patches/aarch64.patch: Moved to...
+	* patches/hotspot/original/aarch64.patch: ...here.
+
+2013-04-26  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* NEWS: Add release notes for 1.11.10, 1.11.11
+	and 1.12.5 and remove features listed under 1.13.0
+	that were provided in those releases.
+
+2013-04-24  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add new patch.
+	* patches/openjdk/8009530-icu_kern_table_support_broken.patch:
+	Backported from 7u.
+
+2013-04-24  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Rename patches.
+	correctly.
+	* patches/openjdk/7133220-factory-finder-parser-transform-useBSClassLoader.patch:
+	Moved to...
+	* patches/openjdk/7133220-factory_finder_parser_transform_useBSClassLoader.patch:
+	...this.
+	* patches/openjdk/6657673-factory-finder-parser-transform-internal-packages.patch:
+	Moved to..
+	* patches/security/20130416/6657673-factory_finder.patch:
+	...this.
+
+2013-04-22  Elliott Baron  <ebaron@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Removed one patch, split it into two.
+	* patches/security/20130416/6657673-jaxp-backport-factoryfinder.patch:
+	Removed. Split into patches below.
+	* patches/openjdk/7133220-factory-finder-parser-transform-useBSClassLoader.patch:
+	First part of removed patch.
+	* patches/openjdk/6657673-factory-finder-parser-transform-internal-packages.patch:
+	Second part of removed patch.
+
+2013-04-19  Elliott Baron  <ebaron@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add new patch.
+	* patches/security/20130416/6657673.patch:
+	Removed {parser,transform}.FactoryFinder hunks.
+	* patches/security/20130416/6657673-jaxp-backport-factoryfinder.patch:
+	Backported {parser,transform}.FactoryFinder fixes
+	from jdk7u-dev changesets: 4a61ac055189 & 38d4d23d167c.
+
+2013-04-19  Jiri Vanek  <jvanek@redhat.com>
+
+	* patches/security/20130416/8007667.patch:
+	Fix patch format to apply on RHEL 5.
+
+2013-04-18  Elliott Baron  <ebaron@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add new patch.
+	* patches/object-factory-cl-internal.patch:
+	Patch to give xalan/xerces access to their own internal
+	packages.
+
+2013-04-17  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* ChangeLog:
+	Move Elliott's entry to correct position.
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Fix path to previous patch.
+	* patches/openjdk/jaxws-tempfiles-ioutils-6.patch:
+	Moved from here to...
+	* patches/jaxws-tempfiles-ioutils-6.patch:
+	...here as not an upstream OpenJDK patch.
+
+2013-04-17  Elliott Baron  <ebaron@redhat.com>
+
+	* patches/openjdk/jaxws-tempfiles-ioutils-6.patch:
+	Restrict temp file permissions.
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Added new patch.
+
+2013-04-17  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* patches/aarch64.patch:
+	Fix to apply against older HotSpot.
+
+2013-04-17  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	PR1402: Support glibc < 2.17 with AArch64 patch
+	* patches/aarch64.patch:
+	Define EM_AARCH64 for legacy systems
+	with glibc earlier than 2.17.
+
+2013-04-17  Andrew John Hughes  <gnu.andrew@member.fsf.org>
+
+	* patches/openjdk/6669869-Beans_isDesignTime_should_be_per-AppContext.patch:
+	Reapplied as a security patch pre-requisite.
+	* patches/security/20130201/8001235.patch:
+	Dropped as included in JAXP tarball used.
+	* INSTALL: Remove --with-{jaxp,jaf,jaxws}-drop-zip documentation.
+	* Makefile.am:
+	(JAXWS_DROP_URL): Removed.
+	(JAXWS_DROP_ZIP): Likewise.
+	(JAXWS_DROP_SHA256SUM): Likewise.
+	(JAF_DROP_URL): Likewise.
+	(JAF_DROP_ZIP): Likewise.
+	(JAF_DROP_SHA256SUM): Likewise.
+	(JAF_DROP_URL): Likewise.
+	(JAXP_DROP_URL): Likewise.
+	(JAXP_DROP_ZIP): Likewise.
+	(JAXP_DROP_SHA256SUM): Likewise.
+	(DROP_PATCHES): Add patches providing code
+	previously provided by drop zips.
+	(SECURITY_PATCHES): Updated.
+	(ICEDTEA_PATCHES): Add DROP_PATCHES.  Remove
+	6669869 duplicate.
+	(ICEDTEA_ENV): Remove ALT_DROPS_DIR.
+	(download-jaxp-drop): Removed.
+	(clean-download-jaxp-drop): Likewise.
+	(download-jaf-drop): Likewise.
+	(clean-download-jaf-drop): Likewise.
+	(download-jaxws-drop): Likewise.
+	(clean-download-jaxws-drop): Likewise.
+	(download-drops): Likewise.
+	(clean-drops): Likewise.
+	(download): Don't depend on download-drops.
+	(clean-download): Likewise for clean-drops.
+	* acinclude.m4:
+	(IT_WITH_JAXP_DROP_ZIP): Removed.
+	(IT_WITH_JAF_DROP_ZIP): Likewise.
+	(IT_WITH_JAXWS_DROP_ZIP): Likewise.
+	* configure.ac: Don't call removed macros above.
+	* patches/ecj/override.patch: Add new cases introduced
+	by security patches (sigh).
+	* patches/libraries.patch,
+	* patches/nomotif-6706121.patch:
+	Regenerated against security patches.
+	* patches/openjdk/5102804-memory_leak.patch,
+	* patches/openjdk/6501644-icu_sync.patch:
+	Backports for security patches.
+	* patches/openjdk/6633275-shaped_translucent_windows.patch:
+	Remove copyright notice changes broken by 8006790 security patch.
+	* patches/openjdk/6669869-queries_per_appcontext.patch,
+	* patches/openjdk/6886358-layout_update.patch,
+	* patches/openjdk/6963811-deadlock_fix.patch,
+	* patches/openjdk/7017324-kerning_crash.patch,
+	* patches/openjdk/7064279-fixup.patch,
+	* patches/openjdk/7064279-resource_release.patch,
+	* patches/openjdk/8004302-soap_test_failure.patch:
+	More backports for security patches.
+	* patches/openjdk/jaf-b20_jaxws2-1_6_2011_06_13.patch,
+	* patches/openjdk/jaxp144_05.patch:
+	Add drop zips in patch form.
+	* patches/security/20130416/6657673-fixup.patch,
+	* patches/security/20130416/6657673.patch,
+	* patches/security/20130416/7200507.patch,
+	* patches/security/20130416/8000724.patch,
+	* patches/security/20130416/8001031.patch,
+	* patches/security/20130416/8001040.patch,
+	* patches/security/20130416/8001322.patch,
+	* patches/security/20130416/8001329.patch,
+	* patches/security/20130416/8003335.patch,
+	* patches/security/20130416/8003445.patch,
+	* patches/security/20130416/8003543.patch,
+	* patches/security/20130416/8004261.patch,
+	* patches/security/20130416/8004336.patch,
+	* patches/security/20130416/8004986.patch,
+	* patches/security/20130416/8005432.patch,
+	* patches/security/20130416/8005943.patch,
+	* patches/security/20130416/8006309.patch,
+	* patches/security/20130416/8006435.patch,
+	* patches/security/20130416/8006790.patch,
+	* patches/security/20130416/8006795.patch,
+	* patches/security/20130416/8007406.patch,
+	* patches/security/20130416/8007617.patch,
+	* patches/security/20130416/8009699.patch:
+	Add security patches.
+	* patches/xjc.patch:
+	Regenerate JAXWS patch against sources, not
+	drop system.
+
+2013-04-12  Omair Majid  <omajid@redhat.com>
+
+	* patches/security/20130416/8007667.patch,
+	* patches/security/20130416/8007918.patch,
+	* patches/security/20130416/8009305.patch,
+	* patches/security/20130416/8009814.patch,
+	* patches/security/20130416/8009857.patch:
+	Add security patches.
+
+2013-04-25  Andrew John Hughes  <gnu.andrew@member.fsf.org>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Move aarch64.patch to original
+	HotSpot only.
+	* hotspot.map: Sync with latest hs23 HEAD.
+
+2013-04-12  Andrew John Hughes  <gnu.andrew@member.fsf.org>
+
+	* Makefile.am:
+	(SECURITY_PATCHES): Correct path to 7036559; not
+	a security patch but a backport to enable one to
+	be applied.
+	* patches/security/20130416/7036559.patch: Moved to...
+	* patches/openjdk/7036559-concurrenthashmap_improvements.patch:
+	...here.
+
+2013-04-11  Jon VanAlten  <jon.vanalten@redhat.com>
+
+	* Makefile.am:
+	(SECURITY_PATCHES): Add new patches.
+	* patches/security/20130416/7036559.patch: Add backport.
+	* patches/security/20130416/8009063.patch: Add security fix.
+
+2013-04-22  Andrew John Hughes  <gnu.andrew@member.fsf.org>
+
+	PR1336: Bootstrap failure on Fedora 17/18
+	* Makefile.am:
+	(ICEDTEA_BOOTSTRAP_CLASSES): Add SSLContext,
+	SSLEngine, TrustAnchor and KeyStoreBuilderParameters
+	depending on if methods are missing.
+	* NEWS: Updated.
+	* configure.ac: Mention bugs in comments.
+	Add tests for getDefaultSSLParameters/setSSLParameters,
+	new TrustAnchor constructor, TrustAnchor.getCA() and
+	KeyStoreBuilderParameters.getParameters().
+
+2013-04-17  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(EXTRA_DIST): Remove THANKYOU.
+
+2013-04-17  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add patch after SH patch.
+	* NEWS: Updated.
+	* AUTHORS: Add Andreas and merge in THANKYOU.
+	* THANKYOU: Removed.
+
+2013-03-22  Andreas Schwab  <schwab@suse.cz>
+
+	PR1380: Add AArch64 support to Zero
+	* patches/aarch64.patch:
+	Add Zero support for AArch64.
+
+2013-04-16  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add missing backslash (oops!)
+	* patches/openjdk/7024568-long_method_resolution_oom_error.patch:
+	Fix patch that doesn't apply cleanly.
+
+2013-03-11  Andrew John Hughes  <gnu.andrew@member.fsf.org>
+
+	PR1339: Simplify the rewriter, avoiding concurrency.
+	* rewriter/com/redhat/rewriter/ClassRewriter.java:
+	Always use the single threaded executor.
+	* NEWS: Updated with this and previous fix.
+
+2013-04-16  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	PR1338: Remove dependence on libXp
+	* configure.ac: Drop check for libXp.
+
+2013-04-16  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* patches/pr1319-support_giflib_5.patch,
+	Use #if not #ifdef.
+
+2013-04-12  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	PR1336: Bootstrap failure on Fedora 17/18
+	* Makefile.am:
+	(ICEDTEA_BOOTSTRAP_CLASSES): Add SSLParameters
+	if needed.
+	* configure.ac: Check for javax.net.ssl.SSLParameters.
+
+2013-04-12  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* NEWS: Add PR1362 from last commit.
+	* ChangeLog: Add missing entry for last
+	commit.
+
+2013-04-05  Chris Phillips  <chphilli@redhat.com>
+
+	* arm_port/hotspot/src/cpu/zero/vm/thumb2.cpp:
+	Fix failure in the register allocation logic,
+	diagnosed by Andrew Haley to be an issue with
+	PUSH/POP macro's and assumption of order of
+	evaluation of arguments.  The fix includes
+	detection of the condition and bailing from the
+	compilation if a similar failure is detected.
+
+2013-03-26  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add new backports (HotSpot
+	one only to bundled HotSpot build).
+	* patches/hotspot/original/6840152-jvm_crashes_with_heavyweight_monitors.patch:
+	Backport suggested by Xerxes for hs20.
+	* patches/openjdk/6500343-bad_code_from_conditionals.patch,
+	* patches/openjdk/6682380-foreach_crash.patch,
+	* patches/openjdk/6718364-inference_failure.patch,
+	* patches/openjdk/7003595-incompatibleclasschangeerror.patch,
+	* patches/openjdk/7024568-long_method_resolution_oom_error.patch,
+	* patches/openjdk/7046929-fix_t6397104_test_failure.patch:
+	Langtools backports present in the proprietary JDK 6 tree,
+	as listed by Joe Darcy.
+
+2013-03-22  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add new patch.  Move
+	jvmtiEnv.patch to bundled HotSpot build only.
+	* NEWS: Update with new patch, add OpenJDK 6
+	JIRA URLs.
+	* patches/copy_memory.patch: New patch to
+	add sun.misc.Unsafe.copyMemory method from 7.
+	* patches/jvmtiEnv.patch: Moved to...
+	* patches/hotspot/original/jvmtiEnv.patch: here.
+
 2013-03-19  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* patches/openjdk/8004341-jck_dialog_failure.patch,

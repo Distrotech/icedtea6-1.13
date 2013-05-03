@@ -1,0 +1,76 @@
+# HG changeset patch
+# User mcimadamore
+# Date 1218213500 -3600
+# Node ID 30a415f8667f66f38aa33ad8d289048cb8d3f614
+# Parent  d635feaf3747d1c3111fc84cbff603ccaa75577d
+6718364: inference fails when a generic method is invoked with raw arguments
+Summary: Bug in the implementation of Types.isSubtypeUnchecked
+Reviewed-by: jjg
+
+diff --git a/src/share/classes/com/sun/tools/javac/code/Types.java b/src/share/classes/com/sun/tools/javac/code/Types.java
+--- openjdk/langtools/src/share/classes/com/sun/tools/javac/code/Types.java
++++ openjdk/langtools/src/share/classes/com/sun/tools/javac/code/Types.java
+@@ -305,6 +305,11 @@
+         else if (t.tag == TYPEVAR) {
+             return isSubtypeUnchecked(t.getUpperBound(), s, warn);
+         }
++        else if (s.tag == UNDETVAR) {
++            UndetVar uv = (UndetVar)s;
++            if (uv.inst != null)
++                return isSubtypeUnchecked(t, uv.inst, warn);
++        }
+         else if (!s.isRaw()) {
+             Type t2 = asSuper(t, s.tsym);
+             if (t2 != null && t2.isRaw()) {
+diff --git a/test/tools/javac/generics/inference/6718364/T6718364.java b/test/tools/javac/generics/inference/6718364/T6718364.java
+new file mode 100644
+--- /dev/null
++++ openjdk/langtools/test/tools/javac/generics/inference/6718364/T6718364.java
+@@ -0,0 +1,38 @@
++/*
++ * Copyright 2008 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/**
++ * @test
++ * @bug 6718364
++ * @summary inference fails when a generic method is invoked with raw arguments
++ * @compile/ref=T6718364.out -XDstdout -XDrawDiagnostics -Xlint:unchecked T6718364.java
++ */
++class T6718364 {
++    class X<T> {}
++
++    public <T> void m(X<T> x, T t) {}
++
++    public void test() {
++        m(new X<X<Integer>>(), new X());
++    }
++}
+diff --git a/test/tools/javac/generics/inference/6718364/T6718364.out b/test/tools/javac/generics/inference/6718364/T6718364.out
+new file mode 100644
+--- /dev/null
++++ openjdk/langtools/test/tools/javac/generics/inference/6718364/T6718364.out
+@@ -0,0 +1,3 @@
++T6718364.java:36:32: compiler.warn.prob.found.req: (- compiler.misc.unchecked.assign), T6718364.X, T6718364.X<java.lang.Integer>
++T6718364.java:36:10: compiler.warn.unchecked.meth.invocation.applied: <T>m(T6718364.X<T>,T), T6718364, , T6718364.X<T6718364.X<java.lang.Integer>>,T6718364.X
++2 warnings
+\ No newline at end of file

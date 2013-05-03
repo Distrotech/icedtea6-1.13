@@ -1,0 +1,246 @@
+diff -uN ComponentOrientation/ComponentOrientationTest.java /jck/icedtea6/openjdk/jdk/test/java/awt/ComponentOrientation/ComponentOrientationTest.java
+--- openjdk.old/jdk/test/java/awt/ComponentOrientation/ComponentOrientationTest.java	2013-04-29 15:24:56.000000000 +0200
++++ openjdk/jdk/test/java/awt/ComponentOrientation/ComponentOrientationTest.java	2013-04-29 15:24:56.000000000 +0200
+@@ -0,0 +1,77 @@
++/*
++ * Copyright 2013 Red Hat, Inc. All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ */
++
++import java.awt.ComponentOrientation;
++import java.awt.FlowLayout;
++import java.awt.Rectangle;
++
++import javax.swing.JFrame;
++import javax.swing.JLabel;
++
++/**
++ * @test
++ * @run main ComponentOrientationTest
++ * @author Pavel Tisnovsky
++ *
++ * Basic test if component orientation subsystem works properly.
++ */
++public class ComponentOrientationTest {
++
++    public static void main(String[] args) {
++        int[] aligns = {FlowLayout.LEFT, FlowLayout.CENTER, FlowLayout.RIGHT};
++
++        for (int align : aligns) {
++            testComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT, align, true);
++            testComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT, align, false);
++        }
++    }
++
++    private static void testComponentOrientation(ComponentOrientation componentOrientation, int align, boolean firstLabelBeforeSecondOne) {
++        JFrame panel = new JFrame();
++        JLabel label1 = new JLabel("JAVA");
++        JLabel label2 = new JLabel("JAVA");
++
++        panel.setLayout(new FlowLayout(align));
++        panel.applyComponentOrientation(componentOrientation);
++
++        panel.add(label1);
++        panel.add(label2);
++        panel.pack();
++
++        Rectangle rect1 = firstLabelBeforeSecondOne ? label1.getBounds() : label2.getBounds();
++        Rectangle rect2 = firstLabelBeforeSecondOne ? label2.getBounds() : label1.getBounds();
++
++        // test the order of two components
++        if (rect1.x >= rect2.x) {
++            panel.dispose();
++            throw new RuntimeException("Components are positioned in a wrong order!");
++        }
++        if (rect1.x + rect1.width >= rect2.x) {
++            panel.dispose();
++            throw new RuntimeException("Components are positioned on the same place!");
++        }
++
++        // test vertical position of two components
++        if (rect1.y != rect2.y) {
++            panel.dispose();
++            throw new RuntimeException("Components are not positioned  on the same vertical position!");
++        }
++        panel.dispose();
++    }
++}
+diff -uN ComponentOrientation/ComponentPlacementTest.java /jck/icedtea6/openjdk/jdk/test/java/awt/ComponentOrientation/ComponentPlacementTest.java
+--- openjdk.old/jdk/test/java/awt/ComponentOrientation/ComponentPlacementTest.java	2013-04-29 15:24:56.000000000 +0200
++++ openjdk/jdk/test/java/awt/ComponentOrientation/ComponentPlacementTest.java	2013-04-29 15:24:56.000000000 +0200
+@@ -0,0 +1,79 @@
++/*
++ * Copyright 2013 Red Hat, Inc. All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ */
++
++import java.awt.ComponentOrientation;
++import java.awt.FlowLayout;
++import java.awt.Rectangle;
++
++import javax.swing.JFrame;
++import javax.swing.JLabel;
++
++/**
++ * @test
++ * @run main ComponentPlacementTest
++ * @author Pavel Tisnovsky
++ *
++ * Basic test if component orientation and component placement subsystem works properly.
++ */
++public class ComponentPlacementTest
++{
++    public static void main(String[] args) {
++        int[] aligns = {FlowLayout.LEFT, FlowLayout.CENTER, FlowLayout.RIGHT};
++        for (int align : aligns) {
++            testComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT, align, true);
++            testComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT, align, false);
++        }
++    }
++
++    private static void testComponentOrientation(ComponentOrientation componentOrientation, int align, boolean firstLabelBeforeSecondOne) {
++        JFrame panel = new JFrame();
++        JLabel label1 = new JLabel("JAVA1");
++        JLabel label2 = new JLabel("JAVA2");
++
++        panel.setLayout(new FlowLayout(align));
++        panel.applyComponentOrientation(componentOrientation);
++
++        panel.add(label1);
++        panel.add(label2);
++        panel.pack();
++
++        Rectangle panelRect = panel.getBounds();
++        Rectangle rect1 = firstLabelBeforeSecondOne ? label1.getBounds() : label2.getBounds();
++        Rectangle rect2 = firstLabelBeforeSecondOne ? label2.getBounds() : label1.getBounds();
++        rect1.x += panelRect.x;
++        rect1.y += panelRect.y;
++        rect2.x += panelRect.x;
++        rect2.y += panelRect.y;
++
++        if (!panelRect.contains(rect1)) {
++            panel.dispose();
++            throw new RuntimeException("First component is not placed inside the frame!");
++        }
++        if (!panelRect.contains(rect2)) {
++            panel.dispose();
++            throw new RuntimeException("Second component is not placed inside the frame!");
++        }
++        if (!rect1.intersection(rect2).isEmpty()) {
++            panel.dispose();
++            throw new RuntimeException("Component intersection detected!");
++        }
++        panel.dispose();
++    }
++
++}
+diff -uN ComponentOrientation/ComponentSizeTest.java /jck/icedtea6/openjdk/jdk/test/java/awt/ComponentOrientation/ComponentSizeTest.java
+--- openjdk.old/jdk/test/java/awt/ComponentOrientation/ComponentSizeTest.java	2013-04-29 15:24:56.000000000 +0200
++++ openjdk/jdk/test/java/awt/ComponentOrientation/ComponentSizeTest.java	2013-04-29 15:24:56.000000000 +0200
+@@ -0,0 +1,78 @@
++/*
++ * Copyright 2013 Red Hat, Inc. All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ */
++
++import java.awt.ComponentOrientation;
++import java.awt.FlowLayout;
++import java.awt.Rectangle;
++
++import javax.swing.JFrame;
++import javax.swing.JLabel;
++
++/**
++ * @test
++ * @run main ComponentSizeTest
++ * @author Pavel Tisnovsky
++ *
++ * Basic test if component orientation and component placement subsystem works properly.
++ */
++public class ComponentSizeTest
++{
++    public static void main(String[] args) {
++        int[] aligns = {FlowLayout.LEFT, FlowLayout.CENTER, FlowLayout.RIGHT};
++        for (int align : aligns) {
++            testComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT, align, true);
++            testComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT, align, false);
++        }
++    }
++
++    private static void testComponentOrientation(ComponentOrientation componentOrientation, int align, boolean firstLabelBeforeSecondOne) {
++        JFrame panel = new JFrame();
++        JLabel label1 = new JLabel("JAVA");
++        JLabel label2 = new JLabel("JAVA");
++
++        panel.setLayout(new FlowLayout(align));
++        panel.applyComponentOrientation(componentOrientation);
++
++        panel.add(label1);
++        panel.add(label2);
++        panel.pack();
++
++        Rectangle rect1 = firstLabelBeforeSecondOne ? label1.getBounds() : label2.getBounds();
++        Rectangle rect2 = firstLabelBeforeSecondOne ? label2.getBounds() : label1.getBounds();
++
++        if (rect1.isEmpty()) {
++            panel.dispose();
++            throw new RuntimeException("First component has zero area!");
++        }
++        if (rect2.isEmpty()) {
++            panel.dispose();
++            throw new RuntimeException("Second component has zero area!");
++        }
++        if (rect1.width != rect2.width) {
++            panel.dispose();
++            throw new RuntimeException("Components should have the same width!");
++        }
++        if (rect1.height != rect2.height) {
++            panel.dispose();
++            throw new RuntimeException("Components should have the same height!");
++        }
++        panel.dispose();
++    }
++
++}
