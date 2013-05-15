@@ -263,7 +263,6 @@ DROP_PATCHES = \
 
 SECURITY_PATCHES = \
 	patches/security/20120830/7182135-impossible_to_use_some_editors_directly.patch \
-	patches/openjdk/8009641-8007675_build_fix.patch \
 	patches/openjdk/7036559-concurrenthashmap_improvements.patch \
 	patches/security/20130416/8009063.patch \
 	patches/openjdk/8004302-soap_test_failure.patch \
