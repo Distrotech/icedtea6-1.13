@@ -1,6 +1,6 @@
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/classfile/JavaClass.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/classfile/JavaClass.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/classfile/JavaClass.java	2013-04-16 14:28:09.232148559 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/classfile/JavaClass.java	2013-04-16 14:29:26.549394382 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/classfile/JavaClass.java	2013-05-17 15:36:25.885577734 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/classfile/JavaClass.java	2013-05-17 20:49:35.837545416 +0100
 @@ -63,6 +63,7 @@
  import  com.sun.org.apache.bcel.internal.util.ClassVector;
  import  com.sun.org.apache.bcel.internal.util.ClassQueue;
@@ -30,8 +30,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/i
      catch (SecurityException e) {
          // falls through
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/util/Class2HTML.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/util/Class2HTML.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/util/Class2HTML.java	2013-04-16 14:28:09.312149848 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/util/Class2HTML.java	2013-04-16 14:29:26.549394382 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/util/Class2HTML.java	2013-05-17 15:36:25.969579061 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/util/Class2HTML.java	2013-05-17 20:49:35.853545670 +0100
 @@ -82,6 +82,7 @@
   * method in the Method's frame will jump to the appropiate method in
   * the Code frame.
@@ -50,8 +50,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/i
  
      try {
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/util/ClassPath.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/util/ClassPath.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/util/ClassPath.java	2013-04-16 14:28:09.316149912 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/util/ClassPath.java	2013-04-16 14:29:26.549394382 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/util/ClassPath.java	2013-05-17 15:36:25.969579061 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/util/ClassPath.java	2013-05-17 20:49:35.853545670 +0100
 @@ -66,6 +66,7 @@
   * Responsible for loading (class) files from the CLASSPATH. Inspired by
   * sun.tools.ClassPath.
@@ -123,8 +123,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/i
  
          public String      getPath()        { try {
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/util/JavaWrapper.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/util/JavaWrapper.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/util/JavaWrapper.java	2013-04-16 14:28:09.316149912 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/util/JavaWrapper.java	2013-04-16 14:29:26.549394382 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/util/JavaWrapper.java	2013-05-17 15:36:25.973579124 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/util/JavaWrapper.java	2013-05-17 20:49:35.853545670 +0100
 @@ -72,6 +72,7 @@
   * <pre>java com.sun.org.apache.bcel.internal.util.JavaWrapper -Dbcel.classloader=foo.MyLoader &lt;real.class.name&gt; [arguments]</pre>
   * </p>
@@ -144,7 +144,7 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/i
        s = "com.sun.org.apache.bcel.internal.util.ClassLoader";
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/util/SecuritySupport.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/util/SecuritySupport.java
 --- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/util/SecuritySupport.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/util/SecuritySupport.java	2013-04-16 14:29:26.549394382 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/internal/util/SecuritySupport.java	2013-05-17 20:49:35.853545670 +0100
 @@ -0,0 +1,223 @@
 +/*
 + * reserved comment block
@@ -370,8 +370,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/bcel/i
 +    }
 +}
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLMessages.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLMessages.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLMessages.java	2013-04-16 14:28:09.324150042 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLMessages.java	2013-04-16 14:29:26.549394382 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLMessages.java	2013-05-17 15:36:25.993579439 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLMessages.java	2013-05-17 20:49:35.857545734 +0100
 @@ -22,68 +22,72 @@
   */
  package com.sun.org.apache.xalan.internal.res;
@@ -497,8 +497,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/
 -  }
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_de.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_de.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_de.java	2013-04-16 14:28:09.328150105 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_de.java	2013-04-16 14:29:26.549394382 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_de.java	2013-05-17 15:36:25.997579503 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_de.java	2013-05-17 20:49:35.857545734 +0100
 @@ -2410,68 +2410,4 @@
    public static final String QUERY_HEADER = "MUSTER ";
  
@@ -569,8 +569,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/
 -
 -}
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_es.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_es.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_es.java	2013-04-16 14:28:09.332150170 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_es.java	2013-04-16 14:29:26.549394382 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_es.java	2013-05-17 15:36:26.001579566 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_es.java	2013-05-17 20:49:35.857545734 +0100
 @@ -2409,69 +2409,4 @@
     * @deprecated  */
    public static final String QUERY_HEADER = "PATTERN ";
@@ -642,8 +642,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/
 -
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_fr.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_fr.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_fr.java	2013-04-16 14:28:09.332150170 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_fr.java	2013-04-16 14:29:26.549394382 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_fr.java	2013-05-17 15:36:26.005579629 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_fr.java	2013-05-17 20:49:35.857545734 +0100
 @@ -2410,68 +2410,4 @@
    public static final String QUERY_HEADER = "PATTERN ";
  
@@ -714,8 +714,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/
 -
 -}
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_it.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_it.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_it.java	2013-04-16 14:28:09.336150235 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_it.java	2013-04-16 14:29:26.549394382 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_it.java	2013-05-17 15:36:26.005579629 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_it.java	2013-05-17 20:49:35.857545734 +0100
 @@ -2409,69 +2409,4 @@
     * @deprecated  */
    public static final String QUERY_HEADER = "MODELLO ";
@@ -787,8 +787,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/
 -
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_ja.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_ja.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_ja.java	2013-04-16 14:28:09.336150235 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_ja.java	2013-04-16 14:29:26.549394382 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_ja.java	2013-05-17 15:36:26.009579692 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_ja.java	2013-05-17 20:49:35.857545734 +0100
 @@ -2410,68 +2410,4 @@
    public static final String QUERY_HEADER = "PATTERN ";
  
@@ -859,8 +859,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/
 -
 -}
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources.java	2013-04-16 14:28:09.324150042 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources.java	2013-04-16 14:29:26.549394382 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources.java	2013-05-17 15:36:25.993579439 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources.java	2013-05-17 20:49:35.857545734 +0100
 @@ -1446,68 +1446,4 @@
    public static final String QUERY_HEADER = "PATTERN ";
  
@@ -931,8 +931,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/
 -
 -}
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_ko.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_ko.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_ko.java	2013-04-16 14:28:09.340150299 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_ko.java	2013-04-16 14:29:26.553394447 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_ko.java	2013-05-17 15:36:26.013579755 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_ko.java	2013-05-17 20:49:35.861545797 +0100
 @@ -2409,69 +2409,4 @@
     * @deprecated  */
    public static final String QUERY_HEADER = "PATTERN ";
@@ -1004,8 +1004,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/
 -
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_zh_CN.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_zh_CN.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_zh_CN.java	2013-04-16 14:28:09.340150299 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_zh_CN.java	2013-04-16 14:29:26.553394447 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_zh_CN.java	2013-05-17 15:36:26.017579818 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_zh_CN.java	2013-05-17 20:49:35.861545797 +0100
 @@ -2409,69 +2409,4 @@
     * @deprecated  */
    public static final String QUERY_HEADER = "PATTERN ";
@@ -1077,8 +1077,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/
 -
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_zh_TW.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_zh_TW.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_zh_TW.java	2013-04-16 14:28:09.344150364 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_zh_TW.java	2013-04-16 14:29:26.553394447 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_zh_TW.java	2013-05-17 15:36:26.017579818 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/res/XSLTErrorResources_zh_TW.java	2013-05-17 20:49:35.861545797 +0100
 @@ -2409,69 +2409,4 @@
     * @deprecated  */
    public static final String QUERY_HEADER = "PATTERN ";
@@ -1151,7 +1151,7 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/utils/ConfigurationError.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/utils/ConfigurationError.java
 --- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/utils/ConfigurationError.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/utils/ConfigurationError.java	2013-04-16 14:29:26.553394447 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/utils/ConfigurationError.java	2013-05-17 20:49:35.861545797 +0100
 @@ -0,0 +1,61 @@
 +/*
 + * reserved comment block
@@ -1216,7 +1216,7 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/
 +} // class ConfigurationError
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/utils/ObjectFactory.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/utils/ObjectFactory.java
 --- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/utils/ObjectFactory.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/utils/ObjectFactory.java	2013-04-16 14:29:26.553394447 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/utils/ObjectFactory.java	2013-05-17 20:49:35.861545797 +0100
 @@ -0,0 +1,659 @@
 +/*
 + * reserved comment block
@@ -1879,7 +1879,7 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/
 +} // class ObjectFactory
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/utils/SecuritySupport.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/utils/SecuritySupport.java
 --- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/utils/SecuritySupport.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/utils/SecuritySupport.java	2013-04-16 14:29:26.553394447 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/utils/SecuritySupport.java	2013-05-17 20:49:35.861545797 +0100
 @@ -0,0 +1,206 @@
 +/*
 + * reserved comment block
@@ -2088,8 +2088,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/
 +    }
 +}
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xslt/EnvironmentCheck.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xslt/EnvironmentCheck.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xslt/EnvironmentCheck.java	2013-04-16 14:28:09.344150364 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xslt/EnvironmentCheck.java	2013-04-16 14:29:26.553394447 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xslt/EnvironmentCheck.java	2013-05-17 15:36:26.021579882 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xslt/EnvironmentCheck.java	2013-05-17 20:49:35.861545797 +0100
 @@ -22,6 +22,8 @@
   */
  package com.sun.org.apache.xalan.internal.xslt;
@@ -2136,8 +2136,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/
        if (null != othercp)
        {
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xslt/Process.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xslt/Process.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xslt/Process.java	2013-04-16 14:28:09.348150428 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xslt/Process.java	2013-04-16 14:29:26.553394447 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xslt/Process.java	2013-05-17 15:36:26.021579882 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xslt/Process.java	2013-05-17 20:49:35.861545797 +0100
 @@ -55,6 +55,7 @@
  import com.sun.org.apache.xalan.internal.Version;
  import com.sun.org.apache.xalan.internal.res.XSLMessages;
@@ -2156,8 +2156,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/
      String flavor = "s2s";
  
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/Parser.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/Parser.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/Parser.java	2013-04-16 14:28:09.380150944 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/Parser.java	2013-04-16 14:29:26.553394447 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/Parser.java	2013-05-17 15:36:26.061580514 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/Parser.java	2013-05-17 20:49:35.861545797 +0100
 @@ -400,7 +400,7 @@
              }
          }
@@ -2196,8 +2196,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/
          return null;
      }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/util/ErrorMessages.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/util/ErrorMessages.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/util/ErrorMessages.java	2013-04-16 14:28:09.400151266 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/util/ErrorMessages.java	2013-04-16 14:29:26.553394447 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/util/ErrorMessages.java	2013-05-17 15:36:26.093581019 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/util/ErrorMessages.java	2013-05-17 20:49:35.865545862 +0100
 @@ -947,7 +947,12 @@
          "Cannot set the feature ''{0}'' on this TransformerFactory."},
  
@@ -2213,8 +2213,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/
      }
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/util/ErrorMsg.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/util/ErrorMsg.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/util/ErrorMsg.java	2013-04-16 14:28:09.420151588 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/util/ErrorMsg.java	2013-04-16 14:29:26.553394447 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/util/ErrorMsg.java	2013-05-17 15:36:26.105581209 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/util/ErrorMsg.java	2013-05-17 20:49:35.865545862 +0100
 @@ -23,6 +23,7 @@
  
  package com.sun.org.apache.xalan.internal.xsltc.compiler.util;
@@ -2276,8 +2276,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/
  	Stylesheet stylesheet = node.getStylesheet();
  	if (stylesheet != null)
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/util/Util.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/util/Util.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/util/Util.java	2013-04-16 14:28:09.428151717 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/util/Util.java	2013-04-16 14:29:26.553394447 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/util/Util.java	2013-05-17 15:36:26.117581398 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/util/Util.java	2013-05-17 20:49:35.865545862 +0100
 @@ -26,6 +26,7 @@
  import java.util.StringTokenizer;
  
@@ -2296,8 +2296,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/
      }
  
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/XSLTC.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/XSLTC.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/XSLTC.java	2013-04-16 14:28:09.396151201 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/XSLTC.java	2013-04-16 14:29:26.553394447 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/XSLTC.java	2013-05-17 15:36:26.089580955 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/compiler/XSLTC.java	2013-05-17 20:49:35.865545862 +0100
 @@ -41,10 +41,12 @@
  import java.util.jar.Manifest;
  
@@ -2362,8 +2362,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/
              }
          }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/dom/NodeSortRecord.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/dom/NodeSortRecord.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/dom/NodeSortRecord.java	2013-04-16 14:28:09.444151975 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/dom/NodeSortRecord.java	2013-04-16 14:29:26.553394447 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/dom/NodeSortRecord.java	2013-05-17 15:36:26.133581651 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/dom/NodeSortRecord.java	2013-05-17 20:49:35.865545862 +0100
 @@ -32,6 +32,7 @@
  import com.sun.org.apache.xalan.internal.xsltc.TransletException;
  import com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;
@@ -2382,8 +2382,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/
          catch (SecurityException e) {
              // If we can't read the propery, just use default collator
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/runtime/BasisLibrary.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/runtime/BasisLibrary.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/runtime/BasisLibrary.java	2013-04-16 14:28:09.448152039 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/runtime/BasisLibrary.java	2013-04-16 14:29:26.553394447 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/runtime/BasisLibrary.java	2013-05-17 15:36:26.145581840 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/runtime/BasisLibrary.java	2013-05-17 20:49:35.865545862 +0100
 @@ -23,6 +23,7 @@
  
  package com.sun.org.apache.xalan.internal.xsltc.runtime;
@@ -2402,8 +2402,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/
  
      /**
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/runtime/output/WriterOutputBuffer.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/runtime/output/WriterOutputBuffer.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/runtime/output/WriterOutputBuffer.java	2013-04-16 14:28:09.456152168 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/runtime/output/WriterOutputBuffer.java	2013-04-16 14:29:26.557394511 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/runtime/output/WriterOutputBuffer.java	2013-05-17 15:36:26.153581966 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/runtime/output/WriterOutputBuffer.java	2013-05-17 20:49:35.865545862 +0100
 @@ -23,6 +23,7 @@
  
  package com.sun.org.apache.xalan.internal.xsltc.runtime.output;
@@ -2422,8 +2422,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/
              BUFFER_SIZE = 32 * KB;
          }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/trax/TemplatesImpl.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/trax/TemplatesImpl.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/trax/TemplatesImpl.java	2013-04-16 14:28:09.460152233 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/trax/TemplatesImpl.java	2013-04-16 14:29:26.557394511 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/trax/TemplatesImpl.java	2013-05-17 15:36:26.161582093 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/trax/TemplatesImpl.java	2013-05-17 20:49:35.865545862 +0100
 @@ -42,6 +42,7 @@
  import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
  import com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;
@@ -2458,8 +2458,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/
          if (is.readBoolean()) {
              _uriResolver = (URIResolver) is.readObject();
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/trax/TransformerFactoryImpl.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/trax/TransformerFactoryImpl.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/trax/TransformerFactoryImpl.java	2013-04-16 14:28:09.460152233 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/trax/TransformerFactoryImpl.java	2013-04-16 14:29:26.557394511 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/trax/TransformerFactoryImpl.java	2013-05-17 15:36:26.165582156 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/internal/xsltc/trax/TransformerFactoryImpl.java	2013-05-17 20:49:35.865545862 +0100
 @@ -69,7 +69,7 @@
  import com.sun.org.apache.xalan.internal.xsltc.compiler.XSLTC;
  import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
@@ -2496,8 +2496,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xalan/
      	File transletParentFile = new File(transletParentDir);
      	
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/dom/DOMMessageFormatter.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/dom/DOMMessageFormatter.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/dom/DOMMessageFormatter.java	2013-04-16 14:28:09.472152426 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/dom/DOMMessageFormatter.java	2013-04-16 14:29:26.557394511 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/dom/DOMMessageFormatter.java	2013-05-17 15:36:26.181582409 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/dom/DOMMessageFormatter.java	2013-05-17 20:49:35.865545862 +0100
 @@ -20,10 +20,10 @@
  
  
@@ -2539,8 +2539,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces
      }
  
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/dv/DatatypeException.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/dv/DatatypeException.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/dv/DatatypeException.java	2013-04-16 14:28:09.532153393 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/dv/DatatypeException.java	2013-04-16 14:29:26.557394511 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/dv/DatatypeException.java	2013-05-17 15:36:26.261583673 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/dv/DatatypeException.java	2013-05-17 20:49:35.865545862 +0100
 @@ -20,6 +20,7 @@
  
  package com.sun.org.apache.xerces.internal.impl.dv;
@@ -2567,8 +2567,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces
              throw new MissingResourceException("Property file not found!", "com.sun.org.apache.xerces.internal.impl.msg.XMLSchemaMessages", key);
  
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/msg/XMLMessageFormatter.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/msg/XMLMessageFormatter.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/msg/XMLMessageFormatter.java	2013-04-16 14:28:09.552153715 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/msg/XMLMessageFormatter.java	2013-04-16 14:29:26.557394511 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/msg/XMLMessageFormatter.java	2013-05-17 15:36:26.289584115 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/msg/XMLMessageFormatter.java	2013-05-17 20:49:35.865545862 +0100
 @@ -20,12 +20,11 @@
  
  package com.sun.org.apache.xerces.internal.impl.msg;
@@ -2600,8 +2600,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces
  
          // format message
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/XMLEntityManager.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/XMLEntityManager.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/XMLEntityManager.java	2013-04-16 14:28:09.504152942 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/XMLEntityManager.java	2013-04-16 14:29:26.557394511 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/XMLEntityManager.java	2013-05-17 15:36:26.229583167 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/XMLEntityManager.java	2013-05-17 20:49:35.869545925 +0100
 @@ -52,6 +52,7 @@
  import com.sun.org.apache.xerces.internal.xni.XNIException;
  import com.sun.org.apache.xerces.internal.xni.parser.*;
@@ -2695,8 +2695,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces
      //
      // Package visible methods
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/xpath/regex/RegexParser.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/xpath/regex/RegexParser.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/xpath/regex/RegexParser.java	2013-04-16 14:28:09.560153844 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/xpath/regex/RegexParser.java	2013-04-16 14:29:26.557394511 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/xpath/regex/RegexParser.java	2013-05-17 15:36:26.301584304 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/xpath/regex/RegexParser.java	2013-05-17 20:49:35.869545925 +0100
 @@ -20,6 +20,7 @@
  
  package com.sun.org.apache.xerces.internal.impl.xpath.regex;
@@ -2719,8 +2719,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces
          }
          catch (MissingResourceException mre) {
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/xs/XSMessageFormatter.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/xs/XSMessageFormatter.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/xs/XSMessageFormatter.java	2013-04-16 14:28:09.572154037 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/xs/XSMessageFormatter.java	2013-04-16 14:29:26.557394511 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/xs/XSMessageFormatter.java	2013-05-17 15:36:26.321584620 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/impl/xs/XSMessageFormatter.java	2013-05-17 20:49:35.869545925 +0100
 @@ -20,11 +20,11 @@
  
  package com.sun.org.apache.xerces.internal.impl.xs;
@@ -2759,8 +2759,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces
  
          String msg = fResourceBundle.getString(key);
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/jaxp/validation/JAXPValidationMessageFormatter.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/jaxp/validation/JAXPValidationMessageFormatter.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/jaxp/validation/JAXPValidationMessageFormatter.java	2013-04-16 14:28:09.600154489 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/jaxp/validation/JAXPValidationMessageFormatter.java	2013-04-16 14:29:26.557394511 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/jaxp/validation/JAXPValidationMessageFormatter.java	2013-05-17 15:36:26.373585441 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/jaxp/validation/JAXPValidationMessageFormatter.java	2013-05-17 20:49:35.869545925 +0100
 @@ -20,15 +20,16 @@
  
  package com.sun.org.apache.xerces.internal.jaxp.validation;
@@ -2794,8 +2794,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces
  
          // format message
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/util/DatatypeMessageFormatter.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/util/DatatypeMessageFormatter.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/util/DatatypeMessageFormatter.java	2013-04-16 14:28:09.616154746 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/util/DatatypeMessageFormatter.java	2013-04-16 14:29:26.557394511 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/util/DatatypeMessageFormatter.java	2013-05-17 15:36:26.409586009 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/util/DatatypeMessageFormatter.java	2013-05-17 20:49:35.869545925 +0100
 @@ -20,15 +20,16 @@
  
  package com.sun.org.apache.xerces.internal.util;
@@ -2829,8 +2829,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces
  
          // format message
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/util/SAXMessageFormatter.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/util/SAXMessageFormatter.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/util/SAXMessageFormatter.java	2013-04-16 14:28:09.620154811 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/util/SAXMessageFormatter.java	2013-04-16 14:29:26.557394511 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/util/SAXMessageFormatter.java	2013-05-17 15:36:26.417586137 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/util/SAXMessageFormatter.java	2013-05-17 20:49:35.869545925 +0100
 @@ -19,16 +19,17 @@
   */
  package com.sun.org.apache.xerces.internal.util;
@@ -2865,8 +2865,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces
  
          // format message
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/util/SecurityManager.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/util/SecurityManager.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/util/SecurityManager.java	2013-04-16 14:28:09.620154811 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/util/SecurityManager.java	2013-04-16 14:29:26.557394511 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/util/SecurityManager.java	2013-05-17 15:36:26.417586137 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/util/SecurityManager.java	2013-05-17 20:49:35.869545925 +0100
 @@ -61,6 +61,8 @@
  
  package com.sun.org.apache.xerces.internal.util;
@@ -2967,7 +2967,7 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces
  } // class SecurityManager
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/utils/ConfigurationError.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/utils/ConfigurationError.java
 --- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/utils/ConfigurationError.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/utils/ConfigurationError.java	2013-04-16 14:29:26.557394511 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/utils/ConfigurationError.java	2013-05-17 20:49:35.869545925 +0100
 @@ -0,0 +1,58 @@
 +/*
 + * reserved comment block
@@ -3029,7 +3029,7 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces
 +} // class ConfigurationError
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/utils/ObjectFactory.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/utils/ObjectFactory.java
 --- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/utils/ObjectFactory.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/utils/ObjectFactory.java	2013-04-16 14:29:26.557394511 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/utils/ObjectFactory.java	2013-05-17 20:49:35.869545925 +0100
 @@ -0,0 +1,436 @@
 +/*
 + * reserved comment block
@@ -3469,7 +3469,7 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces
 +} // class ObjectFactory
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/utils/SecuritySupport.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/utils/SecuritySupport.java
 --- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/utils/SecuritySupport.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/utils/SecuritySupport.java	2013-04-16 14:29:26.557394511 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/utils/SecuritySupport.java	2013-05-17 20:49:35.869545925 +0100
 @@ -0,0 +1,199 @@
 +/*
 + * reserved comment block
@@ -3671,8 +3671,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces
 +    private SecuritySupport () {}
 +}
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/xinclude/XIncludeMessageFormatter.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/xinclude/XIncludeMessageFormatter.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/xinclude/XIncludeMessageFormatter.java	2013-04-16 14:28:09.628154939 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/xinclude/XIncludeMessageFormatter.java	2013-04-16 14:29:26.557394511 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/xinclude/XIncludeMessageFormatter.java	2013-05-17 15:36:26.437586452 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/xinclude/XIncludeMessageFormatter.java	2013-05-17 20:49:35.869545925 +0100
 @@ -20,11 +20,11 @@
  
  package com.sun.org.apache.xerces.internal.xinclude;
@@ -3711,8 +3711,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces
  
          String msg = fResourceBundle.getString(key);
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/xpointer/XPointerMessageFormatter.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/xpointer/XPointerMessageFormatter.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/xpointer/XPointerMessageFormatter.java	2013-04-16 14:28:09.636155069 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/xpointer/XPointerMessageFormatter.java	2013-04-16 14:29:26.557394511 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/xpointer/XPointerMessageFormatter.java	2013-05-17 15:36:26.453586705 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces/internal/xpointer/XPointerMessageFormatter.java	2013-05-17 20:49:35.869545925 +0100
 @@ -24,6 +24,7 @@
  import java.util.ResourceBundle;
  import java.util.PropertyResourceBundle;
@@ -3748,8 +3748,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xerces
  
          String msg = fResourceBundle.getString(key);
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/dtm/DTMManager.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/dtm/DTMManager.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/dtm/DTMManager.java	2013-04-16 14:28:09.644155197 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/dtm/DTMManager.java	2013-04-16 14:29:26.557394511 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/dtm/DTMManager.java	2013-05-17 15:36:26.473587020 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/dtm/DTMManager.java	2013-05-17 20:49:35.869545925 +0100
 @@ -26,6 +26,7 @@
  import com.sun.org.apache.xml.internal.res.XMLMessages;
  import com.sun.org.apache.xml.internal.utils.PrefixResolver;
@@ -3768,8 +3768,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
      catch (SecurityException ex){}
    }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_ca.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_ca.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_ca.java	2013-04-16 14:28:09.664155519 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_ca.java	2013-04-16 14:29:26.557394511 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_ca.java	2013-05-17 15:36:26.509587590 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_ca.java	2013-05-17 20:49:35.869545925 +0100
 @@ -24,9 +24,6 @@
  
  
@@ -3849,8 +3849,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
 -
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_cs.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_cs.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_cs.java	2013-04-16 14:28:09.664155519 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_cs.java	2013-04-16 14:29:26.557394511 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_cs.java	2013-05-17 15:36:26.509587590 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_cs.java	2013-05-17 20:49:35.873545987 +0100
 @@ -24,9 +24,6 @@
  
  
@@ -3930,8 +3930,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
 -
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_de.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_de.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_de.java	2013-04-16 14:28:09.664155519 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_de.java	2013-04-16 14:29:26.561394576 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_de.java	2013-05-17 15:36:26.509587590 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_de.java	2013-05-17 20:49:35.873545987 +0100
 @@ -24,9 +24,6 @@
  
  
@@ -4011,8 +4011,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
 -
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_es.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_es.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_es.java	2013-04-16 14:28:09.664155519 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_es.java	2013-04-16 14:29:26.561394576 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_es.java	2013-05-17 15:36:26.513587653 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_es.java	2013-05-17 20:49:35.873545987 +0100
 @@ -24,9 +24,6 @@
  
  
@@ -4092,8 +4092,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
 -
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_fr.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_fr.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_fr.java	2013-04-16 14:28:09.664155519 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_fr.java	2013-04-16 14:29:26.561394576 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_fr.java	2013-05-17 15:36:26.513587653 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_fr.java	2013-05-17 20:49:35.873545987 +0100
 @@ -24,9 +24,6 @@
  
  
@@ -4173,8 +4173,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
 -
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_it.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_it.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_it.java	2013-04-16 14:28:09.664155519 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_it.java	2013-04-16 14:29:26.561394576 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_it.java	2013-05-17 15:36:26.513587653 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_it.java	2013-05-17 20:49:35.873545987 +0100
 @@ -24,9 +24,6 @@
  
  
@@ -4254,8 +4254,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
 -
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_ja.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_ja.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_ja.java	2013-04-16 14:28:09.664155519 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_ja.java	2013-04-16 14:29:26.561394576 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_ja.java	2013-05-17 15:36:26.513587653 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_ja.java	2013-05-17 20:49:35.873545987 +0100
 @@ -24,9 +24,6 @@
  
  
@@ -4335,8 +4335,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
 -
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources.java	2013-04-16 14:28:09.660155456 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources.java	2013-04-16 14:29:26.557394511 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources.java	2013-05-17 15:36:26.509587590 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources.java	2013-05-17 20:49:35.873545987 +0100
 @@ -24,9 +24,6 @@
  
  
@@ -4416,8 +4416,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
 -
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_ko.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_ko.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_ko.java	2013-04-16 14:28:09.664155519 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_ko.java	2013-04-16 14:29:26.561394576 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_ko.java	2013-05-17 15:36:26.513587653 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_ko.java	2013-05-17 20:49:35.873545987 +0100
 @@ -24,9 +24,6 @@
  
  
@@ -4497,8 +4497,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
 -
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_sk.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_sk.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_sk.java	2013-04-16 14:28:09.664155519 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_sk.java	2013-04-16 14:29:26.561394576 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_sk.java	2013-05-17 15:36:26.517587716 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_sk.java	2013-05-17 20:49:35.873545987 +0100
 @@ -24,9 +24,6 @@
  
  
@@ -4578,8 +4578,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
 -
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_tr.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_tr.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_tr.java	2013-04-16 14:28:09.668155584 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_tr.java	2013-04-16 14:29:26.561394576 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_tr.java	2013-05-17 15:36:26.517587716 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_tr.java	2013-05-17 20:49:35.873545987 +0100
 @@ -24,9 +24,6 @@
  
  
@@ -4659,8 +4659,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
 -
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_zh_CN.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_zh_CN.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_zh_CN.java	2013-04-16 14:28:09.668155584 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_zh_CN.java	2013-04-16 14:29:26.561394576 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_zh_CN.java	2013-05-17 15:36:26.517587716 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_zh_CN.java	2013-05-17 20:49:35.873545987 +0100
 @@ -24,9 +24,6 @@
  
  
@@ -4740,8 +4740,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
 -
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_zh_TW.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_zh_TW.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_zh_TW.java	2013-04-16 14:28:09.668155584 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_zh_TW.java	2013-04-16 14:29:26.561394576 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_zh_TW.java	2013-05-17 15:36:26.517587716 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLErrorResources_zh_TW.java	2013-05-17 20:49:35.873545987 +0100
 @@ -24,9 +24,6 @@
  
  
@@ -4821,8 +4821,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
 -
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLMessages.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLMessages.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLMessages.java	2013-04-16 14:28:09.668155584 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLMessages.java	2013-04-16 14:29:26.561394576 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLMessages.java	2013-05-17 15:36:26.521587779 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/res/XMLMessages.java	2013-05-17 20:49:35.877546051 +0100
 @@ -22,10 +22,9 @@
   */
  package com.sun.org.apache.xml.internal.res;
@@ -4910,8 +4910,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
 -  }
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/resolver/Catalog.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/resolver/Catalog.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/resolver/Catalog.java	2013-04-16 14:28:09.668155584 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/resolver/Catalog.java	2013-04-16 14:29:26.561394576 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/resolver/Catalog.java	2013-05-17 15:36:26.521587779 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/resolver/Catalog.java	2013-05-17 20:49:35.877546051 +0100
 @@ -23,6 +23,8 @@
  
  package com.sun.org.apache.xml.internal.resolver;
@@ -4940,8 +4940,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
      Enumeration en = catalogEntries.elements();
      while (en.hasMoreElements()) {
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/resolver/CatalogManager.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/resolver/CatalogManager.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/resolver/CatalogManager.java	2013-04-16 14:28:09.668155584 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/resolver/CatalogManager.java	2013-04-16 14:29:26.561394576 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/resolver/CatalogManager.java	2013-05-17 15:36:26.525587842 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/resolver/CatalogManager.java	2013-05-17 20:49:35.877546051 +0100
 @@ -23,6 +23,7 @@
  
  package com.sun.org.apache.xml.internal.resolver;
@@ -5016,8 +5016,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
      if (className == null) {
        if (resources==null) readProperties();
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/resolver/Resolver.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/resolver/Resolver.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/resolver/Resolver.java	2013-04-16 14:28:09.668155584 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/resolver/Resolver.java	2013-04-16 14:29:26.561394576 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/resolver/Resolver.java	2013-05-17 15:36:26.525587842 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/resolver/Resolver.java	2013-05-17 20:49:35.877546051 +0100
 @@ -31,6 +31,7 @@
  import java.net.URL;
  import java.net.URLConnection;
@@ -5045,8 +5045,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
          Enumeration en = catalogEntries.elements();
          while (en.hasMoreElements()) {
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serialize/SerializerFactory.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serialize/SerializerFactory.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serialize/SerializerFactory.java	2013-04-16 14:28:09.684155841 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serialize/SerializerFactory.java	2013-04-16 14:29:26.561394576 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serialize/SerializerFactory.java	2013-05-17 15:36:26.545588158 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serialize/SerializerFactory.java	2013-05-17 20:49:35.877546051 +0100
 @@ -21,6 +21,7 @@
  
  package com.sun.org.apache.xml.internal.serialize;
@@ -5065,8 +5065,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
              token = new StringTokenizer( list, " ;,:" );
              while ( token.hasMoreTokens() ) {
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/Encodings.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/Encodings.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/Encodings.java	2013-04-16 14:28:09.684155841 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/Encodings.java	2013-04-16 14:29:26.561394576 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/Encodings.java	2013-05-17 15:36:26.553588285 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/Encodings.java	2013-05-17 20:49:35.877546051 +0100
 @@ -34,6 +34,7 @@
  import java.util.Properties;
  import java.util.StringTokenizer;
@@ -5105,7 +5105,7 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
  
              Properties props = new Properties();
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/ObjectFactory.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/ObjectFactory.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/ObjectFactory.java	2013-04-16 14:28:09.688155906 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/ObjectFactory.java	2013-05-17 15:36:26.557588348 +0100
 +++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/ObjectFactory.java	1970-01-01 01:00:00.000000000 +0100
 @@ -1,662 +0,0 @@
 -/*
@@ -5771,8 +5771,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
 -
 -} // class ObjectFactory
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/OutputPropertiesFactory.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/OutputPropertiesFactory.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/OutputPropertiesFactory.java	2013-04-16 14:28:09.688155906 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/OutputPropertiesFactory.java	2013-04-16 14:29:26.561394576 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/OutputPropertiesFactory.java	2013-05-17 15:36:26.557588348 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/OutputPropertiesFactory.java	2013-05-17 20:49:35.877546051 +0100
 @@ -22,6 +22,7 @@
   */
  package com.sun.org.apache.xml.internal.serializer;
@@ -5800,7 +5800,7 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
              catch (SecurityException se)
              {
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/SecuritySupport12.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/SecuritySupport12.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/SecuritySupport12.java	2013-04-16 14:28:09.688155906 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/SecuritySupport12.java	2013-05-17 15:36:26.557588348 +0100
 +++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/SecuritySupport12.java	1970-01-01 01:00:00.000000000 +0100
 @@ -1,145 +0,0 @@
 -/*
@@ -5949,7 +5949,7 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
 -
 -}
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/SecuritySupport.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/SecuritySupport.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/SecuritySupport.java	2013-04-16 14:28:09.688155906 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/SecuritySupport.java	2013-05-17 15:36:26.557588348 +0100
 +++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/SecuritySupport.java	1970-01-01 01:00:00.000000000 +0100
 @@ -1,125 +0,0 @@
 -/*
@@ -6078,8 +6078,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
 -    }
 -}
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/ToStream.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/ToStream.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/ToStream.java	2013-04-16 14:28:09.700156100 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/ToStream.java	2013-04-16 14:29:26.565394640 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/ToStream.java	2013-05-17 15:36:26.569588536 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/ToStream.java	2013-05-17 20:49:35.877546051 +0100
 @@ -22,6 +22,7 @@
   */
  package com.sun.org.apache.xml.internal.serializer;
@@ -6098,8 +6098,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
      /**
       * True if the the system line separator is to be used.
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/TreeWalker.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/TreeWalker.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/TreeWalker.java	2013-04-16 14:28:09.704156164 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/TreeWalker.java	2013-04-16 14:29:26.565394640 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/TreeWalker.java	2013-05-17 15:36:26.573588601 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/TreeWalker.java	2013-05-17 20:49:35.881546115 +0100
 @@ -22,6 +22,7 @@
   */
  package com.sun.org.apache.xml.internal.serializer;
@@ -6127,8 +6127,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
                  catch (SecurityException se){// user.dir not accessible from applet
  
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/utils/Messages.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/utils/Messages.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/utils/Messages.java	2013-04-16 14:28:09.708156229 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/utils/Messages.java	2013-04-16 14:29:26.565394640 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/utils/Messages.java	2013-05-17 15:36:26.581588727 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/serializer/utils/Messages.java	2013-05-17 20:49:35.881546115 +0100
 @@ -22,6 +22,7 @@
   */
  package com.sun.org.apache.xml.internal.serializer.utils;
@@ -6270,8 +6270,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
 -    }
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/utils/res/XResourceBundle.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/utils/res/XResourceBundle.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/utils/res/XResourceBundle.java	2013-04-16 14:28:09.728156552 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/utils/res/XResourceBundle.java	2013-04-16 14:29:26.565394640 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/utils/res/XResourceBundle.java	2013-05-17 15:36:26.625589422 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/utils/res/XResourceBundle.java	2013-05-17 20:49:35.881546115 +0100
 @@ -22,6 +22,8 @@
   */
  package com.sun.org.apache.xml.internal.utils.res;
@@ -6434,8 +6434,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
 -  }
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/utils/TreeWalker.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/utils/TreeWalker.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/utils/TreeWalker.java	2013-04-16 14:28:09.720156422 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/utils/TreeWalker.java	2013-04-16 14:29:26.565394640 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/utils/TreeWalker.java	2013-05-17 15:36:26.613589232 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/internal/utils/TreeWalker.java	2013-05-17 20:49:35.881546115 +0100
 @@ -22,6 +22,7 @@
   */
  package com.sun.org.apache.xml.internal.utils;
@@ -6472,8 +6472,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xml/in
                  catch (SecurityException se){// user.dir not accessible from applet
  
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/functions/FuncSystemProperty.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/functions/FuncSystemProperty.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/functions/FuncSystemProperty.java	2013-04-16 14:28:09.752156937 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/functions/FuncSystemProperty.java	2013-04-16 14:29:26.565394640 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/functions/FuncSystemProperty.java	2013-05-17 15:36:26.677590243 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/functions/FuncSystemProperty.java	2013-05-17 20:49:35.881546115 +0100
 @@ -31,6 +31,8 @@
  import com.sun.org.apache.xpath.internal.objects.XObject;
  import com.sun.org.apache.xpath.internal.objects.XString;
@@ -6519,7 +6519,7 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/
  
        // get a buffered version
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/functions/ObjectFactory.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/functions/ObjectFactory.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/functions/ObjectFactory.java	2013-04-16 14:28:09.752156937 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/functions/ObjectFactory.java	2013-05-17 15:36:26.681590306 +0100
 +++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/functions/ObjectFactory.java	1970-01-01 01:00:00.000000000 +0100
 @@ -1,663 +0,0 @@
 -/*
@@ -7186,7 +7186,7 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/
 -
 -} // class ObjectFactory
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/functions/SecuritySupport12.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/functions/SecuritySupport12.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/functions/SecuritySupport12.java	2013-04-16 14:28:09.752156937 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/functions/SecuritySupport12.java	2013-05-17 15:36:26.681590306 +0100
 +++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/functions/SecuritySupport12.java	1970-01-01 01:00:00.000000000 +0100
 @@ -1,148 +0,0 @@
 -/*
@@ -7338,7 +7338,7 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/
 -
 -}
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/functions/SecuritySupport.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/functions/SecuritySupport.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/functions/SecuritySupport.java	2013-04-16 14:28:09.752156937 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/functions/SecuritySupport.java	2013-05-17 15:36:26.681590306 +0100
 +++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/functions/SecuritySupport.java	1970-01-01 01:00:00.000000000 +0100
 @@ -1,127 +0,0 @@
 -/*
@@ -7469,8 +7469,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/
 -    }
 -}
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_de.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_de.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_de.java	2013-04-16 14:28:09.764157131 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_de.java	2013-04-16 14:29:26.565394640 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_de.java	2013-05-17 15:36:26.709590749 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_de.java	2013-05-17 20:49:35.881546115 +0100
 @@ -23,9 +23,6 @@
  package com.sun.org.apache.xpath.internal.res;
  
@@ -7551,8 +7551,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/
 -
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_es.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_es.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_es.java	2013-04-16 14:28:09.764157131 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_es.java	2013-04-16 14:29:26.565394640 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_es.java	2013-05-17 15:36:26.713590812 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_es.java	2013-05-17 20:49:35.881546115 +0100
 @@ -23,9 +23,6 @@
  package com.sun.org.apache.xpath.internal.res;
  
@@ -7633,8 +7633,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/
 -
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_fr.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_fr.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_fr.java	2013-04-16 14:28:09.768157196 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_fr.java	2013-04-16 14:29:26.565394640 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_fr.java	2013-05-17 15:36:26.713590812 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_fr.java	2013-05-17 20:49:35.881546115 +0100
 @@ -23,9 +23,6 @@
  package com.sun.org.apache.xpath.internal.res;
  
@@ -7715,8 +7715,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/
 -
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_it.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_it.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_it.java	2013-04-16 14:28:09.768157196 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_it.java	2013-04-16 14:29:26.565394640 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_it.java	2013-05-17 15:36:26.713590812 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_it.java	2013-05-17 20:49:35.885546179 +0100
 @@ -23,9 +23,6 @@
  package com.sun.org.apache.xpath.internal.res;
  
@@ -7797,8 +7797,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/
 -
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_ja.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_ja.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_ja.java	2013-04-16 14:28:09.768157196 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_ja.java	2013-04-16 14:29:26.565394640 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_ja.java	2013-05-17 15:36:26.717590875 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_ja.java	2013-05-17 20:49:35.885546179 +0100
 @@ -23,9 +23,6 @@
  package com.sun.org.apache.xpath.internal.res;
  
@@ -7879,8 +7879,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/
 -
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources.java	2013-04-16 14:28:09.764157131 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources.java	2013-04-16 14:29:26.565394640 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources.java	2013-05-17 15:36:26.709590749 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources.java	2013-05-17 20:49:35.885546179 +0100
 @@ -23,9 +23,6 @@
  package com.sun.org.apache.xpath.internal.res;
  
@@ -7961,8 +7961,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/
 -
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_ko.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_ko.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_ko.java	2013-04-16 14:28:09.768157196 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_ko.java	2013-04-16 14:29:26.565394640 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_ko.java	2013-05-17 15:36:26.717590875 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_ko.java	2013-05-17 20:49:35.885546179 +0100
 @@ -23,9 +23,6 @@
  package com.sun.org.apache.xpath.internal.res;
  
@@ -8043,8 +8043,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/
 -
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_zh_CN.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_zh_CN.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_zh_CN.java	2013-04-16 14:28:09.772157260 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_zh_CN.java	2013-04-16 14:29:26.565394640 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_zh_CN.java	2013-05-17 15:36:26.721590938 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_zh_CN.java	2013-05-17 20:49:35.885546179 +0100
 @@ -23,9 +23,6 @@
  package com.sun.org.apache.xpath.internal.res;
  
@@ -8125,8 +8125,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/
 -
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_zh_TW.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_zh_TW.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_zh_TW.java	2013-04-16 14:28:09.772157260 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_zh_TW.java	2013-04-16 14:29:26.565394640 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_zh_TW.java	2013-05-17 15:36:26.721590938 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHErrorResources_zh_TW.java	2013-05-17 20:49:35.885546179 +0100
 @@ -23,9 +23,6 @@
  package com.sun.org.apache.xpath.internal.res;
  
@@ -8207,8 +8207,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/
 -
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHMessages.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHMessages.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHMessages.java	2013-04-16 14:28:09.772157260 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHMessages.java	2013-04-16 14:29:26.569394704 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHMessages.java	2013-05-17 15:36:26.721590938 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/internal/res/XPATHMessages.java	2013-05-17 20:49:35.885546179 +0100
 @@ -22,130 +22,128 @@
   */
  package com.sun.org.apache.xpath.internal.res;
@@ -8446,8 +8446,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/org/apache/xpath/
 +    }
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/xml/internal/stream/writers/WriterUtility.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/xml/internal/stream/writers/WriterUtility.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/xml/internal/stream/writers/WriterUtility.java	2013-04-16 14:28:09.780157389 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/xml/internal/stream/writers/WriterUtility.java	2013-04-16 14:29:26.569394704 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/xml/internal/stream/writers/WriterUtility.java	2013-05-17 15:36:26.741591254 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/xml/internal/stream/writers/WriterUtility.java	2013-05-17 20:49:35.885546179 +0100
 @@ -32,6 +32,7 @@
  import java.nio.charset.Charset;
  import java.nio.charset.CharsetEncoder;
@@ -8466,8 +8466,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/xml/internal/stre
                  return Charset.forName(encoding).newEncoder();
              }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/xml/internal/stream/writers/XMLStreamWriterImpl.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/xml/internal/stream/writers/XMLStreamWriterImpl.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/xml/internal/stream/writers/XMLStreamWriterImpl.java	2013-04-16 14:28:09.780157389 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/xml/internal/stream/writers/XMLStreamWriterImpl.java	2013-04-16 14:29:26.569394704 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/xml/internal/stream/writers/XMLStreamWriterImpl.java	2013-05-17 15:36:26.741591254 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/xml/internal/stream/writers/XMLStreamWriterImpl.java	2013-05-17 20:49:35.885546179 +0100
 @@ -53,6 +53,7 @@
  import com.sun.org.apache.xerces.internal.impl.PropertyManager;
  import com.sun.org.apache.xerces.internal.util.NamespaceSupport;
@@ -8486,8 +8486,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/xml/internal/stre
                  fWriter = new UTF8OutputStreamWriter(os);
              } else {
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/xml/internal/stream/XMLEntityStorage.java openjdk/jaxp/drop_included/jaxp_src/src/com/sun/xml/internal/stream/XMLEntityStorage.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/xml/internal/stream/XMLEntityStorage.java	2013-04-16 14:28:09.772157260 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/xml/internal/stream/XMLEntityStorage.java	2013-04-16 14:29:26.569394704 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/xml/internal/stream/XMLEntityStorage.java	2013-05-17 15:36:26.725591000 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/com/sun/xml/internal/stream/XMLEntityStorage.java	2013-05-17 20:49:35.885546179 +0100
 @@ -36,6 +36,7 @@
  import com.sun.org.apache.xerces.internal.impl.PropertyManager;
  import com.sun.org.apache.xerces.internal.impl.XMLErrorReporter;
@@ -8506,8 +8506,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/com/sun/xml/internal/stre
          catch (SecurityException se) {
          }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/javax/xml/datatype/FactoryFinder.java openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/datatype/FactoryFinder.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/javax/xml/datatype/FactoryFinder.java	2013-04-16 14:28:09.784157453 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/datatype/FactoryFinder.java	2013-04-16 14:29:26.569394704 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/javax/xml/datatype/FactoryFinder.java	2013-05-17 15:36:26.749591380 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/datatype/FactoryFinder.java	2013-05-17 20:49:35.889546242 +0100
 @@ -44,6 +44,7 @@
   * @author Santiago.PericasGeertsen@sun.com
   */
@@ -8631,8 +8631,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/javax/xml/datatype/Factor
          
          // No provider found
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/javax/xml/stream/FactoryFinder.java openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/stream/FactoryFinder.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/javax/xml/stream/FactoryFinder.java	2013-04-16 14:28:09.788157518 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/stream/FactoryFinder.java	2013-04-16 14:29:26.569394704 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/javax/xml/stream/FactoryFinder.java	2013-05-17 15:36:26.757591506 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/stream/FactoryFinder.java	2013-05-17 20:49:35.889546242 +0100
 @@ -25,14 +25,12 @@
  
  package javax.xml.stream;
@@ -8790,8 +8790,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/javax/xml/stream/FactoryF
  
          // No provider found
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/javax/xml/validation/SchemaFactoryFinder.java openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/validation/SchemaFactoryFinder.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/javax/xml/validation/SchemaFactoryFinder.java	2013-04-16 14:28:09.800157711 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/validation/SchemaFactoryFinder.java	2013-04-16 14:29:26.569394704 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/javax/xml/validation/SchemaFactoryFinder.java	2013-05-17 15:36:26.781591886 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/validation/SchemaFactoryFinder.java	2013-05-17 20:49:35.889546242 +0100
 @@ -53,6 +53,7 @@
       *<p> Take care of restrictions imposed by java security model </p>
       */
@@ -8857,8 +8857,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/javax/xml/validation/Sche
                  if(debug)   t.printStackTrace();
                      return null;
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/javax/xml/xpath/XPathFactoryFinder.java openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/xpath/XPathFactoryFinder.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/javax/xml/xpath/XPathFactoryFinder.java	2013-04-16 14:28:09.800157711 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/xpath/XPathFactoryFinder.java	2013-04-16 14:29:26.569394704 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/javax/xml/xpath/XPathFactoryFinder.java	2013-05-17 15:36:26.789592011 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/javax/xml/xpath/XPathFactoryFinder.java	2013-05-17 20:49:35.889546242 +0100
 @@ -47,6 +47,7 @@
   * @since 1.5
   */
@@ -8905,8 +8905,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/javax/xml/xpath/XPathFact
              return clazz;
      }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/org/w3c/dom/bootstrap/DOMImplementationRegistry.java openjdk/jaxp/drop_included/jaxp_src/src/org/w3c/dom/bootstrap/DOMImplementationRegistry.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/org/w3c/dom/bootstrap/DOMImplementationRegistry.java	2013-04-16 14:28:09.808157841 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/org/w3c/dom/bootstrap/DOMImplementationRegistry.java	2013-04-16 14:29:26.569394704 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/org/w3c/dom/bootstrap/DOMImplementationRegistry.java	2013-05-17 15:36:26.805592265 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/org/w3c/dom/bootstrap/DOMImplementationRegistry.java	2013-05-17 20:49:35.889546242 +0100
 @@ -104,6 +104,8 @@
       */
      private static final String FALLBACK_CLASS = 
@@ -8936,8 +8936,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/org/w3c/dom/bootstrap/DOM
  		} else {
  		    sourceClass = Class.forName(sourceName);
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/NewInstance.java openjdk/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/NewInstance.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/NewInstance.java	2013-04-16 14:28:09.832158226 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/NewInstance.java	2013-04-16 14:29:26.569394704 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/NewInstance.java	2013-05-17 15:36:26.861593150 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/NewInstance.java	2013-05-17 20:49:35.889546242 +0100
 @@ -54,9 +54,10 @@
   * including versions of Java 2.</p>
   *
@@ -8999,8 +8999,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/NewIn
 -    }
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/ParserAdapter.java openjdk/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/ParserAdapter.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/ParserAdapter.java	2013-04-16 14:28:09.836158291 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/ParserAdapter.java	2013-04-16 14:29:26.569394704 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/ParserAdapter.java	2013-05-17 15:36:26.861593150 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/ParserAdapter.java	2013-05-17 20:49:35.889546242 +0100
 @@ -74,13 +74,14 @@
   *
   * @since SAX 2.0
@@ -9027,8 +9027,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/Parse
          try {
              setup(ParserFactory.makeParser());
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/ParserFactory.java openjdk/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/ParserFactory.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/ParserFactory.java	2013-04-16 14:28:09.836158291 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/ParserFactory.java	2013-04-16 14:29:26.569394704 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/ParserFactory.java	2013-05-17 15:36:26.861593150 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/ParserFactory.java	2013-05-17 20:49:35.889546242 +0100
 @@ -30,12 +30,6 @@
  
  package org.xml.sax.helpers;
@@ -9074,7 +9074,7 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/Parse
  }
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/SecuritySupport.java openjdk/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/SecuritySupport.java
 --- openjdk.orig/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/SecuritySupport.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/SecuritySupport.java	2013-04-16 14:29:26.569394704 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/SecuritySupport.java	2013-05-17 20:49:35.889546242 +0100
 @@ -0,0 +1,108 @@
 +/*
 + * Copyright (c) 2004, 2006, Oracle and/or its affiliates. All rights reserved.
@@ -9185,8 +9185,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/Secur
 +
 +}
 diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/XMLReaderFactory.java openjdk/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/XMLReaderFactory.java
---- openjdk.orig/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/XMLReaderFactory.java	2013-04-16 14:28:09.836158291 +0100
-+++ openjdk/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/XMLReaderFactory.java	2013-04-16 14:29:26.569394704 +0100
+--- openjdk.orig/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/XMLReaderFactory.java	2013-05-17 15:36:26.861593150 +0100
++++ openjdk/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/XMLReaderFactory.java	2013-05-17 20:49:35.889546242 +0100
 @@ -34,8 +34,6 @@
  import java.io.BufferedReader;
  import java.io.InputStream;
@@ -9298,8 +9298,8 @@ diff -Nru openjdk.orig/jaxp/drop_included/jaxp_src/src/org/xml/sax/helpers/XMLRe
  
      private static XMLReader loadClass (ClassLoader loader, String className)
 diff -Nru openjdk.orig/jdk/src/share/lib/security/java.security openjdk/jdk/src/share/lib/security/java.security
---- openjdk.orig/jdk/src/share/lib/security/java.security	2013-04-16 14:28:12.392199476 +0100
-+++ openjdk/jdk/src/share/lib/security/java.security	2013-04-16 14:29:26.545394318 +0100
+--- openjdk.orig/jdk/src/share/lib/security/java.security	2013-03-07 12:33:22.067693916 +0000
++++ openjdk/jdk/src/share/lib/security/java.security	2013-05-17 20:49:35.889546242 +0100
 @@ -130,10 +130,27 @@
  package.access=sun.,\
                 com.sun.xml.internal.bind.,\
@@ -9359,15 +9359,15 @@ diff -Nru openjdk.orig/jdk/src/share/lib/security/java.security openjdk/jdk/src/
  #
  # Determines whether this properties file can be appended to
 diff -Nru openjdk.orig/jdk/src/share/lib/security/java.security-solaris openjdk/jdk/src/share/lib/security/java.security-solaris
---- openjdk.orig/jdk/src/share/lib/security/java.security-solaris	2013-04-16 14:28:12.396199540 +0100
-+++ openjdk/jdk/src/share/lib/security/java.security-solaris	2013-04-16 14:30:42.026610629 +0100
+--- openjdk.orig/jdk/src/share/lib/security/java.security-solaris	2013-03-07 12:33:22.071693981 +0000
++++ openjdk/jdk/src/share/lib/security/java.security-solaris	2013-05-17 20:50:39.366553664 +0100
 @@ -131,10 +131,27 @@
  package.access=sun.,\
                 com.sun.xml.internal.bind.,\
                 com.sun.xml.internal.org.jvnet.staxex.,\
 +               com.sun.xml.internal.stream.,\
                 com.sun.xml.internal.ws.,\
-                com.sun.imageio.
+                com.sun.imageio.,\
                 com.sun.istack.internal.,\
 -               com.sun.jmx.
 +               com.sun.jmx.,\
@@ -9396,7 +9396,7 @@ diff -Nru openjdk.orig/jdk/src/share/lib/security/java.security-solaris openjdk/
                     com.sun.xml.internal.org.jvnet.staxex.,\
 +                   com.sun.xml.internal.stream.,\
                     com.sun.xml.internal.ws.,\
-                    com.sun.imageio.
+                    com.sun.imageio.,\
                     com.sun.istack.internal.,\
 -                   com.sun.jmx.
 +                   com.sun.jmx.,\
@@ -9420,15 +9420,15 @@ diff -Nru openjdk.orig/jdk/src/share/lib/security/java.security-solaris openjdk/
  #
  # Determines whether this properties file can be appended to
 diff -Nru openjdk.orig/jdk/src/share/lib/security/java.security-windows openjdk/jdk/src/share/lib/security/java.security-windows
---- openjdk.orig/jdk/src/share/lib/security/java.security-windows	2013-04-16 14:28:12.396199540 +0100
-+++ openjdk/jdk/src/share/lib/security/java.security-windows	2013-04-16 14:31:35.027464728 +0100
+--- openjdk.orig/jdk/src/share/lib/security/java.security-windows	2013-03-07 12:33:22.071693981 +0000
++++ openjdk/jdk/src/share/lib/security/java.security-windows	2013-05-17 20:51:34.031420024 +0100
 @@ -131,10 +131,27 @@
  package.access=sun.,\
                 com.sun.xml.internal.bind.,\
                 com.sun.xml.internal.org.jvnet.staxex.,\
 +               com.sun.xml.internal.stream.,\
                 com.sun.xml.internal.ws.,\
-                com.sun.imageio.
+                com.sun.imageio.,\
                 com.sun.istack.internal.,\
 -               com.sun.jmx.
 +               com.sun.jmx.,\
@@ -9457,7 +9457,7 @@ diff -Nru openjdk.orig/jdk/src/share/lib/security/java.security-windows openjdk/
                     com.sun.xml.internal.org.jvnet.staxex.,\
 +                   com.sun.xml.internal.stream.,\
                     com.sun.xml.internal.ws.,\
-                    com.sun.imageio.
+                    com.sun.imageio.,\
                     com.sun.istack.internal.,\
 -                   com.sun.jmx.
 +                   com.sun.jmx.,\
@@ -9481,8 +9481,8 @@ diff -Nru openjdk.orig/jdk/src/share/lib/security/java.security-windows openjdk/
  #
  # Determines whether this properties file can be appended to
 diff -Nru openjdk.orig/jdk/test/Makefile openjdk/jdk/test/Makefile
---- openjdk.orig/jdk/test/Makefile	2011-11-14 22:12:18.000000000 +0000
-+++ openjdk/jdk/test/Makefile	2013-04-16 14:29:26.549394382 +0100
+--- openjdk.orig/jdk/test/Makefile	2011-07-06 15:00:38.000000000 +0100
++++ openjdk/jdk/test/Makefile	2013-05-17 20:49:35.893546305 +0100
 @@ -482,7 +482,7 @@
  # Stable samevm testruns (minus items from PROBLEM_LIST)
  JDK_ALL_TARGETS += jdk_misc

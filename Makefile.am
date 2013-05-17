@@ -258,14 +258,12 @@ TAPSET_TEST_SRCS = \
 ICEDTEA_FSG_PATCHES =
 
 DROP_PATCHES = \
-	patches/openjdk/jaf-b20_jaxws2-1_6_2011_06_13.patch \
-	patches/openjdk/jaxp144_05.patch
+	patches/openjdk/jaf-b20_jaxws2-1_6_2011_06_13.patch
 
 SECURITY_PATCHES = \
 	patches/security/20120830/7182135-impossible_to_use_some_editors_directly.patch \
 	patches/openjdk/7036559-concurrenthashmap_improvements.patch \
 	patches/security/20130416/8009063.patch \
-	patches/openjdk/8004302-soap_test_failure.patch \
 	patches/security/20130416/6657673.patch \
 	patches/security/20130416/6657673-fixup.patch \
 	patches/openjdk/7133220-factory_finder_parser_transform_useBSClassLoader.patch \
@@ -497,8 +495,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7162902-corba_fixes.patch \
 	patches/traceable.patch \
 	patches/pr1319-support_giflib_5.patch \
-	patches/openjdk/8007393.patch \
-	patches/openjdk/8007611.patch \
 	patches/copy_memory.patch \
 	patches/openjdk/6718364-inference_failure.patch \
 	patches/openjdk/6682380-foreach_crash.patch \
@@ -560,8 +556,6 @@ ICEDTEA_PATCHES += \
 	patches/pr696-zero-fast_aldc-hs20.patch \
 	patches/arm-debug.patch \
 	patches/openjdk/7010849-modernise_sa.patch \
-	patches/hotspot/original/7197906-handle_32_bit_shifts.patch \
-	patches/hotspot/original/fix_get_stack_bounds_leak.patch \
 	patches/hotspot/original/jvmtiEnv.patch \
 	patches/hotspot/original/6840152-jvm_crashes_with_heavyweight_monitors.patch \
 	patches/hotspot/original/aarch64.patch \

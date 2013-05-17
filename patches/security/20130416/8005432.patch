@@ -1,6 +1,6 @@
 diff -Nru openjdk.orig/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/bind/v2/model/impl/ModelBuilder.java openjdk/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/bind/v2/model/impl/ModelBuilder.java
---- openjdk.orig/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/bind/v2/model/impl/ModelBuilder.java	2013-04-16 14:56:58.235048158 +0100
-+++ openjdk/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/bind/v2/model/impl/ModelBuilder.java	2013-04-16 14:58:37.884647607 +0100
+--- openjdk.orig/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/bind/v2/model/impl/ModelBuilder.java	2013-05-17 20:53:18.957081173 +0100
++++ openjdk/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/bind/v2/model/impl/ModelBuilder.java	2013-05-17 21:13:05.167709974 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
@@ -34,8 +34,8 @@ diff -Nru openjdk.orig/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/bi
       * Checks the uniqueness of the type name.
       */
 diff -Nru openjdk.orig/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/ws/client/WSServiceDelegate.java openjdk/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/ws/client/WSServiceDelegate.java
---- openjdk.orig/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/ws/client/WSServiceDelegate.java	2013-04-16 14:56:58.419051111 +0100
-+++ openjdk/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/ws/client/WSServiceDelegate.java	2013-04-16 14:58:37.884647607 +0100
+--- openjdk.orig/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/ws/client/WSServiceDelegate.java	2013-05-17 20:53:19.145084148 +0100
++++ openjdk/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/ws/client/WSServiceDelegate.java	2013-05-17 21:13:05.171710038 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
@@ -140,8 +140,8 @@ diff -Nru openjdk.orig/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/ws
       * Lists up the port names in WSDL. For error diagnostics.
       */
 diff -Nru openjdk.orig/jaxws/drop_included/jaxws_src/src/javax/xml/soap/FactoryFinder.java openjdk/jaxws/drop_included/jaxws_src/src/javax/xml/soap/FactoryFinder.java
---- openjdk.orig/jaxws/drop_included/jaxws_src/src/javax/xml/soap/FactoryFinder.java	2013-04-16 14:56:58.667055090 +0100
-+++ openjdk/jaxws/drop_included/jaxws_src/src/javax/xml/soap/FactoryFinder.java	2013-04-16 14:58:37.888647671 +0100
+--- openjdk.orig/jaxws/drop_included/jaxws_src/src/javax/xml/soap/FactoryFinder.java	2013-05-17 20:53:19.393088071 +0100
++++ openjdk/jaxws/drop_included/jaxws_src/src/javax/xml/soap/FactoryFinder.java	2013-05-17 21:13:05.171710038 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
@@ -329,8 +329,8 @@ diff -Nru openjdk.orig/jaxws/drop_included/jaxws_src/src/javax/xml/soap/FactoryF
      }
  }
 diff -Nru openjdk.orig/jaxws/drop_included/jaxws_src/src/javax/xml/soap/MessageFactory.java openjdk/jaxws/drop_included/jaxws_src/src/javax/xml/soap/MessageFactory.java
---- openjdk.orig/jaxws/drop_included/jaxws_src/src/javax/xml/soap/MessageFactory.java	2013-04-16 14:56:58.667055090 +0100
-+++ openjdk/jaxws/drop_included/jaxws_src/src/javax/xml/soap/MessageFactory.java	2013-04-16 14:58:37.888647671 +0100
+--- openjdk.orig/jaxws/drop_included/jaxws_src/src/javax/xml/soap/MessageFactory.java	2013-05-17 20:53:19.393088071 +0100
++++ openjdk/jaxws/drop_included/jaxws_src/src/javax/xml/soap/MessageFactory.java	2013-05-17 21:13:05.171710038 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
@@ -366,8 +366,8 @@ diff -Nru openjdk.orig/jaxws/drop_included/jaxws_src/src/javax/xml/soap/MessageF
              return newInstance(SOAPConstants.SOAP_1_1_PROTOCOL);
          } catch (Exception ex) {
 diff -Nru openjdk.orig/jaxws/drop_included/jaxws_src/src/javax/xml/soap/SAAJMetaFactory.java openjdk/jaxws/drop_included/jaxws_src/src/javax/xml/soap/SAAJMetaFactory.java
---- openjdk.orig/jaxws/drop_included/jaxws_src/src/javax/xml/soap/SAAJMetaFactory.java	2013-04-16 14:56:58.667055090 +0100
-+++ openjdk/jaxws/drop_included/jaxws_src/src/javax/xml/soap/SAAJMetaFactory.java	2013-04-16 14:58:37.888647671 +0100
+--- openjdk.orig/jaxws/drop_included/jaxws_src/src/javax/xml/soap/SAAJMetaFactory.java	2013-05-17 20:53:19.393088071 +0100
++++ openjdk/jaxws/drop_included/jaxws_src/src/javax/xml/soap/SAAJMetaFactory.java	2013-05-17 21:13:05.171710038 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
@@ -385,8 +385,8 @@ diff -Nru openjdk.orig/jaxws/drop_included/jaxws_src/src/javax/xml/soap/SAAJMeta
  
      /**
 diff -Nru openjdk.orig/jaxws/drop_included/jaxws_src/src/javax/xml/soap/SOAPConnectionFactory.java openjdk/jaxws/drop_included/jaxws_src/src/javax/xml/soap/SOAPConnectionFactory.java
---- openjdk.orig/jaxws/drop_included/jaxws_src/src/javax/xml/soap/SOAPConnectionFactory.java	2013-04-16 14:56:58.667055090 +0100
-+++ openjdk/jaxws/drop_included/jaxws_src/src/javax/xml/soap/SOAPConnectionFactory.java	2013-04-16 14:58:37.888647671 +0100
+--- openjdk.orig/jaxws/drop_included/jaxws_src/src/javax/xml/soap/SOAPConnectionFactory.java	2013-05-17 20:53:19.393088071 +0100
++++ openjdk/jaxws/drop_included/jaxws_src/src/javax/xml/soap/SOAPConnectionFactory.java	2013-05-17 21:13:05.171710038 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
@@ -404,8 +404,8 @@ diff -Nru openjdk.orig/jaxws/drop_included/jaxws_src/src/javax/xml/soap/SOAPConn
  
      /**
 diff -Nru openjdk.orig/jaxws/drop_included/jaxws_src/src/javax/xml/soap/SOAPFactory.java openjdk/jaxws/drop_included/jaxws_src/src/javax/xml/soap/SOAPFactory.java
---- openjdk.orig/jaxws/drop_included/jaxws_src/src/javax/xml/soap/SOAPFactory.java	2013-04-16 14:56:58.671055155 +0100
-+++ openjdk/jaxws/drop_included/jaxws_src/src/javax/xml/soap/SOAPFactory.java	2013-04-16 14:58:37.888647671 +0100
+--- openjdk.orig/jaxws/drop_included/jaxws_src/src/javax/xml/soap/SOAPFactory.java	2013-05-17 20:53:19.397088135 +0100
++++ openjdk/jaxws/drop_included/jaxws_src/src/javax/xml/soap/SOAPFactory.java	2013-05-17 21:13:05.171710038 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
@@ -436,8 +436,8 @@ diff -Nru openjdk.orig/jaxws/drop_included/jaxws_src/src/javax/xml/soap/SOAPFact
                  return factory;
              return newInstance(SOAPConstants.SOAP_1_1_PROTOCOL);
 diff -Nru openjdk.orig/jdk/src/share/lib/security/java.security openjdk/jdk/src/share/lib/security/java.security
---- openjdk.orig/jdk/src/share/lib/security/java.security	2013-04-16 14:57:04.075141879 +0100
-+++ openjdk/jdk/src/share/lib/security/java.security	2013-04-16 14:58:37.884647607 +0100
+--- openjdk.orig/jdk/src/share/lib/security/java.security	2013-05-17 20:53:21.677124214 +0100
++++ openjdk/jdk/src/share/lib/security/java.security	2013-05-17 21:13:05.175710101 +0100
 @@ -128,10 +128,7 @@
  # corresponding RuntimePermission ("accessClassInPackage."+package) has
  # been granted.
@@ -463,8 +463,8 @@ diff -Nru openjdk.orig/jdk/src/share/lib/security/java.security openjdk/jdk/src/
                     com.sun.istack.internal.,\
                     com.sun.jmx.,\
 diff -Nru openjdk.orig/jdk/src/share/lib/security/java.security-solaris openjdk/jdk/src/share/lib/security/java.security-solaris
---- openjdk.orig/jdk/src/share/lib/security/java.security-solaris	2013-04-16 14:57:04.075141879 +0100
-+++ openjdk/jdk/src/share/lib/security/java.security-solaris	2013-04-16 15:00:01.509990145 +0100
+--- openjdk.orig/jdk/src/share/lib/security/java.security-solaris	2013-05-17 20:53:21.677124214 +0100
++++ openjdk/jdk/src/share/lib/security/java.security-solaris	2013-05-17 21:18:11.136555016 +0100
 @@ -129,10 +129,7 @@
  # corresponding RuntimePermission ("accessClassInPackage."+package) has
  # been granted.
@@ -474,7 +474,7 @@ diff -Nru openjdk.orig/jdk/src/share/lib/security/java.security-solaris openjdk/
 -               com.sun.xml.internal.stream.,\
 -               com.sun.xml.internal.ws.,\
 +               com.sun.xml.internal.,\
-                com.sun.imageio.
+                com.sun.imageio.,\
                 com.sun.istack.internal.,\
                 com.sun.jmx.,\
 @@ -165,10 +162,7 @@
@@ -486,12 +486,12 @@ diff -Nru openjdk.orig/jdk/src/share/lib/security/java.security-solaris openjdk/
 -                   com.sun.xml.internal.stream.,\
 -                   com.sun.xml.internal.ws.,\
 +                   com.sun.xml.internal.,\
-                    com.sun.imageio.
+                    com.sun.imageio.,\
                     com.sun.istack.internal.,\
                     com.sun.jmx.,\
 diff -Nru openjdk.orig/jdk/src/share/lib/security/java.security-windows openjdk/jdk/src/share/lib/security/java.security-windows
---- openjdk.orig/jdk/src/share/lib/security/java.security-windows	2013-04-16 14:57:04.075141879 +0100
-+++ openjdk/jdk/src/share/lib/security/java.security-windows	2013-04-16 15:00:24.790356811 +0100
+--- openjdk.orig/jdk/src/share/lib/security/java.security-windows	2013-05-17 20:53:21.677124214 +0100
++++ openjdk/jdk/src/share/lib/security/java.security-windows	2013-05-17 21:13:38.700238633 +0100
 @@ -129,10 +129,7 @@
  # corresponding RuntimePermission ("accessClassInPackage."+package) has
  # been granted.
@@ -501,7 +501,7 @@ diff -Nru openjdk.orig/jdk/src/share/lib/security/java.security-windows openjdk/
 -               com.sun.xml.internal.stream.,\
 -               com.sun.xml.internal.ws.,\
 +               com.sun.xml.internal.,\
-                com.sun.imageio.
+                com.sun.imageio.,\
                 com.sun.istack.internal.,\
                 com.sun.jmx.,\
 @@ -165,10 +162,7 @@
@@ -513,6 +513,6 @@ diff -Nru openjdk.orig/jdk/src/share/lib/security/java.security-windows openjdk/
 -                   com.sun.xml.internal.stream.,\
 -                   com.sun.xml.internal.ws.,\
 +                   com.sun.xml.internal.,\
-                    com.sun.imageio.
+                    com.sun.imageio.,\
                     com.sun.istack.internal.,\
                     com.sun.jmx.,\
