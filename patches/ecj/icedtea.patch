@@ -327,50 +327,6 @@ diff -Nru openjdk-ecj.orig/corba/make/common/Defs-linux.gmk openjdk-ecj/corba/ma
  
  #
  # We want to privatize JVM symbols on Solaris. This is so the user can
-diff -Nru openjdk-ecj.orig/corba/make/common/shared/Defs-java.gmk openjdk-ecj/corba/make/common/shared/Defs-java.gmk
---- openjdk-ecj.orig/corba/make/common/shared/Defs-java.gmk	2012-01-18 16:50:57.569109033 +0000
-+++ openjdk-ecj/corba/make/common/shared/Defs-java.gmk	2012-01-18 21:43:04.150185964 +0000
-@@ -116,35 +116,17 @@
- CLASS_VERSION = -target $(TARGET_CLASS_VERSION)
- JAVACFLAGS  += $(CLASS_VERSION)
- JAVACFLAGS  += -encoding ascii
--JAVACFLAGS  += -classpath $(BOOTDIR)/lib/tools.jar
-+JAVACFLAGS  += -classpath $(LANGTOOLS_DIST)/lib/classes.jar
- JAVACFLAGS  += $(OTHER_JAVACFLAGS)
- 
- # Needed for javah
--JAVAHFLAGS += -bootclasspath $(CLASSBINDIR)
-+JAVAHFLAGS += -bootclasspath $(CLASSBINDIR):$(ICEDTEA_RT):$(ICEDTEA_JCE):$(CLASSDESTDIR)
- 
--# Langtools
--ifdef LANGTOOLS_DIST
--  JAVAC_JAR   = $(LANGTOOLS_DIST)/bootstrap/lib/javac.jar
--  JAVAH_JAR   = $(LANGTOOLS_DIST)/bootstrap/lib/javah.jar
--  JAVADOC_JAR = $(LANGTOOLS_DIST)/bootstrap/lib/javadoc.jar
--  DOCLETS_JAR = $(LANGTOOLS_DIST)/bootstrap/lib/doclets.jar
--  JAVAC_CMD   = $(BOOT_JAVA_CMD) \
--		"-Xbootclasspath/p:$(JAVAC_JAR)" \
--		-jar $(JAVAC_JAR) $(JAVACFLAGS)
--  JAVAH_CMD   = $(BOOT_JAVA_CMD) \
--		"-Xbootclasspath/p:$(JAVAH_JAR)$(CLASSPATH_SEPARATOR)$(JAVADOC_JAR)$(CLASSPATH_SEPARATOR)$(JAVAC_JAR)"  \
--		-jar $(JAVAH_JAR) $(JAVAHFLAGS)
--  JAVADOC_CMD = $(BOOT_JAVA_CMD) \
--		"-Xbootclasspath/p:$(JAVADOC_JAR)$(CLASSPATH_SEPARATOR)$(JAVAC_JAR)$(CLASSPATH_SEPARATOR)$(DOCLETS_JAR)" \
--		-jar $(JAVADOC_JAR)
--else
--  # If no explicit tools, use boot tools (add VM flags in this case)
--  JAVAC_CMD     = $(JAVA_TOOLS_DIR)/javac $(JAVAC_JVM_FLAGS) \
-+# If no explicit tools, use boot tools (add VM flags in this case)
-+JAVAC_CMD     = $(JAVA_TOOLS_DIR)/javac $(JAVAC_JVM_FLAGS) \
- 		  $(JAVACFLAGS)
--  JAVAH_CMD     = $(JAVA_TOOLS_DIR)/javah \
-+JAVAH_CMD     = $(JAVA_TOOLS_DIR)/javah \
- 		  $(JAVAHFLAGS)
--  JAVADOC_CMD   = $(JAVA_TOOLS_DIR)/javadoc $(JAVA_TOOLS_FLAGS:%=-J%)
--endif
- 
- # Override of what javac to use (see deploy workspace)
- ifdef JAVAC
 diff -Nru openjdk-ecj.orig/corba/make/org/omg/sources/Makefile openjdk-ecj/corba/make/org/omg/sources/Makefile
 --- openjdk-ecj.orig/corba/make/org/omg/sources/Makefile	2010-05-26 09:31:18.000000000 +0100
 +++ openjdk-ecj/corba/make/org/omg/sources/Makefile	2012-01-18 21:43:04.150185964 +0000
@@ -495,19 +451,6 @@ diff -Nru openjdk-ecj.orig/jaxws/build.xml openjdk-ecj/jaxws/build.xml
              <compilerarg value="-J-Xbootclasspath/p:${javac.jar}"/>
              <compilerarg line="${javac.version.opt} ${javac.lint.opts} ${javac.no.jdk.warnings}"/>
              <src refid="src.dir.id"/>
-diff -Nru openjdk-ecj.orig/jdk/make/common/BuildToolJar.gmk openjdk-ecj/jdk/make/common/BuildToolJar.gmk
---- openjdk-ecj.orig/jdk/make/common/BuildToolJar.gmk	2011-01-07 21:32:51.000000000 +0000
-+++ openjdk-ecj/jdk/make/common/BuildToolJar.gmk	2012-01-18 21:43:04.150185964 +0000
-@@ -43,7 +43,8 @@
- 	@$(prep-target)
- 	@$(MKDIR) -p $(BUILDTOOLCLASSDIR)
- 	$(BOOT_JAVAC_CMD) -d $(BUILDTOOLCLASSDIR) \
--	    -sourcepath $(BUILDTOOL_SOURCE_ROOT) $(BUILDTOOL_MAIN_SOURCE_FILE)
-+	    -sourcepath $(BUILDTOOL_SOURCE_ROOT) -classpath $(ICEDTEA_RT) \
-+	    $(BUILDTOOL_MAIN_SOURCE_FILE)
- 	$(BOOT_JAR_CMD) cfm $@ $(BUILDTOOL_MANIFEST_FILE) \
- 	    -C $(BUILDTOOLCLASSDIR) $(PKGDIR) \
- 	    $(JAR_JFLAGS) || $(RM) $@
 diff -Nru openjdk-ecj.orig/jdk/make/common/Release.gmk openjdk-ecj/jdk/make/common/Release.gmk
 --- openjdk-ecj.orig/jdk/make/common/Release.gmk	2012-01-18 16:51:03.177199616 +0000
 +++ openjdk-ecj/jdk/make/common/Release.gmk	2012-01-18 21:43:04.150185964 +0000
@@ -602,18 +545,6 @@ diff -Nru openjdk-ecj.orig/jdk/make/common/Release.gmk openjdk-ecj/jdk/make/comm
 diff -Nru openjdk-ecj.orig/jdk/make/common/Rules.gmk openjdk-ecj/jdk/make/common/Rules.gmk
 --- openjdk-ecj.orig/jdk/make/common/Rules.gmk	2011-01-07 21:32:51.000000000 +0000
 +++ openjdk-ecj/jdk/make/common/Rules.gmk	2012-01-18 21:43:04.150185964 +0000
-@@ -235,8 +235,9 @@
- 	  $(ECHO) "# Java sources to be compiled: (listed in file $(JAVA_SOURCE_LIST))"; \
- 	  $(CAT) $(JAVA_SOURCE_LIST); \
- 	  $(ECHO) "# Running javac:"; \
--	  $(ECHO) $(JAVAC_CMD) -sourcepath "$(SOURCEPATH)" -d $(CLASSDESTDIR) @$(JAVA_SOURCE_LIST); \
--	  $(JAVAC_CMD) -sourcepath "$(SOURCEPATH)" -d $(CLASSDESTDIR) @$(JAVA_SOURCE_LIST); \
-+	   $(ECHO) $(JAVAC_CMD) -sourcepath "$(SOURCEPATH)" -bootclasspath "$(ICEDTEA_RT):$(ICEDTEA_JCE):$(CLASSDESTDIR)" \
-+         -d $(CLASSDESTDIR) @$(JAVA_SOURCE_LIST); \
-+         $(JAVAC_CMD) -sourcepath "$(SOURCEPATH)" -bootclasspath "$(ICEDTEA_RT):$(ICEDTEA_JCE):$(CLASSDESTDIR)" -d $(CLASSDESTDIR) @$(JAVA_SOURCE_LIST); \
- 	fi
- 	@$(java-vm-cleanup)
- 
 @@ -302,6 +303,8 @@
  	$(JAVAH_CMD) -d $(CLASSHDRDIR)/ \
  		$(CLASSES.export) $(subst $$,\$$,$(EXPORTED_inner))
@@ -623,49 +554,6 @@ diff -Nru openjdk-ecj.orig/jdk/make/common/Rules.gmk openjdk-ecj/jdk/make/common
  	@$(TOUCH) $@
  
  classheaders.clean:
-diff -Nru openjdk-ecj.orig/jdk/make/common/shared/Defs-java.gmk openjdk-ecj/jdk/make/common/shared/Defs-java.gmk
---- openjdk-ecj.orig/jdk/make/common/shared/Defs-java.gmk	2012-01-18 16:50:57.569109033 +0000
-+++ openjdk-ecj/jdk/make/common/shared/Defs-java.gmk	2012-01-18 21:43:04.150185964 +0000
-@@ -124,34 +124,18 @@
- JAVACFLAGS  += $(OTHER_JAVACFLAGS)
- 
- # Needed for javah
--JAVAHFLAGS += -bootclasspath $(CLASSBINDIR)
-+JAVAHFLAGS += -bootclasspath $(CLASSBINDIR):$(ICEDTEA_RT):$(CLASSDESTDIR)
- 
- # Needed for JAVADOC and BOOT_JAVACFLAGS
- NO_PROPRIETARY_API_WARNINGS = -XDignore.symbol.file=true
- 
- # Langtools
--ifdef LANGTOOLS_DIST
--  JAVAC_JAR   = $(LANGTOOLS_DIST)/bootstrap/lib/javac.jar
--  JAVAH_JAR   = $(LANGTOOLS_DIST)/bootstrap/lib/javah.jar
--  JAVADOC_JAR = $(LANGTOOLS_DIST)/bootstrap/lib/javadoc.jar
--  DOCLETS_JAR = $(LANGTOOLS_DIST)/bootstrap/lib/doclets.jar
--  JAVAC_CMD   = $(BOOT_JAVA_CMD) \
--		"-Xbootclasspath/p:$(JAVAC_JAR)" \
--		-jar $(JAVAC_JAR) $(JAVACFLAGS)
--  JAVAH_CMD   = $(BOOT_JAVA_CMD) \
--		"-Xbootclasspath/p:$(JAVAH_JAR)$(CLASSPATH_SEPARATOR)$(JAVADOC_JAR)$(CLASSPATH_SEPARATOR)$(JAVAC_JAR)"  \
--		-jar $(JAVAH_JAR) $(JAVAHFLAGS)
--  JAVADOC_CMD = $(BOOT_JAVA_CMD) \
--		"-Xbootclasspath/p:$(JAVADOC_JAR)$(CLASSPATH_SEPARATOR)$(JAVAC_JAR)$(CLASSPATH_SEPARATOR)$(DOCLETS_JAR)" \
--		-jar $(JAVADOC_JAR)
--else
--  # If no explicit tools, use boot tools (add VM flags in this case)
--  JAVAC_CMD     = $(JAVA_TOOLS_DIR)/javac $(JAVAC_JVM_FLAGS) \
-+# If no explicit tools, use boot tools (add VM flags in this case)
-+JAVAC_CMD     = $(JAVA_TOOLS_DIR)/javac $(JAVAC_JVM_FLAGS) \
- 		  $(JAVACFLAGS)
--  JAVAH_CMD     = $(JAVA_TOOLS_DIR)/javah \
-+JAVAH_CMD     = $(JAVA_TOOLS_DIR)/javah \
- 		  $(JAVAHFLAGS)
--  JAVADOC_CMD   = $(JAVA_TOOLS_DIR)/javadoc $(JAVA_TOOLS_FLAGS:%=-J%)
--endif
-+JAVADOC_CMD   = $(JAVA_TOOLS_DIR)/javadoc $(JAVA_TOOLS_FLAGS:%=-J%)
- 
- # Override of what javac to use (see deploy workspace)
- ifdef JAVAC
 diff -Nru openjdk-ecj.orig/jdk/make/java/nio/Makefile openjdk-ecj/jdk/make/java/nio/Makefile
 --- openjdk-ecj.orig/jdk/make/java/nio/Makefile	2012-01-18 16:50:50.576996095 +0000
 +++ openjdk-ecj/jdk/make/java/nio/Makefile	2012-01-18 21:43:04.150185964 +0000
@@ -678,20 +566,6 @@ diff -Nru openjdk-ecj.orig/jdk/make/java/nio/Makefile openjdk-ecj/jdk/make/java/
  include $(BUILDDIR)/common/Defs.gmk
  
  NIO_SRC = $(SHARE_SRC)/classes/java/nio
-diff -Nru openjdk-ecj.orig/jdk/make/java/text/Makefile openjdk-ecj/jdk/make/java/text/Makefile
---- openjdk-ecj.orig/jdk/make/java/text/Makefile	2011-01-07 21:32:51.000000000 +0000
-+++ openjdk-ecj/jdk/make/java/text/Makefile	2012-01-18 21:43:04.150185964 +0000
-@@ -80,8 +80,8 @@
- 		-sourcepath $(TEXT_SRCDIR) \
- 		$(TEXT_SOURCES)
- 	$(MKDIR) -p  $(TEXT_CLASSDIR)
--	$(BOOT_JAVA_CMD) -Xbootclasspath/p:$(TEXT_CLASSES) \
--		-jar $(GENERATEBREAKITERATORDATA_JARFILE) \
-+	$(BOOT_JAVA_CMD) -cp $(TEXT_CLASSES):$(GENERATEBREAKITERATORDATA_JARFILE):$(ICEDTEA_CLS_DIR) \
-+		build.tools.generatebreakiteratordata.GenerateBreakIteratorData \
- 		-o $(TEXT_CLASSDIR) \
- 		-spec $(UNICODEDATA)/UnicodeData.txt
- 	@$(java-vm-cleanup)
 diff -Nru openjdk-ecj.orig/jdk/make/Makefile openjdk-ecj/jdk/make/Makefile
 --- openjdk-ecj.orig/jdk/make/Makefile	2011-01-07 21:32:51.000000000 +0000
 +++ openjdk-ecj/jdk/make/Makefile	2012-01-18 21:43:04.150185964 +0000
@@ -721,34 +595,6 @@ diff -Nru openjdk-ecj.orig/jdk/make/sun/awt/Makefile openjdk-ecj/jdk/make/sun/aw
  	@$(java-vm-cleanup)
  
  fontconfigs.clean :
-diff -Nru openjdk-ecj.orig/jdk/make/sun/javazic/Makefile openjdk-ecj/jdk/make/sun/javazic/Makefile
---- openjdk-ecj.orig/jdk/make/sun/javazic/Makefile	2011-01-07 21:32:51.000000000 +0000
-+++ openjdk-ecj/jdk/make/sun/javazic/Makefile	2012-01-18 21:43:04.150185964 +0000
-@@ -62,7 +62,8 @@
- $(WORKDIR)/$(MAPFILE): $(BUILDTOOLJARDIR)/javazic.jar $(TZFILES)
- 	$(RM) -r $(@D)
- 	$(prep-target)
--	$(BOOT_JAVA_CMD) -jar $(BUILDTOOLJARDIR)/javazic.jar -V "$(TZDATA_VER)" -d $(WORKDIR) $(TZFILES)
-+	$(BOOT_JAVA_CMD) -cp $(ICEDTEA_CLS_DIR):$(BUILDTOOLJARDIR)/javazic.jar \
-+		build.tools.javazic.Main -V "$(TZDATA_VER)" -d $(WORKDIR) $(TZFILES)
- 	@$(java-vm-cleanup)
- 
- $(INSTALLDIR)/$(MAPFILE): $(WORKDIR)/$(MAPFILE)
-diff -Nru openjdk-ecj.orig/jdk/make/sun/text/Makefile openjdk-ecj/jdk/make/sun/text/Makefile
---- openjdk-ecj.orig/jdk/make/sun/text/Makefile	2011-01-07 21:32:51.000000000 +0000
-+++ openjdk-ecj/jdk/make/sun/text/Makefile	2012-01-18 21:43:04.150185964 +0000
-@@ -85,8 +85,9 @@
- 	$(BOOT_JAVAC_CMD) -d $(TEXT_CLASSES) \
- 		-sourcepath $(TEXT_SRCDIR) \
- 		$(BIRULES) $(BIINFO)
--	$(BOOT_JAVA_CMD) -Xbootclasspath/p:$(TEXT_CLASSES) \
--		-jar $(GENERATEBREAKITERATORDATA_JARFILE) \
-+	$(BOOT_JAVA_CMD)  \
-+		-cp $(TEXT_CLASSES):$(ICEDTEA_CLS_DIR):$(GENERATEBREAKITERATORDATA_JARFILE) \
-+		build.tools.generatebreakiteratordata.GenerateBreakIteratorData \
- 		-o $(CLASSDESTDIR)/sun/text/resources \
- 		-spec $(UNICODEDATA)/UnicodeData.txt \
- 		-language th
 diff -Nru openjdk-ecj.orig/jdk/make/sun/xawt/Makefile openjdk-ecj/jdk/make/sun/xawt/Makefile
 --- openjdk-ecj.orig/jdk/make/sun/xawt/Makefile	2012-01-18 16:51:03.393203105 +0000
 +++ openjdk-ecj/jdk/make/sun/xawt/Makefile	2012-01-18 21:43:04.150185964 +0000
@@ -812,66 +658,6 @@ diff -Nru openjdk-ecj.orig/jdk/make/tools/src/build/tools/generatecharacter/Gene
  
                  if (plane == 0 && bLatin1 == false) {
              genCaseMapTableDeclaration(result);
-diff -Nru openjdk-ecj.orig/jdk/src/share/classes/java/lang/Double.java openjdk-ecj/jdk/src/share/classes/java/lang/Double.java
---- openjdk-ecj.orig/jdk/src/share/classes/java/lang/Double.java	2011-01-07 21:32:53.000000000 +0000
-+++ openjdk-ecj/jdk/src/share/classes/java/lang/Double.java	2012-01-18 21:43:04.150185964 +0000
-@@ -76,7 +76,7 @@
-      * {@code 0x1.fffffffffffffP+1023} and also equal to
-      * {@code Double.longBitsToDouble(0x7fefffffffffffffL)}.
-      */
--    public static final double MAX_VALUE = 0x1.fffffffffffffP+1023; // 1.7976931348623157e+308
-+    public static final double MAX_VALUE = 1.7976931348623157e+308;
- 
-     /**
-      * A constant holding the smallest positive normal value of type
-@@ -86,7 +86,7 @@
-      *
-      * @since 1.6
-      */
--    public static final double MIN_NORMAL = 0x1.0p-1022; // 2.2250738585072014E-308
-+    public static final double MIN_NORMAL = 2.2250738585072014E-308;
- 
-     /**
-      * A constant holding the smallest positive nonzero value of type
-@@ -95,7 +95,7 @@
-      * {@code 0x0.0000000000001P-1022} and also equal to
-      * {@code Double.longBitsToDouble(0x1L)}.
-      */
--    public static final double MIN_VALUE = 0x0.0000000000001P-1022; // 4.9e-324
-+    public static final double MIN_VALUE = 4.9e-324;
- 
-     /**
-      * Maximum exponent a finite {@code double} variable may have.
-diff -Nru openjdk-ecj.orig/jdk/src/share/classes/java/lang/Float.java openjdk-ecj/jdk/src/share/classes/java/lang/Float.java
---- openjdk-ecj.orig/jdk/src/share/classes/java/lang/Float.java	2011-01-07 21:32:53.000000000 +0000
-+++ openjdk-ecj/jdk/src/share/classes/java/lang/Float.java	2012-01-18 21:43:04.150185964 +0000
-@@ -76,7 +76,7 @@
-      * {@code 0x1.fffffeP+127f} and also equal to
-      * {@code Float.intBitsToFloat(0x7f7fffff)}.
-      */
--    public static final float MAX_VALUE = 0x1.fffffeP+127f; // 3.4028235e+38f
-+    public static final float MAX_VALUE = 3.4028235e+38f;
- 
-     /**
-      * A constant holding the smallest positive normal value of type
-@@ -86,7 +86,7 @@
-      *
-      * @since 1.6
-      */
--    public static final float MIN_NORMAL = 0x1.0p-126f; // 1.17549435E-38f
-+    public static final float MIN_NORMAL = 1.17549435E-38f;
- 
-     /**
-      * A constant holding the smallest positive nonzero value of type
-@@ -94,7 +94,7 @@
-      * hexadecimal floating-point literal {@code 0x0.000002P-126f}
-      * and also equal to {@code Float.intBitsToFloat(0x1)}.
-      */
--    public static final float MIN_VALUE = 0x0.000002P-126f; // 1.4e-45f
-+    public static final float MIN_VALUE = 1.4e-45f;
- 
-     /**
-      * Maximum exponent a finite {@code float} variable may have.  It
 diff -Nru openjdk-ecj.orig/langtools/make/build.properties openjdk-ecj/langtools/make/build.properties
 --- openjdk-ecj.orig/langtools/make/build.properties	2010-05-26 09:33:27.000000000 +0100
 +++ openjdk-ecj/langtools/make/build.properties	2012-01-18 21:43:04.150185964 +0000
@@ -884,22 +670,3 @@ diff -Nru openjdk-ecj.orig/langtools/make/build.properties openjdk-ecj/langtools
  
  # options for the <javadoc> task for javac
  javadoc.jls3.url=http://java.sun.com/docs/books/jls/
-diff -Nru openjdk-ecj.orig/langtools/make/build.xml openjdk-ecj/langtools/make/build.xml
---- openjdk-ecj.orig/langtools/make/build.xml	2011-02-17 23:26:23.000000000 +0000
-+++ openjdk-ecj/langtools/make/build.xml	2012-01-18 21:43:04.150185964 +0000
-@@ -523,6 +523,7 @@
-                        includeAntRuntime="no"
-                        source="@{javac.source}"
-                        target="@{javac.target}">
-+		    <compilerarg line="-bootclasspath @{classes.dir}:${boot.java.home}/jre/lib/rt.jar"/>
-                     <compilerarg value="-J-Xbootclasspath/p:@{javac.bootclasspath}"/>
-                     <compilerarg line="${javac.version.opt}"/>
-                     <compilerarg line="-Xlint"/>
-@@ -539,6 +540,7 @@
-                        target="@{javac.target}"
-                        debug="${javac.debug}"
-                        debuglevel="${javac.debuglevel}">
-+		    <compilerarg line="-bootclasspath @{classes.dir}:${boot.java.home}/jre/lib/rt.jar"/>
-                     <compilerarg value="-J-Xbootclasspath/p:@{javac.bootclasspath}"/>
-                     <compilerarg value="-Xbootclasspath/p:@{classes.dir}"/>
-                     <compilerarg line="${javac.no.jdk.warnings}"/>

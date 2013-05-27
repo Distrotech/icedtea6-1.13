@@ -22,3 +22,15 @@ diff -Nru openjdk-ecj.orig/jdk/make/sun/xawt/Makefile openjdk-ecj/jdk/make/sun/x
  
  GEN_DIR=$(GENSRCDIR)/sun/awt/X11
  
+diff --git a/make/java/awt/Makefile b/make/java/awt/Makefile
+--- openjdk-ecj/jdk/make/java/awt/Makefile
++++ openjdk-ecj/jdk/make/java/awt/Makefile
+@@ -27,6 +27,8 @@
+ PACKAGE = java.awt
+ PRODUCT = sun
+ include $(BUILDDIR)/common/Defs.gmk
++LANGUAGE_VERSION = -source 6
++CLASS_VERSION = -target 6
+ 
+ 
+ #

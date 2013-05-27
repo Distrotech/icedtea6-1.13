@@ -7,7 +7,29 @@ my $ECJ_WARNINGS="-nowarn";
 my $JAVAC_WARNINGS="-nowarn";
 
 my @bcoption;
-push @bcoption, '-bootclasspath', glob '@abs_top_builddir@/bootstrap/jdk1.6.0/jre/lib/rt.jar'
+my @bcoptionsp = grep {$_ =~ '^-Xbootclasspath/p:' } @ARGV;
+my @bcoptions = grep {$_ =~ '^-Xbootclasspath:' } @ARGV;
+my @bcoptionsa = grep {$_ =~ '^-Xbootclasspath/a:' } @ARGV;
+my $bcp = $bcoptionsp[0];
+my $bc = $bcoptions[0];
+my $bca = $bcoptionsa[0];
+my $systembc = glob '@abs_top_builddir@/bootstrap/jdk1.6.0/jre/lib/rt.jar';
+if ($bcp)
+{
+    $bcp =~ s/^[^:]*://;
+    $systembc = join ":", $bcp, $systembc;
+}
+if ($bc)
+{
+    $bc =~ s/^[^:]*://;
+    $systembc = $bc;
+}
+if ($bca)
+{
+    $bca =~ s/^[^:]*://;
+    $systembc = join ":", $systembc, $bca;
+}
+push @bcoption, '-bootclasspath', $systembc
     unless grep {$_ eq '-bootclasspath'} @ARGV;
 my @ecj_parms = ($ECJ_WARNINGS, @bcoption);
 my @javac_parms = ($JAVAC_WARNINGS, '-Xprefer:source', '-XDignore.symbol.file=true');

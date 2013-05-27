@@ -1,0 +1,45 @@
+diff -Nru openjdk-ecj.orig/jdk/make/java/text/Makefile openjdk-ecj/jdk/make/java/text/Makefile
+--- openjdk-ecj.orig/jdk/make/java/text/Makefile	2013-05-26 16:44:10.208306104 +0100
++++ openjdk-ecj/jdk/make/java/text/Makefile	2013-05-26 16:45:13.509316304 +0100
+@@ -80,9 +80,8 @@
+ 		-sourcepath $(TEXT_SRCDIR) \
+ 		$(TEXT_SOURCES)
+ 	$(MKDIR) -p  $(TEXT_CLASSDIR)
+-	$(BOOT_JAVA_CMD) -Xbootclasspath/p:$(TEXT_CLASSES) \
+-			 -Xbootclasspath/a:$(ICEDTEA_CLS_DIR) \
+-		-jar $(GENERATEBREAKITERATORDATA_JARFILE) \
++	$(BOOT_JAVA_CMD) -cp $(TEXT_CLASSES):$(GENERATEBREAKITERATORDATA_JARFILE):$(ICEDTEA_CLS_DIR) \
++		build.tools.generatebreakiteratordata.GenerateBreakIteratorData \
+ 		-o $(TEXT_CLASSDIR) \
+ 		-spec $(UNICODEDATA)/UnicodeData.txt
+ 	@$(java-vm-cleanup)
+diff -Nru openjdk-ecj.orig/jdk/make/sun/javazic/Makefile openjdk-ecj/jdk/make/sun/javazic/Makefile
+--- openjdk-ecj.orig/jdk/make/sun/javazic/Makefile	2013-05-26 16:44:10.208306104 +0100
++++ openjdk-ecj/jdk/make/sun/javazic/Makefile	2013-05-26 16:46:07.622179877 +0100
+@@ -62,8 +62,8 @@
+ $(WORKDIR)/$(MAPFILE): $(BUILDTOOLJARDIR)/javazic.jar $(TZFILES)
+ 	$(RM) -r $(@D)
+ 	$(prep-target)
+-	$(BOOT_JAVA_CMD) -Xbootclasspath/a:$(ICEDTEA_CLS_DIR) -jar $(BUILDTOOLJARDIR)/javazic.jar \
+-           -V "$(TZDATA_VER)" -d $(WORKDIR) $(TZFILES)
++	$(BOOT_JAVA_CMD) -cp $(ICEDTEA_CLS_DIR):$(BUILDTOOLJARDIR)/javazic.jar \
++		build.tools.javazic.Main -V "$(TZDATA_VER)" -d $(WORKDIR) $(TZFILES)
+ 	@$(java-vm-cleanup)
+ 
+ $(INSTALLDIR)/$(MAPFILE): $(WORKDIR)/$(MAPFILE)
+diff -Nru openjdk-ecj.orig/jdk/make/sun/text/Makefile openjdk-ecj/jdk/make/sun/text/Makefile
+--- openjdk-ecj.orig/jdk/make/sun/text/Makefile	2013-05-26 16:44:10.208306104 +0100
++++ openjdk-ecj/jdk/make/sun/text/Makefile	2013-05-26 16:45:36.981690893 +0100
+@@ -85,9 +85,9 @@
+ 	$(BOOT_JAVAC_CMD) -d $(TEXT_CLASSES) \
+ 		-sourcepath $(TEXT_SRCDIR) \
+ 		$(BIRULES) $(BIINFO)
+-	$(BOOT_JAVA_CMD) -Xbootclasspath/p:$(TEXT_CLASSES) \
+-			 -Xbootclasspath/a:$(ICEDTEA_CLS_DIR) \
+-		-jar $(GENERATEBREAKITERATORDATA_JARFILE) \
++	$(BOOT_JAVA_CMD)  \
++		-cp $(TEXT_CLASSES):$(ICEDTEA_CLS_DIR):$(GENERATEBREAKITERATORDATA_JARFILE) \
++		build.tools.generatebreakiteratordata.GenerateBreakIteratorData \
+ 		-o $(CLASSDESTDIR)/sun/text/resources \
+ 		-spec $(UNICODEDATA)/UnicodeData.txt \
+ 		-language th
