@@ -1,0 +1,35 @@
+diff --git a/make/java/text/Makefile b/make/java/text/Makefile
+--- openjdk-ecj/jdk/make/java/text/Makefile
++++ openjdk-ecj/jdk/make/java/text/Makefile
+@@ -81,6 +81,7 @@
+ 		$(TEXT_SOURCES)
+ 	$(MKDIR) -p  $(TEXT_CLASSDIR)
+ 	$(BOOT_JAVA_CMD) -Xbootclasspath/p:$(TEXT_CLASSES) \
++			 -Xbootclasspath/a:$(ICEDTEA_CLS_DIR) \
+ 		-jar $(GENERATEBREAKITERATORDATA_JARFILE) \
+ 		-o $(TEXT_CLASSDIR) \
+ 		-spec $(UNICODEDATA)/UnicodeData.txt
+diff --git a/make/sun/javazic/Makefile b/make/sun/javazic/Makefile
+--- openjdk-ecj/jdk/make/sun/javazic/Makefile
++++ openjdk-ecj/jdk/make/sun/javazic/Makefile
+@@ -62,7 +62,8 @@
+ $(WORKDIR)/$(MAPFILE): $(BUILDTOOLJARDIR)/javazic.jar $(TZFILES)
+ 	$(RM) -r $(@D)
+ 	$(prep-target)
+-	$(BOOT_JAVA_CMD) -jar $(BUILDTOOLJARDIR)/javazic.jar -V "$(TZDATA_VER)" -d $(WORKDIR) $(TZFILES)
++	$(BOOT_JAVA_CMD) -Xbootclasspath/a:$(ICEDTEA_CLS_DIR) -jar $(BUILDTOOLJARDIR)/javazic.jar \
++           -V "$(TZDATA_VER)" -d $(WORKDIR) $(TZFILES)
+ 	@$(java-vm-cleanup)
+ 
+ $(INSTALLDIR)/$(MAPFILE): $(WORKDIR)/$(MAPFILE)
+diff --git a/make/sun/text/Makefile b/make/sun/text/Makefile
+--- openjdk-ecj/jdk/make/sun/text/Makefile
++++ openjdk-ecj/jdk/make/sun/text/Makefile
+@@ -86,6 +86,7 @@
+ 		-sourcepath $(TEXT_SRCDIR) \
+ 		$(BIRULES) $(BIINFO)
+ 	$(BOOT_JAVA_CMD) -Xbootclasspath/p:$(TEXT_CLASSES) \
++			 -Xbootclasspath/a:$(ICEDTEA_CLS_DIR) \
+ 		-jar $(GENERATEBREAKITERATORDATA_JARFILE) \
+ 		-o $(CLASSDESTDIR)/sun/text/resources \
+ 		-spec $(UNICODEDATA)/UnicodeData.txt \

@@ -1,3 +1,58 @@
+2013-05-15  Andrew John Hughes  <gnu.andrew@member.fsf.org>
+
+	PR1458: Make use of bootstrap tools & -Xbootclasspath
+	patches optional
+	* INSTALL: Document --disable-bootstrap-tools.
+	* Makefile.am:
+	(ICEDTEA_BOOTSTRAP_CLASSES): Add java.sql.SQLException
+	if any of the constructors are missing.
+	(ICEDTEA_ECJ_PATCHES): Split out fphexconstants,
+	no-sun-classes, bootstrap-tools and xbootclasspath
+	patches from icedtea.patch.  Make the latter two
+	conditional.
+	* NEWS: Updated.
+	* acinclude.m4:
+	(IT_USE_BOOTSTRAP_TOOLS): Add --disable-bootstrap-tools
+	to decide whether to use the boot javac/javah or the
+	one built as part of langtools.  Defaults to on.
+	(IT_CHECK_FOR_XBOOTCLASSPATH): Check whether java
+	can be passed -Xbootclasspath/p to prepend a path
+	to the bootclasspath or not.
+	* configure.ac: Invoke the new macros and test
+	for the java.sql.SQLException constructors.
+	* javac.in: Handle -Xbootclasspath/p, -Xbootclasspath
+	and -Xbootclasspath/a by prepending, setting or appending
+	its value to the bootclasspath option used to ecj,
+	respectively.
+	* patches/ecj/bootstrap-tools.patch:
+	Split from icedtea.patch.  Uses the bootstrap
+	javac and javah rather than the langtools one for
+	CORBA and JDK.
+	* patches/ecj/corba-dependencies.patch:
+	Include the langtools source directory on the sourcepath.
+	* patches/ecj/fphexconstants.patch:
+	Split replacements of floating point hex constants out
+	from icedtea.patch.
+	* patches/ecj/icedtea.patch:
+	Remove split-out segements.  Drop addition of ICEDTEA_RT
+	in BuildToolJar.gmk and common/Rules.gmk in JDK altogether,
+	along with setting of bootclasspath in langtools.
+	* patches/ecj/needs-6.patch:
+	Add java.awt Makefile.
+	* patches/ecj/no-sun-classes.patch:
+	Split from icedtea.patch.  Appends ICEDTEA_CLS_DIR to the
+	bootclasspath in java.text, sun.text and sun.javazic
+	Makefiles for VMs without internal Sun classes.
+	* patches/ecj/xbootclasspath.patch:
+	Replaces the use of -Xbootclasspath in java.text,
+	sun.text and sun.javazic for those VMs that don't
+	support it (gcj).
+
+2013-05-20  Pavel Tisnovsky  <ptisnovs@redhat.com>
+
+	* patches/jtreg-TextLayoutBoundsChecks.patch:
+	Fixed wrong JTreg test name in @run annotation.
+
 2013-05-17  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* patches/hotspot/original/7197906-handle_32_bit_shifts.patch,

@@ -154,6 +154,7 @@ to configure:
 * --with-tzdata-dir: Specify the location of Java timezone data, defaulting to /usr/share/javazi.
 * --with-abs-install-dir: The final install location of the j2sdk-image, for use in the SystemTap tapset.
 * --with-llvm-config: Specify the location of the llvm-config binary.
+* --disable-bootstrap-tools: Use javac and javah from langtools, not the bootstrap JDK.
 
 Other options may be supplied which enable or disable new features.
 These are documented fully in the relevant section below.
@@ -191,7 +192,7 @@ IcedTea6 includes an implementation of the javax.sound.* APIs using
 PulseAudio which can be enabled using --enable-pulse-java.   The resulting
 provider is org.classpath.icedtea.pulseaudio.PulseAudioMixerProvider.
 
-Xrender Support
+XRender Support
 ===============
 
 IcedTea6 includes support for an Xrender-based rendering pipeline
@@ -329,7 +330,7 @@ choice, or because the build has default to this on architectures
 other than x86/x86_64/sparc).  As 'hs23' is known not to work with
 Zero or Shark, 'original' is still the default for these builds.
 
-Javascript Support
+JavaScript Support
 ==================
 
 IcedTea6 adds Javascript support via the javax.script API by using
@@ -347,6 +348,14 @@ Note that the final installed JAR file is a modified version with the
 namespace prefixed by 'sun.' as in the proprietary Oracle JDK.  This
 avoids conflicts between the JDK's copy of Rhino and any used by other
 applications.
+
+Bootstrap Tools
+===============
+
+For bootstrap builds, the option --disable-bootstrap-tools can be used
+to make use of the javac and javah built as part of the langtools build,
+rather than the bootstrap tools.  The default setting of this option is
+to use the bootstrap tools.
 
 Building Additional Virtual Machines
 ====================================
