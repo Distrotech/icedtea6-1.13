@@ -1,3 +1,13 @@
+2013-05-28  Xerxes Rånby  <xerxes@zafena.se>
+
+	PR1188: ASM Interpreter and Thumb2 JIT javac miscompile
+	modulo reminder on armel.
+	* arm_port/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S
+	(POPF1): The POPF1 macro used wrong destination register
+	r0 instead of r1 on ARM armel causing issues with the frem bytecode.
+	The frem bytecode was the only bytecode using the defect macro.
+	* NEWS: Updated.
+
 2013-05-15  Andrew John Hughes  <gnu.andrew@member.fsf.org>
 
 	PR1458: Make use of bootstrap tools & -Xbootclasspath
