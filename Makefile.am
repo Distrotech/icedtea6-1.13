@@ -278,8 +278,7 @@ TAPSET_TEST_SRCS = \
 
 ICEDTEA_FSG_PATCHES =
 
-DROP_PATCHES = \
-	patches/openjdk/jaf-b20_jaxws2-1_6_2011_06_13.patch
+DROP_PATCHES =
 
 SECURITY_PATCHES = \
 	patches/security/20120830/7182135-impossible_to_use_some_editors_directly.patch \
@@ -516,7 +515,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7162902-corba_fixes.patch \
 	patches/traceable.patch \
 	patches/pr1319-support_giflib_5.patch \
-	patches/copy_memory.patch \
 	patches/openjdk/6718364-inference_failure.patch \
 	patches/openjdk/6682380-foreach_crash.patch \
 	patches/openjdk/7046929-fix_t6397104_test_failure.patch \
