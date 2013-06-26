@@ -402,7 +402,6 @@ SECURITY_PATCHES = \
 	patches/security/20130618/8009038-jmx_notification_support_improvement.patch \
 	patches/security/20130618/8009067-improve_key_storing.patch \
 	patches/security/20130618/8009235-improve_tsa_data_handling.patch \
-	patches/security/20130618/8009554-serialjavaobject.patch \
 	patches/openjdk/6888167-medialib_memory_leaks.patch \
 	patches/security/20130618/8011243-improve_imaginglib.patch \
 	patches/security/20130618/8011248-better_component_rasters.patch \
