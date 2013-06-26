@@ -3,6 +3,7 @@
 # Date 1371745779 18000
 # Node ID afb96a923f7f2da64e711455257a024c100e8e2e
 # Parent  af33d9cd440e2851eaffb819d67f86b42c6a8030
+# PLEASE SEE the other 6990754 patch which handles renames more generally
 6990754: Use native memory and reference counting to implement SymbolTable
 Summary: move symbols from permgen into C heap and reference count them
 Reviewed-by: never, acorn, jmasa, stefank
@@ -13107,8 +13108,9 @@ diff --git a/src/share/vm/oops/oopsHierarchy.hpp b/src/share/vm/oops/oopsHierarc
  
  #endif // SHARE_VM_OOPS_OOPSHIERARCHY_HPP
 diff --git a/src/share/vm/oops/symbolOop.cpp b/src/share/vm/oops/symbol.cpp
-rename from src/share/vm/oops/symbolOop.cpp
-rename to src/share/vm/oops/symbol.cpp
+# most patch programs can not handle file renames
+# rename from src/share/vm/oops/symbolOop.cpp
+# rename to src/share/vm/oops/symbol.cpp
 --- openjdk/hotspot/src/share/vm/oops/symbolOop.cpp
 +++ openjdk/hotspot/src/share/vm/oops/symbol.cpp
 @@ -1,5 +1,5 @@

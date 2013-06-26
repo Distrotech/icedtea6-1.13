@@ -3,6 +3,7 @@
 # Date 1371730814 18000
 # Node ID 5761891cfee48bc9382dd68e5e1bf164cff9bfbf
 # Parent  741c190d6989de395cb95895dc0320415af6b131
+# PLEASE SEE the other 6851834 patch which handles renames more generally
 6851834: Javadoc doclet needs a structured approach to generate the output HTML.
 Reviewed-by: jjg
 
@@ -11287,8 +11288,9 @@ diff --git a/src/share/classes/com/sun/tools/doclets/formats/html/SingleIndexWri
      }
  }
 diff --git a/src/share/classes/com/sun/tools/doclets/internal/toolkit/util/SourceToHTMLConverter.java b/src/share/classes/com/sun/tools/doclets/formats/html/SourceToHTMLConverter.java
-rename from src/share/classes/com/sun/tools/doclets/internal/toolkit/util/SourceToHTMLConverter.java
-rename to src/share/classes/com/sun/tools/doclets/formats/html/SourceToHTMLConverter.java
+# most patch programs can not handle renames
+# rename from src/share/classes/com/sun/tools/doclets/internal/toolkit/util/SourceToHTMLConverter.java
+# rename to src/share/classes/com/sun/tools/doclets/formats/html/SourceToHTMLConverter.java
 --- openjdk/langtools/src/share/classes/com/sun/tools/doclets/internal/toolkit/util/SourceToHTMLConverter.java
 +++ openjdk/langtools/src/share/classes/com/sun/tools/doclets/formats/html/SourceToHTMLConverter.java
 @@ -23,14 +23,14 @@

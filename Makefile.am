@@ -425,6 +425,7 @@ SECURITY_PATCHES = \
 	patches/openjdk/6786688-wcag_table.patch \
 	patches/openjdk/6961178-doclet_xml.patch \
 	patches/openjdk/6851834-restructure.patch \
+	patches/openjdk/6851834-handle_renames.patch \
 	patches/openjdk/7006270-regressions.patch \
 	patches/security/20130618/8012375-javadoc_framing.patch \
 	patches/security/20130618/8015997-more_javadoc_framing.patch \
@@ -442,6 +443,7 @@ SECURITY_PATCHES += \
 	patches/openjdk/7036747-elfstringtable.patch \
 	patches/openjdk/7017732-move_static_fields_to_class.patch \
 	patches/openjdk/6990754-use_native_memory_for_symboltable.patch \
+	patches/openjdk/6990754-handle_renames.patch \
 	patches/openjdk/7008809-report_class_in_arraystoreexception.patch \
 	patches/openjdk/7086585-flexible_field_injection.patch \
 	patches/security/20130618/hs_merge-01.patch \

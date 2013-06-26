@@ -1,3 +1,18 @@
+2013-06-26  Omair Majid  <omajid@redhat.com>
+
+	* Makefile.am:
+	(SECURITY_PATCHES): Add patches/openjdk/6990754-handle_renames.patch and
+	patches/openjdk/6851834-handle_renames.patch
+	* patches/openjdk/6990754-use_native_memory_for_symboltable.patch: Don't
+	rename files using extended-diff-style.
+	* patches/openjdk/6990754-handle_renames.patch: New file. Contains the
+	rename portion of 6990754 since some patch programs can not handle
+	renames.
+	* patches/openjdk/6851834-restructure.patch: Don't rename files using
+	extended-diff-style.
+	* patches/openjdk/6851834-handle_renames.patch: New file. Contains rename
+	porition of 6851834 since some patch programs can not handle renames.
+
 2013-06-24  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* Makefile.am:
