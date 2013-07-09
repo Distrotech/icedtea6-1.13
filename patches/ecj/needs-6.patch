@@ -22,6 +22,30 @@ diff -Nru openjdk-ecj.orig/jdk/make/sun/xawt/Makefile openjdk-ecj/jdk/make/sun/x
  
  GEN_DIR=$(GENSRCDIR)/sun/awt/X11
  
+diff -Nru openjdk-ecj.orig/jdk/make/javax/sound/Makefile openjdk-ecj/jdk/make/javax/sound/Makefile
+--- openjdk-ecj.orig/jdk/make/javax/sound/Makefile	2013-06-24 00:00:22.031254425 +0100
++++ openjdk-ecj/jdk/make/javax/sound/Makefile	2013-06-24 00:01:27.040288124 +0100
+@@ -28,6 +28,8 @@
+ LIBRARY = jsound
+ PRODUCT = sun
+ include $(BUILDDIR)/common/Defs.gmk
++LANGUAGE_VERSION = -source 6
++CLASS_VERSION = -target 6
+ 
+ # include defines for sound
+ include SoundDefs.gmk
+diff -Nru openjdk-ecj.orig/jdk/make/javax/management/Makefile openjdk-ecj/jdk/make/javax/management/Makefile
+--- openjdk-ecj.orig/jdk/make/javax/management/Makefile	2011-11-14 22:11:40.000000000 +0000
++++ openjdk-ecj/jdk/make/javax/management/Makefile	2013-06-24 00:40:59.742001431 +0100
+@@ -31,6 +31,8 @@
+ PACKAGE = javax.management
+ PRODUCT = sun
+ include $(BUILDDIR)/common/Defs.gmk
++LANGUAGE_VERSION = -source 6
++CLASS_VERSION = -target 6
+ 
+ #
+ # Files to compile
 diff --git a/make/java/awt/Makefile b/make/java/awt/Makefile
 --- openjdk-ecj/jdk/make/java/awt/Makefile
 +++ openjdk-ecj/jdk/make/java/awt/Makefile

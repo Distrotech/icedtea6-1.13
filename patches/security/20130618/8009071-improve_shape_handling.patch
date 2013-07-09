@@ -143,6 +143,14 @@ diff -Nru openjdk.orig/jdk/src/share/native/sun/awt/splashscreen/java_awt_Splash
 diff -Nru openjdk.orig/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c openjdk/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c
 --- openjdk.orig/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c	2011-11-14 16:12:12.000000000 -0600
 +++ openjdk/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c	2013-06-22 03:34:36.084702677 -0500
+@@ -27,6 +27,7 @@
+ #include "splashscreen_gfx.h"
+ 
+ #include <gif_lib.h>
++#include <sizecalc.h>
+ 
+ #define GIF_TRANSPARENT     0x01
+ #define GIF_USER_INPUT      0x02
 @@ -120,7 +120,7 @@
      splash->height = gif->SHeight;
      splash->frameCount = gif->ImageCount;
