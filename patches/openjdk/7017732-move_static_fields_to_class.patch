@@ -1,0 +1,3079 @@
+# HG changeset patch
+# User andrew
+# Date 1371742382 18000
+# Node ID af33d9cd440e2851eaffb819d67f86b42c6a8030
+# Parent  fee3c2ed387b0a925f81448c93265b4c30e0a8d6
+7017732: move static fields into Class to prepare for perm gen removal
+Reviewed-by: kvn, coleenp, twisti, stefank
+
+diff --git a/agent/src/share/classes/sun/jvm/hotspot/jdi/FieldImpl.java b/agent/src/share/classes/sun/jvm/hotspot/jdi/FieldImpl.java
+--- openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/FieldImpl.java
++++ openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/FieldImpl.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -62,7 +62,7 @@
+ 
+     // get the value of static field
+     ValueImpl getValue() {
+-        return getValue(saField.getFieldHolder());
++        return getValue(saField.getFieldHolder().getJavaMirror());
+     }
+ 
+     // get the value of this Field from a specific Oop
+diff --git a/agent/src/share/classes/sun/jvm/hotspot/oops/InstanceKlass.java b/agent/src/share/classes/sun/jvm/hotspot/oops/InstanceKlass.java
+--- openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/oops/InstanceKlass.java
++++ openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/oops/InstanceKlass.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2000, 2008, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -87,7 +87,7 @@
+     innerClasses         = new OopField(type.getOopField("_inner_classes"), Oop.getHeaderSize());
+     nonstaticFieldSize   = new CIntField(type.getCIntegerField("_nonstatic_field_size"), Oop.getHeaderSize());
+     staticFieldSize      = new CIntField(type.getCIntegerField("_static_field_size"), Oop.getHeaderSize());
+-    staticOopFieldSize   = new CIntField(type.getCIntegerField("_static_oop_field_size"), Oop.getHeaderSize());
++    staticOopFieldCount   = new CIntField(type.getCIntegerField("_static_oop_field_count"), Oop.getHeaderSize());
+     nonstaticOopMapSize  = new CIntField(type.getCIntegerField("_nonstatic_oop_map_size"), Oop.getHeaderSize());
+     isMarkedDependent    = new CIntField(type.getCIntegerField("_is_marked_dependent"), Oop.getHeaderSize());
+     initState            = new CIntField(type.getCIntegerField("_init_state"), Oop.getHeaderSize());
+@@ -140,7 +140,7 @@
+   private static OopField  innerClasses;
+   private static CIntField nonstaticFieldSize;
+   private static CIntField staticFieldSize;
+-  private static CIntField staticOopFieldSize;
++  private static CIntField staticOopFieldCount;
+   private static CIntField nonstaticOopMapSize;
+   private static CIntField isMarkedDependent;
+   private static CIntField initState;
+@@ -261,8 +261,7 @@
+   public Symbol    getSourceDebugExtension(){ return (Symbol)       sourceDebugExtension.getValue(this); }
+   public TypeArray getInnerClasses()        { return (TypeArray)    innerClasses.getValue(this); }
+   public long      getNonstaticFieldSize()  { return                nonstaticFieldSize.getValue(this); }
+-  public long      getStaticFieldSize()     { return                staticFieldSize.getValue(this); }
+-  public long      getStaticOopFieldSize()  { return                staticOopFieldSize.getValue(this); }
++  public long      getStaticOopFieldCount() { return                staticOopFieldCount.getValue(this); }
+   public long      getNonstaticOopMapSize() { return                nonstaticOopMapSize.getValue(this); }
+   public boolean   getIsMarkedDependent()   { return                isMarkedDependent.getValue(this) != 0; }
+   public long      getVtableLen()           { return                vtableLen.getValue(this); }
+@@ -454,7 +453,7 @@
+       visitor.doOop(innerClasses, true);
+       visitor.doCInt(nonstaticFieldSize, true);
+       visitor.doCInt(staticFieldSize, true);
+-      visitor.doCInt(staticOopFieldSize, true);
++      visitor.doCInt(staticOopFieldCount, true);
+       visitor.doCInt(nonstaticOopMapSize, true);
+       visitor.doCInt(isMarkedDependent, true);
+       visitor.doCInt(initState, true);
+@@ -693,7 +692,7 @@
+   public long getObjectSize() {
+     long bodySize =    alignObjectOffset(getVtableLen() * getHeap().getOopSize())
+                      + alignObjectOffset(getItableLen() * getHeap().getOopSize())
+-                     + (getStaticFieldSize() + getNonstaticOopMapSize()) * getHeap().getOopSize();
++                     + (getNonstaticOopMapSize()) * getHeap().getOopSize();
+     return alignObjectSize(headerSize + bodySize);
+   }
+ 
+diff --git a/agent/src/share/classes/sun/jvm/hotspot/oops/IntField.java b/agent/src/share/classes/sun/jvm/hotspot/oops/IntField.java
+--- openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/oops/IntField.java
++++ openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/oops/IntField.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2000, 2001, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -40,7 +40,12 @@
+     super(holder, fieldArrayIndex);
+   }
+ 
+-  public int getValue(Oop obj) { return obj.getHandle().getJIntAt(getOffset()); }
++  public int getValue(Oop obj) {
++    if (!isVMField() && !obj.isInstance() && !obj.isArray()) {
++      throw new InternalError(obj.toString());
++    }
++    return obj.getHandle().getJIntAt(getOffset());
++  }
+   public void setValue(Oop obj, int value) throws MutationException {
+     // Fix this: setJIntAt is missing in Address
+   }
+diff --git a/agent/src/share/classes/sun/jvm/hotspot/oops/OopField.java b/agent/src/share/classes/sun/jvm/hotspot/oops/OopField.java
+--- openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/oops/OopField.java
++++ openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/oops/OopField.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2000, 2002, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -41,11 +41,17 @@
+   }
+ 
+   public Oop getValue(Oop obj) {
++    if (!isVMField() && !obj.isInstance() && !obj.isArray()) {
++      throw new InternalError();
++    }
+     return obj.getHeap().newOop(getValueAsOopHandle(obj));
+   }
+ 
+   /** Debugging support */
+   public OopHandle getValueAsOopHandle(Oop obj) {
++    if (!isVMField() && !obj.isInstance() && !obj.isArray()) {
++      throw new InternalError(obj.toString());
++    }
+     return obj.getHandle().getOopHandleAt(getOffset());
+   }
+ 
+diff --git a/agent/src/share/classes/sun/jvm/hotspot/oops/OopUtilities.java b/agent/src/share/classes/sun/jvm/hotspot/oops/OopUtilities.java
+--- openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/oops/OopUtilities.java
++++ openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/oops/OopUtilities.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2000, 2008, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -274,13 +274,7 @@
+        // hc_klass is a HotSpot magic field and hence we can't
+        // find it from InstanceKlass for java.lang.Class.
+        TypeDataBase db = VM.getVM().getTypeDataBase();
+-       int hcKlassOffset = (int) Instance.getHeaderSize();
+-       try {
+-          hcKlassOffset += (db.lookupIntConstant("java_lang_Class::hc_klass_offset").intValue() *
+-                           VM.getVM().getHeapOopSize());
+-       } catch (RuntimeException re) {
+-          // ignore, currently java_lang_Class::hc_klass_offset is zero
+-       }
++       int hcKlassOffset = (int) db.lookupType("java_lang_Class").getCIntegerField("klass_offset").getValue();
+        if (VM.getVM().isCompressedOopsEnabled()) {
+          hcKlassField = new NarrowOopField(new NamedFieldIdentifier("hc_klass"), hcKlassOffset, true);
+        } else {
+diff --git a/agent/src/share/classes/sun/jvm/hotspot/runtime/VM.java b/agent/src/share/classes/sun/jvm/hotspot/runtime/VM.java
+--- openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/runtime/VM.java
++++ openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/runtime/VM.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -839,13 +839,13 @@
+   }
+ 
+   private void readSystemProperties() {
+-     InstanceKlass systemKls = getSystemDictionary().getSystemKlass();
++     final InstanceKlass systemKls = getSystemDictionary().getSystemKlass();
+      systemKls.iterate(new DefaultOopVisitor() {
+                                ObjectReader objReader = new ObjectReader();
+                                public void doOop(sun.jvm.hotspot.oops.OopField field, boolean isVMField) {
+                                   if (field.getID().getName().equals("props")) {
+                                      try {
+-                                        sysProps = (Properties) objReader.readObject(field.getValue(getObj()));
++                                        sysProps = (Properties) objReader.readObject(field.getValue(systemKls.getJavaMirror()));
+                                      } catch (Exception e) {
+                                         if (Assert.ASSERTS_ENABLED) {
+                                            e.printStackTrace();
+diff --git a/agent/test/jdi/sasanity.sh b/agent/test/jdi/sasanity.sh
+--- openjdk/hotspot/agent/test/jdi/sasanity.sh
++++ openjdk/hotspot/agent/test/jdi/sasanity.sh
+@@ -43,6 +43,7 @@
+ fi
+ 
+ jdk=$1
++shift
+ OS=`uname`
+ 
+ if [ "$OS" != "Linux" ]; then
+@@ -68,7 +69,7 @@
+ 
+ tmp=/tmp/sagsetup
+ rm -f $tmp
+-$jdk/bin/java sagtarg > $tmp &
++$jdk/bin/java $* sagtarg > $tmp &
+ pid=$!
+ while [ ! -s $tmp ] ; do
+   # Kludge alert!
+diff --git a/src/cpu/sparc/vm/c1_CodeStubs_sparc.cpp b/src/cpu/sparc/vm/c1_CodeStubs_sparc.cpp
+--- openjdk/hotspot/src/cpu/sparc/vm/c1_CodeStubs_sparc.cpp
++++ openjdk/hotspot/src/cpu/sparc/vm/c1_CodeStubs_sparc.cpp
+@@ -322,7 +322,8 @@
+     // thread.
+     assert(_obj != noreg, "must be a valid register");
+     assert(_oop_index >= 0, "must have oop index");
+-    __ ld_ptr(_obj, instanceKlass::init_thread_offset_in_bytes() + sizeof(klassOopDesc), G3);
++    __ ld_ptr(_obj, java_lang_Class::klass_offset_in_bytes(), G3);
++    __ ld_ptr(G3, instanceKlass::init_thread_offset_in_bytes() + sizeof(klassOopDesc), G3);
+     __ cmp(G2_thread, G3);
+     __ br(Assembler::notEqual, false, Assembler::pn, call_patch);
+     __ delayed()->nop();
+diff --git a/src/cpu/sparc/vm/dump_sparc.cpp b/src/cpu/sparc/vm/dump_sparc.cpp
+--- openjdk/hotspot/src/cpu/sparc/vm/dump_sparc.cpp
++++ openjdk/hotspot/src/cpu/sparc/vm/dump_sparc.cpp
+@@ -80,13 +80,19 @@
+     for (int j = 0; j < num_virtuals; ++j) {
+       dummy_vtable[num_virtuals * i + j] = (void*)masm->pc();
+       __ save(SP, -256, SP);
++      int offset = (i << 8) + j;
++      Register src = G0;
++      if (!Assembler::is_simm13(offset)) {
++        __ sethi(offset, L0);
++        src = L0;
++        offset = offset & ((1 << 10) - 1);
++      }
+       __ brx(Assembler::always, false, Assembler::pt, common_code);
+ 
+       // Load L0 with a value indicating vtable/offset pair.
+       // -- bits[ 7..0]  (8 bits) which virtual method in table?
+-      // -- bits[12..8]  (5 bits) which virtual method table?
+-      // -- must fit in 13-bit instruction immediate field.
+-      __ delayed()->set((i << 8) + j, L0);
++      // -- bits[13..8]  (6 bits) which virtual method table?
++      __ delayed()->or3(src, offset, L0);
+     }
+   }
+ 
+diff --git a/src/cpu/x86/vm/c1_CodeStubs_x86.cpp b/src/cpu/x86/vm/c1_CodeStubs_x86.cpp
+--- openjdk/hotspot/src/cpu/x86/vm/c1_CodeStubs_x86.cpp
++++ openjdk/hotspot/src/cpu/x86/vm/c1_CodeStubs_x86.cpp
+@@ -313,10 +313,13 @@
+     }
+     assert(_obj != noreg, "must be a valid register");
+     Register tmp = rax;
+-    if (_obj == tmp) tmp = rbx;
++    Register tmp2 = rbx;
+     __ push(tmp);
++    __ push(tmp2);
++    __ movptr(tmp2, Address(_obj, java_lang_Class::klass_offset_in_bytes()));
+     __ get_thread(tmp);
+-    __ cmpptr(tmp, Address(_obj, instanceKlass::init_thread_offset_in_bytes() + sizeof(klassOopDesc)));
++    __ cmpptr(tmp, Address(tmp2, instanceKlass::init_thread_offset_in_bytes() + sizeof(klassOopDesc)));
++    __ pop(tmp2);
+     __ pop(tmp);
+     __ jcc(Assembler::notEqual, call_patch);
+ 
+diff --git a/src/cpu/zero/vm/cppInterpreter_zero.cpp b/src/cpu/zero/vm/cppInterpreter_zero.cpp
+--- openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp
++++ openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+  * Copyright 2007, 2008, 2009, 2010 Red Hat, Inc.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+@@ -281,7 +281,7 @@
+ 
+     if (method->is_static()) {
+       istate->set_oop_temp(
+-        method->constants()->pool_holder()->klass_part()->java_mirror());
++        method->constants()->pool_holder()->java_mirror());
+       mirror = istate->oop_temp_addr();
+       *(dst++) = &mirror;
+     }
+@@ -667,7 +667,7 @@
+       (BasicObjectLock *) stack->alloc(monitor_words * wordSize);
+     oop object;
+     if (method->is_static())
+-      object = method->constants()->pool_holder()->klass_part()->java_mirror();
++      object = method->constants()->pool_holder()->java_mirror();
+     else
+       object = (oop) locals[0];
+     monitor->set_obj(object);
+diff --git a/src/share/vm/c1/c1_GraphBuilder.cpp b/src/share/vm/c1/c1_GraphBuilder.cpp
+--- openjdk/hotspot/src/share/vm/c1/c1_GraphBuilder.cpp
++++ openjdk/hotspot/src/share/vm/c1/c1_GraphBuilder.cpp
+@@ -1468,9 +1468,9 @@
+     // so, the is_initialized flag should be suffiect.
+     if (state_before != NULL) {
+       // build a patching constant
+-      obj = new Constant(new ClassConstant(holder), state_before);
++      obj = new Constant(new InstanceConstant(holder->java_mirror()), state_before);
+     } else {
+-      obj = new Constant(new ClassConstant(holder));
++      obj = new Constant(new InstanceConstant(holder->java_mirror()));
+     }
+   }
+ 
+diff --git a/src/share/vm/c1/c1_Runtime1.cpp b/src/share/vm/c1/c1_Runtime1.cpp
+--- openjdk/hotspot/src/share/vm/c1/c1_Runtime1.cpp
++++ openjdk/hotspot/src/share/vm/c1/c1_Runtime1.cpp
+@@ -807,7 +807,7 @@
+         { klassOop klass = resolve_field_return_klass(caller_method, bci, CHECK);
+           // Save a reference to the class that has to be checked for initialization
+           init_klass = KlassHandle(THREAD, klass);
+-          k = klass;
++          k = klass->java_mirror();
+         }
+         break;
+       case Bytecodes::_new:
+diff --git a/src/share/vm/ci/ciCPCache.cpp b/src/share/vm/ci/ciCPCache.cpp
+--- openjdk/hotspot/src/share/vm/ci/ciCPCache.cpp
++++ openjdk/hotspot/src/share/vm/ci/ciCPCache.cpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -46,8 +46,7 @@
+ // ciCPCache::is_f1_null_at
+ bool ciCPCache::is_f1_null_at(int index) {
+   VM_ENTRY_MARK;
+-  oop f1 = entry_at(index)->f1();
+-  return (f1 == NULL);
++  return entry_at(index)->is_f1_null();
+ }
+ 
+ 
+diff --git a/src/share/vm/ci/ciField.cpp b/src/share/vm/ci/ciField.cpp
+--- openjdk/hotspot/src/share/vm/ci/ciField.cpp
++++ openjdk/hotspot/src/share/vm/ci/ciField.cpp
+@@ -224,36 +224,38 @@
+       }
+     }
+ 
++    Handle mirror = k->java_mirror();
++
+     _is_constant = true;
+     switch(type()->basic_type()) {
+     case T_BYTE:
+-      _constant_value = ciConstant(type()->basic_type(), k->byte_field(_offset));
++      _constant_value = ciConstant(type()->basic_type(), mirror->byte_field(_offset));
+       break;
+     case T_CHAR:
+-      _constant_value = ciConstant(type()->basic_type(), k->char_field(_offset));
++      _constant_value = ciConstant(type()->basic_type(), mirror->char_field(_offset));
+       break;
+     case T_SHORT:
+-      _constant_value = ciConstant(type()->basic_type(), k->short_field(_offset));
++      _constant_value = ciConstant(type()->basic_type(), mirror->short_field(_offset));
+       break;
+     case T_BOOLEAN:
+-      _constant_value = ciConstant(type()->basic_type(), k->bool_field(_offset));
++      _constant_value = ciConstant(type()->basic_type(), mirror->bool_field(_offset));
+       break;
+     case T_INT:
+-      _constant_value = ciConstant(type()->basic_type(), k->int_field(_offset));
++      _constant_value = ciConstant(type()->basic_type(), mirror->int_field(_offset));
+       break;
+     case T_FLOAT:
+-      _constant_value = ciConstant(k->float_field(_offset));
++      _constant_value = ciConstant(mirror->float_field(_offset));
+       break;
+     case T_DOUBLE:
+-      _constant_value = ciConstant(k->double_field(_offset));
++      _constant_value = ciConstant(mirror->double_field(_offset));
+       break;
+     case T_LONG:
+-      _constant_value = ciConstant(k->long_field(_offset));
++      _constant_value = ciConstant(mirror->long_field(_offset));
+       break;
+     case T_OBJECT:
+     case T_ARRAY:
+       {
+-        oop o = k->obj_field(_offset);
++        oop o = mirror->obj_field(_offset);
+ 
+         // A field will be "constant" if it is known always to be
+         // a non-null reference to an instance of a particular class,
+diff --git a/src/share/vm/ci/ciInstance.cpp b/src/share/vm/ci/ciInstance.cpp
+--- openjdk/hotspot/src/share/vm/ci/ciInstance.cpp
++++ openjdk/hotspot/src/share/vm/ci/ciInstance.cpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -138,3 +138,9 @@
+   st->print(" type=");
+   klass()->print(st);
+ }
++
++
++ciKlass* ciInstance::java_lang_Class_klass() {
++  VM_ENTRY_MARK;
++  return CURRENT_ENV->get_object(java_lang_Class::as_klassOop(get_oop()))->as_klass();
++}
+diff --git a/src/share/vm/ci/ciInstance.hpp b/src/share/vm/ci/ciInstance.hpp
+--- openjdk/hotspot/src/share/vm/ci/ciInstance.hpp
++++ openjdk/hotspot/src/share/vm/ci/ciInstance.hpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -64,6 +64,8 @@
+ 
+   // Constant value of a field at the specified offset.
+   ciConstant field_value_by_offset(int field_offset);
++
++  ciKlass* java_lang_Class_klass();
+ };
+ 
+ #endif // SHARE_VM_CI_CIINSTANCE_HPP
+diff --git a/src/share/vm/ci/ciInstanceKlass.cpp b/src/share/vm/ci/ciInstanceKlass.cpp
+--- openjdk/hotspot/src/share/vm/ci/ciInstanceKlass.cpp
++++ openjdk/hotspot/src/share/vm/ci/ciInstanceKlass.cpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -84,7 +84,6 @@
+     if (h_k() != SystemDictionary::Object_klass()) {
+       super();
+     }
+-    java_mirror();
+     //compute_nonstatic_fields();  // done outside of constructor
+   }
+ 
+@@ -319,6 +318,9 @@
+ // Get the instance of java.lang.Class corresponding to this klass.
+ // Cache it on this->_java_mirror.
+ ciInstance* ciInstanceKlass::java_mirror() {
++  if (is_shared()) {
++    return ciKlass::java_mirror();
++  }
+   if (_java_mirror == NULL) {
+     _java_mirror = ciKlass::java_mirror();
+   }
+diff --git a/src/share/vm/ci/ciObjectFactory.cpp b/src/share/vm/ci/ciObjectFactory.cpp
+--- openjdk/hotspot/src/share/vm/ci/ciObjectFactory.cpp
++++ openjdk/hotspot/src/share/vm/ci/ciObjectFactory.cpp
+@@ -653,7 +653,7 @@
+   if (key->is_perm() && _non_perm_count == 0) {
+     return emptyBucket;
+   } else if (key->is_instance()) {
+-    if (key->klass() == SystemDictionary::Class_klass()) {
++    if (key->klass() == SystemDictionary::Class_klass() && JavaObjectsInPerm) {
+       // class mirror instances are always perm
+       return emptyBucket;
+     }
+diff --git a/src/share/vm/classfile/classFileParser.cpp b/src/share/vm/classfile/classFileParser.cpp
+--- openjdk/hotspot/src/share/vm/classfile/classFileParser.cpp
++++ openjdk/hotspot/src/share/vm/classfile/classFileParser.cpp
+@@ -37,6 +37,7 @@
+ #include "memory/universe.inline.hpp"
+ #include "oops/constantPoolOop.hpp"
+ #include "oops/instanceKlass.hpp"
++#include "oops/instanceMirrorKlass.hpp"
+ #include "oops/klass.inline.hpp"
+ #include "oops/klassOop.hpp"
+ #include "oops/klassVtable.hpp"
+@@ -2737,8 +2738,8 @@
+ }
+ 
+ 
+-void ClassFileParser::java_lang_Class_fix_pre(objArrayHandle* methods_ptr,
+-  FieldAllocationCount *fac_ptr, TRAPS) {
++void ClassFileParser::java_lang_Class_fix_pre(int* nonstatic_field_size,
++                                              FieldAllocationCount *fac_ptr) {
+   // Add fake fields for java.lang.Class instances
+   //
+   // This is not particularly nice. We should consider adding a
+@@ -2755,10 +2756,13 @@
+   // versions because when the offsets are computed at bootstrap
+   // time we don't know yet which version of the JDK we're running in.
+ 
+-  // The values below are fake but will force two non-static oop fields and
++  // The values below are fake but will force three non-static oop fields and
+   // a corresponding non-static oop map block to be allocated.
+   const int extra = java_lang_Class::number_of_fake_oop_fields;
+   fac_ptr->nonstatic_oop_count += extra;
++
++  // Reserve some leading space for fake ints
++  *nonstatic_field_size += align_size_up(java_lang_Class::hc_number_of_fake_int_fields * BytesPerInt, heapOopSize) / heapOopSize;
+ }
+ 
+ 
+@@ -3167,9 +3171,7 @@
+     int next_nonstatic_field_offset;
+ 
+     // Calculate the starting byte offsets
+-    next_static_oop_offset      = (instanceKlass::header_size() +
+-                                  align_object_offset(vtable_size) +
+-                                  align_object_offset(itable_size)) * wordSize;
++    next_static_oop_offset      = instanceMirrorKlass::offset_of_static_fields();
+     next_static_double_offset   = next_static_oop_offset +
+                                   (fac.static_oop_count * heapOopSize);
+     if ( fac.static_double_count &&
+@@ -3519,7 +3521,7 @@
+     }
+ 
+     // We can now create the basic klassOop for this klass
+-    klassOop ik = oopFactory::new_instanceKlass(vtable_size, itable_size,
++    klassOop ik = oopFactory::new_instanceKlass(name, vtable_size, itable_size,
+                                                 static_field_size,
+                                                 total_oop_map_count,
+                                                 rt, CHECK_(nullHandle));
+@@ -3541,7 +3543,7 @@
+     this_klass->set_class_loader(class_loader());
+     this_klass->set_nonstatic_field_size(nonstatic_field_size);
+     this_klass->set_has_nonstatic_fields(has_nonstatic_fields);
+-    this_klass->set_static_oop_field_size(fac.static_oop_count);
++    this_klass->set_static_oop_field_count(fac.static_oop_count);
+     cp->set_pool_holder(this_klass());
+     this_klass->set_constants(cp());
+     this_klass->set_local_interfaces(local_interfaces());
+@@ -3601,9 +3603,6 @@
+     // Make sure this is the end of class file stream
+     guarantee_property(cfs->at_eos(), "Extra bytes at the end of class file %s", CHECK_(nullHandle));
+ 
+-    // Initialize static fields
+-    this_klass->do_local_static_fields(&initialize_static_field, CHECK_(nullHandle));
+-
+     // VerifyOops believes that once this has been set, the object is completely loaded.
+     // Compute transitive closure of interfaces this class implements
+     this_klass->set_transitive_interfaces(transitive_interfaces());
+@@ -3637,6 +3636,9 @@
+       check_illegal_static_method(this_klass, CHECK_(nullHandle));
+     }
+ 
++    // Allocate mirror and initialize static fields
++    java_lang_Class::create_mirror(this_klass, CHECK_(nullHandle));
++
+     ClassLoadingService::notify_class_loaded(instanceKlass::cast(this_klass()),
+                                              false /* not shared class */);
+ 
+diff --git a/src/share/vm/classfile/classFileParser.hpp b/src/share/vm/classfile/classFileParser.hpp
+--- openjdk/hotspot/src/share/vm/classfile/classFileParser.hpp
++++ openjdk/hotspot/src/share/vm/classfile/classFileParser.hpp
+@@ -153,11 +153,12 @@
+   // Add the "discovered" field to java.lang.ref.Reference if
+   // it does not exist.
+   void java_lang_ref_Reference_fix_pre(typeArrayHandle* fields_ptr,
+-    constantPoolHandle cp, FieldAllocationCount *fac_ptr, TRAPS);
++                                       constantPoolHandle cp,
++                                       FieldAllocationCount *fac_ptr, TRAPS);
+   // Adjust the field allocation counts for java.lang.Class to add
+   // fake fields.
+-  void java_lang_Class_fix_pre(objArrayHandle* methods_ptr,
+-    FieldAllocationCount *fac_ptr, TRAPS);
++  void java_lang_Class_fix_pre(int* nonstatic_field_size,
++                               FieldAllocationCount *fac_ptr);
+   // Adjust the next_nonstatic_oop_offset to place the fake fields
+   // before any Java fields.
+   void java_lang_Class_fix_post(int* next_nonstatic_oop_offset);
+diff --git a/src/share/vm/classfile/javaClasses.cpp b/src/share/vm/classfile/javaClasses.cpp
+--- openjdk/hotspot/src/share/vm/classfile/javaClasses.cpp
++++ openjdk/hotspot/src/share/vm/classfile/javaClasses.cpp
+@@ -33,6 +33,7 @@
+ #include "memory/resourceArea.hpp"
+ #include "memory/universe.inline.hpp"
+ #include "oops/instanceKlass.hpp"
++#include "oops/instanceMirrorKlass.hpp"
+ #include "oops/klass.hpp"
+ #include "oops/klassOop.hpp"
+ #include "oops/methodOop.hpp"
+@@ -391,6 +392,75 @@
+   }
+ }
+ 
++static void initialize_static_field(fieldDescriptor* fd, TRAPS) {
++  Handle mirror (THREAD, fd->field_holder()->java_mirror());
++  assert(mirror.not_null() && fd->is_static(), "just checking");
++  if (fd->has_initial_value()) {
++    BasicType t = fd->field_type();
++    switch (t) {
++      case T_BYTE:
++        mirror()->byte_field_put(fd->offset(), fd->int_initial_value());
++              break;
++      case T_BOOLEAN:
++        mirror()->bool_field_put(fd->offset(), fd->int_initial_value());
++              break;
++      case T_CHAR:
++        mirror()->char_field_put(fd->offset(), fd->int_initial_value());
++              break;
++      case T_SHORT:
++        mirror()->short_field_put(fd->offset(), fd->int_initial_value());
++              break;
++      case T_INT:
++        mirror()->int_field_put(fd->offset(), fd->int_initial_value());
++        break;
++      case T_FLOAT:
++        mirror()->float_field_put(fd->offset(), fd->float_initial_value());
++        break;
++      case T_DOUBLE:
++        mirror()->double_field_put(fd->offset(), fd->double_initial_value());
++        break;
++      case T_LONG:
++        mirror()->long_field_put(fd->offset(), fd->long_initial_value());
++        break;
++      case T_OBJECT:
++        {
++          #ifdef ASSERT
++          TempNewSymbol sym = SymbolTable::new_symbol("Ljava/lang/String;", CHECK);
++          assert(fd->signature() == sym, "just checking");
++          #endif
++          oop string = fd->string_initial_value(CHECK);
++          mirror()->obj_field_put(fd->offset(), string);
++        }
++        break;
++      default:
++        THROW_MSG(vmSymbols::java_lang_ClassFormatError(),
++                  "Illegal ConstantValue attribute in class file");
++    }
++  }
++}
++
++
++// During bootstrap, java.lang.Class wasn't loaded so static field
++// offsets were computed without the size added it.  Go back and
++// update all the static field offsets to included the size.
++static void fixup_static_field(fieldDescriptor* fd, TRAPS) {
++  if (fd->is_static()) {
++    int real_offset = fd->offset() + instanceMirrorKlass::offset_of_static_fields();
++    typeArrayOop fields = instanceKlass::cast(fd->field_holder())->fields();
++    fields->short_at_put(fd->index() + instanceKlass::low_offset,  extract_low_short_from_int(real_offset));
++    fields->short_at_put(fd->index() + instanceKlass::high_offset, extract_high_short_from_int(real_offset));
++  }
++}
++
++void java_lang_Class::fixup_mirror(KlassHandle k, TRAPS) {
++  assert(instanceMirrorKlass::offset_of_static_fields() != 0, "must have been computed already");
++
++  if (k->oop_is_instance()) {
++    // Fixup the offsets
++    instanceKlass::cast(k())->do_local_static_fields(&fixup_static_field, CHECK);
++  }
++  create_mirror(k, CHECK);
++}
+ 
+ oop java_lang_Class::create_mirror(KlassHandle k, TRAPS) {
+   assert(k->java_mirror() == NULL, "should only assign mirror once");
+@@ -400,12 +470,17 @@
+   // class is put into the system dictionary.
+   int computed_modifiers = k->compute_modifier_flags(CHECK_0);
+   k->set_modifier_flags(computed_modifiers);
+-  if (SystemDictionary::Class_klass_loaded()) {
++  if (SystemDictionary::Class_klass_loaded() && (k->oop_is_instance() || k->oop_is_javaArray())) {
+     // Allocate mirror (java.lang.Class instance)
+-    Handle mirror = instanceKlass::cast(SystemDictionary::Class_klass())->allocate_permanent_instance(CHECK_0);
++    Handle mirror = instanceMirrorKlass::cast(SystemDictionary::Class_klass())->allocate_instance(k, CHECK_0);
+     // Setup indirections
+     mirror->obj_field_put(klass_offset,  k());
+     k->set_java_mirror(mirror());
++
++    instanceMirrorKlass* mk = instanceMirrorKlass::cast(mirror->klass());
++    java_lang_Class::set_oop_size(mirror(), mk->instance_size(k));
++    java_lang_Class::set_static_oop_field_count(mirror(), mk->compute_static_oop_field_count(mirror()));
++
+     // It might also have a component mirror.  This mirror must already exist.
+     if (k->oop_is_javaArray()) {
+       Handle comp_mirror;
+@@ -428,6 +503,9 @@
+         arrayKlass::cast(k->as_klassOop())->set_component_mirror(comp_mirror());
+         set_array_klass(comp_mirror(), k->as_klassOop());
+       }
++    } else if (k->oop_is_instance()) {
++      // Initialize static fields
++      instanceKlass::cast(k())->do_local_static_fields(&initialize_static_field, CHECK_NULL);
+     }
+     return mirror();
+   } else {
+@@ -436,21 +514,46 @@
+ }
+ 
+ 
++
++int  java_lang_Class::oop_size(oop java_class) {
++  assert(oop_size_offset != 0, "must be set");
++  return java_class->int_field(oop_size_offset);
++}
++void java_lang_Class::set_oop_size(oop java_class, int size) {
++  assert(oop_size_offset != 0, "must be set");
++  java_class->int_field_put(oop_size_offset, size);
++}
++int  java_lang_Class::static_oop_field_count(oop java_class) {
++  assert(static_oop_field_count_offset != 0, "must be set");
++  return java_class->int_field(static_oop_field_count_offset);
++}
++void java_lang_Class::set_static_oop_field_count(oop java_class, int size) {
++  assert(static_oop_field_count_offset != 0, "must be set");
++  java_class->int_field_put(static_oop_field_count_offset, size);
++}
++
++
++
++
+ oop java_lang_Class::create_basic_type_mirror(const char* basic_type_name, BasicType type, TRAPS) {
+   // This should be improved by adding a field at the Java level or by
+   // introducing a new VM klass (see comment in ClassFileParser)
+-  oop java_class = instanceKlass::cast(SystemDictionary::Class_klass())->allocate_permanent_instance(CHECK_0);
++  oop java_class = instanceMirrorKlass::cast(SystemDictionary::Class_klass())->allocate_instance((oop)NULL, CHECK_0);
+   if (type != T_VOID) {
+     klassOop aklass = Universe::typeArrayKlassObj(type);
+     assert(aklass != NULL, "correct bootstrap");
+     set_array_klass(java_class, aklass);
+   }
++  instanceMirrorKlass* mk = instanceMirrorKlass::cast(SystemDictionary::Class_klass());
++  java_lang_Class::set_oop_size(java_class, mk->instance_size(oop(NULL)));
++  java_lang_Class::set_static_oop_field_count(java_class, 0);
+   return java_class;
+ }
+ 
+ 
+ klassOop java_lang_Class::as_klassOop(oop java_class) {
+   //%note memory_2
++  assert(java_lang_Class::is_instance(java_class), "must be a Class object");
+   klassOop k = klassOop(java_class->obj_field(klass_offset));
+   assert(k == NULL || k->is_klass(), "type check");
+   return k;
+@@ -2145,7 +2248,7 @@
+ // Support for java_lang_ref_Reference
+ oop java_lang_ref_Reference::pending_list_lock() {
+   instanceKlass* ik = instanceKlass::cast(SystemDictionary::Reference_klass());
+-  char *addr = (((char *)ik->start_of_static_fields()) + static_lock_offset);
++  address addr = ik->static_field_addr(static_lock_offset);
+   if (UseCompressedOops) {
+     return oopDesc::load_decode_heap_oop((narrowOop *)addr);
+   } else {
+@@ -2155,7 +2258,7 @@
+ 
+ HeapWord *java_lang_ref_Reference::pending_list_addr() {
+   instanceKlass* ik = instanceKlass::cast(SystemDictionary::Reference_klass());
+-  char *addr = (((char *)ik->start_of_static_fields()) + static_pending_offset);
++  address addr = ik->static_field_addr(static_pending_offset);
+   // XXX This might not be HeapWord aligned, almost rather be char *.
+   return (HeapWord*)addr;
+ }
+@@ -2178,16 +2281,14 @@
+ 
+ jlong java_lang_ref_SoftReference::clock() {
+   instanceKlass* ik = instanceKlass::cast(SystemDictionary::SoftReference_klass());
+-  int offset = ik->offset_of_static_fields() + static_clock_offset;
+-
+-  return SystemDictionary::SoftReference_klass()->long_field(offset);
++  jlong* offset = (jlong*)ik->static_field_addr(static_clock_offset);
++  return *offset;
+ }
+ 
+ void java_lang_ref_SoftReference::set_clock(jlong value) {
+   instanceKlass* ik = instanceKlass::cast(SystemDictionary::SoftReference_klass());
+-  int offset = ik->offset_of_static_fields() + static_clock_offset;
+-
+-  SystemDictionary::SoftReference_klass()->long_field_put(offset, value);
++  jlong* offset = (jlong*)ik->static_field_addr(static_clock_offset);
++  *offset = value;
+ }
+ 
+ 
+@@ -2647,26 +2748,18 @@
+ 
+ 
+ // Support for java_lang_System
+-
+-void java_lang_System::compute_offsets() {
+-  assert(offset_of_static_fields == 0, "offsets should be initialized only once");
+-
+-  instanceKlass* ik = instanceKlass::cast(SystemDictionary::System_klass());
+-  offset_of_static_fields = ik->offset_of_static_fields();
++int java_lang_System::in_offset_in_bytes() {
++  return (instanceMirrorKlass::offset_of_static_fields() + static_in_offset);
+ }
+ 
+-int java_lang_System::in_offset_in_bytes() {
+-  return (offset_of_static_fields + static_in_offset);
++
++int java_lang_System::out_offset_in_bytes() {
++  return (instanceMirrorKlass::offset_of_static_fields() + static_out_offset);
+ }
+ 
+ 
+-int java_lang_System::out_offset_in_bytes() {
+-  return (offset_of_static_fields + static_out_offset);
+-}
+-
+-
+ int java_lang_System::err_offset_in_bytes() {
+-  return (offset_of_static_fields + static_err_offset);
++  return (instanceMirrorKlass::offset_of_static_fields() + static_err_offset);
+ }
+ 
+ 
+@@ -2688,6 +2781,8 @@
+ int java_lang_Class::array_klass_offset;
+ int java_lang_Class::resolved_constructor_offset;
+ int java_lang_Class::number_of_fake_oop_fields;
++int java_lang_Class::oop_size_offset;
++int java_lang_Class::static_oop_field_count_offset;
+ int java_lang_Throwable::backtrace_offset;
+ int java_lang_Throwable::detailMessage_offset;
+ int java_lang_Throwable::cause_offset;
+@@ -2731,7 +2826,6 @@
+ int java_lang_ref_SoftReference::timestamp_offset;
+ int java_lang_ref_SoftReference::static_clock_offset;
+ int java_lang_ClassLoader::parent_offset;
+-int java_lang_System::offset_of_static_fields;
+ int java_lang_System::static_in_offset;
+ int java_lang_System::static_out_offset;
+ int java_lang_System::static_err_offset;
+@@ -2849,10 +2943,19 @@
+   java_lang_String::count_offset  = java_lang_String::offset_offset + sizeof (jint);
+   java_lang_String::hash_offset   = java_lang_String::count_offset + sizeof (jint);
+ 
+-  // Do the Class Class
+-  java_lang_Class::klass_offset = java_lang_Class::hc_klass_offset * x + header;
+-  java_lang_Class::array_klass_offset = java_lang_Class::hc_array_klass_offset * x + header;
+-  java_lang_Class::resolved_constructor_offset = java_lang_Class::hc_resolved_constructor_offset * x + header;
++  {
++    // Do the Class Class
++    int offset = header;
++    java_lang_Class::oop_size_offset = header;
++    offset += BytesPerInt;
++    java_lang_Class::static_oop_field_count_offset = offset;
++    offset = align_size_up(offset + BytesPerInt, x);
++    java_lang_Class::klass_offset = offset;
++    offset += x;
++    java_lang_Class::array_klass_offset = offset;
++    offset += x;
++    java_lang_Class::resolved_constructor_offset = offset;
++  }
+ 
+   // This is NOT an offset
+   java_lang_Class::number_of_fake_oop_fields = java_lang_Class::hc_number_of_fake_oop_fields;
+@@ -2910,7 +3013,6 @@
+ void JavaClasses::compute_offsets() {
+ 
+   java_lang_Class::compute_offsets();
+-  java_lang_System::compute_offsets();
+   java_lang_Thread::compute_offsets();
+   java_lang_ThreadGroup::compute_offsets();
+   if (EnableMethodHandles) {
+@@ -2995,10 +3097,10 @@
+     tty->print_cr("Static field %s.%s appears to be nonstatic", klass_name, field_name);
+     return false;
+   }
+-  if (fd.offset() == hardcoded_offset + h_klass->offset_of_static_fields()) {
++  if (fd.offset() == hardcoded_offset + instanceMirrorKlass::offset_of_static_fields()) {
+     return true;
+   } else {
+-    tty->print_cr("Offset of static field %s.%s is hardcoded as %d but should really be %d.", klass_name, field_name, hardcoded_offset, fd.offset() - h_klass->offset_of_static_fields());
++    tty->print_cr("Offset of static field %s.%s is hardcoded as %d but should really be %d.", klass_name, field_name, hardcoded_offset, fd.offset() - instanceMirrorKlass::offset_of_static_fields());
+     return false;
+   }
+ }
+diff --git a/src/share/vm/classfile/javaClasses.hpp b/src/share/vm/classfile/javaClasses.hpp
+--- openjdk/hotspot/src/share/vm/classfile/javaClasses.hpp
++++ openjdk/hotspot/src/share/vm/classfile/javaClasses.hpp
+@@ -162,10 +162,8 @@
+   // The fake offsets are added by the class loader when java.lang.Class is loaded
+ 
+   enum {
+-    hc_klass_offset                = 0,
+-    hc_array_klass_offset          = 1,
+-    hc_resolved_constructor_offset = 2,
+-    hc_number_of_fake_oop_fields   = 3
++    hc_number_of_fake_oop_fields   = 3,
++    hc_number_of_fake_int_fields   = 2
+   };
+ 
+   static int klass_offset;
+@@ -173,6 +171,9 @@
+   static int array_klass_offset;
+   static int number_of_fake_oop_fields;
+ 
++  static int oop_size_offset;
++  static int static_oop_field_count_offset;
++
+   static void compute_offsets();
+   static bool offsets_computed;
+   static int classRedefinedCount_offset;
+@@ -181,6 +182,7 @@
+  public:
+   // Instance creation
+   static oop  create_mirror(KlassHandle k, TRAPS);
++  static void fixup_mirror(KlassHandle k, TRAPS);
+   static oop  create_basic_type_mirror(const char* basic_type_name, BasicType type, TRAPS);
+   // Conversion
+   static klassOop as_klassOop(oop java_class);
+@@ -215,6 +217,12 @@
+   static void set_classRedefinedCount(oop the_class_mirror, int value);
+   // Support for parallelCapable field
+   static bool parallelCapable(oop the_class_mirror);
++
++  static int oop_size(oop java_class);
++  static void set_oop_size(oop java_class, int size);
++  static int static_oop_field_count(oop java_class);
++  static void set_static_oop_field_count(oop java_class, int size);
++
+   // Debugging
+   friend class JavaClasses;
+   friend class instanceKlass;   // verification code accesses offsets
+diff --git a/src/share/vm/code/codeCache.cpp b/src/share/vm/code/codeCache.cpp
+--- openjdk/hotspot/src/share/vm/code/codeCache.cpp
++++ openjdk/hotspot/src/share/vm/code/codeCache.cpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+diff --git a/src/share/vm/code/nmethod.cpp b/src/share/vm/code/nmethod.cpp
+--- openjdk/hotspot/src/share/vm/code/nmethod.cpp
++++ openjdk/hotspot/src/share/vm/code/nmethod.cpp
+@@ -654,6 +654,9 @@
+     _pc_desc_cache.reset_to(NULL);
+ 
+     code_buffer->copy_oops_to(this);
++    if (ScavengeRootsInCode && detect_scavenge_root_oops()) {
++      CodeCache::add_scavenge_root_nmethod(this);
++    }
+     debug_only(verify_scavenge_root_oops());
+     CodeCache::commit(this);
+   }
+diff --git a/src/share/vm/interpreter/bytecodeInterpreter.cpp b/src/share/vm/interpreter/bytecodeInterpreter.cpp
+--- openjdk/hotspot/src/share/vm/interpreter/bytecodeInterpreter.cpp
++++ openjdk/hotspot/src/share/vm/interpreter/bytecodeInterpreter.cpp
+@@ -650,7 +650,7 @@
+           // oop rcvr = locals[0].j.r;
+           oop rcvr;
+           if (METHOD->is_static()) {
+-            rcvr = METHOD->constants()->pool_holder()->klass_part()->java_mirror();
++            rcvr = METHOD->constants()->pool_holder()->java_mirror();
+           } else {
+             rcvr = LOCALS_OBJECT(0);
+             VERIFY_OOP(rcvr);
+@@ -2105,8 +2105,8 @@
+             break;
+ 
+           case JVM_CONSTANT_Class:
+-            VERIFY_OOP(constants->resolved_klass_at(index)->klass_part()->java_mirror());
+-            SET_STACK_OBJECT(constants->resolved_klass_at(index)->klass_part()->java_mirror(), 0);
++            VERIFY_OOP(constants->resolved_klass_at(index)->java_mirror());
++            SET_STACK_OBJECT(constants->resolved_klass_at(index)->java_mirror(), 0);
+             break;
+ 
+           case JVM_CONSTANT_UnresolvedString:
+diff --git a/src/share/vm/interpreter/interpreterRuntime.cpp b/src/share/vm/interpreter/interpreterRuntime.cpp
+--- openjdk/hotspot/src/share/vm/interpreter/interpreterRuntime.cpp
++++ openjdk/hotspot/src/share/vm/interpreter/interpreterRuntime.cpp
+@@ -112,7 +112,7 @@
+ 
+   if (tag.is_unresolved_klass() || tag.is_klass()) {
+     klassOop klass = pool->klass_at(index, CHECK);
+-    oop java_class = klass->klass_part()->java_mirror();
++    oop java_class = klass->java_mirror();
+     thread->set_vm_result(java_class);
+   } else {
+ #ifdef ASSERT
+@@ -974,7 +974,8 @@
+ ConstantPoolCacheEntry *cp_entry))
+ 
+   // check the access_flags for the field in the klass
+-  instanceKlass* ik = instanceKlass::cast((klassOop)cp_entry->f1());
++
++  instanceKlass* ik = instanceKlass::cast(java_lang_Class::as_klassOop(cp_entry->f1()));
+   typeArrayOop fields = ik->fields();
+   int index = cp_entry->field_index();
+   assert(index < fields->length(), "holders field index is out of range");
+@@ -1000,7 +1001,7 @@
+     // non-static field accessors have an object, but we need a handle
+     h_obj = Handle(thread, obj);
+   }
+-  instanceKlassHandle h_cp_entry_f1(thread, (klassOop)cp_entry->f1());
++  instanceKlassHandle h_cp_entry_f1(thread, java_lang_Class::as_klassOop(cp_entry->f1()));
+   jfieldID fid = jfieldIDWorkaround::to_jfieldID(h_cp_entry_f1, cp_entry->f2(), is_static);
+   JvmtiExport::post_field_access(thread, method(thread), bcp(thread), h_cp_entry_f1, h_obj, fid);
+ IRT_END
+@@ -1008,7 +1009,7 @@
+ IRT_ENTRY(void, InterpreterRuntime::post_field_modification(JavaThread *thread,
+   oopDesc* obj, ConstantPoolCacheEntry *cp_entry, jvalue *value))
+ 
+-  klassOop k = (klassOop)cp_entry->f1();
++  klassOop k = java_lang_Class::as_klassOop(cp_entry->f1());
+ 
+   // check the access_flags for the field in the klass
+   instanceKlass* ik = instanceKlass::cast(k);
+diff --git a/src/share/vm/memory/compactingPermGenGen.hpp b/src/share/vm/memory/compactingPermGenGen.hpp
+--- openjdk/hotspot/src/share/vm/memory/compactingPermGenGen.hpp
++++ openjdk/hotspot/src/share/vm/memory/compactingPermGenGen.hpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -108,7 +108,7 @@
+ public:
+ 
+   enum {
+-    vtbl_list_size = 16, // number of entries in the shared space vtable list.
++    vtbl_list_size = 17, // number of entries in the shared space vtable list.
+     num_virtuals = 200   // number of virtual methods in Klass (or
+                          // subclass) objects, or greater.
+   };
+diff --git a/src/share/vm/memory/oopFactory.cpp b/src/share/vm/memory/oopFactory.cpp
+--- openjdk/hotspot/src/share/vm/memory/oopFactory.cpp
++++ openjdk/hotspot/src/share/vm/memory/oopFactory.cpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -118,12 +118,12 @@
+ }
+ 
+ 
+-klassOop oopFactory::new_instanceKlass(int vtable_len, int itable_len,
++klassOop oopFactory::new_instanceKlass(Symbol* name, int vtable_len, int itable_len,
+                                        int static_field_size,
+                                        unsigned int nonstatic_oop_map_count,
+                                        ReferenceType rt, TRAPS) {
+   instanceKlassKlass* ikk = instanceKlassKlass::cast(Universe::instanceKlassKlassObj());
+-  return ikk->allocate_instance_klass(vtable_len, itable_len, static_field_size, nonstatic_oop_map_count, rt, CHECK_NULL);
++  return ikk->allocate_instance_klass(name, vtable_len, itable_len, static_field_size, nonstatic_oop_map_count, rt, CHECK_NULL);
+ }
+ 
+ 
+diff --git a/src/share/vm/memory/oopFactory.hpp b/src/share/vm/memory/oopFactory.hpp
+--- openjdk/hotspot/src/share/vm/memory/oopFactory.hpp
++++ openjdk/hotspot/src/share/vm/memory/oopFactory.hpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -101,7 +101,8 @@
+                                                     TRAPS);
+ 
+   // Instance classes
+-  static klassOop        new_instanceKlass(int vtable_len, int itable_len,
++  static klassOop        new_instanceKlass(Symbol* name,
++                                           int vtable_len, int itable_len,
+                                            int static_field_size,
+                                            unsigned int nonstatic_oop_map_count,
+                                            ReferenceType rt, TRAPS);
+diff --git a/src/share/vm/memory/universe.cpp b/src/share/vm/memory/universe.cpp
+--- openjdk/hotspot/src/share/vm/memory/universe.cpp
++++ openjdk/hotspot/src/share/vm/memory/universe.cpp
+@@ -51,6 +51,7 @@
+ #include "oops/cpCacheKlass.hpp"
+ #include "oops/cpCacheOop.hpp"
+ #include "oops/instanceKlass.hpp"
++#include "oops/instanceMirrorKlass.hpp"
+ #include "oops/instanceKlassKlass.hpp"
+ #include "oops/instanceRefKlass.hpp"
+ #include "oops/klassKlass.hpp"
+@@ -535,6 +536,7 @@
+   { objArrayKlassKlass o;     add_vtable(list, &n, &o, count); }
+   { instanceKlassKlass o;     add_vtable(list, &n, &o, count); }
+   { instanceKlass o;          add_vtable(list, &n, &o, count); }
++  { instanceMirrorKlass o;    add_vtable(list, &n, &o, count); }
+   { instanceRefKlass o;       add_vtable(list, &n, &o, count); }
+   { typeArrayKlassKlass o;    add_vtable(list, &n, &o, count); }
+   { symbolKlass o;            add_vtable(list, &n, &o, count); }
+@@ -557,7 +559,7 @@
+       KlassHandle k(THREAD, klassOop(obj));
+       // We will never reach the CATCH below since Exceptions::_throw will cause
+       // the VM to exit if an exception is thrown during initialization
+-      java_lang_Class::create_mirror(k, CATCH);
++      java_lang_Class::fixup_mirror(k, CATCH);
+       // This call unconditionally creates a new mirror for k,
+       // and links in k's component_mirror field if k is an array.
+       // If k is an objArray, k's element type must already have
+@@ -615,6 +617,10 @@
+   // walk over permanent objects created so far (mostly classes) and fixup their mirrors. Note
+   // that the number of objects allocated at this point is very small.
+   assert(SystemDictionary::Class_klass_loaded(), "java.lang.Class should be loaded");
++
++  // Cache the start of the static fields
++  instanceMirrorKlass::init_offset_of_static_fields();
++
+   FixupMirrorClosure blk;
+   Universe::heap()->permanent_object_iterate(&blk);
+ }
+diff --git a/src/share/vm/oops/arrayKlassKlass.cpp b/src/share/vm/oops/arrayKlassKlass.cpp
+--- openjdk/hotspot/src/share/vm/oops/arrayKlassKlass.cpp
++++ openjdk/hotspot/src/share/vm/oops/arrayKlassKlass.cpp
+@@ -28,6 +28,13 @@
+ #include "oops/arrayKlassKlass.hpp"
+ #include "oops/oop.inline.hpp"
+ #include "runtime/handles.inline.hpp"
++#ifndef SERIALGC
++#include "gc_implementation/parNew/parOopClosures.inline.hpp"
++#include "gc_implementation/parallelScavenge/psPromotionManager.inline.hpp"
++#include "gc_implementation/parallelScavenge/psScavenge.inline.hpp"
++#include "memory/cardTableRS.hpp"
++#include "oops/oop.pcgc.inline.hpp"
++#endif
+ 
+ 
+ klassOop arrayKlassKlass::create_klass(TRAPS) {
+@@ -104,9 +111,12 @@
+ int arrayKlassKlass::oop_oop_iterate_m(oop obj, OopClosure* blk, MemRegion mr) {
+   assert(obj->is_klass(), "must be klass");
+   arrayKlass* ak = arrayKlass::cast(klassOop(obj));
+-  blk->do_oop(ak->adr_component_mirror());
+-  blk->do_oop(ak->adr_lower_dimension());
+-  blk->do_oop(ak->adr_higher_dimension());
++  oop* addr = ak->adr_component_mirror();
++  if (mr.contains(addr)) blk->do_oop(addr);
++  addr = ak->adr_lower_dimension();
++  if (mr.contains(addr)) blk->do_oop(addr);
++  addr = ak->adr_higher_dimension();
++  if (mr.contains(addr)) blk->do_oop(addr);
+   ak->vtable()->oop_oop_iterate_m(blk, mr);
+   return klassKlass::oop_oop_iterate_m(obj, blk, mr);
+ }
+@@ -114,6 +124,12 @@
+ #ifndef SERIALGC
+ void arrayKlassKlass::oop_push_contents(PSPromotionManager* pm, oop obj) {
+   assert(obj->blueprint()->oop_is_arrayKlass(),"must be an array klass");
++  arrayKlass* ak = arrayKlass::cast(klassOop(obj));
++  oop* p = ak->adr_component_mirror();
++  if (PSScavenge::should_scavenge(p)) {
++    pm->claim_or_forward_depth(p);
++  }
++  klassKlass::oop_push_contents(pm, obj);
+ }
+ 
+ int arrayKlassKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
+diff --git a/src/share/vm/oops/constantPoolOop.cpp b/src/share/vm/oops/constantPoolOop.cpp
+--- openjdk/hotspot/src/share/vm/oops/constantPoolOop.cpp
++++ openjdk/hotspot/src/share/vm/oops/constantPoolOop.cpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -477,7 +477,7 @@
+     {
+       klassOop resolved = klass_at_impl(this_oop, index, CHECK_NULL);
+       // ldc wants the java mirror.
+-      result_oop = resolved->klass_part()->java_mirror();
++      result_oop = resolved->java_mirror();
+       break;
+     }
+ 
+diff --git a/src/share/vm/oops/cpCacheKlass.cpp b/src/share/vm/oops/cpCacheKlass.cpp
+--- openjdk/hotspot/src/share/vm/oops/cpCacheKlass.cpp
++++ openjdk/hotspot/src/share/vm/oops/cpCacheKlass.cpp
+@@ -185,22 +185,18 @@
+ void constantPoolCacheKlass::oop_push_contents(PSPromotionManager* pm,
+                                                oop obj) {
+   assert(obj->is_constantPoolCache(), "should be constant pool");
+-  if (EnableInvokeDynamic) {
++  if (ScavengeRootsInCode) {
+     constantPoolCacheOop cache = (constantPoolCacheOop)obj;
+     // during a scavenge, it is safe to inspect my pool, since it is perm
+     constantPoolOop pool = cache->constant_pool();
+     assert(pool->is_constantPool(), "should be constant pool");
+-    if (pool->has_invokedynamic()) {
+-      for (int i = 0; i < cache->length(); i++) {
+-        ConstantPoolCacheEntry* e = cache->entry_at(i);
+-        oop* p = (oop*)&e->_f1;
+-        if (e->is_secondary_entry()) {
+-          if (PSScavenge::should_scavenge(p))
+-            pm->claim_or_forward_depth(p);
+-          assert(!(e->is_vfinal() && PSScavenge::should_scavenge((oop*)&e->_f2)),
+-                 "no live oops here");
+-        }
+-      }
++    for (int i = 0; i < cache->length(); i++) {
++      ConstantPoolCacheEntry* e = cache->entry_at(i);
++      oop* p = (oop*)&e->_f1;
++      if (PSScavenge::should_scavenge(p))
++        pm->claim_or_forward_depth(p);
++      assert(!(e->is_vfinal() && PSScavenge::should_scavenge((oop*)&e->_f2)),
++             "no live oops here");
+     }
+   }
+ }
+diff --git a/src/share/vm/oops/cpCacheOop.cpp b/src/share/vm/oops/cpCacheOop.cpp
+--- openjdk/hotspot/src/share/vm/oops/cpCacheOop.cpp
++++ openjdk/hotspot/src/share/vm/oops/cpCacheOop.cpp
+@@ -133,7 +133,7 @@
+                                        TosState field_type,
+                                        bool is_final,
+                                        bool is_volatile) {
+-  set_f1(field_holder());
++  set_f1(field_holder()->java_mirror());
+   set_f2(field_offset);
+   // The field index is used by jvm/ti and is the index into fields() array
+   // in holder instanceKlass.  This is scaled by instanceKlass::next_offset.
+diff --git a/src/share/vm/oops/instanceKlass.cpp b/src/share/vm/oops/instanceKlass.cpp
+--- openjdk/hotspot/src/share/vm/oops/instanceKlass.cpp
++++ openjdk/hotspot/src/share/vm/oops/instanceKlass.cpp
+@@ -37,6 +37,7 @@
+ #include "memory/oopFactory.hpp"
+ #include "memory/permGen.hpp"
+ #include "oops/instanceKlass.hpp"
++#include "oops/instanceMirrorKlass.hpp"
+ #include "oops/instanceOop.hpp"
+ #include "oops/methodOop.hpp"
+ #include "oops/objArrayKlassKlass.hpp"
+@@ -649,6 +650,7 @@
+ }
+ 
+ instanceOop instanceKlass::allocate_instance(TRAPS) {
++  assert(!oop_is_instanceMirror(), "wrong allocation path");
+   bool has_finalizer_flag = has_finalizer(); // Query before possible GC
+   int size = size_helper();  // Query before forming handle.
+ 
+@@ -669,6 +671,7 @@
+   // instances so simply disallow finalizable perm objects.  This can
+   // be relaxed if a need for it is found.
+   assert(!has_finalizer(), "perm objects not allowed to have finalizers");
++  assert(!oop_is_instanceMirror(), "wrong allocation path");
+   int size = size_helper();  // Query before forming handle.
+   KlassHandle h_k(THREAD, as_klassOop());
+   instanceOop i = (instanceOop)
+@@ -891,6 +894,7 @@
+   }
+ }
+ 
++
+ void instanceKlass::do_local_static_fields(FieldClosure* cl) {
+   fieldDescriptor fd;
+   int length = fields()->length();
+@@ -1602,36 +1606,6 @@
+ // The following macros call specialized macros, passing either oop or
+ // narrowOop as the specialization type.  These test the UseCompressedOops
+ // flag.
+-#define InstanceKlass_OOP_ITERATE(start_p, count,    \
+-                                  do_oop, assert_fn) \
+-{                                                    \
+-  if (UseCompressedOops) {                           \
+-    InstanceKlass_SPECIALIZED_OOP_ITERATE(narrowOop, \
+-      start_p, count,                                \
+-      do_oop, assert_fn)                             \
+-  } else {                                           \
+-    InstanceKlass_SPECIALIZED_OOP_ITERATE(oop,       \
+-      start_p, count,                                \
+-      do_oop, assert_fn)                             \
+-  }                                                  \
+-}
+-
+-#define InstanceKlass_BOUNDED_OOP_ITERATE(start_p, count, low, high,    \
+-                                          do_oop, assert_fn) \
+-{                                                            \
+-  if (UseCompressedOops) {                                   \
+-    InstanceKlass_SPECIALIZED_BOUNDED_OOP_ITERATE(narrowOop, \
+-      start_p, count,                                        \
+-      low, high,                                             \
+-      do_oop, assert_fn)                                     \
+-  } else {                                                   \
+-    InstanceKlass_SPECIALIZED_BOUNDED_OOP_ITERATE(oop,       \
+-      start_p, count,                                        \
+-      low, high,                                             \
+-      do_oop, assert_fn)                                     \
+-  }                                                          \
+-}
+-
+ #define InstanceKlass_OOP_MAP_ITERATE(obj, do_oop, assert_fn)            \
+ {                                                                        \
+   /* Compute oopmap block range. The common case                         \
+@@ -1704,46 +1678,6 @@
+   }                                                                      \
+ }
+ 
+-void instanceKlass::follow_static_fields() {
+-  InstanceKlass_OOP_ITERATE( \
+-    start_of_static_fields(), static_oop_field_size(), \
+-    MarkSweep::mark_and_push(p), \
+-    assert_is_in_closed_subset)
+-}
+-
+-#ifndef SERIALGC
+-void instanceKlass::follow_static_fields(ParCompactionManager* cm) {
+-  InstanceKlass_OOP_ITERATE( \
+-    start_of_static_fields(), static_oop_field_size(), \
+-    PSParallelCompact::mark_and_push(cm, p), \
+-    assert_is_in)
+-}
+-#endif // SERIALGC
+-
+-void instanceKlass::adjust_static_fields() {
+-  InstanceKlass_OOP_ITERATE( \
+-    start_of_static_fields(), static_oop_field_size(), \
+-    MarkSweep::adjust_pointer(p), \
+-    assert_nothing)
+-}
+-
+-#ifndef SERIALGC
+-void instanceKlass::update_static_fields() {
+-  InstanceKlass_OOP_ITERATE( \
+-    start_of_static_fields(), static_oop_field_size(), \
+-    PSParallelCompact::adjust_pointer(p), \
+-    assert_nothing)
+-}
+-
+-void instanceKlass::update_static_fields(HeapWord* beg_addr, HeapWord* end_addr) {
+-  InstanceKlass_BOUNDED_OOP_ITERATE( \
+-    start_of_static_fields(), static_oop_field_size(), \
+-    beg_addr, end_addr, \
+-    PSParallelCompact::adjust_pointer(p), \
+-    assert_nothing )
+-}
+-#endif // SERIALGC
+-
+ void instanceKlass::oop_follow_contents(oop obj) {
+   assert(obj != NULL, "can't follow the content of NULL object");
+   obj->follow_header();
+@@ -1830,22 +1764,6 @@
+ ALL_OOP_OOP_ITERATE_CLOSURES_2(InstanceKlass_OOP_OOP_ITERATE_BACKWARDS_DEFN)
+ #endif // !SERIALGC
+ 
+-void instanceKlass::iterate_static_fields(OopClosure* closure) {
+-    InstanceKlass_OOP_ITERATE( \
+-      start_of_static_fields(), static_oop_field_size(), \
+-      closure->do_oop(p), \
+-      assert_is_in_reserved)
+-}
+-
+-void instanceKlass::iterate_static_fields(OopClosure* closure,
+-                                          MemRegion mr) {
+-  InstanceKlass_BOUNDED_OOP_ITERATE( \
+-    start_of_static_fields(), static_oop_field_size(), \
+-    mr.start(), mr.end(), \
+-    (closure)->do_oop_v(p), \
+-    assert_is_in_closed_subset)
+-}
+-
+ int instanceKlass::oop_adjust_pointers(oop obj) {
+   int size = size_helper();
+   InstanceKlass_OOP_MAP_ITERATE( \
+@@ -1883,21 +1801,6 @@
+   return size_helper();
+ }
+ 
+-void instanceKlass::push_static_fields(PSPromotionManager* pm) {
+-  InstanceKlass_OOP_ITERATE( \
+-    start_of_static_fields(), static_oop_field_size(), \
+-    if (PSScavenge::should_scavenge(p)) { \
+-      pm->claim_or_forward_depth(p); \
+-    }, \
+-    assert_nothing )
+-}
+-
+-void instanceKlass::copy_static_fields(ParCompactionManager* cm) {
+-  InstanceKlass_OOP_ITERATE( \
+-    start_of_static_fields(), static_oop_field_size(), \
+-    PSParallelCompact::adjust_pointer(p), \
+-    assert_is_in)
+-}
+ #endif // SERIALGC
+ 
+ // This klass is alive but the implementor link is not followed/updated.
+@@ -1992,6 +1895,11 @@
+   }
+ }
+ 
++address instanceKlass::static_field_addr(int offset) {
++  return (address)(offset + instanceMirrorKlass::offset_of_static_fields() + (intptr_t)java_mirror());
++}
++
++
+ const char* instanceKlass::signature_name() const {
+   const char* src = (const char*) (name()->as_C_string());
+   const int src_length = (int)strlen(src);
+@@ -2359,7 +2267,7 @@
+ 
+ void FieldPrinter::do_field(fieldDescriptor* fd) {
+   _st->print(BULLET);
+-   if (fd->is_static() || (_obj == NULL)) {
++   if (_obj == NULL) {
+      fd->print_on(_st);
+      _st->cr();
+    } else {
+@@ -2389,8 +2297,8 @@
+   }
+ 
+   st->print_cr(BULLET"---- fields (total size %d words):", oop_size(obj));
+-  FieldPrinter print_nonstatic_field(st, obj);
+-  do_nonstatic_fields(&print_nonstatic_field);
++  FieldPrinter print_field(st, obj);
++  do_nonstatic_fields(&print_field);
+ 
+   if (as_klassOop() == SystemDictionary::Class_klass()) {
+     st->print(BULLET"signature: ");
+@@ -2408,6 +2316,12 @@
+     st->print(BULLET"fake entry for array: ");
+     array_klass->print_value_on(st);
+     st->cr();
++    st->print_cr(BULLET"fake entry for oop_size: %d", java_lang_Class::oop_size(obj));
++    st->print_cr(BULLET"fake entry for static_oop_field_count: %d", java_lang_Class::static_oop_field_count(obj));
++    klassOop real_klass = java_lang_Class::as_klassOop(obj);
++    if (real_klass && real_klass->klass_part()->oop_is_instance()) {
++      instanceKlass::cast(real_klass)->do_local_static_fields(&print_field);
++    }
+   } else if (as_klassOop() == SystemDictionary::MethodType_klass()) {
+     st->print(BULLET"signature: ");
+     java_dyn_MethodType::print_signature(obj, st);
+@@ -2550,7 +2464,7 @@
+ 
+ 
+ void JNIid::verify(klassOop holder) {
+-  int first_field_offset  = instanceKlass::cast(holder)->offset_of_static_fields();
++  int first_field_offset  = instanceMirrorKlass::offset_of_static_fields();
+   int end_field_offset;
+   end_field_offset = first_field_offset + (instanceKlass::cast(holder)->static_field_size() * wordSize);
+ 
+diff --git a/src/share/vm/oops/instanceKlass.hpp b/src/share/vm/oops/instanceKlass.hpp
+--- openjdk/hotspot/src/share/vm/oops/instanceKlass.hpp
++++ openjdk/hotspot/src/share/vm/oops/instanceKlass.hpp
+@@ -75,8 +75,6 @@
+ //    [Java vtable length         ]
+ //    [oop map cache (stack maps) ]
+ //    [EMBEDDED Java vtable             ] size in words = vtable_len
+-//    [EMBEDDED static oop fields       ] size in words = static_oop_fields_size
+-//    [         static non-oop fields   ] size in words = static_field_size - static_oop_fields_size
+ //    [EMBEDDED nonstatic oop-map blocks] size in words = nonstatic_oop_map_size
+ //
+ //    The embedded nonstatic oop-map blocks are short pairs (offset, length) indicating
+@@ -226,7 +224,7 @@
+   // (including inherited fields but after header_size()).
+   int             _nonstatic_field_size;
+   int             _static_field_size;    // number words used by static fields (oop and non-oop) in this klass
+-  int             _static_oop_field_size;// number of static oop fields in this klass
++  int             _static_oop_field_count;// number of static oop fields in this klass
+   int             _nonstatic_oop_map_size;// size in words of nonstatic oop map blocks
+   bool            _is_marked_dependent;  // used for marking during flushing and deoptimization
+   bool            _rewritten;            // methods rewritten.
+@@ -277,8 +275,8 @@
+   int static_field_size() const            { return _static_field_size; }
+   void set_static_field_size(int size)     { _static_field_size = size; }
+ 
+-  int static_oop_field_size() const        { return _static_oop_field_size; }
+-  void set_static_oop_field_size(int size) { _static_oop_field_size = size; }
++  int static_oop_field_count() const        { return _static_oop_field_count; }
++  void set_static_oop_field_count(int size) { _static_oop_field_count = size; }
+ 
+   // Java vtable
+   int  vtable_length() const               { return _vtable_len; }
+@@ -651,6 +649,7 @@
+ 
+   // Casting from klassOop
+   static instanceKlass* cast(klassOop k) {
++    assert(k->is_klass(), "must be");
+     Klass* kp = k->klass_part();
+     assert(kp->null_vtbl() || kp->oop_is_instance_slow(), "cast to instanceKlass");
+     return (instanceKlass*) kp;
+@@ -658,7 +657,7 @@
+ 
+   // Sizing (in words)
+   static int header_size()            { return align_object_offset(oopDesc::header_size() + sizeof(instanceKlass)/HeapWordSize); }
+-  int object_size() const             { return object_size(align_object_offset(vtable_length()) + align_object_offset(itable_length()) + static_field_size() + nonstatic_oop_map_size()); }
++  int object_size() const             { return object_size(align_object_offset(vtable_length()) + align_object_offset(itable_length()) + nonstatic_oop_map_size()); }
+   static int vtable_start_offset()    { return header_size(); }
+   static int vtable_length_offset()   { return oopDesc::header_size() + offset_of(instanceKlass, _vtable_len) / HeapWordSize; }
+   static int object_size(int extra)   { return align_object_size(header_size() + extra); }
+@@ -667,20 +666,12 @@
+   intptr_t* start_of_itable() const        { return start_of_vtable() + align_object_offset(vtable_length()); }
+   int  itable_offset_in_words() const { return start_of_itable() - (intptr_t*)as_klassOop(); }
+ 
+-  // Static field offset is an offset into the Heap, should be converted by
+-  // based on UseCompressedOop for traversal
+-  HeapWord* start_of_static_fields() const {
+-    return (HeapWord*)(start_of_itable() + align_object_offset(itable_length()));
+-  }
+-
+   intptr_t* end_of_itable() const          { return start_of_itable() + itable_length(); }
+ 
+-  int offset_of_static_fields() const {
+-    return (intptr_t)start_of_static_fields() - (intptr_t)as_klassOop();
+-  }
++  address static_field_addr(int offset);
+ 
+   OopMapBlock* start_of_nonstatic_oop_maps() const {
+-    return (OopMapBlock*) (start_of_static_fields() + static_field_size());
++    return (OopMapBlock*)(start_of_itable() + align_object_offset(itable_length()));
+   }
+ 
+   // Allocation profiling support
+@@ -710,8 +701,6 @@
+ 
+   // Garbage collection
+   void oop_follow_contents(oop obj);
+-  void follow_static_fields();
+-  void adjust_static_fields();
+   int  oop_adjust_pointers(oop obj);
+   bool object_is_parsable() const { return _init_state != unparsable_by_gc; }
+        // Value of _init_state must be zero (unparsable_by_gc) when klass field is set.
+@@ -723,17 +712,6 @@
+   // Parallel Scavenge and Parallel Old
+   PARALLEL_GC_DECLS
+ 
+-#ifndef SERIALGC
+-  // Parallel Scavenge
+-  void push_static_fields(PSPromotionManager* pm);
+-
+-  // Parallel Old
+-  void follow_static_fields(ParCompactionManager* cm);
+-  void copy_static_fields(ParCompactionManager* cm);
+-  void update_static_fields();
+-  void update_static_fields(HeapWord* beg_addr, HeapWord* end_addr);
+-#endif // SERIALGC
+-
+   // Naming
+   const char* signature_name() const;
+ 
+@@ -762,9 +740,6 @@
+   ALL_OOP_OOP_ITERATE_CLOSURES_2(InstanceKlass_OOP_OOP_ITERATE_BACKWARDS_DECL)
+ #endif // !SERIALGC
+ 
+-  void iterate_static_fields(OopClosure* closure);
+-  void iterate_static_fields(OopClosure* closure, MemRegion mr);
+-
+ private:
+   // initialization state
+ #ifdef ASSERT
+@@ -921,6 +896,10 @@
+   // Identifier lookup
+   JNIid* find(int offset);
+ 
++  bool find_local_field(fieldDescriptor* fd) {
++    return instanceKlass::cast(holder())->find_local_field_from_offset(offset(), true, fd);
++  }
++
+   // Garbage collection support
+   oop* holder_addr() { return (oop*)&_holder; }
+   void oops_do(OopClosure* f);
+diff --git a/src/share/vm/oops/instanceKlassKlass.cpp b/src/share/vm/oops/instanceKlassKlass.cpp
+--- openjdk/hotspot/src/share/vm/oops/instanceKlassKlass.cpp
++++ openjdk/hotspot/src/share/vm/oops/instanceKlassKlass.cpp
+@@ -31,6 +31,7 @@
+ #include "memory/gcLocker.hpp"
+ #include "oops/constantPoolOop.hpp"
+ #include "oops/instanceKlass.hpp"
++#include "oops/instanceMirrorKlass.hpp"
+ #include "oops/instanceKlassKlass.hpp"
+ #include "oops/instanceRefKlass.hpp"
+ #include "oops/objArrayKlassKlass.hpp"
+@@ -86,7 +87,6 @@
+   assert(klassOop(obj)->klass_part()->oop_is_instance_slow(), "must be instance klass");
+ 
+   instanceKlass* ik = instanceKlass::cast(klassOop(obj));
+-  ik->follow_static_fields();
+   {
+     HandleMark hm;
+     ik->vtable()->oop_follow_contents();
+@@ -130,7 +130,6 @@
+   assert(klassOop(obj)->klass_part()->oop_is_instance_slow(), "must be instance klass");
+ 
+   instanceKlass* ik = instanceKlass::cast(klassOop(obj));
+-  ik->follow_static_fields(cm);
+   ik->vtable()->oop_follow_contents(cm);
+   ik->itable()->oop_follow_contents(cm);
+ 
+@@ -174,7 +173,6 @@
+   // Don't call size() or oop_size() since that is a virtual call.
+   int size = ik->object_size();
+ 
+-  ik->iterate_static_fields(blk);
+   ik->vtable()->oop_oop_iterate(blk);
+   ik->itable()->oop_oop_iterate(blk);
+ 
+@@ -218,7 +216,6 @@
+   // Don't call size() or oop_size() since that is a virtual call.
+   int size = ik->object_size();
+ 
+-  ik->iterate_static_fields(blk, mr);
+   ik->vtable()->oop_oop_iterate_m(blk, mr);
+   ik->itable()->oop_oop_iterate_m(blk, mr);
+ 
+@@ -281,7 +278,6 @@
+   assert(klassOop(obj)->klass_part()->oop_is_instance_slow(), "must be instance klass");
+ 
+   instanceKlass* ik = instanceKlass::cast(klassOop(obj));
+-  ik->adjust_static_fields();
+   ik->vtable()->oop_adjust_pointers();
+   ik->itable()->oop_adjust_pointers();
+ 
+@@ -318,7 +314,6 @@
+ #ifndef SERIALGC
+ void instanceKlassKlass::oop_push_contents(PSPromotionManager* pm, oop obj) {
+   instanceKlass* ik = instanceKlass::cast(klassOop(obj));
+-  ik->push_static_fields(pm);
+ 
+   oop* loader_addr = ik->adr_class_loader();
+   if (PSScavenge::should_scavenge(loader_addr)) {
+@@ -354,7 +349,6 @@
+          "must be instance klass");
+ 
+   instanceKlass* ik = instanceKlass::cast(klassOop(obj));
+-  ik->update_static_fields();
+   ik->vtable()->oop_update_pointers(cm);
+   ik->itable()->oop_update_pointers(cm);
+ 
+@@ -403,22 +397,28 @@
+ #endif // SERIALGC
+ 
+ klassOop
+-instanceKlassKlass::allocate_instance_klass(int vtable_len, int itable_len,
++instanceKlassKlass::allocate_instance_klass(Symbol* name, int vtable_len, int itable_len,
+                                             int static_field_size,
+                                             unsigned nonstatic_oop_map_count,
+                                             ReferenceType rt, TRAPS) {
+ 
+   const int nonstatic_oop_map_size =
+     instanceKlass::nonstatic_oop_map_size(nonstatic_oop_map_count);
+-  int size = instanceKlass::object_size(align_object_offset(vtable_len) + align_object_offset(itable_len) + static_field_size + nonstatic_oop_map_size);
++  int size = instanceKlass::object_size(align_object_offset(vtable_len) + align_object_offset(itable_len) + nonstatic_oop_map_size);
+ 
+   // Allocation
+   KlassHandle h_this_klass(THREAD, as_klassOop());
+   KlassHandle k;
+   if (rt == REF_NONE) {
+-    // regular klass
+-    instanceKlass o;
+-    k = base_create_klass(h_this_klass, size, o.vtbl_value(), CHECK_NULL);
++    if (name != vmSymbols::java_lang_Class()) {
++      // regular klass
++      instanceKlass o;
++      k = base_create_klass(h_this_klass, size, o.vtbl_value(), CHECK_NULL);
++    } else {
++      // Class
++      instanceMirrorKlass o;
++      k = base_create_klass(h_this_klass, size, o.vtbl_value(), CHECK_NULL);
++    }
+   } else {
+     // reference klass
+     instanceRefKlass o;
+@@ -453,7 +453,7 @@
+     ik->set_source_file_name(NULL);
+     ik->set_source_debug_extension(NULL);
+     ik->set_inner_classes(NULL);
+-    ik->set_static_oop_field_size(0);
++    ik->set_static_oop_field_count(0);
+     ik->set_nonstatic_field_size(0);
+     ik->set_is_marked_dependent(false);
+     ik->set_init_state(instanceKlass::allocated);
+@@ -487,9 +487,6 @@
+     // To get verify to work - must be set to partial loaded before first GC point.
+     k()->set_partially_loaded();
+   }
+-
+-  // GC can happen here
+-  java_lang_Class::create_mirror(k, CHECK_NULL); // Allocate mirror
+   return k();
+ }
+ 
+@@ -611,13 +608,6 @@
+   FieldPrinter print_nonstatic_field(st);
+   ik->do_nonstatic_fields(&print_nonstatic_field);
+ 
+-  st->print(BULLET"static oop maps:     ");
+-  if (ik->static_oop_field_size() > 0) {
+-    int first_offset = ik->offset_of_static_fields();
+-    st->print("%d-%d", first_offset, first_offset + ik->static_oop_field_size() - 1);
+-  }
+-  st->cr();
+-
+   st->print(BULLET"non-static oop maps: ");
+   OopMapBlock* map     = ik->start_of_nonstatic_oop_maps();
+   OopMapBlock* end_map = map + ik->nonstatic_oop_map_count();
+@@ -675,7 +665,6 @@
+ 
+     // Verify static fields
+     VerifyFieldClosure blk;
+-    ik->iterate_static_fields(&blk);
+ 
+     // Verify vtables
+     if (ik->is_linked()) {
+diff --git a/src/share/vm/oops/instanceKlassKlass.hpp b/src/share/vm/oops/instanceKlassKlass.hpp
+--- openjdk/hotspot/src/share/vm/oops/instanceKlassKlass.hpp
++++ openjdk/hotspot/src/share/vm/oops/instanceKlassKlass.hpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -41,7 +41,8 @@
+   // Allocation
+   DEFINE_ALLOCATE_PERMANENT(instanceKlassKlass);
+   static klassOop create_klass(TRAPS);
+-  klassOop allocate_instance_klass(int vtable_len,
++  klassOop allocate_instance_klass(Symbol* name,
++                                   int vtable_len,
+                                    int itable_len,
+                                    int static_field_size,
+                                    unsigned int nonstatic_oop_map_count,
+diff --git a/src/share/vm/oops/instanceMirrorKlass.cpp b/src/share/vm/oops/instanceMirrorKlass.cpp
+new file mode 100644
+--- /dev/null
++++ openjdk/hotspot/src/share/vm/oops/instanceMirrorKlass.cpp
+@@ -0,0 +1,313 @@
++/*
++ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ *
++ */
++
++#include "precompiled.hpp"
++#include "classfile/javaClasses.hpp"
++#include "classfile/systemDictionary.hpp"
++#include "gc_implementation/shared/markSweep.inline.hpp"
++#include "gc_interface/collectedHeap.inline.hpp"
++#include "memory/genOopClosures.inline.hpp"
++#include "memory/oopFactory.hpp"
++#include "memory/permGen.hpp"
++#include "oops/instanceKlass.hpp"
++#include "oops/instanceMirrorKlass.hpp"
++#include "oops/instanceOop.hpp"
++#include "oops/oop.inline.hpp"
++#include "oops/symbol.hpp"
++#include "runtime/handles.inline.hpp"
++#ifndef SERIALGC
++#include "gc_implementation/g1/g1CollectedHeap.inline.hpp"
++#include "gc_implementation/g1/g1OopClosures.inline.hpp"
++#include "gc_implementation/g1/g1RemSet.inline.hpp"
++#include "gc_implementation/g1/heapRegionSeq.inline.hpp"
++#include "gc_implementation/parNew/parOopClosures.inline.hpp"
++#include "gc_implementation/parallelScavenge/psPromotionManager.inline.hpp"
++#include "gc_implementation/parallelScavenge/psScavenge.inline.hpp"
++#include "oops/oop.pcgc.inline.hpp"
++#endif
++
++int instanceMirrorKlass::_offset_of_static_fields = 0;
++
++#ifdef ASSERT
++template <class T> void assert_is_in(T *p) {
++  T heap_oop = oopDesc::load_heap_oop(p);
++  if (!oopDesc::is_null(heap_oop)) {
++    oop o = oopDesc::decode_heap_oop_not_null(heap_oop);
++    assert(Universe::heap()->is_in(o), "should be in heap");
++  }
++}
++template <class T> void assert_is_in_closed_subset(T *p) {
++  T heap_oop = oopDesc::load_heap_oop(p);
++  if (!oopDesc::is_null(heap_oop)) {
++    oop o = oopDesc::decode_heap_oop_not_null(heap_oop);
++    assert(Universe::heap()->is_in_closed_subset(o), "should be in closed");
++  }
++}
++template <class T> void assert_is_in_reserved(T *p) {
++  T heap_oop = oopDesc::load_heap_oop(p);
++  if (!oopDesc::is_null(heap_oop)) {
++    oop o = oopDesc::decode_heap_oop_not_null(heap_oop);
++    assert(Universe::heap()->is_in_reserved(o), "should be in reserved");
++  }
++}
++template <class T> void assert_nothing(T *p) {}
++
++#else
++template <class T> void assert_is_in(T *p) {}
++template <class T> void assert_is_in_closed_subset(T *p) {}
++template <class T> void assert_is_in_reserved(T *p) {}
++template <class T> void assert_nothing(T *p) {}
++#endif // ASSERT
++
++#define InstanceMirrorKlass_SPECIALIZED_OOP_ITERATE( \
++  T, start_p, count, do_oop,                         \
++  assert_fn)                                         \
++{                                                    \
++  T* p         = (T*)(start_p);                      \
++  T* const end = p + (count);                        \
++  while (p < end) {                                  \
++    (assert_fn)(p);                                  \
++    do_oop;                                          \
++    ++p;                                             \
++  }                                                  \
++}
++
++#define InstanceMirrorKlass_SPECIALIZED_BOUNDED_OOP_ITERATE( \
++  T, start_p, count, low, high,                              \
++  do_oop, assert_fn)                                         \
++{                                                            \
++  T* const l = (T*)(low);                                    \
++  T* const h = (T*)(high);                                   \
++  assert(mask_bits((intptr_t)l, sizeof(T)-1) == 0 &&         \
++         mask_bits((intptr_t)h, sizeof(T)-1) == 0,           \
++         "bounded region must be properly aligned");         \
++  T* p       = (T*)(start_p);                                \
++  T* end     = p + (count);                                  \
++  if (p < l) p = l;                                          \
++  if (end > h) end = h;                                      \
++  while (p < end) {                                          \
++    (assert_fn)(p);                                          \
++    do_oop;                                                  \
++    ++p;                                                     \
++  }                                                          \
++}
++
++
++#define InstanceMirrorKlass_OOP_ITERATE(start_p, count,    \
++                                  do_oop, assert_fn)       \
++{                                                          \
++  if (UseCompressedOops) {                                 \
++    InstanceMirrorKlass_SPECIALIZED_OOP_ITERATE(narrowOop, \
++      start_p, count,                                      \
++      do_oop, assert_fn)                                   \
++  } else {                                                 \
++    InstanceMirrorKlass_SPECIALIZED_OOP_ITERATE(oop,       \
++      start_p, count,                                      \
++      do_oop, assert_fn)                                   \
++  }                                                        \
++}
++
++// The following macros call specialized macros, passing either oop or
++// narrowOop as the specialization type.  These test the UseCompressedOops
++// flag.
++#define InstanceMirrorKlass_BOUNDED_OOP_ITERATE(start_p, count, low, high, \
++                                          do_oop, assert_fn)               \
++{                                                                          \
++  if (UseCompressedOops) {                                                 \
++    InstanceMirrorKlass_SPECIALIZED_BOUNDED_OOP_ITERATE(narrowOop,         \
++      start_p, count,                                                      \
++      low, high,                                                           \
++      do_oop, assert_fn)                                                   \
++  } else {                                                                 \
++    InstanceMirrorKlass_SPECIALIZED_BOUNDED_OOP_ITERATE(oop,               \
++      start_p, count,                                                      \
++      low, high,                                                           \
++      do_oop, assert_fn)                                                   \
++  }                                                                        \
++}
++
++
++void instanceMirrorKlass::oop_follow_contents(oop obj) {
++  instanceKlass::oop_follow_contents(obj);
++  InstanceMirrorKlass_OOP_ITERATE(                                                    \
++    start_of_static_fields(obj), java_lang_Class::static_oop_field_count(obj),        \
++    MarkSweep::mark_and_push(p),                                                      \
++    assert_is_in_closed_subset)
++}
++
++#ifndef SERIALGC
++void instanceMirrorKlass::oop_follow_contents(ParCompactionManager* cm,
++                                              oop obj) {
++  instanceKlass::oop_follow_contents(cm, obj);
++  InstanceMirrorKlass_OOP_ITERATE(                                                    \
++    start_of_static_fields(obj), java_lang_Class::static_oop_field_count(obj),        \
++    PSParallelCompact::mark_and_push(cm, p),                                          \
++    assert_is_in)
++}
++#endif // SERIALGC
++
++int instanceMirrorKlass::oop_adjust_pointers(oop obj) {
++  int size = oop_size(obj);
++  instanceKlass::oop_adjust_pointers(obj);
++  InstanceMirrorKlass_OOP_ITERATE(                                                    \
++    start_of_static_fields(obj), java_lang_Class::static_oop_field_count(obj),        \
++    MarkSweep::adjust_pointer(p),                                                     \
++    assert_nothing)
++  return size;
++}
++
++#define InstanceMirrorKlass_SPECIALIZED_OOP_ITERATE_DEFN(T, nv_suffix)                \
++  InstanceMirrorKlass_OOP_ITERATE(                                                    \
++    start_of_static_fields(obj), java_lang_Class::static_oop_field_count(obj),        \
++      (closure)->do_oop##nv_suffix(p),                                                \
++    assert_is_in_closed_subset)                                                       \
++  return oop_size(obj);                                                               \
++
++#define InstanceMirrorKlass_BOUNDED_SPECIALIZED_OOP_ITERATE(T, nv_suffix, mr)         \
++  InstanceMirrorKlass_BOUNDED_OOP_ITERATE(                                            \
++    start_of_static_fields(obj), java_lang_Class::static_oop_field_count(obj),        \
++    mr.start(), mr.end(),                                                             \
++      (closure)->do_oop##nv_suffix(p),                                                \
++    assert_is_in_closed_subset)                                                       \
++  return oop_size(obj);                                                               \
++
++
++// Macro to define instanceMirrorKlass::oop_oop_iterate for virtual/nonvirtual for
++// all closures.  Macros calling macros above for each oop size.
++
++#define InstanceMirrorKlass_OOP_OOP_ITERATE_DEFN(OopClosureType, nv_suffix)           \
++                                                                                      \
++int instanceMirrorKlass::                                                             \
++oop_oop_iterate##nv_suffix(oop obj, OopClosureType* closure) {                        \
++  /* Get size before changing pointers */                                             \
++  SpecializationStats::record_iterate_call##nv_suffix(SpecializationStats::irk);      \
++                                                                                      \
++  instanceKlass::oop_oop_iterate##nv_suffix(obj, closure);                            \
++                                                                                      \
++  if (UseCompressedOops) {                                                            \
++    InstanceMirrorKlass_SPECIALIZED_OOP_ITERATE_DEFN(narrowOop, nv_suffix);           \
++  } else {                                                                            \
++    InstanceMirrorKlass_SPECIALIZED_OOP_ITERATE_DEFN(oop, nv_suffix);                 \
++  }                                                                                   \
++}
++
++#ifndef SERIALGC
++#define InstanceMirrorKlass_OOP_OOP_ITERATE_BACKWARDS_DEFN(OopClosureType, nv_suffix) \
++                                                                                      \
++int instanceMirrorKlass::                                                             \
++oop_oop_iterate_backwards##nv_suffix(oop obj, OopClosureType* closure) {              \
++  /* Get size before changing pointers */                                             \
++  SpecializationStats::record_iterate_call##nv_suffix(SpecializationStats::irk);      \
++                                                                                      \
++  instanceKlass::oop_oop_iterate_backwards##nv_suffix(obj, closure);                  \
++                                                                                      \
++  if (UseCompressedOops) {                                                            \
++    InstanceMirrorKlass_SPECIALIZED_OOP_ITERATE_DEFN(narrowOop, nv_suffix);           \
++  } else {                                                                            \
++    InstanceMirrorKlass_SPECIALIZED_OOP_ITERATE_DEFN(oop, nv_suffix);                 \
++  }                                                                                   \
++}
++#endif // !SERIALGC
++
++
++#define InstanceMirrorKlass_OOP_OOP_ITERATE_DEFN_m(OopClosureType, nv_suffix)         \
++                                                                                      \
++int instanceMirrorKlass::                                                             \
++oop_oop_iterate##nv_suffix##_m(oop obj,                                               \
++                               OopClosureType* closure,                               \
++                               MemRegion mr) {                                        \
++  SpecializationStats::record_iterate_call##nv_suffix(SpecializationStats::irk);      \
++                                                                                      \
++  instanceKlass::oop_oop_iterate##nv_suffix##_m(obj, closure, mr);                    \
++  if (UseCompressedOops) {                                                            \
++    InstanceMirrorKlass_BOUNDED_SPECIALIZED_OOP_ITERATE(narrowOop, nv_suffix, mr);    \
++  } else {                                                                            \
++    InstanceMirrorKlass_BOUNDED_SPECIALIZED_OOP_ITERATE(oop, nv_suffix, mr);          \
++  }                                                                                   \
++}
++
++ALL_OOP_OOP_ITERATE_CLOSURES_1(InstanceMirrorKlass_OOP_OOP_ITERATE_DEFN)
++ALL_OOP_OOP_ITERATE_CLOSURES_2(InstanceMirrorKlass_OOP_OOP_ITERATE_DEFN)
++#ifndef SERIALGC
++ALL_OOP_OOP_ITERATE_CLOSURES_1(InstanceMirrorKlass_OOP_OOP_ITERATE_BACKWARDS_DEFN)
++ALL_OOP_OOP_ITERATE_CLOSURES_2(InstanceMirrorKlass_OOP_OOP_ITERATE_BACKWARDS_DEFN)
++#endif // SERIALGC
++ALL_OOP_OOP_ITERATE_CLOSURES_1(InstanceMirrorKlass_OOP_OOP_ITERATE_DEFN_m)
++ALL_OOP_OOP_ITERATE_CLOSURES_2(InstanceMirrorKlass_OOP_OOP_ITERATE_DEFN_m)
++
++#ifndef SERIALGC
++void instanceMirrorKlass::oop_push_contents(PSPromotionManager* pm, oop obj) {
++  instanceKlass::oop_push_contents(pm, obj);
++  InstanceMirrorKlass_OOP_ITERATE(                                            \
++    start_of_static_fields(obj), java_lang_Class::static_oop_field_count(obj),\
++    if (PSScavenge::should_scavenge(p)) {                                     \
++      pm->claim_or_forward_depth(p);                                          \
++    },                                                                        \
++    assert_nothing )
++}
++
++int instanceMirrorKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
++  instanceKlass::oop_update_pointers(cm, obj);
++  InstanceMirrorKlass_OOP_ITERATE(                                            \
++    start_of_static_fields(obj), java_lang_Class::static_oop_field_count(obj),\
++    PSParallelCompact::adjust_pointer(p),                                     \
++    assert_nothing)
++  return oop_size(obj);
++}
++#endif // SERIALGC
++
++int instanceMirrorKlass::instance_size(KlassHandle k) {
++  if (k() != NULL && k->oop_is_instance()) {
++    return align_object_size(size_helper() + instanceKlass::cast(k())->static_field_size());
++  }
++  return size_helper();
++}
++
++instanceOop instanceMirrorKlass::allocate_instance(KlassHandle k, TRAPS) {
++  // Query before forming handle.
++  int size = instance_size(k);
++  KlassHandle h_k(THREAD, as_klassOop());
++  instanceOop i;
++
++  if (JavaObjectsInPerm) {
++    i = (instanceOop) CollectedHeap::permanent_obj_allocate(h_k, size, CHECK_NULL);
++  } else {
++    assert(ScavengeRootsInCode > 0, "must be");
++    i = (instanceOop) CollectedHeap::obj_allocate(h_k, size, CHECK_NULL);
++  }
++
++  return i;
++}
++
++int instanceMirrorKlass::oop_size(oop obj) const {
++  return java_lang_Class::oop_size(obj);
++}
++
++int instanceMirrorKlass::compute_static_oop_field_count(oop obj) {
++  klassOop k = java_lang_Class::as_klassOop(obj);
++  if (k != NULL && k->klass_part()->oop_is_instance()) {
++    return instanceKlass::cast(k)->static_oop_field_count();
++  }
++  return 0;
++}
+diff --git a/src/share/vm/oops/instanceMirrorKlass.hpp b/src/share/vm/oops/instanceMirrorKlass.hpp
+new file mode 100644
+--- /dev/null
++++ openjdk/hotspot/src/share/vm/oops/instanceMirrorKlass.hpp
+@@ -0,0 +1,110 @@
++/*
++ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ *
++ */
++
++#ifndef SHARE_VM_OOPS_INSTANCEMIRRORKLASS_HPP
++#define SHARE_VM_OOPS_INSTANCEMIRRORKLASS_HPP
++
++#include "oops/instanceKlass.hpp"
++
++// An instanceMirrorKlass is a specialized instanceKlass for
++// java.lang.Class instances.  These instances are special because
++// they contain the static fields of the class in addition to the
++// normal fields of Class.  This means they are variable sized
++// instances and need special logic for computing their size and for
++// iteration of their oops.
++
++
++class instanceMirrorKlass: public instanceKlass {
++ private:
++  static int _offset_of_static_fields;
++
++ public:
++  // Type testing
++  bool oop_is_instanceMirror() const             { return true; }
++
++  // Casting from klassOop
++  static instanceMirrorKlass* cast(klassOop k) {
++    assert(k->klass_part()->oop_is_instanceMirror(), "cast to instanceMirrorKlass");
++    return (instanceMirrorKlass*) k->klass_part();
++  }
++
++  // Returns the size of the instance including the extra static fields.
++  virtual int oop_size(oop obj) const;
++
++  // Static field offset is an offset into the Heap, should be converted by
++  // based on UseCompressedOop for traversal
++  static HeapWord* start_of_static_fields(oop obj) {
++    return (HeapWord*)((intptr_t)obj + offset_of_static_fields());
++  }
++
++  static void init_offset_of_static_fields() {
++    // Cache the offset of the static fields in the Class instance
++    assert(_offset_of_static_fields == 0, "once");
++    _offset_of_static_fields = instanceMirrorKlass::cast(SystemDictionary::Class_klass())->size_helper() << LogHeapWordSize;
++  }
++
++  static int offset_of_static_fields() {
++    return _offset_of_static_fields;
++  }
++
++  int compute_static_oop_field_count(oop obj);
++
++  // Given a Klass return the size of the instance
++  int instance_size(KlassHandle k);
++
++  // allocation
++  DEFINE_ALLOCATE_PERMANENT(instanceMirrorKlass);
++  instanceOop allocate_instance(KlassHandle k, TRAPS);
++
++  // Garbage collection
++  int  oop_adjust_pointers(oop obj);
++  void oop_follow_contents(oop obj);
++
++  // Parallel Scavenge and Parallel Old
++  PARALLEL_GC_DECLS
++
++  int oop_oop_iterate(oop obj, OopClosure* blk) {
++    return oop_oop_iterate_v(obj, blk);
++  }
++  int oop_oop_iterate_m(oop obj, OopClosure* blk, MemRegion mr) {
++    return oop_oop_iterate_v_m(obj, blk, mr);
++  }
++
++#define InstanceMirrorKlass_OOP_OOP_ITERATE_DECL(OopClosureType, nv_suffix)           \
++  int oop_oop_iterate##nv_suffix(oop obj, OopClosureType* blk);                       \
++  int oop_oop_iterate##nv_suffix##_m(oop obj, OopClosureType* blk, MemRegion mr);
++
++  ALL_OOP_OOP_ITERATE_CLOSURES_1(InstanceMirrorKlass_OOP_OOP_ITERATE_DECL)
++  ALL_OOP_OOP_ITERATE_CLOSURES_2(InstanceMirrorKlass_OOP_OOP_ITERATE_DECL)
++
++#ifndef SERIALGC
++#define InstanceMirrorKlass_OOP_OOP_ITERATE_BACKWARDS_DECL(OopClosureType, nv_suffix) \
++  int oop_oop_iterate_backwards##nv_suffix(oop obj, OopClosureType* blk);
++
++  ALL_OOP_OOP_ITERATE_CLOSURES_1(InstanceMirrorKlass_OOP_OOP_ITERATE_BACKWARDS_DECL)
++  ALL_OOP_OOP_ITERATE_CLOSURES_2(InstanceMirrorKlass_OOP_OOP_ITERATE_BACKWARDS_DECL)
++#endif // !SERIALGC
++};
++
++#endif // SHARE_VM_OOPS_INSTANCEMIRRORKLASS_HPP
+diff --git a/src/share/vm/oops/klass.hpp b/src/share/vm/oops/klass.hpp
+--- openjdk/hotspot/src/share/vm/oops/klass.hpp
++++ openjdk/hotspot/src/share/vm/oops/klass.hpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -576,6 +576,7 @@
+  public:
+   // type testing operations
+   virtual bool oop_is_instance_slow()       const { return false; }
++  virtual bool oop_is_instanceMirror()      const { return false; }
+   virtual bool oop_is_instanceRef()         const { return false; }
+   virtual bool oop_is_array()               const { return false; }
+   virtual bool oop_is_objArray_slow()       const { return false; }
+@@ -811,4 +812,8 @@
+ #endif
+ };
+ 
++
++inline oop klassOopDesc::java_mirror() const                        { return klass_part()->java_mirror(); }
++
++
+ #endif // SHARE_VM_OOPS_KLASS_HPP
+diff --git a/src/share/vm/oops/klassKlass.cpp b/src/share/vm/oops/klassKlass.cpp
+--- openjdk/hotspot/src/share/vm/oops/klassKlass.cpp
++++ openjdk/hotspot/src/share/vm/oops/klassKlass.cpp
+@@ -42,6 +42,10 @@
+ #include "oops/typeArrayKlass.hpp"
+ #include "runtime/handles.inline.hpp"
+ #ifndef SERIALGC
++#include "gc_implementation/parNew/parOopClosures.inline.hpp"
++#include "gc_implementation/parallelScavenge/psPromotionManager.inline.hpp"
++#include "gc_implementation/parallelScavenge/psScavenge.inline.hpp"
++#include "memory/cardTableRS.hpp"
+ #include "oops/oop.pcgc.inline.hpp"
+ #endif
+ 
+@@ -182,6 +186,12 @@
+ 
+ #ifndef SERIALGC
+ void klassKlass::oop_push_contents(PSPromotionManager* pm, oop obj) {
++  Klass* k = Klass::cast(klassOop(obj));
++
++  oop* p = k->adr_java_mirror();
++  if (PSScavenge::should_scavenge(p)) {
++    pm->claim_or_forward_depth(p);
++  }
+ }
+ 
+ int klassKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
+@@ -253,7 +263,7 @@
+ 
+   if (k->java_mirror() != NULL || (k->oop_is_instance() && instanceKlass::cast(klassOop(obj))->is_loaded())) {
+     guarantee(k->java_mirror() != NULL,          "should be allocated");
+-    guarantee(k->java_mirror()->is_perm(),       "should be in permspace");
++    guarantee(k->java_mirror()->is_perm() || !JavaObjectsInPerm,       "should be in permspace");
+     guarantee(k->java_mirror()->is_instance(),   "should be instance");
+   }
+   if (k->name() != NULL) {
+diff --git a/src/share/vm/oops/klassOop.hpp b/src/share/vm/oops/klassOop.hpp
+--- openjdk/hotspot/src/share/vm/oops/klassOop.hpp
++++ openjdk/hotspot/src/share/vm/oops/klassOop.hpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -45,7 +45,73 @@
+   static int klass_part_offset_in_bytes()        { return sizeof(klassOopDesc); }
+ 
+   // returns the Klass part containing dispatching behavior
+-  Klass* klass_part()                            { return (Klass*)((address)this + klass_part_offset_in_bytes()); }
++  Klass* klass_part() const                      { return (Klass*)((address)this + klass_part_offset_in_bytes()); }
++
++  // Convenience wrapper
++  inline oop java_mirror() const;
++
++ private:
++  // These have no implementation since klassOop should never be accessed in this fashion
++  oop obj_field(int offset) const;
++  void obj_field_put(int offset, oop value);
++  void obj_field_raw_put(int offset, oop value);
++
++  jbyte byte_field(int offset) const;
++  void byte_field_put(int offset, jbyte contents);
++
++  jchar char_field(int offset) const;
++  void char_field_put(int offset, jchar contents);
++
++  jboolean bool_field(int offset) const;
++  void bool_field_put(int offset, jboolean contents);
++
++  jint int_field(int offset) const;
++  void int_field_put(int offset, jint contents);
++
++  jshort short_field(int offset) const;
++  void short_field_put(int offset, jshort contents);
++
++  jlong long_field(int offset) const;
++  void long_field_put(int offset, jlong contents);
++
++  jfloat float_field(int offset) const;
++  void float_field_put(int offset, jfloat contents);
++
++  jdouble double_field(int offset) const;
++  void double_field_put(int offset, jdouble contents);
++
++  address address_field(int offset) const;
++  void address_field_put(int offset, address contents);
++
++  oop obj_field_acquire(int offset) const;
++  void release_obj_field_put(int offset, oop value);
++
++  jbyte byte_field_acquire(int offset) const;
++  void release_byte_field_put(int offset, jbyte contents);
++
++  jchar char_field_acquire(int offset) const;
++  void release_char_field_put(int offset, jchar contents);
++
++  jboolean bool_field_acquire(int offset) const;
++  void release_bool_field_put(int offset, jboolean contents);
++
++  jint int_field_acquire(int offset) const;
++  void release_int_field_put(int offset, jint contents);
++
++  jshort short_field_acquire(int offset) const;
++  void release_short_field_put(int offset, jshort contents);
++
++  jlong long_field_acquire(int offset) const;
++  void release_long_field_put(int offset, jlong contents);
++
++  jfloat float_field_acquire(int offset) const;
++  void release_float_field_put(int offset, jfloat contents);
++
++  jdouble double_field_acquire(int offset) const;
++  void release_double_field_put(int offset, jdouble contents);
++
++  address address_field_acquire(int offset) const;
++  void release_address_field_put(int offset, address contents);
+ };
+ 
+ #endif // SHARE_VM_OOPS_KLASSOOP_HPP
+diff --git a/src/share/vm/oops/klassVtable.cpp b/src/share/vm/oops/klassVtable.cpp
+--- openjdk/hotspot/src/share/vm/oops/klassVtable.cpp
++++ openjdk/hotspot/src/share/vm/oops/klassVtable.cpp
+@@ -1134,7 +1134,7 @@
+   itableOffsetEntry* ioe = (itableOffsetEntry*)klass->start_of_itable();
+   itableMethodEntry* ime = (itableMethodEntry*)(ioe + nof_interfaces);
+   intptr_t* end               = klass->end_of_itable();
+-  assert((oop*)(ime + nof_methods) <= (oop*)klass->start_of_static_fields(), "wrong offset calculation (1)");
++  assert((oop*)(ime + nof_methods) <= (oop*)klass->start_of_nonstatic_oop_maps(), "wrong offset calculation (1)");
+   assert((oop*)(end) == (oop*)(ime + nof_methods),                      "wrong offset calculation (2)");
+ 
+   // Visit all interfaces and initialize itable offset table
+diff --git a/src/share/vm/oops/objArrayKlassKlass.cpp b/src/share/vm/oops/objArrayKlassKlass.cpp
+--- openjdk/hotspot/src/share/vm/oops/objArrayKlassKlass.cpp
++++ openjdk/hotspot/src/share/vm/oops/objArrayKlassKlass.cpp
+@@ -31,6 +31,13 @@
+ #include "oops/objArrayKlassKlass.hpp"
+ #include "oops/oop.inline.hpp"
+ #include "oops/oop.inline2.hpp"
++#ifndef SERIALGC
++#include "gc_implementation/parNew/parOopClosures.inline.hpp"
++#include "gc_implementation/parallelScavenge/psPromotionManager.inline.hpp"
++#include "gc_implementation/parallelScavenge/psScavenge.inline.hpp"
++#include "memory/cardTableRS.hpp"
++#include "oops/oop.pcgc.inline.hpp"
++#endif
+ 
+ klassOop objArrayKlassKlass::create_klass(TRAPS) {
+   objArrayKlassKlass o;
+@@ -232,12 +239,23 @@
+   addr = oak->bottom_klass_addr();
+   if (mr.contains(addr)) blk->do_oop(addr);
+ 
+-  return arrayKlassKlass::oop_oop_iterate(obj, blk);
++  return arrayKlassKlass::oop_oop_iterate_m(obj, blk, mr);
+ }
+ 
+ #ifndef SERIALGC
+ void objArrayKlassKlass::oop_push_contents(PSPromotionManager* pm, oop obj) {
+   assert(obj->blueprint()->oop_is_objArrayKlass(),"must be an obj array klass");
++  objArrayKlass* oak = objArrayKlass::cast((klassOop)obj);
++  oop* p = oak->element_klass_addr();
++  if (PSScavenge::should_scavenge(p)) {
++    pm->claim_or_forward_depth(p);
++  }
++  p = oak->bottom_klass_addr();
++  if (PSScavenge::should_scavenge(p)) {
++    pm->claim_or_forward_depth(p);
++  }
++
++  arrayKlassKlass::oop_push_contents(pm, obj);
+ }
+ 
+ int objArrayKlassKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
+@@ -299,7 +317,7 @@
+ // Verification
+ 
+ void objArrayKlassKlass::oop_verify_on(oop obj, outputStream* st) {
+-  klassKlass::oop_verify_on(obj, st);
++  arrayKlassKlass::oop_verify_on(obj, st);
+   objArrayKlass* oak = objArrayKlass::cast((klassOop)obj);
+   guarantee(oak->element_klass()->is_perm(),  "should be in permspace");
+   guarantee(oak->element_klass()->is_klass(), "should be klass");
+diff --git a/src/share/vm/oops/oop.hpp b/src/share/vm/oops/oop.hpp
+--- openjdk/hotspot/src/share/vm/oops/oop.hpp
++++ openjdk/hotspot/src/share/vm/oops/oop.hpp
+@@ -124,6 +124,7 @@
+ 
+   // type test operations (inlined in oop.inline.h)
+   bool is_instance()           const;
++  bool is_instanceMirror()     const;
+   bool is_instanceRef()        const;
+   bool is_array()              const;
+   bool is_objArray()           const;
+diff --git a/src/share/vm/oops/oop.inline.hpp b/src/share/vm/oops/oop.inline.hpp
+--- openjdk/hotspot/src/share/vm/oops/oop.inline.hpp
++++ openjdk/hotspot/src/share/vm/oops/oop.inline.hpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -135,6 +135,7 @@
+ inline bool oopDesc::is_a(klassOop k)        const { return blueprint()->is_subtype_of(k); }
+ 
+ inline bool oopDesc::is_instance()           const { return blueprint()->oop_is_instance(); }
++inline bool oopDesc::is_instanceMirror()     const { return blueprint()->oop_is_instanceMirror(); }
+ inline bool oopDesc::is_instanceRef()        const { return blueprint()->oop_is_instanceRef(); }
+ inline bool oopDesc::is_array()              const { return blueprint()->oop_is_array(); }
+ inline bool oopDesc::is_objArray()           const { return blueprint()->oop_is_objArray(); }
+@@ -394,7 +395,7 @@
+ 
+ inline int oopDesc::size_given_klass(Klass* klass)  {
+   int lh = klass->layout_helper();
+-  int s  = lh >> LogHeapWordSize;  // deliver size scaled by wordSize
++  int s;
+ 
+   // lh is now a value computed at class initialization that may hint
+   // at the size.  For instances, this is positive and equal to the
+@@ -407,7 +408,13 @@
+   // alive or dead.  So the speed here is equal in importance to the
+   // speed of allocation.
+ 
+-  if (lh <= Klass::_lh_neutral_value) {
++  if (lh > Klass::_lh_neutral_value) {
++    if (!Klass::layout_helper_needs_slow_path(lh)) {
++      s = lh >> LogHeapWordSize;  // deliver size scaled by wordSize
++    } else {
++      s = klass->oop_size(this);
++    }
++  } else if (lh <= Klass::_lh_neutral_value) {
+     // The most common case is instances; fall through if so.
+     if (lh < Klass::_lh_neutral_value) {
+       // Second most common case is arrays.  We have to fetch the
+diff --git a/src/share/vm/oops/oopsHierarchy.hpp b/src/share/vm/oops/oopsHierarchy.hpp
+--- openjdk/hotspot/src/share/vm/oops/oopsHierarchy.hpp
++++ openjdk/hotspot/src/share/vm/oops/oopsHierarchy.hpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -176,6 +176,7 @@
+ 
+ class Klass;
+ class   instanceKlass;
++class     instanceMirrorKlass;
+ class     instanceRefKlass;
+ class   methodKlass;
+ class   constMethodKlass;
+diff --git a/src/share/vm/opto/compile.cpp b/src/share/vm/opto/compile.cpp
+--- openjdk/hotspot/src/share/vm/opto/compile.cpp
++++ openjdk/hotspot/src/share/vm/opto/compile.cpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -1196,11 +1196,15 @@
+   // Oop pointers need some flattening
+   const TypeInstPtr *to = tj->isa_instptr();
+   if( to && _AliasLevel >= 2 && to != TypeOopPtr::BOTTOM ) {
++    ciInstanceKlass *k = to->klass()->as_instance_klass();
+     if( ptr == TypePtr::Constant ) {
+-      // No constant oop pointers (such as Strings); they alias with
+-      // unknown strings.
+-      assert(!is_known_inst, "not scalarizable allocation");
+-      tj = to = TypeInstPtr::make(TypePtr::BotPTR,to->klass(),false,0,offset);
++      if (to->klass() != ciEnv::current()->Class_klass() ||
++          offset < k->size_helper() * wordSize) {
++        // No constant oop pointers (such as Strings); they alias with
++        // unknown strings.
++        assert(!is_known_inst, "not scalarizable allocation");
++        tj = to = TypeInstPtr::make(TypePtr::BotPTR,to->klass(),false,0,offset);
++      }
+     } else if( is_known_inst ) {
+       tj = to; // Keep NotNull and klass_is_exact for instance type
+     } else if( ptr == TypePtr::NotNull || to->klass_is_exact() ) {
+@@ -1210,7 +1214,6 @@
+       tj = to = TypeInstPtr::make(TypePtr::BotPTR,to->klass(),false,0,offset);
+     }
+     // Canonicalize the holder of this field
+-    ciInstanceKlass *k = to->klass()->as_instance_klass();
+     if (offset >= 0 && offset < instanceOopDesc::base_offset_in_bytes()) {
+       // First handle header references such as a LoadKlassNode, even if the
+       // object's klass is unloaded at compile time (4965979).
+@@ -1218,9 +1221,13 @@
+         tj = to = TypeInstPtr::make(TypePtr::BotPTR, env()->Object_klass(), false, NULL, offset);
+       }
+     } else if (offset < 0 || offset >= k->size_helper() * wordSize) {
+-      to = NULL;
+-      tj = TypeOopPtr::BOTTOM;
+-      offset = tj->offset();
++      // Static fields are in the space above the normal instance
++      // fields in the java.lang.Class instance.
++      if (to->klass() != ciEnv::current()->Class_klass()) {
++        to = NULL;
++        tj = TypeOopPtr::BOTTOM;
++        offset = tj->offset();
++      }
+     } else {
+       ciInstanceKlass *canonical_holder = k->get_canonical_holder(offset);
+       if (!k->equals(canonical_holder) || tj->offset() != offset) {
+@@ -1393,7 +1400,7 @@
+ 
+ 
+ //--------------------------------find_alias_type------------------------------
+-Compile::AliasType* Compile::find_alias_type(const TypePtr* adr_type, bool no_create) {
++Compile::AliasType* Compile::find_alias_type(const TypePtr* adr_type, bool no_create, ciField* original_field) {
+   if (_AliasLevel == 0)
+     return alias_type(AliasIdxBot);
+ 
+@@ -1458,22 +1465,28 @@
+     // but the base pointer type is not distinctive enough to identify
+     // references into JavaThread.)
+ 
+-    // Check for final instance fields.
++    // Check for final fields.
+     const TypeInstPtr* tinst = flat->isa_instptr();
+     if (tinst && tinst->offset() >= instanceOopDesc::base_offset_in_bytes()) {
+-      ciInstanceKlass *k = tinst->klass()->as_instance_klass();
+-      ciField* field = k->get_field_by_offset(tinst->offset(), false);
++      ciField* field;
++      if (tinst->const_oop() != NULL &&
++          tinst->klass() == ciEnv::current()->Class_klass() &&
++          tinst->offset() >= (tinst->klass()->as_instance_klass()->size_helper() * wordSize)) {
++        // static field
++        ciInstanceKlass* k = tinst->const_oop()->as_instance()->java_lang_Class_klass()->as_instance_klass();
++        field = k->get_field_by_offset(tinst->offset(), true);
++      } else {
++        ciInstanceKlass *k = tinst->klass()->as_instance_klass();
++        field = k->get_field_by_offset(tinst->offset(), false);
++      }
++      assert(field == NULL ||
++             original_field == NULL ||
++             (field->holder() == original_field->holder() &&
++              field->offset() == original_field->offset() &&
++              field->is_static() == original_field->is_static()), "wrong field?");
+       // Set field() and is_rewritable() attributes.
+       if (field != NULL)  alias_type(idx)->set_field(field);
+     }
+-    const TypeKlassPtr* tklass = flat->isa_klassptr();
+-    // Check for final static fields.
+-    if (tklass && tklass->klass()->is_instance_klass()) {
+-      ciInstanceKlass *k = tklass->klass()->as_instance_klass();
+-      ciField* field = k->get_field_by_offset(tklass->offset(), true);
+-      // Set field() and is_rewritable() attributes.
+-      if (field != NULL)   alias_type(idx)->set_field(field);
+-    }
+   }
+ 
+   // Fill the cache for next time.
+@@ -1496,10 +1509,10 @@
+ Compile::AliasType* Compile::alias_type(ciField* field) {
+   const TypeOopPtr* t;
+   if (field->is_static())
+-    t = TypeKlassPtr::make(field->holder());
++    t = TypeInstPtr::make(field->holder()->java_mirror());
+   else
+     t = TypeOopPtr::make_from_klass_raw(field->holder());
+-  AliasType* atp = alias_type(t->add_offset(field->offset_in_bytes()));
++  AliasType* atp = alias_type(t->add_offset(field->offset_in_bytes()), field);
+   assert(field->is_final() == !atp->is_rewritable(), "must get the rewritable bits correct");
+   return atp;
+ }
+@@ -1516,7 +1529,7 @@
+   if (adr_type == NULL)             return true;
+   if (adr_type == TypePtr::BOTTOM)  return true;
+ 
+-  return find_alias_type(adr_type, true) != NULL;
++  return find_alias_type(adr_type, true, NULL) != NULL;
+ }
+ 
+ //-----------------------------must_alias--------------------------------------
+diff --git a/src/share/vm/opto/compile.hpp b/src/share/vm/opto/compile.hpp
+--- openjdk/hotspot/src/share/vm/opto/compile.hpp
++++ openjdk/hotspot/src/share/vm/opto/compile.hpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -596,7 +596,7 @@
+   }
+ 
+   AliasType*        alias_type(int                idx)  { assert(idx < num_alias_types(), "oob"); return _alias_types[idx]; }
+-  AliasType*        alias_type(const TypePtr* adr_type) { return find_alias_type(adr_type, false); }
++  AliasType*        alias_type(const TypePtr* adr_type, ciField* field = NULL) { return find_alias_type(adr_type, false, field); }
+   bool         have_alias_type(const TypePtr* adr_type);
+   AliasType*        alias_type(ciField*         field);
+ 
+@@ -835,7 +835,7 @@
+   void grow_alias_types();
+   AliasCacheEntry* probe_alias_cache(const TypePtr* adr_type);
+   const TypePtr *flatten_alias_type(const TypePtr* adr_type) const;
+-  AliasType* find_alias_type(const TypePtr* adr_type, bool no_create);
++  AliasType* find_alias_type(const TypePtr* adr_type, bool no_create, ciField* field);
+ 
+   void verify_top(Node*) const PRODUCT_RETURN;
+ 
+diff --git a/src/share/vm/opto/parse.hpp b/src/share/vm/opto/parse.hpp
+--- openjdk/hotspot/src/share/vm/opto/parse.hpp
++++ openjdk/hotspot/src/share/vm/opto/parse.hpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -483,8 +483,8 @@
+   bool static_field_ok_in_clinit(ciField *field, ciMethod *method);
+ 
+   // common code for actually performing the load or store
+-  void do_get_xxx(const TypePtr* obj_type, Node* obj, ciField* field, bool is_field);
+-  void do_put_xxx(const TypePtr* obj_type, Node* obj, ciField* field, bool is_field);
++  void do_get_xxx(Node* obj, ciField* field, bool is_field);
++  void do_put_xxx(Node* obj, ciField* field, bool is_field);
+ 
+   // loading from a constant field or the constant pool
+   // returns false if push failed (non-perm field constants only, not ldcs)
+diff --git a/src/share/vm/opto/parse3.cpp b/src/share/vm/opto/parse3.cpp
+--- openjdk/hotspot/src/share/vm/opto/parse3.cpp
++++ openjdk/hotspot/src/share/vm/opto/parse3.cpp
+@@ -112,29 +112,31 @@
+     // Compile-time detect of null-exception?
+     if (stopped())  return;
+ 
++#ifdef ASSERT
+     const TypeInstPtr *tjp = TypeInstPtr::make(TypePtr::NotNull, iter().get_declared_field_holder());
+     assert(_gvn.type(obj)->higher_equal(tjp), "cast_up is no longer needed");
++#endif
+ 
+     if (is_get) {
+       --_sp;  // pop receiver before getting
+-      do_get_xxx(tjp, obj, field, is_field);
++      do_get_xxx(obj, field, is_field);
+     } else {
+-      do_put_xxx(tjp, obj, field, is_field);
++      do_put_xxx(obj, field, is_field);
+       --_sp;  // pop receiver after putting
+     }
+   } else {
+-    const TypeKlassPtr* tkp = TypeKlassPtr::make(field_holder);
+-    obj = _gvn.makecon(tkp);
++    const TypeInstPtr* tip = TypeInstPtr::make(field_holder->java_mirror());
++    obj = _gvn.makecon(tip);
+     if (is_get) {
+-      do_get_xxx(tkp, obj, field, is_field);
++      do_get_xxx(obj, field, is_field);
+     } else {
+-      do_put_xxx(tkp, obj, field, is_field);
++      do_put_xxx(obj, field, is_field);
+     }
+   }
+ }
+ 
+ 
+-void Parse::do_get_xxx(const TypePtr* obj_type, Node* obj, ciField* field, bool is_field) {
++void Parse::do_get_xxx(Node* obj, ciField* field, bool is_field) {
+   // Does this field have a constant value?  If so, just push the value.
+   if (field->is_constant()) {
+     if (field->is_static()) {
+@@ -231,7 +233,7 @@
+   }
+ }
+ 
+-void Parse::do_put_xxx(const TypePtr* obj_type, Node* obj, ciField* field, bool is_field) {
++void Parse::do_put_xxx(Node* obj, ciField* field, bool is_field) {
+   bool is_vol = field->is_volatile();
+   // If reference is volatile, prevent following memory ops from
+   // floating down past the volatile write.  Also prevents commoning
+diff --git a/src/share/vm/opto/type.cpp b/src/share/vm/opto/type.cpp
+--- openjdk/hotspot/src/share/vm/opto/type.cpp
++++ openjdk/hotspot/src/share/vm/opto/type.cpp
+@@ -32,6 +32,7 @@
+ #include "memory/oopFactory.hpp"
+ #include "memory/resourceArea.hpp"
+ #include "oops/instanceKlass.hpp"
++#include "oops/instanceMirrorKlass.hpp"
+ #include "oops/klassKlass.hpp"
+ #include "oops/objArrayKlass.hpp"
+ #include "oops/typeArrayKlass.hpp"
+@@ -2241,43 +2242,49 @@
+     } else if (this->isa_aryptr()) {
+       _is_ptr_to_narrowoop = (klass()->is_obj_array_klass() &&
+                              _offset != arrayOopDesc::length_offset_in_bytes());
+-    } else if (klass() == ciEnv::current()->Class_klass() &&
+-               (_offset == java_lang_Class::klass_offset_in_bytes() ||
+-                _offset == java_lang_Class::array_klass_offset_in_bytes())) {
+-      // Special hidden fields from the Class.
+-      assert(this->isa_instptr(), "must be an instance ptr.");
+-      _is_ptr_to_narrowoop = true;
+     } else if (klass()->is_instance_klass()) {
+       ciInstanceKlass* ik = klass()->as_instance_klass();
+       ciField* field = NULL;
+       if (this->isa_klassptr()) {
+-        // Perm objects don't use compressed references, except for
+-        // static fields which are currently compressed.
+-        field = ik->get_field_by_offset(_offset, true);
+-        if (field != NULL) {
+-          BasicType basic_elem_type = field->layout_type();
+-          _is_ptr_to_narrowoop = (basic_elem_type == T_OBJECT ||
+-                                  basic_elem_type == T_ARRAY);
+-        }
++        // Perm objects don't use compressed references
+       } else if (_offset == OffsetBot || _offset == OffsetTop) {
+         // unsafe access
+         _is_ptr_to_narrowoop = true;
+       } else { // exclude unsafe ops
+         assert(this->isa_instptr(), "must be an instance ptr.");
+-        // Field which contains a compressed oop references.
+-        field = ik->get_field_by_offset(_offset, false);
+-        if (field != NULL) {
++
++        if (klass() == ciEnv::current()->Class_klass() &&
++            (_offset == java_lang_Class::klass_offset_in_bytes() ||
++             _offset == java_lang_Class::array_klass_offset_in_bytes())) {
++          // Special hidden fields from the Class.
++          assert(this->isa_instptr(), "must be an instance ptr.");
++          _is_ptr_to_narrowoop = true;
++        } else if (klass() == ciEnv::current()->Class_klass() &&
++                   _offset >= instanceMirrorKlass::offset_of_static_fields()) {
++          // Static fields
++          assert(o != NULL, "must be constant");
++          ciInstanceKlass* k = o->as_instance()->java_lang_Class_klass()->as_instance_klass();
++          ciField* field = k->get_field_by_offset(_offset, true);
++          assert(field != NULL, "missing field");
+           BasicType basic_elem_type = field->layout_type();
+           _is_ptr_to_narrowoop = (basic_elem_type == T_OBJECT ||
+                                   basic_elem_type == T_ARRAY);
+-        } else if (klass()->equals(ciEnv::current()->Object_klass())) {
+-          // Compile::find_alias_type() cast exactness on all types to verify
+-          // that it does not affect alias type.
+-          _is_ptr_to_narrowoop = true;
+         } else {
+-          // Type for the copy start in LibraryCallKit::inline_native_clone().
+-          assert(!klass_is_exact(), "only non-exact klass");
+-          _is_ptr_to_narrowoop = true;
++          // Instance fields which contains a compressed oop references.
++          field = ik->get_field_by_offset(_offset, false);
++          if (field != NULL) {
++            BasicType basic_elem_type = field->layout_type();
++            _is_ptr_to_narrowoop = (basic_elem_type == T_OBJECT ||
++                                    basic_elem_type == T_ARRAY);
++          } else if (klass()->equals(ciEnv::current()->Object_klass())) {
++            // Compile::find_alias_type() cast exactness on all types to verify
++            // that it does not affect alias type.
++            _is_ptr_to_narrowoop = true;
++          } else {
++            // Type for the copy start in LibraryCallKit::inline_native_clone().
++            assert(!klass_is_exact(), "only non-exact klass");
++            _is_ptr_to_narrowoop = true;
++          }
+         }
+       }
+     }
+diff --git a/src/share/vm/prims/jni.cpp b/src/share/vm/prims/jni.cpp
+--- openjdk/hotspot/src/share/vm/prims/jni.cpp
++++ openjdk/hotspot/src/share/vm/prims/jni.cpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -1865,7 +1865,7 @@
+     // Static field. The fieldID a JNIid specifying the field holder and the offset within the klassOop.
+     JNIid* id = jfieldIDWorkaround::from_static_jfieldID(fieldID);
+     assert(id->is_static_field_id(), "invalid static field id");
+-    found = instanceKlass::cast(id->holder())->find_local_field_from_offset(id->offset(), true, &fd);
++    found = id->find_local_field(&fd);
+   } else {
+     // Non-static field. The fieldID is really the offset of the field within the instanceOop.
+     int offset = jfieldIDWorkaround::from_instance_jfieldID(k, fieldID);
+@@ -1915,9 +1915,7 @@
+   JNIid* id = instanceKlass::cast(fd.field_holder())->jni_id_for(fd.offset());
+   debug_only(id->set_is_static_field_id();)
+ 
+-  debug_only(int first_offset = instanceKlass::cast(fd.field_holder())->offset_of_static_fields();)
+-  debug_only(int end_offset = first_offset + (instanceKlass::cast(fd.field_holder())->static_field_size() * wordSize);)
+-  assert(id->offset() >= first_offset && id->offset() < end_offset, "invalid static field offset");
++  debug_only(id->verify(fd.field_holder()));
+ 
+   ret = jfieldIDWorkaround::to_static_jfieldID(id);
+   return ret;
+@@ -1937,7 +1935,7 @@
+   if (JvmtiExport::should_post_field_access()) {
+     JvmtiExport::jni_GetField_probe(thread, NULL, NULL, id->holder(), fieldID, true);
+   }
+-  jobject ret = JNIHandles::make_local(id->holder()->obj_field(id->offset()));
++  jobject ret = JNIHandles::make_local(id->holder()->java_mirror()->obj_field(id->offset()));
+   DTRACE_PROBE1(hotspot_jni, GetStaticObjectField__return, ret);
+   return ret;
+ JNI_END
+@@ -1959,7 +1957,7 @@
+   if (JvmtiExport::should_post_field_access()) { \
+     JvmtiExport::jni_GetField_probe(thread, NULL, NULL, id->holder(), fieldID, true); \
+   } \
+-  ret = id->holder()-> Fieldname##_field (id->offset()); \
++  ret = id->holder()->java_mirror()-> Fieldname##_field (id->offset()); \
+   return ret;\
+ JNI_END
+ 
+@@ -1985,7 +1983,7 @@
+     field_value.l = value;
+     JvmtiExport::jni_SetField_probe(thread, NULL, NULL, id->holder(), fieldID, true, 'L', (jvalue *)&field_value);
+   }
+-  id->holder()->obj_field_put(id->offset(), JNIHandles::resolve(value));
++  id->holder()->java_mirror()->obj_field_put(id->offset(), JNIHandles::resolve(value));
+   DTRACE_PROBE(hotspot_jni, SetStaticObjectField__return);
+ JNI_END
+ 
+@@ -2008,7 +2006,7 @@
+     field_value.unionType = value; \
+     JvmtiExport::jni_SetField_probe(thread, NULL, NULL, id->holder(), fieldID, true, SigType, (jvalue *)&field_value); \
+   } \
+-  id->holder()-> Fieldname##_field_put (id->offset(), value); \
++  id->holder()->java_mirror()-> Fieldname##_field_put (id->offset(), value); \
+   DTRACE_PROBE(hotspot_jni, SetStatic##Result##Field__return);\
+ JNI_END
+ 
+diff --git a/src/share/vm/prims/jniCheck.cpp b/src/share/vm/prims/jniCheck.cpp
+--- openjdk/hotspot/src/share/vm/prims/jniCheck.cpp
++++ openjdk/hotspot/src/share/vm/prims/jniCheck.cpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -218,8 +218,7 @@
+     ReportJNIFatalError(thr, fatal_wrong_static_field);
+ 
+   /* check for proper field type */
+-  if (!instanceKlass::cast(f_oop)->find_local_field_from_offset(
+-          id->offset(), true, &fd))
++  if (!id->find_local_field(&fd))
+     ReportJNIFatalError(thr, fatal_static_field_not_found);
+   if ((fd.field_type() != ftype) &&
+       !(fd.field_type() == T_ARRAY && ftype == T_OBJECT)) {
+diff --git a/src/share/vm/prims/jvm.cpp b/src/share/vm/prims/jvm.cpp
+--- openjdk/hotspot/src/share/vm/prims/jvm.cpp
++++ openjdk/hotspot/src/share/vm/prims/jvm.cpp
+@@ -1877,7 +1877,7 @@
+     THROW_MSG_0(vmSymbols::java_lang_IllegalArgumentException(), "Wrong type at constant pool index");
+   }
+   klassOop k = cp->klass_at(index, CHECK_NULL);
+-  return (jclass) JNIHandles::make_local(k->klass_part()->java_mirror());
++  return (jclass) JNIHandles::make_local(k->java_mirror());
+ }
+ JVM_END
+ 
+@@ -1893,7 +1893,7 @@
+   }
+   klassOop k = constantPoolOopDesc::klass_at_if_loaded(cp, index);
+   if (k == NULL) return NULL;
+-  return (jclass) JNIHandles::make_local(k->klass_part()->java_mirror());
++  return (jclass) JNIHandles::make_local(k->java_mirror());
+ }
+ JVM_END
+ 
+diff --git a/src/share/vm/prims/jvmtiEnvBase.cpp b/src/share/vm/prims/jvmtiEnvBase.cpp
+--- openjdk/hotspot/src/share/vm/prims/jvmtiEnvBase.cpp
++++ openjdk/hotspot/src/share/vm/prims/jvmtiEnvBase.cpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -616,9 +616,7 @@
+   bool found = false;
+   if (jfieldIDWorkaround::is_static_jfieldID(field)) {
+     JNIid* id = jfieldIDWorkaround::from_static_jfieldID(field);
+-    int offset = id->offset();
+-    klassOop holder = id->holder();
+-    found = instanceKlass::cast(holder)->find_local_field_from_offset(offset, true, fd);
++    found = id->find_local_field(fd);
+   } else {
+     // Non-static field. The fieldID is really the offset of the field within the object.
+     int offset = jfieldIDWorkaround::from_instance_jfieldID(k, field);
+diff --git a/src/share/vm/prims/jvmtiTagMap.cpp b/src/share/vm/prims/jvmtiTagMap.cpp
+--- openjdk/hotspot/src/share/vm/prims/jvmtiTagMap.cpp
++++ openjdk/hotspot/src/share/vm/prims/jvmtiTagMap.cpp
+@@ -27,6 +27,7 @@
+ #include "classfile/systemDictionary.hpp"
+ #include "classfile/vmSymbols.hpp"
+ #include "jvmtifiles/jvmtiEnv.hpp"
++#include "oops/instanceMirrorKlass.hpp"
+ #include "oops/objArrayKlass.hpp"
+ #include "oops/oop.inline2.hpp"
+ #include "prims/jvmtiEventController.hpp"
+@@ -2594,6 +2595,11 @@
+     if (o->is_klass()) {
+       klassOop k = (klassOop)o;
+       o = Klass::cast(k)->java_mirror();
++      if (o == NULL) {
++        // Classes without mirrors don't correspond to real Java
++        // classes so just ignore them.
++        return;
++      }
+     } else {
+ 
+       // SystemDictionary::always_strong_oops_do reports the application
+@@ -2834,10 +2840,10 @@
+ 
+ // verify that a static oop field is in range
+ static inline bool verify_static_oop(instanceKlass* ik,
+-                                     klassOop k, int offset) {
+-  address obj_p = (address)k + offset;
+-  address start = (address)ik->start_of_static_fields();
+-  address end = start + (ik->static_oop_field_size() * heapOopSize);
++                                     oop mirror, int offset) {
++  address obj_p = (address)mirror + offset;
++  address start = (address)instanceMirrorKlass::start_of_static_fields(mirror);
++  address end = start + (java_lang_Class::static_oop_field_count(mirror) * heapOopSize);
+   assert(end >= start, "sanity check");
+ 
+   if (obj_p >= start && obj_p < end) {
+@@ -2938,8 +2944,8 @@
+       ClassFieldDescriptor* field = field_map->field_at(i);
+       char type = field->field_type();
+       if (!is_primitive_field_type(type)) {
+-        oop fld_o = k->obj_field(field->field_offset());
+-        assert(verify_static_oop(ik, k, field->field_offset()), "sanity check");
++        oop fld_o = mirror->obj_field(field->field_offset());
++        assert(verify_static_oop(ik, mirror, field->field_offset()), "sanity check");
+         if (fld_o != NULL) {
+           int slot = field->field_index();
+           if (!CallbackInvoker::report_static_field_reference(mirror, fld_o, slot)) {
+diff --git a/src/share/vm/prims/unsafe.cpp b/src/share/vm/prims/unsafe.cpp
+--- openjdk/hotspot/src/share/vm/prims/unsafe.cpp
++++ openjdk/hotspot/src/share/vm/prims/unsafe.cpp
+@@ -686,7 +686,7 @@
+     THROW_0(vmSymbols::java_lang_IllegalArgumentException());
+   }
+ 
+-  return JNIHandles::make_local(env, java_lang_Class::as_klassOop(mirror));
++  return JNIHandles::make_local(env, mirror);
+ UNSAFE_END
+ 
+ //@deprecated
+@@ -704,7 +704,7 @@
+   if (clazz == NULL) {
+     THROW_0(vmSymbols::java_lang_NullPointerException());
+   }
+-  return JNIHandles::make_local(env, java_lang_Class::as_klassOop(JNIHandles::resolve_non_null(clazz)));
++  return JNIHandles::make_local(env, JNIHandles::resolve_non_null(clazz));
+ UNSAFE_END
+ 
+ UNSAFE_ENTRY(void, Unsafe_EnsureClassInitialized(JNIEnv *env, jobject unsafe, jobject clazz))
+diff --git a/src/share/vm/runtime/arguments.cpp b/src/share/vm/runtime/arguments.cpp
+--- openjdk/hotspot/src/share/vm/runtime/arguments.cpp
++++ openjdk/hotspot/src/share/vm/runtime/arguments.cpp
+@@ -2973,6 +2973,12 @@
+       }
+     }
+   }
++  if (!JavaObjectsInPerm && ScavengeRootsInCode == 0) {
++    if (!FLAG_IS_DEFAULT(ScavengeRootsInCode)) {
++      warning("forcing ScavengeRootsInCode non-zero because JavaObjectsInPerm is false");
++    }
++    ScavengeRootsInCode = 1;
++  }
+ 
+   // Parse JavaVMInitArgs structure passed in, as well as JAVA_TOOL_OPTIONS and _JAVA_OPTIONS
+   jint result = parse_vm_init_args(args);
+diff --git a/src/share/vm/runtime/globals.hpp b/src/share/vm/runtime/globals.hpp
+--- openjdk/hotspot/src/share/vm/runtime/globals.hpp
++++ openjdk/hotspot/src/share/vm/runtime/globals.hpp
+@@ -1184,6 +1184,11 @@
+           "Decay time (in milliseconds) to re-enable bulk rebiasing of a "  \
+           "type after previous bulk rebias")                                \
+                                                                             \
++  develop(bool, JavaObjectsInPerm, false,                                   \
++          "controls whether Classes and interned Strings are allocated"     \
++          "in perm.  This purely intended to allow debugging issues"        \
++          "in production.")                                                 \
++                                                                            \
+   /* tracing */                                                             \
+                                                                             \
+   notproduct(bool, TraceRuntimeCalls, false,                                \
+diff --git a/src/share/vm/runtime/reflection.cpp b/src/share/vm/runtime/reflection.cpp
+--- openjdk/hotspot/src/share/vm/runtime/reflection.cpp
++++ openjdk/hotspot/src/share/vm/runtime/reflection.cpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -649,7 +649,7 @@
+       if (TraceClassResolution) {
+         trace_class_resolution(k);
+       }
+-      return k->klass_part()->java_mirror();
++      return k->java_mirror();
+   };
+ }
+ 
+diff --git a/src/share/vm/runtime/thread.cpp b/src/share/vm/runtime/thread.cpp
+--- openjdk/hotspot/src/share/vm/runtime/thread.cpp
++++ openjdk/hotspot/src/share/vm/runtime/thread.cpp
+@@ -3182,7 +3182,7 @@
+         fieldDescriptor fd;
+         // Possible we might not find this field; if so, don't break
+         if (ik->find_local_field(vmSymbols::frontCacheEnabled_name(), vmSymbols::bool_signature(), &fd)) {
+-          k()->bool_field_put(fd.offset(), true);
++          k()->java_mirror()->bool_field_put(fd.offset(), true);
+         }
+       }
+ 
+@@ -3198,7 +3198,7 @@
+           fieldDescriptor fd;
+           // Possible we might not find this field: if so, silently don't break
+           if (ik->find_local_field(vmSymbols::stringCacheEnabled_name(), vmSymbols::bool_signature(), &fd)) {
+-            k()->bool_field_put(fd.offset(), true);
++            k()->java_mirror()->bool_field_put(fd.offset(), true);
+           }
+         }
+       }
+diff --git a/src/share/vm/runtime/vmStructs.cpp b/src/share/vm/runtime/vmStructs.cpp
+--- openjdk/hotspot/src/share/vm/runtime/vmStructs.cpp
++++ openjdk/hotspot/src/share/vm/runtime/vmStructs.cpp
+@@ -251,7 +251,7 @@
+   nonstatic_field(instanceKlass,               _inner_classes,                                typeArrayOop)                          \
+   nonstatic_field(instanceKlass,               _nonstatic_field_size,                         int)                                   \
+   nonstatic_field(instanceKlass,               _static_field_size,                            int)                                   \
+-  nonstatic_field(instanceKlass,               _static_oop_field_size,                        int)                                   \
++  nonstatic_field(instanceKlass,               _static_oop_field_count,                       int)                                   \
+   nonstatic_field(instanceKlass,               _nonstatic_oop_map_size,                       int)                                   \
+   nonstatic_field(instanceKlass,               _is_marked_dependent,                          bool)                                  \
+   nonstatic_field(instanceKlass,               _minor_version,                                u2)                                    \
+@@ -928,6 +928,15 @@
+   static_field(Arguments,                      _num_jvm_args,                                 int)                                   \
+   static_field(Arguments,                      _java_command,                                 char*)                                 \
+                                                                                                                                      \
++  /*********************************/                                                                                                \
++  /* java_lang_Class fields        */                                                                                                \
++  /*********************************/                                                                                                \
++                                                                                                                                     \
++  static_field(java_lang_Class,                klass_offset,                                  int)                                   \
++  static_field(java_lang_Class,                resolved_constructor_offset,                   int)                                   \
++  static_field(java_lang_Class,                array_klass_offset,                            int)                                   \
++  static_field(java_lang_Class,                oop_size_offset,                               int)                                   \
++  static_field(java_lang_Class,                static_oop_field_count_offset,                 int)                                   \
+                                                                                                                                      \
+   /************************/                                                                                                         \
+   /* Miscellaneous fields */                                                                                                         \
+@@ -1410,6 +1419,7 @@
+   declare_toplevel_type(intptr_t*)                                        \
+    declare_unsigned_integer_type(InvocationCounter) /* FIXME: wrong type (not integer) */ \
+   declare_toplevel_type(JavaThread*)                                      \
++  declare_toplevel_type(java_lang_Class)                                  \
+   declare_toplevel_type(jbyte*)                                           \
+   declare_toplevel_type(jbyte**)                                          \
+   declare_toplevel_type(jint*)                                            \
+@@ -1696,15 +1706,6 @@
+                                                                           \
+   declare_constant(ConstantPoolCacheEntry::tosBits)                       \
+                                                                           \
+-  /*********************************/                                     \
+-  /* java_lang_Class field offsets */                                     \
+-  /*********************************/                                     \
+-                                                                          \
+-  declare_constant(java_lang_Class::hc_klass_offset)                      \
+-  declare_constant(java_lang_Class::hc_array_klass_offset)                \
+-  declare_constant(java_lang_Class::hc_resolved_constructor_offset)       \
+-  declare_constant(java_lang_Class::hc_number_of_fake_oop_fields)         \
+-                                                                          \
+   /***************************************/                               \
+   /* java_lang_Thread::ThreadStatus enum */                               \
+   /***************************************/                               \
+diff --git a/src/share/vm/shark/sharkNativeWrapper.cpp b/src/share/vm/shark/sharkNativeWrapper.cpp
+--- openjdk/hotspot/src/share/vm/shark/sharkNativeWrapper.cpp
++++ openjdk/hotspot/src/share/vm/shark/sharkNativeWrapper.cpp
+@@ -101,7 +101,7 @@
+     builder()->CreateStore(
+       builder()->CreateInlineOop(
+         JNIHandles::make_local(
+-          target()->method_holder()->klass_part()->java_mirror())),
++          target()->method_holder()->java_mirror())),
+       oop_tmp_slot());
+ 
+     param_types.push_back(box_type);

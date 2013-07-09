@@ -1,0 +1,3424 @@
+# HG changeset patch
+# User andrew
+# Date 1371750221 18000
+# Node ID f105c2b7da46999930ae40ac8661a56d6ce1c5cd
+# Parent  f44f27f80f2caf315f0f56cd63b5beb46908051e
+7086585: make Java field injection more flexible
+Reviewed-by: jrose, twisti, kvn, coleenp
+
+diff --git a/agent/src/share/classes/sun/jvm/hotspot/oops/Field.java b/agent/src/share/classes/sun/jvm/hotspot/oops/Field.java
+--- openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/oops/Field.java
++++ openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/oops/Field.java
+@@ -39,28 +39,20 @@
+ 
+   /** Constructor for fields that are named in an InstanceKlass's
+       fields array (i.e., named, non-VM fields) */
+-  Field(InstanceKlass holder, int fieldArrayIndex) {
++  Field(InstanceKlass holder, int fieldIndex) {
+     this.holder = holder;
+-    this.fieldArrayIndex = fieldArrayIndex;
++    this.fieldIndex = fieldIndex;
+ 
+-    ConstantPool cp      = holder.getConstants();
+-    TypeArray fields     = holder.getFields();
+-    short access         = fields.getShortAt(fieldArrayIndex + InstanceKlass.ACCESS_FLAGS_OFFSET);
+-    short nameIndex      = fields.getShortAt(fieldArrayIndex + InstanceKlass.NAME_INDEX_OFFSET);
+-    short signatureIndex = fields.getShortAt(fieldArrayIndex + InstanceKlass.SIGNATURE_INDEX_OFFSET);
+-    offset               = VM.getVM().buildIntFromShorts(fields.getShortAt(fieldArrayIndex + InstanceKlass.LOW_OFFSET),
+-                                                         fields.getShortAt(fieldArrayIndex + InstanceKlass.HIGH_OFFSET));
+-    short genericSignatureIndex = fields.getShortAt(fieldArrayIndex + InstanceKlass.GENERIC_SIGNATURE_INDEX_OFFSET);
+-    Symbol name = cp.getSymbolAt(nameIndex);
++    offset               = holder.getFieldOffset(fieldIndex);
++    genericSignature     = holder.getFieldGenericSignature(fieldIndex);
++
++    Symbol name          = holder.getFieldName(fieldIndex);
+     id          = new NamedFieldIdentifier(name.asString());
+-    signature   = cp.getSymbolAt(signatureIndex);
+-    if (genericSignatureIndex != 0)  {
+-       genericSignature = cp.getSymbolAt(genericSignatureIndex);
+-    } else {
+-       genericSignature = null;
+-    }
+ 
++    signature            = holder.getFieldSignature(fieldIndex);
+     fieldType   = new FieldType(signature);
++
++    short access         = holder.getFieldAccessFlags(fieldIndex);
+     accessFlags = new AccessFlags(access);
+   }
+ 
+@@ -73,7 +65,7 @@
+   private Symbol          signature;
+   private Symbol          genericSignature;
+   private AccessFlags     accessFlags;
+-  private int             fieldArrayIndex;
++  private int             fieldIndex;
+ 
+   /** Returns the byte offset of the field within the object or klass */
+   public long getOffset() { return offset; }
+@@ -101,8 +93,8 @@
+   /** (Named, non-VM fields only) Returns the index in the fields
+       TypeArray for this field. Equivalent to the "index" in the VM's
+       fieldDescriptors. */
+-  public int getFieldArrayIndex() {
+-    return fieldArrayIndex;
++  public int getFieldIndex() {
++    return fieldIndex;
+   }
+ 
+   /** (Named, non-VM fields only) Retrieves the access flags. */
+diff --git a/agent/src/share/classes/sun/jvm/hotspot/oops/InstanceKlass.java b/agent/src/share/classes/sun/jvm/hotspot/oops/InstanceKlass.java
+--- openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/oops/InstanceKlass.java
++++ openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/oops/InstanceKlass.java
+@@ -51,7 +51,7 @@
+   public static int LOW_OFFSET;
+   public static int HIGH_OFFSET;
+   public static int GENERIC_SIGNATURE_INDEX_OFFSET;
+-  public static int NEXT_OFFSET;
++  public static int FIELD_SLOTS;
+   public static int IMPLEMENTORS_LIMIT;
+ 
+   // ClassState constants
+@@ -78,6 +78,7 @@
+       implementors[i]    = new OopField(type.getOopField("_implementors[0]"), arrayOffset);
+     }
+     fields               = new OopField(type.getOopField("_fields"), Oop.getHeaderSize());
++    javaFieldsCount      = new CIntField(type.getCIntegerField("_java_fields_count"), Oop.getHeaderSize());
+     constants            = new OopField(type.getOopField("_constants"), Oop.getHeaderSize());
+     classLoader          = new OopField(type.getOopField("_class_loader"), Oop.getHeaderSize());
+     protectionDomain     = new OopField(type.getOopField("_protection_domain"), Oop.getHeaderSize());
+@@ -100,14 +101,14 @@
+     headerSize           = alignObjectOffset(Oop.getHeaderSize() + type.getSize());
+ 
+     // read field offset constants
+-    ACCESS_FLAGS_OFFSET = db.lookupIntConstant("instanceKlass::access_flags_offset").intValue();
+-    NAME_INDEX_OFFSET = db.lookupIntConstant("instanceKlass::name_index_offset").intValue();
+-    SIGNATURE_INDEX_OFFSET = db.lookupIntConstant("instanceKlass::signature_index_offset").intValue();
+-    INITVAL_INDEX_OFFSET = db.lookupIntConstant("instanceKlass::initval_index_offset").intValue();
+-    LOW_OFFSET = db.lookupIntConstant("instanceKlass::low_offset").intValue();
+-    HIGH_OFFSET = db.lookupIntConstant("instanceKlass::high_offset").intValue();
+-    GENERIC_SIGNATURE_INDEX_OFFSET = db.lookupIntConstant("instanceKlass::generic_signature_offset").intValue();
+-    NEXT_OFFSET = db.lookupIntConstant("instanceKlass::next_offset").intValue();
++    ACCESS_FLAGS_OFFSET            = db.lookupIntConstant("FieldInfo::access_flags_offset").intValue();
++    NAME_INDEX_OFFSET              = db.lookupIntConstant("FieldInfo::name_index_offset").intValue();
++    SIGNATURE_INDEX_OFFSET         = db.lookupIntConstant("FieldInfo::signature_index_offset").intValue();
++    INITVAL_INDEX_OFFSET           = db.lookupIntConstant("FieldInfo::initval_index_offset").intValue();
++    LOW_OFFSET                     = db.lookupIntConstant("FieldInfo::low_offset").intValue();
++    HIGH_OFFSET                    = db.lookupIntConstant("FieldInfo::high_offset").intValue();
++    GENERIC_SIGNATURE_INDEX_OFFSET = db.lookupIntConstant("FieldInfo::generic_signature_offset").intValue();
++    FIELD_SLOTS                    = db.lookupIntConstant("FieldInfo::field_slots").intValue();
+     // read ClassState constants
+     CLASS_STATE_UNPARSABLE_BY_GC = db.lookupIntConstant("instanceKlass::unparsable_by_gc").intValue();
+     CLASS_STATE_ALLOCATED = db.lookupIntConstant("instanceKlass::allocated").intValue();
+@@ -131,6 +132,7 @@
+   private static CIntField nofImplementors;
+   private static OopField[] implementors;
+   private static OopField  fields;
++  private static CIntField javaFieldsCount;
+   private static OopField  constants;
+   private static OopField  classLoader;
+   private static OopField  protectionDomain;
+@@ -243,6 +245,34 @@
+ 
+   public static long getHeaderSize() { return headerSize; }
+ 
++  public short getFieldAccessFlags(int index) {
++    return getFields().getShortAt(index * FIELD_SLOTS + ACCESS_FLAGS_OFFSET);
++  }
++
++  public Symbol getFieldName(int index) {
++    int nameIndex = getFields().getShortAt(index * FIELD_SLOTS + NAME_INDEX_OFFSET);
++    return getConstants().getSymbolAt(nameIndex);
++  }
++
++  public Symbol getFieldSignature(int index) {
++    int signatureIndex = getFields().getShortAt(index * FIELD_SLOTS + SIGNATURE_INDEX_OFFSET);
++    return getConstants().getSymbolAt(signatureIndex);
++  }
++
++  public Symbol getFieldGenericSignature(int index) {
++    short genericSignatureIndex = getFields().getShortAt(index * FIELD_SLOTS + GENERIC_SIGNATURE_INDEX_OFFSET);
++    if (genericSignatureIndex != 0)  {
++      return getConstants().getSymbolAt(genericSignatureIndex);
++    }
++    return null;
++  }
++
++  public int getFieldOffset(int index) {
++    TypeArray fields = getFields();
++    return VM.getVM().buildIntFromShorts(fields.getShortAt(index * FIELD_SLOTS + LOW_OFFSET),
++                                         fields.getShortAt(index * FIELD_SLOTS + HIGH_OFFSET));
++  }
++
+   // Accessors for declared fields
+   public Klass     getArrayKlasses()        { return (Klass)        arrayKlasses.getValue(this); }
+   public ObjArray  getMethods()             { return (ObjArray)     methods.getValue(this); }
+@@ -253,6 +283,8 @@
+   public Klass     getImplementor()         { return (Klass)        implementors[0].getValue(this); }
+   public Klass     getImplementor(int i)    { return (Klass)        implementors[i].getValue(this); }
+   public TypeArray getFields()              { return (TypeArray)    fields.getValue(this); }
++  public int       getJavaFieldsCount()     { return                (int) javaFieldsCount.getValue(this); }
++  public int       getAllFieldsCount()      { return                (int)getFields().getLength(); }
+   public ConstantPool getConstants()        { return (ConstantPool) constants.getValue(this); }
+   public Oop       getClassLoader()         { return                classLoader.getValue(this); }
+   public Oop       getProtectionDomain()    { return                protectionDomain.getValue(this); }
+@@ -461,8 +493,8 @@
+     }
+ 
+     TypeArray fields = getFields();
+-    int length = (int) fields.getLength();
+-    for (int index = 0; index < length; index += NEXT_OFFSET) {
++    int length = getJavaFieldsCount();
++    for (int index = 0; index < length; index += FIELD_SLOTS) {
+       short accessFlags    = fields.getShortAt(index + ACCESS_FLAGS_OFFSET);
+       short signatureIndex = fields.getShortAt(index + SIGNATURE_INDEX_OFFSET);
+       FieldType   type   = new FieldType(getConstants().getSymbolAt(signatureIndex));
+@@ -483,8 +515,8 @@
+     }
+     TypeArray fields = getFields();
+ 
+-    int length = (int) fields.getLength();
+-    for (int index = 0; index < length; index += NEXT_OFFSET) {
++    int length = getJavaFieldsCount();
++    for (int index = 0; index < length; index += FIELD_SLOTS) {
+       short accessFlags    = fields.getShortAt(index + ACCESS_FLAGS_OFFSET);
+       short signatureIndex = fields.getShortAt(index + SIGNATURE_INDEX_OFFSET);
+ 
+@@ -499,9 +531,9 @@
+   /** Field access by name. */
+   public Field findLocalField(Symbol name, Symbol sig) {
+     TypeArray fields = getFields();
+-    int n = (int) fields.getLength();
++    int length = (int) fields.getLength();
+     ConstantPool cp = getConstants();
+-    for (int i = 0; i < n; i += NEXT_OFFSET) {
++    for (int i = 0; i < length; i += FIELD_SLOTS) {
+       int nameIndex = fields.getShortAt(i + NAME_INDEX_OFFSET);
+       int sigIndex  = fields.getShortAt(i + SIGNATURE_INDEX_OFFSET);
+       Symbol f_name = cp.getSymbolAt(nameIndex);
+@@ -594,9 +626,9 @@
+         // not including inherited fields.
+         TypeArray fields = getFields();
+ 
+-        int length = (int) fields.getLength();
+-        List immediateFields = new ArrayList(length / NEXT_OFFSET);
+-        for (int index = 0; index < length; index += NEXT_OFFSET) {
++        int length = getJavaFieldsCount();
++        List immediateFields = new ArrayList(length);
++        for (int index = 0; index < length; index += FIELD_SLOTS) {
+             immediateFields.add(getFieldByIndex(index));
+         }
+ 
+diff --git a/agent/src/share/classes/sun/jvm/hotspot/tools/jcore/ClassWriter.java b/agent/src/share/classes/sun/jvm/hotspot/tools/jcore/ClassWriter.java
+--- openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/tools/jcore/ClassWriter.java
++++ openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/tools/jcore/ClassWriter.java
+@@ -381,15 +381,15 @@
+ 
+     protected void writeFields() throws IOException {
+         TypeArray fields = klass.getFields();
+-        final int length = (int) fields.getLength();
++        final int length = klass.getJavaFieldsCount();
+ 
+         // write number of fields
+-        dos.writeShort((short) (length / InstanceKlass.NEXT_OFFSET) );
++        dos.writeShort((short) (length / InstanceKlass.FIELD_SLOTS) );
+ 
+         if (DEBUG) debugMessage("number of fields = "
+-                                + length/InstanceKlass.NEXT_OFFSET);
++                                + length/InstanceKlass.FIELD_SLOTS);
+ 
+-        for (int index = 0; index < length; index += InstanceKlass.NEXT_OFFSET) {
++        for (int index = 0; index < length; index += InstanceKlass.FIELD_SLOTS) {
+             short accessFlags    = fields.getShortAt(index + InstanceKlass.ACCESS_FLAGS_OFFSET);
+             dos.writeShort(accessFlags & (short) JVM_RECOGNIZED_FIELD_MODIFIERS);
+ 
+diff --git a/agent/src/share/classes/sun/jvm/hotspot/tools/soql/SOQL.java b/agent/src/share/classes/sun/jvm/hotspot/tools/soql/SOQL.java
+--- openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/tools/soql/SOQL.java
++++ openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/tools/soql/SOQL.java
+@@ -150,16 +150,13 @@
+             }
+ 
+             // list immediate fields only
+-            TypeArray fields = klass.getFields();
+-            int numFields = (int) fields.getLength();
++            int numFields = klass.getJavaFieldsCount();
+             ConstantPool cp = klass.getConstants();
+             out.println("fields");
+             if (numFields != 0) {
+-               for (int f = 0; f < numFields; f += InstanceKlass.NEXT_OFFSET) {
+-                 int nameIndex = fields.getShortAt(f + InstanceKlass.NAME_INDEX_OFFSET);
+-                 int sigIndex  = fields.getShortAt(f + InstanceKlass.SIGNATURE_INDEX_OFFSET);
+-                 Symbol f_name = cp.getSymbolAt(nameIndex);
+-                 Symbol f_sig  = cp.getSymbolAt(sigIndex);
++              for (int f = 0; f < numFields; f++){
++                 Symbol f_name = klass.getFieldName(f);
++                 Symbol f_sig  = klass.getFieldSignature(f);
+                  StringBuffer sigBuf = new StringBuffer();
+                  new SignatureConverter(f_sig, sigBuf).dispatchField();
+                  out.print('\t');
+diff --git a/agent/src/share/classes/sun/jvm/hotspot/ui/classbrowser/HTMLGenerator.java b/agent/src/share/classes/sun/jvm/hotspot/ui/classbrowser/HTMLGenerator.java
+--- openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/ui/classbrowser/HTMLGenerator.java
++++ openjdk/hotspot/agent/src/share/classes/sun/jvm/hotspot/ui/classbrowser/HTMLGenerator.java
+@@ -1117,20 +1117,15 @@
+                 InstanceKlass kls = (InstanceKlass) obj;
+                 buf.append(" " + kls.getName().asString() + "={");
+                 int flen = ov.fieldsSize();
+-
+-                TypeArray klfields = kls.getFields();
+-                int klen = (int) klfields.getLength();
+-
+-                ConstantPool cp = kls.getConstants();
++                int klen = kls.getJavaFieldsCount();
+                 int findex = 0;
+-                for (int index = 0; index < klen; index += kls.NEXT_OFFSET) {
+-                    int accsFlags = klfields.getShortAt(index + kls.ACCESS_FLAGS_OFFSET);
+-                    int nameIndex = klfields.getShortAt(index + kls.NAME_INDEX_OFFSET);
++                for (int index = 0; index < klen; index++) {
++                    int accsFlags = kls.getFieldAccessFlags(index);
++                    Symbol f_name = kls.getFieldName(index);
+                     AccessFlags access = new AccessFlags(accsFlags);
+                     if (!access.isStatic()) {
+                         ScopeValue svf = ov.getFieldAt(findex++);
+                         String    fstr = scopeValueAsString(sd, svf);
+-                        Symbol f_name  = cp.getSymbolAt(nameIndex);
+                         buf.append(" [" + f_name.asString() + " :"+ index + "]=(#" + fstr + ")");
+                     }
+                 }
+@@ -1820,13 +1815,11 @@
+ 
+    protected String genHTMLListForFields(InstanceKlass klass) {
+       Formatter buf = new Formatter(genHTML);
+-      TypeArray fields = klass.getFields();
+-      int numFields = (int) fields.getLength();
+-      ConstantPool cp = klass.getConstants();
++      int numFields = klass.getJavaFieldsCount();
+       if (numFields != 0) {
+          buf.h3("Fields");
+          buf.beginList();
+-         for (int f = 0; f < numFields; f += InstanceKlass.NEXT_OFFSET) {
++         for (int f = 0; f < numFields; f++) {
+            sun.jvm.hotspot.oops.Field field = klass.getFieldByIndex(f);
+            String f_name = ((NamedFieldIdentifier)field.getID()).getName();
+            Symbol f_sig  = field.getSignature();
+diff --git a/agent/test/jdi/sasanity.sh b/agent/test/jdi/sasanity.sh
+--- openjdk/hotspot/agent/test/jdi/sasanity.sh
++++ openjdk/hotspot/agent/test/jdi/sasanity.sh
+@@ -76,5 +76,5 @@
+   sleep 2
+ done
+ 
+-$jdk/bin/java -showversion ${OPTIONS} -classpath $javacp SASanityChecker $pid
++$jdk/bin/java -showversion ${OPTIONS} -classpath $javacp $* SASanityChecker $pid
+ kill -9 $pid
+diff --git a/src/cpu/sparc/vm/assembler_sparc.cpp b/src/cpu/sparc/vm/assembler_sparc.cpp
+--- openjdk/hotspot/src/cpu/sparc/vm/assembler_sparc.cpp
++++ openjdk/hotspot/src/cpu/sparc/vm/assembler_sparc.cpp
+@@ -3186,15 +3186,10 @@
+                                                 Register temp_reg) {
+   assert_different_registers(vmslots_reg, mh_reg, temp_reg);
+   // load mh.type.form.vmslots
+-  if (java_dyn_MethodHandle::vmslots_offset_in_bytes() != 0) {
+-    // hoist vmslots into every mh to avoid dependent load chain
+-    ld(           Address(mh_reg,    delayed_value(java_dyn_MethodHandle::vmslots_offset_in_bytes, temp_reg)),   vmslots_reg);
+-  } else {
+-    Register temp2_reg = vmslots_reg;
+-    load_heap_oop(Address(mh_reg,    delayed_value(java_dyn_MethodHandle::type_offset_in_bytes, temp_reg)),      temp2_reg);
+-    load_heap_oop(Address(temp2_reg, delayed_value(java_dyn_MethodType::form_offset_in_bytes, temp_reg)),        temp2_reg);
+-    ld(           Address(temp2_reg, delayed_value(java_dyn_MethodTypeForm::vmslots_offset_in_bytes, temp_reg)), vmslots_reg);
+-  }
++  Register temp2_reg = vmslots_reg;
++  load_heap_oop(Address(mh_reg,    delayed_value(java_dyn_MethodHandle::type_offset_in_bytes, temp_reg)),      temp2_reg);
++  load_heap_oop(Address(temp2_reg, delayed_value(java_dyn_MethodType::form_offset_in_bytes, temp_reg)),        temp2_reg);
++  ld(           Address(temp2_reg, delayed_value(java_dyn_MethodTypeForm::vmslots_offset_in_bytes, temp_reg)), vmslots_reg);
+ }
+ 
+ 
+@@ -4918,4 +4913,3 @@
+   // Caller should set it:
+   // add(G0, 1, result); // equals
+ }
+-
+diff --git a/src/cpu/x86/vm/assembler_x86.cpp b/src/cpu/x86/vm/assembler_x86.cpp
+--- openjdk/hotspot/src/cpu/x86/vm/assembler_x86.cpp
++++ openjdk/hotspot/src/cpu/x86/vm/assembler_x86.cpp
+@@ -7806,15 +7806,10 @@
+                                                 Register temp_reg) {
+   assert_different_registers(vmslots_reg, mh_reg, temp_reg);
+   // load mh.type.form.vmslots
+-  if (java_dyn_MethodHandle::vmslots_offset_in_bytes() != 0) {
+-    // hoist vmslots into every mh to avoid dependent load chain
+-    movl(vmslots_reg, Address(mh_reg, delayed_value(java_dyn_MethodHandle::vmslots_offset_in_bytes, temp_reg)));
+-  } else {
+-    Register temp2_reg = vmslots_reg;
+-    load_heap_oop(temp2_reg, Address(mh_reg,    delayed_value(java_dyn_MethodHandle::type_offset_in_bytes, temp_reg)));
+-    load_heap_oop(temp2_reg, Address(temp2_reg, delayed_value(java_dyn_MethodType::form_offset_in_bytes, temp_reg)));
+-    movl(vmslots_reg, Address(temp2_reg, delayed_value(java_dyn_MethodTypeForm::vmslots_offset_in_bytes, temp_reg)));
+-  }
++  Register temp2_reg = vmslots_reg;
++  load_heap_oop(temp2_reg, Address(mh_reg,    delayed_value(java_dyn_MethodHandle::type_offset_in_bytes, temp_reg)));
++  load_heap_oop(temp2_reg, Address(temp2_reg, delayed_value(java_dyn_MethodType::form_offset_in_bytes, temp_reg)));
++  movl(vmslots_reg, Address(temp2_reg, delayed_value(java_dyn_MethodTypeForm::vmslots_offset_in_bytes, temp_reg)));
+ }
+ 
+ 
+diff --git a/src/share/vm/ci/ciInstanceKlass.cpp b/src/share/vm/ci/ciInstanceKlass.cpp
+--- openjdk/hotspot/src/share/vm/ci/ciInstanceKlass.cpp
++++ openjdk/hotspot/src/share/vm/ci/ciInstanceKlass.cpp
+@@ -31,6 +31,7 @@
+ #include "memory/allocation.hpp"
+ #include "memory/allocation.inline.hpp"
+ #include "oops/oop.inline.hpp"
++#include "oops/fieldStreams.hpp"
+ #include "runtime/fieldDescriptor.hpp"
+ 
+ // ciInstanceKlass
+@@ -411,7 +412,7 @@
+     VM_ENTRY_MARK;
+     ciEnv* curEnv = ciEnv::current();
+     instanceKlass* ik = get_instanceKlass();
+-    int max_n_fields = ik->fields()->length()/instanceKlass::next_offset;
++    int max_n_fields = ik->java_fields_count();
+ 
+     Arena* arena = curEnv->arena();
+     _non_static_fields =
+@@ -475,23 +476,6 @@
+   // Now sort them by offset, ascending.
+   // (In principle, they could mix with superclass fields.)
+   fields->sort(sort_field_by_offset);
+-#ifdef ASSERT
+-  int last_offset = instanceOopDesc::base_offset_in_bytes();
+-  for (int i = 0; i < fields->length(); i++) {
+-    ciField* field = fields->at(i);
+-    int offset = field->offset_in_bytes();
+-    int size   = (field->_type == NULL) ? heapOopSize : field->size_in_bytes();
+-    assert(last_offset <= offset, err_msg("no field overlap: %d <= %d", last_offset, offset));
+-    if (last_offset > (int)sizeof(oopDesc))
+-      assert((offset - last_offset) < BytesPerLong, "no big holes");
+-    // Note:  Two consecutive T_BYTE fields will be separated by wordSize-1
+-    // padding bytes if one of them is declared by a superclass.
+-    // This is a minor inefficiency classFileParser.cpp.
+-    last_offset = offset + size;
+-  }
+-  assert(last_offset <= (int)instanceOopDesc::base_offset_in_bytes() + fsize, "no overflow");
+-#endif
+-
+   _nonstatic_fields = fields;
+   return flen;
+ }
+@@ -504,33 +488,29 @@
+   int flen = 0;
+   GrowableArray<ciField*>* fields = NULL;
+   instanceKlass* k = get_instanceKlass();
+-  typeArrayOop fields_array = k->fields();
+-  for (int pass = 0; pass <= 1; pass++) {
+-    for (int i = 0, alen = fields_array->length(); i < alen; i += instanceKlass::next_offset) {
+-      fieldDescriptor fd;
+-      fd.initialize(k->as_klassOop(), i);
+-      if (fd.is_static())  continue;
+-      if (pass == 0) {
+-        flen += 1;
+-      } else {
+-        ciField* field = new (arena) ciField(&fd);
+-        fields->append(field);
+-      }
+-    }
++  for (JavaFieldStream fs(k); !fs.done(); fs.next()) {
++    if (fs.access_flags().is_static())  continue;
++    flen += 1;
++  }
+ 
+-    // Between passes, allocate the array:
+-    if (pass == 0) {
+-      if (flen == 0) {
+-        return NULL;  // return nothing if none are locally declared
+-      }
+-      if (super_fields != NULL) {
+-        flen += super_fields->length();
+-      }
+-      fields = new (arena) GrowableArray<ciField*>(arena, flen, 0, NULL);
+-      if (super_fields != NULL) {
+-        fields->appendAll(super_fields);
+-      }
+-    }
++  // allocate the array:
++  if (flen == 0) {
++    return NULL;  // return nothing if none are locally declared
++  }
++  if (super_fields != NULL) {
++    flen += super_fields->length();
++  }
++  fields = new (arena) GrowableArray<ciField*>(arena, flen, 0, NULL);
++  if (super_fields != NULL) {
++    fields->appendAll(super_fields);
++  }
++
++  for (JavaFieldStream fs(k); !fs.done(); fs.next()) {
++    if (fs.access_flags().is_static())  continue;
++    fieldDescriptor fd;
++    fd.initialize(k->as_klassOop(), fs.index());
++    ciField* field = new (arena) ciField(&fd);
++    fields->append(field);
+   }
+   assert(fields->length() == flen, "sanity");
+   return fields;
+diff --git a/src/share/vm/classfile/classFileParser.cpp b/src/share/vm/classfile/classFileParser.cpp
+--- openjdk/hotspot/src/share/vm/classfile/classFileParser.cpp
++++ openjdk/hotspot/src/share/vm/classfile/classFileParser.cpp
+@@ -36,6 +36,7 @@
+ #include "memory/oopFactory.hpp"
+ #include "memory/universe.inline.hpp"
+ #include "oops/constantPoolOop.hpp"
++#include "oops/fieldStreams.hpp"
+ #include "oops/instanceKlass.hpp"
+ #include "oops/instanceMirrorKlass.hpp"
+ #include "oops/klass.inline.hpp"
+@@ -1004,42 +1005,98 @@
+   STATIC_BYTE,          // Boolean, Byte, char
+   STATIC_SHORT,         // shorts
+   STATIC_WORD,          // ints
+-  STATIC_DOUBLE,        // long or double
+-  STATIC_ALIGNED_DOUBLE,// aligned long or double
++  STATIC_DOUBLE,        // aligned long or double
+   NONSTATIC_OOP,
+   NONSTATIC_BYTE,
+   NONSTATIC_SHORT,
+   NONSTATIC_WORD,
+   NONSTATIC_DOUBLE,
+-  NONSTATIC_ALIGNED_DOUBLE
++  MAX_FIELD_ALLOCATION_TYPE,
++  BAD_ALLOCATION_TYPE = -1
+ };
+ 
+-
+-struct FieldAllocationCount {
+-  unsigned int static_oop_count;
+-  unsigned int static_byte_count;
+-  unsigned int static_short_count;
+-  unsigned int static_word_count;
+-  unsigned int static_double_count;
+-  unsigned int nonstatic_oop_count;
+-  unsigned int nonstatic_byte_count;
+-  unsigned int nonstatic_short_count;
+-  unsigned int nonstatic_word_count;
+-  unsigned int nonstatic_double_count;
++static FieldAllocationType _basic_type_to_atype[2 * (T_CONFLICT + 1)] = {
++  BAD_ALLOCATION_TYPE, // 0
++  BAD_ALLOCATION_TYPE, // 1
++  BAD_ALLOCATION_TYPE, // 2
++  BAD_ALLOCATION_TYPE, // 3
++  NONSTATIC_BYTE ,     // T_BOOLEAN  =  4,
++  NONSTATIC_SHORT,     // T_CHAR     =  5,
++  NONSTATIC_WORD,      // T_FLOAT    =  6,
++  NONSTATIC_DOUBLE,    // T_DOUBLE   =  7,
++  NONSTATIC_BYTE,      // T_BYTE     =  8,
++  NONSTATIC_SHORT,     // T_SHORT    =  9,
++  NONSTATIC_WORD,      // T_INT      = 10,
++  NONSTATIC_DOUBLE,    // T_LONG     = 11,
++  NONSTATIC_OOP,       // T_OBJECT   = 12,
++  NONSTATIC_OOP,       // T_ARRAY    = 13,
++  BAD_ALLOCATION_TYPE, // T_VOID     = 14,
++  BAD_ALLOCATION_TYPE, // T_ADDRESS  = 15,
++  BAD_ALLOCATION_TYPE, // T_NARROWOOP= 16,
++  BAD_ALLOCATION_TYPE, // T_CONFLICT = 17,
++  BAD_ALLOCATION_TYPE, // 0
++  BAD_ALLOCATION_TYPE, // 1
++  BAD_ALLOCATION_TYPE, // 2
++  BAD_ALLOCATION_TYPE, // 3
++  STATIC_BYTE ,        // T_BOOLEAN  =  4,
++  STATIC_SHORT,        // T_CHAR     =  5,
++  STATIC_WORD,          // T_FLOAT    =  6,
++  STATIC_DOUBLE,       // T_DOUBLE   =  7,
++  STATIC_BYTE,         // T_BYTE     =  8,
++  STATIC_SHORT,        // T_SHORT    =  9,
++  STATIC_WORD,         // T_INT      = 10,
++  STATIC_DOUBLE,       // T_LONG     = 11,
++  STATIC_OOP,          // T_OBJECT   = 12,
++  STATIC_OOP,          // T_ARRAY    = 13,
++  BAD_ALLOCATION_TYPE, // T_VOID     = 14,
++  BAD_ALLOCATION_TYPE, // T_ADDRESS  = 15,
++  BAD_ALLOCATION_TYPE, // T_NARROWOOP= 16,
++  BAD_ALLOCATION_TYPE, // T_CONFLICT = 17,
+ };
+ 
+-typeArrayHandle ClassFileParser::parse_fields(constantPoolHandle cp, bool is_interface,
+-                                              struct FieldAllocationCount *fac,
+-                                              objArrayHandle* fields_annotations, TRAPS) {
++static FieldAllocationType basic_type_to_atype(bool is_static, BasicType type) {
++  assert(type >= T_BOOLEAN && type < T_VOID, "only allowable values");
++  FieldAllocationType result = _basic_type_to_atype[type + (is_static ? (T_CONFLICT + 1) : 0)];
++  assert(result != BAD_ALLOCATION_TYPE, "bad type");
++  return result;
++}
++
++class FieldAllocationCount: public ResourceObj {
++ public:
++  unsigned int count[MAX_FIELD_ALLOCATION_TYPE];
++
++  FieldAllocationCount() {
++    for (int i = 0; i < MAX_FIELD_ALLOCATION_TYPE; i++) {
++      count[i] = 0;
++    }
++  }
++
++  FieldAllocationType update(bool is_static, BasicType type) {
++    FieldAllocationType atype = basic_type_to_atype(is_static, type);
++    count[atype]++;
++    return atype;
++  }
++};
++
++
++typeArrayHandle ClassFileParser::parse_fields(Symbol* class_name,
++                                              constantPoolHandle cp, bool is_interface,
++                                              FieldAllocationCount *fac,
++                                              objArrayHandle* fields_annotations,
++                                              int* java_fields_count_ptr, TRAPS) {
+   ClassFileStream* cfs = stream();
+   typeArrayHandle nullHandle;
+   cfs->guarantee_more(2, CHECK_(nullHandle));  // length
+   u2 length = cfs->get_u2_fast();
++  *java_fields_count_ptr = length;
++
++  int num_injected = 0;
++  InjectedField* injected = JavaClasses::get_injected(class_name, &num_injected);
++
+   // Tuples of shorts [access, name index, sig index, initial value index, byte offset, generic signature index]
+-  typeArrayOop new_fields = oopFactory::new_permanent_shortArray(length*instanceKlass::next_offset, CHECK_(nullHandle));
++  typeArrayOop new_fields = oopFactory::new_permanent_shortArray((length + num_injected) * FieldInfo::field_slots, CHECK_(nullHandle));
+   typeArrayHandle fields(THREAD, new_fields);
+ 
+-  int index = 0;
+   typeArrayHandle field_annotations;
+   for (int n = 0; n < length; n++) {
+     cfs->guarantee_more(8, CHECK_(nullHandle));  // access_flags, name_index, descriptor_index, attributes_count
+@@ -1090,93 +1147,77 @@
+       }
+     }
+ 
+-    fields->short_at_put(index++, access_flags.as_short());
+-    fields->short_at_put(index++, name_index);
+-    fields->short_at_put(index++, signature_index);
+-    fields->short_at_put(index++, constantvalue_index);
++    FieldInfo* field = FieldInfo::from_field_array(fields(), n);
++    field->initialize(access_flags.as_short(),
++                      name_index,
++                      signature_index,
++                      constantvalue_index,
++                      generic_signature_index,
++                      0);
++
++    BasicType type = cp->basic_type_for_signature_at(signature_index);
+ 
+     // Remember how many oops we encountered and compute allocation type
+-    BasicType type = cp->basic_type_for_signature_at(signature_index);
+-    FieldAllocationType atype;
+-    if ( is_static ) {
+-      switch ( type ) {
+-        case  T_BOOLEAN:
+-        case  T_BYTE:
+-          fac->static_byte_count++;
+-          atype = STATIC_BYTE;
+-          break;
+-        case  T_LONG:
+-        case  T_DOUBLE:
+-          if (Universe::field_type_should_be_aligned(type)) {
+-            atype = STATIC_ALIGNED_DOUBLE;
+-          } else {
+-            atype = STATIC_DOUBLE;
+-          }
+-          fac->static_double_count++;
+-          break;
+-        case  T_CHAR:
+-        case  T_SHORT:
+-          fac->static_short_count++;
+-          atype = STATIC_SHORT;
+-          break;
+-        case  T_FLOAT:
+-        case  T_INT:
+-          fac->static_word_count++;
+-          atype = STATIC_WORD;
+-          break;
+-        case  T_ARRAY:
+-        case  T_OBJECT:
+-          fac->static_oop_count++;
+-          atype = STATIC_OOP;
+-          break;
+-        case  T_ADDRESS:
+-        case  T_VOID:
+-        default:
+-          assert(0, "bad field type");
+-      }
+-    } else {
+-      switch ( type ) {
+-        case  T_BOOLEAN:
+-        case  T_BYTE:
+-          fac->nonstatic_byte_count++;
+-          atype = NONSTATIC_BYTE;
+-          break;
+-        case  T_LONG:
+-        case  T_DOUBLE:
+-          if (Universe::field_type_should_be_aligned(type)) {
+-            atype = NONSTATIC_ALIGNED_DOUBLE;
+-          } else {
+-            atype = NONSTATIC_DOUBLE;
+-          }
+-          fac->nonstatic_double_count++;
+-          break;
+-        case  T_CHAR:
+-        case  T_SHORT:
+-          fac->nonstatic_short_count++;
+-          atype = NONSTATIC_SHORT;
+-          break;
+-        case  T_FLOAT:
+-        case  T_INT:
+-          fac->nonstatic_word_count++;
+-          atype = NONSTATIC_WORD;
+-          break;
+-        case  T_ARRAY:
+-        case  T_OBJECT:
+-          fac->nonstatic_oop_count++;
+-          atype = NONSTATIC_OOP;
+-          break;
+-        case  T_ADDRESS:
+-        case  T_VOID:
+-        default:
+-          assert(0, "bad field type");
+-      }
+-    }
++    FieldAllocationType atype = fac->update(is_static, type);
+ 
+     // The correct offset is computed later (all oop fields will be located together)
+     // We temporarily store the allocation type in the offset field
+-    fields->short_at_put(index++, atype);
+-    fields->short_at_put(index++, 0);  // Clear out high word of byte offset
+-    fields->short_at_put(index++, generic_signature_index);
++    field->set_offset(atype);
++  }
++
++  if (num_injected != 0) {
++    int index = length;
++    for (int n = 0; n < num_injected; n++) {
++      // Check for duplicates
++      if (injected[n].may_be_java) {
++        Symbol* name      = injected[n].name();
++        Symbol* signature = injected[n].signature();
++        bool duplicate = false;
++        for (int i = 0; i < length; i++) {
++          FieldInfo* f = FieldInfo::from_field_array(fields(), i);
++          if (name      == cp->symbol_at(f->name_index()) &&
++              signature == cp->symbol_at(f->signature_index())) {
++            // Symbol is desclared in Java so skip this one
++            duplicate = true;
++            break;
++          }
++        }
++        if (duplicate) {
++          // These will be removed from the field array at the end
++          continue;
++        }
++      }
++
++      // Injected field
++      FieldInfo* field = FieldInfo::from_field_array(fields(), index);
++      field->initialize(JVM_ACC_FIELD_INTERNAL,
++                        injected[n].name_index,
++                        injected[n].signature_index,
++                        0,
++                        0,
++                        0);
++
++      BasicType type = FieldType::basic_type(injected[n].signature());
++
++      // Remember how many oops we encountered and compute allocation type
++      FieldAllocationType atype = fac->update(false, type);
++
++      // The correct offset is computed later (all oop fields will be located together)
++      // We temporarily store the allocation type in the offset field
++      field->set_offset(atype);
++      index++;
++    }
++
++    if (index < length + num_injected) {
++      // sometimes injected fields already exist in the Java source so
++      // the fields array could be too long.  In that case trim the
++      // fields array.
++      new_fields = oopFactory::new_permanent_shortArray(index * FieldInfo::field_slots, CHECK_(nullHandle));
++      for (int i = 0; i < index * FieldInfo::field_slots; i++) {
++        new_fields->short_at_put(i, fields->short_at(i));
++      }
++      fields = new_fields;
++    }
+   }
+ 
+   if (_need_verify && length > 1) {
+@@ -1188,11 +1229,9 @@
+     bool dup = false;
+     {
+       debug_only(No_Safepoint_Verifier nsv;)
+-      for (int i = 0; i < length*instanceKlass::next_offset; i += instanceKlass::next_offset) {
+-        int name_index = fields->ushort_at(i + instanceKlass::name_index_offset);
+-        Symbol* name = cp->symbol_at(name_index);
+-        int sig_index = fields->ushort_at(i + instanceKlass::signature_index_offset);
+-        Symbol* sig = cp->symbol_at(sig_index);
++      for (AllFieldStream fs(fields, cp); !fs.done(); fs.next()) {
++        Symbol* name = fs.name();
++        Symbol* sig = fs.signature();
+         // If no duplicates, add name/signature in hashtable names_and_sigs.
+         if (!put_after_lookup(name, sig, names_and_sigs)) {
+           dup = true;
+@@ -2647,227 +2686,6 @@
+ }
+ 
+ 
+-void ClassFileParser::java_lang_ref_Reference_fix_pre(typeArrayHandle* fields_ptr,
+-  constantPoolHandle cp, FieldAllocationCount *fac_ptr, TRAPS) {
+-  // This code is for compatibility with earlier jdk's that do not
+-  // have the "discovered" field in java.lang.ref.Reference.  For 1.5
+-  // the check for the "discovered" field should issue a warning if
+-  // the field is not found.  For 1.6 this code should be issue a
+-  // fatal error if the "discovered" field is not found.
+-  //
+-  // Increment fac.nonstatic_oop_count so that the start of the
+-  // next type of non-static oops leaves room for the fake oop.
+-  // Do not increment next_nonstatic_oop_offset so that the
+-  // fake oop is place after the java.lang.ref.Reference oop
+-  // fields.
+-  //
+-  // Check the fields in java.lang.ref.Reference for the "discovered"
+-  // field.  If it is not present, artifically create a field for it.
+-  // This allows this VM to run on early JDK where the field is not
+-  // present.
+-  int reference_sig_index = 0;
+-  int reference_name_index = 0;
+-  int reference_index = 0;
+-  int extra = java_lang_ref_Reference::number_of_fake_oop_fields;
+-  const int n = (*fields_ptr)()->length();
+-  for (int i = 0; i < n; i += instanceKlass::next_offset ) {
+-    int name_index =
+-    (*fields_ptr)()->ushort_at(i + instanceKlass::name_index_offset);
+-    int sig_index  =
+-      (*fields_ptr)()->ushort_at(i + instanceKlass::signature_index_offset);
+-    Symbol* f_name = cp->symbol_at(name_index);
+-    Symbol* f_sig  = cp->symbol_at(sig_index);
+-    if (f_sig == vmSymbols::reference_signature() && reference_index == 0) {
+-      // Save the index for reference signature for later use.
+-      // The fake discovered field does not entries in the
+-      // constant pool so the index for its signature cannot
+-      // be extracted from the constant pool.  It will need
+-      // later, however.  It's signature is vmSymbols::reference_signature()
+-      // so same an index for that signature.
+-      reference_sig_index = sig_index;
+-      reference_name_index = name_index;
+-      reference_index = i;
+-    }
+-    if (f_name == vmSymbols::reference_discovered_name() &&
+-      f_sig == vmSymbols::reference_signature()) {
+-      // The values below are fake but will force extra
+-      // non-static oop fields and a corresponding non-static
+-      // oop map block to be allocated.
+-      extra = 0;
+-      break;
+-    }
+-  }
+-  if (extra != 0) {
+-    fac_ptr->nonstatic_oop_count += extra;
+-    // Add the additional entry to "fields" so that the klass
+-    // contains the "discoverd" field and the field will be initialized
+-    // in instances of the object.
+-    int fields_with_fix_length = (*fields_ptr)()->length() +
+-      instanceKlass::next_offset;
+-    typeArrayOop ff = oopFactory::new_permanent_shortArray(
+-                                                fields_with_fix_length, CHECK);
+-    typeArrayHandle fields_with_fix(THREAD, ff);
+-
+-    // Take everything from the original but the length.
+-    for (int idx = 0; idx < (*fields_ptr)->length(); idx++) {
+-      fields_with_fix->ushort_at_put(idx, (*fields_ptr)->ushort_at(idx));
+-    }
+-
+-    // Add the fake field at the end.
+-    int i = (*fields_ptr)->length();
+-    // There is no name index for the fake "discovered" field nor
+-    // signature but a signature is needed so that the field will
+-    // be properly initialized.  Use one found for
+-    // one of the other reference fields. Be sure the index for the
+-    // name is 0.  In fieldDescriptor::initialize() the index of the
+-    // name is checked.  That check is by passed for the last nonstatic
+-    // oop field in a java.lang.ref.Reference which is assumed to be
+-    // this artificial "discovered" field.  An assertion checks that
+-    // the name index is 0.
+-    assert(reference_index != 0, "Missing signature for reference");
+-
+-    int j;
+-    for (j = 0; j < instanceKlass::next_offset; j++) {
+-      fields_with_fix->ushort_at_put(i + j,
+-        (*fields_ptr)->ushort_at(reference_index +j));
+-    }
+-    // Clear the public access flag and set the private access flag.
+-    short flags;
+-    flags =
+-      fields_with_fix->ushort_at(i + instanceKlass::access_flags_offset);
+-    assert(!(flags & JVM_RECOGNIZED_FIELD_MODIFIERS), "Unexpected access flags set");
+-    flags = flags & (~JVM_ACC_PUBLIC);
+-    flags = flags | JVM_ACC_PRIVATE;
+-    AccessFlags access_flags;
+-    access_flags.set_flags(flags);
+-    assert(!access_flags.is_public(), "Failed to clear public flag");
+-    assert(access_flags.is_private(), "Failed to set private flag");
+-    fields_with_fix->ushort_at_put(i + instanceKlass::access_flags_offset,
+-      flags);
+-
+-    assert(fields_with_fix->ushort_at(i + instanceKlass::name_index_offset)
+-      == reference_name_index, "The fake reference name is incorrect");
+-    assert(fields_with_fix->ushort_at(i + instanceKlass::signature_index_offset)
+-      == reference_sig_index, "The fake reference signature is incorrect");
+-    // The type of the field is stored in the low_offset entry during
+-    // parsing.
+-    assert(fields_with_fix->ushort_at(i + instanceKlass::low_offset) ==
+-      NONSTATIC_OOP, "The fake reference type is incorrect");
+-
+-    // "fields" is allocated in the permanent generation.  Disgard
+-    // it and let it be collected.
+-    (*fields_ptr) = fields_with_fix;
+-  }
+-  return;
+-}
+-
+-
+-void ClassFileParser::java_lang_Class_fix_pre(int* nonstatic_field_size,
+-                                              FieldAllocationCount *fac_ptr) {
+-  // Add fake fields for java.lang.Class instances
+-  //
+-  // This is not particularly nice. We should consider adding a
+-  // private transient object field at the Java level to
+-  // java.lang.Class. Alternatively we could add a subclass of
+-  // instanceKlass which provides an accessor and size computer for
+-  // this field, but that appears to be more code than this hack.
+-  //
+-  // NOTE that we wedge these in at the beginning rather than the
+-  // end of the object because the Class layout changed between JDK
+-  // 1.3 and JDK 1.4 with the new reflection implementation; some
+-  // nonstatic oop fields were added at the Java level. The offsets
+-  // of these fake fields can't change between these two JDK
+-  // versions because when the offsets are computed at bootstrap
+-  // time we don't know yet which version of the JDK we're running in.
+-
+-  // The values below are fake but will force three non-static oop fields and
+-  // a corresponding non-static oop map block to be allocated.
+-  const int extra = java_lang_Class::number_of_fake_oop_fields;
+-  fac_ptr->nonstatic_oop_count += extra;
+-
+-  // Reserve some leading space for fake ints
+-  *nonstatic_field_size += align_size_up(java_lang_Class::hc_number_of_fake_int_fields * BytesPerInt, heapOopSize) / heapOopSize;
+-}
+-
+-
+-void ClassFileParser::java_lang_Class_fix_post(int* next_nonstatic_oop_offset_ptr) {
+-  // Cause the extra fake fields in java.lang.Class to show up before
+-  // the Java fields for layout compatibility between 1.3 and 1.4
+-  // Incrementing next_nonstatic_oop_offset here advances the
+-  // location where the real java fields are placed.
+-  const int extra = java_lang_Class::number_of_fake_oop_fields;
+-  (*next_nonstatic_oop_offset_ptr) += (extra * heapOopSize);
+-}
+-
+-
+-// Force MethodHandle.vmentry to be an unmanaged pointer.
+-// There is no way for a classfile to express this, so we must help it.
+-void ClassFileParser::java_dyn_MethodHandle_fix_pre(constantPoolHandle cp,
+-                                                    typeArrayHandle fields,
+-                                                    FieldAllocationCount *fac_ptr,
+-                                                    TRAPS) {
+-  // Add fake fields for java.dyn.MethodHandle instances
+-  //
+-  // This is not particularly nice, but since there is no way to express
+-  // a native wordSize field in Java, we must do it at this level.
+-
+-  if (!EnableMethodHandles)  return;
+-
+-  int word_sig_index = 0;
+-  const int cp_size = cp->length();
+-  for (int index = 1; index < cp_size; index++) {
+-    if (cp->tag_at(index).is_utf8() &&
+-        cp->symbol_at(index) == vmSymbols::machine_word_signature()) {
+-      word_sig_index = index;
+-      break;
+-    }
+-  }
+-
+-  if (word_sig_index == 0)
+-    THROW_MSG(vmSymbols::java_lang_VirtualMachineError(),
+-              "missing I or J signature (for vmentry) in java.dyn.MethodHandle");
+-
+-  // Find vmentry field and change the signature.
+-  bool found_vmentry = false;
+-  for (int i = 0; i < fields->length(); i += instanceKlass::next_offset) {
+-    int name_index = fields->ushort_at(i + instanceKlass::name_index_offset);
+-    int sig_index  = fields->ushort_at(i + instanceKlass::signature_index_offset);
+-    int acc_flags  = fields->ushort_at(i + instanceKlass::access_flags_offset);
+-    Symbol* f_name = cp->symbol_at(name_index);
+-    Symbol* f_sig  = cp->symbol_at(sig_index);
+-    if (f_name == vmSymbols::vmentry_name() && (acc_flags & JVM_ACC_STATIC) == 0) {
+-      if (f_sig == vmSymbols::machine_word_signature()) {
+-        // If the signature of vmentry is already changed, we're done.
+-        found_vmentry = true;
+-        break;
+-      }
+-      else if (f_sig == vmSymbols::byte_signature()) {
+-        // Adjust the field type from byte to an unmanaged pointer.
+-        assert(fac_ptr->nonstatic_byte_count > 0, "");
+-        fac_ptr->nonstatic_byte_count -= 1;
+-
+-        fields->ushort_at_put(i + instanceKlass::signature_index_offset, word_sig_index);
+-        assert(wordSize == longSize || wordSize == jintSize, "ILP32 or LP64");
+-        if (wordSize == longSize)  fac_ptr->nonstatic_double_count += 1;
+-        else                       fac_ptr->nonstatic_word_count   += 1;
+-
+-        FieldAllocationType atype = (FieldAllocationType) fields->ushort_at(i + instanceKlass::low_offset);
+-        assert(atype == NONSTATIC_BYTE, "");
+-        FieldAllocationType new_atype = (wordSize == longSize) ? NONSTATIC_DOUBLE : NONSTATIC_WORD;
+-        fields->ushort_at_put(i + instanceKlass::low_offset, new_atype);
+-
+-        found_vmentry = true;
+-        break;
+-      }
+-    }
+-  }
+-
+-  if (!found_vmentry)
+-    THROW_MSG(vmSymbols::java_lang_VirtualMachineError(),
+-              "missing vmentry byte field in java.dyn.MethodHandle");
+-}
+-
+-
+ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
+                                                     Handle class_loader,
+                                                     Handle protection_domain,
+@@ -3080,10 +2898,13 @@
+       local_interfaces = parse_interfaces(cp, itfs_len, class_loader, protection_domain, _class_name, CHECK_(nullHandle));
+     }
+ 
++    int java_fields_count = 0;
+     // Fields (offsets are filled in later)
+-    struct FieldAllocationCount fac = {0,0,0,0,0,0,0,0,0,0};
++    FieldAllocationCount fac;
+     objArrayHandle fields_annotations;
+-    typeArrayHandle fields = parse_fields(cp, access_flags.is_interface(), &fac, &fields_annotations, CHECK_(nullHandle));
++    typeArrayHandle fields = parse_fields(class_name, cp, access_flags.is_interface(), &fac, &fields_annotations,
++                                          &java_fields_count,
++                                          CHECK_(nullHandle));
+     // Methods
+     bool has_final_method = false;
+     AccessFlags promoted_flags;
+@@ -3201,50 +3022,33 @@
+     // Calculate the starting byte offsets
+     next_static_oop_offset      = instanceMirrorKlass::offset_of_static_fields();
+     next_static_double_offset   = next_static_oop_offset +
+-                                  (fac.static_oop_count * heapOopSize);
+-    if ( fac.static_double_count &&
++                                  (fac.count[STATIC_OOP] * heapOopSize);
++    if ( fac.count[STATIC_DOUBLE] &&
+          (Universe::field_type_should_be_aligned(T_DOUBLE) ||
+           Universe::field_type_should_be_aligned(T_LONG)) ) {
+       next_static_double_offset = align_size_up(next_static_double_offset, BytesPerLong);
+     }
+ 
+     next_static_word_offset     = next_static_double_offset +
+-                                  (fac.static_double_count * BytesPerLong);
++                                  (fac.count[STATIC_DOUBLE] * BytesPerLong);
+     next_static_short_offset    = next_static_word_offset +
+-                                  (fac.static_word_count * BytesPerInt);
++                                  (fac.count[STATIC_WORD] * BytesPerInt);
+     next_static_byte_offset     = next_static_short_offset +
+-                                  (fac.static_short_count * BytesPerShort);
++                                  (fac.count[STATIC_SHORT] * BytesPerShort);
+     next_static_type_offset     = align_size_up((next_static_byte_offset +
+-                                  fac.static_byte_count ), wordSize );
++                                  fac.count[STATIC_BYTE] ), wordSize );
+     static_field_size           = (next_static_type_offset -
+                                   next_static_oop_offset) / wordSize;
++
+     first_nonstatic_field_offset = instanceOopDesc::base_offset_in_bytes() +
+                                    nonstatic_field_size * heapOopSize;
+     next_nonstatic_field_offset = first_nonstatic_field_offset;
+ 
+-    // Add fake fields for java.lang.Class instances (also see below)
+-    if (class_name == vmSymbols::java_lang_Class() && class_loader.is_null()) {
+-      java_lang_Class_fix_pre(&methods, &fac, CHECK_(nullHandle));
+-    }
+-
+-    // adjust the vmentry field declaration in java.dyn.MethodHandle
+-    if (EnableMethodHandles && class_name == vmSymbols::sun_dyn_MethodHandleImpl() && class_loader.is_null()) {
+-      java_dyn_MethodHandle_fix_pre(cp, fields, &fac, CHECK_(nullHandle));
+-    }
+-
+-    // Add a fake "discovered" field if it is not present
+-    // for compatibility with earlier jdk's.
+-    if (class_name == vmSymbols::java_lang_ref_Reference()
+-      && class_loader.is_null()) {
+-      java_lang_ref_Reference_fix_pre(&fields, cp, &fac, CHECK_(nullHandle));
+-    }
+-    // end of "discovered" field compactibility fix
+-
+-    unsigned int nonstatic_double_count = fac.nonstatic_double_count;
+-    unsigned int nonstatic_word_count   = fac.nonstatic_word_count;
+-    unsigned int nonstatic_short_count  = fac.nonstatic_short_count;
+-    unsigned int nonstatic_byte_count   = fac.nonstatic_byte_count;
+-    unsigned int nonstatic_oop_count    = fac.nonstatic_oop_count;
++    unsigned int nonstatic_double_count = fac.count[NONSTATIC_DOUBLE];
++    unsigned int nonstatic_word_count   = fac.count[NONSTATIC_WORD];
++    unsigned int nonstatic_short_count  = fac.count[NONSTATIC_SHORT];
++    unsigned int nonstatic_byte_count   = fac.count[NONSTATIC_BYTE];
++    unsigned int nonstatic_oop_count    = fac.count[NONSTATIC_OOP];
+ 
+     bool super_has_nonstatic_fields =
+             (super_klass() != NULL && super_klass->has_nonstatic_fields());
+@@ -3264,20 +3068,7 @@
+     nonstatic_oop_counts  = NEW_RESOURCE_ARRAY_IN_THREAD(
+               THREAD, unsigned int, nonstatic_oop_count + 1);
+ 
+-    // Add fake fields for java.lang.Class instances (also see above).
+-    // FieldsAllocationStyle and CompactFields values will be reset to default.
+-    if(class_name == vmSymbols::java_lang_Class() && class_loader.is_null()) {
+-      java_lang_Class_fix_post(&next_nonstatic_field_offset);
+-      nonstatic_oop_offsets[0] = first_nonstatic_field_offset;
+-      const uint fake_oop_count = (next_nonstatic_field_offset -
+-                                   first_nonstatic_field_offset) / heapOopSize;
+-      nonstatic_oop_counts[0] = fake_oop_count;
+-      nonstatic_oop_map_count = 1;
+-      nonstatic_oop_count -= fake_oop_count;
+-      first_nonstatic_oop_offset = first_nonstatic_field_offset;
+-    } else {
+-      first_nonstatic_oop_offset = 0; // will be set for first oop field
+-    }
++    first_nonstatic_oop_offset = 0; // will be set for first oop field
+ 
+ #ifndef PRODUCT
+     if( PrintCompactFieldsSavings ) {
+@@ -3432,10 +3223,9 @@
+     // Iterate over fields again and compute correct offsets.
+     // The field allocation type was temporarily stored in the offset slot.
+     // oop fields are located before non-oop fields (static and non-static).
+-    int len = fields->length();
+-    for (int i = 0; i < len; i += instanceKlass::next_offset) {
++    for (AllFieldStream fs(fields, cp); !fs.done(); fs.next()) {
+       int real_offset;
+-      FieldAllocationType atype = (FieldAllocationType) fields->ushort_at(i + instanceKlass::low_offset);
++      FieldAllocationType atype = (FieldAllocationType) fs.offset();
+       switch (atype) {
+         case STATIC_OOP:
+           real_offset = next_static_oop_offset;
+@@ -3453,7 +3243,6 @@
+           real_offset = next_static_word_offset;
+           next_static_word_offset += BytesPerInt;
+           break;
+-        case STATIC_ALIGNED_DOUBLE:
+         case STATIC_DOUBLE:
+           real_offset = next_static_double_offset;
+           next_static_double_offset += BytesPerLong;
+@@ -3515,7 +3304,6 @@
+             next_nonstatic_word_offset += BytesPerInt;
+           }
+           break;
+-        case NONSTATIC_ALIGNED_DOUBLE:
+         case NONSTATIC_DOUBLE:
+           real_offset = next_nonstatic_double_offset;
+           next_nonstatic_double_offset += BytesPerLong;
+@@ -3523,8 +3311,7 @@
+         default:
+           ShouldNotReachHere();
+       }
+-      fields->short_at_put(i + instanceKlass::low_offset,  extract_low_short_from_int(real_offset));
+-      fields->short_at_put(i + instanceKlass::high_offset, extract_high_short_from_int(real_offset));
++      fs.set_offset(real_offset);
+     }
+ 
+     // Size of instances
+@@ -3571,12 +3358,12 @@
+     this_klass->set_class_loader(class_loader());
+     this_klass->set_nonstatic_field_size(nonstatic_field_size);
+     this_klass->set_has_nonstatic_fields(has_nonstatic_fields);
+-    this_klass->set_static_oop_field_count(fac.static_oop_count);
++    this_klass->set_static_oop_field_count(fac.count[STATIC_OOP]);
+     cp->set_pool_holder(this_klass());
+     error_handler.set_in_error(false);   // turn off error handler for cp
+     this_klass->set_constants(cp());
+     this_klass->set_local_interfaces(local_interfaces());
+-    this_klass->set_fields(fields());
++    this_klass->set_fields(fields(), java_fields_count);
+     this_klass->set_methods(methods());
+     if (has_final_method) {
+       this_klass->set_has_final_method();
+diff --git a/src/share/vm/classfile/classFileParser.hpp b/src/share/vm/classfile/classFileParser.hpp
+--- openjdk/hotspot/src/share/vm/classfile/classFileParser.hpp
++++ openjdk/hotspot/src/share/vm/classfile/classFileParser.hpp
+@@ -33,6 +33,9 @@
+ #include "utilities/accessFlags.hpp"
+ 
+ class TempNewSymbol;
++class FieldAllocationCount;
++
++
+ // Parser for for .class files
+ //
+ // The bytes describing the class file structure is read from a Stream object
+@@ -84,9 +87,11 @@
+                               bool* is_synthetic_addr,
+                               u2* generic_signature_index_addr,
+                               typeArrayHandle* field_annotations, TRAPS);
+-  typeArrayHandle parse_fields(constantPoolHandle cp, bool is_interface,
+-                               struct FieldAllocationCount *fac,
+-                               objArrayHandle* fields_annotations, TRAPS);
++  typeArrayHandle parse_fields(Symbol* class_name,
++                               constantPoolHandle cp, bool is_interface,
++                               FieldAllocationCount *fac,
++                               objArrayHandle* fields_annotations,
++                               int* java_fields_count_ptr, TRAPS);
+ 
+   // Method parsing
+   methodHandle parse_method(constantPoolHandle cp, bool is_interface,
+@@ -150,25 +155,6 @@
+   objArrayHandle compute_transitive_interfaces(instanceKlassHandle super,
+                                                objArrayHandle local_ifs, TRAPS);
+ 
+-  // Special handling for certain classes.
+-  // Add the "discovered" field to java.lang.ref.Reference if
+-  // it does not exist.
+-  void java_lang_ref_Reference_fix_pre(typeArrayHandle* fields_ptr,
+-                                       constantPoolHandle cp,
+-                                       FieldAllocationCount *fac_ptr, TRAPS);
+-  // Adjust the field allocation counts for java.lang.Class to add
+-  // fake fields.
+-  void java_lang_Class_fix_pre(int* nonstatic_field_size,
+-                               FieldAllocationCount *fac_ptr);
+-  // Adjust the next_nonstatic_oop_offset to place the fake fields
+-  // before any Java fields.
+-  void java_lang_Class_fix_post(int* next_nonstatic_oop_offset);
+-  // Adjust the field allocation counts for java.dyn.MethodHandle to add
+-  // a fake address (void*) field.
+-  void java_dyn_MethodHandle_fix_pre(constantPoolHandle cp,
+-                                     typeArrayHandle fields,
+-                                     FieldAllocationCount *fac_ptr, TRAPS);
+-
+   // Format checker methods
+   void classfile_parse_error(const char* msg, TRAPS);
+   void classfile_parse_error(const char* msg, int index, TRAPS);
+diff --git a/src/share/vm/classfile/javaClasses.cpp b/src/share/vm/classfile/javaClasses.cpp
+--- openjdk/hotspot/src/share/vm/classfile/javaClasses.cpp
++++ openjdk/hotspot/src/share/vm/classfile/javaClasses.cpp
+@@ -32,6 +32,7 @@
+ #include "memory/oopFactory.hpp"
+ #include "memory/resourceArea.hpp"
+ #include "memory/universe.inline.hpp"
++#include "oops/fieldStreams.hpp"
+ #include "oops/instanceKlass.hpp"
+ #include "oops/instanceMirrorKlass.hpp"
+ #include "oops/klass.hpp"
+@@ -57,6 +58,49 @@
+ # include "thread_windows.inline.hpp"
+ #endif
+ 
++#define INJECTED_FIELD_COMPUTE_OFFSET(klass, name, signature, may_be_java)    \
++  klass::_##name##_offset = JavaClasses::compute_injected_offset(JavaClasses::klass##_##name##_enum);
++
++#define DECLARE_INJECTED_FIELD(klass, name, signature, may_be_java)           \
++  { SystemDictionary::WK_KLASS_ENUM_NAME(klass), vmSymbols::VM_SYMBOL_ENUM_NAME(name##_name), vmSymbols::VM_SYMBOL_ENUM_NAME(signature), may_be_java },
++
++InjectedField JavaClasses::_injected_fields[] = {
++  ALL_INJECTED_FIELDS(DECLARE_INJECTED_FIELD)
++};
++
++int JavaClasses::compute_injected_offset(InjectedFieldID id) {
++  return _injected_fields[id].compute_offset();
++}
++
++
++InjectedField* JavaClasses::get_injected(Symbol* class_name, int* field_count) {
++  *field_count = 0;
++
++  vmSymbols::SID sid = vmSymbols::find_sid(class_name);
++  if (sid == vmSymbols::NO_SID) {
++    // Only well known classes can inject fields
++    return NULL;
++  }
++
++  int count = 0;
++  int start = -1;
++
++#define LOOKUP_INJECTED_FIELD(klass, name, signature, may_be_java) \
++  if (sid == vmSymbols::VM_SYMBOL_ENUM_NAME(klass)) {              \
++    count++;                                                       \
++    if (start == -1) start = klass##_##name##_enum;                \
++  }
++  ALL_INJECTED_FIELDS(LOOKUP_INJECTED_FIELD);
++#undef LOOKUP_INJECTED_FIELD
++
++  if (start != -1) {
++    *field_count = count;
++    return _injected_fields + start;
++  }
++  return NULL;
++}
++
++
+ static bool find_field(instanceKlass* ik,
+                        Symbol* name_symbol, Symbol* signature_symbol,
+                        fieldDescriptor* fd,
+@@ -440,24 +484,19 @@
+ }
+ 
+ 
+-// During bootstrap, java.lang.Class wasn't loaded so static field
+-// offsets were computed without the size added it.  Go back and
+-// update all the static field offsets to included the size.
+-static void fixup_static_field(fieldDescriptor* fd, TRAPS) {
+-  if (fd->is_static()) {
+-    int real_offset = fd->offset() + instanceMirrorKlass::offset_of_static_fields();
+-    typeArrayOop fields = instanceKlass::cast(fd->field_holder())->fields();
+-    fields->short_at_put(fd->index() + instanceKlass::low_offset,  extract_low_short_from_int(real_offset));
+-    fields->short_at_put(fd->index() + instanceKlass::high_offset, extract_high_short_from_int(real_offset));
+-  }
+-}
+-
+ void java_lang_Class::fixup_mirror(KlassHandle k, TRAPS) {
+   assert(instanceMirrorKlass::offset_of_static_fields() != 0, "must have been computed already");
+ 
+   if (k->oop_is_instance()) {
+-    // Fixup the offsets
+-    instanceKlass::cast(k())->do_local_static_fields(&fixup_static_field, CHECK);
++    // During bootstrap, java.lang.Class wasn't loaded so static field
++    // offsets were computed without the size added it.  Go back and
++    // update all the static field offsets to included the size.
++    for (JavaFieldStream fs(instanceKlass::cast(k())); !fs.done(); fs.next()) {
++      if (fs.access_flags().is_static()) {
++        int real_offset = fs.offset() + instanceMirrorKlass::offset_of_static_fields();
++        fs.set_offset(real_offset);
++      }
++    }
+   }
+   create_mirror(k, CHECK);
+ }
+@@ -474,7 +513,7 @@
+     // Allocate mirror (java.lang.Class instance)
+     Handle mirror = instanceMirrorKlass::cast(SystemDictionary::Class_klass())->allocate_instance(k, CHECK_0);
+     // Setup indirections
+-    mirror->obj_field_put(klass_offset,  k());
++    mirror->obj_field_put(_klass_offset,  k());
+     k->set_java_mirror(mirror());
+ 
+     instanceMirrorKlass* mk = instanceMirrorKlass::cast(mirror->klass());
+@@ -516,25 +555,22 @@
+ 
+ 
+ int  java_lang_Class::oop_size(oop java_class) {
+-  assert(oop_size_offset != 0, "must be set");
+-  return java_class->int_field(oop_size_offset);
++  assert(_oop_size_offset != 0, "must be set");
++  return java_class->int_field(_oop_size_offset);
+ }
+ void java_lang_Class::set_oop_size(oop java_class, int size) {
+-  assert(oop_size_offset != 0, "must be set");
+-  java_class->int_field_put(oop_size_offset, size);
++  assert(_oop_size_offset != 0, "must be set");
++  java_class->int_field_put(_oop_size_offset, size);
+ }
+ int  java_lang_Class::static_oop_field_count(oop java_class) {
+-  assert(static_oop_field_count_offset != 0, "must be set");
+-  return java_class->int_field(static_oop_field_count_offset);
++  assert(_static_oop_field_count_offset != 0, "must be set");
++  return java_class->int_field(_static_oop_field_count_offset);
+ }
+ void java_lang_Class::set_static_oop_field_count(oop java_class, int size) {
+-  assert(static_oop_field_count_offset != 0, "must be set");
+-  java_class->int_field_put(static_oop_field_count_offset, size);
++  assert(_static_oop_field_count_offset != 0, "must be set");
++  java_class->int_field_put(_static_oop_field_count_offset, size);
+ }
+ 
+-
+-
+-
+ oop java_lang_Class::create_basic_type_mirror(const char* basic_type_name, BasicType type, TRAPS) {
+   // This should be improved by adding a field at the Java level or by
+   // introducing a new VM klass (see comment in ClassFileParser)
+@@ -554,7 +590,7 @@
+ klassOop java_lang_Class::as_klassOop(oop java_class) {
+   //%note memory_2
+   assert(java_lang_Class::is_instance(java_class), "must be a Class object");
+-  klassOop k = klassOop(java_class->obj_field(klass_offset));
++  klassOop k = klassOop(java_class->obj_field(_klass_offset));
+   assert(k == NULL || k->is_klass(), "type check");
+   return k;
+ }
+@@ -610,7 +646,7 @@
+ 
+ 
+ klassOop java_lang_Class::array_klass(oop java_class) {
+-  klassOop k = klassOop(java_class->obj_field(array_klass_offset));
++  klassOop k = klassOop(java_class->obj_field(_array_klass_offset));
+   assert(k == NULL || k->is_klass() && Klass::cast(k)->oop_is_javaArray(), "should be array klass");
+   return k;
+ }
+@@ -618,12 +654,12 @@
+ 
+ void java_lang_Class::set_array_klass(oop java_class, klassOop klass) {
+   assert(klass->is_klass() && Klass::cast(klass)->oop_is_javaArray(), "should be array klass");
+-  java_class->obj_field_put(array_klass_offset, klass);
++  java_class->obj_field_put(_array_klass_offset, klass);
+ }
+ 
+ 
+ methodOop java_lang_Class::resolved_constructor(oop java_class) {
+-  oop constructor = java_class->obj_field(resolved_constructor_offset);
++  oop constructor = java_class->obj_field(_resolved_constructor_offset);
+   assert(constructor == NULL || constructor->is_method(), "should be method");
+   return methodOop(constructor);
+ }
+@@ -631,21 +667,21 @@
+ 
+ void java_lang_Class::set_resolved_constructor(oop java_class, methodOop constructor) {
+   assert(constructor->is_method(), "should be method");
+-  java_class->obj_field_put(resolved_constructor_offset, constructor);
++  java_class->obj_field_put(_resolved_constructor_offset, constructor);
+ }
+ 
+ 
+ bool java_lang_Class::is_primitive(oop java_class) {
+   // should assert:
+   //assert(java_lang_Class::is_instance(java_class), "must be a Class object");
+-  klassOop k = klassOop(java_class->obj_field(klass_offset));
++  klassOop k = klassOop(java_class->obj_field(_klass_offset));
+   return k == NULL;
+ }
+ 
+ 
+ BasicType java_lang_Class::primitive_type(oop java_class) {
+   assert(java_lang_Class::is_primitive(java_class), "just checking");
+-  klassOop ak = klassOop(java_class->obj_field(array_klass_offset));
++  klassOop ak = klassOop(java_class->obj_field(_array_klass_offset));
+   BasicType type = T_VOID;
+   if (ak != NULL) {
+     // Note: create_basic_type_mirror above initializes ak to a non-null value.
+@@ -680,34 +716,18 @@
+ 
+ bool java_lang_Class::offsets_computed = false;
+ int  java_lang_Class::classRedefinedCount_offset = -1;
+-int  java_lang_Class::parallelCapable_offset = -1;
+ 
+ void java_lang_Class::compute_offsets() {
+   assert(!offsets_computed, "offsets should be initialized only once");
+   offsets_computed = true;
+ 
+-  klassOop k = SystemDictionary::Class_klass();
++  klassOop klass_oop = SystemDictionary::Class_klass();
+   // The classRedefinedCount field is only present starting in 1.5,
+   // so don't go fatal.
+   compute_optional_offset(classRedefinedCount_offset,
+-    k, vmSymbols::classRedefinedCount_name(), vmSymbols::int_signature());
+-
+-  // The field indicating parallelCapable (parallelLockMap) is only present starting in 7,
+-  klassOop k1 = SystemDictionary::ClassLoader_klass();
+-  compute_optional_offset(parallelCapable_offset,
+-    k1, vmSymbols::parallelCapable_name(), vmSymbols::concurrenthashmap_signature());
+-}
+-
+-// For class loader classes, parallelCapable defined
+-// based on non-null field
+-// Written to by java.lang.ClassLoader, vm only reads this field, doesn't set it
+-bool java_lang_Class::parallelCapable(oop class_loader) {
+-  if (!JDK_Version::is_gte_jdk17x_version()
+-     || parallelCapable_offset == -1) {
+-     // Default for backward compatibility is false
+-     return false;
+-  }
+-  return (class_loader->obj_field(parallelCapable_offset) != NULL);
++                          klass_oop, vmSymbols::classRedefinedCount_name(), vmSymbols::int_signature());
++
++  CLASS_INJECTED_FIELDS(INJECTED_FIELD_COMPUTE_OFFSET);
+ }
+ 
+ int java_lang_Class::classRedefinedCount(oop the_class_mirror) {
+@@ -2605,6 +2625,7 @@
+     compute_optional_offset(_erasedType_offset, k, vmSymbols::erasedType_name(), vmSymbols::java_dyn_MethodType_signature(), true);
+     compute_optional_offset(_genericInvoker_offset, k, vmSymbols::genericInvoker_name(), vmSymbols::java_dyn_MethodHandle_signature(), true);
+     if (_genericInvoker_offset == 0)  _genericInvoker_offset = -1;  // set to explicit "empty" value
++    METHODTYPEFORM_INJECTED_FIELDS(INJECTED_FIELD_COMPUTE_OFFSET);
+   }
+ }
+ 
+@@ -2722,6 +2743,18 @@
+ 
+ 
+ // Support for java_lang_ClassLoader
++bool java_lang_ClassLoader::offsets_computed = false;
++int  java_lang_ClassLoader::parallelCapable_offset = -1;
++
++void java_lang_ClassLoader::compute_offsets() {
++  assert(!offsets_computed, "offsets should be initialized only once");
++  offsets_computed = true;
++
++  // The field indicating parallelCapable (parallelLockMap) is only present starting in 7,
++  klassOop k1 = SystemDictionary::ClassLoader_klass();
++  compute_optional_offset(parallelCapable_offset,
++    k1, vmSymbols::parallelCapable_name(), vmSymbols::concurrenthashmap_signature());
++}
+ 
+ oop java_lang_ClassLoader::parent(oop loader) {
+   assert(loader->is_oop(), "loader must be oop");
+@@ -2729,6 +2762,18 @@
+ }
+ 
+ 
++// For class loader classes, parallelCapable defined
++// based on non-null field
++// Written to by java.lang.ClassLoader, vm only reads this field, doesn't set it
++bool java_lang_ClassLoader::parallelCapable(oop class_loader) {
++  if (!JDK_Version::is_gte_jdk17x_version()
++     || parallelCapable_offset == -1) {
++     // Default for backward compatibility is false
++     return false;
++  }
++  return (class_loader->obj_field(parallelCapable_offset) != NULL);
++}
++
+ bool java_lang_ClassLoader::is_trusted_loader(oop loader) {
+   // Fix for 4474172; see evaluation for more details
+   loader = non_reflection_class_loader(loader);
+@@ -2787,12 +2832,11 @@
+ int java_lang_String::offset_offset;
+ int java_lang_String::count_offset;
+ int java_lang_String::hash_offset;
+-int java_lang_Class::klass_offset;
+-int java_lang_Class::array_klass_offset;
+-int java_lang_Class::resolved_constructor_offset;
+-int java_lang_Class::number_of_fake_oop_fields;
+-int java_lang_Class::oop_size_offset;
+-int java_lang_Class::static_oop_field_count_offset;
++int java_lang_Class::_klass_offset;
++int java_lang_Class::_array_klass_offset;
++int java_lang_Class::_resolved_constructor_offset;
++int java_lang_Class::_oop_size_offset;
++int java_lang_Class::_static_oop_field_count_offset;
+ int java_lang_Throwable::backtrace_offset;
+ int java_lang_Throwable::detailMessage_offset;
+ int java_lang_Throwable::cause_offset;
+@@ -2905,20 +2949,20 @@
+ 
+ 
+ void java_nio_Buffer::compute_offsets() {
+-  klassOop k = SystemDictionary::java_nio_Buffer_klass();
++  klassOop k = SystemDictionary::nio_Buffer_klass();
+   assert(k != NULL, "must be loaded in 1.4+");
+   compute_offset(_limit_offset, k, vmSymbols::limit_name(), vmSymbols::int_signature());
+ }
+ 
+ // Support for intrinsification of sun.misc.AtomicLongCSImpl.attemptUpdate
+ int sun_misc_AtomicLongCSImpl::value_offset() {
+-  assert(SystemDictionary::sun_misc_AtomicLongCSImpl_klass() != NULL, "can't call this");
++  assert(SystemDictionary::AtomicLongCSImpl_klass() != NULL, "can't call this");
+   return _value_offset;
+ }
+ 
+ 
+ void sun_misc_AtomicLongCSImpl::compute_offsets() {
+-  klassOop k = SystemDictionary::sun_misc_AtomicLongCSImpl_klass();
++  klassOop k = SystemDictionary::AtomicLongCSImpl_klass();
+   // If this class is not present, its value field offset won't be referenced.
+   if (k != NULL) {
+     compute_offset(_value_offset, k, vmSymbols::value_name(), vmSymbols::long_signature());
+@@ -2953,23 +2997,6 @@
+   java_lang_String::count_offset  = java_lang_String::offset_offset + sizeof (jint);
+   java_lang_String::hash_offset   = java_lang_String::count_offset + sizeof (jint);
+ 
+-  {
+-    // Do the Class Class
+-    int offset = header;
+-    java_lang_Class::oop_size_offset = header;
+-    offset += BytesPerInt;
+-    java_lang_Class::static_oop_field_count_offset = offset;
+-    offset = align_size_up(offset + BytesPerInt, x);
+-    java_lang_Class::klass_offset = offset;
+-    offset += x;
+-    java_lang_Class::array_klass_offset = offset;
+-    offset += x;
+-    java_lang_Class::resolved_constructor_offset = offset;
+-  }
+-
+-  // This is NOT an offset
+-  java_lang_Class::number_of_fake_oop_fields = java_lang_Class::hc_number_of_fake_oop_fields;
+-
+   // Throwable Class
+   java_lang_Throwable::backtrace_offset  = java_lang_Throwable::hc_backtrace_offset  * x + header;
+   java_lang_Throwable::detailMessage_offset = java_lang_Throwable::hc_detailMessage_offset * x + header;
+@@ -3021,8 +3048,8 @@
+ 
+ // Compute non-hard-coded field offsets of all the classes in this file
+ void JavaClasses::compute_offsets() {
+-
+-  java_lang_Class::compute_offsets();
++  // java_lang_Class::compute_offsets was called earlier in bootstrap
++  java_lang_ClassLoader::compute_offsets();
+   java_lang_Thread::compute_offsets();
+   java_lang_ThreadGroup::compute_offsets();
+   if (EnableMethodHandles) {
+@@ -3249,6 +3276,23 @@
+ 
+ #endif // PRODUCT
+ 
++int InjectedField::compute_offset() {
++  klassOop klass_oop = klass();
++  for (AllFieldStream fs(instanceKlass::cast(klass_oop)); !fs.done(); fs.next()) {
++    if (!may_be_java && !fs.access_flags().is_internal()) {
++      // Only look at injected fields
++      continue;
++    }
++    if (fs.name() == name() && fs.signature() == signature()) {
++      return fs.offset();
++    }
++  }
++  ResourceMark rm;
++  tty->print_cr("Invalid layout of %s at %s", instanceKlass::cast(klass_oop)->external_name(), name()->as_C_string());
++  fatal("Invalid layout of preloaded class");
++  return -1;
++}
++
+ void javaClasses_init() {
+   JavaClasses::compute_offsets();
+   JavaClasses::check_offsets();
+diff --git a/src/share/vm/classfile/javaClasses.hpp b/src/share/vm/classfile/javaClasses.hpp
+--- openjdk/hotspot/src/share/vm/classfile/javaClasses.hpp
++++ openjdk/hotspot/src/share/vm/classfile/javaClasses.hpp
+@@ -156,30 +156,32 @@
+ 
+ // Interface to java.lang.Class objects
+ 
++#define CLASS_INJECTED_FIELDS(macro)                                       \
++  macro(java_lang_Class, klass,                  object_signature,  false) \
++  macro(java_lang_Class, resolved_constructor,   object_signature,  false) \
++  macro(java_lang_Class, array_klass,            object_signature,  false) \
++  macro(java_lang_Class, oop_size,               int_signature,     false) \
++  macro(java_lang_Class, static_oop_field_count, int_signature,     false)
++
+ class java_lang_Class : AllStatic {
+-   friend class VMStructs;
++  friend class VMStructs;
++
+  private:
+   // The fake offsets are added by the class loader when java.lang.Class is loaded
+ 
+-  enum {
+-    hc_number_of_fake_oop_fields   = 3,
+-    hc_number_of_fake_int_fields   = 2
+-  };
++  static int _klass_offset;
++  static int _resolved_constructor_offset;
++  static int _array_klass_offset;
+ 
+-  static int klass_offset;
+-  static int resolved_constructor_offset;
+-  static int array_klass_offset;
+-  static int number_of_fake_oop_fields;
++  static int _oop_size_offset;
++  static int _static_oop_field_count_offset;
+ 
+-  static int oop_size_offset;
+-  static int static_oop_field_count_offset;
+-
+-  static void compute_offsets();
+   static bool offsets_computed;
+   static int classRedefinedCount_offset;
+-  static int parallelCapable_offset;
+ 
+  public:
++  static void compute_offsets();
++
+   // Instance creation
+   static oop  create_mirror(KlassHandle k, TRAPS);
+   static void fixup_mirror(KlassHandle k, TRAPS);
+@@ -209,14 +211,12 @@
+   static klassOop array_klass(oop java_class);
+   static void set_array_klass(oop java_class, klassOop klass);
+   // compiler support for class operations
+-  static int klass_offset_in_bytes() { return klass_offset; }
+-  static int resolved_constructor_offset_in_bytes() { return resolved_constructor_offset; }
+-  static int array_klass_offset_in_bytes() { return array_klass_offset; }
++  static int klass_offset_in_bytes()                { return _klass_offset; }
++  static int resolved_constructor_offset_in_bytes() { return _resolved_constructor_offset; }
++  static int array_klass_offset_in_bytes()          { return _array_klass_offset; }
+   // Support for classRedefinedCount field
+   static int classRedefinedCount(oop the_class_mirror);
+   static void set_classRedefinedCount(oop the_class_mirror, int value);
+-  // Support for parallelCapable field
+-  static bool parallelCapable(oop the_class_mirror);
+ 
+   static int oop_size(oop java_class);
+   static void set_oop_size(oop java_class, int size);
+@@ -828,16 +828,19 @@
+ 
+ // Interface to java.dyn.MethodHandle objects
+ 
++#define METHODHANDLE_INJECTED_FIELDS(macro)                               \
++  macro(java_dyn_MethodHandle, vmentry,  intptr_signature, false) \
++  macro(java_dyn_MethodHandle, vmtarget, object_signature, true)
++
+ class MethodHandleEntry;
+ 
+ class java_dyn_MethodHandle: AllStatic {
+   friend class JavaClasses;
+ 
+  private:
+-  static int _vmentry_offset;           // assembly code trampoline for MH
+-  static int _vmtarget_offset;          // class-specific target reference
++  static int _vmentry_offset;            // assembly code trampoline for MH
++  static int _vmtarget_offset;           // class-specific target reference
+   static int _type_offset;              // the MethodType of this MH
+-  static int _vmslots_offset;           // OPTIONAL hoisted type.form.vmslots
+ 
+   static void compute_offsets();
+ 
+@@ -853,8 +856,6 @@
+   static void       set_vmentry(oop mh, MethodHandleEntry* data);
+ 
+   static int            vmslots(oop mh);
+-  static void      init_vmslots(oop mh);
+-  static int    compute_vmslots(oop mh);
+ 
+   // Testers
+   static bool is_subclass(klassOop klass) {
+@@ -868,14 +869,15 @@
+   static int type_offset_in_bytes()             { return _type_offset; }
+   static int vmtarget_offset_in_bytes()         { return _vmtarget_offset; }
+   static int vmentry_offset_in_bytes()          { return _vmentry_offset; }
+-  static int vmslots_offset_in_bytes()          { return _vmslots_offset; }
+ };
+ 
++#define DIRECTMETHODHANDLE_INJECTED_FIELDS(macro)                          \
++  macro(java_dyn_DirectMethodHandle, vmindex, int_signature, true)
++
+ class sun_dyn_DirectMethodHandle: public java_dyn_MethodHandle {
+   friend class JavaClasses;
+ 
+  private:
+-  //         _vmtarget_offset;          // method   or class      or interface
+   static int _vmindex_offset;           // negative or vtable idx or itable idx
+   static void compute_offsets();
+ 
+@@ -977,6 +979,9 @@
+ // Interface to sun.dyn.MemberName objects
+ // (These are a private interface for Java code to query the class hierarchy.)
+ 
++#define MEMBERNAME_INJECTED_FIELDS(macro)                              \
++  macro(sun_dyn_MemberName, vmtarget, object_signature, true)
++
+ class sun_dyn_MemberName: AllStatic {
+   friend class JavaClasses;
+ 
+@@ -1084,6 +1089,10 @@
+   static int form_offset_in_bytes()             { return _form_offset; }
+ };
+ 
++#define METHODTYPEFORM_INJECTED_FIELDS(macro)                              \
++  macro(java_dyn_MethodTypeForm, vmslots,  int_signature,    true) \
++  macro(java_dyn_MethodTypeForm, vmlayout, object_signature, true)
++
+ class java_dyn_MethodTypeForm: AllStatic {
+   friend class JavaClasses;
+ 
+@@ -1097,6 +1106,8 @@
+  public:
+   // Accessors
+   static int            vmslots(oop mtform);
++  static void       set_vmslots(oop mtform, int vmslots);
++
+   static oop            erasedType(oop mtform);
+   static oop            genericInvoker(oop mtform);
+ 
+@@ -1114,8 +1125,6 @@
+ 
+ private:
+   static int _target_offset;
+-  static int _caller_method_offset;
+-  static int _caller_bci_offset;
+ 
+   static void compute_offsets();
+ 
+@@ -1124,12 +1133,6 @@
+   static oop            target(oop site);
+   static void       set_target(oop site, oop target);
+ 
+-  static oop            caller_method(oop site);
+-  static void       set_caller_method(oop site, oop ref);
+-
+-  static jint           caller_bci(oop site);
+-  static void       set_caller_bci(oop site, jint bci);
+-
+   // Testers
+   static bool is_subclass(klassOop klass) {
+     return Klass::cast(klass)->is_subclass_of(SystemDictionary::CallSite_klass());
+@@ -1140,8 +1143,6 @@
+ 
+   // Accessors for code generation:
+   static int target_offset_in_bytes()           { return _target_offset; }
+-  static int caller_method_offset_in_bytes()    { return _caller_method_offset; }
+-  static int caller_bci_offset_in_bytes()       { return _caller_bci_offset; }
+ };
+ 
+ 
+@@ -1175,11 +1176,18 @@
+    hc_parent_offset = 0
+   };
+ 
++  static bool offsets_computed;
+   static int parent_offset;
++  static int parallelCapable_offset;
++
++  static void compute_offsets();
+ 
+  public:
+   static oop parent(oop loader);
+ 
++  // Support for parallelCapable field
++  static bool parallelCapable(oop the_class_mirror);
++
+   static bool is_trusted_loader(oop loader);
+ 
+   // Fix for 4474172
+@@ -1308,17 +1316,71 @@
+   static oop  get_owner_threadObj(oop obj);
+ };
+ 
++// Use to declare fields that need to be injected into Java classes
++// for the JVM to use.  The name_index and signature_index are
++// declared in vmSymbols.  The may_be_java flag is used to declare
++// fields that might already exist in Java but should be injected if
++// they don't.  Otherwise the field is unconditionally injected and
++// the JVM uses the injected one.  This is to ensure that name
++// collisions don't occur.  In general may_be_java should be false
++// unless there's a good reason.
++
++class InjectedField {
++ public:
++  const SystemDictionary::WKID klass_id;
++  const vmSymbols::SID name_index;
++  const vmSymbols::SID signature_index;
++  const bool           may_be_java;
++
++
++  klassOop klass() const    { return SystemDictionary::well_known_klass(klass_id); }
++  Symbol* name() const      { return lookup_symbol(name_index); }
++  Symbol* signature() const { return lookup_symbol(signature_index); }
++
++  int compute_offset();
++
++  // Find the Symbol for this index
++  static Symbol* lookup_symbol(int symbol_index) {
++    return vmSymbols::symbol_at((vmSymbols::SID)symbol_index);
++  }
++};
++
++#define DECLARE_INJECTED_FIELD_ENUM(klass, name, signature, may_be_java) \
++  klass##_##name##_enum,
++
++#define ALL_INJECTED_FIELDS(macro)          \
++  CLASS_INJECTED_FIELDS(macro)              \
++  METHODHANDLE_INJECTED_FIELDS(macro)       \
++  DIRECTMETHODHANDLE_INJECTED_FIELDS(macro) \
++  MEMBERNAME_INJECTED_FIELDS(macro)         \
++  METHODTYPEFORM_INJECTED_FIELDS(macro)
++
+ // Interface to hard-coded offset checking
+ 
+ class JavaClasses : AllStatic {
+  private:
++
++  static InjectedField _injected_fields[];
++
+   static bool check_offset(const char *klass_name, int offset, const char *field_name, const char* field_sig) PRODUCT_RETURN0;
+   static bool check_static_offset(const char *klass_name, int hardcoded_offset, const char *field_name, const char* field_sig) PRODUCT_RETURN0;
+   static bool check_constant(const char *klass_name, int constant, const char *field_name, const char* field_sig) PRODUCT_RETURN0;
++
+  public:
++  enum InjectedFieldID {
++    ALL_INJECTED_FIELDS(DECLARE_INJECTED_FIELD_ENUM)
++    MAX_enum
++  };
++
++  static int compute_injected_offset(InjectedFieldID id);
++
+   static void compute_hard_coded_offsets();
+   static void compute_offsets();
+   static void check_offsets() PRODUCT_RETURN;
++
++  static InjectedField* get_injected(Symbol* class_name, int* field_count);
+ };
+ 
++#undef DECLARE_INJECTED_FIELD_ENUM
++
+ #endif // SHARE_VM_CLASSFILE_JAVACLASSES_HPP
+diff --git a/src/share/vm/classfile/systemDictionary.cpp b/src/share/vm/classfile/systemDictionary.cpp
+--- openjdk/hotspot/src/share/vm/classfile/systemDictionary.cpp
++++ openjdk/hotspot/src/share/vm/classfile/systemDictionary.cpp
+@@ -125,13 +125,13 @@
+ bool SystemDictionary::is_parallelCapable(Handle class_loader) {
+   if (UnsyncloadClass || class_loader.is_null()) return true;
+   if (AlwaysLockClassLoader) return false;
+-  return java_lang_Class::parallelCapable(class_loader());
++  return java_lang_ClassLoader::parallelCapable(class_loader());
+ }
+ // ----------------------------------------------------------------------------
+ // ParallelDefineClass flag does not apply to bootclass loader
+ bool SystemDictionary::is_parallelDefine(Handle class_loader) {
+    if (class_loader.is_null()) return false;
+-   if (AllowParallelDefineClass && java_lang_Class::parallelCapable(class_loader())) {
++   if (AllowParallelDefineClass && java_lang_ClassLoader::parallelCapable(class_loader())) {
+      return true;
+    }
+    return false;
+@@ -1280,7 +1280,7 @@
+                                                     Symbol* class_name,
+                                                     TRAPS) {
+ 
+-  klassOop dlm = SystemDictionary::sun_jkernel_DownloadManager_klass();
++  klassOop dlm = SystemDictionary::DownloadManager_klass();
+   instanceKlassHandle nk;
+ 
+   // If download manager class isn't loaded just return.
+@@ -1941,7 +1941,7 @@
+   // first do Object, String, Class
+   initialize_wk_klasses_through(WK_KLASS_ENUM_NAME(Class_klass), scan, CHECK);
+ 
+-  debug_only(instanceKlass::verify_class_klass_nonstatic_oop_maps(WK_KLASS(Class_klass)));
++  java_lang_Class::compute_offsets();
+ 
+   // Fixup mirrors for classes loaded before java.lang.Class.
+   // These calls iterate over the objects currently in the perm gen
+@@ -1999,7 +1999,7 @@
+   //_box_klasses[T_ARRAY]   = WK_KLASS(object_klass);
+ 
+ #ifdef KERNEL
+-  if (sun_jkernel_DownloadManager_klass() == NULL) {
++  if (DownloadManager_klass() == NULL) {
+     warning("Cannot find sun/jkernel/DownloadManager");
+   }
+ #endif // KERNEL
+@@ -2740,7 +2740,7 @@
+       class_size += ik->local_interfaces()->size();
+       class_size += ik->transitive_interfaces()->size();
+       // We do not have to count implementors, since we only store one!
+-      class_size += ik->fields()->size();
++      class_size += ik->all_fields_count() * FieldInfo::field_slots;
+     }
+   }
+ 
+diff --git a/src/share/vm/classfile/systemDictionary.hpp b/src/share/vm/classfile/systemDictionary.hpp
+--- openjdk/hotspot/src/share/vm/classfile/systemDictionary.hpp
++++ openjdk/hotspot/src/share/vm/classfile/systemDictionary.hpp
+@@ -133,15 +133,15 @@
+   template(reflect_Method_klass,         java_lang_reflect_Method,       Pre) \
+   template(reflect_Constructor_klass,    java_lang_reflect_Constructor,  Pre) \
+                                                                               \
+-  /* NOTE: needed too early in bootstrapping process to have checks based on JDK version */ \
+-  /* Universe::is_gte_jdk14x_version() is not set up by this point. */        \
+-  /* It's okay if this turns out to be NULL in non-1.4 JDKs. */               \
+-  template(reflect_MagicAccessorImpl_klass,          sun_reflect_MagicAccessorImpl,  Opt) \
+-  template(reflect_MethodAccessorImpl_klass, sun_reflect_MethodAccessorImpl, Opt_Only_JDK14NewRef) \
+-  template(reflect_ConstructorAccessorImpl_klass, sun_reflect_ConstructorAccessorImpl, Opt_Only_JDK14NewRef) \
+-  template(reflect_DelegatingClassLoader_klass, sun_reflect_DelegatingClassLoader, Opt) \
+-  template(reflect_ConstantPool_klass,  sun_reflect_ConstantPool,       Opt_Only_JDK15) \
+-  template(reflect_UnsafeStaticFieldAccessorImpl_klass, sun_reflect_UnsafeStaticFieldAccessorImpl, Opt_Only_JDK15) \
++  /* NOTE: needed too early in bootstrapping process to have checks based on JDK version */                              \
++  /* Universe::is_gte_jdk14x_version() is not set up by this point. */                                                   \
++  /* It's okay if this turns out to be NULL in non-1.4 JDKs. */                                                          \
++  template(reflect_MagicAccessorImpl_klass,             sun_reflect_MagicAccessorImpl,             Opt)                  \
++  template(reflect_MethodAccessorImpl_klass,            sun_reflect_MethodAccessorImpl,            Opt_Only_JDK14NewRef) \
++  template(reflect_ConstructorAccessorImpl_klass,       sun_reflect_ConstructorAccessorImpl,       Opt_Only_JDK14NewRef) \
++  template(reflect_DelegatingClassLoader_klass,         sun_reflect_DelegatingClassLoader,         Opt)                  \
++  template(reflect_ConstantPool_klass,                  sun_reflect_ConstantPool,                  Opt_Only_JDK15)       \
++  template(reflect_UnsafeStaticFieldAccessorImpl_klass, sun_reflect_UnsafeStaticFieldAccessorImpl, Opt_Only_JDK15)       \
+                                                                               \
+   /* support for dynamic typing; it's OK if these are NULL in earlier JDKs */ \
+   template(MethodHandle_klass,           java_dyn_MethodHandle,          Opt) \
+@@ -165,14 +165,14 @@
+   template(StackTraceElement_klass,      java_lang_StackTraceElement,    Opt) \
+   /* Universe::is_gte_jdk14x_version() is not set up by this point. */        \
+   /* It's okay if this turns out to be NULL in non-1.4 JDKs. */               \
+-  template(java_nio_Buffer_klass,        java_nio_Buffer,                Opt) \
++  template(nio_Buffer_klass,             java_nio_Buffer,                Opt) \
+                                                                               \
+   /* If this class isn't present, it won't be referenced. */                  \
+-  template(sun_misc_AtomicLongCSImpl_klass, sun_misc_AtomicLongCSImpl,   Opt) \
++  template(AtomicLongCSImpl_klass,       sun_misc_AtomicLongCSImpl,   Opt)    \
+                                                                               \
+-  template(sun_jkernel_DownloadManager_klass, sun_jkernel_DownloadManager, Opt_Kernel) \
++  template(DownloadManager_klass,        sun_jkernel_DownloadManager, Opt_Kernel) \
+                                                                               \
+-  template(sun_misc_PostVMInitHook_klass, sun_misc_PostVMInitHook, Opt)       \
++  template(PostVMInitHook_klass,         sun_misc_PostVMInitHook, Opt)        \
+                                                                               \
+   /* Preload boxing klasses */                                                \
+   template(Boolean_klass,                java_lang_Boolean,              Pre) \
+@@ -196,7 +196,7 @@
+   enum WKID {
+     NO_WKID = 0,
+ 
+-    #define WK_KLASS_ENUM(name, ignore_s, ignore_o) WK_KLASS_ENUM_NAME(name),
++    #define WK_KLASS_ENUM(name, symbol, ignore_o) WK_KLASS_ENUM_NAME(name), WK_KLASS_ENUM_NAME(symbol) = WK_KLASS_ENUM_NAME(name),
+     WK_KLASSES_DO(WK_KLASS_ENUM)
+     #undef WK_KLASS_ENUM
+ 
+@@ -421,11 +421,16 @@
+   }
+ 
+ public:
+-  #define WK_KLASS_DECLARE(name, ignore_symbol, option) \
++  #define WK_KLASS_DECLARE(name, symbol, option) \
+     static klassOop name() { return check_klass_##option(_well_known_klasses[WK_KLASS_ENUM_NAME(name)]); }
+   WK_KLASSES_DO(WK_KLASS_DECLARE);
+   #undef WK_KLASS_DECLARE
+ 
++  static klassOop well_known_klass(WKID id) {
++    assert(id >= (int)FIRST_WKID && id < (int)WKID_LIMIT, "oob");
++    return _well_known_klasses[id];
++  }
++
+   // Local definition for direct access to the private array:
+   #define WK_KLASS(name) _well_known_klasses[SystemDictionary::WK_KLASS_ENUM_NAME(name)]
+ 
+diff --git a/src/share/vm/classfile/vmSymbols.hpp b/src/share/vm/classfile/vmSymbols.hpp
+--- openjdk/hotspot/src/share/vm/classfile/vmSymbols.hpp
++++ openjdk/hotspot/src/share/vm/classfile/vmSymbols.hpp
+@@ -258,8 +258,8 @@
+   template(linkMethodHandleConstant_signature, "(Ljava/lang/Class;ILjava/lang/Class;Ljava/lang/String;Ljava/lang/Object;)Ljava/dyn/MethodHandle;") \
+   template(makeDynamicCallSite_name,                  "makeDynamicCallSite")                      \
+   template(makeDynamicCallSite_signature, "(Ljava/dyn/MethodHandle;Ljava/lang/String;Ljava/dyn/MethodType;Ljava/lang/Object;Lsun/dyn/MemberName;I)Ljava/dyn/CallSite;") \
+-  NOT_LP64(  do_alias(machine_word_signature,         int_signature)  )                           \
+-  LP64_ONLY( do_alias(machine_word_signature,         long_signature) )                           \
++  NOT_LP64(  do_alias(intptr_signature,               int_signature)  )                           \
++  LP64_ONLY( do_alias(intptr_signature,               long_signature) )                           \
+                                                                                                   \
+   /* common method and field names */                                                             \
+   template(object_initializer_name,                   "<init>")                                   \
+@@ -356,6 +356,11 @@
+   template(erasedType_name,                           "erasedType")                               \
+   template(genericInvoker_name,                       "genericInvoker")                           \
+   template(append_name,                               "append")                                   \
++  template(klass_name,                                "klass")                                    \
++  template(resolved_constructor_name,                 "resolved_constructor")                     \
++  template(array_klass_name,                          "array_klass")                              \
++  template(oop_size_name,                             "oop_size")                                 \
++  template(static_oop_field_count_name,               "static_oop_field_count")                   \
+                                                                                                   \
+   /* non-intrinsic name/signature pairs: */                                                       \
+   template(register_method_name,                      "register")                                 \
+diff --git a/src/share/vm/interpreter/interpreterRuntime.cpp b/src/share/vm/interpreter/interpreterRuntime.cpp
+--- openjdk/hotspot/src/share/vm/interpreter/interpreterRuntime.cpp
++++ openjdk/hotspot/src/share/vm/interpreter/interpreterRuntime.cpp
+@@ -976,11 +976,8 @@
+   // check the access_flags for the field in the klass
+ 
+   instanceKlass* ik = instanceKlass::cast(java_lang_Class::as_klassOop(cp_entry->f1()));
+-  typeArrayOop fields = ik->fields();
+   int index = cp_entry->field_index();
+-  assert(index < fields->length(), "holders field index is out of range");
+-  // bail out if field accesses are not watched
+-  if ((fields->ushort_at(index) & JVM_ACC_FIELD_ACCESS_WATCHED) == 0) return;
++  if ((ik->field_access_flags(index) & JVM_ACC_FIELD_ACCESS_WATCHED) == 0) return;
+ 
+   switch(cp_entry->flag_state()) {
+     case btos:    // fall through
+@@ -1013,11 +1010,9 @@
+ 
+   // check the access_flags for the field in the klass
+   instanceKlass* ik = instanceKlass::cast(k);
+-  typeArrayOop fields = ik->fields();
+   int index = cp_entry->field_index();
+-  assert(index < fields->length(), "holders field index is out of range");
+   // bail out if field modifications are not watched
+-  if ((fields->ushort_at(index) & JVM_ACC_FIELD_MODIFICATION_WATCHED) == 0) return;
++  if ((ik->field_access_flags(index) & JVM_ACC_FIELD_MODIFICATION_WATCHED) == 0) return;
+ 
+   char sig_type = '\0';
+ 
+diff --git a/src/share/vm/oops/cpCacheOop.cpp b/src/share/vm/oops/cpCacheOop.cpp
+--- openjdk/hotspot/src/share/vm/oops/cpCacheOop.cpp
++++ openjdk/hotspot/src/share/vm/oops/cpCacheOop.cpp
+@@ -128,17 +128,13 @@
+ void ConstantPoolCacheEntry::set_field(Bytecodes::Code get_code,
+                                        Bytecodes::Code put_code,
+                                        KlassHandle field_holder,
+-                                       int orig_field_index,
++                                       int field_index,
+                                        int field_offset,
+                                        TosState field_type,
+                                        bool is_final,
+                                        bool is_volatile) {
+   set_f1(field_holder()->java_mirror());
+   set_f2(field_offset);
+-  // The field index is used by jvm/ti and is the index into fields() array
+-  // in holder instanceKlass.  This is scaled by instanceKlass::next_offset.
+-  assert((orig_field_index % instanceKlass::next_offset) == 0, "wierd index");
+-  const int field_index = orig_field_index / instanceKlass::next_offset;
+   assert(field_index <= field_index_mask,
+          "field index does not fit in low flag bits");
+   set_flags(as_flags(field_type, is_final, false, is_volatile, false, false) |
+@@ -149,7 +145,7 @@
+ }
+ 
+ int  ConstantPoolCacheEntry::field_index() const {
+-  return (_flags & field_index_mask) * instanceKlass::next_offset;
++  return (_flags & field_index_mask);
+ }
+ 
+ void ConstantPoolCacheEntry::set_method(Bytecodes::Code invoke_code,
+diff --git a/src/share/vm/oops/fieldInfo.hpp b/src/share/vm/oops/fieldInfo.hpp
+new file mode 100644
+--- /dev/null
++++ openjdk/hotspot/src/share/vm/oops/fieldInfo.hpp
+@@ -0,0 +1,132 @@
++/*
++ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ *
++ */
++
++#ifndef SHARE_VM_OOPS_FIELDINFO_HPP
++#define SHARE_VM_OOPS_FIELDINFO_HPP
++
++#include "oops/typeArrayOop.hpp"
++#include "classfile/vmSymbols.hpp"
++
++// This class represents the field information contained in the fields
++// array of an instanceKlass.  Currently it's laid on top an array of
++// Java shorts but in the future it could simply be used as a real
++// array type.  FieldInfo generally shouldn't be used directly.
++// Fields should be queried either through instanceKlass or through
++// the various FieldStreams.
++class FieldInfo VALUE_OBJ_CLASS_SPEC {
++  friend class fieldDescriptor;
++  friend class JavaFieldStream;
++  friend class ClassFileParser;
++
++ public:
++  // fields
++  // Field info extracted from the class file and stored
++  // as an array of 7 shorts
++  enum FieldOffset {
++    access_flags_offset      = 0,
++    name_index_offset        = 1,
++    signature_index_offset   = 2,
++    initval_index_offset     = 3,
++    low_offset               = 4,
++    high_offset              = 5,
++    generic_signature_offset = 6,
++    field_slots              = 7
++  };
++
++ private:
++  u2 _shorts[field_slots];
++
++  void set_name_index(u2 val)                    { _shorts[name_index_offset] = val;         }
++  void set_signature_index(u2 val)               { _shorts[signature_index_offset] = val;    }
++  void set_initval_index(u2 val)                 { _shorts[initval_index_offset] = val;      }
++  void set_generic_signature_index(u2 val)       { _shorts[generic_signature_offset] = val;  }
++
++  u2 name_index() const                          { return _shorts[name_index_offset];        }
++  u2 signature_index() const                     { return _shorts[signature_index_offset];   }
++  u2 initval_index() const                       { return _shorts[initval_index_offset];     }
++  u2 generic_signature_index() const             { return _shorts[generic_signature_offset]; }
++
++ public:
++  static FieldInfo* from_field_array(typeArrayOop fields, int index) {
++    return ((FieldInfo*)fields->short_at_addr(index * field_slots));
++  }
++
++  void initialize(u2 access_flags,
++                  u2 name_index,
++                  u2 signature_index,
++                  u2 initval_index,
++                  u2 generic_signature_index,
++                  u4 offset) {
++    _shorts[access_flags_offset] = access_flags;
++    _shorts[name_index_offset] = name_index;
++    _shorts[signature_index_offset] = signature_index;
++    _shorts[initval_index_offset] = initval_index;
++    _shorts[generic_signature_offset] = generic_signature_index;
++    set_offset(offset);
++  }
++
++  u2 access_flags() const                        { return _shorts[access_flags_offset];            }
++  u4 offset() const                              { return build_int_from_shorts(_shorts[low_offset], _shorts[high_offset]); }
++
++  Symbol* name(constantPoolHandle cp) const {
++    int index = name_index();
++    if (is_internal()) {
++      return lookup_symbol(index);
++    }
++    return cp->symbol_at(index);
++  }
++
++  Symbol* signature(constantPoolHandle cp) const {
++    int index = signature_index();
++    if (is_internal()) {
++      return lookup_symbol(index);
++    }
++    return cp->symbol_at(index);
++  }
++
++  Symbol* generic_signature(constantPoolHandle cp) const {
++    int index = generic_signature_index();
++    if (index == 0) {
++      return NULL;
++    }
++    return cp->symbol_at(index);
++  }
++
++  void set_access_flags(u2 val)                  { _shorts[access_flags_offset] = val;             }
++  void set_offset(u4 val)                        {
++    _shorts[low_offset] = extract_low_short_from_int(val);
++    _shorts[high_offset] = extract_high_short_from_int(val);
++  }
++
++  bool is_internal() const {
++    return (access_flags() & JVM_ACC_FIELD_INTERNAL) != 0;
++  }
++
++  Symbol* lookup_symbol(int symbol_index) const {
++    assert(is_internal(), "only internal fields");
++    return vmSymbols::symbol_at((vmSymbols::SID)symbol_index);
++  }
++};
++
++#endif // SHARE_VM_OOPS_FIELDINFO_HPP
+diff --git a/src/share/vm/oops/fieldStreams.hpp b/src/share/vm/oops/fieldStreams.hpp
+new file mode 100644
+--- /dev/null
++++ openjdk/hotspot/src/share/vm/oops/fieldStreams.hpp
+@@ -0,0 +1,174 @@
++/*
++ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ *
++ */
++
++#ifndef SHARE_VM_OOPS_FIELDSTREAMS_HPP
++#define SHARE_VM_OOPS_FIELDSTREAMS_HPP
++
++#include "oops/instanceKlass.hpp"
++#include "oops/fieldInfo.hpp"
++
++// The is the base class for iteration over the fields array
++// describing the declared fields in the class.  Several subclasses
++// are provided depending on the kind of iteration required.  The
++// JavaFieldStream is for iterating over regular Java fields and it
++// generally the preferred iterator.  InternalFieldStream only
++// iterates over fields that have been injected by the JVM.
++// AllFieldStream exposes all fields and should only be used in rare
++// cases.
++class FieldStreamBase : public StackObj {
++ protected:
++  typeArrayHandle     _fields;
++  constantPoolHandle  _constants;
++  int                 _index;
++  int                 _limit;
++
++  FieldInfo* field() const { return FieldInfo::from_field_array(_fields(), _index); }
++
++  FieldStreamBase(typeArrayHandle fields, constantPoolHandle constants, int start, int limit) {
++    _fields = fields;
++    _constants = constants;
++    _index = start;
++    _limit = limit;
++  }
++
++  FieldStreamBase(typeArrayHandle fields, constantPoolHandle constants) {
++    _fields = fields;
++    _constants = constants;
++    _index = 0;
++    _limit = fields->length() / FieldInfo::field_slots;
++  }
++
++ public:
++  FieldStreamBase(instanceKlass* klass) {
++    _fields = klass->fields();
++    _constants = klass->constants();
++    _index = 0;
++    _limit = klass->java_fields_count();
++  }
++  FieldStreamBase(instanceKlassHandle klass) {
++    _fields = klass->fields();
++    _constants = klass->constants();
++    _index = 0;
++    _limit = klass->java_fields_count();
++  }
++
++  // accessors
++  int index() const                 { return _index; }
++
++  void next() { _index += 1; }
++  bool done() const { return _index >= _limit; }
++
++  // Accessors for current field
++  AccessFlags access_flags() const {
++    AccessFlags flags;
++    flags.set_flags(field()->access_flags());
++    return flags;
++  }
++
++  void set_access_flags(u2 flags) const {
++    field()->set_access_flags(flags);
++  }
++
++  void set_access_flags(AccessFlags flags) const {
++    set_access_flags(flags.as_short());
++  }
++
++  Symbol* name() const {
++    return field()->name(_constants);
++  }
++
++  Symbol* signature() const {
++    return field()->signature(_constants);
++  }
++
++  Symbol* generic_signature() const {
++    return field()->generic_signature(_constants);
++  }
++
++  int offset() const {
++    return field()->offset();
++  }
++
++  void set_offset(int offset) {
++    field()->set_offset(offset);
++  }
++};
++
++// Iterate over only the internal fields
++class JavaFieldStream : public FieldStreamBase {
++ public:
++  JavaFieldStream(instanceKlass* k):      FieldStreamBase(k->fields(), k->constants(), 0, k->java_fields_count()) {}
++  JavaFieldStream(instanceKlassHandle k): FieldStreamBase(k->fields(), k->constants(), 0, k->java_fields_count()) {}
++
++  int name_index() const {
++    assert(!field()->is_internal(), "regular only");
++    return field()->name_index();
++  }
++  void set_name_index(int index) {
++    assert(!field()->is_internal(), "regular only");
++    field()->set_name_index(index);
++  }
++  int signature_index() const {
++    assert(!field()->is_internal(), "regular only");
++    return field()->signature_index();
++  }
++  void set_signature_index(int index) {
++    assert(!field()->is_internal(), "regular only");
++    field()->set_signature_index(index);
++  }
++  int generic_signature_index() const {
++    assert(!field()->is_internal(), "regular only");
++    return field()->generic_signature_index();
++  }
++  void set_generic_signature_index(int index) {
++    assert(!field()->is_internal(), "regular only");
++    field()->set_generic_signature_index(index);
++  }
++  int initval_index() const {
++    assert(!field()->is_internal(), "regular only");
++    return field()->initval_index();
++  }
++  void set_initval_index(int index) {
++    assert(!field()->is_internal(), "regular only");
++    return field()->set_initval_index(index);
++  }
++};
++
++
++// Iterate over only the internal fields
++class InternalFieldStream : public FieldStreamBase {
++ public:
++  InternalFieldStream(instanceKlass* k):      FieldStreamBase(k->fields(), k->constants(), k->java_fields_count(), k->all_fields_count()) {}
++  InternalFieldStream(instanceKlassHandle k): FieldStreamBase(k->fields(), k->constants(), k->java_fields_count(), k->all_fields_count()) {}
++};
++
++
++class AllFieldStream : public FieldStreamBase {
++ public:
++  AllFieldStream(typeArrayHandle fields, constantPoolHandle constants): FieldStreamBase(fields, constants) {}
++  AllFieldStream(instanceKlass* k):      FieldStreamBase(k->fields(), k->constants()) {}
++  AllFieldStream(instanceKlassHandle k): FieldStreamBase(k->fields(), k->constants()) {}
++};
++
++#endif // SHARE_VM_OOPS_FIELDSTREAMS_HPP
+diff --git a/src/share/vm/oops/instanceKlass.cpp b/src/share/vm/oops/instanceKlass.cpp
+--- openjdk/hotspot/src/share/vm/oops/instanceKlass.cpp
++++ openjdk/hotspot/src/share/vm/oops/instanceKlass.cpp
+@@ -36,6 +36,7 @@
+ #include "memory/genOopClosures.inline.hpp"
+ #include "memory/oopFactory.hpp"
+ #include "memory/permGen.hpp"
++#include "oops/fieldStreams.hpp"
+ #include "oops/instanceKlass.hpp"
+ #include "oops/instanceMirrorKlass.hpp"
+ #include "oops/instanceOop.hpp"
+@@ -774,14 +775,11 @@
+ 
+ 
+ bool instanceKlass::find_local_field(Symbol* name, Symbol* sig, fieldDescriptor* fd) const {
+-  const int n = fields()->length();
+-  for (int i = 0; i < n; i += next_offset ) {
+-    int name_index = fields()->ushort_at(i + name_index_offset);
+-    int sig_index  = fields()->ushort_at(i + signature_index_offset);
+-    Symbol* f_name = constants()->symbol_at(name_index);
+-    Symbol* f_sig  = constants()->symbol_at(sig_index);
++  for (JavaFieldStream fs(as_klassOop()); !fs.done(); fs.next()) {
++    Symbol* f_name = fs.name();
++    Symbol* f_sig  = fs.signature();
+     if (f_name == name && f_sig == sig) {
+-      fd->initialize(as_klassOop(), i);
++      fd->initialize(as_klassOop(), fs.index());
+       return true;
+     }
+   }
+@@ -795,11 +793,10 @@
+   closure->do_symbol(&_source_file_name);
+   closure->do_symbol(&_source_debug_extension);
+ 
+-  const int n = fields()->length();
+-  for (int i = 0; i < n; i += next_offset ) {
+-    int name_index = fields()->ushort_at(i + name_index_offset);
++  for (JavaFieldStream fs(this); !fs.done(); fs.next()) {
++    int name_index = fs.name_index();
+     closure->do_symbol(constants()->symbol_at_addr(name_index));
+-    int sig_index  = fields()->ushort_at(i + signature_index_offset);
++    int sig_index  = fs.signature_index();
+     closure->do_symbol(constants()->symbol_at_addr(sig_index));
+   }
+ }
+@@ -864,10 +861,9 @@
+ 
+ 
+ bool instanceKlass::find_local_field_from_offset(int offset, bool is_static, fieldDescriptor* fd) const {
+-  int length = fields()->length();
+-  for (int i = 0; i < length; i += next_offset) {
+-    if (offset_from_fields( i ) == offset) {
+-      fd->initialize(as_klassOop(), i);
++  for (JavaFieldStream fs(as_klassOop()); !fs.done(); fs.next()) {
++    if (fs.offset() == offset) {
++      fd->initialize(as_klassOop(), fs.index());
+       if (fd->is_static() == is_static) return true;
+     }
+   }
+@@ -898,11 +894,12 @@
+ 
+ 
+ void instanceKlass::do_local_static_fields(FieldClosure* cl) {
+-  fieldDescriptor fd;
+-  int length = fields()->length();
+-  for (int i = 0; i < length; i += next_offset) {
+-    fd.initialize(as_klassOop(), i);
+-    if (fd.is_static()) cl->do_field(&fd);
++  for (JavaFieldStream fs(this); !fs.done(); fs.next()) {
++    if (fs.access_flags().is_static()) {
++      fieldDescriptor fd;
++      fd.initialize(as_klassOop(), fs.index());
++      cl->do_field(&fd);
++    }
+   }
+ }
+ 
+@@ -914,11 +911,12 @@
+ 
+ 
+ void instanceKlass::do_local_static_fields_impl(instanceKlassHandle this_oop, void f(fieldDescriptor* fd, TRAPS), TRAPS) {
+-  fieldDescriptor fd;
+-  int length = this_oop->fields()->length();
+-  for (int i = 0; i < length; i += next_offset) {
+-    fd.initialize(this_oop(), i);
+-    if (fd.is_static()) { f(&fd, CHECK); } // Do NOT remove {}! (CHECK macro expands into several statements)
++  for (JavaFieldStream fs(this_oop()); !fs.done(); fs.next()) {
++    if (fs.access_flags().is_static()) {
++      fieldDescriptor fd;
++      fd.initialize(this_oop(), fs.index());
++      f(&fd, CHECK);
++    }
+   }
+ }
+ 
+@@ -933,11 +931,11 @@
+     super->do_nonstatic_fields(cl);
+   }
+   fieldDescriptor fd;
+-  int length = fields()->length();
++  int length = java_fields_count();
+   // In DebugInfo nonstatic fields are sorted by offset.
+   int* fields_sorted = NEW_C_HEAP_ARRAY(int, 2*(length+1));
+   int j = 0;
+-  for (int i = 0; i < length; i += next_offset) {
++  for (int i = 0; i < length; i += 1) {
+     fd.initialize(as_klassOop(), i);
+     if (!fd.is_static()) {
+       fields_sorted[j + 0] = fd.offset();
+@@ -2412,43 +2410,6 @@
+   oop_oop_iterate(obj, &blk);
+ }
+ 
+-#ifndef PRODUCT
+-
+-void instanceKlass::verify_class_klass_nonstatic_oop_maps(klassOop k) {
+-  // This verification code is disabled.  JDK_Version::is_gte_jdk14x_version()
+-  // cannot be called since this function is called before the VM is
+-  // able to determine what JDK version is running with.
+-  // The check below always is false since 1.4.
+-  return;
+-
+-  // This verification code temporarily disabled for the 1.4
+-  // reflection implementation since java.lang.Class now has
+-  // Java-level instance fields. Should rewrite this to handle this
+-  // case.
+-  if (!(JDK_Version::is_gte_jdk14x_version() && UseNewReflection)) {
+-    // Verify that java.lang.Class instances have a fake oop field added.
+-    instanceKlass* ik = instanceKlass::cast(k);
+-
+-    // Check that we have the right class
+-    static bool first_time = true;
+-    guarantee(k == SystemDictionary::Class_klass() && first_time, "Invalid verify of maps");
+-    first_time = false;
+-    const int extra = java_lang_Class::number_of_fake_oop_fields;
+-    guarantee(ik->nonstatic_field_size() == extra, "just checking");
+-    guarantee(ik->nonstatic_oop_map_count() == 1, "just checking");
+-    guarantee(ik->size_helper() == align_object_size(instanceOopDesc::header_size() + extra), "just checking");
+-
+-    // Check that the map is (2,extra)
+-    int offset = java_lang_Class::klass_offset;
+-
+-    OopMapBlock* map = ik->start_of_nonstatic_oop_maps();
+-    guarantee(map->offset() == offset && map->count() == (unsigned int) extra,
+-              "sanity");
+-  }
+-}
+-
+-#endif // ndef PRODUCT
+-
+ // JNIid class for jfieldIDs only
+ // Note to reviewers:
+ // These JNI functions are just moved over to column 1 and not changed
+diff --git a/src/share/vm/oops/instanceKlass.hpp b/src/share/vm/oops/instanceKlass.hpp
+--- openjdk/hotspot/src/share/vm/oops/instanceKlass.hpp
++++ openjdk/hotspot/src/share/vm/oops/instanceKlass.hpp
+@@ -27,6 +27,7 @@
+ 
+ #include "oops/constMethodOop.hpp"
+ #include "oops/constantPoolOop.hpp"
++#include "oops/fieldInfo.hpp"
+ #include "oops/instanceOop.hpp"
+ #include "oops/klassOop.hpp"
+ #include "oops/klassVtable.hpp"
+@@ -230,6 +231,7 @@
+   int             _static_field_size;    // number words used by static fields (oop and non-oop) in this klass
+   int             _static_oop_field_count;// number of static oop fields in this klass
+   int             _nonstatic_oop_map_size;// size in words of nonstatic oop map blocks
++  int             _java_fields_count;    // The number of declared Java fields
+   bool            _is_marked_dependent;  // used for marking during flushing and deoptimization
+   bool            _rewritten;            // methods rewritten.
+   bool            _has_nonstatic_fields; // for sizing with UseCompressedOops
+@@ -309,28 +311,29 @@
+   objArrayOop transitive_interfaces() const     { return _transitive_interfaces; }
+   void set_transitive_interfaces(objArrayOop a) { oop_store_without_check((oop*) &_transitive_interfaces, (oop) a); }
+ 
+-  // fields
+-  // Field info extracted from the class file and stored
+-  // as an array of 7 shorts
+-  enum FieldOffset {
+-    access_flags_offset    = 0,
+-    name_index_offset      = 1,
+-    signature_index_offset = 2,
+-    initval_index_offset   = 3,
+-    low_offset             = 4,
+-    high_offset            = 5,
+-    generic_signature_offset = 6,
+-    next_offset            = 7
+-  };
++ private:
++  friend class fieldDescriptor;
++  FieldInfo* field(int index) const { return FieldInfo::from_field_array(_fields, index); }
++
++ public:
++  int     field_offset      (int index) const { return field(index)->offset(); }
++  int     field_access_flags(int index) const { return field(index)->access_flags(); }
++  Symbol* field_name        (int index) const { return field(index)->name(constants()); }
++  Symbol* field_signature   (int index) const { return field(index)->signature(constants()); }
++
++  // Number of Java declared fields
++  int java_fields_count() const           { return _java_fields_count; }
++
++  // Number of fields including any injected fields
++  int all_fields_count() const            { return _fields->length() / sizeof(FieldInfo::field_slots); }
+ 
+   typeArrayOop fields() const              { return _fields; }
+-  int offset_from_fields( int index ) const {
+-    return build_int_from_shorts( fields()->ushort_at(index + low_offset),
+-                                  fields()->ushort_at(index + high_offset) );
++
++  void set_fields(typeArrayOop f, int java_fields_count) {
++    oop_store_without_check((oop*) &_fields, (oop) f);
++    _java_fields_count = java_fields_count;
+   }
+ 
+-  void set_fields(typeArrayOop f)          { oop_store_without_check((oop*) &_fields, (oop) f); }
+-
+   // inner classes
+   typeArrayOop inner_classes() const       { return _inner_classes; }
+   void set_inner_classes(typeArrayOop f)   { oop_store_without_check((oop*) &_inner_classes, (oop) f); }
+@@ -846,10 +849,6 @@
+   // Verification
+   const char* internal_name() const;
+   void oop_verify_on(oop obj, outputStream* st);
+-
+-#ifndef PRODUCT
+-  static void verify_class_klass_nonstatic_oop_maps(klassOop k) PRODUCT_RETURN;
+-#endif
+ };
+ 
+ inline methodOop instanceKlass::method_at_vtable(int index)  {
+diff --git a/src/share/vm/oops/instanceKlassKlass.cpp b/src/share/vm/oops/instanceKlassKlass.cpp
+--- openjdk/hotspot/src/share/vm/oops/instanceKlassKlass.cpp
++++ openjdk/hotspot/src/share/vm/oops/instanceKlassKlass.cpp
+@@ -426,7 +426,7 @@
+     ik->set_local_interfaces(NULL);
+     ik->set_transitive_interfaces(NULL);
+     ik->init_implementor();
+-    ik->set_fields(NULL);
++    ik->set_fields(NULL, 0);
+     ik->set_constants(NULL);
+     ik->set_class_loader(NULL);
+     ik->set_protection_domain(NULL);
+diff --git a/src/share/vm/prims/jni.cpp b/src/share/vm/prims/jni.cpp
+--- openjdk/hotspot/src/share/vm/prims/jni.cpp
++++ openjdk/hotspot/src/share/vm/prims/jni.cpp
+@@ -498,7 +498,7 @@
+ 
+   // First check if this is a static field
+   if (modifiers & JVM_ACC_STATIC) {
+-    intptr_t offset = instanceKlass::cast(k1())->offset_from_fields( slot );
++    intptr_t offset = instanceKlass::cast(k1())->field_offset( slot );
+     JNIid* id = instanceKlass::cast(k1())->jni_id_for(offset);
+     assert(id != NULL, "corrupt Field object");
+     debug_only(id->set_is_static_field_id();)
+@@ -510,7 +510,7 @@
+   // The slot is the index of the field description in the field-array
+   // The jfieldID is the offset of the field within the object
+   // It may also have hash bits for k, if VerifyJNIFields is turned on.
+-  intptr_t offset = instanceKlass::cast(k1())->offset_from_fields( slot );
++  intptr_t offset = instanceKlass::cast(k1())->field_offset( slot );
+   assert(instanceKlass::cast(k1())->contains_field_offset(offset), "stay within object");
+   ret = jfieldIDWorkaround::to_instance_jfieldID(k1(), offset);
+   return ret;
+diff --git a/src/share/vm/prims/jvm.cpp b/src/share/vm/prims/jvm.cpp
+--- openjdk/hotspot/src/share/vm/prims/jvm.cpp
++++ openjdk/hotspot/src/share/vm/prims/jvm.cpp
+@@ -32,6 +32,7 @@
+ #include "gc_interface/collectedHeap.inline.hpp"
+ #include "memory/oopFactory.hpp"
+ #include "memory/universe.inline.hpp"
++#include "oops/fieldStreams.hpp"
+ #include "oops/instanceKlass.hpp"
+ #include "oops/objArrayKlass.hpp"
+ #include "prims/jvm.h"
+@@ -1562,7 +1563,7 @@
+ 
+   fieldDescriptor fd;
+   KlassHandle kh(THREAD, k);
+-  intptr_t offset = instanceKlass::cast(kh())->offset_from_fields(slot);
++  intptr_t offset = instanceKlass::cast(kh())->field_offset(slot);
+ 
+   if (modifiers & JVM_ACC_STATIC) {
+     // for static fields we only look in the current class
+@@ -1662,9 +1663,6 @@
+   // Ensure class is linked
+   k->link_class(CHECK_NULL);
+ 
+-  typeArrayHandle fields(THREAD, k->fields());
+-  int fields_len = fields->length();
+-
+   // 4496456 We need to filter out java.lang.Throwable.backtrace
+   bool skip_backtrace = false;
+ 
+@@ -1673,12 +1671,11 @@
+ 
+   if (publicOnly) {
+     num_fields = 0;
+-    for (int i = 0, j = 0; i < fields_len; i += instanceKlass::next_offset, j++) {
+-      int mods = fields->ushort_at(i + instanceKlass::access_flags_offset) & JVM_RECOGNIZED_FIELD_MODIFIERS;
+-      if (mods & JVM_ACC_PUBLIC) ++num_fields;
++    for (JavaFieldStream fs(k()); !fs.done(); fs.next()) {
++      if (fs.access_flags().is_public()) ++num_fields;
+     }
+   } else {
+-    num_fields = fields_len / instanceKlass::next_offset;
++    num_fields = k->java_fields_count();
+ 
+     if (k() == SystemDictionary::Throwable_klass()) {
+       num_fields--;
+@@ -1691,16 +1688,15 @@
+ 
+   int out_idx = 0;
+   fieldDescriptor fd;
+-  for (int i = 0; i < fields_len; i += instanceKlass::next_offset) {
++  for (JavaFieldStream fs(k); !fs.done(); fs.next()) {
+     if (skip_backtrace) {
+       // 4496456 skip java.lang.Throwable.backtrace
+-      int offset = k->offset_from_fields(i);
++      int offset = fs.offset();
+       if (offset == java_lang_Throwable::get_backtrace_offset()) continue;
+     }
+ 
+-    int mods = fields->ushort_at(i + instanceKlass::access_flags_offset) & JVM_RECOGNIZED_FIELD_MODIFIERS;
+-    if (!publicOnly || (mods & JVM_ACC_PUBLIC)) {
+-      fd.initialize(k(), i);
++    if (!publicOnly || fs.access_flags().is_public()) {
++      fd.initialize(k(), fs.index());
+       oop field = Reflection::new_field(&fd, UseNewReflection, CHECK_NULL);
+       result->obj_at_put(out_idx, field);
+       ++out_idx;
+@@ -2188,7 +2184,7 @@
+   k = JvmtiThreadState::class_to_verify_considering_redefinition(k, thread);
+   if (!Klass::cast(k)->oop_is_instance())
+     return 0;
+-  return instanceKlass::cast(k)->fields()->length() / instanceKlass::next_offset;
++  return instanceKlass::cast(k)->java_fields_count();
+ JVM_END
+ 
+ 
+@@ -2284,8 +2280,7 @@
+   JVMWrapper("JVM_GetFieldIxModifiers");
+   klassOop k = java_lang_Class::as_klassOop(JNIHandles::resolve_non_null(cls));
+   k = JvmtiThreadState::class_to_verify_considering_redefinition(k, thread);
+-  typeArrayOop fields = instanceKlass::cast(k)->fields();
+-  return fields->ushort_at(field_index * instanceKlass::next_offset + instanceKlass::access_flags_offset) & JVM_RECOGNIZED_FIELD_MODIFIERS;
++  return instanceKlass::cast(k)->field_access_flags(field_index) & JVM_RECOGNIZED_FIELD_MODIFIERS;
+ JVM_END
+ 
+ 
+@@ -2468,7 +2463,7 @@
+ JVM_END
+ 
+ 
+-JVM_QUICK_ENTRY(jint, JVM_GetCPFieldModifiers(JNIEnv *env, jclass cls, int cp_index, jclass called_cls))
++JVM_ENTRY(jint, JVM_GetCPFieldModifiers(JNIEnv *env, jclass cls, int cp_index, jclass called_cls))
+   JVMWrapper("JVM_GetCPFieldModifiers");
+   klassOop k = java_lang_Class::as_klassOop(JNIHandles::resolve_non_null(cls));
+   klassOop k_called = java_lang_Class::as_klassOop(JNIHandles::resolve_non_null(called_cls));
+@@ -2480,12 +2475,9 @@
+     case JVM_CONSTANT_Fieldref: {
+       Symbol* name      = cp->uncached_name_ref_at(cp_index);
+       Symbol* signature = cp->uncached_signature_ref_at(cp_index);
+-      typeArrayOop fields = instanceKlass::cast(k_called)->fields();
+-      int fields_count = fields->length();
+-      for (int i = 0; i < fields_count; i += instanceKlass::next_offset) {
+-        if (cp_called->symbol_at(fields->ushort_at(i + instanceKlass::name_index_offset)) == name &&
+-            cp_called->symbol_at(fields->ushort_at(i + instanceKlass::signature_index_offset)) == signature) {
+-          return fields->ushort_at(i + instanceKlass::access_flags_offset) & JVM_RECOGNIZED_FIELD_MODIFIERS;
++      for (JavaFieldStream fs(k_called); !fs.done(); fs.next()) {
++        if (fs.name() == name && fs.signature() == signature) {
++          return fs.access_flags().as_short() & JVM_RECOGNIZED_FIELD_MODIFIERS;
+         }
+       }
+       return -1;
+diff --git a/src/share/vm/prims/jvmtiClassFileReconstituter.cpp b/src/share/vm/prims/jvmtiClassFileReconstituter.cpp
+--- openjdk/hotspot/src/share/vm/prims/jvmtiClassFileReconstituter.cpp
++++ openjdk/hotspot/src/share/vm/prims/jvmtiClassFileReconstituter.cpp
+@@ -25,6 +25,7 @@
+ #include "precompiled.hpp"
+ #include "classfile/symbolTable.hpp"
+ #include "interpreter/bytecodeStream.hpp"
++#include "oops/fieldStreams.hpp"
+ #include "prims/jvmtiClassFileReconstituter.hpp"
+ #include "runtime/signature.hpp"
+ #ifdef TARGET_ARCH_x86
+@@ -46,25 +47,22 @@
+ // JVMSpec|     field_info fields[fields_count];
+ void JvmtiClassFileReconstituter::write_field_infos() {
+   HandleMark hm(thread());
+-  typeArrayHandle fields(thread(), ikh()->fields());
+-  int fields_length = fields->length();
+-  int num_fields = fields_length / instanceKlass::next_offset;
+   objArrayHandle fields_anno(thread(), ikh()->fields_annotations());
+ 
+-  write_u2(num_fields);
+-  for (int index = 0; index < fields_length; index += instanceKlass::next_offset) {
+-    AccessFlags access_flags;
+-    int flags = fields->ushort_at(index + instanceKlass::access_flags_offset);
+-    access_flags.set_flags(flags);
+-    int name_index = fields->ushort_at(index + instanceKlass::name_index_offset);
+-    int signature_index = fields->ushort_at(index + instanceKlass::signature_index_offset);
+-    int initial_value_index = fields->ushort_at(index + instanceKlass::initval_index_offset);
++  // Compute the real number of Java fields
++  int java_fields = ikh()->java_fields_count();
++
++  write_u2(java_fields * FieldInfo::field_slots);
++  for (JavaFieldStream fs(ikh()); !fs.done(); fs.next()) {
++    AccessFlags access_flags = fs.access_flags();
++    int name_index = fs.name_index();
++    int signature_index = fs.signature_index();
++    int initial_value_index = fs.initval_index();
+     guarantee(name_index != 0 && signature_index != 0, "bad constant pool index for field");
+-    int offset = ikh()->offset_from_fields( index );
+-    int generic_signature_index =
+-                        fields->ushort_at(index + instanceKlass::generic_signature_offset);
++    // int offset = ikh()->field_offset( index );
++    int generic_signature_index = fs.generic_signature_index();
+     typeArrayHandle anno(thread(), fields_anno.not_null() ?
+-                                 (typeArrayOop)(fields_anno->obj_at(index / instanceKlass::next_offset)) :
++                                 (typeArrayOop)(fields_anno->obj_at(fs.index())) :
+                                  (typeArrayOop)NULL);
+ 
+     // JVMSpec|   field_info {
+@@ -75,7 +73,7 @@
+     // JVMSpec|         attribute_info attributes[attributes_count];
+     // JVMSpec|   }
+ 
+-    write_u2(flags & JVM_RECOGNIZED_FIELD_MODIFIERS);
++    write_u2(access_flags.as_int() & JVM_RECOGNIZED_FIELD_MODIFIERS);
+     write_u2(name_index);
+     write_u2(signature_index);
+     int attr_count = 0;
+diff --git a/src/share/vm/prims/jvmtiEnv.cpp b/src/share/vm/prims/jvmtiEnv.cpp
+--- openjdk/hotspot/src/share/vm/prims/jvmtiEnv.cpp
++++ openjdk/hotspot/src/share/vm/prims/jvmtiEnv.cpp
+@@ -2044,7 +2044,6 @@
+   // make sure we haven't set this watch before
+   if (fdesc_ptr->is_field_access_watched()) return JVMTI_ERROR_DUPLICATE;
+   fdesc_ptr->set_is_field_access_watched(true);
+-  update_klass_field_access_flag(fdesc_ptr);
+ 
+   JvmtiEventController::change_field_watch(JVMTI_EVENT_FIELD_ACCESS, true);
+ 
+@@ -2057,7 +2056,6 @@
+   // make sure we have a watch to clear
+   if (!fdesc_ptr->is_field_access_watched()) return JVMTI_ERROR_NOT_FOUND;
+   fdesc_ptr->set_is_field_access_watched(false);
+-  update_klass_field_access_flag(fdesc_ptr);
+ 
+   JvmtiEventController::change_field_watch(JVMTI_EVENT_FIELD_ACCESS, false);
+ 
+@@ -2070,7 +2068,6 @@
+   // make sure we haven't set this watch before
+   if (fdesc_ptr->is_field_modification_watched()) return JVMTI_ERROR_DUPLICATE;
+   fdesc_ptr->set_is_field_modification_watched(true);
+-  update_klass_field_access_flag(fdesc_ptr);
+ 
+   JvmtiEventController::change_field_watch(JVMTI_EVENT_FIELD_MODIFICATION, true);
+ 
+@@ -2083,7 +2080,6 @@
+    // make sure we have a watch to clear
+   if (!fdesc_ptr->is_field_modification_watched()) return JVMTI_ERROR_NOT_FOUND;
+   fdesc_ptr->set_is_field_modification_watched(false);
+-  update_klass_field_access_flag(fdesc_ptr);
+ 
+   JvmtiEventController::change_field_watch(JVMTI_EVENT_FIELD_MODIFICATION, false);
+ 
+diff --git a/src/share/vm/prims/jvmtiEnvBase.cpp b/src/share/vm/prims/jvmtiEnvBase.cpp
+--- openjdk/hotspot/src/share/vm/prims/jvmtiEnvBase.cpp
++++ openjdk/hotspot/src/share/vm/prims/jvmtiEnvBase.cpp
+@@ -565,15 +565,6 @@
+ }
+ 
+ 
+-// update the access_flags for the field in the klass
+-void
+-JvmtiEnvBase::update_klass_field_access_flag(fieldDescriptor *fd) {
+-  instanceKlass* ik = instanceKlass::cast(fd->field_holder());
+-  typeArrayOop fields = ik->fields();
+-  fields->ushort_at_put(fd->index(), (jushort)fd->access_flags().as_short());
+-}
+-
+-
+ // return the vframe on the specified thread and depth, NULL if no such frame
+ vframe*
+ JvmtiEnvBase::vframeFor(JavaThread* java_thread, jint depth) {
+diff --git a/src/share/vm/prims/jvmtiEnvBase.hpp b/src/share/vm/prims/jvmtiEnvBase.hpp
+--- openjdk/hotspot/src/share/vm/prims/jvmtiEnvBase.hpp
++++ openjdk/hotspot/src/share/vm/prims/jvmtiEnvBase.hpp
+@@ -267,8 +267,6 @@
+   // convert to a jni jclass from a non-null klassOop
+   jclass get_jni_class_non_null(klassOop k);
+ 
+-  void update_klass_field_access_flag(fieldDescriptor *fd);
+-
+   jint count_locked_objects(JavaThread *java_thread, Handle hobj);
+   jvmtiError get_locked_objects_in_frame(JavaThread *calling_thread,
+                                    JavaThread* java_thread,
+diff --git a/src/share/vm/prims/jvmtiRedefineClasses.cpp b/src/share/vm/prims/jvmtiRedefineClasses.cpp
+--- openjdk/hotspot/src/share/vm/prims/jvmtiRedefineClasses.cpp
++++ openjdk/hotspot/src/share/vm/prims/jvmtiRedefineClasses.cpp
+@@ -30,6 +30,7 @@
+ #include "interpreter/rewriter.hpp"
+ #include "memory/gcLocker.hpp"
+ #include "memory/universe.inline.hpp"
++#include "oops/fieldStreams.hpp"
+ #include "oops/klassVtable.hpp"
+ #include "prims/jvmtiImpl.hpp"
+ #include "prims/jvmtiRedefineClasses.hpp"
+@@ -551,41 +552,35 @@
+ 
+   // Check if the number, names, types and order of fields declared in these classes
+   // are the same.
+-  typeArrayOop k_old_fields = the_class->fields();
+-  typeArrayOop k_new_fields = scratch_class->fields();
+-  int n_fields = k_old_fields->length();
+-  if (n_fields != k_new_fields->length()) {
+-    return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_SCHEMA_CHANGED;
+-  }
+-
+-  for (i = 0; i < n_fields; i += instanceKlass::next_offset) {
++  JavaFieldStream old_fs(the_class);
++  JavaFieldStream new_fs(scratch_class);
++  for (; !old_fs.done() && !new_fs.done(); old_fs.next(), new_fs.next()) {
+     // access
+-    old_flags = k_old_fields->ushort_at(i + instanceKlass::access_flags_offset);
+-    new_flags = k_new_fields->ushort_at(i + instanceKlass::access_flags_offset);
++    old_flags = old_fs.access_flags().as_short();
++    new_flags = new_fs.access_flags().as_short();
+     if ((old_flags ^ new_flags) & JVM_RECOGNIZED_FIELD_MODIFIERS) {
+       return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_SCHEMA_CHANGED;
+     }
+     // offset
+-    if (k_old_fields->short_at(i + instanceKlass::low_offset) !=
+-        k_new_fields->short_at(i + instanceKlass::low_offset) ||
+-        k_old_fields->short_at(i + instanceKlass::high_offset) !=
+-        k_new_fields->short_at(i + instanceKlass::high_offset)) {
++    if (old_fs.offset() != new_fs.offset()) {
+       return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_SCHEMA_CHANGED;
+     }
+     // name and signature
+-    jshort name_index = k_old_fields->short_at(i + instanceKlass::name_index_offset);
+-    jshort sig_index = k_old_fields->short_at(i +instanceKlass::signature_index_offset);
+-    Symbol* name_sym1 = the_class->constants()->symbol_at(name_index);
+-    Symbol* sig_sym1 = the_class->constants()->symbol_at(sig_index);
+-    name_index = k_new_fields->short_at(i + instanceKlass::name_index_offset);
+-    sig_index = k_new_fields->short_at(i + instanceKlass::signature_index_offset);
+-    Symbol* name_sym2 = scratch_class->constants()->symbol_at(name_index);
+-    Symbol* sig_sym2 = scratch_class->constants()->symbol_at(sig_index);
++    Symbol* name_sym1 = the_class->constants()->symbol_at(old_fs.name_index());
++    Symbol* sig_sym1 = the_class->constants()->symbol_at(old_fs.signature_index());
++    Symbol* name_sym2 = scratch_class->constants()->symbol_at(new_fs.name_index());
++    Symbol* sig_sym2 = scratch_class->constants()->symbol_at(new_fs.signature_index());
+     if (name_sym1 != name_sym2 || sig_sym1 != sig_sym2) {
+       return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_SCHEMA_CHANGED;
+     }
+   }
+ 
++  // If both streams aren't done then we have a differing number of
++  // fields.
++  if (!old_fs.done() || !new_fs.done()) {
++    return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_SCHEMA_CHANGED;
++  }
++
+   // Do a parallel walk through the old and new methods. Detect
+   // cases where they match (exist in both), have been added in
+   // the new methods, or have been deleted (exist only in the
+@@ -2363,38 +2358,34 @@
+   int i;  // for portability
+ 
+   // update each field in klass to use new constant pool indices as needed
+-  typeArrayHandle fields(THREAD, scratch_class->fields());
+-  int n_fields = fields->length();
+-  for (i = 0; i < n_fields; i += instanceKlass::next_offset) {
+-    jshort cur_index = fields->short_at(i + instanceKlass::name_index_offset);
++  for (JavaFieldStream fs(scratch_class); !fs.done(); fs.next()) {
++    jshort cur_index = fs.name_index();
+     jshort new_index = find_new_index(cur_index);
+     if (new_index != 0) {
+       RC_TRACE_WITH_THREAD(0x00080000, THREAD,
+         ("field-name_index change: %d to %d", cur_index, new_index));
+-      fields->short_at_put(i + instanceKlass::name_index_offset, new_index);
++      fs.set_name_index(new_index);
+     }
+-    cur_index = fields->short_at(i + instanceKlass::signature_index_offset);
++    cur_index = fs.signature_index();
+     new_index = find_new_index(cur_index);
+     if (new_index != 0) {
+       RC_TRACE_WITH_THREAD(0x00080000, THREAD,
+         ("field-signature_index change: %d to %d", cur_index, new_index));
+-      fields->short_at_put(i + instanceKlass::signature_index_offset,
+-        new_index);
++      fs.set_signature_index(new_index);
+     }
+-    cur_index = fields->short_at(i + instanceKlass::initval_index_offset);
++    cur_index = fs.initval_index();
+     new_index = find_new_index(cur_index);
+     if (new_index != 0) {
+       RC_TRACE_WITH_THREAD(0x00080000, THREAD,
+         ("field-initval_index change: %d to %d", cur_index, new_index));
+-      fields->short_at_put(i + instanceKlass::initval_index_offset, new_index);
++      fs.set_initval_index(new_index);
+     }
+-    cur_index = fields->short_at(i + instanceKlass::generic_signature_offset);
++    cur_index = fs.generic_signature_index();
+     new_index = find_new_index(cur_index);
+     if (new_index != 0) {
+       RC_TRACE_WITH_THREAD(0x00080000, THREAD,
+         ("field-generic_signature change: %d to %d", cur_index, new_index));
+-      fields->short_at_put(i + instanceKlass::generic_signature_offset,
+-        new_index);
++      fs.set_generic_signature_index(new_index);
+     }
+   } // end for each field
+ 
+diff --git a/src/share/vm/prims/methodHandles.cpp b/src/share/vm/prims/methodHandles.cpp
+--- openjdk/hotspot/src/share/vm/prims/methodHandles.cpp
++++ openjdk/hotspot/src/share/vm/prims/methodHandles.cpp
+@@ -386,7 +386,7 @@
+     int slot  = java_lang_reflect_Field::slot(target_oop);  // fd.index()
+     int mods  = java_lang_reflect_Field::modifiers(target_oop);
+     klassOop k = java_lang_Class::as_klassOop(clazz);
+-    int offset = instanceKlass::cast(k)->offset_from_fields(slot);
++    int offset = instanceKlass::cast(k)->field_offset(slot);
+     init_MemberName(mname_oop, k, accessFlags_from(mods), offset);
+   } else {
+     int decode_flags = 0; klassOop receiver_limit = NULL;
+@@ -646,6 +646,7 @@
+       }
+     }
+   }
++  assert(java_lang_invoke_MethodTypeForm::vmslots(mtform()) == argument_slot_count(mtype()), "must agree");
+ }
+ 
+ // Conversely, a member name which is only initialized from JVM internals
+@@ -1410,8 +1411,6 @@
+     THROW(vmSymbols::java_lang_InternalError());
+   }
+ 
+-  java_dyn_MethodHandle::init_vmslots(mh());
+-
+   if (VerifyMethodHandles) {
+     // The privileged code which invokes this routine should not make
+     // a mistake about types, but it's better to verify.
+@@ -1531,7 +1530,6 @@
+   if (m.is_null())      { THROW(vmSymbols::java_lang_InternalError()); }
+   if (m->is_abstract()) { THROW(vmSymbols::java_lang_AbstractMethodError()); }
+ 
+-  java_dyn_MethodHandle::init_vmslots(mh());
+ 
+   if (VerifyMethodHandles) {
+     verify_BoundMethodHandle_with_receiver(mh, m, CHECK);
+@@ -1639,8 +1637,6 @@
+     THROW(vmSymbols::java_lang_InternalError());
+   }
+ 
+-  java_dyn_MethodHandle::init_vmslots(mh());
+-
+   if (VerifyMethodHandles) {
+     int insert_after = argnum - 1;
+     verify_vmargslot(mh, insert_after, sun_dyn_BoundMethodHandle::vmargslot(mh()), CHECK);
+diff --git a/src/share/vm/prims/unsafe.cpp b/src/share/vm/prims/unsafe.cpp
+--- openjdk/hotspot/src/share/vm/prims/unsafe.cpp
++++ openjdk/hotspot/src/share/vm/prims/unsafe.cpp
+@@ -652,7 +652,7 @@
+     }
+   }
+ 
+-  int offset = instanceKlass::cast(k)->offset_from_fields(slot);
++  int offset = instanceKlass::cast(k)->field_offset(slot);
+   return field_offset_from_byte_offset(offset);
+ }
+ 
+diff --git a/src/share/vm/runtime/fieldDescriptor.cpp b/src/share/vm/runtime/fieldDescriptor.cpp
+--- openjdk/hotspot/src/share/vm/runtime/fieldDescriptor.cpp
++++ openjdk/hotspot/src/share/vm/runtime/fieldDescriptor.cpp
+@@ -42,59 +42,51 @@
+   objArrayOop md = ik->fields_annotations();
+   if (md == NULL)
+     return NULL;
+-  assert((index() % instanceKlass::next_offset) == 0, "");
+-  return typeArrayOop(md->obj_at(index() / instanceKlass::next_offset));
++  return typeArrayOop(md->obj_at(index()));
+ }
+ 
+ constantTag fieldDescriptor::initial_value_tag() const {
+-  return constants()->tag_at(_initial_value_index);
++  return constants()->tag_at(initial_value_index());
+ }
+ 
+ jint fieldDescriptor::int_initial_value() const {
+-  return constants()->int_at(_initial_value_index);
++  return constants()->int_at(initial_value_index());
+ }
+ 
+ jlong fieldDescriptor::long_initial_value() const {
+-  return constants()->long_at(_initial_value_index);
++  return constants()->long_at(initial_value_index());
+ }
+ 
+ jfloat fieldDescriptor::float_initial_value() const {
+-  return constants()->float_at(_initial_value_index);
++  return constants()->float_at(initial_value_index());
+ }
+ 
+ jdouble fieldDescriptor::double_initial_value() const {
+-  return constants()->double_at(_initial_value_index);
++  return constants()->double_at(initial_value_index());
+ }
+ 
+ oop fieldDescriptor::string_initial_value(TRAPS) const {
+-  return constants()->string_at(_initial_value_index, CHECK_0);
++  return constants()->string_at(initial_value_index(), CHECK_0);
+ }
+ 
+ void fieldDescriptor::initialize(klassOop k, int index) {
+   instanceKlass* ik = instanceKlass::cast(k);
+   _cp = ik->constants();
+-  typeArrayOop fields = ik->fields();
++  FieldInfo* f = ik->field(index);
++  assert(!f->is_internal(), "regular Java fields only");
+ 
+-  assert(fields->length() % instanceKlass::next_offset == 0, "Illegal size of field array");
+-  assert(fields->length() >= index + instanceKlass::next_offset, "Illegal size of field array");
+-
+-  _access_flags.set_field_flags(fields->ushort_at(index + instanceKlass::access_flags_offset));
+-  _name_index = fields->ushort_at(index + instanceKlass::name_index_offset);
+-  _signature_index = fields->ushort_at(index + instanceKlass::signature_index_offset);
+-  _initial_value_index = fields->ushort_at(index + instanceKlass::initval_index_offset);
+-  guarantee(_name_index != 0 && _signature_index != 0, "bad constant pool index for fieldDescriptor");
+-  _offset = ik->offset_from_fields( index );
+-  _generic_signature_index = fields->ushort_at(index + instanceKlass::generic_signature_offset);
++  _access_flags = accessFlags_from(f->access_flags());
++  guarantee(f->name_index() != 0 && f->signature_index() != 0, "bad constant pool index for fieldDescriptor");
+   _index = index;
+ }
+ 
+ #ifndef PRODUCT
+ 
+ void fieldDescriptor::print_on(outputStream* st) const {
+-  _access_flags.print_on(st);
+-  constants()->symbol_at(_name_index)->print_value_on(st);
++  access_flags().print_on(st);
++  name()->print_value_on(st);
+   st->print(" ");
+-  constants()->symbol_at(_signature_index)->print_value_on(st);
++  signature()->print_value_on(st);
+   st->print(" @%d ", offset());
+   if (WizardMode && has_initial_value()) {
+     st->print("(initval ");
+diff --git a/src/share/vm/runtime/fieldDescriptor.hpp b/src/share/vm/runtime/fieldDescriptor.hpp
+--- openjdk/hotspot/src/share/vm/runtime/fieldDescriptor.hpp
++++ openjdk/hotspot/src/share/vm/runtime/fieldDescriptor.hpp
+@@ -40,29 +40,40 @@
+ class fieldDescriptor VALUE_OBJ_CLASS_SPEC {
+  private:
+   AccessFlags         _access_flags;
+-  int                 _name_index;
+-  int                 _signature_index;
+-  int                 _initial_value_index;
+-  int                 _offset;
+-  int                 _generic_signature_index;
+-  int                 _index; // index into fields() array
++  int                 _index; // the field index
+   constantPoolHandle  _cp;
+ 
++  // update the access_flags for the field in the klass
++  void update_klass_field_access_flag() {
++    instanceKlass* ik = instanceKlass::cast(field_holder());
++    ik->field(index())->set_access_flags(_access_flags.as_short());
++  }
++
++  FieldInfo* field() const {
++    instanceKlass* ik = instanceKlass::cast(field_holder());
++    return ik->field(_index);
++  }
++
+  public:
+-  Symbol* name() const                 { return _cp->symbol_at(_name_index); }
+-  Symbol* signature() const            { return _cp->symbol_at(_signature_index); }
++  Symbol* name() const {
++    return field()->name(_cp);
++  }
++  Symbol* signature() const {
++    return field()->signature(_cp);
++  }
+   klassOop field_holder() const        { return _cp->pool_holder(); }
+   constantPoolOop constants() const    { return _cp(); }
+   AccessFlags access_flags() const     { return _access_flags; }
+   oop loader() const;
+   // Offset (in words) of field from start of instanceOop / klassOop
+-  int offset() const                   { return _offset; }
+-  Symbol* generic_signature() const    { return (_generic_signature_index > 0 ? _cp->symbol_at(_generic_signature_index) : (Symbol*)NULL); }
++  int offset() const                   { return field()->offset(); }
++  Symbol* generic_signature() const    { return field()->generic_signature(_cp); }
+   int index() const                    { return _index; }
+   typeArrayOop annotations() const;
+ 
+   // Initial field value
+-  bool has_initial_value() const          { return _initial_value_index != 0; }
++  bool has_initial_value() const          { return field()->initval_index() != 0; }
++  int initial_value_index() const         { return field()->initval_index(); }
+   constantTag initial_value_tag() const;  // The tag will return true on one of is_int(), is_long(), is_single(), is_double()
+   jint        int_initial_value() const;
+   jlong       long_initial_value() const;
+@@ -74,25 +85,31 @@
+   BasicType field_type() const            { return FieldType::basic_type(signature()); }
+ 
+   // Access flags
+-  bool is_public() const                  { return _access_flags.is_public(); }
+-  bool is_private() const                 { return _access_flags.is_private(); }
+-  bool is_protected() const               { return _access_flags.is_protected(); }
++  bool is_public() const                  { return access_flags().is_public(); }
++  bool is_private() const                 { return access_flags().is_private(); }
++  bool is_protected() const               { return access_flags().is_protected(); }
+   bool is_package_private() const         { return !is_public() && !is_private() && !is_protected(); }
+ 
+-  bool is_static() const                  { return _access_flags.is_static(); }
+-  bool is_final() const                   { return _access_flags.is_final(); }
+-  bool is_volatile() const                { return _access_flags.is_volatile(); }
+-  bool is_transient() const               { return _access_flags.is_transient(); }
++  bool is_static() const                  { return access_flags().is_static(); }
++  bool is_final() const                   { return access_flags().is_final(); }
++  bool is_volatile() const                { return access_flags().is_volatile(); }
++  bool is_transient() const               { return access_flags().is_transient(); }
+ 
+-  bool is_synthetic() const               { return _access_flags.is_synthetic(); }
++  bool is_synthetic() const               { return access_flags().is_synthetic(); }
+ 
+-  bool is_field_access_watched() const    { return _access_flags.is_field_access_watched(); }
++  bool is_field_access_watched() const    { return access_flags().is_field_access_watched(); }
+   bool is_field_modification_watched() const
+-                                          { return _access_flags.is_field_modification_watched(); }
+-  void set_is_field_access_watched(const bool value)
+-                                          { _access_flags.set_is_field_access_watched(value); }
+-  void set_is_field_modification_watched(const bool value)
+-                                          { _access_flags.set_is_field_modification_watched(value); }
++                                          { return access_flags().is_field_modification_watched(); }
++
++  void set_is_field_access_watched(const bool value) {
++    _access_flags.set_is_field_access_watched(value);
++    update_klass_field_access_flag();
++  }
++
++  void set_is_field_modification_watched(const bool value) {
++    _access_flags.set_is_field_modification_watched(value);
++    update_klass_field_access_flag();
++  }
+ 
+   // Initialization
+   void initialize(klassOop k, int index);
+diff --git a/src/share/vm/runtime/reflectionUtils.hpp b/src/share/vm/runtime/reflectionUtils.hpp
+--- openjdk/hotspot/src/share/vm/runtime/reflectionUtils.hpp
++++ openjdk/hotspot/src/share/vm/runtime/reflectionUtils.hpp
+@@ -107,10 +107,8 @@
+ 
+ class FieldStream : public KlassStream {
+  private:
+-  int length() const                { return fields()->length(); }
+-  constantPoolOop constants() const { return _klass->constants(); }
+- protected:
+-  typeArrayOop fields() const       { return _klass->fields(); }
++  int length() const                { return _klass->java_fields_count(); }
++
+  public:
+   FieldStream(instanceKlassHandle klass, bool local_only, bool classes_only)
+     : KlassStream(klass, local_only, classes_only) {
+@@ -118,26 +116,23 @@
+     next();
+   }
+ 
+-  void next() { _index -= instanceKlass::next_offset; }
++  void next() { _index -= 1; }
+ 
+   // Accessors for current field
+   AccessFlags access_flags() const {
+     AccessFlags flags;
+-    flags.set_flags(fields()->ushort_at(index() + instanceKlass::access_flags_offset));
++    flags.set_flags(_klass->field_access_flags(_index));
+     return flags;
+   }
+   Symbol* name() const {
+-    int name_index = fields()->ushort_at(index() + instanceKlass::name_index_offset);
+-    return constants()->symbol_at(name_index);
++    return _klass->field_name(_index);
+   }
+   Symbol* signature() const {
+-    int signature_index = fields()->ushort_at(index() +
+-                                       instanceKlass::signature_index_offset);
+-    return constants()->symbol_at(signature_index);
++    return _klass->field_signature(_index);
+   }
+   // missing: initval()
+   int offset() const {
+-    return _klass->offset_from_fields( index() );
++    return _klass->field_offset( index() );
+   }
+ };
+ 
+@@ -213,10 +208,10 @@
+   }
+   int field_count();
+   void next() {
+-    _index -= instanceKlass::next_offset;
++    _index -= 1;
+     if (has_filtered_field()) {
+       while (_index >=0 && FilteredFieldsMap::is_filtered_field((klassOop)_klass(), offset())) {
+-        _index -= instanceKlass::next_offset;
++        _index -= 1;
+       }
+     }
+   }
+diff --git a/src/share/vm/runtime/thread.cpp b/src/share/vm/runtime/thread.cpp
+--- openjdk/hotspot/src/share/vm/runtime/thread.cpp
++++ openjdk/hotspot/src/share/vm/runtime/thread.cpp
+@@ -981,7 +981,7 @@
+ // General purpose hook into Java code, run once when the VM is initialized.
+ // The Java library method itself may be changed independently from the VM.
+ static void call_postVMInitHook(TRAPS) {
+-  klassOop k = SystemDictionary::sun_misc_PostVMInitHook_klass();
++  klassOop k = SystemDictionary::PostVMInitHook_klass();
+   instanceKlassHandle klass (THREAD, k);
+   if (klass.not_null()) {
+     JavaValue result(T_VOID);
+diff --git a/src/share/vm/runtime/vmStructs.cpp b/src/share/vm/runtime/vmStructs.cpp
+--- openjdk/hotspot/src/share/vm/runtime/vmStructs.cpp
++++ openjdk/hotspot/src/share/vm/runtime/vmStructs.cpp
+@@ -241,6 +241,7 @@
+   nonstatic_field(instanceKlass,               _nof_implementors,                             int)                                   \
+   nonstatic_field(instanceKlass,               _implementors[0],                              klassOop)                              \
+   nonstatic_field(instanceKlass,               _fields,                                       typeArrayOop)                          \
++  nonstatic_field(instanceKlass,               _java_fields_count,                             int)                                   \
+   nonstatic_field(instanceKlass,               _constants,                                    constantPoolOop)                       \
+   nonstatic_field(instanceKlass,               _class_loader,                                 oop)                                   \
+   nonstatic_field(instanceKlass,               _protection_domain,                            oop)                                   \
+@@ -931,11 +932,11 @@
+   /* java_lang_Class fields        */                                                                                                \
+   /*********************************/                                                                                                \
+                                                                                                                                      \
+-  static_field(java_lang_Class,                klass_offset,                                  int)                                   \
+-  static_field(java_lang_Class,                resolved_constructor_offset,                   int)                                   \
+-  static_field(java_lang_Class,                array_klass_offset,                            int)                                   \
+-  static_field(java_lang_Class,                oop_size_offset,                               int)                                   \
+-  static_field(java_lang_Class,                static_oop_field_count_offset,                 int)                                   \
++  static_field(java_lang_Class,                _klass_offset,                                 int)                                   \
++  static_field(java_lang_Class,                _resolved_constructor_offset,                  int)                                   \
++  static_field(java_lang_Class,                _array_klass_offset,                           int)                                   \
++  static_field(java_lang_Class,                _oop_size_offset,                              int)                                   \
++  static_field(java_lang_Class,                _static_oop_field_count_offset,                int)                                   \
+                                                                                                                                      \
+   /************************/                                                                                                         \
+   /* Miscellaneous fields */                                                                                                         \
+@@ -1627,19 +1628,24 @@
+   declare_constant(constMethodOopDesc::_has_localvariable_table)          \
+                                                                           \
+   /*************************************/                                 \
+-  /* instanceKlass FieldOffset enum    */                                 \
++  /* instanceKlass enum                */                                 \
+   /*************************************/                                 \
+                                                                           \
+-  declare_constant(instanceKlass::access_flags_offset)                    \
+-  declare_constant(instanceKlass::name_index_offset)                      \
+-  declare_constant(instanceKlass::signature_index_offset)                 \
+-  declare_constant(instanceKlass::initval_index_offset)                   \
+-  declare_constant(instanceKlass::low_offset)                             \
+-  declare_constant(instanceKlass::high_offset)                            \
+-  declare_constant(instanceKlass::generic_signature_offset)               \
+-  declare_constant(instanceKlass::next_offset)                            \
+   declare_constant(instanceKlass::implementors_limit)                     \
+                                                                           \
++  /*************************************/                                 \
++  /* FieldInfo FieldOffset enum        */                                 \
++  /*************************************/                                 \
++                                                                          \
++  declare_constant(FieldInfo::access_flags_offset)                        \
++  declare_constant(FieldInfo::name_index_offset)                          \
++  declare_constant(FieldInfo::signature_index_offset)                     \
++  declare_constant(FieldInfo::initval_index_offset)                       \
++  declare_constant(FieldInfo::low_offset)                                 \
++  declare_constant(FieldInfo::high_offset)                                \
++  declare_constant(FieldInfo::generic_signature_offset)                   \
++  declare_constant(FieldInfo::field_slots)                                \
++                                                                          \
+   /************************************************/                      \
+   /* instanceKlass InnerClassAttributeOffset enum */                      \
+   /************************************************/                      \
+diff --git a/src/share/vm/utilities/accessFlags.hpp b/src/share/vm/utilities/accessFlags.hpp
+--- openjdk/hotspot/src/share/vm/utilities/accessFlags.hpp
++++ openjdk/hotspot/src/share/vm/utilities/accessFlags.hpp
+@@ -79,9 +79,14 @@
+   // Note that the class-related ACC_ANNOTATION bit conflicts with these flags.
+   JVM_ACC_FIELD_ACCESS_WATCHED       = 0x00002000,  // field access is watched by JVMTI
+   JVM_ACC_FIELD_MODIFICATION_WATCHED = 0x00008000,  // field modification is watched by JVMTI
++  JVM_ACC_FIELD_INTERNAL             = 0x00000400,  // internal field, same as JVM_ACC_ABSTRACT
++
++  JVM_ACC_FIELD_INTERNAL_FLAGS       = JVM_ACC_FIELD_ACCESS_WATCHED |
++                                       JVM_ACC_FIELD_MODIFICATION_WATCHED |
++                                       JVM_ACC_FIELD_INTERNAL,
+ 
+                                                     // flags accepted by set_field_flags()
+-  JVM_ACC_FIELD_FLAGS                = 0x00008000 | JVM_ACC_WRITTEN_FLAGS
++  JVM_ACC_FIELD_FLAGS                = JVM_RECOGNIZED_FIELD_MODIFIERS | JVM_ACC_FIELD_INTERNAL_FLAGS
+ 
+ };
+ 
+@@ -150,13 +155,17 @@
+   bool is_field_access_watched() const  { return (_flags & JVM_ACC_FIELD_ACCESS_WATCHED) != 0; }
+   bool is_field_modification_watched() const
+                                         { return (_flags & JVM_ACC_FIELD_MODIFICATION_WATCHED) != 0; }
++  bool is_internal() const              { return (_flags & JVM_ACC_FIELD_INTERNAL) != 0; }
+ 
+   // get .class file flags
+   jint get_flags               () const { return (_flags & JVM_ACC_WRITTEN_FLAGS); }
+ 
+   // Initialization
+   void add_promoted_flags(jint flags)   { _flags |= (flags & JVM_ACC_PROMOTED_FLAGS); }
+-  void set_field_flags(jint flags)      { _flags = (flags & JVM_ACC_FIELD_FLAGS); }
++  void set_field_flags(jint flags)      {
++    assert((flags & JVM_ACC_FIELD_FLAGS) == flags, "only recognized flags");
++    _flags = (flags & JVM_ACC_FIELD_FLAGS);
++  }
+   void set_flags(jint flags)            { _flags = (flags & JVM_ACC_WRITTEN_FLAGS); }
+ 
+   void set_queued_for_compilation()    { atomic_set_bits(JVM_ACC_QUEUED); }
+@@ -218,8 +227,8 @@
+                                        }
+ 
+   // Conversion
+-  jshort as_short()                    { return (jshort)_flags; }
+-  jint   as_int()                      { return _flags; }
++  jshort as_short() const              { return (jshort)_flags; }
++  jint   as_int() const                { return _flags; }
+ 
+   inline friend AccessFlags accessFlags_from(jint flags);
+ 

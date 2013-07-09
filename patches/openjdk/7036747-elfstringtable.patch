@@ -1,0 +1,130 @@
+# HG changeset patch
+# User zgu
+# Date 1303909797 14400
+# Node ID fee3c2ed387b0a925f81448c93265b4c30e0a8d6
+# Parent  d521fcfccc58dce20f41178374292f2b8430686c
+7036747: 7017009 reappeared, problem with ElfStringTable
+Summary: Created new "new" operator for CHeapObj that allows malloc to fail without causing fatal error. Also replaced "HeapAllocate" with "os::malloc" in decoder code to allow decoder to handle low memory scenario.
+Reviewed-by: coleenp, dholmes
+
+diff --git a/src/share/vm/memory/allocation.cpp b/src/share/vm/memory/allocation.cpp
+--- openjdk/hotspot/src/share/vm/memory/allocation.cpp
++++ openjdk/hotspot/src/share/vm/memory/allocation.cpp
+@@ -44,6 +44,14 @@
+   return (void *) AllocateHeap(size, "CHeapObj-new");
+ }
+ 
++void* CHeapObj::operator new (size_t size, const std::nothrow_t&  nothrow_constant) {
++  char* p = (char*) os::malloc(size);
++#ifdef ASSERT
++  if (PrintMallocFree) trace_heap_malloc(size, "CHeapObj-new", p);
++#endif
++  return p;
++}
++
+ void CHeapObj::operator delete(void* p){
+  FreeHeap(p);
+ }
+diff --git a/src/share/vm/memory/allocation.hpp b/src/share/vm/memory/allocation.hpp
+--- openjdk/hotspot/src/share/vm/memory/allocation.hpp
++++ openjdk/hotspot/src/share/vm/memory/allocation.hpp
+@@ -34,6 +34,8 @@
+ #include "opto/c2_globals.hpp"
+ #endif
+ 
++#include <new>
++
+ #define ARENA_ALIGN_M1 (((size_t)(ARENA_AMALLOC_ALIGNMENT)) - 1)
+ #define ARENA_ALIGN_MASK (~((size_t)ARENA_ALIGN_M1))
+ #define ARENA_ALIGN(x) ((((size_t)(x)) + ARENA_ALIGN_M1) & ARENA_ALIGN_MASK)
+@@ -105,6 +107,7 @@
+ class CHeapObj ALLOCATION_SUPER_CLASS_SPEC {
+  public:
+   void* operator new(size_t size);
++  void* operator new (size_t size, const std::nothrow_t&  nothrow_constant);
+   void  operator delete(void* p);
+   void* new_array(size_t size);
+ };
+diff --git a/src/share/vm/utilities/elfFile.cpp b/src/share/vm/utilities/elfFile.cpp
+--- openjdk/hotspot/src/share/vm/utilities/elfFile.cpp
++++ openjdk/hotspot/src/share/vm/utilities/elfFile.cpp
+@@ -29,6 +29,7 @@
+ #include <string.h>
+ #include <stdio.h>
+ #include <limits.h>
++#include <new>
+ 
+ #include "memory/allocation.inline.hpp"
+ #include "utilities/decoder.hpp"
+@@ -46,7 +47,7 @@
+   m_status = Decoder::no_error;
+ 
+   int len = strlen(filepath) + 1;
+-  m_filepath = NEW_C_HEAP_ARRAY(char, len);
++  m_filepath = (const char*)os::malloc(len * sizeof(char));
+   if (m_filepath != NULL) {
+     strcpy((char*)m_filepath, filepath);
+     m_file = fopen(filepath, "r");
+@@ -74,7 +75,7 @@
+   }
+ 
+   if (m_filepath != NULL) {
+-    FREE_C_HEAP_ARRAY(char, m_filepath);
++    os::free((void*)m_filepath);
+   }
+ 
+   if (m_next != NULL) {
+@@ -120,14 +121,14 @@
+       }
+       // string table
+       if (shdr.sh_type == SHT_STRTAB) {
+-        ElfStringTable* table = new ElfStringTable(m_file, shdr, index);
++        ElfStringTable* table = new (std::nothrow) ElfStringTable(m_file, shdr, index);
+         if (table == NULL) {
+           m_status = Decoder::out_of_memory;
+           return false;
+         }
+         add_string_table(table);
+       } else if (shdr.sh_type == SHT_SYMTAB || shdr.sh_type == SHT_DYNSYM) {
+-        ElfSymbolTable* table = new ElfSymbolTable(m_file, shdr);
++        ElfSymbolTable* table = new (std::nothrow) ElfSymbolTable(m_file, shdr);
+         if (table == NULL) {
+           m_status = Decoder::out_of_memory;
+           return false;
+diff --git a/src/share/vm/utilities/elfStringTable.cpp b/src/share/vm/utilities/elfStringTable.cpp
+--- openjdk/hotspot/src/share/vm/utilities/elfStringTable.cpp
++++ openjdk/hotspot/src/share/vm/utilities/elfStringTable.cpp
+@@ -27,6 +27,7 @@
+ #ifndef _WINDOWS
+ 
+ #include "memory/allocation.inline.hpp"
++#include "runtime/os.hpp"
+ #include "utilities/elfStringTable.hpp"
+ 
+ // We will try to load whole string table into memory if we can.
+@@ -41,14 +42,14 @@
+ 
+   // try to load the string table
+   long cur_offset = ftell(file);
+-  m_table = (char*)NEW_C_HEAP_ARRAY(char, shdr.sh_size);
++  m_table = (char*)os::malloc(sizeof(char) * shdr.sh_size);
+   if (m_table != NULL) {
+     // if there is an error, mark the error
+     if (fseek(file, shdr.sh_offset, SEEK_SET) ||
+       fread((void*)m_table, shdr.sh_size, 1, file) != 1 ||
+       fseek(file, cur_offset, SEEK_SET)) {
+       m_status = Decoder::file_invalid;
+-      FREE_C_HEAP_ARRAY(char, m_table);
++      os::free((void*)m_table);
+       m_table = NULL;
+     }
+   } else {
+@@ -58,7 +59,7 @@
+ 
+ ElfStringTable::~ElfStringTable() {
+   if (m_table != NULL) {
+-    FREE_C_HEAP_ARRAY(char, m_table);
++    os::free((void*)m_table);
+   }
+ 
+   if (m_next != NULL) {

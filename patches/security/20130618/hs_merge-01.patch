@@ -1,0 +1,284 @@
+# HG changeset patch
+# User andrew
+# Date 1371815475 18000
+# Node ID 4215483da6f258a04b3a8ce6015d57ecbc296eac
+# Parent  f105c2b7da46999930ae40ac8661a56d6ce1c5cd
+Fix merge issues
+
+diff --git a/src/share/vm/classfile/classFileParser.cpp b/src/share/vm/classfile/classFileParser.cpp
+--- openjdk/hotspot/src/share/vm/classfile/classFileParser.cpp
++++ openjdk/hotspot/src/share/vm/classfile/classFileParser.cpp
+@@ -2638,54 +2638,6 @@
+ }
+ 
+ 
+-static void initialize_static_field(fieldDescriptor* fd, TRAPS) {
+-  KlassHandle h_k (THREAD, fd->field_holder());
+-  assert(h_k.not_null() && fd->is_static(), "just checking");
+-  if (fd->has_initial_value()) {
+-    BasicType t = fd->field_type();
+-    switch (t) {
+-      case T_BYTE:
+-        h_k()->byte_field_put(fd->offset(), fd->int_initial_value());
+-              break;
+-      case T_BOOLEAN:
+-        h_k()->bool_field_put(fd->offset(), fd->int_initial_value());
+-              break;
+-      case T_CHAR:
+-        h_k()->char_field_put(fd->offset(), fd->int_initial_value());
+-              break;
+-      case T_SHORT:
+-        h_k()->short_field_put(fd->offset(), fd->int_initial_value());
+-              break;
+-      case T_INT:
+-        h_k()->int_field_put(fd->offset(), fd->int_initial_value());
+-        break;
+-      case T_FLOAT:
+-        h_k()->float_field_put(fd->offset(), fd->float_initial_value());
+-        break;
+-      case T_DOUBLE:
+-        h_k()->double_field_put(fd->offset(), fd->double_initial_value());
+-        break;
+-      case T_LONG:
+-        h_k()->long_field_put(fd->offset(), fd->long_initial_value());
+-        break;
+-      case T_OBJECT:
+-        {
+-          #ifdef ASSERT
+-          TempNewSymbol sym = SymbolTable::new_symbol("Ljava/lang/String;", CHECK);
+-          assert(fd->signature() == sym, "just checking");
+-          #endif
+-          oop string = fd->string_initial_value(CHECK);
+-          h_k()->obj_field_put(fd->offset(), string);
+-        }
+-        break;
+-      default:
+-        THROW_MSG(vmSymbols::java_lang_ClassFormatError(),
+-                  "Illegal ConstantValue attribute in class file");
+-    }
+-  }
+-}
+-
+-
+ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
+                                                     Handle class_loader,
+                                                     Handle protection_domain,
+diff --git a/src/share/vm/classfile/symbolTable.cpp b/src/share/vm/classfile/symbolTable.cpp
+--- openjdk/hotspot/src/share/vm/classfile/symbolTable.cpp
++++ openjdk/hotspot/src/share/vm/classfile/symbolTable.cpp
+@@ -40,6 +40,7 @@
+ 
+ SymbolTable* SymbolTable::_the_table = NULL;
+ bool SymbolTable::_needs_rehashing = false;
++jint SymbolTable::_seed = 0;
+ 
+ Symbol* SymbolTable::allocate_symbol(const u1* name, int len, TRAPS) {
+   // Don't allow symbols to be created which cannot fit in a Symbol*.
+@@ -121,17 +122,25 @@
+   }
+ }
+ 
++unsigned int SymbolTable::new_hash(Symbol* sym) {
++  ResourceMark rm;
++  // Use alternate hashing algorithm on this symbol.
++  return AltHashing::murmur3_32(seed(), (const jbyte*)sym->as_C_string(), sym->utf8_length());
++}
+ 
+ // Create a new table and using alternate hash code, populate the new table
+ // with the existing strings.   Set flag to use the alternate hash code afterwards.
+ void SymbolTable::rehash_table() {
+ 
+   assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
+-  // This should never happen with -Xshare:dump but it might in testing mode.
+-  if (DumpSharedSpaces) return;
++  assert(!DumpSharedSpaces, "this should never happen with -Xshare:dump");
+   // Create a new symbol table
+   SymbolTable* new_table = new SymbolTable();
+ 
++  // Initialize the global seed for hashing.
++  _seed = AltHashing::compute_seed();
++  assert(seed() != 0, "shouldn't be zero");
++
+   the_table()->move_to(new_table);
+ 
+   // Delete the table and buckets (entries are reused in new table).
+diff --git a/src/share/vm/classfile/symbolTable.hpp b/src/share/vm/classfile/symbolTable.hpp
+--- openjdk/hotspot/src/share/vm/classfile/symbolTable.hpp
++++ openjdk/hotspot/src/share/vm/classfile/symbolTable.hpp
+@@ -88,6 +88,7 @@
+ 
+   // Set if one bucket is out of balance due to hash algorithm deficiency
+   static bool _needs_rehashing;
++  static jint _seed;
+ 
+   // Adding elements
+   Symbol* basic_add(int index, u1* name, int len,
+@@ -120,6 +121,10 @@
+     : Hashtable<Symbol*>(symbol_table_size, sizeof (HashtableEntry<Symbol*>), t,
+                 number_of_entries) {}
+ 
++  static bool use_alternate_hashcode()  { return _seed != 0; }
++  static jint seed()                    { return _seed; }
++ 
++  unsigned int new_hash(Symbol* sym);
+ public:
+   enum {
+     symbol_alloc_batch_size = 8
+@@ -225,6 +230,7 @@
+ 
+   // Set if one bucket is out of balance due to hash algorithm deficiency
+   static bool _needs_rehashing;
++  static jint _seed;
+ 
+   static oop intern(Handle string_or_null, jchar* chars, int length, TRAPS);
+   oop basic_add(int index, Handle string_or_null, jchar* name, int len,
+@@ -243,6 +249,10 @@
+     : Hashtable<oop>(string_table_size, sizeof (HashtableEntry<oop>), t,
+                 number_of_entries) {}
+ 
++  static bool use_alternate_hashcode()  { return _seed != 0; }
++  static jint seed()                    { return _seed; }
++
++  unsigned int new_hash(oop s);
+ public:
+   // The string table
+   static StringTable* the_table() { return _the_table; }
+diff --git a/src/share/vm/oops/instanceKlassKlass.cpp b/src/share/vm/oops/instanceKlassKlass.cpp
+--- openjdk/hotspot/src/share/vm/oops/instanceKlassKlass.cpp
++++ openjdk/hotspot/src/share/vm/oops/instanceKlassKlass.cpp
+@@ -347,35 +347,6 @@
+   return ik->object_size();
+ }
+ 
+-int instanceKlassKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
+-                                            HeapWord* beg_addr,
+-                                            HeapWord* end_addr) {
+-  assert(obj->is_klass(),"must be a klass");
+-  assert(klassOop(obj)->klass_part()->oop_is_instance_slow(),
+-         "must be instance klass");
+-
+-  instanceKlass* ik = instanceKlass::cast(klassOop(obj));
+-  ik->update_static_fields(beg_addr, end_addr);
+-  ik->vtable()->oop_update_pointers(cm, beg_addr, end_addr);
+-  ik->itable()->oop_update_pointers(cm, beg_addr, end_addr);
+-
+-  oop* const beg_oop = MAX2((oop*)beg_addr, ik->oop_block_beg());
+-  oop* const end_oop = MIN2((oop*)end_addr, ik->oop_block_end());
+-  for (oop* cur_oop = beg_oop; cur_oop < end_oop; ++cur_oop) {
+-    PSParallelCompact::adjust_pointer(cur_oop);
+-  }
+-
+-  // The oop_map_cache, jni_ids and jni_id_map are allocated from the C heap,
+-  // and so don't lie within any 'Chunk' boundaries.  Update them when the
+-  // lowest addressed oop in the instanceKlass 'oop_block' is updated.
+-  if (beg_oop == ik->oop_block_beg()) {
+-    OopClosure* closure = PSParallelCompact::adjust_root_pointer_closure();
+-    iterate_c_heap_oops(ik, closure);
+-  }
+-
+-  klassKlass::oop_update_pointers(cm, obj, beg_addr, end_addr);
+-  return ik->object_size();
+-}
+ #endif // SERIALGC
+ 
+ klassOop
+diff --git a/src/share/vm/prims/methodHandles.cpp b/src/share/vm/prims/methodHandles.cpp
+--- openjdk/hotspot/src/share/vm/prims/methodHandles.cpp
++++ openjdk/hotspot/src/share/vm/prims/methodHandles.cpp
+@@ -646,7 +646,7 @@
+       }
+     }
+   }
+-  assert(java_lang_invoke_MethodTypeForm::vmslots(mtform()) == argument_slot_count(mtype()), "must agree");
++  assert(java_dyn_MethodTypeForm::vmslots(mtform()) == argument_slot_count(mtype()), "must agree");
+ }
+ 
+ // Conversely, a member name which is only initialized from JVM internals
+diff --git a/src/share/vm/utilities/hashtable.cpp b/src/share/vm/utilities/hashtable.cpp
+--- openjdk/hotspot/src/share/vm/utilities/hashtable.cpp
++++ openjdk/hotspot/src/share/vm/utilities/hashtable.cpp
+@@ -1,4 +1,5 @@
+-/* * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
++/* 
++* Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -96,38 +97,18 @@
+   return false;
+ }
+ 
+-unsigned int Hashtable::new_hash(oop string) {
+-  ResourceMark rm;
+-  int length;
+-  if (java_lang_String::is_instance(string)) {
+-    jchar* chars = java_lang_String::as_unicode_string(string, length);
+-    // Use alternate hashing algorithm on the string
+-    return AltHashing::murmur3_32(seed(), chars, length);
+-  } else {
+-    // Use alternate hashing algorithm on this symbol.
+-    symbolOop symOop = (symbolOop) string;
+-    return AltHashing::murmur3_32(seed(), (const jbyte*)symOop->bytes(), symOop->utf8_length());
+-  }
+-}
+-
+ // Create a new table and using alternate hash code, populate the new table
+ // with the existing elements.   This can be used to change the hash code
+ // and could in the future change the size of the table.
+ 
+-void Hashtable::move_to(Hashtable* new_table) {
+-  // Initialize the global seed for hashing.
+-  assert(new_table->seed() == 0, "should be zero");
+-  _seed = AltHashing::compute_seed();
+-  assert(seed() != 0, "shouldn't be zero");
+-  new_table->set_seed(_seed);
+-
++template <class T> void Hashtable<T>::move_to(Hashtable<T>* new_table) {
+   int saved_entry_count = this->number_of_entries();
+   
+   // Iterate through the table and create a new entry for the new table
+   for (int i = 0; i < new_table->table_size(); ++i) {
+-    for (HashtableEntry* p = bucket(i); p != NULL; ) {
+-      HashtableEntry* next = p->next();
+-      oop string = p->literal();
++    for (HashtableEntry<T>* p = bucket(i); p != NULL; ) {
++      HashtableEntry<T>* next = p->next();
++      T string = p->literal();
+       // Use alternate hashing algorithm on the symbol in the first table
+       unsigned int hashValue = new_hash(string);
+       // Get a new index relative to the new table (can also change size)
+diff --git a/src/share/vm/utilities/hashtable.hpp b/src/share/vm/utilities/hashtable.hpp
+--- openjdk/hotspot/src/share/vm/utilities/hashtable.hpp
++++ openjdk/hotspot/src/share/vm/utilities/hashtable.hpp
+@@ -240,11 +240,11 @@
+ 
+ public:
+   Hashtable(int table_size, int entry_size)
+-    : BasicHashtable(table_size, entry_size), _seed(0)  { }
++    : BasicHashtable(table_size, entry_size) { }
+ 
+   Hashtable(int table_size, int entry_size,
+                    HashtableBucket* buckets, int number_of_entries)
+-    : BasicHashtable(table_size, entry_size, buckets, number_of_entries), _seed(0) { }
++    : BasicHashtable(table_size, entry_size, buckets, number_of_entries) { }
+ 
+   // Debugging
+   void print()               PRODUCT_RETURN;
+@@ -279,15 +279,8 @@
+   }
+ 
+   // Function to move these elements into the new table.
+-  void move_to(Hashtable* new_table);
+-  bool use_alternate_hashcode()  { return _seed != 0; }
+-  jint seed()                    { return _seed; }
+-  void set_seed(jint seed)       { _seed = seed; }
+-
+- private:
+-  jint _seed;
+-
+-  unsigned int new_hash(oop string);
++  void move_to(Hashtable<T>* new_table);
++  virtual unsigned int new_hash(T) { ShouldNotReachHere(); return 0; } // should be overridden
+ };
+ 
+ 

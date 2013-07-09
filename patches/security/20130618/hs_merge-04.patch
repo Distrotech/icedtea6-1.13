@@ -1,0 +1,44 @@
+# HG changeset patch
+# User andrew
+# Date 1371823968 18000
+# Node ID 23feb1f1b3033e87b9bad1f88f663ec3e1ac5ca9
+# Parent  81575d3cbd95714395c022a7f7ca622bab432b2b
+Hashing cleanup
+
+diff --git a/src/share/vm/classfile/symbolTable.cpp b/src/share/vm/classfile/symbolTable.cpp
+--- openjdk/hotspot/src/share/vm/classfile/symbolTable.cpp
++++ openjdk/hotspot/src/share/vm/classfile/symbolTable.cpp
+@@ -176,8 +176,8 @@
+ 
+ // Pick hashing algorithm.
+ unsigned int SymbolTable::hash_symbol(const char* s, int len) {
+-  return the_table()->use_alternate_hashcode() ?
+-           AltHashing::murmur3_32(the_table()->seed(), (const jbyte*)s, len) :
++  return use_alternate_hashcode() ?
++           AltHashing::murmur3_32(seed(), (const jbyte*)s, len) :
+            java_lang_String::to_hash(s, len);
+ }
+ 
+@@ -568,7 +568,7 @@
+ 
+ // Pick hashing algorithm
+ unsigned int StringTable::hash_string(const jchar* s, int len) {
+-  return the_table()->use_alternate_hashcode() ? AltHashing::murmur3_32(the_table()->seed(), s, len) :
++  return use_alternate_hashcode() ? AltHashing::murmur3_32(seed(), s, len) :
+                                     java_lang_String::to_hash(s, len);
+ }
+ 
+@@ -770,6 +770,13 @@
+   st->print_cr("Maximum bucket size     : %7.0f", summary.maximum());
+ }
+ 
++unsigned int StringTable::new_hash(oop string) {
++  ResourceMark rm;
++  int length;
++  jchar* chars = java_lang_String::as_unicode_string(string, length);
++  // Use alternate hashing algorithm on the string
++  return AltHashing::murmur3_32(seed(), chars, length);
++}
+ 
+ // Create a new table and using alternate hash code, populate the new table
+ // with the existing strings.   Set flag to use the alternate hash code afterwards.

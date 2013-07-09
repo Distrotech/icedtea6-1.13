@@ -1,0 +1,18 @@
+# HG changeset patch
+# User andrew
+# Date 1371822495 18000
+# Node ID cdce92891bfbc17372d8e5d5d2cccf319cf73589
+# Parent  f97b2cef7f861a3eb6d78e70cdb2cef1517bb968
+Add missing _seed variable
+
+diff --git a/src/share/vm/classfile/symbolTable.cpp b/src/share/vm/classfile/symbolTable.cpp
+--- openjdk/hotspot/src/share/vm/classfile/symbolTable.cpp
++++ openjdk/hotspot/src/share/vm/classfile/symbolTable.cpp
+@@ -564,6 +564,7 @@
+ StringTable* StringTable::_the_table = NULL;
+ 
+ bool StringTable::_needs_rehashing = false;
++jint StringTable::_seed = 0;
+ 
+ // Pick hashing algorithm
+ unsigned int StringTable::hash_string(const jchar* s, int len) {

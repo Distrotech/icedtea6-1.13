@@ -1,0 +1,1006 @@
+diff -Nru openjdk.orig/jdk/src/share/native/common/sizecalc.h openjdk/jdk/src/share/native/common/sizecalc.h
+--- openjdk.orig/jdk/src/share/native/common/sizecalc.h	1969-12-31 18:00:00.000000000 -0600
++++ openjdk/jdk/src/share/native/common/sizecalc.h	2013-06-22 03:34:36.084702677 -0500
+@@ -0,0 +1,118 @@
++/*
++ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.  Oracle designates this
++ * particular file as subject to the "Classpath" exception as provided
++ * by Oracle in the LICENSE file that accompanied this code.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++#ifndef SIZECALC_H
++#define SIZECALC_H
++
++/*
++ * A machinery for safe calculation of sizes used when allocating memory.
++ *
++ * All size checks are performed against the SIZE_MAX (the maximum value for
++ * size_t). All numerical arguments as well as the result of calculation must
++ * be non-negative integers less than or equal to SIZE_MAX, otherwise the
++ * calculated size is considered unsafe.
++ *
++ * If the SIZECALC_ALLOC_THROWING_BAD_ALLOC macro is defined, then _ALLOC_
++ * helper macros throw the std::bad_alloc instead of returning NULL.
++ */
++
++#include <stdint.h> /* SIZE_MAX for C99+ */
++/* http://stackoverflow.com/questions/3472311/what-is-a-portable-method-to-find-the-maximum-value-of-size-t */
++#ifndef SIZE_MAX
++#define SIZE_MAX ((size_t)-1)
++#endif
++
++#define IS_SAFE_SIZE_T(x) ((x) >= 0 && (unsigned long long)(x) <= SIZE_MAX)
++
++#define IS_SAFE_SIZE_MUL(m, n) \
++    (IS_SAFE_SIZE_T(m) && IS_SAFE_SIZE_T(n) && ((m) == 0 || (n) == 0 || (size_t)(n) <= (SIZE_MAX / (size_t)(m))))
++
++#define IS_SAFE_SIZE_ADD(a, b) \
++    (IS_SAFE_SIZE_T(a) && IS_SAFE_SIZE_T(b) && (size_t)(b) <= (SIZE_MAX - (size_t)(a)))
++
++
++
++/* Helper macros */
++
++#ifdef SIZECALC_ALLOC_THROWING_BAD_ALLOC
++#define FAILURE_RESULT throw std::bad_alloc()
++#else
++#define FAILURE_RESULT NULL
++#endif
++
++/*
++ * A helper macro to safely allocate an array of size m*n.
++ * Example usage:
++ *    int* p = (int*)SAFE_SIZE_ARRAY_ALLOC(malloc, sizeof(int), n);
++ *    if (!p) throw OutOfMemory;
++ *    // Use the allocated array...
++ */
++#define SAFE_SIZE_ARRAY_ALLOC(func, m, n) \
++    (IS_SAFE_SIZE_MUL((m), (n)) ? ((func)((m) * (n))) : FAILURE_RESULT)
++
++#define SAFE_SIZE_ARRAY_REALLOC(func, p, m, n) \
++    (IS_SAFE_SIZE_MUL((m), (n)) ? ((func)((p), (m) * (n))) : FAILURE_RESULT)
++
++/*
++ * A helper macro to safely allocate an array of type 'type' with 'n' items
++ * using the C++ new[] operator.
++ * Example usage:
++ *    MyClass* p = SAFE_SIZE_NEW_ARRAY(MyClass, n);
++ *    // Use the pointer.
++ * This macro throws the std::bad_alloc C++ exception to indicate
++ * a failure.
++ * NOTE: if 'n' is calculated, the calling code is responsible for using the
++ * IS_SAFE_... macros to check if the calculations are safe.
++ */
++#define SAFE_SIZE_NEW_ARRAY(type, n) \
++    (IS_SAFE_SIZE_MUL(sizeof(type), (n)) ? (new type[(n)]) : throw std::bad_alloc())
++
++#define SAFE_SIZE_NEW_ARRAY2(type, n, m) \
++    (IS_SAFE_SIZE_MUL((m), (n)) && IS_SAFE_SIZE_MUL(sizeof(type), (n) * (m)) ? \
++     (new type[(n) * (m)]) : throw std::bad_alloc())
++
++/*
++ * Checks if a data structure of size (a + m*n) can be safely allocated
++ * w/o producing an integer overflow when calculating its size.
++ */
++#define IS_SAFE_STRUCT_SIZE(a, m, n) \
++    ( \
++      IS_SAFE_SIZE_MUL((m), (n)) && IS_SAFE_SIZE_ADD((m) * (n), (a)) \
++    )
++
++/*
++ * A helper macro for implementing safe memory allocation for a data structure
++ * of size (a + m * n).
++ * Example usage:
++ *    void * p = SAFE_SIZE_ALLOC(malloc, header, num, itemSize);
++ *    if (!p) throw OutOfMemory;
++ *    // Use the allocated memory...
++ */
++#define SAFE_SIZE_STRUCT_ALLOC(func, a, m, n) \
++    (IS_SAFE_STRUCT_SIZE((a), (m), (n)) ? ((func)((a) + (m) * (n))) : FAILURE_RESULT)
++
++
++#endif /* SIZECALC_H */
++
+diff -Nru openjdk.orig/jdk/src/share/native/sun/awt/splashscreen/java_awt_SplashScreen.c openjdk/jdk/src/share/native/sun/awt/splashscreen/java_awt_SplashScreen.c
+--- openjdk.orig/jdk/src/share/native/sun/awt/splashscreen/java_awt_SplashScreen.c	2011-11-14 16:12:12.000000000 -0600
++++ openjdk/jdk/src/share/native/sun/awt/splashscreen/java_awt_SplashScreen.c	2013-06-22 03:34:36.084702677 -0500
+@@ -26,6 +26,7 @@
+ #include "splashscreen_impl.h"
+ #include <jni.h>
+ #include <jlong_md.h>
++#include <sizecalc.h>
+ 
+ JNIEXPORT jint JNICALL
+ JNI_OnLoad(JavaVM * vm, void *reserved)
+@@ -57,7 +58,7 @@
+     if (splash->overlayData) {
+         free(splash->overlayData);
+     }
+-    splash->overlayData = malloc(dataSize * sizeof(rgbquad_t));
++    splash->overlayData = SAFE_SIZE_ARRAY_ALLOC(malloc, dataSize, sizeof(rgbquad_t));
+     if (splash->overlayData) {
+         /* we need a copy anyway, so we'll be using GetIntArrayRegion */
+         (*env)->GetIntArrayRegion(env, data, 0, dataSize,
+diff -Nru openjdk.orig/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c openjdk/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c
+--- openjdk.orig/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c	2011-11-14 16:12:12.000000000 -0600
++++ openjdk/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c	2013-06-22 03:34:36.084702677 -0500
+@@ -120,7 +120,7 @@
+     splash->height = gif->SHeight;
+     splash->frameCount = gif->ImageCount;
+     splash->frames = (SplashImage *)
+-        malloc(sizeof(SplashImage) * gif->ImageCount);
++        SAFE_SIZE_ARRAY_ALLOC(malloc, sizeof(SplashImage), gif->ImageCount);
+     if (!splash->frames) {
+       free(pBitmapBits);
+       free(pOldBitmapBits);
+diff -Nru openjdk.orig/jdk/src/share/native/sun/java2d/pipe/Region.c openjdk/jdk/src/share/native/sun/java2d/pipe/Region.c
+--- openjdk.orig/jdk/src/share/native/sun/java2d/pipe/Region.c	2011-11-14 16:12:13.000000000 -0600
++++ openjdk/jdk/src/share/native/sun/java2d/pipe/Region.c	2013-06-22 03:34:36.085702679 -0500
+@@ -28,6 +28,7 @@
+ #include "jni_util.h"
+ 
+ #include "Region.h"
++#include "sizecalc.h"
+ 
+ static jfieldID endIndexID;
+ static jfieldID bandsID;
+@@ -260,8 +261,8 @@
+         }
+         Region_StartIteration(env, &clipInfo);
+         numrects = Region_CountIterationRects(&clipInfo);
+-        if (numrects > initialBufferSize) {
+-            *pRect = (RECT_T *) malloc(numrects * sizeof(RECT_T));
++        if ((unsigned long)numrects > initialBufferSize) {
++            *pRect = (RECT_T *) SAFE_SIZE_ARRAY_ALLOC(malloc, numrects, sizeof(RECT_T));
+             if (*pRect == NULL) {
+                 Region_EndIteration(env, &clipInfo);
+                 JNU_ThrowOutOfMemoryError(env,
+diff -Nru openjdk.orig/jdk/src/solaris/native/sun/awt/awt_Robot.c openjdk/jdk/src/solaris/native/sun/awt/awt_Robot.c
+--- openjdk.orig/jdk/src/solaris/native/sun/awt/awt_Robot.c	2011-11-14 16:12:15.000000000 -0600
++++ openjdk/jdk/src/solaris/native/sun/awt/awt_Robot.c	2013-06-22 03:34:36.085702679 -0500
+@@ -40,6 +40,7 @@
+ #include <X11/extensions/XInput.h>
+ #include <X11/extensions/XI.h>
+ #include <jni.h>
++#include <sizecalc.h>
+ #include "robot_common.h"
+ #include "canvas.h"
+ #include "wsutils.h"
+@@ -266,8 +267,9 @@
+     image = getWindowImage(awt_display, rootWindow, x, y, width, height);
+ 
+     /* Array to use to crunch around the pixel values */
+-    ary = (jint *) malloc(width * height * sizeof (jint));
+-    if (ary == NULL) {
++    if (!IS_SAFE_SIZE_MUL(width, height) ||
++        !(ary = (jint *) SAFE_SIZE_ARRAY_ALLOC(malloc, width * height, sizeof (jint))))
++    {
+         JNU_ThrowOutOfMemoryError(env, "OutOfMemoryError");
+         XDestroyImage(image);
+         AWT_UNLOCK();
+diff -Nru openjdk.orig/jdk/src/solaris/native/sun/awt/awt_UNIXToolkit.c openjdk/jdk/src/solaris/native/sun/awt/awt_UNIXToolkit.c
+--- openjdk.orig/jdk/src/solaris/native/sun/awt/awt_UNIXToolkit.c	2011-11-14 16:12:16.000000000 -0600
++++ openjdk/jdk/src/solaris/native/sun/awt/awt_UNIXToolkit.c	2013-06-22 03:34:36.085702679 -0500
+@@ -29,6 +29,7 @@
+ #include <dlfcn.h>
+ 
+ #include <jni.h>
++#include <sizecalc.h>
+ #include "sun_awt_UNIXToolkit.h"
+ 
+ #ifndef HEADLESS
+@@ -148,7 +149,8 @@
+     }
+ 
+     len = (*env)->GetStringUTFLength(env, filename);
+-    filename_str = (char *)malloc(sizeof(char) * (len + 1));
++    filename_str = (char *)SAFE_SIZE_ARRAY_ALLOC(malloc,
++            sizeof(char), len + 1);
+     if (filename_str == NULL) {
+         JNU_ThrowOutOfMemoryError(env, "OutOfMemoryError");
+         return JNI_FALSE;
+@@ -189,7 +191,8 @@
+     }
+ 
+     len = (*env)->GetStringUTFLength(env, stock_id);
+-    stock_id_str = (char *)malloc(sizeof(char) * (len + 1));
++    stock_id_str = (char *)SAFE_SIZE_ARRAY_ALLOC(malloc,
++            sizeof(char), len + 1);
+     if (stock_id_str == NULL) {
+         JNU_ThrowOutOfMemoryError(env, "OutOfMemoryError");
+         return JNI_FALSE;
+@@ -200,7 +203,8 @@
+     if (detail != NULL)
+     {
+         len = (*env)->GetStringUTFLength(env, detail);
+-        detail_str = (char *)malloc(sizeof(char) * (len + 1));
++        detail_str = (char *)SAFE_SIZE_ARRAY_ALLOC(malloc,
++                sizeof(char), len + 1);
+         if (detail_str == NULL) {
+             JNU_ThrowOutOfMemoryError(env, "OutOfMemoryError");
+             return JNI_FALSE;
+diff -Nru openjdk.orig/jdk/src/solaris/native/sun/awt/fontpath.c openjdk/jdk/src/solaris/native/sun/awt/fontpath.c
+--- openjdk.orig/jdk/src/solaris/native/sun/awt/fontpath.c	2013-06-22 15:43:08.458839780 -0500
++++ openjdk/jdk/src/solaris/native/sun/awt/fontpath.c	2013-06-22 03:34:36.085702679 -0500
+@@ -40,6 +40,7 @@
+ 
+ #include <jni.h>
+ #include <jni_util.h>
++#include <sizecalc.h>
+ #include <sun_font_FontManager.h>
+ #ifndef HEADLESS
+ #include <X11/Xlib.h>
+@@ -182,7 +183,7 @@
+ 
+     if ( fDirP->num == 0 ) return;
+ 
+-    appendDirList = malloc ( fDirP->num * sizeof ( int ));
++    appendDirList = SAFE_SIZE_ARRAY_ALLOC(malloc, fDirP->num, sizeof ( int ));
+     if ( appendDirList == NULL ) {
+       return;  /* if it fails we cannot do much */
+     }
+@@ -239,7 +240,7 @@
+     }
+ 
+ 
+-    newFontPath = malloc ( totalDirCount * sizeof ( char **) );
++    newFontPath = SAFE_SIZE_ARRAY_ALLOC(malloc, totalDirCount, sizeof ( char **) );
+     /* if it fails free things and get out */
+     if ( newFontPath == NULL ) {
+       free ( ( void *) appendDirList );
+@@ -260,7 +261,12 @@
+ 
+         /* printf ( "Appending %s\n", fDirP->name[index] ); */
+ 
+-        onePath = malloc ( ( strlen (fDirP->name[index]) + 2 )* sizeof( char ) );
++        onePath = SAFE_SIZE_ARRAY_ALLOC(malloc, strlen (fDirP->name[index]) + 2, sizeof( char ) );
++        if (onePath == NULL) {
++            free ( ( void *) appendDirList );
++            XFreeFontPath ( origFontPath );
++            return;
++        }
+         strcpy ( onePath, fDirP->name[index] );
+         strcat ( onePath, "/" );
+         newFontPath[nPaths++] = onePath;
+diff -Nru openjdk.orig/jdk/src/solaris/native/sun/awt/gtk2_interface.c openjdk/jdk/src/solaris/native/sun/awt/gtk2_interface.c
+--- openjdk.orig/jdk/src/solaris/native/sun/awt/gtk2_interface.c	2011-11-14 16:12:16.000000000 -0600
++++ openjdk/jdk/src/solaris/native/sun/awt/gtk2_interface.c	2013-06-22 10:35:00.508880273 -0500
+@@ -30,6 +30,7 @@
+ #include <string.h>
+ #include "gtk2_interface.h"
+ #include "java_awt_Transparency.h"
++#include "sizecalc.h"
+ 
+ #define GTK2_LIB "libgtk-x11-2.0.so.0"
+ 
+@@ -637,7 +638,8 @@
+     {
+         gchar *tmp_env = strdup (gtk_modules_env);
+         /* the new env will be smaller than the old one */
+-        gchar *s, *new_env = malloc (sizeof(ENV_PREFIX)+strlen (gtk_modules_env));
++        gchar *s, *new_env = SAFE_SIZE_STRUCT_ALLOC(malloc,
++                sizeof(ENV_PREFIX), 1, strlen (gtk_modules_env));
+ 
+         if (new_env != NULL )
+         {
+diff -Nru openjdk.orig/jdk/src/solaris/native/sun/awt/splashscreen/splashscreen_sys.c openjdk/jdk/src/solaris/native/sun/awt/splashscreen/splashscreen_sys.c
+--- openjdk.orig/jdk/src/solaris/native/sun/awt/splashscreen/splashscreen_sys.c	2011-11-14 16:12:16.000000000 -0600
++++ openjdk/jdk/src/solaris/native/sun/awt/splashscreen/splashscreen_sys.c	2013-06-22 10:35:17.128937870 -0500
+@@ -40,6 +40,7 @@
+ #include <langinfo.h>
+ #include <locale.h>
+ #include <fcntl.h>
++#include <sizecalc.h>
+ 
+ static Bool shapeSupported;
+ static int shapeEventBase, shapeErrorBase;
+@@ -75,9 +76,12 @@
+         goto done;
+     }
+     inSize = strlen(in);
++    buf = SAFE_SIZE_ARRAY_ALLOC(malloc, inSize, 2);
++    if (!buf) {
++        return NULL;
++    }
+     bufSize = inSize*2; // need 2 bytes per char for UCS-2, this is
+                         // 2 bytes per source byte max
+-    buf = malloc(bufSize);
+     out = buf; outSize = bufSize;
+     /* linux iconv wants char** source and solaris wants const char**...
+        cast to void* */
+@@ -113,12 +117,20 @@
+     initRect(&maskRect, 0, 0, splash->width, splash->height, 1,
+             splash->width * splash->imageFormat.depthBytes,
+             splash->frames[imageIndex].bitmapBits, &splash->imageFormat);
+-    rects =
+-        malloc(sizeof(XRectangle) * (splash->width / 2 + 1) * splash->height);
++    if (!IS_SAFE_SIZE_MUL(splash->width / 2 + 1, splash->height)) {
++        return;
++    }
++    rects = SAFE_SIZE_ARRAY_ALLOC(malloc,
++            sizeof(XRectangle), (splash->width / 2 + 1) * splash->height);
++    if (!rects) {
++        return;
++    }
+ 
+     frame->numRects = BitmapToYXBandedRectangles(&maskRect, rects);
+-    frame->rects = malloc(frame->numRects * sizeof(XRectangle));
+-    memcpy(frame->rects, rects, frame->numRects * sizeof(XRectangle));
++    frame->rects = SAFE_SIZE_ARRAY_ALLOC(malloc, frame->numRects, sizeof(XRectangle));
++    if (frame->rects) { // handle the error after the if(){}
++        memcpy(frame->rects, rects, frame->numRects * sizeof(XRectangle));
++    }
+     free(rects);
+ }
+ 
+diff -Nru openjdk.orig/jdk/src/solaris/native/sun/xawt/XlibWrapper.c openjdk/jdk/src/solaris/native/sun/xawt/XlibWrapper.c
+--- openjdk.orig/jdk/src/solaris/native/sun/xawt/XlibWrapper.c	2013-06-22 15:43:09.066839271 -0500
++++ openjdk/jdk/src/solaris/native/sun/xawt/XlibWrapper.c	2013-06-22 10:37:06.731315811 -0500
+@@ -37,6 +37,7 @@
+ #include <jni.h>
+ #include <jni_util.h>
+ #include <jlong.h>
++#include <sizecalc.h>
+ 
+ #include <awt.h>
+ #include <jvm.h>
+@@ -1991,6 +1992,10 @@
+     size_t worstBufferSize = (size_t)((width / 2 + 1) * height);
+     RECT_T * pRect;
+ 
++    if (!IS_SAFE_SIZE_MUL(width / 2 + 1, height)) {
++        return;
++    }
++
+     AWT_CHECK_HAVE_LOCK();
+ 
+     len = (*env)->GetArrayLength(env, bitmap);
+@@ -2003,7 +2008,10 @@
+         return;
+     }
+ 
+-    pRect = (RECT_T *)malloc(worstBufferSize * sizeof(RECT_T));
++    pRect = (RECT_T *)SAFE_SIZE_ARRAY_ALLOC(malloc, worstBufferSize, sizeof(RECT_T));
++    if (!pRect) {
++        return;
++    }
+ 
+     /* Note: the values[0] and values[1] are supposed to contain the width
+      * and height (see XIconInfo.getIntData() for details). So, we do +2.
+diff -Nru openjdk.orig/jdk/src/windows/native/sun/awt/splashscreen/splashscreen_sys.c openjdk/jdk/src/windows/native/sun/awt/splashscreen/splashscreen_sys.c
+--- openjdk.orig/jdk/src/windows/native/sun/awt/splashscreen/splashscreen_sys.c	2011-11-14 16:12:17.000000000 -0600
++++ openjdk/jdk/src/windows/native/sun/awt/splashscreen/splashscreen_sys.c	2013-06-22 10:33:22.939540596 -0500
+@@ -27,6 +27,7 @@
+ #include <windowsx.h>
+ #include <windows.h>
+ #include <winuser.h>
++#include "sizecalc.h"
+ 
+ /* layered windows api prototypes. wouldn't be needed if we could use an updated version of the MS PSDK. */
+ 
+@@ -85,7 +86,10 @@
+     len = strlen(in);
+     outChars = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, in, len,
+                                        NULL, 0);
+-    buf = malloc(outChars*sizeof(WCHAR));
++    buf = (WCHAR*) SAFE_SIZE_ARRAY_ALLOC(malloc, outChars, sizeof(WCHAR));
++    if (!buf) {
++        return NULL;
++    }
+     rc = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, in, len,
+                                  buf, outChars);
+     if (rc==0) {
+@@ -116,8 +120,14 @@
+         return;
+ 
+     /* reserving memory for the worst case */
+-    pRgnData = (RGNDATA *) malloc(sizeof(RGNDATAHEADER) +
+-            sizeof(RECT) * (splash->width / 2 + 1) * splash->height);
++    if (!IS_SAFE_SIZE_MUL(splash->width / 2 + 1, splash->height)) {
++        return;
++    }
++    pRgnData = (RGNDATA *) SAFE_SIZE_STRUCT_ALLOC(malloc, sizeof(RGNDATAHEADER),
++            sizeof(RECT), (splash->width / 2 + 1) * splash->height);
++    if (!pRgnData) {
++        return;
++    }
+     pRgnHdr = (RGNDATAHEADER *) pRgnData;
+     initRect(&maskRect, 0, 0, splash->width, splash->height, 1,
+             splash->width * splash->imageFormat.depthBytes,
+@@ -148,7 +158,6 @@
+ {
+     unsigned numColors = splash->screenFormat.colorMap ?
+         splash->screenFormat.numColors : 0;
+-    unsigned bmiSize;
+     BITMAPV4HEADER *pBmi;
+     HPALETTE hOldPal = NULL;
+ 
+@@ -156,8 +165,11 @@
+         return;
+     if (splash->currentFrame < 0 || splash->currentFrame >= splash->frameCount)
+         return;
+-    bmiSize = sizeof(BITMAPV4HEADER) + sizeof(RGBQUAD) * numColors;
+-    pBmi = (BITMAPV4HEADER *) alloca(bmiSize);
++    pBmi = (BITMAPV4HEADER *) SAFE_SIZE_STRUCT_ALLOC(alloca, sizeof(BITMAPV4HEADER),
++            sizeof(RGBQUAD), numColors);
++    if (!pBmi) {
++        return;
++    }
+     memset(pBmi, 0, sizeof(BITMAPV4HEADER));
+     if (splash->screenFormat.colorMap)
+         memcpy(((BYTE *) pBmi) + sizeof(BITMAPV4HEADER),
+@@ -181,8 +193,11 @@
+        here on demand */
+     if (!splash->hPalette) {
+         unsigned i;
+-        LOGPALETTE *pLogPal =
+-            malloc(sizeof(LOGPALETTE) + sizeof(PALETTEENTRY) * numColors);
++        LOGPALETTE *pLogPal = (LOGPALETTE *) SAFE_SIZE_STRUCT_ALLOC(malloc,
++                sizeof(LOGPALETTE), sizeof(PALETTEENTRY), numColors);
++        if (!pLogPal) {
++            return;
++        }
+ 
+         pLogPal->palVersion = 0x300;
+         pLogPal->palNumEntries = (WORD) numColors;
+diff -Nru openjdk.orig/jdk/src/windows/native/sun/font/lcdglyph.c openjdk/jdk/src/windows/native/sun/font/lcdglyph.c
+--- openjdk.orig/jdk/src/windows/native/sun/font/lcdglyph.c	2013-06-22 15:43:09.297839077 -0500
++++ openjdk/jdk/src/windows/native/sun/font/lcdglyph.c	2013-06-22 03:34:36.262702877 -0500
+@@ -54,6 +54,7 @@
+ #include <jni.h>
+ #include <jni_util.h>
+ #include <jlong_md.h>
++#include <sizecalc.h>
+ #include <sun_font_FileFontStrike.h>
+ 
+ #include "fontscalerdefs.h"
+@@ -374,11 +375,11 @@
+     bmi.bmiHeader.biBitCount = 24;
+     bmi.bmiHeader.biCompression = BI_RGB;
+ 
+-    dibImageSize = dibBytesWidth*height;
+-    dibImage = malloc(dibImageSize);
++    dibImage = SAFE_SIZE_ARRAY_ALLOC(malloc, dibBytesWidth, height);
+     if (dibImage == NULL) {
+         FREE_AND_RETURN;
+     }
++    dibImageSize = dibBytesWidth*height;
+     memset(dibImage, 0, dibImageSize);
+ 
+     err = GetDIBits(hMemoryDC, hBitmap, 0, height, dibImage,
+@@ -407,11 +408,12 @@
+      * that extra "1" was added as padding, so the sub-pixel positioning of
+      * fractional metrics could index into it.
+      */
+-    imageSize = bytesWidth*height;
+-    glyphInfo = (GlyphInfo*)malloc(sizeof(GlyphInfo)+imageSize);
++    glyphInfo = (GlyphInfo*)SAFE_SIZE_STRUCT_ALLOC(malloc, sizeof(GlyphInfo),
++            bytesWidth, height);
+     if (malloc == NULL) {
+         FREE_AND_RETURN;
+     }
++    imageSize = bytesWidth*height;
+     glyphInfo->cellInfo = NULL;
+     glyphInfo->rowBytes = bytesWidth;
+     glyphInfo->width = width;
+diff -Nru openjdk.orig/jdk/src/windows/native/sun/java2d/opengl/WGLSurfaceData.c openjdk/jdk/src/windows/native/sun/java2d/opengl/WGLSurfaceData.c
+--- openjdk.orig/jdk/src/windows/native/sun/java2d/opengl/WGLSurfaceData.c	2013-06-22 15:43:08.634839633 -0500
++++ openjdk/jdk/src/windows/native/sun/java2d/opengl/WGLSurfaceData.c	2013-06-22 03:34:36.262702877 -0500
+@@ -30,6 +30,7 @@
+ #include "jni.h"
+ #include "jlong.h"
+ #include "jni_util.h"
++#include "sizecalc.h"
+ #include "OGLRenderQueue.h"
+ #include "WGLGraphicsConfig.h"
+ #include "WGLSurfaceData.h"
+@@ -593,7 +594,7 @@
+     height = h;
+     srcx = srcy = dstx = dsty = 0;
+ 
+-    pDst = malloc(height * scanStride);
++    pDst = SAFE_SIZE_ARRAY_ALLOC(malloc, height, scanStride);
+     if (pDst == NULL) {
+         return JNI_FALSE;
+     }
+diff -Nru openjdk.orig/jdk/src/windows/native/sun/java2d/windows/GDIBlitLoops.cpp openjdk/jdk/src/windows/native/sun/java2d/windows/GDIBlitLoops.cpp
+--- openjdk.orig/jdk/src/windows/native/sun/java2d/windows/GDIBlitLoops.cpp	2013-06-22 15:43:08.370839854 -0500
++++ openjdk/jdk/src/windows/native/sun/java2d/windows/GDIBlitLoops.cpp	2013-06-22 03:34:36.262702877 -0500
+@@ -157,6 +157,7 @@
+                 // when using ByteGray surfaces.  Eventually, we should use
+                 // the new Disposer mechanism to delete this native memory.
+                 if (byteGrayPalette == NULL) {
++                    // assert (256 * sizeof(RGBQUAD)) <= SIZE_MAX
+                     byteGrayPalette = (RGBQUAD *)safe_Malloc(256 * sizeof(RGBQUAD));
+                     for (int i = 0; i < 256; ++i) {
+                         byteGrayPalette[i].rgbRed = i;
+diff -Nru openjdk.orig/jdk/src/windows/native/sun/java2d/windows/GDIRenderer.cpp openjdk/jdk/src/windows/native/sun/java2d/windows/GDIRenderer.cpp
+--- openjdk.orig/jdk/src/windows/native/sun/java2d/windows/GDIRenderer.cpp	2013-06-22 15:43:08.735839548 -0500
++++ openjdk/jdk/src/windows/native/sun/java2d/windows/GDIRenderer.cpp	2013-06-22 03:34:36.263702878 -0500
+@@ -86,7 +86,7 @@
+         *pNpoints = outpoints;
+     }
+     if (outpoints > POLYTEMPSIZE) {
+-        pPoints = (POINT *) safe_Malloc(sizeof(POINT) * outpoints);
++        pPoints = (POINT *) SAFE_SIZE_ARRAY_ALLOC(safe_Malloc, sizeof(POINT), outpoints);
+     }
+     BOOL isempty = fixend;
+     for (int i = 0; i < npoints; i++) {
+diff -Nru openjdk.orig/jdk/src/windows/native/sun/java2d/windows/GDIWindowSurfaceData.cpp openjdk/jdk/src/windows/native/sun/java2d/windows/GDIWindowSurfaceData.cpp
+--- openjdk.orig/jdk/src/windows/native/sun/java2d/windows/GDIWindowSurfaceData.cpp	2013-06-22 15:43:08.370839855 -0500
++++ openjdk/jdk/src/windows/native/sun/java2d/windows/GDIWindowSurfaceData.cpp	2013-06-22 03:34:36.263702878 -0500
+@@ -1036,8 +1036,9 @@
+             int topInset = wsdo->insets.top;
+             Region_StartIteration(env, &clipInfo);
+             jint numrects = Region_CountIterationRects(&clipInfo);
+-            DWORD nCount = sizeof(RGNDATAHEADER) + numrects * sizeof(RECT);
+-            RGNDATA *lpRgnData = (RGNDATA *) safe_Malloc(nCount);
++            RGNDATA *lpRgnData = (RGNDATA *) SAFE_SIZE_STRUCT_ALLOC(safe_Malloc,
++                    sizeof(RGNDATAHEADER), numrects, sizeof(RECT));
++            const DWORD nCount = sizeof(RGNDATAHEADER) + numrects * sizeof(RECT);
+             lpRgnData->rdh.dwSize = sizeof(RGNDATAHEADER);
+             lpRgnData->rdh.iType = RDH_RECTANGLES;
+             lpRgnData->rdh.nCount = numrects;
+diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/alloc.h openjdk/jdk/src/windows/native/sun/windows/alloc.h
+--- openjdk.orig/jdk/src/windows/native/sun/windows/alloc.h	2011-11-14 16:12:18.000000000 -0600
++++ openjdk/jdk/src/windows/native/sun/windows/alloc.h	2013-06-22 03:34:36.264702879 -0500
+@@ -35,6 +35,9 @@
+     class bad_alloc {};
+ }
+ 
++#define SIZECALC_ALLOC_THROWING_BAD_ALLOC
++#include "sizecalc.h"
++
+ class awt_toolkit_shutdown {};
+ 
+ // Disable "C++ Exception Specification ignored" warnings.
+diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_BitmapUtil.cpp openjdk/jdk/src/windows/native/sun/windows/awt_BitmapUtil.cpp
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_BitmapUtil.cpp	2013-06-22 15:43:08.635839632 -0500
++++ openjdk/jdk/src/windows/native/sun/windows/awt_BitmapUtil.cpp	2013-06-22 03:34:36.264702879 -0500
+@@ -39,13 +39,13 @@
+ HBITMAP BitmapUtil::CreateTransparencyMaskFromARGB(int width, int height, int* imageData)
+ {
+     //Scan lines should be aligned to word boundary
+-    int bufLength = ((width + 15) / 16 * 2) * height;//buf length (bytes)
++    if (!IS_SAFE_SIZE_ADD(width, 15)) return NULL;
++    char* buf = SAFE_SIZE_NEW_ARRAY2(char, (width + 15) / 16 * 2, height);
++    if (buf == NULL) return NULL;
+     int* srcPos = imageData;
+-    char* buf = new char[bufLength];
+     char* bufPos = buf;
+     int tmp = 0;
+     int cbit = 0x80;
+-    if (buf == NULL) return NULL;
+     for (int i = 0; i < height; i++) {
+         for (int j = 0; j < width; j++) {
+             //cbit is shifted right for every pixel
+@@ -251,8 +251,12 @@
+             reinterpret_cast<BITMAPINFO*>(&bi), DIB_RGB_COLORS);
+ 
+     /* reserving memory for the worst case */
+-    RGNDATA * pRgnData = (RGNDATA *) safe_Malloc(sizeof(RGNDATAHEADER) +
+-            sizeof(RECT) * (width / 2 + 1) * height);
++    if (!IS_SAFE_SIZE_MUL(width / 2 + 1, height)) {
++        throw std::bad_alloc();
++    }
++    RGNDATA * pRgnData = (RGNDATA *) SAFE_SIZE_STRUCT_ALLOC(safe_Malloc,
++            sizeof(RGNDATAHEADER),
++            sizeof(RECT), (width / 2 + 1) * height);
+     RGNDATAHEADER * pRgnHdr = (RGNDATAHEADER *) pRgnData;
+     pRgnHdr->dwSize = sizeof(RGNDATAHEADER);
+     pRgnHdr->iType = RDH_RECTANGLES;
+diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.cpp openjdk/jdk/src/windows/native/sun/windows/awt_Component.cpp
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.cpp	2013-06-22 15:43:09.068839269 -0500
++++ openjdk/jdk/src/windows/native/sun/windows/awt_Component.cpp	2013-06-22 10:30:17.853888796 -0500
+@@ -2362,12 +2362,12 @@
+         if (insets != NULL) {
+             ::OffsetRgn(rgn, insets->left, insets->top);
+         }
+-        int size = ::GetRegionData(rgn, 0, NULL);
++        DWORD size = ::GetRegionData(rgn, 0, NULL);
+         if (size == 0) {
+             ::DeleteObject((HGDIOBJ)rgn);
+             return;
+         }
+-        char* buffer = new char[size];
++        char* buffer = new char[size]; // safe because sizeof(char)==1
+         memset(buffer, 0, size);
+         LPRGNDATA rgndata = (LPRGNDATA)buffer;
+         rgndata->rdh.dwSize = sizeof(RGNDATAHEADER);
+@@ -6314,18 +6314,30 @@
+     c = (AwtComponent *)pData;
+     if (::IsWindow(c->GetHWnd())) {
+         HRGN hRgn = NULL;
+-        if (region || x1 || x2 || y1 || y2) {
++
+             // If all the params are zeros, the shape must be simply reset.
+             // Otherwise, convert it into a region.
+-            RGNDATA *pRgnData = NULL;
+-            RGNDATAHEADER *pRgnHdr;
++        if (region || x1 || x2 || y1 || y2) {
++	    RECT_T rects[256];
++	    RECT_T *pRect = rects;
+ 
+-            /* reserving memory for the worst case */
+-            size_t worstBufferSize = size_t(((x2 - x1) / 2 + 1) * (y2 - y1));
+-            pRgnData = (RGNDATA *) safe_Malloc(sizeof(RGNDATAHEADER) +
+-                    sizeof(RECT_T) * worstBufferSize);
+-            pRgnHdr = (RGNDATAHEADER *) pRgnData;
++	    const int numrects = RegionToYXBandedRectangles(env, x1, y1, x2, y2,
++                        region, &pRect, sizeof(rects)/sizeof(rects[0]));
++	    if (!pRect) {
++		// RegionToYXBandedRectangles doesn't use safe_Malloc(),
++		// so throw the exception explicitly
++		throw std::bad_alloc();
++	    }
++
++	    RGNDATA *pRgnData = (RGNDATA *) SAFE_SIZE_STRUCT_ALLOC(safe_Malloc,
++                        sizeof(RGNDATAHEADER), sizeof(RECT_T), numrects);
++	    memcpy(pRgnData + sizeof(RGNDATAHEADER), pRect, sizeof(RECT_T) * numrects);
++	    if (pRect != rects) {
++		free(pRect);
++	    }
++	    pRect = NULL;
+ 
++	    RGNDATAHEADER *pRgnHdr = (RGNDATAHEADER *) pRgnData;
+             pRgnHdr->dwSize = sizeof(RGNDATAHEADER);
+             pRgnHdr->iType = RDH_RECTANGLES;
+             pRgnHdr->nRgnSize = 0;
+@@ -6333,9 +6345,7 @@
+             pRgnHdr->rcBound.left = 0;
+             pRgnHdr->rcBound.bottom = LONG(y2 - y1);
+             pRgnHdr->rcBound.right = LONG(x2 - x1);
+-
+-            RECT_T * pRect = (RECT_T *) (((BYTE *) pRgnData) + sizeof(RGNDATAHEADER));
+-            pRgnHdr->nCount = RegionToYXBandedRectangles(env, x1, y1, x2, y2, region, &pRect, worstBufferSize);
++            pRgnHdr->nCount = numrects;
+ 
+             hRgn = ::ExtCreateRegion(NULL,
+                     sizeof(RGNDATAHEADER) + sizeof(RECT_T) * pRgnHdr->nCount, pRgnData);
+@@ -7344,3 +7354,4 @@
+         delete tmpDCList;
+     }
+ }
++
+diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Cursor.cpp openjdk/jdk/src/windows/native/sun/windows/awt_Cursor.cpp
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Cursor.cpp	2011-11-14 16:12:18.000000000 -0600
++++ openjdk/jdk/src/windows/native/sun/windows/awt_Cursor.cpp	2013-06-22 03:34:36.266702881 -0500
+@@ -379,14 +379,14 @@
+         return;
+     }
+ 
+-    int length = env->GetArrayLength(andMask);
+-    jbyte *andMaskPtr = new jbyte[length];
++    jsize length = env->GetArrayLength(andMask);
++    jbyte *andMaskPtr = new jbyte[length]; // safe because sizeof(jbyte)==1
+     env->GetByteArrayRegion(andMask, 0, length, andMaskPtr);
+ 
+     HBITMAP hMask = ::CreateBitmap(nW, nH, 1, 1, (BYTE *)andMaskPtr);
+     ::GdiFlush();
+ 
+-    int *cols = new int[nW*nH];
++    int *cols = SAFE_SIZE_NEW_ARRAY2(int, nW, nH);
+ 
+     jint *intRasterDataPtr = NULL;
+     HBITMAP hColor = NULL;
+diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_DataTransferer.cpp openjdk/jdk/src/windows/native/sun/windows/awt_DataTransferer.cpp
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_DataTransferer.cpp	2011-11-14 16:12:18.000000000 -0600
++++ openjdk/jdk/src/windows/native/sun/windows/awt_DataTransferer.cpp	2013-06-22 10:32:57.350451069 -0500
+@@ -284,13 +284,13 @@
+         }
+ 
+         UINT bufsize = 512; // in characters, not in bytes
+-        buffer = (LPTSTR)safe_Malloc(bufsize*sizeof(TCHAR));
++        buffer = (LPTSTR)SAFE_SIZE_ARRAY_ALLOC(safe_Malloc, bufsize, sizeof(TCHAR));
+ 
+         for (UINT i = 0; i < nFilenames; i++) {
+             UINT size = (*do_drag_query_file)(hdrop, i, NULL, 0);
+             if (size > bufsize) {
+                 bufsize = size;
+-                buffer = (LPTSTR)safe_Realloc(buffer, bufsize*sizeof(TCHAR));
++                buffer = (LPTSTR)SAFE_SIZE_ARRAY_REALLOC(safe_Realloc, buffer, bufsize, sizeof(TCHAR));
+             }
+             (*do_drag_query_file)(hdrop, i, buffer, bufsize);
+ 
+@@ -362,7 +362,7 @@
+         return NULL;
+     }
+ 
+-    jbyte* bBytes = (jbyte*)safe_Malloc(size * sizeof(jbyte));
++    jbyte* bBytes = (jbyte*)SAFE_SIZE_ARRAY_ALLOC(safe_Malloc, size, sizeof(jbyte));
+ 
+     try {
+ 
+@@ -779,9 +779,9 @@
+                         } else {
+                             LPBYTE lpbMfBuffer = NULL;
+                             try {
+-                                UINT uMfSizeWithHead = uMfSize + sizeof(METAFILEPICT);
+-
+-                                lpbMfBuffer = (LPBYTE)safe_Malloc(uMfSizeWithHead);
++                                lpbMfBuffer = (LPBYTE)SAFE_SIZE_STRUCT_ALLOC(safe_Malloc,
++                                        sizeof(METAFILEPICT), uMfSize, 1);
++                                const UINT uMfSizeWithHead = uMfSize + sizeof(METAFILEPICT);
+                                 VERIFY(::GetMetaFileBitsEx(hmf, uMfSize,
+                                                             lpbMfBuffer + sizeof(METAFILEPICT)) == uMfSize);
+                                 bytes = env->NewByteArray(uMfSizeWithHead);
+diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_DesktopProperties.cpp openjdk/jdk/src/windows/native/sun/windows/awt_DesktopProperties.cpp
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_DesktopProperties.cpp	2011-11-14 16:12:18.000000000 -0600
++++ openjdk/jdk/src/windows/native/sun/windows/awt_DesktopProperties.cpp	2013-06-22 03:34:36.267702882 -0500
+@@ -174,7 +174,7 @@
+     if (*valueType == REG_EXPAND_SZ) {
+         // Pending: buffer must be null-terminated at this point
+         valueChar = ExpandEnvironmentStrings(buffer, NULL, 0);
+-        LPTSTR buffer2 = (LPTSTR)safe_Malloc(valueChar*sizeof(TCHAR));
++        LPTSTR buffer2 = (LPTSTR)SAFE_SIZE_ARRAY_ALLOC(safe_Malloc, valueChar, sizeof(TCHAR));
+         ExpandEnvironmentStrings(buffer, buffer2, valueChar);
+         free(buffer);
+         return buffer2;
+@@ -604,11 +604,11 @@
+     }
+ 
+     LPTSTR valueName = TEXT("PlaceN");
+-    LPTSTR valueNameBuf = (LPTSTR)safe_Malloc((lstrlen(valueName) + 1) * sizeof(TCHAR));
++    LPTSTR valueNameBuf = (LPTSTR)SAFE_SIZE_ARRAY_ALLOC(safe_Malloc, (lstrlen(valueName) + 1), sizeof(TCHAR));
+     lstrcpy(valueNameBuf, valueName);
+ 
+     LPTSTR propKey = TEXT("win.comdlg.placesBarPlaceN");
+-    LPTSTR propKeyBuf = (LPTSTR)safe_Malloc((lstrlen(propKey) + 1) * sizeof(TCHAR));
++    LPTSTR propKeyBuf = (LPTSTR)SAFE_SIZE_ARRAY_ALLOC(safe_Malloc, (lstrlen(propKey) + 1), sizeof(TCHAR));
+     lstrcpy(propKeyBuf, propKey);
+ 
+     int i = 0;
+diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_DnDDT.cpp openjdk/jdk/src/windows/native/sun/windows/awt_DnDDT.cpp
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_DnDDT.cpp	2011-11-14 16:12:18.000000000 -0600
++++ openjdk/jdk/src/windows/native/sun/windows/awt_DnDDT.cpp	2013-06-22 03:34:36.267702882 -0500
+@@ -815,8 +815,8 @@
+         if (m_dataObject->QueryGetData(&tmp) != S_OK) continue;
+ 
+         if (m_nformats % CACHE_INCR == 0) {
+-            m_formats = (FORMATETC *)safe_Realloc(m_formats,
+-                                                  (CACHE_INCR + m_nformats) *
++            m_formats = (FORMATETC *)SAFE_SIZE_ARRAY_REALLOC(safe_Realloc, m_formats,
++                                                  CACHE_INCR + m_nformats,
+                                                   sizeof(FORMATETC));
+         }
+ 
+diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_InputMethod.cpp openjdk/jdk/src/windows/native/sun/windows/awt_InputMethod.cpp
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_InputMethod.cpp	2011-11-14 16:12:18.000000000 -0600
++++ openjdk/jdk/src/windows/native/sun/windows/awt_InputMethod.cpp	2013-06-22 03:34:36.267702882 -0500
+@@ -334,7 +334,7 @@
+     // list which is returned by GetKeyboardLayoutList ensures to match first when
+     // looking up suitable layout.
+     int layoutCount = ::GetKeyboardLayoutList(0, NULL) + 1;  // +1 for user's preferred HKL
+-    HKL FAR * hKLList = (HKL FAR *)safe_Malloc(sizeof(HKL)*layoutCount);
++    HKL FAR * hKLList = (HKL FAR *)SAFE_SIZE_ARRAY_ALLOC(safe_Malloc, sizeof(HKL), layoutCount);
+     DASSERT(!safe_ExceptionOccurred(env));
+     ::GetKeyboardLayoutList(layoutCount - 1, &(hKLList[1]));
+     hKLList[0] = getDefaultKeyboardLayout(); // put user's preferred layout on top of the list
+@@ -438,7 +438,7 @@
+ 
+     // get list of available HKLs
+     int layoutCount = ::GetKeyboardLayoutList(0, NULL);
+-    HKL FAR * hKLList = (HKL FAR *)safe_Malloc(sizeof(HKL)*layoutCount);
++    HKL FAR * hKLList = (HKL FAR *)SAFE_SIZE_ARRAY_ALLOC(safe_Malloc, sizeof(HKL), layoutCount);
+     DASSERT(!safe_ExceptionOccurred(env));
+     ::GetKeyboardLayoutList(layoutCount, hKLList);
+ 
+@@ -447,7 +447,7 @@
+     int destIndex = 0;
+     int javaLocaleNameCount = 0;
+     int current = 0;
+-    const char ** javaLocaleNames = (const char **)safe_Malloc(sizeof(char *)*layoutCount);
++    const char ** javaLocaleNames = (const char **)SAFE_SIZE_ARRAY_ALLOC(safe_Malloc, sizeof(char *), layoutCount);
+     DASSERT(!safe_ExceptionOccurred(env));
+     for (; srcIndex < layoutCount; srcIndex++) {
+         const char * srcLocaleName = getJavaIDFromLangID(LOWORD(hKLList[srcIndex]));
+@@ -510,7 +510,7 @@
+     jstring infojStr = NULL;
+ 
+     if ((buffSize = ::ImmGetDescription(hkl, szImmDescription, 0)) > 0) {
+-        szImmDescription = (LPTSTR) safe_Malloc(buffSize * sizeof(TCHAR));
++        szImmDescription = (LPTSTR) SAFE_SIZE_ARRAY_ALLOC(safe_Malloc, (buffSize+1), sizeof(TCHAR));
+ 
+         if (szImmDescription != NULL) {
+             ImmGetDescription(hkl, szImmDescription, buffSize);
+diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_PrintControl.cpp openjdk/jdk/src/windows/native/sun/windows/awt_PrintControl.cpp
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_PrintControl.cpp	2011-11-14 16:12:18.000000000 -0600
++++ openjdk/jdk/src/windows/native/sun/windows/awt_PrintControl.cpp	2013-06-22 03:34:36.267702882 -0500
+@@ -502,8 +502,8 @@
+                                               NULL, NULL);
+ 
+     if (numPaperSizes > 0) {
+-        papers = (WORD*)safe_Malloc(sizeof(WORD) * numPaperSizes);
+-        paperSizes = (POINT *)safe_Malloc(sizeof(*paperSizes) *
++        papers = (WORD*)SAFE_SIZE_ARRAY_ALLOC(safe_Malloc, sizeof(WORD), numPaperSizes);
++        paperSizes = (POINT *)SAFE_SIZE_ARRAY_ALLOC(safe_Malloc, sizeof(*paperSizes),
+                                           numPaperSizes);
+ 
+         DWORD result1 = DeviceCapabilities(printer, port,
+diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_PrintJob.cpp openjdk/jdk/src/windows/native/sun/windows/awt_PrintJob.cpp
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_PrintJob.cpp	2011-11-14 16:12:18.000000000 -0600
++++ openjdk/jdk/src/windows/native/sun/windows/awt_PrintJob.cpp	2013-06-22 03:34:36.268702883 -0500
+@@ -433,7 +433,7 @@
+         int measure = PSD_INTHOUSANDTHSOFINCHES;
+         int sz = GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_IMEASURE, NULL, 0);
+         if (sz > 0) {
+-          LPTSTR str = (LPTSTR)safe_Malloc(sizeof(TCHAR) * sz);
++          LPTSTR str = (LPTSTR)SAFE_SIZE_ARRAY_ALLOC(safe_Malloc, sizeof(TCHAR), sz);
+           if (str != NULL) {
+             sz = GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_IMEASURE, str, sz);
+             if (sz > 0) {
+@@ -643,7 +643,7 @@
+           int sz = GetLocaleInfo(LOCALE_USER_DEFAULT,
+                                  LOCALE_IMEASURE, NULL, 0);
+           if (sz > 0) {
+-            LPTSTR str = (LPTSTR)safe_Malloc(sizeof(TCHAR) * sz);
++            LPTSTR str = (LPTSTR)SAFE_SIZE_ARRAY_ALLOC(safe_Malloc, sizeof(TCHAR), sz);
+             if (str != NULL) {
+               sz = GetLocaleInfo(LOCALE_USER_DEFAULT,
+                                  LOCALE_IMEASURE, str, sz);
+@@ -2314,8 +2314,8 @@
+      * rounded advances will drift away from the true advance.
+      */
+     if (glyphPos != NULL && strLen > 0) {
+-         xadvances = (int*)safe_Malloc(strLen * sizeof(int));
+-         xyadvances = (int*)safe_Malloc(strLen * sizeof(int) * 2);
++         xadvances = (int*)SAFE_SIZE_ARRAY_ALLOC(safe_Malloc, strLen, sizeof(int));
++         xyadvances = (int*)SAFE_SIZE_ARRAY_ALLOC(safe_Malloc, strLen, sizeof(int) * 2);
+     }
+     if (xadvances != NULL && xyadvances != NULL) {
+         int *inxAdvances = xadvances;
+@@ -2523,8 +2523,9 @@
+     if ((imgWidthByteSz % sizeof(DWORD)) != 0)
+         padBytes = sizeof(DWORD) - (imgWidthByteSz % sizeof(DWORD));
+ 
++    jbyte* alignedImage = (jbyte*) SAFE_SIZE_ARRAY_ALLOC(safe_Malloc,
++            imgWidthByteSz+padBytes, ROUND_TO_LONG(srcHeight));
+     long newImgSize = (imgWidthByteSz+padBytes) * ROUND_TO_LONG(srcHeight);
+-    jbyte* alignedImage = (jbyte*) safe_Malloc(newImgSize);
+ 
+     if (alignedImage != NULL) {
+         memset(alignedImage, 0xff, newImgSize);
+@@ -3122,7 +3123,7 @@
+                                        DC_PAPERSIZE, NULL, NULL);
+ 
+     if (numPaperSizes > 0) {
+-        paperSizes = (POINT *)safe_Malloc(sizeof(*paperSizes) * numPaperSizes);
++        paperSizes = (POINT *)SAFE_SIZE_ARRAY_ALLOC(safe_Malloc, sizeof(*paperSizes), numPaperSizes);
+ 
+         DWORD result = DeviceCapabilities(deviceName, portName,
+                                           DC_PAPERSIZE, (LPTSTR) paperSizes,
+@@ -3770,8 +3771,8 @@
+     numPaperSizes = (int)DeviceCapabilities(printer, port, DC_PAPERSIZE,
+                                             NULL, NULL);
+     if (numPaperSizes > 0) {
+-        papers = (WORD*)safe_Malloc(sizeof(WORD) * numPaperSizes);
+-        paperSizes = (POINT *)safe_Malloc(sizeof(*paperSizes) * numPaperSizes);
++        papers = (WORD*)SAFE_SIZE_ARRAY_ALLOC(safe_Malloc, sizeof(WORD), numPaperSizes);
++        paperSizes = (POINT *)SAFE_SIZE_ARRAY_ALLOC(safe_Malloc, sizeof(*paperSizes), numPaperSizes);
+ 
+         DWORD result1 = DeviceCapabilities(printer, port,
+                                            DC_PAPERS, (LPTSTR) papers, NULL);
+diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Robot.cpp openjdk/jdk/src/windows/native/sun/windows/awt_Robot.cpp
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Robot.cpp	2011-11-14 16:12:18.000000000 -0600
++++ openjdk/jdk/src/windows/native/sun/windows/awt_Robot.cpp	2013-06-22 03:34:36.268702883 -0500
+@@ -234,7 +234,9 @@
+     static const int BITS_PER_PIXEL = 32;
+     static const int BYTES_PER_PIXEL = BITS_PER_PIXEL/8;
+ 
++    if (!IS_SAFE_SIZE_MUL(width, height)) throw std::bad_alloc();
+     int numPixels = width*height;
++    if (!IS_SAFE_SIZE_MUL(BYTES_PER_PIXEL, numPixels)) throw std::bad_alloc();
+     int pixelDataSize = BYTES_PER_PIXEL*numPixels;
+     DASSERT(pixelDataSize > 0 && pixelDataSize % 4 == 0);
+     // allocate memory for BITMAPINFO + pixel data
+@@ -244,6 +246,9 @@
+     // end of our block of memory.  Now we allocate sufficient memory.
+     // See MSDN docs for BITMAPINFOHEADER -bchristi
+ 
++    if (!IS_SAFE_SIZE_ADD(sizeof(BITMAPINFOHEADER) + 3 * sizeof(RGBQUAD), pixelDataSize)) {
++        throw std::bad_alloc();
++    }
+     BITMAPINFO * pinfo = (BITMAPINFO *)(new BYTE[sizeof(BITMAPINFOHEADER) + 3 * sizeof(RGBQUAD) + pixelDataSize]);
+ 
+     // pixel data starts after 3 RGBQUADS for color masks
+diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/CmdIDList.cpp openjdk/jdk/src/windows/native/sun/windows/CmdIDList.cpp
+--- openjdk.orig/jdk/src/windows/native/sun/windows/CmdIDList.cpp	2011-11-14 16:12:18.000000000 -0600
++++ openjdk/jdk/src/windows/native/sun/windows/CmdIDList.cpp	2013-06-22 03:34:36.263702878 -0500
+@@ -39,7 +39,7 @@
+ {
+     m_capacity = ARRAY_INITIAL_SIZE;
+     m_first_free = -1;
+-    m_array = (CmdIDEntry *)safe_Malloc(m_capacity * sizeof(AwtObject*));
++    m_array = (CmdIDEntry *)SAFE_SIZE_ARRAY_ALLOC(safe_Malloc, m_capacity, sizeof(AwtObject*));
+     BuildFreeList(0);
+ }
+ 
+@@ -80,8 +80,8 @@
+             m_capacity += ARRAY_SIZE_INCREMENT;
+             if (m_capacity > ARRAY_MAXIMUM_SIZE)
+                 m_capacity = ARRAY_MAXIMUM_SIZE;
+-            m_array = (CmdIDEntry *)safe_Realloc(m_array,
+-                                        m_capacity * sizeof(CmdIDEntry*));
++            m_array = (CmdIDEntry *)SAFE_SIZE_ARRAY_REALLOC(safe_Realloc, m_array,
++                                        m_capacity, sizeof(CmdIDEntry*));
+             BuildFreeList(old_capacity);
+         }
+     }
+diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/Devices.cpp openjdk/jdk/src/windows/native/sun/windows/Devices.cpp
+--- openjdk.orig/jdk/src/windows/native/sun/windows/Devices.cpp	2013-06-22 15:43:08.377839847 -0500
++++ openjdk/jdk/src/windows/native/sun/windows/Devices.cpp	2013-06-22 10:32:18.591315108 -0500
+@@ -97,8 +97,8 @@
+     J2dTraceLn1(J2D_TRACE_INFO, "Devices::Devices numDevices=%d", numDevices);
+     this->numDevices = numDevices;
+     this->refCount = 0;
+-    devices = (AwtWin32GraphicsDevice**)safe_Malloc
+-        (numDevices * sizeof(AwtWin32GraphicsDevice *));
++    devices = (AwtWin32GraphicsDevice**)SAFE_SIZE_ARRAY_ALLOC(safe_Malloc,
++        numDevices, sizeof(AwtWin32GraphicsDevice *));
+ }
+ 
+ /**
+@@ -114,7 +114,8 @@
+     J2dTraceLn(J2D_TRACE_INFO, "Devices::UpdateInstance");
+ 
+     int numScreens = ::CountMonitors();
+-    MHND *monHds = (MHND *)safe_Malloc(numScreens * sizeof(MHND));
++    MHND *monHds = (MHND *)SAFE_SIZE_ARRAY_ALLOC(safe_Malloc,
++            numScreens, sizeof(MHND));
+     if (numScreens != ::CollectMonitors(monHds, numScreens)) {
+         J2dRlsTraceLn(J2D_TRACE_ERROR,
+                       "Devices::UpdateInstance: Failed to get all "\
+diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/ShellFolder2.cpp openjdk/jdk/src/windows/native/sun/windows/ShellFolder2.cpp
+--- openjdk.orig/jdk/src/windows/native/sun/windows/ShellFolder2.cpp	2011-11-14 16:12:18.000000000 -0600
++++ openjdk/jdk/src/windows/native/sun/windows/ShellFolder2.cpp	2013-06-22 03:34:36.264702879 -0500
+@@ -385,6 +385,9 @@
+     if (cb == 0)
+         return 0;
+ 
++    if (!IS_SAFE_SIZE_ADD(cb, sizeof(SHITEMID))) {
++        return 0;
++    }
+     // Allocate space for this as well as null-terminating entry.
+     LPITEMIDLIST newPIDL = (LPITEMIDLIST)pMalloc->Alloc(cb + sizeof(SHITEMID));
+ 
+@@ -425,6 +428,9 @@
+     int len1 = pidlLength(parentPIDL);
+     int len2 = pidlLength(relativePIDL);
+ 
++    if (!IS_SAFE_SIZE_ADD(len1, len2) || !IS_SAFE_SIZE_ADD(len1 + len2, sizeof(SHITEMID))) {
++        return 0;
++    }
+     LPITEMIDLIST newPIDL = (LPITEMIDLIST)pMalloc->Alloc(len1 + len2 + sizeof(SHITEMID));
+     memcpy(newPIDL, parentPIDL, len1);
+     memcpy(((LPBYTE) newPIDL) + len1, relativePIDL, len2);
+diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/WPrinterJob.cpp openjdk/jdk/src/windows/native/sun/windows/WPrinterJob.cpp
+--- openjdk.orig/jdk/src/windows/native/sun/windows/WPrinterJob.cpp	2011-11-14 16:12:18.000000000 -0600
++++ openjdk/jdk/src/windows/native/sun/windows/WPrinterJob.cpp	2013-06-22 10:38:43.325646229 -0500
+@@ -872,7 +872,7 @@
+       int numSizes = ::DeviceCapabilities(printerName, printerPort,
+                                           DC_PAPERS, NULL, NULL);
+       if (numSizes > 0) {
+-          LPWORD papers = (LPWORD)safe_Malloc(numSizes * sizeof(WORD));
++          LPWORD papers = (LPWORD)SAFE_SIZE_ARRAY_ALLOC(safe_Malloc, numSizes, sizeof(WORD));
+           if (papers != NULL &&
+               ::DeviceCapabilities(printerName, printerPort,
+                                    DC_PAPERS, papers, NULL) != -1) {

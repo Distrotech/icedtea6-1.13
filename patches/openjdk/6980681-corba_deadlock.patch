@@ -1,13 +1,6 @@
 diff -Nru openjdk.orig/corba/src/share/classes/com/sun/corba/se/impl/orb/ORBImpl.java openjdk/corba/src/share/classes/com/sun/corba/se/impl/orb/ORBImpl.java
 --- openjdk.orig/corba/src/share/classes/com/sun/corba/se/impl/orb/ORBImpl.java	2012-10-30 14:11:07.206514499 +0000
 +++ openjdk/corba/src/share/classes/com/sun/corba/se/impl/orb/ORBImpl.java	2012-10-30 14:12:01.291393721 +0000
-@@ -1,5 +1,5 @@
- /*
-- * Copyright (c) 2002, 2007, Oracle and/or its affiliates. All rights reserved.
-+ * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
-  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
-  *
-  * This code is free software; you can redistribute it and/or modify it
 @@ -245,7 +245,14 @@
      // All access to resolver, localResolver, and urlOperation must be protected using
      // resolverLock.  Do not hold the ORBImpl lock while accessing
