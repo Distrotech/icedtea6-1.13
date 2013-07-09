@@ -439,19 +439,8 @@ SECURITY_PATCHES += \
 	patches/security/20130416/8004336.patch \
 	patches/security/20130416/8006309.patch \
 	patches/security/20130416/8009699.patch \
-	patches/openjdk/7036747-elfstringtable.patch \
-	patches/openjdk/7017732-move_static_fields_to_class.patch \
-	patches/openjdk/6990754-use_native_memory_for_symboltable.patch \
-	patches/openjdk/6990754-handle_renames.patch \
-	patches/openjdk/7008809-report_class_in_arraystoreexception.patch \
-	patches/openjdk/7086585-flexible_field_injection.patch \
-	patches/security/20130618/hs_merge-01.patch \
-	patches/security/20130618/hs_merge-02.patch \
-	patches/security/20130618/hs_merge-03.patch \
-	patches/openjdk/7014851-unused_parallel_compaction_code.patch \
-	patches/security/20130618/hs_merge-04.patch \
-	patches/security/20130618/7158805-nested_subroutine_rewriting.patch \
-	patches/security/20130618/8001330-checking_order_improvement.patch
+	patches/security/20130618/7158805-nested_subroutine_rewriting-it6.patch \
+	patches/security/20130618/8001330-checking_order_improvement-it6.patch
 endif
 
 SPECIAL_SECURITY_PATCH_1 = patches/security/20120214/7112642.patch
