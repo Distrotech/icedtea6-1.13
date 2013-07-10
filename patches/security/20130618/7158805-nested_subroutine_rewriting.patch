@@ -149,7 +149,6 @@ diff --git a/src/share/vm/memory/allocation.hpp b/src/share/vm/memory/allocation
 +#include <new>
 +
  #define ARENA_ALIGN_M1 (((size_t)(ARENA_AMALLOC_ALIGNMENT)) - 1)
-@@ -38,6 +38,12 @@
  #define ARENA_ALIGN_MASK (~((size_t)ARENA_ALIGN_M1))
  #define ARENA_ALIGN(x) ((((size_t)(x)) + ARENA_ALIGN_M1) & ARENA_ALIGN_MASK)
  
