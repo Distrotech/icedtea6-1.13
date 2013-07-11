@@ -1,0 +1,58 @@
+# HG changeset patch
+# User coffeys
+# Date 1367438524 -3600
+# Node ID 0f93d6b18a16bf893b152a46df0e22e32666f7ce
+# Parent  55eaa0da2a8f6d9fe4966d3d9940258a1b0d4399
+8013196: TimeZone.getDefault() throws NPE due to sun.awt.AppContext.getAppContext()
+Reviewed-by: mchung, okutsu
+
+--- openjdk/jdk/src/share/classes/sun/awt/AppContext.java
++++ openjdk/jdk/src/share/classes/sun/awt/AppContext.java
+@@ -813,16 +813,24 @@
+     static {
+         sun.misc.SharedSecrets.setJavaAWTAccess(new sun.misc.JavaAWTAccess() {
+             public Object get(Object key) {
+-                return getAppContext().get(key);
++                AppContext ac = getAppContext();
++                return (ac == null) ? null : ac.get(key);
+             }
+             public void put(Object key, Object value) {
+-                getAppContext().put(key, value);
++                AppContext ac = getAppContext();
++                if (ac != null) {
++                    ac.put(key, value);
++                }
+             }
+             public void remove(Object key) {
+-                getAppContext().remove(key);
++                AppContext ac = getAppContext();
++                if (ac != null) {
++                    ac.remove(key);
++                }
+             }
+             public boolean isDisposed() {
+-                return getAppContext().isDisposed();
++                AppContext ac = getAppContext();
++                return (ac == null) ? true : ac.isDisposed();
+             }
+             public boolean isMainAppContext() {
+                 return (numAppContexts.get() == 1 && mainAppContext != null);
+--- openjdk/jdk/src/share/classes/sun/misc/SharedSecrets.java
++++ openjdk/jdk/src/share/classes/sun/misc/SharedSecrets.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -174,6 +174,9 @@
+     public static JavaAWTAccess getJavaAWTAccess() {
+         // this may return null in which case calling code needs to
+         // provision for.
++        if (javaAWTAccess == null || javaAWTAccess.getContext() == null) {
++            return null;
++        }
+         return javaAWTAccess;
+     }
+ }

@@ -1,0 +1,33 @@
+# HG changeset patch
+# User uta
+# Date 1362736022 -14400
+# Node ID 81f7897e8144196779a3e0050150ceaa9d7c26fe
+# Parent  686d810cb9b66eae9456e259dd697854b8d0eaec
+8009463: Regression test test\java\lang\Runtime\exec\ArgWithSpaceAndFinalBackslash.java failing.
+Reviewed-by: alanb, ahgross
+
+--- openjdk/jdk/src/windows/classes/java/lang/ProcessImpl.java
++++ openjdk/jdk/src/windows/classes/java/lang/ProcessImpl.java
+@@ -262,6 +262,22 @@
+             if (needsEscaping(isCmdFile, s)) {
+                 cmdbuf.append('"');
+                 cmdbuf.append(s);
++
++                // The code protects the [java.exe] and console command line
++                // parser, that interprets the [\"] combination as an escape
++                // sequence for the ["] char.
++                //     http://msdn.microsoft.com/en-us/library/17w5ykft.aspx
++                //
++                // If the argument is an FS path, doubling of the tail [\]
++                // char is not a problem for non-console applications.
++                //
++                // The [\"] sequence is not an escape sequence for the [cmd.exe]
++                // command line parser. The case of the [""] tail escape
++                // sequence could not be realized due to the argument validation
++                // procedure.
++                if (!isCmdFile && s.endsWith("\\")) {
++                    cmdbuf.append('\\');
++                }
+                 cmdbuf.append('"');
+             } else {
+                 cmdbuf.append(s);

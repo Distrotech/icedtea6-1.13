@@ -647,7 +647,29 @@ ICEDTEA_PATCHES = \
 	patches/jtreg-LayoutLimits.patch \
 	patches/jtreg-ComponentOrientationTests.patch \
 	patches/jtreg-TextLayoutBoundsChecks.patch \
-	patches/openjdk/7171223-strict_aliasing.patch
+	patches/openjdk/7171223-strict_aliasing.patch \
+	patches/openjdk/7188114-alternate_command_line_parser.patch \
+	patches/openjdk/7199143-OCSP_timeout.patch \
+	patches/openjdk/8006120-server_jre.patch \
+	patches/openjdk/8006536-remove_trailing_slashes.patch \
+	patches/openjdk/8009165-inappropriate_method_in_reflectutil.patch \
+	patches/openjdk/8009217-fix_test_compile.patch \
+	patches/openjdk/8009463-space_and_final_backslash.patch \
+	patches/openjdk/8009610-blacklist_malware_certificate.patch \
+	patches/openjdk/8010213-set_socketoptions_windows.patch \
+	patches/openjdk/8010714-xml_dsig_retrievalmethod.patch \
+	patches/openjdk/8011154-awt_regresssion.patch \
+	patches/openjdk/8011313-OCSP_timeout_wrong_value.patch \
+	patches/openjdk/8011992-MlibOpsTest_failed.patch \
+	patches/openjdk/8012112-MlibOpsTest_fails.patch \
+	patches/openjdk/8012617-arrayindexoutofbounds_linebreakmeasurer.patch \
+	patches/openjdk/8012933-appcontext_disposed_too_early.patch \
+	patches/openjdk/8013196-TimeZone_getDefault_throws_exception.patch \
+	patches/openjdk/8014205-blank_swing_dialogs_windows.patch \
+	patches/openjdk/8014427-raster_regresssion.patch \
+	patches/openjdk/8014618-strip_leading_zeros_premastersecret.patch \
+	patches/openjdk/8014676-javadebugger_space_in_paths.patch \
+	patches/openjdk/8014968-OCSP_timeout_default.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \

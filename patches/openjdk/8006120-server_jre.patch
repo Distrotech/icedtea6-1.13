@@ -1,0 +1,60 @@
+# HG changeset patch
+# User andrew
+# Date 1372384541 18000
+# Node ID 75cf6b2c4f573f155d3173f11d207a2155a887a9
+# Parent  5db08be3f8c2f84a02ff21c433d319205865d5d5
+8006120: Provide "Server JRE" for 7u train
+Reviewed-by: pbhat, cgruszka
+Contributed-by: amy.y.wang@oracle.com
+
+--- openjdk/jdk/make/common/Defs.gmk
++++ openjdk/jdk/make/common/Defs.gmk
+@@ -296,6 +296,7 @@
+ 
+ JDK_IMAGE_DIR = $(ABS_OUTPUTDIR)/j2sdk-image
+ JRE_IMAGE_DIR = $(ABS_OUTPUTDIR)/j2re-image
++JDK_SERVER_IMAGE_DIR = $(ABS_OUTPUTDIR)/j2sdk-server-image
+ 
+ #where the demo source can be found
+ DEMOSRCDIR          = $(SHARE_SRC)/demo
+--- openjdk/jdk/make/common/Release.gmk
++++ openjdk/jdk/make/common/Release.gmk
+@@ -226,15 +226,16 @@
+ trim-image-jre trim-image-jdk \
+ identify-image-jre identify-image-jdk \
+ process-image-jre process-image-jdk \
+-compare-image \
+-sec-files sec-files-win jgss-files ::
++compare-image  \
++sec-files sec-files-win jgss-files server-jdk-image ::
+ 	@$(ECHO) ">>>Making "$@" @ `$(DATE)` ..."
+ 
+ # Order is important here, trim jre after jdk image is created
+ images:: sanity-images post-sanity-images  \
+ 	 $(INITIAL_IMAGE_JRE) $(INITIAL_IMAGE_JDK) \
+ 	 trim-image-jre trim-image-jdk \
+-	 process-image-jre process-image-jdk sec-files sec-files-win jgss-files 
++	 process-image-jre process-image-jdk sec-files sec-files-win \
++	jgss-files server-jdk-image 
+ 
+ # Don't use these
+ image-jre:: initial-image-jre trim-image-jre identify-image-jre process-image-jre
+@@ -850,6 +851,18 @@
+ 	done
+ 	$(RM) $(JRE_BIN_LIST)
+ 
++# Duplicate current j2re-image contents to server-j2re-image 
++# for the server version of jre, before deploy build
++server-jdk-image::
++	$(RM) -r $(JDK_SERVER_IMAGE_DIR)
++	$(CP) -r $(JDK_IMAGE_DIR) $(JDK_SERVER_IMAGE_DIR)
++	$(RM) -r $(JDK_SERVER_IMAGE_DIR)/demo
++	$(RM) -r $(JDK_SERVER_IMAGE_DIR)/sample
++	$(RM) $(JDK_SERVER_IMAGE_DIR)/bin/jcontrol
++	$(RM) $(JDK_SERVER_IMAGE_DIR)/jre/bin/jcontrol
++	$(RM) $(JDK_SERVER_IMAGE_DIR)/man/ja_JP.UTF-8/man1/javaws.1
++	$(RM) $(JDK_SERVER_IMAGE_DIR)/man/man1/javaws.1
++
+ ######################################################
+ # JDK Image
+ ######################################################

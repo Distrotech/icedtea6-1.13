@@ -1,0 +1,20 @@
+# HG changeset patch
+# User anthony
+# Date 1365494933 -14400
+# Node ID 5e190bcba6be48c41e68cb85ae7173c51cc931c0
+# Parent  2d3faf2175618b8b5596acbbcb69f163b9773db5
+8011154: java/awt/Frame/ShapeNotSetSometimes/ShapeNotSetSometimes.java failed since 7u25b03 on windows
+Reviewed-by: art, yan
+
+diff --git openjdk/jdk/src/windows/native/sun/windows/awt_Component.cpp openjdk/jdk/src/windows/native/sun/windows/awt_Component.cpp
+--- openjdk/jdk/src/windows/native/sun/windows/awt_Component.cpp
++++ openjdk/jdk/src/windows/native/sun/windows/awt_Component.cpp
+@@ -6125,7 +6125,7 @@
+ 
+                 RGNDATA *pRgnData = (RGNDATA *) SAFE_SIZE_STRUCT_ALLOC(safe_Malloc,
+                         sizeof(RGNDATAHEADER), sizeof(RECT_T), numrects);
+-                memcpy(pRgnData + sizeof(RGNDATAHEADER), pRect, sizeof(RECT_T) * numrects);
++                memcpy((BYTE*)pRgnData + sizeof(RGNDATAHEADER), pRect, sizeof(RECT_T) * numrects);
+                 if (pRect != rects) {
+                     free(pRect);
+                 }

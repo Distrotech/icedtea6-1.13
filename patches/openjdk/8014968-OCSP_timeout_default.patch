@@ -1,0 +1,19 @@
+# HG changeset patch
+# User ngthomas
+# Date 1369157140 25200
+# Node ID 66420635ccfc7338d509979aee871b85d085529e
+# Parent  c655aca607b16492caf7f89b3e2592c4b0c71e34
+8014968: OCSP and CRL connection timeout is set to four hours by default
+Reviewed-by: mullan
+
+--- openjdk/jdk/src/share/classes/sun/security/provider/certpath/OCSP.java
++++ openjdk/jdk/src/share/classes/sun/security/provider/certpath/OCSP.java
+@@ -84,7 +84,7 @@
+         Integer tmp = java.security.AccessController.doPrivileged(
+                 new GetIntegerAction("com.sun.security.ocsp.timeout"));
+         if (tmp == null || tmp < 0) {
+-            tmp = DEFAULT_CONNECT_TIMEOUT;
++            return DEFAULT_CONNECT_TIMEOUT;
+         }
+         // Convert to milliseconds, as the system property will be
+         // specified in seconds

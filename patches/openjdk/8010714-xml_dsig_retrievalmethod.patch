@@ -1,0 +1,345 @@
+# HG changeset patch
+# User mullan
+# Date 1368217731 14400
+# Node ID 0d497f17e31b82d42b5ae0a26e6636ee9ea65887
+# Parent  7750666eaf166e523bf2bea826ef6ef1056ea252
+8010714: XML DSig API allows a RetrievalMethod to reference another RetrievalMethod
+Reviewed-by: xuelei, hawtin
+
+--- openjdk/jdk/src/share/classes/com/sun/org/apache/xml/internal/security/keys/KeyInfo.java
++++ openjdk/jdk/src/share/classes/com/sun/org/apache/xml/internal/security/keys/KeyInfo.java
+@@ -54,6 +54,7 @@
+ import com.sun.org.apache.xml.internal.security.utils.IdResolver;
+ import com.sun.org.apache.xml.internal.security.utils.SignatureElementProxy;
+ import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
++import org.w3c.dom.Attr;
+ import org.w3c.dom.Document;
+ import org.w3c.dom.Element;
+ import org.w3c.dom.Node;
+@@ -128,8 +129,11 @@
+     */
+    public KeyInfo(Element element, String BaseURI) throws XMLSecurityException {
+       super(element, BaseURI);
+-     // _storageResolvers.add(null);
+ 
++      Attr attr = element.getAttributeNodeNS(null, "Id");
++      if (attr != null) {
++          element.setIdAttributeNode(attr, true);
++      }
+    }
+ 
+    /**
+@@ -139,9 +143,8 @@
+     */
+    public void setId(String Id) {
+ 
+-      if ((Id != null)) {
+-         this._constructionElement.setAttributeNS(null, Constants._ATT_ID, Id);
+-         IdResolver.registerElementById(this._constructionElement, Id);
++      if (Id != null) {
++          setLocalIdAttribute(Constants._ATT_ID, Id);
+       }
+    }
+ 
+@@ -1008,7 +1011,7 @@
+    /**
+     * Stores the individual (per-KeyInfo) {@link KeyResolver}s
+     */
+-   List<KeyResolverSpi> _internalKeyResolvers = null;
++   List<KeyResolverSpi> _internalKeyResolvers = new ArrayList<KeyResolverSpi>();
+ 
+    /**
+     * This method is used to add a custom {@link KeyResolverSpi} to a KeyInfo
+--- openjdk/jdk/src/share/classes/com/sun/org/apache/xml/internal/security/signature/Manifest.java
++++ openjdk/jdk/src/share/classes/com/sun/org/apache/xml/internal/security/signature/Manifest.java
+@@ -42,6 +42,7 @@
+ import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
+ import com.sun.org.apache.xml.internal.security.utils.resolver.ResourceResolver;
+ import com.sun.org.apache.xml.internal.security.utils.resolver.ResourceResolverSpi;
++import org.w3c.dom.Attr;
+ import org.w3c.dom.DOMException;
+ import org.w3c.dom.Document;
+ import org.w3c.dom.Element;
+@@ -100,6 +101,11 @@
+ 
+       super(element, BaseURI);
+ 
++      Attr attr = element.getAttributeNodeNS(null, "Id");
++      if (attr != null) {
++          element.setIdAttributeNode(attr, true);
++      }
++
+       // check out Reference children
+       this._referencesEl = XMLUtils.selectDsNodes(this._constructionElement.getFirstChild(),
+          Constants._TAG_REFERENCE);
+@@ -120,6 +126,11 @@
+       this._references = new ArrayList(le);
+ 
+       for (int i = 0; i < le; i++) {
++         Element refElem = this._referencesEl[i];
++         Attr refAttr = refElem.getAttributeNodeNS(null, "Id");
++         if (refAttr != null) {
++             refElem.setIdAttributeNode(refAttr, true);
++         }
+          this._references.add(null);
+       }
+    }
+@@ -220,8 +231,7 @@
+    public void setId(String Id) {
+ 
+       if (Id != null) {
+-         this._constructionElement.setAttributeNS(null, Constants._ATT_ID, Id);
+-         IdResolver.registerElementById(this._constructionElement, Id);
++          setLocalIdAttribute(Constants._ATT_ID, Id);
+       }
+    }
+ 
+--- openjdk/jdk/src/share/classes/com/sun/org/apache/xml/internal/security/signature/ObjectContainer.java
++++ openjdk/jdk/src/share/classes/com/sun/org/apache/xml/internal/security/signature/ObjectContainer.java
+@@ -68,9 +68,8 @@
+     */
+    public void setId(String Id) {
+ 
+-      if ((Id != null)) {
+-         this._constructionElement.setAttributeNS(null, Constants._ATT_ID, Id);
+-         IdResolver.registerElementById(this._constructionElement, Id);
++      if (Id != null) {
++          setLocalIdAttribute(Constants._ATT_ID, Id);
+       }
+    }
+ 
+--- openjdk/jdk/src/share/classes/com/sun/org/apache/xml/internal/security/signature/Reference.java
++++ openjdk/jdk/src/share/classes/com/sun/org/apache/xml/internal/security/signature/Reference.java
+@@ -284,8 +284,7 @@
+    public void setId(String Id) {
+ 
+       if ( Id != null ) {
+-         this._constructionElement.setAttributeNS(null, Constants._ATT_ID, Id);
+-         IdResolver.registerElementById(this._constructionElement, Id);
++          setLocalIdAttribute(Constants._ATT_ID, Id);
+       }
+    }
+ 
+--- openjdk/jdk/src/share/classes/com/sun/org/apache/xml/internal/security/signature/SignatureProperties.java
++++ openjdk/jdk/src/share/classes/com/sun/org/apache/xml/internal/security/signature/SignatureProperties.java
+@@ -25,6 +25,7 @@
+ import com.sun.org.apache.xml.internal.security.utils.IdResolver;
+ import com.sun.org.apache.xml.internal.security.utils.SignatureElementProxy;
+ import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
++import org.w3c.dom.Attr;
+ import org.w3c.dom.Document;
+ import org.w3c.dom.Element;
+ 
+@@ -61,6 +62,21 @@
+    public SignatureProperties(Element element, String BaseURI)
+            throws XMLSecurityException {
+       super(element, BaseURI);
++
++      Attr attr = element.getAttributeNodeNS(null, "Id");
++      if (attr != null) {
++          element.setIdAttributeNode(attr, true);
++      }
++
++      int length = getLength();
++      for (int i = 0; i < length; i++) {
++          Element propertyElem =
++              XMLUtils.selectDsNode(getElement(), Constants._TAG_SIGNATUREPROPERTY, i);
++          Attr propertyAttr = propertyElem.getAttributeNodeNS(null, "Id");
++          if (propertyAttr != null) {
++              propertyElem.setIdAttributeNode(propertyAttr, true);
++          }
++      }
+    }
+ 
+    /**
+@@ -109,9 +125,8 @@
+     */
+    public void setId(String Id) {
+ 
+-      if ((Id != null)) {
+-         this._constructionElement.setAttributeNS(null, Constants._ATT_ID, Id);
+-         IdResolver.registerElementById(this._constructionElement, Id);
++      if (Id != null) {
++          setLocalIdAttribute(Constants._ATT_ID, Id);
+       }
+    }
+ 
+--- openjdk/jdk/src/share/classes/com/sun/org/apache/xml/internal/security/signature/SignatureProperty.java
++++ openjdk/jdk/src/share/classes/com/sun/org/apache/xml/internal/security/signature/SignatureProperty.java
+@@ -80,9 +80,8 @@
+     */
+    public void setId(String Id) {
+ 
+-      if ((Id != null)) {
+-         this._constructionElement.setAttributeNS(null, Constants._ATT_ID, Id);
+-         IdResolver.registerElementById(this._constructionElement, Id);
++      if (Id != null) {
++          setLocalIdAttribute(Constants._ATT_ID, Id);
+       }
+    }
+ 
+--- openjdk/jdk/src/share/classes/com/sun/org/apache/xml/internal/security/signature/XMLSignature.java
++++ openjdk/jdk/src/share/classes/com/sun/org/apache/xml/internal/security/signature/XMLSignature.java
+@@ -49,9 +49,11 @@
+ import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
+ import com.sun.org.apache.xml.internal.security.utils.resolver.ResourceResolver;
+ import com.sun.org.apache.xml.internal.security.utils.resolver.ResourceResolverSpi;
++import org.w3c.dom.Attr;
+ import org.w3c.dom.Document;
+ import org.w3c.dom.Element;
+ import org.w3c.dom.Node;
++import org.w3c.dom.NodeList;
+ import org.w3c.dom.Text;
+ 
+ 
+@@ -306,6 +308,10 @@
+ 
+          throw new XMLSignatureException("xml.WrongContent", exArgs);
+       }
++      Attr signatureValueAttr = signatureValueElement.getAttributeNodeNS(null, "Id");
++      if (signatureValueAttr != null) {
++          signatureValueElement.setIdAttributeNode(signatureValueAttr, true);
++      }
+ 
+       // <element ref="ds:KeyInfo" minOccurs="0"/>
+       Element keyInfoElem = XMLUtils.getNextElement(signatureValueElement.getNextSibling());//XMLUtils.selectDsNode(this._constructionElement.getFirstChild(),
+@@ -316,6 +322,34 @@
+                   keyInfoElem.getLocalName().equals(Constants._TAG_KEYINFO)) ) {
+          this._keyInfo = new KeyInfo(keyInfoElem, BaseURI);
+       }
++
++      // <element ref="ds:Object" minOccurs="0" maxOccurs="unbounded"/>
++      Element objectElem =
++          XMLUtils.getNextElement(signatureValueElement.getNextSibling());
++      while (objectElem != null) {
++          Attr objectAttr = objectElem.getAttributeNodeNS(null, "Id");
++          if (objectAttr != null) {
++              objectElem.setIdAttributeNode(objectAttr, true);
++          }
++
++          NodeList nodes = objectElem.getChildNodes();
++          int length = nodes.getLength();
++          // Register Ids of the Object child elements
++          for (int i = 0; i < length; i++) {
++              Node child = nodes.item(i);
++              if (child.getNodeType() == Node.ELEMENT_NODE) {
++                  Element childElem = (Element)child;
++                  String tag = childElem.getLocalName();
++                  if (tag.equals("Manifest")) {
++                      new Manifest(childElem, BaseURI);
++                  } else if (tag.equals("SignatureProperties")) {
++                      new SignatureProperties(childElem, BaseURI);
++                  }
++              }
++          }
++
++          objectElem = XMLUtils.getNextElement(objectElem.getNextSibling());
++      }
+    }
+ 
+    /**
+@@ -325,9 +359,8 @@
+     */
+    public void setId(String Id) {
+ 
+-      if ( (Id != null)) {
+-         this._constructionElement.setAttributeNS(null, Constants._ATT_ID, Id);
+-         IdResolver.registerElementById(this._constructionElement, Id);
++      if (Id != null) {
++          setLocalIdAttribute(Constants._ATT_ID, Id);
+       }
+    }
+ 
+--- openjdk/jdk/src/share/classes/com/sun/org/apache/xml/internal/security/signature/XMLSignatureInput.java
++++ openjdk/jdk/src/share/classes/com/sun/org/apache/xml/internal/security/signature/XMLSignatureInput.java
+@@ -27,7 +27,7 @@
+ import java.io.OutputStream;
+ import java.io.UnsupportedEncodingException;
+ import java.util.ArrayList;
+-import java.util.HashSet;
++import java.util.LinkedHashSet;
+ import java.util.List;
+ import java.util.Set;
+ 
+@@ -243,13 +243,13 @@
+             if (circumvent) {
+                 XMLUtils.circumventBug2650(XMLUtils.getOwnerDocument(_subNode));
+             }
+-            this._inputNodeSet = new HashSet();
++            this._inputNodeSet = new LinkedHashSet();
+             XMLUtils.getSet(_subNode,this._inputNodeSet, excludeNode, this.excludeComments);
+ 
+             return this._inputNodeSet;
+         } else if (this.isOctetStream()) {
+             convertToNodes();
+-            HashSet result=new HashSet();
++            LinkedHashSet result = new LinkedHashSet();
+             XMLUtils.getSet(_subNode, result,null,false);
+             //this._inputNodeSet=result;
+             return result;
+--- openjdk/jdk/src/share/classes/com/sun/org/apache/xml/internal/security/utils/ElementProxy.java
++++ openjdk/jdk/src/share/classes/com/sun/org/apache/xml/internal/security/utils/ElementProxy.java
+@@ -515,4 +515,16 @@
+         return prefixMappings.get(namespace);
+     }
+ 
++    protected void setLocalIdAttribute(String attrName, String value) {
++
++        if (value != null) {
++            Attr attr = getDocument().createAttributeNS(null, attrName);
++            attr.setValue(value);
++            getElement().setAttributeNodeNS(attr);
++            getElement().setIdAttributeNode(attr, true);
++        }
++        else {
++            getElement().removeAttributeNS(null, attrName);
++        }
++    }
+ }
+--- openjdk/jdk/src/share/classes/org/jcp/xml/dsig/internal/dom/ApacheNodeSetData.java
++++ openjdk/jdk/src/share/classes/org/jcp/xml/dsig/internal/dom/ApacheNodeSetData.java
+@@ -48,7 +48,7 @@
+ 
+     public Iterator iterator() {
+         // If nodefilters are set, must execute them first to create node-set
+-        if (xi.getNodeFilters() != null) {
++        if (xi.getNodeFilters() != null && !xi.getNodeFilters().isEmpty()) {
+             return Collections.unmodifiableSet
+                 (getNodeSet(xi.getNodeFilters())).iterator();
+         }
+--- openjdk/jdk/src/share/classes/org/jcp/xml/dsig/internal/dom/DOMRetrievalMethod.java
++++ openjdk/jdk/src/share/classes/org/jcp/xml/dsig/internal/dom/DOMRetrievalMethod.java
+@@ -230,6 +230,21 @@
+         } catch (Exception e) {
+             throw new URIReferenceException(e);
+         }
++
++        // guard against RetrievalMethod loops
++        if ((data instanceof NodeSetData) && Utils.secureValidation(context)) {
++            NodeSetData nsd = (NodeSetData)data;
++            Iterator i = nsd.iterator();
++            if (i.hasNext()) {
++                Node root = (Node)i.next();
++                if ("RetrievalMethod".equals(root.getLocalName())) {
++                    throw new URIReferenceException(
++                        "It is forbidden to have one RetrievalMethod point " +
++                        "to another when secure validation is enabled");
++                }
++            }
++        }
++
+         return data;
+     }
+ 
+--- openjdk/jdk/src/share/classes/org/jcp/xml/dsig/internal/dom/Utils.java
++++ openjdk/jdk/src/share/classes/org/jcp/xml/dsig/internal/dom/Utils.java
+@@ -107,6 +107,9 @@
+     }
+ 
+     static boolean secureValidation(XMLCryptoContext xc) {
++        if (xc == null) {
++            return false;
++        }
+         return getBoolean(xc, "org.jcp.xml.dsig.secureValidation");
+     }
+ 

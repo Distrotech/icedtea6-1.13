@@ -1,0 +1,68 @@
+# HG changeset patch
+# User andrew
+# Date 1372303219 18000
+# Node ID 80fba79ca568f299920968a4e4b440775e82df2c
+# Parent  b904ff04371605b2bd33ea6f80794585cf6eb84c
+8009165: Fix for 8006435 needs revision
+Summary: The fix for JDK-8006435 added a new ReflectUtil.ensureClassAccess method which is not an appropriate utility method in ReflectUtil.
+Reviewed-by: alanb, mchung, dfuchs
+
+--- openjdk/jdk/src/share/classes/com/sun/jmx/mbeanserver/MBeanInstantiator.java
++++ openjdk/jdk/src/share/classes/com/sun/jmx/mbeanserver/MBeanInstantiator.java
+@@ -31,6 +31,7 @@
+ import java.io.IOException;
+ import java.io.ObjectInputStream;
+ import java.lang.reflect.Constructor;
++import java.lang.reflect.Modifier;
+ import java.lang.reflect.InvocationTargetException;
+ import java.security.AccessControlContext;
+ import java.security.AccessController;
+@@ -227,7 +228,7 @@
+         // Instantiate the new object
+         try {
+             ReflectUtil.checkPackageAccess(theClass);
+-            ReflectUtil.ensureClassAccess(theClass);
++            ensureClassAccess(theClass);
+             moi= cons.newInstance();
+         } catch (InvocationTargetException e) {
+             // Wrap the exception.
+@@ -303,7 +304,7 @@
+         }
+         try {
+             ReflectUtil.checkPackageAccess(theClass);
+-            ReflectUtil.ensureClassAccess(theClass);
++            ensureClassAccess(theClass);
+             moi = cons.newInstance(params);
+         }
+         catch (NoSuchMethodError error) {
+@@ -773,4 +774,13 @@
+         }, ctx);
+         return loader;
+     }
++
++    private static void ensureClassAccess(Class clazz)
++            throws IllegalAccessException
++    {
++        int mod = clazz.getModifiers();
++        if (!Modifier.isPublic(mod)) {
++            throw new IllegalAccessException("Class is not public and can't be instantiated");
++        }
++    }
+ }
+--- openjdk/jdk/src/share/classes/sun/reflect/misc/ReflectUtil.java
++++ openjdk/jdk/src/share/classes/sun/reflect/misc/ReflectUtil.java
+@@ -47,14 +47,6 @@
+         return cls.newInstance();
+     }
+ 
+-    public static void ensureClassAccess(Class clazz)
+-           throws IllegalAccessException
+-    {
+-        int mod = clazz.getModifiers();
+-        if ( ! Modifier.isPublic(mod) ){
+-            throw new IllegalAccessException("Class is not public and can't be instantiated");
+-        }
+-    }
+     /*
+      * Reflection.ensureMemberAccess is overly-restrictive
+      * due to a bug. We awkwardly work around it for now.

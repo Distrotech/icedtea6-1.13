@@ -1,0 +1,51 @@
+# HG changeset patch
+# User bae
+# Date 1366020921 -14400
+# Node ID 22decf80e0e833a8667f3e413da735b269d97fe6
+# Parent  2a78c210f0e2ab6fdb6070789a8928acefa1383d
+8012112: java/awt/image/mlib/MlibOpsTest.java fails on sparc solaris
+Reviewed-by: prr, vadim
+
+--- openjdk/jdk/src/share/native/sun/awt/medialib/awt_ImagingLib.c
++++ openjdk/jdk/src/share/native/sun/awt/medialib/awt_ImagingLib.c
+@@ -1312,13 +1312,17 @@
+         return 0;
+     }
+ 
++    ncomponents = srcImageP->cmodel.isDefaultCompatCM
++        ? 4
++        : srcImageP->cmodel.numComponents;
++
+     /* Make sure that color order can be used for
+      * re-ordering of lookup arrays.
+      */
+     for (i = 0; i < nbands; i++) {
+         int idx = srcImageP->hints.colorOrder[i];
+ 
+-        if (idx < 0 || idx >= nbands) {
++        if (idx < 0 || idx >= ncomponents) {
+             awt_freeParsedImage(srcImageP, TRUE);
+             awt_freeParsedImage(dstImageP, TRUE);
+             return 0;
+@@ -1327,10 +1331,6 @@
+ 
+     lut_nbands = (*env)->GetArrayLength(env, jtableArrays);
+ 
+-    ncomponents = srcImageP->cmodel.isDefaultCompatCM
+-        ? 4
+-        : srcImageP->cmodel.numComponents;
+-
+     if (lut_nbands > ncomponents) {
+         lut_nbands = ncomponents;
+     }
+--- openjdk/jdk/test/java/awt/image/mlib/MlibOpsTest.java
++++ openjdk/jdk/test/java/awt/image/mlib/MlibOpsTest.java
+@@ -23,7 +23,7 @@
+ 
+ /*
+  * @test
+- * @bug     6556332 8011992
++ * @bug     6556332 8011992 8012112
+  * @summary Test verifies that on-demnad loading of medialib library does
+  *          not break imageing ops based on this library.
+  * @run     main MlibOpsTest

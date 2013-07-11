@@ -1,0 +1,20 @@
+# HG changeset patch
+# User bae
+# Date 1368551120 -14400
+# Node ID 9c9dc3220f0a857385242ad77a10f0b5caa3f861
+# Parent  683f472433103a1aaee0bbee21814328fecd91a6
+8014427: REGRESSION: closed/javax/imageio/plugins/bmp/Write3ByteBgrTest.java fails since 7u25 b09
+Reviewed-by: prr, vadim
+
+--- openjdk/jdk/src/share/classes/java/awt/image/Raster.java
++++ openjdk/jdk/src/share/classes/java/awt/image/Raster.java
+@@ -392,7 +392,8 @@
+             }
+         }
+         int banks = maxBank + 1;
+-        int size = scanlineStride * (h - 1) + // fisrt (h - 1) scans
++        int size = maxBandOff +
++            scanlineStride * (h - 1) + // fisrt (h - 1) scans
+             w; // last scan
+ 
+         switch(dataType) {
