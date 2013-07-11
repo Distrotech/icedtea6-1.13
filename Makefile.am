@@ -667,7 +667,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/8013196-TimeZone_getDefault_throws_exception.patch \
 	patches/openjdk/8014205-blank_swing_dialogs_windows.patch \
 	patches/openjdk/8014427-raster_regression.patch \
-	patches/openjdk/8014618-strip_leading_zeros_premastersecret.patch \
 	patches/openjdk/8014676-javadebugger_space_in_paths.patch \
 	patches/openjdk/8014968-OCSP_timeout_default.patch \
 	patches/openjdk/8002070-remove_logger_stack_search.patch \
