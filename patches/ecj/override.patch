@@ -300,17 +300,6 @@ diff -Nru openjdk-ecj.orig/jdk/src/share/classes/com/sun/media/sound/AbstractMid
          public final void close() {
              open = false;
              synchronized (AbstractMidiDevice.this.traRecLock) {
-diff -ruN openjdk-ecj.orig/jdk/src/share/classes/java/awt/image/BufferedImage.java openjdk-ecj/jdk/src/share/classes/java/awt/image/BufferedImage.java
---- openjdk-ecj.orig/jdk/src/share/classes/java/awt/image/BufferedImage.java	2013-07-01 13:03:32.946070591 -0400
-+++ openjdk-ecj/jdk/src/share/classes/java/awt/image/BufferedImage.java	2013-07-01 13:33:55.905426035 -0400
-@@ -810,7 +810,6 @@
-                 new PrivilegedAction<Boolean>()
-         {
- 
--            @Override
-             public Boolean run() {
-                 final ClassLoader std = System.class.getClassLoader();
- 
 diff -Nru openjdk-ecj.orig/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java openjdk-ecj/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java
 --- openjdk-ecj.orig/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java	2011-01-07 21:33:03.000000000 +0000
 +++ openjdk-ecj/jdk/src/share/classes/sun/swing/plaf/synth/SynthFileChooserUIImpl.java	2012-06-13 17:39:06.625931390 +0100

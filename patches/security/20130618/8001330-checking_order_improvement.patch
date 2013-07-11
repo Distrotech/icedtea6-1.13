@@ -1,10 +1,10 @@
 # HG changeset patch
-# User andrew
-# Date 1371562887 18000
-# Node ID d521fcfccc58dce20f41178374292f2b8430686c
-# Parent  684f0c17ce15a3e012e9b73d618af1462f8c2d64
+# User chrisphi
+# Date 1373378000 -3600
+# Node ID d913c85a5297ea80a71b2f6a1174237cb2fbbbad
+# Parent  2df643057b3d5f75d287a352cadf6fc0501a1682
 8001330: Improve on checking order
-Reviewed-by: acorn, hawtin
+8011896: Add check for invalid offset for new AccessControlContext isAuthorized field
 
 diff --git a/src/share/vm/classfile/javaClasses.cpp b/src/share/vm/classfile/javaClasses.cpp
 --- openjdk/hotspot/src/share/vm/classfile/javaClasses.cpp
@@ -263,6 +263,33 @@ diff --git a/src/share/vm/memory/universe.hpp b/src/share/vm/memory/universe.hpp
    static ActiveMethodOopsCache* reflect_invoke_cache() { return _reflect_invoke_cache; }
    static oop          null_ptr_exception_instance()   { return _null_ptr_exception_instance;   }
    static oop          arithmetic_exception_instance() { return _arithmetic_exception_instance; }
+diff --git a/src/share/vm/oops/instanceKlass.cpp b/src/share/vm/oops/instanceKlass.cpp
+--- openjdk/hotspot/src/share/vm/oops/instanceKlass.cpp
++++ openjdk/hotspot/src/share/vm/oops/instanceKlass.cpp
+@@ -1992,6 +1992,11 @@
+   }
+ }
+ 
++address instanceKlass::static_field_addr(int offset) {
++  return (address)(offset + instanceKlass::offset_of_static_fields() + (intptr_t)java_mirror());
++}
++
++
+ const char* instanceKlass::signature_name() const {
+   const char* src = (const char*) (name()->as_C_string());
+   const int src_length = (int)strlen(src);
+diff --git a/src/share/vm/oops/instanceKlass.hpp b/src/share/vm/oops/instanceKlass.hpp
+--- openjdk/hotspot/src/share/vm/oops/instanceKlass.hpp
++++ openjdk/hotspot/src/share/vm/oops/instanceKlass.hpp
+@@ -675,6 +675,8 @@
+ 
+   intptr_t* end_of_itable() const          { return start_of_itable() + itable_length(); }
+ 
++  address static_field_addr(int offset);
++
+   int offset_of_static_fields() const {
+     return (intptr_t)start_of_static_fields() - (intptr_t)as_klassOop();
+   }
 diff --git a/src/share/vm/prims/jvm.cpp b/src/share/vm/prims/jvm.cpp
 --- openjdk/hotspot/src/share/vm/prims/jvm.cpp
 +++ openjdk/hotspot/src/share/vm/prims/jvm.cpp

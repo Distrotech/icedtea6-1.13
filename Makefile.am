@@ -439,8 +439,8 @@ SECURITY_PATCHES += \
 	patches/security/20130416/8004336.patch \
 	patches/security/20130416/8006309.patch \
 	patches/security/20130416/8009699.patch \
-	patches/security/20130618/7158805-nested_subroutine_rewriting-it6.patch \
-	patches/security/20130618/8001330-checking_order_improvement-it6.patch
+	patches/security/20130618/7158805-nested_subroutine_rewriting.patch \
+	patches/security/20130618/8001330-checking_order_improvement.patch
 endif
 
 SPECIAL_SECURITY_PATCH_1 = patches/security/20120214/7112642.patch
@@ -658,7 +658,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/8009610-blacklist_malware_certificate.patch \
 	patches/openjdk/8010213-set_socketoptions_windows.patch \
 	patches/openjdk/8010714-xml_dsig_retrievalmethod.patch \
-	patches/openjdk/8011154-awt_regresssion.patch \
+	patches/openjdk/8011154-awt_regression.patch \
 	patches/openjdk/8011313-OCSP_timeout_wrong_value.patch \
 	patches/openjdk/8011992-MlibOpsTest_failed.patch \
 	patches/openjdk/8012112-MlibOpsTest_fails.patch \
@@ -666,7 +666,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/8012933-appcontext_disposed_too_early.patch \
 	patches/openjdk/8013196-TimeZone_getDefault_throws_exception.patch \
 	patches/openjdk/8014205-blank_swing_dialogs_windows.patch \
-	patches/openjdk/8014427-raster_regresssion.patch \
+	patches/openjdk/8014427-raster_regression.patch \
 	patches/openjdk/8014618-strip_leading_zeros_premastersecret.patch \
 	patches/openjdk/8014676-javadebugger_space_in_paths.patch \
 	patches/openjdk/8014968-OCSP_timeout_default.patch \

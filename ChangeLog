@@ -1,3 +1,41 @@
+2013-07-10  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* patches/security/20130618/7158805-nested_subroutine_rewriting-it6.patch:
+	Readd parts of patch removed without note in
+	an earlier backport and fix copyright headers to
+	apply (2011 instead of 2010).
+
+2013-07-09  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* patches/ecj/ant.patch,
+	* patches/openjdk/6990754-handle_renames.patch,
+	* patches/openjdk/6990754-use_native_memory_for_symboltable.patch,
+	* patches/openjdk/7008809-report_class_in_arraystoreexception.patch,
+	* patches/openjdk/7014851-unused_parallel_compaction_code.patch,
+	* patches/openjdk/7017732-move_static_fields_to_class.patch,
+	* patches/openjdk/7036747-elfstringtable.patch,
+	* patches/openjdk/7086585-flexible_field_injection.patch,
+	* patches/openjdk/8014618-strip_leading_zeros_premastersecret.patch,
+	* patches/security/20130618/7158805-nested_subroutine_rewriting-it6.patch,
+	* patches/security/20130618/8001330-checking_order_improvement-it6.patch,
+	* patches/security/20130618/hs_merge-01.patch,
+	* patches/security/20130618/hs_merge-02.patch,
+	* patches/security/20130618/hs_merge-03.patch,
+	* patches/security/20130618/hs_merge-04.patch,
+	* patches/sparc.patch:
+	Remove unused patches.
+	* patches/openjdk/8011154-awt_regresssion.patch,
+	* patches/openjdk/8014427-raster_regresssion.patch:
+	Dropped superfluous 's' from name.
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Move back to using HotSpot patches without '-it6' suffix.
+	* patches/ecj/override.patch: Drop recent addition.  In accordance with
+	PR1397, we should avoid extending this patch in favour of either not
+	including @Override additions or setting source/target correctly.
+	* patches/security/20130618/7158805-nested_subroutine_rewriting.patch,
+	* patches/security/20130618/8001330-checking_order_improvement.patch:
+	Replace with Chris' patches, regenerated as unified diffs.
+
 2013-07-03  Omair Majid  <omajid@redhat.com>
 
 	* patches/openjdk/6541350-tz_display_names_l10n.patch,

@@ -1,14 +1,20 @@
 # HG changeset patch
-# User andrew
-# Date 1371562757 18000
-# Node ID 684f0c17ce15a3e012e9b73d618af1462f8c2d64
-# Parent  f5eac6fae49e04b673a8307058ce3b22750da0a9
+# User chrisphi
+# Date 1373377939 -3600
+# Node ID 2df643057b3d5f75d287a352cadf6fc0501a1682
+# Parent  694e7185c7d959055f6edd878a0e8ff16c5461ba
 7158805: Better rewriting of nested subroutine calls
-Reviewed-by: mschoene, coleenp
 
 diff --git a/src/share/vm/memory/allocation.cpp b/src/share/vm/memory/allocation.cpp
 --- openjdk/hotspot/src/share/vm/memory/allocation.cpp
 +++ openjdk/hotspot/src/share/vm/memory/allocation.cpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
 @@ -199,7 +199,7 @@
     ChunkPool(size_t size) : _size(size) { _first = NULL; _num_chunks = _num_used = 0; }
  
@@ -129,6 +135,20 @@ diff --git a/src/share/vm/memory/allocation.cpp b/src/share/vm/memory/allocation
 diff --git a/src/share/vm/memory/allocation.hpp b/src/share/vm/memory/allocation.hpp
 --- openjdk/hotspot/src/share/vm/memory/allocation.hpp
 +++ openjdk/hotspot/src/share/vm/memory/allocation.hpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -34,10 +34,18 @@
+ #include "opto/c2_globals.hpp"
+ #endif
+ 
++#include <new>
++
+ #define ARENA_ALIGN_M1 (((size_t)(ARENA_AMALLOC_ALIGNMENT)) - 1)
 @@ -38,6 +38,12 @@
  #define ARENA_ALIGN_MASK (~((size_t)ARENA_ALIGN_M1))
  #define ARENA_ALIGN(x) ((((size_t)(x)) + ARENA_ALIGN_M1) & ARENA_ALIGN_MASK)
@@ -142,7 +162,7 @@ diff --git a/src/share/vm/memory/allocation.hpp b/src/share/vm/memory/allocation
  // All classes in the virtual machine must be subclassed
  // by one of the following allocation classes:
  //
-@@ -152,7 +158,7 @@
+@@ -152,7 +160,7 @@
    Chunk*       _next;     // Next Chunk in list
    const size_t _len;      // Size of this Chunk
   public:
@@ -151,7 +171,7 @@ diff --git a/src/share/vm/memory/allocation.hpp b/src/share/vm/memory/allocation
    void  operator delete(void* p);
    Chunk(size_t length);
  
-@@ -200,7 +206,8 @@
+@@ -200,7 +208,8 @@
    Chunk *_first;                // First chunk
    Chunk *_chunk;                // current chunk
    char *_hwm, *_max;            // High water mark and max in current chunk
@@ -161,7 +181,7 @@ diff --git a/src/share/vm/memory/allocation.hpp b/src/share/vm/memory/allocation
    NOT_PRODUCT(size_t _size_in_bytes;) // Size of arena (used for memory usage tracing)
    NOT_PRODUCT(static size_t _bytes_allocated;) // total #bytes allocated since start
    friend class AllocStats;
-@@ -209,10 +216,15 @@
+@@ -209,10 +218,15 @@
  
    void signal_out_of_memory(size_t request, const char* whence) const;
  
@@ -178,7 +198,7 @@ diff --git a/src/share/vm/memory/allocation.hpp b/src/share/vm/memory/allocation
    }
  
   public:
-@@ -224,14 +236,15 @@
+@@ -224,14 +238,15 @@
    char* hwm() const             { return _hwm; }
  
    // Fast allocate in the arena.  Common case is: pointer test + increment.
@@ -197,7 +217,7 @@ diff --git a/src/share/vm/memory/allocation.hpp b/src/share/vm/memory/allocation
      } else {
        char *old = _hwm;
        _hwm += x;
-@@ -239,13 +252,14 @@
+@@ -239,13 +254,14 @@
      }
    }
    // Further assume size is padded out to words
@@ -215,7 +235,7 @@ diff --git a/src/share/vm/memory/allocation.hpp b/src/share/vm/memory/allocation
      } else {
        char *old = _hwm;
        _hwm += x;
-@@ -255,7 +269,7 @@
+@@ -255,7 +271,7 @@
  
    // Allocate with 'double' alignment. It is 8 bytes on sparc.
    // In other cases Amalloc_D() should be the same as Amalloc_4().
@@ -224,7 +244,7 @@ diff --git a/src/share/vm/memory/allocation.hpp b/src/share/vm/memory/allocation
      assert( (x&(sizeof(char*)-1)) == 0, "misaligned size" );
      debug_only(if (UseMallocOnly) return malloc(x);)
  #if defined(SPARC) && !defined(_LP64)
-@@ -263,10 +277,11 @@
+@@ -263,10 +279,11 @@
      size_t delta = (((size_t)_hwm + DALIGN_M1) & ~DALIGN_M1) - (size_t)_hwm;
      x += delta;
  #endif
@@ -238,7 +258,7 @@ diff --git a/src/share/vm/memory/allocation.hpp b/src/share/vm/memory/allocation
      } else {
        char *old = _hwm;
        _hwm += x;
-@@ -286,7 +301,8 @@
+@@ -286,7 +303,8 @@
      if (((char*)ptr) + size == _hwm) _hwm = (char*)ptr;
    }
  
@@ -248,7 +268,7 @@ diff --git a/src/share/vm/memory/allocation.hpp b/src/share/vm/memory/allocation
  
    // Move contents of this arena into an empty arena
    Arena *move_contents(Arena *empty_arena);
-@@ -328,9 +344,12 @@
+@@ -328,9 +346,12 @@
  
  
  //%note allocation_1
@@ -264,7 +284,7 @@ diff --git a/src/share/vm/memory/allocation.hpp b/src/share/vm/memory/allocation
  extern void resource_free_bytes( char *old, size_t size );
  
  //----------------------------------------------------------------------
-@@ -376,6 +395,13 @@
+@@ -376,6 +397,13 @@
        DEBUG_ONLY(set_allocation_type(res, RESOURCE_AREA);)
        return res;
    }
@@ -278,7 +298,7 @@ diff --git a/src/share/vm/memory/allocation.hpp b/src/share/vm/memory/allocation
    void  operator delete(void* p);
  };
  
-@@ -386,6 +412,9 @@
+@@ -386,6 +414,9 @@
  #define NEW_RESOURCE_ARRAY(type, size)\
    (type*) resource_allocate_bytes((size) * sizeof(type))
  
