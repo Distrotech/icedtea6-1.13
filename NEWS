@@ -35,6 +35,210 @@ New in release 1.13.0 (201X-XX-XX):
   - JVM_IsVMGeneratedMethodIx stub
   - Dummy implementation of sun.misc.Perf natives
 
+New in release 1.12.6 (2013-07-10):
+
+* Security fixes
+  - S6741606, CVE-2013-2407: Integrate Apache Santuario
+  - S7158805, CVE-2013-2445: Better rewriting of nested subroutine calls
+  - S7170730, CVE-2013-2451: Improve Windows network stack support.
+  - S8000638, CVE-2013-2450: Improve deserialization
+  - S8000642, CVE-2013-2446: Better handling of objects for transportation
+  - S8001032: Restrict object access
+  - S8001033, CVE-2013-2452: Refactor network address handling in virtual machine identifiers
+  - S8001034, CVE-2013-1500: Memory management improvements
+  - S8001038, CVE-2013-2444: Resourcefully handle resources
+  - S8001043: Clarify definition restrictions
+  - S8001309: Better handling of annotation interfaces
+  - S8001318, CVE-2013-2447: Socket.getLocalAddress not consistent with InetAddress.getLocalHost
+  - S8001330, CVE-2013-2443: Improve on checking order
+  - S8003703, CVE-2013-2412: Update RMI connection dialog box
+  - S8004584: Augment applet contextualization
+  - S8005007: Better glyph processing
+  - S8006328, CVE-2013-2448: Improve robustness of sound classes
+  - S8006611: Improve scripting
+  - S8007467: Improve robustness of JMX internal APIs
+  - S8007471: Improve MBean notifications
+  - S8007812, CVE-2013-2455: (reflect) Class.getEnclosingMethod problematic for some classes
+  - S8008120, CVE-2013-2457: Improve JMX class checking
+  - S8008124, CVE-2013-2453: Better compliance testing
+  - S8008128: Better API coherence for JMX
+  - S8008132, CVE-2013-2456: Better serialization support
+  - S8008585: Better JMX data handling
+  - S8008593: Better URLClassLoader resource management
+  - S8008603: Improve provision of JMX providers
+  - S8008611: Better handling of annotations in JMX
+  - S8008615: Improve robustness of JMX internal APIs
+  - S8008623: Better handling of MBeanServers
+  - S8008744, CVE-2013-2407: Rework part of fix for JDK-6741606
+  - S8008982: Adjust JMX for underlying interface changes
+  - S8009004: Better implementation of RMI connections
+  - S8009013: Better handling of T2K glyphs
+  - S8009034: Improve resulting notifications in JMX
+  - S8009038: Improve JMX notification support
+  - S8009067: Improve storing keys in KeyStore
+  - S8009071, CVE-2013-2459: Improve shape handling
+  - S8009235: Improve handling of TSA data
+  - S8011243, CVE-2013-2470: Improve ImagingLib
+  - S8011248, CVE-2013-2471: Better Component Rasters
+  - S8011253, CVE-2013-2472: Better Short Component Rasters
+  - S8011257, CVE-2013-2473: Better Byte Component Rasters
+  - S8012375, CVE-2013-1571: Improve Javadoc framing
+  - S8012421: Better positioning of PairPositioning
+  - S8012438, CVE-2013-2463: Better image validation
+  - S8012597, CVE-2013-2465: Better image channel verification
+  - S8012601, CVE-2013-2469: Better validation of image layouts
+  - S8014281, CVE-2013-2461: Better checking of XML signature
+  - S8015997: Additional improvement in Javadoc framing
+* Backports
+  - S6469266: Integrate Apache XMLSec 1.4.2 into JDK 7
+  - S6541350: TimeZone display names localization
+  - S6656651: Windows Look and Feel LCD glyph images have some differences from native applications.
+  - S6786028: Javadoc HTML WCAG 2.0 accessibility issues in standard doclet - Bold tags should be strong
+  - S6786682: Javadoc HTML WCAG 2.0 accessibility issues in standard doclet - HTML tag should have lang attribute
+  - S6786688: Javadoc HTML WCAG 2.0 accessibility issues in standard doclet - Table must have captions and headers
+  - S6786690: Javadoc HTML WCAG 2.0 accessibility issues in standard doclet - DL tag and nesting issue
+  - S6802694: Javadoc doclet does not display deprecated information with -nocomment option for serialized form
+  - S6821191: Timezone display name localization
+  - S6851834: Javadoc doclet needs a structured approach to generate the output HTML.
+  - S6888167: memory leaks in the medialib glue code
+  - S6961178: Allow doclet.xml to contain XML attributes
+  - S6977550: (tz) Support tzdata2010l
+  - S6996686: (tz) Support tzdata2010o
+  - S7006270: Several javadoc regression tests are failing on windows
+  - S7017800: (tz) Support tzdata2011b
+  - S7027387: (tz) Support tzdata2011d
+  - S7033174: (tz) Support tzdata2011e
+  - S7039469: (tz) Support tzdata2011g
+  - S7090843: (tz) Support tzdata2011j
+  - S7103108: (tz) Support tzdata2011l
+  - S7103405: Correct display names for Pacific/Apia timezone
+  - S7104126: Insert openjdk copyright header back into TZdata files
+  - S7158483: (tz) Support tzdata2012c
+  - S7171223: Building ExtensionSubtables.cpp should use -fno-strict-aliasing
+  - S7198570: (tz) Support tzdata2012f
+  - S7195301: XML Signature DOM implementation should not use instanceof to determine type of Node
+  - S8002225: (tz) Support tzdata2012i
+  - S8009165: Fix for 8006435 needs revision
+  - S8009217: REGRESSION: test com/sun/org/apache/xml/internal/security/transforms/ClassLoaderTest.java fails to compile since 7u21b03
+  - S8009530: ICU Kern table support broken
+  - S8009610: Blacklist certificate used with malware.
+  - S8009987: (tz) Support tzdata2013b
+  - S8009996: tests javax/management/mxbean/MiscTest.java and javax/management/mxbean/StandardMBeanOverrideTest.java fail
+  - S8010714: XML DSig API allows a RetrievalMethod to reference another RetrievalMethod
+  - S8010727: WLS fails to add a logger with "" in its own LogManager subclass instance
+  - S8010939: Deadlock in LogManager
+  - S8011154: java/awt/Frame/ShapeNotSetSometimes/ShapeNotSetSometimes.java failed since 7u25b03 on windows
+  - S8011557: Improve reflection utility classes
+  - S8011992: java/awt/image/mlib/MlibOpsTest.java failed since jdk7u25b05
+  - S8012112: java/awt/image/mlib/MlibOpsTest.java fails on sparc solaris
+  - S8012617: ArrayIndexOutOfBoundsException with some fonts using LineBreakMeasurer
+  - S8012933: Test closed/java/awt/Dialog/DialogAnotherThread/JaWSTest.java fails since jdk 7u25 b07
+  - S8013196: TimeZone.getDefault() throws NPE due to sun.awt.AppContext.getAppContext()
+  - S8014427: REGRESSION: closed/javax/imageio/plugins/bmp/Write3ByteBgrTest.java fails since 7u25 b09
+  - S8014718: Netbeans IDE begins to throw a lot exceptions since 7u25 b10
+
+New in release 1.11.12 (2013-07-10):
+
+* Security fixes
+  - S6741606, CVE-2013-2407: Integrate Apache Santuario
+  - S7158805, CVE-2013-2445: Better rewriting of nested subroutine calls
+  - S7170730, CVE-2013-2451: Improve Windows network stack support.
+  - S8000638, CVE-2013-2450: Improve deserialization
+  - S8000642, CVE-2013-2446: Better handling of objects for transportation
+  - S8001032: Restrict object access
+  - S8001033, CVE-2013-2452: Refactor network address handling in virtual machine identifiers
+  - S8001034, CVE-2013-1500: Memory management improvements
+  - S8001038, CVE-2013-2444: Resourcefully handle resources
+  - S8001043: Clarify definition restrictions
+  - S8001309: Better handling of annotation interfaces
+  - S8001318, CVE-2013-2447: Socket.getLocalAddress not consistent with InetAddress.getLocalHost
+  - S8001330, CVE-2013-2443: Improve on checking order
+  - S8003703, CVE-2013-2412: Update RMI connection dialog box
+  - S8004584: Augment applet contextualization
+  - S8005007: Better glyph processing
+  - S8006328, CVE-2013-2448: Improve robustness of sound classes
+  - S8006611: Improve scripting
+  - S8007467: Improve robustness of JMX internal APIs
+  - S8007471: Improve MBean notifications
+  - S8007812, CVE-2013-2455: (reflect) Class.getEnclosingMethod problematic for some classes
+  - S8008120, CVE-2013-2457: Improve JMX class checking
+  - S8008124, CVE-2013-2453: Better compliance testing
+  - S8008128: Better API coherence for JMX
+  - S8008132, CVE-2013-2456: Better serialization support
+  - S8008585: Better JMX data handling
+  - S8008593: Better URLClassLoader resource management
+  - S8008603: Improve provision of JMX providers
+  - S8008611: Better handling of annotations in JMX
+  - S8008615: Improve robustness of JMX internal APIs
+  - S8008623: Better handling of MBeanServers
+  - S8008744, CVE-2013-2407: Rework part of fix for JDK-6741606
+  - S8008982: Adjust JMX for underlying interface changes
+  - S8009004: Better implementation of RMI connections
+  - S8009013: Better handling of T2K glyphs
+  - S8009034: Improve resulting notifications in JMX
+  - S8009038: Improve JMX notification support
+  - S8009067: Improve storing keys in KeyStore
+  - S8009071, CVE-2013-2459: Improve shape handling
+  - S8009235: Improve handling of TSA data
+  - S8011243, CVE-2013-2470: Improve ImagingLib
+  - S8011248, CVE-2013-2471: Better Component Rasters
+  - S8011253, CVE-2013-2472: Better Short Component Rasters
+  - S8011257, CVE-2013-2473: Better Byte Component Rasters
+  - S8012375, CVE-2013-1571: Improve Javadoc framing
+  - S8012421: Better positioning of PairPositioning
+  - S8012438, CVE-2013-2463: Better image validation
+  - S8012597, CVE-2013-2465: Better image channel verification
+  - S8012601, CVE-2013-2469: Better validation of image layouts
+  - S8014281, CVE-2013-2461: Better checking of XML signature
+  - S8015997: Additional improvement in Javadoc framing
+* Backports
+  - S6469266: Integrate Apache XMLSec 1.4.2 into JDK 7
+  - S6541350: TimeZone display names localization
+  - S6656651: Windows Look and Feel LCD glyph images have some differences from native applications.
+  - S6786028: Javadoc HTML WCAG 2.0 accessibility issues in standard doclet - Bold tags should be strong
+  - S6786682: Javadoc HTML WCAG 2.0 accessibility issues in standard doclet - HTML tag should have lang attribute
+  - S6786688: Javadoc HTML WCAG 2.0 accessibility issues in standard doclet - Table must have captions and headers
+  - S6786690: Javadoc HTML WCAG 2.0 accessibility issues in standard doclet - DL tag and nesting issue
+  - S6802694: Javadoc doclet does not display deprecated information with -nocomment option for serialized form
+  - S6821191: Timezone display name localization
+  - S6851834: Javadoc doclet needs a structured approach to generate the output HTML.
+  - S6888167: memory leaks in the medialib glue code
+  - S6961178: Allow doclet.xml to contain XML attributes
+  - S6977550: (tz) Support tzdata2010l
+  - S6996686: (tz) Support tzdata2010o
+  - S7006270: Several javadoc regression tests are failing on windows
+  - S7017800: (tz) Support tzdata2011b
+  - S7027387: (tz) Support tzdata2011d
+  - S7033174: (tz) Support tzdata2011e
+  - S7039469: (tz) Support tzdata2011g
+  - S7090843: (tz) Support tzdata2011j
+  - S7103108: (tz) Support tzdata2011l
+  - S7103405: Correct display names for Pacific/Apia timezone
+  - S7104126: Insert openjdk copyright header back into TZdata files
+  - S7158483: (tz) Support tzdata2012c
+  - S7171223: Building ExtensionSubtables.cpp should use -fno-strict-aliasing
+  - S7198570: (tz) Support tzdata2012f
+  - S7195301: XML Signature DOM implementation should not use instanceof to determine type of Node
+  - S8002225: (tz) Support tzdata2012i
+  - S8009165: Fix for 8006435 needs revision
+  - S8009217: REGRESSION: test com/sun/org/apache/xml/internal/security/transforms/ClassLoaderTest.java fails to compile since 7u21b03
+  - S8009530: ICU Kern table support broken
+  - S8009610: Blacklist certificate used with malware.
+  - S8009987: (tz) Support tzdata2013b
+  - S8009996: tests javax/management/mxbean/MiscTest.java and javax/management/mxbean/StandardMBeanOverrideTest.java fail
+  - S8010714: XML DSig API allows a RetrievalMethod to reference another RetrievalMethod
+  - S8010727: WLS fails to add a logger with "" in its own LogManager subclass instance
+  - S8010939: Deadlock in LogManager
+  - S8011154: java/awt/Frame/ShapeNotSetSometimes/ShapeNotSetSometimes.java failed since 7u25b03 on windows
+  - S8011557: Improve reflection utility classes
+  - S8011992: java/awt/image/mlib/MlibOpsTest.java failed since jdk7u25b05
+  - S8012112: java/awt/image/mlib/MlibOpsTest.java fails on sparc solaris
+  - S8012617: ArrayIndexOutOfBoundsException with some fonts using LineBreakMeasurer
+  - S8012933: Test closed/java/awt/Dialog/DialogAnotherThread/JaWSTest.java fails since jdk 7u25 b07
+  - S8013196: TimeZone.getDefault() throws NPE due to sun.awt.AppContext.getAppContext()
+  - S8014427: REGRESSION: closed/javax/imageio/plugins/bmp/Write3ByteBgrTest.java fails since 7u25 b09
+  - S8014718: Netbeans IDE begins to throw a lot exceptions since 7u25 b10
+
 New in release 1.12.5 (2013-04-24):
 
 * New features
