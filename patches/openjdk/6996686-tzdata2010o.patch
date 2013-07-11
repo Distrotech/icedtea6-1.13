@@ -1,0 +1,93 @@
+# HG changeset patch
+# User peytoia
+# Date 1288678136 -32400
+# Node ID 30bc265fa0d0385857c106a5f9bdafa19cbf2ac5
+# Parent  de89eec422c3ce434605255170459e57f940d369
+6996686: (tz) Support tzdata2010o
+Reviewed-by: okutsu
+
+--- openjdk/jdk/make/sun/javazic/tzdata/VERSION
++++ openjdk/jdk/make/sun/javazic/tzdata/VERSION
+@@ -21,4 +21,4 @@
+ # or visit www.oracle.com if you need additional information or have any
+ # questions.
+ #
+-tzdata2010l
++tzdata2010o
+--- openjdk/jdk/make/sun/javazic/tzdata/asia
++++ openjdk/jdk/make/sun/javazic/tzdata/asia
+@@ -569,8 +569,8 @@
+ Rule	HK	1954	1964	-	Mar	Sun>=18	3:30	1:00	S
+ Rule	HK	1954	only	-	Oct	31	3:30	0	-
+ Rule	HK	1955	1964	-	Nov	Sun>=1	3:30	0	-
+-Rule	HK	1965	1977	-	Apr	Sun>=16	3:30	1:00	S
+-Rule	HK	1965	1977	-	Oct	Sun>=16	3:30	0	-
++Rule	HK	1965	1976	-	Apr	Sun>=16	3:30	1:00	S
++Rule	HK	1965	1976	-	Oct	Sun>=16	3:30	0	-
+ Rule	HK	1973	only	-	Dec	30	3:30	1:00	S
+ Rule	HK	1979	only	-	May	Sun>=8	3:30	1:00	S
+ Rule	HK	1979	only	-	Oct	Sun>=16	3:30	0	-
+--- openjdk/jdk/make/sun/javazic/tzdata/australasia
++++ openjdk/jdk/make/sun/javazic/tzdata/australasia
+@@ -306,13 +306,26 @@
+ # http://www.timeanddate.com/news/time/fiji-dst-ends-march-2010.html
+ # </a>
+ 
++# From Alexander Krivenyshev (2010-10-24):
++# According to Radio Fiji and Fiji Times online, Fiji will end DST 3 
++# weeks earlier than expected - on March 6, 2011, not March 27, 2011...
++# Here is confirmation from Government of the Republic of the Fiji Islands, 
++# Ministry of Information (fiji.gov.fj) web site:
++# <a href="http://www.fiji.gov.fj/index.php?option=com_content&view=article&id=2608:daylight-savings&catid=71:press-releases&Itemid=155">
++# http://www.fiji.gov.fj/index.php?option=com_content&view=article&id=2608:daylight-savings&catid=71:press-releases&Itemid=155
++# </a>
++# or
++# <a href="http://www.worldtimezone.com/dst_news/dst_news_fiji04.html">
++# http://www.worldtimezone.com/dst_news/dst_news_fiji04.html
++# </a>
++
+ # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+ Rule	Fiji	1998	1999	-	Nov	Sun>=1	2:00	1:00	S
+ Rule	Fiji	1999	2000	-	Feb	lastSun	3:00	0	-
+ Rule	Fiji	2009	only	-	Nov	29	2:00	1:00	S
+ Rule	Fiji	2010	only	-	Mar	lastSun	3:00	0	-
+ Rule	Fiji	2010	only	-	Oct	24	2:00	1:00	S
+-Rule	Fiji	2011	only	-	Mar	lastSun 3:00	0	-
++Rule	Fiji	2011	only	-	Mar	Sun>=1	3:00	0	-
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+ Zone	Pacific/Fiji	11:53:40 -	LMT	1915 Oct 26	# Suva
+ 			12:00	Fiji	FJ%sT	# Fiji Time
+@@ -509,11 +522,21 @@
+ # http://www.parliament.gov.ws/documents/acts/Daylight%20Saving%20Act%20%202009%20%28English%29%20-%20Final%207-7-091.pdf
+ # </a>
+ 
++# From Raymond Hughes (2010-10-07):
++# Please see
++# <a href="http://www.mcil.gov.ws">
++# http://www.mcil.gov.ws
++# </a>,
++# the Ministry of Commerce, Industry and Labour (sideframe) "Last Sunday
++# September 2010 (26/09/10) - adjust clocks forward from 12:00 midnight
++# to 01:00am and First Sunday April 2011 (03/04/11) - adjust clocks
++# backwards from 1:00am to 12:00am"
++
+ Zone Pacific/Apia	 12:33:04 -	LMT	1879 Jul  5
+ 			-11:26:56 -	LMT	1911
+ 			-11:30	-	SAMT	1950		# Samoa Time
+ 			-11:00	-	WST	2010 Sep 26
+-			-11:00	1:00	WSDT	2011 Apr 3
++			-11:00	1:00	WSDT	2011 Apr 3 1:00
+ 			-11:00	-	WST
+ 
+ # Solomon Is
+--- openjdk/jdk/make/sun/javazic/tzdata/zone.tab
++++ openjdk/jdk/make/sun/javazic/tzdata/zone.tab
+@@ -63,7 +63,7 @@
+ AQ	-6736+06253	Antarctica/Mawson	Mawson Station, Holme Bay
+ AQ	-6835+07758	Antarctica/Davis	Davis Station, Vestfold Hills
+ AQ	-6617+11031	Antarctica/Casey	Casey Station, Bailey Peninsula
+-AQ	-7824+10654	Antarctica/Vostok	Vostok Station, S Magnetic Pole
++AQ	-7824+10654	Antarctica/Vostok	Vostok Station, Lake Vostok
+ AQ	-6640+14001	Antarctica/DumontDUrville	Dumont-d'Urville Station, Terre Adelie
+ AQ	-690022+0393524	Antarctica/Syowa	Syowa Station, E Ongul I
+ AQ	-5430+15857	Antarctica/Macquarie	Macquarie Island Station, Macquarie Island

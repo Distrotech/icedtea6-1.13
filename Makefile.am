@@ -669,7 +669,37 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/8014427-raster_regresssion.patch \
 	patches/openjdk/8014618-strip_leading_zeros_premastersecret.patch \
 	patches/openjdk/8014676-javadebugger_space_in_paths.patch \
-	patches/openjdk/8014968-OCSP_timeout_default.patch
+	patches/openjdk/8014968-OCSP_timeout_default.patch \
+	patches/openjdk/8002070-remove_logger_stack_search.patch \
+	patches/openjdk/8002070-remove_logger_stack_search_2.patch \
+	patches/openjdk/8010118-caller_sensitive.patch \
+	patches/openjdk/8010727-empty_logger_name.patch \
+	patches/openjdk/8010939-logmanager_deadlock.patch \
+	patches/openjdk/8011990-logger_test_urls.patch \
+	patches/openjdk/8013380-logger_stack_walk_glassfish.patch \
+	patches/openjdk/8013380-handle_renames.patch \
+	patches/openjdk/8014745-logger_stack_walk_switch.patch \
+	patches/openjdk/8012243-serial_regression.patch \
+	patches/openjdk/8014718-remove_logging_suntoolkit.patch \
+	patches/openjdk/8011139-revise_checking_getenclosingclass.patch \
+	patches/openjdk/8009996-emitter_bean.patch \
+	patches/openjdk/6541350-tz_display_names_l10n.patch \
+	patches/openjdk/6821191-tz_display_names_l10n.patch \
+	patches/openjdk/6977550-tzdata2010l.patch \
+	patches/openjdk/6996686-tzdata2010o.patch \
+	patches/openjdk/7017800-tzdata2011b.patch \
+	patches/openjdk/7027387-tzdata2011d.patch \
+	patches/openjdk/7033174-tzdata2011e.patch \
+	patches/openjdk/7039469-tzdata2011g.patch \
+	patches/openjdk/7090843-tzdata2011j.patch \
+	patches/openjdk/7103108-tzdata2011l.patch \
+	patches/openjdk/7104126-headers_tzdata.patch \
+	patches/openjdk/7103405-correct_display_names.patch \
+	patches/openjdk/7158483-tzdata2012c.patch \
+	patches/openjdk/7198570-tzdata2012f.patch \
+	patches/openjdk/8002225-tzdata2012i.patch \
+	patches/openjdk/8009987-tzdata2013b.patch
+
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \

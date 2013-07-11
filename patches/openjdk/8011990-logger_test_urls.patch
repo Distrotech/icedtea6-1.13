@@ -1,0 +1,55 @@
+# HG changeset patch
+# User jgish
+# Date 1366144454 14400
+# Node ID b9dc2f2b4c4daafb23b0cf76c71d88d8b2623fe0
+# Parent  108fe5a882a7bf5af5b38e963cef2729b41fa26e
+8011990: TEST_BUG: java/util/logging/bundlesearch/ResourceBundleSearchTest.java fails on Windows
+Summary: Fix URL to reliably work on all platforms
+Reviewed-by: duke
+
+--- openjdk/jdk/test/java/util/logging/bundlesearch/IndirectlyLoadABundle.java
++++ openjdk/jdk/test/java/util/logging/bundlesearch/IndirectlyLoadABundle.java
+@@ -21,6 +21,7 @@
+  * questions.
+  */
+ 
++import java.io.File;
+ import java.lang.reflect.InvocationTargetException;
+ import java.lang.reflect.Method;
+ import java.net.URL;
+@@ -45,11 +46,13 @@
+         String testClassesDir = System.getProperty("test.classes",
+                 System.getProperty("user.dir"));
+         String sep = System.getProperty("file.separator");
++
+         URL[] urls = new URL[2];
+ 
+         // Allow for both jtreg and standalone cases here
+-        urls[0] = new URL("file://" + testDir + sep + "resources" + sep);
+-        urls[1] = new URL("file://" + testClassesDir + sep );
++        urls[0] = new File( testDir + sep + "resources" + sep ).toURI().toURL();
++        urls[1] = new File( testClassesDir + sep ).toURI().toURL();
++
+         System.out.println("INFO: urls[0] = " + urls[0]);
+         System.out.println("INFO: urls[1] = " + urls[1]);
+ 
+--- openjdk/jdk/test/java/util/logging/bundlesearch/ResourceBundleSearchTest.java
++++ openjdk/jdk/test/java/util/logging/bundlesearch/ResourceBundleSearchTest.java
+@@ -29,6 +29,7 @@
+  * @build  ResourceBundleSearchTest IndirectlyLoadABundle LoadItUp
+  * @run main ResourceBundleSearchTest
+  */
++import java.io.File;
+ import java.net.URL;
+ import java.net.URLClassLoader;
+ import java.util.ArrayList;
+@@ -70,7 +71,8 @@
+         String sep = System.getProperty("file.separator");
+ 
+         URL[] urls = new URL[1];
+-        urls[0] = new URL("file://" + testDir + sep + "resources" + sep);
++
++        urls[0] = new File( testDir + sep + "resources" + sep ).toURI().toURL();
+         URLClassLoader rbClassLoader = new URLClassLoader(urls);
+ 
+         // Test 1 - can we find a Logger bundle from doing a stack search?

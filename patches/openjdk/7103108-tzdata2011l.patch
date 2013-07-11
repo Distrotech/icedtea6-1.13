@@ -1,0 +1,1593 @@
+# HG changeset patch
+# User asaha
+# Date 1319235923 25200
+# Node ID dd8350c61d3669eed93507e46e877affe18c2d41
+# Parent  426499ae8e0465161186dfee107ca30f6f6d833c
+7103108: (tz) Support tzdata2011l
+Reviewed-by: coffeys, peytoia
+
+--- openjdk/jdk/make/sun/javazic/tzdata/VERSION
++++ openjdk/jdk/make/sun/javazic/tzdata/VERSION
+@@ -21,4 +21,4 @@
+ # or visit www.oracle.com if you need additional information or have any
+ # questions.
+ #
+-tzdata2011j
++tzdata2011l
+--- openjdk/jdk/make/sun/javazic/tzdata/africa
++++ openjdk/jdk/make/sun/javazic/tzdata/africa
+@@ -1,27 +1,5 @@
+-#
+-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+-#  
+-# This code is free software; you can redistribute it and/or modify it
+-# under the terms of the GNU General Public License version 2 only, as
+-# published by the Free Software Foundation.  Oracle designates this
+-# particular file as subject to the "Classpath" exception as provided
+-# by Oracle in the LICENSE file that accompanied this code.
+-#  
+-# This code is distributed in the hope that it will be useful, but WITHOUT
+-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+-# version 2 for more details (a copy is included in the LICENSE file that
+-# accompanied this code).
+-#  
+-# You should have received a copy of the GNU General Public License version
+-# 2 along with this work; if not, write to the Free Software Foundation,
+-# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+-#  
+-# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+-# or visit www.oracle.com if you need additional information or have any
+-# questions.
+-#
+ # <pre>
++# @(#)africa	8.33
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+--- openjdk/jdk/make/sun/javazic/tzdata/antarctica
++++ openjdk/jdk/make/sun/javazic/tzdata/antarctica
+@@ -1,27 +1,5 @@
+-#
+-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+-#  
+-# This code is free software; you can redistribute it and/or modify it
+-# under the terms of the GNU General Public License version 2 only, as
+-# published by the Free Software Foundation.  Oracle designates this
+-# particular file as subject to the "Classpath" exception as provided
+-# by Oracle in the LICENSE file that accompanied this code.
+-#  
+-# This code is distributed in the hope that it will be useful, but WITHOUT
+-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+-# version 2 for more details (a copy is included in the LICENSE file that
+-# accompanied this code).
+-#  
+-# You should have received a copy of the GNU General Public License version
+-# 2 along with this work; if not, write to the Free Software Foundation,
+-# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+-#  
+-# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+-# or visit www.oracle.com if you need additional information or have any
+-# questions.
+-#
+ # <pre>
++# @(#)antarctica	8.9
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+--- openjdk/jdk/make/sun/javazic/tzdata/asia
++++ openjdk/jdk/make/sun/javazic/tzdata/asia
+@@ -1,26 +1,4 @@
+-#
+-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+-#  
+-# This code is free software; you can redistribute it and/or modify it
+-# under the terms of the GNU General Public License version 2 only, as
+-# published by the Free Software Foundation.  Oracle designates this
+-# particular file as subject to the "Classpath" exception as provided
+-# by Oracle in the LICENSE file that accompanied this code.
+-#  
+-# This code is distributed in the hope that it will be useful, but WITHOUT
+-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+-# version 2 for more details (a copy is included in the LICENSE file that
+-# accompanied this code).
+-#  
+-# You should have received a copy of the GNU General Public License version
+-# 2 along with this work; if not, write to the Free Software Foundation,
+-# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+-#  
+-# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+-# or visit www.oracle.com if you need additional information or have any
+-# questions.
+-#
++# @(#)asia	8.68
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+@@ -2216,7 +2194,47 @@
+ # http://www.timeanddate.com/news/time/westbank-gaza-end-dst-2010.html
+ # </a>
+ 
++# From Steffen Thorsen (2011-08-26):
++# Gaza and the West Bank did go back to standard time in the beginning of
++# August, and will now enter daylight saving time again on 2011-08-30
++# 00:00 (so two periods of DST in 2011). The pause was because of
++# Ramadan.
++#
++# <a href="http://www.maannews.net/eng/ViewDetails.aspx?ID=416217">
++# http://www.maannews.net/eng/ViewDetails.aspx?ID=416217
++# </a>
++# Additional info:
++# <a href="http://www.timeanddate.com/news/time/palestine-dst-2011.html">
++# http://www.timeanddate.com/news/time/palestine-dst-2011.html
++# </a>
++
++# From Alexander Krivenyshev (2011-08-27):
++# According to the article in The Jerusalem Post:
++# "...Earlier this month, the Palestinian government in the West Bank decided to
++# move to standard time for 30 days, during Ramadan. The Palestinians in the
++# Gaza Strip accepted the change and also moved their clocks one hour back.
++# The Hamas government said on Saturday that it won't observe summertime after
++# the Muslim feast of Id al-Fitr, which begins on Tuesday..."
++# ...
++# <a href="http://www.jpost.com/MiddleEast/Article.aspx?id=235650">
++# http://www.jpost.com/MiddleEast/Article.aspx?id=235650
++# </a>
++# or
++# <a href="http://www.worldtimezone.com/dst_news/dst_news_gazastrip05.html">
++# http://www.worldtimezone.com/dst_news/dst_news_gazastrip05.html
++# </a>
+ # The rules for Egypt are stolen from the `africa' file.
++
++# From Steffen Thorsen (2011-09-30):
++# West Bank did end Daylight Saving Time this morning/midnight (2011-09-30 
++# 00:00).
++# So West Bank and Gaza now have the same time again.
++#
++# Many sources, including:
++# <a href="http://www.maannews.net/eng/ViewDetails.aspx?ID=424808">
++# http://www.maannews.net/eng/ViewDetails.aspx?ID=424808
++# </a>
++
+ # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+ Rule EgyptAsia	1957	only	-	May	10	0:00	1:00	S
+ Rule EgyptAsia	1957	1958	-	Oct	 1	0:00	0	-
+@@ -2232,19 +2250,37 @@
+ Rule Palestine	2006	2008	-	Apr	 1	0:00	1:00	S
+ Rule Palestine	2006	only	-	Sep	22	0:00	0	-
+ Rule Palestine	2007	only	-	Sep	Thu>=8	2:00	0	-
+-Rule Palestine	2008	only	-	Aug	lastFri	2:00	0	-
++Rule Palestine	2008	only	-	Aug	lastFri	0:00	0	-
+ Rule Palestine	2009	only	-	Mar	lastFri	0:00	1:00	S
+-Rule Palestine	2010	max	-	Mar	lastSat	0:01	1:00	S
+-Rule Palestine	2009	max	-	Sep	Fri>=1	2:00	0	-
++Rule Palestine	2009	only	-	Sep	Fri>=1	2:00	0	-
++Rule Palestine	2010	only	-	Mar	lastSat	0:01	1:00	S
+ Rule Palestine	2010	only	-	Aug	11	0:00	0	-
+ 
++# From Arthur David Olson (2011-09-20):
++# 2011 transitions per http://www.timeanddate.com as of 2011-09-20.
++
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+ Zone	Asia/Gaza	2:17:52	-	LMT	1900 Oct
+ 			2:00	Zion	EET	1948 May 15
+ 			2:00 EgyptAsia	EE%sT	1967 Jun  5
+ 			2:00	Zion	I%sT	1996
+ 			2:00	Jordan	EE%sT	1999
+-			2:00 Palestine	EE%sT
++			2:00 Palestine	EE%sT	2011 Apr  2 12:01
++			2:00	1:00	EEST	2011 Aug  1
++			2:00	-	EET
++
++Zone	Asia/Hebron	2:20:23	-	LMT	1900 Oct
++			2:00	Zion	EET	1948 May 15
++			2:00 EgyptAsia	EE%sT	1967 Jun  5
++			2:00	Zion	I%sT	1996
++			2:00	Jordan	EE%sT	1999
++			2:00 Palestine	EE%sT	2008 Aug
++			2:00 	1:00	EEST	2008 Sep
++			2:00 Palestine	EE%sT	2011 Apr  1 12:01
++			2:00	1:00	EEST	2011 Aug  1
++			2:00	-	EET	2011 Aug 30
++			2:00	1:00	EEST	2011 Sep 30 3:00
++			2:00	-	EET
+ 
+ # Paracel Is
+ # no information
+--- openjdk/jdk/make/sun/javazic/tzdata/australasia
++++ openjdk/jdk/make/sun/javazic/tzdata/australasia
+@@ -1,27 +1,5 @@
+-#
+-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+-#  
+-# This code is free software; you can redistribute it and/or modify it
+-# under the terms of the GNU General Public License version 2 only, as
+-# published by the Free Software Foundation.  Oracle designates this
+-# particular file as subject to the "Classpath" exception as provided
+-# by Oracle in the LICENSE file that accompanied this code.
+-#  
+-# This code is distributed in the hope that it will be useful, but WITHOUT
+-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+-# version 2 for more details (a copy is included in the LICENSE file that
+-# accompanied this code).
+-#  
+-# You should have received a copy of the GNU General Public License version
+-# 2 along with this work; if not, write to the Free Software Foundation,
+-# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+-#  
+-# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+-# or visit www.oracle.com if you need additional information or have any
+-# questions.
+-#
+ # <pre>
++# @(#)australasia	8.27
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+@@ -318,6 +296,18 @@
+ # http://www.worldtimezone.com/dst_news/dst_news_fiji04.html
+ # </a>
+ 
++# From Steffen Thorsen (2011-10-03):
++# Now the dates have been confirmed, and at least our start date 
++# assumption was correct (end date was one week wrong).
++#
++# <a href="http://www.fiji.gov.fj/index.php?option=com_content&view=article&id=4966:daylight-saving-starts-in-fiji&catid=71:press-releases&Itemid=155">
++# www.fiji.gov.fj/index.php?option=com_content&view=article&id=4966:daylight-saving-starts-in-fiji&catid=71:press-releases&Itemid=155
++# </a>
++# which says
++# Members of the public are reminded to change their time to one hour in 
++# advance at 2am to 3am on October 23, 2011 and one hour back at 3am to 
++# 2am on February 26 next year.
++
+ # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+ Rule	Fiji	1998	1999	-	Nov	Sun>=1	2:00	1:00	S
+ Rule	Fiji	1999	2000	-	Feb	lastSun	3:00	0	-
+@@ -325,6 +315,8 @@
+ Rule	Fiji	2010	only	-	Mar	lastSun	3:00	0	-
+ Rule	Fiji	2010	only	-	Oct	24	2:00	1:00	S
+ Rule	Fiji	2011	only	-	Mar	Sun>=1	3:00	0	-
++Rule	Fiji	2011	only	-	Oct	23	2:00	1:00	S
++Rule	Fiji	2012	only	-	Feb	26	3:00	0	-
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+ Zone	Pacific/Fiji	11:53:40 -	LMT	1915 Oct 26	# Suva
+ 			12:00	Fiji	FJ%sT	# Fiji Time
+--- openjdk/jdk/make/sun/javazic/tzdata/backward
++++ openjdk/jdk/make/sun/javazic/tzdata/backward
+@@ -1,27 +1,5 @@
+-#
+-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+-#  
+-# This code is free software; you can redistribute it and/or modify it
+-# under the terms of the GNU General Public License version 2 only, as
+-# published by the Free Software Foundation.  Oracle designates this
+-# particular file as subject to the "Classpath" exception as provided
+-# by Oracle in the LICENSE file that accompanied this code.
+-#  
+-# This code is distributed in the hope that it will be useful, but WITHOUT
+-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+-# version 2 for more details (a copy is included in the LICENSE file that
+-# accompanied this code).
+-#  
+-# You should have received a copy of the GNU General Public License version
+-# 2 along with this work; if not, write to the Free Software Foundation,
+-# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+-#  
+-# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+-# or visit www.oracle.com if you need additional information or have any
+-# questions.
+-#
+ # <pre>
++# @(#)backward	8.9
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+--- openjdk/jdk/make/sun/javazic/tzdata/etcetera
++++ openjdk/jdk/make/sun/javazic/tzdata/etcetera
+@@ -1,27 +1,5 @@
+-#
+-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+-#  
+-# This code is free software; you can redistribute it and/or modify it
+-# under the terms of the GNU General Public License version 2 only, as
+-# published by the Free Software Foundation.  Oracle designates this
+-# particular file as subject to the "Classpath" exception as provided
+-# by Oracle in the LICENSE file that accompanied this code.
+-#  
+-# This code is distributed in the hope that it will be useful, but WITHOUT
+-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+-# version 2 for more details (a copy is included in the LICENSE file that
+-# accompanied this code).
+-#  
+-# You should have received a copy of the GNU General Public License version
+-# 2 along with this work; if not, write to the Free Software Foundation,
+-# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+-#  
+-# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+-# or visit www.oracle.com if you need additional information or have any
+-# questions.
+-#
+ # <pre>
++# @(#)etcetera	8.3
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+--- openjdk/jdk/make/sun/javazic/tzdata/europe
++++ openjdk/jdk/make/sun/javazic/tzdata/europe
+@@ -1,27 +1,5 @@
+-#
+-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+-#  
+-# This code is free software; you can redistribute it and/or modify it
+-# under the terms of the GNU General Public License version 2 only, as
+-# published by the Free Software Foundation.  Oracle designates this
+-# particular file as subject to the "Classpath" exception as provided
+-# by Oracle in the LICENSE file that accompanied this code.
+-#  
+-# This code is distributed in the hope that it will be useful, but WITHOUT
+-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+-# version 2 for more details (a copy is included in the LICENSE file that
+-# accompanied this code).
+-#  
+-# You should have received a copy of the GNU General Public License version
+-# 2 along with this work; if not, write to the Free Software Foundation,
+-# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+-#  
+-# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+-# or visit www.oracle.com if you need additional information or have any
+-# questions.
+-#
+ # <pre>
++# @(#)europe	8.38
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+@@ -583,9 +561,9 @@
+ #
+ Rule	Russia	1992	only	-	Mar	lastSat	 23:00	1:00	S
+ Rule	Russia	1992	only	-	Sep	lastSat	 23:00	0	-
+-Rule	Russia	1993	max	-	Mar	lastSun	 2:00s	1:00	S
++Rule	Russia	1993	2010	-	Mar	lastSun	 2:00s	1:00	S
+ Rule	Russia	1993	1995	-	Sep	lastSun	 2:00s	0	-
+-Rule	Russia	1996	max	-	Oct	lastSun	 2:00s	0	-
++Rule	Russia	1996	2010	-	Oct	lastSun	 2:00s	0	-
+ 
+ # From Alexander Krivenyshev (2011-06-14):
+ # According to Kremlin press service, Russian President Dmitry Medvedev
+@@ -605,7 +583,6 @@
+ # From Arthur David Olson (2011-06-15):
+ # Take "abolishing daylight saving time" to mean that time is now considered
+ # to be standard.
+-# At least for now, keep the "old" Russia rules for the benefit of Belarus.
+ 
+ # These are for backward compatibility with older versions.
+ 
+@@ -711,6 +688,23 @@
+ 			1:00	EU	CE%sT
+ 
+ # Belarus
++# From Yauhen Kharuzhy (2011-09-16):
++# By latest Belarus government act Europe/Minsk timezone was changed to
++# GMT+3 without DST (was GMT+2 with DST).
++#
++# Sources (Russian language):
++# 1.
++# <a href="http://www.belta.by/ru/all_news/society/V-Belarusi-otmenjaetsja-perexod-na-sezonnoe-vremja_i_572952.html">
++# http://www.belta.by/ru/all_news/society/V-Belarusi-otmenjaetsja-perexod-na-sezonnoe-vremja_i_572952.html
++# </a>
++# 2.
++# <a href="http://naviny.by/rubrics/society/2011/09/16/ic_articles_116_175144/">
++# http://naviny.by/rubrics/society/2011/09/16/ic_articles_116_175144/
++# </a>
++# 3.
++# <a href="http://news.tut.by/society/250578.html">
++# http://news.tut.by/society/250578.html
++# </a>
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+ Zone	Europe/Minsk	1:50:16 -	LMT	1880
+ 			1:50	-	MMT	1924 May 2 # Minsk Mean Time
+@@ -722,7 +716,8 @@
+ 			2:00	1:00	EEST	1991 Sep 29 2:00s
+ 			2:00	-	EET	1992 Mar 29 0:00s
+ 			2:00	1:00	EEST	1992 Sep 27 0:00s
+-			2:00	Russia	EE%sT
++			2:00	Russia	EE%sT	2011 Mar 27 2:00s
++			3:00	-	FET # Further-eastern European Time
+ 
+ # Belgium
+ #
+@@ -2056,7 +2051,7 @@
+ 			 2:00	Poland	CE%sT	1946
+ 			 3:00	Russia	MSK/MSD	1991 Mar 31 2:00s
+ 			 2:00	Russia	EE%sT	2011 Mar 27 2:00s
+-			 3:00	-	KALT
++			 3:00	-	FET # Further-eastern European Time
+ #
+ # From Oscar van Vlijmen (2001-08-25): [This region consists of]
+ # Respublika Adygeya, Arkhangel'skaya oblast',
+@@ -2211,7 +2206,7 @@
+ # [parts of] Respublika Sakha (Yakutiya), Chitinskaya oblast'.
+ 
+ # From Oscar van Vlijmen (2009-11-29):
+-# ...some regions of RUssia were merged with others since 2005...
++# ...some regions of [Russia] were merged with others since 2005...
+ # Some names were changed, no big deal, except for one instance: a new name.
+ # YAK/YAKST: UTC+9 Zabajkal'skij kraj.
+ 
+@@ -2635,6 +2630,28 @@
+ # of March at 3am the time is changing to 4am and each last Sunday of
+ # October the time at 4am is changing to 3am"
+ 
++# From Alexander Krivenyshev (2011-09-20):
++# On September 20, 2011 the deputies of the Verkhovna Rada agreed to
++# abolish the transfer clock to winter time.
++#
++# Bill number 8330 of MP from the Party of Regions Oleg Nadoshi got
++# approval from 266 deputies.
++#
++# Ukraine abolishes transter back to the winter time (in Russian)
++# <a href="http://news.mail.ru/politics/6861560/">
++# http://news.mail.ru/politics/6861560/
++# </a>
++#
++# The Ukrainians will no longer change the clock (in Russian)
++# <a href="http://www.segodnya.ua/news/14290482.html">
++# http://www.segodnya.ua/news/14290482.html
++# </a>
++#
++# Deputies cancelled the winter time (in Russian)
++# <a href="http://www.pravda.com.ua/rus/news/2011/09/20/6600616/">
++# http://www.pravda.com.ua/rus/news/2011/09/20/6600616/
++# </a>
++
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+ # Most of Ukraine since 1970 has been like Kiev.
+ # "Kyiv" is the transliteration of the Ukrainian name, but
+@@ -2648,7 +2665,8 @@
+ 			3:00	-	MSK	1990 Jul  1 2:00
+ 			2:00	-	EET	1992
+ 			2:00	E-Eur	EE%sT	1995
+-			2:00	EU	EE%sT
++			2:00	EU	EE%sT	2011 Mar lastSun 1:00u
++			3:00	-	FET # Further-eastern European Time
+ # Ruthenia used CET 1990/1991.
+ # "Uzhhorod" is the transliteration of the Ukrainian name, but
+ # "Uzhgorod" is more common in English.
+@@ -2662,7 +2680,8 @@
+ 			1:00	-	CET	1991 Mar 31 3:00
+ 			2:00	-	EET	1992
+ 			2:00	E-Eur	EE%sT	1995
+-			2:00	EU	EE%sT
++			2:00	EU	EE%sT	2011 Mar lastSun 1:00u
++			3:00	-	FET # Further-eastern European Time
+ # Zaporozh'ye and eastern Lugansk oblasts observed DST 1990/1991.
+ # "Zaporizhia" is the transliteration of the Ukrainian name, but
+ # "Zaporozh'ye" is more common in English.  Use the common English
+@@ -2675,7 +2694,8 @@
+ 			1:00	C-Eur	CE%sT	1943 Oct 25
+ 			3:00	Russia	MSK/MSD	1991 Mar 31 2:00
+ 			2:00	E-Eur	EE%sT	1995
+-			2:00	EU	EE%sT
++			2:00	EU	EE%sT	2011 Mar lastSun 1:00u
++			3:00	-	FET # Further-eastern European Time
+ # Central Crimea used Moscow time 1994/1997.
+ Zone Europe/Simferopol	2:16:24 -	LMT	1880
+ 			2:16	-	SMT	1924 May  2 # Simferopol Mean T
+@@ -2700,7 +2720,8 @@
+ # Assume it happened in March by not changing the clocks.
+ 			3:00	Russia	MSK/MSD	1997
+ 			3:00	-	MSK	1997 Mar lastSun 1:00u
+-			2:00	EU	EE%sT
++			2:00	EU	EE%sT	2011 Mar lastSun 1:00u
++			3:00	-	FET # Further-eastern European Time
+ 
+ ###############################################################################
+ 
+--- openjdk/jdk/make/sun/javazic/tzdata/factory
++++ openjdk/jdk/make/sun/javazic/tzdata/factory
+@@ -1,27 +1,5 @@
+-#
+-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+-#  
+-# This code is free software; you can redistribute it and/or modify it
+-# under the terms of the GNU General Public License version 2 only, as
+-# published by the Free Software Foundation.  Oracle designates this
+-# particular file as subject to the "Classpath" exception as provided
+-# by Oracle in the LICENSE file that accompanied this code.
+-#  
+-# This code is distributed in the hope that it will be useful, but WITHOUT
+-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+-# version 2 for more details (a copy is included in the LICENSE file that
+-# accompanied this code).
+-#  
+-# You should have received a copy of the GNU General Public License version
+-# 2 along with this work; if not, write to the Free Software Foundation,
+-# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+-#  
+-# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+-# or visit www.oracle.com if you need additional information or have any
+-# questions.
+-#
+ # <pre>
++# @(#)factory	8.2
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+--- openjdk/jdk/make/sun/javazic/tzdata/iso3166.tab
++++ openjdk/jdk/make/sun/javazic/tzdata/iso3166.tab
+@@ -1,27 +1,5 @@
+-#
+-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+-#  
+-# This code is free software; you can redistribute it and/or modify it
+-# under the terms of the GNU General Public License version 2 only, as
+-# published by the Free Software Foundation.  Oracle designates this
+-# particular file as subject to the "Classpath" exception as provided
+-# by Oracle in the LICENSE file that accompanied this code.
+-#  
+-# This code is distributed in the hope that it will be useful, but WITHOUT
+-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+-# version 2 for more details (a copy is included in the LICENSE file that
+-# accompanied this code).
+-#  
+-# You should have received a copy of the GNU General Public License version
+-# 2 along with this work; if not, write to the Free Software Foundation,
+-# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+-#  
+-# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+-# or visit www.oracle.com if you need additional information or have any
+-# questions.
+-#
+ # <pre>
++# @(#)iso3166.tab	8.11
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ # ISO 3166 alpha-2 country codes
+--- openjdk/jdk/make/sun/javazic/tzdata/leapseconds
++++ openjdk/jdk/make/sun/javazic/tzdata/leapseconds
+@@ -1,27 +1,5 @@
+-#
+-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+-#  
+-# This code is free software; you can redistribute it and/or modify it
+-# under the terms of the GNU General Public License version 2 only, as
+-# published by the Free Software Foundation.  Oracle designates this
+-# particular file as subject to the "Classpath" exception as provided
+-# by Oracle in the LICENSE file that accompanied this code.
+-#  
+-# This code is distributed in the hope that it will be useful, but WITHOUT
+-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+-# version 2 for more details (a copy is included in the LICENSE file that
+-# accompanied this code).
+-#  
+-# You should have received a copy of the GNU General Public License version
+-# 2 along with this work; if not, write to the Free Software Foundation,
+-# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+-#  
+-# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+-# or visit www.oracle.com if you need additional information or have any
+-# questions.
+-#
+ # <pre>
++# @(#)leapseconds	8.11
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+--- openjdk/jdk/make/sun/javazic/tzdata/northamerica
++++ openjdk/jdk/make/sun/javazic/tzdata/northamerica
+@@ -1,27 +1,5 @@
+-#
+-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+-#  
+-# This code is free software; you can redistribute it and/or modify it
+-# under the terms of the GNU General Public License version 2 only, as
+-# published by the Free Software Foundation.  Oracle designates this
+-# particular file as subject to the "Classpath" exception as provided
+-# by Oracle in the LICENSE file that accompanied this code.
+-#  
+-# This code is distributed in the hope that it will be useful, but WITHOUT
+-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+-# version 2 for more details (a copy is included in the LICENSE file that
+-# accompanied this code).
+-#  
+-# You should have received a copy of the GNU General Public License version
+-# 2 along with this work; if not, write to the Free Software Foundation,
+-# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+-#  
+-# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+-# or visit www.oracle.com if you need additional information or have any
+-# questions.
+-#
+ # <pre>
++# @(#)northamerica	8.49
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+@@ -505,7 +483,7 @@
+ 			 -8:00	US	P%sT	1983 Oct 30 2:00
+ 			 -9:00	US	Y%sT	1983 Nov 30
+ 			 -9:00	US	AK%sT
+-Zone America/Sitka	 -14:58:47 -	LMT	1867 Oct 18
++Zone America/Sitka	 14:58:47 -	LMT	1867 Oct 18
+ 			 -9:01:13 -	LMT	1900 Aug 20 12:00
+ 			 -8:00	-	PST	1942
+ 			 -8:00	US	P%sT	1946
+@@ -1190,31 +1168,21 @@
+ # INMS (2000-09-12) says that, since 1988 at least, Newfoundland switches
+ # at 00:01 local time.  For now, assume it started in 1987.
+ 
+-# From Michael Pelley (2011-08-05):
+-# The Government of Newfoundland and Labrador has pending changes to
+-# modify the hour for daylight savings time to come into effect in
+-# November 2011. This modification would change the time from 12:01AM to
+-# 2:00AM on the dates of the switches of Daylight Savings Time to/from
+-# Standard Time.
+-#
+-# As a matter of reference, in Canada provinces have the authority of
+-# setting time zone information. The legislation has passed our
+-# legislative body (The House of Assembly) and is awaiting the
+-# proclamation to come into effect. You may find this information at:
+-# <a href="http://www.assembly.nl.ca/legislation/sr/lists/Proclamation.htm">
+-# http://www.assembly.nl.ca/legislation/sr/lists/Proclamation.htm
+-# </a>
+-# and
+-# search within that web page for Standard Time (Amendment) Act. The Act
+-# may be found at:
+-# <a href="http://www.assembly.nl.ca/business/bills/Bill1106.htm">
+-# http://www.assembly.nl.ca/business/bills/Bill1106.htm
++# From Michael Pelley (2011-09-12):
++# We received today, Monday, September 12, 2011, notification that the
++# changes to the Newfoundland Standard Time Act have been proclaimed.
++# The change in the Act stipulates that the change from Daylight Savings
++# Time to Standard Time and from Standard Time to Daylight Savings Time
++# now occurs at 2:00AM.
++# ...
++# <a href="http://www.assembly.nl.ca/legislation/sr/annualstatutes/2011/1106.chp.htm">
++# http://www.assembly.nl.ca/legislation/sr/annualstatutes/2011/1106.chp.htm
+ # </a>
+ # ...
+-# MICHAEL PELLEY | Manager of Enterprise Architecture - Solution Delivery
+-# Office of the Chief Information Officer Executive Council Government of
+-# Newfoundland & Labrador P.O. Box 8700, 40 Higgins Line, St. John's NL
+-# A1B 4J6
++# MICHAEL PELLEY  |  Manager of Enterprise Architecture - Solution Delivery
++# Office of the Chief Information Officer
++# Executive Council
++# Government of Newfoundland & Labrador
+ 
+ Rule	StJohns	1987	only	-	Apr	Sun>=1	0:01	1:00	D
+ Rule	StJohns	1987	2006	-	Oct	lastSun	0:01	0	S
+--- openjdk/jdk/make/sun/javazic/tzdata/pacificnew
++++ openjdk/jdk/make/sun/javazic/tzdata/pacificnew
+@@ -1,27 +1,5 @@
+-#
+-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+-#  
+-# This code is free software; you can redistribute it and/or modify it
+-# under the terms of the GNU General Public License version 2 only, as
+-# published by the Free Software Foundation.  Oracle designates this
+-# particular file as subject to the "Classpath" exception as provided
+-# by Oracle in the LICENSE file that accompanied this code.
+-#  
+-# This code is distributed in the hope that it will be useful, but WITHOUT
+-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+-# version 2 for more details (a copy is included in the LICENSE file that
+-# accompanied this code).
+-#  
+-# You should have received a copy of the GNU General Public License version
+-# 2 along with this work; if not, write to the Free Software Foundation,
+-# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+-#  
+-# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+-# or visit www.oracle.com if you need additional information or have any
+-# questions.
+-#
+ # <pre>
++# @(#)pacificnew	8.2
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+--- openjdk/jdk/make/sun/javazic/tzdata/solar87
++++ openjdk/jdk/make/sun/javazic/tzdata/solar87
+@@ -1,27 +1,5 @@
+-#
+-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+-#  
+-# This code is free software; you can redistribute it and/or modify it
+-# under the terms of the GNU General Public License version 2 only, as
+-# published by the Free Software Foundation.  Oracle designates this
+-# particular file as subject to the "Classpath" exception as provided
+-# by Oracle in the LICENSE file that accompanied this code.
+-#  
+-# This code is distributed in the hope that it will be useful, but WITHOUT
+-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+-# version 2 for more details (a copy is included in the LICENSE file that
+-# accompanied this code).
+-#  
+-# You should have received a copy of the GNU General Public License version
+-# 2 along with this work; if not, write to the Free Software Foundation,
+-# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+-#  
+-# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+-# or visit www.oracle.com if you need additional information or have any
+-# questions.
+-#
+ # <pre>
++# @(#)solar87	8.2
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+--- openjdk/jdk/make/sun/javazic/tzdata/solar88
++++ openjdk/jdk/make/sun/javazic/tzdata/solar88
+@@ -1,27 +1,5 @@
+-#
+-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+-#  
+-# This code is free software; you can redistribute it and/or modify it
+-# under the terms of the GNU General Public License version 2 only, as
+-# published by the Free Software Foundation.  Oracle designates this
+-# particular file as subject to the "Classpath" exception as provided
+-# by Oracle in the LICENSE file that accompanied this code.
+-#  
+-# This code is distributed in the hope that it will be useful, but WITHOUT
+-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+-# version 2 for more details (a copy is included in the LICENSE file that
+-# accompanied this code).
+-#  
+-# You should have received a copy of the GNU General Public License version
+-# 2 along with this work; if not, write to the Free Software Foundation,
+-# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+-#  
+-# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+-# or visit www.oracle.com if you need additional information or have any
+-# questions.
+-#
+ # <pre>
++# @(#)solar88	8.2
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+--- openjdk/jdk/make/sun/javazic/tzdata/solar89
++++ openjdk/jdk/make/sun/javazic/tzdata/solar89
+@@ -1,27 +1,5 @@
+-#
+-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+-#  
+-# This code is free software; you can redistribute it and/or modify it
+-# under the terms of the GNU General Public License version 2 only, as
+-# published by the Free Software Foundation.  Oracle designates this
+-# particular file as subject to the "Classpath" exception as provided
+-# by Oracle in the LICENSE file that accompanied this code.
+-#  
+-# This code is distributed in the hope that it will be useful, but WITHOUT
+-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+-# version 2 for more details (a copy is included in the LICENSE file that
+-# accompanied this code).
+-#  
+-# You should have received a copy of the GNU General Public License version
+-# 2 along with this work; if not, write to the Free Software Foundation,
+-# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+-#  
+-# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+-# or visit www.oracle.com if you need additional information or have any
+-# questions.
+-#
+ # <pre>
++# @(#)solar89	8.2
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+--- openjdk/jdk/make/sun/javazic/tzdata/southamerica
++++ openjdk/jdk/make/sun/javazic/tzdata/southamerica
+@@ -1,27 +1,5 @@
+-#
+-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+-#  
+-# This code is free software; you can redistribute it and/or modify it
+-# under the terms of the GNU General Public License version 2 only, as
+-# published by the Free Software Foundation.  Oracle designates this
+-# particular file as subject to the "Classpath" exception as provided
+-# by Oracle in the LICENSE file that accompanied this code.
+-#  
+-# This code is distributed in the hope that it will be useful, but WITHOUT
+-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+-# version 2 for more details (a copy is included in the LICENSE file that
+-# accompanied this code).
+-#  
+-# You should have received a copy of the GNU General Public License version
+-# 2 along with this work; if not, write to the Free Software Foundation,
+-# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+-#  
+-# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+-# or visit www.oracle.com if you need additional information or have any
+-# questions.
+-#
+ # <pre>
++# @(#)southamerica	8.50
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+@@ -819,6 +797,26 @@
+ # <a href="http://www.timeanddate.com/news/time/brazil-dst-2008-2009.html">
+ # http://www.timeanddate.com/news/time/brazil-dst-2008-2009.html
+ # </a>
++#
++# From Alexander Krivenyshev (2011-10-04):
++# State Bahia will return to Daylight savings time this year after 8 years off.
++# The announcement was made by Governor Jaques Wagner in an interview to a 
++# television station in Salvador. 
++
++# In Portuguese:
++# <a href="http://g1.globo.com/bahia/noticia/2011/10/governador-jaques-wagner-confirma-horario-de-verao-na-bahia.html">
++# http://g1.globo.com/bahia/noticia/2011/10/governador-jaques-wagner-confirma-horario-de-verao-na-bahia.html
++# </a> and
++# <a href="http://noticias.terra.com.br/brasil/noticias/0,,OI5390887-EI8139,00-Bahia+volta+a+ter+horario+de+verao+apos+oito+anos.html">
++# http://noticias.terra.com.br/brasil/noticias/0,,OI5390887-EI8139,00-Bahia+volta+a+ter+horario+de+verao+apos+oito+anos.html
++# </a>
++
++# From Guilherme Bernardes Rodrigues (2011-10-07):
++# There is news in the media, however there is still no decree about it.
++# I just send a e-mail to Zulmira Brandão at
++# <a href="http://pcdsh01.on.br/">http://pcdsh01.on.br/</a> the
++# oficial agency about time in Brazil, and she confirmed that the old rule is
++# still in force.
+ 
+ # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+ # Decree <a href="http://pcdsh01.on.br/HV20466.htm">20,466</a> (1931-10-01)
+@@ -1057,6 +1055,9 @@
+ Zone America/Bahia	-2:34:04 -	LMT	1914
+ 			-3:00	Brazil	BR%sT	2003 Sep 24
+ 			-3:00	-	BRT
++# as noted above, not yet in operation.
++#			-3:00	-	BRT	2011 Oct 16
++#			-3:00	Brazil	BR%sT
+ #
+ # Goias (GO), Distrito Federal (DF), Minas Gerais (MG),
+ # Espirito Santo (ES), Rio de Janeiro (RJ), Sao Paulo (SP), Parana (PR),
+--- openjdk/jdk/make/sun/javazic/tzdata/systemv
++++ openjdk/jdk/make/sun/javazic/tzdata/systemv
+@@ -1,27 +1,5 @@
+-#
+-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+-#  
+-# This code is free software; you can redistribute it and/or modify it
+-# under the terms of the GNU General Public License version 2 only, as
+-# published by the Free Software Foundation.  Oracle designates this
+-# particular file as subject to the "Classpath" exception as provided
+-# by Oracle in the LICENSE file that accompanied this code.
+-#  
+-# This code is distributed in the hope that it will be useful, but WITHOUT
+-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+-# version 2 for more details (a copy is included in the LICENSE file that
+-# accompanied this code).
+-#  
+-# You should have received a copy of the GNU General Public License version
+-# 2 along with this work; if not, write to the Free Software Foundation,
+-# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+-#  
+-# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+-# or visit www.oracle.com if you need additional information or have any
+-# questions.
+-#
+ # <pre>
++# @(#)systemv	8.2
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+--- openjdk/jdk/make/sun/javazic/tzdata/zone.tab
++++ openjdk/jdk/make/sun/javazic/tzdata/zone.tab
+@@ -1,27 +1,5 @@
+-#
+-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+-#  
+-# This code is free software; you can redistribute it and/or modify it
+-# under the terms of the GNU General Public License version 2 only, as
+-# published by the Free Software Foundation.  Oracle designates this
+-# particular file as subject to the "Classpath" exception as provided
+-# by Oracle in the LICENSE file that accompanied this code.
+-#  
+-# This code is distributed in the hope that it will be useful, but WITHOUT
+-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+-# version 2 for more details (a copy is included in the LICENSE file that
+-# accompanied this code).
+-#  
+-# You should have received a copy of the GNU General Public License version
+-# 2 along with this work; if not, write to the Free Software Foundation,
+-# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+-#  
+-# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+-# or visit www.oracle.com if you need additional information or have any
+-# questions.
+-#
+ # <pre>
++# @(#)zone.tab	8.49
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ #
+@@ -341,7 +319,8 @@
+ PM	+4703-05620	America/Miquelon
+ PN	-2504-13005	Pacific/Pitcairn
+ PR	+182806-0660622	America/Puerto_Rico
+-PS	+3130+03428	Asia/Gaza
++PS	+3130+03428	Asia/Gaza	Gaza Strip
++PS	+313200+0350542	Asia/Hebron	West Bank
+ PT	+3843-00908	Europe/Lisbon	mainland
+ PT	+3238-01654	Atlantic/Madeira	Madeira Islands
+ PT	+3744-02540	Atlantic/Azores	Azores
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames.java
+@@ -103,6 +103,8 @@
+                                      "Eastern Daylight Time", "EDT"};
+         String EST_NSW[] = new String[] {"Eastern Standard Time (New South Wales)", "EST",
+                                          "Eastern Summer Time (New South Wales)", "EST"};
++        String FET[] = new String[] {"Further-eastern European Time", "FET",
++                                     "Further-eastern European Summer Time", "FEST"};
+         String GHMT[] = new String[] {"Ghana Mean Time", "GMT",
+                                      "Ghana Summer Time", "GHST"};
+         String GAMBIER[] =  new String[] {"Gambier Time", "GAMT",
+@@ -511,6 +513,7 @@
+                                             "Tajikistan Summer Time", "TJST"}},
+             {"Asia/Gaza", EET},
+             {"Asia/Harbin", CTT},
++            {"Asia/Hebron", EET},
+             {"Asia/Ho_Chi_Minh", ICT},
+             {"Asia/Hong_Kong", HKT},
+             {"Asia/Hovd", new String[] {"Hovd Time", "HOVT",
+@@ -674,9 +677,8 @@
+             {"Europe/Isle_of_Man", GMTBST},
+             {"Europe/Istanbul", EET},
+             {"Europe/Jersey", GMTBST},
+-            {"Europe/Kaliningrad", new String[] {"Kaliningrad Time", "KALT",
+-                                                 "Kaliningrad Summer Time", "KALST"}},
+-            {"Europe/Kiev", EET},
++            {"Europe/Kaliningrad", FET},
++            {"Europe/Kiev", FET},
+             {"Europe/Lisbon", WET},
+             {"Europe/Ljubljana", CET},
+             {"Europe/London", GMTBST},
+@@ -684,7 +686,7 @@
+             {"Europe/Madrid", CET},
+             {"Europe/Malta", CET},
+             {"Europe/Mariehamn", EET},
+-            {"Europe/Minsk", EET},
++            {"Europe/Minsk", FET},
+             {"Europe/Monaco", CET},
+             {"Europe/Moscow", MSK},
+             {"Europe/Nicosia", EET},
+@@ -697,14 +699,14 @@
+                                             "Samara Summer Time", "SAMST"}},
+             {"Europe/San_Marino", CET},
+             {"Europe/Sarajevo", CET},
+-            {"Europe/Simferopol", EET},
++            {"Europe/Simferopol", FET},
+             {"Europe/Skopje", CET},
+             {"Europe/Sofia", EET},
+             {"Europe/Stockholm", CET},
+             {"Europe/Tallinn", EET},
+             {"Europe/Tirane", CET},
+             {"Europe/Tiraspol", EET},
+-            {"Europe/Uzhgorod", EET},
++            {"Europe/Uzhgorod", FET},
+             {"Europe/Vaduz", CET},
+             {"Europe/Vatican", CET},
+             {"Europe/Vienna", CET},
+@@ -713,7 +715,7 @@
+                                                "Volgograd Summer Time", "VOLST"}},
+             {"Europe/Warsaw", CET},
+             {"Europe/Zagreb", CET},
+-            {"Europe/Zaporozhye", EET},
++            {"Europe/Zaporozhye", FET},
+             {"Europe/Zurich", CET},
+             {"GB", GMTBST},
+             {"GB-Eire", GMTBST},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_de.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_de.java
+@@ -103,6 +103,8 @@
+                                      "\u00d6stliche Sommerzeit", "EDT"};
+         String EST_NSW[] = new String[] {"\u00d6stliche Normalzeit (New South Wales)", "EST",
+                                          "\u00d6stliche Sommerzeit (New South Wales)", "EST"};
++        String FET[] = new String[] {"Further-eastern European Time", "FET",
++                                     "Further-eastern European Summer Time", "FEST"};
+         String GHMT[] = new String[] {"Ghanaische Normalzeit", "GMT",
+                                       "Ghanaische Sommerzeit", "GHST"};
+         String GAMBIER[] =  new String[] {"Gambier Zeit", "GAMT",
+@@ -511,6 +513,7 @@
+                                             "Tadschikische Sommerzeit", "TJST"}},
+             {"Asia/Gaza", EET},
+             {"Asia/Harbin", CTT},
++            {"Asia/Hebron", EET},
+             {"Asia/Ho_Chi_Minh", ICT},
+             {"Asia/Hong_Kong", HKT},
+             {"Asia/Hovd", new String[] {"Hovd Zeit", "HOVT",
+@@ -674,9 +677,8 @@
+             {"Europe/Isle_of_Man", GMTBST},
+             {"Europe/Istanbul", EET},
+             {"Europe/Jersey", GMTBST},
+-            {"Europe/Kaliningrad", new String[] {"Kaliningrad Time", "KALT",
+-                                                 "Kaliningrad Summer Time", "KALST"}},
+-            {"Europe/Kiev", EET},
++            {"Europe/Kaliningrad", FET},
++            {"Europe/Kiev", FET},
+             {"Europe/Lisbon", WET},
+             {"Europe/Ljubljana", CET},
+             {"Europe/London", GMTBST},
+@@ -684,7 +686,7 @@
+             {"Europe/Madrid", CET},
+             {"Europe/Malta", CET},
+             {"Europe/Mariehamn", EET},
+-            {"Europe/Minsk", EET},
++            {"Europe/Minsk", FET},
+             {"Europe/Monaco", CET},
+             {"Europe/Moscow", MSK},
+             {"Europe/Nicosia", EET},
+@@ -697,14 +699,14 @@
+                                             "Samarische Sommerzeit", "SAMST"}},
+             {"Europe/San_Marino", CET},
+             {"Europe/Sarajevo", CET},
+-            {"Europe/Simferopol", EET},
++            {"Europe/Simferopol", FET},
+             {"Europe/Skopje", CET},
+             {"Europe/Sofia", EET},
+             {"Europe/Stockholm", CET},
+             {"Europe/Tallinn", EET},
+             {"Europe/Tirane", CET},
+             {"Europe/Tiraspol", EET},
+-            {"Europe/Uzhgorod", EET},
++            {"Europe/Uzhgorod", FET},
+             {"Europe/Vaduz", CET},
+             {"Europe/Vatican", CET},
+             {"Europe/Vienna", CET},
+@@ -713,7 +715,7 @@
+                                                "Wolgograder Sommerzeit", "VOLST"}},
+             {"Europe/Warsaw", CET},
+             {"Europe/Zagreb", CET},
+-            {"Europe/Zaporozhye", EET},
++            {"Europe/Zaporozhye", FET},
+             {"Europe/Zurich", CET},
+             {"GB", GMTBST},
+             {"GB-Eire", GMTBST},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_es.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_es.java
+@@ -103,6 +103,8 @@
+                                      "Hora de verano Oriental", "EDT"};
+         String EST_NSW[] = new String[] {"Hora est\u00e1ndar Oriental (Nueva Gales del Sur)", "EST",
+                                          "Hora de verano Oriental (Nueva Gales del Sur)", "EST"};
++        String FET[] = new String[] {"Further-eastern European Time", "FET",
++                                     "Further-eastern European Summer Time", "FEST"};
+         String GHMT[] = new String[] {"Hora central de Ghana", "GMT",
+                                       "Hora de verano de Ghana", "GHST"};
+         String GAMBIER[] =  new String[] {"Hora de Gambier", "GAMT",
+@@ -511,6 +513,7 @@
+                                             "Hora de verano de Tajikist\u00e1n", "TJST"}},
+             {"Asia/Gaza", EET},
+             {"Asia/Harbin", CTT},
++            {"Asia/Hebron", EET},
+             {"Asia/Ho_Chi_Minh", ICT},
+             {"Asia/Hong_Kong", HKT},
+             {"Asia/Hovd", new String[] {"Hora de Hovd", "HOVT",
+@@ -674,9 +677,8 @@
+             {"Europe/Isle_of_Man", GMTBST},
+             {"Europe/Istanbul", EET},
+             {"Europe/Jersey", GMTBST},
+-            {"Europe/Kaliningrad", new String[] {"Kaliningrad Time", "KALT",
+-                                                 "Kaliningrad Summer Time", "KALST"}},
+-            {"Europe/Kiev", EET},
++            {"Europe/Kaliningrad", FET},
++            {"Europe/Kiev", FET},
+             {"Europe/Lisbon", WET},
+             {"Europe/Ljubljana", CET},
+             {"Europe/London", GMTBST},
+@@ -684,7 +686,7 @@
+             {"Europe/Madrid", CET},
+             {"Europe/Malta", CET},
+             {"Europe/Mariehamn", EET},
+-            {"Europe/Minsk", EET},
++            {"Europe/Minsk", FET},
+             {"Europe/Monaco", CET},
+             {"Europe/Moscow", MSK},
+             {"Europe/Nicosia", EET},
+@@ -697,14 +699,14 @@
+                                             "Hora de verano de Samara", "SAMST"}},
+             {"Europe/San_Marino", CET},
+             {"Europe/Sarajevo", CET},
+-            {"Europe/Simferopol", EET},
++            {"Europe/Simferopol", FET},
+             {"Europe/Skopje", CET},
+             {"Europe/Sofia", EET},
+             {"Europe/Stockholm", CET},
+             {"Europe/Tallinn", EET},
+             {"Europe/Tirane", CET},
+             {"Europe/Tiraspol", EET},
+-            {"Europe/Uzhgorod", EET},
++            {"Europe/Uzhgorod", FET},
+             {"Europe/Vaduz", CET},
+             {"Europe/Vatican", CET},
+             {"Europe/Vienna", CET},
+@@ -713,7 +715,7 @@
+                                                "Hora de verano de Volgogrado", "VOLST"}},
+             {"Europe/Warsaw", CET},
+             {"Europe/Zagreb", CET},
+-            {"Europe/Zaporozhye", EET},
++            {"Europe/Zaporozhye", FET},
+             {"Europe/Zurich", CET},
+             {"GB", GMTBST},
+             {"GB-Eire", GMTBST},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_fr.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_fr.java
+@@ -103,6 +103,8 @@
+                                      "Heure avanc\u00e9e de l'Est", "EDT"} ;
+         String EST_NSW[] = new String[] {"Heure normale de l'Est (Nouvelle-Galles du Sud)", "EST",
+                                          "Heure d'\u00e9t\u00e9 de l'Est (Nouvelle-Galles du Sud)", "EST"} ;
++        String FET[] = new String[] {"Further-eastern European Time", "FET",
++                                     "Further-eastern European Summer Time", "FEST"};
+         String GHMT[] = new String[] {"Heure du Ghana", "GMT",
+                                       "Heure d'\u00e9t\u00e9 du Ghana", "GHST"};
+         String GAMBIER[] =  new String[] {"Heure de Gambi", "GAMT",
+@@ -511,6 +513,7 @@
+                                             "Heure d'\u00e9t\u00e9 du Tadjikistan", "TJST"}},
+             {"Asia/Gaza", EET},
+             {"Asia/Harbin", CTT},
++            {"Asia/Hebron", EET},
+             {"Asia/Ho_Chi_Minh", ICT},
+             {"Asia/Hong_Kong", HKT},
+             {"Asia/Hovd", new String[] {"Heure de Hovd", "HOVT",
+@@ -674,9 +677,8 @@
+             {"Europe/Isle_of_Man", GMTBST},
+             {"Europe/Istanbul", EET},
+             {"Europe/Jersey", GMTBST},
+-            {"Europe/Kaliningrad", new String[] {"Kaliningrad Time", "KALT",
+-                                                 "Kaliningrad Summer Time", "KALST"}},
+-            {"Europe/Kiev", EET},
++            {"Europe/Kaliningrad", FET},
++            {"Europe/Kiev", FET},
+             {"Europe/Lisbon", WET},
+             {"Europe/Ljubljana", CET},
+             {"Europe/London", GMTBST},
+@@ -684,7 +686,7 @@
+             {"Europe/Madrid", CET},
+             {"Europe/Malta", CET},
+             {"Europe/Mariehamn", EET},
+-            {"Europe/Minsk", EET},
++            {"Europe/Minsk", FET},
+             {"Europe/Monaco", CET},
+             {"Europe/Moscow", MSK},
+             {"Europe/Nicosia", EET},
+@@ -697,14 +699,14 @@
+                                             "Heure d'\u00e9t\u00e9 de Samara", "SAMST"}},
+             {"Europe/San_Marino", CET},
+             {"Europe/Sarajevo", CET},
+-            {"Europe/Simferopol", EET},
++            {"Europe/Simferopol", FET},
+             {"Europe/Skopje", CET},
+             {"Europe/Sofia", EET},
+             {"Europe/Stockholm", CET},
+             {"Europe/Tallinn", EET},
+             {"Europe/Tirane", CET},
+             {"Europe/Tiraspol", EET},
+-            {"Europe/Uzhgorod", EET},
++            {"Europe/Uzhgorod", FET},
+             {"Europe/Vaduz", CET},
+             {"Europe/Vatican", CET},
+             {"Europe/Vienna", CET},
+@@ -713,7 +715,7 @@
+                                                "Heure d'\u00e9t\u00e9 de Volgograd", "VOLST"}},
+             {"Europe/Warsaw", CET},
+             {"Europe/Zagreb", CET},
+-            {"Europe/Zaporozhye", EET},
++            {"Europe/Zaporozhye", FET},
+             {"Europe/Zurich", CET},
+             {"GB", GMTBST},
+             {"GB-Eire", GMTBST},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_it.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_it.java
+@@ -103,6 +103,8 @@
+                                      "Ora legale USA orientale", "EDT"};
+         String EST_NSW[] = new String[] {"Ora solare dell'Australia orientale (Nuovo Galles del Sud)", "EST",
+                                          "Ora estiva dell'Australia orientale (Nuovo Galles del Sud)", "EST"};
++        String FET[] = new String[] {"Further-eastern European Time", "FET",
++                                     "Further-eastern European Summer Time", "FEST"};
+         String GHMT[] = new String[] {"Ora media del Ghana", "GMT",
+                                       "Ora legale del Ghana", "GHST"};
+         String GAMBIER[] =  new String[] {"Ora di Gambier", "GAMT",
+@@ -511,6 +513,7 @@
+                                             "Ora estiva del Tagikistan", "TJST"}},
+             {"Asia/Gaza", EET},
+             {"Asia/Harbin", CTT},
++            {"Asia/Hebron", EET},
+             {"Asia/Ho_Chi_Minh", ICT},
+             {"Asia/Hong_Kong", HKT},
+             {"Asia/Hovd", new String[] {"Ora di Hovd", "HOVT",
+@@ -674,9 +677,8 @@
+             {"Europe/Isle_of_Man", GMTBST},
+             {"Europe/Istanbul", EET},
+             {"Europe/Jersey", GMTBST},
+-            {"Europe/Kaliningrad", new String[] {"Kaliningrad Time", "KALT",
+-                                                 "Kaliningrad Summer Time", "KALST"}},
+-            {"Europe/Kiev", EET},
++            {"Europe/Kaliningrad", FET},
++            {"Europe/Kiev", FET},
+             {"Europe/Lisbon", WET},
+             {"Europe/Ljubljana", CET},
+             {"Europe/London", GMTBST},
+@@ -684,7 +686,7 @@
+             {"Europe/Madrid", CET},
+             {"Europe/Malta", CET},
+             {"Europe/Mariehamn", EET},
+-            {"Europe/Minsk", EET},
++            {"Europe/Minsk", FET},
+             {"Europe/Monaco", CET},
+             {"Europe/Moscow", MSK},
+             {"Europe/Nicosia", EET},
+@@ -697,14 +699,14 @@
+                                             "Ora estiva di Samara", "SAMST"}},
+             {"Europe/San_Marino", CET},
+             {"Europe/Sarajevo", CET},
+-            {"Europe/Simferopol", EET},
++            {"Europe/Simferopol", FET},
+             {"Europe/Skopje", CET},
+             {"Europe/Sofia", EET},
+             {"Europe/Stockholm", CET},
+             {"Europe/Tallinn", EET},
+             {"Europe/Tirane", CET},
+             {"Europe/Tiraspol", EET},
+-            {"Europe/Uzhgorod", EET},
++            {"Europe/Uzhgorod", FET},
+             {"Europe/Vaduz", CET},
+             {"Europe/Vatican", CET},
+             {"Europe/Vienna", CET},
+@@ -713,7 +715,7 @@
+                                                "Ora estiva di Volgograd", "VOLST"}},
+             {"Europe/Warsaw", CET},
+             {"Europe/Zagreb", CET},
+-            {"Europe/Zaporozhye", EET},
++            {"Europe/Zaporozhye", FET},
+             {"Europe/Zurich", CET},
+             {"GB", GMTBST},
+             {"GB-Eire", GMTBST},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_ja.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_ja.java
+@@ -103,6 +103,8 @@
+                                      "\u6771\u90e8\u590f\u6642\u9593", "EDT"};
+         String EST_NSW[] = new String[] {"\u6771\u90e8\u6a19\u6e96\u6642 (\u30cb\u30e5\u30fc\u30b5\u30a6\u30b9\u30a6\u30a7\u30fc\u30eb\u30ba)", "EST",
+                                          "\u6771\u90e8\u590f\u6642\u9593 (\u30cb\u30e5\u30fc\u30b5\u30a6\u30b9\u30a6\u30a7\u30fc\u30eb\u30ba)", "EST"};
++        String FET[] = new String[] {"Further-eastern European Time", "FET",
++                                     "Further-eastern European Summer Time", "FEST"};
+         String GHMT[] = new String[] {"\u30ac\u30fc\u30ca\u6a19\u6e96\u6642", "GMT",
+                                      "\u30ac\u30fc\u30ca\u590f\u6642\u9593", "GHST"};
+         String GAMBIER[] =  new String[] {"\u30ac\u30f3\u30d3\u30a2\u6642\u9593", "GAMT",
+@@ -511,6 +513,7 @@
+                                             "\u30bf\u30b8\u30ad\u30b9\u30bf\u30f3\u590f\u6642\u9593", "TJST"}},
+             {"Asia/Gaza", EET},
+             {"Asia/Harbin", CTT},
++            {"Asia/Hebron", EET},
+             {"Asia/Ho_Chi_Minh", ICT},
+             {"Asia/Hong_Kong", HKT},
+             {"Asia/Hovd", new String[] {"\u30db\u30d6\u30c9\u6642\u9593", "HOVT",
+@@ -674,9 +677,8 @@
+             {"Europe/Isle_of_Man", GMTBST},
+             {"Europe/Istanbul", EET},
+             {"Europe/Jersey", GMTBST},
+-            {"Europe/Kaliningrad", new String[] {"Kaliningrad Time", "KALT",
+-                                                 "Kaliningrad Summer Time", "KALST"}},
+-            {"Europe/Kiev", EET},
++            {"Europe/Kaliningrad", FET},
++            {"Europe/Kiev", FET},
+             {"Europe/Lisbon", WET},
+             {"Europe/Ljubljana", CET},
+             {"Europe/London", GMTBST},
+@@ -684,7 +686,7 @@
+             {"Europe/Madrid", CET},
+             {"Europe/Malta", CET},
+             {"Europe/Mariehamn", EET},
+-            {"Europe/Minsk", EET},
++            {"Europe/Minsk", FET},
+             {"Europe/Monaco", CET},
+             {"Europe/Moscow", MSK},
+             {"Europe/Nicosia", EET},
+@@ -697,14 +699,14 @@
+                                             "\u30b5\u30de\u30e9\u590f\u6642\u9593", "SAMST"}},
+             {"Europe/San_Marino", CET},
+             {"Europe/Sarajevo", CET},
+-            {"Europe/Simferopol", EET},
++            {"Europe/Simferopol", FET},
+             {"Europe/Skopje", CET},
+             {"Europe/Sofia", EET},
+             {"Europe/Stockholm", CET},
+             {"Europe/Tallinn", EET},
+             {"Europe/Tirane", CET},
+             {"Europe/Tiraspol", EET},
+-            {"Europe/Uzhgorod", EET},
++            {"Europe/Uzhgorod", FET},
+             {"Europe/Vaduz", CET},
+             {"Europe/Vatican", CET},
+             {"Europe/Vienna", CET},
+@@ -713,7 +715,7 @@
+                                                "\u30dc\u30eb\u30b4\u30b0\u30e9\u30fc\u30c9\u590f\u6642\u9593", "VOLST"}},
+             {"Europe/Warsaw", CET},
+             {"Europe/Zagreb", CET},
+-            {"Europe/Zaporozhye", EET},
++            {"Europe/Zaporozhye", FET},
+             {"Europe/Zurich", CET},
+             {"GB", GMTBST},
+             {"GB-Eire", GMTBST},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_ko.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_ko.java
+@@ -103,6 +103,8 @@
+                                      "\ub3d9\ubd80 \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "EDT"};
+         String EST_NSW[] = new String[] {"\ub3d9\ubd80 \ud45c\uc900\uc2dc(\ub274 \uc0ac\uc6b0\uc2a4 \uc6e8\uc77c\uc988)", "EST",
+                                          "\ub3d9\ubd80 \uc77c\uad11\uc808\uc57d\uc2dc\uac04(\ub274 \uc0ac\uc6b0\uc2a4 \uc6e8\uc77c\uc988)", "EST"};
++        String FET[] = new String[] {"Further-eastern European Time", "FET",
++                                     "Further-eastern European Summer Time", "FEST"};
+         String GHMT[] = new String[] {"\uac00\ub098 \ud45c\uc900\uc2dc", "GMT",
+                                      "\uac00\ub098 \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "GHST"};
+         String GAMBIER[] =  new String[] {"\uac10\ube44\uc544 \uc2dc\uac04", "GAMT",
+@@ -511,6 +513,7 @@
+                                             "\ud0c0\uc9c0\ud0a4\uc2a4\ud0c4 \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "TJST"}},
+             {"Asia/Gaza", EET},
+             {"Asia/Harbin", CTT},
++            {"Asia/Hebron", EET},
+             {"Asia/Ho_Chi_Minh", ICT},
+             {"Asia/Hong_Kong", HKT},
+             {"Asia/Hovd", new String[] {"Hovd \uc2dc\uac04", "HOVT",
+@@ -674,9 +677,8 @@
+             {"Europe/Isle_of_Man", GMTBST},
+             {"Europe/Istanbul", EET},
+             {"Europe/Jersey", GMTBST},
+-            {"Europe/Kaliningrad", new String[] {"Kaliningrad Time", "KALT",
+-                                                 "Kaliningrad Summer Time", "KALST"}},
+-            {"Europe/Kiev", EET},
++            {"Europe/Kaliningrad", FET},
++            {"Europe/Kiev", FET},
+             {"Europe/Lisbon", WET},
+             {"Europe/Ljubljana", CET},
+             {"Europe/London", GMTBST},
+@@ -684,7 +686,7 @@
+             {"Europe/Madrid", CET},
+             {"Europe/Malta", CET},
+             {"Europe/Mariehamn", EET},
+-            {"Europe/Minsk", EET},
++            {"Europe/Minsk", FET},
+             {"Europe/Monaco", CET},
+             {"Europe/Moscow", MSK},
+             {"Europe/Nicosia", EET},
+@@ -697,14 +699,14 @@
+                                             "\uc0ac\ub9c8\ub77c \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "SAMST"}},
+             {"Europe/San_Marino", CET},
+             {"Europe/Sarajevo", CET},
+-            {"Europe/Simferopol", EET},
++            {"Europe/Simferopol", FET},
+             {"Europe/Skopje", CET},
+             {"Europe/Sofia", EET},
+             {"Europe/Stockholm", CET},
+             {"Europe/Tallinn", EET},
+             {"Europe/Tirane", CET},
+             {"Europe/Tiraspol", EET},
+-            {"Europe/Uzhgorod", EET},
++            {"Europe/Uzhgorod", FET},
+             {"Europe/Vaduz", CET},
+             {"Europe/Vatican", CET},
+             {"Europe/Vienna", CET},
+@@ -713,7 +715,7 @@
+                                                "\ubcfc\uace0\uadf8\ub77c\ub4dc \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "VOLST"}},
+             {"Europe/Warsaw", CET},
+             {"Europe/Zagreb", CET},
+-            {"Europe/Zaporozhye", EET},
++            {"Europe/Zaporozhye", FET},
+             {"Europe/Zurich", CET},
+             {"GB", GMTBST},
+             {"GB-Eire", GMTBST},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_sv.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_sv.java
+@@ -103,6 +103,8 @@
+                                      "Eastern, sommartid", "EDT"};
+         String EST_NSW[] = new String[] {"Eastern, normaltid (Nya Sydwales)", "EST",
+                                          "Eastern, sommartid (Nya Sydwales)", "EST"};
++        String FET[] = new String[] {"Further-eastern European Time", "FET",
++                                     "Further-eastern European Summer Time", "FEST"};
+         String GHMT[] = new String[] {"Ghana, normaltid", "GMT",
+                                       "Ghana, sommartid", "GHST"};
+         String GAMBIER[] =  new String[] {"Gambier, normaltid", "GAMT",
+@@ -511,6 +513,7 @@
+                                             "Tadzjikistan, sommartid", "TJST"}},
+             {"Asia/Gaza", EET},
+             {"Asia/Harbin", CTT},
++            {"Asia/Hebron", EET},
+             {"Asia/Ho_Chi_Minh", ICT},
+             {"Asia/Hong_Kong", HKT},
+             {"Asia/Hovd", new String[] {"Hovd, normaltid", "HOVT",
+@@ -674,9 +677,8 @@
+             {"Europe/Isle_of_Man", GMTBST},
+             {"Europe/Istanbul", EET},
+             {"Europe/Jersey", GMTBST},
+-            {"Europe/Kaliningrad", new String[] {"Kaliningrad Time", "KALT",
+-                                                 "Kaliningrad Summer Time", "KALST"}},
+-            {"Europe/Kiev", EET},
++            {"Europe/Kaliningrad", FET},
++            {"Europe/Kiev", FET},
+             {"Europe/Lisbon", WET},
+             {"Europe/Ljubljana", CET},
+             {"Europe/London", GMTBST},
+@@ -684,7 +686,7 @@
+             {"Europe/Madrid", CET},
+             {"Europe/Malta", CET},
+             {"Europe/Mariehamn", EET},
+-            {"Europe/Minsk", EET},
++            {"Europe/Minsk", FET},
+             {"Europe/Monaco", CET},
+             {"Europe/Moscow", MSK},
+             {"Europe/Nicosia", EET},
+@@ -697,14 +699,14 @@
+                                             "Samara, sommartid", "SAMST"}},
+             {"Europe/San_Marino", CET},
+             {"Europe/Sarajevo", CET},
+-            {"Europe/Simferopol", EET},
++            {"Europe/Simferopol", FET},
+             {"Europe/Skopje", CET},
+             {"Europe/Sofia", EET},
+             {"Europe/Stockholm", CET},
+             {"Europe/Tallinn", EET},
+             {"Europe/Tirane", CET},
+             {"Europe/Tiraspol", EET},
+-            {"Europe/Uzhgorod", EET},
++            {"Europe/Uzhgorod", FET},
+             {"Europe/Vaduz", CET},
+             {"Europe/Vatican", CET},
+             {"Europe/Vienna", CET},
+@@ -713,7 +715,7 @@
+                                                "Volgograd, sommartid", "VOLST"}},
+             {"Europe/Warsaw", CET},
+             {"Europe/Zagreb", CET},
+-            {"Europe/Zaporozhye", EET},
++            {"Europe/Zaporozhye", FET},
+             {"Europe/Zurich", CET},
+             {"GB", GMTBST},
+             {"GB-Eire", GMTBST},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_zh_CN.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_zh_CN.java
+@@ -103,6 +103,8 @@
+                                      "\u4e1c\u90e8\u590f\u4ee4\u65f6", "EDT"};
+         String EST_NSW[] = new String[] {"\u4e1c\u90e8\u6807\u51c6\u65f6\u95f4\uff08\u65b0\u5357\u5a01\u5c14\u65af\uff09", "EST",
+                                          "\u4e1c\u90e8\u590f\u4ee4\u65f6\uff08\u65b0\u5357\u5a01\u5c14\u65af\uff09", "EST"};
++        String FET[] = new String[] {"Further-eastern European Time", "FET",
++                                     "Further-eastern European Summer Time", "FEST"};
+         String GHMT[] = new String[] {"\u52a0\u7eb3\u65f6\u95f4", "GMT",
+                                      "\u52a0\u7eb3\u590f\u4ee4\u65f6", "GHST"};
+         String GAMBIER[] =  new String[] {"\u5188\u6bd4\u4e9a\u65f6\u95f4", "GAMT",
+@@ -511,6 +513,7 @@
+                                             "\u5854\u5409\u514b\u65af\u5766\u590f\u4ee4\u65f6", "TJST"}},
+             {"Asia/Gaza", EET},
+             {"Asia/Harbin", CTT},
++            {"Asia/Hebron", EET},
+             {"Asia/Ho_Chi_Minh", ICT},
+             {"Asia/Hong_Kong", HKT},
+             {"Asia/Hovd", new String[] {"\u79d1\u5e03\u591a\u65f6\u95f4", "HOVT",
+@@ -674,9 +677,8 @@
+             {"Europe/Isle_of_Man", GMTBST},
+             {"Europe/Istanbul", EET},
+             {"Europe/Jersey", GMTBST},
+-            {"Europe/Kaliningrad", new String[] {"Kaliningrad Time", "KALT",
+-                                                 "Kaliningrad Summer Time", "KALST"}},
+-            {"Europe/Kiev", EET},
++            {"Europe/Kaliningrad", FET},
++            {"Europe/Kiev", FET},
+             {"Europe/Lisbon", WET},
+             {"Europe/Ljubljana", CET},
+             {"Europe/London", GMTBST},
+@@ -684,7 +686,7 @@
+             {"Europe/Madrid", CET},
+             {"Europe/Malta", CET},
+             {"Europe/Mariehamn", EET},
+-            {"Europe/Minsk", EET},
++            {"Europe/Minsk", FET},
+             {"Europe/Monaco", CET},
+             {"Europe/Moscow", MSK},
+             {"Europe/Nicosia", EET},
+@@ -697,14 +699,14 @@
+                                             "\u6c99\u9a6c\u62c9\u590f\u4ee4\u65f6", "SAMST"}},
+             {"Europe/San_Marino", CET},
+             {"Europe/Sarajevo", CET},
+-            {"Europe/Simferopol", EET},
++            {"Europe/Simferopol", FET},
+             {"Europe/Skopje", CET},
+             {"Europe/Sofia", EET},
+             {"Europe/Stockholm", CET},
+             {"Europe/Tallinn", EET},
+             {"Europe/Tirane", CET},
+             {"Europe/Tiraspol", EET},
+-            {"Europe/Uzhgorod", EET},
++            {"Europe/Uzhgorod", FET},
+             {"Europe/Vaduz", CET},
+             {"Europe/Vatican", CET},
+             {"Europe/Vienna", CET},
+@@ -713,7 +715,7 @@
+                                                "\u4f0f\u5c14\u52a0\u683c\u52d2\u590f\u4ee4\u65f6", "VOLST"}},
+             {"Europe/Warsaw", CET},
+             {"Europe/Zagreb", CET},
+-            {"Europe/Zaporozhye", EET},
++            {"Europe/Zaporozhye", FET},
+             {"Europe/Zurich", CET},
+             {"GB", GMTBST},
+             {"GB-Eire", GMTBST},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_zh_TW.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_zh_TW.java
+@@ -103,6 +103,8 @@
+                                      "\u6771\u65b9\u65e5\u5149\u7bc0\u7d04\u6642\u9593", "EDT"};
+         String EST_NSW[] = new String[] {"\u6771\u65b9\u6a19\u6e96\u6642\u9593 (\u65b0\u5357\u5a01\u723e\u65af)", "EST",
+                                          "\u6771\u65b9\u590f\u4ee4\u6642\u9593 (\u65b0\u5357\u5a01\u723e\u65af)", "EST"};
++        String FET[] = new String[] {"Further-eastern European Time", "FET",
++                                     "Further-eastern European Summer Time", "FEST"};
+         String GHMT[] = new String[] {"\u8fe6\u7d0d\u5e73\u5747\u6642\u9593", "GMT",
+                                       "\u8fe6\u7d0d\u590f\u4ee4\u6642\u9593", "GHST"};
+         String GAMBIER[] =  new String[] {"\u7518\u6bd4\u723e\u6642\u9593", "GAMT",
+@@ -511,6 +513,7 @@
+                                             "\u5854\u5409\u514b\u590f\u4ee4\u6642\u9593", "TJST"}},
+             {"Asia/Gaza", EET},
+             {"Asia/Harbin", CTT},
++            {"Asia/Hebron", EET},
+             {"Asia/Ho_Chi_Minh", ICT},
+             {"Asia/Hong_Kong", HKT},
+             {"Asia/Hovd", new String[] {"\u4faf\u5fb7 (Hovd) \u6642\u9593", "HOVT",
+@@ -675,9 +678,8 @@
+             {"Europe/Isle_of_Man", GMTBST},
+             {"Europe/Istanbul", EET},
+             {"Europe/Jersey", GMTBST},
+-            {"Europe/Kaliningrad", new String[] {"Kaliningrad Time", "KALT",
+-                                                 "Kaliningrad Summer Time", "KALST"}},
+-            {"Europe/Kiev", EET},
++            {"Europe/Kaliningrad", FET},
++            {"Europe/Kiev", FET},
+             {"Europe/Lisbon", WET},
+             {"Europe/Ljubljana", CET},
+             {"Europe/London", GMTBST},
+@@ -685,7 +687,7 @@
+             {"Europe/Madrid", CET},
+             {"Europe/Malta", CET},
+             {"Europe/Mariehamn", EET},
+-            {"Europe/Minsk", EET},
++            {"Europe/Minsk", FET},
+             {"Europe/Monaco", CET},
+             {"Europe/Moscow", MSK},
+             {"Europe/Nicosia", EET},
+@@ -698,14 +700,14 @@
+                                             "\u6c99\u99ac\u62c9\u590f\u4ee4\u6642\u9593", "SAMST"}},
+             {"Europe/San_Marino", CET},
+             {"Europe/Sarajevo", CET},
+-            {"Europe/Simferopol", EET},
++            {"Europe/Simferopol", FET},
+             {"Europe/Skopje", CET},
+             {"Europe/Sofia", EET},
+             {"Europe/Stockholm", CET},
+             {"Europe/Tallinn", EET},
+             {"Europe/Tirane", CET},
+             {"Europe/Tiraspol", EET},
+-            {"Europe/Uzhgorod", EET},
++            {"Europe/Uzhgorod", FET},
+             {"Europe/Vaduz", CET},
+             {"Europe/Vatican", CET},
+             {"Europe/Vienna", CET},
+@@ -714,7 +716,7 @@
+                                                "\u4f0f\u723e\u52a0\u683c\u52d2\u590f\u4ee4\u6642\u9593", "VOLST"}},
+             {"Europe/Warsaw", CET},
+             {"Europe/Zagreb", CET},
+-            {"Europe/Zaporozhye", EET},
++            {"Europe/Zaporozhye", FET},
+             {"Europe/Zurich", CET},
+             {"GB", GMTBST},
+             {"GB-Eire", GMTBST},

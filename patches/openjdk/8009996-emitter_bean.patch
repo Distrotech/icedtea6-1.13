@@ -1,0 +1,27 @@
+changeset:   4963:05e5519ffbcc
+user:        andrew
+date:        Wed Jun 26 22:27:10 2013 -0500
+files:       src/share/classes/javax/management/StandardEmitterMBean.java
+description:
+8009996: tests javax/management/mxbean/MiscTest.java and javax/management/mxbean/StandardMBeanOverrideTest.java fail
+Reviewed-by: dfuchs, dholmes
+
+
+--- openjdk/jdk/src/share/classes/javax/management/StandardEmitterMBean.java
++++ openjdk/jdk/src/share/classes/javax/management/StandardEmitterMBean.java
+@@ -258,8 +258,13 @@
+     }
+ 
+     public MBeanNotificationInfo[] getNotificationInfo() {
+-        if (notificationInfo == null || notificationInfo.length == 0) {
++        // this getter might get called from the super constructor
++        // when the notificationInfo has not been properly set yet
++        if (notificationInfo == null) {
+             return NO_NOTIFICATION_INFO;
++        }
++        if (notificationInfo.length == 0) {
++            return notificationInfo;
+         } else {
+             return notificationInfo.clone();
+         }
+

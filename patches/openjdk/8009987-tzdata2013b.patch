@@ -1,0 +1,2165 @@
+# HG changeset patch
+# User peytoia
+# Date 1363347351 -32400
+# Node ID d0902320c58f1b4c339e2aec3f120c9d6e3ea732
+# Parent  1f833e4211177700a66cc22a0c5a794448c1a29a
+8009987: (tz) Support tzdata2013b
+Reviewed-by: okutsu
+
+--- openjdk/jdk/make/sun/javazic/tzdata/VERSION
++++ openjdk/jdk/make/sun/javazic/tzdata/VERSION
+@@ -21,4 +21,4 @@
+ # or visit www.oracle.com if you need additional information or have any
+ # questions.
+ #
+-tzdata2012i
++tzdata2013b
+--- openjdk/jdk/make/sun/javazic/tzdata/africa
++++ openjdk/jdk/make/sun/javazic/tzdata/africa
+@@ -27,9 +27,9 @@
+ 
+ # This data is by no means authoritative; if you think you know better,
+ # go ahead and edit the file (and please send any changes to
+-# tz@elsie.nci.nih.gov for general use in the future).
++# tz@iana.org for general use in the future).
+ 
+-# From Paul Eggert (2006-03-22):
++# From Paul Eggert (2013-02-21):
+ #
+ # A good source for time zone historical data outside the U.S. is
+ # Thomas G. Shanks and Rique Pottenger, The International Atlas (6th edition),
+@@ -48,6 +48,10 @@
+ # Whitman Publishing Co, 2 Niagara Av, Ealing, London (undated), which
+ # I found in the UCLA library.
+ #
++# For data circa 1899, a common source is:
++# Milne J. Civil time. Geogr J. 1899 Feb;13(2):173-94
++# <http://www.jstor.org/stable/1774359>.
++#
+ # A reliable and entertaining source about time zones is
+ # Derek Howse, Greenwich time and longitude, Philip Wilson Publishers (1997).
+ #
+@@ -139,8 +143,12 @@
+ 			1:00	-	WAT
+ 
+ # Botswana
++# From Paul Eggert (2013-02-21):
++# Milne says they were regulated by the Cape Town Signal in 1899;
++# assume they switched to 2:00 when Cape Town did.
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+ Zone	Africa/Gaborone	1:43:40 -	LMT	1885
++			1:30	-	SAST	1903 Mar
+ 			2:00	-	CAT	1943 Sep 19 2:00
+ 			2:00	1:00	CAST	1944 Mar 19 2:00
+ 			2:00	-	CAT
+@@ -212,6 +220,11 @@
+ 
+ # Egypt
+ 
++# Milne says Cairo used 2:05:08.9, the local mean time of the Abbasizeh
++# observatory; round to nearest.  Milne also says that the official time for
++# Egypt was mean noon at the Great Pyramid, 2:04:30.5, but apparently this
++# did not apply to Cairo, Alexandria, or Port Said.
++
+ # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+ Rule	Egypt	1940	only	-	Jul	15	0:00	1:00	S
+ Rule	Egypt	1940	only	-	Oct	 1	0:00	0	-
+@@ -352,7 +365,7 @@
+ Rule	Egypt	2010	only	-	Sep	lastThu	23:00s	0	-
+ 
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+-Zone	Africa/Cairo	2:05:00 -	LMT	1900 Oct
++Zone	Africa/Cairo	2:05:09 -	LMT	1900 Oct
+ 			2:00	Egypt	EE%sT
+ 
+ # Equatorial Guinea
+@@ -447,6 +460,20 @@
+ 
+ # Libya
+ 
++# From Even Scharning (2012-11-10):
++# Libya set their time one hour back at 02:00 on Saturday November 10.
++# http://www.libyaherald.com/2012/11/04/clocks-to-go-back-an-hour-on-saturday/
++# Here is an official source [in Arabic]: http://ls.ly/fb6Yc
++#
++# Steffen Thorsen forwarded a translation (2012-11-10) in
++# http://mm.icann.org/pipermail/tz/2012-November/018451.html
++#
++# From Tim Parenti (2012-11-11):
++# Treat the 2012-11-10 change as a zone change from UTC+2 to UTC+1.
++# The DST rules planned for 2013 and onward roughly mirror those of Europe
++# (either two days before them or five days after them, so as to fall on
++# lastFri instead of lastSun).
++
+ # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+ Rule	Libya	1951	only	-	Oct	14	2:00	1:00	S
+ Rule	Libya	1952	only	-	Jan	 1	0:00	0	-
+@@ -461,17 +488,21 @@
+ Rule	Libya	1986	only	-	Oct	 3	0:00	0	-
+ Rule	Libya	1987	1989	-	Apr	 1	0:00	1:00	S
+ Rule	Libya	1987	1989	-	Oct	 1	0:00	0	-
++Rule	Libya	1997	only	-	Apr	 4	0:00	1:00	S
++Rule	Libya	1997	only	-	Oct	 4	0:00	0	-
++Rule	Libya	2013	max	-	Mar	lastFri	1:00	1:00	S
++Rule	Libya	2013	max	-	Oct	lastFri	2:00	0	-
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+ Zone	Africa/Tripoli	0:52:44 -	LMT	1920
+ 			1:00	Libya	CE%sT	1959
+ 			2:00	-	EET	1982
+ 			1:00	Libya	CE%sT	1990 May  4
+-# The following entries are from Shanks & Pottenger;
++# The 1996 and 1997 entries are from Shanks & Pottenger;
+ # the IATA SSIM data contain some obvious errors.
+ 			2:00	-	EET	1996 Sep 30
+-			1:00	-	CET	1997 Apr  4
+-			1:00	1:00	CEST	1997 Oct  4
+-			2:00	-	EET
++			1:00	Libya	CE%sT	1997 Oct  4
++			2:00	-	EET	2012 Nov 10 2:00
++			1:00	Libya	CE%sT
+ 
+ # Madagascar
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+@@ -838,6 +869,41 @@
+ # 3:00 am Friday, July 20, 2012 and will again be advanced by 60 minutes
+ # August 20, 2012 from 2:00 am.
+ 
++# From Paul Eggert (2013-03-06):
++# Morocco's daylight-saving transitions due to Ramadan seem to be
++# announced a bit in advance.  On 2012-07-11 the Moroccan government
++# announced that year's Ramadan daylight-saving transitions would be
++# 2012-07-20 and 2012-08-20; see
++# <http://www.mmsp.gov.ma/fr/actualites.aspx?id=288>.
++#
++# To estimate what the Moroccan government will do in future years,
++# transition dates for 2013 through 2021 were determined by running
++# the following program under GNU Emacs 24.3:
++#
++# (let ((islamic-year 1434))
++#   (while (< islamic-year 1444)
++#     (let ((a
++#	     (calendar-gregorian-from-absolute
++#	      (calendar-islamic-to-absolute (list 9 1 islamic-year))))
++#	    (b
++#	     (calendar-gregorian-from-absolute
++#	      (calendar-islamic-to-absolute (list 10 1 islamic-year)))))
++#	(insert
++#	 (format
++#	  (concat "Rule\tMorocco\t%d\tonly\t-\t%s\t %2d\t 3:00\t0\t-\n"
++#		  "Rule\tMorocco\t%d\tonly\t-\t%s\t %2d\t 2:00\t1:00\tS\n")
++#	  (car (cdr (cdr a))) (calendar-month-name (car a) t) (car (cdr a))
++#	  (car (cdr (cdr b))) (calendar-month-name (car b) t) (car (cdr b)))))
++#     (setq islamic-year (+ 1 islamic-year))))
++#
++# with the results hand-edited for 2020-2022, when the normal spring-forward
++# date falls during the estimated Ramadan.
++#
++# From 2023 through 2038 Ramadan is not predicted to overlap with
++# daylight saving time.  Starting in 2039 there will be overlap again,
++# but 32-bit time_t values roll around in 2038 so for now do not worry
++# about dates after 2038.
++
+ # RULE	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+ 
+ Rule	Morocco	1939	only	-	Sep	12	 0:00	1:00	S
+@@ -863,10 +929,28 @@
+ Rule	Morocco	2010	only	-	Aug	 8	 0:00	0	-
+ Rule	Morocco	2011	only	-	Apr	 3	 0:00	1:00	S
+ Rule	Morocco	2011	only	-	Jul	 31	 0	0	-
+-Rule	Morocco	2012	max	-	Apr	 lastSun 2:00	1:00	S
++Rule	Morocco	2012	2019	-	Apr	 lastSun 2:00	1:00	S
+ Rule	Morocco	2012	max	-	Sep	 lastSun 3:00	0	-
+ Rule	Morocco	2012	only	-	Jul	 20	 3:00	0	-
+ Rule	Morocco	2012	only	-	Aug	 20	 2:00	1:00	S
++Rule	Morocco	2013	only	-	Jul	  9	 3:00	0	-
++Rule	Morocco	2013	only	-	Aug	  8	 2:00	1:00	S
++Rule	Morocco	2014	only	-	Jun	 29	 3:00	0	-
++Rule	Morocco	2014	only	-	Jul	 29	 2:00	1:00	S
++Rule	Morocco	2015	only	-	Jun	 18	 3:00	0	-
++Rule	Morocco	2015	only	-	Jul	 18	 2:00	1:00	S
++Rule	Morocco	2016	only	-	Jun	  7	 3:00	0	-
++Rule	Morocco	2016	only	-	Jul	  7	 2:00	1:00	S
++Rule	Morocco	2017	only	-	May	 27	 3:00	0	-
++Rule	Morocco	2017	only	-	Jun	 26	 2:00	1:00	S
++Rule	Morocco	2018	only	-	May	 16	 3:00	0	-
++Rule	Morocco	2018	only	-	Jun	 15	 2:00	1:00	S
++Rule	Morocco	2019	only	-	May	  6	 3:00	0	-
++Rule	Morocco	2019	only	-	Jun	  5	 2:00	1:00	S
++Rule	Morocco	2020	only	-	May	 24	 2:00	1:00	S
++Rule	Morocco	2021	only	-	May	 13	 2:00	1:00	S
++Rule	Morocco	2022	only	-	May	  3	 2:00	1:00	S
++Rule	Morocco	2023	max	-	Apr	 lastSun 2:00	1:00	S
+ 
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+ Zone Africa/Casablanca	-0:30:20 -	LMT	1913 Oct 26
+--- openjdk/jdk/make/sun/javazic/tzdata/antarctica
++++ openjdk/jdk/make/sun/javazic/tzdata/antarctica
+@@ -73,10 +73,8 @@
+ Rule	ChileAQ	2010	only	-	Apr	Sun>=1	3:00u	0	-
+ Rule	ChileAQ	2011	only	-	May	Sun>=2	3:00u	0	-
+ Rule	ChileAQ	2011	only	-	Aug	Sun>=16	4:00u	1:00	S
+-Rule	ChileAQ	2012	only	-	Apr	Sun>=23	3:00u	0	-
+-Rule	ChileAQ	2012	only	-	Sep	Sun>=2	4:00u	1:00	S
+-Rule	ChileAQ	2013	max	-	Mar	Sun>=9	3:00u	0	-
+-Rule	ChileAQ	2013	max	-	Oct	Sun>=9	4:00u	1:00	S
++Rule	ChileAQ	2012	max	-	Apr	Sun>=23	3:00u	0	-
++Rule	ChileAQ	2012	max	-	Sep	Sun>=2	4:00u	1:00	S
+ 
+ # These rules are stolen from the `australasia' file.
+ Rule	AusAQ	1917	only	-	Jan	 1	0:01	1:00	-
+--- openjdk/jdk/make/sun/javazic/tzdata/asia
++++ openjdk/jdk/make/sun/javazic/tzdata/asia
+@@ -27,9 +27,9 @@
+ 
+ # This data is by no means authoritative; if you think you know better,
+ # go ahead and edit the file (and please send any changes to
+-# tz@elsie.nci.nih.gov for general use in the future).
++# tz@iana.org for general use in the future).
+ 
+-# From Paul Eggert (2006-03-22):
++# From Paul Eggert (2013-02-21):
+ #
+ # A good source for time zone historical data outside the U.S. is
+ # Thomas G. Shanks and Rique Pottenger, The International Atlas (6th edition),
+@@ -48,6 +48,10 @@
+ # Whitman Publishing Co, 2 Niagara Av, Ealing, London (undated), which
+ # I found in the UCLA library.
+ #
++# For data circa 1899, a common source is:
++# Milne J. Civil time. Geogr J. 1899 Feb;13(2):173-94
++# <http://www.jstor.org/stable/1774359>.
++#
+ # A reliable and entertaining source about time zones is
+ # Derek Howse, Greenwich time and longitude, Philip Wilson Publishers (1997).
+ #
+@@ -302,9 +306,12 @@
+ 			8:00	-	BNT
+ 
+ # Burma / Myanmar
++
++# Milne says 6:24:40 was the meridian of the time ball observatory at Rangoon.
++
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+ Zone	Asia/Rangoon	6:24:40 -	LMT	1880		# or Yangon
+-			6:24:36	-	RMT	1920	   # Rangoon Mean Time?
++			6:24:40	-	RMT	1920	   # Rangoon Mean Time?
+ 			6:30	-	BURT	1942 May   # Burma Time
+ 			9:00	-	JST	1945 May 3
+ 			6:30	-	MMT		   # Myanmar Time
+@@ -407,7 +414,8 @@
+ 			8:00	PRC	C%sT
+ # Zhongyuan Time ("Central plain Time")
+ # most of China
+-Zone	Asia/Shanghai	8:05:52	-	LMT	1928
++# Milne gives 8:05:56.7; round to nearest.
++Zone	Asia/Shanghai	8:05:57	-	LMT	1928
+ 			8:00	Shang	C%sT	1949
+ 			8:00	PRC	C%sT
+ # Long-shu Time (probably due to Long and Shu being two names of that area)
+@@ -504,6 +512,10 @@
+ 			8:00	PRC	C%sT
+ 
+ 
++# Hong Kong (Xianggang)
++
++# Milne gives 7:36:41.7; round this.
++
+ # From Lee Yiu Chung (2009-10-24):
+ # I found there are some mistakes for the...DST rule for Hong
+ # Kong. [According] to the DST record from Hong Kong Observatory (actually,
+@@ -570,7 +582,6 @@
+ # The Japanese surrender of Hong Kong was signed 1945-09-15.
+ # For lack of anything better, use start of those days as the transition times.
+ 
+-# Hong Kong (Xianggang)
+ # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+ Rule	HK	1941	only	-	Apr	1	3:30	1:00	S
+ Rule	HK	1941	only	-	Sep	30	3:30	0	-
+@@ -592,7 +603,7 @@
+ Rule	HK	1979	only	-	May	Sun>=8	3:30	1:00	S
+ Rule	HK	1979	only	-	Oct	Sun>=16	3:30	0	-
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+-Zone	Asia/Hong_Kong	7:36:36 -	LMT	1904 Oct 30
++Zone	Asia/Hong_Kong	7:36:42 -	LMT	1904 Oct 30
+ 			8:00	HK	HK%sT	1941 Dec 25
+ 			9:00	-	JST	1945 Sep 15
+ 			8:00	HK	HK%sT
+@@ -669,6 +680,9 @@
+ ###############################################################################
+ 
+ # Cyprus
++#
++# Milne says the Eastern Telegraph Company used 2:14:00.  Stick with LMT.
++#
+ # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+ Rule	Cyprus	1975	only	-	Apr	13	0:00	1:00	S
+ Rule	Cyprus	1975	only	-	Oct	12	0:00	0	-
+@@ -1222,7 +1236,6 @@
+ Rule	Zion	2012	only	-	Sep	23	2:00	0	S
+ 
+ # From Ephraim Silverberg (2012-10-18):
+-
+ # Yesterday, the Interior Ministry Committee, after more than a year
+ # past, approved sending the proposed June 2011 changes to the Time
+ # Decree Law back to the Knesset for second and third (final) votes
+@@ -1235,6 +1248,10 @@
+ # later (i.e. at 02:00 the first Monday after October 2).
+ # [Rosh Hashana holidays are factored in until 2100.]
+ 
++# From Ephraim Silverberg (2012-11-05):
++# The Knesset passed today (in second and final readings) the amendment to the
++# Time Decree Law making the changes ... law.
++
+ # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+ Rule	Zion	2013	max	-	Mar	Fri>=23	2:00	1:00	D
+ Rule	Zion	2013	2026	-	Oct	Sun>=2	2:00	0	S
+@@ -1824,8 +1841,11 @@
+ 			5:45	-	NPT	# Nepal Time
+ 
+ # Oman
++
++# Milne says 3:54:24 was the meridian of the Muscat Tidal Observatory.
++
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+-Zone	Asia/Muscat	3:54:20 -	LMT	1920
++Zone	Asia/Muscat	3:54:24 -	LMT	1920
+ 			4:00	-	GST
+ 
+ # Pakistan
+@@ -2072,8 +2092,7 @@
+ # occurred before our cutoff date of 1970.
+ # However, as we get more information, we may need to add entries
+ # for parts of the West Bank as they transitioned from Israel's rules
+-# to Palestine's rules.  If you have more info about this, please
+-# send it to tz@elsie.nci.nih.gov for incorporation into future editions.
++# to Palestine's rules.
+ 
+ # From IINS News Service - Israel - 1998-03-23 10:38:07 Israel time,
+ # forwarded by Ephraim Silverberg:
+@@ -2421,6 +2440,13 @@
+ # no information
+ 
+ # Sri Lanka
++
++# From Paul Eggert (2013-02-21):
++# Milne says "Madras mean time use from May 1, 1898.  Prior to this Colombo
++# mean time, 5h. 4m. 21.9s. F., was used."  But 5:04:21.9 differs considerably
++# from Colombo's meridian 5:19:24, so for now ignore Milne and stick with
++# Shanks and Pottenger.
++
+ # From Paul Eggert (1996-09-03):
+ # "Sri Lanka advances clock by an hour to avoid blackout"
+ # (www.virtual-pc.com/lankaweb/news/items/240596-2.html, 1996-05-24,
+@@ -2720,6 +2746,12 @@
+ 
+ # Vietnam
+ 
++# From Paul Eggert (2013-02-21):
++# Milne gives 7:16:56 for the meridian of Saigon in 1899, as being
++# used in Lower Laos, Cambodia, and Annam.  But this is quite a ways
++# from Saigon's location.  For now, ignore this and stick with Shanks
++# and Pottenger.
++
+ # From Arthur David Olson (2008-03-18):
+ # The English-language name of Vietnam's most populous city is "Ho Chi Min City";
+ # we use Ho_Chi_Minh below to avoid a name of more than 14 characters.
+@@ -2733,6 +2765,10 @@
+ 			7:00	-	ICT
+ 
+ # Yemen
++
++# Milne says 2:59:54 was the meridian of the saluting battery at Aden,
++# and that Yemen was at 1:55:56, the meridian of the Hagia Sophia.
++
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+-Zone	Asia/Aden	3:00:48	-	LMT	1950
++Zone	Asia/Aden	2:59:54	-	LMT	1950
+ 			3:00	-	AST
+--- openjdk/jdk/make/sun/javazic/tzdata/australasia
++++ openjdk/jdk/make/sun/javazic/tzdata/australasia
+@@ -269,6 +269,9 @@
+ 			6:30	-	CCT	# Cocos Islands Time
+ 
+ # Fiji
++
++# Milne gives 11:55:44 for Suva.
++
+ # From Alexander Krivenyshev (2009-11-10):
+ # According to Fiji Broadcasting Corporation,  Fiji plans to re-introduce DST
+ # from November 29th 2009  to April 25th 2010.
+@@ -362,7 +365,7 @@
+ Rule	Fiji	2011	only	-	Mar	Sun>=1	3:00	0	-
+ Rule	Fiji	2012	max	-	Jan	Sun>=18	3:00	0	-
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+-Zone	Pacific/Fiji	11:53:40 -	LMT	1915 Oct 26	# Suva
++Zone	Pacific/Fiji	11:55:44 -	LMT	1915 Oct 26	# Suva
+ 			12:00	Fiji	FJ%sT	# Fiji Time
+ 
+ # French Polynesia
+@@ -803,9 +806,9 @@
+ 
+ # This data is by no means authoritative; if you think you know better,
+ # go ahead and edit the file (and please send any changes to
+-# tz@elsie.nci.nih.gov for general use in the future).
++# tz@iana.org for general use in the future).
+ 
+-# From Paul Eggert (2006-03-22):
++# From Paul Eggert (2013-02-21):
+ # A good source for time zone historical data outside the U.S. is
+ # Thomas G. Shanks and Rique Pottenger, The International Atlas (6th edition),
+ # San Diego: ACS Publications, Inc. (2003).
+@@ -823,6 +826,10 @@
+ # Whitman Publishing Co, 2 Niagara Av, Ealing, London (undated), which
+ # I found in the UCLA library.
+ #
++# For data circa 1899, a common source is:
++# Milne J. Civil time. Geogr J. 1899 Feb;13(2):173-94
++# <http://www.jstor.org/stable/1774359>.
++#
+ # A reliable and entertaining source about time zones is
+ # Derek Howse, Greenwich time and longitude, Philip Wilson Publishers (1997).
+ #
+--- openjdk/jdk/make/sun/javazic/tzdata/europe
++++ openjdk/jdk/make/sun/javazic/tzdata/europe
+@@ -27,7 +27,7 @@
+ 
+ # This data is by no means authoritative; if you think you know better,
+ # go ahead and edit the file (and please send any changes to
+-# tz@elsie.nci.nih.gov for general use in the future).
++# tz@iana.org for general use in the future).
+ 
+ # From Paul Eggert (2006-03-22):
+ # A good source for time zone historical data outside the U.S. is
+@@ -53,6 +53,12 @@
+ #	William Willett, The Waste of Daylight, 19th edition
+ #	</a> (1914-03)
+ #
++#	Milne J. Civil time. Geogr J. 1899 Feb;13(2):173-94
++#	<http://www.jstor.org/stable/1774359>.  He writes:
++#	"It is requested that corrections and additions to these tables
++#	may be sent to Mr. John Milne, Royal Geographical Society,
++#	Savile Row, London."  Nowadays please email them to tz@iana.org.
++#
+ #	Brazil's Departamento Servico da Hora (DSH),
+ #	<a href="http://pcdsh01.on.br/HISTHV.htm">
+ #	History of Summer Time
+@@ -689,6 +695,8 @@
+ 
+ # Austria
+ 
++# Milne says Vienna time was 1:05:21.
++
+ # From Paul Eggert (2006-03-22): Shanks & Pottenger give 1918-06-16 and
+ # 1945-11-18, but the Austrian Federal Office of Metrology and
+ # Surveying (BEV) gives 1918-09-16 and for Vienna gives the "alleged"
+@@ -706,7 +714,7 @@
+ Rule	Austria	1980	only	-	Apr	 6	0:00	1:00	S
+ Rule	Austria	1980	only	-	Sep	28	0:00	0	-
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+-Zone	Europe/Vienna	1:05:20 -	LMT	1893 Apr
++Zone	Europe/Vienna	1:05:21 -	LMT	1893 Apr
+ 			1:00	C-Eur	CE%sT	1920
+ 			1:00	Austria	CE%sT	1940 Apr  1 2:00s
+ 			1:00	C-Eur	CE%sT	1945 Apr  2 2:00s
+@@ -1262,6 +1270,21 @@
+ 			1:00	Germany	CE%sT	1980
+ 			1:00	EU	CE%sT
+ 
++# From Tobias Conradi (2011-09-12):
++# Busingen <http://www.buesingen.de>, surrounded by the Swiss canton
++# Schaffhausen, did not start observing DST in 1980 as the rest of DE
++# (West Germany at that time) and DD (East Germany at that time) did.
++# DD merged into DE, the area is currently covered by code DE in ISO 3166-1,
++# which in turn is covered by the zone Europe/Berlin.
++#
++# Source for the time in Busingen 1980:
++# http://www.srf.ch/player/video?id=c012c029-03b7-4c2b-9164-aa5902cd58d3
++
++# From Arthur David Olson (2012-03-03):
++# Busingen and Zurich have shared clocks since 1970.
++
++Link	Europe/Zurich	Europe/Busingen
++
+ # Georgia
+ # Please see the "asia" file for Asia/Tbilisi.
+ # Herodotus (Histories, IV.45) says Georgia north of the Phasis (now Rioni)
+@@ -2066,6 +2089,70 @@
+ 
+ # Russia
+ 
++# From Alexander Krivenyshev (2011-09-15):
++# Based on last Russian Government Decree # 725 on August 31, 2011
++# (Government document
++# <a href="http://www.government.ru/gov/results/16355/print/">
++# http://www.government.ru/gov/results/16355/print/
++# </a>
++# in Russian)
++# there are few corrections have to be made for some Russian time zones...
++# All updated Russian Time Zones were placed in table and translated to English
++# by WorldTimeZone.com at the link below:
++# <a href="http://www.worldtimezone.com/dst_news/dst_news_russia36.htm">
++# http://www.worldtimezone.com/dst_news/dst_news_russia36.htm
++# </a>
++
++# From Sanjeev Gupta (2011-09-27):
++# Scans of [Decree #23 of January 8, 1992] are available at:
++# <a href="http://government.consultant.ru/page.aspx?1223966">
++# http://government.consultant.ru/page.aspx?1223966
++# They are in Cyrillic letters (presumably Russian).
++
++# From Arthur David Olson (2012-05-09):
++# Regarding the instant when clocks in time-zone-shifting parts of Russia
++# changed in September 2011:
++#
++# One source is
++# < a href="http://government.ru/gov/results/16355/>
++# http://government.ru/gov/results/16355/
++# </a>
++# which, according to translate.google.com, begins "Decree of August 31,
++# 2011 No 725" and contains no other dates or "effective date" information.
++#
++# Another source is
++# <a href="http://www.rg.ru/2011/09/06/chas-zona-dok.html">
++# http://www.rg.ru/2011/09/06/chas-zona-dok.html
++# </a>
++# which, according to translate.google.com, begins "Resolution of the
++# Government of the Russian Federation on August 31, 2011 N 725" and also
++# contains "Date first official publication: September 6, 2011 Posted on:
++# in the 'RG' - Federal Issue number 5573 September 6, 2011" but which
++# does not contain any "effective date" information.
++#
++# Another source is
++# <a href="http://en.wikipedia.org/wiki/Oymyakonsky_District#cite_note-RuTime-7">
++# http://en.wikipedia.org/wiki/Oymyakonsky_District#cite_note-RuTime-7
++# </a>
++# which, in note 8, contains "Resolution #725 of August 31, 2011...
++# Effective as of after 7 days following the day of the official publication"
++# but which does not contain any reference to September 6, 2011.
++#
++# The Wikipedia article refers to
++# <a href="http://base.consultant.ru/cons/cgi/online.cgi?req=doc;base=LAW;n=118896">
++# http://base.consultant.ru/cons/cgi/online.cgi?req=doc;base=LAW;n=118896
++# </a>
++# which seems to copy the text of the government.ru page.
++#
++# Tobias Conradi combines Wikipedia's
++# "as of after 7 days following the day of the official publication"
++# with www.rg.ru's "Date of first official publication: September 6, 2011" to get
++# September 13, 2011 as the cutover date (unusually, a Tuesday, as Tobias Conradi notes).
++#
++# None of the sources indicates a time of day for changing clocks.
++#
++# Go with 2011-09-13 0:00s.
++
+ # From Paul Eggert (2006-03-22):
+ # Except for Moscow after 1919-07-01, I invented the time zone abbreviations.
+ # Moscow time zone abbreviations after 1919-07-01, and Moscow rules after 1991,
+@@ -2293,14 +2380,32 @@
+ # [parts of] Respublika Sakha (Yakutiya).
+ 
+ # From Oscar van Vlijmen (2009-11-29):
+-# The Sakha districts are: Bulunskij, Verkhoyanskij, Tomponskij, Ust'-Majskij,
+-# Ust'-Yanskij.
++# The Sakha districts are: Bulunskij, Verkhoyanskij, ... Ust'-Yanskij.
+ Zone Asia/Vladivostok	 8:47:44 -	LMT	1922 Nov 15
+ 			 9:00	-	VLAT	1930 Jun 21 # Vladivostok Time
+ 			10:00	Russia	VLA%sT	1991 Mar 31 2:00s
+ 			 9:00	Russia	VLA%sST	1992 Jan 19 2:00s
+ 			10:00	Russia	VLA%sT	2011 Mar 27 2:00s
+ 			11:00	-	VLAT
++
++# From Arthur David Olson (2012-05-09):
++# Tomponskij and Ust'-Majskij switched from Vladivostok time to Yakutsk time
++# in 2011.
++#
++# From Paul Eggert (2012-11-25):
++# Shanks and Pottenger (2003) has Khandyga on Yakutsk time.
++# Make a wild guess that it switched to Vladivostok time in 2004.
++# This transition is no doubt wrong, but we have no better info.
++#
++Zone Asia/Khandyga	 9:02:13 -	LMT	1919 Dec 15
++			 8:00	-	YAKT	1930 Jun 21 # Yakutsk Time
++			 9:00	Russia	YAK%sT	1991 Mar 31 2:00s
++			 8:00	Russia	YAK%sT	1992 Jan 19 2:00s
++			 9:00	Russia	YAK%sT	2004
++			10:00	Russia	VLA%sT	2011 Mar 27 2:00s
++			11:00	-	VLAT	2011 Sep 13 0:00s # Decree 725?
++			10:00	-	YAKT
++
+ #
+ # Sakhalinskaya oblast'.
+ # The Zone name should be Yuzhno-Sakhalinsk, but that's too long.
+@@ -2319,14 +2424,26 @@
+ 
+ # From Oscar van Vlijmen (2009-11-29):
+ # The Sakha districts are: Abyjskij, Allaikhovskij, Verkhhhnekolymskij, Momskij,
+-# Nizhnekolymskij, Ojmyakonskij, Srednekolymskij.
++# Nizhnekolymskij, ... Srednekolymskij.
+ Zone Asia/Magadan	10:03:12 -	LMT	1924 May  2
+ 			10:00	-	MAGT	1930 Jun 21 # Magadan Time
+ 			11:00	Russia	MAG%sT	1991 Mar 31 2:00s
+ 			10:00	Russia	MAG%sT	1992 Jan 19 2:00s
+ 			11:00	Russia	MAG%sT	2011 Mar 27 2:00s
+ 			12:00	-	MAGT
+-#
++
++# From Arthur David Olson (2012-05-09):
++# Ojmyakonskij and the Kuril Islands switched from
++# Magadan time to Vladivostok time in 2011.
++Zone Asia/Ust-Nera	 9:32:54 -	LMT	1919 Dec 15
++			 8:00	-	YAKT	1930 Jun 21 # Yakutsk Time
++			 9:00	Russia	YAKT	1981 Apr  1
++			11:00	Russia	MAG%sT	1991 Mar 31 2:00s
++			10:00	Russia	MAG%sT	1992 Jan 19 2:00s
++			11:00	Russia	MAG%sT	2011 Mar 27 2:00s
++			12:00	-	MAGT	2011 Sep 13 0:00s # Decree 725?
++			11:00	-	VLAT
++
+ # From Oscar van Vlijmen (2001-08-25): [This region consists of]
+ # Kamchatskaya oblast', Koryakskij avtonomnyj okrug.
+ #
+--- openjdk/jdk/make/sun/javazic/tzdata/northamerica
++++ openjdk/jdk/make/sun/javazic/tzdata/northamerica
+@@ -29,7 +29,7 @@
+ 
+ # This data is by no means authoritative; if you think you know better,
+ # go ahead and edit the file (and please send any changes to
+-# tz@elsie.nci.nih.gov for general use in the future).
++# tz@iana.org for general use in the future).
+ 
+ # From Paul Eggert (1999-03-22):
+ # A reliable and entertaining source about time zones is
+@@ -1042,6 +1042,9 @@
+ #	William Willett, The Waste of Daylight, 19th edition
+ #	</a> (1914-03)
+ #
++#	Milne J. Civil time. Geogr J. 1899 Feb;13(2):173-94
++#	<http://www.jstor.org/stable/1774359>.
++#
+ # See the `europe' file for Greenland.
+ 
+ # Canada
+@@ -2577,6 +2580,8 @@
+ 
+ # Bahamas
+ #
++# For 1899 Milne gives -5:09:29.5; round that.
++#
+ # From Sue Williams (2006-12-07):
+ # The Bahamas announced about a month ago that they plan to change their DST
+ # rules to sync with the U.S. starting in 2007....
+@@ -2586,11 +2591,14 @@
+ Rule	Bahamas	1964	1975	-	Oct	lastSun	2:00	0	S
+ Rule	Bahamas	1964	1975	-	Apr	lastSun	2:00	1:00	D
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+-Zone	America/Nassau	-5:09:24 -	LMT	1912 Mar 2
++Zone	America/Nassau	-5:09:30 -	LMT	1912 Mar 2
+ 			-5:00	Bahamas	E%sT	1976
+ 			-5:00	US	E%sT
+ 
+ # Barbados
++
++# For 1899 Milne gives -3:58:29.2; round that.
++
+ # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+ Rule	Barb	1977	only	-	Jun	12	2:00	1:00	D
+ Rule	Barb	1977	1978	-	Oct	Sun>=1	2:00	0	S
+@@ -2598,8 +2606,8 @@
+ Rule	Barb	1979	only	-	Sep	30	2:00	0	S
+ Rule	Barb	1980	only	-	Sep	25	2:00	0	S
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+-Zone America/Barbados	-3:58:28 -	LMT	1924		# Bridgetown
+-			-3:58:28 -	BMT	1932	  # Bridgetown Mean Time
++Zone America/Barbados	-3:58:29 -	LMT	1924		# Bridgetown
++			-3:58:29 -	BMT	1932	  # Bridgetown Mean Time
+ 			-4:00	Barb	A%sT
+ 
+ # Belize
+@@ -2617,6 +2625,9 @@
+ 
+ # Bermuda
+ 
++# For 1899 Milne gives -4:19:18.3 as the meridian of the clock tower,
++# Bermuda dockyard, Ireland I; round that.
++
+ # From Dan Jones, reporting in The Royal Gazette (2006-06-26):
+ 
+ # Next year, however, clocks in the US will go forward on the second Sunday
+@@ -2626,7 +2637,7 @@
+ # http://www.theroyalgazette.com/apps/pbcs.dll/article?AID=/20060529/NEWS/105290135
+ 
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+-Zone Atlantic/Bermuda	-4:19:04 -	LMT	1930 Jan  1 2:00    # Hamilton
++Zone Atlantic/Bermuda	-4:19:18 -	LMT	1930 Jan  1 2:00    # Hamilton
+ 			-4:00	-	AST	1974 Apr 28 2:00
+ 			-4:00	Bahamas	A%sT	1976
+ 			-4:00	US	A%sT
+@@ -2638,6 +2649,9 @@
+ 			-5:00	-	EST
+ 
+ # Costa Rica
++
++# Milne gives -5:36:13.3 as San Jose mean time; round to nearest.
++
+ # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+ Rule	CR	1979	1980	-	Feb	lastSun	0:00	1:00	D
+ Rule	CR	1979	1980	-	Jun	Sun>=1	0:00	0	S
+@@ -2648,14 +2662,19 @@
+ Rule	CR	1992	only	-	Mar	15	0:00	0	S
+ # There are too many San Joses elsewhere, so we'll use `Costa Rica'.
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+-Zone America/Costa_Rica	-5:36:20 -	LMT	1890		# San Jose
+-			-5:36:20 -	SJMT	1921 Jan 15 # San Jose Mean Time
++Zone America/Costa_Rica	-5:36:13 -	LMT	1890		# San Jose
++			-5:36:13 -	SJMT	1921 Jan 15 # San Jose Mean Time
+ 			-6:00	CR	C%sT
+ # Coco
+ # no information; probably like America/Costa_Rica
+ 
+ # Cuba
+ 
++# From Paul Eggert (2013-02-21):
++# Milne gives -5:28:50.45 for the observatory at Havana, -5:29:23.57
++# for the port, and -5:30 for meteorological observations.
++# For now, stick with Shanks & Pottenger.
++
+ # From Arthur David Olson (1999-03-29):
+ # The 1999-03-28 exhibition baseball game held in Havana, Cuba, between
+ # the Cuban National Team and the Baltimore Orioles was carried live on
+@@ -3004,24 +3023,21 @@
+ # apparently using the same start and end date as USA/Canada.
+ # So this means they have already changed their time.
+ #
+-# (Sources in French):
+-# <a href="http://www.alterpresse.org/spip.php?article12510">
+ # http://www.alterpresse.org/spip.php?article12510
+-# </a>
+-# <a href="http://radiovision2000haiti.net/home/?p=13253">
+ # http://radiovision2000haiti.net/home/?p=13253
+-# </a>
+ #
+-# Our coverage:
+-# <a href="http://www.timeanddate.com/news/time/haiti-dst-2012.html">
+-# http://www.timeanddate.com/news/time/haiti-dst-2012.html
+-# </a>
+-
+ # From Arthur David Olson (2012-03-11):
+ # The alterpresse.org source seems to show a US-style leap from 2:00 a.m. to
+ # 3:00 a.m. rather than the traditional Haitian jump at midnight.
+-# Assume a US-style fall back as well XXX.
+-# Do not yet assume that the change carries forward past 2012 XXX.
++# Assume a US-style fall back as well.
++
++# From Steffen Thorsen (2013-03-10):
++# It appears that Haiti is observing DST this year as well, same rules
++# as US/Canada.  They did it last year as well, and it looks like they
++# are going to observe DST every year now...
++#
++# http://radiovision2000haiti.net/public/haiti-avis-changement-dheure-dimanche/
++# http://www.canalplushaiti.net/?p=6714
+ 
+ # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+ Rule	Haiti	1983	only	-	May	8	0:00	1:00	D
+@@ -3033,8 +3049,8 @@
+ Rule	Haiti	1988	1997	-	Oct	lastSun	1:00s	0	S
+ Rule	Haiti	2005	2006	-	Apr	Sun>=1	0:00	1:00	D
+ Rule	Haiti	2005	2006	-	Oct	lastSun	0:00	0	S
+-Rule	Haiti	2012	only	-	Mar	Sun>=8	2:00	1:00	D
+-Rule	Haiti	2012	only	-	Nov	Sun>=1	2:00	0	S
++Rule	Haiti	2012	max	-	Mar	Sun>=8	2:00	1:00	D
++Rule	Haiti	2012	max	-	Nov	Sun>=1	2:00	0	S
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+ Zone America/Port-au-Prince -4:49:20 -	LMT	1890
+ 			-4:49	-	PPMT	1917 Jan 24 12:00 # P-a-P MT
+--- openjdk/jdk/make/sun/javazic/tzdata/southamerica
++++ openjdk/jdk/make/sun/javazic/tzdata/southamerica
+@@ -27,13 +27,17 @@
+ 
+ # This data is by no means authoritative; if you think you know better,
+ # go ahead and edit the file (and please send any changes to
+-# tz@elsie.nci.nih.gov for general use in the future).
++# tz@iana.org for general use in the future).
+ 
+ # From Paul Eggert (2006-03-22):
+ # A good source for time zone historical data outside the U.S. is
+ # Thomas G. Shanks and Rique Pottenger, The International Atlas (6th edition),
+ # San Diego: ACS Publications, Inc. (2003).
+ #
++# For data circa 1899, a common source is:
++# Milne J. Civil time. Geogr J. 1899 Feb;13(2):173-94
++# <http://www.jstor.org/stable/1774359>.
++#
+ # Gwillim Law writes that a good source
+ # for recent time zone data is the International Air Transport
+ # Association's Standard Schedules Information Manual (IATA SSIM),
+@@ -404,21 +408,11 @@
+ # <a/>
+ # is the official page for the Province Government).
+ #
+-# There's also a note in only one of the major national papers (La Nación) at
+-# <a href="http://www.lanacion.com.ar/nota.asp?nota_id=1107912">
++# There's also a note in only one of the major national papers ...
+ # http://www.lanacion.com.ar/nota.asp?nota_id=1107912
+-# </a>
+ #
+-# The press release says:
+-#  (...) anunció que el próximo domingo a las 00:00 los puntanos deberán
+-# atrasar una hora sus relojes.
+-#
+-# A partir de entonces, San Luis establecerá el huso horario propio de
+-# la Provincia. De esta manera, durante el periodo del calendario anual
+-# 2009, el cambio horario quedará comprendido entre las 00:00 del tercer
+-# domingo de marzo y las 24:00 del segundo sábado de octubre.
+-# Quick&dirty translation
+-# (...) announced that next Sunday, at 00:00, Puntanos (the San Luis
++# The press release says [quick and dirty translation]:
++# ... announced that next Sunday, at 00:00, Puntanos (the San Luis
+ # inhabitants) will have to turn back one hour their clocks
+ #
+ # Since then, San Luis will establish its own Province timezone. Thus,
+@@ -480,6 +474,9 @@
+ # rules...San Luis is still using "Western ARgentina Time" and it got
+ # stuck on Summer daylight savings time even though the summer is over.
+ 
++# From Paul Eggert (2013-02-21):
++# Milne says Cordoba time was -4:16:48.2.  Round to the nearest second.
++
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+ #
+ # Buenos Aires (BA), Capital Federal (CF),
+@@ -835,9 +832,9 @@
+ 
+ # From Guilherme Bernardes Rodrigues (2011-10-07):
+ # There is news in the media, however there is still no decree about it.
+-# I just send a e-mail to Zulmira Brandão at
++# I just send a e-mail to Zulmira Brandao at
+ # <a href="http://pcdsh01.on.br/">http://pcdsh01.on.br/</a> the
+-# oficial agency about time in Brazil, and she confirmed that the old rule is
++# official agency about time in Brazil, and she confirmed that the old rule is
+ # still in force.
+ 
+ # From Guilherme Bernardes Rodrigues (2011-10-14)
+@@ -1266,9 +1263,13 @@
+ # b. Saturday, September 1, 2012, clocks should go forward 60 minutes; that is,
+ # at 23:59:59, instead of passing to 0:00, the time should be adjusted to be
+ # 01:00 on September 2.
+-#
+-# Note that...this is yet another "temporary" change that will be reevaluated
+-# AGAIN in 2013.
++
++# From Steffen Thorsen (2013-02-15):
++# According to several news sources, Chile has extended DST this year,
++# they will end DST later and start DST earlier than planned.  They
++# hope to save energy.  The new end date is 2013-04-28 00:00 and new
++# start date is 2013-09-08 00:00....
++# http://www.gob.cl/informa/2013/02/15/gobierno-anuncia-fechas-de-cambio-de-hora-para-el-ano-2013.htm
+ 
+ # NOTE: ChileAQ rules for Antarctic bases are stored separately in the
+ # 'antarctica' file.
+@@ -1311,10 +1312,8 @@
+ Rule	Chile	2010	only	-	Apr	Sun>=1	3:00u	0	-
+ Rule	Chile	2011	only	-	May	Sun>=2	3:00u	0	-
+ Rule	Chile	2011	only	-	Aug	Sun>=16	4:00u	1:00	S
+-Rule	Chile	2012	only	-	Apr	Sun>=23	3:00u	0	-
+-Rule	Chile	2012	only	-	Sep	Sun>=2	4:00u	1:00	S
+-Rule	Chile	2013	max	-	Mar	Sun>=9	3:00u	0	-
+-Rule	Chile	2013	max	-	Oct	Sun>=9	4:00u	1:00	S
++Rule	Chile	2012	max	-	Apr	Sun>=23	3:00u	0	-
++Rule	Chile	2012	max	-	Sep	Sun>=2	4:00u	1:00	S
+ # IATA SSIM anomalies: (1992-02) says 1992-03-14;
+ # (1996-09) says 1998-03-08.  Ignore these.
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+@@ -1336,17 +1335,23 @@
+ # San Felix, and Antarctic bases, are like America/Santiago.
+ 
+ # Colombia
++
++# Milne gives 4:56:16.4 for Bogota time in 1899; round to nearest.  He writes,
++# "A variation of fifteen minutes in the public clocks of Bogota is not rare."
++
+ # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+ Rule	CO	1992	only	-	May	 3	0:00	1:00	S
+ Rule	CO	1993	only	-	Apr	 4	0:00	0	-
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+-Zone	America/Bogota	-4:56:20 -	LMT	1884 Mar 13
+-			-4:56:20 -	BMT	1914 Nov 23 # Bogota Mean Time
++Zone	America/Bogota	-4:56:16 -	LMT	1884 Mar 13
++			-4:56:16 -	BMT	1914 Nov 23 # Bogota Mean Time
+ 			-5:00	CO	CO%sT	# Colombia Time
+ # Malpelo, Providencia, San Andres
+ # no information; probably like America/Bogota
+ 
+ # Curacao
++
++# Milne gives 4:35:46.9 for Curacao mean time; round to nearest.
+ #
+ # From Paul Eggert (2006-03-22):
+ # Shanks & Pottenger say that The Bottom and Philipsburg have been at
+@@ -1363,7 +1368,7 @@
+ # though, as far as we know.
+ #
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+-Zone	America/Curacao	-4:35:44 -	LMT	1912 Feb 12	# Willemstad
++Zone	America/Curacao	-4:35:47 -	LMT	1912 Feb 12	# Willemstad
+ 			-4:30	-	ANT	1965 # Netherlands Antilles Time
+ 			-4:00	-	AST
+ 
+@@ -1377,6 +1382,8 @@
+ 
+ # Ecuador
+ #
++# Milne says the Sentral and South American Telegraph Company used -5:24:15.
++#
+ # From Paul Eggert (2007-03-04):
+ # Apparently Ecuador had a failed experiment with DST in 1992.
+ # <http://midena.gov.ec/content/view/1261/208/> (2007-02-27) and
+@@ -1583,6 +1590,15 @@
+ # ...
+ Rule	Para	2010	max	-	Oct	Sun>=1	0:00	1:00	S
+ Rule	Para	2010	max	-	Apr	Sun>=8	0:00	0	-
++#
++# From Steffen Thorsen (2013-03-07):
++# Paraguay will end DST on 2013-03-24 00:00....
++# They do not tell if this will be a permanent change or just this year....
++# http://www.ande.gov.py/interna.php?id=1075
++#
++# From Paul Eggert (2013-03-07):
++# For now, assume it's just this year.
++Rule	Para	2013	only	-	Mar	24	0:00	0	-
+ 
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+ Zone America/Asuncion	-3:50:40 -	LMT	1890
+--- openjdk/jdk/make/sun/javazic/tzdata/zone.tab
++++ openjdk/jdk/make/sun/javazic/tzdata/zone.tab
+@@ -182,7 +182,8 @@
+ CX	-1025+10543	Indian/Christmas
+ CY	+3510+03322	Asia/Nicosia
+ CZ	+5005+01426	Europe/Prague
+-DE	+5230+01322	Europe/Berlin
++DE	+5230+01322	Europe/Berlin	most locations
++DE	+4742+00841	Europe/Busingen	Busingen
+ DJ	+1136+04309	Africa/Djibouti
+ DK	+5540+01235	Europe/Copenhagen
+ DM	+1518-06124	America/Dominica
+@@ -364,8 +365,10 @@
+ RU	+5601+09250	Asia/Krasnoyarsk	Moscow+04 - Yenisei River
+ RU	+5216+10420	Asia/Irkutsk	Moscow+05 - Lake Baikal
+ RU	+6200+12940	Asia/Yakutsk	Moscow+06 - Lena River
++RU	+623923+1353314	Asia/Khandyga	Moscow+06 - Tomponsky, Ust-Maysky
+ RU	+4310+13156	Asia/Vladivostok	Moscow+07 - Amur River
+ RU	+4658+14242	Asia/Sakhalin	Moscow+07 - Sakhalin Island
++RU	+643337+1431336	Asia/Ust-Nera	Moscow+07 - Oymyakonsky
+ RU	+5934+15048	Asia/Magadan	Moscow+08 - Magadan
+ RU	+5301+15839	Asia/Kamchatka	Moscow+08 - Kamchatka
+ RU	+6445+17729	Asia/Anadyr	Moscow+08 - Bering Sea
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames.java
+@@ -75,6 +75,8 @@
+                                      "Central European Summer Time", "CEST"};
+         String CHAST[] = new String[] {"Chatham Standard Time", "CHAST",
+                                        "Chatham Daylight Time", "CHADT"};
++        String ChST[] = new String[] {"Chamorro Standard Time", "ChST",
++                                      "Chamorro Daylight Time", "ChDT"};
+         String CHUT[] = new String[] {"Chuuk Time", "CHUT",
+                                       "Chuuk Summer Time", "CHUST"};
+         String CIT[] = new String[] {"Central Indonesia Time", "CIT",
+@@ -161,6 +163,8 @@
+                                       "Pohnpei Summer Time", "PONST"};
+         String PST[] = new String[] {"Pacific Standard Time", "PST",
+                                      "Pacific Daylight Time", "PDT"};
++        String SAMOA[] = new String[] {"Samoa Standard Time", "SST",
++                                       "Samoa Daylight Time", "SDT"};
+         String SAST[] = new String[] {"South Africa Standard Time", "SAST",
+                                       "South Africa Summer Time", "SAST"};
+         String SBT[] = new String[] {"Solomon Is. Time", "SBT",
+@@ -175,6 +179,14 @@
+                                      "Turkmenistan Summer Time", "TMST"};
+         String ULAT[]= new String[] {"Ulaanbaatar Time", "ULAT",
+                                      "Ulaanbaatar Summer Time", "ULAST"};
++        String UTC[] = new String[] {"Coordinated Universal Time", "UTC",
++                                     "Coordinated Universal Time", "UTC"};
++        String UZT[] = new String[] {"Uzbekistan Time", "UZT",
++                                     "Uzbekistan Summer Time", "UZST"};
++        String VICTORIA[] = new String[] {"Eastern Standard Time (Victoria)", "EST",
++                                          "Eastern Summer Time (Victoria)", "EST"};
++        String VLAT[] = new String[] {"Vladivostok Time", "VLAT",
++                                      "Vladivostok Summer Time", "VLAST"};
+         String WART[] = new String[] {"Western Argentine Time", "WART",
+                                       "Western Argentine Summer Time", "WARST"};
+         String WAT[] = new String[] {"Western African Time", "WAT",
+@@ -185,18 +197,10 @@
+                                      "West Indonesia Summer Time", "WIST"};
+         String WST_AUS[] = new String[] {"Western Standard Time (Australia)", "WST",
+                                          "Western Summer Time (Australia)", "WST"};
+-        String SAMOA[] = new String[] {"Samoa Standard Time", "SST",
+-                                       "Samoa Daylight Time", "SDT"};
+         String WST_SAMOA[] = new String[] {"West Samoa Time", "WST",
+                                            "West Samoa Daylight Time", "WSDT"};
+-        String ChST[] = new String[] {"Chamorro Standard Time", "ChST",
+-                                      "Chamorro Daylight Time", "ChDT"};
+-        String VICTORIA[] = new String[] {"Eastern Standard Time (Victoria)", "EST",
+-                                          "Eastern Summer Time (Victoria)", "EST"};
+-        String UTC[] = new String[] {"Coordinated Universal Time", "UTC",
+-                                     "Coordinated Universal Time", "UTC"};
+-        String UZT[] = new String[] {"Uzbekistan Time", "UZT",
+-                                     "Uzbekistan Summer Time", "UZST"};
++        String YAKT[] = new String[] {"Yakutsk Time", "YAKT",
++                                      "Yakutsk Summer Time", "YAKST"};
+ 
+         return new Object[][] {
+             {"America/Los_Angeles", PST},
+@@ -287,7 +291,7 @@
+             {"Africa/Porto-Novo", WAT},
+             {"Africa/Sao_Tome", GMT},
+             {"Africa/Timbuktu", GMT},
+-            {"Africa/Tripoli", EET},
++            {"Africa/Tripoli", CET},
+             {"Africa/Tunis", CET},
+             {"Africa/Windhoek", WAT},
+             {"America/Adak", HAST},
+@@ -533,6 +537,7 @@
+             {"Asia/Kashgar", CTT},
+             {"Asia/Kathmandu", NPT},
+             {"Asia/Katmandu", NPT},
++            {"Asia/Khandyga", YAKT},
+             {"Asia/Kolkata", IST},
+             {"Asia/Krasnoyarsk", new String[] {"Krasnoyarsk Time", "KRAT",
+                                                "Krasnoyarsk Summer Time", "KRAST"}},
+@@ -581,11 +586,10 @@
+             {"Asia/Ulaanbaatar", ULAT},
+             {"Asia/Ulan_Bator", ULAT},
+             {"Asia/Urumqi", CTT},
++            {"Asia/Ust-Nera", VLAT},
+             {"Asia/Vientiane", ICT},
+-            {"Asia/Vladivostok", new String[] {"Vladivostok Time", "VLAT",
+-                                               "Vladivostok Summer Time", "VLAST"}},
+-            {"Asia/Yakutsk", new String[] {"Yakutsk Time", "YAKT",
+-                                           "Yakutsk Summer Time", "YAKST"}},
++            {"Asia/Vladivostok", VLAT},
++            {"Asia/Yakutsk", YAKT},
+             {"Asia/Yekaterinburg", new String[] {"Yekaterinburg Time", "YEKT",
+                                                  "Yekaterinburg Summer Time", "YEKST"}},
+             {"Asia/Yerevan", ARMT},
+@@ -669,6 +673,7 @@
+             {"Europe/Bratislava", CET},
+             {"Europe/Brussels", CET},
+             {"Europe/Budapest", CET},
++            {"Europe/Busingen", CET},
+             {"Europe/Chisinau", EET},
+             {"Europe/Copenhagen", CET},
+             {"Europe/Dublin", DUBLIN},
+@@ -748,7 +753,7 @@
+             {"Jamaica", EST},
+             {"Japan", JST},
+             {"Kwajalein", MHT},
+-            {"Libya", EET},
++            {"Libya", CET},
+             {"MET", new String[] {"Middle Europe Time", "MET",
+                                   "Middle Europe Summer Time", "MEST"}},
+             {"Mexico/BajaNorte", PST},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_de.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_de.java
+@@ -75,6 +75,8 @@
+                                      "Mitteleurop\u00e4ische Sommerzeit", "MESZ"};
+         String CHAST[] = new String[] {"Chatham Normalzeit", "CHAST",
+                                        "Chatham Sommerzeit", "CHADT"};
++        String ChST[] = new String[] {"Chamorro Normalzeit", "ChST",
++                      "Chamorro Sommerzeit", "ChDT"};
+         String CHUT[] = new String[] {"Chuuk Time", "CHUT",
+                                       "Chuuk Summer Time", "CHUST"};
+         String CIT[] = new String[] {"Zentralindonesische Zeit", "CIT",
+@@ -161,6 +163,8 @@
+                                       "Pohnpei Summer Time", "PONST"};
+         String PST[] = new String[] {"Pazifische Normalzeit", "PST",
+                                      "Pazifische Sommerzeit", "PDT"};
++        String SAMOA[] = new String[] {"Samoa Normalzeit", "SST",
++                                       "Samoa Sommerzeit", "SDT"};
+         String SAST[] = new String[] {"S\u00fcdafrikanische Normalzeit", "SAST",
+                                       "S\u00fcdafrikanische Sommerzeit", "SAST"};
+         String SBT[] = new String[] {"Salomoninseln Zeit", "SBT",
+@@ -175,6 +179,14 @@
+                                      "Turkmenische Sommerzeit", "TMST"};
+         String ULAT[]= new String[] {"Ulaanbaatar Zeit", "ULAT",
+                                      "Ulaanbaatar Sommerzeit", "ULAST"};
++        String UTC[] = new String[] {"Koordinierte Universalzeit", "UTC",
++                                     "Koordinierte Universalzeit", "UTC"};
++        String UZT[] = new String[] {"Usbekistan Zeit", "UZT",
++                                     "Usbekistan Sommerzeit", "UZST"};
++        String VICTORIA[] = new String[] {"\u00d6stliche Normalzeit (Victoria)", "EST",
++                                          "\u00d6stliche Sommerzeit (Victoria)", "EST"};
++        String VLAT[] = new String[] {"Wladiwostok Zeit", "VLAT",
++                                      "Wladiwostok Sommerzeit", "VLAST"};
+         String WART[] = new String[] {"Westargentinische Zeit", "WART",
+                                       "Westargentinische Sommerzeit", "WARST"};
+         String WAT[] = new String[] {"Westafrikanische Zeit", "WAT",
+@@ -185,18 +197,10 @@
+                                      "Westindonesische Sommerzeit", "WIST"};
+         String WST_AUS[] = new String[] {"Westliche Normalzeit (Australien)", "WST",
+                                          "Westliche Sommerzeit (Australien)", "WST"};
+-        String SAMOA[] = new String[] {"Samoa Normalzeit", "SST",
+-                                       "Samoa Sommerzeit", "SDT"};
+         String WST_SAMOA[] = new String[] {"West Samoa Zeit", "WST",
+                                            "West Samoa Sommerzeit", "WSDT"};
+-        String ChST[] = new String[] {"Chamorro Normalzeit", "ChST",
+-                      "Chamorro Sommerzeit", "ChDT"};
+-        String VICTORIA[] = new String[] {"\u00d6stliche Normalzeit (Victoria)", "EST",
+-                                          "\u00d6stliche Sommerzeit (Victoria)", "EST"};
+-        String UTC[] = new String[] {"Koordinierte Universalzeit", "UTC",
+-                                     "Koordinierte Universalzeit", "UTC"};
+-        String UZT[] = new String[] {"Usbekistan Zeit", "UZT",
+-                                     "Usbekistan Sommerzeit", "UZST"};
++        String YAKT[] = new String[] {"Jakutsk Zeit", "YAKT",
++                                      "Jakutsk Sommerzeit", "YAKST"};
+ 
+         return new Object[][] {
+             {"America/Los_Angeles", PST},
+@@ -287,7 +291,7 @@
+             {"Africa/Porto-Novo", WAT},
+             {"Africa/Sao_Tome", GMT},
+             {"Africa/Timbuktu", GMT},
+-            {"Africa/Tripoli", EET},
++            {"Africa/Tripoli", CET},
+             {"Africa/Tunis", CET},
+             {"Africa/Windhoek", WAT},
+             {"America/Adak", HAST},
+@@ -533,6 +537,7 @@
+             {"Asia/Kashgar", CTT},
+             {"Asia/Kathmandu", NPT},
+             {"Asia/Katmandu", NPT},
++            {"Asia/Khandyga", YAKT},
+             {"Asia/Kolkata", IST},
+             {"Asia/Krasnoyarsk", new String[] {"Krasnojarsker Zeit", "KRAT",
+                                                "Krasnojarsker Sommerzeit", "KRAST"}},
+@@ -581,11 +586,10 @@
+             {"Asia/Ulaanbaatar", ULAT},
+             {"Asia/Ulan_Bator", ULAT},
+             {"Asia/Urumqi", CTT},
++            {"Asia/Ust-Nera", VLAT},
+             {"Asia/Vientiane", ICT},
+-            {"Asia/Vladivostok", new String[] {"Wladiwostok Zeit", "VLAT",
+-                                               "Wladiwostok Sommerzeit", "VLAST"}},
+-            {"Asia/Yakutsk", new String[] {"Jakutsk Zeit", "YAKT",
+-                                           "Jakutsk Sommerzeit", "YAKST"}},
++            {"Asia/Vladivostok", VLAT},
++            {"Asia/Yakutsk", YAKT},
+             {"Asia/Yekaterinburg", new String[] {"Jekaterinburger Zeit", "YEKT",
+                                                  "Jekaterinburger Sommerzeit", "YEKST"}},
+             {"Asia/Yerevan", ARMT},
+@@ -669,6 +673,7 @@
+             {"Europe/Bratislava", CET},
+             {"Europe/Brussels", CET},
+             {"Europe/Budapest", CET},
++            {"Europe/Busingen", CET},
+             {"Europe/Chisinau", EET},
+             {"Europe/Copenhagen", CET},
+             {"Europe/Dublin", DUBLIN},
+@@ -748,7 +753,7 @@
+             {"Jamaica", EST},
+             {"Japan", JST},
+             {"Kwajalein", MHT},
+-            {"Libya", EET},
++            {"Libya", CET},
+             {"MET", new String[] {"Zentraleurop\u00e4ische Zeit", "MET",
+                                   "Zentraleurop\u00e4ische Sommerzeit", "MEST"}},
+             {"Mexico/BajaNorte", PST},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_es.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_es.java
+@@ -75,6 +75,8 @@
+                                      "Hora de verano de Europa Central", "CEST"};
+         String CHAST[] = new String[] {"Hora est\u00e1ndar de Chatham", "CHAST",
+                                        "Hora de verano de Chatham", "CHADT"};
++        String ChST[] = new String[] {"Hora est\u00e1ndar de Chamorro", "ChST",
++                                      "Hora de verano de Chamorro", "ChDT"};
+         String CHUT[] = new String[] {"Chuuk Time", "CHUT",
+                                       "Chuuk Summer Time", "CHUST"};
+         String CIT[] = new String[] {"Hora de Indonesia Central", "CIT",
+@@ -161,6 +163,8 @@
+                                       "Pohnpei Summer Time", "PONST"};
+         String PST[] = new String[] {"Hora est\u00e1ndar del Pac\u00edfico", "PST",
+                                      "Hora de verano del Pac\u00edfico", "PDT"};
++        String SAMOA[] = new String[] {"Hora est\u00e1ndar de Samoa", "SST",
++                                       "Hora de verano de Samoa", "SDT"};
+         String SAST[] = new String[] {"Hora est\u00e1ndar de Sud\u00e1frica", "SAST",
+                                       "Hora de verano de Sud\u00e1frica", "SAST"};
+         String SBT[] = new String[] {"Hora de las Islas Solomon", "SBT",
+@@ -175,6 +179,14 @@
+                                      "Hora de verano de Turkmenist\u00e1n", "TMST"};
+         String ULAT[]= new String[] {"Hora de Ulan Bator", "ULAT",
+                                      "Hora de verano de Ulan Bator", "ULAST"};
++        String UTC[] = new String[] {"Hora Universal Coordinada", "UTC",
++                                     "Hora Universal Coordinada", "UTC"};
++        String UZT[] = new String[] {"Hora de Uzbekist\u00e1n", "UZT",
++                                     "Hora de verano de Uzbekist\u00e1n", "UZST"};
++        String VICTORIA[] = new String[] {"Hora est\u00e1ndar del Este (Victoria)", "EST",
++                                          "Hora de verano del Este (Victoria)", "EST"};
++        String VLAT[] = new String[] {"Hora de Vladivostok", "VLAT",
++                                      "Hora de verano de Vladivostok", "VLAST"};
+         String WART[] = new String[] {"Hora de Argentina Occidental", "WART",
+                                       "Hora de verano de Argentina Occidental", "WARST"};
+         String WAT[] = new String[] {"Hora de \u00c1frica Occidental", "WAT",
+@@ -185,18 +197,10 @@
+                                      "Indonesia Hora de verano de Indonesia Occidental", "WIST"};
+         String WST_AUS[] = new String[] {"Hora est\u00e1ndar Occidental (Australia)", "WST",
+                                          "Hora de verano Occidental (Australia)", "WST"};
+-        String SAMOA[] = new String[] {"Hora est\u00e1ndar de Samoa", "SST",
+-                                       "Hora de verano de Samoa", "SDT"};
+         String WST_SAMOA[] = new String[] {"Hora de Samoa Occidental", "WST",
+                                            "Hora de verano de Samoa Occidental", "WSDT"};
+-        String ChST[] = new String[] {"Hora est\u00e1ndar de Chamorro", "ChST",
+-                                      "Hora de verano de Chamorro", "ChDT"};
+-        String VICTORIA[] = new String[] {"Hora est\u00e1ndar del Este (Victoria)", "EST",
+-                                          "Hora de verano del Este (Victoria)", "EST"};
+-        String UTC[] = new String[] {"Hora Universal Coordinada", "UTC",
+-                                     "Hora Universal Coordinada", "UTC"};
+-        String UZT[] = new String[] {"Hora de Uzbekist\u00e1n", "UZT",
+-                                     "Hora de verano de Uzbekist\u00e1n", "UZST"};
++        String YAKT[] = new String[] {"Hora de Yakutsk", "YAKT",
++                                      "Hora de verano de Yakutsk", "YAKST"};
+ 
+         return new Object[][] {
+             {"America/Los_Angeles", PST},
+@@ -287,7 +291,7 @@
+             {"Africa/Porto-Novo", WAT},
+             {"Africa/Sao_Tome", GMT},
+             {"Africa/Timbuktu", GMT},
+-            {"Africa/Tripoli", EET},
++            {"Africa/Tripoli", CET},
+             {"Africa/Tunis", CET},
+             {"Africa/Windhoek", WAT},
+             {"America/Adak", HAST},
+@@ -533,6 +537,7 @@
+             {"Asia/Kashgar", CTT},
+             {"Asia/Kathmandu", NPT},
+             {"Asia/Katmandu", NPT},
++            {"Asia/Khandyga", YAKT},
+             {"Asia/Kolkata", IST},
+             {"Asia/Krasnoyarsk", new String[] {"Hora de Krasnoyarsk", "KRAT",
+                                                "Hora de verano de Krasnoyarsk", "KRAST"}},
+@@ -581,11 +586,10 @@
+             {"Asia/Ulaanbaatar", ULAT},
+             {"Asia/Ulan_Bator", ULAT},
+             {"Asia/Urumqi", CTT},
++            {"Asia/Ust-Nera", VLAT},
+             {"Asia/Vientiane", ICT},
+-            {"Asia/Vladivostok", new String[] {"Hora de Vladivostok", "VLAT",
+-                                               "Hora de verano de Vladivostok", "VLAST"}},
+-            {"Asia/Yakutsk", new String[] {"Hora de Yakutsk", "YAKT",
+-                                           "Hora de verano de Yakutsk", "YAKST"}},
++            {"Asia/Vladivostok", VLAT},
++            {"Asia/Yakutsk", YAKT},
+             {"Asia/Yekaterinburg", new String[] {"Hora de Ekaterinburgo", "YEKT",
+                                                  "Hora de verano de Ekaterinburgo", "YEKST"}},
+             {"Asia/Yerevan", ARMT},
+@@ -669,6 +673,7 @@
+             {"Europe/Bratislava", CET},
+             {"Europe/Brussels", CET},
+             {"Europe/Budapest", CET},
++            {"Europe/Busingen", CET},
+             {"Europe/Chisinau", EET},
+             {"Europe/Copenhagen", CET},
+             {"Europe/Dublin", DUBLIN},
+@@ -748,7 +753,7 @@
+             {"Jamaica", EST},
+             {"Japan", JST},
+             {"Kwajalein", MHT},
+-            {"Libya", EET},
++            {"Libya", CET},
+             {"MET", new String[] {"Hora de Europa Central", "MET",
+                                   "Hora de verano de Europa Central", "MEST"}},
+             {"Mexico/BajaNorte", PST},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_fr.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_fr.java
+@@ -48,43 +48,45 @@
+         String ADELAIDE[] = new String[] {"Heure standard d'Australie centrale (Australie du sud)", "CST",
+                                           "Heure d'\u00e9t\u00e9 d'Australie centrale (Australie du sud)", "CST"};
+         String AGT[] = new String[] {"Heure D'Argentine", "ART",
+-                                     "Heure d'\u00e9t\u00e9 D'Argentine", "ARST"} ;
++                                     "Heure d'\u00e9t\u00e9 D'Argentine", "ARST"};
+         String AKST[] = new String[] {"Heure normale d'Alaska", "AKST",
+-                                      "Heure avanc\u00e9e d'Alaska", "AKDT"} ;
++                                      "Heure avanc\u00e9e d'Alaska", "AKDT"};
+         String AMT[] = new String[] {"Heure normale d'Amazonie", "AMT",
+-                                     "Heure d'\u00e9t\u00e9 d'Amazonie", "AMST"} ;
++                                     "Heure d'\u00e9t\u00e9 d'Amazonie", "AMST"};
+         String ARAST[] = new String[] {"Heure normale d'Arabie", "AST",
+-                                       "Heure avanc\u00e9e d'Arabie", "ADT"} ;
++                                       "Heure avanc\u00e9e d'Arabie", "ADT"};
+         String ARMT[] = new String[] {"Heure d'Arm\u00e9nie", "AMT",
+-                                      "Heure d'\u00e9t\u00e9 d'Arm\u00e9nie", "AMST"} ;
++                                      "Heure d'\u00e9t\u00e9 d'Arm\u00e9nie", "AMST"};
+         String AST[] = new String[] {"Heure normale de l'Atlantique", "AST",
+-                                     "Heure avanc\u00e9e de l'Atlantique", "ADT"} ;
++                                     "Heure avanc\u00e9e de l'Atlantique", "ADT"};
+         String BDT[] = new String[] {"Heure du Bangladesh", "BDT",
+-                                     "Heure d'\u00e9t\u00e9 du Bangladesh", "BDST"} ;
++                                     "Heure d'\u00e9t\u00e9 du Bangladesh", "BDST"};
+         String BRISBANE[] = new String[] {"Heure standard d'Australie orientale (Queensland)", "EST",
+                                           "Heure d'\u00e9t\u00e9 d'Australie orientale (Queensland)", "EST"};
+         String BROKEN_HILL[] = new String[] {"Heure standard d'Australie centrale (Australie du sud/Nouvelle-Galles du sud)", "CST",
+                                              "Heure d'\u00e9t\u00e9 d'Australie centrale(Australie du sud/Nouvelle-Galles du sud)", "CST"};
+         String BRT[] = new String[] {"Heure du Br\u00e9sil", "BRT",
+-                                     "Heure d'\u00e9t\u00e9 du Br\u00e9sil", "BRST"} ;
++                                     "Heure d'\u00e9t\u00e9 du Br\u00e9sil", "BRST"};
+         String BTT[] = new String[] {"Heure du Bhoutan", "BTT",
+-                                     "Heure d'\u00e9t\u00e9 du Bhoutan", "BTST"} ;
++                                     "Heure d'\u00e9t\u00e9 du Bhoutan", "BTST"};
+         String CAT[] = new String[] {"Heure d'Afrique centrale", "CAT",
+-                                     "Heure d'\u00e9t\u00e9 d'Afrique centrale", "CAST"} ;
++                                     "Heure d'\u00e9t\u00e9 d'Afrique centrale", "CAST"};
+         String CET[] = new String[] {"Heure d'Europe centrale", "CET",
+-                                     "Heure d'\u00e9t\u00e9 d'Europe centrale", "CEST"} ;
++                                     "Heure d'\u00e9t\u00e9 d'Europe centrale", "CEST"};
+         String CHAST[] = new String[] {"Heure standard de Chatham", "CHAST",
+                                        "Heure avanc\u00e9e de Chatham", "CHADT"};
++        String ChST[] = new String[] {"Heure normale des \u00eeles Mariannes", "ChST",
++                      "Heure d'\u00e9t\u00e9 des \u00eeles Mariannes", "ChDT"};
+         String CHUT[] = new String[] {"Chuuk Time", "CHUT",
+                                       "Chuuk Summer Time", "CHUST"};
+         String CIT[] = new String[] {"Heure d'Indon\u00e9sie centrale", "CIT",
+                                      "Heure d'\u00e9t\u00e9 d'Indon\u00e9sie centrale", "CIST"};
+         String CLT[] = new String[] {"Heure du Chili", "CLT",
+-                                     "Heure d'\u00e9t\u00e9 du Chili", "CLST"} ;
++                                     "Heure d'\u00e9t\u00e9 du Chili", "CLST"};
+         String CST[] = new String[] {"Heure normale du Centre", "CST",
+-                                     "Heure avanc\u00e9e du Centre", "CDT"} ;
++                                     "Heure avanc\u00e9e du Centre", "CDT"};
+         String CTT[] = new String[] {"Heure normale de Chine", "CST",
+-                                     "Heure avanc\u00e9e de Chine", "CDT"} ;
++                                     "Heure avanc\u00e9e de Chine", "CDT"};
+         String CUBA[] = new String[] {"Heure standard de Cuba", "CST",
+                                       "Heure d'\u00e9t\u00e9 de Cuba", "CDT"};
+         String DARWIN[] = new String[] {"Heure standard d'Australie centrale (Territoire du Nord)", "CST",
+@@ -92,17 +94,17 @@
+         String DUBLIN[] = new String[] {"Heure du m\u00e9ridien de Greenwich", "GMT",
+                                         "Heure d'\u00e9t\u00e9 irlandaise", "IST"};
+         String EAT[] = new String[] {"Heure d'Afrique de l'Est", "EAT",
+-                                     "Heure d'\u00e9t\u00e9 d'Afrique de l'Est", "EAST"} ;
++                                     "Heure d'\u00e9t\u00e9 d'Afrique de l'Est", "EAST"};
+         String EASTER[] = new String[] {"Heure de l'Ile de P\u00e2ques", "EAST",
+                                         "Heure d'\u00e9t\u00e9 de l'Ile de P\u00e2ques", "EASST"};
+         String EET[] = new String[] {"Heure d'Europe de l'Est", "EET",
+-                                     "Heure d'\u00e9t\u00e9 d'Europe de l'Est", "EEST"} ;
++                                     "Heure d'\u00e9t\u00e9 d'Europe de l'Est", "EEST"};
+         String EGT[] = new String[] {"Heure du Groenland de l'Est", "EGT",
+-                                     "Heure d'\u00e9t\u00e9 du Groenland de l'Est", "EGST"} ;
++                                     "Heure d'\u00e9t\u00e9 du Groenland de l'Est", "EGST"};
+         String EST[] = new String[] {"Heure normale de l'Est", "EST",
+-                                     "Heure avanc\u00e9e de l'Est", "EDT"} ;
++                                     "Heure avanc\u00e9e de l'Est", "EDT"};
+         String EST_NSW[] = new String[] {"Heure normale de l'Est (Nouvelle-Galles du Sud)", "EST",
+-                                         "Heure d'\u00e9t\u00e9 de l'Est (Nouvelle-Galles du Sud)", "EST"} ;
++                                         "Heure d'\u00e9t\u00e9 de l'Est (Nouvelle-Galles du Sud)", "EST"};
+         String FET[] = new String[] {"Further-eastern European Time", "FET",
+                                      "Further-eastern European Summer Time", "FEST"};
+         String GHMT[] = new String[] {"Heure du Ghana", "GMT",
+@@ -110,29 +112,29 @@
+         String GAMBIER[] =  new String[] {"Heure de Gambi", "GAMT",
+                                           "Heure d'\u00e9t\u00e9 de Gambi", "GAMST"};
+         String GMT[] = new String[] {"Heure de Greenwich", "GMT",
+-                                   "Heure de Greenwich", "GMT"} ;
++                                   "Heure de Greenwich", "GMT"};
+         String GMTBST[] = new String[] {"Heure du m\u00e9ridien de Greenwich", "GMT",
+                                         "Heure d'\u00e9t\u00e9 britannique", "BST"};
+         String GST[] = new String[] {"Heure normale du Golfe", "GST",
+-                                     "Heure avanc\u00e9e du Golfe", "GDT"} ;
++                                     "Heure avanc\u00e9e du Golfe", "GDT"};
+         String HAST[] = new String[] {"Heure normale d'Hawa\u00ef-Al\u00e9outiennes", "HAST",
+-                                      "Heure avanc\u00e9e d'Hawa\u00ef-Al\u00e9outiennes", "HADT"} ;
++                                      "Heure avanc\u00e9e d'Hawa\u00ef-Al\u00e9outiennes", "HADT"};
+         String HKT[] =  new String[] {"Heure de Hong Kong", "HKT",
+                                       "Heure d'\u00e9t\u00e9 de Hong Kong", "HKST"};
+         String HST[] = new String[] {"Heure normale d'Hawa\u00ef", "HST",
+-                                     "Heure avanc\u00e9e d'Hawa\u00ef", "HDT"} ;
++                                     "Heure avanc\u00e9e d'Hawa\u00ef", "HDT"};
+         String ICT[] = new String[] {"Heure d'Indochine", "ICT",
+-                                     "Heure d'\u00e9t\u00e9 d'Indochine", "ICST"} ;
++                                     "Heure d'\u00e9t\u00e9 d'Indochine", "ICST"};
+         String IRT[] = new String[] {"Heure normale d'Iran", "IRST",
+-                                     "Heure avanc\u00e9e d'Iran", "IRDT"} ;
++                                     "Heure avanc\u00e9e d'Iran", "IRDT"};
+         String ISRAEL[] = new String[] {"Heure standard d'Isra\u00ebl", "IST",
+                                         "Heure avanc\u00e9e d'Isra\u00ebl", "IDT"};
+         String IST[] = new String[] {"Heure normale d'Inde", "IST",
+-                                     "Heure avanc\u00e9e d'Inde", "IDT"} ;
++                                     "Heure avanc\u00e9e d'Inde", "IDT"};
+         String JST[] = new String[] {"Heure normale du Japon", "JST",
+-                                     "Heure avanc\u00e9e du Japon", "JDT"} ;
++                                     "Heure avanc\u00e9e du Japon", "JDT"};
+         String KST[] = new String[] {"Heure normale de Cor\u00e9e", "KST",
+-                                     "Heure avanc\u00e9e de Cor\u00e9e", "KDT"} ;
++                                     "Heure avanc\u00e9e de Cor\u00e9e", "KDT"};
+         String LORD_HOWE[] = new String[] {"Heure standard de Lord Howe", "LHST",
+                                            "Heure d'\u00e9t\u00e9 de Lord Howe", "LHST"};
+         String MHT[] = new String[] {"Heure des Iles Marshall", "MHT",
+@@ -140,7 +142,7 @@
+         String MSK[] = new String[] {"Heure standard de Moscou", "MSK",
+                                      "Heure avanc\u00e9e de Moscou", "MSD"};
+         String MST[] = new String[] {"Heure normale des Rocheuses", "MST",
+-                                     "Heure avanc\u00e9e des Rocheuses", "MDT"} ;
++                                     "Heure avanc\u00e9e des Rocheuses", "MDT"};
+         String MYT[] = new String[] {"Heure de Malaisie", "MYT",
+                                      "Heure d'\u00e9t\u00e9 de Malaisie", "MYST"};
+         String NORONHA[] = new String[] {"Heure de Fernando de Noronha", "FNT",
+@@ -150,21 +152,23 @@
+         String NPT[] = new String[] {"Heure du N\u00e9pal", "NPT",
+                                      "Heure d'\u00e9t\u00e9 du N\u00e9pal", "NPST"};
+         String NST[] = new String[] {"Heure normale de Terre-Neuve", "NST",
+-                                     "Heure avanc\u00e9e de Terre-Neuve", "NDT"} ;
++                                     "Heure avanc\u00e9e de Terre-Neuve", "NDT"};
+         String NZST[] = new String[] {"Heure normale de Nouvelle-Z\u00e9lande", "NZST",
+-                                      "Heure avanc\u00e9e de Nouvelle-Z\u00e9lande", "NZDT"} ;
++                                      "Heure avanc\u00e9e de Nouvelle-Z\u00e9lande", "NZDT"};
+         String PITCAIRN[] = new String[] {"Heure standard des Pitcairn", "PST",
+                                           "heure avanc\u00e9e des Pitcairn", "PDT"};
+         String PKT[] = new String[] {"Heure du Pakistan", "PKT",
+-                                     "Heure d'\u00e9t\u00e9 du Pakistan", "PKST"} ;
++                                     "Heure d'\u00e9t\u00e9 du Pakistan", "PKST"};
+         String PONT[] = new String[] {"Pohnpei Time", "PONT",
+                                       "Pohnpei Summer Time", "PONST"};
+         String PST[] = new String[] {"Heure normale du Pacifique", "PST",
+-                                     "Heure avanc\u00e9e du Pacifique", "PDT"} ;
++                                     "Heure avanc\u00e9e du Pacifique", "PDT"};
++        String SAMOA[] = new String[] {"Heure standard de Samoa", "SST",
++                                       "Heure avanc\u00e9e de Samoa", "SDT"};
+         String SAST[] = new String[] {"Heure normale d'Afrique du Sud", "SAST",
+-                                      "Heure d'\u00e9t\u00e9 d'Afrique du Sud", "SAST"} ;
++                                      "Heure d'\u00e9t\u00e9 d'Afrique du Sud", "SAST"};
+         String SBT[] = new String[] {"Heure des \u00celes Salomon", "SBT",
+-                                     "Heure d'\u00e9t\u00e9 des \u00celes Salomon", "SBST"} ;
++                                     "Heure d'\u00e9t\u00e9 des \u00celes Salomon", "SBST"};
+         String SGT[] = new String[] {"Heure de Singapour", "SGT",
+                                      "Heure d'\u00e9t\u00e9 de Singapour", "SGST"};
+         String SLST[] = new String[] {"Heure du m\u00e9ridien de Greenwich", "GMT",
+@@ -172,31 +176,31 @@
+         String TASMANIA[] = new String[] {"Heure standard d'Australie orientale (Tasmanie)", "EST",
+                                           "Heure d'\u00e9t\u00e9 d'Australie orientale (Tasmanie)", "EST"};
+         String TMT[] = new String[] {"Heure du Turkm\u00e9nistan", "TMT",
+-                                     "Heure d'\u00e9t\u00e9 du Turkm\u00e9nistan", "TMST"} ;
++                                     "Heure d'\u00e9t\u00e9 du Turkm\u00e9nistan", "TMST"};
+         String ULAT[]= new String[] {"Heure de l'Ulaanbaatar", "ULAT",
+-                                     "Heure d'\u00e9t\u00e9 de l'Ulaanbaatar", "ULAST"} ;
+-        String WART[] = new String[] {"Heure D'Argentine de l'Ouest", "WART",
+-                                      "Heure d'\u00e9t\u00e9 D'Argentine de l'Ouest", "WARST"} ;
+-        String WAT[] = new String[] {"Heure d'Afrique de l'Ouest", "WAT",
+-                                     "Heure d'\u00e9t\u00e9 d'Afrique de l'Ouest", "WAST"} ;
+-        String WET[] = new String[] {"Heure d'Europe de l'Ouest", "WET",
+-                                     "Heure d'\u00e9t\u00e9 d'Europe de l'Ouest", "WEST"} ;
+-        String WIT[] = new String[] {"Heure de l'Indon\u00e9sie occidentale", "WIT",
+-                                     "Heure d'\u00e9t\u00e9 de l'Indon\u00e9sie occidentale", "WIST"};
+-        String WST_AUS[] = new String[] {"Heure normale de l'Ouest (Australie)", "WST",
+-                                         "Heure d'\u00e9t\u00e9 de l'Ouest (Australie)", "WST"} ;
+-        String SAMOA[] = new String[] {"Heure standard de Samoa", "SST",
+-                                       "Heure avanc\u00e9e de Samoa", "SDT"};
+-        String WST_SAMOA[] = new String[] {"Heure des Samoas occidentales", "WST",
+-                                           "Heure d'\u00e9t\u00e9 des Samoas occidentales", "WSDT"} ;
+-        String ChST[] = new String[] {"Heure normale des \u00eeles Mariannes", "ChST",
+-                      "Heure d'\u00e9t\u00e9 des \u00eeles Mariannes", "ChDT"};
+-        String VICTORIA[] = new String[] {"Heure standard d'Australie orientale (Victoria)", "EST",
+-                                          "Heure d'\u00e9t\u00e9 d'Australie orientale (Victoria)", "EST"};
++                                     "Heure d'\u00e9t\u00e9 de l'Ulaanbaatar", "ULAST"};
+         String UTC[] = new String[] {"Temps universel coordonn\u00e9", "UTC",
+                                      "Temps universel coordonn\u00e9", "UTC"};
+         String UZT[] = new String[] {"Heure de l'Ouzb\u00e9kistan", "UZT",
+                                      "Heure d'\u00e9t\u00e9 de l'Ouzb\u00e9kistan", "UZST"};
++        String VICTORIA[] = new String[] {"Heure standard d'Australie orientale (Victoria)", "EST",
++                                          "Heure d'\u00e9t\u00e9 d'Australie orientale (Victoria)", "EST"};
++        String VLAT[] = new String[] {"Heure de Vladivostok", "VLAT",
++                                      "Heure d'\u00e9t\u00e9 de Vladivostok", "VLAST"};
++        String WART[] = new String[] {"Heure D'Argentine de l'Ouest", "WART",
++                                      "Heure d'\u00e9t\u00e9 D'Argentine de l'Ouest", "WARST"};
++        String WAT[] = new String[] {"Heure d'Afrique de l'Ouest", "WAT",
++                                     "Heure d'\u00e9t\u00e9 d'Afrique de l'Ouest", "WAST"};
++        String WET[] = new String[] {"Heure d'Europe de l'Ouest", "WET",
++                                     "Heure d'\u00e9t\u00e9 d'Europe de l'Ouest", "WEST"};
++        String WIT[] = new String[] {"Heure de l'Indon\u00e9sie occidentale", "WIT",
++                                     "Heure d'\u00e9t\u00e9 de l'Indon\u00e9sie occidentale", "WIST"};
++        String WST_AUS[] = new String[] {"Heure normale de l'Ouest (Australie)", "WST",
++                                         "Heure d'\u00e9t\u00e9 de l'Ouest (Australie)", "WST"};
++        String WST_SAMOA[] = new String[] {"Heure des Samoas occidentales", "WST",
++                                           "Heure d'\u00e9t\u00e9 des Samoas occidentales", "WSDT"};
++        String YAKT[] = new String[] {"Heure du Iakoutsk", "YAKT",
++                                      "Heure d'\u00e9t\u00e9 du Iakoutsk", "YAKST"};
+ 
+         return new Object[][] {
+             {"America/Los_Angeles", PST},
+@@ -287,7 +291,7 @@
+             {"Africa/Porto-Novo", WAT},
+             {"Africa/Sao_Tome", GMT},
+             {"Africa/Timbuktu", GMT},
+-            {"Africa/Tripoli", EET},
++            {"Africa/Tripoli", CET},
+             {"Africa/Tunis", CET},
+             {"Africa/Windhoek", WAT},
+             {"America/Adak", HAST},
+@@ -533,6 +537,7 @@
+             {"Asia/Kashgar", CTT},
+             {"Asia/Kathmandu", NPT},
+             {"Asia/Katmandu", NPT},
++            {"Asia/Khandyga", YAKT},
+             {"Asia/Kolkata", IST},
+             {"Asia/Krasnoyarsk", new String[] {"Heure de Krasno\u00efarsk", "KRAT",
+                                                "Heure d'\u00e9t\u00e9 de Krasno\u00efarsk", "KRAST"}},
+@@ -581,11 +586,10 @@
+             {"Asia/Ulaanbaatar", ULAT},
+             {"Asia/Ulan_Bator", ULAT},
+             {"Asia/Urumqi", CTT},
++            {"Asia/Ust-Nera", VLAT},
+             {"Asia/Vientiane", ICT},
+-            {"Asia/Vladivostok", new String[] {"Heure de Vladivostok", "VLAT",
+-                                               "Heure d'\u00e9t\u00e9 de Vladivostok", "VLAST"}},
+-            {"Asia/Yakutsk", new String[] {"Heure du Iakoutsk", "YAKT",
+-                                           "Heure d'\u00e9t\u00e9 du Iakoutsk", "YAKST"}},
++            {"Asia/Vladivostok", VLAT},
++            {"Asia/Yakutsk", YAKT},
+             {"Asia/Yekaterinburg", new String[] {"Heure de Yekaterinburg", "YEKT",
+                                                  "Heure d'\u00e9t\u00e9 de Yekaterinburg", "YEKST"}},
+             {"Asia/Yerevan", ARMT},
+@@ -669,6 +673,7 @@
+             {"Europe/Bratislava", CET},
+             {"Europe/Brussels", CET},
+             {"Europe/Budapest", CET},
++            {"Europe/Busingen", CET},
+             {"Europe/Chisinau", EET},
+             {"Europe/Copenhagen", CET},
+             {"Europe/Dublin", DUBLIN},
+@@ -748,7 +753,7 @@
+             {"Jamaica", EST},
+             {"Japan", JST},
+             {"Kwajalein", MHT},
+-            {"Libya", EET},
++            {"Libya", CET},
+             {"MET", new String[] {"Heure de l'Europe centrale", "MET",
+                                   "Heure d'\u00e9t\u00e9 de l'Europe centrale", "MEST"}},
+             {"Mexico/BajaNorte", PST},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_it.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_it.java
+@@ -77,6 +77,8 @@
+                                        "Ora legale di Chatham", "CHADT"};
+         String CHUT[] = new String[] {"Chuuk Time", "CHUT",
+                                       "Chuuk Summer Time", "CHUST"};
++        String ChST[] = new String[] {"Ora standard di Chamorro", "ChST",
++                              "Ora legale di Chamorro", "ChDT"};
+         String CIT[] = new String[] {"Ora dell'Indonesia centrale", "CIT",
+                                      "Ora estiva dell'Indonesia centrale", "CIST"};
+         String CLT[] = new String[] {"Ora del Cile", "CLT",
+@@ -161,6 +163,8 @@
+                                       "Pohnpei Summer Time", "PONST"};
+         String PST[] = new String[] {"Ora solare della costa occidentale USA", "PST",
+                                      "Ora legale della costa occidentale USA", "PDT"};
++        String SAMOA[] = new String[] {"Ora standard di Samoa", "SST",
++                                       "Ora legale di Samoa", "SDT"};
+         String SAST[] = new String[] {"Ora solare del Sudafrica", "SAST",
+                                       "Ora estiva del Sudafrica", "SAST"};
+         String SBT[] = new String[] {"Ora delle Isole Salomone", "SBT",
+@@ -175,6 +179,14 @@
+                                      "Ora estiva del Turkmenistan", "TMST"};
+         String ULAT[]= new String[] {"Ora di Ulaanbaatar", "ULAT",
+                                      "Ora estiva di Ulaanbaatar", "ULAST"};
++        String UTC[] = new String[] {"Tempo universale coordinato", "UTC",
++                                     "Tempo universale coordinato", "UTC"};
++        String UZT[] = new String[] {"Ora dell'Uzbekistan", "UZT",
++                                     "Ora estiva dell'Uzbekistan", "UZST"};
++        String VICTORIA[] = new String[] {"Ora orientale standard (Victoria)", "EST",
++                                          "Ora estiva orientale (Victoria)", "EST"};
++        String VLAT[] = new String[] {"Ora di Vladivostok", "VLAT",
++                                      "Ora estiva di Vladivostok", "VLAST"};
+         String WART[] = new String[] {"Ora dell'Argentina occidentale", "WART",
+                                       "Ora estiva dell'Argentina occidentale", "WARST"};
+         String WAT[] = new String[] {"Ora dell'Africa occidentale", "WAT",
+@@ -185,18 +197,10 @@
+                                      "Ora estiva dell'Indonesia occidentale", "WIST"};
+         String WST_AUS[] = new String[] {"Ora solare dell'Australia occidentale", "WST",
+                                          "Ora estiva dell'Australia occidentale", "WST"};
+-        String SAMOA[] = new String[] {"Ora standard di Samoa", "SST",
+-                                       "Ora legale di Samoa", "SDT"};
+         String WST_SAMOA[] = new String[] {"Ora di Samoa", "WST",
+                                            "Ora estiva di Samoa", "WSDT"};
+-        String ChST[] = new String[] {"Ora standard di Chamorro", "ChST",
+-                              "Ora legale di Chamorro", "ChDT"};
+-        String VICTORIA[] = new String[] {"Ora orientale standard (Victoria)", "EST",
+-                                          "Ora estiva orientale (Victoria)", "EST"};
+-        String UTC[] = new String[] {"Tempo universale coordinato", "UTC",
+-                                     "Tempo universale coordinato", "UTC"};
+-        String UZT[] = new String[] {"Ora dell'Uzbekistan", "UZT",
+-                                     "Ora estiva dell'Uzbekistan", "UZST"};
++        String YAKT[] = new String[] {"Ora di Jakutsk", "YAKT",
++                                      "Ora estiva di Jakutsk", "YAKST"};
+ 
+         return new Object[][] {
+             {"America/Los_Angeles", PST},
+@@ -287,7 +291,7 @@
+             {"Africa/Porto-Novo", WAT},
+             {"Africa/Sao_Tome", GMT},
+             {"Africa/Timbuktu", GMT},
+-            {"Africa/Tripoli", EET},
++            {"Africa/Tripoli", CET},
+             {"Africa/Tunis", CET},
+             {"Africa/Windhoek", WAT},
+             {"America/Adak", HAST},
+@@ -533,6 +537,7 @@
+             {"Asia/Kashgar", CTT},
+             {"Asia/Kathmandu", NPT},
+             {"Asia/Katmandu", NPT},
++            {"Asia/Khandyga", YAKT},
+             {"Asia/Kolkata", IST},
+             {"Asia/Krasnoyarsk", new String[] {"Ora di Krasnojarsk", "KRAT",
+                                                "Ora estiva di Krasnojarsk", "KRAST"}},
+@@ -581,11 +586,10 @@
+             {"Asia/Ulaanbaatar", ULAT},
+             {"Asia/Ulan_Bator", ULAT},
+             {"Asia/Urumqi", CTT},
++            {"Asia/Ust-Nera", VLAT},
+             {"Asia/Vientiane", ICT},
+-            {"Asia/Vladivostok", new String[] {"Ora di Vladivostok", "VLAT",
+-                                               "Ora estiva di Vladivostok", "VLAST"}},
+-            {"Asia/Yakutsk", new String[] {"Ora di Jakutsk", "YAKT",
+-                                           "Ora estiva di Jakutsk", "YAKST"}},
++            {"Asia/Vladivostok", VLAT},
++            {"Asia/Yakutsk", YAKT},
+             {"Asia/Yekaterinburg", new String[] {"Ora di Ekaterinburg", "YEKT",
+                                                  "Ora estiva di Ekaterinburg", "YEKST"}},
+             {"Asia/Yerevan", ARMT},
+@@ -669,6 +673,7 @@
+             {"Europe/Bratislava", CET},
+             {"Europe/Brussels", CET},
+             {"Europe/Budapest", CET},
++            {"Europe/Busingen", CET},
+             {"Europe/Chisinau", EET},
+             {"Europe/Copenhagen", CET},
+             {"Europe/Dublin", DUBLIN},
+@@ -748,7 +753,7 @@
+             {"Jamaica", EST},
+             {"Japan", JST},
+             {"Kwajalein", MHT},
+-            {"Libya", EET},
++            {"Libya", CET},
+             {"MET", new String[] {"Ora dell'Europa centrale", "MET",
+                                   "Ora estiva dell'Europa centrale", "MEST"}},
+             {"Mexico/BajaNorte", PST},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_ja.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_ja.java
+@@ -75,6 +75,8 @@
+                                      "\u4e2d\u90e8\u30e8\u30fc\u30ed\u30c3\u30d1\u590f\u6642\u9593", "CEST"};
+         String CHAST[] = new String[] {"\u30c1\u30e3\u30bf\u30e0\u6a19\u6e96\u6642", "CHAST",
+                                        "\u30c1\u30e3\u30bf\u30e0\u590f\u6642\u9593", "CHADT"};
++        String ChST[] = new String[] {"\u30b0\u30a2\u30e0\u6a19\u6e96\u6642", "ChST",
++                                      "\u30b0\u30a2\u30e0\u590f\u6642\u9593", "ChDT"};
+         String CHUT[] = new String[] {"Chuuk Time", "CHUT",
+                                       "Chuuk Summer Time", "CHUST"};
+         String CIT[] = new String[] {"\u4e2d\u592e\u30a4\u30f3\u30c9\u30cd\u30b7\u30a2\u6642\u9593", "CIT",
+@@ -161,6 +163,8 @@
+                                       "Pohnpei Summer Time", "PONST"};
+         String PST[] = new String[] {"\u592a\u5e73\u6d0b\u6a19\u6e96\u6642", "PST",
+                                      "\u592a\u5e73\u6d0b\u590f\u6642\u9593", "PDT"};
++        String SAMOA[] = new String[] {"\u30b5\u30e2\u30a2\u6a19\u6e96\u6642", "SST",
++                                       "\u30b5\u30e2\u30a2\u590f\u6642\u9593", "SDT"};
+         String SAST[] = new String[] {"\u5357\u30a2\u30d5\u30ea\u30ab\u6a19\u6e96\u6642", "SAST",
+                                       "\u5357\u30a2\u30d5\u30ea\u30ab\u590f\u6642\u9593", "SAST"};
+         String SBT[] = new String[] {"\u30bd\u30ed\u30e2\u30f3\u8af8\u5cf6\u6642\u9593", "SBT",
+@@ -175,6 +179,14 @@
+                                      "\u30c8\u30eb\u30af\u30e1\u30cb\u30b9\u30bf\u30f3\u590f\u6642\u9593", "TMST"};
+         String ULAT[]= new String[] {"\u30a6\u30e9\u30fc\u30f3\u30d0\u30fc\u30c8\u30eb\u6642\u9593", "ULAT",
+                                      "\u30a6\u30e9\u30fc\u30f3\u30d0\u30fc\u30c8\u30eb\u590f\u6642\u9593", "ULAST"};
++        String UTC[] = new String[] {"\u5354\u5b9a\u4e16\u754c\u6642", "UTC",
++                                     "\u5354\u5b9a\u4e16\u754c\u6642", "UTC"};
++        String UZT[] = new String[] {"\u30a6\u30ba\u30d9\u30ad\u30b9\u30bf\u30f3\u6642\u9593", "UZT",
++                                     "\u30a6\u30ba\u30d9\u30ad\u30b9\u30bf\u30f3\u590f\u6642\u9593", "UZST"};
++        String VICTORIA[] = new String[] {"\u6771\u90e8\u6a19\u6e96\u6642 (\u30d3\u30af\u30c8\u30ea\u30a2)", "EST",
++                                          "\u6771\u90e8\u590f\u6642\u9593 (\u30d3\u30af\u30c8\u30ea\u30a2)", "EST"};
++        String VLAT[] = new String[] {"\u30a6\u30e9\u30b8\u30aa\u30b9\u30c8\u30af\u6642\u9593", "VLAT",
++                                      "\u30a6\u30e9\u30b8\u30aa\u30b9\u30c8\u30af\u590f\u6642\u9593", "VLAST"};
+         String WART[] = new String[] {"\u897f\u30a2\u30eb\u30bc\u30f3\u30c1\u30f3\u6642\u9593", "WART",
+                                       "\u897f\u30a2\u30eb\u30bc\u30f3\u30c1\u30f3\u590f\u6642\u9593", "WARST"};
+         String WAT[] = new String[] {"\u897f\u30a2\u30d5\u30ea\u30ab\u6642\u9593", "WAT",
+@@ -185,18 +197,10 @@
+                                      "\u897f\u30a4\u30f3\u30c9\u30cd\u30b7\u30a2\u590f\u6642\u9593", "WIST"};
+         String WST_AUS[] = new String[] {"\u897f\u90e8\u6a19\u6e96\u6642 (\u30aa\u30fc\u30b9\u30c8\u30e9\u30ea\u30a2)", "WST",
+                                          "\u897f\u90e8\u590f\u6642\u9593 (\u30aa\u30fc\u30b9\u30c8\u30e9\u30ea\u30a2)", "WST"};
+-        String SAMOA[] = new String[] {"\u30b5\u30e2\u30a2\u6a19\u6e96\u6642", "SST",
+-                                       "\u30b5\u30e2\u30a2\u590f\u6642\u9593", "SDT"};
+         String WST_SAMOA[] = new String[] {"\u897f\u30b5\u30e2\u30a2\u6642\u9593", "WST",
+                                            "\u897f\u30b5\u30e2\u30a2\u590f\u6642\u9593", "WSDT"};
+-        String ChST[] = new String[] {"\u30b0\u30a2\u30e0\u6a19\u6e96\u6642", "ChST",
+-                                      "\u30b0\u30a2\u30e0\u590f\u6642\u9593", "ChDT"};
+-        String VICTORIA[] = new String[] {"\u6771\u90e8\u6a19\u6e96\u6642 (\u30d3\u30af\u30c8\u30ea\u30a2)", "EST",
+-                                          "\u6771\u90e8\u590f\u6642\u9593 (\u30d3\u30af\u30c8\u30ea\u30a2)", "EST"};
+-        String UTC[] = new String[] {"\u5354\u5b9a\u4e16\u754c\u6642", "UTC",
+-                                     "\u5354\u5b9a\u4e16\u754c\u6642", "UTC"};
+-        String UZT[] = new String[] {"\u30a6\u30ba\u30d9\u30ad\u30b9\u30bf\u30f3\u6642\u9593", "UZT",
+-                                     "\u30a6\u30ba\u30d9\u30ad\u30b9\u30bf\u30f3\u590f\u6642\u9593", "UZST"};
++        String YAKT[] = new String[] {"\u30e4\u30af\u30fc\u30c4\u30af\u6642\u9593", "YAKT",
++                                      "\u30e4\u30af\u30fc\u30c4\u30af\u590f\u6642\u9593", "YAKST"};
+ 
+         return new Object[][] {
+             {"America/Los_Angeles", PST},
+@@ -287,7 +291,7 @@
+             {"Africa/Porto-Novo", WAT},
+             {"Africa/Sao_Tome", GMT},
+             {"Africa/Timbuktu", GMT},
+-            {"Africa/Tripoli", EET},
++            {"Africa/Tripoli", CET},
+             {"Africa/Tunis", CET},
+             {"Africa/Windhoek", WAT},
+             {"America/Adak", HAST},
+@@ -533,6 +537,7 @@
+             {"Asia/Kashgar", CTT},
+             {"Asia/Kathmandu", NPT},
+             {"Asia/Katmandu", NPT},
++            {"Asia/Khandyga", YAKT},
+             {"Asia/Kolkata", IST},
+             {"Asia/Krasnoyarsk", new String[] {"\u30af\u30e9\u30b9\u30ce\u30e4\u30eb\u30b9\u30af\u6642\u9593", "KRAT",
+                                                "\u30af\u30e9\u30b9\u30ce\u30e4\u30eb\u30b9\u30af\u590f\u6642\u9593", "KRAST"}},
+@@ -581,11 +586,10 @@
+             {"Asia/Ulaanbaatar", ULAT},
+             {"Asia/Ulan_Bator", ULAT},
+             {"Asia/Urumqi", CTT},
++            {"Asia/Ust-Nera", VLAT},
+             {"Asia/Vientiane", ICT},
+-            {"Asia/Vladivostok", new String[] {"\u30a6\u30e9\u30b8\u30aa\u30b9\u30c8\u30af\u6642\u9593", "VLAT",
+-                                               "\u30a6\u30e9\u30b8\u30aa\u30b9\u30c8\u30af\u590f\u6642\u9593", "VLAST"}},
+-            {"Asia/Yakutsk", new String[] {"\u30e4\u30af\u30fc\u30c4\u30af\u6642\u9593", "YAKT",
+-                                           "\u30e4\u30af\u30fc\u30c4\u30af\u590f\u6642\u9593", "YAKST"}},
++            {"Asia/Vladivostok", VLAT},
++            {"Asia/Yakutsk", YAKT},
+             {"Asia/Yekaterinburg", new String[] {"\u30a8\u30ab\u30c6\u30ea\u30f3\u30d6\u30eb\u30b0\u6642\u9593", "YEKT",
+                                                  "\u30a8\u30ab\u30c6\u30ea\u30f3\u30d6\u30eb\u30b0\u590f\u6642\u9593", "YEKST"}},
+             {"Asia/Yerevan", ARMT},
+@@ -669,6 +673,7 @@
+             {"Europe/Bratislava", CET},
+             {"Europe/Brussels", CET},
+             {"Europe/Budapest", CET},
++            {"Europe/Busingen", CET},
+             {"Europe/Chisinau", EET},
+             {"Europe/Copenhagen", CET},
+             {"Europe/Dublin", DUBLIN},
+@@ -748,7 +753,7 @@
+             {"Jamaica", EST},
+             {"Japan", JST},
+             {"Kwajalein", MHT},
+-            {"Libya", EET},
++            {"Libya", CET},
+             {"MET", new String[] {"\u4e2d\u90e8\u30e8\u30fc\u30ed\u30c3\u30d1\u6642\u9593", "MET",
+                                   "\u4e2d\u90e8\u30e8\u30fc\u30ed\u30c3\u30d1\u590f\u6642\u9593", "MEST"}},
+             {"Mexico/BajaNorte", PST},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_ko.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_ko.java
+@@ -75,6 +75,8 @@
+                                      "\uc911\uc559 \uc720\ub7fd \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "CEST"};
+         String CHAST[] = new String[] {"Chatham \ud45c\uc900\uc2dc", "CHAST",
+                                        "Chatham \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "CHADT"};
++        String ChST[] = new String[] {"\ucc28\ubaa8\ub85c \ud45c\uc900\uc2dc", "ChST",
++                                      "\ucc28\ubaa8\ub85c \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "ChDT"};
+         String CHUT[] = new String[] {"Chuuk Time", "CHUT",
+                                       "Chuuk Summer Time", "CHUST"};
+         String CIT[] = new String[] {"\uc911\uc559 \uc778\ub3c4\ub124\uc2dc\uc544 \uc2dc\uac04", "CIT",
+@@ -161,6 +163,8 @@
+                                       "Pohnpei Summer Time", "PONST"};
+         String PST[] = new String[] {"\ud0dc\ud3c9\uc591 \ud45c\uc900\uc2dc", "PST",
+                                      "\ud0dc\ud3c9\uc591 \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "PDT"};
++        String SAMOA[] = new String[] {"\uc0ac\ubaa8\uc544 \ud45c\uc900\uc2dc", "SST",
++                                       "\uc0ac\ubaa8\uc544 \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "SDT"};
+         String SAST[] = new String[] {"\ub0a8\uc544\ud504\ub9ac\uce74 \ud45c\uc900\uc2dc", "SAST",
+                                       "\ub0a8\uc544\ud504\ub9ac\uce74 \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "SAST"};
+         String SBT[] = new String[] {"\uc194\ub85c\ubaac \uad70\ub3c4 \uc2dc\uac04", "SBT",
+@@ -175,6 +179,14 @@
+                                      "\ud22c\ub974\ud06c\uba54\ub2c8\uc2a4\ud0c4 \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "TMST"};
+         String ULAT[]= new String[] {"\uc6b8\ub780\ubc14\ud0c0\ub974 \uc2dc\uac04", "ULAT",
+                                      "\uc6b8\ub780\ubc14\ud0c0\ub974 \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "ULAST"};
++        String UTC[] = new String[] {"\uc138\uacc4 \ud45c\uc900\uc2dc", "UTC",
++                                     "\uc138\uacc4 \ud45c\uc900\uc2dc", "UTC"};
++        String UZT[] = new String[] {"\uc6b0\uc988\ubca0\ud0a4\uc2a4\ud0c4 \uc2dc\uac04", "UZT",
++                                     "\uc6b0\uc988\ubca0\ud0a4\uc2a4\ud0c4 \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "UZST"};
++        String VICTORIA[] = new String[] {"\ub3d9\ubd80 \ud45c\uc900\uc2dc(\ube45\ud1a0\ub9ac\uc544)", "EST",
++                                          "\ub3d9\ubd80 \uc77c\uad11\uc808\uc57d\uc2dc\uac04(\ube45\ud1a0\ub9ac\uc544)", "EST"};
++        String VLAT[] = new String[] {"\ube14\ub77c\ub514\ubcf4\uc2a4\ud1a1 \uc2dc\uac04", "VLAT",
++                                      "\ube14\ub77c\ub514\ubcf4\uc2a4\ud1a1 \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "VLAST"};
+         String WART[] = new String[] {"\uc11c\ubd80 \uc544\ub974\ud5e8\ud2f0\ub098 \uc2dc\uac04", "WART",
+                                       "\uc11c\ubd80 \uc544\ub974\ud5e8\ud2f0\ub098 \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "WARST"};
+         String WAT[] = new String[] {"\uc11c\ubd80 \uc544\ud504\ub9ac\uce74 \uc2dc\uac04", "WAT",
+@@ -185,18 +197,10 @@
+                                      "\uc11c\uc778\ub3c4\ub124\uc2dc\uc544 \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "WIST"};
+         String WST_AUS[] = new String[] {"\uc11c\ubd80 \ud45c\uc900\uc2dc(\ud638\uc8fc)", "WST",
+                                          "\uc11c\ubd80 \uc77c\uad11\uc808\uc57d\uc2dc\uac04(\ud638\uc8fc)", "WST"};
+-        String SAMOA[] = new String[] {"\uc0ac\ubaa8\uc544 \ud45c\uc900\uc2dc", "SST",
+-                                       "\uc0ac\ubaa8\uc544 \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "SDT"};
+         String WST_SAMOA[] = new String[] {"\uc11c\uc0ac\ubaa8\uc544 \uc2dc\uac04", "WST",
+                                            "\uc11c\uc0ac\ubaa8\uc544 \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "WSDT"};
+-        String ChST[] = new String[] {"\ucc28\ubaa8\ub85c \ud45c\uc900\uc2dc", "ChST",
+-                                      "\ucc28\ubaa8\ub85c \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "ChDT"};
+-        String VICTORIA[] = new String[] {"\ub3d9\ubd80 \ud45c\uc900\uc2dc(\ube45\ud1a0\ub9ac\uc544)", "EST",
+-                                          "\ub3d9\ubd80 \uc77c\uad11\uc808\uc57d\uc2dc\uac04(\ube45\ud1a0\ub9ac\uc544)", "EST"};
+-        String UTC[] = new String[] {"\uc138\uacc4 \ud45c\uc900\uc2dc", "UTC",
+-                                     "\uc138\uacc4 \ud45c\uc900\uc2dc", "UTC"};
+-        String UZT[] = new String[] {"\uc6b0\uc988\ubca0\ud0a4\uc2a4\ud0c4 \uc2dc\uac04", "UZT",
+-                                     "\uc6b0\uc988\ubca0\ud0a4\uc2a4\ud0c4 \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "UZST"};
++        String YAKT[] = new String[] {"\uc57c\uce20\ud06c \uc2dc\uac04", "YAKT",
++                                      "\uc57c\uce20\ud06c \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "YAKST"};
+ 
+         return new Object[][] {
+             {"America/Los_Angeles", PST},
+@@ -287,7 +291,7 @@
+             {"Africa/Porto-Novo", WAT},
+             {"Africa/Sao_Tome", GMT},
+             {"Africa/Timbuktu", GMT},
+-            {"Africa/Tripoli", EET},
++            {"Africa/Tripoli", CET},
+             {"Africa/Tunis", CET},
+             {"Africa/Windhoek", WAT},
+             {"America/Adak", HAST},
+@@ -533,6 +537,7 @@
+             {"Asia/Kashgar", CTT},
+             {"Asia/Kathmandu", NPT},
+             {"Asia/Katmandu", NPT},
++            {"Asia/Khandyga", YAKT},
+             {"Asia/Kolkata", IST},
+             {"Asia/Krasnoyarsk", new String[] {"\ud06c\ub77c\uc2a4\ub178\uc57c\ub974\uc2a4\ud06c \uc2dc\uac04", "KRAT",
+                                                "\ud06c\ub77c\uc2a4\ub178\uc57c\ub974\uc2a4\ud06c \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "KRAST"}},
+@@ -581,11 +586,10 @@
+             {"Asia/Ulaanbaatar", ULAT},
+             {"Asia/Ulan_Bator", ULAT},
+             {"Asia/Urumqi", CTT},
++            {"Asia/Ust-Nera", VLAT},
+             {"Asia/Vientiane", ICT},
+-            {"Asia/Vladivostok", new String[] {"\ube14\ub77c\ub514\ubcf4\uc2a4\ud1a1 \uc2dc\uac04", "VLAT",
+-                                               "\ube14\ub77c\ub514\ubcf4\uc2a4\ud1a1 \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "VLAST"}},
+-            {"Asia/Yakutsk", new String[] {"\uc57c\uce20\ud06c \uc2dc\uac04", "YAKT",
+-                                           "\uc57c\uce20\ud06c \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "YAKST"}},
++            {"Asia/Vladivostok", VLAT},
++            {"Asia/Yakutsk", YAKT},
+             {"Asia/Yekaterinburg", new String[] {"\uc608\uce74\ud14c\ub9b0\ubc84\uadf8 \uc2dc\uac04", "YEKT",
+                                                  "\uc608\uce74\ud14c\ub9b0\ubc84\uadf8 \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "YEKST"}},
+             {"Asia/Yerevan", ARMT},
+@@ -669,6 +673,7 @@
+             {"Europe/Bratislava", CET},
+             {"Europe/Brussels", CET},
+             {"Europe/Budapest", CET},
++            {"Europe/Busingen", CET},
+             {"Europe/Chisinau", EET},
+             {"Europe/Copenhagen", CET},
+             {"Europe/Dublin", DUBLIN},
+@@ -748,7 +753,7 @@
+             {"Jamaica", EST},
+             {"Japan", JST},
+             {"Kwajalein", MHT},
+-            {"Libya", EET},
++            {"Libya", CET},
+             {"MET", new String[] {"\uc911\ubd80 \uc720\ub7fd \uc2dc\uac04", "MET",
+                                   "\uc911\ubd80 \uc720\ub7fd \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "MEST"}},
+             {"Mexico/BajaNorte", PST},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_sv.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_sv.java
+@@ -75,6 +75,8 @@
+                                      "Centraleuropeisk sommartid", "CEST"};
+         String CHAST[] = new String[] {"Chatham, normaltid", "CHAST",
+                                        "Chatham, sommartid", "CHADT"};
++        String ChST[] = new String[] {"Chamorro, normaltid", "ChST",
++                                      "Chamorro, sommartid", "ChDT"};
+         String CHUT[] = new String[] {"Chuuk Time", "CHUT",
+                                       "Chuuk Summer Time", "CHUST"};
+         String CIT[] = new String[] {"Centralindonesisk tid", "CIT",
+@@ -161,6 +163,8 @@
+                                       "Pohnpei Summer Time", "PONST"};
+         String PST[] = new String[] {"Stilla havet, normaltid", "PST",
+                                      "Stilla havet, sommartid", "PDT"};
++        String SAMOA[] = new String[] {"Samoa, normaltid", "SST",
++                                       "Samoa, sommartid", "SDT"};
+         String SAST[] = new String[] {"Sydafrika, normaltid", "SAST",
+                                       "Sydafrika, sommartid", "SAST"};
+         String SBT[] = new String[] {"Salomon\u00f6arna, normaltid", "SBT",
+@@ -175,6 +179,14 @@
+                                      "Turkmenistan, sommartid", "TMST"};
+         String ULAT[]= new String[] {"Ulaanbaatar, normaltid", "ULAT",
+                                      "Ulaanbaatar, sommartid", "ULAST"};
++        String UTC[] = new String[] {"Koordinerad universell tid", "UTC",
++                                     "Koordinerad universell tid", "UTC"};
++        String UZT[] = new String[] {"Uzbekistan, normaltid", "UZT",
++                                     "Uzbekistan, sommartid", "UZST"};
++        String VICTORIA[] = new String[] {"\u00d6stlig normaltid (Victoria)", "EST",
++                                          "\u00d6stlig sommartid (Victoria)", "EST"};
++        String VLAT[] = new String[] {"Vladivostok, normaltid", "VLAT",
++                                      "Vladivostok, sommartid", "VLAST"};
+         String WART[] = new String[] {"V\u00e4stargentina, normaltid", "WART",
+                                       "V\u00e4stargentina, sommartid", "WARST"};
+         String WAT[] = new String[] {"V\u00e4stafrikansk tid", "WAT",
+@@ -185,18 +197,10 @@
+                                      "V\u00e4stindonesisk sommartid", "WIST"};
+         String WST_AUS[] = new String[] {"V\u00e4stlig normaltid (Australien)", "WST",
+                                          "V\u00e4stlig sommartid (Australien)", "WST"};
+-        String SAMOA[] = new String[] {"Samoa, normaltid", "SST",
+-                                       "Samoa, sommartid", "SDT"};
+         String WST_SAMOA[] = new String[] {"V\u00e4stsamoansk tid", "WST",
+                                            "V\u00e4stsamoansk sommartid", "WSDT"};
+-        String ChST[] = new String[] {"Chamorro, normaltid", "ChST",
+-                                      "Chamorro, sommartid", "ChDT"};
+-        String VICTORIA[] = new String[] {"\u00d6stlig normaltid (Victoria)", "EST",
+-                                          "\u00d6stlig sommartid (Victoria)", "EST"};
+-        String UTC[] = new String[] {"Koordinerad universell tid", "UTC",
+-                                     "Koordinerad universell tid", "UTC"};
+-        String UZT[] = new String[] {"Uzbekistan, normaltid", "UZT",
+-                                     "Uzbekistan, sommartid", "UZST"};
++        String YAKT[] = new String[] {"Jakutsk, normaltid", "YAKT",
++                                      "Jakutsk, sommartid", "YAKST"};
+ 
+         return new Object[][] {
+             {"America/Los_Angeles", PST},
+@@ -287,7 +291,7 @@
+             {"Africa/Porto-Novo", WAT},
+             {"Africa/Sao_Tome", GMT},
+             {"Africa/Timbuktu", GMT},
+-            {"Africa/Tripoli", EET},
++            {"Africa/Tripoli", CET},
+             {"Africa/Tunis", CET},
+             {"Africa/Windhoek", WAT},
+             {"America/Adak", HAST},
+@@ -533,6 +537,7 @@
+             {"Asia/Kashgar", CTT},
+             {"Asia/Kathmandu", NPT},
+             {"Asia/Katmandu", NPT},
++            {"Asia/Khandyga", YAKT},
+             {"Asia/Kolkata", IST},
+             {"Asia/Krasnoyarsk", new String[] {"Krasnojarsk, normaltid", "KRAT",
+                                                "Krasnojarsk, sommartid", "KRAST"}},
+@@ -581,11 +586,10 @@
+             {"Asia/Ulaanbaatar", ULAT},
+             {"Asia/Ulan_Bator", ULAT},
+             {"Asia/Urumqi", CTT},
++            {"Asia/Ust-Nera", VLAT},
+             {"Asia/Vientiane", ICT},
+-            {"Asia/Vladivostok", new String[] {"Vladivostok, normaltid", "VLAT",
+-                                               "Vladivostok, sommartid", "VLAST"}},
+-            {"Asia/Yakutsk", new String[] {"Jakutsk, normaltid", "YAKT",
+-                                           "Jakutsk, sommartid", "YAKST"}},
++            {"Asia/Vladivostok", VLAT},
++            {"Asia/Yakutsk", YAKT},
+             {"Asia/Yekaterinburg", new String[] {"Jekaterinburg, normaltid", "YEKT",
+                                                  "Jekaterinburg, sommartid", "YEKST"}},
+             {"Asia/Yerevan", ARMT},
+@@ -669,6 +673,7 @@
+             {"Europe/Bratislava", CET},
+             {"Europe/Brussels", CET},
+             {"Europe/Budapest", CET},
++            {"Europe/Busingen", CET},
+             {"Europe/Chisinau", EET},
+             {"Europe/Copenhagen", CET},
+             {"Europe/Dublin", DUBLIN},
+@@ -748,7 +753,7 @@
+             {"Jamaica", EST},
+             {"Japan", JST},
+             {"Kwajalein", MHT},
+-            {"Libya", EET},
++            {"Libya", CET},
+             {"MET", new String[] {"Mellaneuropeisk tid", "MET",
+                                   "Mellaneuropeisk sommartid", "MEST"}},
+             {"Mexico/BajaNorte", PST},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_zh_CN.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_zh_CN.java
+@@ -75,6 +75,8 @@
+                                      "\u4e2d\u6b27\u590f\u4ee4\u65f6", "CEST"};
+         String CHAST[] = new String[] {"\u67e5\u8428\u59c6\u6807\u51c6\u65f6\u95f4", "CHAST",
+                                        "\u67e5\u8428\u59c6\u590f\u4ee4\u65f6", "CHADT"};
++        String ChST[] = new String[] {"Chamorro \u6807\u51c6\u65f6\u95f4", "ChST",
++                                      "Chamorro \u590f\u4ee4\u65f6", "ChDT"};
+         String CHUT[] = new String[] {"Chuuk Time", "CHUT",
+                                       "Chuuk Summer Time", "CHUST"};
+         String CIT[] = new String[] {"\u4e2d\u90e8\u5370\u5ea6\u5c3c\u897f\u4e9a\u65f6\u95f4", "CIT",
+@@ -161,6 +163,8 @@
+                                       "Pohnpei Summer Time", "PONST"};
+         String PST[] = new String[] {"\u592a\u5e73\u6d0b\u6807\u51c6\u65f6\u95f4", "PST",
+                                      "\u592a\u5e73\u6d0b\u590f\u4ee4\u65f6", "PDT"};
++        String SAMOA[] = new String[] {"\u8428\u6469\u4e9a\u7fa4\u5c9b\u6807\u51c6\u65f6\u95f4", "SST",
++                                       "\u8428\u6469\u4e9a\u7fa4\u5c9b\u590f\u4ee4\u65f6", "SDT"};
+         String SAST[] = new String[] {"\u5357\u975e\u6807\u51c6\u65f6\u95f4", "SAST",
+                                       "\u5357\u975e\u590f\u4ee4\u65f6", "SAST"};
+         String SBT[] = new String[] {"\u6240\u7f57\u95e8\u7fa4\u5c9b\u65f6\u95f4", "SBT",
+@@ -175,6 +179,14 @@
+                                      "\u571f\u5e93\u66fc\u590f\u4ee4\u65f6", "TMST"};
+         String ULAT[]= new String[] {"\u5e93\u4f26\u65f6\u95f4", "ULAT",
+                                      "\u5e93\u4f26\u590f\u4ee4\u65f6", "ULAST"};
++        String UTC[] = new String[] {"\u534f\u8c03\u4e16\u754c\u65f6\u95f4", "UTC",
++                                     "\u534f\u8c03\u4e16\u754c\u65f6\u95f4", "UTC"};
++        String UZT[] = new String[] {"\u4e4c\u5179\u522b\u514b\u65af\u5766\u65f6\u95f4", "UZT",
++                                     "\u4e4c\u5179\u522b\u514b\u65af\u5766\u590f\u4ee4\u65f6", "UZST"};
++        String VICTORIA[] = new String[] {"\u4e1c\u90e8\u6807\u51c6\u65f6\u95f4\uff08\u7ef4\u591a\u5229\u4e9a\uff09", "EST",
++                                          "\u4e1c\u90e8\u590f\u4ee4\u65f6\uff08\u7ef4\u591a\u5229\u4e9a\uff09", "EST"};
++        String VLAT[] = new String[] {"\u6d77\u53c2\u5d34\u65f6\u95f4", "VLAT",
++                                      "\u6d77\u53c2\u5d34\u590f\u4ee4\u65f6", "VLAST"};
+         String WART[] = new String[] {"\u897f\u963f\u6839\u5ef7\u65f6\u95f4", "WART",
+                                       "\u897f\u963f\u6839\u5ef7\u590f\u4ee4\u65f6", "WARST"};
+         String WAT[] = new String[] {"\u897f\u975e\u65f6\u95f4", "WAT",
+@@ -185,18 +197,10 @@
+                                      "\u897f\u5370\u5ea6\u5c3c\u897f\u4e9a\u590f\u4ee4\u65f6", "WIST"};
+         String WST_AUS[] = new String[] {"\u897f\u90e8\u6807\u51c6\u65f6\u95f4\uff08\u6fb3\u5927\u5229\u4e9a\uff09", "WST",
+                                          "\u897f\u90e8\u590f\u4ee4\u65f6\uff08\u6fb3\u5927\u5229\u4e9a\uff09", "WST"};
+-        String SAMOA[] = new String[] {"\u8428\u6469\u4e9a\u7fa4\u5c9b\u6807\u51c6\u65f6\u95f4", "SST",
+-                                       "\u8428\u6469\u4e9a\u7fa4\u5c9b\u590f\u4ee4\u65f6", "SDT"};
+         String WST_SAMOA[] = new String[] {"\u897f\u8428\u6469\u4e9a\u65f6\u95f4", "WST",
+                                            "\u897f\u8428\u6469\u4e9a\u590f\u4ee4\u65f6", "WSDT"};
+-        String ChST[] = new String[] {"Chamorro \u6807\u51c6\u65f6\u95f4", "ChST",
+-                                      "Chamorro \u590f\u4ee4\u65f6", "ChDT"};
+-        String VICTORIA[] = new String[] {"\u4e1c\u90e8\u6807\u51c6\u65f6\u95f4\uff08\u7ef4\u591a\u5229\u4e9a\uff09", "EST",
+-                                          "\u4e1c\u90e8\u590f\u4ee4\u65f6\uff08\u7ef4\u591a\u5229\u4e9a\uff09", "EST"};
+-        String UTC[] = new String[] {"\u534f\u8c03\u4e16\u754c\u65f6\u95f4", "UTC",
+-                                     "\u534f\u8c03\u4e16\u754c\u65f6\u95f4", "UTC"};
+-        String UZT[] = new String[] {"\u4e4c\u5179\u522b\u514b\u65af\u5766\u65f6\u95f4", "UZT",
+-                                     "\u4e4c\u5179\u522b\u514b\u65af\u5766\u590f\u4ee4\u65f6", "UZST"};
++        String YAKT[] = new String[] {"\u4e9a\u5e93\u6b21\u514b\u65f6\u95f4", "YAKT",
++                                      "\u4e9a\u5e93\u6b21\u514b\u590f\u4ee4\u65f6", "YAKST"};
+ 
+         return new Object[][] {
+             {"America/Los_Angeles", PST},
+@@ -287,7 +291,7 @@
+             {"Africa/Porto-Novo", WAT},
+             {"Africa/Sao_Tome", GMT},
+             {"Africa/Timbuktu", GMT},
+-            {"Africa/Tripoli", EET},
++            {"Africa/Tripoli", CET},
+             {"Africa/Tunis", CET},
+             {"Africa/Windhoek", WAT},
+             {"America/Adak", HAST},
+@@ -533,6 +537,7 @@
+             {"Asia/Kashgar", CTT},
+             {"Asia/Kathmandu", NPT},
+             {"Asia/Katmandu", NPT},
++            {"Asia/Khandyga", YAKT},
+             {"Asia/Kolkata", IST},
+             {"Asia/Krasnoyarsk", new String[] {"\u514b\u62c9\u65af\u8bfa\u4e9a\u5c14\u65af\u514b\u65f6\u95f4", "KRAT",
+                                                "\u514b\u62c9\u65af\u8bfa\u4e9a\u5c14\u65af\u514b\u590f\u4ee4\u65f6", "KRAST"}},
+@@ -581,11 +586,10 @@
+             {"Asia/Ulaanbaatar", ULAT},
+             {"Asia/Ulan_Bator", ULAT},
+             {"Asia/Urumqi", CTT},
++            {"Asia/Ust-Nera", VLAT},
+             {"Asia/Vientiane", ICT},
+-            {"Asia/Vladivostok", new String[] {"\u6d77\u53c2\u5d34\u65f6\u95f4", "VLAT",
+-                                               "\u6d77\u53c2\u5d34\u590f\u4ee4\u65f6", "VLAST"}},
+-            {"Asia/Yakutsk", new String[] {"\u4e9a\u5e93\u6b21\u514b\u65f6\u95f4", "YAKT",
+-                                           "\u4e9a\u5e93\u6b21\u514b\u590f\u4ee4\u65f6", "YAKST"}},
++            {"Asia/Vladivostok", VLAT},
++            {"Asia/Yakutsk", YAKT},
+             {"Asia/Yekaterinburg", new String[] {"Yekaterinburg \u65f6\u95f4", "YEKT",
+                                                  "Yekaterinburg \u590f\u4ee4\u65f6", "YEKST"}},
+             {"Asia/Yerevan", ARMT},
+@@ -669,6 +673,7 @@
+             {"Europe/Bratislava", CET},
+             {"Europe/Brussels", CET},
+             {"Europe/Budapest", CET},
++            {"Europe/Busingen", CET},
+             {"Europe/Chisinau", EET},
+             {"Europe/Copenhagen", CET},
+             {"Europe/Dublin", DUBLIN},
+@@ -748,7 +753,7 @@
+             {"Jamaica", EST},
+             {"Japan", JST},
+             {"Kwajalein", MHT},
+-            {"Libya", EET},
++            {"Libya", CET},
+             {"MET", new String[] {"\u4e2d\u6b27\u65f6\u95f4", "MET",
+                                   "\u4e2d\u6b27\u590f\u4ee4\u65f6", "MEST"}},
+             {"Mexico/BajaNorte", PST},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_zh_TW.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_zh_TW.java
+@@ -75,6 +75,8 @@
+                                      "\u4e2d\u6b50\u590f\u4ee4\u6642\u9593", "CEST"};
+         String CHAST[] = new String[] {"\u67e5\u5766\u6a19\u6e96\u6642\u9593", "CHAST",
+                                        "\u67e5\u5766\u65e5\u5149\u7bc0\u7d04\u6642\u9593", "CHADT"};
++        String ChST[] = new String[] {"\u67e5\u83ab\u6d1b\u6a19\u6e96\u6642\u9593", "ChST",
++                                     "\u67e5\u83ab\u6d1b\u65e5\u5149\u7bc0\u7d04\u6642\u9593", "ChDT"};
+         String CHUT[] = new String[] {"Chuuk Time", "CHUT",
+                                       "Chuuk Summer Time", "CHUST"};
+         String CIT[] = new String[] {"\u4e2d\u5370\u5ea6\u5c3c\u897f\u4e9e\u6642\u9593", "CIT",
+@@ -161,6 +163,8 @@
+                                       "Pohnpei Summer Time", "PONST"};
+         String PST[] = new String[] {"\u592a\u5e73\u6d0b\u6a19\u6e96\u6642\u9593", "PST",
+                                      "\u592a\u5e73\u6d0b\u65e5\u5149\u7bc0\u7d04\u6642\u9593", "PDT"};
++        String SAMOA[] = new String[] {"\u85a9\u6469\u4e9e\u6a19\u6e96\u6642\u9593", "SST",
++                                       "\u85a9\u6469\u4e9e\u65e5\u5149\u7bc0\u7d04\u6642\u9593", "SDT"};
+         String SAST[] = new String[] {"\u5357\u975e\u6a19\u6e96\u6642\u9593", "SAST",
+                                       "\u5357\u975e\u590f\u4ee4\u6642\u9593", "SAST"};
+         String SBT[] = new String[] {"\u6240\u7f85\u9580\u7fa4\u5cf6\u6642\u9593", "SBT",
+@@ -175,7 +179,15 @@
+                                      "\u571f\u5eab\u66fc\u590f\u4ee4\u6642\u9593", "TMST"};
+         String ULAT[]= new String[] {"\u5eab\u502b\u6642\u9593", "ULAT",
+                                      "\u5eab\u502b\u590f\u4ee4\u6642\u9593", "ULAST"};
+-          String WART[] = new String[] {"\u897f\u963f\u6839\u5ef7\u6642\u9593", "WART",
++        String UTC[] = new String[] {"\u5354\u8abf\u4e16\u754c\u6642\u9593", "UTC",
++                                     "\u5354\u8abf\u4e16\u754c\u6642\u9593", "UTC"};
++        String UZT[] = new String[] {"\u70cf\u8332\u5225\u514b\u65af\u5766\u6642\u9593", "UZT",
++                                     "\u70cf\u8332\u5225\u514b\u65af\u5766\u590f\u4ee4\u6642\u9593", "UZST"};
++        String VICTORIA[] = new String[] {"\u6771\u90e8\u6a19\u6e96\u6642\u9593 (\u7dad\u591a\u5229\u4e9e\u90a6)", "EST",
++                                          "\u6771\u90e8\u590f\u4ee4\u6642\u9593 (\u7dad\u591a\u5229\u4e9e\u90a6)", "EST"};
++        String VLAT[] = new String[] {"\u6d77\u53c3\u5d34\u6642\u9593", "VLAT",
++                                      "\u6d77\u53c3\u5d34\u590f\u4ee4\u6642\u9593", "VLAST"};
++        String WART[] = new String[] {"\u897f\u963f\u6839\u5ef7\u6642\u9593", "WART",
+                                       "\u897f\u963f\u6839\u5ef7\u590f\u4ee4\u6642\u9593", "WARST"};
+         String WAT[] = new String[] {"\u897f\u975e\u6642\u9593", "WAT",
+                                      "\u897f\u975e\u590f\u4ee4\u6642\u9593", "WAST"};
+@@ -185,18 +197,10 @@
+                                      "\u897f\u5370\u5c3c\u590f\u4ee4\u6642\u9593", "WIST"};
+         String WST_AUS[] = new String[] {"\u897f\u65b9\u6a19\u6e96\u6642\u9593 (\u6fb3\u5927\u5229\u4e9e)", "WST",
+                                          "\u897f\u65b9\u590f\u4ee4\u6642\u9593 (\u6fb3\u5927\u5229\u4e9e)", "WST"};
+-        String SAMOA[] = new String[] {"\u85a9\u6469\u4e9e\u6a19\u6e96\u6642\u9593", "SST",
+-                                       "\u85a9\u6469\u4e9e\u65e5\u5149\u7bc0\u7d04\u6642\u9593", "SDT"};
+         String WST_SAMOA[] = new String[] {"\u897f\u85a9\u6469\u4e9e\u6642\u9593", "WST",
+                                            "\u897f\u85a9\u6469\u4e9e\u590f\u4ee4\u6642\u9593", "WSDT"};
+-        String ChST[] = new String[] {"\u67e5\u83ab\u6d1b\u6a19\u6e96\u6642\u9593", "ChST",
+-                                     "\u67e5\u83ab\u6d1b\u65e5\u5149\u7bc0\u7d04\u6642\u9593", "ChDT"};
+-        String VICTORIA[] = new String[] {"\u6771\u90e8\u6a19\u6e96\u6642\u9593 (\u7dad\u591a\u5229\u4e9e\u90a6)", "EST",
+-                                          "\u6771\u90e8\u590f\u4ee4\u6642\u9593 (\u7dad\u591a\u5229\u4e9e\u90a6)", "EST"};
+-        String UTC[] = new String[] {"\u5354\u8abf\u4e16\u754c\u6642\u9593", "UTC",
+-                                     "\u5354\u8abf\u4e16\u754c\u6642\u9593", "UTC"};
+-        String UZT[] = new String[] {"\u70cf\u8332\u5225\u514b\u65af\u5766\u6642\u9593", "UZT",
+-                                     "\u70cf\u8332\u5225\u514b\u65af\u5766\u590f\u4ee4\u6642\u9593", "UZST"};
++        String YAKT[] = new String[] {"\u4e9e\u5eab\u6b21\u514b\u6642\u9593", "YAKT",
++                                      "\u4e9e\u5eab\u6b21\u514b\u590f\u4ee4\u6642\u9593", "YAKST"};
+ 
+         return new Object[][] {
+             {"America/Los_Angeles", PST},
+@@ -287,7 +291,7 @@
+             {"Africa/Porto-Novo", WAT},
+             {"Africa/Sao_Tome", GMT},
+             {"Africa/Timbuktu", GMT},
+-            {"Africa/Tripoli", EET},
++            {"Africa/Tripoli", CET},
+             {"Africa/Tunis", CET},
+             {"Africa/Windhoek", WAT},
+             {"America/Adak", HAST},
+@@ -533,6 +537,7 @@
+             {"Asia/Kashgar", CTT},
+             {"Asia/Kathmandu", NPT},
+             {"Asia/Katmandu", NPT},
++            {"Asia/Khandyga", YAKT},
+             {"Asia/Kolkata", IST},
+             {"Asia/Krasnoyarsk", new String[] {"\u514b\u62c9\u65af\u8afe\u4e9e\u723e\u65af\u514b\u6642\u9593", "KRAT",
+                                                "\u514b\u62c9\u65af\u8afe\u4e9e\u723e\u65af\u514b\u590f\u4ee4\u6642\u9593", "KRAST"}},
+@@ -582,11 +587,10 @@
+             {"Asia/Ulaanbaatar", ULAT},
+             {"Asia/Ulan_Bator", ULAT},
+             {"Asia/Urumqi", CTT},
++            {"Asia/Ust-Nera", VLAT},
+             {"Asia/Vientiane", ICT},
+-            {"Asia/Vladivostok", new String[] {"\u6d77\u53c3\u5d34\u6642\u9593", "VLAT",
+-                                               "\u6d77\u53c3\u5d34\u590f\u4ee4\u6642\u9593", "VLAST"}},
+-            {"Asia/Yakutsk", new String[] {"\u4e9e\u5eab\u6b21\u514b\u6642\u9593", "YAKT",
+-                                           "\u4e9e\u5eab\u6b21\u514b\u590f\u4ee4\u6642\u9593", "YAKST"}},
++            {"Asia/Vladivostok", VLAT},
++            {"Asia/Yakutsk", YAKT},
+             {"Asia/Yekaterinburg", new String[] {"Yekaterinburg \u6642\u9593", "YEKT",
+                                                  "Yekaterinburg \u590f\u4ee4\u6642\u9593", "YEKST"}},
+             {"Asia/Yerevan", ARMT},
+@@ -670,6 +674,7 @@
+             {"Europe/Bratislava", CET},
+             {"Europe/Brussels", CET},
+             {"Europe/Budapest", CET},
++            {"Europe/Busingen", CET},
+             {"Europe/Chisinau", EET},
+             {"Europe/Copenhagen", CET},
+             {"Europe/Dublin", DUBLIN},
+@@ -749,7 +754,7 @@
+             {"Jamaica", EST},
+             {"Japan", JST},
+             {"Kwajalein", MHT},
+-            {"Libya", EET},
++            {"Libya", CET},
+             {"MET", new String[] {"\u4e2d\u6b50\u6642\u9593", "MET",
+                                   "\u4e2d\u6b50\u590f\u4ee4\u6642\u9593", "MEST"}},
+             {"Mexico/BajaNorte", PST},
