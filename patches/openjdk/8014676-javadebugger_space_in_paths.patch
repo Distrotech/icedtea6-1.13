@@ -1,0 +1,32 @@
+# HG changeset patch
+# User dmeetry
+# Date 1368806389 -14400
+# Node ID 529e737ece0c08c9de2aa4f3faa1a5e3887ee51e
+# Parent  9c9dc3220f0a857385242ad77a10f0b5caa3f861
+8014676: Java debugger may fail to run
+Summary: The problem is observed when the binaries for windows are placed under a path which contains a space
+Reviewed-by: alanb
+Contributed-by: ivan.gerasimov@oracle.com
+
+--- openjdk/jdk/src/share/classes/com/sun/tools/jdi/AbstractLauncher.java
++++ openjdk/jdk/src/share/classes/com/sun/tools/jdi/AbstractLauncher.java
+@@ -142,7 +142,7 @@
+      * This class simply provides a context for a single launch and
+      * accept. It provides instance fields that can be used by
+      * all threads involved. This stuff can't be in the Connector proper
+-     * because the connector is is a singleton and not specific to any
++     * because the connector is a singleton and is not specific to any
+      * one launch.
+      */
+     private class Helper {
+--- openjdk/jdk/src/share/classes/com/sun/tools/jdi/SunCommandLineLauncher.java
++++ openjdk/jdk/src/share/classes/com/sun/tools/jdi/SunCommandLineLauncher.java
+@@ -213,7 +213,7 @@
+                 exePath = exe;
+             }
+             // Quote only if necessary in case the quote arg value is bogus
+-            if (hasWhitespace(exe)) {
++            if (hasWhitespace(exePath)) {
+                 exePath = quote + exePath + quote;
+             }
+ 

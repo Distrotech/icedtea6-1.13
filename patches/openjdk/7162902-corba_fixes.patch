@@ -140,13 +140,6 @@ diff -Nru openjdk.orig/corba/src/share/classes/com/sun/corba/se/impl/encoding/Ca
 diff -Nru openjdk.orig/corba/src/share/classes/com/sun/corba/se/impl/interceptors/PIHandlerImpl.java openjdk/corba/src/share/classes/com/sun/corba/se/impl/interceptors/PIHandlerImpl.java
 --- openjdk.orig/corba/src/share/classes/com/sun/corba/se/impl/interceptors/PIHandlerImpl.java	2013-02-13 16:50:15.177517576 +0000
 +++ openjdk/corba/src/share/classes/com/sun/corba/se/impl/interceptors/PIHandlerImpl.java	2013-02-13 16:50:31.277776364 +0000
-@@ -1,5 +1,5 @@
- /*
-- * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
-+ * Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
-  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
-  *
-  * This code is free software; you can redistribute it and/or modify it
 @@ -58,7 +58,7 @@
  import org.omg.PortableInterceptor.TRANSPORT_RETRY;
  import org.omg.PortableInterceptor.USER_EXCEPTION;
@@ -295,13 +288,6 @@ diff -Nru openjdk.orig/corba/src/share/classes/com/sun/corba/se/impl/monitoring/
 diff -Nru openjdk.orig/corba/src/share/classes/com/sun/corba/se/impl/orb/ORBImpl.java openjdk/corba/src/share/classes/com/sun/corba/se/impl/orb/ORBImpl.java
 --- openjdk.orig/corba/src/share/classes/com/sun/corba/se/impl/orb/ORBImpl.java	2013-02-13 16:50:15.185517704 +0000
 +++ openjdk/corba/src/share/classes/com/sun/corba/se/impl/orb/ORBImpl.java	2013-02-13 16:50:31.281776428 +0000
-@@ -1,5 +1,5 @@
- /*
-- * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
-+ * Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
-  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
-  *
-  * This code is free software; you can redistribute it and/or modify it
 @@ -23,35 +23,37 @@
   * questions.
   */
@@ -1920,13 +1906,6 @@ diff -Nru openjdk.orig/corba/src/share/classes/com/sun/corba/se/impl/orbutil/thr
 diff -Nru openjdk.orig/corba/src/share/classes/com/sun/corba/se/impl/protocol/CorbaMessageMediatorImpl.java openjdk/corba/src/share/classes/com/sun/corba/se/impl/protocol/CorbaMessageMediatorImpl.java
 --- openjdk.orig/corba/src/share/classes/com/sun/corba/se/impl/protocol/CorbaMessageMediatorImpl.java	2012-10-26 19:21:48.000000000 +0100
 +++ openjdk/corba/src/share/classes/com/sun/corba/se/impl/protocol/CorbaMessageMediatorImpl.java	2013-02-13 16:50:31.281776428 +0000
-@@ -1,5 +1,5 @@
- /*
-- * Copyright (c) 2001, 2004, Oracle and/or its affiliates. All rights reserved.
-+ * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
-  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
-  *
-  * This code is free software; you can redistribute it and/or modify it
 @@ -1666,7 +1666,9 @@
          ((CDRInputObject)messageMediator.getInputObject()).unmarshalHeader();
  

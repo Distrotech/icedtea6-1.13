@@ -1,0 +1,254 @@
+# HG changeset patch
+# User peytoia
+# Date 1297242029 -32400
+# Node ID eeaad0d340b285fa17e438bb2b9de6fa39289dd1
+# Parent  842a0f8c89ea5d5b4702502594a7fe37c509aec7
+7017800: (tz) Support tzdata2011b
+Reviewed-by: okutsu
+
+--- openjdk/jdk/make/sun/javazic/tzdata/VERSION
++++ openjdk/jdk/make/sun/javazic/tzdata/VERSION
+@@ -21,4 +21,4 @@
+ # or visit www.oracle.com if you need additional information or have any
+ # questions.
+ #
+-tzdata2010o
++tzdata2011b
+--- openjdk/jdk/make/sun/javazic/tzdata/australasia
++++ openjdk/jdk/make/sun/javazic/tzdata/australasia
+@@ -106,14 +106,13 @@
+ Rule	AS	1987	2007	-	Oct	lastSun	2:00s	1:00	-
+ Rule	AS	1972	only	-	Feb	27	2:00s	0	-
+ Rule	AS	1973	1985	-	Mar	Sun>=1	2:00s	0	-
+-Rule	AS	1986	1989	-	Mar	Sun>=15	2:00s	0	-
+-Rule	AS	1990	only	-	Mar	Sun>=18	2:00s	0	-
+-Rule	AS	1991	only	-	Mar	Sun>=1	2:00s	0	-
+-Rule	AS	1992	only	-	Mar	Sun>=18	2:00s	0	-
+-Rule	AS	1993	only	-	Mar	Sun>=1	2:00s	0	-
+-Rule	AS	1994	only	-	Mar	Sun>=18	2:00s	0	-
++Rule	AS	1986	1990	-	Mar	Sun>=15	2:00s	0	-
++Rule	AS	1991	only	-	Mar	3	2:00s	0	-
++Rule	AS	1992	only	-	Mar	22	2:00s	0	-
++Rule	AS	1993	only	-	Mar	7	2:00s	0	-
++Rule	AS	1994	only	-	Mar	20	2:00s	0	-
+ Rule	AS	1995	2005	-	Mar	lastSun	2:00s	0	-
+-Rule	AS	2006	only	-	Apr	Sun>=1	2:00s	0	-
++Rule	AS	2006	only	-	Apr	2	2:00s	0	-
+ Rule	AS	2007	only	-	Mar	lastSun	2:00s	0	-
+ Rule	AS	2008	max	-	Apr	Sun>=1	2:00s	0	-
+ Rule	AS	2008	max	-	Oct	Sun>=1	2:00s	1:00	-
+--- openjdk/jdk/make/sun/javazic/tzdata/northamerica
++++ openjdk/jdk/make/sun/javazic/tzdata/northamerica
+@@ -368,6 +368,27 @@
+ 			-7:00	US	M%sT	2003 Oct 26 02:00
+ 			-6:00	US	C%sT
+ 
++# From Josh Findley (2011-01-21):
++# ...it appears that Mercer County, North Dakota, changed from the
++# mountain time zone to the central time zone at the last transition from
++# daylight-saving to standard time (on Nov. 7, 2010):
++# <a href="http://www.gpo.gov/fdsys/pkg/FR-2010-09-29/html/2010-24376.htm">
++# http://www.gpo.gov/fdsys/pkg/FR-2010-09-29/html/2010-24376.htm
++# </a>
++# <a href="http://www.bismarcktribune.com/news/local/article_1eb1b588-c758-11df-b472-001cc4c03286.html">
++# http://www.bismarcktribune.com/news/local/article_1eb1b588-c758-11df-b472-001cc4c03286.html
++# </a>
++
++# From Andy Lipscomb (2011-01-24):
++# ...according to the Census Bureau, the largest city is Beulah (although
++# it's commonly referred to as Beulah-Hazen, with Hazen being the next
++# largest city in Mercer County).  Google Maps places Beulah's city hall
++# at 4715'51" north, 10146'40" west, which yields an offset of 6h47'07".
++
++Zone America/North_Dakota/Beulah -6:47:07 - LMT 1883 Nov 18 12:12:53
++			-7:00	US	M%sT	2010 Nov  7 2:00
++			-6:00	US	C%sT
++
+ # US mountain time, represented by Denver
+ #
+ # Colorado, far western Kansas, Montana, western
+@@ -493,20 +514,50 @@
+ #  three votes for and one against."
+ 
+ # Hawaii
++
++# From Arthur David Olson (2010-12-09):
++# "Hawaiian Time" by Robert C. Schmitt and Doak C. Cox appears on pages 207-225
++# of volume 26 of The Hawaiian Journal of History (1992). As of 2010-12-09,
++# the article is available at
++# <a href="http://evols.library.manoa.hawaii.edu/bitstream/10524/239/2/JL26215.pdf">
++# http://evols.library.manoa.hawaii.edu/bitstream/10524/239/2/JL26215.pdf
++# </a>
++# and indicates that standard time was adopted effective noon, January
++# 13, 1896 (page 218), that in "1933, the Legislature decreed daylight
++# saving for the period between the last Sunday of each April and the
++# last Sunday of each September, but less than a month later repealed the
++# act," (page 220), that year-round daylight saving time was in effect
++# from 1942-02-09 to 1945-09-30 (page 221, with no time of day given for
++# when clocks changed) and that clocks were changed by 30 minutes
++# effective the second Sunday of June, 1947 (page 219, with no time of
++# day given for when clocks changed). A footnote for the 1933 changes
++# cites Session Laws of Hawaii 1933, "Act. 90 (approved 26 Apr. 1933)
++# and Act 163 (approved 21 May 1933)."
++
++# From Arthur David Olson (2011-01-19):
++# The following is from "Laws of the Territory of Hawaii Passed by the
++# Seventeenth Legislature: Regular Session 1933," available (as of
++# 2011-01-19) at American University's Pence Law Library. Page 85: "Act
++# 90...At 2 o'clock ante meridian of the last Sunday in April of each
++# year, the standard time of this Territory shall be advanced one
++# hour...This Act shall take effect upon its approval. Approved this 26th
++# day of April, A. D. 1933. LAWRENCE M JUDD, Governor of the Territory of
++# Hawaii." Page 172:  "Act 163...Act 90 of the Session Laws of 1933 is
++# hereby repealed...This Act shall take effect upon its approval, upon
++# which date the standard time of this Territory shall be restored to
++# that existing immediately prior to the taking effect of said Act 90.
++# Approved this 21st day of May, A. D. 1933. LAWRENCE M. JUDD, Governor
++# of the Territory of Hawaii."
+ #
+-# From Arthur David Olson:
+-# And then there's Hawaii.
+-# DST was observed for one day in 1933;
+-# standard time was changed by half an hour in 1947;
+-# it's always standard as of 1986.
+-#
+-# From Paul Eggert:
+-# Shanks says the 1933 experiment lasted for three weeks.  Go with Shanks.
+-#
+-Zone Pacific/Honolulu	-10:31:26 -	LMT	1900 Jan  1 12:00
+-			-10:30	-	HST	1933 Apr 30 2:00
+-			-10:30	1:00	HDT	1933 May 21 2:00
+-			-10:30	US	H%sT	1947 Jun  8 2:00
++# Note that 1933-05-21 was a Sunday.
++# We're left to guess the time of day when Act 163 was approved; guess noon.
++
++Zone Pacific/Honolulu	-10:31:26 -	LMT	1896 Jan 13 12:00 #Schmitt&Cox
++			-10:30	-	HST	1933 Apr 30 2:00 #Laws 1933
++			-10:30	1:00	HDT	1933 May 21 12:00 #Laws 1933+12
++			-10:30	-	HST	1942 Feb 09 2:00 #Schmitt&Cox+2
++			-10:30	1:00	HDT	1945 Sep 30 2:00 #Schmitt&Fox+2
++			-10:30	US	H%sT	1947 Jun  8 2:00 #Schmitt&Fox+2
+ 			-10:00	-	HST
+ 
+ # Now we turn to US areas that have diverged from the consensus since 1970.
+--- openjdk/jdk/make/sun/javazic/tzdata/zone.tab
++++ openjdk/jdk/make/sun/javazic/tzdata/zone.tab
+@@ -233,8 +233,8 @@
+ HU	+4730+01905	Europe/Budapest
+ ID	-0610+10648	Asia/Jakarta	Java & Sumatra
+ ID	-0002+10920	Asia/Pontianak	west & central Borneo
+-ID	-0507+11924	Asia/Makassar	east & south Borneo, Celebes, Bali, Nusa Tengarra, west Timor
+-ID	-0232+14042	Asia/Jayapura	Irian Jaya & the Moluccas
++ID	-0507+11924	Asia/Makassar	east & south Borneo, Sulawesi (Celebes), Bali, Nusa Tengarra, west Timor
++ID	-0232+14042	Asia/Jayapura	west New Guinea (Irian Jaya) & Malukus (Moluccas)
+ IE	+5320-00615	Europe/Dublin
+ IL	+3146+03514	Asia/Jerusalem
+ IM	+5409-00428	Europe/Isle_of_Man
+@@ -426,6 +426,7 @@
+ US	+450628-0873651	America/Menominee	Central Time - Michigan - Dickinson, Gogebic, Iron & Menominee Counties
+ US	+470659-1011757	America/North_Dakota/Center	Central Time - North Dakota - Oliver County
+ US	+465042-1012439	America/North_Dakota/New_Salem	Central Time - North Dakota - Morton County (except Mandan area)
++US	+471551-1014640	America/North_Dakota/Beulah	Central Time - North Dakota - Mercer County
+ US	+394421-1045903	America/Denver	Mountain Time
+ US	+433649-1161209	America/Boise	Mountain Time - south Idaho & east Oregon
+ US	+364708-1084111	America/Shiprock	Mountain Time - Navajo
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames.java
+@@ -405,6 +405,7 @@
+             {"America/Nipigon", EST},
+             {"America/Nome", AKST},
+             {"America/Noronha", NORONHA},
++            {"America/North_Dakota/Beulah", CST},
+             {"America/North_Dakota/Center", CST},
+             {"America/North_Dakota/New_Salem", CST},
+             {"America/Ojinaga", MST},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_de.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_de.java
+@@ -405,6 +405,7 @@
+             {"America/Nipigon", EST},
+             {"America/Nome", AKST},
+             {"America/Noronha", NORONHA},
++            {"America/North_Dakota/Beulah", CST},
+             {"America/North_Dakota/Center", CST},
+             {"America/North_Dakota/New_Salem", CST},
+             {"America/Ojinaga", MST},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_es.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_es.java
+@@ -405,6 +405,7 @@
+             {"America/Nipigon", EST},
+             {"America/Nome", AKST},
+             {"America/Noronha", NORONHA},
++            {"America/North_Dakota/Beulah", CST},
+             {"America/North_Dakota/Center", CST},
+             {"America/North_Dakota/New_Salem", CST},
+             {"America/Ojinaga", MST},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_fr.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_fr.java
+@@ -405,6 +405,7 @@
+             {"America/Nipigon", EST},
+             {"America/Nome", AKST},
+             {"America/Noronha", NORONHA},
++            {"America/North_Dakota/Beulah", CST},
+             {"America/North_Dakota/Center", CST},
+             {"America/North_Dakota/New_Salem", CST},
+             {"America/Ojinaga", MST},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_it.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_it.java
+@@ -405,6 +405,7 @@
+             {"America/Nipigon", EST},
+             {"America/Nome", AKST},
+             {"America/Noronha", NORONHA},
++            {"America/North_Dakota/Beulah", CST},
+             {"America/North_Dakota/Center", CST},
+             {"America/North_Dakota/New_Salem", CST},
+             {"America/Ojinaga", MST},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_ja.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_ja.java
+@@ -405,6 +405,7 @@
+             {"America/Nipigon", EST},
+             {"America/Nome", AKST},
+             {"America/Noronha", NORONHA},
++            {"America/North_Dakota/Beulah", CST},
+             {"America/North_Dakota/Center", CST},
+             {"America/North_Dakota/New_Salem", CST},
+             {"America/Ojinaga", MST},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_ko.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_ko.java
+@@ -405,6 +405,7 @@
+             {"America/Nipigon", EST},
+             {"America/Nome", AKST},
+             {"America/Noronha", NORONHA},
++            {"America/North_Dakota/Beulah", CST},
+             {"America/North_Dakota/Center", CST},
+             {"America/North_Dakota/New_Salem", CST},
+             {"America/Ojinaga", MST},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_sv.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_sv.java
+@@ -405,6 +405,7 @@
+             {"America/Nipigon", EST},
+             {"America/Nome", AKST},
+             {"America/Noronha", NORONHA},
++            {"America/North_Dakota/Beulah", CST},
+             {"America/North_Dakota/Center", CST},
+             {"America/North_Dakota/New_Salem", CST},
+             {"America/Ojinaga", MST},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_zh_CN.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_zh_CN.java
+@@ -405,6 +405,7 @@
+             {"America/Nipigon", EST},
+             {"America/Nome", AKST},
+             {"America/Noronha", NORONHA},
++            {"America/North_Dakota/Beulah", CST},
+             {"America/North_Dakota/Center", CST},
+             {"America/North_Dakota/New_Salem", CST},
+             {"America/Ojinaga", MST},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_zh_TW.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_zh_TW.java
+@@ -405,6 +405,7 @@
+             {"America/Nipigon", EST},
+             {"America/Nome", AKST},
+             {"America/Noronha", NORONHA},
++            {"America/North_Dakota/Beulah", CST},
+             {"America/North_Dakota/Center", CST},
+             {"America/North_Dakota/New_Salem", CST},
+             {"America/Ojinaga", MST},

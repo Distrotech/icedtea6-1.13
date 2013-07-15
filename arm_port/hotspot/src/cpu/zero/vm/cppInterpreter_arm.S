@@ -345,7 +345,7 @@ do_\label:
 	flds s1, [stack, #4]
 	add stack, #4
 #else
-	POP r0
+	POP r1
 #endif
 	.endm
 	

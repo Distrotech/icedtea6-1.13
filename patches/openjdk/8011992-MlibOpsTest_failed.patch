@@ -1,0 +1,89 @@
+# HG changeset patch
+# User bae
+# Date 1365761717 -14400
+# Node ID 2a78c210f0e2ab6fdb6070789a8928acefa1383d
+# Parent  94b16322eb0b0f7ab4d8eb91ac10a2ea2928f199
+8011992: java/awt/image/mlib/MlibOpsTest.java failed since jdk7u25b05
+Reviewed-by: prr, vadim
+
+--- openjdk/jdk/src/share/native/sun/awt/medialib/awt_ImagingLib.c
++++ openjdk/jdk/src/share/native/sun/awt/medialib/awt_ImagingLib.c
+@@ -1302,29 +1302,39 @@
+         return 0;
+     }
+ 
+-    lut_nbands = (*env)->GetArrayLength(env, jtableArrays);
+-
+-    ncomponents = srcImageP->cmodel.isDefaultCompatCM
+-        ? 4
+-        : srcImageP->cmodel.numComponents;
+-
+-    if (lut_nbands > ncomponents) {
+-        lut_nbands = ncomponents;
++    nbands = setImageHints(env, srcImageP, dstImageP, FALSE, TRUE,
++                        FALSE, &hint);
++
++    if (nbands < 1 || nbands > srcImageP->cmodel.numComponents) {
++        /* Can't handle any custom images */
++        awt_freeParsedImage(srcImageP, TRUE);
++        awt_freeParsedImage(dstImageP, TRUE);
++        return 0;
+     }
+ 
+     /* Make sure that color order can be used for
+      * re-ordering of lookup arrays.
+      */
+-    for (i = 0; i < ncomponents; i++) {
++    for (i = 0; i < nbands; i++) {
+         int idx = srcImageP->hints.colorOrder[i];
+ 
+-        if (idx < 0 || idx >= ncomponents) {
++        if (idx < 0 || idx >= nbands) {
+             awt_freeParsedImage(srcImageP, TRUE);
+             awt_freeParsedImage(dstImageP, TRUE);
+             return 0;
+         }
+     }
+ 
++    lut_nbands = (*env)->GetArrayLength(env, jtableArrays);
++
++    ncomponents = srcImageP->cmodel.isDefaultCompatCM
++        ? 4
++        : srcImageP->cmodel.numComponents;
++
++    if (lut_nbands > ncomponents) {
++        lut_nbands = ncomponents;
++    }
++
+     tbl = NULL;
+     if (SAFE_TO_ALLOC_2(ncomponents, sizeof(unsigned char *))) {
+         tbl = (unsigned char **)
+@@ -1367,17 +1377,6 @@
+         }
+     }
+ 
+-    nbands = setImageHints(env, srcImageP, dstImageP, FALSE, TRUE,
+-                        FALSE, &hint);
+-    if (nbands < 1) {
+-        /* Can't handle any custom images */
+-        free(tbl);
+-        free(jtable);
+-        awt_freeParsedImage(srcImageP, TRUE);
+-        awt_freeParsedImage(dstImageP, TRUE);
+-        return 0;
+-    }
+-
+     /* Allocate the arrays */
+     if (allocateArray(env, srcImageP, &src, &sdata, TRUE, FALSE, FALSE) < 0) {
+         /* Must be some problem */
+--- openjdk/jdk/test/java/awt/image/mlib/MlibOpsTest.java
++++ openjdk/jdk/test/java/awt/image/mlib/MlibOpsTest.java
+@@ -23,7 +23,7 @@
+ 
+ /*
+  * @test
+- * @bug     6556332
++ * @bug     6556332 8011992
+  * @summary Test verifies that on-demnad loading of medialib library does
+  *          not break imageing ops based on this library.
+  * @run     main MlibOpsTest

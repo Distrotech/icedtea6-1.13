@@ -1,0 +1,31 @@
+# HG changeset patch
+# User andrew
+# Date 1372303832 18000
+# Node ID c655aca607b16492caf7f89b3e2592c4b0c71e34
+# Parent  5e190bcba6be48c41e68cb85ae7173c51cc931c0
+8011313: OCSP timeout set to wrong value if com.sun.security.ocsp.timeout not defined
+Reviewed-by: vinnie
+
+--- openjdk/jdk/src/share/classes/sun/security/provider/certpath/OCSP.java
++++ openjdk/jdk/src/share/classes/sun/security/provider/certpath/OCSP.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2009, 2013, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -81,10 +81,9 @@
+      * value is negative, set the timeout length to the default.
+      */
+     private static int initializeTimeout() {
+-        int tmp = java.security.AccessController.doPrivileged(
+-                new GetIntegerAction("com.sun.security.ocsp.timeout",
+-                                     DEFAULT_CONNECT_TIMEOUT));
+-        if (tmp < 0) {
++        Integer tmp = java.security.AccessController.doPrivileged(
++                new GetIntegerAction("com.sun.security.ocsp.timeout"));
++        if (tmp == null || tmp < 0) {
+             tmp = DEFAULT_CONNECT_TIMEOUT;
+         }
+         // Convert to milliseconds, as the system property will be

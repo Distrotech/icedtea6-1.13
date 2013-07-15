@@ -1,0 +1,42 @@
+# HG changeset patch
+# User dfuchs
+# Date 1367362161 -7200
+# Node ID 7c75580b144fc3e7841e1b7fa7e4ae7efb67476e
+# Parent  22decf80e0e833a8667f3e413da735b269d97fe6
+8012243: about 30% regression on specjvm2008.serial on 7u25 comparing 7u21
+Reviewed-by: alanb, skoivu, smarks, mchung
+
+--- openjdk/jdk/src/share/classes/java/io/ObjectStreamClass.java
++++ openjdk/jdk/src/share/classes/java/io/ObjectStreamClass.java
+@@ -266,9 +266,11 @@
+         if (cl == null) {
+             return null;
+         }
+-        Class<?> caller = Reflection.getCallerClass();
+-        if (ReflectUtil.needsPackageAccessCheck(caller.getClassLoader(), cl.getClassLoader())) {
+-            ReflectUtil.checkPackageAccess(cl);
++        if (System.getSecurityManager() != null) {
++            Class<?> caller = Reflection.getCallerClass();
++            if (ReflectUtil.needsPackageAccessCheck(caller.getClassLoader(), cl.getClassLoader())) {
++                ReflectUtil.checkPackageAccess(cl);
++            }
+         }
+         return cl;
+     }
+--- openjdk/jdk/src/share/classes/java/io/ObjectStreamField.java
++++ openjdk/jdk/src/share/classes/java/io/ObjectStreamField.java
+@@ -162,9 +162,11 @@
+      */
+     @CallerSensitive
+     public Class<?> getType() {
+-        Class<?> caller = Reflection.getCallerClass();
+-        if (ReflectUtil.needsPackageAccessCheck(caller.getClassLoader(), type.getClassLoader())) {
+-            ReflectUtil.checkPackageAccess(type);
++        if (System.getSecurityManager() != null) {
++            Class<?> caller = Reflection.getCallerClass();
++            if (ReflectUtil.needsPackageAccessCheck(caller.getClassLoader(), type.getClassLoader())) {
++                ReflectUtil.checkPackageAccess(type);
++            }
+         }
+         return type;
+     }

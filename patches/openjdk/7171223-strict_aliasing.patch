@@ -1,0 +1,25 @@
+# HG changeset patch
+# User andrew
+# Date 1338391068 -3600
+# Node ID 18416c18dc35344d89a3a997420a65c996e5e906
+# Parent  8634e1665b74843e2af88b51bfa788562a842d7b
+7171223: Building ExtensionSubtables.cpp should use -fno-strict-aliasing
+Summary: GCC 4.4+ have stricter aliasing requirements which produces a new warning from this code
+Reviewed-by: prr, ohair
+
+diff --git a/make/sun/font/Makefile b/make/sun/font/Makefile
+--- openjdk/jdk/make/sun/font/Makefile
++++ openjdk/jdk/make/sun/font/Makefile
+@@ -96,6 +96,12 @@
+ 
+ endif # PLATFORM
+ 
++# Turn off aliasing with GCC for ExtensionSubtables.cpp
++ifeq ($(PLATFORM), linux)
++  CXXFLAGS += $(CXXFLAGS_$(@F))
++  CXXFLAGS_ExtensionSubtables.o = -fno-strict-aliasing
++endif
++
+ #In the non-OpenJDK mode we need to build T2K
+ ifndef OPENJDK
+ t2k:

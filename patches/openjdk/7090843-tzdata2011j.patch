@@ -1,0 +1,1228 @@
+# HG changeset patch
+# User peytoia
+# Date 1316071034 -32400
+# Node ID e97325a7fe7b037be1cfcb33acd5ed5aea25a24e
+# Parent  6b1e65e73b804bb5eeee4cb2d8ba15db7e6ad73f
+7090843: (tz) Support tzdata2011j
+Reviewed-by: okutsu
+
+--- openjdk/jdk/make/sun/javazic/tzdata/VERSION
++++ openjdk/jdk/make/sun/javazic/tzdata/VERSION
+@@ -21,4 +21,4 @@
+ # or visit www.oracle.com if you need additional information or have any
+ # questions.
+ #
+-tzdata2011g
++tzdata2011j
+--- openjdk/jdk/make/sun/javazic/tzdata/africa
++++ openjdk/jdk/make/sun/javazic/tzdata/africa
+@@ -80,7 +80,7 @@
+ # I invented the following abbreviations; corrections are welcome!
+ #	 2:00	WAST	West Africa Summer Time
+ #	 2:30	BEAT	British East Africa Time (no longer used)
+-#	 2:44:45 BEAUT	British East Africa Unified Time (no longer used)
++#	 2:45	BEAUT	British East Africa Unified Time (no longer used)
+ #	 3:00	CAST	Central Africa Summer Time (no longer used)
+ #	 3:00	SAST	South Africa Summer Time (no longer used)
+ #	 3:00	EAT	East Africa Time
+@@ -418,7 +418,7 @@
+ Zone	Africa/Nairobi	2:27:16	-	LMT	1928 Jul
+ 			3:00	-	EAT	1930
+ 			2:30	-	BEAT	1940
+-			2:44:45	-	BEAUT	1960
++			2:45	-	BEAUT	1960
+ 			3:00	-	EAT
+ 
+ # Lesotho
+@@ -979,6 +979,11 @@
+ 			2:00	Sudan	CA%sT	2000 Jan 15 12:00
+ 			3:00	-	EAT
+ 
++# South Sudan
++Zone	Africa/Juba	2:06:24 -	LMT	1931
++			2:00	Sudan	CA%sT	2000 Jan 15 12:00
++			3:00	-	EAT
++
+ # Swaziland
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+ Zone	Africa/Mbabane	2:04:24 -	LMT	1903 Mar
+@@ -988,7 +993,7 @@
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+ Zone Africa/Dar_es_Salaam 2:37:08 -	LMT	1931
+ 			3:00	-	EAT	1948
+-			2:44:45	-	BEAUT	1961
++			2:45	-	BEAUT	1961
+ 			3:00	-	EAT
+ 
+ # Togo
+@@ -1114,7 +1119,7 @@
+ Zone	Africa/Kampala	2:09:40 -	LMT	1928 Jul
+ 			3:00	-	EAT	1930
+ 			2:30	-	BEAT	1948
+-			2:44:45	-	BEAUT	1957
++			2:45	-	BEAUT	1957
+ 			3:00	-	EAT
+ 
+ # Zambia
+--- openjdk/jdk/make/sun/javazic/tzdata/antarctica
++++ openjdk/jdk/make/sun/javazic/tzdata/antarctica
+@@ -41,18 +41,6 @@
+ # I made up all time zone abbreviations mentioned here; corrections welcome!
+ # FORMAT is `zzz' and GMTOFF is 0 for locations while uninhabited.
+ 
+-# These rules are stolen from the `europe' file.
+-# Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+-Rule	RussAQ	1981	1984	-	Apr	 1	 0:00	1:00	S
+-Rule	RussAQ	1981	1983	-	Oct	 1	 0:00	0	-
+-Rule	RussAQ	1984	1991	-	Sep	lastSun	 2:00s	0	-
+-Rule	RussAQ	1985	1991	-	Mar	lastSun	 2:00s	1:00	S
+-Rule	RussAQ	1992	only	-	Mar	lastSat	 23:00	1:00	S
+-Rule	RussAQ	1992	only	-	Sep	lastSat	 23:00	0	-
+-Rule	RussAQ	1993	max	-	Mar	lastSun	 2:00s	1:00	S
+-Rule	RussAQ	1993	1995	-	Sep	lastSun	 2:00s	0	-
+-Rule	RussAQ	1996	max	-	Oct	lastSun	 2:00s	0	-
+-
+ # These rules are stolen from the `southamerica' file.
+ # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+ Rule	ArgAQ	1964	1966	-	Mar	 1	0:00	0	-
+--- openjdk/jdk/make/sun/javazic/tzdata/asia
++++ openjdk/jdk/make/sun/javazic/tzdata/asia
+@@ -99,6 +99,10 @@
+ Rule RussiaAsia	1993	1995	-	Sep	lastSun	 2:00s	0	-
+ Rule RussiaAsia	1996	max	-	Oct	lastSun	 2:00s	0	-
+ 
++# From Arthur David Olson (2011-06-15):
++# While Russia abandoned DST in 2011, Armenia may choose to
++# follow Russia's "old" rules.
++
+ # Afghanistan
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+ Zone	Asia/Kabul	4:36:48 -	LMT	1890
+--- openjdk/jdk/make/sun/javazic/tzdata/australasia
++++ openjdk/jdk/make/sun/javazic/tzdata/australasia
+@@ -521,7 +521,7 @@
+ # http://www.parliament.gov.ws/documents/acts/Daylight%20Saving%20Act%20%202009%20%28English%29%20-%20Final%207-7-091.pdf
+ # </a>
+ 
+-# From Raymond Hughes (2010-10-07):
++# From Laupue Raymond Hughes (2010-10-07):
+ # Please see
+ # <a href="http://www.mcil.gov.ws">
+ # http://www.mcil.gov.ws
+@@ -531,7 +531,7 @@
+ # to 01:00am and First Sunday April 2011 (03/04/11) - adjust clocks
+ # backwards from 1:00am to 12:00am"
+ 
+-# From Raymond Hughes (2011-03-07)
++# From Laupue Raymond Hughes (2011-03-07):
+ # I believe this will be posted shortly on the website
+ # <a href="http://www.mcil.gov.ws">
+ # www.mcil.gov.ws
+@@ -551,12 +551,74 @@
+ # Margaret Fruean ACTING CHIEF EXECUTIVE OFFICER MINISTRY OF COMMERCE,
+ # INDUSTRY AND LABOUR 28th February 2011
+ 
++# From David Zuelke (2011-05-09):
++# Subject: Samoa to move timezone from east to west of international date line
++# 
++# <a href="http://www.morningstar.co.uk/uk/markets/newsfeeditem.aspx?id=138501958347963">
++# http://www.morningstar.co.uk/uk/markets/newsfeeditem.aspx?id=138501958347963
++# </a>
++
++# From Mark Sim-Smith (2011-08-17):
++# I have been in contact with Leilani Tuala Warren from the Samoa Law
++# Reform Commission, and she has sent me a copy of the Bill that she
++# confirmed has been passed...Most of the sections are about maps rather
++# than the time zone change, but I'll paste the relevant bits below. But
++# the essence is that at midnight 29 Dec (UTC-11 I suppose), Samoa
++# changes from UTC-11 to UTC+13:
++#
++# International Date Line Bill 2011
++#
++# AN ACT to provide for the change to standard time in Samoa and to make
++# consequential amendments to the position of the International Date
++# Line, and for related purposes.
++#
++# BE IT ENACTED by the Legislative Assembly of Samoa in Parliament
++# assembled as follows:
++#
++# 1. Short title and commencement-(1) This Act may be cited as the
++# International Date Line Act 2011. (2) Except for section 5(3) this Act
++# commences at 12 o'clock midnight, on Thursday 29th December 2011. (3)
++# Section 5(3) commences on the date of assent by the Head of State.
++#
++# [snip]
++#
++# 3. Interpretation - [snip] "Samoa standard time" in this Act and any
++# other statute of Samoa which refers to 'Samoa standard time' means the
++# time 13 hours in advance of Co-ordinated Universal Time.
++#
++# 4. Samoa standard time - (1) Upon the commencement of this Act, Samoa
++# standard time shall be set at 13 hours in advance of Co-ordinated
++# Universal Time for the whole of Samoa. (2) All references to Samoa's
++# time zone and to Samoa standard time in Samoa in all legislation and
++# instruments after the commencement of this Act shall be references to
++# Samoa standard time as provided for in this Act. (3) Nothing in this
++# Act affects the provisions of the Daylight Saving Act 2009, except that
++# it defines Samoa standard time....
++
++# From Laupue Raymond Hughes (2011-09-02):
++# <a href="http://www.mcil.gov.ws/mcil_publications.html">
++# http://www.mcil.gov.ws/mcil_publications.html
++# </a>
++#
++# here is the official website publication for Samoa DST and dateline change
++#
++# DST
++# Year	End	Time	Start	Time
++# 2011	- - -	- - -	24 September	3:00am to 4:00am
++# 2012	01 April	4:00am to 3:00am	- - -	- - -
++#
++# Dateline Change skip Friday 30th Dec 2011
++# Thursday 29th December 2011	23:59:59 Hours
++# Saturday 31st December 2011	00:00:00 Hours
+ Zone Pacific/Apia	 12:33:04 -	LMT	1879 Jul  5
+ 			-11:26:56 -	LMT	1911
+ 			-11:30	-	SAMT	1950		# Samoa Time
+ 			-11:00	-	WST	2010 Sep 26
+ 			-11:00	1:00	WSDT	2011 Apr 2 4:00
+-			-11:00	-	WST
++			-11:00	-	WST	2011 Sep 24 3:00
++			-11:00	1:00	WSDT	2011 Dec 30
++			 13:00	1:00	WSDT	2012 Apr 1 4:00
++			 13:00	-	WST
+ 
+ # Solomon Is
+ # excludes Bougainville, for which see Papua New Guinea
+@@ -1228,7 +1290,7 @@
+ # Lord Howe Island Board (controlling authority for the Island) is
+ # seeking the community's views on various options for summer time
+ # arrangements on the Island, e.g. advance clocks by 1 full hour
+-# instead of only 30 minutes.  Dependant on the wishes of residents
++# instead of only 30 minutes.  [Dependent] on the wishes of residents
+ # the Board may approach the NSW government to change the existing
+ # arrangements.  The starting date for summer time on the Island will
+ # however always coincide with the rest of NSW.
+@@ -1354,7 +1416,7 @@
+ 
+ # From Paul Eggert (1996-01-22):
+ # Today's _Wall Street Journal_ (page 1) reports that Kiribati
+-# ``declared it the same day throught the country as of Jan. 1, 1995''
++# ``declared it the same day [throughout] the country as of Jan. 1, 1995''
+ # as part of the competition to be first into the 21st century.
+ 
+ 
+--- openjdk/jdk/make/sun/javazic/tzdata/europe
++++ openjdk/jdk/make/sun/javazic/tzdata/europe
+@@ -587,6 +587,26 @@
+ Rule	Russia	1993	1995	-	Sep	lastSun	 2:00s	0	-
+ Rule	Russia	1996	max	-	Oct	lastSun	 2:00s	0	-
+ 
++# From Alexander Krivenyshev (2011-06-14):
++# According to Kremlin press service, Russian President Dmitry Medvedev
++# signed a federal law "On calculation of time" on June 9, 2011.
++# According to the law Russia is abolishing daylight saving time.
++# 
++# Medvedev signed a law "On the Calculation of Time" (in russian): 
++# <a href="http://bmockbe.ru/events/?ID=7583">
++# http://bmockbe.ru/events/?ID=7583
++# </a>
++# 
++# Medvedev signed a law on the calculation of the time (in russian):
++# <a href="http://www.regnum.ru/news/polit/1413906.html">
++# http://www.regnum.ru/news/polit/1413906.html
++# </a>
++
++# From Arthur David Olson (2011-06-15):
++# Take "abolishing daylight saving time" to mean that time is now considered
++# to be standard.
++# At least for now, keep the "old" Russia rules for the benefit of Belarus.
++
+ # These are for backward compatibility with older versions.
+ 
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+@@ -2035,7 +2055,8 @@
+ 			 1:00	C-Eur	CE%sT	1945
+ 			 2:00	Poland	CE%sT	1946
+ 			 3:00	Russia	MSK/MSD	1991 Mar 31 2:00s
+-			 2:00	Russia	EE%sT
++			 2:00	Russia	EE%sT	2011 Mar 27 2:00s
++			 3:00	-	KALT
+ #
+ # From Oscar van Vlijmen (2001-08-25): [This region consists of]
+ # Respublika Adygeya, Arkhangel'skaya oblast',
+@@ -2064,7 +2085,8 @@
+ 			 2:00	-	EET	1930 Jun 21
+ 			 3:00	Russia	MSK/MSD	1991 Mar 31 2:00s
+ 			 2:00	Russia	EE%sT	1992 Jan 19 2:00s
+-			 3:00	Russia	MSK/MSD
++			 3:00	Russia	MSK/MSD	2011 Mar 27 2:00s
++			 4:00	-	MSK
+ #
+ # Astrakhanskaya oblast', Kirovskaya oblast', Saratovskaya oblast',
+ # Volgogradskaya oblast'.  Shanks & Pottenger say Kirov is still at +0400
+@@ -2077,7 +2099,8 @@
+ 			 4:00	Russia	VOL%sT	1989 Mar 26 2:00s # Volgograd T
+ 			 3:00	Russia	VOL%sT	1991 Mar 31 2:00s
+ 			 4:00	-	VOLT	1992 Mar 29 2:00s
+-			 3:00	Russia	VOL%sT
++			 3:00	Russia	VOL%sT	2011 Mar 27 2:00s
++			 4:00	-	VOLT
+ #
+ # From Oscar van Vlijmen (2001-08-25): [This region consists of]
+ # Samarskaya oblast', Udmyrtskaya respublika
+@@ -2089,7 +2112,8 @@
+ 			 2:00	Russia	KUY%sT	1991 Sep 29 2:00s
+ 			 3:00	-	KUYT	1991 Oct 20 3:00
+ 			 4:00	Russia	SAM%sT	2010 Mar 28 2:00s # Samara Time
+-			 3:00	Russia	SAM%sT
++			 3:00	Russia	SAM%sT	2011 Mar 27 2:00s
++			 4:00	-	SAMT
+ 
+ #
+ # From Oscar van Vlijmen (2001-08-25): [This region consists of]
+@@ -2102,7 +2126,8 @@
+ 			 4:00	-	SVET	1930 Jun 21 # Sverdlovsk Time
+ 			 5:00	Russia	SVE%sT	1991 Mar 31 2:00s
+ 			 4:00	Russia	SVE%sT	1992 Jan 19 2:00s
+-			 5:00	Russia	YEK%sT	# Yekaterinburg Time
++			 5:00	Russia	YEK%sT	2011 Mar 27 2:00s
++			 6:00	-	YEKT	# Yekaterinburg Time
+ #
+ # From Oscar van Vlijmen (2001-08-25): [This region consists of]
+ # Respublika Altaj, Altajskij kraj, Omskaya oblast'.
+@@ -2110,7 +2135,8 @@
+ 			 5:00	-	OMST	1930 Jun 21 # Omsk TIme
+ 			 6:00	Russia	OMS%sT	1991 Mar 31 2:00s
+ 			 5:00	Russia	OMS%sT	1992 Jan 19 2:00s
+-			 6:00	Russia	OMS%sT
++			 6:00	Russia	OMS%sT	2011 Mar 27 2:00s
++			 7:00	-	OMST
+ #
+ # From Paul Eggert (2006-08-19): I'm guessing about Tomsk here; it's
+ # not clear when it switched from +7 to +6.
+@@ -2120,7 +2146,8 @@
+ 			 7:00	Russia	NOV%sT	1991 Mar 31 2:00s
+ 			 6:00	Russia	NOV%sT	1992 Jan 19 2:00s
+ 			 7:00	Russia	NOV%sT	1993 May 23 # say Shanks & P.
+-			 6:00	Russia	NOV%sT
++			 6:00	Russia	NOV%sT	2011 Mar 27 2:00s
++			 7:00	-	NOVT
+ 
+ # From Alexander Krivenyshev (2009-10-13):
+ # Kemerovo oblast' (Kemerovo region) in Russia will change current time zone on
+@@ -2153,7 +2180,8 @@
+ 			 7:00	Russia	KRA%sT	1991 Mar 31 2:00s
+ 			 6:00	Russia	KRA%sT	1992 Jan 19 2:00s
+ 			 7:00	Russia	KRA%sT	2010 Mar 28 2:00s
+-			 6:00	Russia	NOV%sT # Novosibirsk/Novokuznetsk Time
++			 6:00	Russia	NOV%sT	2011 Mar 27 2:00s
++			 7:00	-	NOVT # Novosibirsk/Novokuznetsk Time
+ 
+ #
+ # From Oscar van Vlijmen (2001-08-25): [This region consists of]
+@@ -2164,7 +2192,8 @@
+ 			 6:00	-	KRAT	1930 Jun 21 # Krasnoyarsk Time
+ 			 7:00	Russia	KRA%sT	1991 Mar 31 2:00s
+ 			 6:00	Russia	KRA%sT	1992 Jan 19 2:00s
+-			 7:00	Russia	KRA%sT
++			 7:00	Russia	KRA%sT	2011 Mar 27 2:00s
++			 8:00	-	KRAT
+ #
+ # From Oscar van Vlijmen (2001-08-25): [This region consists of]
+ # Respublika Buryatiya, Irkutskaya oblast',
+@@ -2174,7 +2203,8 @@
+ 			 7:00	-	IRKT	1930 Jun 21 # Irkutsk Time
+ 			 8:00	Russia	IRK%sT	1991 Mar 31 2:00s
+ 			 7:00	Russia	IRK%sT	1992 Jan 19 2:00s
+-			 8:00	Russia	IRK%sT
++			 8:00	Russia	IRK%sT	2011 Mar 27 2:00s
++			 9:00	-	IRKT
+ #
+ # From Oscar van Vlijmen (2003-10-18): [This region consists of]
+ # Aginskij Buryatskij avtonomnyj okrug, Amurskaya oblast',
+@@ -2197,7 +2227,8 @@
+ 			 8:00	-	YAKT	1930 Jun 21 # Yakutsk Time
+ 			 9:00	Russia	YAK%sT	1991 Mar 31 2:00s
+ 			 8:00	Russia	YAK%sT	1992 Jan 19 2:00s
+-			 9:00	Russia	YAK%sT
++			 9:00	Russia	YAK%sT	2011 Mar 27 2:00s
++			 10:00	-	YAKT
+ #
+ # From Oscar van Vlijmen (2003-10-18): [This region consists of]
+ # Evrejskaya avtonomnaya oblast', Khabarovskij kraj, Primorskij kraj,
+@@ -2210,7 +2241,8 @@
+ 			 9:00	-	VLAT	1930 Jun 21 # Vladivostok Time
+ 			10:00	Russia	VLA%sT	1991 Mar 31 2:00s
+ 			 9:00	Russia	VLA%sST	1992 Jan 19 2:00s
+-			10:00	Russia	VLA%sT
++			10:00	Russia	VLA%sT	2011 Mar 27 2:00s
++			11:00	-	VLAT
+ #
+ # Sakhalinskaya oblast'.
+ # The Zone name should be Yuzhno-Sakhalinsk, but that's too long.
+@@ -2220,7 +2252,8 @@
+ 			11:00	Russia	SAK%sT	1991 Mar 31 2:00s # Sakhalin T.
+ 			10:00	Russia	SAK%sT	1992 Jan 19 2:00s
+ 			11:00	Russia	SAK%sT	1997 Mar lastSun 2:00s
+-			10:00	Russia	SAK%sT
++			10:00	Russia	SAK%sT	2011 Mar 27 2:00s
++			11:00	-	SAKT
+ #
+ # From Oscar van Vlijmen (2003-10-18): [This region consists of]
+ # Magadanskaya oblast', Respublika Sakha (Yakutiya).
+@@ -2233,7 +2266,8 @@
+ 			10:00	-	MAGT	1930 Jun 21 # Magadan Time
+ 			11:00	Russia	MAG%sT	1991 Mar 31 2:00s
+ 			10:00	Russia	MAG%sT	1992 Jan 19 2:00s
+-			11:00	Russia	MAG%sT
++			11:00	Russia	MAG%sT	2011 Mar 27 2:00s
++			12:00	-	MAGT
+ #
+ # From Oscar van Vlijmen (2001-08-25): [This region consists of]
+ # Kamchatskaya oblast', Koryakskij avtonomnyj okrug.
+@@ -2244,7 +2278,8 @@
+ 			12:00	Russia	PET%sT	1991 Mar 31 2:00s
+ 			11:00	Russia	PET%sT	1992 Jan 19 2:00s
+ 			12:00	Russia	PET%sT	2010 Mar 28 2:00s
+-			11:00	Russia	PET%sT
++			11:00	Russia	PET%sT	2011 Mar 27 2:00s
++			12:00	-	PETT
+ #
+ # Chukotskij avtonomnyj okrug
+ Zone Asia/Anadyr	11:49:56 -	LMT	1924 May  2
+@@ -2253,7 +2288,8 @@
+ 			12:00	Russia	ANA%sT	1991 Mar 31 2:00s
+ 			11:00	Russia	ANA%sT	1992 Jan 19 2:00s
+ 			12:00	Russia	ANA%sT	2010 Mar 28 2:00s
+-			11:00	Russia	ANA%sT
++			11:00	Russia	ANA%sT	2011 Mar 27 2:00s
++			12:00	-	ANAT
+ 
+ # Serbia
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+--- openjdk/jdk/make/sun/javazic/tzdata/iso3166.tab
++++ openjdk/jdk/make/sun/javazic/tzdata/iso3166.tab
+@@ -43,6 +43,9 @@
+ #
+ # Lines beginning with `#' are comments.
+ #
++# From Arthur David Olson (2011-08-17):
++# Resynchronized today with the ISO 3166 site (adding SS for South Sudan).
++#
+ #country-
+ #code	country name
+ AD	Andorra
+@@ -52,7 +55,6 @@
+ AI	Anguilla
+ AL	Albania
+ AM	Armenia
+-AN	Netherlands Antilles
+ AO	Angola
+ AQ	Antarctica
+ AR	Argentina
+@@ -75,6 +77,7 @@
+ BM	Bermuda
+ BN	Brunei
+ BO	Bolivia
++BQ	Bonaire Sint Eustatius & Saba
+ BR	Brazil
+ BS	Bahamas
+ BT	Bhutan
+@@ -97,6 +100,7 @@
+ CR	Costa Rica
+ CU	Cuba
+ CV	Cape Verde
++CW	Curacao
+ CX	Christmas Island
+ CY	Cyprus
+ CZ	Czech Republic
+@@ -251,8 +255,10 @@
+ SN	Senegal
+ SO	Somalia
+ SR	Suriname
++SS	South Sudan
+ ST	Sao Tome & Principe
+ SV	El Salvador
++SX	Sint Maarten
+ SY	Syria
+ SZ	Swaziland
+ TC	Turks & Caicos Is
+--- openjdk/jdk/make/sun/javazic/tzdata/northamerica
++++ openjdk/jdk/make/sun/javazic/tzdata/northamerica
+@@ -490,6 +490,10 @@
+ # own time. I asked about daylight saving; they said it wasn't used. I
+ # did not inquire about practices in the past.
+ 
++# From Arthur David Olson (2011-08-17):
++# For lack of better information, assume that Metlakatla's
++# abandonment of use of daylight saving resulted from the 1983 vote.
++
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+ Zone America/Juneau	 15:02:19 -	LMT	1867 Oct 18
+ 			 -8:57:41 -	LMT	1900 Aug 20 12:00
+@@ -515,7 +519,7 @@
+ 			 -8:00	US	P%sT	1946
+ 			 -8:00	-	PST	1969
+ 			 -8:00	US	P%sT	1983 Oct 30 2:00
+-			 -8:00	US	MeST
++			 -8:00	-	MeST
+ Zone America/Yakutat	 14:41:05 -	LMT	1867 Oct 18
+ 			 -9:18:55 -	LMT	1900 Aug 20 12:00
+ 			 -9:00	-	YST	1942
+@@ -615,8 +619,8 @@
+ 			-10:30	-	HST	1933 Apr 30 2:00 #Laws 1933
+ 			-10:30	1:00	HDT	1933 May 21 12:00 #Laws 1933+12
+ 			-10:30	-	HST	1942 Feb 09 2:00 #Schmitt&Cox+2
+-			-10:30	1:00	HDT	1945 Sep 30 2:00 #Schmitt&Fox+2
+-			-10:30	US	H%sT	1947 Jun  8 2:00 #Schmitt&Fox+2
++			-10:30	1:00	HDT	1945 Sep 30 2:00 #Schmitt&Cox+2
++			-10:30	-	HST	1947 Jun  8 2:00 #Schmitt&Cox+2
+ 			-10:00	-	HST
+ 
+ # Now we turn to US areas that have diverged from the consensus since 1970.
+@@ -1185,12 +1189,39 @@
+ # From Paul Eggert (2000-10-02):
+ # INMS (2000-09-12) says that, since 1988 at least, Newfoundland switches
+ # at 00:01 local time.  For now, assume it started in 1987.
++
++# From Michael Pelley (2011-08-05):
++# The Government of Newfoundland and Labrador has pending changes to
++# modify the hour for daylight savings time to come into effect in
++# November 2011. This modification would change the time from 12:01AM to
++# 2:00AM on the dates of the switches of Daylight Savings Time to/from
++# Standard Time.
++#
++# As a matter of reference, in Canada provinces have the authority of
++# setting time zone information. The legislation has passed our
++# legislative body (The House of Assembly) and is awaiting the
++# proclamation to come into effect. You may find this information at:
++# <a href="http://www.assembly.nl.ca/legislation/sr/lists/Proclamation.htm">
++# http://www.assembly.nl.ca/legislation/sr/lists/Proclamation.htm
++# </a>
++# and
++# search within that web page for Standard Time (Amendment) Act. The Act
++# may be found at:
++# <a href="http://www.assembly.nl.ca/business/bills/Bill1106.htm">
++# http://www.assembly.nl.ca/business/bills/Bill1106.htm
++# </a>
++# ...
++# MICHAEL PELLEY | Manager of Enterprise Architecture - Solution Delivery
++# Office of the Chief Information Officer Executive Council Government of
++# Newfoundland & Labrador P.O. Box 8700, 40 Higgins Line, St. John's NL
++# A1B 4J6
++
+ Rule	StJohns	1987	only	-	Apr	Sun>=1	0:01	1:00	D
+ Rule	StJohns	1987	2006	-	Oct	lastSun	0:01	0	S
+ Rule	StJohns	1988	only	-	Apr	Sun>=1	0:01	2:00	DD
+ Rule	StJohns	1989	2006	-	Apr	Sun>=1	0:01	1:00	D
+-Rule	StJohns	2007	max	-	Mar	Sun>=8	0:01	1:00	D
+-Rule	StJohns	2007	max	-	Nov	Sun>=1	0:01	0	S
++Rule	StJohns	2007	2011	-	Mar	Sun>=8	0:01	1:00	D
++Rule	StJohns	2007	2010	-	Nov	Sun>=1	0:01	0	S
+ #
+ # St John's has an apostrophe, but Posix file names can't have apostrophes.
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+@@ -1200,7 +1231,8 @@
+ 			-3:30:52 StJohns N%sT	1935 Mar 30
+ 			-3:30	StJohns	N%sT	1942 May 11
+ 			-3:30	Canada	N%sT	1946
+-			-3:30	StJohns	N%sT
++			-3:30	StJohns	N%sT	2011 Nov
++			-3:30	Canada	N%sT
+ 
+ # most of east Labrador
+ 
+@@ -1214,7 +1246,8 @@
+ 			-3:30	StJohns	N%sT	1942 May 11
+ 			-3:30	Canada	N%sT	1946
+ 			-3:30	StJohns	N%sT	1966 Mar 15 2:00
+-			-4:00	StJohns	A%sT
++			-4:00	StJohns	A%sT	2011 Nov
++			-4:00	Canada	A%sT
+ 
+ 
+ # west Labrador, Nova Scotia, Prince Edward I
+@@ -1946,20 +1979,69 @@
+ # daylight saving....
+ # http://www.nnsl.com/frames/newspapers/2006-11/nov13_06none.html
+ 
+-# From Chris Walton (2007-03-14):
+-# Today I phoned the "hamlet office" to find out what Resolute was doing with
+-# its clocks.
++# From Chris Walton (2011-03-21):
++# Back in 2007 I initiated the creation of a new "zone file" for Resolute
++# Bay. Resolute Bay is a small community located about 900km north of
++# the Arctic Circle. The zone file was required because Resolute Bay had
++# decided to use UTC-5 instead of UTC-6 for the winter of 2006-2007.
+ #
+-# The individual that answered the phone confirmed that the clocks did not
+-# move at the end of daylight saving on October 29/2006.  He also told me that
+-# the clocks did not move this past weekend (March 11/2007)....
+-
+-# From Chris Walton (2008-11-13):
+-# ...the residents of Resolute believe that they are changing "time zones"
+-# twice a year.  In winter months, local time is qualified with "Eastern
+-# Time" which is really "Eastern Standard Time (UTC-5)".  In summer
+-# months, local time is qualified with "Central Time" which is really
+-# "Central Daylight Time (UTC-5)"...
++# According to new information which I received last week, Resolute Bay
++# went back to using UTC-6 in the winter of 2007-2008...
++#
++# On March 11/2007 most of Canada went onto daylight saving. On March
++# 14/2007 I phoned the Resolute Bay hamlet office to do a "time check." I
++# talked to somebody that was both knowledgeable and helpful. I was able
++# to confirm that Resolute Bay was still operating on UTC-5. It was
++# explained to me that Resolute Bay had been on the Eastern Time zone
++# (EST) in the winter, and was now back on the Central Time zone (CDT).
++# i.e. the time zone had changed twice in the last year but the clocks
++# had not moved. The residents had to know which time zone they were in
++# so they could follow the correct TV schedule...
++#
++# On Nov 02/2008 most of Canada went onto standard time. On Nov 03/2008 I
++# phoned the Resolute Bay hamlet office...[D]ue to the challenging nature
++# of the phone call, I decided to seek out an alternate source of
++# information. I found an e-mail address for somebody by the name of
++# Stephanie Adams whose job was listed as "Inns North Support Officer for
++# Arctic Co-operatives." I was under the impression that Stephanie lived
++# and worked in Resolute Bay...
++#
++# On March 14/2011 I phoned the hamlet office again. I was told that
++# Resolute Bay had been using Central Standard Time over the winter of
++# 2010-2011 and that the clocks had therefore been moved one hour ahead
++# on March 13/2011. The person I talked to was aware that Resolute Bay
++# had previously experimented with Eastern Standard Time but he could not
++# tell me when the practice had stopped.
++#
++# On March 17/2011 I searched the Web to find an e-mail address of
++# somebody that might be able to tell me exactly when Resolute Bay went
++# off Eastern Standard Time. I stumbled on the name "Aziz Kheraj." Aziz
++# used to be the mayor of Resolute Bay and he apparently owns half the
++# businesses including "South Camp Inn." This website has some info on
++# Aziz:
++# <a href="http://www.uphere.ca/node/493">
++# http://www.uphere.ca/node/493
++# </a>
++#
++# I sent Aziz an e-mail asking when Resolute Bay had stopped using
++# Eastern Standard Time.
++#
++# Aziz responded quickly with this: "hi, The time was not changed for the
++# 1 year only, the following year, the community went back to the old way
++# of "spring ahead-fall behind" currently we are zulu plus 5 hrs and in
++# the winter Zulu plus 6 hrs"
++#
++# This of course conflicted with everything I had ascertained in November 2008.
++#
++# I sent Aziz a copy of my 2008 e-mail exchange with Stephanie. Aziz
++# responded with this: "Hi, Stephanie lives in Winnipeg. I live here, You
++# may want to check with the weather office in Resolute Bay or do a
++# search on the weather through Env. Canada. web site"
++#
++# If I had realized the Stephanie did not live in Resolute Bay I would
++# never have contacted her.  I now believe that all the information I
++# obtained in November 2008 should be ignored...
++# I apologize for reporting incorrect information in 2008.
+ 
+ # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+ Rule	NT_YK	1918	only	-	Apr	14	2:00	1:00	D
+@@ -1987,14 +2069,12 @@
+ 			-6:00	Canada	C%sT	2000 Oct 29 2:00
+ 			-5:00	Canada	E%sT
+ # aka Qausuittuq
+-# Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+-Rule	Resolute 2006	max	-	Nov	Sun>=1	2:00	0	ES
+-Rule	Resolute 2007	max	-	Mar	Sun>=8	2:00	0	CD
+ Zone America/Resolute	0	-	zzz	1947 Aug 31 # Resolute founded
+ 			-6:00	NT_YK	C%sT	2000 Oct 29 2:00
+ 			-5:00	-	EST	2001 Apr  1 3:00
+ 			-6:00	Canada	C%sT	2006 Oct 29 2:00
+-			-5:00	Resolute	%sT
++			-5:00	-	EST	2007 Mar 11 3:00
++			-6:00	Canada	C%sT
+ # aka Kangiqiniq
+ Zone America/Rankin_Inlet 0	-	zzz	1957 # Rankin Inlet founded
+ 			-6:00	NT_YK	C%sT	2000 Oct 29 2:00
+--- openjdk/jdk/make/sun/javazic/tzdata/southamerica
++++ openjdk/jdk/make/sun/javazic/tzdata/southamerica
+@@ -1298,6 +1298,14 @@
+ 			-4:30	-	ANT	1965 # Netherlands Antilles Time
+ 			-4:00	-	AST
+ 
++# From Arthur David Olson (2011-06-15):
++# At least for now, use links for places with new iso3166 codes.
++# The name "Lower Prince's Quarter" is both longer than fourteen charaters
++# and contains an apostrophe; use "Lower_Princes" below.
++
++Link	America/Curacao	America/Lower_Princes # Sint Maarten
++Link	America/Curacao	America/Kralendijk # Bonaire, Sint Estatius and Saba
++
+ # Ecuador
+ #
+ # From Paul Eggert (2007-03-04):
+--- openjdk/jdk/make/sun/javazic/tzdata/zone.tab
++++ openjdk/jdk/make/sun/javazic/tzdata/zone.tab
+@@ -54,7 +54,6 @@
+ AI	+1812-06304	America/Anguilla
+ AL	+4120+01950	Europe/Tirane
+ AM	+4011+04430	Asia/Yerevan
+-AN	+1211-06900	America/Curacao
+ AO	-0848+01314	Africa/Luanda
+ AQ	-7750+16636	Antarctica/McMurdo	McMurdo Station, Ross Island
+ AQ	-9000+00000	Antarctica/South_Pole	Amundsen-Scott Station, South Pole
+@@ -109,6 +108,7 @@
+ BM	+3217-06446	Atlantic/Bermuda
+ BN	+0456+11455	Asia/Brunei
+ BO	-1630-06809	America/La_Paz
++BQ	+120903-0681636	America/Kralendijk
+ BR	-0351-03225	America/Noronha	Atlantic islands
+ BR	-0127-04829	America/Belem	Amapa, E Para
+ BR	-0343-03830	America/Fortaleza	NE Brazil (MA, PI, CE, RN, PB)
+@@ -142,7 +142,7 @@
+ CA	+4823-08915	America/Thunder_Bay	Eastern Time - Thunder Bay, Ontario
+ CA	+6344-06828	America/Iqaluit	Eastern Time - east Nunavut - most locations
+ CA	+6608-06544	America/Pangnirtung	Eastern Time - Pangnirtung, Nunavut
+-CA	+744144-0944945	America/Resolute	Eastern Standard Time - Resolute, Nunavut
++CA	+744144-0944945	America/Resolute	Central Standard Time - Resolute, Nunavut
+ CA	+484531-0913718	America/Atikokan	Eastern Standard Time - Atikokan, Ontario and Southampton I, Nunavut
+ CA	+624900-0920459	America/Rankin_Inlet	Central Time - central Nunavut
+ CA	+4953-09709	America/Winnipeg	Central Time - Manitoba & west Ontario
+@@ -177,6 +177,7 @@
+ CR	+0956-08405	America/Costa_Rica
+ CU	+2308-08222	America/Havana
+ CV	+1455-02331	Atlantic/Cape_Verde
++CW	+1211-06900	America/Curacao
+ CX	-1025+10543	Indian/Christmas
+ CY	+3510+03322	Asia/Nicosia
+ CZ	+5005+01426	Europe/Prague
+@@ -382,8 +383,10 @@
+ SN	+1440-01726	Africa/Dakar
+ SO	+0204+04522	Africa/Mogadishu
+ SR	+0550-05510	America/Paramaribo
++SS	+0451+03136	Africa/Juba
+ ST	+0020+00644	Africa/Sao_Tome
+ SV	+1342-08912	America/El_Salvador
++SX	+180305-0630250	America/Lower_Princes
+ SY	+3330+03618	Asia/Damascus
+ SZ	-2618+03106	Africa/Mbabane
+ TC	+2128-07108	America/Grand_Turk
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames.java
+@@ -159,8 +159,6 @@
+                                       "Pohnpei Summer Time", "PONST"};
+         String PST[] = new String[] {"Pacific Standard Time", "PST",
+                                      "Pacific Daylight Time", "PDT"};
+-        String RST[] = new String[] {"Eastern Standard Time", "EST",
+-                                     "Central Daylight Time", "CDT"};
+         String SAST[] = new String[] {"South Africa Standard Time", "SAST",
+                                       "South Africa Summer Time", "SAST"};
+         String SBT[] = new String[] {"Solomon Is. Time", "SBT",
+@@ -262,6 +260,7 @@
+             {"Africa/Gaborone", CAT},
+             {"Africa/Harare", CAT},
+             {"Africa/Johannesburg", SAST},
++            {"Africa/Juba", EAT},
+             {"Africa/Kampala", EAT},
+             {"Africa/Khartoum", EAT},
+             {"Africa/Kigali", CAT},
+@@ -378,11 +377,13 @@
+             {"America/Kentucky/Louisville", EST},
+             {"America/Kentucky/Monticello", EST},
+             {"America/Knox_IN", CST},
++            {"America/Kralendijk", AST},
+             {"America/La_Paz", new String[] {"Bolivia Time", "BOT",
+                                              "Bolivia Summer Time", "BOST"}},
+             {"America/Lima", new String[] {"Peru Time", "PET",
+                                            "Peru Summer Time", "PEST"}},
+             {"America/Louisville", EST},
++            {"America/Lower_Princes", AST},
+             {"America/Maceio", BRT},
+             {"America/Managua", CST},
+             {"America/Manaus", AMT},
+@@ -425,7 +426,7 @@
+             {"America/Rankin_Inlet", CST},
+             {"America/Recife", BRT},
+             {"America/Regina", CST},
+-            {"America/Resolute", RST},
++            {"America/Resolute", CST},
+             {"America/Rio_Branco", AMT},
+             {"America/Rosario", AGT},
+             {"America/Santa_Isabel", PST},
+@@ -673,7 +674,8 @@
+             {"Europe/Isle_of_Man", GMTBST},
+             {"Europe/Istanbul", EET},
+             {"Europe/Jersey", GMTBST},
+-            {"Europe/Kaliningrad", EET},
++            {"Europe/Kaliningrad", new String[] {"Kaliningrad Time", "KALT",
++                                                 "Kaliningrad Summer Time", "KALST"}},
+             {"Europe/Kiev", EET},
+             {"Europe/Lisbon", WET},
+             {"Europe/Ljubljana", CET},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_de.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_de.java
+@@ -159,8 +159,6 @@
+                                       "Pohnpei Summer Time", "PONST"};
+         String PST[] = new String[] {"Pazifische Normalzeit", "PST",
+                                      "Pazifische Sommerzeit", "PDT"};
+-        String RST[] = new String[] {"\u00d6stliche Normalzeit", "EST",
+-                                     "Zentrale Sommerzeit", "CDT"};
+         String SAST[] = new String[] {"S\u00fcdafrikanische Normalzeit", "SAST",
+                                       "S\u00fcdafrikanische Sommerzeit", "SAST"};
+         String SBT[] = new String[] {"Salomoninseln Zeit", "SBT",
+@@ -262,6 +260,7 @@
+             {"Africa/Gaborone", CAT},
+             {"Africa/Harare", CAT},
+             {"Africa/Johannesburg", SAST},
++            {"Africa/Juba", EAT},
+             {"Africa/Kampala", EAT},
+             {"Africa/Khartoum", EAT},
+             {"Africa/Kigali", CAT},
+@@ -378,11 +377,13 @@
+             {"America/Kentucky/Louisville", EST},
+             {"America/Kentucky/Monticello", EST},
+             {"America/Knox_IN", CST},
++            {"America/Kralendijk", AST},
+             {"America/La_Paz", new String[] {"Bolivianische Zeit", "BOT",
+                                              "Bolivianische Sommerzeit", "BOST"}},
+             {"America/Lima", new String[] {"Peruanische Zeit", "PET",
+                                            "Peruanische Sommerzeit", "PEST"}},
+             {"America/Louisville", EST},
++            {"America/Lower_Princes", AST},
+             {"America/Maceio", BRT},
+             {"America/Managua", CST},
+             {"America/Manaus", AMT},
+@@ -425,7 +426,7 @@
+             {"America/Rankin_Inlet", CST},
+             {"America/Recife", BRT},
+             {"America/Regina", CST},
+-            {"America/Resolute", RST},
++            {"America/Resolute", CST},
+             {"America/Rio_Branco", AMT},
+             {"America/Rosario", AGT},
+             {"America/Santa_Isabel", PST},
+@@ -673,7 +674,8 @@
+             {"Europe/Isle_of_Man", GMTBST},
+             {"Europe/Istanbul", EET},
+             {"Europe/Jersey", GMTBST},
+-            {"Europe/Kaliningrad", EET},
++            {"Europe/Kaliningrad", new String[] {"Kaliningrad Time", "KALT",
++                                                 "Kaliningrad Summer Time", "KALST"}},
+             {"Europe/Kiev", EET},
+             {"Europe/Lisbon", WET},
+             {"Europe/Ljubljana", CET},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_es.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_es.java
+@@ -159,8 +159,6 @@
+                                       "Pohnpei Summer Time", "PONST"};
+         String PST[] = new String[] {"Hora est\u00e1ndar del Pac\u00edfico", "PST",
+                                      "Hora de verano del Pac\u00edfico", "PDT"};
+-        String RST[] = new String[] {"Hora est\u00e1ndar Oriental", "EST",
+-                                     "Hora de verano Central", "CDT"};
+         String SAST[] = new String[] {"Hora est\u00e1ndar de Sud\u00e1frica", "SAST",
+                                       "Hora de verano de Sud\u00e1frica", "SAST"};
+         String SBT[] = new String[] {"Hora de las Islas Solomon", "SBT",
+@@ -262,6 +260,7 @@
+             {"Africa/Gaborone", CAT},
+             {"Africa/Harare", CAT},
+             {"Africa/Johannesburg", SAST},
++            {"Africa/Juba", EAT},
+             {"Africa/Kampala", EAT},
+             {"Africa/Khartoum", EAT},
+             {"Africa/Kigali", CAT},
+@@ -378,11 +377,13 @@
+             {"America/Kentucky/Louisville", EST},
+             {"America/Kentucky/Monticello", EST},
+             {"America/Knox_IN", CST},
++            {"America/Kralendijk", AST},
+             {"America/La_Paz", new String[] {"Hora de Bolivia", "BOT",
+                                              "Hora de verano de Bolivia", "BOST"}},
+             {"America/Lima", new String[] {"Hora de Per\u00fa", "PET",
+                                            "Hora de verano de Per\u00fa", "PEST"}},
+             {"America/Louisville", EST},
++            {"America/Lower_Princes", AST},
+             {"America/Maceio", BRT},
+             {"America/Managua", CST},
+             {"America/Manaus", AMT},
+@@ -425,7 +426,7 @@
+             {"America/Rankin_Inlet", CST},
+             {"America/Recife", BRT},
+             {"America/Regina", CST},
+-            {"America/Resolute", RST},
++            {"America/Resolute", CST},
+             {"America/Rio_Branco", AMT},
+             {"America/Rosario", AGT},
+             {"America/Santa_Isabel", PST},
+@@ -673,7 +674,8 @@
+             {"Europe/Isle_of_Man", GMTBST},
+             {"Europe/Istanbul", EET},
+             {"Europe/Jersey", GMTBST},
+-            {"Europe/Kaliningrad", EET},
++            {"Europe/Kaliningrad", new String[] {"Kaliningrad Time", "KALT",
++                                                 "Kaliningrad Summer Time", "KALST"}},
+             {"Europe/Kiev", EET},
+             {"Europe/Lisbon", WET},
+             {"Europe/Ljubljana", CET},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_fr.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_fr.java
+@@ -159,8 +159,6 @@
+                                       "Pohnpei Summer Time", "PONST"};
+         String PST[] = new String[] {"Heure normale du Pacifique", "PST",
+                                      "Heure avanc\u00e9e du Pacifique", "PDT"} ;
+-        String RST[] = new String[] {"Heure normale de l'Est", "EST",
+-                                     "Heure avanc\u00e9e du Centre", "CDT"} ;
+         String SAST[] = new String[] {"Heure normale d'Afrique du Sud", "SAST",
+                                       "Heure d'\u00e9t\u00e9 d'Afrique du Sud", "SAST"} ;
+         String SBT[] = new String[] {"Heure des \u00celes Salomon", "SBT",
+@@ -262,6 +260,7 @@
+             {"Africa/Gaborone", CAT},
+             {"Africa/Harare", CAT},
+             {"Africa/Johannesburg", SAST},
++            {"Africa/Juba", EAT},
+             {"Africa/Kampala", EAT},
+             {"Africa/Khartoum", EAT},
+             {"Africa/Kigali", CAT},
+@@ -378,11 +377,13 @@
+             {"America/Kentucky/Louisville", EST},
+             {"America/Kentucky/Monticello", EST},
+             {"America/Knox_IN", CST},
++            {"America/Kralendijk", AST},
+             {"America/La_Paz", new String[] {"Heure de Bolivie", "BOT",
+                                              "Heure d'\u00e9t\u00e9 de Bolivie", "BOST"}},
+             {"America/Lima", new String[] {"Heure du P\u00e9rou", "PET",
+                                            "Heure d'\u00e9t\u00e9 du P\u00e9rou", "PEST"}},
+             {"America/Louisville", EST},
++            {"America/Lower_Princes", AST},
+             {"America/Maceio", BRT},
+             {"America/Managua", CST},
+             {"America/Manaus", AMT},
+@@ -425,7 +426,7 @@
+             {"America/Rankin_Inlet", CST},
+             {"America/Recife", BRT},
+             {"America/Regina", CST},
+-            {"America/Resolute", RST},
++            {"America/Resolute", CST},
+             {"America/Rio_Branco", AMT},
+             {"America/Rosario", AGT},
+             {"America/Santa_Isabel", PST},
+@@ -673,7 +674,8 @@
+             {"Europe/Isle_of_Man", GMTBST},
+             {"Europe/Istanbul", EET},
+             {"Europe/Jersey", GMTBST},
+-            {"Europe/Kaliningrad", EET},
++            {"Europe/Kaliningrad", new String[] {"Kaliningrad Time", "KALT",
++                                                 "Kaliningrad Summer Time", "KALST"}},
+             {"Europe/Kiev", EET},
+             {"Europe/Lisbon", WET},
+             {"Europe/Ljubljana", CET},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_it.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_it.java
+@@ -159,8 +159,6 @@
+                                       "Pohnpei Summer Time", "PONST"};
+         String PST[] = new String[] {"Ora solare della costa occidentale USA", "PST",
+                                      "Ora legale della costa occidentale USA", "PDT"};
+-        String RST[] = new String[] {"Ora solare USA orientale", "EST",
+-                                     "Ora legale USA centrale", "CDT"};
+         String SAST[] = new String[] {"Ora solare del Sudafrica", "SAST",
+                                       "Ora estiva del Sudafrica", "SAST"};
+         String SBT[] = new String[] {"Ora delle Isole Salomone", "SBT",
+@@ -262,6 +260,7 @@
+             {"Africa/Gaborone", CAT},
+             {"Africa/Harare", CAT},
+             {"Africa/Johannesburg", SAST},
++            {"Africa/Juba", EAT},
+             {"Africa/Kampala", EAT},
+             {"Africa/Khartoum", EAT},
+             {"Africa/Kigali", CAT},
+@@ -378,11 +377,13 @@
+             {"America/Kentucky/Louisville", EST},
+             {"America/Kentucky/Monticello", EST},
+             {"America/Knox_IN", CST},
++            {"America/Kralendijk", AST},
+             {"America/La_Paz", new String[] {"Ora della Bolivia", "BOT",
+                                              "Ora estiva della Bolivia", "BOST"}},
+             {"America/Lima", new String[] {"Ora del Per\u00f9", "PET",
+                                            "Ora estiva del Per\u00f9", "PEST"}},
+             {"America/Louisville", EST},
++            {"America/Lower_Princes", AST},
+             {"America/Maceio", BRT},
+             {"America/Managua", CST},
+             {"America/Manaus", AMT},
+@@ -425,7 +426,7 @@
+             {"America/Rankin_Inlet", CST},
+             {"America/Recife", BRT},
+             {"America/Regina", CST},
+-            {"America/Resolute", RST},
++            {"America/Resolute", CST},
+             {"America/Rio_Branco", AMT},
+             {"America/Rosario", AGT},
+             {"America/Santa_Isabel", PST},
+@@ -673,7 +674,8 @@
+             {"Europe/Isle_of_Man", GMTBST},
+             {"Europe/Istanbul", EET},
+             {"Europe/Jersey", GMTBST},
+-            {"Europe/Kaliningrad", EET},
++            {"Europe/Kaliningrad", new String[] {"Kaliningrad Time", "KALT",
++                                                 "Kaliningrad Summer Time", "KALST"}},
+             {"Europe/Kiev", EET},
+             {"Europe/Lisbon", WET},
+             {"Europe/Ljubljana", CET},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_ja.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_ja.java
+@@ -159,8 +159,6 @@
+                                       "Pohnpei Summer Time", "PONST"};
+         String PST[] = new String[] {"\u592a\u5e73\u6d0b\u6a19\u6e96\u6642", "PST",
+                                      "\u592a\u5e73\u6d0b\u590f\u6642\u9593", "PDT"};
+-        String RST[] = new String[] {"\u6771\u90e8\u6a19\u6e96\u6642", "EST",
+-                                     "\u4e2d\u90e8\u590f\u6642\u9593", "CDT"};
+         String SAST[] = new String[] {"\u5357\u30a2\u30d5\u30ea\u30ab\u6a19\u6e96\u6642", "SAST",
+                                       "\u5357\u30a2\u30d5\u30ea\u30ab\u590f\u6642\u9593", "SAST"};
+         String SBT[] = new String[] {"\u30bd\u30ed\u30e2\u30f3\u8af8\u5cf6\u6642\u9593", "SBT",
+@@ -262,6 +260,7 @@
+             {"Africa/Gaborone", CAT},
+             {"Africa/Harare", CAT},
+             {"Africa/Johannesburg", SAST},
++            {"Africa/Juba", EAT},
+             {"Africa/Kampala", EAT},
+             {"Africa/Khartoum", EAT},
+             {"Africa/Kigali", CAT},
+@@ -378,11 +377,13 @@
+             {"America/Kentucky/Louisville", EST},
+             {"America/Kentucky/Monticello", EST},
+             {"America/Knox_IN", CST},
++            {"America/Kralendijk", AST},
+             {"America/La_Paz", new String[] {"\u30dc\u30ea\u30d3\u30a2\u6642\u9593", "BOT",
+                                              "\u30dc\u30ea\u30d3\u30a2\u590f\u6642\u9593", "BOST"}},
+             {"America/Lima", new String[] {"\u30da\u30eb\u30fc\u6642\u9593", "PET",
+                                            "\u30da\u30eb\u30fc\u590f\u6642\u9593", "PEST"}},
+             {"America/Louisville", EST},
++            {"America/Lower_Princes", AST},
+             {"America/Maceio", BRT},
+             {"America/Managua", CST},
+             {"America/Manaus", AMT},
+@@ -425,7 +426,7 @@
+             {"America/Rankin_Inlet", CST},
+             {"America/Recife", BRT},
+             {"America/Regina", CST},
+-            {"America/Resolute", RST},
++            {"America/Resolute", CST},
+             {"America/Rio_Branco", AMT},
+             {"America/Rosario", AGT},
+             {"America/Santa_Isabel", PST},
+@@ -673,7 +674,8 @@
+             {"Europe/Isle_of_Man", GMTBST},
+             {"Europe/Istanbul", EET},
+             {"Europe/Jersey", GMTBST},
+-            {"Europe/Kaliningrad", EET},
++            {"Europe/Kaliningrad", new String[] {"Kaliningrad Time", "KALT",
++                                                 "Kaliningrad Summer Time", "KALST"}},
+             {"Europe/Kiev", EET},
+             {"Europe/Lisbon", WET},
+             {"Europe/Ljubljana", CET},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_ko.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_ko.java
+@@ -159,8 +159,6 @@
+                                       "Pohnpei Summer Time", "PONST"};
+         String PST[] = new String[] {"\ud0dc\ud3c9\uc591 \ud45c\uc900\uc2dc", "PST",
+                                      "\ud0dc\ud3c9\uc591 \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "PDT"};
+-        String RST[] = new String[] {"\ub3d9\ubd80 \ud45c\uc900\uc2dc", "EST",
+-                                     "\uc911\ubd80 \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "CDT"};
+         String SAST[] = new String[] {"\ub0a8\uc544\ud504\ub9ac\uce74 \ud45c\uc900\uc2dc", "SAST",
+                                       "\ub0a8\uc544\ud504\ub9ac\uce74 \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "SAST"};
+         String SBT[] = new String[] {"\uc194\ub85c\ubaac \uad70\ub3c4 \uc2dc\uac04", "SBT",
+@@ -262,6 +260,7 @@
+             {"Africa/Gaborone", CAT},
+             {"Africa/Harare", CAT},
+             {"Africa/Johannesburg", SAST},
++            {"Africa/Juba", EAT},
+             {"Africa/Kampala", EAT},
+             {"Africa/Khartoum", EAT},
+             {"Africa/Kigali", CAT},
+@@ -378,11 +377,13 @@
+             {"America/Kentucky/Louisville", EST},
+             {"America/Kentucky/Monticello", EST},
+             {"America/Knox_IN", CST},
++            {"America/Kralendijk", AST},
+             {"America/La_Paz", new String[] {"\ubcfc\ub9ac\ube44\uc544 \uc2dc\uac04", "BOT",
+                                             "\ubcfc\ub9ac\ube44\uc544 \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "BOST"}},
+             {"America/Lima", new String[] {"\ud398\ub8e8 \uc2dc\uac04", "PET",
+                                             "\ud398\ub8e8 \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "PEST"}},
+             {"America/Louisville", EST},
++            {"America/Lower_Princes", AST},
+             {"America/Maceio", BRT},
+             {"America/Managua", CST},
+             {"America/Manaus", AMT},
+@@ -425,7 +426,7 @@
+             {"America/Rankin_Inlet", CST},
+             {"America/Recife", BRT},
+             {"America/Regina", CST},
+-            {"America/Resolute", RST},
++            {"America/Resolute", CST},
+             {"America/Rio_Branco", AMT},
+             {"America/Rosario", AGT},
+             {"America/Santa_Isabel", PST},
+@@ -673,7 +674,8 @@
+             {"Europe/Isle_of_Man", GMTBST},
+             {"Europe/Istanbul", EET},
+             {"Europe/Jersey", GMTBST},
+-            {"Europe/Kaliningrad", EET},
++            {"Europe/Kaliningrad", new String[] {"Kaliningrad Time", "KALT",
++                                                 "Kaliningrad Summer Time", "KALST"}},
+             {"Europe/Kiev", EET},
+             {"Europe/Lisbon", WET},
+             {"Europe/Ljubljana", CET},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_sv.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_sv.java
+@@ -159,8 +159,6 @@
+                                       "Pohnpei Summer Time", "PONST"};
+         String PST[] = new String[] {"Stilla havet, normaltid", "PST",
+                                      "Stilla havet, sommartid", "PDT"};
+-        String RST[] = new String[] {"Eastern, normaltid", "EST",
+-                                     "Central sommartid", "CDT"};
+         String SAST[] = new String[] {"Sydafrika, normaltid", "SAST",
+                                       "Sydafrika, sommartid", "SAST"};
+         String SBT[] = new String[] {"Salomon\u00f6arna, normaltid", "SBT",
+@@ -262,6 +260,7 @@
+             {"Africa/Gaborone", CAT},
+             {"Africa/Harare", CAT},
+             {"Africa/Johannesburg", SAST},
++            {"Africa/Juba", EAT},
+             {"Africa/Kampala", EAT},
+             {"Africa/Khartoum", EAT},
+             {"Africa/Kigali", CAT},
+@@ -378,11 +377,13 @@
+             {"America/Kentucky/Louisville", EST},
+             {"America/Kentucky/Monticello", EST},
+             {"America/Knox_IN", CST},
++            {"America/Kralendijk", AST},
+             {"America/La_Paz", new String[] {"Bolivia, normaltid", "BOT",
+                                              "Bolivia, sommartid", "BOST"}},
+             {"America/Lima", new String[] {"Peru, normaltid", "PET",
+                                            "Peru, sommartid", "PEST"}},
+             {"America/Louisville", EST},
++            {"America/Lower_Princes", AST},
+             {"America/Maceio", BRT},
+             {"America/Managua", CST},
+             {"America/Manaus", AMT},
+@@ -425,7 +426,7 @@
+             {"America/Rankin_Inlet", CST},
+             {"America/Recife", BRT},
+             {"America/Regina", CST},
+-            {"America/Resolute", RST},
++            {"America/Resolute", CST},
+             {"America/Rio_Branco", AMT},
+             {"America/Rosario", AGT},
+             {"America/Santa_Isabel", PST},
+@@ -673,7 +674,8 @@
+             {"Europe/Isle_of_Man", GMTBST},
+             {"Europe/Istanbul", EET},
+             {"Europe/Jersey", GMTBST},
+-            {"Europe/Kaliningrad", EET},
++            {"Europe/Kaliningrad", new String[] {"Kaliningrad Time", "KALT",
++                                                 "Kaliningrad Summer Time", "KALST"}},
+             {"Europe/Kiev", EET},
+             {"Europe/Lisbon", WET},
+             {"Europe/Ljubljana", CET},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_zh_CN.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_zh_CN.java
+@@ -159,8 +159,6 @@
+                                       "Pohnpei Summer Time", "PONST"};
+         String PST[] = new String[] {"\u592a\u5e73\u6d0b\u6807\u51c6\u65f6\u95f4", "PST",
+                                      "\u592a\u5e73\u6d0b\u590f\u4ee4\u65f6", "PDT"};
+-        String RST[] = new String[] {"\u4e1c\u90e8\u6807\u51c6\u65f6\u95f4", "EST",
+-                                     "\u4e2d\u592e\u590f\u4ee4\u65f6", "CDT"};
+         String SAST[] = new String[] {"\u5357\u975e\u6807\u51c6\u65f6\u95f4", "SAST",
+                                       "\u5357\u975e\u590f\u4ee4\u65f6", "SAST"};
+         String SBT[] = new String[] {"\u6240\u7f57\u95e8\u7fa4\u5c9b\u65f6\u95f4", "SBT",
+@@ -262,6 +260,7 @@
+             {"Africa/Gaborone", CAT},
+             {"Africa/Harare", CAT},
+             {"Africa/Johannesburg", SAST},
++            {"Africa/Juba", EAT},
+             {"Africa/Kampala", EAT},
+             {"Africa/Khartoum", EAT},
+             {"Africa/Kigali", CAT},
+@@ -378,11 +377,13 @@
+             {"America/Kentucky/Louisville", EST},
+             {"America/Kentucky/Monticello", EST},
+             {"America/Knox_IN", CST},
++            {"America/Kralendijk", AST},
+             {"America/La_Paz", new String[] {"\u73bb\u5229\u7ef4\u4e9a\u65f6\u95f4", "BOT",
+                                              "\u73bb\u5229\u7ef4\u4e9a\u590f\u4ee4\u65f6", "BOST"}},
+             {"America/Lima", new String[] {"\u79d8\u9c81\u65f6\u95f4", "PET",
+                                            "\u79d8\u9c81\u590f\u4ee4\u65f6", "PEST"}},
+             {"America/Louisville", EST},
++            {"America/Lower_Princes", AST},
+             {"America/Maceio", BRT},
+             {"America/Managua", CST},
+             {"America/Manaus", AMT},
+@@ -425,7 +426,7 @@
+             {"America/Rankin_Inlet", CST},
+             {"America/Recife", BRT},
+             {"America/Regina", CST},
+-            {"America/Resolute", RST},
++            {"America/Resolute", CST},
+             {"America/Rio_Branco", AMT},
+             {"America/Rosario", AGT},
+             {"America/Santa_Isabel", PST},
+@@ -673,7 +674,8 @@
+             {"Europe/Isle_of_Man", GMTBST},
+             {"Europe/Istanbul", EET},
+             {"Europe/Jersey", GMTBST},
+-            {"Europe/Kaliningrad", EET},
++            {"Europe/Kaliningrad", new String[] {"Kaliningrad Time", "KALT",
++                                                 "Kaliningrad Summer Time", "KALST"}},
+             {"Europe/Kiev", EET},
+             {"Europe/Lisbon", WET},
+             {"Europe/Ljubljana", CET},
+--- openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_zh_TW.java
++++ openjdk/jdk/src/share/classes/sun/util/resources/TimeZoneNames_zh_TW.java
+@@ -159,8 +159,6 @@
+                                       "Pohnpei Summer Time", "PONST"};
+         String PST[] = new String[] {"\u592a\u5e73\u6d0b\u6a19\u6e96\u6642\u9593", "PST",
+                                      "\u592a\u5e73\u6d0b\u65e5\u5149\u7bc0\u7d04\u6642\u9593", "PDT"};
+-        String RST[] = new String[] {"\u6771\u65b9\u6a19\u6e96\u6642\u9593", "EST",
+-                                     "\u4e2d\u592e\u65e5\u5149\u7bc0\u7d04\u6642\u9593", "CDT"};
+         String SAST[] = new String[] {"\u5357\u975e\u6a19\u6e96\u6642\u9593", "SAST",
+                                       "\u5357\u975e\u590f\u4ee4\u6642\u9593", "SAST"};
+         String SBT[] = new String[] {"\u6240\u7f85\u9580\u7fa4\u5cf6\u6642\u9593", "SBT",
+@@ -262,6 +260,7 @@
+             {"Africa/Gaborone", CAT},
+             {"Africa/Harare", CAT},
+             {"Africa/Johannesburg", SAST},
++            {"Africa/Juba", EAT},
+             {"Africa/Kampala", EAT},
+             {"Africa/Khartoum", EAT},
+             {"Africa/Kigali", CAT},
+@@ -378,11 +377,13 @@
+             {"America/Kentucky/Louisville", EST},
+             {"America/Kentucky/Monticello", EST},
+             {"America/Knox_IN", CST},
++            {"America/Kralendijk", AST},
+             {"America/La_Paz", new String[] {"\u73bb\u5229\u7dad\u4e9e\u6642\u9593", "BOT",
+                                              "\u73bb\u5229\u7dad\u4e9e\u590f\u4ee4\u6642\u9593", "BOST"}},
+             {"America/Lima", new String[] {"\u7955\u9b6f\u6642\u9593", "PET",
+                                            "\u7955\u9b6f\u590f\u4ee4\u6642\u9593", "PEST"}},
+             {"America/Louisville", EST},
++            {"America/Lower_Princes", AST},
+             {"America/Maceio", BRT},
+             {"America/Managua", CST},
+             {"America/Manaus", AMT},
+@@ -425,7 +426,7 @@
+             {"America/Rankin_Inlet", CST},
+             {"America/Recife", BRT},
+             {"America/Regina", CST},
+-            {"America/Resolute", RST},
++            {"America/Resolute", CST},
+             {"America/Rio_Branco", AMT},
+             {"America/Rosario", AGT},
+             {"America/Santa_Isabel", PST},
+@@ -674,7 +675,8 @@
+             {"Europe/Isle_of_Man", GMTBST},
+             {"Europe/Istanbul", EET},
+             {"Europe/Jersey", GMTBST},
+-            {"Europe/Kaliningrad", EET},
++            {"Europe/Kaliningrad", new String[] {"Kaliningrad Time", "KALT",
++                                                 "Kaliningrad Summer Time", "KALST"}},
+             {"Europe/Kiev", EET},
+             {"Europe/Lisbon", WET},
+             {"Europe/Ljubljana", CET},

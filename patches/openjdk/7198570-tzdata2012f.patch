@@ -1,0 +1,841 @@
+# HG changeset patch
+# User coffeys
+# Date 1349962116 -3600
+# Node ID c554456c623f1d05180b291ce0b1e4589e2bd165
+# Parent  5683b3f7f8cc58746a2983ee6294b62ccdfa159c
+7198570: (tz) Support tzdata2012f
+Reviewed-by: peytoia, asaha
+
+--- openjdk/jdk/make/sun/javazic/tzdata/VERSION
++++ openjdk/jdk/make/sun/javazic/tzdata/VERSION
+@@ -21,4 +21,4 @@
+ # or visit www.oracle.com if you need additional information or have any
+ # questions.
+ #
+-tzdata2012c
++tzdata2012f
+--- openjdk/jdk/make/sun/javazic/tzdata/africa
++++ openjdk/jdk/make/sun/javazic/tzdata/africa
+@@ -22,7 +22,6 @@
+ # questions.
+ #
+ # <pre>
+-# @(#)africa	8.35
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+@@ -261,7 +260,7 @@
+ # I received a mail from an airline which says that the daylight
+ # saving time in Egypt will end in the night of 2007-09-06 to 2007-09-07.
+ # From Jesper Norgaard Welen (2007-08-15): [The following agree:]
+-# http://www.nentjes.info/Bill/bill5.htm 
++# http://www.nentjes.info/Bill/bill5.htm
+ # http://www.timeanddate.com/worldclock/city.html?n=53
+ # From Steffen Thorsen (2007-09-04): The official information...:
+ # http://www.sis.gov.eg/En/EgyptOnline/Miscellaneous/000002/0207000000000000001580.htm
+@@ -315,18 +314,18 @@
+ # in September.
+ 
+ # From Steffen Thorsen (2009-08-11):
+-# We have been able to confirm the August change with the Egyptian Cabinet 
++# We have been able to confirm the August change with the Egyptian Cabinet
+ # Information and Decision Support Center:
+ # <a href="http://www.timeanddate.com/news/time/egypt-dst-ends-2009.html">
+ # http://www.timeanddate.com/news/time/egypt-dst-ends-2009.html
+ # </a>
+-# 
++#
+ # The Middle East News Agency
+ # <a href="http://www.mena.org.eg/index.aspx">
+ # http://www.mena.org.eg/index.aspx
+ # </a>
+ # also reports "Egypt starts winter time on August 21"
+-# today in article numbered "71, 11/08/2009 12:25 GMT." 
++# today in article numbered "71, 11/08/2009 12:25 GMT."
+ # Only the title above is available without a subscription to their service,
+ # and can be found by searching for "winter" in their search engine
+ # (at least today).
+@@ -505,7 +504,7 @@
+ # From Steffen Thorsen (2008-06-25):
+ # Mauritius plans to observe DST from 2008-11-01 to 2009-03-31 on a trial
+ # basis....
+-# It seems that Mauritius observed daylight saving time from 1982-10-10 to 
++# It seems that Mauritius observed daylight saving time from 1982-10-10 to
+ # 1983-03-20 as well, but that was not successful....
+ # http://www.timeanddate.com/news/time/mauritius-daylight-saving-time.html
+ 
+@@ -529,12 +528,12 @@
+ # than previously announced (2008-11-01 to 2009-03-31).  The new start
+ # date is 2008-10-26 at 02:00 and the new end date is 2009-03-27 (no time
+ # given, but it is probably at either 2 or 3 wall clock time).
+-# 
+-# A little strange though, since the article says that they moved the date 
+-# to align itself with Europe and USA which also change time on that date, 
+-# but that means they have not paid attention to what happened in 
+-# USA/Canada last year (DST ends first Sunday in November). I also wonder 
+-# why that they end on a Friday, instead of aligning with Europe which 
++#
++# A little strange though, since the article says that they moved the date
++# to align itself with Europe and USA which also change time on that date,
++# but that means they have not paid attention to what happened in
++# USA/Canada last year (DST ends first Sunday in November). I also wonder
++# why that they end on a Friday, instead of aligning with Europe which
+ # changes two days later.
+ 
+ # From Alex Krivenyshev (2008-07-11):
+@@ -593,7 +592,7 @@
+ # </a>
+ 
+ # From Arthur David Olson (2009-07-11):
+-# The "mauritius-dst-will-not-repeat" wrapup includes this: 
++# The "mauritius-dst-will-not-repeat" wrapup includes this:
+ # "The trial ended on March 29, 2009, when the clocks moved back by one hour
+ # at 2am (or 02:00) local time..."
+ 
+@@ -687,8 +686,8 @@
+ # XXX--guess that it is only Morocco for now; guess only 2008 for now.
+ 
+ # From Steffen Thorsen (2008-08-27):
+-# Morocco will change the clocks back on the midnight between August 31 
+-# and September 1. They originally planned to observe DST to near the end 
++# Morocco will change the clocks back on the midnight between August 31
++# and September 1. They originally planned to observe DST to near the end
+ # of September:
+ #
+ # One article about it (in French):
+@@ -822,6 +821,23 @@
+ # "...&agrave; partir du dernier dimance d'avril et non fins mars,
+ # comme annonc&eacute; pr&eacute;c&eacute;demment."
+ 
++# From Milamber Space Network (2012-07-17):
++# The official return to GMT is announced by the Moroccan government:
++# <a href="http://www.mmsp.gov.ma/fr/actualites.aspx?id=288">
++# http://www.mmsp.gov.ma/fr/actualites.aspx?id=288 [in French]
++# </a>
++#
++# Google translation, lightly edited:
++# Back to the standard time of the Kingdom (GMT)
++# Pursuant to Decree No. 2-12-126 issued on 26 Jumada (I) 1433 (April 18,
++# 2012) and in accordance with the order of Mr. President of the
++# Government No. 3-47-12 issued on 24 Sha'ban (11 July 2012), the Ministry
++# of Public Service and Administration Modernization announces the return
++# of the legal time of the Kingdom (GMT) from Friday, July 20, 2012 until
++# Monday, August 20, 2012.  So the time will be delayed by 60 minutes from
++# 3:00 am Friday, July 20, 2012 and will again be advanced by 60 minutes
++# August 20, 2012 from 2:00 am.
++
+ # RULE	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+ 
+ Rule	Morocco	1939	only	-	Sep	12	 0:00	1:00	S
+@@ -849,6 +865,8 @@
+ Rule	Morocco	2011	only	-	Jul	 31	 0	0	-
+ Rule	Morocco	2012	max	-	Apr	 lastSun 2:00	1:00	S
+ Rule	Morocco	2012	max	-	Sep	 lastSun 3:00	0	-
++Rule	Morocco	2012	only	-	Jul	 20	 3:00	0	-
++Rule	Morocco	2012	only	-	Aug	 20	 2:00	1:00	S
+ 
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+ Zone Africa/Casablanca	-0:30:20 -	LMT	1913 Oct 26
+@@ -877,7 +895,7 @@
+ # Forecasting Riaan van Zyl explained that the far eastern parts of
+ # the country are close to 40 minutes earlier in sunrise than the rest
+ # of the country.
+-# 
++#
+ # From Paul Eggert (2007-03-31):
+ # Apparently the Caprivi Strip informally observes Botswana time, but
+ # we have no details.  In the meantime people there can use Africa/Gaborone.
+--- openjdk/jdk/make/sun/javazic/tzdata/antarctica
++++ openjdk/jdk/make/sun/javazic/tzdata/antarctica
+@@ -22,7 +22,6 @@
+ # questions.
+ #
+ # <pre>
+-# @(#)antarctica	8.10
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+--- openjdk/jdk/make/sun/javazic/tzdata/asia
++++ openjdk/jdk/make/sun/javazic/tzdata/asia
+@@ -22,7 +22,6 @@
+ # questions.
+ #
+ # <pre>
+-# @(#)asia	8.73
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+@@ -125,7 +124,7 @@
+ # From Alexander Krivenyshev (2012-02-10):
+ # According to News Armenia, on Feb 9, 2012,
+ # http://newsarmenia.ru/society/20120209/42609695.html
+-# 
++#
+ # The Armenia National Assembly adopted final reading of Amendments to the
+ # Law "On procedure of calculation time on the territory of the Republic of
+ # Armenia" according to which Armenia [is] abolishing Daylight Saving Time.
+@@ -205,15 +204,15 @@
+ # </a>
+ 
+ # From A. N. M. Kamrus Saadat (2009-06-15):
+-# Finally we've got the official mail regarding DST start time where DST start 
+-# time is mentioned as Jun 19 2009, 23:00 from BTRC (Bangladesh 
+-# Telecommunication Regulatory Commission). 
++# Finally we've got the official mail regarding DST start time where DST start
++# time is mentioned as Jun 19 2009, 23:00 from BTRC (Bangladesh
++# Telecommunication Regulatory Commission).
+ #
+ # No DST end date has been announced yet.
+ 
+ # From Alexander Krivenyshev (2009-09-25):
+-# Bangladesh won't go back to Standard Time from October 1, 2009, 
+-# instead it will continue DST measure till the cabinet makes a fresh decision. 
++# Bangladesh won't go back to Standard Time from October 1, 2009,
++# instead it will continue DST measure till the cabinet makes a fresh decision.
+ #
+ # Following report by same newspaper-"The Daily Star Friday":
+ # "DST change awaits cabinet decision-Clock won't go back by 1-hr from Oct 1"
+@@ -227,8 +226,8 @@
+ 
+ # From Steffen Thorsen (2009-10-13):
+ # IANS (Indo-Asian News Service) now reports:
+-# Bangladesh has decided that the clock advanced by an hour to make 
+-# maximum use of daylight hours as an energy saving measure would 
++# Bangladesh has decided that the clock advanced by an hour to make
++# maximum use of daylight hours as an energy saving measure would
+ # "continue for an indefinite period."
+ #
+ # One of many places where it is published:
+@@ -256,7 +255,7 @@
+ 
+ # From Alexander Krivenyshev (2010-03-22):
+ # According to Bangladesh newspaper "The Daily Star,"
+-# Cabinet cancels Daylight Saving Time 
++# Cabinet cancels Daylight Saving Time
+ # <a href="http://www.thedailystar.net/newDesign/latest_news.php?nid=22817">
+ # http://www.thedailystar.net/newDesign/latest_news.php?nid=22817
+ # </a>
+@@ -384,11 +383,11 @@
+ # observing daylight saving time in 1986.
+ #
+ # From Thomas S. Mullaney (2008-02-11):
+-# I think you're combining two subjects that need to treated 
+-# separately: daylight savings (which, you're correct, wasn't 
+-# implemented until the 1980s) and the unified time zone centered near 
+-# Beijing (which was implemented in 1949). Briefly, there was also a 
+-# "Lhasa Time" in Tibet and "Urumqi Time" in Xinjiang. The first was 
++# I think you're combining two subjects that need to treated
++# separately: daylight savings (which, you're correct, wasn't
++# implemented until the 1980s) and the unified time zone centered near
++# Beijing (which was implemented in 1949). Briefly, there was also a
++# "Lhasa Time" in Tibet and "Urumqi Time" in Xinjiang. The first was
+ # ceased, and the second eventually recognized (again, in the 1980s).
+ #
+ # From Paul Eggert (2008-06-30):
+@@ -525,7 +524,7 @@
+ # as of 2009-10-28:
+ # Year        Period
+ # 1941        1 Apr to 30 Sep
+-# 1942        Whole year 
++# 1942        Whole year
+ # 1943        Whole year
+ # 1944        Whole year
+ # 1945        Whole year
+@@ -616,16 +615,16 @@
+ # From Arthur David Olson (2010-04-07):
+ # Here's Google's translation of the table at the bottom of the "summert.htm" page:
+ # Decade 	                                                    Name                      Start and end date
+-# Republic of China 34 years to 40 years (AD 1945-1951 years) Summer Time               May 1 to September 30 
+-# 41 years of the Republic of China (AD 1952)                 Daylight Saving Time      March 1 to October 31 
+-# Republic of China 42 years to 43 years (AD 1953-1954 years) Daylight Saving Time      April 1 to October 31 
+-# In the 44 years to 45 years (AD 1955-1956 years)            Daylight Saving Time      April 1 to September 30 
+-# Republic of China 46 years to 48 years (AD 1957-1959)       Summer Time               April 1 to September 30 
+-# Republic of China 49 years to 50 years (AD 1960-1961)       Summer Time               June 1 to September 30 
+-# Republic of China 51 years to 62 years (AD 1962-1973 years) Stop Summer Time 
+-# Republic of China 63 years to 64 years (1974-1975 AD)       Daylight Saving Time      April 1 to September 30 
+-# Republic of China 65 years to 67 years (1976-1978 AD)       Stop Daylight Saving Time 
+-# Republic of China 68 years (AD 1979)                        Daylight Saving Time      July 1 to September 30 
++# Republic of China 34 years to 40 years (AD 1945-1951 years) Summer Time               May 1 to September 30
++# 41 years of the Republic of China (AD 1952)                 Daylight Saving Time      March 1 to October 31
++# Republic of China 42 years to 43 years (AD 1953-1954 years) Daylight Saving Time      April 1 to October 31
++# In the 44 years to 45 years (AD 1955-1956 years)            Daylight Saving Time      April 1 to September 30
++# Republic of China 46 years to 48 years (AD 1957-1959)       Summer Time               April 1 to September 30
++# Republic of China 49 years to 50 years (AD 1960-1961)       Summer Time               June 1 to September 30
++# Republic of China 51 years to 62 years (AD 1962-1973 years) Stop Summer Time
++# Republic of China 63 years to 64 years (1974-1975 AD)       Daylight Saving Time      April 1 to September 30
++# Republic of China 65 years to 67 years (1976-1978 AD)       Stop Daylight Saving Time
++# Republic of China 68 years (AD 1979)                        Daylight Saving Time      July 1 to September 30
+ # Republic of China since 69 years (AD 1980)                  Stop Daylight Saving Time
+ 
+ # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+@@ -1859,15 +1858,15 @@
+ # shown 8 per cent higher consumption of electricity.
+ 
+ # From Alex Krivenyshev (2008-05-15):
+-# 
+-# Here is an article that Pakistan plan to introduce Daylight Saving Time 
++#
++# Here is an article that Pakistan plan to introduce Daylight Saving Time
+ # on June 1, 2008 for 3 months.
+-# 
+-# "... The federal cabinet on Wednesday announced a new conservation plan to help 
+-# reduce load shedding by approving the closure of commercial centres at 9pm and 
+-# moving clocks forward by one hour for the next three months. 
++#
++# "... The federal cabinet on Wednesday announced a new conservation plan to help
++# reduce load shedding by approving the closure of commercial centres at 9pm and
++# moving clocks forward by one hour for the next three months.
+ # ...."
+-# 
++#
+ # <a href="http://www.worldtimezone.net/dst_news/dst_news_pakistan01.html">
+ # http://www.worldtimezone.net/dst_news/dst_news_pakistan01.html
+ # </a>
+@@ -1927,7 +1926,7 @@
+ # Government has decided to restore the previous time by moving the
+ # clocks backward by one hour from October 1. A formal announcement to
+ # this effect will be made after the Prime Minister grants approval in
+-# this regard." 
++# this regard."
+ # <a href="http://www.thenews.com.pk/updates.asp?id=87168">
+ # http://www.thenews.com.pk/updates.asp?id=87168
+ # </a>
+@@ -2223,7 +2222,7 @@
+ # <a href="http://www.maannews.net/eng/ViewDetails.aspx?ID=306795">
+ # http://www.maannews.net/eng/ViewDetails.aspx?ID=306795
+ # </a>
+-# the clocks were set back one hour at 2010-08-11 00:00:00 local time in 
++# the clocks were set back one hour at 2010-08-11 00:00:00 local time in
+ # Gaza and the West Bank.
+ # Some more background info:
+ # <a href="http://www.timeanddate.com/news/time/westbank-gaza-end-dst-2010.html">
+@@ -2262,7 +2261,7 @@
+ # The rules for Egypt are stolen from the `africa' file.
+ 
+ # From Steffen Thorsen (2011-09-30):
+-# West Bank did end Daylight Saving Time this morning/midnight (2011-09-30 
++# West Bank did end Daylight Saving Time this morning/midnight (2011-09-30
+ # 00:00).
+ # So West Bank and Gaza now have the same time again.
+ #
+@@ -2536,19 +2535,19 @@
+ # having it between Wednesday and Thursday (two workdays in Syria) since the
+ # weekend in Syria is not Saturday and Sunday, but Friday and Saturday. So now
+ # it is implemented at midnight of the last workday before weekend...
+-# 
++#
+ # From Steffen Thorsen (2007-10-27):
+ # Jesper Norgaard Welen wrote:
+-# 
++#
+ # > "Winter local time in Syria will be observed at midnight of Thursday 1
+ # > November 2007, and the clock will be put back 1 hour."
+-# 
++#
+ # I found confirmation on this in this gov.sy-article (Arabic):
+ # http://wehda.alwehda.gov.sy/_print_veiw.asp?FileName=12521710520070926111247
+-# 
++#
+ # which using Google's translate tools says:
+-# Council of Ministers also approved the commencement of work on 
+-# identifying the winter time as of Friday, 2/11/2007 where the 60th 
++# Council of Ministers also approved the commencement of work on
++# identifying the winter time as of Friday, 2/11/2007 where the 60th
+ # minute delay at midnight Thursday 1/11/2007.
+ Rule	Syria	2007	only	-	Nov	 Fri>=1	0:00	0	-
+ 
+@@ -2614,8 +2613,8 @@
+ # </a>
+ 
+ # From Steffen Thorsen (2009-10-27):
+-# The Syrian Arab News Network on 2009-09-29 reported that Syria will 
+-# revert back to winter (standard) time on midnight between Thursday 
++# The Syrian Arab News Network on 2009-09-29 reported that Syria will
++# revert back to winter (standard) time on midnight between Thursday
+ # 2009-10-29 and Friday 2009-10-30:
+ # <a href="http://www.sana.sy/ara/2/2009/09/29/247012.htm">
+ # http://www.sana.sy/ara/2/2009/09/29/247012.htm (Arabic)
+--- openjdk/jdk/make/sun/javazic/tzdata/australasia
++++ openjdk/jdk/make/sun/javazic/tzdata/australasia
+@@ -22,7 +22,6 @@
+ # questions.
+ #
+ # <pre>
+-# @(#)australasia	8.30
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+@@ -307,9 +306,9 @@
+ # </a>
+ 
+ # From Alexander Krivenyshev (2010-10-24):
+-# According to Radio Fiji and Fiji Times online, Fiji will end DST 3 
++# According to Radio Fiji and Fiji Times online, Fiji will end DST 3
+ # weeks earlier than expected - on March 6, 2011, not March 27, 2011...
+-# Here is confirmation from Government of the Republic of the Fiji Islands, 
++# Here is confirmation from Government of the Republic of the Fiji Islands,
+ # Ministry of Information (fiji.gov.fj) web site:
+ # <a href="http://www.fiji.gov.fj/index.php?option=com_content&view=article&id=2608:daylight-savings&catid=71:press-releases&Itemid=155">
+ # http://www.fiji.gov.fj/index.php?option=com_content&view=article&id=2608:daylight-savings&catid=71:press-releases&Itemid=155
+@@ -320,15 +319,15 @@
+ # </a>
+ 
+ # From Steffen Thorsen (2011-10-03):
+-# Now the dates have been confirmed, and at least our start date 
++# Now the dates have been confirmed, and at least our start date
+ # assumption was correct (end date was one week wrong).
+ #
+ # <a href="http://www.fiji.gov.fj/index.php?option=com_content&view=article&id=4966:daylight-saving-starts-in-fiji&catid=71:press-releases&Itemid=155">
+ # www.fiji.gov.fj/index.php?option=com_content&view=article&id=4966:daylight-saving-starts-in-fiji&catid=71:press-releases&Itemid=155
+ # </a>
+ # which says
+-# Members of the public are reminded to change their time to one hour in 
+-# advance at 2am to 3am on October 23, 2011 and one hour back at 3am to 
++# Members of the public are reminded to change their time to one hour in
++# advance at 2am to 3am on October 23, 2011 and one hour back at 3am to
+ # 2am on February 26 next year.
+ 
+ # From Ken Rylander (2011-10-24)
+@@ -345,15 +344,23 @@
+ # The commencement of daylight saving will remain unchanged and start
+ # on the  23rd of October, 2011.
+ 
++# From the Fiji Government Online Portal (2012-08-21) via Steffen Thorsen:
++# The Minister for Labour, Industrial Relations and Employment Mr Jone Usamate
++# today confirmed that Fiji will start daylight savings at 2 am on Sunday 21st
++# October 2012 and end at 3 am on Sunday 20th January 2013.
++# http://www.fiji.gov.fj/index.php?option=com_content&view=article&id=6702&catid=71&Itemid=155
++#
++# From Paul Eggert (2012-08-31):
++# For now, guess a pattern of the penultimate Sundays in October and January.
++
+ # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+ Rule	Fiji	1998	1999	-	Nov	Sun>=1	2:00	1:00	S
+ Rule	Fiji	1999	2000	-	Feb	lastSun	3:00	0	-
+ Rule	Fiji	2009	only	-	Nov	29	2:00	1:00	S
+ Rule	Fiji	2010	only	-	Mar	lastSun	3:00	0	-
+-Rule	Fiji	2010	only	-	Oct	24	2:00	1:00	S
++Rule	Fiji	2010	max	-	Oct	Sun>=18	2:00	1:00	S
+ Rule	Fiji	2011	only	-	Mar	Sun>=1	3:00	0	-
+-Rule	Fiji	2011	only	-	Oct	23	2:00	1:00	S
+-Rule	Fiji	2012	only	-	Jan	22	3:00	0	-
++Rule	Fiji	2012	max	-	Jan	Sun>=18	3:00	0	-
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+ Zone	Pacific/Fiji	11:53:40 -	LMT	1915 Oct 26	# Suva
+ 			12:00	Fiji	FJ%sT	# Fiji Time
+@@ -582,7 +589,7 @@
+ 
+ # From David Zuelke (2011-05-09):
+ # Subject: Samoa to move timezone from east to west of international date line
+-# 
++#
+ # <a href="http://www.morningstar.co.uk/uk/markets/newsfeeditem.aspx?id=138501958347963">
+ # http://www.morningstar.co.uk/uk/markets/newsfeeditem.aspx?id=138501958347963
+ # </a>
+@@ -664,25 +671,25 @@
+ #
+ # From Gwillim Law (2011-12-29)
+ # A correspondent informed me that Tokelau, like Samoa, will be skipping
+-# December 31 this year, thereby changing its time zone from UTC-10 to
+-# UTC+14. When I tried to verify this statement, I found a confirming
+-# article in Time magazine online
+-# <a href="http://www.time.com/time/world/article/0,8599,2103243,00.html">
+-# (http://www.time.com/time/world/article/0,8599,2103243,00.html).
+-# </a>
++# December 31 this year ...
+ #
+-# From Jonathan Leffler (2011-12-29)
+-# Information from the BBC to the same effect:
+-# <a href="http://www.bbc.co.uk/news/world-asia-16351377">
+-# http://www.bbc.co.uk/news/world-asia-16351377
+-# </a>
++# From Steffen Thorsen (2012-07-25)
++# ... we double checked by calling hotels and offices based in Tokelau asking
++# about the time there, and they all told a time that agrees with UTC+13....
++# Shanks says UTC-10 from 1901 [but] ... there is a good chance the change
++# actually was to UTC-11 back then.
+ #
+-# Patch supplied by Tim Parenti (2011-12-29)
++# From Paul Eggert (2012-07-25)
++# A Google Books snippet of Appendix to the Journals of the House of
++# Representatives of New Zealand, Session 1948,
++# <http://books.google.com/books?id=ZaVCAQAAIAAJ>, page 65, says Tokelau
++# was "11 hours slow on G.M.T."  Go with Thorsen and assume Shanks & Pottenger
++# are off by an hour starting in 1901.
+ 
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+ Zone	Pacific/Fakaofo	-11:24:56 -	LMT	1901
+-			-10:00	-	TKT 2011 Dec 30	# Tokelau Time
+-			14:00	-	TKT
++			-11:00	-	TKT 2011 Dec 30	# Tokelau Time
++			13:00	-	TKT
+ 
+ # Tonga
+ # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+@@ -1363,22 +1370,22 @@
+ # See "southeast Australia" above for 2008 and later.
+ 
+ # From Steffen Thorsen (2009-04-28):
+-# According to the official press release, South Australia's extended daylight 
+-# saving period will continue with the same rules as used during the 2008-2009 
++# According to the official press release, South Australia's extended daylight
++# saving period will continue with the same rules as used during the 2008-2009
+ # summer (southern hemisphere).
+-# 
++#
+ # From
+ # <a href="http://www.safework.sa.gov.au/uploaded_files/DaylightDatesSet.pdf">
+ # http://www.safework.sa.gov.au/uploaded_files/DaylightDatesSet.pdf
+ # </a>
+-# The extended daylight saving period that South Australia has been trialling 
++# The extended daylight saving period that South Australia has been trialling
+ # for over the last year is now set to be ongoing.
+-# Daylight saving will continue to start on the first Sunday in October each 
++# Daylight saving will continue to start on the first Sunday in October each
+ # year and finish on the first Sunday in April the following year.
+-# Industrial Relations Minister, Paul Caica, says this provides South Australia 
+-# with a consistent half hour time difference with NSW, Victoria, Tasmania and 
++# Industrial Relations Minister, Paul Caica, says this provides South Australia
++# with a consistent half hour time difference with NSW, Victoria, Tasmania and
+ # the ACT for all 52 weeks of the year...
+-# 
++#
+ # We have a wrap-up here:
+ # <a href="http://www.timeanddate.com/news/time/south-australia-extends-dst.html">
+ # http://www.timeanddate.com/news/time/south-australia-extends-dst.html
+--- openjdk/jdk/make/sun/javazic/tzdata/backward
++++ openjdk/jdk/make/sun/javazic/tzdata/backward
+@@ -22,7 +22,6 @@
+ # questions.
+ #
+ # <pre>
+-# @(#)backward	8.11
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+--- openjdk/jdk/make/sun/javazic/tzdata/etcetera
++++ openjdk/jdk/make/sun/javazic/tzdata/etcetera
+@@ -22,7 +22,6 @@
+ # questions.
+ #
+ # <pre>
+-# @(#)etcetera	8.3
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+--- openjdk/jdk/make/sun/javazic/tzdata/europe
++++ openjdk/jdk/make/sun/javazic/tzdata/europe
+@@ -22,7 +22,6 @@
+ # questions.
+ #
+ # <pre>
+-# @(#)europe	8.41
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+@@ -598,12 +597,12 @@
+ # According to Kremlin press service, Russian President Dmitry Medvedev
+ # signed a federal law "On calculation of time" on June 9, 2011.
+ # According to the law Russia is abolishing daylight saving time.
+-# 
+-# Medvedev signed a law "On the Calculation of Time" (in russian): 
++#
++# Medvedev signed a law "On the Calculation of Time" (in russian):
+ # <a href="http://bmockbe.ru/events/?ID=7583">
+ # http://bmockbe.ru/events/?ID=7583
+ # </a>
+-# 
++#
+ # Medvedev signed a law on the calculation of the time (in russian):
+ # <a href="http://www.regnum.ru/news/polit/1413906.html">
+ # http://www.regnum.ru/news/polit/1413906.html
+@@ -1711,7 +1710,7 @@
+ # From Alexander Krivenyshev (2011-10-26)
+ # NO need to divide Moldova into two timezones at this point.
+ # As of today, Transnistria (Pridnestrovie)- Tiraspol reversed its own
+-# decision to abolish DST this winter. 
++# decision to abolish DST this winter.
+ # Following Moldova and neighboring Ukraine- Transnistria (Pridnestrovie)-
+ # Tiraspol will go back to winter time on October 30, 2011.
+ # News from Moldova (in russian):
+@@ -2601,11 +2600,11 @@
+ # http://www.alomaliye.com/bkk_2002_3769.htm
+ 
+ # From G&ouml;kdeniz Karada&#x011f; (2011-03-10):
+-# 
++#
+ # According to the articles linked below, Turkey will change into summer
+ # time zone (GMT+3) on March 28, 2011 at 3:00 a.m. instead of March 27.
+ # This change is due to a nationwide exam on 27th.
+-# 
++#
+ # <a href="http://www.worldbulletin.net/?aType=haber&ArticleID=70872">
+ # http://www.worldbulletin.net/?aType=haber&ArticleID=70872
+ # </a>
+@@ -2722,7 +2721,7 @@
+ # time this year after all.
+ #
+ # From Udo Schwedt (2011-10-18):
+-# As far as I understand, the recent change to the Ukranian time zone 
++# As far as I understand, the recent change to the Ukranian time zone
+ # (Europe/Kiev) to introduce permanent daylight saving time (similar
+ # to Russia) was reverted today:
+ #
+--- openjdk/jdk/make/sun/javazic/tzdata/factory
++++ openjdk/jdk/make/sun/javazic/tzdata/factory
+@@ -22,7 +22,6 @@
+ # questions.
+ #
+ # <pre>
+-# @(#)factory	8.2
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+--- openjdk/jdk/make/sun/javazic/tzdata/iso3166.tab
++++ openjdk/jdk/make/sun/javazic/tzdata/iso3166.tab
+@@ -22,7 +22,6 @@
+ # questions.
+ #
+ # <pre>
+-# @(#)iso3166.tab	8.11
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ # ISO 3166 alpha-2 country codes
+--- openjdk/jdk/make/sun/javazic/tzdata/leapseconds
++++ openjdk/jdk/make/sun/javazic/tzdata/leapseconds
+@@ -22,7 +22,6 @@
+ # questions.
+ #
+ # <pre>
+-# @(#)leapseconds	8.13
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+@@ -101,8 +100,8 @@
+ #
+ #
+ # A positive leap second will be introduced at the end of June 2012.
+-# The sequence of dates of the UTC second markers will be:		
+-# 		
++# The sequence of dates of the UTC second markers will be:
++#
+ #                          2012 June 30,     23h 59m 59s
+ #                          2012 June 30,     23h 59m 60s
+ #                          2012 July  1,      0h  0m  0s
+@@ -119,6 +118,6 @@
+ #
+ #
+ # Daniel GAMBIS
+-# Head		
++# Head
+ # Earth Orientation Center of IERS
+ # Observatoire de Paris, France
+--- openjdk/jdk/make/sun/javazic/tzdata/northamerica
++++ openjdk/jdk/make/sun/javazic/tzdata/northamerica
+@@ -22,7 +22,6 @@
+ # questions.
+ #
+ # <pre>
+-# @(#)northamerica	8.54
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+@@ -502,7 +501,7 @@
+ 			 -8:00	US	P%sT	1946
+ 			 -8:00	-	PST	1969
+ 			 -8:00	US	P%sT	1980 Apr 27 2:00
+-			 -9:00	US	Y%sT	1980 Oct 26 2:00	
++			 -9:00	US	Y%sT	1980 Oct 26 2:00
+ 			 -8:00	US	P%sT	1983 Oct 30 2:00
+ 			 -9:00	US	Y%sT	1983 Nov 30
+ 			 -9:00	US	AK%sT
+@@ -1867,7 +1866,7 @@
+ # Here is a summary of the three clock change events in Creston's history:
+ # 1. 1884 or 1885: adoption of Mountain Standard Time (GMT-7)
+ # Exact date unknown
+-# 2. Oct 1916: switch to Pacific Standard Time (GMT-8) 
++# 2. Oct 1916: switch to Pacific Standard Time (GMT-8)
+ # Exact date in October unknown;  Sunday October 1 is a reasonable guess.
+ # 3. June 1918: switch to Pacific Daylight Time (GMT-7)
+ # Exact date in June unknown; Sunday June 2 is a reasonable guess.
+@@ -2697,20 +2696,20 @@
+ # except that it switches at midnight standard time as usual.
+ #
+ # From Steffen Thorsen (2007-10-25):
+-# Carlos Alberto Fonseca Arauz informed me that Cuba will end DST one week 
++# Carlos Alberto Fonseca Arauz informed me that Cuba will end DST one week
+ # earlier - on the last Sunday of October, just like in 2006.
+-# 
++#
+ # He supplied these references:
+-# 
++#
+ # http://www.prensalatina.com.mx/article.asp?ID=%7B4CC32C1B-A9F7-42FB-8A07-8631AFC923AF%7D&language=ES
+ # http://actualidad.terra.es/sociedad/articulo/cuba_llama_ahorrar_energia_cambio_1957044.htm
+-# 
++#
+ # From Alex Kryvenishev (2007-10-25):
+ # Here is also article from Granma (Cuba):
+-# 
++#
+ # [Regira] el Horario Normal desde el [proximo] domingo 28 de octubre
+ # http://www.granma.cubaweb.cu/2007/10/24/nacional/artic07.html
+-# 
++#
+ # http://www.worldtimezone.com/dst_news/dst_news_cuba03.html
+ 
+ # From Arthur David Olson (2008-03-09):
+@@ -2794,7 +2793,7 @@
+ # </a>
+ #
+ # From Steffen Thorsen (2011-10-30)
+-# Cuba will end DST two weeks later this year. Instead of going back 
++# Cuba will end DST two weeks later this year. Instead of going back
+ # tonight, it has been delayed to 2011-11-13 at 01:00.
+ #
+ # One source (Spanish)
+@@ -2806,11 +2805,11 @@
+ # <a href="http://www.timeanddate.com/news/time/cuba-time-changes-2011.html">
+ # http://www.timeanddate.com/news/time/cuba-time-changes-2011.html
+ # </a>
+-# 
++#
+ # From Steffen Thorsen (2012-03-01)
+-# According to Radio Reloj, Cuba will start DST on Midnight between March 
++# According to Radio Reloj, Cuba will start DST on Midnight between March
+ # 31 and April 1.
+-# 
++#
+ # Radio Reloj has the following info (Spanish):
+ # <a href="http://www.radioreloj.cu/index.php/noticias-radio-reloj/71-miscelaneas/7529-cuba-aplicara-el-horario-de-verano-desde-el-1-de-abril">
+ # http://www.radioreloj.cu/index.php/noticias-radio-reloj/71-miscelaneas/7529-cuba-aplicara-el-horario-de-verano-desde-el-1-de-abril
+--- openjdk/jdk/make/sun/javazic/tzdata/pacificnew
++++ openjdk/jdk/make/sun/javazic/tzdata/pacificnew
+@@ -22,7 +22,6 @@
+ # questions.
+ #
+ # <pre>
+-# @(#)pacificnew	8.2
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+--- openjdk/jdk/make/sun/javazic/tzdata/solar87
++++ openjdk/jdk/make/sun/javazic/tzdata/solar87
+@@ -22,7 +22,6 @@
+ # questions.
+ #
+ # <pre>
+-# @(#)solar87	8.2
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+--- openjdk/jdk/make/sun/javazic/tzdata/solar88
++++ openjdk/jdk/make/sun/javazic/tzdata/solar88
+@@ -22,7 +22,6 @@
+ # questions.
+ #
+ # <pre>
+-# @(#)solar88	8.2
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+--- openjdk/jdk/make/sun/javazic/tzdata/solar89
++++ openjdk/jdk/make/sun/javazic/tzdata/solar89
+@@ -22,7 +22,6 @@
+ # questions.
+ #
+ # <pre>
+-# @(#)solar89	8.2
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+--- openjdk/jdk/make/sun/javazic/tzdata/southamerica
++++ openjdk/jdk/make/sun/javazic/tzdata/southamerica
+@@ -22,7 +22,6 @@
+ # questions.
+ #
+ # <pre>
+-# @(#)southamerica	8.53
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+@@ -255,7 +254,7 @@
+ Rule	Arg	2007	only	-	Dec	30	0:00	1:00	S
+ Rule	Arg	2008	2009	-	Mar	Sun>=15	0:00	0	-
+ Rule	Arg	2008	only	-	Oct	Sun>=15	0:00	1:00	S
+- 
++
+ # From Mariano Absatz (2004-05-21):
+ # Today it was officially published that the Province of Mendoza is changing
+ # its timezone this winter... starting tomorrow night....
+@@ -345,9 +344,9 @@
+ # confirms what Alex Krivenyshev has earlier sent to the tz
+ # emailing list about that San Luis plans to return to standard
+ # time much earlier than the rest of the country. It also
+-# confirms that upon request the provinces San Juan and Mendoza 
+-# refused to follow San Luis in this change. 
+-# 
++# confirms that upon request the provinces San Juan and Mendoza
++# refused to follow San Luis in this change.
++#
+ # The change is supposed to take place Monday the 21.st at 0:00
+ # hours. As far as I understand it if this goes ahead, we need
+ # a new timezone for San Luis (although there are also documented
+@@ -409,7 +408,7 @@
+ # <a href="http://www.lanacion.com.ar/nota.asp?nota_id=1107912">
+ # http://www.lanacion.com.ar/nota.asp?nota_id=1107912
+ # </a>
+-# 
++#
+ # The press release says:
+ #  (...) anunció que el próximo domingo a las 00:00 los puntanos deberán
+ # atrasar una hora sus relojes.
+@@ -823,8 +822,8 @@
+ #
+ # From Alexander Krivenyshev (2011-10-04):
+ # State Bahia will return to Daylight savings time this year after 8 years off.
+-# The announcement was made by Governor Jaques Wagner in an interview to a 
+-# television station in Salvador. 
++# The announcement was made by Governor Jaques Wagner in an interview to a
++# television station in Salvador.
+ 
+ # In Portuguese:
+ # <a href="http://g1.globo.com/bahia/noticia/2011/10/governador-jaques-wagner-confirma-horario-de-verao-na-bahia.html">
+@@ -1183,7 +1182,7 @@
+ # Due to drought, Chile extends Daylight Time in three weeks.  This
+ # is one-time change (Saturday 3/29 at 24:00 for America/Santiago
+ # and Saturday 3/29 at 22:00 for Pacific/Easter)
+-# The Supreme Decree is located at 
++# The Supreme Decree is located at
+ # <a href="http://www.shoa.cl/servicios/supremo316.pdf">
+ # http://www.shoa.cl/servicios/supremo316.pdf
+ # </a>
+@@ -1194,7 +1193,7 @@
+ 
+ # From Jose Miguel Garrido (2008-03-05):
+ # ...
+-# You could see the announces of the change on 
++# You could see the announces of the change on
+ # <a href="http://www.shoa.cl/noticias/2008/04hora/hora.htm">
+ # http://www.shoa.cl/noticias/2008/04hora/hora.htm
+ # </a>.
+--- openjdk/jdk/make/sun/javazic/tzdata/systemv
++++ openjdk/jdk/make/sun/javazic/tzdata/systemv
+@@ -22,7 +22,6 @@
+ # questions.
+ #
+ # <pre>
+-# @(#)systemv	8.2
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ 
+--- openjdk/jdk/make/sun/javazic/tzdata/zone.tab
++++ openjdk/jdk/make/sun/javazic/tzdata/zone.tab
+@@ -22,7 +22,6 @@
+ # questions.
+ #
+ # <pre>
+-# @(#)zone.tab	8.55
+ # This file is in the public domain, so clarified as of
+ # 2009-05-17 by Arthur David Olson.
+ #

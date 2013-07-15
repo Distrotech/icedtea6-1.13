@@ -318,16 +318,96 @@ SECURITY_PATCHES = \
 	patches/security/20130416/8007918.patch \
 	patches/security/20130416/8009305.patch \
 	patches/security/20130416/8009814.patch \
-	patches/security/20130416/8009857.patch
+	patches/security/20130416/8009857.patch \
+	patches/openjdk/7195301-no_instanceof_node.patch \
+	patches/openjdk/6469266-xmlsec_1.4.2.patch \
+	patches/security/20130618/6741606-apache_santuario.patch \
+	patches/security/20130618/7170730-windows_network_stack.patch \
+	patches/security/20130618/8000638-improve_deserialization.patch \
+	patches/security/20130618/8001032-restrict_object_access-corba.patch \
+	patches/security/20130618/8001032-restrict_object_access-jdk.patch \
+	patches/security/20130618/8001033-refactor_address_handling.patch \
+	patches/security/20130618/8001034-memory_management.patch \
+	patches/security/20130618/8001038-resourcefully_handle_resources.patch \
+	patches/security/20130618/8001043-clarify_definition_restrictions.patch \
+	patches/security/20130618/8001309-better_handling_of_annotation_interfaces.patch \
+	patches/security/20130618/8001318-socket_getlocaladdress_consistency.patch \
+	patches/security/20130618/8001318-6_fixup.patch \
+	patches/security/20130618/8001330-improve_checking_order.patch \
+	patches/security/20130618/8003703-update_rmi_connection_dialog.patch \
+	patches/openjdk/8005615-failure_to_load_logger_implementation.patch \
+	patches/openjdk/8007393.patch \
+	patches/openjdk/8007611.patch \
+	patches/security/20130618/8004584-augment_applet_contextualization.patch \
+	patches/security/20130618/8005007-better_glyph_processing.patch \
+	patches/security/20130618/8006328-sound_class_robustness.patch \
+	patches/security/20130618/8006328-6_fixup.patch \
+	patches/security/20130618/8006611-improve_scripting.patch \
+	patches/security/20130618/8007467-improve_jmx_internal_api_robustness.patch \
+	patches/security/20130618/8007471-improve_mbean_notifications.patch \
+	patches/security/20130618/8007471-6_fixup.patch \
+	patches/security/20130618/8007812-getenclosingmethod.patch \
+	patches/security/20130618/8008120-improve_jmx_class_checking.patch \
+	patches/security/20130618/8008124-better_compliance_testing.patch \
+	patches/security/20130618/8008128-better_jmx_api_coherence.patch \
+	patches/security/20130618/8008132-better_serialization.patch \
+	patches/security/20130618/8008585-jmx_data_handling.patch \
+	patches/security/20130618/8008593-better_urlclassloader.patch \
+	patches/security/20130618/8008603-jmx_provider_provision.patch \
+	patches/security/20130618/8008611-jmx_annotations.patch \
+	patches/security/20130618/8008611-6_fixup.patch \
+	patches/security/20130618/8008615-jmx_internal_api_robustness.patch \
+	patches/security/20130618/8008623-mbeanserver_handling.patch \
+	patches/security/20130618/8008744-6741606_rework.patch \
+	patches/security/20130618/8008982-jmx_interface_changes.patch \
+	patches/security/20130618/8009004-rmi_connection_improvement.patch \
+	patches/security/20130618/8009013-t2k_glyphs.patch \
+	patches/security/20130618/8009034-jmx_notification_improvement.patch \
+	patches/security/20130618/8009038-jmx_notification_support_improvement.patch \
+	patches/security/20130618/8009067-improve_key_storing.patch \
+	patches/security/20130618/8009235-improve_tsa_data_handling.patch \
+	patches/openjdk/6888167-medialib_memory_leaks.patch \
+	patches/security/20130618/8011243-improve_imaginglib.patch \
+	patches/security/20130618/8011248-better_component_rasters.patch \
+	patches/security/20130618/8011253-better_short_component_rasters.patch \
+	patches/security/20130618/8011257-better_byte_component_rasters.patch \
+	patches/security/20130618/8011557-improve_reflection.patch \
+	patches/security/20130618/8012421-better_positioning.patch \
+	patches/security/20130618/8012438-better_image_validation.patch \
+	patches/security/20130618/8012597-better_image_channel_validation.patch \
+	patches/security/20130618/8012601-better_layout_validation.patch \
+	patches/security/20130618/8014281-better_xml_signature_checking.patch \
+	patches/security/20130618/diamond_fix.patch \
+	patches/security/20130618/handle_npe.patch \
+	patches/security/20130618/javac_issue.patch \
+	patches/security/20130618/8000642-better_transportation_handling.patch \
+	patches/openjdk/6786028-wcag_bold_tags.patch \
+	patches/openjdk/6786682-wcag_lang.patch \
+	patches/openjdk/6802694-no_deprecated.patch \
+	patches/openjdk/6786690-wcag_dl.patch \
+	patches/openjdk/6786688-wcag_table.patch \
+	patches/openjdk/6961178-doclet_xml.patch \
+	patches/openjdk/6851834-restructure.patch \
+	patches/openjdk/6851834-handle_renames.patch \
+	patches/openjdk/7006270-regressions.patch \
+	patches/security/20130618/8012375-javadoc_framing.patch \
+	patches/security/20130618/8015997-more_javadoc_framing.patch \
+	patches/security/20130618/langtools_merge-01.patch \
+	patches/security/20130618/langtools_merge-02.patch \
+	patches/security/20130618/langtools_generics.patch \
+	patches/security/20130618/langtools_merge-03.patch
 
 if !WITH_ALT_HSBUILD
 SECURITY_PATCHES += \
 	patches/security/20130416/8004336.patch \
 	patches/security/20130416/8006309.patch \
-	patches/security/20130416/8009699.patch
+	patches/security/20130416/8009699.patch \
+	patches/security/20130618/7158805-nested_subroutine_rewriting.patch \
+	patches/security/20130618/8001330-checking_order_improvement.patch
 endif
 
-SPECIAL_SECURITY_PATCH = patches/security/20120214/7112642.patch
+SPECIAL_SECURITY_PATCH_1 = patches/security/20120214/7112642.patch
+SPECIAL_SECURITY_PATCH_2 = patches/security/20130618/8009071-improve_shape_handling.patch
 
 ICEDTEA_PATCHES = \
 	$(DROP_PATCHES) \
@@ -343,13 +423,14 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6725214-direct3d-01.patch \
 	patches/openjdk/6748082-isDisplayLocal.patch \
 	patches/openjdk/6633275-shaped_translucent_windows.patch \
-	$(SPECIAL_SECURITY_PATCH) \
+	$(SPECIAL_SECURITY_PATCH_1) \
 	patches/openjdk/6769607-modal-hangs.patch \
 	patches/openjdk/6791612-opengl-jni-fix.patch \
 	patches/openjdk/6755274-glgetstring-crash.patch \
 	patches/openjdk/6984543-onscreen_rendering_resize_test.patch \
 	patches/openjdk/6693253-security_warning.patch \
 	patches/openjdk/6444769-windowwithwarningtest.patch \
+	patches/openjdk/6656651-windows_lcd_glyphs.patch \
 	patches/notice-safepoints.patch \
 	patches/parisc-opt.patch \
 	patches/lucene-crash.patch \
@@ -359,6 +440,7 @@ ICEDTEA_PATCHES = \
 	patches/headers.patch \
 	patches/gcc-suffix.patch \
 	patches/libraries.patch \
+	$(SPECIAL_SECURITY_PATCH_2) \
 	patches/lcms.patch \
 	patches/uname.patch \
 	patches/freetypeversion.patch \
@@ -492,8 +574,6 @@ ICEDTEA_PATCHES = \
 	patches/ScriptEngineManager-doc.patch \
 	patches/openjdk/6883983-JarVerifier_removed_dependency_sun_security_pkcs.patch \
 	patches/openjdk/4465490-Suspicious_double-check_locking_idiom.patch \
-	patches/idresolver_fix.patch \
-	patches/apache-xml-internal-fix-bug-38655.patch \
 	patches/openjdk/6792400-Avoid_loading_Normalizer_resources.patch \
 	patches/openjdk/7088989-ucrypto_tests.patch \
 	patches/generalise_crypto_tests.patch \
@@ -527,7 +607,59 @@ ICEDTEA_PATCHES = \
 	patches/jtreg-LayoutGetCharacterCount.patch \
 	patches/jtreg-LayoutLimits.patch \
 	patches/jtreg-ComponentOrientationTests.patch \
-	patches/jtreg-TextLayoutBoundsChecks.patch
+	patches/jtreg-TextLayoutBoundsChecks.patch \
+	patches/openjdk/7171223-strict_aliasing.patch \
+	patches/openjdk/7188114-alternate_command_line_parser.patch \
+	patches/openjdk/7199143-OCSP_timeout.patch \
+	patches/openjdk/8006120-server_jre.patch \
+	patches/openjdk/8006536-remove_trailing_slashes.patch \
+	patches/openjdk/8009165-inappropriate_method_in_reflectutil.patch \
+	patches/openjdk/8009217-fix_test_compile.patch \
+	patches/openjdk/8009463-space_and_final_backslash.patch \
+	patches/openjdk/8009610-blacklist_malware_certificate.patch \
+	patches/openjdk/8010213-set_socketoptions_windows.patch \
+	patches/openjdk/8010714-xml_dsig_retrievalmethod.patch \
+	patches/openjdk/8011154-awt_regression.patch \
+	patches/openjdk/8011313-OCSP_timeout_wrong_value.patch \
+	patches/openjdk/8011992-MlibOpsTest_failed.patch \
+	patches/openjdk/8012112-MlibOpsTest_fails.patch \
+	patches/openjdk/8012617-arrayindexoutofbounds_linebreakmeasurer.patch \
+	patches/openjdk/8012933-appcontext_disposed_too_early.patch \
+	patches/openjdk/8013196-TimeZone_getDefault_throws_exception.patch \
+	patches/openjdk/8014205-blank_swing_dialogs_windows.patch \
+	patches/openjdk/8014427-raster_regression.patch \
+	patches/openjdk/8014676-javadebugger_space_in_paths.patch \
+	patches/openjdk/8014968-OCSP_timeout_default.patch \
+	patches/openjdk/8002070-remove_logger_stack_search.patch \
+	patches/openjdk/8002070-remove_logger_stack_search_2.patch \
+	patches/openjdk/8010118-caller_sensitive.patch \
+	patches/openjdk/8010727-empty_logger_name.patch \
+	patches/openjdk/8010939-logmanager_deadlock.patch \
+	patches/openjdk/8011990-logger_test_urls.patch \
+	patches/openjdk/8013380-logger_stack_walk_glassfish.patch \
+	patches/openjdk/8013380-handle_renames.patch \
+	patches/openjdk/8014745-logger_stack_walk_switch.patch \
+	patches/openjdk/8012243-serial_regression.patch \
+	patches/openjdk/8014718-remove_logging_suntoolkit.patch \
+	patches/openjdk/8011139-revise_checking_getenclosingclass.patch \
+	patches/openjdk/8009996-emitter_bean.patch \
+	patches/openjdk/6541350-tz_display_names_l10n.patch \
+	patches/openjdk/6821191-tz_display_names_l10n.patch \
+	patches/openjdk/6977550-tzdata2010l.patch \
+	patches/openjdk/6996686-tzdata2010o.patch \
+	patches/openjdk/7017800-tzdata2011b.patch \
+	patches/openjdk/7027387-tzdata2011d.patch \
+	patches/openjdk/7033174-tzdata2011e.patch \
+	patches/openjdk/7039469-tzdata2011g.patch \
+	patches/openjdk/7090843-tzdata2011j.patch \
+	patches/openjdk/7103108-tzdata2011l.patch \
+	patches/openjdk/7104126-headers_tzdata.patch \
+	patches/openjdk/7103405-correct_display_names.patch \
+	patches/openjdk/7158483-tzdata2012c.patch \
+	patches/openjdk/7198570-tzdata2012f.patch \
+	patches/openjdk/8002225-tzdata2012i.patch \
+	patches/openjdk/8009987-tzdata2013b.patch
+
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
