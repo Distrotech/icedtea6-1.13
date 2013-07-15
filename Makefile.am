@@ -282,7 +282,6 @@ DROP_PATCHES =
 
 SECURITY_PATCHES = \
 	patches/security/20120830/7182135-impossible_to_use_some_editors_directly.patch \
-	patches/openjdk/7036559-concurrenthashmap_improvements.patch \
 	patches/security/20130416/8009063.patch \
 	patches/security/20130416/6657673.patch \
 	patches/security/20130416/6657673-fixup.patch \
@@ -335,9 +334,6 @@ SECURITY_PATCHES = \
 	patches/security/20130618/8001318-6_fixup.patch \
 	patches/security/20130618/8001330-improve_checking_order.patch \
 	patches/security/20130618/8003703-update_rmi_connection_dialog.patch \
-	patches/openjdk/8005615-failure_to_load_logger_implementation.patch \
-	patches/openjdk/8007393.patch \
-	patches/openjdk/8007611.patch \
 	patches/security/20130618/8004584-augment_applet_contextualization.patch \
 	patches/security/20130618/8005007-better_glyph_processing.patch \
 	patches/security/20130618/8006328-sound_class_robustness.patch \
