@@ -1384,21 +1384,25 @@ clean-replace-hotspot:
 
 # Copy ports sources into tree
 stamps/ports.stamp: stamps/replace-hotspot.stamp
+if !WITH_ALT_HSBUILD
 	for target in $(abs_top_srcdir)/arm_port/hotspot/tools \
 		      $(abs_top_srcdir)/arm_port/hotspot/src/*cpu/* ; do \
 	  link=$$(dirname $$target | sed 's/^.*arm_port/openjdk/'); \
 	  cp -rv $(SRC_DIR_LINK) $$target $$link; \
 	  chmod -R ug+rwX $$link; \
 	done
+endif
 	mkdir -p stamps
 	touch stamps/ports.stamp
 
 clean-ports:
+if !WITH_ALT_HSBUILD
 	for target in $(abs_top_srcdir)/arm_port/hotspot/tools \
 		      $(abs_top_srcdir)/arm_port/hotspot/src/*cpu/* ; do \
 	  link=$$(dirname $$target | sed 's/^.*arm_port/openjdk/'); \
 	  rm -rf $$link; \
 	done
+endif
 	rm -f stamps/ports.stamp
 
 stamps/generated.stamp: stamps/ports.stamp

@@ -1,5 +1,12 @@
 2013-07-22  Andrew John Hughes  <gnu.andrew@redhat.com>
 
+	* Makefile.am:
+	(ports): Only copy over arm_port directory
+	contents if using the upstream HotSpot 20.
+	(clean-ports): Likewise for cleanup.
+
+2013-07-22  Andrew John Hughes  <gnu.andrew@redhat.com>
+
 	PR718: Backport LCMS2 support from IcedTea7
 	* Makefile.am:
 	(LCMS_PATCHES): Populate based on which version
