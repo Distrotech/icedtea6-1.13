@@ -562,7 +562,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6826104-npe_on_app_and_toolkit_modal_dialog_click.patch \
 	patches/openjdk/5082756-ImageIO_plugins_metadata_boolean_attributes.patch \
 	patches/openjdk/6296893-BMP_Writer_handles_TopDown_prop_incorrectly.patch \
-	patches/hotspot/$(HSBUILD)/arm-hsdis.patch \
 	patches/openjdk/7103610-_NET_WM_PID_and_WM_CLIENT_MACHINE_are_not_set.patch \
 	patches/openjdk/6706974-krb5_test_infrastructure.patch \
 	patches/openjdk/6764553-IdResolver_is_not_thread_safe.patch \
@@ -706,7 +705,8 @@ ICEDTEA_PATCHES += \
 	patches/hotspot/original/jvmtiEnv.patch \
 	patches/hotspot/original/6840152-jvm_crashes_with_heavyweight_monitors.patch \
 	patches/hotspot/original/aarch64.patch \
-	patches/hotspot/original/7022999-fastlocking_compiler1_only.patch
+	patches/hotspot/original/7022999-fastlocking_compiler1_only.patch \
+	patches/hotspot/original/arm-hsdis.patch
 endif
 
 if WITH_RHINO

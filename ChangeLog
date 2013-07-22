@@ -1,3 +1,19 @@
+2013-07-18  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* patches/hotspot/hs23/arm-hsdis.patch:
+	Removed.
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Only apply original
+	arm-hsdis patch.
+	* hotspot.map: Update to latest HotSpot
+	from 2.3.x forest, which contains the ARM32
+	port.
+
+2013-07-17  Omair Majid  <omajid@redhat.com>
+
+	* patches/openjdk/8010118-caller_sensitive.patch: Fix mistake in
+	backport.
+
 2013-07-11  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* patches/openjdk/7036559-concurrenthashmap_improvements.patch:

@@ -1484,17 +1484,17 @@ Reviewed-by: alanb, twisti, jrose, kvn
  
          // Walk through the loaded drivers attempting to locate someone
          // who understands the given URL.
-@@ -258,8 +248,7 @@
+@@ -258,8 +248,8 @@
              DriverInfo di = (DriverInfo)drivers.elementAt(i);
              // If the caller does not have permission to load the driver then
              // skip it.
 -            if ( getCallerClass(callerCL, di.driverClassName ) !=
--                 di.driverClass ) {
-+            if ( callerClass != di.driverClass ) {
++            if ( getCallerClass(callerClass, di.driverClassName ) !=
+                  di.driverClass ) {
                  println("    skipping: " + di);
                  continue;
              }
-@@ -322,31 +311,29 @@
+@@ -322,31 +311,30 @@
       * @param driver the JDBC Driver to drop
       * @exception SQLException if a database access error occurs
       */
@@ -1504,6 +1504,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
 -        // Gets the classloader of the code that called this method,
 -        // may be null.
 -        ClassLoader callerCL = DriverManager.getCallerClassLoader();
++        Class<?> callerClass = Reflection.getCallerClass();
          println("DriverManager.deregisterDriver: " + driver);
  
          // Walk through the loaded drivers.
@@ -1524,7 +1525,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          // If the caller does not have permission to load the driver then
          // throw a security exception.
 -        if (getCallerClass(callerCL, di.driverClassName ) != di.driverClass ) {
-+        if (Reflection.getCallerClass() != di.driverClass) {
++        if (getCallerClass(callerClass, di.driverClassName ) != di.driverClass) {
              throw new SecurityException();
          }
  
@@ -1551,10 +1552,23 @@ Reviewed-by: alanb, twisti, jrose, kvn
              // If the caller does not have permission to load the driver then
              // skip it.
 -            if ( getCallerClass(callerCL, di.driverClassName ) != di.driverClass ) {
-+            if ( callerClass != di.driverClass ) {
++            if ( getCallerClass(callerClass, di.driverClassName) != di.driverClass ) {
                  println("    skipping: " + di);
                  continue;
              }
+@@ -467,6 +467,12 @@
+ 
+     //------------------------------------------------------------------------
+ 
++    private static Class getCallerClass(Class<?> caller,
++                                        String driverClassName) {
++        ClassLoader callerCL = caller != null ? caller.getClassLoader() : null;
++        return getCallerClass(callerCL, driverClassName);
++    }
++
+     // Returns the class object that would be created if the code calling the
+     // driver manager had loaded the driver class, or null if the class
+     // is inaccessible.
 @@ -546,19 +537,20 @@
  
      //  Worker method called by the public getConnection() methods.
