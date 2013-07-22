@@ -1,0 +1,42 @@
+# HG changeset patch
+# User bae
+# Date 1295871266 -10800
+# Node ID 59a04fd5537f21f61c4c03b42621175a2f196eb2
+# Parent  dbb6ebd5059a48f124df49a291bc0e881aab606b
+7002766: Java2d: Changes to correct c/c++ language issues for use of parfait
+Reviewed-by: jgodinez, prr
+
+diff --git a/src/share/native/sun/awt/image/jpeg/jmorecfg.h b/src/share/native/sun/awt/image/jpeg/jmorecfg.h
+--- openjdk/jdk/src/share/native/sun/awt/image/jpeg/jmorecfg.h
++++ openjdk/jdk/src/share/native/sun/awt/image/jpeg/jmorecfg.h
+@@ -161,11 +161,11 @@
+ 
+ /* INT32 must hold at least signed 32-bit values. */
+ 
+-#ifndef XMD_H                   /* X11/xmd.h correctly defines INT32 */
+-#ifndef _LP64
++#ifndef XMD_H                         /* X11/xmd.h correctly defines INT32 */
++#if defined(_LP64) || defined(_WIN32) /* _WIN32 is on all windows platfroms (x86 and x64) */
++typedef int INT32;
++#else
+ typedef long INT32;
+-#else
+-typedef int INT32;
+ #endif
+ #endif
+ 
+@@ -221,11 +221,14 @@
+  * explicit coding is needed; see uses of the NEED_FAR_POINTERS symbol.
+  */
+ 
++
++#ifndef FAR
+ #ifdef NEED_FAR_POINTERS
+ #define FAR  far
+ #else
+ #define FAR
+ #endif
++#endif
+ 
+ 
+ /*

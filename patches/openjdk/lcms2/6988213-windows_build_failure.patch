@@ -1,0 +1,25 @@
+# HG changeset patch
+# User bae
+# Date 1286008880 -14400
+# Node ID fc1e180884d0f960630662939da8599e8b2b61f5
+# Parent  e0c8923316b03b47205be06dce7786893f34cf9e
+6988213: lcms build failure on windows-amd64
+Reviewed-by: igor, prr
+
+diff --git a/make/sun/cmm/lcms/Makefile b/make/sun/cmm/lcms/Makefile
+--- openjdk/jdk/make/sun/cmm/lcms/Makefile
++++ openjdk/jdk/make/sun/cmm/lcms/Makefile
+@@ -79,7 +79,12 @@
+ vpath %.c   $(SHARE_SRC)/native/sun/java2d
+ 
+ ifeq ($(PLATFORM), windows)
+-OTHER_CFLAGS += -DCMS_IS_WINDOWS_ -Dsqrtf=sqrt
++OTHER_CFLAGS += -DCMS_IS_WINDOWS_
++
++ifeq ($(COMPILER_VERSION), VS2003)
++OTHER_CFLAGS += -Dsqrtf=sqrt
++endif
++
+ OTHER_LDLIBS = $(OBJDIR)/../../../sun.awt/awt/$(OBJDIRNAME)/awt.lib
+ OTHER_INCLUDES += -I$(SHARE_SRC)/native/sun/java2d \
+                   -I$(SHARE_SRC)/native/sun/awt/debug

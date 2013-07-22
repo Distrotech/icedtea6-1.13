@@ -446,9 +446,29 @@ endif
 SPECIAL_SECURITY_PATCH_1 = patches/security/20120214/7112642.patch
 SPECIAL_SECURITY_PATCH_2 = patches/security/20130618/8009071-improve_shape_handling.patch
 
+if ENABLE_LCMS2
+LCMS_PATCHES = \
+	patches/openjdk/lcms2/6523398-writing_tags.patch \
+	patches/openjdk/lcms2/6988213-windows_build_failure.patch \
+	patches/openjdk/lcms2/system_lcms2.patch \
+	patches/openjdk/lcms2/7053526-lcms_2.4.patch \
+	patches/openjdk/lcms2/8007929-improve_curvesalloc.patch \
+	patches/openjdk/lcms2/8007925-improve_cmsstagealloclabv2tov4curves.patch \
+	patches/openjdk/lcms2/8009654-cmsnamed_stability.patch \
+	patches/openjdk/lcms2/7002766-parfait.patch \
+	patches/openjdk/lcms2/7042594-tck_failure.patch \
+	patches/openjdk/lcms2/8007927-improve_cmsallocprofilesequencedescription.patch
+else
+LCMS_PATCHES = \
+	patches/lcms.patch
+endif
+
 ICEDTEA_PATCHES = \
 	$(DROP_PATCHES) \
 	$(SECURITY_PATCHES) \
+	patches/openjdk/6733501-icedtea_lcms_test.patch \
+	$(LCMS_PATCHES) \
+	patches/openjdk/7002766-parfait-jpeg.patch \
 	patches/openjdk/4993545-nativeinlightfixer.patch \
 	patches/openjdk/6637796-set_bounds.patch \
 	patches/openjdk/6607660-treelock.patch \
@@ -478,7 +498,6 @@ ICEDTEA_PATCHES = \
 	patches/gcc-suffix.patch \
 	patches/libraries.patch \
 	$(SPECIAL_SECURITY_PATCH_2) \
-	patches/lcms.patch \
 	patches/uname.patch \
 	patches/freetypeversion.patch \
 	patches/nomotif-6706121.patch \
@@ -573,7 +592,6 @@ ICEDTEA_PATCHES = \
 	patches/jtreg-FileMap.patch \
 	patches/jtreg-ChannelsWrite.patch \
 	patches/jtreg-bug7036148-test.patch \
-	patches/jtreg-ReadWriteProfileTest.patch \
 	patches/openjdk/6818312-com.sun.awt.SecurityWarning.getSize.patch \
 	patches/jtreg-MappedByteBuffer-Basic.patch \
 	patches/openjdk/7008106-WindowOpacity.patch \

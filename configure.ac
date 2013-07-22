@@ -289,6 +289,8 @@ IT_JAVAH
 IT_WITH_PAX
 AC_CONFIG_FILES([pax-mark-vm], [chmod +x pax-mark-vm])
 
+IT_ENABLE_LCMS2
+
 dnl pkgconfig cannot be used to find these headers and libraries.
 AC_CHECK_HEADERS([cups/cups.h cups/ppd.h],[]
 	,[AC_MSG_ERROR("CUPS headers were not found -

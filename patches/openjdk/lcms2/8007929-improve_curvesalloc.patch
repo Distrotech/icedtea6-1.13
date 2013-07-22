@@ -1,0 +1,28 @@
+# HG changeset patch
+# User bae
+# Date 1363852924 -14400
+# Node ID ba8eb4f3c7b5b0301b55fa2950dd228d6d83ae39
+# Parent  12877b5c159d4b44954163cc4cc91661969f6b84
+8007929: Improve CurvesAlloc
+Reviewed-by: bae, prr
+Contributed-by: jia-hong.chen@oracle.com
+
+diff --git a/src/share/native/sun/java2d/cmm/lcms/cmsopt.c b/src/share/native/sun/java2d/cmm/lcms/cmsopt.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsopt.c
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsopt.c
+@@ -1201,6 +1201,15 @@
+     for (i=0; i < nCurves; i++) {
+ 
+         c16->Curves[i] = _cmsCalloc(ContextID, nElements, sizeof(cmsUInt16Number));
++        if (c16->Curves[i] == NULL) {
++            for (j=0; j < i; j++) {
++                _cmsFree(ContextID, c16->Curves[j]);
++            }
++            _cmsFree(ContextID, c16->Curves);
++            _cmsFree(ContextID, c16);
++
++            return NULL;
++        }
+ 
+         if (nElements == 256) {
+ 

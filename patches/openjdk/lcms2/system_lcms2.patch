@@ -1,0 +1,93 @@
+# HG changeset patch
+# User andrew
+# Date 1374265381 -3600
+# Node ID 7aeb2bc6bc331d96af4b4db95f24654424275290
+# Parent  2c7aec8cf96482afdaf08a7a5ff1c2e57a135cb3
+Allow system LCMS2 to be used to build and enable by default in generic profile.
+
+diff --git a/make/jdk_generic_profile.sh b/make/jdk_generic_profile.sh
+--- openjdk/jdk/make/jdk_generic_profile.sh
++++ openjdk/jdk/make/jdk_generic_profile.sh
+@@ -2,6 +2,7 @@
+ 
+ #
+ # Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
++# Copyright 2011 Red Hat, Inc.
+ # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ #
+ # This code is free software; you can redistribute it and/or modify it
+@@ -446,3 +447,24 @@
+     export LLVM_LIBS
+   fi
+ fi
++
++# Export variables for system LCMS
++# LCMS_CFLAGS and LCMS_LIBS tell the compiler how to compile and
++# link against lcms2
++pkgconfig=$(which pkg-config 2>/dev/null)
++if [ -x "${pkgconfig}" ] ; then
++  if [ "${LCMS_CFLAGS}" = "" ] ; then
++    LCMS_CFLAGS=$("${pkgconfig}" --cflags lcms2)
++  fi
++  if [ "${LCMS_LIBS}" = "" ] ; then
++    LCMS_LIBS=$("${pkgconfig}" --libs lcms2)
++  fi
++fi
++if [ "${LCMS_LIBS}" = "" ] ; then
++    LIBFFI_LIBS="-llcms2"
++fi
++export LCMS_CFLAGS
++export LCMS_LIBS
++
++# IcedTea defaults; use system libraries
++export USE_SYSTEM_LCMS=true
+diff --git a/make/sun/cmm/lcms/FILES_c_unix.gmk b/make/sun/cmm/lcms/FILES_c_unix.gmk
+--- openjdk/jdk/make/sun/cmm/lcms/FILES_c_unix.gmk
++++ openjdk/jdk/make/sun/cmm/lcms/FILES_c_unix.gmk
+@@ -1,5 +1,6 @@
+ #
+ # Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
++# Copyright 2011 Red Hat, Inc.
+ # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ #
+ # This code is free software; you can redistribute it and/or modify it
+@@ -23,6 +24,7 @@
+ # questions.
+ #
+ 
++ifndef USE_SYSTEM_LCMS
+ FILES_c = \
+     cmscam02.c \
+     cmscgats.c \
+@@ -47,5 +49,8 @@
+     cmstypes.c \
+     cmsvirt.c \
+     cmswtpnt.c \
+-    cmsxform.c \
++    cmsxform.c
++endif
++
++FILES_c += \
+     LCMS.c
+diff --git a/make/sun/cmm/lcms/Makefile b/make/sun/cmm/lcms/Makefile
+--- openjdk/jdk/make/sun/cmm/lcms/Makefile
++++ openjdk/jdk/make/sun/cmm/lcms/Makefile
+@@ -1,5 +1,6 @@
+ #
+ # Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
++# Copyright 2011 Red Hat, Inc.
+ # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ #
+ # This code is free software; you can redistribute it and/or modify it
+@@ -97,8 +98,9 @@
+ 	$(RM) $(OBJDIR)/cmm.h
+ 
+ else
+-OTHER_LDLIBS = $(LIBM) -lawt -L$(LIBDIR)/$(LIBARCH)/xawt 
++OTHER_LDLIBS = $(LIBM) -lawt -L$(LIBDIR)/$(LIBARCH)/xawt $(LCMS_LIBS)
+ CPPFLAGS += -I$(SHARE_SRC)/native/sun/java2d \
+-            -I$(SHARE_SRC)/native/sun/awt/debug
++            -I$(SHARE_SRC)/native/sun/awt/debug \
++	    $(LCMS_CFLAGS)
+ endif
+ 

@@ -1,3 +1,38 @@
+2013-07-22  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	PR718: Backport LCMS2 support from IcedTea7
+	* Makefile.am:
+	(LCMS_PATCHES): Populate based on which version
+	of LCMS is being built.
+	(ICEDTEA_PATCHES): Add LCMS_PATCHES.  Remove
+	lcms.patch and patches/jtreg-ReadWriteProfileTest.patch,
+	the latter being 6733501 in disguise.
+	* NEWS: Mention PR718.
+	* acinclude.m4:
+	(IT_ENABLE_LCMS2): New macro to enable or disable
+	the use of LCMS 2 (enabled by default).
+	* configure.ac: Invoke IT_ENABLE_LCMS2.
+	* patches/libraries.patch: Adjust due to JPEG changes
+	in 7002766.
+	* patches/openjdk/6733501-icedtea_lcms_test.patch:
+	Identical to ReadWriteProfileTest.patch with addition
+	of upstream changeset information.
+	* patches/openjdk/7002766-parfait-jpeg.patch:
+	JPEG segment of 7002766 applied on all builds.
+	* patches/openjdk/lcms2/6523398-writing_tags.patch,
+	* patches/openjdk/lcms2/6988213-windows_build_failure.patch,
+	* patches/openjdk/lcms2/7002766-parfait.patch,
+	* patches/openjdk/lcms2/7042594-tck_failure.patch,
+	* patches/openjdk/lcms2/7053526-lcms_2.4.patch,
+	* patches/openjdk/lcms2/8007925-improve_cmsstagealloclabv2tov4curves.patch,
+	* patches/openjdk/lcms2/8007927-improve_cmsallocprofilesequencedescription.patch,
+	* patches/openjdk/lcms2/8007929-improve_curvesalloc.patch,
+	* patches/openjdk/lcms2/8009654-cmsnamed_stability.patch,
+	* patches/openjdk/lcms2/system_lcms2.patch:
+	Add backports from OpenJDK 7 to provide LCMS 2 support.
+	* patches/jtreg-ReadWriteProfileTest.patch:
+	This is 6733501 above.
+
 2013-07-18  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* patches/hotspot/hs23/arm-hsdis.patch:
