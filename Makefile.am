@@ -282,42 +282,6 @@ DROP_PATCHES =
 
 SECURITY_PATCHES = \
 	patches/security/20120830/7182135-impossible_to_use_some_editors_directly.patch \
-	patches/security/20130416/8009063.patch \
-	patches/security/20130416/6657673.patch \
-	patches/security/20130416/6657673-fixup.patch \
-	patches/openjdk/7133220-factory_finder_parser_transform_useBSClassLoader.patch \
-	patches/security/20130416/6657673-factory_finder.patch \
-	patches/openjdk/6669869-queries_per_appcontext.patch \
-	patches/openjdk/5102804-memory_leak.patch \
-	patches/openjdk/6963811-deadlock_fix.patch \
-	patches/openjdk/7064279-resource_release.patch \
-	patches/openjdk/7064279-fixup.patch \
-	patches/security/20130416/7200507.patch \
-	patches/security/20130416/8000724.patch \
-	patches/security/20130416/8004986.patch \
-	patches/openjdk/6501644-icu_sync.patch \
-	patches/openjdk/6886358-layout_update.patch \
-	patches/security/20130416/8001031.patch \
-	patches/openjdk/7017324-kerning_crash.patch \
-	patches/security/20130416/8001040.patch \
-	patches/security/20130416/8001322.patch \
-	patches/security/20130416/8001329.patch \
-	patches/security/20130416/8003335.patch \
-	patches/security/20130416/8003445.patch \
-	patches/security/20130416/8003543.patch \
-	patches/security/20130416/8004261.patch \
-	patches/security/20130416/8005432.patch \
-	patches/security/20130416/8005943.patch \
-	patches/security/20130416/8006435.patch \
-	patches/security/20130416/8006790.patch \
-	patches/security/20130416/8006795.patch \
-	patches/security/20130416/8007406.patch \
-	patches/security/20130416/8007617.patch \
-	patches/security/20130416/8007667.patch \
-	patches/security/20130416/8007918.patch \
-	patches/security/20130416/8009305.patch \
-	patches/security/20130416/8009814.patch \
-	patches/security/20130416/8009857.patch \
 	patches/openjdk/7195301-no_instanceof_node.patch \
 	patches/openjdk/6469266-xmlsec_1.4.2.patch \
 	patches/security/20130618/6741606-apache_santuario.patch \
