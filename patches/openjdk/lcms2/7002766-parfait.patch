@@ -1,0 +1,20 @@
+# HG changeset patch
+# User bae
+# Date 1295871266 -10800
+# Node ID 59a04fd5537f21f61c4c03b42621175a2f196eb2
+# Parent  dbb6ebd5059a48f124df49a291bc0e881aab606b
+7002766: Java2d: Changes to correct c/c++ language issues for use of parfait
+Reviewed-by: jgodinez, prr
+
+diff --git a/src/share/native/sun/java2d/cmm/lcms/LCMS.c b/src/share/native/sun/java2d/cmm/lcms/LCMS.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/LCMS.c
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/LCMS.c
+@@ -137,7 +137,7 @@
+     JNU_ThrowByName(env, "java/awt/color/CMMException", errMsg);
+ }
+ 
+-JNIEXPORT int JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved) {
++JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved) {
+     javaVM = jvm;
+ 
+     cmsSetLogErrorHandler(errorHandler);

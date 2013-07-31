@@ -1,0 +1,23 @@
+# HG changeset patch
+# User bae
+# Date 1363852330 -14400
+# Node ID 681b8e306e873d2073070c197bdfaad843f0501a
+# Parent  6450b0e87f344ca80b7918a222ffce6f33ecd3c0
+8007927: Improve cmsAllocProfileSequenceDescription
+Reviewed-by: bae, prr
+Contributed-by: jia-hong.chen@oracle.com
+
+diff --git a/src/share/native/sun/java2d/cmm/lcms/cmsnamed.c b/src/share/native/sun/java2d/cmm/lcms/cmsnamed.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsnamed.c
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsnamed.c
+@@ -735,6 +735,10 @@
+     Seq -> seq      = (cmsPSEQDESC*) _cmsCalloc(ContextID, n, sizeof(cmsPSEQDESC));
+     Seq -> n        = n;
+ 
++    if (Seq -> seq == NULL) {
++        _cmsFree(ContextID, Seq);
++        return NULL;
++    }
+ 
+     for (i=0; i < n; i++) {
+         Seq -> seq[i].Manufacturer = NULL;

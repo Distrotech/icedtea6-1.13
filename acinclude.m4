@@ -2054,3 +2054,20 @@ AC_DEFUN([IT_USING_CACAO],[
   AM_CONDITIONAL(USING_CACAO, test "x${USING_CACAO}" = "xyes")
   AC_PROVIDE([$0])dnl
 ])
+
+AC_DEFUN_ONCE([IT_ENABLE_LCMS2],
+[
+  AC_MSG_CHECKING([whether to enable the use of LCMS2])
+  AC_ARG_ENABLE([lcms2],
+	      [AS_HELP_STRING(--enable-lcms2,use LCMS 2 backport from OpenJDK 7 [[default=yes]])],
+  [
+    ENABLE_LCMS2="${enableval}"
+  ],
+  [
+    ENABLE_LCMS2=yes
+  ])
+
+  AC_MSG_RESULT(${ENABLE_LCMS2})
+  AM_CONDITIONAL(ENABLE_LCMS2, test x"${ENABLE_LCMS2}" = "xyes")
+  AC_SUBST(ENABLE_LCMS2)
+])
