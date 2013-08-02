@@ -282,64 +282,8 @@ DROP_PATCHES =
 
 SECURITY_PATCHES = \
 	patches/security/20120830/7182135-impossible_to_use_some_editors_directly.patch \
-	patches/openjdk/7195301-no_instanceof_node.patch \
-	patches/openjdk/6469266-xmlsec_1.4.2.patch \
-	patches/security/20130618/6741606-apache_santuario.patch \
-	patches/security/20130618/7170730-windows_network_stack.patch \
-	patches/security/20130618/8000638-improve_deserialization.patch \
 	patches/security/20130618/8001032-restrict_object_access-corba.patch \
-	patches/security/20130618/8001032-restrict_object_access-jdk.patch \
-	patches/security/20130618/8001033-refactor_address_handling.patch \
-	patches/security/20130618/8001034-memory_management.patch \
-	patches/security/20130618/8001038-resourcefully_handle_resources.patch \
-	patches/security/20130618/8001043-clarify_definition_restrictions.patch \
-	patches/security/20130618/8001309-better_handling_of_annotation_interfaces.patch \
-	patches/security/20130618/8001318-socket_getlocaladdress_consistency.patch \
-	patches/security/20130618/8001318-6_fixup.patch \
-	patches/security/20130618/8001330-improve_checking_order.patch \
-	patches/security/20130618/8003703-update_rmi_connection_dialog.patch \
-	patches/security/20130618/8004584-augment_applet_contextualization.patch \
-	patches/security/20130618/8005007-better_glyph_processing.patch \
-	patches/security/20130618/8006328-sound_class_robustness.patch \
-	patches/security/20130618/8006328-6_fixup.patch \
-	patches/security/20130618/8006611-improve_scripting.patch \
-	patches/security/20130618/8007467-improve_jmx_internal_api_robustness.patch \
-	patches/security/20130618/8007471-improve_mbean_notifications.patch \
-	patches/security/20130618/8007471-6_fixup.patch \
-	patches/security/20130618/8007812-getenclosingmethod.patch \
-	patches/security/20130618/8008120-improve_jmx_class_checking.patch \
-	patches/security/20130618/8008124-better_compliance_testing.patch \
-	patches/security/20130618/8008128-better_jmx_api_coherence.patch \
-	patches/security/20130618/8008132-better_serialization.patch \
-	patches/security/20130618/8008585-jmx_data_handling.patch \
-	patches/security/20130618/8008593-better_urlclassloader.patch \
-	patches/security/20130618/8008603-jmx_provider_provision.patch \
-	patches/security/20130618/8008611-jmx_annotations.patch \
-	patches/security/20130618/8008611-6_fixup.patch \
-	patches/security/20130618/8008615-jmx_internal_api_robustness.patch \
-	patches/security/20130618/8008623-mbeanserver_handling.patch \
-	patches/security/20130618/8008744-6741606_rework.patch \
-	patches/security/20130618/8008982-jmx_interface_changes.patch \
-	patches/security/20130618/8009004-rmi_connection_improvement.patch \
-	patches/security/20130618/8009013-t2k_glyphs.patch \
-	patches/security/20130618/8009034-jmx_notification_improvement.patch \
-	patches/security/20130618/8009038-jmx_notification_support_improvement.patch \
-	patches/security/20130618/8009067-improve_key_storing.patch \
-	patches/security/20130618/8009235-improve_tsa_data_handling.patch \
-	patches/openjdk/6888167-medialib_memory_leaks.patch \
-	patches/security/20130618/8011243-improve_imaginglib.patch \
-	patches/security/20130618/8011248-better_component_rasters.patch \
-	patches/security/20130618/8011253-better_short_component_rasters.patch \
-	patches/security/20130618/8011257-better_byte_component_rasters.patch \
-	patches/security/20130618/8011557-improve_reflection.patch \
-	patches/security/20130618/8012421-better_positioning.patch \
-	patches/security/20130618/8012438-better_image_validation.patch \
-	patches/security/20130618/8012597-better_image_channel_validation.patch \
-	patches/security/20130618/8012601-better_layout_validation.patch \
-	patches/security/20130618/8014281-better_xml_signature_checking.patch \
-	patches/security/20130618/diamond_fix.patch \
 	patches/security/20130618/handle_npe.patch \
-	patches/security/20130618/javac_issue.patch \
 	patches/security/20130618/8000642-better_transportation_handling.patch \
 	patches/openjdk/6786028-wcag_bold_tags.patch \
 	patches/openjdk/6786682-wcag_lang.patch \
