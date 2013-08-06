@@ -681,7 +681,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/8012112-MlibOpsTest_fails.patch \
 	patches/openjdk/8012617-arrayindexoutofbounds_linebreakmeasurer.patch \
 	patches/openjdk/8012933-appcontext_disposed_too_early.patch \
-	patches/openjdk/8013196-TimeZone_getDefault_throws_exception.patch \
+	patches/openjdk/8013196-timezone_getdefault_throws_exception.patch \
 	patches/openjdk/8014205-blank_swing_dialogs_windows.patch \
 	patches/openjdk/8014427-raster_regression.patch \
 	patches/openjdk/8014676-javadebugger_space_in_paths.patch \
