@@ -37,22 +37,3 @@ Reviewed-by: mchung, okutsu
              }
              public boolean isMainAppContext() {
                  return (numAppContexts.get() == 1 && mainAppContext != null);
---- openjdk/jdk/src/share/classes/sun/misc/SharedSecrets.java
-+++ openjdk/jdk/src/share/classes/sun/misc/SharedSecrets.java
-@@ -1,5 +1,5 @@
- /*
-- * Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
-+ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
-  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
-  *
-  * This code is free software; you can redistribute it and/or modify it
-@@ -174,6 +174,9 @@
-     public static JavaAWTAccess getJavaAWTAccess() {
-         // this may return null in which case calling code needs to
-         // provision for.
-+        if (javaAWTAccess == null || javaAWTAccess.getContext() == null) {
-+            return null;
-+        }
-         return javaAWTAccess;
-     }
- }

@@ -714,8 +714,10 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7158483-tzdata2012c.patch \
 	patches/openjdk/7198570-tzdata2012f.patch \
 	patches/openjdk/8002225-tzdata2012i.patch \
-	patches/openjdk/8009987-tzdata2013b.patch
-
+	patches/openjdk/8009987-tzdata2013b.patch \
+	patches/openjdk/7196533-timezone_bottleneck.patch \
+	patches/openjdk/6636370-appcontext_simplification.patch \
+	patches/openjdk/6636331-appcontext_concurrentmodificationexception.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
