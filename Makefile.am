@@ -282,9 +282,7 @@ DROP_PATCHES =
 
 SECURITY_PATCHES = \
 	patches/security/20120830/7182135-impossible_to_use_some_editors_directly.patch \
-	patches/security/20130618/8001032-restrict_object_access-corba.patch \
 	patches/security/20130618/handle_npe.patch \
-	patches/security/20130618/8000642-better_transportation_handling.patch \
 	patches/openjdk/6786028-wcag_bold_tags.patch \
 	patches/openjdk/6786682-wcag_lang.patch \
 	patches/openjdk/6802694-no_deprecated.patch \
