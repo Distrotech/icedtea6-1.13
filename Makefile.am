@@ -544,7 +544,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/8012112-MlibOpsTest_fails.patch \
 	patches/openjdk/8012617-arrayindexoutofbounds_linebreakmeasurer.patch \
 	patches/openjdk/8012933-appcontext_disposed_too_early.patch \
-	patches/openjdk/8013196-TimeZone_getDefault_throws_exception.patch \
+	patches/openjdk/8013196-timezone_getdefault_throws_exception.patch \
 	patches/openjdk/8014205-blank_swing_dialogs_windows.patch \
 	patches/openjdk/8014427-raster_regression.patch \
 	patches/openjdk/8014676-javadebugger_space_in_paths.patch \
@@ -577,8 +577,10 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7158483-tzdata2012c.patch \
 	patches/openjdk/7198570-tzdata2012f.patch \
 	patches/openjdk/8002225-tzdata2012i.patch \
-	patches/openjdk/8009987-tzdata2013b.patch
-
+	patches/openjdk/8009987-tzdata2013b.patch \
+	patches/openjdk/7196533-timezone_bottleneck.patch \
+	patches/openjdk/6636370-appcontext_simplification.patch \
+	patches/openjdk/6636331-appcontext_concurrentmodificationexception.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \

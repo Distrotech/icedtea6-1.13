@@ -1,0 +1,178 @@
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/AppContext.java openjdk/jdk/src/share/classes/sun/awt/AppContext.java
+--- openjdk.orig/jdk/src/share/classes/sun/awt/AppContext.java	2013-08-05 16:49:37.120128300 +0100
++++ openjdk/jdk/src/share/classes/sun/awt/AppContext.java	2013-08-05 17:02:51.304664462 +0100
+@@ -151,7 +151,7 @@
+        contained in another AppContext. It is implicitly created for
+        standalone apps only (i.e. not applets)
+     */
+-    private static AppContext mainAppContext = null;
++    private static volatile AppContext mainAppContext = null;
+ 
+     /*
+      * The hash map associated with this AppContext.  A private delegate
+@@ -223,14 +223,15 @@
+         threadGroup2appContext.put(threadGroup, this);
+ 
+         this.contextClassLoader =
+-            (ClassLoader) AccessController.doPrivileged(new PrivilegedAction() {
+-                    public Object run() {
++             AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
++                    public ClassLoader run() {
+                         return Thread.currentThread().getContextClassLoader();
+                     }
+                 });
+     }
+ 
+-    private static MostRecentThreadAppContext mostRecentThreadAppContext = null;
++    private static final ThreadLocal<AppContext> threadAppContext =
++            new ThreadLocal<AppContext>();
+ 
+     private final static void initMainAppContext() {
+         // On the main Thread, we get the ThreadGroup, make a corresponding
+@@ -270,30 +271,18 @@
+             return mainAppContext;
+         }
+ 
+-        final Thread currentThread = Thread.currentThread();
++        AppContext appContext = threadAppContext.get();
+ 
+-        AppContext appContext = null;
+-
+-        // Note: this most recent Thread/AppContext caching is thread-hot.
+-        // A simple test using SwingSet found that 96.8% of lookups
+-        // were matched using the most recent Thread/AppContext.  By
+-        // instantiating a simple MostRecentThreadAppContext object on
+-        // cache misses, the cache hits can be processed without
+-        // synchronization.
+-
+-        MostRecentThreadAppContext recent = mostRecentThreadAppContext;
+-        if ((recent != null) && (recent.thread == currentThread))  {
+-            appContext = recent.appContext; // Cache hit
+-        } else {
+-            appContext = (AppContext)AccessController.doPrivileged(
+-                                            new PrivilegedAction() {
+-            public Object run() {
+-            // Get the current ThreadGroup, and look for it and its
+-            // parents in the hash from ThreadGroup to AppContext --
+-            // it should be found, because we use createNewContext()
+-            // when new AppContext objects are created.
+-            ThreadGroup currentThreadGroup = currentThread.getThreadGroup();
+-            ThreadGroup threadGroup = currentThreadGroup;
++        if (null == appContext) {
++            appContext = AccessController.doPrivileged(new PrivilegedAction<AppContext>()
++            {
++                public AppContext run() {
++                    // Get the current ThreadGroup, and look for it and its
++                    // parents in the hash from ThreadGroup to AppContext --
++                    // it should be found, because we use createNewContext()
++                    // when new AppContext objects are created.
++                    ThreadGroup currentThreadGroup = Thread.currentThread().getThreadGroup();
++                    ThreadGroup threadGroup = currentThreadGroup;
+ 
+                     // Special case: we implicitly create the main app context
+                     // if no contexts have been created yet. This covers standalone apps
+@@ -308,28 +297,29 @@
+                         }
+                     }
+ 
+-            AppContext context = threadGroup2appContext.get(threadGroup);
+-            while (context == null) {
+-                threadGroup = threadGroup.getParent();
+-                if (threadGroup == null) {
+-		    return null;
++                    AppContext context = threadGroup2appContext.get(threadGroup);
++                    while (context == null) {
++                        threadGroup = threadGroup.getParent();
++                        if (threadGroup == null) {
++                            return null;
++                        }
++                        context = threadGroup2appContext.get(threadGroup);
++                    }
++
++                    // In case we did anything in the above while loop, we add
++                    // all the intermediate ThreadGroups to threadGroup2appContext
++                    // so we won't spin again.
++                    for (ThreadGroup tg = currentThreadGroup; tg != threadGroup; tg = tg.getParent()) {
++                        threadGroup2appContext.put(tg, context);
++                    }
++
++                    // Now we're done, so we cache the latest key/value pair.
++                    threadAppContext.set(context);
++
++
++                    return context;
+                 }
+-                context = threadGroup2appContext.get(threadGroup);
+-            }
+-            // In case we did anything in the above while loop, we add
+-            // all the intermediate ThreadGroups to threadGroup2appContext
+-            // so we won't spin again.
+-            for (ThreadGroup tg = currentThreadGroup; tg != threadGroup; tg = tg.getParent()) {
+-                threadGroup2appContext.put(tg, context);
+-            }
+-
+-            // Now we're done, so we cache the latest key/value pair.
+-            mostRecentThreadAppContext =
+-                new MostRecentThreadAppContext(currentThread, context);
+-
+-            return context;
+-          }
+-         });
++            });
+         }
+ 
+         return appContext;
+@@ -473,7 +463,7 @@
+         // Threads in the ThreadGroup to exit.
+ 
+         long startTime = System.currentTimeMillis();
+-        long endTime = startTime + (long)THREAD_INTERRUPT_TIMEOUT;
++        long endTime = startTime + THREAD_INTERRUPT_TIMEOUT;
+         while ((this.threadGroup.activeCount() > 0) &&
+                (System.currentTimeMillis() < endTime)) {
+             try {
+@@ -488,7 +478,7 @@
+         // Threads in the ThreadGroup to die.
+ 
+         startTime = System.currentTimeMillis();
+-        endTime = startTime + (long)THREAD_INTERRUPT_TIMEOUT;
++        endTime = startTime + THREAD_INTERRUPT_TIMEOUT;
+         while ((this.threadGroup.activeCount() > 0) &&
+                (System.currentTimeMillis() < endTime)) {
+             try {
+@@ -507,10 +497,7 @@
+         }
+         threadGroup2appContext.remove(this.threadGroup);
+ 
+-        MostRecentThreadAppContext recent = mostRecentThreadAppContext;
+-        if ((recent != null) && (recent.appContext == this))
+-            mostRecentThreadAppContext = null;
+-                // If the "most recent" points to this, clear it for GC
++        threadAppContext.set(null);
+ 
+         // Finally, we destroy the ThreadGroup entirely.
+         try {
+@@ -693,6 +680,7 @@
+      * Returns a string representation of this AppContext.
+      * @since   1.2
+      */
++    @Override
+     public String toString() {
+         return getClass().getName() + "[threadGroup=" + threadGroup.getName() + "]";
+     }
+@@ -842,15 +830,6 @@
+     }
+ }
+ 
+-final class MostRecentThreadAppContext {
+-    final Thread thread;
+-    final AppContext appContext;
+-    MostRecentThreadAppContext(Thread key, AppContext value) {
+-        thread = key;
+-        appContext = value;
+-    }
+-}
+-
+ final class MostRecentKeyValue {
+     Object key;
+     Object value;
