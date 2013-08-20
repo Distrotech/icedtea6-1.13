@@ -717,34 +717,75 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/8009987-tzdata2013b.patch \
 	patches/openjdk/7196533-timezone_bottleneck.patch \
 	patches/openjdk/6636370-appcontext_simplification.patch \
-	patches/openjdk/6636331-appcontext_concurrentmodificationexception.patch
+	patches/openjdk/6636331-appcontext_concurrentmodificationexception.patch \
+	patches/sparc-ptracefix.patch \
+	patches/hotspot/$(HSBUILD)/alpha-fixes.patch \
+	patches/hotspot/$(HSBUILD)/gcc-suffix.patch \
+	patches/hotspot/$(HSBUILD)/text-relocations.patch \
+	patches/hotspot/$(HSBUILD)/version.patch \
+	patches/memory-limits.patch \
+	patches/sh4-support.patch \
+	patches/hotspot/$(HSBUILD)/aarch64.patch \
+	patches/hotspot/$(HSBUILD)/arm.patch \
+	patches/arm-debug.patch \
+	patches/hotspot/$(HSBUILD)/jtreg-test7020373-fix.patch \
+	patches/jtreg-6929067-fix.patch \
+	patches/hotspot/$(HSBUILD)/update-bootclasspath.patch \
+	patches/hotspot/original/jvmtiEnv.patch \
+	patches/hotspot/original/7197906-handle_32_bit_shifts.patch \
+	patches/sparc-trapsfix.patch \
+	patches/print_lsb_release.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
 	patches/hotspot/hs23/remove_jsr292_tests.patch \
-	patches/hotspot/hs23/revert-7017193.patch
+	patches/hotspot/hs23/revert-7017193.patch \
+	patches/hotspot/hs23/7188168-fix_debug_binaries.patch \
+	patches/hotspot/hs23/arm-01-hsx22.patch \
+	patches/hotspot/hs23/arm-03-invokedynamic.patch \
+	patches/hotspot/hs23/arm-04-invokedynamic_jit.patch \
+	patches/hotspot/hs23/arm-05-invokedynamic_methodhandle.patch \
+	patches/hotspot/hs23/arm-06-no_o0.patch \
+	patches/hotspot/hs23/arm-07-cleanup.patch \
+	patches/hotspot/hs23/arm-08-cleanup.patch \
+	patches/hotspot/hs23/arm-09-jvmti.patch \
+	patches/hotspot/hs23/arm-10-memory_protect.patch \
+	patches/hotspot/hs23/arm-11-thumb2_jit.patch \
+	patches/hotspot/hs23/arm-12-ldrexd.patch \
+	patches/hotspot/hs23/arm-13-sp_adjustment.patch \
+	patches/hotspot/hs23/arm-14-stage1.patch \
+	patches/hotspot/hs23/arm-15-stage2.patch \
+	patches/hotspot/hs23/arm-16-dont_save_locals.patch \
+	patches/hotspot/hs23/arm-17-no_debug_code.patch \
+	patches/hotspot/hs23/arm-18-correct_call.patch \
+	patches/hotspot/hs23/arm-19-fix_jit_bug.patch \
+	patches/hotspot/hs23/arm-20-function_renaming.patch \
+	patches/hotspot/hs23/arm-21-fix_compareandswaplong.patch \
+	patches/hotspot/hs23/arm-22-fix_trashed_thread_ptr.patch \
+	patches/hotspot/hs23/arm-25-hsx23.patch \
+	patches/hotspot/hs23/drop_unlicensed_test.patch \
+	patches/hotspot/hs23/no_useless_debuginfo_files.patch \
+	patches/hotspot/hs23/pr1101-sparc_symbols.patch \
+	patches/hotspot/hs23/type_fixes.patch \
+	patches/hotspot/hs23/zero_hs22.patch \
+	patches/hotspot/hs23/zero_fixes.patch \
+	patches/pr1095-werror.patch \
+	patches/arm/cc_compile-01.patch \
+	patches/arm/cc_compile-02.patch \
+	patches/arm/cc_compile-03.patch \
+	patches/arm/cc_compile-04.patch \
+	patches/arm/cc_compile-05.patch \
+	patches/arm/cc_compile-06.patch
 else
 # stdc-limit-macros is part of 7032458
 # pr690-shark-jit-hs20.patch is part of 7032458
 # pr696-zero-fast_aldc-hs20.patch is 7030207 & part of 7032458
 ICEDTEA_PATCHES += \
 	patches/stdc-limit-macros.patch \
-	patches/version-hotspot.patch \
-	patches/text-relocations.patch \
-	patches/gcc-suffix-hotspot.patch \
-	patches/memory-limits.patch \
-	patches/print_lsb_release.patch \
-	patches/alpha-fixes.patch \
 	patches/use-idx_t.patch \
 	patches/params-cast-size_t.patch \
-	patches/sparc-ptracefix.patch \
-	patches/sparc-trapsfix.patch \
 	patches/openjdk/7019808-stack_noexec.patch \
-	patches/sh4-support.patch \
-	patches/update-bootclasspath.patch \
-	patches/arm.patch \
 	patches/numa_on_early_glibc.patch \
-	patches/jtreg-6929067-fix.patch \
 	patches/ia64-fix.patch \
 	patches/openjdk/7041156-gcc_export_dynamic.patch \
 	patches/openjdk/7032388-work_without_cmov_instruction.patch \
@@ -760,19 +801,18 @@ ICEDTEA_PATCHES += \
 	patches/jtreg-remove-test-6991596.patch \
 	patches/openjdk/7036220-shark_llvm_29_headers.patch \
 	patches/openjdk/7029152-String_intrinsics_miss_optimization.patch \
-	patches/jtreg-hotspot-Test7020373-fix.patch \
 	patches/pr690-shark-jit-hs20.patch \
 	patches/pr696-zero-fast_aldc-hs20.patch \
-	patches/arm-debug.patch \
 	patches/openjdk/7010849-modernise_sa.patch \
-	patches/hotspot/original/7197906-handle_32_bit_shifts.patch \
 	patches/hotspot/original/fix_get_stack_bounds_leak.patch \
-	patches/hotspot/original/jvmtiEnv.patch \
 	patches/hotspot/original/6840152-jvm_crashes_with_heavyweight_monitors.patch \
-	patches/hotspot/original/aarch64.patch \
+	patches/hotspot/original/7032696-7029152_broke_vm.patch \
 	patches/hotspot/original/7022999-fastlocking_compiler1_only.patch \
-	patches/hotspot/original/arm-hsdis.patch
+	patches/hotspot/original/7140985-hsdis_caller_options.patch
 endif
+
+ICEDTEA_PATCHES += \
+	patches/hotspot/$(HSBUILD)/arm-hsdis.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -1386,25 +1426,21 @@ clean-replace-hotspot:
 
 # Copy ports sources into tree
 stamps/ports.stamp: stamps/replace-hotspot.stamp
-if !WITH_ALT_HSBUILD
 	for target in $(abs_top_srcdir)/arm_port/hotspot/tools \
 		      $(abs_top_srcdir)/arm_port/hotspot/src/*cpu/* ; do \
 	  link=$$(dirname $$target | sed 's/^.*arm_port/openjdk/'); \
 	  cp -rv $(SRC_DIR_LINK) $$target $$link; \
 	  chmod -R ug+rwX $$link; \
 	done
-endif
 	mkdir -p stamps
 	touch stamps/ports.stamp
 
 clean-ports:
-if !WITH_ALT_HSBUILD
 	for target in $(abs_top_srcdir)/arm_port/hotspot/tools \
 		      $(abs_top_srcdir)/arm_port/hotspot/src/*cpu/* ; do \
 	  link=$$(dirname $$target | sed 's/^.*arm_port/openjdk/'); \
 	  rm -rf $$link; \
 	done
-endif
 	rm -f stamps/ports.stamp
 
 stamps/generated.stamp: stamps/ports.stamp

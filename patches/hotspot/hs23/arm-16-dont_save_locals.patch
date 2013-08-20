@@ -1,0 +1,263 @@
+# HG changeset patch
+# User aph
+# Date 1338387602 14400
+#      Wed May 30 10:20:02 2012 -0400
+# Node ID 41fd39ce5b9968cd6980ba60d77d17157473e437
+# Parent  5dced5a7d1e4b5b6f90d19988b1db353e20e27c7
+Don't save locals at a return.
+
+diff --git a/make/linux/makefiles/fastdebug.make b/make/linux/makefiles/fastdebug.make
+--- openjdk/hotspot/make/linux/makefiles/fastdebug.make
++++ openjdk/hotspot/make/linux/makefiles/fastdebug.make
+@@ -31,7 +31,7 @@
+ # (OPT_CFLAGS/SLOWER is also available, to alter compilation of buggy files)
+ 
+ ifeq ($(BUILDARCH), ia64)
+-  # Bug in GCC, causes hang.  -O1 will override the -O3 specified earlier
++  # Bug in GCC, causes hang.  -O1 will override the -O0 specified earlier
+   OPT_CFLAGS/callGenerator.o += -O1
+   OPT_CFLAGS/ciTypeFlow.o += -O1
+   OPT_CFLAGS/compile.o += -O1
+diff --git a/make/linux/makefiles/gcc.make b/make/linux/makefiles/gcc.make
+--- openjdk/hotspot/make/linux/makefiles/gcc.make
++++ openjdk/hotspot/make/linux/makefiles/gcc.make
+@@ -169,7 +169,7 @@
+ CFLAGS_WARN/BYFILE = $(CFLAGS_WARN/$@)$(CFLAGS_WARN/DEFAULT$(CFLAGS_WARN/$@)) 
+ 
+ # The flags to use for an Optimized g++ build
+-OPT_CFLAGS += -O3
++OPT_CFLAGS += -O0
+ 
+ # Hotspot uses very unstrict aliasing turn this optimization off
+ OPT_CFLAGS += -fno-strict-aliasing
+diff --git a/make/solaris/makefiles/gcc.make b/make/solaris/makefiles/gcc.make
+--- openjdk/hotspot/make/solaris/makefiles/gcc.make
++++ openjdk/hotspot/make/solaris/makefiles/gcc.make
+@@ -122,7 +122,7 @@
+ CFLAGS_WARN/BYFILE = $(CFLAGS_WARN/$@)$(CFLAGS_WARN/DEFAULT$(CFLAGS_WARN/$@))  
+ 
+ # The flags to use for an Optimized g++ build
+-OPT_CFLAGS += -O3
++OPT_CFLAGS += -O0
+ 
+ # Hotspot uses very unstrict aliasing turn this optimization off
+ OPT_CFLAGS += -fno-strict-aliasing
+diff --git a/src/cpu/zero/vm/asm_helper.cpp b/src/cpu/zero/vm/asm_helper.cpp
+--- openjdk/hotspot/src/cpu/zero/vm/asm_helper.cpp
++++ openjdk/hotspot/src/cpu/zero/vm/asm_helper.cpp
+@@ -403,6 +403,8 @@
+     return thread->pending_exception();
+ }
+ 
++extern "C" void ps();
++
+ extern "C" oop Helper_SafePoint(JavaThread *thread)
+ {
+     {
+@@ -412,6 +414,15 @@
+     return thread->pending_exception();
+ }
+ 
++extern "C" oop Helper_SafePoint2(JavaThread *thread)
++{
++    {
++      HandleMarkCleaner __hmc(thread);
++    }
++    SafepointSynchronize::block(thread);
++    return thread->pending_exception();
++}
++
+ extern "C" void Helper_RaiseArrayBoundException(JavaThread *thread, int index)
+ {
+   char message[jintAsStringSize];
+diff --git a/src/cpu/zero/vm/thumb2.cpp b/src/cpu/zero/vm/thumb2.cpp
+--- openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
++++ openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
+@@ -3447,13 +3447,15 @@
+   jstack->depth = 0;
+ }
+ 
++// SAVE_STACK and RESTORE_STACK save the stack state so that it's
++// possible to do a stack flush to memory and restore that stack state
++// to the same registers.
+ #define SAVE_STACK(JSTACK)					\
+   unsigned saved_stack_elements[JSTACK->depth];			\
+   unsigned saved_stack_depth;					\
+   memcpy(saved_stack_elements, JSTACK->stack,			\
+ 	 JSTACK->depth * sizeof saved_stack_elements[0]);	\
+   saved_stack_depth = JSTACK->depth;
+-
+ #define RESTORE_STACK(JSTACK, CODEBUF)					\
+   Thumb2_Pop_Multiple(CODEBUF, saved_stack_elements, saved_stack_depth); \
+   memcpy(JSTACK->stack, saved_stack_elements,				\
+@@ -4217,7 +4219,7 @@
+   //
+   //  n.b. for a return there is no need save or restore locals
+ 
+-  bool is_return = offset == 0;
++  bool is_return = offset == 0; // This is some kind of return bytecode
+ 
+   int r_tmp = Thumb2_Tmp(jinfo, 0);
+   unsigned dest;
+@@ -4261,23 +4263,19 @@
+     SAVE_STACK(jinfo->jstack);
+     Thumb2_Flush(jinfo);
+ 
++    // We don't save or restore locals if we're returning.
++    if (! is_return)
++      Thumb2_save_locals(jinfo, stackdepth);
++
+     // now the safepoint polling code itself
+-
+-    // We save the locals at a return bytecode even though we aren't
+-    // going to restore them: we do so because otherwise there's a
+-    // risk that the GC might scan garbage.
+-    Thumb2_save_locals(jinfo, stackdepth);
+-
+     mov_imm(jinfo->codebuf, ARM_R1, bci+CONSTMETHOD_CODEOFFSET);
+     add_imm(jinfo->codebuf, ARM_R2, ISTATE_REG(jinfo),
+ 	    ISTATE_OFFSET(jinfo, stackdepth, 0));
+     bl(jinfo->codebuf, handlers[H_SAFEPOINT]);
+ 
+-    // We don't restore the locals if we're returning.
+     if (! is_return)
+       Thumb2_restore_locals(jinfo, stackdepth);
+ 
+-    // But we always restore the register state of the stack.
+     RESTORE_STACK(jinfo->jstack, jinfo->codebuf);
+ 
+     if (offset < 0) {
+diff --git a/src/os/linux/vm/os_linux.cpp b/src/os/linux/vm/os_linux.cpp
+--- openjdk/hotspot/src/os/linux/vm/os_linux.cpp
++++ openjdk/hotspot/src/os/linux/vm/os_linux.cpp
+@@ -4206,8 +4206,11 @@
+   Linux::fast_thread_clock_init();
+ 
+   // Allocate a single page and mark it as readable for safepoint polling
+-  address polling_page = (address) ::mmap(NULL, Linux::page_size(), PROT_READ, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+-  guarantee( polling_page != MAP_FAILED, "os::init_2: failed to allocate polling page" );
++  julong foo = (julong) ::mmap(NULL, 65536, PROT_READ, 
++				 MAP_PRIVATE|MAP_ANONYMOUS|MAP_NORESERVE, -1, 0);
++  address polling_page = (address)(foo & -65536L);
++  if ((julong)polling_page < foo)
++    polling_page += 65536;
+ 
+   os::set_polling_page( polling_page );
+ 
+diff --git a/src/share/vm/gc_implementation/shared/markSweep.cpp b/src/share/vm/gc_implementation/shared/markSweep.cpp
+--- openjdk/hotspot/src/share/vm/gc_implementation/shared/markSweep.cpp
++++ openjdk/hotspot/src/share/vm/gc_implementation/shared/markSweep.cpp
+@@ -30,6 +30,11 @@
+ #include "oops/objArrayKlass.inline.hpp"
+ #include "oops/oop.inline.hpp"
+ 
++
++void *arse[2];
++
++void sa(void*a, void *b) { arse[0] = a; arse [1] = b; }
++
+ Stack<oop>              MarkSweep::_marking_stack;
+ Stack<DataLayout*>      MarkSweep::_revisit_mdo_stack;
+ Stack<Klass*>           MarkSweep::_revisit_klass_stack;
+diff --git a/src/share/vm/gc_implementation/shared/markSweep.inline.hpp b/src/share/vm/gc_implementation/shared/markSweep.inline.hpp
+--- openjdk/hotspot/src/share/vm/gc_implementation/shared/markSweep.inline.hpp
++++ openjdk/hotspot/src/share/vm/gc_implementation/shared/markSweep.inline.hpp
+@@ -43,9 +43,15 @@
+   }
+ }
+ 
++extern "C" void *arse[2];
++
++extern "C" void sa(void*a, void *b);
++
+ template <class T> inline void MarkSweep::follow_root(T* p) {
+   assert(!Universe::heap()->is_in_reserved(p),
+          "roots shouldn't be things within the heap");
++  if (arse[0] <= (void *)p && arse[1] >= (void *)p)
++    fprintf(stderr, "Whip\n");
+ #ifdef VALIDATE_MARK_SWEEP
+   if (ValidateMarkSweep) {
+     guarantee(!_root_refs_stack->contains(p), "should only be in here once");
+diff --git a/src/share/vm/interpreter/bytecodeInterpreter.cpp b/src/share/vm/interpreter/bytecodeInterpreter.cpp
+--- openjdk/hotspot/src/share/vm/interpreter/bytecodeInterpreter.cpp
++++ openjdk/hotspot/src/share/vm/interpreter/bytecodeInterpreter.cpp
+@@ -1513,7 +1513,13 @@
+       CASE(_freturn):
+       {
+           // Allow a safepoint before returning to frame manager.
+-          SAFEPOINT;
++    if ( SafepointSynchronize::is_synchronizing()) {
++        {
++          /* zap freed handles rather than GC'ing them */
++          HandleMarkCleaner __hmc(THREAD);
++        }
++        CALL_VM(SafepointSynchronize::block(THREAD), handle_exception);
++    }
+ 
+           goto handle_return;
+       }
+diff --git a/src/share/vm/runtime/frame.cpp b/src/share/vm/runtime/frame.cpp
+--- openjdk/hotspot/src/share/vm/runtime/frame.cpp
++++ openjdk/hotspot/src/share/vm/runtime/frame.cpp
+@@ -785,6 +785,9 @@
+       }
+       if (in_stack) {
+         _f->do_oop(addr);
++      } else {
++	fprintf(stderr, "Arse! %p\n",
++		_fr->interpreter_frame_tos_address());
+       }
+     }
+   }
+diff --git a/src/share/vm/runtime/vmThread.cpp b/src/share/vm/runtime/vmThread.cpp
+--- openjdk/hotspot/src/share/vm/runtime/vmThread.cpp
++++ openjdk/hotspot/src/share/vm/runtime/vmThread.cpp
+@@ -256,6 +256,39 @@
+   }
+ }
+ 
++class BangerThread : NamedThread
++{
++public:
++
++  static BangerThread *the_thread;
++
++  static void create() {
++    the_thread = new BangerThread();
++    os::create_thread (the_thread, os::watcher_thread);
++    Thread::start(the_thread);
++  }
++
++  BangerThread() : NamedThread() {
++    set_name("banger");
++  }
++
++  void run() {
++    struct timespec req;
++    req.tv_nsec = 0.5e9;
++    req.tv_sec = 0;
++
++    for (;;)
++      {
++	nanosleep(&req, NULL);
++	// VM_ForceSafepoint op;
++	// VMThread::execute(&op);
++	Universe::heap()->collect(GCCause::_java_lang_system_gc);
++      }
++  }
++};
++
++BangerThread *BangerThread::the_thread;
++
+ void VMThread::run() {
+   assert(this == vm_thread(), "check");
+ 
+@@ -280,6 +313,8 @@
+   // possible to set the VM thread priority higher than any Java thread.
+   os::set_native_priority( this, prio );
+ 
++  BangerThread::create();
++
+   // Wait for VM_Operations until termination
+   this->loop();
+ 

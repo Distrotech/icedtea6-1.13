@@ -1,0 +1,29 @@
+# HG changeset patch
+# User andrew
+# Date 1374828674 -3600
+#      Fri Jul 26 09:51:14 2013 +0100
+# Node ID 799641e9320fc73eb051d44e6590b3d2132b7255
+# Parent  ca2cc93a664023cffde25c5c3a1d53db44db9474
+Use $(CC) as before for bytecodes_arm.s and mkoffsets targets
+
+diff --git a/make/linux/makefiles/zeroshark.make b/make/linux/makefiles/zeroshark.make
+--- openjdk/hotspot/make/linux/makefiles/zeroshark.make
++++ openjdk/hotspot/make/linux/makefiles/zeroshark.make
+@@ -42,7 +42,7 @@
+ 
+ bytecodes_arm.s: bytecodes_arm.def mkbc
+ 	@echo Generating ARM assembler bytecode sequences
+-	$(CXX_COMPILE) -E -x c++ - < $< | ./mkbc - $@ $(COMPILE_DONE)
++	$(CC_COMPILE) $(CFLAGS) -E -x c++ - < $< | ./mkbc - $@ $(COMPILE_DONE)
+ 
+ mkbc:	$(GAMMADIR)/tools/mkbc.c
+ 	@echo Compiling mkbc tool
+@@ -51,7 +51,7 @@
+ mkoffsets:	asm_helper.cpp
+ 	@echo Compiling offset generator
+ 	$(QUIETLY) $(REMOVE_TARGET)
+-	$(CXX_COMPILE) -DSTATIC_OFFSETS -o $@ $< $(COMPILE_DONE)
++	$(CC_COMPILE) $(CFLAGS) -DSTATIC_OFFSETS -o $@ $< $(COMPILE_DONE)
+ 
+ endif
+ 

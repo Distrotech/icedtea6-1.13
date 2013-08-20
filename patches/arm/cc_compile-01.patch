@@ -1,0 +1,23 @@
+# HG changeset patch
+# User andrew
+# Date 1374065527 -3600
+#      Wed Jul 17 13:52:07 2013 +0100
+# Node ID 4e032c676dc89b4e313bede0b1c8c1b4bfb229ca
+# Parent  84b9ad9615531b4f957a2ebd760e928ac47590ee
+Use $(CC) to compile mkbc instead of $(CC_COMPILE) to avoid C++-only flags
+
+diff --git a/make/linux/makefiles/zeroshark.make b/make/linux/makefiles/zeroshark.make
+--- openjdk/hotspot/make/linux/makefiles/zeroshark.make
++++ openjdk/hotspot/make/linux/makefiles/zeroshark.make
+@@ -44,9 +44,10 @@
+ 	@echo Generatine ARM assembler bytecode sequences
+ 	$(CC_COMPILE) -E -x c++ - < $< | ./mkbc - $@ $(COMPILE_DONE)
+ 
++# Can't use $(CC_COMPILE) as it contains C++ flags
+ mkbc:	$(GAMMADIR)/tools/mkbc.c
+ 	@echo Compiling mkbc tool
+-	$(CC_COMPILE) -o $@ $< $(COMPILE_DONE)
++	$(CC) -o $@ $< $(COMPILE_DONE)
+ 
+ mkoffsets:	asm_helper.cpp
+ 	@echo Compiling offset generator

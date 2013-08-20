@@ -1,0 +1,24 @@
+# HG changeset patch
+# User chrisphi
+# Date 1346342007 14400
+#      Thu Aug 30 11:53:27 2012 -0400
+# Node ID 8910dbb0a40f2d421a6e05c6b237776cc902c0ed
+# Parent  716e3ad6e2c668be8171ab218c9b16402feb03c8
+ARM: Fix trashed thread ptr after recursive re-entry from
+	asm jit.
+
+diff --git a/src/cpu/zero/vm/cppInterpreter_arm.S b/src/cpu/zero/vm/cppInterpreter_arm.S
+--- openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S
++++ openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S
+@@ -2988,7 +2988,10 @@
+ 	// Handler for java.lang.invoke.MethodHandles::invoke
+ 	ALIGN_CODE
+ method_handle_entry:
+- 	b	fast_method_handle_entry	
++	stmfd   arm_sp!, {thread, lr}
++	mov     thread, r2
++	bl      fast_method_handle_entry
++	ldmfd   arm_sp!, {thread, pc}
+ 	ALIGN_CODE
+ fast_method_handle_entry:
+ 	stmfd	arm_sp!, {regset, lr}

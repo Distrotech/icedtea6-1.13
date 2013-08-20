@@ -1,0 +1,35 @@
+diff -Nru openjdk.orig/hotspot/agent/src/os/linux/Makefile openjdk/hotspot/agent/src/os/linux/Makefile
+--- openjdk.orig/hotspot/agent/src/os/linux/Makefile	2013-08-13 00:23:20.327167380 +0100
++++ openjdk/hotspot/agent/src/os/linux/Makefile	2013-08-13 00:51:37.282875625 +0100
+@@ -23,7 +23,7 @@
+ #
+ 
+ ARCH := $(shell if ([ `uname -m` = "ia64" ])  ; then echo ia64 ; elif ([ `uname -m` = "x86_64" ]) ; then echo amd64; elif ([ `uname -m` = "sparc64" ]) ; then echo sparc; else echo i386 ; fi )
+-GCC      = gcc
++GCC      = gcc$(GCC_SUFFIX)
+ 
+ JAVAH    = ${JAVA_HOME}/bin/javah
+ 
+diff -Nru openjdk.orig/hotspot/make/linux/makefiles/gcc.make openjdk/hotspot/make/linux/makefiles/gcc.make
+--- openjdk.orig/hotspot/make/linux/makefiles/gcc.make	2013-08-13 00:23:14.723077560 +0100
++++ openjdk/hotspot/make/linux/makefiles/gcc.make	2013-08-13 00:52:35.751804662 +0100
+@@ -28,13 +28,13 @@
+ # When cross-compiling the ALT_COMPILER_PATH points
+ # to the cross-compilation toolset
+ ifdef CROSS_COMPILE_ARCH
+-CXX = $(ALT_COMPILER_PATH)/g++
+-CC  = $(ALT_COMPILER_PATH)/gcc
+-HOSTCXX = g++
+-HOSTCC  = gcc
++CXX = $(ALT_COMPILER_PATH)/g++$(GCC_SUFFIX)
++CC  = $(ALT_COMPILER_PATH)/gcc$(GCC_SUFFIX)
++HOSTCXX = g++$(GCC_SUFFIX)
++HOSTCC  = gcc$(GCC_SUFFIX)
+ else
+-CXX = g++
+-CC  = gcc
++CXX = g++$(GCC_SUFFIX)
++CC  = gcc$(GCC_SUFFIX)
+ HOSTCXX = $(CXX)
+ HOSTCC  = $(CC)
+ endif

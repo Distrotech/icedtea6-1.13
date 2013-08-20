@@ -1,0 +1,247 @@
+# HG changeset patch
+# User adinn
+# Date 1337163667 -3600
+#      Wed May 16 11:21:07 2012 +0100
+# Node ID 181ca5501979aae58184e2e1561d65c3302aee7c
+# Parent  e6d602f07305e762d8c27ab4a81b22aa423a5376
+modified safepoint check to rely on memory protect signal instead of polling
+
+diff --git a/src/cpu/zero/vm/thumb2.cpp b/src/cpu/zero/vm/thumb2.cpp
+--- openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
++++ openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
+@@ -56,7 +56,7 @@
+ #define THUMB2_MAXLOCALS 1000
+ 
+ #include <sys/mman.h>
+-
++#include <ucontext.h>
+ #include "precompiled.hpp"
+ #include "interpreter/bytecodes.hpp"
+ 
+@@ -434,6 +434,9 @@
+ #define BYTESEX_REVERSE(v) (((v)<<24) | (((v)<<8) & 0xff0000) | (((v)>>8) & 0xff00) | ((v)>>24))
+ #define BYTESEX_REVERSE_U2(v) (((v)<<8) | ((v)>>8))
+ 
++// n.b. this value is chosen because it is an illegal thumb2 instruction
++#define THUMB2_POLLING_PAGE_MAGIC 0xdead
++
+ typedef struct Thumb2_CodeBuf {
+   unsigned size;
+   char *sp;
+@@ -4496,26 +4499,134 @@
+ 
+ void Thumb2_codegen(Thumb2_Info *jinfo, unsigned start);
+ 
++// called from the SEGV handling code to see if a polling page read
++// is from a legitimate safepoint address
++int Thumb2_Install_Safepoint_PC(ucontext_t *uc, int magicByteOffset)
++{
++  mcontext_t *mc = &uc->uc_mcontext;
++  unsigned long arm_pc = mc->arm_pc;
++  // ensure the faulting instruction lies in JITted code
++  if (arm_pc < (unsigned long)(thumb2_codebuf + 1)) {
++    return false;
++  }
++  if (arm_pc >= (unsigned long)thumb2_codebuf->sp) {
++    return false;
++  }
++  // skip to the MAGIC word and check it is valid
++  arm_pc +=magicByteOffset;
++  if (*((short*)arm_pc) != (short)THUMB2_POLLING_PAGE_MAGIC) {
++    return false;
++  }
++
++  // skip the magic word 
++  arm_pc += 2;
++  mc->arm_pc = arm_pc;
++
++  return true;
++}
++
+ // Insert code to poll the SafepointSynchronize state and call
+ // Helper_SafePoint.
+-void Thumb2_Safepoint(Thumb2_Info *jinfo, int stackdepth, int bci)
++// -- if offset is negative it identifies a bytecode index which
++// should be jumped to via an unconditional backward branch
++// taken either before or after executing the safepoint check
++// -- if offset is zero or positive then a return or conditional
++// branch, respectively, needs to be compiled so control should
++// flow to end of the safepoint check whether or not it is executed
++
++void Thumb2_Safepoint(Thumb2_Info *jinfo, int stackdepth, int bci, int offset)
+ {
+   Thumb2_Flush(jinfo);
++  // normal case: read the polling page and branch to skip
++  // the safepoint test
++  // abnormal case: read the polling page, trap to handler
++  // which resets return address into the safepoint check code
++  // 
++  // with a negative offset the generated code will look like
++  //    movw r_tmp, #polling_page
++  //    movt r_tmp, #polling_page
++  //    ldr r_tmp, [r_tmp, #K] ; K == 2 * byte offset to the magic word
++  //    b.n #branchtarget
++  //    #POLLING_PAGE_MAGIC ; magic data word
++  //    <
++  //     safepoint check  code
++  //    >
++  //    b.n #branchtarget
++  //
++  // i.e. the generated code includes the branch backwards twice
++  // and relies on a fault at the ldr to skip into the safepoint code
++  //
++  // with a zero or positive offset the caller will plant the return
++  // (zero) or conditional branch (positive) code after the check so
++  // the normal path skips round the safepoint check code and the
++  // abnormal path just drops through. the generated code will look
++  // like
++  //
++  //    movw r_tmp, #polling_page
++  //    movt r_tmp, #polling_page
++  //    ldr r_tmp, [r_tmp, #0]
++  //    b.n L1
++  //    POLLING_PAGE_MAGIC ; data
++  //    <
++  //     safepoint check  code
++  //    >
++  // L1:
++  //    <caller plants branch/return here>
++  // 
++  //  n.b. for a return there is no need save or restore locals
++
+   int r_tmp = Thumb2_Tmp(jinfo, 0);
+-  mov_imm(jinfo->codebuf, r_tmp, (u32)SafepointSynchronize::address_of_state());
+-  ldr_imm(jinfo->codebuf, r_tmp, r_tmp, 0, 0, 0);
+-  cmp_imm(jinfo->codebuf, r_tmp, SafepointSynchronize::_synchronizing);
+-  {
+-    // FIXME: If we are at a return instruction there is no point
+-    // saving and restoring locals: no-one cares about them any more
+-    // and we could safely ignore them.  However, this generic
+-    // safepoint code also handles branches within a method.
+-    unsigned loc = forward_16(jinfo->codebuf);
+-  Thumb2_save_locals(jinfo, stackdepth);
+-    mov_imm(jinfo->codebuf, ARM_R1, bci+CONSTMETHOD_CODEOFFSET);
+-    bl(jinfo->codebuf, handlers[H_SAFEPOINT]);
+-  Thumb2_restore_locals(jinfo, stackdepth);
+-    bcc_patch(jinfo->codebuf, COND_NE, loc);
++  unsigned dest;
++  if (offset < 0) {
++    // the index of the backward branch target in the code buffer
++    dest = jinfo->bc_stackinfo[bci+offset] & ~BC_FLAGS_MASK;
++  } else {
++    dest = 0;
++  }
++  mov_imm(jinfo->codebuf, r_tmp, (u32)os::get_polling_page());
++  // this encodes the offset from the read instruction to the magic
++  // word into the fault address, assuming it is 4 bytes. however, if
++  // we need to plant a wide backwards branch we may need to rewrite
++  // this instruction with offset 6. so stash the instruction location
++  // here just in case. n.b. the offset is doubled to ensure the fault
++  // address in aligned -- aligned reads always use a single 16-bit
++  // instruction whereas non-aligned reads require 2 x 16 bit words
++  unsigned read_loc = out_loc(jinfo->codebuf);
++  ldr_imm(jinfo->codebuf, r_tmp, r_tmp, 8, 1, 0);
++  if (offset < 0) {
++    branch_uncond(jinfo->codebuf, dest);
++    unsigned magic_loc = out_loc(jinfo->codebuf);
++    if (magic_loc - read_loc != 4) {
++      JASSERT(magic_loc - read_loc == 6, "bad safepoint offset to magic word");
++      // must have needed a wide branch so patch the load instruction
++      jinfo->codebuf->idx = read_loc >> 1;
++      ldr_imm(jinfo->codebuf, r_tmp, r_tmp, 12, 1, 0);
++      jinfo->codebuf->idx = magic_loc >> 1;
++    }
++  } else {
++    // leave space for the forward skip branch
++    // location of branch instruction is read_loc + 2
++    forward_16(jinfo->codebuf);
++  }
++  // now write a magic word after the branch so the signal handler can
++  // test that a polling page read is kosher
++  out_16(jinfo->codebuf, THUMB2_POLLING_PAGE_MAGIC);
++  // now the safepoint polling code itself
++  // n.b. no need for save or restore of locals at return i.e. when offset == 0
++  //if (offset != 0) {
++    Thumb2_save_locals(jinfo, stackdepth);
++    //}
++  mov_imm(jinfo->codebuf, ARM_R1, bci+CONSTMETHOD_CODEOFFSET);
++  bl(jinfo->codebuf, handlers[H_SAFEPOINT]);
++  //if (offset != 0) {
++    Thumb2_restore_locals(jinfo, stackdepth);
++    //}
++  if (offset < 0) {
++    // needs another unconditional backward branch
++    branch_uncond(jinfo->codebuf, dest);
++  } else {
++    // patch in the forward skip branch
++  branch_narrow_patch(jinfo->codebuf, read_loc + 2);
+   }
+ }
+ 
+@@ -4525,7 +4636,11 @@
+   unsigned dest_taken = bci + offset;
+ 
+   if (jinfo->bc_stackinfo[dest_taken] & BC_COMPILED) {
+-    Thumb2_Safepoint(jinfo, stackdepth, bci);
++    // pass offset as positive so the safepoint code plant a forward
++    // skip over the test rather than doing an unconditional backwards
++    // branch. that allows the condition test to be planted by
++    // whatever followed this call
++    Thumb2_Safepoint(jinfo, stackdepth, bci, -offset);
+   }
+ }
+ 
+@@ -4554,8 +4669,8 @@
+     unsigned loc;
+ 
+     if (jinfo->bc_stackinfo[dest_taken] & BC_COMPILED) {
+-      Thumb2_Safepoint(jinfo, stackdepth, bci);
+-      branch_uncond(jinfo->codebuf, jinfo->bc_stackinfo[dest_taken] & ~BC_FLAGS_MASK);
++      // n.b. the backwards branch will be planted by the safepoint routine
++      Thumb2_Safepoint(jinfo, stackdepth, bci, offset);
+       return dest_not_taken;
+     }
+     loc = forward_32(jinfo->codebuf);
+@@ -4567,7 +4682,7 @@
+ 
+ void Thumb2_Return(Thumb2_Info *jinfo, unsigned opcode, int bci, int stackdepth)
+ {
+-  Thumb2_Safepoint(jinfo, stackdepth, bci);
++  Thumb2_Safepoint(jinfo, stackdepth, bci, 0);
+ 
+   Reg r_lo, r;
+   Thumb2_Stack *jstack = jinfo->jstack;
+diff --git a/src/os_cpu/linux_zero/vm/os_linux_zero.cpp b/src/os_cpu/linux_zero/vm/os_linux_zero.cpp
+--- openjdk/hotspot/src/os_cpu/linux_zero/vm/os_linux_zero.cpp
++++ openjdk/hotspot/src/os_cpu/linux_zero/vm/os_linux_zero.cpp
+@@ -118,6 +118,7 @@
+ 
+ #ifdef HOTSPOT_ASM
+ extern "C" int asm_check_null_ptr(ucontext_t *uc);
++extern int Thumb2_Install_Safepoint_PC(ucontext_t *uc, int magicBytes);
+ #endif // HOTSPOT_ASM
+ 
+ extern "C" JNIEXPORT int
+@@ -129,7 +130,21 @@
+ 
+ #ifdef HOTSPOT_ASM
+   if (sig == SIGSEGV) {
+-        if (asm_check_null_ptr(uc)) return 1;
++    // check to see if this was the result of a back edge safepoint check
++    if (os::is_poll_address((address)info->si_addr)) {
++      // check that this is a legitimate safepoint rather
++      // than any old illegal access to the polling page.
++      // if the the check code returns true it will patch
++      // the return address to enter the safepoint check code
++      // n.b. the offset into the page gives us twice the offset to
++      // the magic word in bytes
++      int magicByteOffset = ((address)info->si_addr - (address)os::get_polling_page()) / 2;
++      if (Thumb2_Install_Safepoint_PC(uc, magicByteOffset)) {
++	return true;
++      }
++    } else if (asm_check_null_ptr(uc)) {
++      return 1;
++    }
+   }
+ #endif // HOTSPOT_ASM
+ 

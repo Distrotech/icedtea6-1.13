@@ -1,0 +1,56 @@
+# HG changeset patch
+# User aph
+# Date 1338303981 14400
+#      Tue May 29 11:06:21 2012 -0400
+# Node ID 5dced5a7d1e4b5b6f90d19988b1db353e20e27c7
+# Parent  7c2f5538e02d23dd78c2b3847bc3865d946184a4
+Phase 2
+
+diff --git a/src/cpu/zero/vm/thumb2.cpp b/src/cpu/zero/vm/thumb2.cpp
+--- openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
++++ openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
+@@ -4217,6 +4217,8 @@
+   //
+   //  n.b. for a return there is no need save or restore locals
+ 
++  bool is_return = offset == 0;
++
+   int r_tmp = Thumb2_Tmp(jinfo, 0);
+   unsigned dest;
+   if (offset < 0) {
+@@ -4255,22 +4257,29 @@
+   out_16(jinfo->codebuf, THUMB2_POLLING_PAGE_MAGIC);
+ 
+   {
++    // Flush the stack to memory and save its register state.
+     SAVE_STACK(jinfo->jstack);
+     Thumb2_Flush(jinfo);
++
+     // now the safepoint polling code itself
+-    // n.b. no need for save or restore of locals at return i.e. when offset == 0
+-    //if (offset != 0) {
++
++    // We save the locals at a return bytecode even though we aren't
++    // going to restore them: we do so because otherwise there's a
++    // risk that the GC might scan garbage.
+     Thumb2_save_locals(jinfo, stackdepth);
+-    //}
+ 
+     mov_imm(jinfo->codebuf, ARM_R1, bci+CONSTMETHOD_CODEOFFSET);
+     add_imm(jinfo->codebuf, ARM_R2, ISTATE_REG(jinfo),
+ 	    ISTATE_OFFSET(jinfo, stackdepth, 0));
+     bl(jinfo->codebuf, handlers[H_SAFEPOINT]);
+-    //if (offset != 0) {
+-    Thumb2_restore_locals(jinfo, stackdepth);
+-    //}
++
++    // We don't restore the locals if we're returning.
++    if (! is_return)
++      Thumb2_restore_locals(jinfo, stackdepth);
++
++    // But we always restore the register state of the stack.
+     RESTORE_STACK(jinfo->jstack, jinfo->codebuf);
++
+     if (offset < 0) {
+       // needs another unconditional backward branch
+       branch_uncond(jinfo->codebuf, dest);

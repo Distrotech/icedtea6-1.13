@@ -1,0 +1,19 @@
+# HG changeset patch
+# User adinn
+# Date 1339087786 -3600
+#      Thu Jun 07 17:49:46 2012 +0100
+# Node ID 392b9d0730b83a8f095db8748a9eab0acb7b58e0
+# Parent  f678e6078f9a1ddde06b68475d55fc1dfa78707a
+corrected call from fast_method_handle_entry to CppInterpreter::method_handle_entry so that thread is loaded into r2
+
+diff --git a/src/cpu/zero/vm/cppInterpreter_arm.S b/src/cpu/zero/vm/cppInterpreter_arm.S
+--- openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S
++++ openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S
+@@ -2992,6 +2992,7 @@
+ 	ALIGN_CODE
+ fast_method_handle_entry:
+ 	stmfd	arm_sp!, {regset, lr}
++	mov	r2, thread
+ 	bl	_ZN14CppInterpreter19method_handle_entryEP13methodOopDesciP6Thread
+ 	ldmia	sp!, {regset, pc}
+ 

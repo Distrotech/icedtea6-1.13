@@ -1,0 +1,189 @@
+diff -Nru openjdk.orig/hotspot/make/linux/makefiles/gcc.make openjdk/hotspot/make/linux/makefiles/gcc.make
+--- openjdk.orig/hotspot/make/linux/makefiles/gcc.make	2013-08-15 11:57:39.465203366 +0100
++++ openjdk/hotspot/make/linux/makefiles/gcc.make	2013-08-15 11:58:31.314009857 +0100
+@@ -243,6 +243,7 @@
+     FASTDEBUG_CFLAGS/amd64 = -g
+     FASTDEBUG_CFLAGS/arm   = -g
+     FASTDEBUG_CFLAGS/ppc   = -g
++    FASTDEBUG_CFLAGS/zero  = -g
+     FASTDEBUG_CFLAGS += $(DEBUG_CFLAGS/$(BUILDARCH))
+     ifeq ($(FASTDEBUG_CFLAGS/$(BUILDARCH)),)
+       FASTDEBUG_CFLAGS += -gstabs
+@@ -252,6 +253,7 @@
+     OPT_CFLAGS/amd64 = -g
+     OPT_CFLAGS/arm   = -g
+     OPT_CFLAGS/ppc   = -g
++    OPT_CFLAGS/zero  = -g
+     OPT_CFLAGS += $(OPT_CFLAGS/$(BUILDARCH))
+     ifeq ($(OPT_CFLAGS/$(BUILDARCH)),)
+       OPT_CFLAGS += -gstabs
+diff -Nru openjdk.orig/hotspot/src/cpu/zero/vm/asm_helper.cpp openjdk/hotspot/src/cpu/zero/vm/asm_helper.cpp
+--- openjdk.orig/hotspot/src/cpu/zero/vm/asm_helper.cpp	2013-08-15 11:57:20.584909682 +0100
++++ openjdk/hotspot/src/cpu/zero/vm/asm_helper.cpp	2013-08-15 11:58:31.318009920 +0100
+@@ -1,5 +1,6 @@
+ /*
+  * Copyright 2009, 2010 Edward Nevill
++ * Copyright 2011, Red Hat
+  *
+  * This code is free software; you can redistribute it and/or modify it
+  * under the terms of the GNU General Public License version 2 only, as
+@@ -118,9 +119,9 @@
+ 
+ class VMStructs {
+ public:
+-	static inline klassOop klass_at_addr(constantPoolOop constants, u2 index) {
+-	  return (klassOop) *constants->obj_at_addr(index);
+-	}
++  static inline klassOop klass_at_addr(constantPoolOop constants, u2 index) {
++    return (klassOop) *constants->obj_at_addr_raw(index);
++  }
+ };
+ 
+ extern "C" oop Helper_new(interpreterState istate, unsigned index)
+@@ -314,7 +315,7 @@
+   }
+ }
+ 
+-extern "C" void Helper_Raise(JavaThread *thread, symbolOopDesc *name, char const *msg)
++extern "C" void Helper_Raise(JavaThread *thread, Symbol *name, char const *msg)
+ {
+    ThreadInVMfromJava trans(thread);
+    Exceptions::_throw_msg(thread, "[Bytecoce Interpreter]", 99, name, msg);
+diff -Nru openjdk.orig/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S
+--- openjdk.orig/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S	2013-08-15 11:57:20.592909807 +0100
++++ openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S	2013-08-15 11:58:31.318009920 +0100
+@@ -1,6 +1,7 @@
+ #ifdef __arm__
+ 
+ @ Copyright 2009, 2010 Edward Nevill
++@ Copyright 2012, Red Hat
+ @ DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ @
+ @ This code is free software; you can redistribute it and/or modify it
+@@ -809,6 +810,7 @@
+         .word   normal_entry                    // implementation of java.lang.Math.sqrt  (x)
+         .word   normal_entry                    // implementation of java.lang.Math.log   (x)
+         .word   normal_entry                    // implementation of java.lang.Math.log10 (x)
++        .word   accessor_entry                  // implementation of java.lang.ref.Reference.get()
+ 3:
+ 	
+ 	ALIGN_CODE
+@@ -7093,7 +7095,7 @@
+ CompileThreshold_Address:                               .word   0
+ InterpreterInvocationLimit_Address:			.word	0
+ UseCompiler_Address:					.word	0
+-can_post_interpreter_events:				.word	0
++can_post_interpreter_events:				.word	0 	
+ PrintCommandLineFlags_Address:				.word	0
+ oopDesc_Address:					.word	0
+ ThreadLocalStorage_thread_index:			.word	0
+diff -Nru openjdk.orig/hotspot/src/cpu/zero/vm/thumb2.cpp openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
+--- openjdk.orig/hotspot/src/cpu/zero/vm/thumb2.cpp	2013-08-15 11:57:20.592909807 +0100
++++ openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp	2013-08-15 12:06:13.809203104 +0100
+@@ -1,6 +1,6 @@
+ /*
+  * Copyright 2009, 2010 Edward Nevill
+- * Copyright 2013 Red Hat
++ * Copyright 2011 Red Hat, Inc.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+  * under the terms of the GNU General Public License version 2 only, as
+@@ -652,7 +652,7 @@
+ void Thumb2_save_locals(Thumb2_Info *jinfo, unsigned stackdepth);
+ void Thumb2_restore_locals(Thumb2_Info *jinfo, unsigned stackdepth);
+ 
+-static int method_stackchange(jbyte *base)
++static int method_stackchange(const jbyte *base)
+ {
+   jbyte c;
+   int stackchange = 0;
+@@ -683,7 +683,8 @@
+   return stackchange;
+ }
+ 
+-static void Thumb2_local_info_from_sig(Thumb2_Info *jinfo, methodOop method, jbyte *base)
++static void Thumb2_local_info_from_sig(Thumb2_Info *jinfo, methodOop method,
++				       const jbyte *base)
+ {
+   jbyte c;
+   unsigned arg = 0;
+@@ -1787,8 +1788,8 @@
+       case opc_putfield: {
+ 	int index = GET_NATIVE_U2(code_base+bci+1);
+ 	constantPoolOop pool = jinfo->method->constants();
+-	symbolOop sig = pool->signature_ref_at(index);
+-	jbyte *base = sig->base();
++	Symbol *sig = pool->signature_ref_at(index);
++	const jbyte *base = sig->base();
+ 	jbyte c = *base;
+ 	int stackchange;
+ 
+@@ -1815,9 +1816,8 @@
+       case opc_invokestatic: {
+ 	int index = GET_NATIVE_U2(code_base+bci+1);
+ 	constantPoolOop pool = jinfo->method->constants();
+-	//symbolOop name = pool->name_ref_at(index);
+-	symbolOop sig = pool->signature_ref_at(index);
+-	jbyte *base = sig->base();
++	Symbol *sig = pool->signature_ref_at(index);
++	const jbyte *base = sig->base();
+ 
+ 	//tty->print("%d: %s: %s\n", opcode, name->as_C_string(), sig->as_C_string());
+ 	stackdepth += method_stackchange(base);
+@@ -6025,8 +6025,8 @@
+         if (!cache->is_resolved((Bytecodes::Code)opcode)) {
+  	  int java_index = GET_NATIVE_U2(code_base+bci+1);
+ 	  constantPoolOop pool = jinfo->method->constants();
+-	  symbolOop sig = pool->signature_ref_at(java_index);
+-	  jbyte *base = sig->base();
++	  Symbol *sig = pool->signature_ref_at(java_index);
++	  const jbyte *base = sig->base();
+ 	  jbyte c = *base;
+ 	  int handler = H_GETFIELD_WORD;
+ 
+@@ -6093,8 +6093,8 @@
+         if (!cache->is_resolved((Bytecodes::Code)opcode)) {
+ 	  int java_index = GET_NATIVE_U2(code_base+bci+1);
+ 	  constantPoolOop pool = jinfo->method->constants();
+-	  symbolOop sig = pool->signature_ref_at(java_index);
+-	  jbyte *base = sig->base();
++	  Symbol *sig = pool->signature_ref_at(java_index);
++	  const jbyte *base = sig->base();
+ 	  jbyte c = *base;
+ 	  int handler = H_GETSTATIC_WORD;
+ 
+@@ -6158,8 +6158,8 @@
+         if (!cache->is_resolved((Bytecodes::Code)opcode)) {
+ 	  int java_index = GET_NATIVE_U2(code_base+bci+1);
+ 	  constantPoolOop pool = jinfo->method->constants();
+-	  symbolOop sig = pool->signature_ref_at(java_index);
+-	  jbyte *base = sig->base();
++	  Symbol *sig = pool->signature_ref_at(java_index);
++	  const jbyte *base = sig->base();
+ 	  jbyte c = *base;
+ 	  int handler = H_PUTFIELD_WORD;
+ 
+@@ -6224,8 +6224,8 @@
+         if (!cache->is_resolved((Bytecodes::Code)opcode)) {
+ 	  int java_index = GET_NATIVE_U2(code_base+bci+1);
+ 	  constantPoolOop pool = jinfo->method->constants();
+-	  symbolOop sig = pool->signature_ref_at(java_index);
+-	  jbyte *base = sig->base();
++	  Symbol *sig = pool->signature_ref_at(java_index);
++	  const jbyte *base = sig->base();
+ 	  jbyte c = *base;
+ 	  int handler = H_PUTSTATIC_WORD;
+ 
+@@ -7320,9 +7320,9 @@
+   HandleMark __hm(thread);
+   frame fr = thread->last_frame();
+   methodOop method = fr.interpreter_frame_method();
+-  symbolOop name = method->name();
+-  symbolOop sig = method->signature();
+-  jbyte *base = sig->base();;
++  Symbol *name = method->name();
++  Symbol *sig = method->signature();
++  const jbyte *base = sig->base();
+ 
+   jubyte *code_base = (jubyte *)method->code_base();
+   int code_size = method->code_size();

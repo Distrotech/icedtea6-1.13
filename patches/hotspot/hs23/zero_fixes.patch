@@ -1,0 +1,644 @@
+# HG changeset patch
+# User andrew
+# Date 1346354667 -3600
+#      Thu Aug 30 20:24:27 2012 +0100
+# Node ID 2a413d946cb1acdcbe1110098f79b7a1f267bf75
+# Parent  3e0087ab5e924827bc198557c8e4e5b1c4ff1fa3
+Fix Zero FTBFS issues
+
+diff --git a/src/cpu/zero/vm/assembler_zero.cpp b/src/cpu/zero/vm/assembler_zero.cpp
+--- openjdk/hotspot/src/cpu/zero/vm/assembler_zero.cpp
++++ openjdk/hotspot/src/cpu/zero/vm/assembler_zero.cpp
+@@ -91,3 +91,11 @@
+ address ShouldNotCallThisEntry() {
+   return (address) should_not_call;
+ }
++
++static void zero_null_fn() {
++  return;
++}
++
++address ZeroNullStubEntry(address fn) {
++  return (address) fn;
++}
+diff --git a/src/cpu/zero/vm/assembler_zero.hpp b/src/cpu/zero/vm/assembler_zero.hpp
+--- openjdk/hotspot/src/cpu/zero/vm/assembler_zero.hpp
++++ openjdk/hotspot/src/cpu/zero/vm/assembler_zero.hpp
+@@ -65,5 +65,6 @@
+ 
+ address ShouldNotCallThisStub();
+ address ShouldNotCallThisEntry();
++address ZeroNullStubEntry(address fn);
+ 
+ #endif // CPU_ZERO_VM_ASSEMBLER_ZERO_HPP
+diff --git a/src/cpu/zero/vm/copy_zero.hpp b/src/cpu/zero/vm/copy_zero.hpp
+--- openjdk/hotspot/src/cpu/zero/vm/copy_zero.hpp
++++ openjdk/hotspot/src/cpu/zero/vm/copy_zero.hpp
+@@ -169,7 +169,7 @@
+ }
+ 
+ static void pd_fill_to_bytes(void* to, size_t count, jubyte value) {
+-  memset(to, value, count);
++  if ( count > 0 ) memset(to, value, count);
+ }
+ 
+ static void pd_zero_to_words(HeapWord* tohw, size_t count) {
+@@ -177,7 +177,7 @@
+ }
+ 
+ static void pd_zero_to_bytes(void* to, size_t count) {
+-  memset(to, 0, count);
++  if ( count > 0 ) memset(to, 0, count);
+ }
+ 
+ #endif // CPU_ZERO_VM_COPY_ZERO_HPP
+diff --git a/src/cpu/zero/vm/cppInterpreter_zero.cpp b/src/cpu/zero/vm/cppInterpreter_zero.cpp
+--- openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp
++++ openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp
+@@ -36,6 +36,7 @@
+ #include "oops/oop.inline.hpp"
+ #include "prims/jvmtiExport.hpp"
+ #include "prims/jvmtiThreadState.hpp"
++#include "prims/methodHandles.hpp"
+ #include "runtime/arguments.hpp"
+ #include "runtime/deoptimization.hpp"
+ #include "runtime/frame.inline.hpp"
+@@ -65,6 +66,13 @@
+   CALL_VM_NOCHECK_NOFIX(func)                   \
+   fixup_after_potential_safepoint()
+ 
++
++#ifdef z_CPPDEBUG
++#define CPPINT_DEBUG( Z_code_ ) Z_code_
++#else
++#define CPPINT_DEBUG( Z_code_ )
++#endif
++
+ int CppInterpreter::normal_entry(methodOop method, intptr_t UNUSED, TRAPS) {
+   JavaThread *thread = (JavaThread *) THREAD;
+ 
+@@ -699,6 +707,9 @@
+     method_handle = adapter;
+   }
+ 
++  CPPINT_DEBUG( tty->print_cr( "Process method_handle sp: 0x%x unwind_sp: 0x%x result_slots: %d.", \
++			       stack->sp(), unwind_sp, result_slots ); )
++
+   // Start processing
+   process_method_handle(method_handle, THREAD);
+   if (HAS_PENDING_EXCEPTION)
+@@ -718,6 +729,8 @@
+   }
+ 
+   // Check
++  CPPINT_DEBUG( tty->print_cr( "Exiting method_handle_entry,  sp: 0x%x unwind_sp: 0x%x result_slots: %d.", \
++			       stack->sp(), unwind_sp, result_slots ); )
+   assert(stack->sp() == unwind_sp - result_slots, "should be");
+ 
+   // No deoptimized frames on the stack
+@@ -725,6 +738,7 @@
+ }
+ 
+ void CppInterpreter::process_method_handle(oop method_handle, TRAPS) {
++
+   JavaThread *thread = (JavaThread *) THREAD;
+   ZeroStack *stack = thread->zero_stack();
+   intptr_t *vmslots = stack->sp();
+@@ -739,6 +753,7 @@
+     (MethodHandles::EntryKind) (((intptr_t) entry) & 0xffffffff);
+ 
+   methodOop method = NULL;
++  CPPINT_DEBUG( tty->print_cr( "\nEntering %s 0x%x.",MethodHandles::entry_name(entry_kind), (char *)vmslots ); )
+   switch (entry_kind) {
+   case MethodHandles::_invokestatic_mh:
+     direct_to_method = true;
+@@ -811,11 +826,15 @@
+   case MethodHandles::_bound_int_mh:
+   case MethodHandles::_bound_long_mh:
+     {
+-      BasicType arg_type  = T_ILLEGAL;
+-      int       arg_mask  = -1;
+-      int       arg_slots = -1;
+-      MethodHandles::get_ek_bound_mh_info(
+-        entry_kind, arg_type, arg_mask, arg_slots);
++      //     BasicType arg_type  = T_ILLEGAL;
++      //     int       arg_mask  = -1;
++      //     int       arg_slots = -1;
++      //     MethodHandles::get_ek_bound_mh_info(
++      //      entry_kind, arg_type, arg_mask, arg_slots);
++      BasicType arg_type = MethodHandles::ek_bound_mh_arg_type(entry_kind);
++      int arg_mask = 0;
++      int arg_slots = type2size[arg_type];;
++
+       int arg_slot =
+         java_lang_invoke_BoundMethodHandle::vmargslot(method_handle);
+ 
+@@ -961,10 +980,13 @@
+         java_lang_invoke_AdapterMethodHandle::conversion(method_handle);
+       int arg2 = MethodHandles::adapter_conversion_vminfo(conv);
+ 
+-      int swap_bytes = 0, rotate = 0;
+-      MethodHandles::get_ek_adapter_opt_swap_rot_info(
+-        entry_kind, swap_bytes, rotate);
+-      int swap_slots = swap_bytes >> LogBytesPerWord;
++      // int swap_bytes = 0, rotate = 0;
++      //     MethodHandles::get_ek_adapter_opt_swap_rot_info(
++      //        entry_kind, swap_bytes, rotate);
++      int swap_slots = MethodHandles::ek_adapter_opt_swap_slots(entry_kind);
++      int rotate = MethodHandles::ek_adapter_opt_swap_mode(entry_kind);
++      int swap_bytes = swap_slots * Interpreter::stackElementSize;
++      swap_slots = swap_bytes >> LogBytesPerWord;
+ 
+       intptr_t tmp;
+       switch (rotate) {
+@@ -1080,12 +1102,309 @@
+     }
+     break;
+ 
+-  default:
+-    tty->print_cr("unhandled entry_kind %s",
++  case MethodHandles::_adapter_opt_spread_0:
++  case MethodHandles::_adapter_opt_spread_1_ref:
++  case MethodHandles::_adapter_opt_spread_2_ref:
++  case MethodHandles::_adapter_opt_spread_3_ref:
++  case MethodHandles::_adapter_opt_spread_4_ref:
++  case MethodHandles::_adapter_opt_spread_5_ref:
++  case MethodHandles::_adapter_opt_spread_ref:
++  case MethodHandles::_adapter_opt_spread_byte:
++  case MethodHandles::_adapter_opt_spread_char:
++  case MethodHandles::_adapter_opt_spread_short:
++  case MethodHandles::_adapter_opt_spread_int:
++  case MethodHandles::_adapter_opt_spread_long:
++  case MethodHandles::_adapter_opt_spread_float:
++  case MethodHandles::_adapter_opt_spread_double:
++    {
++
++      // spread an array out into a group of arguments
++
++      int arg_slot =
++        java_lang_invoke_AdapterMethodHandle::vmargslot(method_handle);
++      // Fetch the argument, which we will cast to the required array type.
++      oop arg = VMSLOTS_OBJECT(arg_slot);
++
++      BasicType elem_type      =
++        MethodHandles::ek_adapter_opt_spread_type(entry_kind);
++      int       elem_slots     = 
++        type2size[elem_type];  // 1 or 2
++      int       array_slots    = 
++        1;  // array is always a T_OBJECT
++      int       length_offset  = 
++        arrayOopDesc::length_offset_in_bytes();
++      int       elem0_offset   = 
++        arrayOopDesc::base_offset_in_bytes(elem_type);
++      int       length_constant = 
++        MethodHandles::ek_adapter_opt_spread_count(entry_kind);
++      int       array_length = 0;
++      void      *array_elem0 = NULL;       
++
++      CPPINT_DEBUG( tty->print_cr( \
++        "ENTERING _adapter_opt_spread: %s %d %d 0x%x 0x%x", \
++        type2name(elem_type), arg_slot, length_constant, (char *)arg, stack->sp() ); )
++
++      // If the spread count is -1, the length is "variable" ie controlled
++      // by the array length.
++      // See ek_adapter_opt_spread_count in methodHandles.hpp
++      // If array lenth is 0 or spread count is 0 , we will remove the argslot.
++
++      bool length_can_be_zero = (length_constant == 0);
++      if (length_constant < 0) {
++        // some adapters with variable length must handle the zero case
++        if (!OptimizeMethodHandles ||
++            elem_type != T_OBJECT)
++          length_can_be_zero = true;
++      }
++
++      if (arg == NULL) {
++        CPPINT_DEBUG( tty->print_cr( \
++          "arg NULL implies Array_length == 0, remove slot." ); )
++        // remove arg slot
++        remove_vmslots(arg_slot, 1, THREAD); // doesn't trap
++        vmslots = stack->sp(); // unused, but let the compiler figure that out
++        CPPINT_DEBUG( tty->print_cr( \
++          " >> Would LEAVE _adapter_opt_spread with NPE." ); )
++#ifdef _NOT_DEF_
++	// queue a nullpointer exception for the caller
++        stack->set_sp(calculate_unwind_sp(stack, method_handle));
++        CALL_VM_NOCHECK_NOFIX(
++          throw_exception(
++            thread,
++            vmSymbols::java_lang_NullPointerException()));
++        // NB all oops trashed!
++        assert(HAS_PENDING_EXCEPTION, "should do");
++        return;
++#endif
++      } else {    //  (arg != NULL) 
++        klassOop objKlassOop = arg->klass();
++        klassOop klassOf = java_lang_Class::as_klassOop(
++          java_lang_invoke_AdapterMethodHandle::argument(method_handle));
++
++        if (objKlassOop != klassOf &&
++            !objKlassOop->klass_part()->is_subtype_of(klassOf)) {
++          CPPINT_DEBUG( tty->print_cr( \
++            "CLASS CAST ERROR #1 in _adapter_opt_spread." ); )
++          ResourceMark rm(THREAD);
++          const char* objName = Klass::cast(objKlassOop)->external_name();
++          const char* klassName = Klass::cast(klassOf)->external_name();
++          char* message = SharedRuntime::generate_class_cast_message(
++            objName, klassName);
++
++          stack->set_sp(calculate_unwind_sp(stack, method_handle));
++          CALL_VM_NOCHECK_NOFIX(
++            throw_exception(
++              thread,
++              vmSymbols::java_lang_ClassCastException(), message));
++          // NB all oops trashed!
++          assert(HAS_PENDING_EXCEPTION, "should do");
++          return;
++        }
++
++        // Check the array type.
++
++        klassOop array_klass_oop = NULL;
++        BasicType array_type = java_lang_Class::as_BasicType(
++          java_lang_invoke_AdapterMethodHandle::argument(method_handle),
++            &array_klass_oop);
++        arrayKlassHandle array_klass(THREAD, array_klass_oop);
++
++        assert(array_type == T_OBJECT, "");
++        assert(Klass::cast(array_klass_oop)->oop_is_array(), "");
++        if (!(array_type == T_OBJECT) || 
++            !(Klass::cast(array_klass_oop)->oop_is_array())) {
++          CPPINT_DEBUG( tty->print_cr( \
++            "CLASS CAST ERROR #2 not an array in _adapter_opt_spread." ); )
++          ResourceMark rm(THREAD);
++          const char* objName = Klass::cast(objKlassOop)->external_name();
++          const char* klassName = Klass::cast(klassOf)->external_name();
++          char* message = SharedRuntime::generate_class_cast_message(
++            objName, klassName);
++          stack->set_sp(calculate_unwind_sp(stack, method_handle));
++          CALL_VM_NOCHECK_NOFIX(
++            throw_exception(
++              thread,
++              vmSymbols::java_lang_ClassCastException(), message));
++          // NB all oops trashed!
++          assert(HAS_PENDING_EXCEPTION, "should do");
++          return;
++        }
++
++        klassOop element_klass_oop = NULL;
++        BasicType element_type = 
++          java_lang_Class::as_BasicType(array_klass->component_mirror(),
++            &element_klass_oop);
++        KlassHandle element_klass(THREAD, element_klass_oop);
++	if ((elem_type != T_OBJECT) && (elem_type != element_type)) {
++          CPPINT_DEBUG( tty->print_cr( \
++            "CLASS CAST ERROR #3 invalid type %s != %s in _adapter_opt_spread.", \
++            type2name(elem_type), type2name(element_type)  ); )
++          ResourceMark rm(THREAD);
++          const char* objName = Klass::cast(objKlassOop)->external_name();
++          const char* klassName = Klass::cast(klassOf)->external_name();
++          char* message = SharedRuntime::generate_class_cast_message(
++            objName, klassName);
++          stack->set_sp(calculate_unwind_sp(stack, method_handle));
++          CALL_VM_NOCHECK_NOFIX(
++            throw_exception(
++              thread,
++              vmSymbols::java_lang_ClassCastException(), message));
++          // NB all oops trashed!
++          assert(HAS_PENDING_EXCEPTION, "should do");
++          return;
++        }
++
++        array_length = arrayOop(arg)->length();
++
++        // Check the required length.
++        if (length_constant > 0) { // must match ?
++          if ( array_length != length_constant ) {
++            CPPINT_DEBUG( tty->print_cr( \
++              "ARRY INDEX ERROR #4 invalid array length in _adapter_opt_spread." ); )
++            //fixme  ArrayIndexOutOfBoundsException ?
++            ResourceMark rm(THREAD);
++            const char* objName = Klass::cast(objKlassOop)->external_name();
++            const char* klassName = Klass::cast(klassOf)->external_name();
++            char* message = SharedRuntime::generate_class_cast_message(
++              objName, klassName);
++
++            stack->set_sp(calculate_unwind_sp(stack, method_handle));
++            CALL_VM_NOCHECK_NOFIX(
++              throw_exception(
++                thread,
++                vmSymbols::java_lang_ArrayIndexOutOfBoundsException(), message));
++            // NB all oops trashed!
++            assert(HAS_PENDING_EXCEPTION, "should do");
++            return;
++          }
++        // use array_length ?
++        } else { // length_constant == [ -1 or 0 ] 
++          if ( (array_length > 0) || length_can_be_zero ) {
++            // use array_length.
++          } else { // array_length 0 and not length_can_be_zero
++            CPPINT_DEBUG( tty->print_cr( \
++              "ARRY INDEX ERROR #5 arry length 0 in _adapter_opt_spread." ); )
++            //fixme   ArrayIndexOutOfBoundsException ?
++            ResourceMark rm(THREAD);
++            const char* objName = Klass::cast(objKlassOop)->external_name();
++            const char* klassName = Klass::cast(klassOf)->external_name();
++            char* message = SharedRuntime::generate_class_cast_message(
++              objName, klassName);
++
++            stack->set_sp(calculate_unwind_sp(stack, method_handle));
++            CALL_VM_NOCHECK_NOFIX(
++              throw_exception(
++                thread,
++                vmSymbols::java_lang_ArrayIndexOutOfBoundsException(), message));
++            // NB all oops trashed!
++            assert(HAS_PENDING_EXCEPTION, "should do");
++            return;
++          }
++        }
++
++        // Array length checked out.  Now insert any required arg slots.
++        // array_length - 1 more slots if array_length > 0
++        // otherwise  if array_length == 0 remove arg_slot.
++
++        if ( array_length > 0 ) {
++          int slots = (array_length * elem_slots) - 1;
++          CPPINT_DEBUG( tty->print_cr( \
++            "array_length %d %d slots needed in _adapter_opt_spread.",\
++              array_length, slots); )
++          debug_only(if (elem_slots == 2) \
++            assert ((slots % 2 == 1)," bad slots calc"));
++          if ( slots > 0 ) {
++            intptr_t *unwind_sp = 
++            calculate_unwind_sp(stack, method_handle);
++            insert_vmslots(arg_slot, slots, THREAD);
++            if (HAS_PENDING_EXCEPTION) {
++              // all oops trashed
++              stack->set_sp(unwind_sp);
++              return;
++            }
++          }
++          vmslots = stack->sp();
++          arg_slot += slots;
++
++          array_elem0 = arrayOop(arg)->base(elem_type);
++
++          // Copy from the array to the new arg slots.
++          // [from native : Beware:  Arguments that are shallow 
++          // on the stack are deep in the array,
++          // and vice versa.  So a downward-growing stack (the usual) 
++          // has to be copied elementwise in reverse order 
++          // from the source array.]
++
++          void * array_elem = array_elem0;
++          int top_slot = arg_slot;
++
++          debug_only(if (elem_slots == 2) \
++            assert ((((ulong)(char *)&vmslots[top_slot]) % \
++              (u_int)type2aelembytes(elem_type) == 0), \
++                " bad arg alignment"));
++
++          CPPINT_DEBUG( tty->print_cr( \
++            "BEGIN ARRY LOOP %d %d 0x%x 0x%x _adapter_opt_spread.",\
++              array_length, top_slot, &vmslots[top_slot], array_elem  ); )
++
++          for (int index = 0; index < array_length; index++) {
++            switch (elem_type) {
++            case T_BYTE:
++              SET_VMSLOTS_INT(*(jint*)array_elem, top_slot);
++              break;
++            case T_CHAR:
++              SET_VMSLOTS_INT(*(jint*)array_elem, top_slot);
++              break;
++            case T_SHORT:
++              SET_VMSLOTS_INT(*(jint*)array_elem, top_slot);
++              break;
++            case T_INT:
++              SET_VMSLOTS_INT(*(jint*)array_elem, top_slot);
++              break;
++            case T_FLOAT:
++              SET_VMSLOTS_FLOAT(*(jfloat*)array_elem,top_slot);
++              break;
++            case T_LONG:
++              SET_VMSLOTS_LONG(*(jlong*)array_elem, top_slot);
++              break;
++            case T_DOUBLE:
++              SET_VMSLOTS_DOUBLE(*(jdouble*)array_elem, top_slot);
++              break;
++            case T_OBJECT:
++              SET_VMSLOTS_OBJECT(*(oopDesc**)array_elem, top_slot);
++              break;
++            default:
++              tty->print_cr("unhandled type %s", type2name(elem_type));
++              ShouldNotReachHere();
++            }
++            array_elem = (void*)((char *)array_elem +
++              type2aelembytes(element_type));
++            top_slot -= elem_slots;
++          }
++          arg_slot++;
++        }
++      }
++      if ((array_length == 0) && (arg != NULL)) {
++        CPPINT_DEBUG( tty->print_cr( \
++          "Array_length == 0, will remove slot." ); )
++        // remove arg slot
++        remove_vmslots(arg_slot, 1, THREAD); // doesn't trap
++         // unused, but let the compiler figure that out
++        vmslots = stack->sp();
++        //
++      }
++      CPPINT_DEBUG( tty->print_cr( \
++        "LEAVING _adapter_opt_spread: %s 0x%x 0x%x \n", \
++          type2name(elem_type), (char *)arg, (char *)stack->sp() ); )
++    }
++        break;
++    default:
++      tty->print_cr("unhandled entry_kind %s",
+                   MethodHandles::entry_name(entry_kind));
+-    ShouldNotReachHere();
++      ShouldNotReachHere();
+   }
+ 
++
+   // Continue along the chain
+   if (direct_to_method) {
+     if (method == NULL) {
+@@ -1138,6 +1457,7 @@
+     tty->print_cr("dst_rtype = %s", type2name(dst_rtype));
+     ShouldNotReachHere();
+   }
++  CPPINT_DEBUG( tty->print_cr( "LEAVING %s\n",MethodHandles::entry_name(entry_kind) ); )
+ }
+ 
+ // The new slots will be inserted before slot insert_before.
+diff --git a/src/cpu/zero/vm/frame_zero.inline.hpp b/src/cpu/zero/vm/frame_zero.inline.hpp
+--- openjdk/hotspot/src/cpu/zero/vm/frame_zero.inline.hpp
++++ openjdk/hotspot/src/cpu/zero/vm/frame_zero.inline.hpp
+@@ -36,6 +36,8 @@
+   _deopt_state = unknown;
+ }
+ 
++inline address  frame::sender_pc()           const { ShouldNotCallThis();  }
++
+ inline frame::frame(ZeroFrame* zf, intptr_t* sp) {
+   _zeroframe = zf;
+   _sp = sp;
+diff --git a/src/cpu/zero/vm/methodHandles_zero.cpp b/src/cpu/zero/vm/methodHandles_zero.cpp
+--- openjdk/hotspot/src/cpu/zero/vm/methodHandles_zero.cpp
++++ openjdk/hotspot/src/cpu/zero/vm/methodHandles_zero.cpp
+@@ -28,6 +28,8 @@
+ #include "memory/allocation.inline.hpp"
+ #include "prims/methodHandles.hpp"
+ 
++#define __ _masm->
++
+ int MethodHandles::adapter_conversion_ops_supported_mask() {
+   return ((1<<java_lang_invoke_AdapterMethodHandle::OP_RETYPE_ONLY)
+          |(1<<java_lang_invoke_AdapterMethodHandle::OP_RETYPE_RAW)
+@@ -38,12 +40,73 @@
+          |(1<<java_lang_invoke_AdapterMethodHandle::OP_ROT_ARGS)
+          |(1<<java_lang_invoke_AdapterMethodHandle::OP_DUP_ARGS)
+          |(1<<java_lang_invoke_AdapterMethodHandle::OP_DROP_ARGS)
+-         //|(1<<java_lang_invoke_AdapterMethodHandle::OP_SPREAD_ARGS) //BUG!
++         |(1<<java_lang_invoke_AdapterMethodHandle::OP_SPREAD_ARGS)
+          );
+-  // FIXME: MethodHandlesTest gets a crash if we enable OP_SPREAD_ARGS.
+ }
+ 
+ void MethodHandles::generate_method_handle_stub(MacroAssembler*          masm,
+                                                 MethodHandles::EntryKind ek) {
+   init_entry(ek, (MethodHandleEntry *) ek);
+ }
++void MethodHandles::RicochetFrame::generate_ricochet_blob(MacroAssembler* _masm,
++                                                          // output params:
++                                                          int* bounce_offset,
++                                                          int* exception_offset,
++                                                          int* frame_size_in_words) {
++  (*frame_size_in_words) = 0;
++  address start = __ pc();
++  (*bounce_offset) = __ pc() - start;
++  (*exception_offset) = __ pc() - start;
++}
++
++frame MethodHandles::ricochet_frame_sender(const frame& fr, RegisterMap *map) {
++  //RicochetFrame* f = RicochetFrame::from_frame(fr);
++  // Cf. is_interpreted_frame path of frame::sender
++  //  intptr_t* younger_sp = fr.sp();
++  //  intptr_t* sp         = fr.sender_sp();
++  //  return frame(sp, younger_sp, this_frame_adjusted_stack);
++  ShouldNotCallThis();  
++}
++
++void MethodHandles::ricochet_frame_oops_do(const frame& fr, OopClosure* blk, const RegisterMap* reg_map) {
++  //  ResourceMark rm;
++  //  RicochetFrame* f = RicochetFrame::from_frame(fr);
++
++  // pick up the argument type descriptor:
++  //  Thread* thread = Thread::current();
++  // process fixed part
++  //  blk->do_oop((oop*)f->saved_target_addr());
++  //  blk->do_oop((oop*)f->saved_args_layout_addr());
++
++  // process variable arguments:
++  //  if (cookie.is_null())  return;  // no arguments to describe
++
++  // the cookie is actually the invokeExact method for my target
++  // his argument signature is what I'm interested in
++  //  assert(cookie->is_method(), "");
++  //  methodHandle invoker(thread, methodOop(cookie()));
++  //  assert(invoker->name() == vmSymbols::invokeExact_name(), "must be this kind of method");
++  //  assert(!invoker->is_static(), "must have MH argument");
++  //  int slot_count = invoker->size_of_parameters();
++  //  assert(slot_count >= 1, "must include 'this'");
++  //  intptr_t* base = f->saved_args_base();
++  //  intptr_t* retval = NULL;
++  //  if (f->has_return_value_slot())
++  //    retval = f->return_value_slot_addr();
++  //  int slot_num = slot_count - 1;
++  //  intptr_t* loc = &base[slot_num];
++  //blk->do_oop((oop*) loc);   // original target, which is irrelevant
++  //  int arg_num = 0;
++  //  for (SignatureStream ss(invoker->signature()); !ss.is_done(); ss.next()) {
++  //    if (ss.at_return_type())  continue;
++  //    BasicType ptype = ss.type();
++  //    if (ptype == T_ARRAY)  ptype = T_OBJECT; // fold all refs to T_OBJECT
++  //    assert(ptype >= T_BOOLEAN && ptype <= T_OBJECT, "not array or void");
++  //    slot_num -= type2size[ptype];
++  //    loc = &base[slot_num];
++  //    bool is_oop = (ptype == T_OBJECT && loc != retval);
++  //    if (is_oop)  blk->do_oop((oop*)loc);
++  //    arg_num += 1;
++  //  }
++  //  assert(slot_num == 0, "must have processed all the arguments");
++}
+diff --git a/src/cpu/zero/vm/methodHandles_zero.hpp b/src/cpu/zero/vm/methodHandles_zero.hpp
+--- openjdk/hotspot/src/cpu/zero/vm/methodHandles_zero.hpp
++++ openjdk/hotspot/src/cpu/zero/vm/methodHandles_zero.hpp
+@@ -43,4 +43,12 @@
+     saved_target        *(rcx+&mh_vmtgt)    L2_stgt
+     continuation        #STUB_CON           L1_cont
+    */
++ public:
++
++static void generate_ricochet_blob(MacroAssembler* _masm,
++                                     // output params:
++                                     int* bounce_offset,
++                                     int* exception_offset,
++                                     int* frame_size_in_words);
++
+ };
+diff --git a/src/cpu/zero/vm/sharedRuntime_zero.cpp b/src/cpu/zero/vm/sharedRuntime_zero.cpp
+--- openjdk/hotspot/src/cpu/zero/vm/sharedRuntime_zero.cpp
++++ openjdk/hotspot/src/cpu/zero/vm/sharedRuntime_zero.cpp
+@@ -48,6 +48,11 @@
+ 
+ 
+ 
++static address zero_null_code_stub() {
++  address start = ShouldNotCallThisStub();
++  return start;
++}
++
+ int SharedRuntime::java_calling_convention(const BasicType *sig_bt,
+                                            VMRegPair *regs,
+                                            int total_args_passed,
+@@ -64,9 +69,9 @@
+                         AdapterFingerPrint *fingerprint) {
+   return AdapterHandlerLibrary::new_entry(
+     fingerprint,
+-    ShouldNotCallThisStub(),
+-    ShouldNotCallThisStub(),
+-    ShouldNotCallThisStub());
++    ZeroNullStubEntry( CAST_FROM_FN_PTR(address,zero_null_code_stub) ),
++    ZeroNullStubEntry( CAST_FROM_FN_PTR(address,zero_null_code_stub) ),
++    ZeroNullStubEntry( CAST_FROM_FN_PTR(address,zero_null_code_stub) ));
+ }
+ 
+ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
+@@ -107,11 +112,11 @@
+ }
+ 
+ static SafepointBlob* generate_empty_safepoint_blob() {
+-  return NULL;
++  return CAST_FROM_FN_PTR(SafepointBlob*,zero_stub);
+ }
+ 
+ static DeoptimizationBlob* generate_empty_deopt_blob() {
+-  return NULL;
++  return CAST_FROM_FN_PTR(DeoptimizationBlob*,zero_stub);
+ }
+ 
+ void SharedRuntime::generate_deopt_blob() {
+diff --git a/src/share/vm/asm/codeBuffer.cpp b/src/share/vm/asm/codeBuffer.cpp
+--- openjdk/hotspot/src/share/vm/asm/codeBuffer.cpp
++++ openjdk/hotspot/src/share/vm/asm/codeBuffer.cpp
+@@ -674,7 +674,7 @@
+     }
+   }
+ 
+-  if (dest->blob() == NULL) {
++  if ((dest->blob() == NULL) && dest_filled ) {
+     // Destination is a final resting place, not just another buffer.
+     // Normalize uninitialized bytes in the final padding.
+     Copy::fill_to_bytes(dest_filled, dest_end - dest_filled,
