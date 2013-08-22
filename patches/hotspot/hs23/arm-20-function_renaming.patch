@@ -1,0 +1,377 @@
+# HG changeset patch
+# User aph
+# Date 1339161112 14400
+#      Fri Jun 08 09:11:52 2012 -0400
+# Node ID ec8bef59601010ebed1be95e372f557cb2daf6fa
+# Parent  7e952fe038821e949a5c07362e4f30b0a5d7bccc
+ARM: Rename a bunch of misleadingly-named functions
+2012-06-08  Andrew Haley  <aph@redhat.com>
+
+	* thumb2.cpp: Rename some functions:
+	Thumb2_save_locals -> Thumb2_save_local_refs
+	Thumb2_restore_locals -> Thumb2_restore_local_refs
+	Thumb2_invoke_save -> Thumb2_save_all_locals
+	Thumb2_invoke_restore -> Thumb2_restore_all_locals
+
+diff --git a/src/cpu/zero/vm/thumb2.cpp b/src/cpu/zero/vm/thumb2.cpp
+--- openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
++++ openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
+@@ -734,8 +734,8 @@
+ #define IS_INT_SIZE_BASE_TYPE(c) (c=='B' || c=='C' || c=='F' || c=='I' || c=='S' || c=='Z')
+ #define IS_INT_SIZE_TYPE(c) (IS_INT_SIZE_BASE_TYPE(c) || c == 'L' || c == '[')
+ 
+-void Thumb2_save_locals(Thumb2_Info *jinfo, unsigned stackdepth);
+-void Thumb2_restore_locals(Thumb2_Info *jinfo, unsigned stackdepth);
++void Thumb2_save_local_refs(Thumb2_Info *jinfo, unsigned stackdepth);
++void Thumb2_restore_local_refs(Thumb2_Info *jinfo, unsigned stackdepth);
+ void Thumb2_Exit(Thumb2_Info *jinfo, unsigned handler, unsigned bci, unsigned stackdepth);
+ 
+ static int method_stackchange(const jbyte *base)
+@@ -4270,7 +4270,7 @@
+ 
+     // We don't save or restore locals if we're returning.
+     if (! is_return)
+-      Thumb2_save_locals(jinfo, stackdepth);
++      Thumb2_save_local_refs(jinfo, stackdepth);
+ 
+     // now the safepoint polling code itself
+     mov_imm(jinfo->codebuf, ARM_R1, bci+CONSTMETHOD_CODEOFFSET);
+@@ -4279,7 +4279,7 @@
+     bl(jinfo->codebuf, handlers[H_SAFEPOINT]);
+ 
+     if (! is_return)
+-      Thumb2_restore_locals(jinfo, stackdepth);
++      Thumb2_restore_local_refs(jinfo, stackdepth);
+ 
+     RESTORE_STACK(jinfo->jstack, jinfo->codebuf);
+ 
+@@ -4344,7 +4344,7 @@
+     return -1;
+ }
+ 
+-void Thumb2_save_locals(Thumb2_Info *jinfo, unsigned stackdepth)
++void Thumb2_save_local_refs(Thumb2_Info *jinfo, unsigned stackdepth)
+ {
+   int nlocals = jinfo->method->max_locals();
+   unsigned *locals_info = jinfo->locals_info;
+@@ -4361,7 +4361,7 @@
+   }
+ }
+ 
+-void Thumb2_restore_locals(Thumb2_Info *jinfo, unsigned stackdepth)
++void Thumb2_restore_local_refs(Thumb2_Info *jinfo, unsigned stackdepth)
+ {
+   int nlocals = jinfo->method->max_locals();
+   unsigned *locals_info = jinfo->locals_info;
+@@ -4378,7 +4378,7 @@
+   }
+ }
+ 
+-void Thumb2_invoke_save(Thumb2_Info *jinfo, unsigned stackdepth)
++void Thumb2_save_all_locals(Thumb2_Info *jinfo, unsigned stackdepth)
+ {
+   int nlocals = jinfo->method->max_locals();
+   unsigned *locals_info = jinfo->locals_info;
+@@ -4395,7 +4395,7 @@
+   }
+ }
+ 
+-void Thumb2_invoke_restore(Thumb2_Info *jinfo, unsigned stackdepth)
++void Thumb2_restore_all_locals(Thumb2_Info *jinfo, unsigned stackdepth)
+ {
+   int nlocals = jinfo->method->max_locals();
+   unsigned *locals_info = jinfo->locals_info;
+@@ -4413,7 +4413,7 @@
+ void Thumb2_Exit(Thumb2_Info *jinfo, unsigned handler, unsigned bci, unsigned stackdepth)
+ {
+     Thumb2_Flush(jinfo);
+-    Thumb2_invoke_save(jinfo, stackdepth);
++    Thumb2_save_all_locals(jinfo, stackdepth);
+     mov_imm(jinfo->codebuf, ARM_R0, bci+CONSTMETHOD_CODEOFFSET);
+     bl(jinfo->codebuf, handlers[handler]);
+ }
+@@ -4433,7 +4433,7 @@
+     unsigned loc_success1, loc_success2, loc_failed, loc_retry, loc_exception;
+     unsigned loc_illegal_monitor_state;
+     Thumb2_Flush(jinfo);
+-//    Thumb2_save_locals(jinfo);
++//    Thumb2_save_local_refs(jinfo);
+     // Free the monitor
+     //
+     // 		add	r1, #<stackdepth>-8
+@@ -5000,7 +5000,7 @@
+       unsigned expect_hi = POP(jstack);
+ 
+       Thumb2_Flush(jinfo);
+-      Thumb2_save_locals(jinfo, stackdepth - 4); // 4 args popped above
++      Thumb2_save_local_refs(jinfo, stackdepth - 4); // 4 args popped above
+ 
+       // instance of java.lang.Unsafe:
+       ldr_imm(jinfo->codebuf, ARM_LR, Rstack, 3 * wordSize, 1, 0);
+@@ -5033,7 +5033,7 @@
+       mov_imm(codebuf, result, 1);
+       fullBarrier(codebuf);
+ 
+-      Thumb2_restore_locals(jinfo, stackdepth - 4); // 4 args popped above
++      Thumb2_restore_local_refs(jinfo, stackdepth - 4); // 4 args popped above
+       add_imm(codebuf, Rstack, Rstack, 4 * wordSize);
+       PUSH(jstack, result);
+     }
+@@ -5286,10 +5286,10 @@
+ 	    JASSERT(opcode != opc_ldc2_w, "ldc2_w unresolved?");
+ 	    Thumb2_Flush(jinfo);
+ 	    mov_imm(jinfo->codebuf, ARM_R0, bci+CONSTMETHOD_CODEOFFSET);
+-	  Thumb2_save_locals(jinfo, stackdepth);
++	  Thumb2_save_local_refs(jinfo, stackdepth);
+ //	    mov_imm(jinfo->codebuf, ARM_R1, opcode != opc_ldc);
+ 	    bl(jinfo->codebuf, handlers[opcode == opc_ldc ? H_LDC : H_LDC_W]);
+-	  Thumb2_restore_locals(jinfo, stackdepth);
++	  Thumb2_restore_local_refs(jinfo, stackdepth);
+ 	    ldr_imm(jinfo->codebuf, ARM_R0, Rthread, THREAD_VM_RESULT, 1, 0);
+ 	    mov_imm(jinfo->codebuf, ARM_R2, 0);
+ 	    str_imm(jinfo->codebuf, ARM_R2, Rthread, THREAD_VM_RESULT, 1, 0);
+@@ -5858,11 +5858,11 @@
+ 	  if (c == 'C') handler = H_GETFIELD_H;
+ 	  if (c == 'S') handler = H_GETFIELD_SH;
+ 	  Thumb2_Flush(jinfo);
+-	  Thumb2_save_locals(jinfo, stackdepth);
++	  Thumb2_save_local_refs(jinfo, stackdepth);
+ 	  mov_imm(jinfo->codebuf, ARM_R0, bci+CONSTMETHOD_CODEOFFSET);
+ 	  mov_imm(jinfo->codebuf, ARM_R1, index);
+ 	  blx(jinfo->codebuf, handlers[handler]);
+-	  Thumb2_restore_locals(jinfo, STACKDEPTH(jinfo, bc_stackinfo[bci+len]));
++	  Thumb2_restore_local_refs(jinfo, STACKDEPTH(jinfo, bc_stackinfo[bci+len]));
+ 	  break;
+ 	}
+ 
+@@ -5921,11 +5921,11 @@
+ 	  if (c == 'C') handler = H_GETSTATIC_H;
+ 	  if (c == 'S') handler = H_GETSTATIC_SH;
+ 	  Thumb2_Flush(jinfo);
+-	  Thumb2_save_locals(jinfo, stackdepth);
++	  Thumb2_save_local_refs(jinfo, stackdepth);
+ 	  mov_imm(jinfo->codebuf, ARM_R0, bci+CONSTMETHOD_CODEOFFSET);
+ 	  mov_imm(jinfo->codebuf, ARM_R1, index);
+ 	  blx(jinfo->codebuf, handlers[handler]);
+-	  Thumb2_restore_locals(jinfo, STACKDEPTH(jinfo, bc_stackinfo[bci+len]));
++	  Thumb2_restore_local_refs(jinfo, STACKDEPTH(jinfo, bc_stackinfo[bci+len]));
+ 	  break;
+ 	}
+ 
+@@ -5986,11 +5986,11 @@
+ 	  if (c == 'C' || c == 'S') handler = H_PUTFIELD_H;
+  	  if (c == '[' || c == 'L') handler = H_PUTFIELD_A;
+ 	  Thumb2_Flush(jinfo);
+-	  Thumb2_save_locals(jinfo, stackdepth);
++	  Thumb2_save_local_refs(jinfo, stackdepth);
+ 	  mov_imm(jinfo->codebuf, ARM_R0, bci+CONSTMETHOD_CODEOFFSET);
+ 	  mov_imm(jinfo->codebuf, ARM_R1, index);
+ 	  blx(jinfo->codebuf, handlers[handler]);
+-	  Thumb2_restore_locals(jinfo, STACKDEPTH(jinfo, bc_stackinfo[bci+len]));
++	  Thumb2_restore_local_refs(jinfo, STACKDEPTH(jinfo, bc_stackinfo[bci+len]));
+ 
+ 	  break;
+ 	}
+@@ -6052,11 +6052,11 @@
+ 	  if (c == 'C' || c == 'S') handler = H_PUTSTATIC_H;
+ 	  if (c == '[' || c == 'L') handler = H_PUTSTATIC_A;
+ 	  Thumb2_Flush(jinfo);
+-	  Thumb2_save_locals(jinfo, stackdepth);
++	  Thumb2_save_local_refs(jinfo, stackdepth);
+ 	  mov_imm(jinfo->codebuf, ARM_R0, bci+CONSTMETHOD_CODEOFFSET);
+ 	  mov_imm(jinfo->codebuf, ARM_R1, index);
+ 	  blx(jinfo->codebuf, handlers[handler]);
+-	  Thumb2_restore_locals(jinfo, STACKDEPTH(jinfo, bc_stackinfo[bci+len]));
++	  Thumb2_restore_local_refs(jinfo, STACKDEPTH(jinfo, bc_stackinfo[bci+len]));
+ 	  break;
+ 	}
+ 
+@@ -6134,13 +6134,13 @@
+         cache = cp->entry_at(index);
+         if (!cache->is_resolved((Bytecodes::Code)opcode)) {
+ 	  Thumb2_Flush(jinfo);
+-	  Thumb2_invoke_save(jinfo, stackdepth);
++	  Thumb2_save_all_locals(jinfo, stackdepth);
+ 	  mov_imm(jinfo->codebuf, ARM_R0, bci+CONSTMETHOD_CODEOFFSET);
+ 	  mov_imm(jinfo->codebuf, ARM_R1, index);
+ 	  blx(jinfo->codebuf,
+ 	    handlers[opcode == opc_invokestatic ? H_INVOKESTATIC :
+ 		     opcode == opc_invokespecial ? H_INVOKESPECIAL : H_INVOKEVIRTUAL]);
+-	  Thumb2_invoke_restore(jinfo, STACKDEPTH(jinfo, bc_stackinfo[bci+len]));
++	  Thumb2_restore_all_locals(jinfo, STACKDEPTH(jinfo, bc_stackinfo[bci+len]));
+ 	  break;
+ 	}
+ 
+@@ -6183,14 +6183,14 @@
+ 
+  	Thumb2_Flush(jinfo);
+ 	if (OSPACE) {
+-	  Thumb2_invoke_save(jinfo, stackdepth);
++	  Thumb2_save_all_locals(jinfo, stackdepth);
+ 	  mov_imm(jinfo->codebuf, ARM_R0, bci+CONSTMETHOD_CODEOFFSET);
+ 	  mov_imm(jinfo->codebuf, ARM_R1, index);
+ 	  blx(jinfo->codebuf, handlers[
+ 	      opcode == opc_invokestatic ? H_INVOKESTATIC_RESOLVED :
+ 	      opcode == opc_invokespecial ? H_INVOKESPECIAL_RESOLVED :
+ 	      cache->is_vfinal() ? H_INVOKEVFINAL : H_INVOKEVIRTUAL_RESOLVED]);
+-	  Thumb2_invoke_restore(jinfo, STACKDEPTH(jinfo, bc_stackinfo[bci+len]));
++	  Thumb2_restore_all_locals(jinfo, STACKDEPTH(jinfo, bc_stackinfo[bci+len]));
+ 	  break;
+ 	}
+ 
+@@ -6214,7 +6214,7 @@
+  	ldr_imm(jinfo->codebuf, ARM_R1, ARM_R0, METHOD_FROM_INTERPRETED, 1, 0);
+ 	store_istate(jinfo, ARM_R2, ISTATE_BCP, stackdepth);
+  	str_imm(jinfo->codebuf, Rstack, Rthread, THREAD_JAVA_SP, 1, 0);
+- 	Thumb2_invoke_save(jinfo, stackdepth);
++ 	Thumb2_save_all_locals(jinfo, stackdepth);
+ 	sub_imm(jinfo->codebuf, Rstack, Rstack, 4);
+  	ldr_imm(jinfo->codebuf, ARM_R3, ARM_R1, 0, 1, 0);
+ 	store_istate(jinfo, Rstack, ISTATE_STACK, stackdepth+1);
+@@ -6225,12 +6225,12 @@
+ 	ldr_imm(jinfo->codebuf, Rstack, Rthread, THREAD_JAVA_SP, 1, 0);
+ 	load_istate(jinfo, ARM_R2, ISTATE_STACK_LIMIT, stackdepth);
+  	ldr_imm(jinfo->codebuf, ARM_R1, Rthread, THREAD_TOP_ZERO_FRAME, 1, 0);
+-	Thumb2_invoke_restore(jinfo, stackdepth);
++	Thumb2_restore_all_locals(jinfo, stackdepth);
+ 	mov_imm(jinfo->codebuf, ARM_R0, 0);   // set last SP to zero
+ 					      // before setting FP
+ 	str_imm(jinfo->codebuf, ARM_R0, Rthread, THREAD_LAST_JAVA_SP, 1, 0);
+ 	ldr_imm(jinfo->codebuf, ARM_R1, Rthread, THREAD_TOP_ZERO_FRAME, 1, 0);
+-	Thumb2_invoke_restore(jinfo, stackdepth);
++	Thumb2_restore_all_locals(jinfo, stackdepth);
+ 	add_imm(jinfo->codebuf, ARM_R2, ARM_R2, 4);
+ 	ldr_imm(jinfo->codebuf, ARM_R3, Rthread, THREAD_PENDING_EXC, 1, 0);
+ 	str_imm(jinfo->codebuf, ARM_R2, Rthread, THREAD_JAVA_SP, 1, 0);
+@@ -6251,11 +6251,11 @@
+ 	// Currently we just call the unresolved invokeinterface entry for resolved /
+ 	// unresolved alike!
+ 	Thumb2_Flush(jinfo);
+-	Thumb2_invoke_save(jinfo, stackdepth);
++	Thumb2_save_all_locals(jinfo, stackdepth);
+ 	mov_imm(jinfo->codebuf, ARM_R0, bci+CONSTMETHOD_CODEOFFSET);
+ 	mov_imm(jinfo->codebuf, ARM_R1, index);
+ 	blx(jinfo->codebuf, handlers[H_INVOKEINTERFACE]);
+-	Thumb2_invoke_restore(jinfo, STACKDEPTH(jinfo, bc_stackinfo[bci+len]));
++	Thumb2_restore_all_locals(jinfo, STACKDEPTH(jinfo, bc_stackinfo[bci+len]));
+ 	break;
+       }
+ 
+@@ -6386,7 +6386,7 @@
+ 	ldr_imm(jinfo->codebuf, r_tmp, r_tmp, KLASS_PART+KLASS_ACCESSFLAGS, 1, 0);
+ 	tst_imm(jinfo->codebuf, r_tmp, JVM_ACC_HAS_FINALIZER);
+ 	loc_eq = forward_16(jinfo->codebuf);
+-	Thumb2_save_locals(jinfo, stackdepth);
++	Thumb2_save_local_refs(jinfo, stackdepth);
+ 	mov_reg(jinfo->codebuf, ARM_R1, r);
+ 	load_istate(jinfo, ARM_R0, ISTATE_METHOD, stackdepth);
+ 	ldr_imm(jinfo->codebuf, ARM_R0, ARM_R0, METHOD_CONSTMETHOD, 1, 0);
+@@ -6414,9 +6414,9 @@
+ 	Thumb2_Flush(jinfo);
+ 	mov_imm(jinfo->codebuf, ARM_R1, GET_JAVA_U2(code_base+bci+1));
+ 	mov_imm(jinfo->codebuf, ARM_R3, bci+CONSTMETHOD_CODEOFFSET);
+-      Thumb2_save_locals(jinfo, stackdepth);
++      Thumb2_save_local_refs(jinfo, stackdepth);
+ 	bl(jinfo->codebuf, handlers[H_NEW]);
+-      Thumb2_restore_locals(jinfo, stackdepth);
++      Thumb2_restore_local_refs(jinfo, stackdepth);
+ 	cmp_imm(jinfo->codebuf, ARM_R0, 0);
+ 	it(jinfo->codebuf, COND_EQ, IT_MASK_T);
+ 	bl(jinfo->codebuf, handlers[H_HANDLE_EXCEPTION]);
+@@ -6438,9 +6438,9 @@
+ 	dst[2] = ARM_R3;
+ 	mov_multiple(jinfo->codebuf, dst, src, 3);
+ 	mov_imm(jinfo->codebuf, ARM_R0, bci+CONSTMETHOD_CODEOFFSET);
+-      Thumb2_save_locals(jinfo, stackdepth - 3);	// 3 args popped above
++      Thumb2_save_local_refs(jinfo, stackdepth - 3);	// 3 args popped above
+ 	bl(jinfo->codebuf, handlers[H_AASTORE]);
+-      Thumb2_restore_locals(jinfo, stackdepth - 3);
++      Thumb2_restore_local_refs(jinfo, stackdepth - 3);
+ 	cmp_imm(jinfo->codebuf, ARM_R0, 0);
+ 	it(jinfo->codebuf, COND_NE, IT_MASK_T);
+ 	bl(jinfo->codebuf, handlers[H_HANDLE_EXCEPTION]);
+@@ -6457,9 +6457,9 @@
+ 	mov_reg(jinfo->codebuf, ARM_R2, r);
+ 	mov_imm(jinfo->codebuf, ARM_R1, GET_JAVA_U2(code_base+bci+1));
+ 	mov_imm(jinfo->codebuf, ARM_R3, bci+CONSTMETHOD_CODEOFFSET);
+-      Thumb2_save_locals(jinfo, stackdepth - 1);
++      Thumb2_save_local_refs(jinfo, stackdepth - 1);
+ 	bl(jinfo->codebuf, handlers[H_INSTANCEOF]);
+-      Thumb2_restore_locals(jinfo, stackdepth - 1);	// 1 arg popped above
++      Thumb2_restore_local_refs(jinfo, stackdepth - 1);	// 1 arg popped above
+ 	cmp_imm(jinfo->codebuf, ARM_R0, (unsigned)-1);
+ 	it(jinfo->codebuf, COND_EQ, IT_MASK_T);
+ 	bl(jinfo->codebuf, handlers[H_HANDLE_EXCEPTION]);
+@@ -6477,9 +6477,9 @@
+ 	mov_reg(jinfo->codebuf, ARM_R2, r);
+ 	mov_imm(jinfo->codebuf, ARM_R1, GET_JAVA_U2(code_base+bci+1));
+ 	mov_imm(jinfo->codebuf, ARM_R3, bci+CONSTMETHOD_CODEOFFSET);
+-      Thumb2_save_locals(jinfo, stackdepth);
++      Thumb2_save_local_refs(jinfo, stackdepth);
+ 	bl(jinfo->codebuf, handlers[H_CHECKCAST]);
+-      Thumb2_restore_locals(jinfo, stackdepth);
++      Thumb2_restore_local_refs(jinfo, stackdepth);
+ 	cmp_imm(jinfo->codebuf, ARM_R0, 0);
+ 	it(jinfo->codebuf, COND_NE, IT_MASK_T);
+ 	bl(jinfo->codebuf, handlers[H_HANDLE_EXCEPTION]);
+@@ -6488,10 +6488,10 @@
+ 
+       case opc_monitorenter:
+ 	Thumb2_Flush(jinfo);
+-	Thumb2_invoke_save(jinfo, stackdepth);
++	Thumb2_save_all_locals(jinfo, stackdepth);
+ 	mov_imm(jinfo->codebuf, ARM_R0, bci+CONSTMETHOD_CODEOFFSET);
+ 	bl(jinfo->codebuf, handlers[H_MONITORENTER]);
+-	Thumb2_invoke_restore(jinfo, stackdepth);
++	Thumb2_restore_all_locals(jinfo, stackdepth);
+ 	break;
+ 
+       case opc_monitorexit: {
+@@ -6502,9 +6502,9 @@
+ 	Thumb2_Flush(jinfo);
+ 	mov_reg(jinfo->codebuf, ARM_R1, r);
+ 	mov_imm(jinfo->codebuf, ARM_R3, bci+CONSTMETHOD_CODEOFFSET);
+-        Thumb2_save_locals(jinfo, stackdepth);
++        Thumb2_save_local_refs(jinfo, stackdepth);
+ 	bl(jinfo->codebuf, handlers[H_MONITOREXIT]);
+-        Thumb2_restore_locals(jinfo, stackdepth);
++        Thumb2_restore_local_refs(jinfo, stackdepth);
+ 	cmp_imm(jinfo->codebuf, ARM_R0, 0);
+ 	it(jinfo->codebuf, COND_NE, IT_MASK_T);
+ 	bl(jinfo->codebuf, handlers[H_HANDLE_EXCEPTION]);
+@@ -6521,9 +6521,9 @@
+ 	mov_reg(jinfo->codebuf, ARM_R2, r);
+ 	mov_imm(jinfo->codebuf, ARM_R1, code_base[bci+1]);
+ 	mov_imm(jinfo->codebuf, ARM_R3, bci+CONSTMETHOD_CODEOFFSET);
+-      Thumb2_save_locals(jinfo, stackdepth-1);
++      Thumb2_save_local_refs(jinfo, stackdepth-1);
+ 	bl(jinfo->codebuf, handlers[H_NEWARRAY]);
+-      Thumb2_restore_locals(jinfo, stackdepth-1);
++      Thumb2_restore_local_refs(jinfo, stackdepth-1);
+ 	ldr_imm(jinfo->codebuf, ARM_R0, Rthread, THREAD_VM_RESULT, 1, 0);
+ 	mov_imm(jinfo->codebuf, ARM_R2, 0);
+   	str_imm(jinfo->codebuf, ARM_R2, Rthread, THREAD_VM_RESULT, 1, 0);
+@@ -6544,9 +6544,9 @@
+ 	mov_reg(jinfo->codebuf, ARM_R3, r);
+ 	mov_imm(jinfo->codebuf, ARM_R2, GET_JAVA_U2(code_base+bci+1));
+ 	mov_imm(jinfo->codebuf, ARM_R0, bci+CONSTMETHOD_CODEOFFSET);
+-      Thumb2_save_locals(jinfo, stackdepth-1);
++      Thumb2_save_local_refs(jinfo, stackdepth-1);
+ 	bl(jinfo->codebuf, handlers[H_ANEWARRAY]);
+-      Thumb2_restore_locals(jinfo, stackdepth-1);
++      Thumb2_restore_local_refs(jinfo, stackdepth-1);
+ 	ldr_imm(jinfo->codebuf, ARM_R0, Rthread, THREAD_VM_RESULT, 1, 0);
+ 	mov_imm(jinfo->codebuf, ARM_R2, 0);
+   	str_imm(jinfo->codebuf, ARM_R2, Rthread, THREAD_VM_RESULT, 1, 0);
+@@ -6563,9 +6563,9 @@
+ 	Thumb2_Flush(jinfo);
+ 	mov_imm(jinfo->codebuf, ARM_R0, bci+CONSTMETHOD_CODEOFFSET);
+ 	mov_imm(jinfo->codebuf, ARM_R1, code_base[bci+3] * 4);
+-      Thumb2_save_locals(jinfo, stackdepth);
++      Thumb2_save_local_refs(jinfo, stackdepth);
+ 	bl(jinfo->codebuf, handlers[H_MULTIANEWARRAY]);
+-      Thumb2_restore_locals(jinfo, stackdepth - code_base[bci+3]);
++      Thumb2_restore_local_refs(jinfo, stackdepth - code_base[bci+3]);
+ 	ldr_imm(jinfo->codebuf, ARM_R0, Rthread, THREAD_VM_RESULT, 1, 0);
+ 	mov_imm(jinfo->codebuf, ARM_R2, 0);
+   	str_imm(jinfo->codebuf, ARM_R2, Rthread, THREAD_VM_RESULT, 1, 0);

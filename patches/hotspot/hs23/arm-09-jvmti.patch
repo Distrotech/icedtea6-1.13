@@ -1,0 +1,256 @@
+# HG changeset patch
+# User adinn
+# Date 1335885227 -3600
+#      Tue May 01 16:13:47 2012 +0100
+# Node ID e6d602f07305e762d8c27ab4a81b22aa423a5376
+# Parent  bbdfa2225c4366fb99afde607c9f19ad2f7fdad3
+added jvmti event generation for dynamic_generate and compiled_method_load events to ARM JIT compiler
+
+diff --git a/src/cpu/zero/vm/thumb2.cpp b/src/cpu/zero/vm/thumb2.cpp
+--- openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
++++ openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
+@@ -26,6 +26,13 @@
+ 
+ #ifdef THUMB2EE
+ 
++// setting DISABLE_THUMB2_JVMTI at build time disables notification
++// of JVMTI dynamic_generate and compiled_method_load events
++#undef THUMB2_JVMTI
++#if !defined(DISABLE_THUMB2_JVMTI)
++#define THUMB2_JVMTI
++#endif
++
+ #define T2EE_PRINT_COMPILATION
+ #define T2EE_PRINT_STATISTICS
+ #define T2EE_PRINT_DISASS
+@@ -440,6 +447,76 @@
+ unsigned stack[1000];
+ unsigned r_local[1000];
+ 
++#ifdef THUMB2_JVMTI
++// jvmti needs to map start address of generated code for a bytecode
++// to corresponding bytecode index so agents can correlate code address
++// ranges with bci and thence line number
++static jvmtiAddrLocationMap *address_bci_map = NULL;
++static jint address_bci_map_length = 0;
++
++static void *stub_gen_code_start = 0;
++static void *stub_gen_code_end = 0;
++
++// function used to lazily initialize the address to bci translation map
++// the first time a compiled method is generated.
++static void address_bci_map_init(JavaThread *thread)
++{
++  // the dynamic_code_generated event posted to notify generation of
++  // the stub code has to be posted lazily because generation happens
++  // in Thumb2_Initialize under bci_init and the latter is called as a
++  // side-effect of loading libjvm.o. we don't have a Java thread at
++  // that point nor, indeed, any agents to catch the notify. so the
++  // info cached by Thumb2_Initialize needs to be posted when the
++  // first compiled method load event is notified, at which point we
++  // will indeed have a current thread.
++
++  {
++    // a thread transition from in Java to in VM is required before
++    // calling into Jvmti
++
++    ThreadInVMfromJava transition(thread);
++
++    JvmtiExport::post_dynamic_code_generated("thumb2_dynamic_stubs_block",
++					   stub_gen_code_start,
++					   stub_gen_code_end);
++
++    // n.b. exiting this block reverts the thread state to in Java
++  }
++  
++
++  // the map is lazily allocated so we don't use the space unless we
++  // are actually using the JIT
++
++  // at worst we need a start address for every bytecode so
++  // the map size is limited by the compiler's bytecode limit
++  address_bci_map = new jvmtiAddrLocationMap[THUMB2_MAX_BYTECODE_SIZE];
++}
++
++// clear the address to bci translation map
++static void address_bci_map_reset(JavaThread *thread)
++{
++  // this only gets called after obtaining the compiler lock so there
++  // is no need to worry about races
++  
++  if (address_bci_map == NULL) {
++    address_bci_map_init(thread);
++  }
++
++  // this effectively clears the previous map
++
++  address_bci_map_length = 0;
++}
++
++// add an entry to the address to bci translation map
++// this will never exceed the available space
++static void address_bci_map_add(void *addr, unsigned bci)
++{
++    address_bci_map[address_bci_map_length].start_address = addr;
++    address_bci_map[address_bci_map_length].location = bci;
++    address_bci_map_length++;
++}
++#endif // THUMB2_JVMTI
++
+ #ifdef T2EE_PRINT_DISASS
+ short start_bci[THUMB2_MAX_T2CODE_SIZE];
+ short end_bci[THUMB2_MAX_T2CODE_SIZE];
+@@ -5382,6 +5459,14 @@
+     end_bci[start_idx] = bci + len;
+ #endif
+ 
++#ifdef THUMB2_JVMTI
++    // emit a start address --> bci map entry before
++    // generating machine code for this bytecode
++
++    void *addr = (void *)(codebuf->codebuf + codebuf->idx);
++    address_bci_map_add(addr, bci);
++#endif //THUMB2_JVMTI
++
+     switch (opcode) {
+       case opc_nop:
+ 	break;
+@@ -7473,6 +7558,10 @@
+   memset(end_bci, 0xff, sizeof(end_bci));
+ #endif
+ 
++#ifdef THUMB2_JVMTI
++  address_bci_map_reset(thread);
++#endif // THUMB2_JVMTI
++
+   jinfo_str.thread = thread;
+   jinfo_str.method = method;
+   jinfo_str.code_base = code_base;
+@@ -7580,6 +7669,36 @@
+   if (compiled_offset == 0) return 0;
+   thumb_entry.compiled_entrypoint = slow_entry + compiled_offset;
+   thumb_entry.osr_entry = (unsigned)cmethod->osr_entry | TBIT;
++#ifdef THUMB2_JVMTI
++  {
++    // we need to dispatch a compiled_method_load event
++    // to all registered Jvmti agents
++
++    // notify the whole generated code region for this Java method
++    // from slow_entry through to the end of the osr table. some
++    // of it is data not code but that's not a problem.
++
++    const void *gen_code_start = (const void *)(slow_entry ^ TBIT);
++    unsigned gen_code_size = codebuf_str.idx * 2;
++
++    // address_bci_map translates start addresses for generated code
++    // sections to bytecode indices and contains address_bci_map_length
++    // entries
++
++    // the final compile_info argument is supposed to contain
++    // information about inlined code. we can supply NULL for now -
++    // oprofile doesn't use it anyway
++
++    void *compile_info = NULL;
++
++    // transition from in Java to in VM before calling into Jvmti
++    ThreadInVMfromJava transition(thread);
++
++    JvmtiExport::post_compiled_method_load(method, gen_code_size,
++		gen_code_start, address_bci_map_length,
++		address_bci_map, NULL);
++  }
++#endif // THUMB2_JVMTI
+   return *(unsigned long long *)&thumb_entry;
+ }
+ 
+@@ -7735,6 +7854,11 @@
+   }
+ 
+ #if 1
++#ifdef THUMB2_JVMTI
++  // cache the start of the generated stub region for notification later
++  stub_gen_code_start = cb->hp;
++#endif // THUMB2_JVMTI
++
+   memcpy(cb->hp, Thumb2_stubs, STUBS_SIZE);
+ 
+   // fprintf(stderr, "Thumb2_stubs offset: 0x%x\n",
+@@ -8114,6 +8238,11 @@
+   cb->hp += codebuf.idx * 2;
+ 
+   thumb2_codebuf = cb;
++
++#ifdef THUMB2_JVMTI
++  // cache the end of the generated stub region for notification later
++  stub_gen_code_end = cb->hp;
++#endif // THUMB2_JVMTI
+ }
+ 
+ #endif // THUMB2EE
+diff --git a/src/share/vm/prims/jvmtiExport.cpp b/src/share/vm/prims/jvmtiExport.cpp
+--- openjdk/hotspot/src/share/vm/prims/jvmtiExport.cpp
++++ openjdk/hotspot/src/share/vm/prims/jvmtiExport.cpp
+@@ -1774,6 +1774,47 @@
+   }
+ }
+ 
++#if defined(ZERO) && defined(ARM)
++
++// special compiled_method_load notify API for thumb2 compiler
++
++void JvmtiExport::post_compiled_method_load(const methodOop method, const jint length,
++                                            const void *code_begin, const jint map_length,
++                                            const jvmtiAddrLocationMap* map,
++					    const void *compile_info)
++{
++  JavaThread* thread = JavaThread::current();
++  jmethodID methodId = method->jmethod_id();
++
++  EVT_TRIG_TRACE(JVMTI_EVENT_COMPILED_METHOD_LOAD,
++                 ("JVMTI [%s] method compile load event triggered (by thumb2_compile)",
++                 JvmtiTrace::safe_get_thread_name(thread)));
++
++  JvmtiEnvIterator it;
++  for (JvmtiEnv* env = it.first(); env != NULL; env = it.next(env)) {
++    if (env->is_enabled(JVMTI_EVENT_COMPILED_METHOD_LOAD)) {
++
++      EVT_TRACE(JVMTI_EVENT_COMPILED_METHOD_LOAD,
++                ("JVMTI [%s] class compile method load event sent %s.%s   (by thumb2_compile)",
++                JvmtiTrace::safe_get_thread_name(thread),
++                method->klass_name()->as_C_string(),
++		 method->name()->as_C_string()));
++
++      JvmtiEventMark jem(thread);
++      JvmtiJavaThreadEventTransition jet(thread);
++      jvmtiEventCompiledMethodLoad callback = env->callbacks()->CompiledMethodLoad;
++
++      if (callback != NULL) {
++        (*callback)(env->jvmti_external(), methodId,
++                    length, code_begin, map_length,
++                    map, compile_info);
++      }
++    }
++  }
++}
++
++#endif // defined(TARGET_ARCH_zero) && ZERO_LIBARCH == "arm"
++
+ 
+ // post a COMPILED_METHOD_LOAD event for a given environment
+ void JvmtiExport::post_compiled_method_load(JvmtiEnv* env, const jmethodID method, const jint length,
+diff --git a/src/share/vm/prims/jvmtiExport.hpp b/src/share/vm/prims/jvmtiExport.hpp
+--- openjdk/hotspot/src/share/vm/prims/jvmtiExport.hpp
++++ openjdk/hotspot/src/share/vm/prims/jvmtiExport.hpp
+@@ -295,6 +295,12 @@
+                                         jint *cached_length_ptr);
+   static void post_native_method_bind(methodOop method, address* function_ptr) KERNEL_RETURN;
+   static void post_compiled_method_load(nmethod *nm) KERNEL_RETURN;
++#ifdef __arm__
++  static void post_compiled_method_load(const methodOop method, const jint length,
++					const void *code_begin, const jint map_length,
++					const jvmtiAddrLocationMap* map,
++					const void *compile_info) KERNEL_RETURN;
++#endif // __arm__
+   static void post_dynamic_code_generated(const char *name, const void *code_begin, const void *code_end) KERNEL_RETURN;
+ 
+   // used to post a CompiledMethodUnload event

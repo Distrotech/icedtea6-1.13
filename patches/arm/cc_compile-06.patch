@@ -1,0 +1,20 @@
+# HG changeset patch
+# User andrew
+# Date 1374834702 -3600
+#      Fri Jul 26 11:31:42 2013 +0100
+# Node ID 37b254871acbef27e5f29c73982ac324e7df2b9a
+# Parent  799641e9320fc73eb051d44e6590b3d2132b7255
+Include $(CFLAGS) in assembler stage
+
+diff --git a/make/linux/makefiles/zeroshark.make b/make/linux/makefiles/zeroshark.make
+--- openjdk/hotspot/make/linux/makefiles/zeroshark.make
++++ openjdk/hotspot/make/linux/makefiles/zeroshark.make
+@@ -58,7 +58,7 @@
+ %.o: %.S
+ 	@echo Assembling $<
+ 	$(QUIETLY) $(REMOVE_TARGET)
+-	$(COMPILE.CC) -o $@ $< $(COMPILE_DONE)
++	$(COMPILE.CC) $(CFLAGS) -o $@ $< $(COMPILE_DONE)
+ 
+ # The copied fdlibm routines in sharedRuntimeTrig.o must not be optimized
+ OPT_CFLAGS/sharedRuntimeTrig.o = $(OPT_CFLAGS/NOOPT)

@@ -1,0 +1,322 @@
+# HG changeset patch
+# User aph
+# Date 1333122781 14400
+#      Fri Mar 30 11:53:01 2012 -0400
+# Node ID e6035cca61febb42f5dac0cf4d64850272005975
+# Parent  9d94a5fd37a775e9c1306165f5046db237c58f70
+invokedynamic and aldc for JIT
+
+diff --git a/make/linux/makefiles/fastdebug.make b/make/linux/makefiles/fastdebug.make
+--- openjdk/hotspot/make/linux/makefiles/fastdebug.make
++++ openjdk/hotspot/make/linux/makefiles/fastdebug.make
+@@ -31,7 +31,7 @@
+ # (OPT_CFLAGS/SLOWER is also available, to alter compilation of buggy files)
+ 
+ ifeq ($(BUILDARCH), ia64)
+-  # Bug in GCC, causes hang.  -O1 will override the -O3 specified earlier
++  # Bug in GCC, causes hang.  -O1 will override the -O0 specified earlier
+   OPT_CFLAGS/callGenerator.o += -O1
+   OPT_CFLAGS/ciTypeFlow.o += -O1
+   OPT_CFLAGS/compile.o += -O1
+diff --git a/make/linux/makefiles/gcc.make b/make/linux/makefiles/gcc.make
+--- openjdk/hotspot/make/linux/makefiles/gcc.make
++++ openjdk/hotspot/make/linux/makefiles/gcc.make
+@@ -169,7 +169,7 @@
+ CFLAGS_WARN/BYFILE = $(CFLAGS_WARN/$@)$(CFLAGS_WARN/DEFAULT$(CFLAGS_WARN/$@)) 
+ 
+ # The flags to use for an Optimized g++ build
+-OPT_CFLAGS += -O3
++OPT_CFLAGS += -O0
+ 
+ # Hotspot uses very unstrict aliasing turn this optimization off
+ OPT_CFLAGS += -fno-strict-aliasing
+diff --git a/src/cpu/zero/vm/bytecodes_arm.def b/src/cpu/zero/vm/bytecodes_arm.def
+--- openjdk/hotspot/src/cpu/zero/vm/bytecodes_arm.def
++++ openjdk/hotspot/src/cpu/zero/vm/bytecodes_arm.def
+@@ -270,6 +270,8 @@
+ iload_iload	= 0xe3, 4
+ iload_iload_N	= 0xe4, 3
+ 
++fast_aldc	= 0xe5, 2
++fast_aldc_w	= 0xe6, 3
+ @return_register_finalizer = 0xe7, 1
+ 
+ iload_0_iconst_N        = 0xe9, 2
+diff --git a/src/cpu/zero/vm/cppInterpreter_arm.S b/src/cpu/zero/vm/cppInterpreter_arm.S
+--- openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S
++++ openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S
+@@ -988,6 +988,7 @@
+ 			.word	.abortentry114, 1
+ 		FBC	.word	.abortentry117, 0
+ 			.word	.abortentry118, 0
++			.word	.abortentry119, 1
+ 	.word	0
+ 
+ #endif
+@@ -2746,6 +2747,8 @@
+ 	Opcode	fast_iload_N_iload_N
+ #endif
+ 	Opcode	undefined
++	DECACHE_JPC
++	DECACHE_STACK
+ 	ldr	r2, [dispatch, #Bytecodes_name_Address-XXX]
+ 	ldrb	r3, [jpc, #0]	@ zero_extendqisi2
+ 	adrl	r0, bytecode_interpreter_str
+@@ -3055,34 +3058,46 @@
+ 	b	.invokeinterface_invoke
+ 
+ # r2 = [jpc, #1]
+-# r1 = [jpc, #2]
+ 	Opcode	invokedynamic
+-	ldrb	r1, [jpc, #2]
+ 	DECACHE_STACK
+-	orr	r1, r2, r1, lsl #8
+-        mvn     r1, r1, asl #16
+-        mov     r1, r1, lsr #16
++	// Fetch index bytes from bytecode
++	ldrb	r0, [jpc, #2]
++	ldrb	r1, [jpc, #3]
++	ldrb	r3, [jpc, #4]
++	orr	r2, r2, r0, lsl #8
++	orr	r2, r2, r1, lsl #16
++	orr	r1, r2, r3, lsl #24
++	// The index is inverted, so we invert it back with MVN
++        mvn     r1, r1
++	// The pool entry is in R0
+         add     r0, constpool, r1, lsl #4
++
++	// Save the pool entry
++	stmfd	arm_sp!, {r0}
++
+ 	DECACHE_JPC
+-
+-	bl	resolve_invokedynamic
+-
+-	CACHE_STACK
+-	add	stack, #4
+-
+-	stmfd	arm_sp!, {r0}
++	ldr     r1, [r0, #CP_OFFSET+4]  // Pointer to call site
++	// Already resolved?
++	cmp     r1, #0 
++	bleq    resolve_invokedynamic
++
++	// Get the offset from a call site to the corresponding target
++	// method handle
+ 	bl	_ZN25java_lang_invoke_CallSite22target_offset_in_bytesEv
+ 	mov	lr, r0
++
++	// Restore the pool entry
+ 	ldmfd	arm_sp!, {r0}
+ 
++	ldr	r0, [r0, #CP_OFFSET+4]	// Call site
+ .abortentry119:
+-	ldr	r0, [r0, #CP_OFFSET+4]	// Call site
+-
+ 	ldr	r0, [r0, lr]		// Method handle
+ 	ldr	r1, [istate, #ISTATE_THREAD]
+ .invokedynamic_invoke:
++	// Call the target method
+ 	bl	_ZN14CppInterpreter21process_method_handleEP7oopDescP6Thread
+ 
++	// Load up the interpreter registers.  Probably not necessary
+ 	adrl	ip, dispatch_init_adcon
+ 	ldm	ip, {r0, r1}
+ 	add	r0, r0, ip
+@@ -3096,6 +3111,8 @@
+ 	ldr	r2, [istate, #ISTATE_STACK_LIMIT]
+ 	sub	stack, stack, #4
+ 
++	// Fix up everything in the thread state to point to the
++	// current frame
+ 	ldr	r1, [ip, #THREAD_JAVA_SP]
+ 	stmfd	arm_sp!, {r1}
+ 	mov	r1, #0
+@@ -3107,6 +3124,7 @@
+ 	ldmfd	arm_sp!, {r1}
+ 	str	r1, [ip, #THREAD_LAST_JAVA_SP]
+ 	DISPATCH_START	5
++	// Test for an exception
+ 	ldr	r3, [ip, #4]
+ 	DISPATCH_NEXT
+ 	DISPATCH_NEXT
+@@ -3123,10 +3141,10 @@
+ 	bne	.invokedynamic_invoke
+ 
+ resolve_invokedynamic:
+-	stmfd	arm_sp!, {r0, lr}
++	stmfd	arm_sp!, {lr}
+ 	ldr	r0, [r8, #ISTATE_THREAD]
+ 	bl	_ZN18InterpreterRuntime21resolve_invokedynamicEP10JavaThread
+-	ldmfd	arm_sp!, {r0, pc}
++	ldmfd	arm_sp!, {pc}
+ 
+ 	ALIGN_CODE
+ method_handle_entry:
+@@ -3137,6 +3155,50 @@
+ 	bl	_ZN14CppInterpreter19method_handle_entryEP13methodOopDesciP6Thread
+ 	ldmia	sp!, {regset, pc}
+ 
++# r0 = constpool cache entry
++	.macro	aldc	opc, seq_len
++	// Save the pool entry
++	stmfd	arm_sp!, {r0}
++
++	DECACHE_JPC
++	ldr     r1, [r0, #CP_OFFSET+4]  // Pointer to call site
++	// Already resolved?
++	cmp     r1, #0 
++	ldr	r0, [istate, #ISTATE_THREAD]
++	mov	r1, #\opc
++	bleq    _ZN18InterpreterRuntime11resolve_ldcEP10JavaThreadN9Bytecodes4CodeE
++
++	// Restore the pool entry
++	ldmfd	arm_sp!, {r0}
++
++	ldr     r1, [r0, #CP_OFFSET+4]  // Pointer to MethodHandle
++	PUSH	r1
++
++	// Test for an exception
++	ldr	ip, [istate, #ISTATE_THREAD]
++	ldr	r3, [ip, #4]
++	cmp	r3, #0
++	bne	handle_exception
++	
++	DISPATCH	\seq_len
++	.endm
++
++# r2 = [jpc, #1]
++	Opcode fast_aldc
++	DECACHE_STACK
++        add     r0, constpool, r2, lsl #4
++	aldc opc_fast_aldc, 2
++
++# r2 = [jpc, #1]
++# r1 = [jpc, #2]
++	Opcode fast_aldc_w
++	// Fetch index bytes from bytecode
++	ldrb	r1, [jpc, #2]
++	DECACHE_STACK
++	orr	r1, r2, r1, lsl #8
++        add     r0, constpool, r1, lsl #4
++	aldc opc_fast_aldc_w, 3
++
+ #ifdef FAST_BYTECODES
+ # r2 = [jpc, #1]
+ # r1 = [jpc, #2]
+diff --git a/src/cpu/zero/vm/thumb2.cpp b/src/cpu/zero/vm/thumb2.cpp
+--- openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
++++ openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
+@@ -239,6 +239,7 @@
+ #define opc_invokespecial	0xb7
+ #define opc_invokestatic	0xb8
+ #define opc_invokeinterface	0xb9
++#define opc_invokedynamic	0xba
+ #define opc_new			0xbb
+ #define opc_newarray		0xbc
+ #define opc_anewarray		0xbd
+@@ -258,6 +259,9 @@
+ 
+ #define OPC_LAST_JAVA_OP	0xca
+ 
++#define opc_fast_aldc		Bytecodes::_fast_aldc
++#define opc_fast_aldc_w		Bytecodes::_fast_aldc_w
++
+ #define opc_bgetfield			0xcc
+ #define opc_cgetfield			0xcd
+ #define opc_igetfield			0xd0
+@@ -413,6 +417,7 @@
+ #endif // PRODUCT
+ 
+ #define GET_NATIVE_U2(p)	(*(unsigned short *)(p))
++#define GET_NATIVE_U4(p)	(*(unsigned *)(p))
+ 
+ #define GET_JAVA_S1(p)		(((signed char *)(p))[0])
+ #define GET_JAVA_S2(p)  	((((signed char *)(p))[0] << 8) + (p)[1])
+@@ -1209,8 +1214,8 @@
+ 	BCI(3, 0, 0, 1, 0, 0, 0, 0, 0),	// invokevfinal
+ 	BCI(2, 0, 1, 0, 1, 0, 0, 0, BCI_TYPE_INT),	// iload_iload
+ 	BCI(2, 0, 1, 0, 1, 0, 0, 0, BCI_TYPE_INT),	// iload_iload_N
+-	BCI(0, 0, 0, 1, 0, 0, 0, 0, 0),	// impdep1
+-	BCI(0, 0, 0, 1, 0, 0, 0, 0, 0),	// impdep2
++	BCI(2, 0, 1, 0, 0, 0, 0, 0, 0),	// fast_aldc
++	BCI(3, 0, 1, 0, 0, 0, 0, 0, 0),	// fast_aldc_w
+ 	BCI(1, 0, 0, 1, 0, 0, 0, 0, 0),	// return_register_finalizer
+ 	BCI(1, 4, 2, 0, 0, 0, 0, 0, 0),	// dmac
+ 	BCI(1, 0, 1, 0, 1, 1, 0, 0, BCI_TYPE_INT),	// iload_0_iconst_N
+@@ -1302,6 +1307,16 @@
+ 	break;
+       }
+ 
++    case opc_invokedynamic:
++      bci += 5;
++      break;
++    case opc_fast_aldc_w:
++      bci += 3;
++      break;
++    case opc_fast_aldc:
++      bci += 2;
++      break;
++
+       case opc_jsr: {
+ 	int off = GET_JAVA_S2(code_base+bci+1);
+ 	if (off < 0) bc_stackinfo[bci+off] |= BC_BACK_TARGET;
+@@ -1804,6 +1819,21 @@
+ 	break;
+       }
+ 
++      case opc_invokedynamic: {
++	int site_index = GET_NATIVE_U4(code_base+bci+1);
++	constantPoolOop pool = jinfo->method->constants();
++	int main_index = pool->cache()->secondary_entry_at(site_index)->main_entry_index();
++	// int pool_index = pool->cache()->entry_at(main_index)->constant_pool_index();
++	Symbol *sig = pool->signature_ref_at(main_index);
++	const jbyte *base = sig->base();
++
++	//tty->print("%d: %s: %s\n", opcode, name->as_C_string(), sig->as_C_string());
++	stackdepth += method_stackchange(base);
++	opcode = code_base[bci];
++	bci += 5;
++	break;
++      }
++
+       case opc_invokeresolved:
+       case opc_invokespecialresolved:
+       case opc_invokestaticresolved:
+@@ -5249,10 +5279,17 @@
+     stackdepth = stackinfo & ~BC_FLAGS_MASK;
+     bc_stackinfo[bci] = (stackinfo & BC_FLAGS_MASK) | (codebuf->idx * 2) | BC_COMPILED;
+ 
+-    if (opcode > OPC_LAST_JAVA_OP && opcode != opc_return_register_finalizer) {
+-      if (Bytecodes::is_defined((Bytecodes::Code)opcode))
+-	opcode = (unsigned)Bytecodes::java_code((Bytecodes::Code)opcode);
+-    }
++    if (opcode > OPC_LAST_JAVA_OP)
++      switch (opcode) {
++      default:
++	if (Bytecodes::is_defined((Bytecodes::Code)opcode))
++	  opcode = (unsigned)Bytecodes::java_code((Bytecodes::Code)opcode);
++	break;
++      case opc_return_register_finalizer:
++      case opc_fast_aldc_w:
++      case opc_fast_aldc:
++	break;
++      }
+ 
+     len = Bytecodes::length_for((Bytecodes::Code)opcode);
+     if (len <= 0) {
+@@ -6546,6 +6583,14 @@
+ 	break;
+       }
+ 
++    case opc_invokedynamic:
++    case opc_fast_aldc_w:
++    case opc_fast_aldc:
++      {
++	Thumb2_Exit(jinfo, H_EXIT_TO_INTERPRETER, bci, stackdepth);
++	break;
++      }
++
+       case opc_jsr_w:
+       case opc_jsr: {
+ 	Thumb2_Jsr(jinfo , bci, stackdepth);

@@ -1,0 +1,59 @@
+# HG changeset patch
+# User aph
+# Date 1338991762 14400
+#      Wed Jun 06 10:09:22 2012 -0400
+# Node ID 7e952fe038821e949a5c07362e4f30b0a5d7bccc
+# Parent  392b9d0730b83a8f095db8748a9eab0acb7b58e0
+Fix JIT bug that miscompiles org.eclipse.ui.internal.contexts.ContextAuthority.sourceChanged
+2012-06-06  Andrew Haley  <aph@redhat.com>
+
+	* thumb2.cpp (Thumb2_Compile): Ask the CompilerOracle if we should
+	compile this method.
+	(Thumb2_iOp): Use a temporary to hold the shift count.
+
+diff --git a/src/cpu/zero/vm/thumb2.cpp b/src/cpu/zero/vm/thumb2.cpp
+--- openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
++++ openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
+@@ -68,6 +68,7 @@
+ #include <ucontext.h>
+ #include "precompiled.hpp"
+ #include "interpreter/bytecodes.hpp"
++#include "compiler/compilerOracle.hpp"
+ 
+ #define opc_nop			0x00
+ #define opc_aconst_null		0x01
+@@ -3969,8 +3970,12 @@
+   case opc_ishl:
+   case opc_ishr:
+   case opc_iushr:
+-    and_imm(jinfo->codebuf, r_rho, r_rho, 31);
+-    break;
++    {
++      unsigned tmp_reg = Thumb2_Tmp(jinfo, 1 << r_lho | 1 << r_rho | 1 << r);
++      and_imm(jinfo->codebuf, tmp_reg, r_rho, 31);
++      r_rho = tmp_reg;
++      break;
++    }
+   }
+   dop_reg(jinfo->codebuf, dOps[opc-opc_iadd], r, r_lho, r_rho, 0, 0);
+ }
+@@ -7044,10 +7049,15 @@
+   if (!(CPUInfo & ARCH_THUMB2))
+ 	UseCompiler = false;
+ 
+-  if (!UseCompiler || method->is_not_compilable()) {
+-	ic->set(ic->state(), 1);
+-	bc->set(ic->state(), 1);
+-	return 0;
++  {
++    bool ignore;
++    methodHandle mh(thread, method);
++    if (!UseCompiler || method->is_not_compilable()
++	|| CompilerOracle::should_exclude(mh, ignore)) {
++      ic->set(ic->state(), 1);
++      bc->set(ic->state(), 1);
++      return 0;
++    }
+   }
+ 
+   slow_entry = *(unsigned *)method->from_interpreted_entry();

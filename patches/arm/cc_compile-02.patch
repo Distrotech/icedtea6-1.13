@@ -1,0 +1,46 @@
+# HG changeset patch
+# User andrew
+# Date 1374078604 -3600
+#      Wed Jul 17 17:30:04 2013 +0100
+# Node ID c93fcd47982ff8d85dcd2e091634b21574b4ae8a
+# Parent  4e032c676dc89b4e313bede0b1c8c1b4bfb229ca
+Remove C++ flags from CC_COMPILE and fix usage in zeroshark.make.
+
+diff --git a/make/linux/makefiles/rules.make b/make/linux/makefiles/rules.make
+--- openjdk/hotspot/make/linux/makefiles/rules.make
++++ openjdk/hotspot/make/linux/makefiles/rules.make
+@@ -31,7 +31,7 @@
+ DEMANGLE        = $(DEMANGLER) < $@ > .$@ && mv -f .$@ $@
+ 
+ # $(CC) is the c compiler (cc/gcc), $(CXX) is the c++ compiler (CC/g++).
+-CC_COMPILE       = $(CC) $(CXXFLAGS) $(CFLAGS)
++CC_COMPILE       = $(CC) $(CXXFLAGS)
+ CXX_COMPILE      = $(CXX) $(CXXFLAGS) $(CFLAGS)
+ 
+ AS.S            = $(AS) $(ASFLAGS)
+diff --git a/make/linux/makefiles/zeroshark.make b/make/linux/makefiles/zeroshark.make
+--- openjdk/hotspot/make/linux/makefiles/zeroshark.make
++++ openjdk/hotspot/make/linux/makefiles/zeroshark.make
+@@ -41,18 +41,17 @@
+ 	./mkoffsets > $@
+ 
+ bytecodes_arm.s: bytecodes_arm.def mkbc
+-	@echo Generatine ARM assembler bytecode sequences
+-	$(CC_COMPILE) -E -x c++ - < $< | ./mkbc - $@ $(COMPILE_DONE)
++	@echo Generating ARM assembler bytecode sequences
++	$(CXX_COMPILE) -E - < $< | ./mkbc - $@ $(COMPILE_DONE)
+ 
+-# Can't use $(CC_COMPILE) as it contains C++ flags
+ mkbc:	$(GAMMADIR)/tools/mkbc.c
+ 	@echo Compiling mkbc tool
+-	$(CC) -o $@ $< $(COMPILE_DONE)
++	$(CC_COMPILE) -o $@ $< $(COMPILE_DONE)
+ 
+ mkoffsets:	asm_helper.cpp
+ 	@echo Compiling offset generator
+ 	$(QUIETLY) $(REMOVE_TARGET)
+-	$(CC_COMPILE) -DSTATIC_OFFSETS -o $@ $< $(COMPILE_DONE)
++	$(CXX_COMPILE) -DSTATIC_OFFSETS -o $@ $< $(COMPILE_DONE)
+ 
+ endif
+ 

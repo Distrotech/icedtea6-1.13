@@ -1,0 +1,32 @@
+# HG changeset patch
+# User aph
+# Date 1333361388 14400
+#      Mon Apr 02 06:09:48 2012 -0400
+# Node ID b0e8fbcb7413bc8246497d48aa436cf6b1f2c209
+# Parent  dc9aad1d1e45352c623a21f8c9f7da1356a44a40
+Revert change to -O0
+
+diff --git a/make/linux/makefiles/fastdebug.make b/make/linux/makefiles/fastdebug.make
+--- openjdk/hotspot/make/linux/makefiles/fastdebug.make
++++ openjdk/hotspot/make/linux/makefiles/fastdebug.make
+@@ -31,7 +31,7 @@
+ # (OPT_CFLAGS/SLOWER is also available, to alter compilation of buggy files)
+ 
+ ifeq ($(BUILDARCH), ia64)
+-  # Bug in GCC, causes hang.  -O1 will override the -O0 specified earlier
++  # Bug in GCC, causes hang.  -O1 will override the -O3 specified earlier
+   OPT_CFLAGS/callGenerator.o += -O1
+   OPT_CFLAGS/ciTypeFlow.o += -O1
+   OPT_CFLAGS/compile.o += -O1
+diff --git a/make/linux/makefiles/gcc.make b/make/linux/makefiles/gcc.make
+--- openjdk/hotspot/make/linux/makefiles/gcc.make
++++ openjdk/hotspot/make/linux/makefiles/gcc.make
+@@ -169,7 +169,7 @@
+ CFLAGS_WARN/BYFILE = $(CFLAGS_WARN/$@)$(CFLAGS_WARN/DEFAULT$(CFLAGS_WARN/$@)) 
+ 
+ # The flags to use for an Optimized g++ build
+-OPT_CFLAGS += -O0
++OPT_CFLAGS += -O3
+ 
+ # Hotspot uses very unstrict aliasing turn this optimization off
+ OPT_CFLAGS += -fno-strict-aliasing

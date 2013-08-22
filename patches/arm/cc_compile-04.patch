@@ -1,0 +1,20 @@
+# HG changeset patch
+# User andrew
+# Date 1374780484 -3600
+#      Thu Jul 25 20:28:04 2013 +0100
+# Node ID ca2cc93a664023cffde25c5c3a1d53db44db9474
+# Parent  d24281f1ddc22054ece6636f26d884cfbca38bf6
+Tell gcc explicitly that the input from stdin is C++, allowing C++ flags to be used.
+
+diff --git a/make/linux/makefiles/zeroshark.make b/make/linux/makefiles/zeroshark.make
+--- openjdk/hotspot/make/linux/makefiles/zeroshark.make
++++ openjdk/hotspot/make/linux/makefiles/zeroshark.make
+@@ -42,7 +42,7 @@
+ 
+ bytecodes_arm.s: bytecodes_arm.def mkbc
+ 	@echo Generating ARM assembler bytecode sequences
+-	$(CXX_COMPILE) -E - < $< | ./mkbc - $@ $(COMPILE_DONE)
++	$(CXX_COMPILE) -E -x c++ - < $< | ./mkbc - $@ $(COMPILE_DONE)
+ 
+ mkbc:	$(GAMMADIR)/tools/mkbc.c
+ 	@echo Compiling mkbc tool

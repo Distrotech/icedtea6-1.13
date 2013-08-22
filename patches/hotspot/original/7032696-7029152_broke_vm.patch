@@ -1,0 +1,52 @@
+# HG changeset patch
+# User kvn
+# Date 1301602954 25200
+#      Thu Mar 31 13:22:34 2011 -0700
+# Node ID cb162b348743609de50b12e3becef670d6cadc1b
+# Parent  38fea01eb669970fa9252530c1ea186631136b4b
+7032696: Fix for 7029152 broke VM
+Summary: StrIntrinsicNode::Ideal() should not optimize memory during Parse.
+Reviewed-by: jrose, never
+
+diff --git a/src/share/vm/opto/loopTransform.cpp b/src/share/vm/opto/loopTransform.cpp
+--- openjdk/hotspot/src/share/vm/opto/loopTransform.cpp
++++ openjdk/hotspot/src/share/vm/opto/loopTransform.cpp
+@@ -432,6 +432,12 @@
+     return false;
+   }
+ 
++  // Currently we don't have policy to optimize one iteration loops.
++  // Maximally unrolling transformation is used for that:
++  // it is peeled and the original loop become non reachable (dead).
++  if (trip_count == 1)
++    return true;
++
+   // Do not unroll a loop with String intrinsics code.
+   // String intrinsics are large and have loops.
+   for (uint k = 0; k < _body.size(); k++) {
+diff --git a/src/share/vm/opto/memnode.cpp b/src/share/vm/opto/memnode.cpp
+--- openjdk/hotspot/src/share/vm/opto/memnode.cpp
++++ openjdk/hotspot/src/share/vm/opto/memnode.cpp
+@@ -2628,12 +2628,16 @@
+ Node *StrIntrinsicNode::Ideal(PhaseGVN *phase, bool can_reshape) {
+   if (remove_dead_region(phase, can_reshape)) return this;
+ 
+-  Node* mem = phase->transform(in(MemNode::Memory));
+-  // If transformed to a MergeMem, get the desired slice
+-  uint alias_idx = phase->C->get_alias_index(adr_type());
+-  mem = mem->is_MergeMem() ? mem->as_MergeMem()->memory_at(alias_idx) : mem;
+-  if (mem != in(MemNode::Memory))
+-    set_req(MemNode::Memory, mem);
++  if (can_reshape) {
++    Node* mem = phase->transform(in(MemNode::Memory));
++    // If transformed to a MergeMem, get the desired slice
++    uint alias_idx = phase->C->get_alias_index(adr_type());
++    mem = mem->is_MergeMem() ? mem->as_MergeMem()->memory_at(alias_idx) : mem;
++    if (mem != in(MemNode::Memory)) {
++      set_req(MemNode::Memory, mem);
++      return this;
++    }
++  }
+   return NULL;
+ }
+ 

@@ -1,0 +1,135 @@
+# HG changeset patch
+# User aph
+# Date 1338300671 14400
+#      Tue May 29 10:11:11 2012 -0400
+# Node ID 7c2f5538e02d23dd78c2b3847bc3865d946184a4
+# Parent  3d357a7b7112245d267838138e0193633b0ba36d
+Phase 1
+
+diff --git a/src/cpu/zero/vm/thumb2.cpp b/src/cpu/zero/vm/thumb2.cpp
+--- openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
++++ openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
+@@ -3168,6 +3168,8 @@
+   unsigned i;
+   Reg r;
+ 
++  if (nregs == 0)
++    return;
+   JASSERT(nregs > 0, "nregs must be > 0");
+   if (nregs == 1) {
+     ldr_imm(codebuf, regs[0], Rstack, 4, 0, 1);
+@@ -3445,6 +3447,19 @@
+   jstack->depth = 0;
+ }
+ 
++#define SAVE_STACK(JSTACK)					\
++  unsigned saved_stack_elements[JSTACK->depth];			\
++  unsigned saved_stack_depth;					\
++  memcpy(saved_stack_elements, JSTACK->stack,			\
++	 JSTACK->depth * sizeof saved_stack_elements[0]);	\
++  saved_stack_depth = JSTACK->depth;
++
++#define RESTORE_STACK(JSTACK, CODEBUF)					\
++  Thumb2_Pop_Multiple(CODEBUF, saved_stack_elements, saved_stack_depth); \
++  memcpy(JSTACK->stack, saved_stack_elements,				\
++	 JSTACK->depth * sizeof saved_stack_elements[0]);		\
++  JSTACK->depth = saved_stack_depth;
++
+ // Call this when we are about to corrupt a local
+ // The local may already be on the stack
+ // For example
+@@ -4164,7 +4179,6 @@
+ 
+ void Thumb2_Safepoint(Thumb2_Info *jinfo, int stackdepth, int bci, int offset)
+ {
+-  Thumb2_Flush(jinfo);
+   // normal case: read the polling page and branch to skip
+   // the safepoint test
+   // abnormal case: read the polling page, trap to handler
+@@ -4239,33 +4253,31 @@
+   // now write a magic word after the branch so the signal handler can
+   // test that a polling page read is kosher
+   out_16(jinfo->codebuf, THUMB2_POLLING_PAGE_MAGIC);
+-  // now the safepoint polling code itself
+-  // n.b. no need for save or restore of locals at return i.e. when offset == 0
+-  //if (offset != 0) {
++
++  {
++    SAVE_STACK(jinfo->jstack);
++    Thumb2_Flush(jinfo);
++    // now the safepoint polling code itself
++    // n.b. no need for save or restore of locals at return i.e. when offset == 0
++    //if (offset != 0) {
+     Thumb2_save_locals(jinfo, stackdepth);
+     //}
+ 
+-  // The frame walking code used by the garbage collector
+-  // (frame::interpreter_frame_tos_address()) assumes that the stack
+-  // pointer points one word below the top item on the stack, so we
+-  // have to adjust the SP saved in istate accordingly.  If we don't,
+-  // the value on TOS won't be seen by the GC and we will crash later.
+-  sub_imm(jinfo->codebuf, ARM_R0, Rstack, 4);
+-  store_istate(jinfo, ARM_R0, ISTATE_STACK, stackdepth);
+-
+-  mov_imm(jinfo->codebuf, ARM_R1, bci+CONSTMETHOD_CODEOFFSET);
+-  add_imm(jinfo->codebuf, ARM_R2, ISTATE_REG(jinfo),
+-	  ISTATE_OFFSET(jinfo, stackdepth, 0));
+-  bl(jinfo->codebuf, handlers[H_SAFEPOINT]);
+-  //if (offset != 0) {
++    mov_imm(jinfo->codebuf, ARM_R1, bci+CONSTMETHOD_CODEOFFSET);
++    add_imm(jinfo->codebuf, ARM_R2, ISTATE_REG(jinfo),
++	    ISTATE_OFFSET(jinfo, stackdepth, 0));
++    bl(jinfo->codebuf, handlers[H_SAFEPOINT]);
++    //if (offset != 0) {
+     Thumb2_restore_locals(jinfo, stackdepth);
+     //}
+-  if (offset < 0) {
+-    // needs another unconditional backward branch
+-    branch_uncond(jinfo->codebuf, dest);
+-  } else {
+-    // patch in the forward skip branch
+-  branch_narrow_patch(jinfo->codebuf, read_loc + 2);
++    RESTORE_STACK(jinfo->jstack, jinfo->codebuf);
++    if (offset < 0) {
++      // needs another unconditional backward branch
++      branch_uncond(jinfo->codebuf, dest);
++    } else {
++      // patch in the forward skip branch
++      branch_narrow_patch(jinfo->codebuf, read_loc + 2);
++    }
+   }
+ }
+ 
+@@ -4467,7 +4479,7 @@
+       branch_uncond(jinfo->codebuf, ret_idx);
+       return;
+     }
+-    if (OSPACE) jinfo->compiled_return = jinfo->codebuf->idx * 2;
++    jinfo->compiled_return = jinfo->codebuf->idx * 2;
+   } else {
+     if (opcode == opc_lreturn || opcode == opc_dreturn) {
+       Thumb2_Fill(jinfo, 2);
+@@ -4482,7 +4494,7 @@
+         branch_uncond(jinfo->codebuf, ret_idx);
+         return;
+       }
+-      if (OSPACE) jinfo->compiled_word_return[r] = jinfo->codebuf->idx * 2;
++      jinfo->compiled_word_return[r] = jinfo->codebuf->idx * 2;
+     }
+   }
+ 
+@@ -7847,6 +7859,14 @@
+   handlers[H_SAFEPOINT] = out_pos(&codebuf);
+   stm(&codebuf, (1<<ARM_LR), ARM_SP, PUSH_FD, 1);
+ 
++  // The frame walking code used by the garbage collector
++  // (frame::interpreter_frame_tos_address()) assumes that the stack
++  // pointer points one word below the top item on the stack, so we
++  // have to adjust the SP saved in istate accordingly.  If we don't,
++  // the value on TOS won't be seen by the GC and we will crash later.
++  sub_imm(&codebuf, ARM_R0, Rstack, 4);
++  str_imm(&codebuf, ARM_R0, ARM_R2, ISTATE_STACK, 1, 0);
++
+   // Set up BytecodeInterpreter->_bcp for the GC
+   // bci+CONSTMETHOD_CODEOFFSET is passed in ARM_R1
+   // istate is passed in ARM_R2

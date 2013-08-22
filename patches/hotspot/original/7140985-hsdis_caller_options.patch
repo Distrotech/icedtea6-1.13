@@ -1,0 +1,23 @@
+# HG changeset patch
+# User kvn
+# Date 1328923205 28800
+#      Fri Feb 10 17:20:05 2012 -0800
+# Node ID de34c646c3f7ef4d027293c427451df307054299
+# Parent  73df3733f2eba06a91130e825b2de24256e58378
+7140985: HSDIS does not handle caller options correctly
+Summary: Fix typo.
+Reviewed-by: jrose, kvn
+Contributed-by: Andrew Haley <aph@redhat.com>
+
+diff --git a/src/share/tools/hsdis/hsdis.c b/src/share/tools/hsdis/hsdis.c
+--- openjdk/hotspot/src/share/tools/hsdis/hsdis.c
++++ openjdk/hotspot/src/share/tools/hsdis/hsdis.c
+@@ -356,7 +356,7 @@
+       if (plen > mach_size)  plen = mach_size;
+       strncpy(mach_option, p, plen);
+       mach_option[plen] = '\0';
+-    } else if (plen > 6 && strncmp(p, "hsdis-", 6)) {
++    } else if (plen > 6 && strncmp(p, "hsdis-", 6) == 0) {
+       // do not pass these to the next level
+     } else {
+       /* just copy it; {i386,sparc}-dis.c might like to see it  */

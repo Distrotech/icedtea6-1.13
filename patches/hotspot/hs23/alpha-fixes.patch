@@ -1,0 +1,21 @@
+diff -Nru openjdk.orig/hotspot/agent/src/os/linux/Makefile openjdk/hotspot/agent/src/os/linux/Makefile
+--- openjdk.orig/hotspot/agent/src/os/linux/Makefile	2013-06-04 18:47:35.000000000 +0100
++++ openjdk/hotspot/agent/src/os/linux/Makefile	2013-08-13 00:16:56.692990253 +0100
+@@ -40,7 +40,7 @@
+ 
+ LIBS     = -lthread_db
+ 
+-CFLAGS   = -c -fPIC -g -D_GNU_SOURCE -D$(ARCH) $(INCLUDES) -D_FILE_OFFSET_BITS=64
++CFLAGS   = -c -fPIC -g -D_GNU_SOURCE -D_$(ARCH)_ $(if $(filter $(ARCH),alpha),,-D$(ARCH)) $(INCLUDES) -D_FILE_OFFSET_BITS=64
+ 
+ LIBSA = $(ARCH)/libsaproc.so
+ 
+@@ -73,7 +73,7 @@
+ 	$(GCC) -shared $(LFLAGS_LIBSA) -o $(LIBSA) $(OBJS) $(LIBS)
+ 
+ test.o: test.c
+-	$(GCC) -c -o test.o -g -D_GNU_SOURCE -D$(ARCH) $(INCLUDES) test.c
++	$(GCC) -c -o test.o -g -D_GNU_SOURCE -D_$(ARCH)_ $(if $(filter $(ARCH),alpha),,-D$(ARCH)) $(INCLUDES) test.c
+ 
+ test: test.o
+ 	$(GCC) -o test test.o -L$(ARCH) -lsaproc $(LIBS)

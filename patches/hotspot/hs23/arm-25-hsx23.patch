@@ -1,0 +1,53 @@
+# HG changeset patch
+# User chrisphi
+# Date 1373663895 -3600
+#      Fri Jul 12 22:18:15 2013 +0100
+# Node ID 84b9ad9615531b4f957a2ebd760e928ac47590ee
+# Parent  920cd25ec34c2d5ac14081c37c196bb6630fcf58
+Changes for HSX23
+
+diff --git a/src/cpu/zero/vm/asm_helper.cpp b/src/cpu/zero/vm/asm_helper.cpp
+--- openjdk/hotspot/src/cpu/zero/vm/asm_helper.cpp
++++ openjdk/hotspot/src/cpu/zero/vm/asm_helper.cpp
+@@ -590,7 +590,7 @@
+   nl();
+   print_def("JNIHANDLEBLOCK_TOP", offset_of(JNIHandleBlock, _top));
+   nl();
+-  print_def("KLASS_PART", klassOopDesc::klass_part_offset_in_bytes());
++  print_def("KLASS_PART", sizeof(klassOopDesc));
+   print_def("KLASS_ACCESSFLAGS", offset_of(Klass, _access_flags));
+   print_def("KLASS_JAVA_MIRROR", offset_of(Klass, _java_mirror));
+   print_def("INSTANCEKLASS_INITSTATE", offset_of(instanceKlass, _init_state));
+diff --git a/src/share/vm/utilities/vmError.cpp b/src/share/vm/utilities/vmError.cpp
+--- openjdk/hotspot/src/share/vm/utilities/vmError.cpp
++++ openjdk/hotspot/src/share/vm/utilities/vmError.cpp
+@@ -255,7 +255,7 @@
+ }
+ 
+ #ifdef PRODUCT
+-extern "C" void ps() {
++extern "C" void _ps() {
+   fdStream out(defaultStream::output_fd());
+   JavaThread* thread = JavaThread::active();
+   char *buf = new char[1024*1024];
+diff --git a/src/share/vm/utilities/vmError.hpp b/src/share/vm/utilities/vmError.hpp
+--- openjdk/hotspot/src/share/vm/utilities/vmError.hpp
++++ openjdk/hotspot/src/share/vm/utilities/vmError.hpp
+@@ -31,7 +31,7 @@
+ class VM_ReportJavaOutOfMemory;
+ 
+ #ifdef PRODUCT
+-extern "C" void ps();
++extern "C" void _ps();
+ #endif // PRODUCT
+ 
+ class VMError : public StackObj {
+@@ -103,7 +103,7 @@
+   bool should_report_bug(unsigned int id) { return id != oom_error; }
+ 
+ #ifdef PRODUCT
+-  friend void ps();
++  friend void _ps();
+ #endif // PRODUCT
+ 
+ public:

@@ -1,0 +1,52 @@
+# HG changeset patch
+# User aph
+# Date 1339165537 14400
+#      Fri Jun 08 10:25:37 2012 -0400
+# Node ID 716e3ad6e2c668be8171ab218c9b16402feb03c8
+# Parent  ec8bef59601010ebed1be95e372f557cb2daf6fa
+Fix call to handle_special_method().  Fix compareAndSwapLong.
+2012-06-08  Andrew Haley  <aph@redhat.com>
+
+	* thumb2.cpp (Thumb2_codegen): Move call to
+	handle_special_method() outside test.
+	(handle_special_method: _compareAndSwapLong): Save/restore all
+	locals, not just locals of ref type.
+
+diff --git a/src/cpu/zero/vm/thumb2.cpp b/src/cpu/zero/vm/thumb2.cpp
+--- openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
++++ openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
+@@ -5000,7 +5000,7 @@
+       unsigned expect_hi = POP(jstack);
+ 
+       Thumb2_Flush(jinfo);
+-      Thumb2_save_local_refs(jinfo, stackdepth - 4); // 4 args popped above
++      Thumb2_save_all_locals(jinfo, stackdepth - 4); // 4 args popped above
+ 
+       // instance of java.lang.Unsafe:
+       ldr_imm(jinfo->codebuf, ARM_LR, Rstack, 3 * wordSize, 1, 0);
+@@ -5033,7 +5033,7 @@
+       mov_imm(codebuf, result, 1);
+       fullBarrier(codebuf);
+ 
+-      Thumb2_restore_local_refs(jinfo, stackdepth - 4); // 4 args popped above
++      Thumb2_restore_all_locals(jinfo, stackdepth - 4); // 4 args popped above
+       add_imm(codebuf, Rstack, Rstack, 4 * wordSize);
+       PUSH(jstack, result);
+     }
+@@ -6145,11 +6145,13 @@
+ 	}
+ 
+ 	callee = opcode == opc_invokevirtual ? (methodOop)cache->f2() : (methodOop)cache->f1();
+-	if ((opcode != opc_invokevirtual || cache->is_vfinal()) && callee->is_accessor()) {
+-
++
++	if (opcode != opc_invokevirtual || cache->is_vfinal()) {
+ 	  if (handle_special_method(callee, jinfo, stackdepth))
+ 	    break;
+-
++	}
++
++	if ((opcode != opc_invokevirtual || cache->is_vfinal()) && callee->is_accessor()) {
+ 	  u1 *code = callee->code_base();
+ 	  int index = GET_NATIVE_U2(&code[2]);
+ 	  constantPoolCacheOop callee_cache = callee->constants()->cache();

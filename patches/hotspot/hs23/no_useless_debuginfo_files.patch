@@ -1,0 +1,211 @@
+diff -Nru openjdk.orig/hotspot/make/linux/makefiles/defs.make openjdk/hotspot/make/linux/makefiles/defs.make
+--- openjdk.orig/hotspot/make/linux/makefiles/defs.make	2013-08-15 12:35:17.268593696 +0100
++++ openjdk/hotspot/make/linux/makefiles/defs.make	2013-08-15 13:38:11.757283349 +0100
+@@ -232,10 +232,12 @@
+ # client and server subdirectories have symbolic links to ../libjsig.so
+ EXPORT_LIST += $(EXPORT_JRE_LIB_ARCH_DIR)/libjsig.$(LIBRARY_SUFFIX)
+ ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
+-  ifeq ($(ZIP_DEBUGINFO_FILES),1)
+-    EXPORT_LIST += $(EXPORT_JRE_LIB_ARCH_DIR)/libjsig.diz
+-  else
+-    EXPORT_LIST += $(EXPORT_JRE_LIB_ARCH_DIR)/libjsig.debuginfo
++  ifneq ($(STRIP_POLICY),no_strip)
++    ifeq ($(ZIP_DEBUGINFO_FILES),1)
++      EXPORT_LIST += $(EXPORT_JRE_LIB_ARCH_DIR)/libjsig.diz
++    else
++      EXPORT_LIST += $(EXPORT_JRE_LIB_ARCH_DIR)/libjsig.debuginfo
++    endif
+   endif
+ endif
+ EXPORT_SERVER_DIR = $(EXPORT_JRE_LIB_ARCH_DIR)/server
+@@ -245,10 +247,12 @@
+ EXPORT_LIST += $(EXPORT_SERVER_DIR)/Xusage.txt
+ EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm.$(LIBRARY_SUFFIX)
+   ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
+-    ifeq ($(ZIP_DEBUGINFO_FILES),1)
+-      EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm.diz
+-    else
+-      EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm.debuginfo
++    ifneq ($(STRIP_POLICY),no_strip)
++      ifeq ($(ZIP_DEBUGINFO_FILES),1)
++        EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm.diz
++      else
++        EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm.debuginfo
++      endif
+     endif
+   endif
+ endif
+@@ -274,12 +278,14 @@
+ ADD_SA_BINARIES/sparc = $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.$(LIBRARY_SUFFIX) \
+                         $(EXPORT_LIB_DIR)/sa-jdi.jar 
+ ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
+-  ifeq ($(ZIP_DEBUGINFO_FILES),1)
+-    ADD_SA_BINARIES/x86   += $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.diz
+-    ADD_SA_BINARIES/sparc += $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.diz
+-  else
+-    ADD_SA_BINARIES/x86   += $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.debuginfo
+-    ADD_SA_BINARIES/sparc += $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.debuginfo
++  ifneq ($(STRIP_POLICY),no_strip)
++    ifeq ($(ZIP_DEBUGINFO_FILES),1)
++      ADD_SA_BINARIES/x86   += $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.diz
++      ADD_SA_BINARIES/sparc += $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.diz
++    else
++      ADD_SA_BINARIES/x86   += $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.debuginfo
++      ADD_SA_BINARIES/sparc += $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.debuginfo
++    endif
+   endif
+ endif
+ ADD_SA_BINARIES/ppc   = 
+diff -Nru openjdk.orig/hotspot/make/linux/makefiles/jsig.make openjdk/hotspot/make/linux/makefiles/jsig.make
+--- openjdk.orig/hotspot/make/linux/makefiles/jsig.make	2013-06-04 18:47:35.000000000 +0100
++++ openjdk/hotspot/make/linux/makefiles/jsig.make	2013-08-15 13:35:49.867056064 +0100
+@@ -62,8 +62,10 @@
+                          $(LFLAGS_JSIG) $(JSIG_DEBUG_CFLAGS) -o $@ $< -ldl
+ 	$(QUIETLY) [ -f $(LIBJSIG_G) ] || { ln -s $@ $(LIBJSIG_G); }
+ ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
++  ifneq ($(STRIP_POLICY),no_strip)
+ 	$(QUIETLY) $(OBJCOPY) --only-keep-debug $@ $(LIBJSIG_DEBUGINFO)
+ 	$(QUIETLY) $(OBJCOPY) --add-gnu-debuglink=$(LIBJSIG_DEBUGINFO) $@
++  endif
+   ifeq ($(STRIP_POLICY),all_strip)
+ 	$(QUIETLY) $(STRIP) $@
+   else
+diff -Nru openjdk.orig/hotspot/make/linux/makefiles/saproc.make openjdk/hotspot/make/linux/makefiles/saproc.make
+--- openjdk.orig/hotspot/make/linux/makefiles/saproc.make	2013-06-04 18:47:35.000000000 +0100
++++ openjdk/hotspot/make/linux/makefiles/saproc.make	2013-08-15 13:35:29.918742922 +0100
+@@ -91,8 +91,10 @@
+ 	           -lthread_db
+ 	$(QUIETLY) [ -f $(LIBSAPROC_G) ] || { ln -s $@ $(LIBSAPROC_G); }
+ ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
++  ifneq ($(STRIP_POLICY),no_strip)
+ 	$(QUIETLY) $(OBJCOPY) --only-keep-debug $@ $(LIBSAPROC_DEBUGINFO)
+ 	$(QUIETLY) $(OBJCOPY) --add-gnu-debuglink=$(LIBSAPROC_DEBUGINFO) $@
++  endif
+   ifeq ($(STRIP_POLICY),all_strip)
+ 	$(QUIETLY) $(STRIP) $@
+   else
+diff -Nru openjdk.orig/hotspot/make/linux/makefiles/vm.make openjdk/hotspot/make/linux/makefiles/vm.make
+--- openjdk.orig/hotspot/make/linux/makefiles/vm.make	2013-08-15 12:35:21.404659098 +0100
++++ openjdk/hotspot/make/linux/makefiles/vm.make	2013-08-15 13:35:05.146354054 +0100
+@@ -346,8 +346,10 @@
+ 	}
+ ifeq ($(CROSS_COMPILE_ARCH),)
+   ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
++    ifneq ($(STRIP_POLICY),no_strip)
+ 	$(QUIETLY) $(OBJCOPY) --only-keep-debug $@ $(LIBJVM_DEBUGINFO)
+ 	$(QUIETLY) $(OBJCOPY) --add-gnu-debuglink=$(LIBJVM_DEBUGINFO) $@
++    endif
+     ifeq ($(STRIP_POLICY),all_strip)
+ 	$(QUIETLY) $(STRIP) $@
+     else
+diff -Nru openjdk.orig/hotspot/make/solaris/makefiles/dtrace.make openjdk/hotspot/make/solaris/makefiles/dtrace.make
+--- openjdk.orig/hotspot/make/solaris/makefiles/dtrace.make	2013-06-04 18:47:35.000000000 +0100
++++ openjdk/hotspot/make/solaris/makefiles/dtrace.make	2013-08-15 13:34:18.545622525 +0100
+@@ -122,6 +122,7 @@
+ # This problem has only been seen on Solaris X64, but we call this tool
+ # on all Solaris builds just in case.
+ 	$(QUIETLY) $(FIX_EMPTY_SEC_HDR_FLAGS) $@
++  ifneq ($(STRIP_POLICY),no_strip)
+ 	$(QUIETLY) $(OBJCOPY) --only-keep-debug $@ $(XLIBJVM_DB_DEBUGINFO)
+ # $(OBJCOPY) --add-gnu-debuglink=... corrupts SUNW_* sections.
+ # Use $(ADD_GNU_DEBUGLINK) until a fixed $(OBJCOPY) is available.
+@@ -129,6 +130,7 @@
+ # Do this part in the $(XLIBJVM_DIR) subdir so $(XLIBJVM_DIR) is not
+ # in the link name:
+ 	( cd $(XLIBJVM_DIR) && $(ADD_GNU_DEBUGLINK) $(LIBJVM_DB_DEBUGINFO) $(LIBJVM_DB) )
++  endif
+   ifeq ($(STRIP_POLICY),all_strip)
+ 	$(QUIETLY) $(STRIP) $@
+   else
+@@ -156,12 +158,14 @@
+ ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
+ # Clear the SHF_ALLOC flag (if set) from empty section headers.
+ 	$(QUIETLY) $(FIX_EMPTY_SEC_HDR_FLAGS) $@
++  ifneq ($(STRIP_POLICY),no_strip)
+ 	$(QUIETLY) $(OBJCOPY) --only-keep-debug $@ $(XLIBJVM_DTRACE_DEBUGINFO)
+ # $(OBJCOPY) --add-gnu-debuglink=... corrupts SUNW_* sections.
+ #         $(OBJCOPY) --add-gnu-debuglink=$(LIBJVM_DTRACE_DEBUGINFO) $(LIBJVM_DTRACE) ;
+ # Do this part in the $(XLIBJVM_DIR) subdir so $(XLIBJVM_DIR) is not
+ # in the link name:
+ 	( cd $(XLIBJVM_DIR) && $(ADD_GNU_DEBUGLINK) $(LIBJVM_DTRACE_DEBUGINFO) $(LIBJVM_DTRACE) )
++  endif
+   ifeq ($(STRIP_POLICY),all_strip)
+ 	$(QUIETLY) $(STRIP) $@
+   else
+@@ -228,10 +232,12 @@
+ ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
+ # Clear the SHF_ALLOC flag (if set) from empty section headers.
+ 	$(QUIETLY) $(FIX_EMPTY_SEC_HDR_FLAGS) $@
++  ifneq ($(STRIP_POLICY),no_strip)
+ 	$(QUIETLY) $(OBJCOPY) --only-keep-debug $@ $(LIBJVM_DB_DEBUGINFO)
+ # $(OBJCOPY) --add-gnu-debuglink=... corrupts SUNW_* sections.
+ #	$(QUIETLY) $(OBJCOPY) --add-gnu-debuglink=$(LIBJVM_DB_DEBUGINFO) $@
+ 	$(QUIETLY) $(ADD_GNU_DEBUGLINK) $(LIBJVM_DB_DEBUGINFO) $@
++  endif
+   ifeq ($(STRIP_POLICY),all_strip)
+ 	$(QUIETLY) $(STRIP) $@
+   else
+@@ -256,10 +262,12 @@
+ ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
+ # Clear the SHF_ALLOC flag (if set) from empty section headers.
+ 	$(QUIETLY) $(FIX_EMPTY_SEC_HDR_FLAGS) $@
++  ifneq ($(STRIP_POLICY),no_strip)
+ 	$(QUIETLY) $(OBJCOPY) --only-keep-debug $@ $(LIBJVM_DTRACE_DEBUGINFO)
+ # $(OBJCOPY) --add-gnu-debuglink=... corrupts SUNW_* sections.
+ #	$(QUIETLY) $(OBJCOPY) --add-gnu-debuglink=$(LIBJVM_DTRACE_DEBUGINFO) $@
+ 	$(QUIETLY) $(ADD_GNU_DEBUGLINK) $(LIBJVM_DTRACE_DEBUGINFO) $@
++  endif
+   ifeq ($(STRIP_POLICY),all_strip)
+ 	$(QUIETLY) $(STRIP) $@
+   else
+diff -Nru openjdk.orig/hotspot/make/solaris/makefiles/jsig.make openjdk/hotspot/make/solaris/makefiles/jsig.make
+--- openjdk.orig/hotspot/make/solaris/makefiles/jsig.make	2013-06-04 18:47:35.000000000 +0100
++++ openjdk/hotspot/make/solaris/makefiles/jsig.make	2013-08-15 13:32:50.344237932 +0100
+@@ -64,11 +64,13 @@
+ # This problem has only been seen on Solaris X64, but we call this tool
+ # on all Solaris builds just in case.
+ 	$(QUIETLY) $(FIX_EMPTY_SEC_HDR_FLAGS) $@
++  ifneq ($(STRIP_POLICY),no_strip)
+ 	$(QUIETLY) $(OBJCOPY) --only-keep-debug $@ $(LIBJSIG_DEBUGINFO)
+ # $(OBJCOPY) --add-gnu-debuglink=... corrupts SUNW_* sections.
+ # Use $(ADD_GNU_DEBUGLINK) until a fixed $(OBJCOPY) is available.
+ #	$(QUIETLY) $(OBJCOPY) --add-gnu-debuglink=$(LIBJSIG_DEBUGINFO) $@
+ 	$(QUIETLY) $(ADD_GNU_DEBUGLINK) $(LIBJSIG_DEBUGINFO) $@
++  endif
+   ifeq ($(STRIP_POLICY),all_strip)
+ 	$(QUIETLY) $(STRIP) $@
+   else
+diff -Nru openjdk.orig/hotspot/make/solaris/makefiles/saproc.make openjdk/hotspot/make/solaris/makefiles/saproc.make
+--- openjdk.orig/hotspot/make/solaris/makefiles/saproc.make	2013-06-04 18:47:35.000000000 +0100
++++ openjdk/hotspot/make/solaris/makefiles/saproc.make	2013-08-15 13:32:19.283754806 +0100
+@@ -115,11 +115,13 @@
+ # This problem has only been seen on Solaris X64, but we call this tool
+ # on all Solaris builds just in case.
+ 	$(QUIETLY) $(FIX_EMPTY_SEC_HDR_FLAGS) $@
++  ifneq ($(STRIP_POLICY),no_strip)
+ 	$(QUIETLY) $(OBJCOPY) --only-keep-debug $@ $(LIBSAPROC_DEBUGINFO)
+ # $(OBJCOPY) --add-gnu-debuglink=... corrupts SUNW_* sections.
+ # Use $(ADD_GNU_DEBUGLINK) until a fixed $(OBJCOPY) is available.
+ #	$(QUIETLY) $(OBJCOPY) --add-gnu-debuglink=$(LIBSAPROC_DEBUGINFO) $@
+ 	$(QUIETLY) $(ADD_GNU_DEBUGLINK) $(LIBSAPROC_DEBUGINFO) $@
++  endif
+   ifeq ($(STRIP_POLICY),all_strip)
+ 	$(QUIETLY) $(STRIP) $@
+   else
+diff -Nru openjdk.orig/hotspot/make/solaris/makefiles/vm.make openjdk/hotspot/make/solaris/makefiles/vm.make
+--- openjdk.orig/hotspot/make/solaris/makefiles/vm.make	2013-06-04 18:47:35.000000000 +0100
++++ openjdk/hotspot/make/solaris/makefiles/vm.make	2013-08-15 13:31:22.718878888 +0100
+@@ -300,11 +300,13 @@
+ # This problem has only been seen on Solaris X64, but we call this tool
+ # on all Solaris builds just in case.
+ 	$(QUIETLY) $(FIX_EMPTY_SEC_HDR_FLAGS) $@
++ ifneq ($(STRIP_POLICY),no_strip)
+ 	$(QUIETLY) $(OBJCOPY) --only-keep-debug $@ $(LIBJVM_DEBUGINFO)
+ # $(OBJCOPY) --add-gnu-debuglink=... corrupts SUNW_* sections.
+ # Use $(ADD_GNU_DEBUGLINK) until a fixed $(OBJCOPY) is available.
+ #	$(QUIETLY) $(OBJCOPY) --add-gnu-debuglink=$(LIBJVM_DEBUGINFO) $@
+ 	$(QUIETLY) $(ADD_GNU_DEBUGLINK) $(LIBJVM_DEBUGINFO) $@
++  endif
+   ifeq ($(STRIP_POLICY),all_strip)
+ 	$(QUIETLY) $(STRIP) $@
+   else

@@ -1,0 +1,29 @@
+# HG changeset patch
+# User aph
+# Date 1334150559 14400
+#      Wed Apr 11 09:22:39 2012 -0400
+# Node ID bbdfa2225c4366fb99afde607c9f19ad2f7fdad3
+# Parent  44561baab700f78dca72ede31d3d531fde893762
+Minor review cleanups.
+
+diff --git a/src/cpu/zero/vm/cppInterpreter_arm.S b/src/cpu/zero/vm/cppInterpreter_arm.S
+--- openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S
++++ openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S
+@@ -3138,7 +3138,7 @@
+ 
+ resolve_invokedynamic:
+ 	stmfd	arm_sp!, {lr}
+-	ldr	r0, [r8, #ISTATE_THREAD]
++	ldr	r0, [istate, #ISTATE_THREAD]
+ 	bl	_ZN18InterpreterRuntime21resolve_invokedynamicEP10JavaThread
+ 	ldmfd	arm_sp!, {pc}
+ 
+@@ -3152,7 +3152,7 @@
+ 	bl	_ZN14CppInterpreter19method_handle_entryEP13methodOopDesciP6Thread
+ 	ldmia	sp!, {regset, pc}
+ 
+-	// Common code for fast_aldc_w and fast_aldc_w
++	// Common code for fast_aldc and fast_aldc_w
+ # r0 = constpool cache entry
+ 	.macro	aldc	opc, seq_len
+ 	// Save the pool entry

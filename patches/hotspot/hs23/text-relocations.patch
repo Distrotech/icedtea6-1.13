@@ -1,0 +1,40 @@
+diff -Nru openjdk.orig/hotspot/make/linux/makefiles/gcc.make openjdk/hotspot/make/linux/makefiles/gcc.make
+--- openjdk.orig/hotspot/make/linux/makefiles/gcc.make	2013-08-13 00:55:07.094203656 +0100
++++ openjdk/hotspot/make/linux/makefiles/gcc.make	2013-08-14 15:01:09.867458248 +0100
+@@ -67,6 +67,12 @@
+ PICFLAG = -fPIC
+ endif
+ 
++ifneq ($(filter alpha parisc ppc ppc64 s390 s390x sparc sparc64 sparcv9,$(ZERO_LIBARCH)),)
++PICFLAG = -fPIC
++else
++PICFLAG = -fpic
++endif
++
+ VM_PICFLAG/LIBJVM = $(PICFLAG)
+ VM_PICFLAG/AOUT   =
+ VM_PICFLAG        = $(VM_PICFLAG/$(LINK_INTO))
+diff -Nru openjdk.orig/hotspot/make/linux/makefiles/rules.make openjdk/hotspot/make/linux/makefiles/rules.make
+--- openjdk.orig/hotspot/make/linux/makefiles/rules.make	2013-06-04 18:47:35.000000000 +0100
++++ openjdk/hotspot/make/linux/makefiles/rules.make	2013-08-14 15:02:09.188387281 +0100
+@@ -143,20 +143,10 @@
+ 
+ include $(GAMMADIR)/make/altsrc.make
+ 
+-# The non-PIC object files are only generated for 32 bit platforms.
+-ifdef LP64
+ %.o: %.cpp
+ 	@echo Compiling $<
+ 	$(QUIETLY) $(REMOVE_TARGET)
+ 	$(QUIETLY) $(COMPILE.CXX) $(DEPFLAGS) -o $@ $< $(COMPILE_DONE)
+-else
+-%.o: %.cpp
+-	@echo Compiling $<
+-	$(QUIETLY) $(REMOVE_TARGET)
+-	$(QUIETLY) $(if $(findstring $@, $(NONPIC_OBJ_FILES)), \
+-	   $(subst $(VM_PICFLAG), ,$(COMPILE.CXX)) $(DEPFLAGS) -o $@ $< $(COMPILE_DONE), \
+-	   $(COMPILE.CXX) $(DEPFLAGS) -o $@ $< $(COMPILE_DONE))
+-endif
+ 
+ %.o: %.s
+ 	@echo Assembling $<

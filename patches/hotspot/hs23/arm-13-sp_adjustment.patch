@@ -1,0 +1,31 @@
+# HG changeset patch
+# User aph
+# Date 1338209322 14400
+#      Mon May 28 08:48:42 2012 -0400
+# Node ID 3d357a7b7112245d267838138e0193633b0ba36d
+# Parent  0bebe238c22fb22628a6c1a375ace996a0c26cde
+Adjust saved SP when safepointing.
+2012-05-28  Andrew Haley  <aph@redhat.com>
+
+	* thumb2.cpp (Thumb2_Safepoint): Adjust saved SP when
+	safepointing.
+
+diff --git a/src/cpu/zero/vm/thumb2.cpp b/src/cpu/zero/vm/thumb2.cpp
+--- openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
++++ openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
+@@ -4244,6 +4244,15 @@
+   //if (offset != 0) {
+     Thumb2_save_locals(jinfo, stackdepth);
+     //}
++
++  // The frame walking code used by the garbage collector
++  // (frame::interpreter_frame_tos_address()) assumes that the stack
++  // pointer points one word below the top item on the stack, so we
++  // have to adjust the SP saved in istate accordingly.  If we don't,
++  // the value on TOS won't be seen by the GC and we will crash later.
++  sub_imm(jinfo->codebuf, ARM_R0, Rstack, 4);
++  store_istate(jinfo, ARM_R0, ISTATE_STACK, stackdepth);
++
+   mov_imm(jinfo->codebuf, ARM_R1, bci+CONSTMETHOD_CODEOFFSET);
+   add_imm(jinfo->codebuf, ARM_R2, ISTATE_REG(jinfo),
+ 	  ISTATE_OFFSET(jinfo, stackdepth, 0));

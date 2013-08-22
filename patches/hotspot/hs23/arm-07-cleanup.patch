@@ -1,0 +1,153 @@
+# HG changeset patch
+# User aph
+# Date 1334074921 14400
+#      Tue Apr 10 12:22:01 2012 -0400
+# Node ID 44561baab700f78dca72ede31d3d531fde893762
+# Parent  b0e8fbcb7413bc8246497d48aa436cf6b1f2c209
+Tidy up, minor comment changes.
+
+diff --git a/src/cpu/zero/vm/asm_helper.cpp b/src/cpu/zero/vm/asm_helper.cpp
+--- openjdk/hotspot/src/cpu/zero/vm/asm_helper.cpp
++++ openjdk/hotspot/src/cpu/zero/vm/asm_helper.cpp
+@@ -373,6 +373,11 @@
+ 	       err_msg(msg, opcode, name));
+ }
+ 
++extern "C" int Helper_target_offset_in_bytes()
++{
++  return java_lang_invoke_CallSite::target_offset_in_bytes();
++}
++
+ #endif // STATIC_OFFSETS
+ 
+ #ifdef STATIC_OFFSETS
+diff --git a/src/cpu/zero/vm/cppInterpreter_arm.S b/src/cpu/zero/vm/cppInterpreter_arm.S
+--- openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S
++++ openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S
+@@ -802,7 +802,7 @@
+         .word   empty_entry                     // empty method (code: _return)
+         .word   accessor_entry                  // accessor method (code: _aload_0, _getfield, _(a|i)return)
+         .word   normal_entry                    // abstract method (throws an AbstractMethodException)
+-        .word   method_handle_entry             // java.dyn.MethodHandles::invoke
++        .word   method_handle_entry             // java.lang.invoke.MethodHandles::invoke
+         .word   normal_entry                    // implementation of java.lang.Math.sin   (x)
+         .word   normal_entry                    // implementation of java.lang.Math.cos   (x)
+         .word   normal_entry                    // implementation of java.lang.Math.tan   (x)
+@@ -2747,6 +2747,7 @@
+ 	Opcode	fast_iload_N_iload_N
+ #endif
+ 	Opcode	undefined
++	// Decache to get better diagnostic info
+ 	DECACHE_JPC
+ 	DECACHE_STACK
+ 	ldr	r2, [dispatch, #Bytecodes_name_Address-XXX]
+@@ -3083,7 +3084,7 @@
+ 
+ 	// Get the offset from a call site to the corresponding target
+ 	// method handle
+-	bl	_ZN25java_lang_invoke_CallSite22target_offset_in_bytesEv
++	bl	Helper_target_offset_in_bytes
+ 	mov	lr, r0
+ 
+ 	// Restore the pool entry
+@@ -3093,7 +3094,7 @@
+ .abortentry119:
+ 	ldr	r0, [r0, lr]		// Method handle
+ 	ldr	r1, [istate, #ISTATE_THREAD]
+-.invokedynamic_invoke:
++
+ 	// Call the target method
+ 	bl	_ZN14CppInterpreter21process_method_handleEP7oopDescP6Thread
+ 
+@@ -3135,26 +3136,23 @@
+ 	CACHE_CP
+ 	DISPATCH_FINISH
+ 
+-.invokedynamic_methodDynamic:
+-	tst	r3, #flag_vfinalMethod
+-	ldrne	r0, [r0, #CP_OFFSET+8]
+-	bne	.invokedynamic_invoke
+-
+ resolve_invokedynamic:
+ 	stmfd	arm_sp!, {lr}
+ 	ldr	r0, [r8, #ISTATE_THREAD]
+ 	bl	_ZN18InterpreterRuntime21resolve_invokedynamicEP10JavaThread
+ 	ldmfd	arm_sp!, {pc}
+ 
++	// Handler for java.lang.invoke.MethodHandles::invoke
+ 	ALIGN_CODE
+ method_handle_entry:
+-	b	fast_method_handle_entry	
++ 	b	fast_method_handle_entry	
+ 	ALIGN_CODE
+ fast_method_handle_entry:
+ 	stmfd	arm_sp!, {regset, lr}
+ 	bl	_ZN14CppInterpreter19method_handle_entryEP13methodOopDesciP6Thread
+ 	ldmia	sp!, {regset, pc}
+ 
++	// Common code for fast_aldc_w and fast_aldc_w
+ # r0 = constpool cache entry
+ 	.macro	aldc	opc, seq_len
+ 	// Save the pool entry
+@@ -3183,12 +3181,14 @@
+ 	DISPATCH	\seq_len
+ 	.endm
+ 
++	// Handler for ldc MethodHandle
+ # r2 = [jpc, #1]
+ 	Opcode fast_aldc
+ 	DECACHE_STACK
+         add     r0, constpool, r2, lsl #4
+ 	aldc opc_fast_aldc, 2
+ 
++	// Handler for ldc_w MethodHandle
+ # r2 = [jpc, #1]
+ # r1 = [jpc, #2]
+ 	Opcode fast_aldc_w
+@@ -5163,8 +5163,8 @@
+ 	.word	do_invokevfinal	@ 226 0xe2
+ 	.word	do_fast_iload_iload	@ 227 0xe3
+ 	.word	do_fast_iload_iload_N	@ 228 0xe4
+-	.word	do_undefined	@ 229 0xe5
+-	.word	do_undefined	@ 230 0xe6
++	.word	do_fast_aldc		@ 229 0xe5
++	.word	do_fast_aldc_w	@ 230 0xe6
+ 	.word	do_return_register_finalizer	@ 231 0xe7
+ 	.word	do_undefined	@ 232 0xe8
+ 	.word	do_iload_0_iconst_N	@ 233 0xe9
+diff --git a/src/cpu/zero/vm/cppInterpreter_zero.cpp b/src/cpu/zero/vm/cppInterpreter_zero.cpp
+--- openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp
++++ openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp
+@@ -52,8 +52,6 @@
+ #include "shark/shark_globals.hpp"
+ #endif
+ 
+-#include <stdlib.h>
+-
+ #ifdef CC_INTERP
+ 
+ #define fixup_after_potential_safepoint()       \
+@@ -1685,11 +1683,9 @@
+   address entry_point = NULL;
+ 
+ #ifdef HOTSPOT_ASM
+-  if (getenv("OGGHZF_GFRF") == NULL) {
+     address asm_entry = asm_generate_method_entry(kind);
+     if (asm_entry)
+       return ((InterpreterGenerator*) this)->generate_entry(asm_entry);
+-    }
+ #endif // HOTSPOT_ASM
+ 
+   switch (kind) {
+diff --git a/src/cpu/zero/vm/thumb2.cpp b/src/cpu/zero/vm/thumb2.cpp
+--- openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
++++ openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
+@@ -1171,7 +1171,7 @@
+ 	BCI(3, 0, 0, 1, 0, 0, 0, 0, 0),	// invokespecial
+ 	BCI(3, 0, 0, 1, 0, 0, 0, 0, 0),	// invokestatic
+ 	BCI(3, 0, 0, 1, 0, 0, 0, 0, 0),	// invokeinterface
+-	BCI(0, 0, 0, 1, 0, 0, 0, 0, 0),	// xxxunusedxxx
++	BCI(5, 0, 0, 1, 0, 0, 0, 0, 0),	// invokedynamic
+ 	BCI(3, 0, 1, 0, 0, 0, 0, 0, 0),	// new
+ 	BCI(2, 1, 1, 0, 0, 0, 0, 0, 0),	// newarray
+ 	BCI(3, 1, 1, 0, 0, 0, 0, 0, 0),	// anewarray

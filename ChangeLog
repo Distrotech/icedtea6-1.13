@@ -1,3 +1,108 @@
+2013-08-20  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add patches from IcedTea's
+	HotSpot 23 (mainly the ARM port work).  Move
+	some patches back to being applied on both
+	versions of HotSpot.
+	(ports): Install ARM port in all builds.
+	(clean-ports): Likewise for uninstall.
+	* hotspot.map: Use HotSpot 23 from the 7u
+	tree.
+	* patches/arm/cc_compile-01.patch,
+	* patches/arm/cc_compile-02.patch,
+	* patches/arm/cc_compile-03.patch,
+	* patches/arm/cc_compile-04.patch,
+	* patches/arm/cc_compile-05.patch,
+	* patches/arm/cc_compile-06.patch,
+	* patches/hotspot/hs23/7188168-fix_debug_binaries.patch,
+	* patches/hotspot/hs23/aarch64.patch:
+	Patches from IcedTea's 2.3.x HotSpot.
+	* patches/hotspot/original/alpha-fixes.patch,
+	* patches/hotspot/hs23/alpha-fixes.patch:
+	Split from patches/alpha-fixes.patch.
+	* patches/hotspot/hs23/arm-01-hsx22.patch,
+	* patches/hotspot/hs23/arm-03-invokedynamic.patch,
+	* patches/hotspot/hs23/arm-04-invokedynamic_jit.patch,
+	* patches/hotspot/hs23/arm-05-invokedynamic_methodhandle.patch,
+	* patches/hotspot/hs23/arm-06-no_o0.patch,
+	* patches/hotspot/hs23/arm-07-cleanup.patch,
+	* patches/hotspot/hs23/arm-08-cleanup.patch,
+	* patches/hotspot/hs23/arm-09-jvmti.patch,
+	* patches/hotspot/hs23/arm-10-memory_protect.patch,
+	* patches/hotspot/hs23/arm-11-thumb2_jit.patch,
+	* patches/hotspot/hs23/arm-12-ldrexd.patch,
+	* patches/hotspot/hs23/arm-13-sp_adjustment.patch,
+	* patches/hotspot/hs23/arm-14-stage1.patch,
+	* patches/hotspot/hs23/arm-15-stage2.patch,
+	* patches/hotspot/hs23/arm-16-dont_save_locals.patch,
+	* patches/hotspot/hs23/arm-17-no_debug_code.patch,
+	* patches/hotspot/hs23/arm-18-correct_call.patch,
+	* patches/hotspot/hs23/arm-19-fix_jit_bug.patch,
+	* patches/hotspot/hs23/arm-20-function_renaming.patch,
+	* patches/hotspot/hs23/arm-21-fix_compareandswaplong.patch,
+	* patches/hotspot/hs23/arm-22-fix_trashed_thread_ptr.patch,
+	* patches/hotspot/hs23/arm-25-hsx23.patch:
+	HotSpot 23 only ARM port work.
+	* patches/hotspot/hs23/arm-hsdis.patch:
+	HotSpot 23 version of hsdis patch.
+	* patches/hotspot/original/arm.patch,
+	* patches/hotspot/hs23/arm.patch,
+	Split from patches/arm.patch.
+	* patches/hotspot/hs23/drop_unlicensed_test.patch:
+	Patches from IcedTea's 2.3.x HotSpot.
+	* patches/hotspot/original/gcc-suffix.patch,
+	* patches/hotspot/hs23/gcc-suffix.patch:
+	Split from patches/gcc-suffix-hotspot.patch.
+	* patches/hotspot/original/jtreg-test7020373-fix.patch,
+	* patches/hotspot/hs23/jtreg-test7020373-fix.patch:
+	Split from patches/jtreg-hotspot-Test7020373-fix.patch.
+	* patches/hotspot/hs23/no_useless_debuginfo_files.patch,
+	* patches/hotspot/hs23/pr1101-sparc_symbols.patch:
+	From IcedTea 2.3.x HotSpot.
+	* patches/hotspot/original/text-relocations.patch:
+	* patches/hotspot/hs23/text-relocations.patch:
+	Split from patches/text-relocations.patch.
+	* patches/hotspot/hs23/type_fixes.patch:
+	From IcedTea 2.3.x HotSpot.
+	* patches/hotspot/original/update-bootclasspath.patch,
+	* patches/hotspot/hs23/update-bootclasspath.patch:
+	Split from patches/update-bootclasspath.patch.
+	* patches/hotspot/original/version.patch,
+	* patches/hotspot/hs23/version.patch:
+	Split from patches/version-hotspot.patch.
+	* patches/hotspot/hs23/zero_fixes.patch,
+	* patches/hotspot/hs23/zero_hs22.patch:
+	HotSpot 23 only Zero work.
+	* patches/hotspot/original/7032696-7029152_broke_vm.patch:
+	Backported from 7u.
+	* patches/hotspot/original/7140985-hsdis_caller_options.patch:
+	Upstream version of part of the arm-hsdis patch.
+	* patches/hotspot/original/arm-hsdis.patch:
+	Remove 7140985 fragment.
+	* patches/pr1095-werror.patch: Apply to both HotSpots.
+
+2013-08-14  Xerxes Rånby  <xerxes@zafena.se>
+	    Robert Lougher  <rob@jamvm.org.uk>
+
+	JamVM
+	- JSR 292: enable for OpenJDK 7/IcedTea 2
+	- JSR 335: invokeinterface check in method resolution
+	- JSR 335: java.lang.invoke.MagicLambdaImpl
+	- JSR 292: invokedynamic is 5 bytes - non-direct interp
+	- JSR 292: invokedynamic is 5 bytes in length
+	- Minor formatting change
+	- Minor fixes: use perror for mmap failure
+	- FreeClassData: fix comment
+	- FreeClassData: adjust method count for Miranda methods
+	- JSR 335: remove GC hack
+	- JSR 335: implement "bridge" methods for Mirandas
+	- JSR 335: handle multiple defaults and conflicts
+	* NEWS: Updated.
+	* Makefile.am
+	(JAMVM_VERSION): Updated JamVM to 2013-07-14 revision.
+	(JAMVM_SHA256SUM): Updated.
+
 2013-08-07  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* patches/openjdk/6786028-wcag_bold_tags.patch,

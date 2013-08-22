@@ -1,0 +1,192 @@
+# HG changeset patch
+# User andrew
+# Date 1316650188 -3600
+#      Thu Sep 22 01:09:48 2011 +0100
+# Node ID e0155b0ad538da0ed3046127cf087dda042783e8
+# Parent  d88eef905e3079c07507cf395d4cb12fa2981db4
+Use appropriate types in order to allow builds on more architectures.
+
+diff --git a/src/share/vm/asm/codeBuffer.hpp b/src/share/vm/asm/codeBuffer.hpp
+--- openjdk/hotspot/src/share/vm/asm/codeBuffer.hpp
++++ openjdk/hotspot/src/share/vm/asm/codeBuffer.hpp
+@@ -93,7 +93,7 @@
+   address     _locs_point;      // last relocated position (grows upward)
+   bool        _locs_own;        // did I allocate the locs myself?
+   bool        _frozen;          // no more expansion of this section
+-  char        _index;           // my section number (SECT_INST, etc.)
++  signed char _index;           // my section number (SECT_INST, etc.)
+   CodeBuffer* _outer;           // enclosing CodeBuffer
+ 
+   // (Note:  _locs_point used to be called _last_reloc_offset.)
+diff --git a/src/share/vm/ci/ciTypeFlow.cpp b/src/share/vm/ci/ciTypeFlow.cpp
+--- openjdk/hotspot/src/share/vm/ci/ciTypeFlow.cpp
++++ openjdk/hotspot/src/share/vm/ci/ciTypeFlow.cpp
+@@ -403,7 +403,7 @@
+   // Set the rest of the locals to bottom.
+   Cell cell = state->next_cell(state->tos());
+   state->set_stack_size(0);
+-  int limit = state->limit_cell();
++  Cell limit = state->limit_cell();
+   for (; cell < limit; cell = state->next_cell(cell)) {
+     state->set_type_at(cell, state->bottom_type());
+   }
+diff --git a/src/share/vm/compiler/methodLiveness.cpp b/src/share/vm/compiler/methodLiveness.cpp
+--- openjdk/hotspot/src/share/vm/compiler/methodLiveness.cpp
++++ openjdk/hotspot/src/share/vm/compiler/methodLiveness.cpp
+@@ -572,15 +572,15 @@
+ 
+ 
+ MethodLiveness::BasicBlock::BasicBlock(MethodLiveness *analyzer, int start, int limit) :
+-         _gen((uintptr_t*)analyzer->arena()->Amalloc(BytesPerWord * analyzer->bit_map_size_words()),
++         _gen((size_t*)analyzer->arena()->Amalloc(BytesPerWord * analyzer->bit_map_size_words()),
+                          analyzer->bit_map_size_bits()),
+-         _kill((uintptr_t*)analyzer->arena()->Amalloc(BytesPerWord * analyzer->bit_map_size_words()),
++         _kill((size_t*)analyzer->arena()->Amalloc(BytesPerWord * analyzer->bit_map_size_words()),
+                          analyzer->bit_map_size_bits()),
+-         _entry((uintptr_t*)analyzer->arena()->Amalloc(BytesPerWord * analyzer->bit_map_size_words()),
++         _entry((size_t*)analyzer->arena()->Amalloc(BytesPerWord * analyzer->bit_map_size_words()),
+                          analyzer->bit_map_size_bits()),
+-         _normal_exit((uintptr_t*)analyzer->arena()->Amalloc(BytesPerWord * analyzer->bit_map_size_words()),
++         _normal_exit((size_t*)analyzer->arena()->Amalloc(BytesPerWord * analyzer->bit_map_size_words()),
+                          analyzer->bit_map_size_bits()),
+-         _exception_exit((uintptr_t*)analyzer->arena()->Amalloc(BytesPerWord * analyzer->bit_map_size_words()),
++         _exception_exit((size_t*)analyzer->arena()->Amalloc(BytesPerWord * analyzer->bit_map_size_words()),
+                          analyzer->bit_map_size_bits()),
+          _last_bci(-1) {
+   _analyzer = analyzer;
+@@ -998,7 +998,7 @@
+ }
+ 
+ MethodLivenessResult MethodLiveness::BasicBlock::get_liveness_at(ciMethod* method, int bci) {
+-  MethodLivenessResult answer(NEW_RESOURCE_ARRAY(uintptr_t, _analyzer->bit_map_size_words()),
++  MethodLivenessResult answer(NEW_RESOURCE_ARRAY(size_t, _analyzer->bit_map_size_words()),
+                 _analyzer->bit_map_size_bits());
+   answer.set_is_valid();
+ 
+diff --git a/src/share/vm/gc_implementation/concurrentMarkSweep/concurrentMarkSweepGeneration.cpp b/src/share/vm/gc_implementation/concurrentMarkSweep/concurrentMarkSweepGeneration.cpp
+--- openjdk/hotspot/src/share/vm/gc_implementation/concurrentMarkSweep/concurrentMarkSweepGeneration.cpp
++++ openjdk/hotspot/src/share/vm/gc_implementation/concurrentMarkSweep/concurrentMarkSweepGeneration.cpp
+@@ -957,7 +957,7 @@
+   if (free_percentage < desired_free_percentage) {
+     size_t desired_capacity = (size_t)(used() / ((double) 1 - desired_free_percentage));
+     assert(desired_capacity >= capacity(), "invalid expansion size");
+-    expand_bytes = MAX2(desired_capacity - capacity(), MinHeapDeltaBytes);
++    expand_bytes = MAX2((long unsigned int) (desired_capacity - capacity()), (long unsigned int) MinHeapDeltaBytes);
+   }
+   if (expand_bytes > 0) {
+     if (PrintGCDetails && Verbose) {
+@@ -6253,7 +6253,7 @@
+     HeapWord* curAddr = _markBitMap.startWord();
+     while (curAddr < _markBitMap.endWord()) {
+       size_t remaining  = pointer_delta(_markBitMap.endWord(), curAddr);
+-      MemRegion chunk(curAddr, MIN2(CMSBitMapYieldQuantum, remaining));
++      MemRegion chunk(curAddr, MIN2((size_t) CMSBitMapYieldQuantum, remaining));
+       _markBitMap.clear_large_range(chunk);
+       if (ConcurrentMarkSweepThread::should_yield() &&
+           !foregroundGCIsActive() &&
+@@ -6546,7 +6546,7 @@
+     return;
+   }
+   // Double capacity if possible
+-  size_t new_capacity = MIN2(_capacity*2, MarkStackSizeMax);
++  size_t new_capacity = MIN2((size_t) _capacity*2, (size_t) MarkStackSizeMax);
+   // Do not give up existing stack until we have managed to
+   // get the double capacity that we desired.
+   ReservedSpace rs(ReservedSpace::allocation_align_size_up(
+diff --git a/src/share/vm/gc_implementation/parallelScavenge/psParallelCompact.cpp b/src/share/vm/gc_implementation/parallelScavenge/psParallelCompact.cpp
+--- openjdk/hotspot/src/share/vm/gc_implementation/parallelScavenge/psParallelCompact.cpp
++++ openjdk/hotspot/src/share/vm/gc_implementation/parallelScavenge/psParallelCompact.cpp
+@@ -897,8 +897,8 @@
+ void PSParallelCompact::initialize_dead_wood_limiter()
+ {
+   const size_t max = 100;
+-  _dwl_mean = double(MIN2(ParallelOldDeadWoodLimiterMean, max)) / 100.0;
+-  _dwl_std_dev = double(MIN2(ParallelOldDeadWoodLimiterStdDev, max)) / 100.0;
++  _dwl_mean = double(MIN2((size_t) ParallelOldDeadWoodLimiterMean, max)) / 100.0;
++  _dwl_std_dev = double(MIN2((size_t) ParallelOldDeadWoodLimiterStdDev, max)) / 100.0;
+   _dwl_first_term = 1.0 / (sqrt(2.0 * M_PI) * _dwl_std_dev);
+   DEBUG_ONLY(_dwl_initialized = true;)
+   _dwl_adjustment = normal_distribution(1.0);
+diff --git a/src/share/vm/gc_implementation/parallelScavenge/psPermGen.cpp b/src/share/vm/gc_implementation/parallelScavenge/psPermGen.cpp
+--- openjdk/hotspot/src/share/vm/gc_implementation/parallelScavenge/psPermGen.cpp
++++ openjdk/hotspot/src/share/vm/gc_implementation/parallelScavenge/psPermGen.cpp
+@@ -69,7 +69,7 @@
+   _last_used = current_live;
+ 
+   // We have different alignment constraints than the rest of the heap.
+-  const size_t alignment = MAX2(MinPermHeapExpansion,
++  const size_t alignment = MAX2((size_t) MinPermHeapExpansion,
+                                 virtual_space()->alignment());
+ 
+   // Compute the desired size:
+diff --git a/src/share/vm/memory/collectorPolicy.cpp b/src/share/vm/memory/collectorPolicy.cpp
+--- openjdk/hotspot/src/share/vm/memory/collectorPolicy.cpp
++++ openjdk/hotspot/src/share/vm/memory/collectorPolicy.cpp
+@@ -327,7 +327,7 @@
+     // yield a size that is too small) and bound it by MaxNewSize above.
+     // Ergonomics plays here by previously calculating the desired
+     // NewSize and MaxNewSize.
+-    max_new_size = MIN2(MAX2(max_new_size, NewSize), MaxNewSize);
++    max_new_size = MIN2(MAX2(max_new_size, (size_t) NewSize), (size_t) MaxNewSize);
+   }
+   assert(max_new_size > 0, "All paths should set max_new_size");
+ 
+diff --git a/src/share/vm/memory/threadLocalAllocBuffer.cpp b/src/share/vm/memory/threadLocalAllocBuffer.cpp
+--- openjdk/hotspot/src/share/vm/memory/threadLocalAllocBuffer.cpp
++++ openjdk/hotspot/src/share/vm/memory/threadLocalAllocBuffer.cpp
+@@ -240,7 +240,7 @@
+   size_t init_sz;
+ 
+   if (TLABSize > 0) {
+-    init_sz = MIN2(TLABSize / HeapWordSize, max_size());
++    init_sz = MIN2((size_t) (TLABSize / HeapWordSize), max_size());
+   } else if (global_stats() == NULL) {
+     // Startup issue - main thread initialized before heap initialized.
+     init_sz = min_size();
+diff --git a/src/share/vm/runtime/arguments.cpp b/src/share/vm/runtime/arguments.cpp
+--- openjdk/hotspot/src/share/vm/runtime/arguments.cpp
++++ openjdk/hotspot/src/share/vm/runtime/arguments.cpp
+@@ -1143,7 +1143,7 @@
+     // NewSize was set on the command line and it is larger than
+     // preferred_max_new_size.
+     if (!FLAG_IS_DEFAULT(NewSize)) {   // NewSize explicitly set at command-line
+-      FLAG_SET_ERGO(uintx, MaxNewSize, MAX2(NewSize, preferred_max_new_size));
++      FLAG_SET_ERGO(uintx, MaxNewSize, MAX2((size_t) NewSize, preferred_max_new_size));
+     } else {
+       FLAG_SET_ERGO(uintx, MaxNewSize, preferred_max_new_size);
+     }
+@@ -1172,8 +1172,8 @@
+       // Unless explicitly requested otherwise, make young gen
+       // at least min_new, and at most preferred_max_new_size.
+       if (FLAG_IS_DEFAULT(NewSize)) {
+-        FLAG_SET_ERGO(uintx, NewSize, MAX2(NewSize, min_new));
+-        FLAG_SET_ERGO(uintx, NewSize, MIN2(preferred_max_new_size, NewSize));
++        FLAG_SET_ERGO(uintx, NewSize, MAX2((size_t) NewSize, min_new));
++        FLAG_SET_ERGO(uintx, NewSize, MIN2(preferred_max_new_size, (size_t) NewSize));
+         if (PrintGCDetails && Verbose) {
+           // Too early to use gclog_or_tty
+           tty->print_cr("CMS ergo set NewSize: " SIZE_FORMAT, NewSize);
+diff --git a/src/share/vm/utilities/bitMap.hpp b/src/share/vm/utilities/bitMap.hpp
+--- openjdk/hotspot/src/share/vm/utilities/bitMap.hpp
++++ openjdk/hotspot/src/share/vm/utilities/bitMap.hpp
+@@ -79,7 +79,7 @@
+ 
+   // Set a word to a specified value or to all ones; clear a word.
+   void set_word  (idx_t word, bm_word_t val) { _map[word] = val; }
+-  void set_word  (idx_t word)            { set_word(word, ~(uintptr_t)0); }
++  void set_word  (idx_t word)            { set_word(word, ~(idx_t)0); }
+   void clear_word(idx_t word)            { _map[word] = 0; }
+ 
+   // Utilities for ranges of bits.  Ranges are half-open [beg, end).
+diff --git a/src/share/vm/utilities/ostream.cpp b/src/share/vm/utilities/ostream.cpp
+--- openjdk/hotspot/src/share/vm/utilities/ostream.cpp
++++ openjdk/hotspot/src/share/vm/utilities/ostream.cpp
+@@ -961,7 +961,7 @@
+   server.sin_port = htons(port);
+ 
+   server.sin_addr.s_addr = inet_addr(ip);
+-  if (server.sin_addr.s_addr == (uint32_t)-1) {
++  if (server.sin_addr.s_addr == (in_addr_t)-1) {
+     struct hostent* host = os::get_host_by_name((char*)ip);
+     if (host != NULL) {
+       memcpy(&server.sin_addr, host->h_addr_list[0], host->h_length);

@@ -1,0 +1,40 @@
+# HG changeset patch
+# User aph
+# Date 1333128870 14400
+#      Fri Mar 30 13:34:30 2012 -0400
+# Node ID dc9aad1d1e45352c623a21f8c9f7da1356a44a40
+# Parent  e6035cca61febb42f5dac0cf4d64850272005975
+ARM: JIT-compilation of ldc methodHandle
+
+diff --git a/src/cpu/zero/vm/thumb2.cpp b/src/cpu/zero/vm/thumb2.cpp
+--- openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
++++ openjdk/hotspot/src/cpu/zero/vm/thumb2.cpp
+@@ -6584,10 +6584,27 @@
+       }
+ 
+     case opc_invokedynamic:
++      {
++	Thumb2_Exit(jinfo, H_EXIT_TO_INTERPRETER, bci, stackdepth);
++	break;
++      }
++
+     case opc_fast_aldc_w:
+     case opc_fast_aldc:
+       {
+-	Thumb2_Exit(jinfo, H_EXIT_TO_INTERPRETER, bci, stackdepth);
++	unsigned index = (opcode == (unsigned)opc_fast_aldc) ?
++				code_base[bci+1] : GET_NATIVE_U2(code_base+bci+1);
++	constantPoolOop constants = jinfo->method->constants();
++	ConstantPoolCacheEntry* cpce = constants->cache()->entry_at(index);
++        if (! cpce->is_f1_null()) {
++	  Thumb2_Spill(jinfo, 1, 0);
++	  int r = JSTACK_REG(jstack);
++	  PUSH(jstack, r);
++	  ldr_imm(jinfo->codebuf, r, Ristate, ISTATE_CONSTANTS, 1, 0);
++	  ldr_imm(jinfo->codebuf, r, r, CP_OFFSET + (index << 4) + 4, 1, 0); // offset to cache->f1()
++	} else {
++	  Thumb2_Exit(jinfo, H_EXIT_TO_INTERPRETER, bci, stackdepth);
++	}
+ 	break;
+       }
+ 

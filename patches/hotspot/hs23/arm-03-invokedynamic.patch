@@ -1,0 +1,171 @@
+# HG changeset patch
+# User aph
+# Date 1332855608 14400
+#      Tue Mar 27 09:40:08 2012 -0400
+# Node ID 9d94a5fd37a775e9c1306165f5046db237c58f70
+# Parent  1b5ced49aa9f214a3012ad54fb34012d187f7fb9
+ARM: First cut of invokedynamic
+
+diff --git a/src/cpu/zero/vm/bytecodes_arm.def b/src/cpu/zero/vm/bytecodes_arm.def
+--- openjdk/hotspot/src/cpu/zero/vm/bytecodes_arm.def
++++ openjdk/hotspot/src/cpu/zero/vm/bytecodes_arm.def
+@@ -219,6 +219,7 @@
+ invokespecial        = 0xb7, 3
+ invokestatic         = 0xb8, 3
+ invokeinterface      = 0xb9, 0
++invokedynamic        = 0xba, 0
+ new                  = 0xbb, 3
+ newarray             = 0xbc, 2
+ anewarray            = 0xbd, 3
+diff --git a/src/cpu/zero/vm/cppInterpreter_arm.S b/src/cpu/zero/vm/cppInterpreter_arm.S
+--- openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S
++++ openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_arm.S
+@@ -802,7 +802,7 @@
+         .word   empty_entry                     // empty method (code: _return)
+         .word   accessor_entry                  // accessor method (code: _aload_0, _getfield, _(a|i)return)
+         .word   normal_entry                    // abstract method (throws an AbstractMethodException)
+-        .word   vm_fatal_error                  // java.dyn.MethodHandles::invoke
++        .word   method_handle_entry             // java.dyn.MethodHandles::invoke
+         .word   normal_entry                    // implementation of java.lang.Math.sin   (x)
+         .word   normal_entry                    // implementation of java.lang.Math.cos   (x)
+         .word   normal_entry                    // implementation of java.lang.Math.tan   (x)
+@@ -2755,7 +2755,7 @@
+ 	adr	r2, unimplemented_opcode_msg
+ 	ldr	r1, =__LINE__
+ 	str	ip, [arm_sp, #-8]!
+-	bl	Helper_report_fatal
++ 	bl	Helper_report_fatal
+ 	b	breakpoint
+ 	.ltorg
+ unimplemented_opcode_msg:
+@@ -3054,6 +3054,89 @@
+ 	ldr	tmp2, [r3, #INSTANCEKLASS_VTABLE_OFFSET]
+ 	b	.invokeinterface_invoke
+ 
++# r2 = [jpc, #1]
++# r1 = [jpc, #2]
++	Opcode	invokedynamic
++	ldrb	r1, [jpc, #2]
++	DECACHE_STACK
++	orr	r1, r2, r1, lsl #8
++        mvn     r1, r1, asl #16
++        mov     r1, r1, lsr #16
++        add     r0, constpool, r1, lsl #4
++	DECACHE_JPC
++
++	bl	resolve_invokedynamic
++
++	CACHE_STACK
++	add	stack, #4
++
++	stmfd	arm_sp!, {r0}
++	bl	_ZN25java_lang_invoke_CallSite22target_offset_in_bytesEv
++	mov	lr, r0
++	ldmfd	arm_sp!, {r0}
++
++.abortentry119:
++	ldr	r0, [r0, #CP_OFFSET+4]	// Call site
++
++	ldr	r0, [r0, lr]		// Method handle
++	ldr	r1, [istate, #ISTATE_THREAD]
++.invokedynamic_invoke:
++	bl	_ZN14CppInterpreter21process_method_handleEP7oopDescP6Thread
++
++	adrl	ip, dispatch_init_adcon
++	ldm	ip, {r0, r1}
++	add	r0, r0, ip
++	add	dispatch, r1, r0
++
++	CACHE_LOCALS
++
++	ldr	ip, [istate, #ISTATE_THREAD]
++	CACHE_JPC
++	ldr	stack, [ip, #THREAD_JAVA_SP]
++	ldr	r2, [istate, #ISTATE_STACK_LIMIT]
++	sub	stack, stack, #4
++
++	ldr	r1, [ip, #THREAD_JAVA_SP]
++	stmfd	arm_sp!, {r1}
++	mov	r1, #0
++	str	r1, [ip, #THREAD_LAST_JAVA_SP]
++	ldr	r1, [ip, #THREAD_TOP_ZERO_FRAME]
++	add	r2, r2, #4
++	str	r2, [ip, #THREAD_JAVA_SP]
++	str	r1, [ip, #THREAD_LAST_JAVA_FP]
++	ldmfd	arm_sp!, {r1}
++	str	r1, [ip, #THREAD_LAST_JAVA_SP]
++	DISPATCH_START	5
++	ldr	r3, [ip, #4]
++	DISPATCH_NEXT
++	DISPATCH_NEXT
++	cmp	r3, #0
++	DISPATCH_NEXT
++	bne	invokedynamic_exception_fix
++	DISPATCH_NEXT
++	CACHE_CP
++	DISPATCH_FINISH
++
++.invokedynamic_methodDynamic:
++	tst	r3, #flag_vfinalMethod
++	ldrne	r0, [r0, #CP_OFFSET+8]
++	bne	.invokedynamic_invoke
++
++resolve_invokedynamic:
++	stmfd	arm_sp!, {r0, lr}
++	ldr	r0, [r8, #ISTATE_THREAD]
++	bl	_ZN18InterpreterRuntime21resolve_invokedynamicEP10JavaThread
++	ldmfd	arm_sp!, {r0, pc}
++
++	ALIGN_CODE
++method_handle_entry:
++	b	fast_method_handle_entry	
++	ALIGN_CODE
++fast_method_handle_entry:
++	stmfd	arm_sp!, {regset, lr}
++	bl	_ZN14CppInterpreter19method_handle_entryEP13methodOopDesciP6Thread
++	ldmia	sp!, {regset, pc}
++
+ #ifdef FAST_BYTECODES
+ # r2 = [jpc, #1]
+ # r1 = [jpc, #2]
+@@ -3507,6 +3590,7 @@
+ 	.byte	0
+ 	ALIGN_WORD
+ 
++invokedynamic_exception_fix:
+ invokeinterface_exception_fix:
+ 	sub	jpc, jpc, #2
+ invoke_exception_fix:
+@@ -4974,7 +5058,7 @@
+ 	.word	do_invokespecial	@ 183 0xb7
+ 	.word	do_invokestatic	@ 184 0xb8
+ 	.word	do_invokeinterface	@ 185 0xb9
+-	.word	do_undefined	@ 186 0xba
++	.word	do_invokedynamic	@ 186 0xba
+ 	.word	do_new	@ 187 0xbb
+ 	.word	do_newarray	@ 188 0xbc
+ 	.word	do_anewarray	@ 189 0xbd
+diff --git a/src/cpu/zero/vm/cppInterpreter_zero.cpp b/src/cpu/zero/vm/cppInterpreter_zero.cpp
+--- openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp
++++ openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp
+@@ -52,6 +52,8 @@
+ #include "shark/shark_globals.hpp"
+ #endif
+ 
++#include <stdlib.h>
++
+ #ifdef CC_INTERP
+ 
+ #define fixup_after_potential_safepoint()       \
+@@ -1683,9 +1685,11 @@
+   address entry_point = NULL;
+ 
+ #ifdef HOTSPOT_ASM
++  if (getenv("OGGHZF_GFRF") == NULL) {
+     address asm_entry = asm_generate_method_entry(kind);
+     if (asm_entry)
+       return ((InterpreterGenerator*) this)->generate_entry(asm_entry);
++    }
+ #endif // HOTSPOT_ASM
+ 
+   switch (kind) {
