@@ -281,8 +281,7 @@ ICEDTEA_FSG_PATCHES =
 DROP_PATCHES =
 
 SECURITY_PATCHES = \
-	patches/security/20120830/7182135-impossible_to_use_some_editors_directly.patch \
-	patches/security/20130618/handle_npe.patch
+	patches/security/20120830/7182135-impossible_to_use_some_editors_directly.patch
 
 if !WITH_ALT_HSBUILD
 SECURITY_PATCHES += \
@@ -381,7 +380,6 @@ ICEDTEA_PATCHES = \
 	patches/debug-dir.patch \
 	patches/override-redirect-metacity.patch \
 	patches/openjdk/6967533-pre_epoch.patch \
-	patches/fonts-rhel.patch \
 	patches/fonts-gentoo.patch \
 	patches/ipv4-mapped-ipv6-addresses.patch \
 	patches/jtreg-OpenGLContextInit.patch \
@@ -433,7 +431,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7036754-stroker-nan.patch \
 	patches/openjdk/pgram-pipe-regression.patch \
 	patches/openjdk/mutter.patch \
-	patches/fonts-rhel-version.patch \
 	patches/openjdk/7036148-npe-null-jmenu-name.patch \
 	patches/jtreg-ChangeDir.patch \
 	patches/jtreg-TempBuffer.patch \
@@ -506,7 +503,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7003595-incompatibleclasschangeerror.patch \
 	patches/openjdk/6500343-bad_code_from_conditionals.patch \
 	patches/jaxws-tempfiles-ioutils-6.patch \
-	patches/object-factory-cl-internal.patch \
 	patches/openjdk/8009530-icu_kern_table_support_broken.patch \
 	patches/jtreg-LayoutGetCharacterCount.patch \
 	patches/jtreg-LayoutLimits.patch \
@@ -546,7 +542,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/8012243-serial_regression.patch \
 	patches/openjdk/8014718-remove_logging_suntoolkit.patch \
 	patches/openjdk/8011139-revise_checking_getenclosingclass.patch \
-	patches/openjdk/8009996-emitter_bean.patch \
 	patches/openjdk/6541350-tz_display_names_l10n.patch \
 	patches/openjdk/6821191-tz_display_names_l10n.patch \
 	patches/openjdk/6977550-tzdata2010l.patch \
