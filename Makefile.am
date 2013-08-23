@@ -575,12 +575,12 @@ ICEDTEA_PATCHES = \
 	patches/jtreg-6929067-fix.patch \
 	patches/hotspot/$(HSBUILD)/update-bootclasspath.patch \
 	patches/hotspot/original/jvmtiEnv.patch \
-	patches/hotspot/original/7197906-handle_32_bit_shifts.patch \
 	patches/sparc-trapsfix.patch \
 	patches/print_lsb_release.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
+	patches/hotspot/hs23/7197906-handle_32_bit_shifts.patch \
 	patches/hotspot/hs23/remove_jsr292_tests.patch \
 	patches/hotspot/hs23/revert-7017193.patch \
 	patches/hotspot/hs23/7188168-fix_debug_binaries.patch \

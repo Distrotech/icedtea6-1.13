@@ -1,3 +1,17 @@
+2013-08-23  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Apply 7197906 on hs23 only.
+	* patches/security/20130416/8004336.patch,
+	* patches/security/20130416/8006309.patch,
+	* patches/security/20130416/8009699.patch:
+	Restore HotSpot security patches as not available
+	in upstream HotSpot yet.
+	* patches/hotspot/original/7197906-handle_32_bit_shifts.patch:
+	Moved to...
+	* patches/hotspot/hs23/7197906-handle_32_bit_shifts.patch:
+	...here.
+
 2013-08-22  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* patches/fonts-rhel-version.patch,
