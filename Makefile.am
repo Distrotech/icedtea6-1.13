@@ -457,7 +457,8 @@ LCMS_PATCHES = \
 	patches/openjdk/lcms2/8009654-cmsnamed_stability.patch \
 	patches/openjdk/lcms2/7002766-parfait.patch \
 	patches/openjdk/lcms2/7042594-tck_failure.patch \
-	patches/openjdk/lcms2/8007927-improve_cmsallocprofilesequencedescription.patch
+	patches/openjdk/lcms2/8007927-improve_cmsallocprofilesequencedescription.patch \
+	patches/lcms2-emulate_old_settagdata.patch
 else
 LCMS_PATCHES = \
 	patches/lcms.patch
