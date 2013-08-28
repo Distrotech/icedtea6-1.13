@@ -734,7 +734,8 @@ ICEDTEA_PATCHES = \
 	patches/hotspot/original/jvmtiEnv.patch \
 	patches/hotspot/original/7197906-handle_32_bit_shifts.patch \
 	patches/sparc-trapsfix.patch \
-	patches/print_lsb_release.patch
+	patches/print_lsb_release.patch \
+	patches/openjdk/6893617-cnctx_always_uses_default_orb.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
