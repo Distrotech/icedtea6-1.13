@@ -1,0 +1,332 @@
+diff -Nru openjdk.orig/jdk/make/sun/security/krb5/internal/ccache/Makefile openjdk/jdk/make/sun/security/krb5/internal/ccache/Makefile
+--- openjdk.orig/jdk/make/sun/security/krb5/internal/ccache/Makefile	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/jdk/make/sun/security/krb5/internal/ccache/Makefile	2013-08-29 18:23:03.264241145 +0100
+@@ -0,0 +1,48 @@
++#
++# Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
++# Copyright (c) 2013 Red Hat, Inc. and/or its affiliates.
++# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++#
++# This code is free software; you can redistribute it and/or modify it
++# under the terms of the GNU General Public License version 2 only, as
++# published by the Free Software Foundation.  Oracle designates this
++# particular file as subject to the "Classpath" exception as provided
++# by Oracle in the LICENSE file that accompanied this code.
++#
++# This code is distributed in the hope that it will be useful, but WITHOUT
++# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++# version 2 for more details (a copy is included in the LICENSE file that
++# accompanied this code).
++#
++# You should have received a copy of the GNU General Public License version
++# 2 along with this work; if not, write to the Free Software Foundation,
++# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++#
++# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++# or visit www.oracle.com if you need additional information or have any
++# questions.
++#
++
++BUILDDIR = ../../../../..
++PACKAGE = sun.security.krb5.internal.ccache
++PRODUCT = sun
++include $(BUILDDIR)/common/Defs.gmk
++
++#
++# Java Files
++#
++AUTO_FILES_JAVA_DIRS = sun/security/krb5/internal/ccache
++
++ifeq ($(PLATFORM), $(filter $(PLATFORM),linux solaris))
++FILES_export = sun/security/krb5/internal/ccache/FileCredentialsCache.java
++FILES_c = krb5ccache.c
++LIBRARY = j2krb5
++
++vpath %.c \
++  $(PLATFORM_SRC)/native/sun/security/krb5/internal/ccache
++
++include $(BUILDDIR)/common/Library.gmk
++
++OTHER_LDLIBS = $(LIBDL) $(JVMLIB) -lkrb5
++endif # PLATFORM
+diff -Nru openjdk.orig/jdk/make/sun/security/Makefile openjdk/jdk/make/sun/security/Makefile
+--- openjdk.orig/jdk/make/sun/security/Makefile	2012-10-26 19:25:42.000000000 +0100
++++ openjdk/jdk/make/sun/security/Makefile	2013-08-29 18:25:01.210077070 +0100
+@@ -1,5 +1,6 @@
+ #
+ # Copyright (c) 1996, 2007, Oracle and/or its affiliates. All rights reserved.
++# Copyright (c) 2013 Red Hat, Inc. and/or its affiliates.
+ # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ #
+ # This code is free software; you can redistribute it and/or modify it
+@@ -52,6 +53,12 @@
+   endif
+ endif
+ 
++# Build krb5/internal/ccache only on Linux and Solaris platforms.
++KRB5_CCACHE =
++ifeq ($(PLATFORM), $(filter $(PLATFORM),linux solaris))
++  KRB5_CCACHE = krb5/internal/ccache
++endif
++
+ # Build Microsoft CryptoAPI provider only on (non-64-bit) Windows platform.
+ MSCAPI =
+ ifeq ($(PLATFORM), windows)
+@@ -61,7 +68,7 @@
+ endif
+ 
+ SUBDIRS = other action util tools jgss krb5 smartcardio $(PKCS11) \
+-          $(JGSS_WRAPPER) $(MSCAPI)
++          $(JGSS_WRAPPER) $(MSCAPI) $(KRB5_CCACHE)
+ 
+ all build clean clobber::
+ 	$(SUBDIRS-loop)
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/krb5/internal/ccache/FileCredentialsCache.java openjdk/jdk/src/share/classes/sun/security/krb5/internal/ccache/FileCredentialsCache.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/krb5/internal/ccache/FileCredentialsCache.java	2012-10-26 19:26:06.000000000 +0100
++++ openjdk/jdk/src/share/classes/sun/security/krb5/internal/ccache/FileCredentialsCache.java	2013-08-29 20:33:06.093698688 +0100
+@@ -1,5 +1,6 @@
+ /*
+  * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2013 Red Hat, Inc. and/or its affiliates.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -43,7 +44,6 @@
+ import java.io.FileOutputStream;
+ import java.io.BufferedReader;
+ import java.io.InputStreamReader;
+-import java.lang.reflect.*;
+ 
+ /**
+  * CredentialsCache stores credentials(tickets, session keys, etc) in a
+@@ -63,6 +63,8 @@
+     private Vector<Credentials> credentialsList;
+     private static String dir;
+     private static boolean DEBUG = Krb5.DEBUG;
++    private static boolean alreadyLoaded = false;
++    private static boolean alreadyTried = false;
+ 
+     public static synchronized FileCredentialsCache acquireInstance(
+                 PrincipalName principal, String cache) {
+@@ -356,14 +358,14 @@
+      * Returns path name of the credentials cache file.
+      * The path name is searched in the following order:
+      *
+-     * 1. /tmp/krb5cc_<uid> on unix systems
++     * 1. location specified by Kerberos API on unix systems
+      * 2. <user.home>/krb5cc_<user.name>
+      * 3. <user.home>/krb5cc (if can't get <user.name>)
+      */
+ 
+     public static String getDefaultCacheName() {
+         String stdCacheNameComponent = "krb5cc";
+-        String name;
++        String name = null;
+         // get cache name from system.property
+ 
+         String osname =
+@@ -382,26 +384,46 @@
+          */
+ 
+         if (osname != null) {
+-            String cmd = null;
+-            String uidStr = null;
+-            long uid = 0;
+-
+             if (osname.startsWith("SunOS") ||
+                 (osname.startsWith("Linux"))) {
+                 try {
+-                    Class<?> c = Class.forName
+-                        ("com.sun.security.auth.module.UnixSystem");
+-                    Constructor<?> constructor = c.getConstructor();
+-                    Object obj = constructor.newInstance();
+-                    Method method = c.getMethod("getUid");
+-                    uid =  ((Long)method.invoke(obj)).longValue();
+-                    name = File.separator + "tmp" +
+-                        File.separator + stdCacheNameComponent + "_" + uid;
+-                    if (DEBUG) {
+-                        System.out.println(">>>KinitOptions cache name is " +
+-                                           name);
++                    // Load the native code if necessary
++                    if (!alreadyTried) {
++                        // See if there's any native code to load
++                        try {
++                            ensureLoaded();
++                        } catch (Exception e) {
++                            if (DEBUG) {
++                                System.out.println("Could not load native Kerberos bridge");
++                                e.printStackTrace();
++                            }
++                            alreadyTried = true;
++                        }
++                    }
++                    if (alreadyLoaded) {
++                        // There is some native code
++                        if (DEBUG) {
++                           System.out.println(">> Look up native default credential cache");
++                        }
++                        // Query the native Kerberos API for the cache location
++                        name = nativeGetDefaultCacheName();
++                    }
++
++                    /*
++                     * We require the default cache location to be a file name.
++                     * DIR: can point to a cache collection, while DIR:: points
++                     * to a specific cache file.
++                     *  
++                     * http://k5wiki.kerberos.org/wiki?title=Projects/Client_principal_selection&oldid=4118
++                     */
++                    if (name.startsWith("FILE:") || name.startsWith("DIR::")) {
++                        name = name.substring(5);
++                        if (DEBUG) {
++                            System.out.println(">>>KinitOptions cache name is " +
++                                    name);
++                        }
++                        return name;
+                     }
+-                    return name;
+                 } catch (Exception e) {
+                     if (DEBUG) {
+                         System.out.println("Exception in obtaining uid " +
+@@ -445,6 +467,8 @@
+ 
+         return name;
+     }
++    
++    private native static String nativeGetDefaultCacheName() throws Exception;
+ 
+     public static String checkValidation(String name) {
+         String fullname = null;
+@@ -526,4 +550,16 @@
+         }
+         return null;
+     }
++    
++    private static void ensureLoaded() {
++        java.security.AccessController.doPrivileged(
++                new java.security.PrivilegedAction<Void> () {
++                    public Void run() {
++                            System.loadLibrary("j2krb5");
++                        return null;
++                    }
++                });
++        alreadyLoaded = true;
++    }
++    
+ }
+diff -Nru openjdk.orig/jdk/src/solaris/native/sun/security/krb5/internal/ccache/krb5ccache.c openjdk/jdk/src/solaris/native/sun/security/krb5/internal/ccache/krb5ccache.c
+--- openjdk.orig/jdk/src/solaris/native/sun/security/krb5/internal/ccache/krb5ccache.c	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/jdk/src/solaris/native/sun/security/krb5/internal/ccache/krb5ccache.c	2013-08-29 18:23:03.264241145 +0100
+@@ -0,0 +1,111 @@
++/*
++ * Copyright (c) 2013 Red Hat Inc. and/or its affiliates.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.  Oracle designates this
++ * particular file as subject to the "Classpath" exception as provided
++ * by Oracle in the LICENSE file that accompanied this code.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++#define _GNU_SOURCE
++
++#include <krb5.h>
++#include <stdlib.h>
++#include <stdio.h>
++
++#include "sun_security_krb5_internal_ccache_FileCredentialsCache.h"
++
++static void handle_error(JNIEnv *env, krb5_context context, krb5_error_code err, const char *func_name);
++static jint throw_Exception(JNIEnv *env, const char *class_name, const char *message);
++
++/*
++ * Class:     sun_security_krb5_internal_ccache_FileCredentialsCache
++ * Method:    nativeGetDefaultCacheName
++ * Signature: ()Ljava/lang/String;
++ */
++JNIEXPORT jstring JNICALL Java_sun_security_krb5_internal_ccache_FileCredentialsCache_nativeGetDefaultCacheName
++(JNIEnv *env, jclass krbcredsClass)
++{
++    krb5_context context;
++    krb5_error_code err;
++    krb5_ccache cache;
++    const char *cc_type, *cc_name;
++    char *cc_full_name;
++    jstring result;
++
++    /* Need a krb5_context to proceed further */
++    err = krb5_init_context(&context);
++    if (err) {
++        handle_error(env, context, err, "krb5_init_context");
++        return NULL;
++    }
++
++    /* Get the default credential cache.
++     * We intentionally do not use krb5_cc_default_name because when the cache
++     * is a collection, krb5_cc_default_name returns the collection directory.
++     * By using krb5_cc_default and then krb5_cc_get_name, we get the primary
++     * cache file within the collection. */
++    err = krb5_cc_default(context, &cache);
++    if (err) {
++        handle_error(env, context, err, "krb5_cc_default");
++        krb5_free_context(context);
++        return NULL;
++    }
++
++    /* Get the type and name of the default cache and construct a string
++     * of the form 'type:name'. */
++    cc_type = krb5_cc_get_type(context, cache);
++    cc_name = krb5_cc_get_name(context, cache);
++    if (asprintf(&cc_full_name, "%s:%s", cc_type, cc_name) < 0) {
++        throw_Exception(env, "java/lang/OutOfMemoryError", "Unable to construct credential cache string");
++        krb5_free_context(context);
++        return NULL;
++    }
++
++    result = (*env)->NewStringUTF(env, cc_full_name);
++
++    free(cc_full_name);
++    krb5_free_context(context);
++    return result;
++}
++
++static void handle_error(JNIEnv *env, krb5_context context, krb5_error_code err, const char *func_name) {
++    const char *err_msg;
++    char *result;
++
++    err_msg = krb5_get_error_message(context, err);
++    if (asprintf(&result, "%s: %s", func_name, err_msg) < 0) {
++        throw_Exception(env, "java/lang/OutOfMemoryError", "Unable to construct error message");
++        return;
++    }
++    throw_Exception(env, "java/lang/Exception", result);
++
++    free(result);
++    krb5_free_error_message(context, err_msg);
++}
++
++static jint throw_Exception(JNIEnv *env, const char *class_name, const char *message) {
++    jclass class;
++
++    class = (*env)->FindClass(env, class_name);
++    if (class == NULL) {
++        return -1;
++    }
++    return (*env)->ThrowNew(env, class, message);
++}
