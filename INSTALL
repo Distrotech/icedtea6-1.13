@@ -161,7 +161,6 @@ These are documented fully in the relevant section below.
 
 * --enable-pulse-java: Build the PulseAudio sound provider.
 * --disable-xrender: Don't include the XRender pipeline.
-* --enable-nio2: Include the NIO2 backport.
 * --enable-systemtap: Include support for tracing using systemtap.
 * --enable-nss: Enable the NSS security provider.
 * --enable-cacao: Replace HotSpot with the CACAO VM.
@@ -172,6 +171,10 @@ These are documented fully in the relevant section below.
 * --with-rhino: Include Javascript support using Rhino.
 * --with-additional-vms=vm-list: Additional VMs to build using the system described
   below.
+* --enable-lcms2: Use LCMS 2 backport from OpenJDK 7 rather than LCMS 1.
+* --enable-system-kerberos: Link against the system Kerberos library and
+  query it at runtime to obtain the cache location, rather than using a
+  hardcoded value.
 
 Testing
 =======

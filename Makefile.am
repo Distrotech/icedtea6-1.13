@@ -737,7 +737,8 @@ ICEDTEA_PATCHES = \
 	patches/sparc-trapsfix.patch \
 	patches/print_lsb_release.patch \
 	patches/openjdk/6893617-cnctx_always_uses_default_orb.patch \
-	patches/alternative_krb5_cache.patch
+	patches/alternative_krb5_cache.patch \
+	patches/alternative_krb5_cache_fixup.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
@@ -1034,6 +1035,13 @@ endif
 if WITH_RHINO
 ICEDTEA_ENV += \
 	RHINO_JAR="$(abs_top_builddir)/rhino/rhino.jar"
+endif
+
+if USE_SYSTEM_KERBEROS
+ICEDTEA_ENV += \
+	SYSTEM_KRB5="true" \
+	KRB5_LIBS="${KRB5_LIBS}" \
+	KRB5_CFLAGS="${KRB5_CFLAGS}"
 endif
 
 # OpenJDK ecj build environment.

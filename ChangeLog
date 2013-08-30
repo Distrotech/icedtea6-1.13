@@ -1,3 +1,21 @@
+2013-08-30  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add new patch.
+	(ICEDTEA_ENV): Set SYSTEM_KRB5, KRB5_LIBS
+	and KRB5_CFLAGS.
+	* acinclude.m4:
+	(IT_CHECK_FOR_KERBEROS): Add --enable-system-kerberos
+	option (on by default) which checks for libkrb5 and
+	the krb5.h header.
+	* configure.ac: Invoke IT_CHECK_FOR_KERBEROS.
+	* patches/alternative_krb5_cache_fixup.patch:
+	Fix previous Kerberos patch to fall back on old
+	method of using /tmp/krb5cc_<uid> and to allow
+	the LDFLAGS for Kerberos to be specified.
+	* INSTALL: Updated.
+	* NEWS: Likewise.
+
 2013-08-29  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* Makefile.am:
