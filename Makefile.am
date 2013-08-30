@@ -738,7 +738,9 @@ ICEDTEA_PATCHES = \
 	patches/print_lsb_release.patch \
 	patches/openjdk/6893617-cnctx_always_uses_default_orb.patch \
 	patches/alternative_krb5_cache.patch \
-	patches/alternative_krb5_cache_fixup.patch
+	patches/alternative_krb5_cache_fixup.patch \
+	patches/openjdk/8014469-tzdata2013c.patch \
+	patches/openjdk/8020054-tzdata2013d.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \

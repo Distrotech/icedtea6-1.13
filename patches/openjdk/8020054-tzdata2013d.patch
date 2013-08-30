@@ -1,0 +1,314 @@
+# HG changeset patch
+# User igerasim
+# Date 1373612209 -14400
+#      Fri Jul 12 10:56:49 2013 +0400
+# Node ID dbf9b854ae55750afe3c8b3e319e3ccf5cfd2901
+# Parent  1dad45fa401d88fd42b795a2bd0ca796f6842ba5
+8020054: (tz) Support tzdata2013d
+Reviewed-by: coffeys, peytoia
+
+diff --git a/make/sun/javazic/tzdata/VERSION b/make/sun/javazic/tzdata/VERSION
+--- openjdk/jdk/make/sun/javazic/tzdata/VERSION
++++ openjdk/jdk/make/sun/javazic/tzdata/VERSION
+@@ -21,4 +21,4 @@
+ # or visit www.oracle.com if you need additional information or have any
+ # questions.
+ #
+-tzdata2013c
++tzdata2013d
+diff --git a/make/sun/javazic/tzdata/africa b/make/sun/javazic/tzdata/africa
+--- openjdk/jdk/make/sun/javazic/tzdata/africa
++++ openjdk/jdk/make/sun/javazic/tzdata/africa
+@@ -875,12 +875,18 @@
+ # announced that year's Ramadan daylight-saving transitions would be
+ # 2012-07-20 and 2012-08-20; see
+ # <http://www.mmsp.gov.ma/fr/actualites.aspx?id=288>.
+-#
++
++# From Andrew Paprocki (2013-07-02):
++# Morocco announced that the year's Ramadan daylight-savings
++# transitions would be 2013-07-07 and 2013-08-10; see:
++# http://www.maroc.ma/en/news/morocco-suspends-daylight-saving-time-july-7-aug10
++
++# From Paul Eggert (2013-07-03):
+ # To estimate what the Moroccan government will do in future years,
+-# transition dates for 2013 through 2021 were determined by running
++# transition dates for 2014 through 2021 were determined by running
+ # the following program under GNU Emacs 24.3:
+ #
+-# (let ((islamic-year 1434))
++# (let ((islamic-year 1435))
+ #   (while (< islamic-year 1444)
+ #     (let ((a
+ #	     (calendar-gregorian-from-absolute
+@@ -933,8 +939,8 @@
+ Rule	Morocco	2012	max	-	Sep	 lastSun 3:00	0	-
+ Rule	Morocco	2012	only	-	Jul	 20	 3:00	0	-
+ Rule	Morocco	2012	only	-	Aug	 20	 2:00	1:00	S
+-Rule	Morocco	2013	only	-	Jul	  9	 3:00	0	-
+-Rule	Morocco	2013	only	-	Aug	  8	 2:00	1:00	S
++Rule	Morocco	2013	only	-	Jul	  7	 3:00	0	-
++Rule	Morocco	2013	only	-	Aug	 10	 2:00	1:00	S
+ Rule	Morocco	2014	only	-	Jun	 29	 3:00	0	-
+ Rule	Morocco	2014	only	-	Jul	 29	 2:00	1:00	S
+ Rule	Morocco	2015	only	-	Jun	 18	 3:00	0	-
+diff --git a/make/sun/javazic/tzdata/asia b/make/sun/javazic/tzdata/asia
+--- openjdk/jdk/make/sun/javazic/tzdata/asia
++++ openjdk/jdk/make/sun/javazic/tzdata/asia
+@@ -1235,39 +1235,21 @@
+ Rule	Zion	2012	only	-	Mar	Fri>=26	2:00	1:00	D
+ Rule	Zion	2012	only	-	Sep	23	2:00	0	S
+ 
+-# From Ephraim Silverberg (2012-10-18):
+-# Yesterday, the Interior Ministry Committee, after more than a year
+-# past, approved sending the proposed June 2011 changes to the Time
+-# Decree Law back to the Knesset for second and third (final) votes
+-# before the upcoming elections on Jan. 22, 2013.  Hence, although the
+-# changes are not yet law, they are expected to be so before February 2013.
++# From Ephraim Silverberg (2013-06-27):
++# On June 23, 2013, the Israeli government approved changes to the
++# Time Decree Law.  The next day, the changes passed the First Reading
++# in the Knesset.  The law is expected to pass the Second and Third
++# (final) Readings by the beginning of September 2013.
+ #
+-# As of 2013, DST starts at 02:00 on the Friday before the last Sunday in March.
+-# DST ends at 02:00 on the first Sunday after October 1, unless it occurs on the
+-# second day of the Jewish Rosh Hashana holiday, in which case DST ends a day
+-# later (i.e. at 02:00 the first Monday after October 2).
+-# [Rosh Hashana holidays are factored in until 2100.]
+-
+-# From Ephraim Silverberg (2012-11-05):
+-# The Knesset passed today (in second and final readings) the amendment to the
+-# Time Decree Law making the changes ... law.
++# As of 2013, DST starts at 02:00 on the Friday before the last Sunday
++# in March.  DST ends at 02:00 on the last Sunday of October.
+ 
+ # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+ Rule	Zion	2013	max	-	Mar	Fri>=23	2:00	1:00	D
+-Rule	Zion	2013	2026	-	Oct	Sun>=2	2:00	0	S
+-Rule	Zion	2027	only	-	Oct	Mon>=3	2:00	0	S
+-Rule	Zion	2028	max	-	Oct	Sun>=2	2:00	0	S
+-# The following rules are commented out for now, as they break older
+-# versions of zic that support only signed 32-bit timestamps, i.e.,
+-# through 2038-01-19 03:14:07 UTC.
+-#Rule	Zion	2028	2053	-	Oct	Sun>=2	2:00	0	S
+-#Rule	Zion	2054	only	-	Oct	Mon>=3	2:00	0	S
+-#Rule	Zion	2055	2080	-	Oct	Sun>=2	2:00	0	S
+-#Rule	Zion	2081	only	-	Oct	Mon>=3	2:00	0	S
+-#Rule	Zion	2082	max	-	Oct	Sun>=2	2:00	0	S
++Rule	Zion	2013	max	-	Oct	lastSun	2:00	0	S
+ 
+ # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+-Zone	Asia/Jerusalem	2:20:56 -	LMT	1880
++Zone	Asia/Jerusalem	2:20:54 -	LMT	1880
+ 			2:20:40	-	JMT	1918	# Jerusalem Mean Time?
+ 			2:00	Zion	I%sT
+ 
+@@ -2570,8 +2552,8 @@
+ Rule	Syria	2007	only	-	Mar	lastFri	0:00	1:00	S
+ # From Jesper Norgard (2007-10-27):
+ # The sister center ICARDA of my work CIMMYT is confirming that Syria DST will
+-# not take place 1.st November at 0:00 o'clock but 1.st November at 24:00 or
+-# rather Midnight between Thursday and Friday. This does make more sence than
++# not take place 1st November at 0:00 o'clock but 1st November at 24:00 or
++# rather Midnight between Thursday and Friday. This does make more sense than
+ # having it between Wednesday and Thursday (two workdays in Syria) since the
+ # weekend in Syria is not Saturday and Sunday, but Friday and Saturday. So now
+ # it is implemented at midnight of the last workday before weekend...
+diff --git a/make/sun/javazic/tzdata/australasia b/make/sun/javazic/tzdata/australasia
+--- openjdk/jdk/make/sun/javazic/tzdata/australasia
++++ openjdk/jdk/make/sun/javazic/tzdata/australasia
+@@ -253,10 +253,16 @@
+ # - Macquarie Island will stay on UTC+11 for winter and therefore not
+ # switch back from daylight savings time when other parts of Australia do
+ # on 4 April.
++#
++# From Arthur David Olson (2013-05-23):
++# The 1919 transition is overspecified below so pre-2013 zics
++# will produce a binary file with an EST-type as the first 32-bit type;
++# this is required for correct handling of times before 1916 by
++# pre-2013 versions of localtime.
+ Zone Antarctica/Macquarie 0	-	zzz	1899 Nov
+ 			10:00	-	EST	1916 Oct 1 2:00
+ 			10:00	1:00	EST	1917 Feb
+-			10:00	Aus	EST	1919 Apr
++			10:00	Aus	EST	1919 Apr 1 0:00s
+ 			0	-	zzz	1948 Mar 25
+ 			10:00	Aus	EST	1967
+ 			10:00	AT	EST	2010 Apr 4 3:00
+@@ -1498,12 +1504,12 @@
+ # From Paul Eggert (2000-01-08):
+ # IATA SSIM (1999-09) says DST ends 0100 local time.  Go with McDow.
+ 
+-# From the BBC World Service (1998-10-31 11:32 UTC):
++# From the BBC World Service in
++# http://news.bbc.co.uk/2/hi/asia-pacific/205226.stm (1998-10-31 16:03 UTC):
+ # The Fijiian government says the main reasons for the time change is to
+-# improve productivity and reduce road accidents.  But correspondents say it
+-# also hopes the move will boost Fiji's ability to compete with other pacific
+-# islands in the effort to attract tourists to witness the dawning of the new
+-# millenium.
++# improve productivity and reduce road accidents.... [T]he move is also
++# intended to boost Fiji's ability to attract tourists to witness the dawning
++# of the new millennium.
+ 
+ # http://www.fiji.gov.fj/press/2000_09/2000_09_13-05.shtml (2000-09-13)
+ # reports that Fiji has discontinued DST.
+@@ -1648,7 +1654,7 @@
+ # Shanks & Pottenger say the transition was on 1968-10-01; go with Mundell.
+ 
+ # From Eric Ulevik (1999-05-03):
+-# Tonga's director of tourism, who is also secretary of the National Millenium
++# Tonga's director of tourism, who is also secretary of the National Millennium
+ # Committee, has a plan to get Tonga back in front.
+ # He has proposed a one-off move to tropical daylight saving for Tonga from
+ # October to March, which has won approval in principle from the Tongan
+diff --git a/make/sun/javazic/tzdata/europe b/make/sun/javazic/tzdata/europe
+--- openjdk/jdk/make/sun/javazic/tzdata/europe
++++ openjdk/jdk/make/sun/javazic/tzdata/europe
+@@ -546,7 +546,7 @@
+ # It seems that Paris, Monaco, Rule France, Rule Belgium all agree on
+ # 2:00 standard time, e.g. 3:00 local time.  However there are no
+ # countries that use C-Eur rules in September 1945, so the only items
+-# affected are apparently these ficticious zones that translates acronyms
++# affected are apparently these fictitious zones that translate acronyms
+ # CET and MET:
+ #
+ # Zone CET  1:00 C-Eur CE%sT
+@@ -2802,9 +2802,9 @@
+ 
+ # Ukraine
+ #
+-# From Igor Karpov, who works for the Ukranian Ministry of Justice,
++# From Igor Karpov, who works for the Ukrainian Ministry of Justice,
+ # via Garrett Wollman (2003-01-27):
+-# BTW, I've found the official document on this matter. It's goverment
++# BTW, I've found the official document on this matter. It's government
+ # regulations number 509, May 13, 1996. In my poor translation it says:
+ # "Time in Ukraine is set to second timezone (Kiev time). Each last Sunday
+ # of March at 3am the time is changing to 4am and each last Sunday of
+@@ -2838,7 +2838,7 @@
+ # time this year after all.
+ #
+ # From Udo Schwedt (2011-10-18):
+-# As far as I understand, the recent change to the Ukranian time zone
++# As far as I understand, the recent change to the Ukrainian time zone
+ # (Europe/Kiev) to introduce permanent daylight saving time (similar
+ # to Russia) was reverted today:
+ #
+diff --git a/make/sun/javazic/tzdata/iso3166.tab b/make/sun/javazic/tzdata/iso3166.tab
+--- openjdk/jdk/make/sun/javazic/tzdata/iso3166.tab
++++ openjdk/jdk/make/sun/javazic/tzdata/iso3166.tab
+@@ -26,14 +26,12 @@
+ # 2009-05-17 by Arthur David Olson.
+ # ISO 3166 alpha-2 country codes
+ #
+-# From Paul Eggert (2006-09-27):
++# From Paul Eggert (2013-05-27):
+ #
+ # This file contains a table with the following columns:
+ # 1.  ISO 3166-1 alpha-2 country code, current as of
+-#     ISO 3166-1 Newsletter VI-1 (2007-09-21).  See:
+-#     <a href="http://www.iso.org/iso/en/prods-services/iso3166ma/index.html">
+-#     ISO 3166 Maintenance agency (ISO 3166/MA)
+-#     </a>.
++#     ISO 3166-1 Newsletter VI-15 (2013-05-10).  See: Updates on ISO 3166
++#   http://www.iso.org/iso/home/standards/country_codes/updates_on_iso_3166.htm
+ # 2.  The usual English name for the country,
+ #     chosen so that alphabetic sorting of subsets produces helpful lists.
+ #     This is not the same as the English name in the ISO 3166 tables.
+@@ -43,8 +41,9 @@
+ #
+ # Lines beginning with `#' are comments.
+ #
+-# From Arthur David Olson (2011-08-17):
+-# Resynchronized today with the ISO 3166 site (adding SS for South Sudan).
++# This table is intended as an aid for users, to help them select time
++# zone data appropriate for their practical needs.  It is not intended
++# to take or endorse any position on legal or territorial claims.
+ #
+ #country-
+ #code	country name
+@@ -77,7 +76,7 @@
+ BM	Bermuda
+ BN	Brunei
+ BO	Bolivia
+-BQ	Bonaire Sint Eustatius & Saba
++BQ	Bonaire, St Eustatius & Saba
+ BR	Brazil
+ BS	Bahamas
+ BT	Bhutan
+@@ -258,7 +257,7 @@
+ SS	South Sudan
+ ST	Sao Tome & Principe
+ SV	El Salvador
+-SX	Sint Maarten
++SX	St Maarten (Dutch part)
+ SY	Syria
+ SZ	Swaziland
+ TC	Turks & Caicos Is
+diff --git a/make/sun/javazic/tzdata/southamerica b/make/sun/javazic/tzdata/southamerica
+--- openjdk/jdk/make/sun/javazic/tzdata/southamerica
++++ openjdk/jdk/make/sun/javazic/tzdata/southamerica
+@@ -994,7 +994,7 @@
+ # adopted by the same states as before.
+ Rule	Brazil	2007	only	-	Oct	Sun>=8	 0:00	1:00	S
+ # From Frederico A. C. Neves (2008-09-10):
+-# Acording to this decree
++# According to this decree
+ # <a href="http://www.planalto.gov.br/ccivil_03/_Ato2007-2010/2008/Decreto/D6558.htm">
+ # http://www.planalto.gov.br/ccivil_03/_Ato2007-2010/2008/Decreto/D6558.htm
+ # </a>
+@@ -1226,7 +1226,7 @@
+ # http://www.emol.com/noticias/nacional/detalle/detallenoticias.asp?idnoticia=467651
+ # </a>
+ #
+-# This is not yet reflected in the offical "cambio de hora" site, but
++# This is not yet reflected in the official "cambio de hora" site, but
+ # probably will be soon:
+ # <a href="http://www.horaoficial.cl/cambio.htm">
+ # http://www.horaoficial.cl/cambio.htm
+diff --git a/make/sun/javazic/tzdata/zone.tab b/make/sun/javazic/tzdata/zone.tab
+--- openjdk/jdk/make/sun/javazic/tzdata/zone.tab
++++ openjdk/jdk/make/sun/javazic/tzdata/zone.tab
+@@ -27,15 +27,19 @@
+ #
+ # TZ zone descriptions
+ #
+-# From Paul Eggert (1996-08-05):
++# From Paul Eggert (2013-05-27):
+ #
+ # This file contains a table with the following columns:
+ # 1.  ISO 3166 2-character country code.  See the file `iso3166.tab'.
++#     This identifies a country that overlaps the zone.  The country may
++#     overlap other zones and the zone may overlap other countries.
+ # 2.  Latitude and longitude of the zone's principal location
+ #     in ISO 6709 sign-degrees-minutes-seconds format,
+ #     either +-DDMM+-DDDMM or +-DDMMSS+-DDDMMSS,
+ #     first latitude (+ is north), then longitude (+ is east).
++#     This location need not lie within the column-1 country.
+ # 3.  Zone name used in value of TZ environment variable.
++#     Please see the 'Theory' file for how zone names are chosen.
+ # 4.  Comments; present if and only if the country has multiple rows.
+ #
+ # Columns are separated by a single tab.
+@@ -45,6 +49,10 @@
+ #
+ # Lines beginning with `#' are comments.
+ #
++# This table is intended as an aid for users, to help them select time
++# zone data appropriate for their practical needs.  It is not intended
++# to take or endorse any position on legal or territorial claims.
++#
+ #country-
+ #code	coordinates	TZ			comments
+ AD	+4230+00131	Europe/Andorra
+@@ -239,7 +247,7 @@
+ ID	-0507+11924	Asia/Makassar	east & south Borneo, Sulawesi (Celebes), Bali, Nusa Tengarra, west Timor
+ ID	-0232+14042	Asia/Jayapura	west New Guinea (Irian Jaya) & Malukus (Moluccas)
+ IE	+5320-00615	Europe/Dublin
+-IL	+3146+03514	Asia/Jerusalem
++IL	+314650+0351326	Asia/Jerusalem
+ IM	+5409-00428	Europe/Isle_of_Man
+ IN	+2232+08822	Asia/Kolkata
+ IO	-0720+07225	Indian/Chagos
