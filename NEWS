@@ -21,6 +21,17 @@ New in release 1.13.0 (201X-XX-XX):
   - S8009641: OpenJDK 6 build broken via 8007675 fix
   - OJ4: Backport the new version of copyMemory from OpenJDK 7 to allow Snappy to build
   - S7022999: Can't build with FORCE_TIERED=0 (bundled HotSpot only)
+  - S4893408: JPEGReader throws IllegalArgException when setting the destination to BYTE_GRAY
+  - S6631559: Registration of ImageIO plugins should not cause loading of jpeg.dlli and cmm.dll
+  - S6791502: IIOException "Invalid icc profile" on jpeg after update from JDK5 to JDK6
+  - S6793818: JpegImageReader is too greedy creating color profiles
+  - S6888215: memory leak in jpeg plugin
+  - S6989760: cmm native compiler warnings
+  - S6989774: imageio compiler warnings in native code
+  - S7013519: [parfait] Integer overflows in 2D code
+  - S7018912: [parfait] potential buffer overruns in imageio jpeg
+  - S8005194: [parfait] #353 sun/awt/image/jpeg/imageioJPEG.c Memory leak of pointer 'scale' allocated with calloc()
+  - S8020983, RH976897: OutOfMemoryError caused by non garbage collected JPEGImageWriter Instances
 * Bug fixes
   - PR1188: ASM Interpreter and Thumb2 JIT javac miscompile modulo reminder on armel.
   - PR1318: Fix automatic enabling of the Zero build on non-JIT architectures which don't use CACAO or JamVM.

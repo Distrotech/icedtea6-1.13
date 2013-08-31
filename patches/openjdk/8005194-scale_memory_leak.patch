@@ -1,0 +1,25 @@
+# HG changeset patch
+# User jgodinez
+# Date 1360190702 28800
+#      Wed Feb 06 14:45:02 2013 -0800
+# Node ID 37719b174e8705b5b7f01d55bceaeb1213805032
+# Parent  8fc3e4015b090ebe974a842cf7f065e5af7429aa
+8005194: [parfait] #353 sun/awt/image/jpeg/imageioJPEG.c Memory leak of pointer 'scale' allocated with calloc()
+Reviewed-by: prr, vadim
+Contributed-by: jia-hong.chen@oracle.com
+
+diff --git a/src/share/native/sun/awt/image/jpeg/imageioJPEG.c b/src/share/native/sun/awt/image/jpeg/imageioJPEG.c
+--- openjdk/jdk/src/share/native/sun/awt/image/jpeg/imageioJPEG.c
++++ openjdk/jdk/src/share/native/sun/awt/image/jpeg/imageioJPEG.c
+@@ -2694,6 +2694,11 @@
+             scale[i] = (UINT8*) malloc((maxBandValue + 1) * sizeof(UINT8));
+ 
+             if (scale[i] == NULL) {
++                // Cleanup before throwing an out of memory exception
++                for (j = 0; j < i; j++) {
++                    free(scale[j]);
++                }
++                free(scale);
+                 JNU_ThrowByName( env, "java/lang/OutOfMemoryError",
+                                  "Writing JPEG Stream");
+                 return JNI_FALSE;

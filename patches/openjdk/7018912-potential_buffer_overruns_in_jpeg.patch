@@ -1,0 +1,21 @@
+# HG changeset patch
+# User bae
+# Date 1297939346 -10800
+#      Thu Feb 17 13:42:26 2011 +0300
+# Node ID e45f7d50dbc9789ddc69d7cd76bf72bde47ef3d6
+# Parent  b04dafeda7063e07662508419415fca4a9989b24
+7018912: [parfait] potential buffer overruns in imageio jpeg
+Reviewed-by: jgodinez, prr
+
+diff --git a/src/share/native/sun/awt/image/jpeg/imageioJPEG.c b/src/share/native/sun/awt/image/jpeg/imageioJPEG.c
+--- openjdk/jdk/src/share/native/sun/awt/image/jpeg/imageioJPEG.c
++++ openjdk/jdk/src/share/native/sun/awt/image/jpeg/imageioJPEG.c
+@@ -1846,7 +1846,7 @@
+ 
+     cinfo = (j_decompress_ptr) data->jpegObj;
+ 
+-    if ((numBands < 1) ||
++    if ((numBands < 1) || (numBands > MAX_BANDS) ||
+         (sourceXStart < 0) || (sourceXStart >= (jint)cinfo->image_width) ||
+         (sourceYStart < 0) || (sourceYStart >= (jint)cinfo->image_height) ||
+         (sourceWidth < 1) || (sourceWidth > (jint)cinfo->image_width) ||

@@ -1,3 +1,26 @@
+2013-08-30  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add new patches.
+	* NEWS: Updated with new patches.
+	* patches/imageiojpeg_sync.patch:
+	Bring in changes to imageioJPEG.c made between
+	the start of OpenJDK 6 and the start of OpenJDK 7's
+	hg repositories.
+	* patches/libraries.patch: Updated against patches below.
+	* patches/openjdk/4893408-jpegreader_byte_gray.patch,
+	* patches/openjdk/6631559-dont_load_libjpeg_to_register_imageio_plugins.patch,
+	* patches/openjdk/6791502-invalid_icc_profile.patch,
+	* patches/openjdk/6793818-jpegimagereader_too_greedy.patch,
+	* patches/openjdk/6888215-jpeg_memory_leak.patch,
+	* patches/openjdk/6989760-native_warnings.patch,
+	* patches/openjdk/6989774-imageio_compiler_warnings.patch,
+	* patches/openjdk/7013519-integer_overflows.patch,
+	* patches/openjdk/7018912-potential_buffer_overruns_in_jpeg.patch,
+	* patches/openjdk/8005194-scale_memory_leak.patch,
+	* patches/openjdk/8020983-outofmemoryerror_jpegimagewriter.patch:
+	New backports from OpenJDK 7u.
+
 2013-08-29  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* Makefile.am:

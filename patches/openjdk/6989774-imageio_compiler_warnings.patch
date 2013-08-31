@@ -1,0 +1,649 @@
+diff -Nru openjdk.orig/jdk/make/sun/jpeg/Makefile openjdk/jdk/make/sun/jpeg/Makefile
+--- openjdk.orig/jdk/make/sun/jpeg/Makefile	2012-10-26 19:25:41.000000000 +0100
++++ openjdk/jdk/make/sun/jpeg/Makefile	2013-08-30 16:29:41.181832003 +0100
+@@ -65,6 +65,19 @@
+     FILES_reorder += reorder-$(ARCH)
+   endif
+ endif
++
++ifeq ($(PLATFORM), linux)
++
++  # Suppress gcc warnings like "variable might be clobbered by 'longjmp'
++  # or 'vfork'": this warning indicates that some variable is placed to
++  # a register by optimized compiler and it's value might be lost on longjmp().
++  # Recommended way to avoid such warning is to declare the variable as
++  # volatile to prevent the optimization. However, this approach does not
++  # work because we have to declare all variables as volatile in result.
++
++  OTHER_CFLAGS += -Wno-clobbered
++endif
++
+ include $(BUILDDIR)/common/Mapfile-vers.gmk
+ include $(BUILDDIR)/common/Library.gmk
+ 
+diff -Nru openjdk.orig/jdk/make/sun/jpeg/reorder-i586 openjdk/jdk/make/sun/jpeg/reorder-i586
+--- openjdk.orig/jdk/make/sun/jpeg/reorder-i586	2012-10-26 19:25:41.000000000 +0100
++++ openjdk/jdk/make/sun/jpeg/reorder-i586	2013-08-30 16:29:41.181832003 +0100
+@@ -22,7 +22,7 @@
+ text: .text%alloc_small: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jmemmgr.o;
+ text: .text%reset_marker_reader: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
+ text: .text%jIInCtlr;
+-text: .text%GET_ARRAYS: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jpegdecoder.o;
++# text: .text%GET_ARRAYS: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jpegdecoder.o;
+ text: .text%jReadHeader;
+ text: .text%jConsumeInput;
+ text: .text%reset_input_controller: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdinput.o;
+@@ -30,36 +30,36 @@
+ text: .text%sun_jpeg_init_source;
+ text: .text%consume_markers: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdinput.o;
+ text: .text%read_markers: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
+-text: .text%first_marker: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
++# text: .text%first_marker: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
+ text: .text%sun_jpeg_fill_input_buffer;
+-text: .text%RELEASE_ARRAYS: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jpegdecoder.o;
+-text: .text%get_soi: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
++# text: .text%RELEASE_ARRAYS: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jpegdecoder.o;
++# text: .text%get_soi: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
+ text: .text%emit_message: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jerror.o;
+-text: .text%next_marker: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
++# text: .text%next_marker: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
+ text: .text%get_interesting_appn: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
+-text: .text%examine_app0: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
++# text: .text%examine_app0: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
+ text: .text%skip_variable: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
+ text: .text%sun_jpeg_skip_input_data;
+-text: .text%examine_app14: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
++# text: .text%examine_app14: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
+ text: .text%get_dqt: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
+ text: .text%jAlcQTable;
+ text: .text%get_sof: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
+-text: .text%get_dri: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
++# text: .text%get_dri: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
+ text: .text%get_dht: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
+ text: .text%jAlcHTable;
+ text: .text%get_sos: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
+-text: .text%initial_setup: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdinput.o;
++# text: .text%initial_setup: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdinput.o;
+ text: .text%jDivRound;
+-text: .text%default_decompress_parms: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdapimin.o;
++# text: .text%default_decompress_parms: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdapimin.o;
+ text: .text%jHasMultScn;
+ text: .text%jStrtDecompress;
+ text: .text%jIDMaster;
+-text: .text%master_selection: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmaster.o;
++# text: .text%master_selection: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmaster.o;
+ text: .text%jCalcDimensions;
+-text: .text%use_merged_upsample: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmaster.o;
+-text: .text%prepare_range_limit_table: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmaster.o;
++# text: .text%use_merged_upsample: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmaster.o;
++# text: .text%prepare_range_limit_table: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmaster.o;
+ text: .text%jIDColor;
+-text: .text%build_ycc_rgb_table: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdcolor.o;
++# text: .text%build_ycc_rgb_table: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdcolor.o;
+ text: .text%jIUpsampler;
+ text: .text%jRound;
+ text: .text%alloc_sarray: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jmemmgr.o;
+@@ -70,16 +70,16 @@
+ text: .text%jIHDecoder;
+ text: .text%jIDCoefC;
+ text: .text%jIDMainC;
+-text: .text%alloc_funny_pointers: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmainct.o;
++# text: .text%alloc_funny_pointers: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmainct.o;
+ text: .text%realize_virt_arrays: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jmemmgr.o;
+ text: .text%start_input_pass: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdinput.o;
+-text: .text%per_scan_setup: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdinput.o;
+-text: .text%latch_quant_tables: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdinput.o;
++# text: .text%per_scan_setup: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdinput.o;
++# text: .text%latch_quant_tables: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdinput.o;
+ text: .text%start_pass_huff_decoder: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdhuff.o;
+ text: .text%jMkDDerived;
+ text: .text%start_input_pass: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdcoefct.o;
+-text: .text%start_iMCU_row: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdcoefct.o;
+-text: .text%output_pass_setup: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdapistd.o;
++# text: .text%start_iMCU_row: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdcoefct.o;
++# text: .text%output_pass_setup: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdapistd.o;
+ text: .text%prepare_for_output_pass: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmaster.o;
+ text: .text%start_pass: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jddctmgr.o;
+ text: .text%start_output_pass: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdcoefct.o;
+@@ -87,7 +87,7 @@
+ text: .text%start_pass_upsample: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdsample.o;
+ text: .text%start_pass_dpost: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdpostct.o;
+ text: .text%start_pass_main: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmainct.o;
+-text: .text%make_funny_pointers: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmainct.o;
++# text: .text%make_funny_pointers: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmainct.o;
+ text: .text%jReadScanlines;
+ text: .text%process_data_context_main: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmainct.o;
+ text: .text%decompress_onepass: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdcoefct.o;
+@@ -100,11 +100,11 @@
+ text: .text%fullsize_upsample: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdsample.o;
+ text: .text%h2v2_fancy_upsample: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdsample.o;
+ text: .text%ycc_rgb_convert: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdcolor.o;
+-text: .text%set_wraparound_pointers: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmainct.o;
+-text: .text%process_restart: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdhuff.o;
++# text: .text%set_wraparound_pointers: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmainct.o;
++# text: .text%process_restart: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdhuff.o;
+ text: .text%read_restart_marker: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
+ text: .text%finish_input_pass: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdinput.o;
+-text: .text%set_bottom_pointers: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmainct.o;
++# text: .text%set_bottom_pointers: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmainct.o;
+ text: .text%jFinDecompress;
+ text: .text%finish_output_pass: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmaster.o;
+ text: .text%sun_jpeg_term_source;
+diff -Nru openjdk.orig/jdk/make/sun/jpeg/reorder-sparc openjdk/jdk/make/sun/jpeg/reorder-sparc
+--- openjdk.orig/jdk/make/sun/jpeg/reorder-sparc	2012-10-26 19:25:41.000000000 +0100
++++ openjdk/jdk/make/sun/jpeg/reorder-sparc	2013-08-30 16:29:41.181832003 +0100
+@@ -30,10 +30,10 @@
+ text: .text%sun_jpeg_init_source;
+ text: .text%consume_markers: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdinput.o;
+ text: .text%read_markers: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
+-text: .text%first_marker: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
++# text: .text%first_marker: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
+ text: .text%sun_jpeg_fill_input_buffer;
+ text: .text%RELEASE_ARRAYS: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jpegdecoder.o;
+-text: .text%get_soi: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
++# text: .text%get_soi: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
+ text: .text%emit_message: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jerror.o;
+ text: .text%next_marker: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
+ text: .text%get_interesting_appn: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
+@@ -44,7 +44,7 @@
+ text: .text%get_dqt: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
+ text: .text%jAlcQTable;
+ text: .text%get_sof: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
+-text: .text%get_dri: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
++# text: .text%get_dri: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
+ text: .text%get_dht: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
+ text: .text%jAlcHTable;
+ text: .text%get_sos: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
+@@ -56,10 +56,10 @@
+ text: .text%jIDMaster;
+ text: .text%master_selection: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmaster.o;
+ text: .text%jCalcDimensions;
+-text: .text%use_merged_upsample: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmaster.o;
+-text: .text%prepare_range_limit_table: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmaster.o;
++# text: .text%use_merged_upsample: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmaster.o;
++# text: .text%prepare_range_limit_table: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmaster.o;
+ text: .text%jIDColor;
+-text: .text%build_ycc_rgb_table: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdcolor.o;
++# text: .text%build_ycc_rgb_table: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdcolor.o;
+ text: .text%jIUpsampler;
+ text: .text%jRound;
+ text: .text%alloc_sarray: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jmemmgr.o;
+@@ -78,7 +78,7 @@
+ text: .text%start_pass_huff_decoder: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdhuff.o;
+ text: .text%jMkDDerived;
+ text: .text%start_input_pass: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdcoefct.o;
+-text: .text%start_iMCU_row: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdcoefct.o;
++# text: .text%start_iMCU_row: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdcoefct.o;
+ text: .text%output_pass_setup: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdapistd.o;
+ text: .text%prepare_for_output_pass: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmaster.o;
+ text: .text%start_pass: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jddctmgr.o;
+@@ -100,11 +100,11 @@
+ text: .text%fullsize_upsample: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdsample.o;
+ text: .text%h2v2_fancy_upsample: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdsample.o;
+ text: .text%ycc_rgb_convert: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdcolor.o;
+-text: .text%set_wraparound_pointers: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmainct.o;
+-text: .text%process_restart: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdhuff.o;
++# text: .text%set_wraparound_pointers: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmainct.o;
++#text: .text%process_restart: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdhuff.o;
+ text: .text%read_restart_marker: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmarker.o;
+ text: .text%finish_input_pass: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdinput.o;
+-text: .text%set_bottom_pointers: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmainct.o;
++# text: .text%set_bottom_pointers: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmainct.o;
+ text: .text%jFinDecompress;
+ text: .text%finish_output_pass: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj/jdmaster.o;
+ text: .text%sun_jpeg_term_source;
+diff -Nru openjdk.orig/jdk/make/sun/jpeg/reorder-sparcv9 openjdk/jdk/make/sun/jpeg/reorder-sparcv9
+--- openjdk.orig/jdk/make/sun/jpeg/reorder-sparcv9	2012-10-26 19:25:41.000000000 +0100
++++ openjdk/jdk/make/sun/jpeg/reorder-sparcv9	2013-08-30 16:29:41.181832003 +0100
+@@ -30,10 +30,10 @@
+ text: .text%sun_jpeg_init_source;
+ text: .text%consume_markers: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdinput.o;
+ text: .text%read_markers: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdmarker.o;
+-text: .text%first_marker: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdmarker.o;
++# text: .text%first_marker: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdmarker.o;
+ text: .text%sun_jpeg_fill_input_buffer;
+ text: .text%RELEASE_ARRAYS: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jpegdecoder.o;
+-text: .text%get_soi: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdmarker.o;
++# text: .text%get_soi: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdmarker.o;
+ text: .text%emit_message: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jerror.o;
+ text: .text%next_marker: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdmarker.o;
+ text: .text%get_interesting_appn: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdmarker.o;
+@@ -44,7 +44,7 @@
+ text: .text%get_dqt: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdmarker.o;
+ text: .text%jAlcQTable;
+ text: .text%get_sof: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdmarker.o;
+-text: .text%get_dri: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdmarker.o;
++# text: .text%get_dri: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdmarker.o;
+ text: .text%get_dht: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdmarker.o;
+ text: .text%jAlcHTable;
+ text: .text%get_sos: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdmarker.o;
+@@ -56,10 +56,10 @@
+ text: .text%jIDMaster;
+ text: .text%master_selection: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdmaster.o;
+ text: .text%jCalcDimensions;
+-text: .text%use_merged_upsample: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdmaster.o;
+-text: .text%prepare_range_limit_table: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdmaster.o;
++# text: .text%use_merged_upsample: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdmaster.o;
++# text: .text%prepare_range_limit_table: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdmaster.o;
+ text: .text%jIDColor;
+-text: .text%build_ycc_rgb_table: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdcolor.o;
++# text: .text%build_ycc_rgb_table: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdcolor.o;
+ text: .text%jIUpsampler;
+ text: .text%jRound;
+ text: .text%alloc_sarray: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jmemmgr.o;
+@@ -78,7 +78,7 @@
+ text: .text%start_pass_huff_decoder: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdhuff.o;
+ text: .text%jMkDDerived;
+ text: .text%start_input_pass: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdcoefct.o;
+-text: .text%start_iMCU_row: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdcoefct.o;
++# text: .text%start_iMCU_row: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdcoefct.o;
+ text: .text%output_pass_setup: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdapistd.o;
+ text: .text%prepare_for_output_pass: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdmaster.o;
+ text: .text%start_pass: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jddctmgr.o;
+@@ -100,11 +100,11 @@
+ text: .text%fullsize_upsample: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdsample.o;
+ text: .text%h2v2_fancy_upsample: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdsample.o;
+ text: .text%ycc_rgb_convert: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdcolor.o;
+-text: .text%set_wraparound_pointers: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdmainct.o;
++# text: .text%set_wraparound_pointers: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdmainct.o;
+ text: .text%process_restart: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdhuff.o;
+ text: .text%read_restart_marker: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdmarker.o;
+ text: .text%finish_input_pass: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdinput.o;
+-text: .text%set_bottom_pointers: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdmainct.o;
++# text: .text%set_bottom_pointers: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdmainct.o;
+ text: .text%jFinDecompress;
+ text: .text%finish_output_pass: OUTPUTDIR/tmp/sun/sun.awt/jpeg/obj64/jdmaster.o;
+ text: .text%sun_jpeg_term_source;
+diff -Nru openjdk.orig/jdk/src/share/native/sun/awt/image/jpeg/imageioJPEG.c openjdk/jdk/src/share/native/sun/awt/image/jpeg/imageioJPEG.c
+--- openjdk.orig/jdk/src/share/native/sun/awt/image/jpeg/imageioJPEG.c	2013-08-30 16:26:19.446692090 +0100
++++ openjdk/jdk/src/share/native/sun/awt/image/jpeg/imageioJPEG.c	2013-08-30 16:31:55.715925913 +0100
+@@ -110,8 +110,8 @@
+     jobject stream;            // ImageInputStream or ImageOutputStream
+     jbyteArray hstreamBuffer;  // Handle to a Java buffer for the stream
+     JOCTET *buf;               // Pinned buffer pointer */
+-    int bufferOffset;          // holds offset between unpin and the next pin
+-    int bufferLength;          // Allocated, nut just used
++    size_t bufferOffset;          // holds offset between unpin and the next pin
++    size_t bufferLength;          // Allocated, nut just used
+     int suspendable;           // Set to true to suspend input
+     long remaining_skip;       // Used only on input
+ } streamBuffer, *streamBufferPtr;
+@@ -130,7 +130,7 @@
+  * Used to signal that no data need be restored from an unpin to a pin.
+  * I.e. the buffer is empty.
+  */
+-#define NO_DATA -1
++#define NO_DATA ((size_t)-1)
+ 
+ // Forward reference
+ static void resetStreamBuffer(JNIEnv *env, streamBufferPtr sb);
+@@ -393,7 +393,6 @@
+ static imageIODataPtr initImageioData (JNIEnv *env,
+                                        j_common_ptr cinfo,
+                                        jobject obj) {
+-    int i, j;
+ 
+     imageIODataPtr data = (imageIODataPtr) malloc (sizeof(imageIOData));
+     if (data == NULL) {
+@@ -992,7 +991,7 @@
+     streamBufferPtr sb = &data->streamBuf;
+     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
+     jint ret;
+-    int offset, buflen;
++    size_t offset, buflen;
+ 
+     /*
+      * The original (jpegdecoder.c) had code here that called
+@@ -1530,7 +1529,7 @@
+         imageio_dispose((j_common_ptr)cinfo);
+         return 0;
+     }
+-    return (jlong) ret;
++    return ptr_to_jlong(ret);
+ }
+ 
+ /*
+@@ -1544,7 +1543,7 @@
+      jobject this,
+      jlong ptr) {
+ 
+-    imageIODataPtr data = (imageIODataPtr) ptr;
++    imageIODataPtr data = (imageIODataPtr)jlong_to_ptr(ptr);
+     j_common_ptr cinfo;
+ 
+     if (data == NULL) {
+@@ -1583,7 +1582,7 @@
+     int h_samp0, h_samp1, h_samp2;
+     int v_samp0, v_samp1, v_samp2;
+     jboolean retval = JNI_FALSE;
+-    imageIODataPtr data = (imageIODataPtr) ptr;
++    imageIODataPtr data = (imageIODataPtr)jlong_to_ptr(ptr);
+     j_decompress_ptr cinfo;
+     struct jpeg_source_mgr *src;
+     sun_jpeg_error_ptr jerr;
+@@ -1781,7 +1780,7 @@
+      jlong ptr,
+      jint code) {
+ 
+-    imageIODataPtr data = (imageIODataPtr) ptr;
++    imageIODataPtr data = (imageIODataPtr)jlong_to_ptr(ptr);
+     j_decompress_ptr cinfo;
+ 
+     if (data == NULL) {
+@@ -1823,7 +1822,7 @@
+     struct jpeg_source_mgr *src;
+     JSAMPROW scanLinePtr = NULL;
+     jint bands[MAX_BANDS];
+-    int i, j;
++    int i;
+     jint *body;
+     int scanlineLimit;
+     int pixelStride;
+@@ -1833,14 +1832,12 @@
+     pixelBufferPtr pb;
+     sun_jpeg_error_ptr jerr;
+     boolean done;
+-    jint *bandSize;
+-    int maxBandValue, halfMaxBandValue;
+     boolean mustScale = FALSE;
+     boolean progressive = FALSE;
+     boolean orderedBands = TRUE;
+-    imageIODataPtr data = (imageIODataPtr) ptr;
++    imageIODataPtr data = (imageIODataPtr)jlong_to_ptr(ptr);
+     j_decompress_ptr cinfo;
+-    unsigned int numBytes;
++    size_t numBytes;
+ 
+     /* verify the inputs */
+ 
+@@ -1872,10 +1869,10 @@
+         return JNI_FALSE;
+     }
+ 
+-    if (stepX > cinfo->image_width) {
++    if (stepX > (jint)cinfo->image_width) {
+         stepX = cinfo->image_width;
+     }
+-    if (stepY > cinfo->image_height) {
++    if (stepY > (jint)cinfo->image_height) {
+         stepY = cinfo->image_height;
+     }
+ 
+@@ -2172,7 +2169,7 @@
+      jobject this,
+      jlong ptr) {
+ 
+-    imageIODataPtr data = (imageIODataPtr) ptr;
++    imageIODataPtr data = (imageIODataPtr)jlong_to_ptr(ptr);
+ 
+     if (data == NULL) {
+         JNU_ThrowByName(env,
+@@ -2190,7 +2187,7 @@
+     (JNIEnv *env,
+      jobject this,
+      jlong ptr) {
+-    imageIODataPtr data = (imageIODataPtr) ptr;
++    imageIODataPtr data = (imageIODataPtr)jlong_to_ptr(ptr);
+     j_decompress_ptr cinfo;
+ 
+     if (data == NULL) {
+@@ -2212,7 +2209,7 @@
+      jobject this,
+      jlong ptr) {
+ 
+-    imageIODataPtr data = (imageIODataPtr) ptr;
++    imageIODataPtr data = (imageIODataPtr)jlong_to_ptr(ptr);
+     j_decompress_ptr cinfo;
+     sun_jpeg_error_ptr jerr;
+ 
+@@ -2285,7 +2282,7 @@
+      jclass reader,
+      jlong ptr) {
+ 
+-    imageIODataPtr data = (imageIODataPtr) ptr;
++    imageIODataPtr data = (imageIODataPtr)jlong_to_ptr(ptr);
+     j_common_ptr info = destroyImageioData(env, data);
+ 
+     imageio_dispose(info);
+@@ -2370,8 +2367,8 @@
+     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
+ 
+     /* find out how much needs to be written */
+-    jint datacount = sb->bufferLength - dest->free_in_buffer;
+-
++    /* this conversion from size_t to jint is safe, because the lenght of the buffer is limited by jint */
++    jint datacount = (jint)(sb->bufferLength - dest->free_in_buffer);
+     if (datacount != 0) {
+         RELEASE_ARRAYS(env, data, (const JOCTET *)(dest->next_output_byte));
+ 
+@@ -2537,7 +2534,7 @@
+         imageio_dispose((j_common_ptr)cinfo);
+         return 0;
+     }
+-    return (jlong) ret;
++    return ptr_to_jlong(ret);
+ }
+ 
+ JNIEXPORT void JNICALL
+@@ -2546,7 +2543,7 @@
+      jobject this,
+      jlong ptr) {
+ 
+-    imageIODataPtr data = (imageIODataPtr) ptr;
++    imageIODataPtr data = (imageIODataPtr)jlong_to_ptr(ptr);
+     j_compress_ptr cinfo;
+ 
+     if (data == NULL) {
+@@ -2577,7 +2574,7 @@
+ 
+     struct jpeg_destination_mgr *dest;
+     sun_jpeg_error_ptr jerr;
+-    imageIODataPtr data = (imageIODataPtr) ptr;
++    imageIODataPtr data = (imageIODataPtr)jlong_to_ptr(ptr);
+     j_compress_ptr cinfo;
+ 
+     if (data == NULL) {
+@@ -2677,7 +2674,7 @@
+     jint *bandSize;
+     int maxBandValue, halfMaxBandValue;
+     boolean mustScale = FALSE;
+-    imageIODataPtr data = (imageIODataPtr) ptr;
++    imageIODataPtr data = (imageIODataPtr)jlong_to_ptr(ptr);
+     j_compress_ptr cinfo;
+ 
+     /* verify the inputs */
+@@ -2783,6 +2780,16 @@
+                                           buffer);
+             JNU_ThrowByName(env, "javax/imageio/IIOException", buffer);
+         }
++
++        if (scale != NULL) {
++            for (i = 0; i < numBands; i++) {
++                if (scale[i] != NULL) {
++                    free(scale[i]);
++                }
++            }
++            free(scale);
++        }
++
+         free(scanLinePtr);
+         return data->abortFlag;
+     }
+@@ -2989,7 +2996,7 @@
+      jobject this,
+      jlong ptr) {
+ 
+-    imageIODataPtr data = (imageIODataPtr) ptr;
++    imageIODataPtr data = (imageIODataPtr)jlong_to_ptr(ptr);
+ 
+     if (data == NULL) {
+         JNU_ThrowByName(env,
+@@ -3006,7 +3013,7 @@
+     (JNIEnv *env,
+      jobject this,
+      jlong ptr) {
+-    imageIODataPtr data = (imageIODataPtr) ptr;
++    imageIODataPtr data = (imageIODataPtr)jlong_to_ptr(ptr);
+     j_compress_ptr cinfo;
+ 
+     if (data == NULL) {
+@@ -3038,7 +3045,7 @@
+      jclass writer,
+      jlong ptr) {
+ 
+-    imageIODataPtr data = (imageIODataPtr) ptr;
++    imageIODataPtr data = (imageIODataPtr)jlong_to_ptr(ptr);
+     j_common_ptr info = destroyImageioData(env, data);
+ 
+     imageio_dispose(info);
+diff -Nru openjdk.orig/jdk/src/share/native/sun/awt/image/jpeg/jdmarker.c openjdk/jdk/src/share/native/sun/awt/image/jpeg/jdmarker.c
+--- openjdk.orig/jdk/src/share/native/sun/awt/image/jpeg/jdmarker.c	2012-10-26 19:26:12.000000000 +0100
++++ openjdk/jdk/src/share/native/sun/awt/image/jpeg/jdmarker.c	2013-08-30 16:29:41.181832003 +0100
+@@ -1325,14 +1325,14 @@
+                    unsigned int length_limit)
+ {
+   my_marker_ptr marker = (my_marker_ptr) cinfo->marker;
+-  long maxlength;
++  size_t maxlength;
+   jpeg_marker_parser_method processor;
+ 
+   /* Length limit mustn't be larger than what we can allocate
+    * (should only be a concern in a 16-bit environment).
+    */
+   maxlength = cinfo->mem->max_alloc_chunk - SIZEOF(struct jpeg_marker_struct);
+-  if (((long) length_limit) > maxlength)
++  if (length_limit > maxlength)
+     length_limit = (unsigned int) maxlength;
+ 
+   /* Choose processor routine to use.
+diff -Nru openjdk.orig/jdk/src/share/native/sun/awt/image/jpeg/jmemmgr.c openjdk/jdk/src/share/native/sun/awt/image/jpeg/jmemmgr.c
+--- openjdk.orig/jdk/src/share/native/sun/awt/image/jpeg/jmemmgr.c	2012-10-26 19:26:12.000000000 +0100
++++ openjdk/jdk/src/share/native/sun/awt/image/jpeg/jmemmgr.c	2013-08-30 16:29:41.181832003 +0100
+@@ -133,7 +133,7 @@
+   jvirt_barray_ptr virt_barray_list;
+ 
+   /* This counts total space obtained from jpeg_get_small/large */
+-  long total_space_allocated;
++  size_t total_space_allocated;
+ 
+   /* alloc_sarray and alloc_barray set this value for use by virtual
+    * array routines.
+@@ -588,8 +588,8 @@
+ /* Allocate the in-memory buffers for any unrealized virtual arrays */
+ {
+   my_mem_ptr mem = (my_mem_ptr) cinfo->mem;
+-  long space_per_minheight, maximum_space, avail_mem;
+-  long minheights, max_minheights;
++  size_t space_per_minheight, maximum_space, avail_mem;
++  size_t minheights, max_minheights;
+   jvirt_sarray_ptr sptr;
+   jvirt_barray_ptr bptr;
+ 
+@@ -1032,7 +1032,7 @@
+ jinit_memory_mgr (j_common_ptr cinfo)
+ {
+   my_mem_ptr mem;
+-  long max_to_use;
++  size_t max_to_use;
+   int pool;
+   size_t test_mac;
+ 
+@@ -1109,8 +1109,10 @@
+ 
+     if ((memenv = getenv("JPEGMEM")) != NULL) {
+       char ch = 'x';
++      unsigned int mem_max = 0u;
+ 
+-      if (sscanf(memenv, "%ld%c", &max_to_use, &ch) > 0) {
++      if (sscanf(memenv, "%u%c", &mem_max, &ch) > 0) {
++        max_to_use = (size_t)mem_max;
+         if (ch == 'm' || ch == 'M')
+           max_to_use *= 1000L;
+         mem->pub.max_memory_to_use = max_to_use * 1000L;
+diff -Nru openjdk.orig/jdk/src/share/native/sun/awt/image/jpeg/jmemnobs.c openjdk/jdk/src/share/native/sun/awt/image/jpeg/jmemnobs.c
+--- openjdk.orig/jdk/src/share/native/sun/awt/image/jpeg/jmemnobs.c	2012-10-26 19:26:12.000000000 +0100
++++ openjdk/jdk/src/share/native/sun/awt/image/jpeg/jmemnobs.c	2013-08-30 16:29:41.181832003 +0100
+@@ -73,9 +73,9 @@
+  * Here we always say, "we got all you want bud!"
+  */
+ 
+-GLOBAL(long)
+-jpeg_mem_available (j_common_ptr cinfo, long min_bytes_needed,
+-                    long max_bytes_needed, long already_allocated)
++GLOBAL(size_t)
++jpeg_mem_available (j_common_ptr cinfo, size_t min_bytes_needed,
++                    size_t max_bytes_needed, size_t already_allocated)
+ {
+   return max_bytes_needed;
+ }
+@@ -100,7 +100,7 @@
+  * cleanup required.  Here, there isn't any.
+  */
+ 
+-GLOBAL(long)
++GLOBAL(size_t)
+ jpeg_mem_init (j_common_ptr cinfo)
+ {
+   return 0;                     /* just set max_memory_to_use to 0 */
+diff -Nru openjdk.orig/jdk/src/share/native/sun/awt/image/jpeg/jmemsys.h openjdk/jdk/src/share/native/sun/awt/image/jpeg/jmemsys.h
+--- openjdk.orig/jdk/src/share/native/sun/awt/image/jpeg/jmemsys.h	2012-10-26 19:26:12.000000000 +0100
++++ openjdk/jdk/src/share/native/sun/awt/image/jpeg/jmemsys.h	2013-08-30 16:29:41.181832003 +0100
+@@ -104,10 +104,10 @@
+  * Conversely, zero may be returned to always use the minimum amount of memory.
+  */
+ 
+-EXTERN(long) jpeg_mem_available JPP((j_common_ptr cinfo,
+-                                     long min_bytes_needed,
+-                                     long max_bytes_needed,
+-                                     long already_allocated));
++EXTERN(size_t) jpeg_mem_available JPP((j_common_ptr cinfo,
++                                     size_t min_bytes_needed,
++                                     size_t max_bytes_needed,
++                                     size_t already_allocated));
+ 
+ 
+ /*
+@@ -198,5 +198,5 @@
+  * all opened backing-store objects have been closed.
+  */
+ 
+-EXTERN(long) jpeg_mem_init JPP((j_common_ptr cinfo));
++EXTERN(size_t) jpeg_mem_init JPP((j_common_ptr cinfo));
+ EXTERN(void) jpeg_mem_term JPP((j_common_ptr cinfo));
+diff -Nru openjdk.orig/jdk/src/share/native/sun/awt/image/jpeg/jpegdecoder.c openjdk/jdk/src/share/native/sun/awt/image/jpeg/jpegdecoder.c
+--- openjdk.orig/jdk/src/share/native/sun/awt/image/jpeg/jpegdecoder.c	2012-10-26 19:26:12.000000000 +0100
++++ openjdk/jdk/src/share/native/sun/awt/image/jpeg/jpegdecoder.c	2013-08-30 16:29:41.181832003 +0100
+@@ -328,7 +328,7 @@
+     if ((*env)->ExceptionOccurred(env) || !GET_ARRAYS(env, src)) {
+         cinfo->err->error_exit((struct jpeg_common_struct *) cinfo);
+     }
+-    if (ret <= src->remaining_skip) {
++    if (ret < 0 || (unsigned int)ret <= src->remaining_skip) {
+         return;
+     }
+     if (src->remaining_skip) {
+@@ -397,7 +397,7 @@
+     }
+     num_bytes += src->remaining_skip;
+     src->remaining_skip = 0;
+-    ret = src->pub.bytes_in_buffer;
++    ret = (int)src->pub.bytes_in_buffer; /* this conversion is safe, because capacity of the buffer is limited by jnit */
+     if (ret >= num_bytes) {
+         src->pub.next_input_byte += num_bytes;
+         src->pub.bytes_in_buffer -= num_bytes;
+diff -Nru openjdk.orig/jdk/src/share/native/sun/awt/image/jpeg/jpeglib.h openjdk/jdk/src/share/native/sun/awt/image/jpeg/jpeglib.h
+--- openjdk.orig/jdk/src/share/native/sun/awt/image/jpeg/jpeglib.h	2012-10-26 19:26:12.000000000 +0100
++++ openjdk/jdk/src/share/native/sun/awt/image/jpeg/jpeglib.h	2013-08-30 16:29:41.181832003 +0100
+@@ -800,10 +800,10 @@
+    * used for virtual-array buffers.)  May be changed by outer application
+    * after creating the JPEG object.
+    */
+-  long max_memory_to_use;
++  size_t max_memory_to_use;
+ 
+   /* Maximum allocation request accepted by alloc_large. */
+-  long max_alloc_chunk;
++  size_t max_alloc_chunk;
+ };
+ 
+ 

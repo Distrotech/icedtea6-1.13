@@ -1,0 +1,747 @@
+diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/imageio/plugins/jpeg/JPEGImageReader.java openjdk/jdk/src/share/classes/com/sun/imageio/plugins/jpeg/JPEGImageReader.java
+--- openjdk.orig/jdk/src/share/classes/com/sun/imageio/plugins/jpeg/JPEGImageReader.java	2013-08-30 16:19:36.256416002 +0100
++++ openjdk/jdk/src/share/classes/com/sun/imageio/plugins/jpeg/JPEGImageReader.java	2013-08-30 16:20:25.453181852 +0100
+@@ -53,6 +53,7 @@
+ import java.util.List;
+ import java.util.Iterator;
+ import java.util.ArrayList;
++import java.util.NoSuchElementException;
+ 
+ import sun.java2d.Disposer;
+ import sun.java2d.DisposerRecord;
+@@ -215,51 +216,6 @@
+     /** The DisposerRecord that handles the actual disposal of this reader. */
+     private DisposerRecord disposerRecord;
+ 
+-    /**
+-     * Maintain an array of the default image types corresponding to the
+-     * various supported IJG colorspace codes.
+-     */
+-    private static final ImageTypeSpecifier [] defaultTypes =
+-        new ImageTypeSpecifier [JPEG.NUM_JCS_CODES];
+-
+-    static {
+-        defaultTypes[JPEG.JCS_GRAYSCALE] =
+-            ImageTypeSpecifier.createFromBufferedImageType
+-            (BufferedImage.TYPE_BYTE_GRAY);
+-        defaultTypes[JPEG.JCS_RGB] =
+-            ImageTypeSpecifier.createInterleaved
+-            (JPEG.JCS.sRGB,
+-             JPEG.bOffsRGB,
+-             DataBuffer.TYPE_BYTE,
+-             false,
+-             false);
+-        defaultTypes[JPEG.JCS_RGBA] =
+-            ImageTypeSpecifier.createPacked
+-            (JPEG.JCS.sRGB,
+-             0xff000000,
+-             0x00ff0000,
+-             0x0000ff00,
+-             0x000000ff,
+-             DataBuffer.TYPE_INT,
+-             false);
+-        if (JPEG.JCS.YCC != null) {
+-            defaultTypes[JPEG.JCS_YCC] =
+-                ImageTypeSpecifier.createInterleaved
+-                (JPEG.JCS.YCC,
+-                 JPEG.bandOffsets[2],
+-                 DataBuffer.TYPE_BYTE,
+-                 false,
+-                 false);
+-            defaultTypes[JPEG.JCS_YCCA] =
+-                ImageTypeSpecifier.createInterleaved
+-                (JPEG.JCS.YCC,
+-                 JPEG.bandOffsets[3],
+-                 DataBuffer.TYPE_BYTE,
+-                 true,
+-                 false);
+-        }
+-    }
+-
+     /** Sets up static C structures. */
+     private static native void initReaderIDs(Class iisClass,
+                                              Class qTableClass,
+@@ -767,11 +723,11 @@
+      * Return an ImageTypeSpecifier corresponding to the given
+      * color space code, or null if the color space is unsupported.
+      */
+-    private ImageTypeSpecifier getImageType(int code) {
+-        ImageTypeSpecifier ret = null;
++    private ImageTypeProducer getImageType(int code) {
++        ImageTypeProducer ret = null;
+ 
+         if ((code > 0) && (code < JPEG.NUM_JCS_CODES)) {
+-            ret = defaultTypes[code];
++            ret = ImageTypeProducer.getTypeProducer(code);
+         }
+         return ret;
+     }
+@@ -787,7 +743,7 @@
+             }
+ 
+             // Returns null if it can't be represented
+-            return getImageType(colorSpaceCode);
++            return getImageType(colorSpaceCode).getType();
+         } finally {
+             clearThreadLock();
+         }
+@@ -822,13 +778,13 @@
+ 
+         // Get the raw ITS, if there is one.  Note that this
+         // won't always be the same as the default.
+-        ImageTypeSpecifier raw = getImageType(colorSpaceCode);
++        ImageTypeProducer raw = getImageType(colorSpaceCode);
+ 
+         // Given the encoded colorspace, build a list of ITS's
+         // representing outputs you could handle starting
+         // with the default.
+ 
+-        ArrayList list = new ArrayList(1);
++        ArrayList<ImageTypeProducer> list = new ArrayList<ImageTypeProducer>(1);
+ 
+         switch (colorSpaceCode) {
+         case JPEG.JCS_GRAYSCALE:
+@@ -838,9 +794,7 @@
+         case JPEG.JCS_RGB:
+             list.add(raw);
+             list.add(getImageType(JPEG.JCS_GRAYSCALE));
+-            if (JPEG.JCS.YCC != null) {
+-                list.add(getImageType(JPEG.JCS_YCC));
+-            }
++            list.add(getImageType(JPEG.JCS_YCC));
+             break;
+         case JPEG.JCS_RGBA:
+             list.add(raw);
+@@ -865,19 +819,21 @@
+             list.add(getImageType(JPEG.JCS_RGB));
+ 
+             if (iccCS != null) {
+-                list.add(ImageTypeSpecifier.createInterleaved
++                list.add(new ImageTypeProducer() {
++                    protected ImageTypeSpecifier produce() {
++                        return ImageTypeSpecifier.createInterleaved
+                          (iccCS,
+                           JPEG.bOffsRGB,  // Assume it's for RGB
+                           DataBuffer.TYPE_BYTE,
+                           false,
+-                          false));
++                          false);
++                    }
++                });
+ 
+             }
+ 
+             list.add(getImageType(JPEG.JCS_GRAYSCALE));
+-            if (JPEG.JCS.YCC != null) { // Might be null if PYCC.pf not installed
+-                list.add(getImageType(JPEG.JCS_YCC));
+-            }
++            list.add(getImageType(JPEG.JCS_YCC));
+             break;
+         case JPEG.JCS_YCbCrA:  // Default is to convert to RGBA
+             // As there is no YCbCr ColorSpace, we can't support
+@@ -886,7 +842,7 @@
+             break;
+         }
+ 
+-        return list.iterator();
++        return new ImageTypeIterator(list.iterator());
+     }
+ 
+     /**
+@@ -936,6 +892,10 @@
+             if  (csType == ColorSpace.TYPE_RGB) { // We want RGB
+                 // IJG can do this for us more efficiently
+                 setOutColorSpace(structPointer, JPEG.JCS_RGB);
++                // Update java state according to changes
++                // in the native part of decoder.
++                outColorSpaceCode = JPEG.JCS_RGB;
++                numComponents = 3;
+             } else if (csType != ColorSpace.TYPE_GRAY) {
+                 throw new IIOException("Incompatible color conversion");
+             }
+@@ -945,6 +905,10 @@
+                 if (colorSpaceCode == JPEG.JCS_YCbCr) {
+                     // If the jpeg space is YCbCr, IJG can do it
+                     setOutColorSpace(structPointer, JPEG.JCS_GRAYSCALE);
++                    // Update java state according to changes
++                    // in the native part of decoder.
++                    outColorSpaceCode = JPEG.JCS_GRAYSCALE;
++                    numComponents = 1;
+                 }
+             } else if ((iccCS != null) &&
+                        (cm.getNumComponents() == numComponents) &&
+@@ -970,20 +934,26 @@
+             }
+             break;
+         case JPEG.JCS_YCC:
+-            if (JPEG.JCS.YCC == null) { // We can't do YCC at all
+-                throw new IIOException("Incompatible color conversion");
+-            }
+-            if ((cs != JPEG.JCS.YCC) &&
+-                (cm.getNumComponents() == numComponents)) {
+-                convert = new ColorConvertOp(JPEG.JCS.YCC, cs, null);
++            {
++                ColorSpace YCC = JPEG.JCS.getYCC();
++                if (YCC == null) { // We can't do YCC at all
++                    throw new IIOException("Incompatible color conversion");
++                }
++                if ((cs != YCC) &&
++                    (cm.getNumComponents() == numComponents)) {
++                    convert = new ColorConvertOp(YCC, cs, null);
++                }
+             }
+             break;
+         case JPEG.JCS_YCCA:
+-            // No conversions available; image must be YCCA
+-            if ((JPEG.JCS.YCC == null) || // We can't do YCC at all
+-                (cs != JPEG.JCS.YCC) ||
+-                (cm.getNumComponents() != numComponents)) {
+-                throw new IIOException("Incompatible color conversion");
++            {
++                ColorSpace YCC = JPEG.JCS.getYCC();
++                // No conversions available; image must be YCCA
++                if ((YCC == null) || // We can't do YCC at all
++                    (cs != YCC) ||
++                    (cm.getNumComponents() != numComponents)) {
++                    throw new IIOException("Incompatible color conversion");
++                }
+             }
+             break;
+         default:
+@@ -1699,3 +1669,140 @@
+         }
+     }
+ }
++
++/**
++ * An internal helper class that wraps producer's iterator
++ * and extracts specifier instances on demand.
++ */
++class ImageTypeIterator implements Iterator<ImageTypeSpecifier> {
++     private Iterator<ImageTypeProducer> producers;
++     private ImageTypeSpecifier theNext = null;
++
++     public ImageTypeIterator(Iterator<ImageTypeProducer> producers) {
++         this.producers = producers;
++     }
++
++     public boolean hasNext() {
++         if (theNext != null) {
++             return true;
++         }
++         if (!producers.hasNext()) {
++             return false;
++         }
++         do {
++             theNext = producers.next().getType();
++         } while (theNext == null && producers.hasNext());
++
++         return (theNext != null);
++     }
++
++     public ImageTypeSpecifier next() {
++         if (theNext != null || hasNext()) {
++             ImageTypeSpecifier t = theNext;
++             theNext = null;
++             return t;
++         } else {
++             throw new NoSuchElementException();
++         }
++     }
++
++     public void remove() {
++         producers.remove();
++     }
++}
++
++/**
++ * An internal helper class that provides means for deferred creation
++ * of ImageTypeSpecifier instance required to describe available
++ * destination types.
++ *
++ * This implementation only supports standard
++ * jpeg color spaces (defined by corresponding JCS color space code).
++ *
++ * To support other color spaces one can override produce() method to
++ * return custom instance of ImageTypeSpecifier.
++ */
++class ImageTypeProducer {
++
++    private ImageTypeSpecifier type = null;
++    boolean failed = false;
++    private int csCode;
++
++    public ImageTypeProducer(int csCode) {
++        this.csCode = csCode;
++    }
++
++    public ImageTypeProducer() {
++        csCode = -1; // undefined
++    }
++
++    public synchronized ImageTypeSpecifier getType() {
++        if (!failed && type == null) {
++            try {
++                type = produce();
++            } catch (Throwable e) {
++                failed = true;
++            }
++        }
++        return type;
++    }
++
++    private static final ImageTypeProducer [] defaultTypes =
++            new ImageTypeProducer [JPEG.NUM_JCS_CODES];
++
++    public synchronized static ImageTypeProducer getTypeProducer(int csCode) {
++        if (csCode < 0 || csCode >= JPEG.NUM_JCS_CODES) {
++            return null;
++        }
++        if (defaultTypes[csCode] == null) {
++            defaultTypes[csCode] = new ImageTypeProducer(csCode);
++        }
++        return defaultTypes[csCode];
++    }
++
++    protected ImageTypeSpecifier produce() {
++        switch (csCode) {
++            case JPEG.JCS_GRAYSCALE:
++                return ImageTypeSpecifier.createFromBufferedImageType
++                        (BufferedImage.TYPE_BYTE_GRAY);
++            case JPEG.JCS_RGB:
++                return ImageTypeSpecifier.createInterleaved(JPEG.JCS.sRGB,
++                        JPEG.bOffsRGB,
++                        DataBuffer.TYPE_BYTE,
++                        false,
++                        false);
++            case JPEG.JCS_RGBA:
++                return ImageTypeSpecifier.createPacked(JPEG.JCS.sRGB,
++                        0xff000000,
++                        0x00ff0000,
++                        0x0000ff00,
++                        0x000000ff,
++                        DataBuffer.TYPE_INT,
++                        false);
++            case JPEG.JCS_YCC:
++                if (JPEG.JCS.getYCC() != null) {
++                    return ImageTypeSpecifier.createInterleaved(
++                            JPEG.JCS.getYCC(),
++                        JPEG.bandOffsets[2],
++                        DataBuffer.TYPE_BYTE,
++                        false,
++                        false);
++                } else {
++                    return null;
++                }
++            case JPEG.JCS_YCCA:
++                if (JPEG.JCS.getYCC() != null) {
++                    return ImageTypeSpecifier.createInterleaved(
++                            JPEG.JCS.getYCC(),
++                        JPEG.bandOffsets[3],
++                        DataBuffer.TYPE_BYTE,
++                        true,
++                        false);
++                } else {
++                    return null;
++                }
++            default:
++                return null;
++        }
++    }
++}
+diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/imageio/plugins/jpeg/JPEGImageWriter.java openjdk/jdk/src/share/classes/com/sun/imageio/plugins/jpeg/JPEGImageWriter.java
+--- openjdk.orig/jdk/src/share/classes/com/sun/imageio/plugins/jpeg/JPEGImageWriter.java	2013-08-30 16:19:36.268416189 +0100
++++ openjdk/jdk/src/share/classes/com/sun/imageio/plugins/jpeg/JPEGImageWriter.java	2013-08-30 16:20:25.453181852 +0100
+@@ -815,7 +815,7 @@
+                             }
+                             break;
+                         case ColorSpace.TYPE_3CLR:
+-                            if (cs == JPEG.JCS.YCC) {
++                            if (cs == JPEG.JCS.getYCC()) {
+                                 if (!alpha) {
+                                     if (jfif != null) {
+                                         convertTosRGB = true;
+@@ -1541,7 +1541,7 @@
+                 }
+                 break;
+             case ColorSpace.TYPE_3CLR:
+-                if (cs == JPEG.JCS.YCC) {
++                if (cs == JPEG.JCS.getYCC()) {
+                     if (alpha) {
+                         retval = JPEG.JCS_YCCA;
+                     } else {
+@@ -1580,7 +1580,7 @@
+                 }
+                 break;
+             case ColorSpace.TYPE_3CLR:
+-                if (cs == JPEG.JCS.YCC) {
++                if (cs == JPEG.JCS.getYCC()) {
+                     if (alpha) {
+                         retval = JPEG.JCS_YCCA;
+                     } else {
+@@ -1626,7 +1626,7 @@
+                 }
+                 break;
+             case ColorSpace.TYPE_3CLR:
+-                if (cs == JPEG.JCS.YCC) {
++                if (cs == JPEG.JCS.getYCC()) {
+                     if (alpha) {
+                         retval = JPEG.JCS_YCCA;
+                     } else {
+diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/imageio/plugins/jpeg/JPEG.java openjdk/jdk/src/share/classes/com/sun/imageio/plugins/jpeg/JPEG.java
+--- openjdk.orig/jdk/src/share/classes/com/sun/imageio/plugins/jpeg/JPEG.java	2013-08-30 16:19:36.256416002 +0100
++++ openjdk/jdk/src/share/classes/com/sun/imageio/plugins/jpeg/JPEG.java	2013-08-30 16:20:25.453181852 +0100
+@@ -215,17 +215,21 @@
+     public static class JCS {
+         public static final ColorSpace sRGB =
+             ColorSpace.getInstance(ColorSpace.CS_sRGB);
+-        public static final ColorSpace YCC;
+ 
+-        static {
+-            ColorSpace cs = null;
+-            try {
+-                cs = ColorSpace.getInstance(ColorSpace.CS_PYCC);
+-            } catch (IllegalArgumentException e) {
+-                // PYCC.pf may not always be installed
+-            } finally {
+-                YCC = cs;
++        private static ColorSpace YCC = null;
++        private static boolean yccInited = false;
++
++        public static ColorSpace getYCC() {
++            if (!yccInited) {
++                try {
++                    YCC = ColorSpace.getInstance(ColorSpace.CS_PYCC);
++                } catch (IllegalArgumentException e) {
++                    // PYCC.pf may not always be installed
++                } finally {
++                    yccInited = true;
++                }
+             }
++            return YCC;
+         }
+     }
+ 
+diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/imageio/plugins/jpeg/JPEGMetadata.java openjdk/jdk/src/share/classes/com/sun/imageio/plugins/jpeg/JPEGMetadata.java
+--- openjdk.orig/jdk/src/share/classes/com/sun/imageio/plugins/jpeg/JPEGMetadata.java	2013-08-30 16:19:36.268416189 +0100
++++ openjdk/jdk/src/share/classes/com/sun/imageio/plugins/jpeg/JPEGMetadata.java	2013-08-30 16:20:25.453181852 +0100
+@@ -490,7 +490,7 @@
+                 }
+                 break;
+             case ColorSpace.TYPE_3CLR:
+-                if (cs == JPEG.JCS.YCC) {
++                if (cs == JPEG.JCS.getYCC()) {
+                     wantJFIF = false;
+                     componentIDs[0] = (byte) 'Y';
+                     componentIDs[1] = (byte) 'C';
+diff -Nru openjdk.orig/jdk/src/share/classes/java/awt/color/ICC_Profile.java openjdk/jdk/src/share/classes/java/awt/color/ICC_Profile.java
+--- openjdk.orig/jdk/src/share/classes/java/awt/color/ICC_Profile.java	2013-08-30 16:19:36.220415442 +0100
++++ openjdk/jdk/src/share/classes/java/awt/color/ICC_Profile.java	2013-08-30 16:20:25.453181852 +0100
+@@ -863,11 +863,16 @@
+         case ColorSpace.CS_PYCC:
+             synchronized(ICC_Profile.class) {
+                 if (PYCCprofile == null) {
+-                    ProfileDeferralInfo pInfo =
+-                        new ProfileDeferralInfo("PYCC.pf",
+-                                                ColorSpace.TYPE_3CLR, 3,
+-                                                CLASS_DISPLAY);
+-                    PYCCprofile = getDeferredInstance(pInfo);
++                    if (getProfileFile("PYCC.pf") != null) {
++                        ProfileDeferralInfo pInfo =
++                            new ProfileDeferralInfo("PYCC.pf",
++                                                    ColorSpace.TYPE_3CLR, 3,
++                                                    CLASS_DISPLAY);
++                        PYCCprofile = getDeferredInstance(pInfo);
++                    } else {
++                        throw new IllegalArgumentException(
++                                "Can't load standard profile: PYCC.pf");
++                    }
+                 }
+                 thisProfile = PYCCprofile;
+             }
+diff -Nru openjdk.orig/jdk/src/share/native/sun/awt/image/jpeg/imageioJPEG.c openjdk/jdk/src/share/native/sun/awt/image/jpeg/imageioJPEG.c
+--- openjdk.orig/jdk/src/share/native/sun/awt/image/jpeg/imageioJPEG.c	2013-08-30 16:19:36.212415317 +0100
++++ openjdk/jdk/src/share/native/sun/awt/image/jpeg/imageioJPEG.c	2013-08-30 16:21:23.982092967 +0100
+@@ -1818,7 +1818,7 @@
+ 
+ 
+     struct jpeg_source_mgr *src;
+-    JSAMPROW scanLinePtr;
++    JSAMPROW scanLinePtr = NULL;
+     jint bands[MAX_BANDS];
+     int i, j;
+     jint *body;
+@@ -1855,7 +1855,7 @@
+ 
+     cinfo = (j_decompress_ptr) data->jpegObj;
+ 
+-    if ((numBands < 1) || (numBands > cinfo->num_components) ||
++    if ((numBands < 1) ||
+         (sourceXStart < 0) || (sourceXStart >= (jint)cinfo->image_width) ||
+         (sourceYStart < 0) || (sourceYStart >= (jint)cinfo->image_height) ||
+         (sourceWidth < 1) || (sourceWidth > (jint)cinfo->image_width) ||
+@@ -1957,15 +1957,6 @@
+                         "Invalid number of color components");
+         return data->abortFlag;
+     }
+-    scanLinePtr = (JSAMPROW)malloc(cinfo->image_width*cinfo->num_components);
+-    if (scanLinePtr == NULL) {
+-        RELEASE_ARRAYS(env, data, src->next_input_byte);
+-        JNU_ThrowByName( env,
+-                         "java/lang/OutOfMemoryError",
+-                         "Reading JPEG Stream");
+-        return data->abortFlag;
+-    }
+-
+     /* Establish the setjmp return context for sun_jpeg_error_exit to use. */
+     jerr = (sun_jpeg_error_ptr) cinfo->err;
+ 
+@@ -1979,7 +1970,10 @@
+                                           buffer);
+             JNU_ThrowByName(env, "javax/imageio/IIOException", buffer);
+         }
+-        free(scanLinePtr);
++        if (scanLinePtr != NULL) {
++            free(scanLinePtr);
++            scanLinePtr = NULL;
++        }
+         return data->abortFlag;
+     }
+ 
+@@ -2017,6 +2011,23 @@
+ 
+     jpeg_start_decompress(cinfo);
+ 
++    if (numBands !=  cinfo->output_components) {
++        JNU_ThrowByName(env, "javax/imageio/IIOException",
++                        "Invalid argument to native readImage");
++        return data->abortFlag;
++    }
++
++
++    // Allocate a 1-scanline buffer
++    scanLinePtr = (JSAMPROW)malloc(cinfo->image_width*cinfo->output_components);
++    if (scanLinePtr == NULL) {
++        RELEASE_ARRAYS(env, data, src->next_input_byte);
++        JNU_ThrowByName( env,
++                         "java/lang/OutOfMemoryError",
++                         "Reading JPEG Stream");
++        return data->abortFlag;
++    }
++
+     // loop over progressive passes
+     done = FALSE;
+     while (!done) {
+@@ -2044,9 +2055,9 @@
+ 
+         scanlineLimit = sourceYStart+sourceHeight;
+         pixelLimit = scanLinePtr
+-            +(sourceXStart+sourceWidth)*cinfo->num_components;
++            +(sourceXStart+sourceWidth)*cinfo->output_components;
+ 
+-        pixelStride = stepX*cinfo->num_components;
++        pixelStride = stepX*cinfo->output_components;
+         targetLine = 0;
+ 
+         while ((data->abortFlag == JNI_FALSE)
+@@ -2068,7 +2079,7 @@
+                 // Optimization: The component bands are ordered sequentially,
+                 // so we can simply use memcpy() to copy the intermediate
+                 // scanline buffer into the raster.
+-                in = scanLinePtr + (sourceXStart * cinfo->num_components);
++                in = scanLinePtr + (sourceXStart * cinfo->output_components);
+                 if (pixelLimit > in) {
+                     numBytes = pixelLimit - in;
+                     if (numBytes > data->pixelBuf.byteBufferLength) {
+@@ -2078,7 +2089,7 @@
+                 }
+             } else {
+                 numBytes = numBands;
+-                for (in = scanLinePtr+sourceXStart*cinfo->num_components;
++                for (in = scanLinePtr+sourceXStart*cinfo->output_components;
+                      in < pixelLimit  &&
+                        numBytes <= data->pixelBuf.byteBufferLength;
+                      in += pixelStride) {
+diff -Nru openjdk.orig/jdk/test/javax/imageio/plugins/jpeg/ReadAsGrayTest.java openjdk/jdk/test/javax/imageio/plugins/jpeg/ReadAsGrayTest.java
+--- openjdk.orig/jdk/test/javax/imageio/plugins/jpeg/ReadAsGrayTest.java	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/jdk/test/javax/imageio/plugins/jpeg/ReadAsGrayTest.java	2013-08-30 16:20:25.453181852 +0100
+@@ -0,0 +1,179 @@
++/*
++ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++/**
++ * @test
++ * @bug     4893408
++ *
++ * @summary Test verifies that Image I/O jpeg reader correctly handles
++ *          destination types if number of color components in destination
++ *          differs from number of color components in the jpeg image.
++ *          Particularly, it verifies reading YCbCr image as a grayscaled
++ *          and reading grayscaled jpeg as a RGB.
++ *
++ * @run     main ReadAsGrayTest
++ */
++
++import java.awt.Color;
++import java.awt.Graphics2D;
++import java.awt.color.ColorSpace;
++import java.awt.image.BufferedImage;
++import java.io.File;
++import java.io.IOException;
++import java.util.Iterator;
++import javax.imageio.ImageIO;
++import javax.imageio.ImageReadParam;
++import javax.imageio.ImageReader;
++import javax.imageio.ImageTypeSpecifier;
++import javax.imageio.stream.ImageInputStream;
++import static java.awt.image.BufferedImage.TYPE_3BYTE_BGR;
++import static java.awt.image.BufferedImage.TYPE_BYTE_GRAY;
++import static java.awt.color.ColorSpace.TYPE_GRAY;
++import static java.awt.color.ColorSpace.CS_sRGB;
++
++public class ReadAsGrayTest {
++    static Color[] colors = new Color[] {
++        Color.white, Color.red, Color.green,
++        Color.blue, Color.black };
++
++    static final int dx = 50;
++    static final int h = 100;
++
++    static ColorSpace sRGB = ColorSpace.getInstance(CS_sRGB);
++
++
++    public static void main(String[] args) throws IOException {
++        System.out.println("Type TYPE_BYTE_GRAY");
++        doTest(TYPE_BYTE_GRAY);
++
++        System.out.println("Type TYPE_3BYTE_BGR");
++        doTest(TYPE_3BYTE_BGR);
++
++        System.out.println("Test PASSED.");
++    }
++
++    private static void doTest(int type) throws IOException {
++        BufferedImage src = createTestImage(type);
++
++        File f = new File("test.jpg");
++
++        if (!ImageIO.write(src, "jpg", f)) {
++            throw new RuntimeException("Failed to write test image.");
++        }
++
++        ImageInputStream iis = ImageIO.createImageInputStream(f);
++        ImageReader reader = ImageIO.getImageReaders(iis).next();
++        reader.setInput(iis);
++
++        Iterator<ImageTypeSpecifier> types = reader.getImageTypes(0);
++        ImageTypeSpecifier srgb = null;
++        ImageTypeSpecifier gray = null;
++        // look for gray and srgb types
++        while ((srgb == null || gray == null) && types.hasNext()) {
++            ImageTypeSpecifier t = types.next();
++            if (t.getColorModel().getColorSpace().getType() == TYPE_GRAY) {
++                gray = t;
++            }
++            if (t.getColorModel().getColorSpace() == sRGB) {
++                srgb = t;
++            }
++        }
++        if (gray == null) {
++            throw new RuntimeException("No gray type available.");
++        }
++        if (srgb == null) {
++            throw new RuntimeException("No srgb type available.");
++        }
++
++        System.out.println("Read as GRAY...");
++        testType(reader, gray, src);
++
++        System.out.println("Read as sRGB...");
++        testType(reader, srgb, src);
++    }
++
++    private static void testType(ImageReader reader,
++                                 ImageTypeSpecifier t,
++                                 BufferedImage src)
++        throws IOException
++    {
++        ImageReadParam p = reader.getDefaultReadParam();
++        p.setDestinationType(t);
++        BufferedImage dst = reader.read(0, p);
++
++        verify(src, dst, t);
++    }
++
++    private static void verify(BufferedImage src,
++                               BufferedImage dst,
++                               ImageTypeSpecifier type)
++    {
++        BufferedImage test =
++                type.createBufferedImage(src.getWidth(), src.getHeight());
++        Graphics2D g = test.createGraphics();
++        g.drawImage(src, 0, 0, null);
++        g.dispose();
++
++        for (int i = 0; i < colors.length; i++) {
++            int x = i * dx + dx / 2;
++            int y = h / 2;
++
++            Color c_test = new Color(test.getRGB(x, y));
++            Color c_dst = new Color(dst.getRGB(x, y));
++
++            if (!compareWithTolerance(c_test, c_dst, 0.01f)) {
++                String msg = String.format("Invalid color: %x instead of %x",
++                                           c_dst.getRGB(), c_test.getRGB());
++                throw new RuntimeException("Test failed: " + msg);
++            }
++        }
++        System.out.println("Verified.");
++    }
++
++    private static boolean compareWithTolerance(Color a, Color b, float delta) {
++        float[] a_rgb = new float[3];
++        a_rgb = a.getRGBColorComponents(a_rgb);
++        float[] b_rgb = new float[3];
++        b_rgb = b.getRGBColorComponents(b_rgb);
++
++        for (int i = 0; i < 3; i++) {
++            if (Math.abs(a_rgb[i] - b_rgb[i]) > delta) {
++                return false;
++            }
++        }
++        return true;
++    }
++
++    private static BufferedImage createTestImage(int type) {
++        BufferedImage img = new BufferedImage(dx * colors.length, h, type);
++
++        Graphics2D g = img.createGraphics();
++        for (int i = 0; i < colors.length; i++) {
++            g.setColor(colors[i]);
++            g.fillRect(i * dx, 0, dx, h);
++        }
++        g.dispose();
++
++        return img;
++    }
++}

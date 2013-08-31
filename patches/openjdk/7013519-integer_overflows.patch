@@ -1,0 +1,17 @@
+diff -Nru openjdk.orig/jdk/src/share/native/sun/awt/image/jpeg/imageioJPEG.c openjdk/jdk/src/share/native/sun/awt/image/jpeg/imageioJPEG.c
+--- openjdk.orig/jdk/src/share/native/sun/awt/image/jpeg/imageioJPEG.c	2013-08-30 17:45:18.973172706 +0100
++++ openjdk/jdk/src/share/native/sun/awt/image/jpeg/imageioJPEG.c	2013-08-30 18:36:21.704926778 +0100
+@@ -2017,6 +2017,13 @@
+         return data->abortFlag;
+     }
+ 
++    if (cinfo->output_components <= 0 ||
++        cinfo->image_width > (0xffffffffu / (unsigned int)cinfo->output_components))
++    {
++        JNU_ThrowByName(env, "javax/imageio/IIOException",
++                        "Invalid number of output components");
++        return data->abortFlag;
++    }
+ 
+     // Allocate a 1-scanline buffer
+     scanLinePtr = (JSAMPROW)malloc(cinfo->image_width*cinfo->output_components);
