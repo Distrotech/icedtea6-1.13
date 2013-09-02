@@ -1,0 +1,48 @@
+# HG changeset patch
+# User andrew
+# Date 1290478643 0
+#      Tue Nov 23 02:17:23 2010 +0000
+# Node ID beb9f3298ad3b32c24ceda7b7d3ed812152bafaa
+# Parent  565be51eb60e3660f9261d3cee23b81d0e50e440
+7000225: Sanity check on sane-alsa-headers is broken
+Summary: Fix use of tab separators, ${alsa_version} expansion and conditional
+Reviewed-by: ohair
+
+diff --git a/make/common/shared/Sanity.gmk b/make/common/shared/Sanity.gmk
+--- openjdk/jdk/make/common/shared/Sanity.gmk
++++ openjdk/jdk/make/common/shared/Sanity.gmk
+@@ -1389,20 +1389,21 @@
+ endif
+ sane-alsa-headers:
+ ifdef REQUIRED_ALSA_VERSION
+-        if [ "$(ALSA_CHECK)" != "same" -a "$(ALSA_CHECK)" != "newer"  ] ; then \
+-	    $(ECHO) "ERROR: The ALSA version must be $(REQUIRED_ALSA_VERSION) or higher. \n" \
+-	      "      You have the following ALSA version installed: $${alsa_version) \n" \
+-	      "      Please reinstall ALSA (drivers and lib). You can download \n" \
+-	      "      the source distribution from http://www.alsa-project.org \n" \
+-	      "      or go to http://www.freshrpms.net/docs/alsa/ for precompiled RPM packages. \n" \
+-	      "" >> $(ERROR_FILE) ; \
+-	  fi \
++	@if [ "$(ALSA_CHECK)" != "missing" ] ; then \
++	    if [ "$(ALSA_CHECK)" != "same" -a "$(ALSA_CHECK)" != "newer"  ] ; then \
++		$(ECHO) "ERROR: The ALSA version must be $(REQUIRED_ALSA_VERSION) or higher. \n" \
++		"      You have the following ALSA version installed: $${alsa_version} \n" \
++		"      Please reinstall ALSA (drivers and lib). You can download \n" \
++		"      the source distribution from http://www.alsa-project.org \n" \
++		"      or go to http://www.freshrpms.net/docs/alsa/ for precompiled RPM packages. \n" \
++		"" >> $(ERROR_FILE) ; \
++	    fi ; \
+ 	else \
+-	  $(ECHO) "ERROR: You seem to not have installed ALSA $(REQUIRED_ALSA_VERSION) or higher. \n" \
+-	  "      Please install ALSA (drivers and lib). You can download the \n" \
+-	  "      source distribution from http://www.alsa-project.org or go to \n" \
+-	  "      http://www.freshrpms.net/docs/alsa/ for precompiled RPM packages. \n" \
+-	  "" >> $(ERROR_FILE) ; \
++	    $(ECHO) "ERROR: You seem to not have installed ALSA $(REQUIRED_ALSA_VERSION) or higher. \n" \
++	    "      Please install ALSA (drivers and lib). You can download the \n" \
++	    "      source distribution from http://www.alsa-project.org or go to \n" \
++	    "      http://www.freshrpms.net/docs/alsa/ for precompiled RPM packages. \n" \
++	    "" >> $(ERROR_FILE) ; \
+ 	fi
+ endif
+ 

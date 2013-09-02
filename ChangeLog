@@ -1,3 +1,24 @@
+2013-09-02  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add new backports.  Move
+	disable-cc-incompatible-sanity-checks and freetypeversion
+	to the end.
+	* patches/disable-cc-incompatible-sanity-checks.patch,
+	* patches/freetypeversion.patch:
+	Regenerated to work after new backports.
+	* patches/openjdk/6563752-ss12_support.patch,
+	* patches/openjdk/6729772-opt_cleanup.patch,
+	* patches/openjdk/6799141-split_out_versions.patch,
+	* patches/openjdk/6816311-compiler_name.patch,
+	* patches/openjdk/6974017-minorver_for_solaris.patch,
+	* patches/openjdk/6980281-majorver_for_solaris.patch,
+	* patches/openjdk/7000225-bad_tabs.patch,
+	* patches/openjdk/7038711-fix_no-clobber_usage.patch:
+	Backports from OpenJDK 7 to bring in latest Makefile
+	updates.
+	* NEWS: Update and order backports numerically.
+
 2013-08-30  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* Makefile.am:
