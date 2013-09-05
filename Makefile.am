@@ -760,7 +760,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6980281-majorver_for_solaris.patch \
 	patches/openjdk/7000225-bad_tabs.patch \
 	patches/openjdk/7038711-fix_no-clobber_usage.patch \
-	patches/disable-cc-incompatible-sanity-checks.patch
+	patches/disable-cc-incompatible-sanity-checks.patch \
+	patches/rh995488-rhel_tz_fix.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
