@@ -18,13 +18,35 @@ New in release 1.13.0 (201X-XX-XX):
   - PR1458: Make use of bootstrap tools & -Xbootclasspath patches optional
   - PR718: Backport LCMS2 support from IcedTea7
 * Backports
-  - S8009641: OpenJDK 6 build broken via 8007675 fix
   - OJ4: Backport the new version of copyMemory from OpenJDK 7 to allow Snappy to build
+  - S4893408: JPEGReader throws IllegalArgException when setting the destination to BYTE_GRAY
+  - S6563752: Build and test JDK7 with Sun Studio 12 Express compilers (prep makefiles)
+  - S6631559: Registration of ImageIO plugins should not cause loading of jpeg.dlli and cmm.dll
+  - S6729772: 64-bit build with SS12 compiler: SIGSEGV (0xb) at pc=0x0000000000000048, pid=14826, tid=2
+  - S6791502: IIOException "Invalid icc profile" on jpeg after update from JDK5 to JDK6
+  - S6793818: JpegImageReader is too greedy creating color profiles
+  - S6799141: Build with --hash-style=both so that binaries can work on SuSE 10
+  - S6816311: Changes to allow builds with latest Windows SDK 6.1 on 64bit Windows 2003
+  - S6888215: memory leak in jpeg plugin
+  - S6974017: Upgrade required Solaris Studio compilers to 5.10 (12 update 1 + patches)
+  - S6980281: SWAT: SwingSet2 got core dumped in Solaris-AMD64 using b107 swat build
+  - S6989760: cmm native compiler warnings
+  - S6989774: imageio compiler warnings in native code
+  - S7000225: Sanity check on sane-alsa-headers is broken
+  - S7013519: [parfait] Integer overflows in 2D code
+  - S7018912: [parfait] potential buffer overruns in imageio jpeg
   - S7022999: Can't build with FORCE_TIERED=0 (bundled HotSpot only)
+  - S7038711: Fix CC_VER checks for compiler options, fix use of -Wno-clobber
+  - S8005194: [parfait] #353 sun/awt/image/jpeg/imageioJPEG.c Memory leak of pointer 'scale' allocated with calloc()
+  - S8009641: OpenJDK 6 build broken via 8007675 fix
+  - S8020983, RH976897: OutOfMemoryError caused by non garbage collected JPEGImageWriter Instances
 * Bug fixes
   - PR1188: ASM Interpreter and Thumb2 JIT javac miscompile modulo reminder on armel.
   - PR1318: Fix automatic enabling of the Zero build on non-JIT architectures which don't use CACAO or JamVM.
   - RH902004: very bad performance with E-Porto Add-In für OpenOffice Writer installed (hs23 only)
+  - RH991170: java does not use correct kerberos credential cache
+  - PR1535: Allow use of system Kerberos to obtain cache location
+  - RH995488: Java thinks that the default timezone is Busingen instead of Zurich
 * JamVM
   - JSR 335: Lambda Expressions
   - JEP 171: Implement fence methods in sun.misc.Unsafe
@@ -36,6 +58,39 @@ New in release 1.13.0 (201X-XX-XX):
   - Set anonymous class protection domain
   - JVM_IsVMGeneratedMethodIx stub
   - Dummy implementation of sun.misc.Perf natives
+
+New in release 1.11.13 (2013-09-06):
+
+* Backports
+  - S4893408: JPEGReader throws IllegalArgException when setting the destination to BYTE_GRAY
+  - S6563752: Build and test JDK7 with Sun Studio 12 Express compilers (prep makefiles)
+  - S6631559: Registration of ImageIO plugins should not cause loading of jpeg.dlli and cmm.dll
+  - S6636331: ConcurrentModificationException in AppContext code
+  - S6636370: minor corrections and simplification of code in AppContext
+  - S6729772: 64-bit build with SS12 compiler: SIGSEGV (0xb) at pc=0x0000000000000048, pid=14826, tid=2
+  - S6791502: IIOException "Invalid icc profile" on jpeg after update from JDK5 to JDK6
+  - S6793818: JpegImageReader is too greedy creating color profiles
+  - S6799141: Build with --hash-style=both so that binaries can work on SuSE 10
+  - S6816311: Changes to allow builds with latest Windows SDK 6.1 on 64bit Windows 2003
+  - S6840152: JVM crashes when heavyweight monitors are used
+  - S6888215: memory leak in jpeg plugin
+  - S6974017: Upgrade required Solaris Studio compilers to 5.10 (12 update 1 + patches)
+  - S6980281: SWAT: SwingSet2 got core dumped in Solaris-AMD64 using b107 swat build
+  - S6989760: cmm native compiler warnings
+  - S6989774: imageio compiler warnings in native code
+  - S7000225: Sanity check on sane-alsa-headers is broken
+  - S7013519: [parfait] Integer overflows in 2D code
+  - S7018912: [parfait] potential buffer overruns in imageio jpeg
+  - S7022999: Can't build with FORCE_TIERED=0
+  - S7038711: Fix CC_VER checks for compiler options, fix use of -Wno-clobber
+  - S7196533: TimeZone.getDefault() slow due to synchronization bottleneck
+  - S8005194: [parfait] #353 sun/awt/image/jpeg/imageioJPEG.c Memory leak of pointer 'scale' allocated with calloc()
+  - S8014469: (tz) Support tzdata2013c
+  - S8020054: (tz) Support tzdata2013d
+  - S8020983, RH976897: OutOfMemoryError caused by non garbage collected JPEGImageWriter Instances
+* Bug fixes
+  - PR1188: ASM Interpreter and Thumb2 JIT javac miscompile modulo reminder on armel.
+  - RH995488: Java thinks that the default timezone is Busingen instead of Zurich
 
 New in release 1.12.6 (2013-07-10):
 

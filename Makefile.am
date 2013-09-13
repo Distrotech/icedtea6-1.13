@@ -306,7 +306,8 @@ LCMS_PATCHES = \
 	patches/openjdk/lcms2/8009654-cmsnamed_stability.patch \
 	patches/openjdk/lcms2/7002766-parfait.patch \
 	patches/openjdk/lcms2/7042594-tck_failure.patch \
-	patches/openjdk/lcms2/8007927-improve_cmsallocprofilesequencedescription.patch
+	patches/openjdk/lcms2/8007927-improve_cmsallocprofilesequencedescription.patch \
+	patches/lcms2-emulate_old_settagdata.patch
 else
 LCMS_PATCHES = \
 	patches/lcms.patch
@@ -337,6 +338,16 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6693253-security_warning.patch \
 	patches/openjdk/6444769-windowwithwarningtest.patch \
 	patches/openjdk/6656651-windows_lcd_glyphs.patch \
+	patches/openjdk/6791502-invalid_icc_profile.patch \
+	patches/openjdk/6793818-jpegimagereader_too_greedy.patch \
+	patches/openjdk/6631559-dont_load_libjpeg_to_register_imageio_plugins.patch \
+	patches/openjdk/4893408-jpegreader_byte_gray.patch \
+	patches/openjdk/6888215-jpeg_memory_leak.patch \
+	patches/openjdk/6989774-imageio_compiler_warnings.patch \
+	patches/openjdk/7018912-potential_buffer_overruns_in_jpeg.patch \
+	patches/openjdk/6989760-native_warnings.patch \
+	patches/openjdk/7013519-integer_overflows.patch \
+	patches/openjdk/8020983-outofmemoryerror_jpegimagewriter.patch \
 	patches/notice-safepoints.patch \
 	patches/parisc-opt.patch \
 	patches/lucene-crash.patch \
@@ -348,7 +359,6 @@ ICEDTEA_PATCHES = \
 	patches/libraries.patch \
 	$(SPECIAL_SECURITY_PATCH_2) \
 	patches/uname.patch \
-	patches/freetypeversion.patch \
 	patches/nomotif-6706121.patch \
 	patches/nomotif.patch \
 	patches/nomotif-mtoolkit.patch \
@@ -370,7 +380,6 @@ ICEDTEA_PATCHES = \
 	patches/jtreg-jrunscript.patch \
 	patches/network-unreachable.patch \
 	patches/dnd-filelists.patch \
-	patches/disable-cc-incompatible-sanity-checks.patch \
 	patches/explicit-target-arch.patch \
 	patches/parisc.patch \
 	patches/policy-evaluation.patch \
@@ -576,7 +585,25 @@ ICEDTEA_PATCHES = \
 	patches/hotspot/$(HSBUILD)/update-bootclasspath.patch \
 	patches/hotspot/original/jvmtiEnv.patch \
 	patches/sparc-trapsfix.patch \
-	patches/print_lsb_release.patch
+	patches/print_lsb_release.patch \
+	patches/openjdk/6893617-cnctx_always_uses_default_orb.patch \
+	patches/alternative_krb5_cache.patch \
+	patches/alternative_krb5_cache_fixup.patch \
+	patches/openjdk/8014469-tzdata2013c.patch \
+	patches/openjdk/8020054-tzdata2013d.patch \
+	patches/imageiojpeg_sync.patch \
+	patches/openjdk/8005194-scale_memory_leak.patch \
+	patches/openjdk/6563752-ss12_support.patch \
+	patches/openjdk/6729772-opt_cleanup.patch \
+	patches/openjdk/6799141-split_out_versions.patch \
+	patches/freetypeversion.patch \
+	patches/openjdk/6816311-compiler_name.patch \
+	patches/openjdk/6974017-minorver_for_solaris.patch \
+	patches/openjdk/6980281-majorver_for_solaris.patch \
+	patches/openjdk/7000225-bad_tabs.patch \
+	patches/openjdk/7038711-fix_no-clobber_usage.patch \
+	patches/disable-cc-incompatible-sanity-checks.patch \
+	patches/rh995488-rhel_tz_fix.patch
 
 if WITH_ALT_HSBUILD
 ICEDTEA_PATCHES += \
@@ -723,7 +750,6 @@ ICEDTEA_ECJ_PATCHES = \
 	patches/ecj/spp.patch \
 	patches/ecj/jopt.patch \
 	patches/ecj/jaxp-dependency.patch \
-	patches/ecj/bootver.patch \
 	patches/ecj/getannotation-cast.patch \
 	patches/ecj/override.patch \
 	patches/ecj/xsltproc.patch \
@@ -873,6 +899,13 @@ endif
 if WITH_RHINO
 ICEDTEA_ENV += \
 	RHINO_JAR="$(abs_top_builddir)/rhino/rhino.jar"
+endif
+
+if USE_SYSTEM_KERBEROS
+ICEDTEA_ENV += \
+	SYSTEM_KRB5="true" \
+	KRB5_LIBS="${KRB5_LIBS}" \
+	KRB5_CFLAGS="${KRB5_CFLAGS}"
 endif
 
 # OpenJDK ecj build environment.

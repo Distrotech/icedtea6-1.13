@@ -1,0 +1,56 @@
+# HG changeset patch
+# User bae
+# Date 1256299191 -14400
+#      Fri Oct 23 15:59:51 2009 +0400
+# Node ID 5fc5d3243a5c68774277a18938c6f496cabd7f94
+# Parent  c579f830770746e8b679ebd3a8a40eb5253e16e5
+6888215: memory leak in jpeg plugin
+Reviewed-by: igor, prr
+
+diff --git a/src/share/native/sun/awt/image/jpeg/imageioJPEG.c b/src/share/native/sun/awt/image/jpeg/imageioJPEG.c
+--- openjdk/jdk/src/share/native/sun/awt/image/jpeg/imageioJPEG.c
++++ openjdk/jdk/src/share/native/sun/awt/image/jpeg/imageioJPEG.c
+@@ -1437,6 +1437,7 @@
+         JNU_ThrowByName( env,
+                          "java/lang/OutOfMemoryError",
+                          "Initializing Reader");
++        free(cinfo);
+         return 0;
+     }
+ 
+@@ -1473,6 +1474,7 @@
+         JNU_ThrowByName(env,
+                         "java/lang/OutOfMemoryError",
+                         "Initializing Reader");
++        imageio_dispose((j_common_ptr)cinfo);
+         return 0;
+     }
+     cinfo->src->bytes_in_buffer = 0;
+@@ -1489,6 +1491,7 @@
+         JNU_ThrowByName( env,
+                          "java/lang/OutOfMemoryError",
+                          "Initializing Reader");
++        imageio_dispose((j_common_ptr)cinfo);
+         return 0;
+     }
+     return (jlong) ret;
+@@ -2420,8 +2423,7 @@
+         JNU_ThrowByName( env,
+                          "java/lang/OutOfMemoryError",
+                          "Initializing Writer");
+-        free(cinfo);
+-        free(jerr);
++        imageio_dispose((j_common_ptr)cinfo);
+         return 0;
+     }
+ 
+@@ -2439,8 +2441,7 @@
+         JNU_ThrowByName( env,
+                          "java/lang/OutOfMemoryError",
+                          "Initializing Writer");
+-        free(cinfo);
+-        free(jerr);
++        imageio_dispose((j_common_ptr)cinfo);
+         return 0;
+     }
+     return (jlong) ret;

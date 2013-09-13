@@ -1,0 +1,31 @@
+diff --git a/src/share/native/sun/java2d/cmm/lcms/LCMS.c b/src/share/native/sun/java2d/cmm/lcms/LCMS.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/LCMS.c
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/LCMS.c
+@@ -479,7 +479,7 @@
+     sig.j = tagSig;
+ 
+     if (JNU_IsNull(env, data)) {
+-        JNU_ThrowIllegalArgumentException(env, "Can not write tag data.");
++        J2dRlsTraceLn(J2D_TRACE_ERROR, "LCMS_setTagData: data == NULL");
+         return;
+     }
+ 
+@@ -488,7 +488,7 @@
+     dataArray = (*env)->GetByteArrayElements(env, data, 0);
+ 
+     if (dataArray == NULL) {
+-        JNU_ThrowIllegalArgumentException(env, "Can not write tag data.");
++        J2dRlsTraceLn(J2D_TRACE_ERROR, "LCMS_setTagData: dataArray == NULL");
+         return;
+     }
+ 
+@@ -501,7 +501,8 @@
+     (*env)->ReleaseByteArrayElements(env, data, dataArray, 0);
+ 
+     if (!status) {
+-        JNU_ThrowIllegalArgumentException(env, "Can not write tag data.");
++        J2dRlsTraceLn1(J2D_TRACE_ERROR, "LCMS_setTagData: status == %d",
++		       status);
+     }
+ }
+ 

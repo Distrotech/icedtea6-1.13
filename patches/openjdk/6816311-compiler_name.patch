@@ -1,0 +1,417 @@
+diff -Nru openjdk.orig/jdk/make/common/Defs-windows.gmk openjdk/jdk/make/common/Defs-windows.gmk
+--- openjdk.orig/jdk/make/common/Defs-windows.gmk	2013-09-02 16:35:07.688884584 +0100
++++ openjdk/jdk/make/common/Defs-windows.gmk	2013-09-02 16:40:22.565779052 +0100
+@@ -78,6 +78,13 @@
+   MS_RUNTIME_LIBRARIES += unicows.dll
+ endif
+ 
++ifeq ($(ARCH_DATA_MODEL), 64)
++  ifeq ($(COMPILER_VERSION), VS2008)
++    MSVCRNN_DLL = msvcr90.dll
++    MSVCPNN_DLL = msvcp90.dll
++    MS_RUNTIME_LIBRARIES += $(MSVCRNN_DLL)
++  endif
++endif
+ 
+ EXTRA_LFLAGS += /LIBPATH:$(DXSDK_LIB_PATH)
+ 
+@@ -302,17 +309,13 @@
+ #
+ CFLAGS_COMMON += -Fd$(OBJDIR)/$(basename $(@F)).pdb -Fm$(OBJDIR)/$(basename $(@F)).map
+ 
+-#
+-# Add warnings and extra on 64bit issues
+-#
+-ifeq ($(ARCH_DATA_MODEL), 64)
+-  CFLAGS_COMMON += -Wp64 
+-endif
+-CFLAGS_COMMON += -W$(COMPILER_WARNING_LEVEL)
+ 
+ #
+ # Treat compiler warnings as errors, if requested
+ #
++CFLAGS_COMMON += -W$(COMPILER_WARNING_LEVEL)
++# Turn off security warnings about using the standard C library function strcpy
++CFLAGS_COMMON += -D _CRT_SECURE_NO_DEPRECATE
+ ifeq ($(COMPILER_WARNINGS_FATAL),true)
+   CFLAGS_COMMON += -WX
+ endif
+diff -Nru openjdk.orig/jdk/make/common/shared/Compiler-gcc.gmk openjdk/jdk/make/common/shared/Compiler-gcc.gmk
+--- openjdk.orig/jdk/make/common/shared/Compiler-gcc.gmk	2013-09-02 16:35:07.712884957 +0100
++++ openjdk/jdk/make/common/shared/Compiler-gcc.gmk	2013-09-02 16:40:22.565779052 +0100
+@@ -27,8 +27,6 @@
+ # GCC Compiler settings
+ #
+ 
+-COMPILER_NAME=GCC
+-
+ ifeq ($(PLATFORM), windows)
+ 
+   # Settings specific to Windows, pretty stale, hasn't been used
+@@ -153,3 +151,7 @@
+ _CC_VER :=$(shell $(CC) -dumpversion 2>&1 )
+ CC_VER  :=$(call GetVersion,"$(_CC_VER)")
+ 
++# Name of compiler
++COMPILER_NAME = GCC$(call MajorVersion,$(CC_VER))
++COMPILER_VERSION = $(COMPILER_NAME)
++
+diff -Nru openjdk.orig/jdk/make/common/shared/Compiler-msvc.gmk openjdk/jdk/make/common/shared/Compiler-msvc.gmk
+--- openjdk.orig/jdk/make/common/shared/Compiler-msvc.gmk	2013-09-02 16:35:07.712884957 +0100
++++ openjdk/jdk/make/common/shared/Compiler-msvc.gmk	2013-09-02 16:40:22.565779052 +0100
+@@ -110,6 +110,12 @@
+         endif
+       endif
+     endif
++    ifeq ($(CC_MAJORVER), 15)
++      COMPILER_NAME=Microsoft Windows SDK with Visual Studio 9 (6001.18000.367)
++      COMPILER_VERSION=VS2008
++      RC = $(MSSDK61)/Bin/X64/rc.exe
++      MT = $(MSSDK61)/Bin/X64/mt.exe
++    endif
+     # This will cause problems if ALT_COMPILER_PATH is defined to ""
+     # which is a directive to use the PATH.
+     REBASE         = $(COMPILER_PATH)../REBASE
+diff -Nru openjdk.orig/jdk/make/common/shared/Compiler-sun.gmk openjdk/jdk/make/common/shared/Compiler-sun.gmk
+--- openjdk.orig/jdk/make/common/shared/Compiler-sun.gmk	2013-09-02 16:35:07.712884957 +0100
++++ openjdk/jdk/make/common/shared/Compiler-sun.gmk	2013-09-02 16:41:13.914577209 +0100
+@@ -27,13 +27,8 @@
+ # Sun Studio Compiler settings
+ #
+ 
+-COMPILER_NAME=Sun Studio
+-
+ # Sun Studio Compiler settings specific to Solaris
+ ifeq ($(PLATFORM), solaris)
+-  # FIXUP: Change to SS12 when validated
+-  #COMPILER_VERSION=SS12
+-  COMPILER_VERSION=SS11
+   CC             = $(COMPILER_PATH)cc
+   CPP            = $(COMPILER_PATH)cc -E
+   CXX            = $(COMPILER_PATH)CC
+@@ -46,7 +41,6 @@
+ # Sun Studio Compiler settings specific to Linux
+ ifeq ($(PLATFORM), linux)
+   # This has not been tested
+-  COMPILER_VERSION=SS11
+   CC             = $(COMPILER_PATH)cc
+   CPP            = $(COMPILER_PATH)cc -E
+   CXX            = $(COMPILER_PATH)CC
+@@ -68,6 +62,18 @@
+ _CC_VER :=$(shell $(CC) -V 2>&1 | $(HEAD) -n 1)
+ CC_VER  :=$(call GetVersion,"$(_CC_VER)")
+ 
++# Name of compilers being used
++COMPILER_VERSION-5.7  = SS10
++COMPILER_NAME-5.7     = Sun Studio 10
++COMPILER_VERSION-5.8  = SS11
++COMPILER_NAME-5.8     = Sun Studio 11
++COMPILER_VERSION-5.9  = SS12
++COMPILER_NAME-5.9     = Sun Studio 12
++COMPILER_VERSION-5.10 = SS13
++COMPILER_NAME-5.10    = Sun Studio 13
++COMPILER_VERSION      = $(COMPILER_VERSION-$(CC_VER))
++COMPILER_NAME         = $(COMPILER_NAME-$(CC_VER))
++
+ # Arch specific settings (determines type of .o files and instruction set)
+ #  Starting in SS12 (5.9), the arch options changed.
+ #  The assembler /usr/ccs/bin/as wants older SS11 (5.8) style options.
+diff -Nru openjdk.orig/jdk/make/common/shared/Defs-versions.gmk openjdk/jdk/make/common/shared/Defs-versions.gmk
+--- openjdk.orig/jdk/make/common/shared/Defs-versions.gmk	2013-09-02 16:35:07.720885081 +0100
++++ openjdk/jdk/make/common/shared/Defs-versions.gmk	2013-09-02 16:40:22.565779052 +0100
+@@ -45,6 +45,12 @@
+ # REQUIRED_CC_VER
+ #   The primary C compiler version expected.
+ #
++# REQUIRED_COMPILER_NAME
++#   The long descriptive name of the compiler we should use
++#
++# REQUIRED_COMPILER_VERSION
++#   The one word name that identifies the compilers being used.
++#
+ # REQUIRED_CYGWIN_VER
+ #   Windows only: If CYGWIN is used, the minimum CYGWIN version.
+ #
+@@ -114,6 +120,8 @@
+   else
+     REQUIRED_FREE_SPACE       = 1040000
+   endif
++  REQUIRED_COMPILER_NAME      = Sun Studio 11
++  REQUIRED_COMPILER_VERSION   = SS11
+   ifeq ($(CC_VERSION),sun)
+     REQUIRED_CC_VER           = 5.8
+   endif
+@@ -130,6 +138,8 @@
+   REQUIRED_OS_VARIANT_VERSION = 9
+   REQUIRED_FREE_SPACE         = 1460000
+   REQUIRED_ALSA_VERSION       = 0.9.1
++  REQUIRED_COMPILER_NAME      = GCC3
++  REQUIRED_COMPILER_VERSION   = GCC3
+   REQUIRED_GCC_VER            = 2.95
+   ifeq ($(CC_VERSION),gcc)
+     REQUIRED_CC_VER           = 3.2
+@@ -155,14 +165,20 @@
+   REQUIRED_DXSDK_VER          = 0x0900
+   ifeq ($(CC_VERSION),msvc)
+     ifeq ($(ARCH_DATA_MODEL), 32)
++      REQUIRED_COMPILER_NAME = Visual Studio .NET 2003 Professional C++
++      REQUIRED_COMPILER_VERSION = VS2003
+       REQUIRED_CC_VER         = 13.10.3077
+       REQUIRED_LINK_VER       = 7.10.3077
+     else
+       ifeq ($(ARCH), ia64)
+-        REQUIRED_CC_VER       = 13.00.9337.7
+-        REQUIRED_LINK_VER     = 7.00.9337.7
++        REQUIRED_COMPILER_NAME    = Microsoft Platform SDK - November 2001 Edition
++        REQUIRED_COMPILER_VERSION = VS2003
++        REQUIRED_CC_VER           = 13.00.9337.7
++        REQUIRED_LINK_VER         = 7.00.9337.7
+       endif
+       ifeq ($(ARCH), amd64)
++        REQUIRED_COMPILER_NAME=Microsoft Platform SDK - April 2005 Edition (3790.1830)
++        REQUIRED_COMPILER_VERSION=VS2005
+         REQUIRED_CC_VER       = 14.00.40310.41
+         REQUIRED_LINK_VER     = 8.00.40310.39
+       endif
+diff -Nru openjdk.orig/jdk/make/common/shared/Defs-windows.gmk openjdk/jdk/make/common/shared/Defs-windows.gmk
+--- openjdk.orig/jdk/make/common/shared/Defs-windows.gmk	2013-09-02 16:35:07.712884957 +0100
++++ openjdk/jdk/make/common/shared/Defs-windows.gmk	2013-09-02 16:40:22.565779052 +0100
+@@ -199,6 +199,7 @@
+ endif
+ ifeq ($(ARCH_DATA_MODEL), 32)
+   _program_files     :=$(call FullPath,$(xPROGRAMFILES))
++  _program_files32   :=$(_program_files)
+ else
+   ifdef PROGRAMW6432
+     xPROGRAMW6432    :="$(subst \,/,$(PROGRAMW6432))"
+@@ -260,17 +261,30 @@
+   ifneq ($(_msvc_dir),)
+     _compiler_bin :=$(_msvc_dir)/Bin
+     _redist_sdk   :=$(_msvc_dir)/../SDK/v1.1/Bin
+-    _ms_sdk       :=$(_msvc_dir)/PlatformSDK
++    # Assume PlatformSDK is in VS71 (will be empty if VS90)
++    _ms_sdk       :=$(call FullPath,$(_msvc_dir)/PlatformSDK)
++    # Assume VS90, then VS80, then VS71
++    _redist_sdk   :=$(call FullPath,$(_msvc_dir)/../SDK/v3.5/Bin)
++    ifeq ($(_redist_sdk),)
++      _redist_sdk   :=$(call FullPath,$(_msvc_dir)/../SDK/v2.0/Bin)
++      ifeq ($(_redist_sdk),)
++        _redist_sdk   :=$(call FullPath,$(_msvc_dir)/../SDK/v1.1/Bin)
++      endif
++    endif
+   endif
+ endif
+ 
+ # The Microsoft Platform SDK installed by itself
+ ifneq ($(_program_files),)
+-  xPSDK  :="$(_program_files)/Microsoft Platform SDK"
+-  _psdk  :=$(call FullPath,$(xPSDK))
++  _PSDK :="$(_program_files)/Microsoft SDKs/Windows/v6.1/"
++  _psdk :=$(call FullPath,$(xMSSDK61))
+   ifeq ($(_psdk),)
+-    xPSDK  :="$(_program_files)/Microsoft SDK"
+-    _psdk :=$(call FullPath,$(xMSSDK))
++    xPSDK  :="$(_program_files)/Microsoft Platform SDK"
++    _psdk  :=$(call FullPath,$(xPSDK))
++    ifeq ($(_psdk),)
++      xPSDK  :="$(_program_files)/Microsoft SDK"
++      _psdk :=$(call FullPath,$(xMSSDK))
++    endif
+   endif
+ endif
+ 
+@@ -291,13 +305,22 @@
+ 
+ # Compilers for 64bit are from SDK
+ ifeq ($(ARCH_DATA_MODEL), 64)
+-  ifneq ($(_ms_sdk),)
+-    ifeq ($(ARCH), ia64)
+-      _compiler_bin :=$(_ms_sdk)/Bin/Win64
+-    endif
+-    ifeq ($(ARCH), amd64)
+-      _compiler_bin :=$(_ms_sdk)/Bin/Win64/x86/$(ARCH)
+-      _redist_sdk   :=$(_ms_sdk)/redist/win64/AMD64
++  xVS2008 :="$(_program_files32)/Microsoft Visual Studio 9.0/"
++  VS2008 :=$(call FullPath,$(xVS2008))
++  ifneq ($(VS2008),)
++    _compiler_bin :=$(VS2008)/VC/Bin/$(ARCH)
++    xMSSDK61      :="$(_program_files)/Microsoft SDKs/Windows/v6.1/"
++    MSSDK61       :=$(call FullPath,$(xMSSDK61))
++    _redist_sdk   :=$(VS2008)/VC/redist/x86/Microsoft.VC90.CRT
++  else
++    ifneq ($(_ms_sdk),)
++      ifeq ($(ARCH), ia64)
++        _compiler_bin :=$(_ms_sdk)/Bin/Win64
++      endif
++      ifeq ($(ARCH), amd64)
++        _compiler_bin :=$(_ms_sdk)/Bin/Win64/x86/$(ARCH)
++        _redist_sdk   :=$(_ms_sdk)/redist/win64/AMD64
++      endif
+     endif
+   endif
+ endif
+@@ -400,38 +423,30 @@
+   _BOOTDIR2  =$(USRJDKINSTANCES_PATH)/jdk$(PREVIOUS_JDK_VERSION)
+ endif
+ 
+-# See if SDK area has a msvcrt.dll file, directory may exist w/o msvcr* files
+-_REDIST_SDK_EXISTS := $(shell \
+-	if [ -f "$(_redist_sdk)/msvcrt.dll" ]; then \
+-	  echo "true"; \
+-	else \
+-	  echo "false"; \
+-	fi)
+-_REDIST71_SDK_EXISTS := $(shell \
+-	if [ -f "$(_redist_sdk)/msvcr71.dll" ]; then \
+-	  echo "true"; \
+-	else \
+-	  echo "false"; \
+-	fi)
++# 32 bit always needs 2 runtimes, 64 bit usually does too
+ 
+-# 32 bit needs 2 runtimes
+-ifeq ($(ARCH_DATA_MODEL), 32)
++# MSVCRT_DLL_PATH: location of msvcrt.dll that will be re-distributed
++ifdef ALT_MSVCRT_DLL_PATH
++  xALT_MSVCRT_DLL_PATH :="$(subst \,/,$(ALT_MSVCRT_DLL_PATH))"
++  MSVCRT_DLL_PATH      :=$(call FullPath,$(xALT_MSVCRT_DLL_PATH))
++else
++  MSVCRT_DLL_PATH :=$(call FullPath,$(_system_root)/system32/)
++endif
++MSVCRT_DLL_PATH:=$(call AltCheckSpaces,MSVCRT_DLL_PATH)
++MSVCRT_DLL_PATH:=$(call AltCheckValue,MSVCRT_DLL_PATH)
+ 
+-  # MSVCRT_DLL_PATH: location of msvcrt.dll that will be re-distributed
+-  ifdef ALT_MSVCRT_DLL_PATH
+-    xALT_MSVCRT_DLL_PATH :="$(subst \,/,$(ALT_MSVCRT_DLL_PATH))"
+-    MSVCRT_DLL_PATH      :=$(call FullPath,$(xALT_MSVCRT_DLL_PATH))
++# 32bit always needs the MSVCRNN runtime, 64bit does when using VS2008
++ifeq ($(ARCH_DATA_MODEL), 32)
++  _NEEDS_MSVCRNN = true
++else
++  ifeq ($(VS2008),)
++    _NEEDS_MSVCRNN = false
+   else
+-    ifeq ($(_REDIST_SDK_EXISTS), true)
+-      xREDIST_DIR   :=$(_redist_sdk)
+-    else
+-      xREDIST_DIR   :=$(_system_root)/system32
+-    endif
+-    MSVCRT_DLL_PATH :=$(call FullPath,$(xREDIST_DIR))
++    _NEEDS_MSVCRNN = true
+   endif
+-  MSVCRT_DLL_PATH:=$(call AltCheckSpaces,MSVCRT_DLL_PATH)
+-  MSVCRT_DLL_PATH:=$(call AltCheckValue,MSVCRT_DLL_PATH)
+-  
++endif
++
++ifeq ($(ARCH_DATA_MODEL), 32)
+   # MSVCR71_DLL_PATH: location of msvcr71.dll that will be re-distributed
+   ifdef ALT_MSVCR71_DLL_PATH
+     xALT_MSVCR71_DLL_PATH :="$(subst \,/,$(ALT_MSVCR71_DLL_PATH))"
+@@ -448,22 +463,17 @@
+   MSVCR71_DLL_PATH:=$(call AltCheckValue,MSVCR71_DLL_PATH)
+   
+ else
+-
+-  # MSVCRT_DLL_PATH: location of msvcrt.dll that will be re-distributed
+-  ifdef ALT_MSVCRT_DLL_PATH
+-    xALT_MSVCRT_DLL_PATH :="$(subst \,/,$(ALT_MSVCRT_DLL_PATH))"
+-    MSVCRT_DLL_PATH      :=$(call FullPath,$(xALT_MSVCRT_DLL_PATH))
+-  else
+-    ifeq ($(_REDIST_SDK_EXISTS), true)
+-      xREDIST_DIR   :=$(_redist_sdk)
+-    else
+-      xREDIST_DIR   :=$(_system_root)/SysWOW64
+-    endif
+-    MSVCRT_DLL_PATH  :=$(call FullPath,$(xREDIST_DIR))
+-  endif
+-  MSVCRT_DLL_PATH:=$(call AltCheckSpaces,MSVCRT_DLL_PATH)
+-  MSVCRT_DLL_PATH:=$(call AltCheckValue,MSVCRT_DLL_PATH)
+-  
++ifeq ($(_NEEDS_MSVCRNN), true)
++   # MSVCRNN_DLL_PATH: location of msvcrnn.dll that will be re-distributed
++   ifdef ALT_MSVCRNN_DLL_PATH
++     xALT_MSVCRNN_DLL_PATH :="$(subst \,/,$(ALT_MSVCRNN_DLL_PATH))"
++     MSVCRNN_DLL_PATH      :=$(call FullPath,$(xALT_MSVCRNN_DLL_PATH))
++   else
++    MSVCRNN_DLL_PATH :=$(_redist_sdk)
++   endif
++   MSVCRNN_DLL_PATH :=$(call AltCheckSpaces,MSVCRNN_DLL_PATH)
++   MSVCRNN_DLL_PATH:=$(call AltCheckValue,MSVCRNN_DLL_PATH)
++endif
+ endif
+ 
+ # DXSDK_PATH: path to Microsoft DirectX SDK Include and Lib
+diff -Nru openjdk.orig/jdk/make/common/shared/Sanity.gmk openjdk/jdk/make/common/shared/Sanity.gmk
+--- openjdk.orig/jdk/make/common/shared/Sanity.gmk	2013-09-02 16:35:07.712884957 +0100
++++ openjdk/jdk/make/common/shared/Sanity.gmk	2013-09-02 16:40:22.565779052 +0100
+@@ -123,7 +123,7 @@
+   ifeq ($(_OS_VERSION),)
+     OS_VERSION = 5.0
+   else
+-    OS_VERSION = $(_OS_VERSION)
++    OS_VERSION = $(call MajorVersion,$(_OS_VERSION)).$(call MinorVersion,$(_OS_VERSION))
+   endif
+   OS_VARIANT_NAME := $(WINDOWS_MAPPING-$(OS_VERSION))
+   OS_VARIANT_VERSION := $(OS_VERSION)
+@@ -1320,8 +1320,8 @@
+ 	fi
+ 	@if [ "$(LINK_CHECK)" != "same" ]; then \
+ 	  $(ECHO) "WARNING: To build Java 2 SDK $(JDK_VERSION) you need : \n" \
+-	    "      $(COMPILER_VERSION) - link.exe version \"$(REQUIRED_LINK_VER)\" \n" \
+-	      "      Specifically the $(COMPILER_NAME) link.exe. \n " \
++	    "      $(REQUIRED_COMPILER_VERSION) - link.exe version \"$(REQUIRED_LINK_VER)\" \n" \
++	      "      Specifically the $(REQUIRED_COMPILER_NAME) link.exe. \n " \
+ 	    "      $(YOU_ARE_USING) Linker version \"$(LINK_VER)\" \n" \
+ 	    "" >> $(WARNING_FILE) ; \
+ 	fi
+@@ -1338,21 +1338,13 @@
+ 	fi
+ ifndef OPENJDK
+ 	@if [ "$(CC_CHECK)" != "same" ]; then \
+-	      $(ECHO) "WARNING: The $(PLATFORM) compiler is not version $(COMPILER_VERSION) $(REQUIRED_CC_VER) \n" \
+-	      "      Specifically the $(COMPILER_NAME) $(CC_TYPE) compiler. \n " \
+-	      "      $(YOU_ARE_USING) compiler version: $(CC_VER) \n" \
++	      $(ECHO) "WARNING: The $(PLATFORM) compiler is not version $(REQUIRED_COMPILER_VERSION) $(REQUIRED_CC_VER) \n" \
++	      "      Specifically the $(REQUIRED_COMPILER_NAME) compiler. \n " \
++	      "      $(YOU_ARE_USING) $(COMPILER_VERSION): $(CC_VER) \n" \
+ 	      "      The compiler was obtained from the following location: \n" \
+ 	      "          $(COMPILER_PATH) \n" \
+ 	      "" >> $(WARNING_FILE) ; \
+          fi
+-  ifeq ($(PLATFORM), windows)
+-    ifeq ($(ARCH_DATA_MODEL), 64)
+-      ifneq ($(COMPILER_VERSION), VS2005)
+-	@$(ECHO) "WARNING: Should be using VS2005 compiler on 64bit platform. \n" \
+-	    "" >> $(WARNING_FILE)
+-      endif
+-    endif
+-  endif
+ endif
+ 
+ ######################################################
+diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt.rc openjdk/jdk/src/windows/native/sun/windows/awt.rc
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt.rc	2013-09-02 16:35:02.892810032 +0100
++++ openjdk/jdk/src/windows/native/sun/windows/awt.rc	2013-09-02 16:40:22.565779052 +0100
+@@ -23,7 +23,7 @@
+ // questions.
+ //
+ 
+-#include "afxres.h"
++#include "windows.h"
+ 
+ // Need 2 defines so macro argument to XSTR will get expanded before quoting.
+ #define XSTR(x) STR(x)
+diff -Nru openjdk.orig/jdk/src/windows/resource/version.rc openjdk/jdk/src/windows/resource/version.rc
+--- openjdk.orig/jdk/src/windows/resource/version.rc	2012-10-26 19:26:19.000000000 +0100
++++ openjdk/jdk/src/windows/resource/version.rc	2013-09-02 16:40:22.565779052 +0100
+@@ -23,7 +23,7 @@
+ // questions.
+ //
+ 
+-#include "afxres.h"
++#include "windows.h"
+ 
+ // Need 2 defines so macro argument to XSTR will get expanded before quoting.
+ #define XSTR(x) STR(x)

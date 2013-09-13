@@ -1,0 +1,915 @@
+diff -Nru openjdk.orig/jdk/make/common/Defs-linux.gmk openjdk/jdk/make/common/Defs-linux.gmk
+--- openjdk.orig/jdk/make/common/Defs-linux.gmk	2013-09-02 16:47:38.412555143 +0100
++++ openjdk/jdk/make/common/Defs-linux.gmk	2013-09-02 16:58:52.819048695 +0100
+@@ -135,6 +135,14 @@
+   LDFLAGS_COMMON        += $(LDFLAGS_COMMON_$(ARCH))
+ endif
+ 
++# If this is a --hash-style=gnu system, use --hash-style=both
++#   The gnu .hash section won't work on some Linux systems like SuSE 10.
++_HAS_HASH_STYLE_GNU:=$(shell $(CC) -dumpspecs | $(GREP) -- '--hash-style=gnu')
++ifneq ($(_HAS_HASH_STYLE_GNU),)
++  LDFLAGS_HASH_STYLE = -Wl,--hash-style=both
++endif
++LDFLAGS_COMMON          += $(LDFLAGS_HASH_STYLE)
++
+ #
+ # Selection of warning messages
+ #
+diff -Nru openjdk.orig/jdk/make/common/shared/Compiler-gcc.gmk openjdk/jdk/make/common/shared/Compiler-gcc.gmk
+--- openjdk.orig/jdk/make/common/shared/Compiler-gcc.gmk	2013-09-02 16:47:38.068549790 +0100
++++ openjdk/jdk/make/common/shared/Compiler-gcc.gmk	2013-09-02 16:58:52.819048695 +0100
+@@ -143,18 +143,10 @@
+   CC             = $(COMPILER_PATH)gcc
+   CPP            = $(COMPILER_PATH)gcc -E
+   CXX            = $(COMPILER_PATH)g++
+-  REQUIRED_CC_VER = 3.2
+ 
+   # Option used to create a shared library
+   SHARED_LIBRARY_FLAG = -G
+-  # But gcc is still needed no matter what on 32bit
+-  ifeq ($(ARCH_DATA_MODEL), 32)
+-    REQUIRED_GCC_VER = 2.95
+-    GCC =$(GCC_COMPILER_PATH)gcc
+-    _GCC_VER :=$(shell $(GCC) -dumpversion 2>&1 )
+-    GCC_VER  :=$(call GetVersion,"$(_GCC_VER)")
+-  endif
+-
++  
+ endif
+ 
+ # Get gcc version
+diff -Nru openjdk.orig/jdk/make/common/shared/Compiler-msvc.gmk openjdk/jdk/make/common/shared/Compiler-msvc.gmk
+--- openjdk.orig/jdk/make/common/shared/Compiler-msvc.gmk	2012-10-26 19:25:40.000000000 +0100
++++ openjdk/jdk/make/common/shared/Compiler-msvc.gmk	2013-09-02 16:58:52.819048695 +0100
+@@ -41,8 +41,6 @@
+   # Fill in unknown values
+   COMPILER_NAME=Unknown MSVC Compiler
+   COMPILER_VERSION=
+-  REQUIRED_CC_VER=
+-  REQUIRED_LINK_VER=
+   
+   # unset any GNU Make settings of MFLAGS and MAKEFLAGS which may mess up nmake
+   NMAKE          = MFLAGS= MAKEFLAGS= $(COMPILER_PATH)nmake -nologo
+@@ -54,8 +52,6 @@
+     CC_TYPE := $(shell $(CC) 2>&1 | $(HEAD) -n 1 | $(NAWK) '{print $$5}')
+     CC_MAJORVER :=$(call MajorVersion,$(CC_VER))
+     REQUIRED_CCTYPE = Optimizing
+-    REQUIRED_CC_VER = 13.10.3077
+-    REQUIRED_LINK_VER = 7.10.3077
+     ifeq ($(CC_MAJORVER), 12)
+       # This should be: CC_VER=12.00.8168 LINK_VER=6.00.8447
+       COMPILER_NAME=Visual C++ 6.0 Professional + VC6-SP 3
+@@ -91,14 +87,6 @@
+     CC_MAJORVER :=$(call MajorVersion,$(CC_VER))
+     CC_MINORVER :=$(call MinorVersion,$(CC_VER))
+     CC_MICROVER :=$(call MicroVersion,$(CC_VER))
+-    ifeq ($(ARCH), ia64)
+-      REQUIRED_CC_VER = 13.00.9337.7
+-      REQUIRED_LINK_VER = 7.00.9337.7
+-    endif
+-    ifeq ($(ARCH), amd64)
+-      REQUIRED_CC_VER = 14.00.40310.41
+-      REQUIRED_LINK_VER = 8.00.40310.39
+-    endif
+     ifeq ($(CC_MAJORVER), 13)
+       ifeq ($(ARCH), ia64)
+         # This should be: CC_VER=13.00.9337.7 LINK_VER=7.00.9337.7
+diff -Nru openjdk.orig/jdk/make/common/shared/Compiler-sun.gmk openjdk/jdk/make/common/shared/Compiler-sun.gmk
+--- openjdk.orig/jdk/make/common/shared/Compiler-sun.gmk	2013-09-02 16:47:38.400554956 +0100
++++ openjdk/jdk/make/common/shared/Compiler-sun.gmk	2013-09-02 16:58:52.819048695 +0100
+@@ -33,29 +33,20 @@
+ ifeq ($(PLATFORM), solaris)
+   # FIXUP: Change to SS12 when validated
+   #COMPILER_VERSION=SS12
+-  #REQUIRED_CC_VER=5.9
+   COMPILER_VERSION=SS11
+-  REQUIRED_CC_VER=5.8
+   CC             = $(COMPILER_PATH)cc
+   CPP            = $(COMPILER_PATH)cc -E
+   CXX            = $(COMPILER_PATH)CC
+   LINT           = $(COMPILER_PATH)lint
+   # Option used to create a shared library
+   SHARED_LIBRARY_FLAG = -G
+-  # But gcc is still needed no matter what on 32bit
+-  ifeq ($(ARCH_DATA_MODEL), 32)
+-    REQUIRED_GCC_VER = 2.95
+-    GCC =$(GCC_COMPILER_PATH)gcc
+-    _GCC_VER :=$(shell $(GCC) -dumpversion 2>&1 )
+-    GCC_VER  :=$(call GetVersion,"$(_GCC_VER)")
+-  endif
++  GCC =$(GCC_COMPILER_PATH)gcc
+ endif
+ 
+ # Sun Studio Compiler settings specific to Linux
+ ifeq ($(PLATFORM), linux)
+   # This has not been tested
+-  COMPILER_VERSION=SS12
+-  REQUIRED_CC_VER=5.9
++  COMPILER_VERSION=SS11
+   CC             = $(COMPILER_PATH)cc
+   CPP            = $(COMPILER_PATH)cc -E
+   CXX            = $(COMPILER_PATH)CC
+diff -Nru openjdk.orig/jdk/make/common/shared/Defs.gmk openjdk/jdk/make/common/shared/Defs.gmk
+--- openjdk.orig/jdk/make/common/shared/Defs.gmk	2013-09-02 16:47:38.412555143 +0100
++++ openjdk/jdk/make/common/shared/Defs.gmk	2013-09-02 16:58:52.819048695 +0100
+@@ -113,9 +113,9 @@
+   fi)
+ endef
+ 
+-# Given a line of text, get the major.minor version number from it
++# Given a line of text, get the version number from it
+ define GetVersion
+-$(shell echo $1 | sed -e 's@[^1-9]*\([1-9][0-9]*\.[0-9][0-9]*\).*@\1@' )
++$(shell echo $1 | sed -e 's@[^0-9]*\([0-9][0-9]*\.[0-9][.0-9]*\).*@\1@' )
+ endef
+ 
+ # Given a major.minor.micro version, return the major, minor, or micro number
+@@ -130,26 +130,26 @@
+ endef
+ 
+ # Macro that returns missing, same, newer, or older $1=version $2=required
+-#  (currently does not check the micro number)
+ define CheckVersions
+ $(shell \
+   if [ "$1" = "" -o "$2" = "" ]; then \
+     echo missing; \
++  elif [ "$1" = "$2" ]; then \
++    echo same; \
++  elif [ $(call MajorVersion,$1) -lt $(call MajorVersion,$2) ] ; then \
++    echo older; \
++  elif [ $(call MajorVersion,$1) -gt $(call MajorVersion,$2) ] ; then \
++    echo newer; \
++  elif [ $(call MinorVersion,$1) -lt $(call MinorVersion,$2) ]; then \
++    echo older; \
++  elif [ $(call MinorVersion,$1) -gt $(call MinorVersion,$2) ]; then \
++    echo newer; \
++  elif [ $(call MicroVersion,$1) -lt $(call MicroVersion,$2) ]; then \
++    echo older; \
++  elif [ $(call MicroVersion,$1) -gt $(call MicroVersion,$2) ]; then \
++    echo newer; \
+   else \
+-    if [ "$1" = "$2" ]; then \
+-      echo same; \
+-    else \
+-      if [ $(call MajorVersion,$1) -lt $(call MajorVersion,$2) ] ; then \
+-        echo older; \
+-      else \
+-	if [ $(call MajorVersion,$1) -eq $(call MajorVersion,$2) -a \
+-	     $(call MinorVersion,$1) -lt $(call MinorVersion,$2) ]; then \
+-          echo older; \
+-        else \
+-          echo newer; \
+-        fi; \
+-      fi; \
+-    fi; \
++    echo same; \
+   fi)
+ endef
+ 
+@@ -499,3 +499,6 @@
+ # Get shared compiler settings
+ include $(JDK_MAKE_SHARED_DIR)/Compiler.gmk
+ 
++# Get the REQUIRED versions
++include $(JDK_MAKE_SHARED_DIR)/Defs-versions.gmk
++
+diff -Nru openjdk.orig/jdk/make/common/shared/Defs-versions.gmk openjdk/jdk/make/common/shared/Defs-versions.gmk
+--- openjdk.orig/jdk/make/common/shared/Defs-versions.gmk	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/jdk/make/common/shared/Defs-versions.gmk	2013-09-02 16:58:52.819048695 +0100
+@@ -0,0 +1,183 @@
++#
++# Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
++# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++#
++# This code is free software; you can redistribute it and/or modify it
++# under the terms of the GNU General Public License version 2 only, as
++# published by the Free Software Foundation.  Sun designates this
++# particular file as subject to the "Classpath" exception as provided
++# by Sun in the LICENSE file that accompanied this code.
++#
++# This code is distributed in the hope that it will be useful, but WITHOUT
++# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++# version 2 for more details (a copy is included in the LICENSE file that
++# accompanied this code).
++#
++# You should have received a copy of the GNU General Public License version
++# 2 along with this work; if not, write to the Free Software Foundation,
++# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++#
++# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++# CA 95054 USA or visit www.sun.com if you need additional information or
++# have any questions.
++#
++
++#
++# WARNING: This file is shared with other workspaces.
++#
++
++# This file needs these set: CC_VERSION, PLATFORM, ARCH_FAMILY, and ARCH_DATA_MODEL.
++
++##########################################################################
++#
++# List of JDK official minimum, expected, or required versions:
++#
++# REQUIRED_ALSA_VERSION
++#   Linux only: The ALSA sound library version expected.
++#
++# REQUIRED_ANT_VER
++#   The minimum 'ant' version.
++#
++# REQUIRED_BOOT_VER
++#   The minimum boot jdk version.
++#
++# REQUIRED_CC_VER
++#   The primary C compiler version expected.
++#
++# REQUIRED_CYGWIN_VER
++#   Windows only: If CYGWIN is used, the minimum CYGWIN version.
++#
++# REQUIRED_DXSDK_VER
++#   Windows only: The version of DirectX SDK expected.
++#
++# REQUIRED_FREE_SPACE
++#   The minimum disk space needed as determined by running 'du -sk' on a fully
++#   built workspace.
++#
++# REQUIRED_FREETYPE_VERSION
++#   If we are using freetype, the freetype version expected.
++#
++# REQUIRED_GCC_VER
++#   Solaris and Linux only. The required version of gcc/g++ for the plugin.
++#
++# REQUIRED_LINK_VER
++#   Windows only: The version of link.exe expected.
++#
++# REQUIRED_MAKE_VER
++#   The minimum version of GNU make.
++#
++# REQUIRED_MKS_VER
++#   Windows only: If MKS used instead of CYGWIN, the minimum version of MKS.
++#
++# REQUIRED_OS_VARIANT_NAME
++#   The OS variation name required.
++#     Solaris: Solaris or OpenSolaris
++#     Windows: Windows2000, WindowsXP, Windows2003, etc.
++#     Linux: Fedora, RedHat, SuSE, Ubuntu, etc.
++#
++# REQUIRED_OS_VARIANT_VERSION
++#   The version number associated with the above OS variant name.
++#     Solaris: output of uname -r
++#     Windows: 5.0 for Windows2000, 5.1 for WindowsXP, 5.2 for Windows2003, etc.
++#     Linux: number for the variant, e.g. 9 for Fedora 9
++#
++# REQUIRED_OS_VERSION
++#   The formal OS version number.
++#     Solaris & Windows: same as REQUIRED_OS_VARIANT_VERSION
++#     Linux: the kernel version, or output of uname -r
++#
++# REQUIRED_UNZIP_VER
++#   The minimum version of unzip.
++#
++# REQUIRED_ZIP_VER
++#   The minimum version of unzip.
++#
++###########
++#
++# Differences in the build platform from these versions may trigger warnings
++#   messages during the sanity checking when building the JDK.
++#
++# When building the OpenJDK most of these required or expected  versions are 
++#  ignored or allowed to vary widely to accomodate the many build situations
++#  of the OpenJDK.
++#
++##########################################################################
++
++# Solaris specific
++ifeq ($(PLATFORM), solaris)
++  REQUIRED_OS_VERSION         = 5.10
++  REQUIRED_OS_VARIANT_NAME    = Solaris
++  REQUIRED_OS_VARIANT_VERSION = $(REQUIRED_OS_VERSION)
++  ifeq ($(ARCH_FAMILY), sparc)
++    REQUIRED_FREE_SPACE       = 1300000
++  else
++    REQUIRED_FREE_SPACE       = 1040000
++  endif
++  ifeq ($(CC_VERSION),sun)
++    REQUIRED_CC_VER           = 5.8
++  endif
++  ifeq ($(CC_VERSION),gcc)
++    REQUIRED_CC_VER           = 3.4.3
++  endif
++  REQUIRED_GCC_VER            = 2.95.2
++endif
++
++# Linux specific
++ifeq ($(PLATFORM), linux)
++  REQUIRED_OS_VERSION         = 2.6
++  REQUIRED_OS_VARIANT_NAME    = Fedora
++  REQUIRED_OS_VARIANT_VERSION = 9
++  REQUIRED_FREE_SPACE         = 1460000
++  REQUIRED_ALSA_VERSION       = 0.9.1
++  REQUIRED_GCC_VER            = 2.95
++  ifeq ($(CC_VERSION),gcc)
++    REQUIRED_CC_VER           = 3.2
++  endif
++  ifeq ($(CC_VERSION),sun)
++    REQUIRED_CC_VER           = 5.8
++  endif
++endif
++
++# Windows specific
++ifeq ($(PLATFORM), windows)
++  ifeq ($(ARCH_DATA_MODEL),64)
++    REQUIRED_OS_VERSION       = 5.2
++    REQUIRED_OS_VARIANT_NAME  = Windows2003
++  else
++    REQUIRED_OS_VERSION       = 5.1
++    REQUIRED_OS_VARIANT_NAME  = WindowsXP
++  endif
++  REQUIRED_OS_VARIANT_VERSION = $(REQUIRED_OS_VERSION)
++  REQUIRED_CYGWIN_VER         = 4.0
++  REQUIRED_MKS_VER            = 6.1
++  REQUIRED_FREE_SPACE         = 500000
++  REQUIRED_DXSDK_VER          = 0x0900
++  ifeq ($(CC_VERSION),msvc)
++    ifeq ($(ARCH_DATA_MODEL), 32)
++      REQUIRED_CC_VER         = 13.10.3077
++      REQUIRED_LINK_VER       = 7.10.3077
++    else
++      ifeq ($(ARCH), ia64)
++        REQUIRED_CC_VER       = 13.00.9337.7
++        REQUIRED_LINK_VER     = 7.00.9337.7
++      endif
++      ifeq ($(ARCH), amd64)
++        REQUIRED_CC_VER       = 14.00.40310.41
++        REQUIRED_LINK_VER     = 8.00.40310.39
++      endif
++    endif
++  endif
++  ifeq ($(CC_VERSION),gcc)
++    REQUIRED_CC_VER           = 3.4.3
++  endif
++endif
++
++# Generic
++REQUIRED_ANT_VER          = 1.6.3
++REQUIRED_BOOT_VER         = 1.5
++REQUIRED_FREETYPE_VERSION = 2.3.0
++REQUIRED_MAKE_VER         = 3.78
++REQUIRED_UNZIP_VER        = 5.12
++REQUIRED_ZIP_VER          = 2.2
++
+diff -Nru openjdk.orig/jdk/make/common/shared/Defs-windows.gmk openjdk/jdk/make/common/shared/Defs-windows.gmk
+--- openjdk.orig/jdk/make/common/shared/Defs-windows.gmk	2012-10-26 19:25:40.000000000 +0100
++++ openjdk/jdk/make/common/shared/Defs-windows.gmk	2013-09-02 16:58:52.819048695 +0100
+@@ -136,10 +136,7 @@
+ UNIXCOMMAND_PATH:=$(call AltCheckSpaces,UNIXCOMMAND_PATH)
+ 
+ # Get version of MKS or CYGWIN
+-ifdef USING_CYGWIN
+-_CYGWIN_VER :=$(shell $(UNAME))
+-CYGWIN_VER  :=$(call GetVersion,$(_CYGWIN_VER))
+-else # MKS
++ifndef USING_CYGWIN
+ _MKS_VER :=$(shell $(MKSINFO) 2>&1 | $(GREP) Release | $(TAIL) -1 | $(SED) -e 's@.*\(Release.*\)@\1@')
+ MKS_VER  :=$(call GetVersion,$(_MKS_VER))
+ # At this point, we can re-define FullPath to use DOSNAME_CMD
+diff -Nru openjdk.orig/jdk/make/common/shared/Platform.gmk openjdk/jdk/make/common/shared/Platform.gmk
+--- openjdk.orig/jdk/make/common/shared/Platform.gmk	2013-09-02 16:47:38.068549790 +0100
++++ openjdk/jdk/make/common/shared/Platform.gmk	2013-09-02 16:58:52.819048695 +0100
+@@ -51,8 +51,6 @@
+ #     USER                        login name of user (minus blanks)
+ #     PLATFORM                    windows, solaris, or linux
+ #     VARIANT                     OPT or DBG, OPT is the default
+-#     OS_NAME                     solaris, linux, or nt
+-#     OS_VERSION                  specific version of os, 5.10, 2.4.9-e.3, etc.
+ #     TEMP_DISK                   /tmp or C:/temp
+ #     ARCH_DATA_MODEL             32 or 64
+ #     ARCH                        sparc, sparcv9, i586, amd64, or ia64
+@@ -71,28 +69,11 @@
+ #     ISA_DIR                     solaris only: /sparcv9 or /amd64
+ #     LIBARCH32                   solaris only: sparc or i386
+ #     LIBARCH64                   solaris only: sparcv9 or amd64
+-#     REQUIRED_WINDOWS_VERSION    windows only: specific version of windows 
+ #     USING_CYGWIN                windows only: true or false
+-#     WINDOWS_NT_VERSION_STRING   windows only: long version name
+-#     REQUIRED_OS_VERSION         required OS version, e.g. 5.10, 2.4
+ #     ISHIELD_TEMP_MIN            windows only: minimum disk space in temp area
+-#     REQUIRED_ZIP_VER            required version of zip
+-#     REQUIRED_UNZIP_VER          required version of unzip
+-#     REQUIRED_DXSDK_VER          windows only: required version of DirectX
+-#     LINUX_VERSION_INFO          linux only: location of linux release file
+-#     REQUIRED_LINUX_VER          linux only: required version of linux
+-#     REQUIRED_LINUX_FULLVER      linux only: required full version of linux
+-#     REQUIRED_ALSA_VERSION       linux only: required version of ALSA
+-#     REQUIRED_FREETYPE_VERSION   openjdk only: required version of freetype 
+ 
+ SYSTEM_UNAME := $(shell uname)
+ 
+-# Normal boot jdk is previous release, but a hard requirement is a 1.6 boot
+-REQUIRED_BOOT_VER = 1.6
+-
+-# If we are using freetype, this is the required version
+-REQUIRED_FREETYPE_VERSION=2.3.0
+-
+ #
+ # Prune out all known SCM (Source Code Management) directories
+ # so they will not be included when copying directory trees
+@@ -111,8 +92,6 @@
+ # Platform settings specific to Solaris
+ ifeq ($(SYSTEM_UNAME), SunOS)
+   PLATFORM = solaris
+-  OS_NAME = solaris
+-  OS_VERSION := $(shell uname -r)
+   # Solaris sparc build can be either 32-bit or 64-bit.
+   #   Default to 32, but allow explicit setting to 32 or 64.
+   ifndef ARCH_DATA_MODEL
+@@ -164,12 +143,6 @@
+   endif
+   # Suffix for file bundles used in previous release
+   BUNDLE_FILE_SUFFIX=.tar
+-  # Required Solaris version
+-  ifeq ($(ARCH), amd64)
+-    REQUIRED_OS_VERSION = 5.10
+-  else
+-    REQUIRED_OS_VERSION = 5.8
+-  endif
+   # How much RAM does this machine have (zones send an error to stderr):
+   MB_OF_MEMORY:=$(shell /usr/sbin/prtconf 2>/dev/null | fgrep 'Memory size:' | expand | cut -d' ' -f3)
+ endif
+@@ -177,8 +150,6 @@
+ # Platform settings specific to Linux
+ ifeq ($(SYSTEM_UNAME), Linux)
+   PLATFORM = linux
+-  OS_NAME = linux
+-  OS_VERSION := $(shell uname -r)
+   # Arch and OS name/version
+   ifndef CROSS_COMPILATION
+     mach := $(shell uname -m)
+@@ -283,27 +254,6 @@
+ 
+   # Suffix for file bundles used in previous release
+   BUNDLE_FILE_SUFFIX=.tar.gz
+-  LINUX_VERSION_INFO = /etc/redhat-release
+-  ifeq ($(ARCH_DATA_MODEL), 32)
+-    REQUIRED_LINUX_VER = Advanced Server
+-    REQUIRED_LINUX_FULLVER = Advanced Server release 2.1AS
+-    REQUIRED_OS_VERSION = 2.4.9-e.3
+-  else
+-    ifeq ($(ARCH), amd64)
+-      LINUX_VERSION_INFO = /etc/SuSE-release
+-      REQUIRED_LINUX_VER = 8.1
+-      REQUIRED_LINUX_FULLVER = $(REQUIRED_LINUX_VER) SLSE AMD64
+-      REQUIRED_OS_VERSION = 2.4.19-SMP
+-    else
+-      REQUIRED_LINUX_VER = Advanced Server
+-      REQUIRED_LINUX_FULLVER = Advanced Server release 2.1AS 64 bit
+-      REQUIRED_OS_VERSION = 2.4.19-SMP
+-    endif
+-  endif
+-  ifneq ($(ARCH), ia64)
+-    # ALSA 0.9.1 and above
+-    REQUIRED_ALSA_VERSION = ^((0[.]9[.][1-9])|(1[.]0[.][0-9]))[0-9]*
+-  endif
+   # How much RAM does this machine have:
+   MB_OF_MEMORY := $(shell free -m | fgrep Mem: | sed -e 's@\ \ *@ @g' | cut -d' ' -f2)
+ endif
+@@ -311,23 +261,15 @@
+ # Windows with and without CYGWIN will be slightly different
+ ifeq ($(SYSTEM_UNAME), Windows_NT)
+   PLATFORM = windows
+-  OS_VERSION := $(shell uname -r)
+-  WINDOWS_NT_VERSION_STRING=Windows_NT
+-  REQUIRED_MKS_VER=6.1
+ endif
+ ifneq (,$(findstring CYGWIN,$(SYSTEM_UNAME)))
+   PLATFORM = windows
+-  OS_VERSION := 5
+   USING_CYGWIN = true
+   export USING_CYGWIN
+-  WINDOWS_NT_VERSION_STRING=CYGWIN_NT
+-  REQUIRED_CYGWIN_VER=4.0
+ endif
+ 
+ # Platform settings specific to Windows
+ ifeq ($(PLATFORM), windows)
+-  OS_NAME = nt
+-  REQUIRED_OS_VERSION=5
+   # Windows builds default to the appropriate for the underlaying
+   # architecture.
+   # Temporary disk area
+@@ -383,7 +325,6 @@
+     # If the user wants to perform a cross compile build then they must
+     # - set ARCH_DATA_MODEL=64 and either
+     #      + set ARCH to ia64 or amd64, or
+-    REQUIRED_WINDOWS_VERSION=Server 2003 Enterprise x64 Edition
+     ifeq ($(PROC_ARCH),X64)
+       ARCH=amd64
+     else
+@@ -393,8 +334,6 @@
+     # Value of Java os.arch property
+     ARCHPROP=$(LIBARCH)
+   else
+-    REQUIRED_WINDOWS_VERSION=2000 or Unknown
+-    #REQUIRED_WINDOWS_VERSION=XP Professional
+     # LIBARCH is used to preserve the jre/lib/i386 directory name for 32-bit intel
+     ARCH=i586
+     LIBARCH=i386
+@@ -440,7 +379,6 @@
+   # ISHIELD_TEMP_MIN is the difference of an empty C:\TEMP vs. one after a
+   #     bundles build on windows.
+   ISHIELD_TEMP_MIN=250000
+-  REQUIRED_DXSDK_VER = 0x0900
+   # How much RAM does this machine have:
+   MB_OF_MEMORY := $(shell \
+     if [ -f "C:/cygwin/bin/free.exe" ] ; then \
+@@ -483,10 +421,6 @@
+   MIN_VM_MEMORY      := 128
+ endif
+ 
+-REQUIRED_ZIP_VER = 2.2
+-REQUIRED_UNZIP_VER = 5.12
+-REQUIRED_MAKE_VER = 3.78
+-
+ # Unix type settings (same for all unix platforms)
+ ifneq ($(PLATFORM), windows)
+   # Temporary disk area
+diff -Nru openjdk.orig/jdk/make/common/shared/Sanity.gmk openjdk/jdk/make/common/shared/Sanity.gmk
+--- openjdk.orig/jdk/make/common/shared/Sanity.gmk	2013-09-02 16:47:34.864499931 +0100
++++ openjdk/jdk/make/common/shared/Sanity.gmk	2013-09-02 17:00:48.380846574 +0100
+@@ -38,54 +38,100 @@
+ SANITY_FILES =  $(ERROR_FILE) $(WARNING_FILE) $(MESSAGE_FILE)
+ 
+ # How to say "The Release Engineering people use this"
+-THE_OFFICIAL_USES=The official $(PLATFORM) builds use
++THE_OFFICIAL_USES=The official builds on $(PLATFORM) use
+ 
+ # How to say "You are using:"
+ YOU_ARE_USING=You appear to be using
+ 
++# Error message
++define SanityError
++$(ECHO) "ERROR: $1\n" >> $(ERROR_FILE)
++endef
++
++# Warning message
++define SanityWarning
++$(ECHO) "WARNING: $1\n" >> $(WARNING_FILE)
++endef
++
++# Official version error message: name version required_version
++define OfficialErrorMessage
++$(call SanityError,\
++$(THE_OFFICIAL_USES) $1 $3. Your $1 $(if $2,undefined,$2) will not work.)
++endef
++
++# Official version warning message: name version required_version
++define OfficialWarningMessage
++$(call SanityWarning,\
++$(THE_OFFICIAL_USES) $1 $3. $(YOU_ARE_USING) $1 $2.)
++endef
++
++
+ # Settings and rules to validate the JDK build environment.
+ 
+ ifeq ($(PLATFORM), solaris)
++  # What kind of system we are using (Variations are Solaris and OpenSolaris)
++  OS_VERSION := $(shell uname -r)
++  OS_VARIANT_NAME := $(strip $(shell head -1 /etc/release | awk '{print $$1;}') )
++  OS_VARIANT_VERSION := $(OS_VERSION)
+   REQ_PATCH_LIST = $(JDK_TOPDIR)/make/PatchList.solaris
+   ifeq ($(ARCH_FAMILY), sparc)
+     PATCH_POSITION = $$4
+   else
+     PATCH_POSITION = $$6
+   endif
++  ifndef OPENJDK
++    _GCC_VER :=$(shell $(GCC) -dumpversion 2>&1 )
++    GCC_VER  :=$(call GetVersion,"$(_GCC_VER)")
++  endif
+ endif
+ 
+ ifeq ($(PLATFORM), linux)
+-  ifeq ($(ARCH), amd64)
+-    LINUX_VERSION := $(shell \
+-        if [ -r "$(LINUX_VERSION_INFO)" ] ; then \
+-          $(CAT) $(LINUX_VERSION_INFO) | $(TAIL) -1 | $(NAWK) '{ print $$3; }';\
+-        else \
+-          $(ECHO) "Unknown linux"; \
+-        fi )
+-  else
+-    LINUX_VERSION := $(shell \
+-        if [ -r "$(LINUX_VERSION_INFO)" ] ; then \
+-          $(NAWK) '{ print $$4" "$$5; }' $(LINUX_VERSION_INFO) ; \
+-        else \
+-          $(ECHO) "Unknown linux"; \
+-        fi )
+-  endif
+-  ifneq ($(ARCH), ia64)
+-    # dummy program that outputs ALSA's version (created in target sane-alsa-versioncheck)
+-    ALSA_VERSION_CHECK = $(TEMPDIR)/alsaversioncheck
+-    ALSA_VERSION = `if [ -f "$(ALSA_VERSION_CHECK)" ] ; then $(ALSA_VERSION_CHECK) ; fi`
+-  endif
++  # What kind of system we are using (Variation is the Linux vendor)
++  OS_VERSION := $(shell uname -r)
++  OS_VARIANT_NAME := $(shell \
++    if [ -f /etc/fedora-release ] ; then \
++      echo "Fedora"; \
++    elif [ -f /etc/redhat-release ] ; then \
++      echo "RedHat"; \
++    elif [ -f /etc/SuSE-release ] ; then \
++      echo "SuSE"; \
++    else \
++      echo "Unknown"; \
++    fi)
++  OS_VARIANT_VERSION := $(shell \
++    if [ "$(OS_VARIANT_NAME)" = "Fedora" ] ; then \
++      $(CAT) /etc/fedora-release | $(HEAD) -1 | $(NAWK) '{ print $$3; }' ; \
++    fi)
++  ALSA_INCLUDE=/usr/include/alsa/version.h
++  ALSA_LIBRARY=/usr/lib/libasound.so
++  _ALSA_VERSION := $(shell $(EGREP) SND_LIB_VERSION_STR $(ALSA_INCLUDE) | \
++           $(SED) -e 's@.*\"\(.*\)\".*@\1@' )
++  ALSA_VERSION := $(call GetVersion,$(_ALSA_VERSION))
+ endif
+ 
+ ifeq ($(PLATFORM), windows)
+-  # Localized systeminfo has localized labels, but not localized values.
+-  _WINDOWS_VERSION := \
+-    $(shell systeminfo 2> $(DEV_NULL) | grep 'Microsoft' | grep 'Windows' | \
+-	 cut -d':' -f2)
+-  ifeq ($(_WINDOWS_VERSION),)
+-    _WINDOWS_VERSION := Windows 2000 or Unknown (no systeminfo utility)
++  # Windows 2000 is 5.0, Windows XP is 5.1, Windows 2003 is 5.2
++  #    Assume 5.0 (Windows 2000) if systeminfo does not help
++  WINDOWS_MAPPING-5.0 := Windows2000
++  WINDOWS_MAPPING-5.1 := WindowsXP
++  WINDOWS_MAPPING-5.2 := Windows2003
++  # What kind of system we are using (Variation is the common name)
++  _OS_VERSION := \
++    $(shell systeminfo 2> $(DEV_NULL) | \
++            egrep '^OS Version:' | \
++            awk '{print $$3;}' )
++  ifeq ($(_OS_VERSION),)
++    OS_VERSION = 5.0
++  else
++    OS_VERSION = $(_OS_VERSION)
++  endif
++  OS_VARIANT_NAME := $(WINDOWS_MAPPING-$(OS_VERSION))
++  OS_VARIANT_VERSION := $(OS_VERSION)
++  ifdef USING_CYGWIN
++    # CYGWIN version
++    _CYGWIN_VER := $(SYSTEM_UNAME)
++    CYGWIN_VER  :=$(call GetVersion,$(_CYGWIN_VER))
+   endif
+-  WINDOWS_VERSION := $(strip $(_WINDOWS_VERSION))
+   DXSDK_VER := $(shell $(EGREP) DIRECT3D_VERSION $(DXSDK_INCLUDE_PATH)/d3d9.h 2>&1 | \
+     $(EGREP) "\#define" | $(NAWK) '{print $$3}')
+ endif
+@@ -100,7 +146,6 @@
+ UNZIP_VER  :=$(call GetVersion,"$(_UNZIP_VER)")
+ BOOT_VER   :=$(call GetVersion,"$(_BOOT_VER)")
+ 
+-REQUIRED_ANT_VER      := 1.6.3
+ _ANT_VER              :=$(shell $(ANT) -version 2>&1 )
+ ANT_VER               :=$(call GetVersion,"$(_ANT_VER)")
+ 
+@@ -161,7 +206,6 @@
+ 	sane-compiler \
+ 	sane-link \
+ 	sane-cacerts \
+-	sane-alsa-versioncheck \
+ 	sane-alsa-headers \
+ 	sane-ant_version \
+ 	sane-zip_version \
+@@ -233,35 +277,29 @@
+ #         generate a fatal sanity error, and a warning about the official
+ #         build platform just becomes clutter.
+ ######################################################
+-OS_CHECK :=$(call CheckVersions,$(OS_VERSION),$(REQUIRED_OS_VERSION))
++ifndef OPENJDK
++  OS_VERSION_CHECK := \
++    $(call CheckVersions,$(OS_VERSION),$(REQUIRED_OS_VERSION))
++  ifeq ($(OS_VARIANT_NAME),$(REQUIRED_OS_VARIANT_NAME))
++    OS_VARIANT_VERSION_CHECK := \
++      $(call CheckVersions,$(OS_VARIANT_VERSION),$(REQUIRED_OS_VARIANT_VERSION))
++  endif
++endif
+ sane-os_version:: sane-arch_data_model sane-memory_check sane-locale sane-os_patch_level
+ ifndef OPENJDK
+-	@if [ "$(OS_CHECK)" = "missing" ]; then \
+-	  $(ECHO) "ERROR: The $(PLATFORM) OS version is undefined (Try: uname -r). \n" \
+-	    "" >> $(ERROR_FILE) ; \
+-	fi
+-	@if [ "$(OS_CHECK)" != "same" ]; then \
+-	  $(ECHO) "WARNING: $(THE_OFFICIAL_USES) OS version $(REQUIRED_OS_VERSION). \n" \
+-	    "        $(YOU_ARE_USING) OS version $(OS_VERSION). \n" \
+-	    "" >> $(WARNING_FILE) ; \
+-	fi
+-  ifeq ($(PLATFORM), windows)
+-	@if [ "$(findstring $(REQUIRED_WINDOWS_VERSION),$(WINDOWS_VERSION))" = "" ]; then \
+-	    $(ECHO) "WARNING: $(YOU_ARE_USING) an unknown version of Windows. \n" \
+-	      "        The required version is $(REQUIRED_WINDOWS_VERSION). \n" \
+-	      "        $(YOU_ARE_USING) $(WINDOWS_VERSION) \n" \
+-	      "" >> $(WARNING_FILE) ; \
+-	fi
+-  endif # windows
+-  ifeq ($(PLATFORM), linux)
+-	@if [ `$(ECHO) "$(LINUX_VERSION)" | $(EGREP) -c '$(REQUIRED_LINUX_VER)'` -ne 1 ]; then \
+-	  $(ECHO) "WARNING: The build is being done on Linux $(LINUX_VERSION). \n" \
+-	    "        $(THE_OFFICIAL_USES) Linux $(REQUIRED_LINUX_VER), \n" \
+-	    "        specifically Linux $(REQUIRED_LINUX_FULLVER). \n" \
+-	    "        The version found was '$(OS_VERSION)'. \n" \
+-	    "" >> $(WARNING_FILE) ; \
+-	fi
+-  endif # linux
++  ifneq ($(OS_VARIANT_NAME),$(REQUIRED_OS_VARIANT_NAME))
++    ifeq ($(OS_VERSION_CHECK),missing)
++	@$(call OfficialErrorMessage,OS version,$(OS_VERSION),$(REQUIRED_OS_VERSION))
++    endif
++    ifneq ($(OS_VERSION_CHECK),same)
++	@$(call OfficialWarningMessage,OS version,$(OS_VERSION),$(REQUIRED_OS_VERSION))
++    endif
++	@$(call OfficialWarningMessage,OS variant,$(OS_VARIANT_NAME),$(REQUIRED_OS_VARIANT_NAME))
++  else
++    ifneq ($(OS_VARIANT_VERSION_CHECK),same)
++	@$(call OfficialWarningMessage,$(OS_VARIANT_NAME) version,$(OS_VARIANT_VERSION),$(REQUIRED_OS_VARIANT_VERSION))
++    endif
++  endif
+ endif # OPENJDK
+ 
+ ifeq ($(PLATFORM), windows)
+@@ -302,16 +340,12 @@
+   CYGWIN_CHECK :=$(call CheckVersions,$(CYGWIN_VER),$(REQUIRED_CYGWIN_VER))
+ sane-cygwin:
+   ifdef USING_CYGWIN
+-	@if [ "$(CYGWIN_CHECK)" = "missing" ]; then \
+-	  $(ECHO) "ERROR: The CYGWIN version is undefined. \n" \
+-	    "      $(THE_OFFICIAL_USES) CYGWIN $(REQUIRED_CYGWIN_VER). \n" \
+-	    "" >> $(ERROR_FILE) ; \
+-	fi
+-	@if [ "$(CYGWIN_CHECK)" = "older" ]; then \
+-	  $(ECHO) "ERROR: The build cannot be done on CYGWIN $(CYGWIN_VER). \n" \
+-	    "      Use CYGWIN $(REQUIRED_CYGWIN_VER) or higher. \n" \
+-	    "" >> $(ERROR_FILE) ; \
+-	fi
++    ifeq ($(CYGWIN_CHECK),missing)
++	@$(call OfficialErrorMessage,CYGWIN version,$(CYGWIN_VER),$(REQUIRED_CYGWIN_VER))
++    endif
++    ifeq ($(CYGWIN_CHECK),older)
++	@$(call OfficialWarningMessage,CYGWIN version,$(CYGWIN_VER),$(REQUIRED_CYGWIN_VER))
++    endif
+   endif
+ endif
+ 
+@@ -339,16 +373,12 @@
+     MKS_CHECK :=$(call CheckVersions,$(MKS_VER),$(REQUIRED_MKS_VER))
+ sane-mks:
+   ifndef USING_CYGWIN
+-	@if [ "$(MKS_CHECK)" = "missing" ]; then \
+-	  $(ECHO) "ERROR: The MKS version is undefined. \n" \
+-	    "      $(THE_OFFICIAL_USES) MKS $(REQUIRED_MKS_VER). \n" \
+-	    "" >> $(ERROR_FILE) ; \
+-	fi
+-	@if [ "$(MKS_CHECK)" = "older" ]; then \
+-	  $(ECHO) "ERROR: The build cannot be done on MKS $(MKS_VER). \n" \
+-	    "      Use MKS $(REQUIRED_MKS_VER) or higher. \n" \
+-	    "" >> $(ERROR_FILE) ; \
+-	fi
++    ifeq ($(MKS_CHECK),missing)
++	@$(call OfficialErrorMessage,MKS version,$(MKS_VER),$(REQUIRED_MKS_VER))
++    endif
++    ifeq ($(MKS_CHECK),older)
++	@$(call OfficialErrorMessage,MKS version,$(MKS_VER),$(REQUIRED_MKS_VER))
++    endif
+   endif
+ endif
+ 
+@@ -1296,11 +1326,6 @@
+ # Check the compiler version(s)
+ ######################################################
+ CC_CHECK  :=$(call CheckVersions,$(CC_VER),$(REQUIRED_CC_VER))
+-ifeq ($(PLATFORM), solaris)
+-  ifeq ($(ARCH_DATA_MODEL), 32)
+-    GCC_CHECK :=$(call CheckVersions,$(GCC_VER),$(REQUIRED_GCC_VER))
+-  endif
+-endif
+ sane-compiler: sane-link
+ 	@if [ "$(CC_CHECK)" = "missing" ]; then \
+ 	  $(ECHO) "ERROR: The Compiler version is undefined. \n" \
+@@ -1315,16 +1340,6 @@
+ 	      "          $(COMPILER_PATH) \n" \
+ 	      "" >> $(WARNING_FILE) ; \
+          fi
+-  ifdef GCC_CHECK
+-	  @if [ "$(GCC_CHECK)" != "same" ]; then \
+-	      $(ECHO) "WARNING: The $(PLATFORM) GCC compiler must be version $(REQUIRED_GCC_VER) \n" \
+-	      "      $(YOU_ARE_USING) compiler version: $(GCC_VER) \n" \
+-	      "      The compiler was obtained from the following location: \n" \
+-	      "          $(GCC_COMPILER_PATH) \n" \
+-	      "      Please change your compiler. \n" \
+-	      "" >> $(WARNING_FILE) ; \
+-	  fi
+-  endif
+   ifeq ($(PLATFORM), windows)
+     ifeq ($(ARCH_DATA_MODEL), 64)
+       ifneq ($(COMPILER_VERSION), VS2005)
+@@ -1338,38 +1353,24 @@
+ ######################################################
+ # Check that ALSA headers and libs are installed and 
+ # that the header has the right version. We only
+-# need /usr/include/alsa/*.h and /usr/lib/libasound.so
++# need /usr/include/alsa/version.h and /usr/lib/libasound.so
+ ######################################################
+ 
+-ifdef ALSA_VERSION_CHECK
+-$(ALSA_VERSION_CHECK): $(ALSA_VERSION_CHECK).c
+-	@$(prep-target)
+-	@$(CC) -o $@ $< -lasound
+-
+-$(ALSA_VERSION_CHECK).c:
+-	@$(prep-target)
+-	@$(ECHO) "#include <alsa/asoundlib.h>\n" \
+-                  "int main(char** argv, int argc) {\n" \
+-                   "  printf(\"%s\", SND_LIB_VERSION_STR);\n" \
+-                    "  return 0;\n" \
+-                    "}\n" \
+-                    > $@
++ifdef REQUIRED_ALSA_VERSION
++  ALSA_CHECK := $(call CheckVersions,$(ALSA_VERSION),$(REQUIRED_ALSA_VERSION))
+ endif
+-
+-sane-alsa-versioncheck: $(ALSA_VERSION_CHECK)
+-sane-alsa-headers: sane-alsa-versioncheck
+-ifdef ALSA_VERSION_CHECK
+-	@if [ -f "$(ALSA_VERSION_CHECK)" ]; then \
+-	  if [ `$(ALSA_VERSION_CHECK) | $(EGREP) -c '$(REQUIRED_ALSA_VERSION)'` -ne 1 ] ; then \
+-	    $(ECHO) "ERROR: The ALSA version must be 0.9.1 or higher. \n" \
+-	      "      You have the following ALSA version installed: $(ALSA_VERSION) \n" \
++sane-alsa-headers:
++ifdef REQUIRED_ALSA_VERSION
++        if [ "$(ALSA_CHECK)" != "same" -a "$(ALSA_CHECK)" != "newer"  ] ; then \
++	    $(ECHO) "ERROR: The ALSA version must be $(REQUIRED_ALSA_VERSION) or higher. \n" \
++	      "      You have the following ALSA version installed: $${alsa_version) \n" \
+ 	      "      Please reinstall ALSA (drivers and lib). You can download \n" \
+ 	      "      the source distribution from http://www.alsa-project.org \n" \
+ 	      "      or go to http://www.freshrpms.net/docs/alsa/ for precompiled RPM packages. \n" \
+ 	      "" >> $(ERROR_FILE) ; \
+ 	  fi \
+ 	else \
+-	  $(ECHO) "ERROR: You seem to not have installed ALSA 0.9.1 or higher. \n" \
++	  $(ECHO) "ERROR: You seem to not have installed ALSA $(REQUIRED_ALSA_VERSION) or higher. \n" \
+ 	  "      Please install ALSA (drivers and lib). You can download the \n" \
+ 	  "      source distribution from http://www.alsa-project.org or go to \n" \
+ 	  "      http://www.freshrpms.net/docs/alsa/ for precompiled RPM packages. \n" \
+@@ -1384,7 +1385,7 @@
+ ######################################################
+ # dump out the variable settings...
+ ######################################################
+-sane-settings:: sane-alsa-versioncheck
++sane-settings::
+ 	@$(ECHO)  >> $(MESSAGE_FILE)
+ 	@$(ECHO) $(ALL_SETTINGS)  >> $(MESSAGE_FILE)
+ 	@$(ECHO)  >> $(MESSAGE_FILE)
+@@ -1396,8 +1397,8 @@
+ ifeq ($(PLATFORM), solaris)
+   ifndef OPENJDK
+     @if [ -r $(GCC_COMPILER_PATH) ]; then \
+-	  if [ ! "$(GCC_VER)" = 2.95.2 ]; then \
+-	    $(ECHO) "ERROR: The Solaris GCC compiler version must be 2.95.2. \n" \
++	  if [ ! "$(GCC_VER)" = $(REQUIRED_GCC_VERSION) ]; then \
++	    $(ECHO) "ERROR: The Solaris GCC compiler version must be $(REQUIRED_GCC_VERSION). \n" \
+ 	      "      You are using the following compiler version: $(GCC_VER) \n" \
+ 	      "      The compiler was obtained from the following location: \n" \
+ 	      "          $(GCC_COMPILER_PATH) \n" \
+diff -Nru openjdk.orig/jdk/make/common/shared/Sanity-Settings.gmk openjdk/jdk/make/common/shared/Sanity-Settings.gmk
+--- openjdk.orig/jdk/make/common/shared/Sanity-Settings.gmk	2012-10-26 19:25:40.000000000 +0100
++++ openjdk/jdk/make/common/shared/Sanity-Settings.gmk	2013-09-02 16:58:52.819048695 +0100
+@@ -170,8 +170,6 @@
+ ifeq ($(PLATFORM),windows)
+   ALL_SETTINGS+=$(call addRequiredSetting,PROCESSOR_ARCHITECTURE)
+   ALL_SETTINGS+=$(call addRequiredSetting,PROCESSOR_IDENTIFIER)
+-  ALL_SETTINGS+=$(call addRequiredSetting,WINDOWS_VERSION)
+-  ALL_SETTINGS+=$(call addRequiredSetting,WINDOWS_NT_VERSION_STRING)
+   ifdef USING_CYGWIN
+     ALL_SETTINGS+=$(call addRequiredSetting,USING_CYGWIN)
+     ALL_SETTINGS+=$(call addRequiredVersionSetting,CYGWIN_VER)
+@@ -182,13 +180,11 @@
+   endif
+ endif
+ ifeq ($(PLATFORM),linux)
+-  ALL_SETTINGS+=$(call addRequiredSetting,LINUX_VERSION)
+-  ifneq ($(ARCH), ia64)
+-    ALL_SETTINGS+=$(call addRequiredSetting,ALSA_VERSION)
+-  endif
++  ALL_SETTINGS+=$(call addRequiredSetting,ALSA_VERSION)
+ endif
+ ALL_SETTINGS+=$(call addRequiredVersionSetting,OS_VERSION)
+-ALL_SETTINGS+=$(call addRequiredSetting,OS_NAME)
++ALL_SETTINGS+=$(call addOptionalSetting,OS_VARIANT_NAME)
++ALL_SETTINGS+=$(call addOptionalSetting,OS_VARIANT_VERSION)
+ ALL_SETTINGS+=$(call addRequiredSetting,MB_OF_MEMORY)
+ 
+ 

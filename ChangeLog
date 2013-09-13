@@ -1,3 +1,110 @@
+2013-09-09  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* NEWS:
+	Add release notes for 1.11.13.
+
+2013-09-05  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add new patch.
+	* patches/rh995488-rhel_tz_fix.patch:
+	Use /etc/sysconfig/clock on RHEL & clones
+	so that they don't search /usr/share/zoneinfo.
+	* NEWS: Mention patch.
+
+2013-09-02  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add new backports.  Move
+	disable-cc-incompatible-sanity-checks and freetypeversion
+	to the end.
+	* patches/disable-cc-incompatible-sanity-checks.patch,
+	* patches/freetypeversion.patch:
+	Regenerated to work after new backports.
+	* patches/openjdk/6563752-ss12_support.patch,
+	* patches/openjdk/6729772-opt_cleanup.patch,
+	* patches/openjdk/6799141-split_out_versions.patch,
+	* patches/openjdk/6816311-compiler_name.patch,
+	* patches/openjdk/6974017-minorver_for_solaris.patch,
+	* patches/openjdk/6980281-majorver_for_solaris.patch,
+	* patches/openjdk/7000225-bad_tabs.patch,
+	* patches/openjdk/7038711-fix_no-clobber_usage.patch:
+	Backports from OpenJDK 7 to bring in latest Makefile
+	updates.
+	* NEWS: Update and order backports numerically.
+
+2013-08-30  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add new patches.
+	* NEWS: Updated with new patches.
+	* patches/imageiojpeg_sync.patch:
+	Bring in changes to imageioJPEG.c made between
+	the start of OpenJDK 6 and the start of OpenJDK 7's
+	hg repositories.
+	* patches/libraries.patch: Updated against patches below.
+	* patches/openjdk/4893408-jpegreader_byte_gray.patch,
+	* patches/openjdk/6631559-dont_load_libjpeg_to_register_imageio_plugins.patch,
+	* patches/openjdk/6791502-invalid_icc_profile.patch,
+	* patches/openjdk/6793818-jpegimagereader_too_greedy.patch,
+	* patches/openjdk/6888215-jpeg_memory_leak.patch,
+	* patches/openjdk/6989760-native_warnings.patch,
+	* patches/openjdk/6989774-imageio_compiler_warnings.patch,
+	* patches/openjdk/7013519-integer_overflows.patch,
+	* patches/openjdk/7018912-potential_buffer_overruns_in_jpeg.patch,
+	* patches/openjdk/8005194-scale_memory_leak.patch,
+	* patches/openjdk/8020983-outofmemoryerror_jpegimagewriter.patch:
+	New backports from OpenJDK 7u.
+
+2013-08-29  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add new timezone data patches.
+	* patches/openjdk/8014469-tzdata2013c.patch,
+	* patches/openjdk/8020054-tzdata2013d.patch:
+	Latest tzdata updates.
+
+2013-08-30  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add new patch.
+	(ICEDTEA_ENV): Set SYSTEM_KRB5, KRB5_LIBS
+	and KRB5_CFLAGS.
+	* acinclude.m4:
+	(IT_CHECK_FOR_KERBEROS): Add --enable-system-kerberos
+	option (on by default) which checks for libkrb5 and
+	the krb5.h header.
+	* configure.ac: Invoke IT_CHECK_FOR_KERBEROS.
+	* patches/alternative_krb5_cache_fixup.patch:
+	Fix previous Kerberos patch to fall back on old
+	method of using /tmp/krb5cc_<uid> and to allow
+	the LDFLAGS for Kerberos to be specified.
+	* INSTALL: Updated.
+	* NEWS: Likewise.
+
+2013-08-29  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add new patch.
+	* NEWS: Mention RH991170.
+	* patches/alternative_krb5_cache.patch:
+	Backport from IcedTea 2.x which retrieves the
+	Kerberos cache name using a Kerberos library call.
+
+2013-08-28  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am: Add new patch.
+	* patches/lcms2-emulate_old_settagdata.patch:
+	Emulate behaviour of old 6 setTagData function
+	in not throwing exceptions.
+
+2013-08-28  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add new backport.
+	* patches/openjdk/6893617-cnctx_always_uses_default_orb.patch:
+	Fixes TCK regression caused by 7162902.
+
 2013-08-23  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* Makefile.am:

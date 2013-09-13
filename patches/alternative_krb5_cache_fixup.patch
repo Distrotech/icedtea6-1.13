@@ -1,0 +1,128 @@
+diff -Nru openjdk.orig/jdk/make/jdk_generic_profile.sh openjdk/jdk/make/jdk_generic_profile.sh
+--- openjdk.orig/jdk/make/jdk_generic_profile.sh	2013-08-30 02:41:17.276807687 +0100
++++ openjdk/jdk/make/jdk_generic_profile.sh	2013-08-30 12:11:12.428923185 +0100
+@@ -467,5 +467,14 @@
+ export LCMS_CFLAGS
+ export LCMS_LIBS
+ 
++# Export variables for system krb5
++# KRB5_CFLAGS and KRB5_LIBS tell the compiler how to compile and
++# link against Kerberos
++if [ "${KRB5_LIBS}" = "" ] ; then
++    KRB5_LIBS="-lkrb5"
++fi
++export KRB5_LIBS
++
+ # IcedTea defaults; use system libraries
+ export USE_SYSTEM_LCMS=true
++export SYSTEM_KRB5=true
+diff -Nru openjdk.orig/jdk/make/sun/security/krb5/internal/ccache/Makefile openjdk/jdk/make/sun/security/krb5/internal/ccache/Makefile
+--- openjdk.orig/jdk/make/sun/security/krb5/internal/ccache/Makefile	2013-08-30 02:41:17.408809749 +0100
++++ openjdk/jdk/make/sun/security/krb5/internal/ccache/Makefile	2013-08-30 12:10:34.336330523 +0100
+@@ -44,5 +44,6 @@
+ 
+ include $(BUILDDIR)/common/Library.gmk
+ 
+-OTHER_LDLIBS = $(LIBDL) $(JVMLIB) -lkrb5
++OTHER_CFLAGS += $(KRB5_CFLAGS)
++OTHER_LDLIBS = $(LIBDL) $(JVMLIB) $(KRB5_LIBS)
+ endif # PLATFORM
+diff -Nru openjdk.orig/jdk/make/sun/security/Makefile openjdk/jdk/make/sun/security/Makefile
+--- openjdk.orig/jdk/make/sun/security/Makefile	2013-08-30 02:41:17.408809749 +0100
++++ openjdk/jdk/make/sun/security/Makefile	2013-08-30 12:10:34.336330523 +0100
+@@ -56,7 +56,9 @@
+ # Build krb5/internal/ccache only on Linux and Solaris platforms.
+ KRB5_CCACHE =
+ ifeq ($(PLATFORM), $(filter $(PLATFORM),linux solaris))
+-  KRB5_CCACHE = krb5/internal/ccache
++  ifeq ($(SYSTEM_KRB5),true)
++    KRB5_CCACHE = krb5/internal/ccache
++  endif
+ endif
+ 
+ # Build Microsoft CryptoAPI provider only on (non-64-bit) Windows platform.
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/krb5/internal/ccache/FileCredentialsCache.java openjdk/jdk/src/share/classes/sun/security/krb5/internal/ccache/FileCredentialsCache.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/krb5/internal/ccache/FileCredentialsCache.java	2013-08-30 02:41:17.408809749 +0100
++++ openjdk/jdk/src/share/classes/sun/security/krb5/internal/ccache/FileCredentialsCache.java	2013-08-30 12:11:55.885599305 +0100
+@@ -45,6 +45,9 @@
+ import java.io.BufferedReader;
+ import java.io.InputStreamReader;
+ 
++import java.lang.reflect.Constructor;
++import java.lang.reflect.Method;
++
+ /**
+  * CredentialsCache stores credentials(tickets, session keys, etc) in a
+  * semi-permanent store
+@@ -359,8 +362,9 @@
+      * The path name is searched in the following order:
+      *
+      * 1. location specified by Kerberos API on unix systems
+-     * 2. <user.home>/krb5cc_<user.name>
+-     * 3. <user.home>/krb5cc (if can't get <user.name>)
++     * 2. /tmp/krb5cc_<uid> on unix systems
++     * 3. <user.home>/krb5cc_<user.name>
++     * 4. <user.home>/krb5cc (if can't get <user.name>)
+      */
+ 
+     public static String getDefaultCacheName() {
+@@ -413,16 +417,32 @@
+                      * We require the default cache location to be a file name.
+                      * DIR: can point to a cache collection, while DIR:: points
+                      * to a specific cache file.
+-                     *  
++                     *
+                      * http://k5wiki.kerberos.org/wiki?title=Projects/Client_principal_selection&oldid=4118
+                      */
+-                    if (name.startsWith("FILE:") || name.startsWith("DIR::")) {
++                    if (name != null && (name.startsWith("FILE:") || name.startsWith("DIR::"))) {
+                         name = name.substring(5);
+                         if (DEBUG) {
+                             System.out.println(">>>KinitOptions cache name is " +
+                                     name);
+                         }
+                         return name;
++                    } else {
++                        long uid = 0;
++
++                        Class<?> c = Class.forName
++                            ("com.sun.security.auth.module.UnixSystem");
++                        Constructor<?> constructor = c.getConstructor();
++                        Object obj = constructor.newInstance();
++                        Method method = c.getMethod("getUid");
++                        uid =  ((Long)method.invoke(obj)).longValue();
++                        name = File.separator + "tmp" +
++                            File.separator + stdCacheNameComponent + "_" + uid;
++                        if (DEBUG) {
++                            System.out.println(">>>KinitOptions cache name is " +
++                                               name);
++                        }
++                        return name;
+                     }
+                 } catch (Exception e) {
+                     if (DEBUG) {
+@@ -467,7 +487,7 @@
+ 
+         return name;
+     }
+-    
++
+     private native static String nativeGetDefaultCacheName() throws Exception;
+ 
+     public static String checkValidation(String name) {
+@@ -550,7 +570,7 @@
+         }
+         return null;
+     }
+-    
++
+     private static void ensureLoaded() {
+         java.security.AccessController.doPrivileged(
+                 new java.security.PrivilegedAction<Void> () {
+@@ -561,5 +581,5 @@
+                 });
+         alreadyLoaded = true;
+     }
+-    
++
+ }

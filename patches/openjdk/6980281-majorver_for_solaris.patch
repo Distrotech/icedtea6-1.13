@@ -1,0 +1,66 @@
+# HG changeset patch
+# User bae
+# Date 1291553491 -10800
+#      Sun Dec 05 15:51:31 2010 +0300
+# Node ID 15e3f6f4a43327a0baa7c7ad0f41ea62c566506b
+# Parent  024fe931de8c0e4b56b29d4b666fbcc69c6213e3
+6980281: SWAT: SwingSet2 got core dumped in Solaris-AMD64 using b107 swat build
+Reviewed-by: prr, ohair
+
+diff --git a/make/common/Defs-solaris.gmk b/make/common/Defs-solaris.gmk
+--- openjdk/jdk/make/common/Defs-solaris.gmk
++++ openjdk/jdk/make/common/Defs-solaris.gmk
+@@ -466,12 +466,14 @@
+     # On X86, make sure tail call optimization is off
+     #    The z and y are the tail call optimizations.
+     ifeq ($(ARCH_FAMILY), i586)
+-      ifeq ($(shell $(EXPR) $(CC_VER) \> 5.8), 1)
+-        # Somehow, tail call optimization is creeping in.
+-        #    Make sure it is off.
+-	# WARNING: These may cause compiler warnings about duplicate -O options
+-        CC_XKEEPFRAME_OPTIONS  += -Wu,-O$(OPT_LEVEL/$(OPTIMIZATION_LEVEL))~yz
+-        CXX_XKEEPFRAME_OPTIONS += -Qoption ube -O$(OPT_LEVEL/$(OPTIMIZATION_LEVEL))~yz
++      ifeq ($(shell $(EXPR) $(CC_MAJORVER) \>= 5), 1)
++        ifeq ($(shell $(EXPR) $(CC_MINORVER) \> 8), 1)
++          #    Somehow, tail call optimization is creeping in.
++          #    Make sure it is off.
++	  # WARNING: These may cause compiler warnings about duplicate -O options
++          CC_XKEEPFRAME_OPTIONS  += -Wu,-O$(OPT_LEVEL/$(OPTIMIZATION_LEVEL))~yz
++          CXX_XKEEPFRAME_OPTIONS += -Qoption ube -O$(OPT_LEVEL/$(OPTIMIZATION_LEVEL))~yz
++        endif
+       endif
+     endif
+   
+@@ -487,12 +489,15 @@
+         CC_XKEEPFRAME_OPTIONS  += -Wu,-Z~B
+         CXX_XKEEPFRAME_OPTIONS += -Qoption ube -Z~B
+       endif
+-      ifeq ($(shell $(EXPR) $(CC_VER) \> 5.6), 1)
+-        # Do NOT use frame pointer register as a general purpose opt register
+-        CC_OPT/NONE            += -xregs=no%frameptr
+-        CXX_OPT/NONE           += -xregs=no%frameptr
+-        CC_XKEEPFRAME_OPTIONS  += -xregs=no%frameptr
+-        CXX_XKEEPFRAME_OPTIONS += -xregs=no%frameptr
++
++      ifeq ($(shell $(EXPR) $(CC_MAJORVER) \>= 5), 1)
++        ifeq ($(shell $(EXPR) $(CC_MINORVER) \> 6), 1)
++          # Do NOT use frame pointer register as a general purpose opt register
++          CC_OPT/NONE            += -xregs=no%frameptr
++          CXX_OPT/NONE           += -xregs=no%frameptr
++          CC_XKEEPFRAME_OPTIONS  += -xregs=no%frameptr
++          CXX_XKEEPFRAME_OPTIONS += -xregs=no%frameptr
++        endif
+       endif
+     endif
+   
+diff --git a/make/common/shared/Compiler-sun.gmk b/make/common/shared/Compiler-sun.gmk
+--- openjdk/jdk/make/common/shared/Compiler-sun.gmk
++++ openjdk/jdk/make/common/shared/Compiler-sun.gmk
+@@ -61,6 +61,7 @@
+ # Get compiler version
+ _CC_VER :=$(shell $(CC) -V 2>&1 | $(HEAD) -n 1)
+ CC_VER  :=$(call GetVersion,"$(_CC_VER)")
++CC_MAJORVER  :=$(call MajorVersion,$(CC_VER))
+ CC_MINORVER  :=$(call MinorVersion,$(CC_VER))
+ 
+ # Name of compilers being used

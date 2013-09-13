@@ -291,6 +291,8 @@ AC_CONFIG_FILES([pax-mark-vm], [chmod +x pax-mark-vm])
 
 IT_ENABLE_LCMS2
 
+IT_CHECK_FOR_KERBEROS
+
 dnl pkgconfig cannot be used to find these headers and libraries.
 AC_CHECK_HEADERS([cups/cups.h cups/ppd.h],[]
 	,[AC_MSG_ERROR("CUPS headers were not found -

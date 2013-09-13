@@ -1,0 +1,125 @@
+diff -Nru openjdk.orig/jdk/make/common/Defs-linux.gmk openjdk/jdk/make/common/Defs-linux.gmk
+--- openjdk.orig/jdk/make/common/Defs-linux.gmk	2013-09-02 16:42:50.832083666 +0100
++++ openjdk/jdk/make/common/Defs-linux.gmk	2013-09-02 16:43:24.332604388 +0100
+@@ -258,9 +258,8 @@
+ # statically link libgcc but will print a warning with the flag. We don't 
+ # want the warning, so check gcc version first.
+ #
+-CC_VER_MAJOR := $(shell $(CC) -dumpversion | $(SED) 's/egcs-//' | $(CUT) -d'.' -f1)
+-ifeq ("$(CC_VER_MAJOR)", "3")
+-OTHER_LDFLAGS  += -static-libgcc
++ifeq ($(CC_MAJORVER),3)
++  OTHER_LDFLAGS  += -static-libgcc
+ endif
+ 
+ # Automatic precompiled header option to use (if COMPILE_APPROACH=batch)
+diff -Nru openjdk.orig/jdk/make/common/Defs-solaris.gmk openjdk/jdk/make/common/Defs-solaris.gmk
+--- openjdk.orig/jdk/make/common/Defs-solaris.gmk	2013-09-02 16:42:51.816098963 +0100
++++ openjdk/jdk/make/common/Defs-solaris.gmk	2013-09-02 16:43:24.332604388 +0100
+@@ -437,14 +437,15 @@
+     # On X86, make sure tail call optimization is off
+     #    The z and y are the tail call optimizations.
+     ifeq ($(ARCH_FAMILY), i586)
+-      ifeq ($(shell $(EXPR) $(CC_MAJORVER) \>= 5), 1)
+-        ifeq ($(shell $(EXPR) $(CC_MINORVER) \> 8), 1)
+-          #    Somehow, tail call optimization is creeping in.
+-          #    Make sure it is off.
+-	  # WARNING: These may cause compiler warnings about duplicate -O options
+-          CC_XKEEPFRAME_OPTIONS  += -Wu,-O$(OPT_LEVEL/$(OPTIMIZATION_LEVEL))~yz
+-          CXX_XKEEPFRAME_OPTIONS += -Qoption ube -O$(OPT_LEVEL/$(OPTIMIZATION_LEVEL))~yz
+-        endif
++      CC_NEWER_THAN_58 := \
++        $(shell $(EXPR) $(CC_MAJORVER) \> 5 \| \
++	    \( $(CC_MAJORVER) = 5 \& $(CC_MINORVER) \> 8 \) )
++      ifeq ($(CC_NEWER_THAN_58),1)
++        #    Somehow, tail call optimization is creeping in.
++        #    Make sure it is off.
++        # WARNING: These may cause compiler warnings about duplicate -O options
++        CC_XKEEPFRAME_OPTIONS  += -Wu,-O$(OPT_LEVEL/$(OPTIMIZATION_LEVEL))~yz
++        CXX_XKEEPFRAME_OPTIONS += -Qoption ube -O$(OPT_LEVEL/$(OPTIMIZATION_LEVEL))~yz
+       endif
+     endif
+   
+@@ -461,14 +462,15 @@
+         CXX_XKEEPFRAME_OPTIONS += -Qoption ube -Z~B
+       endif
+ 
+-      ifeq ($(shell $(EXPR) $(CC_MAJORVER) \>= 5), 1)
+-        ifeq ($(shell $(EXPR) $(CC_MINORVER) \> 6), 1)
+-          # Do NOT use frame pointer register as a general purpose opt register
+-          CC_OPT/NONE            += -xregs=no%frameptr
+-          CXX_OPT/NONE           += -xregs=no%frameptr
+-          CC_XKEEPFRAME_OPTIONS  += -xregs=no%frameptr
+-          CXX_XKEEPFRAME_OPTIONS += -xregs=no%frameptr
+-        endif
++      CC_NEWER_THAN_56 := \
++        $(shell $(EXPR) $(CC_MAJORVER) \> 5 \| \
++	    \( $(CC_MAJORVER) = 5 \& $(CC_MINORVER) \> 6 \) )
++      ifeq ($(CC_NEWER_THAN_56),1)
++        # Do NOT use frame pointer register as a general purpose opt register
++        CC_OPT/NONE            += -xregs=no%frameptr
++        CXX_OPT/NONE           += -xregs=no%frameptr
++        CC_XKEEPFRAME_OPTIONS  += -xregs=no%frameptr
++        CXX_XKEEPFRAME_OPTIONS += -xregs=no%frameptr
+       endif
+     endif
+   
+@@ -546,8 +548,10 @@
+     CFLAGS_REQUIRED_sparc    += -xregs=no%appl
+     CFLAGS_REQUIRED_sparcv9  += -xregs=no%appl
+   endif
+-  ifeq ($(shell $(EXPR) $(CC_VER) \> 5.6), 1)
+-    # We MUST allow data alignment of 4 for sparc V8 (32bit)
++  CC_NEWER_THAN_56 := \
++    $(shell $(EXPR) $(CC_MAJORVER) \> 5 \| \
++         \( $(CC_MAJORVER) = 5 \& $(CC_MINORVER) \> 6 \) )
++  ifeq ($(CC_NEWER_THAN_56),1)
+     #     Presents an ABI issue with customer JNI libs? We must be able to
+     #     to handle 4byte aligned objects? (rare occurance, but possible?)
+     CFLAGS_REQUIRED_sparc += -xmemalign=4s
+diff -Nru openjdk.orig/jdk/make/common/shared/Compiler-gcc.gmk openjdk/jdk/make/common/shared/Compiler-gcc.gmk
+--- openjdk.orig/jdk/make/common/shared/Compiler-gcc.gmk	2013-09-02 16:42:50.872084289 +0100
++++ openjdk/jdk/make/common/shared/Compiler-gcc.gmk	2013-09-02 16:43:24.332604388 +0100
+@@ -150,6 +150,8 @@
+ # Get gcc version
+ _CC_VER :=$(shell $(CC) -dumpversion 2>&1 )
+ CC_VER  :=$(call GetVersion,"$(_CC_VER)")
++CC_MAJORVER  :=$(call MajorVersion,$(CC_VER))
++CC_MINORVER  :=$(call MinorVersion,$(CC_VER))
+ 
+ # Name of compiler
+ COMPILER_NAME = GCC$(call MajorVersion,$(CC_VER))
+diff -Nru openjdk.orig/jdk/make/common/shared/Compiler-sun.gmk openjdk/jdk/make/common/shared/Compiler-sun.gmk
+--- openjdk.orig/jdk/make/common/shared/Compiler-sun.gmk	2013-09-02 16:42:51.816098963 +0100
++++ openjdk/jdk/make/common/shared/Compiler-sun.gmk	2013-09-02 16:44:23.061517244 +0100
+@@ -117,7 +117,10 @@
+   LINT_XARCH_OPTION_OLD/64 += -Xarch=amd64
+ endif
+ # Pick the options we want based on the compiler being used.
+-ifeq ($(shell expr $(CC_VER) \>= 5.9), 1)
++CC_59_OR_NEWER := \
++  $(shell expr $(CC_MAJORVER) \> 5 \| \
++      \( $(CC_MAJORVER) = 5 \& $(CC_MINORVER) \>= 9 \) )
++ifeq ($(CC_59_OR_NEWER), 1)
+   XARCH_OPTION/32 = $(XARCH_OPTION_NEW/32)
+   XARCH_OPTION/64 = $(XARCH_OPTION_NEW/64)
+   LINT_XARCH_OPTION/32 = $(LINT_XARCH_OPTION_NEW/32)
+diff -Nru openjdk.orig/jdk/make/sun/jpeg/Makefile openjdk/jdk/make/sun/jpeg/Makefile
+--- openjdk.orig/jdk/make/sun/jpeg/Makefile	2013-09-02 16:42:50.804083232 +0100
++++ openjdk/jdk/make/sun/jpeg/Makefile	2013-09-02 16:44:44.629852492 +0100
+@@ -74,7 +74,14 @@
+   # volatile to prevent the optimization. However, this approach does not
+   # work because we have to declare all variables as volatile in result.
+ 
+-  OTHER_CFLAGS += -Wno-clobbered
++  ifndef CROSS_COMPILE_ARCH
++    CC_43_OR_NEWER := \
++      $(shell $(EXPR) $(CC_MAJORVER) \> 4 \| \
++          \( $(CC_MAJORVER) = 4 \& $(CC_MINORVER) \>= 3 \) )
++    ifeq ($(CC_43_OR_NEWER),1)
++      OTHER_CFLAGS += -Wno-clobbered
++    endif
++  endif
+ endif
+ 
+ include $(BUILDDIR)/common/Mapfile-vers.gmk

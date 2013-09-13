@@ -1,0 +1,42 @@
+# HG changeset patch
+# User bae
+# Date 1300292466 -10800
+#      Wed Mar 16 19:21:06 2011 +0300
+# Node ID 5c61c31d2621e53e4fe011d235b7f05d0a40ba63
+# Parent  253f3bc64961944b1886a243a662bd929e9ab605
+6989760: cmm native compiler warnings
+Reviewed-by: prr, ohair
+
+diff --git a/make/sun/cmm/kcms/Makefile b/make/sun/cmm/kcms/Makefile
+--- openjdk/jdk/make/sun/cmm/kcms/Makefile
++++ openjdk/jdk/make/sun/cmm/kcms/Makefile
+@@ -72,7 +72,8 @@
+ # Extra rules
+ #
+ ifeq  ($(PLATFORM), linux)
+-LDLIBS += -lpthread
++    LDLIBS += -lpthread
++    OTHER_CFLAGS += -Wno-missing-field-initializers
+ endif
+ 
+ clean clobber:: 
+@@ -104,6 +105,5 @@
+ 
+ endif # PLATFORM
+ 
+-#CFLAGS += -DJAVACMM -DFUT_CALC_EX -DNO_FUT_GCONST
+-CFLAGS += -DFUT_CALC_EX -DNO_FUT_GCONST
++CFLAGS += -DJAVACMM -DFUT_CALC_EX -DNO_FUT_GCONST
+ 
+diff --git a/src/share/native/sun/awt/image/jpeg/imageioJPEG.c b/src/share/native/sun/awt/image/jpeg/imageioJPEG.c
+--- openjdk/jdk/src/share/native/sun/awt/image/jpeg/imageioJPEG.c
++++ openjdk/jdk/src/share/native/sun/awt/image/jpeg/imageioJPEG.c
+@@ -2657,7 +2657,7 @@
+         (destWidth < 0) || (destWidth > srcWidth) ||
+         (destHeight < 0) ||
+         (stepX < 0) || (stepY < 0) ||
+-        ((scanLineSize / numBands) < destWidth))  /* destWidth causes an integer overflow */
++        ((INT_MAX / numBands) < destWidth))  /* destWidth causes an integer overflow */
+     {
+         JNU_ThrowByName(env, "javax/imageio/IIOException",
+                         "Invalid argument to native writeImage");
