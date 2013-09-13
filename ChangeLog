@@ -1,3 +1,74 @@
+2013-09-13  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* patches/cacao/hotspot/original/memory.patch,
+	* patches/ecj/bootver.patch,
+	* patches/ecj/hotspot/original/hotspot-jdk-dependency.patch,
+	* patches/hotspot/hs23/7197906-handle_32_bit_shifts.patch,
+	* patches/hotspot/hs23/revert-7017193.patch,
+	* patches/hotspot/original/6840152-jvm_crashes_with_heavyweight_monitors.patch,
+	* patches/hotspot/original/7022999-fastlocking_compiler1_only.patch,
+	* patches/hotspot/original/7032696-7029152_broke_vm.patch,
+	* patches/hotspot/original/7140985-hsdis_caller_options.patch,
+	* patches/hotspot/original/aarch64.patch,
+	* patches/hotspot/original/alpha-fixes.patch,
+	* patches/hotspot/original/arm-hsdis.patch,
+	* patches/hotspot/original/arm.patch,
+	* patches/hotspot/original/gcc-suffix.patch,
+	* patches/hotspot/original/jtreg-test7020373-fix.patch,
+	* patches/hotspot/original/pr639-broken_shark_build.patch,
+	* patches/hotspot/original/sdt-arguments.patch,
+	* patches/hotspot/original/sdt-dtrace-hpp.patch,
+	* patches/hotspot/original/sdt-jni.patch,
+	* patches/hotspot/original/sdt-make.patch,
+	* patches/hotspot/original/systemtap-alloc-size-workaround.patch,
+	* patches/hotspot/original/systemtap_gc.patch,
+	* patches/hotspot/original/text-relocations.patch,
+	* patches/hotspot/original/update-bootclasspath.patch,
+	* patches/hotspot/original/version.patch,
+	* patches/ia64-fix.patch,
+	* patches/jtreg-remove-test-6987555.patch,
+	* patches/jtreg-remove-test-6991596.patch,
+	* patches/numa_on_early_glibc.patch,
+	* patches/openjdk/6796786-invalid_FP_identity_transform.patch,
+	* patches/openjdk/6956668-misbehavior_of_XOR_operator_with_int.patch,
+	* patches/openjdk/7010849-modernise_sa.patch,
+	* patches/openjdk/7019808-stack_noexec.patch,
+	* patches/openjdk/7029152-String_intrinsics_miss_optimization.patch,
+	* patches/openjdk/7031385-gcc-register-allocation-fix.patch,
+	* patches/openjdk/7032388-work_without_cmov_instruction.patch,
+	* patches/openjdk/7034464-transparent_huge_pages.patch,
+	* patches/openjdk/7036220-shark_llvm_29_headers.patch,
+	* patches/openjdk/7037939-disable_adaptive_resizing_with_large_pages.patch,
+	* patches/openjdk/7041156-gcc_export_dynamic.patch,
+	* patches/openjdk/7042070-Typo_in_Test6796786.patch,
+	* patches/openjdk/7043564-hugepage.patch,
+	* patches/openjdk/7047069-Array_can_dynamically_change_size.patch,
+	* patches/params-cast-size_t.patch,
+	* patches/pr690-shark-jit-hs20.patch,
+	* patches/pr696-zero-fast_aldc-hs20.patch,
+	* patches/security/20130416/8004336.patch,
+	* patches/security/20130416/8006309.patch,
+	* patches/security/20130416/8009699.patch,
+	* patches/security/20130618/7158805-nested_subroutine_rewriting.patch,
+	* patches/security/20130618/8001330-checking_order_improvement.patch,
+	* patches/stdc-limit-macros.patch,
+	* patches/systemtap-gcc-4.5.patch,
+	* patches/use-idx_t.patch:
+	Remove patches obsoleted by dropping of hs20 support.
+	* INSTALL: Update docs to support only the 'original' hs23.
+	* Makefile.am:
+	(SECURITY_PATCHES): Removed (in hs23).
+	(ICEDTEA_PATCHES): Add 6_for_override.  Replace
+	$(HSBUILD) with hs23.  Join ALT_HSBUILD patches
+	into main version.  Remove !ALT_HSBUILD patches.
+	(ICEDTEA_ENV): Join ALT_HSBUILD settings to main version.
+	* acinclude.m4:
+	(IT_WITH_HOTSPOT_BUILD): Support only original.
+	* hotspot.map: Remove hs23 line.
+	* patches/hotspot/hs23/6_for_override.patch:
+	New patch to use source/target 6 for building
+	the agent as the hs23 version includes @Override.
+
 2013-09-09  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* NEWS:

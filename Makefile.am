@@ -283,15 +283,6 @@ DROP_PATCHES =
 SECURITY_PATCHES = \
 	patches/security/20120830/7182135-impossible_to_use_some_editors_directly.patch
 
-if !WITH_ALT_HSBUILD
-SECURITY_PATCHES += \
-	patches/security/20130416/8004336.patch \
-	patches/security/20130416/8006309.patch \
-	patches/security/20130416/8009699.patch \
-	patches/security/20130618/7158805-nested_subroutine_rewriting.patch \
-	patches/security/20130618/8001330-checking_order_improvement.patch
-endif
-
 SPECIAL_SECURITY_PATCH_1 = patches/security/20120214/7112642.patch
 SPECIAL_SECURITY_PATCH_2 = patches/security/20130618/8009071-improve_shape_handling.patch
 
@@ -348,6 +339,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6989760-native_warnings.patch \
 	patches/openjdk/7013519-integer_overflows.patch \
 	patches/openjdk/8020983-outofmemoryerror_jpegimagewriter.patch \
+	patches/hotspot/hs23/6_for_override.patch \
 	patches/notice-safepoints.patch \
 	patches/parisc-opt.patch \
 	patches/lucene-crash.patch \
@@ -459,7 +451,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6679308-Poor_text_rendering_on_translucent_image.patch \
 	patches/openjdk/6842838-64-bit_failure_in_handling_invalid_manifest.patch \
 	patches/openjdk/6882768-test_for_6842838_is_broken.patch \
-	patches/hotspot/$(HSBUILD)/pr639-broken_shark_build.patch \
+	patches/hotspot/hs23/pr639-broken_shark_build.patch \
 	patches/powerpc-stacksize.patch \
 	patches/openjdk/6711682-JCheckBox_in_JTable_does_not_respond_to_click.patch \
 	patches/openjdk/6758179-D3D_AlphaComposite_is_applied_incorrectly.patch \
@@ -571,18 +563,18 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6636370-appcontext_simplification.patch \
 	patches/openjdk/6636331-appcontext_concurrentmodificationexception.patch \
 	patches/sparc-ptracefix.patch \
-	patches/hotspot/$(HSBUILD)/alpha-fixes.patch \
-	patches/hotspot/$(HSBUILD)/gcc-suffix.patch \
-	patches/hotspot/$(HSBUILD)/text-relocations.patch \
-	patches/hotspot/$(HSBUILD)/version.patch \
+	patches/hotspot/hs23/alpha-fixes.patch \
+	patches/hotspot/hs23/gcc-suffix.patch \
+	patches/hotspot/hs23/text-relocations.patch \
+	patches/hotspot/hs23/version.patch \
 	patches/memory-limits.patch \
 	patches/sh4-support.patch \
-	patches/hotspot/$(HSBUILD)/aarch64.patch \
-	patches/hotspot/$(HSBUILD)/arm.patch \
+	patches/hotspot/hs23/aarch64.patch \
+	patches/hotspot/hs23/arm.patch \
 	patches/arm-debug.patch \
-	patches/hotspot/$(HSBUILD)/jtreg-test7020373-fix.patch \
+	patches/hotspot/hs23/jtreg-test7020373-fix.patch \
 	patches/jtreg-6929067-fix.patch \
-	patches/hotspot/$(HSBUILD)/update-bootclasspath.patch \
+	patches/hotspot/hs23/update-bootclasspath.patch \
 	patches/hotspot/original/jvmtiEnv.patch \
 	patches/sparc-trapsfix.patch \
 	patches/print_lsb_release.patch \
@@ -603,13 +595,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7000225-bad_tabs.patch \
 	patches/openjdk/7038711-fix_no-clobber_usage.patch \
 	patches/disable-cc-incompatible-sanity-checks.patch \
-	patches/rh995488-rhel_tz_fix.patch
-
-if WITH_ALT_HSBUILD
-ICEDTEA_PATCHES += \
-	patches/hotspot/hs23/7197906-handle_32_bit_shifts.patch \
+	patches/rh995488-rhel_tz_fix.patch \
 	patches/hotspot/hs23/remove_jsr292_tests.patch \
-	patches/hotspot/hs23/revert-7017193.patch \
 	patches/hotspot/hs23/7188168-fix_debug_binaries.patch \
 	patches/hotspot/hs23/arm-01-hsx22.patch \
 	patches/hotspot/hs23/arm-03-invokedynamic.patch \
@@ -645,43 +632,8 @@ ICEDTEA_PATCHES += \
 	patches/arm/cc_compile-03.patch \
 	patches/arm/cc_compile-04.patch \
 	patches/arm/cc_compile-05.patch \
-	patches/arm/cc_compile-06.patch
-else
-# stdc-limit-macros is part of 7032458
-# pr690-shark-jit-hs20.patch is part of 7032458
-# pr696-zero-fast_aldc-hs20.patch is 7030207 & part of 7032458
-ICEDTEA_PATCHES += \
-	patches/stdc-limit-macros.patch \
-	patches/use-idx_t.patch \
-	patches/params-cast-size_t.patch \
-	patches/openjdk/7019808-stack_noexec.patch \
-	patches/numa_on_early_glibc.patch \
-	patches/ia64-fix.patch \
-	patches/openjdk/7041156-gcc_export_dynamic.patch \
-	patches/openjdk/7032388-work_without_cmov_instruction.patch \
-	patches/openjdk/7031385-gcc-register-allocation-fix.patch \
-	patches/openjdk/7034464-transparent_huge_pages.patch \
-	patches/openjdk/7037939-disable_adaptive_resizing_with_large_pages.patch \
-	patches/openjdk/7043564-hugepage.patch \
-	patches/openjdk/6956668-misbehavior_of_XOR_operator_with_int.patch \
-	patches/openjdk/7047069-Array_can_dynamically_change_size.patch \
-	patches/openjdk/6796786-invalid_FP_identity_transform.patch \
-	patches/openjdk/7042070-Typo_in_Test6796786.patch \
-	patches/jtreg-remove-test-6987555.patch \
-	patches/jtreg-remove-test-6991596.patch \
-	patches/openjdk/7036220-shark_llvm_29_headers.patch \
-	patches/openjdk/7029152-String_intrinsics_miss_optimization.patch \
-	patches/pr690-shark-jit-hs20.patch \
-	patches/pr696-zero-fast_aldc-hs20.patch \
-	patches/openjdk/7010849-modernise_sa.patch \
-	patches/hotspot/original/6840152-jvm_crashes_with_heavyweight_monitors.patch \
-	patches/hotspot/original/7032696-7029152_broke_vm.patch \
-	patches/hotspot/original/7022999-fastlocking_compiler1_only.patch \
-	patches/hotspot/original/7140985-hsdis_caller_options.patch
-endif
-
-ICEDTEA_PATCHES += \
-	patches/hotspot/$(HSBUILD)/arm-hsdis.patch
+	patches/arm/cc_compile-06.patch \
+	patches/hotspot/hs23/arm-hsdis.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -692,13 +644,13 @@ if BUILD_CACAO
 ICEDTEA_PATCHES += \
 	patches/cacao/launcher.patch \
 	patches/cacao/memory.patch \
-	patches/cacao/hotspot/$(HSBUILD)/memory.patch \
+	patches/cacao/hotspot/hs23/memory.patch \
 	patches/cacao/armhf.patch
 else
 if USING_CACAO
 ICEDTEA_PATCHES += \
 	patches/cacao/memory.patch \
-	patches/cacao/hotspot/$(HSBUILD)/memory.patch
+	patches/cacao/hotspot/hs23/memory.patch
 endif
 endif
 
@@ -714,18 +666,9 @@ ICEDTEA_PATCHES += patches/openjdk/6307603-xrender-01.patch \
 endif
 
 if ENABLE_SYSTEMTAP
-if WITH_ALT_HSBUILD
-ICEDTEA_PATCHES += patches/hotspot/hs23/systemtap.patch
-else
-ICEDTEA_PATCHES += patches/hotspot/original/sdt-jni.patch \
-	patches/hotspot/original/sdt-dtrace-hpp.patch \
-	patches/hotspot/original/sdt-make.patch \
-	patches/hotspot/original/sdt-arguments.patch \
-	patches/systemtap-gcc-4.5.patch
-endif
-ICEDTEA_PATCHES += \
-	patches/hotspot/$(HSBUILD)/systemtap_gc.patch \
-	patches/hotspot/$(HSBUILD)/systemtap-alloc-size-workaround.patch
+ICEDTEA_PATCHES += patches/hotspot/hs23/systemtap.patch \
+	patches/hotspot/hs23/systemtap_gc.patch \
+	patches/hotspot/hs23/systemtap-alloc-size-workaround.patch
 endif
 
 if ENABLE_NSS
@@ -756,7 +699,7 @@ ICEDTEA_ECJ_PATCHES = \
 	patches/ecj/corba-dependencies.patch \
 	patches/ecj/jaxws-langtools-dependency.patch \
 	patches/ecj/jaxws-jdk-dependency.patch \
-	patches/ecj/hotspot/$(HSBUILD)/hotspot-jdk-dependency.patch \
+	patches/ecj/hotspot/hs23/hotspot-jdk-dependency.patch \
 	patches/ecj/fphexconstants.patch \
 	patches/ecj/no-sun-classes.patch
 
@@ -851,13 +794,9 @@ ICEDTEA_ENV = \
 	DEBUG_BINARIES="true" \
 	VERBOSE="$(VERBOSE)" \
 	ALT_OUTPUTDIR="$(BUILD_OUTPUT_DIR)" \
-	STATIC_CXX="false"
-
-if WITH_ALT_HSBUILD
-ICEDTEA_ENV += \
+	STATIC_CXX="false" \
 	BUILD_GCC=gcc$(GCC_SUFFIX) \
 	BUILD_CXX=g++$(GCC_SUFFIX)
-endif
 
 if ENABLE_CACAO
 ICEDTEA_ENV += \

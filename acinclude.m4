@@ -963,12 +963,7 @@ AC_DEFUN_ONCE([IT_WITH_HOTSPOT_BUILD],
 [
   AC_REQUIRE([IT_ENABLE_ZERO_BUILD])
   ORIGINAL_BUILD="original"
-  ALTERNATE_BUILD="hs23"
-  if test "x${use_zero}" = "xyes"; then
-    DEFAULT_BUILD=${ORIGINAL_BUILD}
-  else
-    DEFAULT_BUILD=${ALTERNATE_BUILD}
-  fi
+  DEFAULT_BUILD=${ORIGINAL_BUILD}
   AC_MSG_CHECKING([which HotSpot build to use])
   AC_ARG_WITH([hotspot-build],
 	      [AS_HELP_STRING(--with-hotspot-build,the HotSpot build to use (see hotspot.map))],
@@ -978,19 +973,10 @@ AC_DEFUN_ONCE([IT_WITH_HOTSPOT_BUILD],
   [ 
     HSBUILD="${DEFAULT_BUILD}"
   ])
-  if test "x${HSBUILD}" = xyes; then
-	HSBUILD="${ALTERNATE_BUILD}"
-  elif test "x${HSBUILD}" = xno; then
-	HSBUILD="${ORIGINAL_BUILD}"
-  fi
+  HSBUILD="${ORIGINAL_BUILD}"
   AC_MSG_RESULT([${HSBUILD}])
   AC_SUBST([HSBUILD])
   AM_CONDITIONAL(WITH_ALT_HSBUILD, test "x${HSBUILD}" != "x${ORIGINAL_BUILD}")
-  if test "x${HSBUILD}" = "x${ALTERNATE_BUILD}" ; then
-    if test "x${use_zero}" = "xyes"; then
-      AC_MSG_ERROR([The ${ALTERNATE_BUILD} build of HotSpot is known not to work with Zero or Shark.])
-    fi
-  fi
 ])
 
 AC_DEFUN([IT_WITH_HOTSPOT_SRC_ZIP],
