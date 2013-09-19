@@ -339,7 +339,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6989760-native_warnings.patch \
 	patches/openjdk/7013519-integer_overflows.patch \
 	patches/openjdk/8020983-outofmemoryerror_jpegimagewriter.patch \
-	patches/hotspot/hs23/6_for_override.patch \
+	patches/hotspot/hs23/remove_bad_overrides.patch \
 	patches/notice-safepoints.patch \
 	patches/parisc-opt.patch \
 	patches/lucene-crash.patch \
@@ -644,13 +644,13 @@ if BUILD_CACAO
 ICEDTEA_PATCHES += \
 	patches/cacao/launcher.patch \
 	patches/cacao/memory.patch \
-	patches/cacao/hotspot/hs23/memory.patch \
+	patches/cacao/hotspot/original/memory.patch \
 	patches/cacao/armhf.patch
 else
 if USING_CACAO
 ICEDTEA_PATCHES += \
 	patches/cacao/memory.patch \
-	patches/cacao/hotspot/hs23/memory.patch
+	patches/cacao/hotspot/original/memory.patch
 endif
 endif
 
