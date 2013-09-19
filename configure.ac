@@ -17,6 +17,9 @@ AC_PREFIX_DEFAULT([bootstrap])
 
 AC_PROG_CC
 AC_PROG_CXX
+if test "x$CXX" = x; then
+   AC_MSG_ERROR([No C++ compiler found.])
+fi
 
 IT_FIND_TOOL([MAKE], [make])
 IT_FIND_TOOL([GZIP], [gzip])
