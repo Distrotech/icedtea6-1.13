@@ -339,7 +339,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6989760-native_warnings.patch \
 	patches/openjdk/7013519-integer_overflows.patch \
 	patches/openjdk/8020983-outofmemoryerror_jpegimagewriter.patch \
-	patches/hotspot/hs23/remove_bad_overrides.patch \
 	patches/notice-safepoints.patch \
 	patches/parisc-opt.patch \
 	patches/lucene-crash.patch \
