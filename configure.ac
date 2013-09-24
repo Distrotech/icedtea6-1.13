@@ -16,7 +16,14 @@ AC_CANONICAL_HOST
 AC_PREFIX_DEFAULT([bootstrap])
 
 AC_PROG_CC
+if test "x$CC" = x; then
+   AC_MSG_ERROR([No C compiler found.])
+fi
+
 AC_PROG_CXX
+if test "x$CXX" = x; then
+   AC_MSG_ERROR([No C++ compiler found.])
+fi
 
 IT_FIND_TOOL([MAKE], [make])
 IT_FIND_TOOL([GZIP], [gzip])
