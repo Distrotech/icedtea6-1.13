@@ -1070,7 +1070,7 @@ else
 	    if [ -e $(OPENJDK_SRC_ZIP) ] ; then \
 	      mv $(OPENJDK_SRC_ZIP) $(OPENJDK_SRC_ZIP).old ; \
 	    fi ; \
-	    $(WGET) $(OPENJDK_URL)$(OPENJDK_SRC_ZIP) -O $(OPENJDK_SRC_ZIP); \
+	    $(WGET) $(OPENJDK_URL)$(OPENJDK_SRC_ZIP) --no-check-certificate -O $(OPENJDK_SRC_ZIP); \
 	    if ! echo "$(OPENJDK_SHA256SUM)  $(OPENJDK_SRC_ZIP)" \
 	      | $(SHA256SUM) --check ; then \
 	      echo "ERROR: Bad download of OpenJDK zip"; false; \
