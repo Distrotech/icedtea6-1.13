@@ -1,3 +1,14 @@
+2012-08-22  Andrew John Hughes  <gnu_andrew@member.fsf.org>
+
+	PR1288: Allow JARs to be optionally compressed by
+	setting COMPRESS_JARS
+	* Makefile.am:
+	(ICEDTEA_ENV): Add COMPRESS_JARS="true" if
+	ENABLE_JAR_COMPRESSION is set.
+	* NEWS: Updated.
+	* acinclude.m4: Add IT_ENABLE_JAR_COMPRESSION macro.
+	* configure.ac: Include new macro.
+
 2013-10-08  Pavel Tisnovsky  <ptisnovs@redhat.com>
 
 	* Makefile.am:
