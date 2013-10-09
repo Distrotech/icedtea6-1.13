@@ -1,6 +1,6 @@
 diff -Nru openjdk-ecj.orig/corba/make/com/sun/corba/se/Makefile openjdk-ecj/corba/make/com/sun/corba/se/Makefile
---- openjdk-ecj.orig/corba/make/com/sun/corba/se/Makefile	2010-05-26 09:31:18.000000000 +0100
-+++ openjdk-ecj/corba/make/com/sun/corba/se/Makefile	2012-01-18 21:43:04.134185695 +0000
+--- openjdk-ecj.orig/corba/make/com/sun/corba/se/Makefile	2013-10-04 15:45:38.000000000 +0100
++++ openjdk-ecj/corba/make/com/sun/corba/se/Makefile	2013-10-09 12:46:11.374453549 +0100
 @@ -42,7 +42,7 @@
  # the rmic iiop backend needs some classes that are part of the impl/util
  # package.  These classes use log wrappers, so they must be built after
@@ -12,7 +12,7 @@ diff -Nru openjdk-ecj.orig/corba/make/com/sun/corba/se/Makefile openjdk-ecj/corb
  
 diff -Nru openjdk-ecj.orig/corba/make/com/sun/corba/se/org/Makefile openjdk-ecj/corba/make/com/sun/corba/se/org/Makefile
 --- openjdk-ecj.orig/corba/make/com/sun/corba/se/org/Makefile	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk-ecj/corba/make/com/sun/corba/se/org/Makefile	2012-01-18 21:43:04.146185899 +0000
++++ openjdk-ecj/corba/make/com/sun/corba/se/org/Makefile	2013-10-09 12:46:11.374453549 +0100
 @@ -0,0 +1,38 @@
 +#
 +# Copyright 2001-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -53,7 +53,7 @@ diff -Nru openjdk-ecj.orig/corba/make/com/sun/corba/se/org/Makefile openjdk-ecj/
 +#
 +include $(BUILDDIR)/common/Classes.gmk
 diff -Nru openjdk-ecj.orig/corba/make/com/sun/corba/se/sources/Makefile openjdk-ecj/corba/make/com/sun/corba/se/sources/Makefile
---- openjdk-ecj.orig/corba/make/com/sun/corba/se/sources/Makefile	2010-05-26 09:31:18.000000000 +0100
+--- openjdk-ecj.orig/corba/make/com/sun/corba/se/sources/Makefile	2013-10-04 15:45:38.000000000 +0100
 +++ openjdk-ecj/corba/make/com/sun/corba/se/sources/Makefile	1970-01-01 01:00:00.000000000 +0100
 @@ -1,224 +0,0 @@
 -#
@@ -281,8 +281,8 @@ diff -Nru openjdk-ecj.orig/corba/make/com/sun/corba/se/sources/Makefile openjdk-
 -#
 -include $(BUILDDIR)/common/Rules.gmk
 diff -Nru openjdk-ecj.orig/corba/make/common/Defs.gmk openjdk-ecj/corba/make/common/Defs.gmk
---- openjdk-ecj.orig/corba/make/common/Defs.gmk	2011-01-10 21:21:55.000000000 +0000
-+++ openjdk-ecj/corba/make/common/Defs.gmk	2012-01-18 21:43:04.146185899 +0000
+--- openjdk-ecj.orig/corba/make/common/Defs.gmk	2013-10-04 15:45:38.000000000 +0100
++++ openjdk-ecj/corba/make/common/Defs.gmk	2013-10-09 12:46:11.374453549 +0100
 @@ -53,6 +53,13 @@
  
  _OUTPUTDIR=$(TOPDIR)/build/$(PLATFORM)-$(ARCH)
@@ -316,8 +316,8 @@ diff -Nru openjdk-ecj.orig/corba/make/common/Defs.gmk openjdk-ecj/corba/make/com
  vpath %.java $(VPATH.java)
  vpath %.class $(CLASSBINDIR)
 diff -Nru openjdk-ecj.orig/corba/make/common/Defs-linux.gmk openjdk-ecj/corba/make/common/Defs-linux.gmk
---- openjdk-ecj.orig/corba/make/common/Defs-linux.gmk	2012-01-18 16:50:50.977002556 +0000
-+++ openjdk-ecj/corba/make/common/Defs-linux.gmk	2012-01-18 21:43:04.146185899 +0000
+--- openjdk-ecj.orig/corba/make/common/Defs-linux.gmk	2013-10-09 12:43:59.208422274 +0100
++++ openjdk-ecj/corba/make/common/Defs-linux.gmk	2013-10-09 12:46:11.374453549 +0100
 @@ -271,7 +271,7 @@
  #
  VM_NAME         = server
@@ -328,8 +328,8 @@ diff -Nru openjdk-ecj.orig/corba/make/common/Defs-linux.gmk openjdk-ecj/corba/ma
  #
  # We want to privatize JVM symbols on Solaris. This is so the user can
 diff -Nru openjdk-ecj.orig/corba/make/org/omg/sources/Makefile openjdk-ecj/corba/make/org/omg/sources/Makefile
---- openjdk-ecj.orig/corba/make/org/omg/sources/Makefile	2010-05-26 09:31:18.000000000 +0100
-+++ openjdk-ecj/corba/make/org/omg/sources/Makefile	2012-01-18 21:43:04.150185964 +0000
+--- openjdk-ecj.orig/corba/make/org/omg/sources/Makefile	2013-10-04 15:45:38.000000000 +0100
++++ openjdk-ecj/corba/make/org/omg/sources/Makefile	2013-10-09 12:46:11.374453549 +0100
 @@ -93,8 +93,6 @@
  POAHELHOLFILES =    $(POA_GENERATED_HELP_HOL_java:%=$(GENSRCDIR)/%)
  
@@ -407,8 +407,8 @@ diff -Nru openjdk-ecj.orig/corba/make/org/omg/sources/Makefile openjdk-ecj/corba
  pi.compile: $(PIGENERATEDFILES)
  
 diff -Nru openjdk-ecj.orig/corba/make/sun/rmi/corbalogsources/Makefile openjdk-ecj/corba/make/sun/rmi/corbalogsources/Makefile
---- openjdk-ecj.orig/corba/make/sun/rmi/corbalogsources/Makefile	2010-05-26 09:31:18.000000000 +0100
-+++ openjdk-ecj/corba/make/sun/rmi/corbalogsources/Makefile	2012-01-18 21:43:04.150185964 +0000
+--- openjdk-ecj.orig/corba/make/sun/rmi/corbalogsources/Makefile	2013-10-04 15:45:38.000000000 +0100
++++ openjdk-ecj/corba/make/sun/rmi/corbalogsources/Makefile	2013-10-09 12:46:11.374453549 +0100
 @@ -172,7 +172,6 @@
  ACTIVATIONFILES = $(com_sun_corba_se_spi_activation_java:%=$(GENSRCDIR)/%)
  
@@ -426,8 +426,8 @@ diff -Nru openjdk-ecj.orig/corba/make/sun/rmi/corbalogsources/Makefile openjdk-e
  portableactivation.idl.compile: $(PORTABLEACTIVATIONFILES)
  
 diff -Nru openjdk-ecj.orig/jaxp/build.xml openjdk-ecj/jaxp/build.xml
---- openjdk-ecj.orig/jaxp/build.xml	2011-01-10 21:21:59.000000000 +0000
-+++ openjdk-ecj/jaxp/build.xml	2012-01-18 21:43:04.150185964 +0000
+--- openjdk-ecj.orig/jaxp/build.xml	2013-10-04 15:50:12.000000000 +0100
++++ openjdk-ecj/jaxp/build.xml	2013-10-09 12:46:11.374453549 +0100
 @@ -131,7 +131,8 @@
               memoryMaximumSize="${javac.memoryMaximumSize}"
               source="${javac.source}"
@@ -439,8 +439,8 @@ diff -Nru openjdk-ecj.orig/jaxp/build.xml openjdk-ecj/jaxp/build.xml
              <compilerarg line="${javac.version.opt} ${javac.lint.opts} ${javac.no.jdk.warnings}"/>
              <src refid="src.dir.id"/>
 diff -Nru openjdk-ecj.orig/jaxws/build.xml openjdk-ecj/jaxws/build.xml
---- openjdk-ecj.orig/jaxws/build.xml	2011-01-10 21:22:02.000000000 +0000
-+++ openjdk-ecj/jaxws/build.xml	2012-01-18 21:43:04.150185964 +0000
+--- openjdk-ecj.orig/jaxws/build.xml	2013-10-04 15:51:17.000000000 +0100
++++ openjdk-ecj/jaxws/build.xml	2013-10-09 12:46:11.374453549 +0100
 @@ -131,7 +131,8 @@
               memoryMaximumSize="${javac.memoryMaximumSize}"
               source="${javac.source}"
@@ -452,9 +452,9 @@ diff -Nru openjdk-ecj.orig/jaxws/build.xml openjdk-ecj/jaxws/build.xml
              <compilerarg line="${javac.version.opt} ${javac.lint.opts} ${javac.no.jdk.warnings}"/>
              <src refid="src.dir.id"/>
 diff -Nru openjdk-ecj.orig/jdk/make/common/Release.gmk openjdk-ecj/jdk/make/common/Release.gmk
---- openjdk-ecj.orig/jdk/make/common/Release.gmk	2012-01-18 16:51:03.177199616 +0000
-+++ openjdk-ecj/jdk/make/common/Release.gmk	2012-01-18 21:43:04.150185964 +0000
-@@ -649,10 +649,23 @@
+--- openjdk-ecj.orig/jdk/make/common/Release.gmk	2013-10-09 12:44:01.020450124 +0100
++++ openjdk-ecj/jdk/make/common/Release.gmk	2013-10-09 13:17:10.126995245 +0100
+@@ -660,10 +660,23 @@
  $(RES_JAR_ARGLIST): $(RES_JAR_FILELIST)
  	$(prep-target)
  	$(SED) -e "s@^@-C $(CLASSBINDIR) @" $< > $@
@@ -465,22 +465,22 @@ diff -Nru openjdk-ecj.orig/jdk/make/common/Release.gmk openjdk-ecj/jdk/make/comm
  	$(prep-target)
 +ifneq (,$(JAR_KNOWS_ATFILE))
 +	(cd $(CLASSBINDIR) && \
- 	$(BOOT_JAR_CMD) c0mf $(JAR_MANIFEST_FILE) $@ \
+ 	$(BOOT_JAR_CMD) $(CREATE_JAR_OPTS) $(JAR_MANIFEST_FILE) $@ \
 -	    @$(RES_JAR_ARGLIST) $(JAR_JFLAGS)
 +	    $(JAR_JFLAGS) @$(RES_JAR_FILELIST))
 +else ifneq (,$(JAR_ACCEPTS_STDIN_LIST))
 +	(cd $(CLASSBINDIR) && $(CAT) $(RES_JAR_FILELIST) | \
-+	$(BOOT_JAR_CMD) c0mf@ $(JAR_MANIFEST_FILE) $@ \
++	$(BOOT_JAR_CMD) $(CREATE_JAR_OPTS)@ $(JAR_MANIFEST_FILE) $@ \
 +	    $(JAR_JFLAGS))
 +else
 +	(cd $(CLASSBINDIR) && \
-+	$(BOOT_JAR_CMD) c0mf $(JAR_MANIFEST_FILE) $@ \
++	$(BOOT_JAR_CMD) $(CREATE_JAR_OPTS) $(JAR_MANIFEST_FILE) $@ \
 +	    $(JAR_JFLAGS) `cat $(RES_JAR_FILELIST)`)
 +endif
  	@$(java-vm-cleanup)
  
  # Create jsse.jar containing SunJSSE implementation classes
-@@ -708,10 +721,22 @@
+@@ -719,10 +732,22 @@
  $(RT_JAR_ARGLIST): $(RT_JAR_FILELIST)
  	$(prep-target)
  	$(SED) -e "s@^@-C $(CLASSBINDIR) @" $< > $@
@@ -490,22 +490,22 @@ diff -Nru openjdk-ecj.orig/jdk/make/common/Release.gmk openjdk-ecj/jdk/make/comm
  	$(prep-target)
 +ifneq (,$(JAR_KNOWS_ATFILE))
 +	(cd $(CLASSBINDIR) && \
- 	$(BOOT_JAR_CMD) c0mf $(JAR_MANIFEST_FILE) $@ \
+ 	$(BOOT_JAR_CMD) $(CREATE_JAR_OPTS) $(JAR_MANIFEST_FILE) $@ \
 -	    @$(RT_JAR_ARGLIST) $(JAR_JFLAGS)
 +	    $(JAR_JFLAGS) @$(RT_JAR_FILELIST))
 +else ifneq (,$(JAR_ACCEPTS_STDIN_LIST))
 +	(cd $(CLASSBINDIR) && $(CAT) $(RT_JAR_FILELIST) | \
-+	$(BOOT_JAR_CMD) c0mf@ $(JAR_MANIFEST_FILE) $@ \
++	$(BOOT_JAR_CMD) $(CREATE_JAR_OPTS)@ $(JAR_MANIFEST_FILE) $@ \
 +	    $(JAR_JFLAGS))
 +else
 +	(cd $(CLASSBINDIR) && \
-+	$(BOOT_JAR_CMD) c0mf $(JAR_MANIFEST_FILE) $@ \
++	$(BOOT_JAR_CMD) $(CREATE_JAR_OPTS) $(JAR_MANIFEST_FILE) $@ \
 +	    $(JAR_JFLAGS) `$(CAT) $(RT_JAR_FILELIST)`)
 +endif
  	@$(java-vm-cleanup)
  
  # Meta-index construction to make core class loaders lazier
-@@ -942,19 +967,6 @@
+@@ -969,19 +994,6 @@
  	@$(java-vm-cleanup)
  	$(CP) $(LIBDIR)/tools.jar $(JDK_IMAGE_DIR)/lib/tools.jar
  	@#
@@ -517,7 +517,7 @@ diff -Nru openjdk-ecj.orig/jdk/make/common/Release.gmk openjdk-ecj/jdk/make/comm
 -	    -Acom.sun.tools.javac.sym.Jar=$(RT_JAR) \
 -	    -Acom.sun.tools.javac.sym.Dest=$(OUTPUTDIR)/symbols/META-INF/sym/rt.jar \
 -	    $(CORE_PKGS) $(NON_CORE_PKGS) $(EXCLUDE_PROPWARN_PKGS)
--	$(BOOT_JAR_CMD) c0f $(LIBDIR)/ct.sym \
+-	$(BOOT_JAR_CMD) $(CREATE_JAR_OPTS_NOMANIFEST) $(LIBDIR)/ct.sym \
 -	    -C $(OUTPUTDIR)/symbols META-INF $(JAR_JFLAGS)
 -	@$(java-vm-cleanup)
 -	$(CP) $(LIBDIR)/ct.sym $(JDK_IMAGE_DIR)/lib/ct.sym
@@ -525,7 +525,7 @@ diff -Nru openjdk-ecj.orig/jdk/make/common/Release.gmk openjdk-ecj/jdk/make/comm
  	@# CORBA supported orb.idl and ir.idl should be copied to lib
  	@#
  	$(CP) $(LIBDIR)/orb.idl $(JDK_IMAGE_DIR)/lib/orb.idl
-@@ -1023,16 +1035,6 @@
+@@ -1050,16 +1062,6 @@
  	$(CP) $(PLATFORM_SRC)/bin/java_md.h $(JDK_IMAGE_DIR)/src/launcher
  	$(CD) $(JDK_IMAGE_DIR)/src && $(ZIPEXE) -qr ../src.zip *
  	$(RM) -r $(JDK_IMAGE_DIR)/src
@@ -543,9 +543,9 @@ diff -Nru openjdk-ecj.orig/jdk/make/common/Release.gmk openjdk-ecj/jdk/make/comm
  	$(call copy-man-pages,$(JDK_IMAGE_DIR),$(JDK_MAN_PAGES))
  endif # !windows
 diff -Nru openjdk-ecj.orig/jdk/make/common/Rules.gmk openjdk-ecj/jdk/make/common/Rules.gmk
---- openjdk-ecj.orig/jdk/make/common/Rules.gmk	2011-01-07 21:32:51.000000000 +0000
-+++ openjdk-ecj/jdk/make/common/Rules.gmk	2012-01-18 21:43:04.150185964 +0000
-@@ -302,6 +303,8 @@
+--- openjdk-ecj.orig/jdk/make/common/Rules.gmk	2013-10-04 15:55:30.000000000 +0100
++++ openjdk-ecj/jdk/make/common/Rules.gmk	2013-10-09 12:46:11.374453549 +0100
+@@ -302,6 +302,8 @@
  	$(JAVAH_CMD) -d $(CLASSHDRDIR)/ \
  		$(CLASSES.export) $(subst $$,\$$,$(EXPORTED_inner))
  	@$(java-vm-cleanup)
@@ -555,8 +555,8 @@ diff -Nru openjdk-ecj.orig/jdk/make/common/Rules.gmk openjdk-ecj/jdk/make/common
  
  classheaders.clean:
 diff -Nru openjdk-ecj.orig/jdk/make/java/nio/Makefile openjdk-ecj/jdk/make/java/nio/Makefile
---- openjdk-ecj.orig/jdk/make/java/nio/Makefile	2012-01-18 16:50:50.576996095 +0000
-+++ openjdk-ecj/jdk/make/java/nio/Makefile	2012-01-18 21:43:04.150185964 +0000
+--- openjdk-ecj.orig/jdk/make/java/nio/Makefile	2013-10-09 12:43:55.072358704 +0100
++++ openjdk-ecj/jdk/make/java/nio/Makefile	2013-10-09 12:46:11.374453549 +0100
 @@ -31,7 +31,7 @@
  PACKAGE = java.nio
  LIBRARY = nio
@@ -567,8 +567,8 @@ diff -Nru openjdk-ecj.orig/jdk/make/java/nio/Makefile openjdk-ecj/jdk/make/java/
  
  NIO_SRC = $(SHARE_SRC)/classes/java/nio
 diff -Nru openjdk-ecj.orig/jdk/make/Makefile openjdk-ecj/jdk/make/Makefile
---- openjdk-ecj.orig/jdk/make/Makefile	2011-01-07 21:32:51.000000000 +0000
-+++ openjdk-ecj/jdk/make/Makefile	2012-01-18 21:43:04.150185964 +0000
+--- openjdk-ecj.orig/jdk/make/Makefile	2013-10-04 15:55:30.000000000 +0100
++++ openjdk-ecj/jdk/make/Makefile	2013-10-09 12:46:11.374453549 +0100
 @@ -247,7 +247,7 @@
  
  all build:: sanity-all post-sanity-all
@@ -579,9 +579,9 @@ diff -Nru openjdk-ecj.orig/jdk/make/Makefile openjdk-ecj/jdk/make/Makefile
  	$(SUBDIRS-loop)
  
 diff -Nru openjdk-ecj.orig/jdk/make/sun/awt/Makefile openjdk-ecj/jdk/make/sun/awt/Makefile
---- openjdk-ecj.orig/jdk/make/sun/awt/Makefile	2012-01-18 16:50:52.313024135 +0000
-+++ openjdk-ecj/jdk/make/sun/awt/Makefile	2012-01-18 21:43:04.150185964 +0000
-@@ -438,10 +438,9 @@
+--- openjdk-ecj.orig/jdk/make/sun/awt/Makefile	2013-10-09 12:43:59.532427253 +0100
++++ openjdk-ecj/jdk/make/sun/awt/Makefile	2013-10-09 12:46:11.374453549 +0100
+@@ -434,10 +434,9 @@
  COMPILEFONTCONFIG_JARFILE = $(BUILDTOOLJARDIR)/compilefontconfig.jar
  
  $(LIBDIR)/%.bfc: $(FONTCONFIGS_SRC)/$(FONTCONFIGS_SRC_PREFIX)%.properties \
@@ -596,8 +596,8 @@ diff -Nru openjdk-ecj.orig/jdk/make/sun/awt/Makefile openjdk-ecj/jdk/make/sun/aw
  
  fontconfigs.clean :
 diff -Nru openjdk-ecj.orig/jdk/make/sun/xawt/Makefile openjdk-ecj/jdk/make/sun/xawt/Makefile
---- openjdk-ecj.orig/jdk/make/sun/xawt/Makefile	2012-01-18 16:51:03.393203105 +0000
-+++ openjdk-ecj/jdk/make/sun/xawt/Makefile	2012-01-18 21:43:04.150185964 +0000
+--- openjdk-ecj.orig/jdk/make/sun/xawt/Makefile	2013-10-09 12:44:01.268453936 +0100
++++ openjdk-ecj/jdk/make/sun/xawt/Makefile	2013-10-09 12:46:11.374453549 +0100
 @@ -301,11 +301,7 @@
  
  TEMPDIR_CLASSES = $(TEMPDIR)/classes
@@ -638,8 +638,8 @@ diff -Nru openjdk-ecj.orig/jdk/make/sun/xawt/Makefile openjdk-ecj/jdk/make/sun/x
  	done
  	$(TOUCH) $@
 diff -Nru openjdk-ecj.orig/jdk/make/tools/src/build/tools/generatecharacter/GenerateCharacter.java openjdk-ecj/jdk/make/tools/src/build/tools/generatecharacter/GenerateCharacter.java
---- openjdk-ecj.orig/jdk/make/tools/src/build/tools/generatecharacter/GenerateCharacter.java	2011-01-07 21:32:51.000000000 +0000
-+++ openjdk-ecj/jdk/make/tools/src/build/tools/generatecharacter/GenerateCharacter.java	2012-01-18 21:43:04.150185964 +0000
+--- openjdk-ecj.orig/jdk/make/tools/src/build/tools/generatecharacter/GenerateCharacter.java	2013-10-04 15:55:31.000000000 +0100
++++ openjdk-ecj/jdk/make/tools/src/build/tools/generatecharacter/GenerateCharacter.java	2013-10-09 12:46:11.374453549 +0100
 @@ -647,9 +647,6 @@
              throws FileNotFoundException, IOException {
          BufferedReader in = new BufferedReader(new FileReader(theTemplateFileName));
@@ -659,8 +659,8 @@ diff -Nru openjdk-ecj.orig/jdk/make/tools/src/build/tools/generatecharacter/Gene
                  if (plane == 0 && bLatin1 == false) {
              genCaseMapTableDeclaration(result);
 diff -Nru openjdk-ecj.orig/langtools/make/build.properties openjdk-ecj/langtools/make/build.properties
---- openjdk-ecj.orig/langtools/make/build.properties	2010-05-26 09:33:27.000000000 +0100
-+++ openjdk-ecj/langtools/make/build.properties	2012-01-18 21:43:04.150185964 +0000
+--- openjdk-ecj.orig/langtools/make/build.properties	2013-10-04 15:55:57.000000000 +0100
++++ openjdk-ecj/langtools/make/build.properties	2013-10-09 12:46:11.374453549 +0100
 @@ -68,7 +68,7 @@
  # set the following to -version to verify the versions of javac being used
  javac.version.opt =
