@@ -1,15 +1,17 @@
 # HG changeset patch
 # User andrew
 # Date 1372305047 18000
-# Node ID 8c2f91c4c4b80f8725786a3006ee6043d765af72
-# Parent  b9dc2f2b4c4daafb23b0cf76c71d88d8b2623fe0
+#      Wed Jun 26 22:50:47 2013 -0500
+# Node ID 8733761ca20bb4e46405e274c514bda0e0616a21
+# Parent  a7048970934a1425d5486e6acd0b07558be038c4
 8013380: Removal of stack walk to find resource bundle breaks Glassfish startup
 Summary: Use caller's classloader to load resource as an alternative to thread context classloader and system classloader
 Reviewed-by: mchung, alanb
 
---- openjdk/jdk/src/share/classes/java/util/logging/LogManager.java
-+++ openjdk/jdk/src/share/classes/java/util/logging/LogManager.java
-@@ -389,11 +389,11 @@
+diff -r a7048970934a -r 8733761ca20b src/share/classes/java/util/logging/LogManager.java
+--- openjdk/jdk/src/share/classes/java/util/logging/LogManager.java	Tue Apr 16 16:34:14 2013 -0400
++++ openjdk/jdk/src/share/classes/java/util/logging/LogManager.java	Wed Jun 26 22:50:47 2013 -0500
+@@ -377,11 +377,11 @@
      // add a new Logger or return the one that has been added previously
      // as a LogManager subclass may override the addLogger, getLogger,
      // readConfiguration, and other methods.
@@ -23,7 +25,7 @@ Reviewed-by: mchung, alanb
              do {
                  if (addLogger(newLogger)) {
                      // We successfully added the new Logger that we
-@@ -475,7 +475,7 @@
+@@ -465,7 +465,7 @@
          Logger demandLogger(String name, String resourceBundleName) {
              // a LogManager subclass may have its own implementation to add and
              // get a Logger.  So delegate to the LogManager to do the work.
@@ -32,9 +34,10 @@ Reviewed-by: mchung, alanb
          }
  
          synchronized Logger findLogger(String name) {
---- openjdk/jdk/src/share/classes/java/util/logging/Logger.java
-+++ openjdk/jdk/src/share/classes/java/util/logging/Logger.java
-@@ -190,6 +190,7 @@
+diff -r a7048970934a -r 8733761ca20b src/share/classes/java/util/logging/Logger.java
+--- openjdk/jdk/src/share/classes/java/util/logging/Logger.java	Tue Apr 16 16:34:14 2013 -0400
++++ openjdk/jdk/src/share/classes/java/util/logging/Logger.java	Wed Jun 26 22:50:47 2013 -0500
+@@ -189,6 +189,7 @@
      private ArrayList<LogManager.LoggerWeakRef> kids;   // WeakReferences to loggers that have us as parent
      private Level levelObject;
      private volatile int levelValue;  // current effective level value
@@ -42,7 +45,7 @@ Reviewed-by: mchung, alanb
  
      /**
       * GLOBAL_LOGGER_NAME is a name for the global logger.
-@@ -250,15 +251,31 @@
+@@ -244,15 +245,31 @@
       *             no corresponding resource can be found.
       */
      protected Logger(String name, String resourceBundleName) {
@@ -78,7 +81,7 @@ Reviewed-by: mchung, alanb
      // This constructor is used only to create the global Logger.
      // It is needed to break a cyclic dependence between the LogManager
      // and Logger static initializers causing deadlocks.
-@@ -312,7 +329,9 @@
+@@ -306,7 +323,9 @@
                  return manager.demandSystemLogger(name, resourceBundleName);
              }
          }
@@ -89,8 +92,8 @@ Reviewed-by: mchung, alanb
      }
  
      /**
-@@ -405,11 +424,24 @@
-     // adding a new Logger object is handled by LogManager.addLogger().
+@@ -382,11 +401,24 @@
+      */
      @CallerSensitive
      public static synchronized Logger getLogger(String name, String resourceBundleName) {
 -        Logger result = demandLogger(name, resourceBundleName, Reflection.getCallerClass());
@@ -116,9 +119,10 @@ Reviewed-by: mchung, alanb
              throw new IllegalArgumentException(result.resourceBundleName +
                                  " != " + resourceBundleName);
          }
-@@ -479,10 +511,12 @@
+@@ -441,11 +473,13 @@
+      * @return a newly created private Logger
       * @throws MissingResourceException if the named ResourceBundle cannot be found.
-      */ 
+      */
 +    @CallerSensitive
      public static synchronized Logger getAnonymousLogger(String resourceBundleName) {
          LogManager manager = LogManager.getLogManager();
@@ -130,7 +134,7 @@ Reviewed-by: mchung, alanb
          result.anonymous = true;
          Logger root = manager.getLogger("");
          result.doSetParent(root);
-@@ -499,7 +533,7 @@
+@@ -461,7 +495,7 @@
       * @return localization bundle (may be null)
       */
      public ResourceBundle getResourceBundle() {
@@ -139,7 +143,7 @@ Reviewed-by: mchung, alanb
      }
  
      /**
-@@ -581,7 +615,7 @@
+@@ -548,7 +582,7 @@
          String ebname = getEffectiveResourceBundleName();
          if (ebname != null && !ebname.equals(SYSTEM_LOGGER_RB_NAME)) {
              lr.setResourceBundleName(ebname);
@@ -148,7 +152,7 @@ Reviewed-by: mchung, alanb
          }
          log(lr);
      }
-@@ -798,7 +832,7 @@
+@@ -765,7 +799,7 @@
          lr.setLoggerName(name);
          if (rbname != null) {
              lr.setResourceBundleName(rbname);
@@ -157,7 +161,7 @@ Reviewed-by: mchung, alanb
          }
          log(lr);
      }
-@@ -822,7 +856,6 @@
+@@ -789,7 +823,6 @@
       *                         can be null
       * @param   msg     The string message (or a key in the message catalog)
       */
@@ -165,7 +169,7 @@ Reviewed-by: mchung, alanb
      public void logrb(Level level, String sourceClass, String sourceMethod,
                                  String bundleName, String msg) {
          if (level.intValue() < levelValue || levelValue == offValue) {
-@@ -1347,9 +1380,18 @@
+@@ -1323,9 +1356,18 @@
       * there is no suitable previous cached value.
       *
       * @param name the ResourceBundle to locate
@@ -185,7 +189,7 @@ Reviewed-by: mchung, alanb
          // Return a null bundle for a null name.
          if (name == null) {
              return null;
-@@ -1382,22 +1424,52 @@
+@@ -1358,22 +1400,52 @@
              catalogLocale = currentLocale;
              return catalog;
          } catch (MissingResourceException ex) {
@@ -243,8 +247,9 @@ Reviewed-by: mchung, alanb
          }
          resourceBundleName = name;
      }
---- openjdk/jdk/test/java/util/logging/bundlesearch/IndirectlyLoadABundle.java
-+++ openjdk/jdk/test/java/util/logging/bundlesearch/IndirectlyLoadABundle.java
+diff -r a7048970934a -r 8733761ca20b test/java/util/logging/bundlesearch/IndirectlyLoadABundle.java
+--- openjdk/jdk/test/java/util/logging/bundlesearch/IndirectlyLoadABundle.java	Tue Apr 16 16:34:14 2013 -0400
++++ openjdk/jdk/test/java/util/logging/bundlesearch/IndirectlyLoadABundle.java	Wed Jun 26 22:50:47 2013 -0500
 @@ -21,43 +21,28 @@
   * questions.
   */
@@ -412,10 +417,9 @@ Reviewed-by: mchung, alanb
          return ResourceBundleSearchTest.isOnClassPath(rbName, cl);
      }
  }
-rename from test/java/util/logging/bundlesearch/LoadItUp.java
-rename to test/java/util/logging/bundlesearch/LoadItUp1.java
---- openjdk/jdk/test/java/util/logging/bundlesearch/LoadItUp.java
-+++ openjdk/jdk/test/java/util/logging/bundlesearch/LoadItUp1.java
+diff -r a7048970934a -r 8733761ca20b test/java/util/logging/bundlesearch/LoadItUp.java
+--- openjdk/jdk/test/java/util/logging/bundlesearch/LoadItUp.java	Tue Apr 16 16:34:14 2013 -0400
++++ openjdk/jdk/test/java/util/logging/bundlesearch/LoadItUp.java	Wed Jun 26 22:50:47 2013 -0500
 @@ -20,43 +20,30 @@
   * or visit www.oracle.com if you need additional information or have any
   * questions.
@@ -472,9 +476,9 @@ rename to test/java/util/logging/bundlesearch/LoadItUp1.java
 +        return Logger.getLogger(loggerName, bundleName);
      }
  }
-new file mode 100644
---- /dev/null
-+++ openjdk/jdk/test/java/util/logging/bundlesearch/LoadItUp2.java
+diff -r a7048970934a -r 8733761ca20b test/java/util/logging/bundlesearch/LoadItUp2.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/java/util/logging/bundlesearch/LoadItUp2.java	Wed Jun 26 22:50:47 2013 -0500
 @@ -0,0 +1,62 @@
 +/*
 + * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
@@ -538,9 +542,9 @@ new file mode 100644
 +        return true;
 +    }
 +}
-new file mode 100644
---- /dev/null
-+++ openjdk/jdk/test/java/util/logging/bundlesearch/LoadItUp2Invoker.java
+diff -r a7048970934a -r 8733761ca20b test/java/util/logging/bundlesearch/LoadItUp2Invoker.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/java/util/logging/bundlesearch/LoadItUp2Invoker.java	Wed Jun 26 22:50:47 2013 -0500
 @@ -0,0 +1,60 @@
 +/*
 + * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
@@ -602,8 +606,9 @@ new file mode 100644
 +        }
 +    }
 +}
---- openjdk/jdk/test/java/util/logging/bundlesearch/ResourceBundleSearchTest.java
-+++ openjdk/jdk/test/java/util/logging/bundlesearch/ResourceBundleSearchTest.java
+diff -r a7048970934a -r 8733761ca20b test/java/util/logging/bundlesearch/ResourceBundleSearchTest.java
+--- openjdk/jdk/test/java/util/logging/bundlesearch/ResourceBundleSearchTest.java	Tue Apr 16 16:34:14 2013 -0400
++++ openjdk/jdk/test/java/util/logging/bundlesearch/ResourceBundleSearchTest.java	Wed Jun 26 22:50:47 2013 -0500
 @@ -23,15 +23,15 @@
  
  /*
@@ -810,9 +815,9 @@ new file mode 100644
                      foundBundle = false;
                  }
              } catch (Throwable e) {
-new file mode 100644
---- /dev/null
-+++ openjdk/jdk/test/java/util/logging/bundlesearch/TwiceIndirectlyLoadABundle.java
+diff -r a7048970934a -r 8733761ca20b test/java/util/logging/bundlesearch/TwiceIndirectlyLoadABundle.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/java/util/logging/bundlesearch/TwiceIndirectlyLoadABundle.java	Wed Jun 26 22:50:47 2013 -0500
 @@ -0,0 +1,91 @@
 +/*
 + * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
@@ -905,9 +910,9 @@ new file mode 100644
 +        }
 +    }
 +}
-new file mode 100644
---- /dev/null
-+++ openjdk/jdk/test/java/util/logging/bundlesearch/resources/CallerSearchableResource_en.properties
+diff -r a7048970934a -r 8733761ca20b test/java/util/logging/bundlesearch/resources/CallerSearchableResource_en.properties
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/java/util/logging/bundlesearch/resources/CallerSearchableResource_en.properties	Wed Jun 26 22:50:47 2013 -0500
 @@ -0,0 +1,25 @@
 +# 
 +# Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.

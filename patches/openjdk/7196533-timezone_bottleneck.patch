@@ -1,6 +1,15 @@
-diff -Nru openjdk.orig/jdk/src/share/classes/java/util/TimeZone.java openjdk/jdk/src/share/classes/java/util/TimeZone.java
---- openjdk.orig/jdk/src/share/classes/java/util/TimeZone.java	2012-10-26 19:25:53.000000000 +0100
-+++ openjdk/jdk/src/share/classes/java/util/TimeZone.java	2013-08-05 14:46:18.022264343 +0100
+# HG changeset patch
+# User coffeys
+# Date 1381845864 -3600
+#      Tue Oct 15 15:04:24 2013 +0100
+# Node ID 5d81a5f8a3791316367990b35b1ad5faef42d773
+# Parent  77af6e10b333347cd882027ab1bb9a3366278096
+7196533: TimeZone.getDefault() slow due to synchronization bottleneck
+Reviewed-by: okutsu, omajid
+
+diff -r 77af6e10b333 -r 5d81a5f8a379 src/share/classes/java/util/TimeZone.java
+--- openjdk/jdk/src/share/classes/java/util/TimeZone.java	Fri Oct 04 12:22:34 2013 -0400
++++ openjdk/jdk/src/share/classes/java/util/TimeZone.java	Tue Oct 15 15:04:24 2013 +0100
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1996, 2011, Oracle and/or its affiliates. All rights reserved.

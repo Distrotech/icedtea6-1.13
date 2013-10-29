@@ -1,14 +1,16 @@
 # HG changeset patch
 # User jgish
 # Date 1366144454 14400
-# Node ID b9dc2f2b4c4daafb23b0cf76c71d88d8b2623fe0
-# Parent  108fe5a882a7bf5af5b38e963cef2729b41fa26e
+#      Tue Apr 16 16:34:14 2013 -0400
+# Node ID a7048970934a1425d5486e6acd0b07558be038c4
+# Parent  ed410e3d08fe7792e6c08e411580564d2562c03e
 8011990: TEST_BUG: java/util/logging/bundlesearch/ResourceBundleSearchTest.java fails on Windows
 Summary: Fix URL to reliably work on all platforms
 Reviewed-by: duke
 
---- openjdk/jdk/test/java/util/logging/bundlesearch/IndirectlyLoadABundle.java
-+++ openjdk/jdk/test/java/util/logging/bundlesearch/IndirectlyLoadABundle.java
+diff -r ed410e3d08fe -r a7048970934a test/java/util/logging/bundlesearch/IndirectlyLoadABundle.java
+--- openjdk/jdk/test/java/util/logging/bundlesearch/IndirectlyLoadABundle.java	Fri Apr 19 16:50:10 2013 -0700
++++ openjdk/jdk/test/java/util/logging/bundlesearch/IndirectlyLoadABundle.java	Tue Apr 16 16:34:14 2013 -0400
 @@ -21,6 +21,7 @@
   * questions.
   */
@@ -33,8 +35,9 @@ Reviewed-by: duke
          System.out.println("INFO: urls[0] = " + urls[0]);
          System.out.println("INFO: urls[1] = " + urls[1]);
  
---- openjdk/jdk/test/java/util/logging/bundlesearch/ResourceBundleSearchTest.java
-+++ openjdk/jdk/test/java/util/logging/bundlesearch/ResourceBundleSearchTest.java
+diff -r ed410e3d08fe -r a7048970934a test/java/util/logging/bundlesearch/ResourceBundleSearchTest.java
+--- openjdk/jdk/test/java/util/logging/bundlesearch/ResourceBundleSearchTest.java	Fri Apr 19 16:50:10 2013 -0700
++++ openjdk/jdk/test/java/util/logging/bundlesearch/ResourceBundleSearchTest.java	Tue Apr 16 16:34:14 2013 -0400
 @@ -29,6 +29,7 @@
   * @build  ResourceBundleSearchTest IndirectlyLoadABundle LoadItUp
   * @run main ResourceBundleSearchTest

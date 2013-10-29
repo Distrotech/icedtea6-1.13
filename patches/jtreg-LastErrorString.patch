@@ -1,16 +1,15 @@
-diff -Nru IOException/LastErrorString.java /home/brq/ptisnovs/IOException/LastErrorString.java
---- openjdk-old/jdk/test/java/io/IOException/LastErrorString.java	2011-01-21 00:54:47.000000000 +0100
-+++ openjdk/jdk/test/java/io/IOException/LastErrorString.java	2011-02-21 15:34:58.972481000 +0100
-@@ -21,9 +21,13 @@
-  * questions.
+diff -Nru openjdk.orig/jdk/test/java/io/IOException/LastErrorString.java openjdk/jdk/test/java/io/IOException/LastErrorString.java
+--- openjdk.orig/jdk/test/java/io/IOException/LastErrorString.java	2013-10-29 09:39:12.978000311 +0000
++++ openjdk/jdk/test/java/io/IOException/LastErrorString.java	2013-10-29 09:41:26.024030445 +0000
+@@ -22,9 +22,12 @@
   */
  
--/* @test
--   @bug 4167937
+ /* @test
+-   @bug 4167937 8023964
+-   @ignore Test truncates system files when run as root, see 7042603
 -   @summary Test code paths that use the JVM_LastErrorString procedure
-+/*
-+ * @test
-+ * @bug 4167937
++ * @bug 4167937 8023964
++ * @ignore Test truncates system files when run as root, see 7042603
 + * @summary Test code paths that use the JVM_LastErrorString procedure
 + *
 + * @compile LastErrorString.java
@@ -18,7 +17,7 @@ diff -Nru IOException/LastErrorString.java /home/brq/ptisnovs/IOException/LastEr
   */
  
  import java.io.IOException;
-@@ -37,33 +41,11 @@
+@@ -38,33 +41,11 @@
  
      static String UNWRITEABLE_DIR;
      static String UNREADABLE_FILE;
@@ -53,7 +52,7 @@ diff -Nru IOException/LastErrorString.java /home/brq/ptisnovs/IOException/LastEr
      static abstract class Test {
  
          String name;
-@@ -197,7 +179,7 @@
+@@ -198,7 +179,7 @@
  
          new Test("FileOutputStream") {
              public void run() throws IOException {
@@ -62,7 +61,7 @@ diff -Nru IOException/LastErrorString.java /home/brq/ptisnovs/IOException/LastEr
              }}.go();
  
          new ClosedFOSTest("write()") {
-@@ -257,8 +239,29 @@
+@@ -258,8 +239,29 @@
  
      }
  
@@ -92,9 +91,9 @@ diff -Nru IOException/LastErrorString.java /home/brq/ptisnovs/IOException/LastEr
          go();
      }
  
-diff -Nru IOException/LastErrorString.sh /home/brq/ptisnovs/IOException/LastErrorString.sh
---- /dev/null	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/test/java/io/IOException/LastErrorString.sh	2011-02-21 15:34:58.972481000 +0100
+diff -Nru openjdk.orig/jdk/test/java/io/IOException/LastErrorString.sh openjdk/jdk/test/java/io/IOException/LastErrorString.sh
+--- openjdk.orig/jdk/test/java/io/IOException/LastErrorString.sh	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/jdk/test/java/io/IOException/LastErrorString.sh	2013-10-29 09:40:29.223163741 +0000
 @@ -0,0 +1,103 @@
 +#!/bin/sh
 +

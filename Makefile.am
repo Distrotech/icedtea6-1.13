@@ -281,7 +281,109 @@ ICEDTEA_FSG_PATCHES =
 DROP_PATCHES =
 
 SECURITY_PATCHES = \
-	patches/security/20120830/7182135-impossible_to_use_some_editors_directly.patch
+	patches/security/20120830/7182135-impossible_to_use_some_editors_directly.patch \
+	patches/openjdk/8017196-ensure_proxies_are_handled_appropriately.patch \
+	patches/openjdk/8011157-improve_corba_portability.patch \
+	patches/openjdk/8022940-enhance_corba_translations.patch \
+	patches/openjdk/8013503-improve_stream_factories.patch \
+	patches/openjdk/8012425-transform_transformfactory.patch \
+	patches/openjdk/8017298-better_xml_support.patch \
+	patches/openjdk/8014530-better_dsp.patch \
+	patches/openjdk/8021366-jaxp_test_fix-01.patch \
+	patches/openjdk/8021933-jaxp_test_fix-02.patch \
+	patches/openjdk/8022682-supporting_xom.patch \
+	patches/openjdk/8015978-incorrect_transformation.patch \
+	patches/openjdk/oj6-20-merge.patch \
+	patches/openjdk/8024914-swapped_usage.patch \
+	patches/openjdk/8017505-better_client_service.patch \
+	patches/openjdk/8015614-update_build.patch \
+	patches/openjdk/8016256-finalization_final.patch \
+	patches/openjdk/8023683-enhance_class_file_parsing.patch \
+	patches/openjdk/8023457-tracing_mutex.patch \
+	patches/openjdk/8020943-memory_leak.patch \
+	patches/openjdk/8023478-hs_crash.patch \
+	patches/openjdk/4075303-javap_update.patch \
+	patches/openjdk/6819246-javap_instruction_decoding.patch \
+	patches/openjdk/6715767-javap_crash.patch \
+	patches/openjdk/6841420-classfile_methods.patch \
+	patches/openjdk/6841419-classfile_iterator.patch \
+	patches/openjdk/4111861-static_fields.patch \
+	patches/openjdk/4884240-javap_additional_option.patch \
+	patches/openjdk/6852856-javap_subclasses.patch \
+	patches/openjdk/6867671-javap_whitespace.patch \
+	patches/openjdk/6868539-constant_pool_tags.patch \
+	patches/openjdk/4501661-disallow_mixing.patch \
+	patches/openjdk/6824493-experimental.patch \
+	patches/openjdk/6843013-missing_experimental.patch \
+	patches/openjdk/6902264-fix_indentation.patch \
+	patches/openjdk/8016675-robust_javadoc.patch \
+	patches/openjdk/8016653-ignoreable_characters.patch \
+	patches/openjdk/7196533-timezone_bottleneck.patch \
+	patches/openjdk/8006900-new_date_time.patch \
+	patches/openjdk/8008589-better_mbean_permission_validation.patch \
+	patches/openjdk/8011071-better_crypto_provider_handling.patch \
+	patches/openjdk/8011081-improve_jhat.patch \
+	patches/openjdk/8011157-improve_corba_portability-jdk.patch \
+	patches/openjdk/8012071-better_bean_building.patch \
+	patches/openjdk/8012147-improve_tool.patch \
+	patches/openjdk/8012277-improve_dataflavour.patch \
+	patches/openjdk/8013506-better_pack200.patch \
+	patches/openjdk/8013510-augment_image_writing.patch \
+	patches/openjdk/8013514-improve_cmap_stability.patch \
+	patches/openjdk/8013744-better_tabling.patch \
+	patches/openjdk/8014085-better_serialization.patch \
+	patches/openjdk/8014093-improve_image_parsing.patch \
+	patches/openjdk/8014102-improve_image_conversion.patch \
+	patches/openjdk/8014341-better_kerberos_service.patch \
+	patches/openjdk/8014534-better_profiling.patch \
+	patches/openjdk/8014987-augment_serialization.patch \
+	patches/openjdk/8015731-auth_improvements.patch \
+	patches/openjdk/8015743-address_internet_addresses.patch \
+	patches/openjdk/8016357-update_hs_diagnostic_class.patch \
+	patches/openjdk/8002070-remove_logger_stack_search.patch \
+	patches/openjdk/6708729-javap_makefile_update.patch \
+	patches/openjdk/8010118-caller_sensitive.patch \
+	patches/openjdk/oj6-19-fix_8010118_test_cases.patch \
+	patches/openjdk/8010727-empty_logger_name.patch \
+	patches/openjdk/8010939-logmanager_deadlock.patch \
+	patches/openjdk/8011990-logger_test_urls.patch \
+	patches/openjdk/8013380-logger_stack_walk_glassfish.patch \
+	patches/openjdk/8014745-logger_stack_walk_switch.patch \
+	patches/openjdk/8012243-serial_regression.patch \
+	patches/openjdk/8014718-remove_logging_suntoolkit.patch \
+	patches/openjdk/8011139-revise_checking_getenclosingclass.patch \
+	patches/openjdk/8017196-ensure_proxies_are_handled_appropriately-jdk.patch \
+	patches/openjdk/8017287-better_resource_disposal.patch \
+	patches/openjdk/8017291-cast_proxies_aside.patch \
+	patches/openjdk/7146431-java.security_files.patch \
+	patches/openjdk/8006882-jmockit.patch \
+	patches/openjdk/8000450-restrict_access.patch \
+	patches/openjdk/8019979-better_access_test.patch \
+	patches/openjdk/8004188-rename_java.security.patch \
+	patches/openjdk/8017566-backout_part_of_8000450.patch \
+	patches/openjdk/8017300-improve_interface_implementation.patch \
+	patches/openjdk/8019292-better_attribute_value_exceptions.patch \
+	patches/openjdk/8019617-better_view_of_objects.patch \
+	patches/openjdk/8012617-arrayindexoutofbounds_linebreakmeasurer.patch \
+	patches/openjdk/8020293-jvm_crash.patch \
+	patches/openjdk/8013739-better_ldap_resource_management.patch \
+	patches/openjdk/8014349-getdeclaredclass_fix.patch \
+	patches/openjdk/6954275-big_xml_signatures.patch \
+	patches/openjdk/8021290-signature_validation.patch \
+	patches/openjdk/8012453-runtime.exec.patch \
+	patches/openjdk/8015965-typo_in_property_name.patch \
+	patches/openjdk/8015144-performance_regression.patch \
+	patches/openjdk/8019969-inet6_test_case_fix.patch \
+	patches/openjdk/8019584-invalid_notification_fix.patch \
+	patches/openjdk/8021577-bean_serialization_fix.patch \
+	patches/openjdk/8021969-jnlp_load_failure.patch \
+	patches/openjdk/8021355-splashscreen_regression.patch \
+	patches/openjdk/8022661-writeobject_flush.patch \
+	patches/openjdk/8023964-ignore_test.patch \
+	patches/openjdk/8003992-embedded_nulls.patch \
+	patches/openjdk/8013827-createtempfile_hang.patch \
+	patches/openjdk/8025128-createtempfile_absolute_prefix.patch \
+	patches/openjdk/oj6-21-overrides.patch
 
 SPECIAL_SECURITY_PATCH_1 = patches/security/20120214/7112642.patch
 SPECIAL_SECURITY_PATCH_2 = patches/security/20130618/8009071-improve_shape_handling.patch
@@ -515,7 +617,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/8006536-remove_trailing_slashes.patch \
 	patches/openjdk/8009165-inappropriate_method_in_reflectutil.patch \
 	patches/openjdk/8009217-fix_test_compile.patch \
-	patches/openjdk/8009463-space_and_final_backslash.patch \
 	patches/openjdk/8009610-blacklist_malware_certificate.patch \
 	patches/openjdk/8010213-set_socketoptions_windows.patch \
 	patches/openjdk/8010714-xml_dsig_retrievalmethod.patch \
@@ -523,25 +624,12 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/8011313-OCSP_timeout_wrong_value.patch \
 	patches/openjdk/8011992-MlibOpsTest_failed.patch \
 	patches/openjdk/8012112-MlibOpsTest_fails.patch \
-	patches/openjdk/8012617-arrayindexoutofbounds_linebreakmeasurer.patch \
 	patches/openjdk/8012933-appcontext_disposed_too_early.patch \
 	patches/openjdk/8013196-timezone_getdefault_throws_exception.patch \
 	patches/openjdk/8014205-blank_swing_dialogs_windows.patch \
 	patches/openjdk/8014427-raster_regression.patch \
 	patches/openjdk/8014676-javadebugger_space_in_paths.patch \
 	patches/openjdk/8014968-OCSP_timeout_default.patch \
-	patches/openjdk/8002070-remove_logger_stack_search.patch \
-	patches/openjdk/8002070-remove_logger_stack_search_2.patch \
-	patches/openjdk/8010118-caller_sensitive.patch \
-	patches/openjdk/8010727-empty_logger_name.patch \
-	patches/openjdk/8010939-logmanager_deadlock.patch \
-	patches/openjdk/8011990-logger_test_urls.patch \
-	patches/openjdk/8013380-logger_stack_walk_glassfish.patch \
-	patches/openjdk/8013380-handle_renames.patch \
-	patches/openjdk/8014745-logger_stack_walk_switch.patch \
-	patches/openjdk/8012243-serial_regression.patch \
-	patches/openjdk/8014718-remove_logging_suntoolkit.patch \
-	patches/openjdk/8011139-revise_checking_getenclosingclass.patch \
 	patches/openjdk/6541350-tz_display_names_l10n.patch \
 	patches/openjdk/6821191-tz_display_names_l10n.patch \
 	patches/openjdk/6977550-tzdata2010l.patch \
@@ -558,7 +646,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7198570-tzdata2012f.patch \
 	patches/openjdk/8002225-tzdata2012i.patch \
 	patches/openjdk/8009987-tzdata2013b.patch \
-	patches/openjdk/7196533-timezone_bottleneck.patch \
 	patches/openjdk/6636370-appcontext_simplification.patch \
 	patches/openjdk/6636331-appcontext_concurrentmodificationexception.patch \
 	patches/sparc-ptracefix.patch \

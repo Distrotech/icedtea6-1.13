@@ -1,14 +1,16 @@
 # HG changeset patch
 # User prr
-# Date 1366951061 25200
-# Node ID 20d3d11e8d9a2eb2a3324eae651e0f1549f95f86
-# Parent  80383749fc726e4ff57a1fd99d15d7ab9f0d28c6
+# Date 1382993769 0
+#      Mon Oct 28 20:56:09 2013 +0000
+# Node ID 150e0c3e95ce6869f8e7b42c6d8683817433e124
+# Parent  9cfb9105241489a5fbc3fcfdea15a6aee15b2cfc
 8012617: ArrayIndexOutOfBoundsException with some fonts using LineBreakMeasurer
-Reviewed-by: bae, srl
+Reviewed-by: bae, srl, omajid
 
---- openjdk/jdk/src/share/classes/sun/font/ExtendedTextSourceLabel.java
-+++ openjdk/jdk/src/share/classes/sun/font/ExtendedTextSourceLabel.java
-@@ -247,6 +247,10 @@
+diff -r 9cfb91052414 -r 150e0c3e95ce src/share/classes/sun/font/ExtendedTextSourceLabel.java
+--- openjdk/jdk/src/share/classes/sun/font/ExtendedTextSourceLabel.java	Tue Jul 16 21:00:34 2013 +0400
++++ openjdk/jdk/src/share/classes/sun/font/ExtendedTextSourceLabel.java	Mon Oct 28 20:56:09 2013 +0000
+@@ -246,6 +246,10 @@
      float aw = 0f;
      float ah = cm.ascent + cm.descent;
  
@@ -19,7 +21,7 @@ Reviewed-by: bae, srl
      boolean lineIsLTR = (source.getLayoutFlags() & 0x8) == 0;
      int rn = info.length - numvals;
      if (lineIsLTR) {
-@@ -350,24 +354,42 @@
+@@ -349,24 +353,42 @@
  
    public float getCharX(int index) {
      validate(index);
@@ -66,7 +68,7 @@ Reviewed-by: bae, srl
          return new Rectangle2D.Float();
      }
      return new Rectangle2D.Float(
-@@ -463,7 +485,7 @@
+@@ -462,7 +484,7 @@
        if (cidx >= charinfo.length) {
            break; // layout bailed for some reason
        }
@@ -75,7 +77,7 @@ Reviewed-by: bae, srl
        width -= adv;
      }
  
-@@ -512,7 +534,13 @@
+@@ -511,7 +533,13 @@
        //    }
        //}
  
@@ -90,7 +92,7 @@ Reviewed-by: bae, srl
    }
  
    private final float[] getCharinfo() {
-@@ -604,6 +632,9 @@
+@@ -603,6 +631,9 @@
      */
  
      int numGlyphs = gv.getNumGlyphs();
@@ -100,9 +102,23 @@ Reviewed-by: bae, srl
      int[] indices = gv.getGlyphCharIndices(0, numGlyphs, null);
  
      boolean DEBUG = false;
---- openjdk/jdk/src/share/classes/sun/font/GlyphLayout.java
-+++ openjdk/jdk/src/share/classes/sun/font/GlyphLayout.java
-@@ -464,7 +464,12 @@
+diff -r 9cfb91052414 -r 150e0c3e95ce src/share/classes/sun/font/GlyphLayout.java
+--- openjdk/jdk/src/share/classes/sun/font/GlyphLayout.java	Tue Jul 16 21:00:34 2013 +0400
++++ openjdk/jdk/src/share/classes/sun/font/GlyphLayout.java	Mon Oct 28 20:56:09 2013 +0000
+@@ -76,9 +76,12 @@
+ import java.awt.geom.Point2D;
+ import java.util.ArrayList;
+ import java.util.concurrent.ConcurrentHashMap;
++import java.util.logging.Logger;
+ 
+ import static java.lang.Character.*;
+ 
++import sun.java2d.SunGraphicsEnvironment;
++
+ public final class GlyphLayout {
+     // data for glyph vector
+     private GVData _gvdata;
+@@ -461,7 +464,12 @@
                      break;
                  }
                  catch (IndexOutOfBoundsException e) {
@@ -116,7 +132,7 @@ Reviewed-by: bae, srl
                  }
              }
          }
-@@ -473,7 +478,15 @@
+@@ -470,7 +478,19 @@
          //            _gvdata.adjustPositions(txinfo.invdtx);
          //        }
  
@@ -127,14 +143,19 @@ Reviewed-by: bae, srl
 +        StandardGlyphVector gv;
 +        if (_gvdata._count < 0) {
 +            gv = new StandardGlyphVector(font, text, offset, count, frc);
++            if (SunGraphicsEnvironment.debugFonts) {
++               Logger.getLogger("sun.java2d").warning("OpenType layout failed on font: " +
++						      font);
++            }
 +        } else {
 +            gv = _gvdata.createGlyphVector(font, frc, result);
 +        }
          //        System.err.println("Layout returns: " + gv);
          return gv;
      }
---- openjdk/jdk/src/share/native/sun/font/layout/ContextualSubstSubtables.cpp
-+++ openjdk/jdk/src/share/native/sun/font/layout/ContextualSubstSubtables.cpp
+diff -r 9cfb91052414 -r 150e0c3e95ce src/share/native/sun/font/layout/ContextualSubstSubtables.cpp
+--- openjdk/jdk/src/share/native/sun/font/layout/ContextualSubstSubtables.cpp	Tue Jul 16 21:00:34 2013 +0400
++++ openjdk/jdk/src/share/native/sun/font/layout/ContextualSubstSubtables.cpp	Mon Oct 28 20:56:09 2013 +0000
 @@ -218,6 +218,9 @@
  
      LEGlyphID glyph = glyphIterator->getCurrGlyphID();
@@ -175,8 +196,9 @@ Reviewed-by: bae, srl
  
      if (coverageIndex >= 0) {
          const ClassDefinitionTable *backtrackClassDefinitionTable =
---- openjdk/jdk/src/share/native/sun/font/layout/CursiveAttachmentSubtables.cpp
-+++ openjdk/jdk/src/share/native/sun/font/layout/CursiveAttachmentSubtables.cpp
+diff -r 9cfb91052414 -r 150e0c3e95ce src/share/native/sun/font/layout/CursiveAttachmentSubtables.cpp
+--- openjdk/jdk/src/share/native/sun/font/layout/CursiveAttachmentSubtables.cpp	Tue Jul 16 21:00:34 2013 +0400
++++ openjdk/jdk/src/share/native/sun/font/layout/CursiveAttachmentSubtables.cpp	Mon Oct 28 20:56:09 2013 +0000
 @@ -45,7 +45,7 @@
      le_int32  coverageIndex = getGlyphCoverage(base, glyphID, success);
      le_uint16 eeCount       = SWAPW(entryExitCount);
@@ -186,8 +208,9 @@ Reviewed-by: bae, srl
          glyphIterator->setCursiveGlyph();
          return 0;
      }
---- openjdk/jdk/src/share/native/sun/font/layout/ExtensionSubtables.cpp
-+++ openjdk/jdk/src/share/native/sun/font/layout/ExtensionSubtables.cpp
+diff -r 9cfb91052414 -r 150e0c3e95ce src/share/native/sun/font/layout/ExtensionSubtables.cpp
+--- openjdk/jdk/src/share/native/sun/font/layout/ExtensionSubtables.cpp	Tue Jul 16 21:00:34 2013 +0400
++++ openjdk/jdk/src/share/native/sun/font/layout/ExtensionSubtables.cpp	Mon Oct 28 20:56:09 2013 +0000
 @@ -44,10 +44,10 @@
  #define READ_LONG(code) (le_uint32)((SWAPW(*(le_uint16*)&code) << 16) + SWAPW(*(((le_uint16*)&code) + 1)))
  
@@ -210,8 +233,9 @@ Reviewed-by: bae, srl
  
          if(LE_SUCCESS(success)) {
            return lookupProcessor->applySubtable(subtable, elt, glyphIterator, fontInstance, success);
---- openjdk/jdk/src/share/native/sun/font/layout/ExtensionSubtables.h
-+++ openjdk/jdk/src/share/native/sun/font/layout/ExtensionSubtables.h
+diff -r 9cfb91052414 -r 150e0c3e95ce src/share/native/sun/font/layout/ExtensionSubtables.h
+--- openjdk/jdk/src/share/native/sun/font/layout/ExtensionSubtables.h	Tue Jul 16 21:00:34 2013 +0400
++++ openjdk/jdk/src/share/native/sun/font/layout/ExtensionSubtables.h	Mon Oct 28 20:56:09 2013 +0000
 @@ -52,7 +52,8 @@
      le_uint16 extensionLookupType;
      le_uint32 extensionOffset;
@@ -222,8 +246,9 @@ Reviewed-by: bae, srl
                        GlyphIterator *glyphIterator, const LEFontInstance *fontInstance, LEErrorCode& success) const;
  };
  
---- openjdk/jdk/src/share/native/sun/font/layout/GlyphPosnLookupProc.cpp
-+++ openjdk/jdk/src/share/native/sun/font/layout/GlyphPosnLookupProc.cpp
+diff -r 9cfb91052414 -r 150e0c3e95ce src/share/native/sun/font/layout/GlyphPosnLookupProc.cpp
+--- openjdk/jdk/src/share/native/sun/font/layout/GlyphPosnLookupProc.cpp	Tue Jul 16 21:00:34 2013 +0400
++++ openjdk/jdk/src/share/native/sun/font/layout/GlyphPosnLookupProc.cpp	Mon Oct 28 20:56:09 2013 +0000
 @@ -168,7 +168,7 @@
      {
          LEReferenceTo<ExtensionSubtable> subtable(lookupSubtable, success);
@@ -233,8 +258,9 @@ Reviewed-by: bae, srl
          break;
      }
  
---- openjdk/jdk/src/share/native/sun/font/layout/GlyphSubstLookupProc.cpp
-+++ openjdk/jdk/src/share/native/sun/font/layout/GlyphSubstLookupProc.cpp
+diff -r 9cfb91052414 -r 150e0c3e95ce src/share/native/sun/font/layout/GlyphSubstLookupProc.cpp
+--- openjdk/jdk/src/share/native/sun/font/layout/GlyphSubstLookupProc.cpp	Tue Jul 16 21:00:34 2013 +0400
++++ openjdk/jdk/src/share/native/sun/font/layout/GlyphSubstLookupProc.cpp	Mon Oct 28 20:56:09 2013 +0000
 @@ -139,7 +139,7 @@
      {
          const LEReferenceTo<ExtensionSubtable> subtable(lookupSubtable, success);
@@ -244,8 +270,9 @@ Reviewed-by: bae, srl
          break;
      }
  
---- openjdk/jdk/src/share/native/sun/font/layout/LigatureSubstSubtables.cpp
-+++ openjdk/jdk/src/share/native/sun/font/layout/LigatureSubstSubtables.cpp
+diff -r 9cfb91052414 -r 150e0c3e95ce src/share/native/sun/font/layout/LigatureSubstSubtables.cpp
+--- openjdk/jdk/src/share/native/sun/font/layout/LigatureSubstSubtables.cpp	Tue Jul 16 21:00:34 2013 +0400
++++ openjdk/jdk/src/share/native/sun/font/layout/LigatureSubstSubtables.cpp	Mon Oct 28 20:56:09 2013 +0000
 @@ -45,6 +45,10 @@
      LEGlyphID glyph = glyphIterator->getCurrGlyphID();
      le_int32 coverageIndex = getGlyphCoverage(base, glyph, success);
@@ -257,8 +284,9 @@ Reviewed-by: bae, srl
      if (coverageIndex >= 0) {
          Offset ligSetTableOffset = SWAPW(ligSetTableOffsetArray[coverageIndex]);
          const LigatureSetTable *ligSetTable = (const LigatureSetTable *) ((char *) this + ligSetTableOffset);
---- openjdk/jdk/src/share/native/sun/font/layout/MarkToBasePosnSubtables.cpp
-+++ openjdk/jdk/src/share/native/sun/font/layout/MarkToBasePosnSubtables.cpp
+diff -r 9cfb91052414 -r 150e0c3e95ce src/share/native/sun/font/layout/MarkToBasePosnSubtables.cpp
+--- openjdk/jdk/src/share/native/sun/font/layout/MarkToBasePosnSubtables.cpp	Tue Jul 16 21:00:34 2013 +0400
++++ openjdk/jdk/src/share/native/sun/font/layout/MarkToBasePosnSubtables.cpp	Mon Oct 28 20:56:09 2013 +0000
 @@ -56,6 +56,10 @@
      LEGlyphID markGlyph = glyphIterator->getCurrGlyphID();
      le_int32 markCoverage = getGlyphCoverage(base, (LEGlyphID) markGlyph, success);
@@ -270,8 +298,9 @@ Reviewed-by: bae, srl
      if (markCoverage < 0) {
          // markGlyph isn't a covered mark glyph
          return 0;
---- openjdk/jdk/src/share/native/sun/font/layout/MarkToLigaturePosnSubtables.cpp
-+++ openjdk/jdk/src/share/native/sun/font/layout/MarkToLigaturePosnSubtables.cpp
+diff -r 9cfb91052414 -r 150e0c3e95ce src/share/native/sun/font/layout/MarkToLigaturePosnSubtables.cpp
+--- openjdk/jdk/src/share/native/sun/font/layout/MarkToLigaturePosnSubtables.cpp	Tue Jul 16 21:00:34 2013 +0400
++++ openjdk/jdk/src/share/native/sun/font/layout/MarkToLigaturePosnSubtables.cpp	Mon Oct 28 20:56:09 2013 +0000
 @@ -55,6 +55,10 @@
      LEGlyphID markGlyph = glyphIterator->getCurrGlyphID();
      le_int32 markCoverage = getGlyphCoverage(base, (LEGlyphID) markGlyph, success);
@@ -283,8 +312,9 @@ Reviewed-by: bae, srl
      if (markCoverage < 0) {
          // markGlyph isn't a covered mark glyph
          return 0;
---- openjdk/jdk/src/share/native/sun/font/layout/MarkToMarkPosnSubtables.cpp
-+++ openjdk/jdk/src/share/native/sun/font/layout/MarkToMarkPosnSubtables.cpp
+diff -r 9cfb91052414 -r 150e0c3e95ce src/share/native/sun/font/layout/MarkToMarkPosnSubtables.cpp
+--- openjdk/jdk/src/share/native/sun/font/layout/MarkToMarkPosnSubtables.cpp	Tue Jul 16 21:00:34 2013 +0400
++++ openjdk/jdk/src/share/native/sun/font/layout/MarkToMarkPosnSubtables.cpp	Mon Oct 28 20:56:09 2013 +0000
 @@ -56,6 +56,10 @@
      LEGlyphID markGlyph = glyphIterator->getCurrGlyphID();
      le_int32 markCoverage = getGlyphCoverage(base, (LEGlyphID) markGlyph, success);
@@ -296,8 +326,9 @@ Reviewed-by: bae, srl
      if (markCoverage < 0) {
          // markGlyph isn't a covered mark glyph
          return 0;
---- openjdk/jdk/src/share/native/sun/font/layout/MultipleSubstSubtables.cpp
-+++ openjdk/jdk/src/share/native/sun/font/layout/MultipleSubstSubtables.cpp
+diff -r 9cfb91052414 -r 150e0c3e95ce src/share/native/sun/font/layout/MultipleSubstSubtables.cpp
+--- openjdk/jdk/src/share/native/sun/font/layout/MultipleSubstSubtables.cpp	Tue Jul 16 21:00:34 2013 +0400
++++ openjdk/jdk/src/share/native/sun/font/layout/MultipleSubstSubtables.cpp	Mon Oct 28 20:56:09 2013 +0000
 @@ -61,6 +61,10 @@
      le_int32 coverageIndex = getGlyphCoverage(base, glyph, success);
      le_uint16 seqCount = SWAPW(sequenceCount);
@@ -309,8 +340,9 @@ Reviewed-by: bae, srl
      if (coverageIndex >= 0 && coverageIndex < seqCount) {
          Offset sequenceTableOffset = SWAPW(sequenceTableOffsetArray[coverageIndex]);
          const SequenceTable *sequenceTable = (const SequenceTable *) ((char *) this + sequenceTableOffset);
---- openjdk/jdk/src/share/native/sun/font/layout/PairPositioningSubtables.cpp
-+++ openjdk/jdk/src/share/native/sun/font/layout/PairPositioningSubtables.cpp
+diff -r 9cfb91052414 -r 150e0c3e95ce src/share/native/sun/font/layout/PairPositioningSubtables.cpp
+--- openjdk/jdk/src/share/native/sun/font/layout/PairPositioningSubtables.cpp	Tue Jul 16 21:00:34 2013 +0400
++++ openjdk/jdk/src/share/native/sun/font/layout/PairPositioningSubtables.cpp	Mon Oct 28 20:56:09 2013 +0000
 @@ -126,6 +126,11 @@
  {
      LEGlyphID firstGlyph = glyphIterator->getCurrGlyphID();
@@ -323,8 +355,9 @@ Reviewed-by: bae, srl
      GlyphIterator tempIterator(*glyphIterator);
  
      if (coverageIndex >= 0 && glyphIterator->next()) {
---- openjdk/jdk/src/share/native/sun/font/layout/SinglePositioningSubtables.cpp
-+++ openjdk/jdk/src/share/native/sun/font/layout/SinglePositioningSubtables.cpp
+diff -r 9cfb91052414 -r 150e0c3e95ce src/share/native/sun/font/layout/SinglePositioningSubtables.cpp
+--- openjdk/jdk/src/share/native/sun/font/layout/SinglePositioningSubtables.cpp	Tue Jul 16 21:00:34 2013 +0400
++++ openjdk/jdk/src/share/native/sun/font/layout/SinglePositioningSubtables.cpp	Mon Oct 28 20:56:09 2013 +0000
 @@ -70,6 +70,9 @@
  {
      LEGlyphID glyph = glyphIterator->getCurrGlyphID();
@@ -345,8 +378,9 @@ Reviewed-by: bae, srl
  
      if (coverageIndex >= 0) {
          valueRecordArray[0].adjustPosition(coverageIndex, SWAPW(valueFormat), (const char *) this, *glyphIterator, fontInstance);
---- openjdk/jdk/src/share/native/sun/font/layout/SingleSubstitutionSubtables.cpp
-+++ openjdk/jdk/src/share/native/sun/font/layout/SingleSubstitutionSubtables.cpp
+diff -r 9cfb91052414 -r 150e0c3e95ce src/share/native/sun/font/layout/SingleSubstitutionSubtables.cpp
+--- openjdk/jdk/src/share/native/sun/font/layout/SingleSubstitutionSubtables.cpp	Tue Jul 16 21:00:34 2013 +0400
++++ openjdk/jdk/src/share/native/sun/font/layout/SingleSubstitutionSubtables.cpp	Mon Oct 28 20:56:09 2013 +0000
 @@ -69,6 +69,9 @@
  {
      LEGlyphID glyph = glyphIterator->getCurrGlyphID();
@@ -367,8 +401,9 @@ Reviewed-by: bae, srl
  
      if (coverageIndex >= 0) {
          TTGlyphID substitute = SWAPW(substituteArray[coverageIndex]);
---- openjdk/jdk/src/share/native/sun/font/layout/SunLayoutEngine.cpp
-+++ openjdk/jdk/src/share/native/sun/font/layout/SunLayoutEngine.cpp
+diff -r 9cfb91052414 -r 150e0c3e95ce src/share/native/sun/font/layout/SunLayoutEngine.cpp
+--- openjdk/jdk/src/share/native/sun/font/layout/SunLayoutEngine.cpp	Tue Jul 16 21:00:34 2013 +0400
++++ openjdk/jdk/src/share/native/sun/font/layout/SunLayoutEngine.cpp	Mon Oct 28 20:56:09 2013 +0000
 @@ -203,16 +203,19 @@
    getFloat(env, pt, x, y);
    jboolean rtl = (typo_flags & TYPO_RTL) != 0;
@@ -396,9 +431,9 @@ Reviewed-by: bae, srl
  
    if (chars != buffer) {
      free(chars);
-new file mode 100644
---- /dev/null
-+++ openjdk/jdk/test/java/awt/font/LineBreakMeasurer/AllFontsLBM.java
+diff -r 9cfb91052414 -r 150e0c3e95ce test/java/awt/font/LineBreakMeasurer/AllFontsLBM.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/java/awt/font/LineBreakMeasurer/AllFontsLBM.java	Mon Oct 28 20:56:09 2013 +0000
 @@ -0,0 +1,78 @@
 +/*
 + * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.

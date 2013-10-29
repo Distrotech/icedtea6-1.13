@@ -1,14 +1,16 @@
 # HG changeset patch
 # User mchung
 # Date 1368826191 25200
-# Node ID 1e74b61253eb8c0d8d70512ab84ba16366e02c68
-# Parent  d2a1f8885e65ed180240b4d1c298260dd328340e
+#      Fri May 17 14:29:51 2013 -0700
+# Node ID 0bf55b4c8a7bbea02a9d848b2a5451adbd6a6ac4
+# Parent  8733761ca20bb4e46405e274c514bda0e0616a21
 8014745: Provide a switch to allow stack walk search of resource bundle
 Reviewed-by: alanb, jgish
 
---- openjdk/jdk/make/java/java/mapfile-vers
-+++ openjdk/jdk/make/java/java/mapfile-vers
-@@ -266,6 +266,7 @@
+diff -r 8733761ca20b -r 0bf55b4c8a7b make/java/java/mapfile-vers
+--- openjdk/jdk/make/java/java/mapfile-vers	Wed Jun 26 22:50:47 2013 -0500
++++ openjdk/jdk/make/java/java/mapfile-vers	Fri May 17 14:29:51 2013 -0700
+@@ -271,6 +271,7 @@
  		Java_sun_reflect_NativeConstructorAccessorImpl_newInstance0;
  		Java_sun_reflect_NativeMethodAccessorImpl_invoke0;
  		Java_sun_reflect_Reflection_getCallerClass;
@@ -16,9 +18,10 @@ Reviewed-by: alanb, jgish
  		Java_sun_reflect_Reflection_getClassAccessFlags;
                  Java_sun_misc_Version_getJdkVersionInfo;
                  Java_sun_misc_Version_getJdkSpecialVersion;
---- openjdk/jdk/src/share/classes/java/util/logging/Logger.java
-+++ openjdk/jdk/src/share/classes/java/util/logging/Logger.java
-@@ -309,8 +309,13 @@
+diff -r 8733761ca20b -r 0bf55b4c8a7b src/share/classes/java/util/logging/Logger.java
+--- openjdk/jdk/src/share/classes/java/util/logging/Logger.java	Wed Jun 26 22:50:47 2013 -0500
++++ openjdk/jdk/src/share/classes/java/util/logging/Logger.java	Fri May 17 14:29:51 2013 -0700
+@@ -303,8 +303,13 @@
      // null, we assume it's a system logger and add it to the system context.
      // These system loggers only set the resource bundle to the given
      // resource bundle name (rather than the default system resource bundle).
@@ -34,7 +37,7 @@ Reviewed-by: alanb, jgish
          private static boolean getBooleanProperty(final String key) {
              String s = AccessController.doPrivileged(new PrivilegedAction<String>() {
                  public String run() {
-@@ -324,7 +329,7 @@
+@@ -318,7 +323,7 @@
      private static Logger demandLogger(String name, String resourceBundleName, Class<?> caller) {
          LogManager manager = LogManager.getLogManager();
          SecurityManager sm = System.getSecurityManager();
@@ -43,7 +46,7 @@ Reviewed-by: alanb, jgish
              if (caller.getClassLoader() == null) {
                  return manager.demandSystemLogger(name, resourceBundleName);
              }
-@@ -1431,25 +1436,61 @@
+@@ -1407,25 +1412,61 @@
          if (useCallersClassLoader) {
              // Try with the caller's ClassLoader
              ClassLoader callersClassLoader = getCallersClassLoader();
@@ -118,8 +121,9 @@ Reviewed-by: alanb, jgish
      // Private utility method to initialize our one entry
      // resource bundle name cache and the callers ClassLoader
      // Note: for consistency reasons, we are careful to check
---- openjdk/jdk/src/share/classes/sun/reflect/Reflection.java
-+++ openjdk/jdk/src/share/classes/sun/reflect/Reflection.java
+diff -r 8733761ca20b -r 0bf55b4c8a7b src/share/classes/sun/reflect/Reflection.java
+--- openjdk/jdk/src/share/classes/sun/reflect/Reflection.java	Wed Jun 26 22:50:47 2013 -0500
++++ openjdk/jdk/src/share/classes/sun/reflect/Reflection.java	Fri May 17 14:29:51 2013 -0700
 @@ -58,6 +58,21 @@
      @CallerSensitive
      public static native Class getCallerClass();
@@ -142,8 +146,9 @@ Reviewed-by: alanb, jgish
      /** Retrieves the access flags written to the class file. For
          inner classes these flags may differ from those returned by
          Class.getModifiers(), which searches the InnerClasses
---- openjdk/jdk/src/share/native/sun/reflect/Reflection.c
-+++ openjdk/jdk/src/share/native/sun/reflect/Reflection.c
+diff -r 8733761ca20b -r 0bf55b4c8a7b src/share/native/sun/reflect/Reflection.c
+--- openjdk/jdk/src/share/native/sun/reflect/Reflection.c	Wed Jun 26 22:50:47 2013 -0500
++++ openjdk/jdk/src/share/native/sun/reflect/Reflection.c	Fri May 17 14:29:51 2013 -0700
 @@ -34,6 +34,12 @@
      return JVM_GetCallerClass(env, 2);
  }
@@ -157,8 +162,9 @@ Reviewed-by: alanb, jgish
  JNIEXPORT jint JNICALL Java_sun_reflect_Reflection_getClassAccessFlags
  (JNIEnv *env, jclass unused, jclass cls)
  {
---- openjdk/jdk/test/java/util/logging/bundlesearch/ResourceBundleSearchTest.java
-+++ openjdk/jdk/test/java/util/logging/bundlesearch/ResourceBundleSearchTest.java
+diff -r 8733761ca20b -r 0bf55b4c8a7b test/java/util/logging/bundlesearch/ResourceBundleSearchTest.java
+--- openjdk/jdk/test/java/util/logging/bundlesearch/ResourceBundleSearchTest.java	Wed Jun 26 22:50:47 2013 -0500
++++ openjdk/jdk/test/java/util/logging/bundlesearch/ResourceBundleSearchTest.java	Fri May 17 14:29:51 2013 -0700
 @@ -28,6 +28,7 @@
   * @author  Jim Gish
   * @build  ResourceBundleSearchTest IndirectlyLoadABundle LoadItUp1 LoadItUp2 TwiceIndirectlyLoadABundle LoadItUp2Invoker

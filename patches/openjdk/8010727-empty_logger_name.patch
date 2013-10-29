@@ -1,14 +1,16 @@
 # HG changeset patch
 # User mchung
 # Date 1368544028 25200
-# Node ID 776ac4b51f1538de78054f7774b9bbefc91374cb
-# Parent  0d497f17e31b82d42b5ae0a26e6636ee9ea65887
+#      Tue May 14 08:07:08 2013 -0700
+# Node ID e3eae7996a478cd07125110456836a42c8a504c6
+# Parent  d4fca2113b280a7db03b67caae22e0ceafb51b89
 8010727: WLS fails to add a logger with "" in its own LogManager subclass instance
 Reviewed-by: alanb, jgish
 
---- openjdk/jdk/src/share/classes/java/util/logging/LogManager.java
-+++ openjdk/jdk/src/share/classes/java/util/logging/LogManager.java
-@@ -496,7 +496,7 @@
+diff -r d4fca2113b28 -r e3eae7996a47 src/share/classes/java/util/logging/LogManager.java
+--- openjdk/jdk/src/share/classes/java/util/logging/LogManager.java	Fri Oct 25 17:51:03 2013 +0100
++++ openjdk/jdk/src/share/classes/java/util/logging/LogManager.java	Tue May 14 08:07:08 2013 -0700
+@@ -486,7 +486,7 @@
          }
  
          synchronized void ensureRootLogger(Logger logger) {
@@ -17,9 +19,9 @@ Reviewed-by: alanb, jgish
                  return;
  
              // during initialization, rootLogger is null when
-new file mode 100644
---- /dev/null
-+++ openjdk/jdk/test/java/util/logging/LogManagerInstanceTest.java
+diff -r d4fca2113b28 -r e3eae7996a47 test/java/util/logging/LogManagerInstanceTest.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/java/util/logging/LogManagerInstanceTest.java	Tue May 14 08:07:08 2013 -0700
 @@ -0,0 +1,76 @@
 +/*
 + * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.

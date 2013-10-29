@@ -1,14 +1,15 @@
-changeset:   4945:0ab2712a035a
-user:        andrew
-date:        Tue Jun 18 08:09:59 2013 -0500
-files:       make/java/java/FILES_c.gmk make/java/java/mapfile-vers make/java/java/reorder-i586 make/java/java/reorder-sparc make/java/java/reorder-sparcv9 src/share/classes/java/io/ObjectStreamClass.java src/share/classes/java/io/ObjectStreamField.java src/share/classes/java/lang/Class.java src/share/classes/java/lang/ClassLoader.java src/share/classes/java/lang/Package.java src/share/classes/java/lang/Runtime.java src/share/classes/java/lang/System.java src/share/classes/java/lang/Thread.java src/share/classes/java/lang/invoke/MemberName.java src/share/classes/java/lang/invoke/MethodHandleImpl.java src/share/classes/java/lang/invoke/MethodHandleNatives.java src/share/classes/java/lang/invoke/MethodHandleProxies.java src/share/classes/java/lang/invoke/MethodHandles.java src/share/classes/java/lang/reflect/Constructor.java src/share/classes/java/lang/reflect/Field.java src/share/classes/java/lang/reflect/Method.java src/share/classes/java/lang/reflect/Proxy.java src/share/classes/java/security/AccessController.java src/share/classes/java/sql/DriverManager.java src/share/classes/java/util/ResourceBundle.java src/share/classes/java/util/concurrent/atomic/AtomicIntegerFieldUpdater.java src/share/classes/java/util/concurrent/atomic/AtomicLongFieldUpdater.java src/share/classes/java/util/concurrent/atomic/AtomicReferenceFieldUpdater.java src/share/classes/java/util/logging/Logger.java src/share/classes/javax/sql/rowset/serial/SerialJavaObject.java src/share/classes/sun/misc/Unsafe.java src/share/classes/sun/reflect/CallerSensitive.java src/share/classes/sun/reflect/Reflection.java src/share/native/java/lang/ClassLoader.c src/share/native/java/lang/SecurityManager.c src/share/native/sun/reflect/Reflection.c test/Makefile test/sun/reflect/CallerSensitive/CallerSensitiveFinder.java test/sun/reflect/CallerSensitive/ClassFileReader.java test/sun/reflect/CallerSensitive/MethodFinder.java test/sun/reflect/CallerSensitive/MissingCallerSensitive.java
-description:
+# HG changeset patch
+# User mchung
+# Date 1382375156 -3600
+#      Mon Oct 21 18:05:56 2013 +0100
+# Node ID d206cb658a9907c7842c8920f141b3c4eb5efc1f
+# Parent  e56220b54fe2d0f09ee151b28d6e8495cea2136f
 8010118: Annotate jdk caller sensitive methods with @sun.reflect.CallerSensitive
 Reviewed-by: alanb, twisti, jrose, kvn
 
-
---- openjdk/jdk/make/java/java/FILES_c.gmk
-+++ openjdk/jdk/make/java/java/FILES_c.gmk
+diff -r e56220b54fe2 -r d206cb658a99 make/java/java/FILES_c.gmk
+--- openjdk/jdk/make/java/java/FILES_c.gmk	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/make/java/java/FILES_c.gmk	Mon Oct 21 18:05:56 2013 +0100
 @@ -48,7 +48,6 @@
  	Proxy.c \
  	RandomAccessFile.c \
@@ -17,7 +18,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
  	Runtime.c \
  	SecurityManager.c \
  	Shutdown.c \
-@@ -69,7 +68,6 @@
+@@ -68,7 +67,6 @@
  	jdk_util_md.c \
  	check_version.c \
  	java_props_md.c \
@@ -25,9 +26,10 @@ Reviewed-by: alanb, twisti, jrose, kvn
  	ConstantPool.c \
  	MessageUtils.c \
  	GC.c \
---- openjdk/jdk/make/java/java/mapfile-vers
-+++ openjdk/jdk/make/java/java/mapfile-vers
-@@ -233,8 +232,6 @@
+diff -r e56220b54fe2 -r d206cb658a99 make/java/java/mapfile-vers
+--- openjdk/jdk/make/java/java/mapfile-vers	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/make/java/java/mapfile-vers	Mon Oct 21 18:05:56 2013 +0100
+@@ -237,8 +237,6 @@
  		Java_java_security_AccessController_doPrivileged__Ljava_security_PrivilegedExceptionAction_2Ljava_security_AccessControlContext_2;
  		Java_java_security_AccessController_getStackAccessControlContext;
  		Java_java_security_AccessController_getInheritedAccessControlContext;
@@ -36,8 +38,9 @@ Reviewed-by: alanb, twisti, jrose, kvn
  		Java_java_util_TimeZone_getSystemTimeZoneID;
  		Java_java_util_TimeZone_getSystemGMTOffsetID;
  		Java_java_util_concurrent_atomic_AtomicLong_VMSupportsCS8;
---- openjdk/jdk/make/java/java/reorder-i586
-+++ openjdk/jdk/make/java/java/reorder-i586
+diff -r e56220b54fe2 -r d206cb658a99 make/java/java/reorder-i586
+--- openjdk/jdk/make/java/java/reorder-i586	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/make/java/java/reorder-i586	Mon Oct 21 18:05:56 2013 +0100
 @@ -73,7 +73,6 @@
  # Test Sleep
  # Test IntToString
@@ -46,8 +49,9 @@ Reviewed-by: alanb, twisti, jrose, kvn
  text: .text%Java_java_security_AccessController_doPrivileged__Ljava_security_PrivilegedAction_2Ljava_security_AccessControlContext_2;
  text: .text%JNU_GetEnv;
  text: .text%Java_java_io_UnixFileSystem_checkAccess;
---- openjdk/jdk/make/java/java/reorder-sparc
-+++ openjdk/jdk/make/java/java/reorder-sparc
+diff -r e56220b54fe2 -r d206cb658a99 make/java/java/reorder-sparc
+--- openjdk/jdk/make/java/java/reorder-sparc	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/make/java/java/reorder-sparc	Mon Oct 21 18:05:56 2013 +0100
 @@ -78,7 +78,6 @@
  # Test Sleep
  # Test IntToString
@@ -56,8 +60,9 @@ Reviewed-by: alanb, twisti, jrose, kvn
  text: .text%Java_java_security_AccessController_doPrivileged__Ljava_security_PrivilegedAction_2Ljava_security_AccessControlContext_2;
  text: .text%JNU_GetEnv;
  text: .text%Java_java_io_UnixFileSystem_checkAccess;
---- openjdk/jdk/make/java/java/reorder-sparcv9
-+++ openjdk/jdk/make/java/java/reorder-sparcv9
+diff -r e56220b54fe2 -r d206cb658a99 make/java/java/reorder-sparcv9
+--- openjdk/jdk/make/java/java/reorder-sparcv9	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/make/java/java/reorder-sparcv9	Mon Oct 21 18:05:56 2013 +0100
 @@ -74,7 +74,6 @@
  # Test Sleep
  # Test IntToString
@@ -66,8 +71,9 @@ Reviewed-by: alanb, twisti, jrose, kvn
  text: .text%Java_java_security_AccessController_doPrivileged__Ljava_security_PrivilegedAction_2Ljava_security_AccessControlContext_2;
  text: .text%JNU_GetEnv;
  text: .text%Java_java_io_UnixFileSystem_checkAccess;
---- openjdk/jdk/src/share/classes/java/io/ObjectStreamClass.java
-+++ openjdk/jdk/src/share/classes/java/io/ObjectStreamClass.java
+diff -r e56220b54fe2 -r d206cb658a99 src/share/classes/java/io/ObjectStreamClass.java
+--- openjdk/jdk/src/share/classes/java/io/ObjectStreamClass.java	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/src/share/classes/java/io/ObjectStreamClass.java	Mon Oct 21 18:05:56 2013 +0100
 @@ -49,6 +49,8 @@
  import java.util.concurrent.ConcurrentHashMap;
  import java.util.concurrent.ConcurrentMap;
@@ -77,7 +83,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
  import sun.reflect.ReflectionFactory;
  import sun.reflect.misc.ReflectUtil;
  
-@@ -259,12 +261,13 @@
+@@ -234,12 +236,13 @@
       *
       * @return  the <code>Class</code> instance that this descriptor represents
       */
@@ -93,8 +99,9 @@ Reviewed-by: alanb, twisti, jrose, kvn
              ReflectUtil.checkPackageAccess(cl);
          }
          return cl;
---- openjdk/jdk/src/share/classes/java/io/ObjectStreamField.java
-+++ openjdk/jdk/src/share/classes/java/io/ObjectStreamField.java
+diff -r e56220b54fe2 -r d206cb658a99 src/share/classes/java/io/ObjectStreamField.java
+--- openjdk/jdk/src/share/classes/java/io/ObjectStreamField.java	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/src/share/classes/java/io/ObjectStreamField.java	Mon Oct 21 18:05:56 2013 +0100
 @@ -26,6 +26,7 @@
  package java.io;
  
@@ -139,8 +146,9 @@ Reviewed-by: alanb, twisti, jrose, kvn
      /**
       * Returns character encoding of field type.  The encoding is as follows:
       * <blockquote><pre>
---- openjdk/jdk/src/share/classes/java/lang/Class.java
-+++ openjdk/jdk/src/share/classes/java/lang/Class.java
+diff -r e56220b54fe2 -r d206cb658a99 src/share/classes/java/lang/Class.java
+--- openjdk/jdk/src/share/classes/java/lang/Class.java	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/src/share/classes/java/lang/Class.java	Mon Oct 21 18:05:56 2013 +0100
 @@ -53,6 +53,7 @@
  import java.util.Map;
  import java.util.HashMap;
@@ -209,7 +217,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
              if (newInstanceCallerCache != caller) {
                  Reflection.ensureMemberAccess(caller, this, null, modifiers);
                  newInstanceCallerCache = caller;
-@@ -604,16 +604,14 @@
+@@ -602,16 +602,14 @@
       * @see SecurityManager#checkPermission
       * @see java.lang.RuntimePermission
       */
@@ -228,7 +236,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          }
          return cl;
      }
-@@ -894,6 +892,7 @@
+@@ -891,6 +889,7 @@
       *     that class is a local or anonymous class; otherwise {@code null}.
       * @since 1.5
       */
@@ -236,7 +244,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
      public Method getEnclosingMethod() {
          EnclosingMethodInfo enclosingInfo = getEnclosingMethodInfo();
  
-@@ -923,7 +922,7 @@
+@@ -920,7 +919,7 @@
              //
              // Note that we need to do this on the enclosing class
              enclosingCandidate.checkMemberAccess(Member.DECLARED,
@@ -245,7 +253,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
              /*
               * Loop over all declared methods; match method name,
               * number of and type of parameters, *and* return
-@@ -1031,6 +1030,7 @@
+@@ -1028,6 +1027,7 @@
       *     that class is a local or anonymous class; otherwise {@code null}.
       * @since 1.5
       */
@@ -253,7 +261,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
      public Constructor<?> getEnclosingConstructor() {
          EnclosingMethodInfo enclosingInfo = getEnclosingMethodInfo();
  
-@@ -1059,7 +1059,7 @@
+@@ -1056,7 +1056,7 @@
              //
              // Note that we need to do this on the enclosing class
              enclosingCandidate.checkMemberAccess(Member.DECLARED,
@@ -262,7 +270,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
              /*
               * Loop over all declared constructors; match number
               * of and type of parameters.
-@@ -1106,6 +1106,7 @@
+@@ -1103,6 +1103,7 @@
       * @return the immediately enclosing class of the underlying class
       * @since 1.5
       */
@@ -270,7 +278,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
      public Class<?> getEnclosingClass() {
          // There are five kinds of classes (or interfaces):
          // a) Top level classes
-@@ -1138,7 +1139,7 @@
+@@ -1135,7 +1136,7 @@
          // see java.lang.SecurityManager.checkMemberAccess
          if (enclosingCandidate != null) {
              enclosingCandidate.checkMemberAccess(Member.DECLARED,
@@ -279,7 +287,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          }
          return enclosingCandidate;
      }
-@@ -1323,11 +1324,12 @@
+@@ -1320,11 +1321,12 @@
       *
       * @since JDK1.1
       */
@@ -528,11 +536,12 @@ Reviewed-by: alanb, twisti, jrose, kvn
 +            }
 +
              if (ReflectUtil.needsPackageAccessCheck(ccl, cl)) {
+ 
                  String name = this.getName();
-                 int i = name.lastIndexOf('.');
---- openjdk/jdk/src/share/classes/java/lang/ClassLoader.java
-+++ openjdk/jdk/src/share/classes/java/lang/ClassLoader.java
-@@ -56,6 +56,7 @@
+diff -r e56220b54fe2 -r d206cb658a99 src/share/classes/java/lang/ClassLoader.java
+--- openjdk/jdk/src/share/classes/java/lang/ClassLoader.java	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/src/share/classes/java/lang/ClassLoader.java	Mon Oct 21 18:05:56 2013 +0100
+@@ -52,6 +52,7 @@
  import sun.misc.Resource;
  import sun.misc.URLClassPath;
  import sun.misc.VM;
@@ -540,7 +549,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
  import sun.reflect.Reflection;
  import sun.security.util.SecurityConstants;
  
-@@ -1396,15 +1395,13 @@
+@@ -1214,15 +1215,13 @@
       *
       * @since  1.2
       */
@@ -558,7 +567,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          }
          return parent;
      }
-@@ -1464,6 +1461,7 @@
+@@ -1282,6 +1281,7 @@
       *
       * @revised  1.4
       */
@@ -566,7 +575,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
      public static ClassLoader getSystemClassLoader() {
          initSystemClassLoader();
          if (scl == null) {
-@@ -1471,10 +1469,7 @@
+@@ -1289,10 +1289,7 @@
          }
          SecurityManager sm = System.getSecurityManager();
          if (sm != null) {
@@ -578,7 +587,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          }
          return scl;
      }
-@@ -1522,13 +1517,25 @@
+@@ -1341,13 +1338,25 @@
          return false;
      }
  
@@ -611,7 +620,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          // This can be null if the VM is requesting it
          if (caller == null) {
              return null;
-@@ -1537,6 +1544,17 @@
+@@ -1356,6 +1365,17 @@
          return caller.getClassLoader0();
      }
  
@@ -627,10 +636,11 @@ Reviewed-by: alanb, twisti, jrose, kvn
 +    }
 +
      // The class loader for the system
-     // @GuardedBy("ClassLoader.class")
      private static ClassLoader scl;
---- openjdk/jdk/src/share/classes/java/lang/Package.java
-+++ openjdk/jdk/src/share/classes/java/lang/Package.java
+ 
+diff -r e56220b54fe2 -r d206cb658a99 src/share/classes/java/lang/Package.java
+--- openjdk/jdk/src/share/classes/java/lang/Package.java	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/src/share/classes/java/lang/Package.java	Mon Oct 21 18:05:56 2013 +0100
 @@ -47,9 +47,10 @@
  import java.util.HashMap;
  import java.util.Iterator;
@@ -644,7 +654,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
  
  /**
   * {@code Package} objects contain version information
-@@ -272,8 +273,9 @@
+@@ -273,8 +274,9 @@
       * @return the package of the requested name. It may be null if no package
       *          information is available from the archive or codebase.
       */
@@ -655,7 +665,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          if (l != null) {
              return l.getPackage(name);
          } else {
-@@ -293,8 +295,9 @@
+@@ -294,8 +296,9 @@
       * @return a new array of packages known to the callers {@code ClassLoader}
       * instance.  An zero length array is returned if none are known.
       */
@@ -666,8 +676,9 @@ Reviewed-by: alanb, twisti, jrose, kvn
          if (l != null) {
              return l.getPackages();
          } else {
---- openjdk/jdk/src/share/classes/java/lang/Runtime.java
-+++ openjdk/jdk/src/share/classes/java/lang/Runtime.java
+diff -r e56220b54fe2 -r d206cb658a99 src/share/classes/java/lang/Runtime.java
+--- openjdk/jdk/src/share/classes/java/lang/Runtime.java	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/src/share/classes/java/lang/Runtime.java	Mon Oct 21 18:05:56 2013 +0100
 @@ -27,6 +27,8 @@
  
  import java.io.*;
@@ -677,7 +688,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
  
  /**
   * Every Java application has a single instance of class
-@@ -776,8 +778,9 @@
+@@ -771,8 +773,9 @@
       * @see        java.lang.SecurityException
       * @see        java.lang.SecurityManager#checkLink(java.lang.String)
       */
@@ -688,7 +699,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
      }
  
      synchronized void load0(Class fromClass, String filename) {
-@@ -829,8 +832,9 @@
+@@ -824,8 +827,9 @@
       * @see        java.lang.SecurityException
       * @see        java.lang.SecurityManager#checkLink(java.lang.String)
       */
@@ -699,10 +710,10 @@ Reviewed-by: alanb, twisti, jrose, kvn
      }
  
      synchronized void loadLibrary0(Class fromClass, String libname) {
---- openjdk/jdk/src/share/classes/java/lang/System.java
-+++ openjdk/jdk/src/share/classes/java/lang/System.java
-@@ -34,7 +34,8 @@
- import java.nio.channels.Channel;
+diff -r e56220b54fe2 -r d206cb658a99 src/share/classes/java/lang/System.java
+--- openjdk/jdk/src/share/classes/java/lang/System.java	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/src/share/classes/java/lang/System.java	Mon Oct 21 18:05:56 2013 +0100
+@@ -35,6 +35,7 @@
  import java.nio.channels.spi.SelectorProvider;
  import sun.nio.ch.Interruptible;
  import sun.net.InetAddressCachePolicy;
@@ -710,7 +721,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
  import sun.reflect.Reflection;
  import sun.security.util.SecurityConstants;
  import sun.reflect.annotation.AnnotationType;
-@@ -1055,8 +1056,9 @@
+@@ -1018,8 +1019,9 @@
       * @see        java.lang.Runtime#load(java.lang.String)
       * @see        java.lang.SecurityManager#checkLink(java.lang.String)
       */
@@ -721,7 +732,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
      }
  
      /**
-@@ -1080,8 +1082,9 @@
+@@ -1043,8 +1045,9 @@
       * @see        java.lang.Runtime#loadLibrary(java.lang.String)
       * @see        java.lang.SecurityManager#checkLink(java.lang.String)
       */
@@ -732,7 +743,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
      }
  
      /**
-@@ -1197,10 +1200,4 @@
+@@ -1157,10 +1160,4 @@
              }
          });
      }
@@ -743,18 +754,19 @@ Reviewed-by: alanb, twisti, jrose, kvn
 -        return Reflection.getCallerClass(3);
 -    }
  }
---- openjdk/jdk/src/share/classes/java/lang/Thread.java
-+++ openjdk/jdk/src/share/classes/java/lang/Thread.java
-@@ -37,6 +37,8 @@
- import java.util.concurrent.ConcurrentMap;
+diff -r e56220b54fe2 -r d206cb658a99 src/share/classes/java/lang/Thread.java
+--- openjdk/jdk/src/share/classes/java/lang/Thread.java	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/src/share/classes/java/lang/Thread.java	Mon Oct 21 18:05:56 2013 +0100
+@@ -34,6 +34,8 @@
  import java.util.concurrent.locks.LockSupport;
+ import sun.misc.SoftCache;
  import sun.nio.ch.Interruptible;
 +import sun.reflect.CallerSensitive;
 +import sun.reflect.Reflection;
  import sun.security.util.SecurityConstants;
  
  
-@@ -1440,16 +1442,15 @@
+@@ -1370,16 +1372,15 @@
       *
       * @since 1.2
       */
@@ -775,8 +787,9 @@ Reviewed-by: alanb, twisti, jrose, kvn
          }
          return contextClassLoader;
      }
---- openjdk/jdk/src/share/classes/java/lang/reflect/Constructor.java
-+++ openjdk/jdk/src/share/classes/java/lang/reflect/Constructor.java
+diff -r e56220b54fe2 -r d206cb658a99 src/share/classes/java/lang/reflect/Constructor.java
+--- openjdk/jdk/src/share/classes/java/lang/reflect/Constructor.java	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/src/share/classes/java/lang/reflect/Constructor.java	Mon Oct 21 18:05:56 2013 +0100
 @@ -25,6 +25,7 @@
  
  package java.lang.reflect;
@@ -785,7 +798,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
  import sun.reflect.ConstructorAccessor;
  import sun.reflect.Reflection;
  import sun.reflect.generics.repository.ConstructorRepository;
-@@ -505,13 +506,14 @@
+@@ -513,13 +514,14 @@
       * @exception ExceptionInInitializerError if the initialization provoked
       *              by this method fails.
       */
@@ -801,8 +814,9 @@ Reviewed-by: alanb, twisti, jrose, kvn
                  if (securityCheckCache != caller) {
                      Reflection.ensureMemberAccess(caller, clazz, null, modifiers);
                      securityCheckCache = caller;
---- openjdk/jdk/src/share/classes/java/lang/reflect/Field.java
-+++ openjdk/jdk/src/share/classes/java/lang/reflect/Field.java
+diff -r e56220b54fe2 -r d206cb658a99 src/share/classes/java/lang/reflect/Field.java
+--- openjdk/jdk/src/share/classes/java/lang/reflect/Field.java	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/src/share/classes/java/lang/reflect/Field.java	Mon Oct 21 18:05:56 2013 +0100
 @@ -25,6 +25,7 @@
  
  package java.lang.reflect;
@@ -811,7 +825,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
  import sun.reflect.FieldAccessor;
  import sun.reflect.Reflection;
  import sun.reflect.generics.repository.FieldRepository;
-@@ -366,9 +367,15 @@
+@@ -370,9 +371,15 @@
       * @exception ExceptionInInitializerError if the initialization provoked
       *              by this method fails.
       */
@@ -827,7 +841,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          return getFieldAccessor(obj).get(obj);
      }
  
-@@ -394,9 +401,15 @@
+@@ -397,9 +404,15 @@
       *              by this method fails.
       * @see       Field#get
       */
@@ -843,7 +857,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          return getFieldAccessor(obj).getBoolean(obj);
      }
  
-@@ -422,9 +435,15 @@
+@@ -424,9 +437,15 @@
       *              by this method fails.
       * @see       Field#get
       */
@@ -859,7 +873,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          return getFieldAccessor(obj).getByte(obj);
      }
  
-@@ -452,9 +471,15 @@
+@@ -453,9 +472,15 @@
       *              by this method fails.
       * @see Field#get
       */
@@ -891,7 +905,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          return getFieldAccessor(obj).getShort(obj);
      }
  
-@@ -512,9 +543,15 @@
+@@ -511,9 +542,15 @@
       *              by this method fails.
       * @see       Field#get
       */
@@ -907,7 +921,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          return getFieldAccessor(obj).getInt(obj);
      }
  
-@@ -542,9 +579,15 @@
+@@ -540,9 +577,15 @@
       *              by this method fails.
       * @see       Field#get
       */
@@ -923,7 +937,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          return getFieldAccessor(obj).getLong(obj);
      }
  
-@@ -572,9 +615,15 @@
+@@ -569,9 +612,15 @@
       *              by this method fails.
       * @see Field#get
       */
@@ -939,7 +953,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          return getFieldAccessor(obj).getFloat(obj);
      }
  
-@@ -602,9 +651,15 @@
+@@ -598,9 +647,15 @@
       *              by this method fails.
       * @see       Field#get
       */
@@ -955,7 +969,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          return getFieldAccessor(obj).getDouble(obj);
      }
  
-@@ -674,9 +729,15 @@
+@@ -669,9 +724,15 @@
       * @exception ExceptionInInitializerError if the initialization provoked
       *              by this method fails.
       */
@@ -971,7 +985,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          getFieldAccessor(obj).set(obj, value);
      }
  
-@@ -704,9 +765,15 @@
+@@ -698,9 +759,15 @@
       *              by this method fails.
       * @see       Field#set
       */
@@ -987,7 +1001,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          getFieldAccessor(obj).setBoolean(obj, z);
      }
  
-@@ -734,9 +801,15 @@
+@@ -727,9 +794,15 @@
       *              by this method fails.
       * @see       Field#set
       */
@@ -1003,7 +1017,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          getFieldAccessor(obj).setByte(obj, b);
      }
  
-@@ -764,9 +837,15 @@
+@@ -756,9 +829,15 @@
       *              by this method fails.
       * @see       Field#set
       */
@@ -1019,7 +1033,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          getFieldAccessor(obj).setChar(obj, c);
      }
  
-@@ -794,9 +873,15 @@
+@@ -785,9 +864,15 @@
       *              by this method fails.
       * @see       Field#set
       */
@@ -1035,7 +1049,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          getFieldAccessor(obj).setShort(obj, s);
      }
  
-@@ -824,9 +909,15 @@
+@@ -814,9 +899,15 @@
       *              by this method fails.
       * @see       Field#set
       */
@@ -1051,7 +1065,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          getFieldAccessor(obj).setInt(obj, i);
      }
  
-@@ -854,9 +945,15 @@
+@@ -843,9 +934,15 @@
       *              by this method fails.
       * @see       Field#set
       */
@@ -1067,7 +1081,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          getFieldAccessor(obj).setLong(obj, l);
      }
  
-@@ -884,9 +981,15 @@
+@@ -872,9 +969,15 @@
       *              by this method fails.
       * @see       Field#set
       */
@@ -1083,7 +1097,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          getFieldAccessor(obj).setFloat(obj, f);
      }
  
-@@ -914,20 +1017,25 @@
+@@ -901,20 +1004,25 @@
       *              by this method fails.
       * @see       Field#set
       */
@@ -1113,7 +1127,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
      }
  
      // NOTE that there is no synchronization used here. It is correct
-@@ -1069,10 +1069,7 @@
+@@ -961,10 +1069,7 @@
      // NOTE: be very careful if you change the stack depth of this
      // routine. The depth of the "getCallerClass" call is hardwired so
      // that the compiler can have an easier time if this gets inlined.
@@ -1125,7 +1139,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
                  Class targetClass = ((obj == null || !Modifier.isProtected(modifiers))
                                       ? clazz
                                       : obj.getClass());
-@@ -1088,8 +1085,6 @@
+@@ -980,8 +1085,6 @@
                      securityCheckCache = caller;
                      securityCheckTargetClassCache = targetClass;
                  }
@@ -1134,8 +1148,9 @@ Reviewed-by: alanb, twisti, jrose, kvn
      }
  
      /*
---- openjdk/jdk/src/share/classes/java/lang/reflect/Method.java
-+++ openjdk/jdk/src/share/classes/java/lang/reflect/Method.java
+diff -r e56220b54fe2 -r d206cb658a99 src/share/classes/java/lang/reflect/Method.java
+--- openjdk/jdk/src/share/classes/java/lang/reflect/Method.java	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/src/share/classes/java/lang/reflect/Method.java	Mon Oct 21 18:05:56 2013 +0100
 @@ -25,6 +25,7 @@
  
  package java.lang.reflect;
@@ -1144,7 +1159,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
  import sun.reflect.MethodAccessor;
  import sun.reflect.Reflection;
  import sun.reflect.generics.repository.MethodRepository;
-@@ -583,13 +584,18 @@
+@@ -587,13 +588,18 @@
       * @exception ExceptionInInitializerError if the initialization
       * provoked by this method fails.
       */
@@ -1164,8 +1179,8 @@ Reviewed-by: alanb, twisti, jrose, kvn
                  Class targetClass = ((obj == null || !Modifier.isProtected(modifiers))
                                       ? clazz
                                       : obj.getClass());
-@@ -601,6 +606,16 @@
-         return ma.invoke(obj, args);
+@@ -616,6 +622,16 @@
+         return methodAccessor.invoke(obj, args);
      }
  
 +    /*
@@ -1181,9 +1196,10 @@ Reviewed-by: alanb, twisti, jrose, kvn
      /**
       * Returns {@code true} if this method is a bridge
       * method; returns {@code false} otherwise.
---- openjdk/jdk/src/share/classes/java/lang/reflect/Proxy.java
-+++ openjdk/jdk/src/share/classes/java/lang/reflect/Proxy.java
-@@ -39,6 +39,7 @@
+diff -r e56220b54fe2 -r d206cb658a99 src/share/classes/java/lang/reflect/Proxy.java
+--- openjdk/jdk/src/share/classes/java/lang/reflect/Proxy.java	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/src/share/classes/java/lang/reflect/Proxy.java	Mon Oct 21 18:05:56 2013 +0100
+@@ -38,6 +38,7 @@
  import java.util.Set;
  import java.util.WeakHashMap;
  import sun.misc.ProxyGenerator;
@@ -1191,7 +1207,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
  import sun.reflect.Reflection;
  import sun.reflect.misc.ReflectUtil;
  import sun.security.util.SecurityConstants;
-@@ -405,28 +405,21 @@
+@@ -404,28 +405,21 @@
       * @throws  NullPointerException if the {@code interfaces} array
       *          argument or any of its elements are {@code null}
       */
@@ -1225,7 +1241,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
       *
       * To define a proxy class, it performs the access checks as in
       * Class.forName (VM will invoke ClassLoader.checkPackageAccess):
-@@ -444,16 +438,28 @@
+@@ -442,16 +436,28 @@
       * will throw IllegalAccessError when the generated proxy class is
       * being defined via the defineClass0 method.
       */
@@ -1262,7 +1278,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          if (interfaces.length > 65535) {
              throw new IllegalArgumentException("interface limit exceeded");
          }
-@@ -696,6 +701,7 @@
+@@ -692,6 +698,7 @@
       *          if the invocation handler, {@code h}, is
       *          {@code null}
       */
@@ -1270,7 +1286,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
      public static Object newProxyInstance(ClassLoader loader,
                                            Class<?>[] interfaces,
                                            InvocationHandler h)
-@@ -705,10 +711,15 @@
+@@ -701,10 +708,15 @@
              throw new NullPointerException();
          }
  
@@ -1287,7 +1303,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
  
          /*
           * Invoke its constructor with the designated invocation handler.
-@@ -716,7 +727,6 @@
+@@ -712,7 +724,6 @@
          try {
              final Constructor<?> cons = cl.getConstructor(constructorParams);
              final InvocationHandler ih = h;
@@ -1295,8 +1311,9 @@ Reviewed-by: alanb, twisti, jrose, kvn
              if (sm != null && ProxyAccessHelper.needsNewInstanceCheck(cl)) {
                  // create proxy instance with doPrivilege as the proxy class may
                  // implement non-public interfaces that requires a special permission
---- openjdk/jdk/src/share/classes/java/security/AccessController.java
-+++ openjdk/jdk/src/share/classes/java/security/AccessController.java
+diff -r e56220b54fe2 -r d206cb658a99 src/share/classes/java/security/AccessController.java
+--- openjdk/jdk/src/share/classes/java/security/AccessController.java	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/src/share/classes/java/security/AccessController.java	Mon Oct 21 18:05:56 2013 +0100
 @@ -26,6 +26,8 @@
  package java.security;
  
@@ -1394,17 +1411,19 @@ Reviewed-by: alanb, twisti, jrose, kvn
      public static native <T> T
          doPrivileged(PrivilegedExceptionAction<T> action,
                       AccessControlContext context)
---- openjdk/jdk/src/share/classes/java/sql/DriverManager.java
-+++ openjdk/jdk/src/share/classes/java/sql/DriverManager.java
-@@ -30,5 +30,7 @@
+diff -r e56220b54fe2 -r d206cb658a99 src/share/classes/java/sql/DriverManager.java
+--- openjdk/jdk/src/share/classes/java/sql/DriverManager.java	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/src/share/classes/java/sql/DriverManager.java	Mon Oct 21 18:05:56 2013 +0100
+@@ -30,6 +30,8 @@
+ import java.util.ServiceLoader;
  import java.security.AccessController;
  import java.security.PrivilegedAction;
 +import sun.reflect.CallerSensitive;
 +import sun.reflect.Reflection;
  
+ 
  /**
-  * <P>The basic service for managing a set of JDBC drivers.<br>
-@@ -180,14 +181,10 @@
+@@ -159,14 +161,10 @@
       * @return a Connection to the URL
       * @exception SQLException if a database access error occurs
       */
@@ -1421,7 +1440,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
      }
  
      /**
-@@ -203,14 +200,11 @@
+@@ -182,14 +180,11 @@
       * @return a connection to the URL
       * @exception SQLException if a database access error occurs
       */
@@ -1437,7 +1456,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          if (user != null) {
              info.put("user", user);
          }
-@@ -218,7 +212,7 @@
+@@ -197,7 +192,7 @@
              info.put("password", password);
          }
  
@@ -1446,7 +1465,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
      }
  
      /**
-@@ -231,16 +225,12 @@
+@@ -210,16 +205,12 @@
       * @return a connection to the URL
       * @exception SQLException if a database access error occurs
       */
@@ -1484,7 +1503,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
  
          // Walk through the loaded drivers attempting to locate someone
          // who understands the given URL.
-@@ -258,8 +248,8 @@
+@@ -258,7 +248,7 @@
              DriverInfo di = (DriverInfo)drivers.elementAt(i);
              // If the caller does not have permission to load the driver then
              // skip it.
@@ -1493,8 +1512,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
                   di.driverClass ) {
                  println("    skipping: " + di);
                  continue;
-             }
-@@ -322,31 +311,30 @@
+@@ -319,11 +309,10 @@
       * @param driver the JDBC Driver to drop
       * @exception SQLException if a database access error occurs
       */
@@ -1508,19 +1526,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          println("DriverManager.deregisterDriver: " + driver);
  
          // Walk through the loaded drivers.
-         int i;
-         DriverInfo di = null;
-         for (i = 0; i < writeDrivers.size(); i++) {
-             di = (DriverInfo)writeDrivers.elementAt(i);
-             if (di.driver == driver) {
-                 break;
-             }
-         }
-         // If we can't find the driver just return.
-         if (i >= writeDrivers.size()) {
-             println("    couldn't find driver to unload");
-             return;
-         }
+@@ -343,7 +332,7 @@
  
          // If the caller does not have permission to load the driver then
          // throw a security exception.
@@ -1529,7 +1535,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
              throw new SecurityException();
          }
  
-@@ -350,6 +350,7 @@
+@@ -363,6 +352,7 @@
       *
       * @return the list of JDBC Drivers loaded by the caller's class loader
       */
@@ -1537,7 +1543,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
      public static java.util.Enumeration<Driver> getDrivers() {
          java.util.Vector<Driver> result = new java.util.Vector<Driver>();
          java.util.Vector drivers = null;
-@@ -363,16 +364,14 @@
+@@ -376,16 +366,14 @@
              drivers  = readDrivers;
         }
  
@@ -1556,7 +1562,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
                  println("    skipping: " + di);
                  continue;
              }
-@@ -467,6 +467,12 @@
+@@ -481,6 +469,12 @@
  
      //------------------------------------------------------------------------
  
@@ -1569,7 +1575,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
      // Returns the class object that would be created if the code calling the
      // driver manager had loaded the driver class, or null if the class
      // is inaccessible.
-@@ -546,19 +537,20 @@
+@@ -573,7 +567,7 @@
  
      //  Worker method called by the public getConnection() methods.
      private static Connection getConnection(
@@ -1578,7 +1584,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          java.util.Vector drivers = null;
          /*
           * When callerCl is null, we should check the application's
-          * (which is invoking this class indirectly)
+@@ -581,11 +575,12 @@
           * classloader, so that the JDBC driver class outside rt.jar
           * can be loaded from here.
           */
@@ -1596,7 +1602,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          }
  
          if(url == null) {
-@@ -603,10 +595,6 @@
+@@ -666,10 +661,6 @@
      private static boolean initialized = false;
  
      private static Object logSync = new Object();
@@ -1607,8 +1613,9 @@ Reviewed-by: alanb, twisti, jrose, kvn
  }
  
  // DriverInfo is a package-private support class.
---- openjdk/jdk/src/share/classes/java/util/ResourceBundle.java
-+++ openjdk/jdk/src/share/classes/java/util/ResourceBundle.java
+diff -r e56220b54fe2 -r d206cb658a99 src/share/classes/java/util/ResourceBundle.java
+--- openjdk/jdk/src/share/classes/java/util/ResourceBundle.java	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/src/share/classes/java/util/ResourceBundle.java	Mon Oct 21 18:05:56 2013 +0100
 @@ -56,6 +56,8 @@
  import java.util.concurrent.ConcurrentMap;
  import java.util.jar.JarEntry;
@@ -1616,9 +1623,9 @@ Reviewed-by: alanb, twisti, jrose, kvn
 +import sun.reflect.CallerSensitive;
 +import sun.reflect.Reflection;
  
- 
  /**
-@@ -412,14 +414,10 @@
+  *
+@@ -421,14 +423,10 @@
  
      /*
       * Automatic determination of the ClassLoader to be used to load
@@ -1636,7 +1643,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          if (cl == null) {
              // When the caller's loader is the boot class loader, cl is null
              // here. In that case, ClassLoader.getSystemClassLoader() may
-@@ -433,8 +431,6 @@
+@@ -442,8 +440,6 @@
          return cl;
      }
  
@@ -1645,7 +1652,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
      /**
       * A wrapper of ClassLoader.getSystemClassLoader().
       */
-@@ -719,11 +715,12 @@
+@@ -728,11 +724,12 @@
       *     if no resource bundle for the specified base name can be found
       * @return a resource bundle for the given base name and the default locale
       */
@@ -1659,7 +1666,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
                               Control.INSTANCE);
      }
  
-@@ -761,11 +758,12 @@
+@@ -770,11 +767,12 @@
       *        needed.
       * @since 1.6
       */
@@ -1673,7 +1680,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
                               control);
      }
  
-@@ -790,12 +788,13 @@
+@@ -799,12 +797,13 @@
       *        if no resource bundle for the specified base name can be found
       * @return a resource bundle for the given base name and locale
       */
@@ -1688,7 +1695,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
                               Control.INSTANCE);
      }
  
-@@ -836,11 +835,12 @@
+@@ -845,11 +844,12 @@
       *        needed.
       * @since 1.6
       */
@@ -1702,7 +1709,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
                               control);
      }
  
-@@ -1676,8 +1676,9 @@
+@@ -1716,8 +1716,9 @@
       * @since 1.6
       * @see ResourceBundle.Control#getTimeToLive(String,Locale)
       */
@@ -1713,8 +1720,9 @@ Reviewed-by: alanb, twisti, jrose, kvn
      }
  
      /**
---- openjdk/jdk/src/share/classes/java/util/concurrent/atomic/AtomicIntegerFieldUpdater.java
-+++ openjdk/jdk/src/share/classes/java/util/concurrent/atomic/AtomicIntegerFieldUpdater.java
+diff -r e56220b54fe2 -r d206cb658a99 src/share/classes/java/util/concurrent/atomic/AtomicIntegerFieldUpdater.java
+--- openjdk/jdk/src/share/classes/java/util/concurrent/atomic/AtomicIntegerFieldUpdater.java	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/src/share/classes/java/util/concurrent/atomic/AtomicIntegerFieldUpdater.java	Mon Oct 21 18:05:56 2013 +0100
 @@ -34,8 +34,10 @@
   */
  
@@ -1753,8 +1761,9 @@ Reviewed-by: alanb, twisti, jrose, kvn
                  modifiers = field.getModifiers();
                  sun.reflect.misc.ReflectUtil.ensureMemberAccess(
                      caller, tclass, null, modifiers);
---- openjdk/jdk/src/share/classes/java/util/concurrent/atomic/AtomicLongFieldUpdater.java
-+++ openjdk/jdk/src/share/classes/java/util/concurrent/atomic/AtomicLongFieldUpdater.java
+diff -r e56220b54fe2 -r d206cb658a99 src/share/classes/java/util/concurrent/atomic/AtomicLongFieldUpdater.java
+--- openjdk/jdk/src/share/classes/java/util/concurrent/atomic/AtomicLongFieldUpdater.java	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/src/share/classes/java/util/concurrent/atomic/AtomicLongFieldUpdater.java	Mon Oct 21 18:05:56 2013 +0100
 @@ -34,8 +34,10 @@
   */
  
@@ -1813,8 +1822,9 @@ Reviewed-by: alanb, twisti, jrose, kvn
                  modifiers = field.getModifiers();
                  sun.reflect.misc.ReflectUtil.ensureMemberAccess(
                      caller, tclass, null, modifiers);
---- openjdk/jdk/src/share/classes/java/util/concurrent/atomic/AtomicReferenceFieldUpdater.java
-+++ openjdk/jdk/src/share/classes/java/util/concurrent/atomic/AtomicReferenceFieldUpdater.java
+diff -r e56220b54fe2 -r d206cb658a99 src/share/classes/java/util/concurrent/atomic/AtomicReferenceFieldUpdater.java
+--- openjdk/jdk/src/share/classes/java/util/concurrent/atomic/AtomicReferenceFieldUpdater.java	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/src/share/classes/java/util/concurrent/atomic/AtomicReferenceFieldUpdater.java	Mon Oct 21 18:05:56 2013 +0100
 @@ -34,8 +34,10 @@
   */
  
@@ -1827,7 +1837,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
  
  /**
   * A reflection-based utility that enables atomic updates to
-@@ -88,10 +90,12 @@
+@@ -89,10 +91,12 @@
       * @throws RuntimeException with a nested reflection-based
       * exception if the class does not hold field or is the wrong type.
       */
@@ -1841,7 +1851,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
      }
  
      /**
-@@ -199,14 +203,13 @@
+@@ -200,14 +204,13 @@
  
          AtomicReferenceFieldUpdaterImpl(Class<T> tclass,
                                          Class<V> vclass,
@@ -1858,9 +1868,10 @@ Reviewed-by: alanb, twisti, jrose, kvn
                  modifiers = field.getModifiers();
                  sun.reflect.misc.ReflectUtil.ensureMemberAccess(
                      caller, tclass, null, modifiers);
---- openjdk/jdk/src/share/classes/java/util/logging/Logger.java
-+++ openjdk/jdk/src/share/classes/java/util/logging/Logger.java
-@@ -303,13 +305,10 @@
+diff -r e56220b54fe2 -r d206cb658a99 src/share/classes/java/util/logging/Logger.java
+--- openjdk/jdk/src/share/classes/java/util/logging/Logger.java	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/src/share/classes/java/util/logging/Logger.java	Mon Oct 21 18:05:56 2013 +0100
+@@ -298,13 +298,10 @@
          }
      }
  
@@ -1875,9 +1886,10 @@ Reviewed-by: alanb, twisti, jrose, kvn
              if (caller.getClassLoader() == null) {
                  return manager.demandSystemLogger(name, resourceBundleName);
              }
-@@ -347,7 +346,8 @@
+@@ -339,8 +336,9 @@
+      * @return a suitable Logger
       * @throws NullPointerException if the name is null.
-      */ 
+      */
 +    @CallerSensitive
      public static synchronized Logger getLogger(String name) {
 -        return demandLogger(name, null);
@@ -1885,9 +1897,10 @@ Reviewed-by: alanb, twisti, jrose, kvn
      }
  
      /**
-@@ -404,7 +404,8 @@
+@@ -382,8 +380,9 @@
+      *             a different resource bundle name.
       * @throws NullPointerException if the name is null.
-      */ 
+      */
 +    @CallerSensitive
      public static synchronized Logger getLogger(String name, String resourceBundleName) {
 -        Logger result = demandLogger(name, resourceBundleName);
@@ -1895,10 +1908,10 @@ Reviewed-by: alanb, twisti, jrose, kvn
          if (result.resourceBundleName == null) {
              // Note: we may get a MissingResourceException here.
              result.setupResourceInfo(resourceBundleName);
---- openjdk/jdk/src/share/classes/javax/sql/rowset/serial/SerialJavaObject.java
-+++ openjdk/jdk/src/share/classes/javax/sql/rowset/serial/SerialJavaObject.java
-@@ -28,7 +28,9 @@
- import java.io.*;
+diff -r e56220b54fe2 -r d206cb658a99 src/share/classes/javax/sql/rowset/serial/SerialJavaObject.java
+--- openjdk/jdk/src/share/classes/javax/sql/rowset/serial/SerialJavaObject.java	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/src/share/classes/javax/sql/rowset/serial/SerialJavaObject.java	Mon Oct 21 18:05:56 2013 +0100
+@@ -30,6 +30,8 @@
  import java.util.Map;
  import java.lang.reflect.*;
  import javax.sql.rowset.RowSetWarning;
@@ -1907,17 +1920,17 @@ Reviewed-by: alanb, twisti, jrose, kvn
  
  /**
   * A serializable mapping in the Java programming language of an SQL
-@@ -123,7 +125,8 @@
-      * @throws SerialException if an error is encountered accesssing
+@@ -137,6 +139,7 @@
+      * @throws SerialException if an error is encountered accessing
       * the serialized object
       */
 +    @CallerSensitive
      public Field[] getFields() throws SerialException {
          if (fields != null) {
              Class c = this.obj.getClass();
-             return sun.reflect.misc.FieldUtil.getFields(c);
---- openjdk/jdk/src/share/classes/sun/misc/Unsafe.java
-+++ openjdk/jdk/src/share/classes/sun/misc/Unsafe.java
+diff -r e56220b54fe2 -r d206cb658a99 src/share/classes/sun/misc/Unsafe.java
+--- openjdk/jdk/src/share/classes/sun/misc/Unsafe.java	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/src/share/classes/sun/misc/Unsafe.java	Mon Oct 21 18:05:56 2013 +0100
 @@ -28,6 +28,9 @@
  import java.security.*;
  import java.lang.reflect.*;
@@ -1939,7 +1952,7 @@ Reviewed-by: alanb, twisti, jrose, kvn
          if (cc.getClassLoader() != null)
              throw new SecurityException("Unsafe");
          return theUnsafe;
-@@ -809,6 +813,12 @@
+@@ -708,6 +712,12 @@
                                      ClassLoader loader,
                                      ProtectionDomain protectionDomain);
  
@@ -1951,10 +1964,10 @@ Reviewed-by: alanb, twisti, jrose, kvn
 +    @CallerSensitive
      public native Class defineClass(String name, byte[] b, int off, int len);
  
-     /**
-new file mode 100644
---- /dev/null
-+++ openjdk/jdk/src/share/classes/sun/reflect/CallerSensitive.java
+     /** Allocate an instance but do not run any constructor.
+diff -r e56220b54fe2 -r d206cb658a99 src/share/classes/sun/reflect/CallerSensitive.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/src/share/classes/sun/reflect/CallerSensitive.java	Mon Oct 21 18:05:56 2013 +0100
 @@ -0,0 +1,41 @@
 +/*
 + * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
@@ -1997,8 +2010,9 @@ new file mode 100644
 +@Target({METHOD})
 +public @interface CallerSensitive {
 +}
---- openjdk/jdk/src/share/classes/sun/reflect/Reflection.java
-+++ openjdk/jdk/src/share/classes/sun/reflect/Reflection.java
+diff -r e56220b54fe2 -r d206cb658a99 src/share/classes/sun/reflect/Reflection.java
+--- openjdk/jdk/src/share/classes/sun/reflect/Reflection.java	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/src/share/classes/sun/reflect/Reflection.java	Mon Oct 21 18:05:56 2013 +0100
 @@ -52,16 +52,11 @@
          methodFilterMap = new HashMap<Class,String[]>();
      }
@@ -2049,8 +2063,9 @@ new file mode 100644
 +        return false;
 +    }
  }
---- openjdk/jdk/src/share/native/java/lang/SecurityManager.c
-+++ openjdk/jdk/src/share/native/java/lang/SecurityManager.c
+diff -r e56220b54fe2 -r d206cb658a99 src/share/native/java/lang/SecurityManager.c
+--- openjdk/jdk/src/share/native/java/lang/SecurityManager.c	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/src/share/native/java/lang/SecurityManager.c	Mon Oct 21 18:05:56 2013 +0100
 @@ -29,7 +29,6 @@
  
  #include "java_lang_SecurityManager.h"
@@ -2059,8 +2074,9 @@ new file mode 100644
  
  /*
   * Make sure a security manager instance is initialized.
---- openjdk/jdk/src/share/native/sun/reflect/Reflection.c
-+++ openjdk/jdk/src/share/native/sun/reflect/Reflection.c
+diff -r e56220b54fe2 -r d206cb658a99 src/share/native/sun/reflect/Reflection.c
+--- openjdk/jdk/src/share/native/sun/reflect/Reflection.c	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/src/share/native/sun/reflect/Reflection.c	Mon Oct 21 18:05:56 2013 +0100
 @@ -27,9 +27,11 @@
  #include "sun_reflect_Reflection.h"
  
@@ -2075,9 +2091,10 @@ new file mode 100644
  }
  
  JNIEXPORT jint JNICALL Java_sun_reflect_Reflection_getClassAccessFlags
---- openjdk/jdk/test/Makefile
-+++ openjdk/jdk/test/Makefile
-@@ -459,7 +459,7 @@
+diff -r e56220b54fe2 -r d206cb658a99 test/Makefile
+--- openjdk/jdk/test/Makefile	Wed Oct 16 05:39:53 2013 +0100
++++ openjdk/jdk/test/Makefile	Mon Oct 21 18:05:56 2013 +0100
+@@ -455,7 +455,7 @@
  
  # Stable samevm testruns (minus items from PROBLEM_LIST)
  JDK_ALL_TARGETS += jdk_lang
@@ -2086,9 +2103,9 @@ new file mode 100644
  	$(call RunSamevmBatch)
  
  # Stable othervm testruns (minus items from PROBLEM_LIST)
-new file mode 100644
---- /dev/null
-+++ openjdk/jdk/test/sun/reflect/CallerSensitive/CallerSensitiveFinder.java
+diff -r e56220b54fe2 -r d206cb658a99 test/sun/reflect/CallerSensitive/CallerSensitiveFinder.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/sun/reflect/CallerSensitive/CallerSensitiveFinder.java	Mon Oct 21 18:05:56 2013 +0100
 @@ -0,0 +1,248 @@
 +/*
 + * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
@@ -2338,9 +2355,9 @@ new file mode 100644
 +        }
 +    }
 +}
-new file mode 100644
---- /dev/null
-+++ openjdk/jdk/test/sun/reflect/CallerSensitive/ClassFileReader.java
+diff -r e56220b54fe2 -r d206cb658a99 test/sun/reflect/CallerSensitive/ClassFileReader.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/sun/reflect/CallerSensitive/ClassFileReader.java	Mon Oct 21 18:05:56 2013 +0100
 @@ -0,0 +1,338 @@
 +/*
 + * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
@@ -2680,9 +2697,9 @@ new file mode 100644
 +        }
 +    }
 +}
-new file mode 100644
---- /dev/null
-+++ openjdk/jdk/test/sun/reflect/CallerSensitive/MethodFinder.java
+diff -r e56220b54fe2 -r d206cb658a99 test/sun/reflect/CallerSensitive/MethodFinder.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/sun/reflect/CallerSensitive/MethodFinder.java	Mon Oct 21 18:05:56 2013 +0100
 @@ -0,0 +1,201 @@
 +/*
 + * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
@@ -2885,9 +2902,9 @@ new file mode 100644
 +    };
 +}
 +
-new file mode 100644
---- /dev/null
-+++ openjdk/jdk/test/sun/reflect/CallerSensitive/MissingCallerSensitive.java
+diff -r e56220b54fe2 -r d206cb658a99 test/sun/reflect/CallerSensitive/MissingCallerSensitive.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/sun/reflect/CallerSensitive/MissingCallerSensitive.java	Mon Oct 21 18:05:56 2013 +0100
 @@ -0,0 +1,73 @@
 +/*
 + * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.

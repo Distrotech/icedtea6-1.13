@@ -1,15 +1,16 @@
-changeset:   4968:2d3faf217561
-user:        jfranck
-date:        Thu Apr 18 13:18:28 2013 +0200
-files:       src/share/classes/java/lang/Class.java
-description:
+# HG changeset patch
+# User jfranck
+# Date 1382726704 -3600
+#      Fri Oct 25 19:45:04 2013 +0100
+# Node ID a2b63addc0633a5ef8d196d1019d78b920cb4b1a
+# Parent  e7ed5dad88eefc49130ae02bcbf329d72f18f12e
 8011139: (reflect) Revise checking in getEnclosingClass
 Reviewed-by: darcy, mchung, ahgross
 
-
---- openjdk/jdk/src/share/classes/java/lang/Class.java
-+++ openjdk/jdk/src/share/classes/java/lang/Class.java
-@@ -1134,13 +1134,9 @@
+diff -r e7ed5dad88ee -r a2b63addc063 src/share/classes/java/lang/Class.java
+--- openjdk/jdk/src/share/classes/java/lang/Class.java	Fri Oct 25 19:37:20 2013 +0100
++++ openjdk/jdk/src/share/classes/java/lang/Class.java	Fri Oct 25 19:45:04 2013 +0100
+@@ -1131,13 +1131,9 @@
                  enclosingCandidate = enclosingClass;
          }
  
@@ -53,6 +54,5 @@ Reviewed-by: darcy, mchung, ahgross
 +        if (s != null) {
 +            final ClassLoader cl = getClassLoader0();
              if (ReflectUtil.needsPackageAccessCheck(ccl, cl)) {
+ 
                  String name = this.getName();
-                 int i = name.lastIndexOf('.');
-

@@ -1,14 +1,16 @@
 # HG changeset patch
 # User jgish
 # Date 1366415410 25200
-# Node ID 871acb7cd95cb1dedae326e0e8eb4630f4eb980d
-# Parent  776ac4b51f1538de78054f7774b9bbefc91374cb
+#      Fri Apr 19 16:50:10 2013 -0700
+# Node ID ed410e3d08fe7792e6c08e411580564d2562c03e
+# Parent  e3eae7996a478cd07125110456836a42c8a504c6
 8010939: Deadlock in LogManager
 Summary: re-order locks to avoid deadlock
 Reviewed-by: mchung, alanb
 
---- openjdk/jdk/src/share/classes/java/util/logging/LogManager.java
-+++ openjdk/jdk/src/share/classes/java/util/logging/LogManager.java
+diff -r e3eae7996a47 -r ed410e3d08fe src/share/classes/java/util/logging/LogManager.java
+--- openjdk/jdk/src/share/classes/java/util/logging/LogManager.java	Tue May 14 08:07:08 2013 -0700
++++ openjdk/jdk/src/share/classes/java/util/logging/LogManager.java	Fri Apr 19 16:50:10 2013 -0700
 @@ -33,10 +33,8 @@
  import java.lang.ref.WeakReference;
  import java.beans.PropertyChangeListener;
@@ -28,7 +30,7 @@ Reviewed-by: mchung, alanb
      private Properties props = new Properties();
      private PropertyChangeSupport changes
                           = new PropertyChangeSupport(LogManager.class);
-@@ -516,14 +513,11 @@
+@@ -506,14 +503,11 @@
                  throw new NullPointerException();
              }
  
@@ -45,7 +47,7 @@ Reviewed-by: mchung, alanb
                      // a new one to be registered.
                      removeLogger(name);
                  } else {
-@@ -571,6 +565,8 @@
+@@ -561,6 +555,8 @@
              return true;
          }
  
@@ -54,7 +56,7 @@ Reviewed-by: mchung, alanb
          void removeLogger(String name) {
              namedLoggers.remove(name);
          }
-@@ -853,6 +849,7 @@
+@@ -845,6 +841,7 @@
          if (name == null) {
              throw new NullPointerException();
          }
@@ -62,9 +64,9 @@ Reviewed-by: mchung, alanb
          LoggerContext cx = getUserContext();
          if (cx.addLocalLogger(logger)) {
              // Do we have a per logger handler too?
-new file mode 100644
---- /dev/null
-+++ openjdk/jdk/test/java/util/logging/DrainFindDeadlockTest.java
+diff -r e3eae7996a47 -r ed410e3d08fe test/java/util/logging/DrainFindDeadlockTest.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/java/util/logging/DrainFindDeadlockTest.java	Fri Apr 19 16:50:10 2013 -0700
 @@ -0,0 +1,196 @@
 +/*
 + * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
