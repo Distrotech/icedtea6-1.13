@@ -720,7 +720,8 @@ ICEDTEA_PATCHES = \
 	patches/arm/cc_compile-05.patch \
 	patches/arm/cc_compile-06.patch \
 	patches/hotspot/hs23/arm-hsdis.patch \
-	patches/openjdk/7025066-embedded_build.patch
+	patches/openjdk/7025066-embedded_build.patch \
+	patches/s390_casts.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
