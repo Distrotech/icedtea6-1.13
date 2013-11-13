@@ -13,48 +13,6 @@ CVE-XXXX-YYYY: http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
 New in release 1.13.0 (201X-XX-XX):
 
-* Security fixes
-  - S8006900, CVE-2013-3829: Add new date/time capability
-  - S8008589: Better MBean permission validation
-  - S8011071, CVE-2013-5780: Better crypto provider handling
-  - S8011081, CVE-2013-5772: Improve jhat
-  - S8011157, CVE-2013-5814: Improve CORBA portablility
-  - S8012071, CVE-2013-5790: Better Building of Beans
-  - S8012147: Improve tool support
-  - S8012277: CVE-2013-5849: Improve AWT DataFlavor
-  - S8012425, CVE-2013-5802: Transform TransformerFactory
-  - S8013503, CVE-2013-5851: Improve stream factories
-  - S8013506: Better Pack200 data handling
-  - S8013510, CVE-2013-5809: Augment image writing code
-  - S8013514: Improve stability of cmap class
-  - S8013739, CVE-2013-5817: Better LDAP resource management
-  - S8013744, CVE-2013-5783: Better tabling for AWT
-  - S8014085: Better serialization support in JMX classes
-  - S8014093, CVE-2013-5782: Improve parsing of images
-  - S8014102, CVE-2013-5778: Improve image conversion
-  - S8014341, CVE-2013-5803: Better service from Kerberos servers
-  - S8014349, CVE-2013-5840: (cl) Class.getDeclaredClass problematic in some class loader configurations
-  - S8014530, CVE-2013-5825: Better digital signature processing
-  - S8014534: Better profiling support
-  - S8014987, CVE-2013-5842: Augment serialization handling
-  - S8015614: Update build settings
-  - S8015731: Subject java.security.auth.subject to improvements
-  - S8015743, CVE-2013-5774: Address internet addresses
-  - S8016256: Make finalization final
-  - S8016653, CVE-2013-5804: javadoc should ignore ignoreable characters in names
-  - S8016675, CVE-2013-5797: Make Javadoc pages more robust
-  - S8017196, CVE-2013-5850: Ensure Proxies are handled appropriately
-  - S8017287, CVE-2013-5829: Better resource disposal
-  - S8017291, CVE-2013-5830: Cast Proxies Aside
-  - S8017298, CVE-2013-4002: Better XML support
-  - S8017300, CVE-2013-5784: Improve Interface Implementation
-  - S8017505, CVE-2013-5820: Better Client Service
-  - S8019292: Better Attribute Value Exceptions
-  - S8019617: Better view of objects
-  - S8020293: JVM crash
-  - S8021290, CVE-2013-5823: Better signature validation
-  - S8022940: Enhance CORBA translations
-  - S8023683: Enhance class file parsing
 * New features
   - PR1458: Make use of bootstrap tools & -Xbootclasspath patches optional
   - PR718: Backport LCMS2 support from IcedTea7
@@ -910,6 +868,74 @@ New in release 1.13.0 (201X-XX-XX):
   - S8014312: Fork hs23.25 hsx from hs23.21 for jdk7u25 and reinitialize build number
   - S8014464: Update jcheck for 6-open
 * Backports
+  - S7025066: Build systems changes to support SE Embedded Integration
+  - S7038711: Fix CC_VER checks for compiler options, fix use of -Wno-clobber
+  - S8020943: Memory leak when GCNotifier uses create_from_platform_dependent_str()
+  - S8023457: Event based tracing framework needs a mutex for thread groups
+  - S8023478: Test fails with HS crash in GCNotifier.
+* Bug fixes
+  - PR1318: Fix automatic enabling of the Zero build on non-JIT architectures which don't use CACAO or JamVM.
+  - RH902004: very bad performance with E-Porto Add-In für OpenOffice Writer installed (hs23 only)
+  - RH991170: java does not use correct kerberos credential cache
+  - PR1535: Allow use of system Kerberos to obtain cache location
+* JamVM
+  - JSR 335: Lambda Expressions
+  - JEP 171: Implement fence methods in sun.misc.Unsafe
+  - sun.misc.Unsafe: additional methods get/putAddress
+  - FreeClassData: adjust method count for Miranda methods
+  - Fix invokesuper check in invokespecial opcode
+  - Fix non-direct interpreter invokespecial super-class check
+  - When GC'ing a native method don't try to free code
+  - Do not free unprepared Miranda method code data
+  - Set anonymous class protection domain
+  - JVM_IsVMGeneratedMethodIx stub
+  - Dummy implementation of sun.misc.Perf natives
+
+New in release 1.11.14 (2013-11-13):
+
+* Security fixes
+  - S8006900, CVE-2013-3829: Add new date/time capability
+  - S8008589: Better MBean permission validation
+  - S8011071, CVE-2013-5780: Better crypto provider handling
+  - S8011081, CVE-2013-5772: Improve jhat
+  - S8011157, CVE-2013-5814: Improve CORBA portablility
+  - S8012071, CVE-2013-5790: Better Building of Beans
+  - S8012147: Improve tool support
+  - S8012277: CVE-2013-5849: Improve AWT DataFlavor
+  - S8012425, CVE-2013-5802: Transform TransformerFactory
+  - S8013503, CVE-2013-5851: Improve stream factories
+  - S8013506: Better Pack200 data handling
+  - S8013510, CVE-2013-5809: Augment image writing code
+  - S8013514: Improve stability of cmap class
+  - S8013739, CVE-2013-5817: Better LDAP resource management
+  - S8013744, CVE-2013-5783: Better tabling for AWT
+  - S8014085: Better serialization support in JMX classes
+  - S8014093, CVE-2013-5782: Improve parsing of images
+  - S8014102, CVE-2013-5778: Improve image conversion
+  - S8014341, CVE-2013-5803: Better service from Kerberos servers
+  - S8014349, CVE-2013-5840: (cl) Class.getDeclaredClass problematic in some class loader configurations
+  - S8014530, CVE-2013-5825: Better digital signature processing
+  - S8014534: Better profiling support
+  - S8014987, CVE-2013-5842: Augment serialization handling
+  - S8015614: Update build settings
+  - S8015731: Subject java.security.auth.subject to improvements
+  - S8015743, CVE-2013-5774: Address internet addresses
+  - S8016256: Make finalization final
+  - S8016653, CVE-2013-5804: javadoc should ignore ignoreable characters in names
+  - S8016675, CVE-2013-5797: Make Javadoc pages more robust
+  - S8017196, CVE-2013-5850: Ensure Proxies are handled appropriately
+  - S8017287, CVE-2013-5829: Better resource disposal
+  - S8017291, CVE-2013-5830: Cast Proxies Aside
+  - S8017298, CVE-2013-4002: Better XML support
+  - S8017300, CVE-2013-5784: Improve Interface Implementation
+  - S8017505, CVE-2013-5820: Better Client Service
+  - S8019292: Better Attribute Value Exceptions
+  - S8019617: Better view of objects
+  - S8020293: JVM crash
+  - S8021290, CVE-2013-5823: Better signature validation
+  - S8022940: Enhance CORBA translations
+  - S8023683: Enhance class file parsing
+* Backports
   - S4075303: Use javap to enquire about a specific inner class
   - S4111861: static final field contents are not displayed
   - S4348375: Javap is not internationalized
@@ -921,27 +947,19 @@ New in release 1.13.0 (201X-XX-XX):
   - S4876942: javap invoked without args does not print help screen
   - S4880663: javap could output whitespace between class name and opening brace
   - S4884240: additional option required for javap
-  - S4893408: JPEGReader throws IllegalArgException when setting the destination to BYTE_GRAY
   - S4975569: javap doesn't print new flag bits
   - S6271787: javap dumps LocalVariableTypeTable attribute in hex, needs to print a table
   - S6305779: javap: support annotations
   - S6439940: Clean up javap implementation
   - S6469569: wrong check of searchpath in JavapEnvironment
   - S6474890: javap does not open .zip files in -classpath
-  - S6563752: Build and test JDK7 with Sun Studio 12 Express compilers (prep makefiles)
   - S6587786: Javap throws error : "ERROR:Could not find <classname>" for JRE classes
   - S6622215: javap ignores certain relevant access flags
   - S6622216: javap names some attributes incorrectly
   - S6622232: javap gets whitespace confused
   - S6622260: javap prints negative bytes incorrectly in hex
-  - S6631559: Registration of ImageIO plugins should not cause loading of jpeg.dlli and cmm.dll
   - S6708729: update jdk Makefiles for new javap
   - S6715767: javap on java.lang.ClassLoader crashes
-  - S6729772: 64-bit build with SS12 compiler: SIGSEGV (0xb) at pc=0x0000000000000048, pid=14826, tid=2
-  - S6791502: IIOException "Invalid icc profile" on jpeg after update from JDK5 to JDK6
-  - S6793818: JpegImageReader is too greedy creating color profiles
-  - S6799141: Build with --hash-style=both so that binaries can work on SuSE 10
-  - S6816311: Changes to allow builds with latest Windows SDK 6.1 on 64bit Windows 2003
   - S6819246: improve support for decoding instructions in classfile library
   - S6824493: experimental support for additional info for instructions
   - S6841419: classfile: add constant pool iterator
@@ -950,20 +968,12 @@ New in release 1.13.0 (201X-XX-XX):
   - S6852856: javap changes to facilitate subclassing javap for variants
   - S6867671: javap whitespace formatting issues
   - S6868539: javap should use current names for constant pool tags
-  - S6888215: memory leak in jpeg plugin
   - S6902264: fix indentation of tableswitch and lookupswitch
+  - S6925851: Localize JRE into pt_BR
   - S6954275: XML signatures with reference data larger 16KB and cacheRef on fails to validate
-  - S6974017: Upgrade required Solaris Studio compilers to 5.10 (12 update 1 + patches)
-  - S6980281: SWAT: SwingSet2 got core dumped in Solaris-AMD64 using b107 swat build
-  - S6989760: cmm native compiler warnings
-  - S6989774: imageio compiler warnings in native code
-  - S7000225: Sanity check on sane-alsa-headers is broken
-  - S7013519: [parfait] Integer overflows in 2D code
-  - S7018912: [parfait] potential buffer overruns in imageio jpeg
-  - S7025066: Build systems changes to support SE Embedded Integration
-  - S7038711: Fix CC_VER checks for compiler options, fix use of -Wno-clobber
+  - S7035073: Add missing timezones to TimeZoneNames_pt_BR.java
   - S7146431: java.security files out-of-sync
-   -S8000450: Restrict access to com/sun/corba/se/impl package
+  - S8000450: Restrict access to com/sun/corba/se/impl package
   - S8002070: Remove the stack search for a resource bundle for Logger to use
   - S8003992: File and other classes in java.io do not handle embedded nulls properly
   - S8004188: Rename src/share/lib/security/java.security to java.security-linux
@@ -989,7 +999,6 @@ New in release 1.13.0 (201X-XX-XX):
   - S8019584: javax/management/remote/mandatory/loading/MissingClassTest.java failed in nightly against jdk7u45: java.io.InvalidObjectException: Invalid notification: null
   - S8019969: nioNetworkChannelInet6/SetOptionGetOptionTestInet6 test case crashes
   - S8019979: Replace CheckPackageAccess test with better one from closed repo
-  - S8020943: Memory leak when GCNotifier uses create_from_platform_dependent_str()
   - S8021355: REGRESSION: Five closed/java/awt/SplashScreen tests fail since 7u45 b01 on Linux, Solaris
   - S8021366: java_util/Properties/PropertiesWithOtherEncodings fails during 7u45 nightly testing
   - S8021577: JCK test api/javax_management/jmx_serial/modelmbean/ModelMBeanNotificationInfo/serial/index.html#Input has failed since jdk 7u45 b01
@@ -997,32 +1006,13 @@ New in release 1.13.0 (201X-XX-XX):
   - S8021969: The index_AccessAllowed jnlp can not load successfully with exception thrown in the log.
   - S8022661: InetAddress.writeObject() performs flush() on object output stream
   - S8022682: Supporting XOM
-  - S8023457: Event based tracing framework needs a mutex for thread groups
-  - S8023478: Test fails with HS crash in GCNotifier.
   - S8023964: java/io/IOException/LastErrorString.java should be @ignore-d
   - S8024914: Swapped usage of idx_t and bm_word_t types in bitMap.inline.hpp
   - S8025128: File.createTempFile fails if prefix is absolute path
+  - S8025255: (tz) Support tzdata2013g
   - OJ19: Fix test cases from 8010118 to work with OpenJDK 6
   - OJ20: Resolve merge issues with JAXP security fixes
   - OJ21: Remove @Override annotation added on interface by 2013/10/15 security fixes
-* Bug fixes
-  - PR1188: ASM Interpreter and Thumb2 JIT javac miscompile modulo reminder on armel.
-  - PR1318: Fix automatic enabling of the Zero build on non-JIT architectures which don't use CACAO or JamVM.
-  - RH902004: very bad performance with E-Porto Add-In für OpenOffice Writer installed (hs23 only)
-  - RH991170: java does not use correct kerberos credential cache
-  - PR1535: Allow use of system Kerberos to obtain cache location
-* JamVM
-  - JSR 335: Lambda Expressions
-  - JEP 171: Implement fence methods in sun.misc.Unsafe
-  - sun.misc.Unsafe: additional methods get/putAddress
-  - FreeClassData: adjust method count for Miranda methods
-  - Fix invokesuper check in invokespecial opcode
-  - Fix non-direct interpreter invokespecial super-class check
-  - When GC'ing a native method don't try to free code
-  - Do not free unprepared Miranda method code data
-  - Set anonymous class protection domain
-  - JVM_IsVMGeneratedMethodIx stub
-  - Dummy implementation of sun.misc.Perf natives
 
 New in release 1.11.13 (2013-09-06):
 
