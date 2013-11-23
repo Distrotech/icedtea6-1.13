@@ -281,14 +281,7 @@ ICEDTEA_FSG_PATCHES =
 DROP_PATCHES =
 
 SECURITY_PATCHES = \
-	patches/security/20120830/7182135-impossible_to_use_some_editors_directly.patch \
-	patches/openjdk/8024914-swapped_usage.patch \
-	patches/openjdk/8015614-update_build.patch \
-	patches/openjdk/8016256-finalization_final.patch \
-	patches/openjdk/8023683-enhance_class_file_parsing.patch \
-	patches/openjdk/8023457-tracing_mutex.patch \
-	patches/openjdk/8020943-memory_leak.patch \
-	patches/openjdk/8023478-hs_crash.patch
+	patches/security/20120830/7182135-impossible_to_use_some_editors_directly.patch
 
 SPECIAL_SECURITY_PATCH_1 = patches/security/20120214/7112642.patch
 SPECIAL_SECURITY_PATCH_2 = patches/security/20130618/8009071-improve_shape_handling.patch
