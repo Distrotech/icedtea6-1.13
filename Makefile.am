@@ -724,7 +724,8 @@ ICEDTEA_PATCHES = \
 	patches/hotspot/hs23/arm-hsdis.patch \
 	patches/openjdk/7025066-embedded_build.patch \
 	patches/s390_casts.patch \
-	patches/openjdk/8025255-tzdata2013g.patch
+	patches/openjdk/8025255-tzdata2013g.patch \
+	patches/d729448-32_bit_alignment.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \

@@ -1,0 +1,47 @@
+# HG changeset patch
+# User andrew
+# Date 1384967615 0
+#      Wed Nov 20 17:13:35 2013 +0000
+# Node ID 05b64403a1917ddd9e0dd3880a5707e083ed9aba
+# Parent  9d01164b2dfc36fb13984cb0854b2c7a9e4dbfbe
+D729448: 32-bit alignment on mips and mipsel
+
+diff -r 9d01164b2dfc -r 05b64403a191 src/share/vm/interpreter/bytecodeInterpreter.hpp
+--- openjdk/hotspot/src/share/vm/interpreter/bytecodeInterpreter.hpp	Tue Nov 12 17:58:35 2013 +0000
++++ openjdk/hotspot/src/share/vm/interpreter/bytecodeInterpreter.hpp	Wed Nov 20 17:13:35 2013 +0000
+@@ -60,7 +60,16 @@
+     jlong   l;
+     jdouble d;
+     uint32_t      v[2];
+-};
++}
++#ifndef _LP64
++  /* Hotspot only aligns the union to the uintptr_t type, that is 32 bit
++     on a 32-bit CPU. Accesses to double values should be 64-bit aligned
++     on at least MIPS and SPARC. Declare it to GCC for all 32-bit CPUs,
++     as it might also help GCC to select the best instruction on other
++     CPUs. */
++  __attribute__ ((packed, aligned (4)))
++#endif
++;
+ 
+ 
+ typedef class BytecodeInterpreter* interpreterState;
+@@ -172,7 +181,16 @@
+     jlong   l;
+     jdouble d;
+     uint32_t      v[2];
+-};
++}
++#ifndef _LP64
++  /* Hotspot only aligns the union to the uintptr_t type, that is 32 bit
++     on a 32-bit CPU. Accesses to double values should be 64-bit aligned
++     on at least MIPS and SPARC. Declare it to GCC for all 32-bit CPUs,
++     as it might also help GCC to select the best instruction on other
++     CPUs. */
++  __attribute__ ((packed, aligned (4)))
++#endif
++;
+ 
+ /*
+  * Generic 32-bit wide "Java slot" definition. This type occurs
