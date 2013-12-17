@@ -10,7 +10,7 @@ make patch
 
 cp *.tar.gz ../.build-info/src/${1}/
 
-for dpatch in X11R7;do
+for dpatch in X11R7 mlib;do
   echo "Applying distrotech ${dpatch} patch"
   patch -p1 -N -s -r - -i ../.build-info/distrotech-icedtea6-${dpatch}.patch
 done
