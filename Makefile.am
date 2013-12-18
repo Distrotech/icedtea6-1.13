@@ -312,7 +312,6 @@ ICEDTEA_PATCHES = \
 	$(SECURITY_PATCHES) \
 	patches/openjdk/6733501-icedtea_lcms_test.patch \
 	$(LCMS_PATCHES) \
-	patches/openjdk/7002766-parfait-jpeg.patch \
 	patches/openjdk/4993545-nativeinlightfixer.patch \
 	patches/openjdk/6637796-set_bounds.patch \
 	patches/openjdk/6607660-treelock.patch \
@@ -1133,11 +1132,13 @@ clean-download: clean-download-cacao clean-download-jamvm \
 	rm -f stamps/download.stamp
 
 stamps/extract.stamp: stamps/extract-openjdk.stamp \
- stamps/extract-cacao.stamp stamps/extract-jamvm.stamp
+ stamps/extract-cacao.stamp stamps/extract-jamvm.stamp \
+ stamps/remove-intree-libraries.stamp
 	mkdir -p stamps
 	touch $@
 
-clean-extract: clean-extract-openjdk clean-cacao clean-jamvm
+clean-extract: clean-extract-openjdk clean-cacao clean-jamvm \
+  clean-remove-intree-libraries
 	rm -f stamps/extract.stamp
 
 stamps/extract-openjdk.stamp: stamps/download.stamp
@@ -1256,6 +1257,13 @@ clean-ports:
 	  rm -rf $$link; \
 	done
 	rm -f stamps/ports.stamp
+
+stamps/remove-intree-libraries.stamp: stamps/extract-openjdk.stamp
+	sh $(srcdir)/remove-intree-libraries.sh
+	touch stamps/remove-intree-librares.stamp
+
+clean-remove-intree-libraries:
+	rm -f stamps/remove-intree-libraries.stamp
 
 stamps/generated.stamp: stamps/ports.stamp
 	if [ ! -e $(GENERATED_BUILD_DIR) ]; then \

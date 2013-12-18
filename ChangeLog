@@ -1,5 +1,28 @@
 2013-12-18  Andrew John Hughes  <gnu.andrew@member.fsf.org>
 
+	PR1501: Backport IcedTea 2.x library removal script
+	* patches/openjdk/7002766-parfait-jpeg.patch: Moved to...
+	* patches/openjdk/libjpeg/7002766-parfait-jpeg.patch: ... here.
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Drop 7002766 for the time being, until
+	an option to build with bundled libjpeg is added.
+	(extract): Depend on remove-intree-libraries.
+	(clean-extract): Depend on clean-remove-intree-libraries.
+	(remove-intree-libraries): Run new script.
+	(clean-remove-intree-libraries): Remove stamp.
+	* patches/libraries.patch:
+	Regenerated without removal of entire files, which is now
+	done by the script.
+	* patches/openjdk/6989774-imageio_compiler_warnings.patch:
+	Split libjpeg changes into...
+	* patches/openjdk/libjpeg/6989774-imageio_compiler_warnings.patch:
+	... this patch (currently unapplied as above).
+	* remove-intree-libraries.sh: Script to delete bundled
+	libjpeg, giflib, libpng & zlib.
+	* NEWS: Updated.
+
+2013-12-18  Andrew John Hughes  <gnu.andrew@member.fsf.org>
+
 	* NEWS: Mention PR1376.
 
 2013-12-18  Andrew John Hughes  <gnu.andrew@member.fsf.org>
