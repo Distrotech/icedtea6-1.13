@@ -1039,7 +1039,7 @@ AC_DEFUN([IT_WITH_HG_REVISION],
   AM_CONDITIONAL(WITH_HGREV, test "x${HGREV}" != "x")
 ])
 
-AC_DEFUN([IT_CHECK_IF_BOOTSTRAPPING],
+AC_DEFUN_ONCE([IT_CHECK_IF_BOOTSTRAPPING],
 [
   AC_MSG_CHECKING([whether to build a bootstrap version first])
   AC_ARG_ENABLE([bootstrap],
@@ -1061,8 +1061,9 @@ AC_DEFUN([IT_CHECK_IF_BOOTSTRAPPING],
   AM_CONDITIONAL([BOOTSTRAPPING], test x"${enable_bootstrap}" = "xyes")
 ])
 
-AC_DEFUN([IT_CHECK_FOR_JDK],
+AC_DEFUN_ONCE([IT_CHECK_FOR_JDK],
 [
+  AC_REQUIRE([IT_CHECK_IF_BOOTSTRAPPING])
   AC_MSG_CHECKING([for a JDK home directory])
   AC_ARG_WITH([jdk-home],
              [AS_HELP_STRING([--with-jdk-home],

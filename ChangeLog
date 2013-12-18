@@ -1,3 +1,15 @@
+2013-12-18  Andrew John Hughes  <gnu.andrew@member.fsf.org>
+
+	PR1627: JDK check should depend on bootstrapping check
+	* acinclude.m4:
+	(IT_CHECK_IF_BOOTSTRAPPING): Define only once.
+	(IT_CHECK_FOR_JDK): Define only once and require
+	IT_CHECK_IF_BOOTSTRAPPING for setting of
+	enable_bootstrap variable.
+	* configure.ac: Don't invoke IT_CHECK_IF_BOOTSTRAPPING
+	explicitly.
+	* NEWS: Updated.
+
 2013-06-06  Andrew John Hughes  <gnu.andrew@member.fsf.org>
 
 	* INSTALL:
