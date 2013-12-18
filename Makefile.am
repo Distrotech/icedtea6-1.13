@@ -908,7 +908,7 @@ clean-local: clean-tests $(PULSE_JAVA_CLEAN_TARGET) \
  clean-icedtea-against-ecj clean-extract-ecj clean-generated clean-replace-hotspot \
  clean-rewriter clean-rewrite-rhino clean-rt clean-bootstrap-directory \
  clean-bootstrap-directory-ecj clean-bootstrap-directory-symlink \
- clean-bootstrap-directory-symlink-ecj clean-fonts
+ clean-bootstrap-directory-symlink-ecj clean-fonts clean-cryptocheck
 	if [ -e bootstrap ]; then \
 	  rmdir bootstrap ; \
 	fi
@@ -948,7 +948,7 @@ install:
 	clean-add-pulseaudio-ecj clean-add-nss-ecj clean-add-tzdata-support-ecj clean-fonts \
 	clean-download-hotspot clean-tests clean-tapset-report jtregcheck clean-pax-mark-vm \
 	clean-pax-mark-vm-debug clean-pax-mark-vm-ecj clean-check-crypto clean-check-crypto-debug \
-	clean-check-crypto-boot
+	clean-check-crypto-boot clean-cryptocheck
 
 env:
 	@echo 'unset JAVA_HOME'
