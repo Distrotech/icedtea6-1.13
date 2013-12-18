@@ -1964,7 +1964,7 @@ endif
 clean-pax-mark-vm-debug:
 	rm -f stamps/pax-mark-vm-debug.stamp
 
-stamps/check-crypto.stamp: stamps/cryptocheck.stamp
+stamps/check-crypto.stamp: stamps/cryptocheck.stamp stamps/icedtea.stamp
 	if [ -e $(BUILD_OUTPUT_DIR)/j2sdk-image/bin/java ] ; then \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/bin/java -cp $(CRYPTO_CHECK_BUILD_DIR) TestCryptoLevel ; \
 	fi
@@ -1974,7 +1974,7 @@ stamps/check-crypto.stamp: stamps/cryptocheck.stamp
 clean-check-crypto:
 	rm -f stamps/check-crypto.stamp
 
-stamps/check-crypto-debug.stamp: stamps/cryptocheck.stamp
+stamps/check-crypto-debug.stamp: stamps/cryptocheck.stamp stamps/icedtea-debug.stamp
 	if [ -e $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/bin/java ] ; then \
 	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/bin/java -cp $(CRYPTO_CHECK_BUILD_DIR) TestCryptoLevel ; \
 	fi
@@ -2156,7 +2156,7 @@ endif
 clean-pax-mark-vm-ecj:
 	rm -f stamps/pax-mark-vm-ecj.stamp
 
-stamps/check-crypto-boot.stamp: stamps/cryptocheck.stamp
+stamps/check-crypto-boot.stamp: stamps/cryptocheck.stamp stamps/icedtea-ecj.stamp
 	if [ -e $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/bin/java ] ; then \
 	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/bin/java -cp $(CRYPTO_CHECK_BUILD_DIR) TestCryptoLevel ; \
 	fi
