@@ -871,12 +871,14 @@ New in release 1.13.0 (201X-XX-XX):
   - S8011896: Add check for invalid offset for new AccessControlContext isAuthorized field
   - S8014312: Fork hs23.25 hsx from hs23.21 for jdk7u25 and reinitialize build number
   - S8014464: Update jcheck for 6-open
-* Backports
-  - S7025066: Build systems changes to support SE Embedded Integration
-  - S7038711: Fix CC_VER checks for compiler options, fix use of -Wno-clobber
+* Import of OpenJDK6 b29
+  - OJ23: Resolve merge issues in 8015614.
   - S8020943: Memory leak when GCNotifier uses create_from_platform_dependent_str()
   - S8023457: Event based tracing framework needs a mutex for thread groups
   - S8023478: Test fails with HS crash in GCNotifier.
+* Backports
+  - S7025066: Build systems changes to support SE Embedded Integration
+  - S7038711: Fix CC_VER checks for compiler options, fix use of -Wno-clobber
 * Bug fixes
   - PR1318: Fix automatic enabling of the Zero build on non-JIT architectures which don't use CACAO or JamVM.
   - RH902004: very bad performance with E-Porto Add-In für OpenOffice Writer installed (hs23 only)
