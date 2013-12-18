@@ -39,6 +39,7 @@ BUILD_DEBUG_JRE_ARCH_DIR = $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTA
 FONTCONFIG_PATH = openjdk/jdk/src/solaris/classes/sun/awt/fontconfigs
 REWRITER_BUILD_DIR = $(abs_top_builddir)/rewriter.build
 GENERATED_BUILD_DIR = $(abs_top_builddir)/generated.build
+CRYPTO_CHECK_BUILD_DIR = $(abs_top_builddir)/cryptocheck.build
 
 # Source directories
 
@@ -258,6 +259,8 @@ OPENJDK_ECJ_TREE = stamps/patch-ecj.stamp
 # Sources list
 
 REWRITER_SRCS = $(top_srcdir)/rewriter/com/redhat/rewriter/ClassRewriter.java
+CRYPTO_CHECK_SRCS = $(top_srcdir)/TestCryptoLevel.java
+
 # Relative path to JTreg tool
 JTREG_DIR = src/jtreg
 JTREG_SRCS = $(top_srcdir)/$(JTREG_DIR)
@@ -882,7 +885,8 @@ EXTRA_DIST = generated \
 	scripts/jni_desc \
 	rewriter/agpl-3.0.txt \
 	$(REWRITER_SRCS) \
-	$(TAPSET_TEST_SRCS)
+	$(TAPSET_TEST_SRCS) \
+	$(CRYPTO_CHECK_SRCS)
 
 # Top-Level Targets
 # =================
@@ -943,7 +947,8 @@ install:
 	clean-add-tzdata-support clean-add-tzdata-support-debug clean-add-systemtap-ecj \
 	clean-add-pulseaudio-ecj clean-add-nss-ecj clean-add-tzdata-support-ecj clean-fonts \
 	clean-download-hotspot clean-tests clean-tapset-report jtregcheck clean-pax-mark-vm \
-	clean-pax-mark-vm-debug clean-pax-mark-vm-ecj
+	clean-pax-mark-vm-debug clean-pax-mark-vm-ecj clean-check-crypto clean-check-crypto-debug \
+	clean-check-crypto-boot
 
 env:
 	@echo 'unset JAVA_HOME'
@@ -1646,27 +1651,28 @@ clean-icedtea-debug:
 stamps/icedtea-against-icedtea.stamp: stamps/icedtea.stamp \
  stamps/add-jamvm.stamp stamps/add-cacao.stamp stamps/add-zero.stamp \
  stamps/add-systemtap.stamp stamps/add-pulseaudio.stamp stamps/add-nss.stamp \
- stamps/add-tzdata-support.stamp stamps/add-archive.stamp stamps/pax-mark-vm.stamp
+ stamps/add-tzdata-support.stamp stamps/add-archive.stamp stamps/pax-mark-vm.stamp \
+ stamps/check-crypto.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-against-icedtea.stamp
 
 clean-icedtea-against-icedtea: clean-add-jamvm clean-add-zero clean-add-cacao \
  clean-add-systemtap clean-add-pulseaudio clean-add-nss clean-add-tzdata-support \
- clean-add-archive clean-pax-mark-vm
+ clean-add-archive clean-pax-mark-vm clean-check-crypto
 	rm -f stamps/icedtea-against-icedtea.stamp
 
 stamps/icedtea-debug-against-icedtea.stamp: stamps/icedtea-debug.stamp \
  stamps/add-jamvm-debug.stamp stamps/add-cacao-debug.stamp \
  stamps/add-zero-debug.stamp stamps/add-systemtap-debug.stamp stamps/add-pulseaudio-debug.stamp \
  stamps/add-nss-debug.stamp stamps/add-tzdata-support-debug.stamp stamps/add-archive-debug.stamp \
- stamps/pax-mark-vm-debug.stamp
+ stamps/pax-mark-vm-debug.stamp stamps/check-crypto-debug.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-debug-against-icedtea.stamp
 
 clean-icedtea-debug-against-icedtea: clean-add-zero-debug \
  clean-add-jamvm-debug clean-add-cacao-debug clean-add-systemtap-debug \
  clean-add-pulseaudio-debug clean-add-nss-debug clean-add-tzdata-support-debug \
- clean-add-archive-debug clean-pax-mark-vm-debug
+ clean-add-archive-debug clean-pax-mark-vm-debug clean-check-crypto-debug
 	rm -f stamps/icedtea-debug-against-icedtea.stamp
 
 stamps/add-systemtap.stamp: stamps/icedtea.stamp
@@ -1958,6 +1964,24 @@ endif
 clean-pax-mark-vm-debug:
 	rm -f stamps/pax-mark-vm-debug.stamp
 
+stamps/check-crypto.stamp: stamps/cryptocheck.stamp
+	if [ -e $(BUILD_OUTPUT_DIR)/j2sdk-image/bin/java ] ; then \
+	  $(BUILD_OUTPUT_DIR)/j2sdk-image/bin/java -cp $(CRYPTO_CHECK_BUILD_DIR) TestCryptoLevel ; \
+	fi
+	mkdir -p stamps
+	touch $@
+
+clean-check-crypto:
+	rm -f stamps/check-crypto.stamp
+
+stamps/check-crypto-debug.stamp: stamps/cryptocheck.stamp
+	if [ -e $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/bin/java ] ; then \
+	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/bin/java -cp $(CRYPTO_CHECK_BUILD_DIR) TestCryptoLevel ; \
+	fi
+
+clean-check-crypto-debug:
+	rm -f stamps/check-crypto-debug.stamp
+
 # OpenJDK ecj Targets
 # ===================
 
@@ -1979,12 +2003,12 @@ clean-icedtea-ecj:
 
 stamps/icedtea-against-ecj.stamp: stamps/icedtea-ecj.stamp stamps/add-systemtap-ecj.stamp \
  stamps/add-pulseaudio-ecj.stamp stamps/add-nss-ecj.stamp stamps/add-tzdata-support-ecj.stamp \
- stamps/add-archive-ecj.stamp stamps/pax-mark-vm-ecj.stamp
+ stamps/add-archive-ecj.stamp stamps/pax-mark-vm-ecj.stamp stamps/check-crypto-boot.stamp
 	mkdir -p stamps
 	touch stamps/icedtea-against-ecj.stamp
 
 clean-icedtea-against-ecj: clean-add-systemtap-ecj clean-add-pulseaudio-ecj clean-add-nss-ecj \
- clean-add-tzdata-support-ecj clean-add-archive-ecj clean-pax-mark-vm-ecj
+ clean-add-tzdata-support-ecj clean-add-archive-ecj clean-pax-mark-vm-ecj clean-check-crypto-boot
 	rm -f stamps/icedtea-against-ecj.stamp
 
 stamps/add-systemtap-ecj.stamp: stamps/icedtea-ecj.stamp
@@ -2131,6 +2155,16 @@ endif
 
 clean-pax-mark-vm-ecj:
 	rm -f stamps/pax-mark-vm-ecj.stamp
+
+stamps/check-crypto-boot.stamp: stamps/cryptocheck.stamp
+	if [ -e $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/bin/java ] ; then \
+	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/bin/java -cp $(CRYPTO_CHECK_BUILD_DIR) TestCryptoLevel ; \
+	fi
+	mkdir -p stamps
+	touch $@
+
+clean-check-crypto-boot:
+	rm -f stamps/check-crypto-boot.stamp
 
 # Rebuild targets
 
@@ -2720,6 +2754,19 @@ if BOOTSTRAPPING
 endif
 	touch stamps/rt.stamp
 
+# Crypto Level Check
+
+stamps/cryptocheck.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP)
+	mkdir -p $(CRYPTO_CHECK_BUILD_DIR)
+	$(BOOT_DIR)/bin/javac $(IT_JAVACFLAGS) \
+	  -d $(CRYPTO_CHECK_BUILD_DIR) $(CRYPTO_CHECK_SRCS)
+	mkdir -p stamps
+	touch $@
+
+clean-cryptocheck:
+	rm -rf $(CRYPTO_CHECK_BUILD_DIR)
+	rm -f stamps/cryptocheck.stamp
+
 # Target Aliases
 # ===============
 
@@ -2738,6 +2785,14 @@ bootstrap-directory-symlink-ecj: stamps/bootstrap-directory-symlink-ecj.stamp
 bootstrap-directory-symlink: stamps/bootstrap-directory-symlink.stamp
 
 cacao: stamps/cacao.stamp
+
+check-crypto: stamps/check-crypto.stamp
+
+check-crypto-boot: stamps/check-crypto-boot.stamp
+
+check-crypto-debug: stamps/check-crypto-debug.stamp
+
+cryptocheck: stamps/cryptocheck.stamp
 
 nbplatform: stamps/nbplatform.stamp
 
