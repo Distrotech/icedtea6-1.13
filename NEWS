@@ -887,7 +887,6 @@ New in release 1.13.0 (201X-XX-XX):
   - PR1535: Allow use of system Kerberos to obtain cache location
   - PR1627: JDK check should depend on bootstrapping check
 * JamVM
-  - JSR 335: Lambda Expressions
   - JEP 171: Implement fence methods in sun.misc.Unsafe
   - sun.misc.Unsafe: additional methods get/putAddress
   - FreeClassData: adjust method count for Miranda methods
@@ -898,6 +897,13 @@ New in release 1.13.0 (201X-XX-XX):
   - Set anonymous class protection domain
   - JVM_IsVMGeneratedMethodIx stub
   - Dummy implementation of sun.misc.Perf natives
+  - JVM_NewMultiArray: element class may be an array
+  - jtreg test java/lang/reflect/Array/ExceedMaxDim
+  - OpenJDK: Fix Local/Anonymous class checks
+  - classlibMarkThreadTerminated should return Object*
+  - Fix race-condition in constant-pool resolution code
+  - Race condition in setting up imethod table
+  - GC: Minor performance improvement
 
 New in release 1.12.7 (2013-11-21):
 
