@@ -295,13 +295,19 @@ LCMS_PATCHES = \
 	patches/openjdk/lcms2/6988213-windows_build_failure.patch \
 	patches/openjdk/lcms2/system_lcms2.patch \
 	patches/openjdk/lcms2/7053526-lcms_2.4.patch \
-	patches/openjdk/lcms2/8007929-improve_curvesalloc.patch \
-	patches/openjdk/lcms2/8007925-improve_cmsstagealloclabv2tov4curves.patch \
-	patches/openjdk/lcms2/8009654-cmsnamed_stability.patch \
 	patches/openjdk/lcms2/7002766-parfait.patch \
 	patches/openjdk/lcms2/7042594-tck_failure.patch \
-	patches/openjdk/lcms2/8007927-improve_cmsallocprofilesequencedescription.patch \
 	patches/lcms2-emulate_old_settagdata.patch
+if !USE_SYSTEM_LCMS
+LCMS_PATCHES += \
+	patches/openjdk/lcms2/bundled/6523398-writing_tags.patch \
+	patches/openjdk/lcms2/bundled/7053526-lcms_2.4.patch \
+	patches/openjdk/lcms2/bundled/8007929-improve_curvesalloc.patch \
+	patches/openjdk/lcms2/bundled/8007925-improve_cmsstagealloclabv2tov4curves.patch \
+	patches/openjdk/lcms2/bundled/8009654-cmsnamed_stability.patch \
+	patches/openjdk/lcms2/bundled/7042594-tck_failure.patch \
+	patches/openjdk/lcms2/bundled/8007927-improve_cmsallocprofilesequencedescription.patch
+endif
 else
 LCMS_PATCHES = \
 	patches/lcms.patch
@@ -832,6 +838,13 @@ ICEDTEA_ENV += \
 	RHINO_JAR="$(abs_top_builddir)/rhino/rhino.jar"
 endif
 
+if USE_SYSTEM_LCMS
+ICEDTEA_ENV += \
+	USE_SYSTEM_LCMS="true" \
+	LCMS_LIBS="${LCMS2_LIBS}" \
+	LCMS_CFLAGS="${LCMS2_CFLAGS}"
+endif
+
 if USE_SYSTEM_KERBEROS
 ICEDTEA_ENV += \
 	SYSTEM_KRB5="true" \
@@ -1259,7 +1272,7 @@ clean-ports:
 	rm -f stamps/ports.stamp
 
 stamps/remove-intree-libraries.stamp: stamps/extract-openjdk.stamp
-	sh $(srcdir)/remove-intree-libraries.sh
+	sh $(abs_top_builddir)/remove-intree-libraries.sh
 	touch stamps/remove-intree-librares.stamp
 
 clean-remove-intree-libraries:

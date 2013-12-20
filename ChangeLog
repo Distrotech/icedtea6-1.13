@@ -1,3 +1,47 @@
+2013-12-19  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	PR1502: Allow use of system LCMS 2
+	* patches/openjdk/lcms2/8007925-improve_cmsstagealloclabv2tov4curves.patch,
+	* patches/openjdk/lcms2/8007927-improve_cmsallocprofilesequencedescription.patch,
+	* patches/openjdk/lcms2/8007929-improve_curvesalloc.patch,
+	* patches/openjdk/lcms2/8009654-cmsnamed_stability.patch:
+	Moved to...
+	* patches/openjdk/lcms2/bundled/8007925-improve_cmsstagealloclabv2tov4curves.patch,
+	* patches/openjdk/lcms2/bundled/8007927-improve_cmsallocprofilesequencedescription.patch,
+	* patches/openjdk/lcms2/bundled/8007929-improve_curvesalloc.patch,
+	* patches/openjdk/lcms2/bundled/8009654-cmsnamed_stability.patch:
+	...here.
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Apply certain LCMS patches only when
+	not building using the system library.
+	* patches/ecj/icedtea.patch: Only rename header if it
+	exists.
+	* patches/openjdk/lcms2/6523398-writing_tags.patch,
+	* patches/openjdk/lcms2/7042594-tck_failure.patch,
+	* patches/openjdk/lcms2/7053526-lcms_2.4.patch:
+	Move patches to bundled LCMS 2 into...
+	* patches/openjdk/lcms2/bundled/6523398-writing_tags.patch,
+	* patches/openjdk/lcms2/bundled/7042594-tck_failure.patch,
+	* patches/openjdk/lcms2/bundled/7053526-lcms_2.4.patch:
+	...these files.
+	* NEWS: Updated.
+
+2011-05-04  Andrew John Hughes  <ahughes@redhat.com>
+
+	* remove-intree-libraries.sh: Renamed.
+	* INSTALL: Updated with new option.
+	* Makefile.am:
+	(ICEDTEA_ENV): Set USE_SYSTEM_LCMS, LCMS_LIBS
+	and LCMS_CFLAGS if building with system LCMS.
+	* acinclude.m4:
+	(IT_CHECK_FOR_LCMS): Provide the --enable-system-lcms
+	option, enabled by default.
+	* configure.ac:
+	Call IT_CHECK_FOR_LCMS.
+	* remove-intree-libraries.sh.in:
+	Delete LCMS source code only if system version is
+	being used.
+
 2013-12-18  Andrew John Hughes  <gnu.andrew@member.fsf.org>
 
 	* NEWS: Include changes new to b29.

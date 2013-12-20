@@ -549,8 +549,8 @@ diff -Nru openjdk-ecj.orig/jdk/make/common/Rules.gmk openjdk-ecj/jdk/make/common
  	$(JAVAH_CMD) -d $(CLASSHDRDIR)/ \
  		$(CLASSES.export) $(subst $$,\$$,$(EXPORTED_inner))
  	@$(java-vm-cleanup)
-+	-mv $(CLASSHDRDIR)/java_lang_ClassLoader\$$NativeLibrary.h \
-+	  $(CLASSHDRDIR)/java_lang_ClassLoader_NativeLibrary.h
++	if [ -e $(CLASSHDRDIR)/java_lang_ClassLoader\$$NativeLibrary.h ] ; then mv $(CLASSHDRDIR)/java_lang_ClassLoader\$$NativeLibrary.h \
++	  $(CLASSHDRDIR)/java_lang_ClassLoader_NativeLibrary.h ; fi
  	@$(TOUCH) $@
  
  classheaders.clean:

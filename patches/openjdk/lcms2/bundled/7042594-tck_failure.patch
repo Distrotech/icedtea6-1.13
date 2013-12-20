@@ -1,0 +1,15 @@
+diff --git a/src/share/native/sun/java2d/cmm/lcms/cmsio0.c b/src/share/native/sun/java2d/cmm/lcms/cmsio0.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio0.c
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio0.c
+@@ -1687,6 +1687,11 @@
+     TypeHandler ->ContextID  = Icc ->ContextID;
+     TypeHandler ->ICCVersion = Icc ->Version;
+ 
++    if (!_cmsWriteTypeBase(MemIO, TypeHandler ->Signature)) {
++        cmsCloseIOhandler(MemIO);
++        return 0;
++    }
++
+     if (!TypeHandler ->WritePtr(TypeHandler, MemIO, Object, TagDescriptor ->ElemCount)) {
+         cmsCloseIOhandler(MemIO);
+         return 0;
