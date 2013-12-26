@@ -1047,7 +1047,7 @@ else
           fi;
 endif
 	mkdir -p stamps 
-	touch stamps/hgforest.stamp
+	touch $@
 
 clean-hgforest:
 	rm -f stamps/hgforest.stamp
@@ -1147,7 +1147,7 @@ endif
 endif
 endif
 	mkdir -p stamps
-	touch stamps/download-openjdk.stamp
+	touch $@
 
 clean-download-openjdk:
 	rm -f $(OPENJDK_SRC_ZIP)
@@ -1181,7 +1181,7 @@ endif
 	fi
 endif
 	mkdir -p stamps
-	touch stamps/download-hotspot.stamp
+	touch $@
 
 clean-download-hotspot:
 	rm -f $(HOTSPOT_SRC_ZIP)
@@ -1189,7 +1189,7 @@ clean-download-hotspot:
 
 stamps/download.stamp: stamps/download-cacao.stamp stamps/download-jamvm.stamp \
  stamps/download-openjdk.stamp stamps/download-hotspot.stamp
-	touch stamps/download.stamp
+	touch $@
 
 clean-download: clean-download-cacao clean-download-jamvm \
  clean-download-openjdk clean-download-hotspot
@@ -1235,7 +1235,7 @@ if ENABLE_JAMVM
 	cp jvm.jamvm.cfg openjdk/jdk/src/solaris/bin/$(JRE_ARCH_DIR)/jvm.cfg
 endif
 	mkdir -p stamps
-	touch stamps/extract-openjdk.stamp
+	touch $@
 
 clean-extract-openjdk:
 	rm -rf openjdk
@@ -1280,7 +1280,7 @@ if BUILD_JAMVM
 	fi
 endif
 	mkdir -p stamps
-	touch stamps/extract-jamvm.stamp
+	touch $@
 
 stamps/replace-hotspot.stamp: stamps/extract.stamp
 if WITH_ALT_HSBUILD
@@ -1298,7 +1298,7 @@ if WITH_ALT_HSBUILD
 	fi ;
 endif
 	mkdir -p stamps
-	touch stamps/replace-hotspot.stamp
+	touch $@
 
 clean-replace-hotspot:
 	rm -f stamps/replace-hotspot.stamp
@@ -1312,7 +1312,7 @@ stamps/ports.stamp: stamps/replace-hotspot.stamp
 	  chmod -R ug+rwX $$link; \
 	done
 	mkdir -p stamps
-	touch stamps/ports.stamp
+	touch $@
 
 clean-ports:
 	for target in $(abs_top_srcdir)/arm_port/hotspot/tools \
@@ -1324,7 +1324,7 @@ clean-ports:
 
 stamps/remove-intree-libraries.stamp: stamps/extract-openjdk.stamp
 	sh $(abs_top_builddir)/remove-intree-libraries.sh
-	touch stamps/remove-intree-librares.stamp
+	touch $@
 
 clean-remove-intree-libraries:
 	rm -f stamps/remove-intree-libraries.stamp
@@ -1335,7 +1335,7 @@ stamps/generated.stamp: stamps/ports.stamp
 	  chmod -R ug+rwX $(GENERATED_BUILD_DIR) ; \
 	fi
 	mkdir -p stamps
-	touch stamps/generated.stamp
+	touch $@
 
 clean-generated:
 	if [ $(abs_top_srcdir) != $(abs_top_builddir) ]; then \
@@ -1349,7 +1349,7 @@ stamps/fonts.stamp: stamps/generated.stamp
 	cp $(FONTCONFIG_PATH)/linux.fontconfig.Fedora.properties $(FONTCONFIG_PATH)/linux.fontconfig.Fedora.11.properties
 	cp $(FONTCONFIG_PATH)/linux.fontconfig.Fedora.properties $(FONTCONFIG_PATH)/linux.fontconfig.Fedora.12.properties
 	mkdir -p stamps
-	touch stamps/fonts.stamp
+	touch $@
 
 clean-fonts:
 	rm -f stamps/fonts.stamp
@@ -1378,7 +1378,7 @@ stamps/patch-fsg.stamp: stamps/fonts.stamp
 	    test x$${all_patches_ok} = "xyes" && all_patches_ok=$$p ; \
 	  fi ; \
 	done ; \
-	mv stamps/patch-fsg.stamp.tmp stamps/patch-fsg.stamp ; \
+	mv stamps/patch-fsg.stamp.tmp $@ ; \
 	if ! test x$${all_patches_ok} = "xyes"; then \
 	  echo ERROR patch $${all_patches_ok} FAILED! ; \
 	  echo WARNING make clean-patch before retrying a fix ; \
@@ -1427,7 +1427,7 @@ stamps/patch.stamp: stamps/patch-fsg.stamp
 	    test x$${all_patches_ok} = "xyes" && all_patches_ok=$$p ; \
 	  fi ; \
 	done ; \
-	mv stamps/patch.stamp.tmp stamps/patch.stamp ; \
+	mv stamps/patch.stamp.tmp $@ ; \
 	if ! test x$${all_patches_ok} = "xyes"; then \
 	  echo ERROR patch $${all_patches_ok} FAILED! ; \
 	  echo WARNING make clean-patch before retrying a fix ; \
@@ -1483,7 +1483,7 @@ stamps/overlay.stamp: stamps/patch.stamp
 	cp -a overlays.build/openjdk/* openjdk/
 	cp -a overlays.build/jpeg/openjdk/* openjdk/
 	rm -rf overlays.build
-	touch stamps/overlay.stamp
+	touch $@
 
 clean-overlay:
 	rm -f stamps/overlay.stamp
@@ -1498,7 +1498,7 @@ stamps/extract-ecj.stamp: $(OPENJDK_TREE)
 	    cp -pPRl openjdk openjdk-ecj ; \
 	fi
 	mkdir -p stamps
-	touch stamps/extract-ecj.stamp
+	touch $@
 
 # FIXME (missing): Rename to clean-clone-ecj.
 clean-extract-ecj:
@@ -1532,7 +1532,7 @@ stamps/patch-ecj.stamp: stamps/extract-ecj.stamp
 	    test x$${all_patches_ok} = "xyes" && all_patches_ok=$$p ; \
 	  fi ; \
 	done ; \
-	mv stamps/patch-ecj.stamp.tmp stamps/patch-ecj.stamp ; \
+	mv stamps/patch-ecj.stamp.tmp $@ ; \
 	if ! test x$${all_patches_ok} = "xyes"; then \
 	  echo ERROR patch $${all_patches_ok} FAILED! ; \
 	  echo WARNING make clean-patch before retrying a fix ; \
@@ -1566,7 +1566,7 @@ stamps/native-ecj.stamp:
 	  $(GCJ) $(IT_CFLAGS) -Wl,-Bsymbolic -findirect-dispatch -o native-ecj \
 	    --main=org.eclipse.jdt.internal.compiler.batch.Main ${ECJ_JAR} ; \
 	fi ; \
-	touch stamps/native-ecj.stamp
+	touch $@
 
 clean-native-ecj:
 	rm -f native-ecj
@@ -1602,7 +1602,7 @@ stamps/bootstrap-directory-ecj.stamp: stamps/native-ecj.stamp
 	mkdir -p $(ECJ_BOOT_DIR)/lib && \
 	ln -sf $(ECJ_BOOT_DIR)/jre/lib/rt.jar $(ECJ_BOOT_DIR)/lib/tools.jar
 	mkdir -p stamps
-	touch stamps/bootstrap-directory-ecj.stamp
+	touch $@
 
 clean-bootstrap-directory-ecj:
 	rm -rf $(ECJ_BOOT_DIR)
@@ -1617,7 +1617,7 @@ stamps/bootstrap-directory.stamp: stamps/icedtea-against-ecj.stamp
 	  ln -sf $(ECJ_BUILD_OUTPUT_DIR)/include $(ICEDTEA_BOOT_DIR)/include; \
 	fi
 	mkdir -p stamps
-	touch stamps/bootstrap-directory.stamp
+	touch $@
 
 clean-bootstrap-directory:
 	rm -rf $(ICEDTEA_BOOT_DIR)
@@ -1628,7 +1628,7 @@ stamps/bootstrap-directory-symlink-ecj.stamp: stamps/bootstrap-directory-ecj.sta
 	rm -f $(BOOT_DIR)
 	ln -sf $(ECJ_BOOT_DIR) $(BOOT_DIR)
 	mkdir -p stamps
-	touch stamps/bootstrap-directory-symlink-ecj.stamp
+	touch $@
 
 clean-bootstrap-directory-symlink-ecj:
 	rm -f $(BOOT_DIR)
@@ -1646,7 +1646,7 @@ stamps/bootstrap-directory-symlink.stamp: $(BOOTSTRAP_DIRECTORY_STAMP)
            exit 1; \
         fi
 	mkdir -p stamps
-	touch stamps/bootstrap-directory-symlink.stamp
+	touch $@
 
 clean-bootstrap-directory-symlink:
 	rm -f $(BOOT_DIR)
@@ -1682,7 +1682,7 @@ if ENABLE_JAMVM
 endif
 	@echo "IcedTea is served:" $(BUILD_OUTPUT_DIR)
 	mkdir -p stamps
-	touch stamps/icedtea.stamp
+	touch $@
 
 clean-icedtea:
 	rm -rf $(BUILD_OUTPUT_DIR)
@@ -1714,7 +1714,7 @@ endif
 	@echo "IcedTea (debug build) is served:" \
 	  $(DEBUG_BUILD_OUTPUT_DIR)
 	mkdir -p stamps
-	touch stamps/icedtea-debug.stamp
+	touch $@
 
 clean-icedtea-debug:
 	rm -rf $(DEBUG_BUILD_OUTPUT_DIR)
@@ -1726,7 +1726,7 @@ stamps/icedtea-against-icedtea.stamp: stamps/icedtea.stamp \
  stamps/add-tzdata-support.stamp stamps/add-archive.stamp stamps/pax-mark-vm.stamp \
  stamps/check-crypto.stamp
 	mkdir -p stamps
-	touch stamps/icedtea-against-icedtea.stamp
+	touch $@
 
 clean-icedtea-against-icedtea: clean-add-jamvm clean-add-zero clean-add-cacao \
  clean-add-systemtap clean-add-pulseaudio clean-add-nss clean-add-tzdata-support \
@@ -1739,7 +1739,7 @@ stamps/icedtea-debug-against-icedtea.stamp: stamps/icedtea-debug.stamp \
  stamps/add-nss-debug.stamp stamps/add-tzdata-support-debug.stamp stamps/add-archive-debug.stamp \
  stamps/pax-mark-vm-debug.stamp stamps/check-crypto-debug.stamp
 	mkdir -p stamps
-	touch stamps/icedtea-debug-against-icedtea.stamp
+	touch $@
 
 clean-icedtea-debug-against-icedtea: clean-add-zero-debug \
  clean-add-jamvm-debug clean-add-cacao-debug clean-add-systemtap-debug \
@@ -1770,7 +1770,7 @@ if ENABLE_SYSTEMTAP
 	cp $(abs_top_builddir)/tapset/jstack.stp \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset/jstack.stp
 endif
-	touch stamps/add-systemtap.stamp
+	touch $@
 
 clean-add-systemtap:
 	rm -rf $(BUILD_OUTPUT_DIR)/j2sdk-image/tapset
@@ -1798,7 +1798,7 @@ if ENABLE_SYSTEMTAP
 	cp $(abs_top_builddir)/tapset/jstack.stp \
 	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/jstack.stp
 endif
-	touch stamps/add-systemtap-debug.stamp
+	touch $@
 
 clean-add-systemtap-debug:
 	rm -rf $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/tapset
@@ -1817,7 +1817,7 @@ if ENABLE_PULSE_JAVA
 	(cd $(PULSE_JAVA_JAVA_SRCDIR) && \
 	   $(ZIP) -qur $(BUILD_OUTPUT_DIR)/j2sdk-image/src.zip org )
 endif
-	touch stamps/add-pulseaudio.stamp
+	touch $@
 
 # Note: for simplicity, we don't revert the update of src.zip
 clean-add-pulseaudio:
@@ -1840,7 +1840,7 @@ if ENABLE_PULSE_JAVA
 	(cd $(PULSE_JAVA_JAVA_SRCDIR) && \
 	   $(ZIP) -qur $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/src.zip org )
 endif
-	touch stamps/add-pulseaudio-debug.stamp
+	touch $@
 
 # Note: for simplicity, we don't revert the update of src.zip
 clean-add-pulseaudio-debug:
@@ -1884,7 +1884,7 @@ stamps/add-nss.stamp: stamps/icedtea.stamp
 	    done ; \
 	    popd ; \
 	  done ; \
-	  mv stamps/add-nss.stamp.tmp stamps/add-nss.stamp ; \
+	  mv stamps/add-nss.stamp.tmp $@ ; \
 	  if ! test x$${all_patches_ok} = "xyes"; then \
 	    echo ERROR patch $${all_patches_ok} FAILED! ; \
 	    echo WARNING make clean-add-nss before retrying a fix ; \
@@ -1938,7 +1938,7 @@ stamps/add-nss-debug.stamp: stamps/icedtea-debug.stamp
 	  done ; \
 	  popd ; \
 	done ; \
-	mv stamps/add-nss-debug.stamp.tmp stamps/add-nss-debug.stamp ; \
+	mv stamps/add-nss-debug.stamp.tmp $@ ; \
 	if ! test x$${all_patches_ok} = "xyes"; then \
 	  echo ERROR patch $${all_patches_ok} FAILED! ; \
 	  echo WARNING make clean-add-nss-debug before retrying a fix ; \
@@ -1963,7 +1963,7 @@ if WITH_TZDATA_DIR
 	    $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib ; \
 	fi
 endif
-	touch stamps/add-tzdata-support.stamp
+	touch $@
 
 clean-add-tzdata-support:
 	if [ -e $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties ] ; then \
@@ -1978,7 +1978,7 @@ if WITH_TZDATA_DIR
 	    $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib; \
 	fi
 endif
-	touch stamps/add-tzdata-support-debug.stamp
+	touch $@
 
 clean-add-tzdata-support-debug:
 	if [ -e $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties ] ; then \
@@ -1996,7 +1996,7 @@ if !ZERO_BUILD
 endif
 endif
 endif
-	touch stamps/add-archive.stamp
+	touch $@
 
 clean-add-archive:
 	rm -vf $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/*/*.jsa
@@ -2012,7 +2012,7 @@ if !ZERO_BUILD
 endif
 endif
 endif
-	touch stamps/add-archive-debug.stamp
+	touch $@
 
 clean-add-archive-debug:
 	rm -vf $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/*/*.jsa
@@ -2050,6 +2050,8 @@ stamps/check-crypto-debug.stamp: stamps/cryptocheck.stamp stamps/icedtea-debug.s
 	if [ -e $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/bin/java ] ; then \
 	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/bin/java -cp $(CRYPTO_CHECK_BUILD_DIR) TestCryptoLevel ; \
 	fi
+	mkdir -p stamps
+	touch $@
 
 clean-check-crypto-debug:
 	rm -f stamps/check-crypto-debug.stamp
@@ -2067,7 +2069,7 @@ stamps/icedtea-ecj.stamp: stamps/bootstrap-directory-symlink-ecj.stamp \
 	@echo "ecj-poured IcedTea is served:" \
 	  $(ECJ_BUILD_OUTPUT_DIR)
 	mkdir -p stamps
-	touch stamps/icedtea-ecj.stamp
+	touch $@
 
 clean-icedtea-ecj:
 	rm -rf $(ECJ_BUILD_OUTPUT_DIR)
@@ -2077,7 +2079,7 @@ stamps/icedtea-against-ecj.stamp: stamps/icedtea-ecj.stamp stamps/add-systemtap-
  stamps/add-pulseaudio-ecj.stamp stamps/add-nss-ecj.stamp stamps/add-tzdata-support-ecj.stamp \
  stamps/add-archive-ecj.stamp stamps/pax-mark-vm-ecj.stamp stamps/check-crypto-boot.stamp
 	mkdir -p stamps
-	touch stamps/icedtea-against-ecj.stamp
+	touch $@
 
 clean-icedtea-against-ecj: clean-add-systemtap-ecj clean-add-pulseaudio-ecj clean-add-nss-ecj \
  clean-add-tzdata-support-ecj clean-add-archive-ecj clean-pax-mark-vm-ecj clean-check-crypto-boot
@@ -2108,7 +2110,7 @@ if ENABLE_SYSTEMTAP
 	cp $(abs_top_builddir)/tapset/jstack.stp \
 	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/tapset/jstack.stp
 endif
-	touch stamps/add-systemtap-ecj.stamp
+	touch $@
 
 clean-add-systemtap-ecj:
 	rm -rf $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/tapset
@@ -2127,7 +2129,7 @@ if ENABLE_PULSE_JAVA
 	(cd $(PULSE_JAVA_JAVA_SRCDIR) && \
 	   $(ZIP) -qur $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/src.zip org )
 endif
-	touch stamps/add-pulseaudio-ecj.stamp
+	touch $@
 
 # Note: for simplicity, we don't revert the update of src.zip
 clean-add-pulseaudio-ecj:
@@ -2170,7 +2172,7 @@ stamps/add-nss-ecj.stamp: stamps/icedtea-ecj.stamp
 	  done ; \
 	  popd ; \
 	done ; \
-	mv stamps/add-nss-ecj.stamp.tmp stamps/add-nss-ecj.stamp ; \
+	mv stamps/add-nss-ecj.stamp.tmp $@ ; \
 	if ! test x$${all_patches_ok} = "xyes"; then \
 	  echo ERROR patch $${all_patches_ok} FAILED! ; \
 	  echo WARNING make clean-add-nss-ecj before retrying a fix ; \
@@ -2195,7 +2197,7 @@ if WITH_TZDATA_DIR
 	    $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib; \
 	fi
 endif
-	touch stamps/add-tzdata-support-ecj.stamp
+	touch $@
 
 clean-add-tzdata-support-ecj:
 	if [ -e $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/tz.properties ] ; then \
@@ -2213,7 +2215,7 @@ if !ZERO_BUILD
 endif
 endif
 endif
-	touch stamps/add-archive-ecj.stamp
+	touch $@
 
 clean-add-archive-ecj:
 	rm -vf $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/*/*.jsa
@@ -2288,13 +2290,13 @@ $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so: $(PULSE_JAVA_NATIVE_OBJECTS)
 
 stamps/pulse-java.stamp: stamps/pulse-java-jar.stamp $(PULSE_JAVA_NATIVE_BUILDDIR)/libpulse-java.so
 	mkdir -p stamps
-	touch stamps/pulse-java.stamp
+	touch $@
 
 stamps/pulse-java-jar.stamp: stamps/pulse-java-class.stamp
 	mkdir -p $(PULSE_JAVA_CLASS_DIR);
 	$(BOOT_DIR)/bin/jar cf $(PULSE_JAVA_BUILDDIR)/pulse-java.jar -C $(PULSE_JAVA_CLASS_DIR) .;
 	mkdir -p stamps
-	touch stamps/pulse-java-jar.stamp
+	touch $@
 
 stamps/pulse-java-class.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP)
 	mkdir -p $(PULSE_JAVA_CLASS_DIR)
@@ -2306,7 +2308,7 @@ stamps/pulse-java-class.stamp: $(INITIAL_BOOTSTRAP_LINK_STAMP)
 	cp -r $(PULSE_JAVA_JAVA_SRCDIR)/META-INF $(PULSE_JAVA_CLASS_DIR)
 	chmod -R ug+w $(PULSE_JAVA_CLASS_DIR)/META-INF
 	mkdir -p stamps
-	touch stamps/pulse-java-class.stamp
+	touch $@
 
 stamps/pulse-java-headers.stamp: stamps/pulse-java-class.stamp
 	mkdir -p $(PULSE_JAVA_NATIVE_BUILDDIR)
@@ -2323,7 +2325,7 @@ stamps/pulse-java-headers.stamp: stamps/pulse-java-class.stamp
 	$(BOOT_DIR)/bin/javah -d $(PULSE_JAVA_NATIVE_BUILDDIR) -classpath $(PULSE_JAVA_CLASS_DIR) \
 	  -J-Xbootclasspath/p:$(PULSE_JAVA_CLASS_DIR) org.classpath.icedtea.pulseaudio.ContextEvent; \
 	mkdir -p stamps
-	touch stamps/pulse-java-headers.stamp
+	touch $@
 
 clean-pulse-java:
 	rm -rf $(PULSE_JAVA_NATIVE_BUILDDIR)
@@ -2346,7 +2348,7 @@ if WITH_RHINO
 	 -d $(REWRITER_BUILD_DIR) $(REWRITER_SRCS)
 endif
 	mkdir -p stamps
-	touch stamps/rewriter.stamp
+	touch $@
 
 clean-rewriter:
 	rm -rf rewriter.build
@@ -2372,7 +2374,7 @@ if WITH_RHINO
 	$(BOOT_DIR)/bin/jar cfm ../rhino.jar META-INF/MANIFEST.MF sun )
 endif
 	mkdir -p stamps
-	touch stamps/rewrite-rhino.stamp
+	touch $@
 
 clean-rewrite-rhino:
 	rm -rf rhino/rhino.old
@@ -2802,7 +2804,7 @@ if BOOTSTRAPPING
 	fi
 endif
 	mkdir -p stamps
-	touch stamps/rt-class-files.stamp
+	touch $@
 
 clean-rt:
 	rm -rf lib/rt
@@ -2824,7 +2826,7 @@ if BOOTSTRAPPING
 	    -C lib/rt javax -C lib/rt sun ; \
 	fi 
 endif
-	touch stamps/rt.stamp
+	touch $@
 
 # Crypto Level Check
 
