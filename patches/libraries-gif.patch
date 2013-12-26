@@ -1,0 +1,12 @@
+diff -Nru openjdk.orig/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c openjdk/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c
+--- openjdk.orig/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c	2013-12-24 22:17:43.783382906 +0000
++++ openjdk/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c	2013-12-24 22:25:50.582685590 +0000
+@@ -26,7 +26,7 @@
+ #include "splashscreen_impl.h"
+ #include "splashscreen_gfx.h"
+ 
+-#include "../giflib/gif_lib.h"
++#include <gif_lib.h>
+ #include <sizecalc.h>
+ 
+ #define GIF_TRANSPARENT     0x01

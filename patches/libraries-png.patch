@@ -1,0 +1,12 @@
+diff -Nru openjdk.orig/jdk/src/share/native/sun/awt/splashscreen/splashscreen_png.c openjdk/jdk/src/share/native/sun/awt/splashscreen/splashscreen_png.c
+--- openjdk.orig/jdk/src/share/native/sun/awt/splashscreen/splashscreen_png.c	2013-12-06 00:20:25.000000000 +0000
++++ openjdk/jdk/src/share/native/sun/awt/splashscreen/splashscreen_png.c	2013-12-18 16:59:48.552719512 +0000
+@@ -25,7 +25,7 @@
+ 
+ #include "splashscreen_impl.h"
+ 
+-#include "../libpng/png.h"
++#include <png.h>
+ 
+ #include <setjmp.h>
+ 

@@ -1,6 +1,6 @@
 diff -Nru openjdk.orig/jdk/src/share/native/common/sizecalc.h openjdk/jdk/src/share/native/common/sizecalc.h
---- openjdk.orig/jdk/src/share/native/common/sizecalc.h	1969-12-31 18:00:00.000000000 -0600
-+++ openjdk/jdk/src/share/native/common/sizecalc.h	2013-06-22 03:34:36.084702677 -0500
+--- openjdk.orig/jdk/src/share/native/common/sizecalc.h	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/jdk/src/share/native/common/sizecalc.h	2013-12-24 21:41:56.995134733 +0000
 @@ -0,0 +1,118 @@
 +/*
 + * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
@@ -121,8 +121,8 @@ diff -Nru openjdk.orig/jdk/src/share/native/common/sizecalc.h openjdk/jdk/src/sh
 +#endif /* SIZECALC_H */
 +
 diff -Nru openjdk.orig/jdk/src/share/native/sun/awt/splashscreen/java_awt_SplashScreen.c openjdk/jdk/src/share/native/sun/awt/splashscreen/java_awt_SplashScreen.c
---- openjdk.orig/jdk/src/share/native/sun/awt/splashscreen/java_awt_SplashScreen.c	2011-11-14 16:12:12.000000000 -0600
-+++ openjdk/jdk/src/share/native/sun/awt/splashscreen/java_awt_SplashScreen.c	2013-06-22 03:34:36.084702677 -0500
+--- openjdk.orig/jdk/src/share/native/sun/awt/splashscreen/java_awt_SplashScreen.c	2013-12-06 00:20:25.000000000 +0000
++++ openjdk/jdk/src/share/native/sun/awt/splashscreen/java_awt_SplashScreen.c	2013-12-24 21:41:56.995134733 +0000
 @@ -26,6 +26,7 @@
  #include "splashscreen_impl.h"
  #include <jni.h>
@@ -141,17 +141,17 @@ diff -Nru openjdk.orig/jdk/src/share/native/sun/awt/splashscreen/java_awt_Splash
          /* we need a copy anyway, so we'll be using GetIntArrayRegion */
          (*env)->GetIntArrayRegion(env, data, 0, dataSize,
 diff -Nru openjdk.orig/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c openjdk/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c
---- openjdk.orig/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c	2011-11-14 16:12:12.000000000 -0600
-+++ openjdk/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c	2013-06-22 03:34:36.084702677 -0500
+--- openjdk.orig/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c	2013-12-06 00:20:25.000000000 +0000
++++ openjdk/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c	2013-12-24 21:42:20.851493639 +0000
 @@ -27,6 +27,7 @@
  #include "splashscreen_gfx.h"
  
- #include <gif_lib.h>
+ #include "../giflib/gif_lib.h"
 +#include <sizecalc.h>
  
  #define GIF_TRANSPARENT     0x01
  #define GIF_USER_INPUT      0x02
-@@ -120,7 +120,7 @@
+@@ -120,7 +121,7 @@
      splash->height = gif->SHeight;
      splash->frameCount = gif->ImageCount;
      splash->frames = (SplashImage *)
@@ -161,8 +161,8 @@ diff -Nru openjdk.orig/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gi
        free(pBitmapBits);
        free(pOldBitmapBits);
 diff -Nru openjdk.orig/jdk/src/share/native/sun/java2d/pipe/Region.c openjdk/jdk/src/share/native/sun/java2d/pipe/Region.c
---- openjdk.orig/jdk/src/share/native/sun/java2d/pipe/Region.c	2011-11-14 16:12:13.000000000 -0600
-+++ openjdk/jdk/src/share/native/sun/java2d/pipe/Region.c	2013-06-22 03:34:36.085702679 -0500
+--- openjdk.orig/jdk/src/share/native/sun/java2d/pipe/Region.c	2013-12-06 00:20:25.000000000 +0000
++++ openjdk/jdk/src/share/native/sun/java2d/pipe/Region.c	2013-12-24 21:41:56.995134733 +0000
 @@ -28,6 +28,7 @@
  #include "jni_util.h"
  
@@ -183,8 +183,8 @@ diff -Nru openjdk.orig/jdk/src/share/native/sun/java2d/pipe/Region.c openjdk/jdk
                  Region_EndIteration(env, &clipInfo);
                  JNU_ThrowOutOfMemoryError(env,
 diff -Nru openjdk.orig/jdk/src/solaris/native/sun/awt/awt_Robot.c openjdk/jdk/src/solaris/native/sun/awt/awt_Robot.c
---- openjdk.orig/jdk/src/solaris/native/sun/awt/awt_Robot.c	2011-11-14 16:12:15.000000000 -0600
-+++ openjdk/jdk/src/solaris/native/sun/awt/awt_Robot.c	2013-06-22 03:34:36.085702679 -0500
+--- openjdk.orig/jdk/src/solaris/native/sun/awt/awt_Robot.c	2013-12-06 00:20:26.000000000 +0000
++++ openjdk/jdk/src/solaris/native/sun/awt/awt_Robot.c	2013-12-24 21:41:56.995134733 +0000
 @@ -40,6 +40,7 @@
  #include <X11/extensions/XInput.h>
  #include <X11/extensions/XI.h>
@@ -206,8 +206,8 @@ diff -Nru openjdk.orig/jdk/src/solaris/native/sun/awt/awt_Robot.c openjdk/jdk/sr
          XDestroyImage(image);
          AWT_UNLOCK();
 diff -Nru openjdk.orig/jdk/src/solaris/native/sun/awt/awt_UNIXToolkit.c openjdk/jdk/src/solaris/native/sun/awt/awt_UNIXToolkit.c
---- openjdk.orig/jdk/src/solaris/native/sun/awt/awt_UNIXToolkit.c	2011-11-14 16:12:16.000000000 -0600
-+++ openjdk/jdk/src/solaris/native/sun/awt/awt_UNIXToolkit.c	2013-06-22 03:34:36.085702679 -0500
+--- openjdk.orig/jdk/src/solaris/native/sun/awt/awt_UNIXToolkit.c	2013-12-06 00:20:26.000000000 +0000
++++ openjdk/jdk/src/solaris/native/sun/awt/awt_UNIXToolkit.c	2013-12-24 21:41:56.995134733 +0000
 @@ -29,6 +29,7 @@
  #include <dlfcn.h>
  
@@ -247,8 +247,8 @@ diff -Nru openjdk.orig/jdk/src/solaris/native/sun/awt/awt_UNIXToolkit.c openjdk/
              JNU_ThrowOutOfMemoryError(env, "OutOfMemoryError");
              return JNI_FALSE;
 diff -Nru openjdk.orig/jdk/src/solaris/native/sun/awt/fontpath.c openjdk/jdk/src/solaris/native/sun/awt/fontpath.c
---- openjdk.orig/jdk/src/solaris/native/sun/awt/fontpath.c	2013-06-22 15:43:08.458839780 -0500
-+++ openjdk/jdk/src/solaris/native/sun/awt/fontpath.c	2013-06-22 03:34:36.085702679 -0500
+--- openjdk.orig/jdk/src/solaris/native/sun/awt/fontpath.c	2013-12-24 21:36:13.453965475 +0000
++++ openjdk/jdk/src/solaris/native/sun/awt/fontpath.c	2013-12-24 21:41:56.995134733 +0000
 @@ -40,6 +40,7 @@
  
  #include <jni.h>
@@ -290,8 +290,8 @@ diff -Nru openjdk.orig/jdk/src/solaris/native/sun/awt/fontpath.c openjdk/jdk/src
          strcat ( onePath, "/" );
          newFontPath[nPaths++] = onePath;
 diff -Nru openjdk.orig/jdk/src/solaris/native/sun/awt/gtk2_interface.c openjdk/jdk/src/solaris/native/sun/awt/gtk2_interface.c
---- openjdk.orig/jdk/src/solaris/native/sun/awt/gtk2_interface.c	2011-11-14 16:12:16.000000000 -0600
-+++ openjdk/jdk/src/solaris/native/sun/awt/gtk2_interface.c	2013-06-22 10:35:00.508880273 -0500
+--- openjdk.orig/jdk/src/solaris/native/sun/awt/gtk2_interface.c	2013-12-06 00:20:26.000000000 +0000
++++ openjdk/jdk/src/solaris/native/sun/awt/gtk2_interface.c	2013-12-24 21:41:56.995134733 +0000
 @@ -30,6 +30,7 @@
  #include <string.h>
  #include "gtk2_interface.h"
@@ -311,8 +311,8 @@ diff -Nru openjdk.orig/jdk/src/solaris/native/sun/awt/gtk2_interface.c openjdk/j
          if (new_env != NULL )
          {
 diff -Nru openjdk.orig/jdk/src/solaris/native/sun/awt/splashscreen/splashscreen_sys.c openjdk/jdk/src/solaris/native/sun/awt/splashscreen/splashscreen_sys.c
---- openjdk.orig/jdk/src/solaris/native/sun/awt/splashscreen/splashscreen_sys.c	2011-11-14 16:12:16.000000000 -0600
-+++ openjdk/jdk/src/solaris/native/sun/awt/splashscreen/splashscreen_sys.c	2013-06-22 10:35:17.128937870 -0500
+--- openjdk.orig/jdk/src/solaris/native/sun/awt/splashscreen/splashscreen_sys.c	2013-12-06 00:20:26.000000000 +0000
++++ openjdk/jdk/src/solaris/native/sun/awt/splashscreen/splashscreen_sys.c	2013-12-24 21:41:56.995134733 +0000
 @@ -40,6 +40,7 @@
  #include <langinfo.h>
  #include <locale.h>
@@ -361,8 +361,8 @@ diff -Nru openjdk.orig/jdk/src/solaris/native/sun/awt/splashscreen/splashscreen_
  }
  
 diff -Nru openjdk.orig/jdk/src/solaris/native/sun/xawt/XlibWrapper.c openjdk/jdk/src/solaris/native/sun/xawt/XlibWrapper.c
---- openjdk.orig/jdk/src/solaris/native/sun/xawt/XlibWrapper.c	2013-06-22 15:43:09.066839271 -0500
-+++ openjdk/jdk/src/solaris/native/sun/xawt/XlibWrapper.c	2013-06-22 10:37:06.731315811 -0500
+--- openjdk.orig/jdk/src/solaris/native/sun/xawt/XlibWrapper.c	2013-12-24 21:36:16.470010864 +0000
++++ openjdk/jdk/src/solaris/native/sun/xawt/XlibWrapper.c	2013-12-24 21:41:56.995134733 +0000
 @@ -37,6 +37,7 @@
  #include <jni.h>
  #include <jni_util.h>
@@ -395,8 +395,8 @@ diff -Nru openjdk.orig/jdk/src/solaris/native/sun/xawt/XlibWrapper.c openjdk/jdk
      /* Note: the values[0] and values[1] are supposed to contain the width
       * and height (see XIconInfo.getIntData() for details). So, we do +2.
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/awt/splashscreen/splashscreen_sys.c openjdk/jdk/src/windows/native/sun/awt/splashscreen/splashscreen_sys.c
---- openjdk.orig/jdk/src/windows/native/sun/awt/splashscreen/splashscreen_sys.c	2011-11-14 16:12:17.000000000 -0600
-+++ openjdk/jdk/src/windows/native/sun/awt/splashscreen/splashscreen_sys.c	2013-06-22 10:33:22.939540596 -0500
+--- openjdk.orig/jdk/src/windows/native/sun/awt/splashscreen/splashscreen_sys.c	2013-12-06 00:20:26.000000000 +0000
++++ openjdk/jdk/src/windows/native/sun/awt/splashscreen/splashscreen_sys.c	2013-12-24 21:41:56.995134733 +0000
 @@ -27,6 +27,7 @@
  #include <windowsx.h>
  #include <windows.h>
@@ -471,8 +471,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/awt/splashscreen/splashscreen_
          pLogPal->palVersion = 0x300;
          pLogPal->palNumEntries = (WORD) numColors;
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/font/lcdglyph.c openjdk/jdk/src/windows/native/sun/font/lcdglyph.c
---- openjdk.orig/jdk/src/windows/native/sun/font/lcdglyph.c	2013-06-22 15:43:09.297839077 -0500
-+++ openjdk/jdk/src/windows/native/sun/font/lcdglyph.c	2013-06-22 03:34:36.262702877 -0500
+--- openjdk.orig/jdk/src/windows/native/sun/font/lcdglyph.c	2013-12-24 21:36:16.606012911 +0000
++++ openjdk/jdk/src/windows/native/sun/font/lcdglyph.c	2013-12-24 21:41:56.995134733 +0000
 @@ -54,6 +54,7 @@
  #include <jni.h>
  #include <jni_util.h>
@@ -511,8 +511,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/font/lcdglyph.c openjdk/jdk/sr
      glyphInfo->rowBytes = bytesWidth;
      glyphInfo->width = width;
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/java2d/opengl/WGLSurfaceData.c openjdk/jdk/src/windows/native/sun/java2d/opengl/WGLSurfaceData.c
---- openjdk.orig/jdk/src/windows/native/sun/java2d/opengl/WGLSurfaceData.c	2013-06-22 15:43:08.634839633 -0500
-+++ openjdk/jdk/src/windows/native/sun/java2d/opengl/WGLSurfaceData.c	2013-06-22 03:34:36.262702877 -0500
+--- openjdk.orig/jdk/src/windows/native/sun/java2d/opengl/WGLSurfaceData.c	2013-12-24 21:36:13.889972036 +0000
++++ openjdk/jdk/src/windows/native/sun/java2d/opengl/WGLSurfaceData.c	2013-12-24 21:41:56.995134733 +0000
 @@ -30,6 +30,7 @@
  #include "jni.h"
  #include "jlong.h"
@@ -531,8 +531,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/java2d/opengl/WGLSurfaceData.c
          return JNI_FALSE;
      }
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/java2d/windows/GDIBlitLoops.cpp openjdk/jdk/src/windows/native/sun/java2d/windows/GDIBlitLoops.cpp
---- openjdk.orig/jdk/src/windows/native/sun/java2d/windows/GDIBlitLoops.cpp	2013-06-22 15:43:08.370839854 -0500
-+++ openjdk/jdk/src/windows/native/sun/java2d/windows/GDIBlitLoops.cpp	2013-06-22 03:34:36.262702877 -0500
+--- openjdk.orig/jdk/src/windows/native/sun/java2d/windows/GDIBlitLoops.cpp	2013-12-24 21:36:12.841956264 +0000
++++ openjdk/jdk/src/windows/native/sun/java2d/windows/GDIBlitLoops.cpp	2013-12-24 21:41:56.999134792 +0000
 @@ -157,6 +157,7 @@
                  // when using ByteGray surfaces.  Eventually, we should use
                  // the new Disposer mechanism to delete this native memory.
@@ -542,8 +542,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/java2d/windows/GDIBlitLoops.cp
                      for (int i = 0; i < 256; ++i) {
                          byteGrayPalette[i].rgbRed = i;
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/java2d/windows/GDIRenderer.cpp openjdk/jdk/src/windows/native/sun/java2d/windows/GDIRenderer.cpp
---- openjdk.orig/jdk/src/windows/native/sun/java2d/windows/GDIRenderer.cpp	2013-06-22 15:43:08.735839548 -0500
-+++ openjdk/jdk/src/windows/native/sun/java2d/windows/GDIRenderer.cpp	2013-06-22 03:34:36.263702878 -0500
+--- openjdk.orig/jdk/src/windows/native/sun/java2d/windows/GDIRenderer.cpp	2013-12-24 21:36:13.905972277 +0000
++++ openjdk/jdk/src/windows/native/sun/java2d/windows/GDIRenderer.cpp	2013-12-24 21:41:56.999134792 +0000
 @@ -86,7 +86,7 @@
          *pNpoints = outpoints;
      }
@@ -554,8 +554,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/java2d/windows/GDIRenderer.cpp
      BOOL isempty = fixend;
      for (int i = 0; i < npoints; i++) {
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/java2d/windows/GDIWindowSurfaceData.cpp openjdk/jdk/src/windows/native/sun/java2d/windows/GDIWindowSurfaceData.cpp
---- openjdk.orig/jdk/src/windows/native/sun/java2d/windows/GDIWindowSurfaceData.cpp	2013-06-22 15:43:08.370839855 -0500
-+++ openjdk/jdk/src/windows/native/sun/java2d/windows/GDIWindowSurfaceData.cpp	2013-06-22 03:34:36.263702878 -0500
+--- openjdk.orig/jdk/src/windows/native/sun/java2d/windows/GDIWindowSurfaceData.cpp	2013-12-24 21:36:12.845956324 +0000
++++ openjdk/jdk/src/windows/native/sun/java2d/windows/GDIWindowSurfaceData.cpp	2013-12-24 21:41:56.999134792 +0000
 @@ -1036,8 +1036,9 @@
              int topInset = wsdo->insets.top;
              Region_StartIteration(env, &clipInfo);
@@ -569,8 +569,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/java2d/windows/GDIWindowSurfac
              lpRgnData->rdh.iType = RDH_RECTANGLES;
              lpRgnData->rdh.nCount = numrects;
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/alloc.h openjdk/jdk/src/windows/native/sun/windows/alloc.h
---- openjdk.orig/jdk/src/windows/native/sun/windows/alloc.h	2011-11-14 16:12:18.000000000 -0600
-+++ openjdk/jdk/src/windows/native/sun/windows/alloc.h	2013-06-22 03:34:36.264702879 -0500
+--- openjdk.orig/jdk/src/windows/native/sun/windows/alloc.h	2013-12-06 00:20:26.000000000 +0000
++++ openjdk/jdk/src/windows/native/sun/windows/alloc.h	2013-12-24 21:41:56.999134792 +0000
 @@ -35,6 +35,9 @@
      class bad_alloc {};
  }
@@ -582,8 +582,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/alloc.h openjdk/jdk/sr
  
  // Disable "C++ Exception Specification ignored" warnings.
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_BitmapUtil.cpp openjdk/jdk/src/windows/native/sun/windows/awt_BitmapUtil.cpp
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt_BitmapUtil.cpp	2013-06-22 15:43:08.635839632 -0500
-+++ openjdk/jdk/src/windows/native/sun/windows/awt_BitmapUtil.cpp	2013-06-22 03:34:36.264702879 -0500
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_BitmapUtil.cpp	2013-12-24 21:36:13.889972036 +0000
++++ openjdk/jdk/src/windows/native/sun/windows/awt_BitmapUtil.cpp	2013-12-24 21:41:56.999134792 +0000
 @@ -39,13 +39,13 @@
  HBITMAP BitmapUtil::CreateTransparencyMaskFromARGB(int width, int height, int* imageData)
  {
@@ -617,8 +617,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_BitmapUtil.cpp ope
      pRgnHdr->dwSize = sizeof(RGNDATAHEADER);
      pRgnHdr->iType = RDH_RECTANGLES;
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.cpp openjdk/jdk/src/windows/native/sun/windows/awt_Component.cpp
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.cpp	2013-06-22 15:43:09.068839269 -0500
-+++ openjdk/jdk/src/windows/native/sun/windows/awt_Component.cpp	2013-06-22 10:30:17.853888796 -0500
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.cpp	2013-12-24 21:36:16.474010924 +0000
++++ openjdk/jdk/src/windows/native/sun/windows/awt_Component.cpp	2013-12-24 21:41:56.999134792 +0000
 @@ -2362,12 +2362,12 @@
          if (insets != NULL) {
              ::OffsetRgn(rgn, insets->left, insets->top);
@@ -690,8 +690,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.cpp open
  }
 +
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Cursor.cpp openjdk/jdk/src/windows/native/sun/windows/awt_Cursor.cpp
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Cursor.cpp	2011-11-14 16:12:18.000000000 -0600
-+++ openjdk/jdk/src/windows/native/sun/windows/awt_Cursor.cpp	2013-06-22 03:34:36.266702881 -0500
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Cursor.cpp	2013-12-06 00:20:26.000000000 +0000
++++ openjdk/jdk/src/windows/native/sun/windows/awt_Cursor.cpp	2013-12-24 21:41:56.999134792 +0000
 @@ -379,14 +379,14 @@
          return;
      }
@@ -711,8 +711,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Cursor.cpp openjdk
      jint *intRasterDataPtr = NULL;
      HBITMAP hColor = NULL;
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_DataTransferer.cpp openjdk/jdk/src/windows/native/sun/windows/awt_DataTransferer.cpp
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt_DataTransferer.cpp	2011-11-14 16:12:18.000000000 -0600
-+++ openjdk/jdk/src/windows/native/sun/windows/awt_DataTransferer.cpp	2013-06-22 10:32:57.350451069 -0500
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_DataTransferer.cpp	2013-12-06 00:20:26.000000000 +0000
++++ openjdk/jdk/src/windows/native/sun/windows/awt_DataTransferer.cpp	2013-12-24 21:41:56.999134792 +0000
 @@ -284,13 +284,13 @@
          }
  
@@ -752,8 +752,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_DataTransferer.cpp
                                                              lpbMfBuffer + sizeof(METAFILEPICT)) == uMfSize);
                                  bytes = env->NewByteArray(uMfSizeWithHead);
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_DesktopProperties.cpp openjdk/jdk/src/windows/native/sun/windows/awt_DesktopProperties.cpp
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt_DesktopProperties.cpp	2011-11-14 16:12:18.000000000 -0600
-+++ openjdk/jdk/src/windows/native/sun/windows/awt_DesktopProperties.cpp	2013-06-22 03:34:36.267702882 -0500
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_DesktopProperties.cpp	2013-12-06 00:20:26.000000000 +0000
++++ openjdk/jdk/src/windows/native/sun/windows/awt_DesktopProperties.cpp	2013-12-24 21:41:56.999134792 +0000
 @@ -174,7 +174,7 @@
      if (*valueType == REG_EXPAND_SZ) {
          // Pending: buffer must be null-terminated at this point
@@ -778,8 +778,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_DesktopProperties.
  
      int i = 0;
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_DnDDT.cpp openjdk/jdk/src/windows/native/sun/windows/awt_DnDDT.cpp
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt_DnDDT.cpp	2011-11-14 16:12:18.000000000 -0600
-+++ openjdk/jdk/src/windows/native/sun/windows/awt_DnDDT.cpp	2013-06-22 03:34:36.267702882 -0500
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_DnDDT.cpp	2013-12-06 00:20:26.000000000 +0000
++++ openjdk/jdk/src/windows/native/sun/windows/awt_DnDDT.cpp	2013-12-24 21:41:56.999134792 +0000
 @@ -815,8 +815,8 @@
          if (m_dataObject->QueryGetData(&tmp) != S_OK) continue;
  
@@ -792,8 +792,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_DnDDT.cpp openjdk/
          }
  
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_InputMethod.cpp openjdk/jdk/src/windows/native/sun/windows/awt_InputMethod.cpp
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt_InputMethod.cpp	2011-11-14 16:12:18.000000000 -0600
-+++ openjdk/jdk/src/windows/native/sun/windows/awt_InputMethod.cpp	2013-06-22 03:34:36.267702882 -0500
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_InputMethod.cpp	2013-12-06 00:20:26.000000000 +0000
++++ openjdk/jdk/src/windows/native/sun/windows/awt_InputMethod.cpp	2013-12-24 21:41:56.999134792 +0000
 @@ -334,7 +334,7 @@
      // list which is returned by GetKeyboardLayoutList ensures to match first when
      // looking up suitable layout.
@@ -831,8 +831,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_InputMethod.cpp op
          if (szImmDescription != NULL) {
              ImmGetDescription(hkl, szImmDescription, buffSize);
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_PrintControl.cpp openjdk/jdk/src/windows/native/sun/windows/awt_PrintControl.cpp
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt_PrintControl.cpp	2011-11-14 16:12:18.000000000 -0600
-+++ openjdk/jdk/src/windows/native/sun/windows/awt_PrintControl.cpp	2013-06-22 03:34:36.267702882 -0500
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_PrintControl.cpp	2013-12-06 00:20:26.000000000 +0000
++++ openjdk/jdk/src/windows/native/sun/windows/awt_PrintControl.cpp	2013-12-24 21:41:56.999134792 +0000
 @@ -502,8 +502,8 @@
                                                NULL, NULL);
  
@@ -845,8 +845,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_PrintControl.cpp o
  
          DWORD result1 = DeviceCapabilities(printer, port,
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_PrintJob.cpp openjdk/jdk/src/windows/native/sun/windows/awt_PrintJob.cpp
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt_PrintJob.cpp	2011-11-14 16:12:18.000000000 -0600
-+++ openjdk/jdk/src/windows/native/sun/windows/awt_PrintJob.cpp	2013-06-22 03:34:36.268702883 -0500
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_PrintJob.cpp	2013-12-06 00:20:26.000000000 +0000
++++ openjdk/jdk/src/windows/native/sun/windows/awt_PrintJob.cpp	2013-12-24 21:41:56.999134792 +0000
 @@ -433,7 +433,7 @@
          int measure = PSD_INTHOUSANDTHSOFINCHES;
          int sz = GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_IMEASURE, NULL, 0);
@@ -908,8 +908,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_PrintJob.cpp openj
          DWORD result1 = DeviceCapabilities(printer, port,
                                             DC_PAPERS, (LPTSTR) papers, NULL);
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Robot.cpp openjdk/jdk/src/windows/native/sun/windows/awt_Robot.cpp
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Robot.cpp	2011-11-14 16:12:18.000000000 -0600
-+++ openjdk/jdk/src/windows/native/sun/windows/awt_Robot.cpp	2013-06-22 03:34:36.268702883 -0500
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Robot.cpp	2013-12-06 00:20:26.000000000 +0000
++++ openjdk/jdk/src/windows/native/sun/windows/awt_Robot.cpp	2013-12-24 21:41:56.999134792 +0000
 @@ -234,7 +234,9 @@
      static const int BITS_PER_PIXEL = 32;
      static const int BYTES_PER_PIXEL = BITS_PER_PIXEL/8;
@@ -931,8 +931,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt_Robot.cpp openjdk/
  
      // pixel data starts after 3 RGBQUADS for color masks
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/CmdIDList.cpp openjdk/jdk/src/windows/native/sun/windows/CmdIDList.cpp
---- openjdk.orig/jdk/src/windows/native/sun/windows/CmdIDList.cpp	2011-11-14 16:12:18.000000000 -0600
-+++ openjdk/jdk/src/windows/native/sun/windows/CmdIDList.cpp	2013-06-22 03:34:36.263702878 -0500
+--- openjdk.orig/jdk/src/windows/native/sun/windows/CmdIDList.cpp	2013-12-06 00:20:26.000000000 +0000
++++ openjdk/jdk/src/windows/native/sun/windows/CmdIDList.cpp	2013-12-24 21:41:56.999134792 +0000
 @@ -39,7 +39,7 @@
  {
      m_capacity = ARRAY_INITIAL_SIZE;
@@ -954,8 +954,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/CmdIDList.cpp openjdk/
          }
      }
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/Devices.cpp openjdk/jdk/src/windows/native/sun/windows/Devices.cpp
---- openjdk.orig/jdk/src/windows/native/sun/windows/Devices.cpp	2013-06-22 15:43:08.377839847 -0500
-+++ openjdk/jdk/src/windows/native/sun/windows/Devices.cpp	2013-06-22 10:32:18.591315108 -0500
+--- openjdk.orig/jdk/src/windows/native/sun/windows/Devices.cpp	2013-12-24 21:36:12.849956384 +0000
++++ openjdk/jdk/src/windows/native/sun/windows/Devices.cpp	2013-12-24 21:41:56.999134792 +0000
 @@ -97,8 +97,8 @@
      J2dTraceLn1(J2D_TRACE_INFO, "Devices::Devices numDevices=%d", numDevices);
      this->numDevices = numDevices;
@@ -978,8 +978,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/Devices.cpp openjdk/jd
          J2dRlsTraceLn(J2D_TRACE_ERROR,
                        "Devices::UpdateInstance: Failed to get all "\
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/ShellFolder2.cpp openjdk/jdk/src/windows/native/sun/windows/ShellFolder2.cpp
---- openjdk.orig/jdk/src/windows/native/sun/windows/ShellFolder2.cpp	2011-11-14 16:12:18.000000000 -0600
-+++ openjdk/jdk/src/windows/native/sun/windows/ShellFolder2.cpp	2013-06-22 03:34:36.264702879 -0500
+--- openjdk.orig/jdk/src/windows/native/sun/windows/ShellFolder2.cpp	2013-12-06 00:20:26.000000000 +0000
++++ openjdk/jdk/src/windows/native/sun/windows/ShellFolder2.cpp	2013-12-24 21:41:57.003134851 +0000
 @@ -385,6 +385,9 @@
      if (cb == 0)
          return 0;
@@ -1001,8 +1001,8 @@ diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/ShellFolder2.cpp openj
      memcpy(newPIDL, parentPIDL, len1);
      memcpy(((LPBYTE) newPIDL) + len1, relativePIDL, len2);
 diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/WPrinterJob.cpp openjdk/jdk/src/windows/native/sun/windows/WPrinterJob.cpp
---- openjdk.orig/jdk/src/windows/native/sun/windows/WPrinterJob.cpp	2011-11-14 16:12:18.000000000 -0600
-+++ openjdk/jdk/src/windows/native/sun/windows/WPrinterJob.cpp	2013-06-22 10:38:43.325646229 -0500
+--- openjdk.orig/jdk/src/windows/native/sun/windows/WPrinterJob.cpp	2013-12-06 00:20:26.000000000 +0000
++++ openjdk/jdk/src/windows/native/sun/windows/WPrinterJob.cpp	2013-12-24 21:41:57.003134851 +0000
 @@ -872,7 +872,7 @@
        int numSizes = ::DeviceCapabilities(printerName, printerPort,
                                            DC_PAPERS, NULL, NULL);

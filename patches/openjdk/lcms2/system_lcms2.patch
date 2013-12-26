@@ -40,7 +40,7 @@ diff --git a/make/jdk_generic_profile.sh b/make/jdk_generic_profile.sh
 +export LCMS_LIBS
 +
 +# IcedTea defaults; use system libraries
-+export USE_SYSTEM_LCMS=true
++export SYSTEM_LCMS=true
 diff --git a/make/sun/cmm/lcms/FILES_c_unix.gmk b/make/sun/cmm/lcms/FILES_c_unix.gmk
 --- openjdk/jdk/make/sun/cmm/lcms/FILES_c_unix.gmk
 +++ openjdk/jdk/make/sun/cmm/lcms/FILES_c_unix.gmk
@@ -55,7 +55,7 @@ diff --git a/make/sun/cmm/lcms/FILES_c_unix.gmk b/make/sun/cmm/lcms/FILES_c_unix
  # questions.
  #
  
-+ifndef USE_SYSTEM_LCMS
++ifneq ($(SYSTEM_LCMS),true)
  FILES_c = \
      cmscam02.c \
      cmscgats.c \

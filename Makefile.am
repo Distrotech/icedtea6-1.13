@@ -355,7 +355,7 @@ ICEDTEA_PATCHES = \
 	patches/use-system-tzdata.patch \
 	patches/headers.patch \
 	patches/gcc-suffix.patch \
-	patches/libraries.patch \
+	patches/libraries-splashscreen.patch \
 	$(SPECIAL_SECURITY_PATCH_2) \
 	patches/uname.patch \
 	patches/nomotif-6706121.patch \
@@ -401,7 +401,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7003777-bad-html-entity-parse.patch \
 	patches/rendering-engine-tests.patch \
 	patches/openjdk/6800846-printing-quality.patch \
-	patches/rh661505-jpeg.patch \
 	patches/6703377-freetypescaler.patch \
 	patches/openjdk/6642612-filechooser_button_sizes.patch \
 	patches/jtreg-international-fonts-styles.patch \
@@ -681,6 +680,30 @@ ICEDTEA_PATCHES += \
 	patches/pax-mark-rmic-java.patch
 endif
 
+if USE_SYSTEM_ZLIB
+ICEDTEA_PATCHES += \
+	patches/libraries-zlib.patch \
+	patches/linker-libs-order-zlib.patch
+endif
+
+if USE_SYSTEM_JPEG
+ICEDTEA_PATCHES += \
+	patches/libraries-jpeg.patch \
+	patches/rh661505-jpeg.patch
+else
+	patches/rh661505-jpeg-nosys.patch
+endif
+
+if USE_SYSTEM_PNG
+ICEDTEA_PATCHES += \
+	patches/libraries-png.patch
+endif
+
+if USE_SYSTEM_GIF
+ICEDTEA_PATCHES += \
+	patches/libraries-gif.patch
+endif
+
 ICEDTEA_PATCHES += $(DISTRIBUTION_PATCHES)
 
 # Bootstrapping patches
@@ -838,11 +861,39 @@ ICEDTEA_ENV += \
 	RHINO_JAR="$(abs_top_builddir)/rhino/rhino.jar"
 endif
 
+if USE_SYSTEM_ZLIB
+ICEDTEA_ENV += \
+	SYSTEM_ZLIB="true" \
+	ZLIB_LIBS="${ZLIB_LIBS}" \
+	ZLIB_CFLAGS="${ZLIB_CFLAGS}"
+endif
+
 if USE_SYSTEM_LCMS
 ICEDTEA_ENV += \
-	USE_SYSTEM_LCMS="true" \
+	SYSTEM_LCMS="true" \
 	LCMS_LIBS="${LCMS2_LIBS}" \
 	LCMS_CFLAGS="${LCMS2_CFLAGS}"
+endif
+
+if USE_SYSTEM_JPEG
+ICEDTEA_ENV += \
+	SYSTEM_JPEG="true" \
+	JPEG_LIBS="${JPEG_LIBS}" \
+	JPEG_CFLAGS="${JPEG_CFLAGS}"
+endif
+
+if USE_SYSTEM_PNG
+ICEDTEA_ENV += \
+	SYSTEM_PNG="true" \
+	PNG_LIBS="${PNG_LIBS}" \
+	PNG_CFLAGS="${PNG_CFLAGS}"
+endif
+
+if USE_SYSTEM_GIF
+ICEDTEA_ENV += \
+	SYSTEM_GIF="true" \
+	GIF_LIBS="${GIF_LIBS}" \
+	GIF_CFLAGS="${GIF_CFLAGS}"
 endif
 
 if USE_SYSTEM_KERBEROS

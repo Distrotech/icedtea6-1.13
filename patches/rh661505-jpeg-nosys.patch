@@ -1,0 +1,16 @@
+--- openjdk/jdk/src/share/native/sun/awt/image/jpeg/imageioJPEG.c.old	2010-12-24 13:20:49.444589072 -0500
++++ openjdk/jdk/src/share/native/sun/awt/image/jpeg/imageioJPEG.c	2010-12-24 13:21:58.059463767 -0500
+@@ -1488,2 +1488,4 @@
+ 
++#define JPEG_APP1  (JPEG_APP0 + 1)  /* EXIF APP1 marker code  */
++
+ JNIEXPORT jlong JNICALL
+@@ -1541,2 +1543,3 @@
+     jpeg_save_markers(cinfo, ICC_MARKER, 0xFFFF);
++    jpeg_save_markers(cinfo, JPEG_APP1, 0xFFFF);
+ 
+@@ -1601,4 +1604,2 @@
+ 
+-#define JPEG_APP1  (JPEG_APP0 + 1)  /* EXIF APP1 marker code  */
+-
+ /*

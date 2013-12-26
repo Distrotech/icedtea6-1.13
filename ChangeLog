@@ -1,3 +1,65 @@
+2013-12-24  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	PR1630: Make system JPEG/Zlib/PNG/GIF support
+	optional
+	* patches/alternative_krb5_cache_fixup.patch:
+	Replace USE_SYSTEM_LCMS with SYSTEM_LCMS.
+	* patches/libraries-gif.patch: Split out
+	from libraries.patch.
+	* patches/libraries-jpeg.patch: Likewise.
+	* patches/libraries-png.patch: Likewise.
+	* patches/libraries-splashscreen.patch:
+	Rewritten using SYSTEM_{PNG,GIF,ZLIB,JPEG} flags.
+	* patches/libraries-zlib.patch:
+	Split out from libraries.patch.
+	* patches/linker-libs-order-zlib.patch:
+	Split out from linker-libs-order.patch.  Only
+	applies if system zlib is being used.
+	* patches/linker-libs-order.patch:
+	Move system-zlib-specific parts to separate file.
+	* patches/openjdk/lcms2/system_lcms2.patch:
+	Replace USE_SYSTEM_LCMS with SYSTEM_LCMS.
+	* patches/rh661505-jpeg-nosys.patch:
+	New version that uses function calls appropriate for
+	the in-tree version.
+	* patches/security/20130618/8009071-improve_shape_handling.patch:
+	Regenerated as now applied before libraries-gif.patch,
+	which may or may not be applied.
+
+2011-09-06  Andrew John Hughes  <ahughes@redhat.com>
+
+	* patches/libraries.patch:
+	Split into parts for individual libraries.
+	Splashscreen parts rewritten.
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Replace libraries.patch
+	with libraries-splashscreen.patch.  Apply
+	other library patches depending on which
+	system libraries are used and which aren't.
+	Use a different version of the RH661505
+	patch, depending on whether the system
+	or in-tree JPEG library is used.
+	(ICEDTEA_ENV): Set ZLIB_LIBS, ZLIB_CFLAGS,
+	SYSTEM_ZLIB, JPEG_LIBS, JPEG_CFLAGS,
+	SYSTEM_JPEG, PNG_LIBS, PNG_CFLAGS,
+	SYSTEM_PNG, GIF_LIBS, GIF_CFLAGS,
+	SYSTEM_GIF.  Replace USE_SYSTEM_LCMS with
+	SYSTEM_LCMS for consistency.
+	* NEWS: Updated.
+	* acinclude.m4:
+	(IT_CHECK_FOR_ZLIB): New macro to check for zlib.
+	(IT_CHECK_FOR_JPEG): Likewise for libjpeg.
+	(IT_CHECK_FOR_PNG): Likewise for libpng.
+	(IT_CHECK_FOR_GIF): Likewise for giflib.
+	* configure.ac:
+	Remove old AC_CHECK_LIB calls for jpeg, gif
+	and zlib and PKG_CHECK_MODULES call for libpng.
+	Add calls to new macros above.
+	* remove-intree-libraries.sh.in:
+	Make removal of zlib, libpng, giflib and libjpeg
+	files dependent on whether or not the system versions
+	are used (the default).
+
 2013-12-20  Xerxes Rånby  <xerxes@zafena.se>
 	    Robert Lougher  <rob@jamvm.org.uk>
 

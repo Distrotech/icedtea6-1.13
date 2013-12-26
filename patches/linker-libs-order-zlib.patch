@@ -1,0 +1,33 @@
+diff -Nru openjdk.orig/jdk/make/com/sun/java/pack/Makefile openjdk/jdk/make/com/sun/java/pack/Makefile
+--- openjdk.orig/jdk/make/com/sun/java/pack/Makefile	2013-12-24 22:01:47.973029214 +0000
++++ openjdk/jdk/make/com/sun/java/pack/Makefile	2013-12-24 22:06:17.913083097 +0000
+@@ -75,12 +75,12 @@
+             $(ZIPOBJDIR)/infutil.$(OBJECT_SUFFIX) \
+             $(ZIPOBJDIR)/inffast.$(OBJECT_SUFFIX)
+ 
+-  OTHER_LDLIBS += $(ZLIB_LIBS)
+ else
+   OTHER_CXXFLAGS += -DNO_ZLIB -DUNPACK_JNI
+-  OTHER_LDLIBS += $(ZLIB_LIBS) $(JVMLIB)
++  OTHER_LDLIBS += $(JVMLIB)
+ endif
+ 
++OTHER_LDLIBS += $(ZLIB_LIBS)
+ CXXFLAGS_DBG += -DFULL
+ CXXFLAGS_OPT += -DPRODUCT
+ CXXFLAGS_COMMON += -DFULL
+@@ -100,12 +100,11 @@
+   COMPILER_WARNINGS_FATAL=false
+ else
+   LDOUTPUT = -o #Have a space 
+-  LDDFLAGS += $(ZLIB_LIBS) -lc
+-  OTHER_LDLIBS  += $(LIBCXX)
++  OTHER_LDLIBS  += $(LIBCXX) -lc
+ # setup the list of libraries to link in...
+ ifeq ($(PLATFORM), linux)
+ ifeq ("$(CC_VER_MAJOR)", "3")
+-  OTHER_LDLIBS  += $(ZLIB_LIBS) -Wl,-Bstatic -lgcc_eh -Wl,-Bdynamic
++  OTHER_LDLIBS  += -Wl,-Bstatic -lgcc_eh -Wl,-Bdynamic
+ endif
+ endif #LINUX
+ endif #PLATFORM

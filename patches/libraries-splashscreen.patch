@@ -1,0 +1,104 @@
+diff -r 008e31b76d41 make/sun/splashscreen/FILES_c.gmk
+--- openjdk/jdk/make/sun/splashscreen/FILES_c.gmk	Tue Oct 29 04:10:31 2013 +0000
++++ openjdk/jdk/make/sun/splashscreen/FILES_c.gmk	Tue Dec 24 20:18:35 2013 +0000
+@@ -30,7 +30,10 @@
+ 	splashscreen_impl.c \
+ 	splashscreen_jpeg.c \
+ 	splashscreen_png.c \
+-	splashscreen_sys.c \
++	splashscreen_sys.c
++
++ifneq ($(SYSTEM_PNG),true)
++FILES_c = \
+ 	png.c \
+ 	pngerror.c \
+ 	pngget.c \
+@@ -45,10 +48,18 @@
+ 	pngwio.c \
+ 	pngwrite.c \
+ 	pngwtran.c \
+-	pngwutil.c \
++	pngwutil.c
++endif
++
++ifneq ($(SYSTEM_GIF),true)
++FILES_c = \
+ 	dgif_lib.c \
+ 	gif_err.c \
+-	gifalloc.c \
++	gifalloc.c
++endif
++
++ifneq ($(SYSTEM_ZLIB),true)
++FILES_c = \
+ 	compress.c \
+ 	deflate.c \
+ 	gzio.c \
+@@ -62,7 +73,11 @@
+ 	uncompr.c \
+ 	zadler32.c \
+ 	zcrc32.c \
+-	zutil.c \
++	zutil.c
++endif
++
++ifneq ($(SYSTEM_JPEG),true)
++FILES_c = \
+ 	jcomapi.c \
+ 	jdapimin.c \
+ 	jdapistd.c \
+@@ -107,4 +122,4 @@
+ 	jfdctflt.c \
+ 	jfdctfst.c \
+ 	jfdctint.c
+-
++endif
+diff -r 008e31b76d41 make/sun/splashscreen/Makefile
+--- openjdk/jdk/make/sun/splashscreen/Makefile	Tue Oct 29 04:10:31 2013 +0000
++++ openjdk/jdk/make/sun/splashscreen/Makefile	Tue Dec 24 20:18:35 2013 +0000
+@@ -60,6 +60,9 @@
+ #
+ 
+ CFLAGS += -DSPLASHSCREEN
++ifeq ($(SYSTEM_PNG),true)
++CFLAGS += -DPNG_NO_MMX_CODE
++endif
+ 
+ ifneq ($(PLATFORM), windows)
+   CFLAGS += -DWITH_X11
+@@ -70,20 +73,34 @@
+   OTHER_LDLIBS += kernel32.lib user32.lib gdi32.lib 
+ #$(JVMLIB) $(OBJDIR)/../../jpeg/$(OBJDIRNAME)/jpeg$(SUFFIX).lib
+ endif # PLATFORM
++OTHER_LDLIBS += $(PNG_LIBS) $(JPEG_LIBS) $(GIF_LIBS) $(ZLIB_LIBS)
+ 
+ #
+ # Add to ambient vpath to get files in a subdirectory
+ #
+ vpath %.c   $(SHARE_SRC)/native/$(PKGDIR)/splashscreen
+ vpath %.c   $(SHARE_SRC)/native/$(PKGDIR)
++ifneq ($(SYSTEM_GIF),true)
+ vpath %.c   $(SHARE_SRC)/native/$(PKGDIR)/giflib
++endif
++ifneq ($(SYSTEM_ZLIB),true)
+ vpath %.c   $(SHARE_SRC)/native/java/util/zip/zlib-1.1.3
++endif
++ifneq ($(SYSTEM_PNG),true)
+ vpath %.c   $(SHARE_SRC)/native/$(PKGDIR)/libpng
++endif
++ifneq ($(SYSTEM_JPEG),true)
+ vpath %.c   $(SHARE_SRC)/native/$(PKGDIR)/image/jpeg
++endif
+ vpath %.c   $(PLATFORM_SRC)/native/$(PKGDIR)/splashscreen
+ 
+ CPPFLAGS += -I$(PLATFORM_SRC)/native/$(PKGDIR)/splashscreen -I$(SHARE_SRC)/native/$(PKGDIR)/splashscreen
+-CPPFLAGS += -I$(SHARE_SRC)/native/$(PKGDIR)/image/jpeg -I$(SHARE_SRC)/native/java/util/zip/zlib-1.1.3
++ifneq ($(SYSTEM_JPEG),true)
++CPPFLAGS += -I$(SHARE_SRC)/native/$(PKGDIR)/image/jpeg
++endif
++ifneq ($(SYSTEM_ZLIB),true)
++CPPFLAGS += -I$(SHARE_SRC)/native/java/util/zip/zlib-1.1.3
++endif
+ 
+ ifeq ($(PLATFORM), linux)
+   ifeq ($(ARCH_DATA_MODEL), 64)
