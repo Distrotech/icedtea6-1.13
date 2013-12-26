@@ -1,0 +1,14 @@
+diff --git a/jdk/src/share/native/common/sizecalc.h b/jdk/src/share/native/common/sizecalc.h
+index 675750e..f88c27c 100644
+--- openjdk.orig/jdk/src/share/native/common/sizecalc.h
++++ openjdk/jdk/src/share/native/common/sizecalc.h
+@@ -38,7 +38,9 @@
+  * helper macros throw the std::bad_alloc instead of returning NULL.
+  */
+ 
++#ifndef _WIN32
+ #include <stdint.h> /* SIZE_MAX for C99+ */
++#endif /* _WIN32 */
+ /* http://stackoverflow.com/questions/3472311/what-is-a-portable-method-to-find-the-maximum-value-of-size-t */
+ #ifndef SIZE_MAX
+ #define SIZE_MAX ((size_t)-1)

@@ -630,7 +630,9 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7025066-embedded_build.patch \
 	patches/s390_casts.patch \
 	patches/openjdk/8025255-tzdata2013g.patch \
-	patches/d729448-32_bit_alignment.patch
+	patches/d729448-32_bit_alignment.patch \
+	patches/windows-awt.patch \
+	patches/windows-jdk-sizecalc.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \

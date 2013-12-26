@@ -1,0 +1,130 @@
+diff --git a/jdk/src/windows/native/sun/windows/awt_Component.cpp b/jdk/src/windows/native/sun/windows/awt_Component.cpp
+index 7490b4e..660efe7 100644
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.cpp
++++ openjdk/jdk/src/windows/native/sun/windows/awt_Component.cpp
+@@ -218,6 +218,10 @@ static UINT lastShiftKeyPressed = 0; // init to safe value
+ // Added by waleed to initialize the RTL Flags
+ BOOL AwtComponent::sm_rtl = PRIMARYLANGID(GetInputLanguage()) == LANG_ARABIC ||
+                             PRIMARYLANGID(GetInputLanguage()) == LANG_HEBREW;
++
++UINT AwtComponent::sm_95WheelMessage = WM_NULL;
++UINT AwtComponent::sm_95WheelSupport = WM_NULL;			    
++
+ BOOL AwtComponent::sm_rtlReadingOrder =
+     PRIMARYLANGID(GetInputLanguage()) == LANG_ARABIC;
+ 
+diff --git a/jdk/src/windows/native/sun/windows/awt_Component.h b/jdk/src/windows/native/sun/windows/awt_Component.h
+index ac60aec..3d02235 100644
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Component.h
++++ openjdk/jdk/src/windows/native/sun/windows/awt_Component.h
+@@ -423,6 +423,10 @@ public:
+     /* Functions for MouseWheel support on Windows95
+      * These should only be called if running on 95
+      */
++    static void Wheel95Init();
++    INLINE static UINT Wheel95GetMsg() {return sm_95WheelMessage;}
++    static UINT Wheel95GetScrLines();
++    
+ 
+     /* Determines whether the component is obscured by another window */
+     // Called on Toolkit thread
+@@ -718,6 +722,10 @@ protected:
+     virtual void SetDragCapture(UINT flags);
+     virtual void ReleaseDragCapture(UINT flags);
+ 
++    // 95 support for mouse wheel
++    static UINT sm_95WheelMessage;
++    static UINT sm_95WheelSupport;    
++
+     //These functions are overridden in AwtWindow to handle non-opaque windows.
+     virtual void FillBackground(HDC hMemoryDC, SIZE &size);
+     virtual void FillAlpha(void *bitmapBits, SIZE &size, BYTE alpha);
+diff --git a/jdk/src/windows/native/sun/windows/awt_MMStub.h b/jdk/src/windows/native/sun/windows/awt_MMStub.h
+index 802899b..18afeeb 100644
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_MMStub.h
++++ openjdk/jdk/src/windows/native/sun/windows/awt_MMStub.h
+@@ -74,6 +74,12 @@ extern "C" {
+ #define DEV_STR_LEN                         128
+ 
+ 
++#define ULW_ALPHA                           0x00000002
++#define LWA_ALPHA                           0x00000002
++#define WS_EX_LAYERED                       0x00080000
++#define WS_EX_NOACTIVATE                    0x08000000L
++
++
+ //  Datatypes
+ typedef HANDLE                              MHND;
+ typedef BOOL (CALLBACK* MON_ENUM_CALLBACK_PROC)(MHND,HDC,LPRECT,LPARAM);
+@@ -105,6 +111,15 @@ typedef struct tagDISPLAY_DEVICE
+     WCHAR       deviceKey[128];
+ } _DISPLAY_DEVICE, *P_DISPLAY_DEVICE;
+ 
++typedef struct tagMSLLHOOKSTRUCT 
++{
++    POINT       pt;
++    DWORD       mouseData;
++    DWORD       flags;
++    DWORD       time;
++    ULONG_PTR   dwExtraInfo;
++} MSLLHOOKSTRUCT, *PMSLLHOOKSTRUCT, *LPMSLLHOOKSTRUCT;
++
+ /*  Basic API's  */
+ BOOL WINAPI                     _enumDisplayMonitors(HDC,LPCRECT,MON_ENUM_CALLBACK_PROC,LPARAM);
+ BOOL WINAPI                     _enumDisplayDevices (LPVOID,int,P_DISPLAY_DEVICE,DWORD);
+@@ -122,6 +137,10 @@ HDC WINAPI                      _makeDCFromMonitor  (MHND);
+ HWND WINAPI                     _createWindowOM     (MHND,LPCTSTR,LPCTSTR,DWORD,int,int,int,
+                                                      int,HWND,HMENU,HANDLE,LPVOID);
+ 
++WINUSERAPI BOOL WINAPI          SetLayeredWindowAttributes(HWND,COLORREF,BYTE,DWORD);
++WINUSERAPI BOOL WINAPI          UpdateLayeredWindow(HWND,HDC,POINT*,SIZE*,HDC,POINT*,COLORREF,BLENDFUNCTION*,DWORD);
++
++
+ #ifdef __cplusplus
+ }
+ #endif  /* __cplusplus */
+diff --git a/jdk/src/windows/native/sun/windows/awt_Toolkit.cpp b/jdk/src/windows/native/sun/windows/awt_Toolkit.cpp
+index d407c92..940db1f 100644
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Toolkit.cpp
++++ openjdk/jdk/src/windows/native/sun/windows/awt_Toolkit.cpp
+@@ -1602,13 +1602,13 @@ BOOL AwtToolkit::GetScreenInsets(int screenNum, RECT * rect)
+     }
+     /* if additional display */
+     else {
+-        MONITORINFO *miInfo;
++        MONITOR_INFO *miInfo;
+         miInfo = AwtWin32GraphicsDevice::GetMonitorInfo(screenNum);
+         if (miInfo) {
+-            rect->top = miInfo->rcWork.top    - miInfo->rcMonitor.top;
+-            rect->left = miInfo->rcWork.left   - miInfo->rcMonitor.left;
+-            rect->bottom = miInfo->rcMonitor.bottom - miInfo->rcWork.bottom;
+-            rect->right = miInfo->rcMonitor.right - miInfo->rcWork.right;
++            rect->top = miInfo->rWork.top    - miInfo->rMonitor.top;
++            rect->left = miInfo->rWork.left   - miInfo->rMonitor.left;
++            rect->bottom = miInfo->rMonitor.bottom - miInfo->rWork.bottom;
++            rect->right = miInfo->rMonitor.right - miInfo->rWork.right;
+             return TRUE;
+         }
+     }
+diff --git a/jdk/src/windows/native/sun/windows/awt_Window.cpp b/jdk/src/windows/native/sun/windows/awt_Window.cpp
+index c7ead09..863967f 100644
+--- openjdk.orig/jdk/src/windows/native/sun/windows/awt_Window.cpp
++++ openjdk/jdk/src/windows/native/sun/windows/awt_Window.cpp
+@@ -417,7 +417,7 @@ bool AwtWindow::IsWarningWindow(HWND hWnd)
+     return 0 == _tcsncmp(windowClassName,
+             AwtWindow::GetWarningWindowClassName(), len);
+ }
+-+
++
+ LRESULT CALLBACK AwtWindow::CBTFilter(int nCode, WPARAM wParam, LPARAM lParam)
+ {
+     if (nCode == HCBT_ACTIVATE || nCode == HCBT_SETFOCUS) {
+@@ -703,7 +703,7 @@ void AwtWindow::CalculateWarningWindowBounds(JNIEnv *env, LPRECT rect)
+     y = min(y, windowBounds.bottom + (int)warningWindowHeight + 2);
+ 
+     // Now make sure the warning window is visible on the screen
+-    HMONITOR hmon = MonitorFromWindow(GetHWnd(), MONITOR_DEFAULTTOPRIMARY);
++    MHND hmon = MonitorFromWindow(GetHWnd(), MONITOR_DEFAULTTOPRIMARY);
+     DASSERT(hmon != NULL);
+ 
+     RECT monitorBounds;
