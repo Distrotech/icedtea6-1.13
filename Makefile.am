@@ -632,7 +632,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/8025255-tzdata2013g.patch \
 	patches/d729448-32_bit_alignment.patch \
 	patches/windows-awt.patch \
-	patches/windows-jdk-sizecalc.patch
+	patches/windows-jdk-sizecalc.patch \
+	patches/shark_fixes_from_8003868.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
