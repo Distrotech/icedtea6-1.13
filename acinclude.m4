@@ -1653,9 +1653,9 @@ AC_DEFUN_ONCE([IT_CHECK_FOR_GIF],
   if test x"${ENABLE_SYSTEM_GIF}" = "xyes"; then
     dnl Check for GIF headers and libraries.
     AC_CHECK_LIB([gif], [main],
-        , [AC_MSG_ERROR("Could not find GIF library; install GIF or build with --disable-system-gif to use the in-tree copy.")])
+        , [AC_MSG_ERROR([Could not find GIF library; install GIF or build with --disable-system-gif to use the in-tree copy.])])
     AC_CHECK_HEADER([gif_lib.h],
-        , [AC_MSG_ERROR("Could not find GIF header; install GIF or build with --disable-system-gif to use the in-tree copy.")])
+        , [AC_MSG_ERROR([Could not find GIF header; install GIF or build with --disable-system-gif to use the in-tree copy.])])
     GIF_LIBS="-lgif"
     AC_SUBST(GIF_LIBS)
   fi

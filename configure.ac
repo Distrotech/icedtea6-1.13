@@ -302,11 +302,11 @@ IT_CHECK_FOR_KERBEROS
 
 dnl pkgconfig cannot be used to find these headers and libraries.
 AC_CHECK_HEADERS([cups/cups.h cups/ppd.h],[]
-	,[AC_MSG_ERROR("CUPS headers were not found -
-	try installing cups-devel.")])
+	,[AC_MSG_ERROR([Could not find CUPS headers;
+	install CUPS (including cups-devel on binary distros).])])
 AC_CHECK_HEADERS([X11/X.h],[]
-	,[AC_MSG_ERROR("xorg headers were not found -
-	try installing xorg-x11-proto-devel.")])
+	,[AC_MSG_ERROR([Could not find X.org headers;
+	install X.org (including xorg-x11-proto-devel on binary distros).])])
 
 IT_CHECK_FOR_ZLIB
 IT_CHECK_FOR_JPEG
