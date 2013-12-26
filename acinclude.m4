@@ -1578,7 +1578,8 @@ AC_DEFUN_ONCE([IT_CHECK_FOR_ZLIB],
     PKG_CHECK_MODULES(ZLIB, zlib,[ZLIB_FOUND=yes],[ZLIB_FOUND=no])
     if test "x${ZLIB_FOUND}" = xno
     then
-      AC_MSG_ERROR([Could not find ZLIB; install ZLIB or build with --disable-system-zlib to use the in-tree copy.])
+      AC_CHECK_LIB(z, main, ZLIB_LIBS="-lz",
+        [AC_MSG_ERROR([Could not find ZLIB; install ZLIB or build with --disable-system-zlib to use the in-tree copy.])])
     fi
     AC_SUBST(ZLIB_CFLAGS)
     AC_SUBST(ZLIB_LIBS)
