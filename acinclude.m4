@@ -1,6 +1,6 @@
 AC_DEFUN([IT_SET_ARCH_SETTINGS],
 [
-  case "${host_cpu}" in
+  case "${target_cpu}" in
     x86_64)
       BUILD_ARCH_DIR=amd64
       INSTALL_ARCH_DIR=amd64
@@ -108,7 +108,7 @@ AC_DEFUN([IT_SET_ARCH_SETTINGS],
 
 AC_DEFUN([IT_SET_OS_DIRS],
 [
-  case "${host_os}" in
+  case "${target_os}" in
     *linux*)
       BUILD_OS_DIR=linux
       OS_PATH=
@@ -122,7 +122,7 @@ AC_DEFUN([IT_SET_OS_DIRS],
       OS_PATH=
       ;;
     *)
-      AC_MSG_ERROR([unsupported operating system ${host_os}])
+      AC_MSG_ERROR([unsupported operating system ${target_os}])
       ;;
   esac
   AC_SUBST(BUILD_OS_DIR)
@@ -1544,7 +1544,11 @@ AC_DEFUN_ONCE([IT_CHECK_FOR_LCMS],
     ENABLE_SYSTEM_LCMS="${enableval}"
   ],
   [
-    ENABLE_SYSTEM_LCMS="yes"
+    if test x"${target_os}" = "xlinux-gnu"; then
+      ENABLE_SYSTEM_LCMS="yes" ;
+    else
+      ENABLE_SYSTEM_LCMS="no" ;
+    fi;
   ])
   AC_MSG_RESULT(${ENABLE_SYSTEM_LCMS})
   if test x"${ENABLE_SYSTEM_LCMS}" = "xyes"; then
@@ -1570,7 +1574,11 @@ AC_DEFUN_ONCE([IT_CHECK_FOR_ZLIB],
     ENABLE_SYSTEM_ZLIB="${enableval}"
   ],
   [
-    ENABLE_SYSTEM_ZLIB="yes"
+    if test x"${target_os}" = "xlinux-gnu"; then
+      ENABLE_SYSTEM_ZLIB="yes" ;
+    else
+      ENABLE_SYSTEM_ZLIB="no" ;
+    fi
   ])
   AC_MSG_RESULT(${ENABLE_SYSTEM_ZLIB})
   if test x"${ENABLE_SYSTEM_ZLIB}" = "xyes"; then
@@ -1597,7 +1605,11 @@ AC_DEFUN_ONCE([IT_CHECK_FOR_JPEG],
     ENABLE_SYSTEM_JPEG="${enableval}"
   ],
   [
-    ENABLE_SYSTEM_JPEG="yes"
+    if test x"${target_os}" = "xlinux-gnu"; then
+      ENABLE_SYSTEM_JPEG="yes" ;
+    else
+      ENABLE_SYSTEM_JPEG="no" ;
+    fi
   ])
   AC_MSG_RESULT(${ENABLE_SYSTEM_JPEG})
   if test x"${ENABLE_SYSTEM_JPEG}" = "xyes"; then
@@ -1622,7 +1634,11 @@ AC_DEFUN_ONCE([IT_CHECK_FOR_PNG],
     ENABLE_SYSTEM_PNG="${enableval}"
   ],
   [
-    ENABLE_SYSTEM_PNG="yes"
+    if test x"${target_os}" = "xlinux-gnu"; then
+      ENABLE_SYSTEM_PNG="yes" ;
+    else
+      ENABLE_SYSTEM_PNG="no" ;
+    fi
   ])
   AC_MSG_RESULT(${ENABLE_SYSTEM_PNG})
   if test x"${ENABLE_SYSTEM_PNG}" = "xyes"; then
@@ -1648,7 +1664,11 @@ AC_DEFUN_ONCE([IT_CHECK_FOR_GIF],
     ENABLE_SYSTEM_GIF="${enableval}"
   ],
   [
-    ENABLE_SYSTEM_GIF="yes"
+    if test x"${target_os}" = "xlinux-gnu"; then
+      ENABLE_SYSTEM_GIF="yes" ;
+    else
+      ENABLE_SYSTEM_GIF="no" ;
+    fi
   ])
   AC_MSG_RESULT(${ENABLE_SYSTEM_GIF})
   if test x"${ENABLE_SYSTEM_GIF}" = "xyes"; then

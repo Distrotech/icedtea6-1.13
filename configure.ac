@@ -1,4 +1,6 @@
 AC_INIT([icedtea6],[1.13.0pre],[distro-pkg-dev@openjdk.java.net])
+AC_CANONICAL_HOST
+AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([1.9 tar-pax foreign])
 AC_CONFIG_FILES([Makefile])
 
@@ -10,8 +12,6 @@ cd $abs_top_srcdir
 abs_top_srcdir=`pwd`
 cd $abs_top_builddir
 AC_SUBST(abs_top_srcdir)
-
-AC_CANONICAL_HOST
 
 AC_PREFIX_DEFAULT([bootstrap])
 
