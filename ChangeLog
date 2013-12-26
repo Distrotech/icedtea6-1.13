@@ -2,6 +2,15 @@
 
 	* Makefile.am:
 	(ICEDTEA_PATCHES): Add patch.
+	* patches/shark-drop_compile_method_arg_following_7083786.patch:
+	Drop extra argument to compile_method, removed
+	in 7083786, from sharkCompiler.cpp.
+	* NEWS: Updated.
+
+2013-12-26  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add patch.
 	* patches/8003992_support_6.patch:
 	Fix test in 8003992 to build on OpenJDK 6
 	by removing multi-catch and NIO2.

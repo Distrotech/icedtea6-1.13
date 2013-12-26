@@ -634,7 +634,8 @@ ICEDTEA_PATCHES = \
 	patches/windows-awt.patch \
 	patches/windows-jdk-sizecalc.patch \
 	patches/shark_fixes_from_8003868.patch \
-	patches/8003992_support_6.patch
+	patches/8003992_support_6.patch \
+	patches/shark-drop_compile_method_arg_following_7083786.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
