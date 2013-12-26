@@ -1,0 +1,41 @@
+diff -r 008e31b76d41 test/java/io/File/NulFile.java
+--- openjdk/jdk/test/java/io/File/NulFile.java	Tue Oct 29 04:10:31 2013 +0000
++++ openjdk/jdk/test/java/io/File/NulFile.java	Thu Dec 26 13:57:43 2013 +0000
+@@ -37,7 +37,6 @@
+ import java.io.FilenameFilter;
+ import java.io.IOException;
+ import java.net.MalformedURLException;
+-import java.nio.file.InvalidPathException;
+ import java.io.ByteArrayInputStream;
+ import java.io.ByteArrayOutputStream;
+ import java.io.ObjectOutputStream;
+@@ -528,17 +527,6 @@
+             throw new RuntimeException(
+                     "File path should contain Nul character");
+         }
+-        // toPath()
+-        try {
+-            exceptionThrown = false;
+-            testFile.toPath();
+-        } catch (InvalidPathException ex) {
+-            exceptionThrown = true;
+-        }
+-        if (!exceptionThrown) {
+-            throw new RuntimeException("toPath() should throw"
+-                + " InvalidPathException");
+-        }
+     }
+ 
+     private static void testSerialization(File testFile) {
+@@ -561,7 +549,10 @@
+                         "Serialization should not change file path");
+             }
+             test(newFile, false);
+-        } catch (IOException | ClassNotFoundException ex) {
++        } catch (IOException ex) {
++            System.err.println("Exception happens in testSerialization");
++            System.err.println(ex.getMessage());
++        } catch (ClassNotFoundException ex) {
+             System.err.println("Exception happens in testSerialization");
+             System.err.println(ex.getMessage());
+         }

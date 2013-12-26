@@ -2,6 +2,14 @@
 
 	* Makefile.am:
 	(ICEDTEA_PATCHES): Add patch.
+	* patches/8003992_support_6.patch:
+	Fix test in 8003992 to build on OpenJDK 6
+	by removing multi-catch and NIO2.
+
+2013-12-26  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add patch.
 	* patches/shark_fixes_from_8003868.patch:
 	Backport EliminateNestedLocks definition
 	for Shark from 8003868 in OpenJDK 8.
