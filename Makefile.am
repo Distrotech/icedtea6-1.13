@@ -498,9 +498,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/p11cipher-6604496-support_ckm_aes_ctr.patch \
 	patches/openjdk/p11cipher-6414899-p11digest_should_support_cloning.patch \
 	patches/merge_fix.patch \
-	patches/openjdk/6763340-corba_memory_leak.patch \
-	patches/openjdk/6980681-corba_deadlock.patch \
-	patches/openjdk/7162902-corba_fixes.patch \
 	patches/traceable.patch \
 	patches/pr1319-support_giflib_5.patch \
 	patches/openjdk/6718364-inference_failure.patch \
@@ -510,7 +507,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7003595-incompatibleclasschangeerror.patch \
 	patches/openjdk/6500343-bad_code_from_conditionals.patch \
 	patches/jaxws-tempfiles-ioutils-6.patch \
-	patches/openjdk/8009530-icu_kern_table_support_broken.patch \
 	patches/jtreg-LayoutGetCharacterCount.patch \
 	patches/jtreg-LayoutLimits.patch \
 	patches/jtreg-ComponentOrientationTests.patch \
@@ -571,7 +567,6 @@ ICEDTEA_PATCHES = \
 	patches/hotspot/original/jvmtiEnv.patch \
 	patches/sparc-trapsfix.patch \
 	patches/print_lsb_release.patch \
-	patches/openjdk/6893617-cnctx_always_uses_default_orb.patch \
 	patches/alternative_krb5_cache.patch \
 	patches/alternative_krb5_cache_fixup.patch \
 	patches/openjdk/8014469-tzdata2013c.patch \

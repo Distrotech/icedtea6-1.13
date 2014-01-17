@@ -1,3 +1,17 @@
+2014-01-17  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* patches/openjdk/6763340-corba_memory_leak.patch,
+	* patches/openjdk/6893617-cnctx_always_uses_default_orb.patch,
+	* patches/openjdk/6980681-corba_deadlock.patch,
+	* patches/openjdk/7162902-corba_fixes.patch,
+	* patches/openjdk/8009530-icu_kern_table_support_broken.patch:
+	Remove upstreamed fixes.
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Drop above.
+	* patches/hotspot/hs23/update-bootclasspath.patch,
+	* patches/openjdk/p11cipher-6812738-native_cleanup.patch:
+	Regenerated against upstream.
+
 2013-12-26  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* NEWS: Fix usage of JEP and add key.
