@@ -1,7 +1,7 @@
 # Dependencies
 
-OPENJDK_DATE = 05_dec_2013
-OPENJDK_SHA256SUM = a9b1b0a48fb52aef82bbe5db33b1dae1672fc8a5f456451f2e300158fc7a7d6b
+OPENJDK_DATE = 21_jan_2014
+OPENJDK_SHA256SUM = ebd9fdf39c8590cd620cb78c481ca233f5919f2819237b5d2b440666f1dd3475
 OPENJDK_VERSION = b30
 OPENJDK_URL = https://java.net/downloads/openjdk6/
 
@@ -175,7 +175,7 @@ IT_JAVACFLAGS=$(IT_JAVAC_SETTINGS) -source $(IT_LANGUAGE_SOURCE_VERSION) -target
 if USE_HG
   OPENJDK_SRC_ZIP = 
 else
-  OPENJDK_SRC_ZIP = openjdk-6-src-$(OPENJDK_VERSION)-$(OPENJDK_DATE).tar.gz
+  OPENJDK_SRC_ZIP = openjdk-6-src-$(OPENJDK_VERSION)-$(OPENJDK_DATE).tar.xz
 endif
 
 # FIXME (HotSpot): HotSpot changeset logic goes here
