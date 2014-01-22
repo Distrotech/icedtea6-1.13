@@ -20,6 +20,7 @@ New in release 1.13.1 (2014-XX-XX):
   - S8010935: Better XML handling
   - S8011786, CVE-2014-0368: Better applet networking
   - S8021257, CVE-2013-5896: com.sun.corba.se.** should be on restricted package list
+  - S8021271: Better buffering in ObjC code
   - S8022904: Enhance JDBC Parsers
   - S8022927: Input validation for byte/endian conversions
   - S8022935: Enhance Apache resolver classes
@@ -47,8 +48,10 @@ New in release 1.13.1 (2014-XX-XX):
   - S8027201, CVE-2014-0376: Enhance JAX-P set up
 * Import of OpenJDK6 b30
   - OJ24: Fix change summary generator
+  - OJ25: Remove @Override annotation added on interfaces by 2014/01/14 security fixes
   - S6995424: Eliminate dependency to a deprecated API com.sun.security.auth.PolicyFile
   - S8026826: JDK 7 fix for 8010935 broke the build
+  - S8027837: JDK-8021257 causes CORBA build failure on emdedded platforms
 
 New in release 1.13.0 (2013-12-26):
 
