@@ -1537,6 +1537,7 @@ AC_DEFUN_ONCE([IT_DISABLE_JDK_TESTS],
 
 AC_DEFUN_ONCE([IT_CHECK_FOR_LCMS],
 [
+  AC_REQUIRE([IT_ENABLE_LCMS2])
   AC_MSG_CHECKING([whether to use the system LCMS install])
   AC_ARG_ENABLE([system-lcms],
 	      [AS_HELP_STRING(--enable-system-lcms,use the system LCMS [[default=yes]])],
@@ -1544,7 +1545,7 @@ AC_DEFUN_ONCE([IT_CHECK_FOR_LCMS],
     ENABLE_SYSTEM_LCMS="${enableval}"
   ],
   [
-    if test x"${target_os}" = "xlinux-gnu"; then
+    if test x"${ENABLE_LCMS2}" = "xyes" -a x"${target_os}" = "xlinux-gnu" ; then
       ENABLE_SYSTEM_LCMS="yes" ;
     else
       ENABLE_SYSTEM_LCMS="no" ;

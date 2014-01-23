@@ -1,5 +1,14 @@
 2014-01-23  Andrew John Hughes  <gnu.andrew@redhat.com>
 
+	* acinclude.m4:
+	(IT_CHECK_FOR_LCMS): Depend on IT_ENABLE_LCMS2
+	and only enable system LCMS by default if it's
+	enabled.
+	* configure.ac:
+	Don't invoke IT_ENABLE_LCMS2 explicitly.
+
+2014-01-23  Andrew John Hughes  <gnu.andrew@redhat.com>
+
 	* patches/alternative_krb5_cache_fixup.patch:
 	Remove unneeded jdk_generic_profile.sh fragment
 	that doesn't apply when system LCMS is disabled.
