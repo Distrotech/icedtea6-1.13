@@ -1,21 +1,3 @@
-diff -Nru openjdk.orig/jdk/make/jdk_generic_profile.sh openjdk/jdk/make/jdk_generic_profile.sh
---- openjdk.orig/jdk/make/jdk_generic_profile.sh	2013-08-30 02:41:17.276807687 +0100
-+++ openjdk/jdk/make/jdk_generic_profile.sh	2013-08-30 12:11:12.428923185 +0100
-@@ -467,5 +467,14 @@
- export LCMS_CFLAGS
- export LCMS_LIBS
- 
-+# Export variables for system krb5
-+# KRB5_CFLAGS and KRB5_LIBS tell the compiler how to compile and
-+# link against Kerberos
-+if [ "${KRB5_LIBS}" = "" ] ; then
-+    KRB5_LIBS="-lkrb5"
-+fi
-+export KRB5_LIBS
-+
- # IcedTea defaults; use system libraries
- export SYSTEM_LCMS=true
-+export SYSTEM_KRB5=true
 diff -Nru openjdk.orig/jdk/make/sun/security/krb5/internal/ccache/Makefile openjdk/jdk/make/sun/security/krb5/internal/ccache/Makefile
 --- openjdk.orig/jdk/make/sun/security/krb5/internal/ccache/Makefile	2013-08-30 02:41:17.408809749 +0100
 +++ openjdk/jdk/make/sun/security/krb5/internal/ccache/Makefile	2013-08-30 12:10:34.336330523 +0100
