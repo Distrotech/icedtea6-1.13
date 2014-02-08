@@ -4,4 +4,4 @@ case ${5} in
   x86_32)ARCHOPT="ARCH=ilp32";;
 esac;
 
-make ${MAKE_J} CXX=${HOST}-g++ GCC=${HOST}-gcc CC=${HOST}-gcc ALT_OPENWIN_HOME=/usr/X11R7 BUILD_CXX=${HOST}-g++ BUILD_CC=${HOST}-gcc ${ARCHOPT}
+make ${MAKE_J} CXX=${HOST}-g++ GCC=${HOST}-gcc CC=${HOST}-gcc ALT_OPENWIN_HOME=/opt/Xorg BUILD_CXX=${HOST}-g++ BUILD_CC=${HOST}-gcc ${ARCHOPT}
