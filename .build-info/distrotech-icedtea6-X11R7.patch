@@ -6,7 +6,7 @@ diff -ur a/openjdk/corba/make/common/Defs-linux.gmk b/openjdk/corba/make/common/
  override MOOT_PRIORITIES         = true
  override NO_INTERRUPTIBLE_IO     = true
 -override OPENWIN_HOME            = /usr/X11R6
-+override OPENWIN_HOME            = /usr/X11R7
++override OPENWIN_HOME            = /opt/Xorg
  ifeq ($(ARCH), amd64)
  override OPENWIN_LIB             = $(OPENWIN_HOME)/lib64
  else
@@ -19,7 +19,7 @@ diff -ur a/openjdk/jdk/make/common/Defs-linux.gmk b/openjdk/jdk/make/common/Defs
  override MOOT_PRIORITIES         = true
  override NO_INTERRUPTIBLE_IO     = true
 -override OPENWIN_HOME            = /usr/X11R6
-+override OPENWIN_HOME            = /usr/X11R7
++override OPENWIN_HOME            = /opt/Xorg
  ifeq ($(ARCH), amd64)
  override OPENWIN_LIB             = $(OPENWIN_HOME)/lib64
  else
@@ -31,16 +31,16 @@ diff -ur a/openjdk/jdk/make/sun/awt/mawt.gmk b/openjdk/jdk/make/sun/awt/mawt.gmk
      else
      # Allows for builds on Debian GNU Linux, X11 is in a different place 
 -       LIBXT = $(firstword $(wildcard /usr/X11R6/lib/libXt.a) \
-+       LIBXT = $(firstword $(wildcard /usr/X11R7/lib/libXt.a) \
++       LIBXT = $(firstword $(wildcard /opt/Xorg/lib/libXt.a) \
                          $(wildcard /usr/lib/libXt.a))
 -       LIBSM = $(firstword $(wildcard /usr/X11R6/lib/libSM.a) \
-+       LIBSM = $(firstword $(wildcard /usr/X11R7/lib/libSM.a) \
++       LIBSM = $(firstword $(wildcard /opt/Xorg/lib/libSM.a) \
                          $(wildcard /usr/lib/libSM.a))
 -       LIBICE = $(firstword $(wildcard /usr/X11R6/lib/libICE.a) \
-+       LIBICE = $(firstword $(wildcard /usr/X11R7/lib/libICE.a) \
++       LIBICE = $(firstword $(wildcard /opt/Xorg/lib/libICE.a) \
                           $(wildcard /usr/lib/libICE.a))
 -       LIBXTST = $(firstword $(wildcard /usr/X11R6/lib/libXtst.a) \
-+       LIBXTST = $(firstword $(wildcard /usr/X11R7/lib/libXtst.a) \
++       LIBXTST = $(firstword $(wildcard /opt/Xorg/lib/libXtst.a) \
                           $(wildcard /usr/lib/libXtst.a))
     endif
  endif
@@ -50,7 +50,7 @@ diff -ur a/openjdk/jdk/make/sun/awt/mawt.gmk b/openjdk/jdk/make/sun/awt/mawt.gmk
  # Checking for the X11/extensions headers at the additional location
 -  CPPFLAGS += -I/X11R6/include/X11/extensions \
 -              -I/usr/include/X11/extensions
-+  CPPFLAGS += -I=/usr/X11R7/include/X11/extensions -I=/usr/X11R7/include
++  CPPFLAGS += -I=/opt/Xorg/include/X11/extensions -I=/opt/Xorg/include
  endif
  
  ifeq ($(PLATFORM), solaris)
@@ -63,7 +63,7 @@ diff -ur a/openjdk/jdk/make/sun/font/Makefile b/openjdk/jdk/make/sun/font/Makefi
    CPPFLAGS += $(FREETYPE_HEADERS) $(FREETYPE_HEADERS)/freetype2 \
 -	-I$(FREETYPE_HEADERS_PATH) -I$(FREETYPE_HEADERS_PATH)/freetype2
 +	-I=$(FREETYPE_HEADERS_PATH) -I=$(FREETYPE_HEADERS_PATH)/freetype2 \
-+	-I=/usr/X11R7/include
++	-I=/opt/Xorg/include
    OTHER_LDLIBS += $(FREETYPE_LIB)
  endif
  
@@ -76,7 +76,7 @@ diff -ur a/openjdk/jdk/make/sun/xawt/Makefile b/openjdk/jdk/make/sun/xawt/Makefi
  # Allows for builds on Debian GNU Linux, X11 is in a different place 
 -  CPPFLAGS += -I/usr/X11R6/include/X11/extensions \
 -              -I/usr/include/X11/extensions \
-+  CPPFLAGS += -I=/usr/X11R7/include/X11/extensions \
++  CPPFLAGS += -I=/opt/Xorg/include/X11/extensions \
                -I$(MOTIF_DIR)/include \
                -I$(OPENWIN_HOME)/include 
  endif
