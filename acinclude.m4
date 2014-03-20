@@ -2295,3 +2295,25 @@ AC_DEFUN([IT_ENABLE_JAR_COMPRESSION],
   AC_MSG_RESULT([$enable_jar_compression])
   AM_CONDITIONAL([ENABLE_JAR_COMPRESSION], test x"${enable_jar_compression}" = "xyes")
 ])
+
+AC_DEFUN([IT_ENABLE_WERROR],
+[
+  AC_MSG_CHECKING([whether to enable -Werror])
+  AC_ARG_ENABLE([Werror],
+                [AS_HELP_STRING(--enable-Werror,build with -Werror [[default=no]])],
+  [
+    case "${enableval}" in
+      yes)
+        enable_werror=yes
+        ;;
+      *)
+        enable_werror=no
+        ;;
+    esac
+  ],
+  [
+    enable_werror=no
+  ])
+  AC_MSG_RESULT([$enable_werror])
+  AM_CONDITIONAL([ENABLE_WERROR], test x"${enable_werror}" = "xyes")
+])
