@@ -1986,7 +1986,7 @@ clean-add-tzdata-support-debug:
 	fi
 	rm -f stamps/add-tzdata-support-debug.stamp
 
-stamps/add-archive.stamp: stamps/icedtea.stamp
+stamps/add-archive.stamp: stamps/pax-mark-vm.stamp
 if !ENABLE_JAMVM
 if !ENABLE_CACAO
 if !ZERO_BUILD
@@ -2002,7 +2002,7 @@ clean-add-archive:
 	rm -vf $(BUILD_OUTPUT_DIR)/j2sdk-image/jre/lib/$(INSTALL_ARCH_DIR)/*/*.jsa
 	rm -f stamps/add-archive.stamp
 
-stamps/add-archive-debug.stamp: stamps/icedtea-debug.stamp
+stamps/add-archive-debug.stamp: stamps/pax-mark-vm-debug.stamp
 if !ENABLE_JAMVM
 if !ENABLE_CACAO
 if !ZERO_BUILD
@@ -2036,7 +2036,7 @@ endif
 clean-pax-mark-vm-debug:
 	rm -f stamps/pax-mark-vm-debug.stamp
 
-stamps/check-crypto.stamp: stamps/cryptocheck.stamp stamps/icedtea.stamp
+stamps/check-crypto.stamp: stamps/cryptocheck.stamp stamps/pax-mark-vm.stamp
 	if [ -e $(BUILD_OUTPUT_DIR)/j2sdk-image/bin/java ] ; then \
 	  $(BUILD_OUTPUT_DIR)/j2sdk-image/bin/java -cp $(CRYPTO_CHECK_BUILD_DIR) TestCryptoLevel ; \
 	fi
@@ -2046,7 +2046,7 @@ stamps/check-crypto.stamp: stamps/cryptocheck.stamp stamps/icedtea.stamp
 clean-check-crypto:
 	rm -f stamps/check-crypto.stamp
 
-stamps/check-crypto-debug.stamp: stamps/cryptocheck.stamp stamps/icedtea-debug.stamp
+stamps/check-crypto-debug.stamp: stamps/cryptocheck.stamp stamps/pax-mark-vm-debug.stamp
 	if [ -e $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/bin/java ] ; then \
 	  $(DEBUG_BUILD_OUTPUT_DIR)/j2sdk-image/bin/java -cp $(CRYPTO_CHECK_BUILD_DIR) TestCryptoLevel ; \
 	fi
@@ -2205,7 +2205,7 @@ clean-add-tzdata-support-ecj:
 	fi
 	rm -f stamps/add-tzdata-support-ecj.stamp
 
-stamps/add-archive-ecj.stamp: stamps/icedtea-ecj.stamp
+stamps/add-archive-ecj.stamp: stamps/pax-mark-vm-ecj.stamp
 if !ENABLE_JAMVM
 if !ENABLE_CACAO
 if !ZERO_BUILD
@@ -2230,7 +2230,7 @@ endif
 clean-pax-mark-vm-ecj:
 	rm -f stamps/pax-mark-vm-ecj.stamp
 
-stamps/check-crypto-boot.stamp: stamps/cryptocheck.stamp stamps/icedtea-ecj.stamp
+stamps/check-crypto-boot.stamp: stamps/cryptocheck.stamp stamps/pax-mark-vm-ecj.stamp
 	if [ -e $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/bin/java ] ; then \
 	  $(ECJ_BUILD_OUTPUT_DIR)/j2sdk-image/bin/java -cp $(CRYPTO_CHECK_BUILD_DIR) TestCryptoLevel ; \
 	fi

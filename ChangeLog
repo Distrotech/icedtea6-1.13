@@ -1,3 +1,23 @@
+2014-03-25  Andrew John Hughes  <gnu.andrew@member.fsf.org>
+
+	PR1714: Update PaX support to detect running PaX
+	kernel and use newer tools
+	* Makefile.am:
+	(add-archive): Depend on pax-mark-vm as the target executes java.
+	(add-archive-debug): Likewise with pax-mark-vm-debug.
+	(check-crypto): Depend on pax-mark-vm as the target executes java.
+	(check-crypto-debug): Likewise with pax-mark-vm-debug.
+	(add-archive-ecj): Depend on pax-mark-vm-ecj as the target executes java.
+	(check-crypto-boot): Likewise.
+	* NEWS: Updated.
+	* acinclude.m4:
+	(IT_HAS_PAX): New macro to detect whether the running
+	kernel uses PaX.
+	(IT_WITH_PAX): Rewritten to search for PaX tools -
+	currently paxmark.sh, paxctl-ng, chpax and paxctl -
+	and fail if a tool isn't found and a PaX kernel is
+	being used.
+
 2014-01-23  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* acinclude.m4:
