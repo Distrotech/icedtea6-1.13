@@ -313,9 +313,15 @@ LCMS_PATCHES = \
 	patches/lcms.patch
 endif
 
+UPSTREAMED_PATCHES = \
+	patches/openjdk/7110396-sound_code_build_fix.patch \
+	patches/openjdk/8035893-jvm_getversioninfo_zeroing.patch \
+	patches/openjdk/oj6-29-jdk_version_info_zeroing.patch
+
 ICEDTEA_PATCHES = \
 	$(DROP_PATCHES) \
 	$(SECURITY_PATCHES) \
+	$(UPSTREAMED_PATCHES) \
 	patches/openjdk/6733501-icedtea_lcms_test.patch \
 	$(LCMS_PATCHES) \
 	patches/openjdk/4993545-nativeinlightfixer.patch \

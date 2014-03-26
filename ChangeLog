@@ -1,3 +1,19 @@
+2014-03-25  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(UPSTREAMED_PATCHES): Add patches from unreleased upstream.
+	(ICEDTEA_PATCHES): Include UPSTREAMED_PATCHES.
+	* NEWS: Updated.
+	* patches/openjdk/7110396-sound_code_build_fix.patch,
+	* patches/openjdk/8035893-jvm_getversioninfo_zeroing.patch,
+	* patches/openjdk/oj6-29-jdk_version_info_zeroing.patch:
+	Add new patches from upstream.
+
+2014-02-01  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* patches/linker-libs-order.patch:
+	Regenerate, removing upstreamed fragment.
+
 2012-08-16  Andrew John Hughes  <gnu_andrew@member.fsf.org>
 
 	PR1712: Allow -Werror to be turned off in the

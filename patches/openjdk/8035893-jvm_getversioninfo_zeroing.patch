@@ -1,0 +1,21 @@
+# HG changeset patch
+# User igerasim
+# Date 1393588840 -14400
+#      Fri Feb 28 16:00:40 2014 +0400
+# Node ID 72a544aeb89217020b60c10fe167e2567fea3460
+# Parent  9747f83d7a38205a4a26008ee767fd161e1856c2
+8035893: JVM_GetVersionInfo fails to zero structure
+Reviewed-by: sla, zgu
+
+diff -r 9747f83d7a38 -r 72a544aeb892 src/share/vm/prims/jvm.cpp
+--- openjdk/hotspot/src/share/vm/prims/jvm.cpp	Fri Mar 21 20:57:28 2014 +0000
++++ openjdk/hotspot/src/share/vm/prims/jvm.cpp	Fri Feb 28 16:00:40 2014 +0400
+@@ -4534,7 +4534,7 @@
+ 
+ JVM_ENTRY(void, JVM_GetVersionInfo(JNIEnv* env, jvm_version_info* info, size_t info_size))
+ {
+-  memset(info, 0, sizeof(info_size));
++  memset(info, 0, info_size);
+ 
+   info->jvm_version = Abstract_VM_Version::jvm_version();
+   info->update_version = 0;          /* 0 in HotSpot Express VM */

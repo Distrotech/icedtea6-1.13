@@ -1,0 +1,22 @@
+# HG changeset patch
+# User mr
+# Date 1327351181 28800
+#      Mon Jan 23 12:39:41 2012 -0800
+# Node ID b49e33de40eafc113d3ca822f4abe2fde31d2cc2
+# Parent  07a296eb4c9cb88d2d84561ecfe70e10b167a2ac
+7110396: Sound code fails to build with gcc 4.6 on multiarch Linux systems
+Reviewed-by: ohair
+Contributed-by: edvard.wendelin@oracle.com
+
+diff -r 07a296eb4c9c -r b49e33de40ea make/javax/sound/jsoundalsa/Makefile
+--- openjdk/jdk/make/javax/sound/jsoundalsa/Makefile	Tue Jan 21 13:39:13 2014 -0500
++++ openjdk/jdk/make/javax/sound/jsoundalsa/Makefile	Mon Jan 23 12:39:41 2012 -0800
+@@ -65,7 +65,7 @@
+ 	$(MIDIFILES_export) \
+ 	$(PORTFILES_export)
+ 
+-LDFLAGS += -lasound
++OTHER_LDLIBS += -lasound
+ 
+ CPPFLAGS += \
+ 	-DUSE_DAUDIO=TRUE \
