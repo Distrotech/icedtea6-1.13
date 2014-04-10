@@ -1,0 +1,59 @@
+# HG changeset patch
+# User jchen
+# Date 1371150135 25200
+#      Thu Jun 13 12:02:15 2013 -0700
+# Node ID 1fecf631a056e1829de9fe4131d1106698ccd307
+# Parent  ca6f7b562a162203737e4ec40283db3871ea650b
+8014098: Better profile validation
+Reviewed-by: bae, prr
+
+diff -r ca6f7b562a16 -r 1fecf631a056 src/share/native/sun/java2d/cmm/lcms/cmsio0.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio0.c	Fri May 17 16:47:51 2013 +0400
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio0.c	Thu Jun 13 12:02:15 2013 -0700
+@@ -1074,6 +1074,27 @@
+ }
+ 
+ 
++static
++cmsBool SanityCheck(_cmsICCPROFILE* profile)
++{
++    cmsIOHANDLER* io = profile->IOhandler;
++    if (!io) {
++        return FALSE;
++    }
++
++    if (!io->Seek ||
++        !(io->Seek==NULLSeek || io->Seek==MemorySeek || io->Seek==FileSeek))
++    {
++        return FALSE;
++    }
++    if (!io->Read ||
++        !(io->Read==NULLRead || io->Read==MemoryRead || io->Read==FileRead))
++    {
++        return FALSE;
++    }
++
++    return TRUE;
++}
+ 
+ // Dump tag contents. If the profile is being modified, untouched tags are copied from FileOrig
+ static
+@@ -1087,6 +1108,7 @@
+     cmsTagTypeSignature TypeBase;
+     cmsTagTypeHandler* TypeHandler;
+ 
++    if (!SanityCheck(FileOrig)) return FALSE;
+ 
+     for (i=0; i < Icc -> TagCount; i++) {
+ 
+@@ -1292,8 +1314,8 @@
+     // Should we just calculate the needed space?
+     if (MemPtr == NULL) {
+ 
+-           *BytesNeeded =  cmsSaveProfileToIOhandler(hProfile, NULL);
+-            return TRUE;
++        *BytesNeeded = cmsSaveProfileToIOhandler(hProfile, NULL);
++        return (*BytesNeeded == 0 ? FALSE : TRUE);
+     }
+ 
+     // That is a real write operation

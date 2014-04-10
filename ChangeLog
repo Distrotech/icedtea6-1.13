@@ -1,3 +1,41 @@
+2014-04-10  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* patches/merge_fix.patch,
+	* patches/openjdk/4685768-focus.patch,
+	* patches/openjdk/4993545-nativeinlightfixer.patch,
+	* patches/openjdk/6444769-windowwithwarningtest.patch,
+	* patches/openjdk/6607170-request_focus.patch,
+	* patches/openjdk/6607660-treelock.patch,
+	* patches/openjdk/6616323-component_array.patch,
+	* patches/openjdk/6633275-shaped_translucent_windows.patch,
+	* patches/openjdk/6637796-set_bounds.patch,
+	* patches/openjdk/6656651-windows_lcd_glyphs.patch,
+	* patches/openjdk/6682046-shape_calculation.patch,
+	* patches/openjdk/6693253-security_warning.patch,
+	* patches/openjdk/6725214-direct3d-01.patch,
+	* patches/openjdk/6748082-isDisplayLocal.patch,
+	* patches/openjdk/6755274-glgetstring-crash.patch,
+	* patches/openjdk/6769607-modal-hangs.patch,
+	* patches/openjdk/6791612-opengl-jni-fix.patch,
+	* patches/openjdk/6797195-hw_lw_mixing.patch,
+	* patches/openjdk/6984543-onscreen_rendering_resize_test.patch,
+	* patches/openjdk/7110396-sound_code_build_fix.patch,
+	* patches/openjdk/8035893-jvm_getversioninfo_zeroing.patch,
+	* patches/openjdk/oj6-29-jdk_version_info_zeroing.patch,
+	* patches/security/20120214/7112642.patch,
+	* patches/security/20130618/8009071-improve_shape_handling.patch:
+	Removed; upstreamed.
+	* Makefile.am:
+	(SPECIAL_SECURITY_PATCH_1): Removed.
+	(SPECIAL_SECURITY_PATCH_2): Likewise.
+	(LCMS_PATCHES): Add latest security fixes for users of in-tree LCMS2.
+	(UPSTREAMED_PATCHES): Set to empty.
+	(ICEDTEA_PATCHES): Remove upstreamed patches.
+	* patches/nomotif-6706121.patch: Regenerated.
+	* patches/security/20131015/8014098-better_profile_validation.patch,
+	* patches/security/20140415/8031335-better_colour_profiling.patch:
+	Security fixes for LCMS 2, taken from IcedTea 2.4.x.
+
 2014-03-28  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* NEWS: Fix OPENJDK6-29 bug reference.

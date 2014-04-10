@@ -286,9 +286,6 @@ DROP_PATCHES =
 SECURITY_PATCHES = \
 	patches/security/20120830/7182135-impossible_to_use_some_editors_directly.patch
 
-SPECIAL_SECURITY_PATCH_1 = patches/security/20120214/7112642.patch
-SPECIAL_SECURITY_PATCH_2 = patches/security/20130618/8009071-improve_shape_handling.patch
-
 if ENABLE_LCMS2
 LCMS_PATCHES = \
 	patches/openjdk/lcms2/6523398-writing_tags.patch \
@@ -306,17 +303,16 @@ LCMS_PATCHES += \
 	patches/openjdk/lcms2/bundled/8007925-improve_cmsstagealloclabv2tov4curves.patch \
 	patches/openjdk/lcms2/bundled/8009654-cmsnamed_stability.patch \
 	patches/openjdk/lcms2/bundled/7042594-tck_failure.patch \
-	patches/openjdk/lcms2/bundled/8007927-improve_cmsallocprofilesequencedescription.patch
+	patches/openjdk/lcms2/bundled/8007927-improve_cmsallocprofilesequencedescription.patch \
+	patches/security/20131015/8014098-better_profile_validation.patch \
+	patches/security/20140415/8031335-better_colour_profiling.patch
 endif
 else
 LCMS_PATCHES = \
 	patches/lcms.patch
 endif
 
-UPSTREAMED_PATCHES = \
-	patches/openjdk/7110396-sound_code_build_fix.patch \
-	patches/openjdk/8035893-jvm_getversioninfo_zeroing.patch \
-	patches/openjdk/oj6-29-jdk_version_info_zeroing.patch
+UPSTREAMED_PATCHES =
 
 ICEDTEA_PATCHES = \
 	$(DROP_PATCHES) \
@@ -324,25 +320,6 @@ ICEDTEA_PATCHES = \
 	$(UPSTREAMED_PATCHES) \
 	patches/openjdk/6733501-icedtea_lcms_test.patch \
 	$(LCMS_PATCHES) \
-	patches/openjdk/4993545-nativeinlightfixer.patch \
-	patches/openjdk/6637796-set_bounds.patch \
-	patches/openjdk/6607660-treelock.patch \
-	patches/openjdk/6607170-request_focus.patch \
-	patches/openjdk/4685768-focus.patch \
-	patches/openjdk/6616323-component_array.patch \
-	patches/openjdk/6682046-shape_calculation.patch \
-	patches/openjdk/6797195-hw_lw_mixing.patch \
-	patches/openjdk/6725214-direct3d-01.patch \
-	patches/openjdk/6748082-isDisplayLocal.patch \
-	patches/openjdk/6633275-shaped_translucent_windows.patch \
-	$(SPECIAL_SECURITY_PATCH_1) \
-	patches/openjdk/6769607-modal-hangs.patch \
-	patches/openjdk/6791612-opengl-jni-fix.patch \
-	patches/openjdk/6755274-glgetstring-crash.patch \
-	patches/openjdk/6984543-onscreen_rendering_resize_test.patch \
-	patches/openjdk/6693253-security_warning.patch \
-	patches/openjdk/6444769-windowwithwarningtest.patch \
-	patches/openjdk/6656651-windows_lcd_glyphs.patch \
 	patches/openjdk/6791502-invalid_icc_profile.patch \
 	patches/openjdk/6793818-jpegimagereader_too_greedy.patch \
 	patches/openjdk/6631559-dont_load_libjpeg_to_register_imageio_plugins.patch \
@@ -362,7 +339,6 @@ ICEDTEA_PATCHES = \
 	patches/headers.patch \
 	patches/gcc-suffix.patch \
 	patches/libraries-splashscreen.patch \
-	$(SPECIAL_SECURITY_PATCH_2) \
 	patches/uname.patch \
 	patches/nomotif-6706121.patch \
 	patches/nomotif.patch \
@@ -503,7 +479,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/p11cipher-6924489-ckr_operation_not_initialized.patch \
 	patches/openjdk/p11cipher-6604496-support_ckm_aes_ctr.patch \
 	patches/openjdk/p11cipher-6414899-p11digest_should_support_cloning.patch \
-	patches/merge_fix.patch \
 	patches/traceable.patch \
 	patches/pr1319-support_giflib_5.patch \
 	patches/openjdk/6718364-inference_failure.patch \

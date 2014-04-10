@@ -1,0 +1,4433 @@
+# HG changeset patch
+# User prr
+# Date 1390322850 28800
+#      Tue Jan 21 08:47:30 2014 -0800
+# Node ID f09a3112e13070fc3945ed0002422eac009e451c
+# Parent  a7d42517d3f17726f7cba657bfc151342f6645ec
+8031335: Better color profiling
+8029750: Enhance LCMS color processing
+Reviewed-by: bae, vadim, mschoene
+
+diff -r a7d42517d3f1 -r f09a3112e130 src/share/native/sun/java2d/cmm/lcms/cmscam02.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam02.c	Thu Jan 16 18:08:15 2014 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscam02.c	Tue Jan 21 08:47:30 2014 -0800
+@@ -81,7 +81,7 @@
+     cmsUInt32Number surround;
+     cmsFloat64Number n, Nbb, Ncb, z, FL, D;
+ 
+-       cmsContext ContextID;
++    cmsContext ContextID;
+ 
+ } cmsCIECAM02;
+ 
+@@ -467,6 +467,7 @@
+     CAM02COLOR clr;
+     cmsCIECAM02* lpMod = (cmsCIECAM02*) hModel;
+ 
++    memset(&clr, 0, sizeof(clr));
+     _cmsAssert(lpMod != NULL);
+     _cmsAssert(pIn != NULL);
+     _cmsAssert(pOut != NULL);
+@@ -491,6 +492,7 @@
+     CAM02COLOR clr;
+     cmsCIECAM02* lpMod = (cmsCIECAM02*) hModel;
+ 
++    memset(&clr, 0, sizeof(clr));
+     _cmsAssert(lpMod != NULL);
+     _cmsAssert(pIn != NULL);
+     _cmsAssert(pOut != NULL);
+diff -r a7d42517d3f1 -r f09a3112e130 src/share/native/sun/java2d/cmm/lcms/cmscgats.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c	Thu Jan 16 18:08:15 2014 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscgats.c	Tue Jan 21 08:47:30 2014 -0800
+@@ -59,8 +59,8 @@
+ // IT8.7 / CGATS.17-200x handling -----------------------------------------------------------------------------
+ 
+ 
+-#define MAXID        128     // Max lenght of identifier
+-#define MAXSTR      1024     // Max lenght of string
++#define MAXID        128     // Max length of identifier
++#define MAXSTR      1024     // Max length of string
+ #define MAXTABLES    255     // Max Number of tables in a single stream
+ #define MAXINCLUDE    20     // Max number of nested includes
+ 
+@@ -383,28 +383,28 @@
+ //Forward declaration of some internal functions
+ static void* AllocChunk(cmsIT8* it8, cmsUInt32Number size);
+ 
+-// Checks if c is a separator
++// Checks whatever c is a separator
+ static
+ cmsBool isseparator(int c)
+ {
+-        return (c == ' ') || (c == '\t') || (c == '\r');
++    return (c == ' ') || (c == '\t') ;
+ }
+ 
+-// Checks whatever if c is a valid identifier char
++// Checks whatever c is a valid identifier char
+ static
+ cmsBool ismiddle(int c)
+ {
+    return (!isseparator(c) && (c != '#') && (c !='\"') && (c != '\'') && (c > 32) && (c < 127));
+ }
+ 
+-// Checks whatsever if c is a valid identifier middle char.
++// Checks whatsever c is a valid identifier middle char.
+ static
+ cmsBool isidchar(int c)
+ {
+    return isalnum(c) || ismiddle(c);
+ }
+ 
+-// Checks whatsever if c is a valid identifier first char.
++// Checks whatsever c is a valid identifier first char.
+ static
+ cmsBool isfirstidchar(int c)
+ {
+@@ -436,7 +436,6 @@
+ }
+ 
+ 
+-
+ // Makes a file path based on a given reference path
+ // NOTE: this function doesn't check if the path exists or even if it's legal
+ static
+@@ -634,6 +633,9 @@
+     cmsFloat64Number dnum = 0.0;
+     int sign = 1;
+ 
++    // keep safe
++    if (Buffer == NULL) return 0.0;
++
+     if (*Buffer == '-' || *Buffer == '+') {
+ 
+          sign = (*Buffer == '-') ? -1 : 1;
+@@ -867,6 +869,14 @@
+ 
+ 
+         // Next line
++        case '\r':
++            NextCh(it8);
++            if (it8 ->ch == '\n')
++                NextCh(it8);
++            it8->sy = SEOLN;
++            it8->lineno++;
++            break;
++
+         case '\n':
+             NextCh(it8);
+             it8->sy = SEOLN;
+@@ -876,7 +886,7 @@
+         // Comment
+         case '#':
+             NextCh(it8);
+-            while (it8->ch && it8->ch != '\n')
++            while (it8->ch && it8->ch != '\n' && it8->ch != '\r')
+                 NextCh(it8);
+ 
+             it8->sy = SCOMMENT;
+@@ -994,6 +1004,9 @@
+ {
+     switch (it8->sy) {
+ 
++    case SEOLN:   // Empty value
++                  Buffer[0]=0;
++                  break;
+     case SIDENT:  strncpy(Buffer, it8->id, max);
+                   Buffer[max-1]=0;
+                   break;
+@@ -1143,9 +1156,9 @@
+         if (*Key != '#') { // Comments are ignored
+ 
+             if (cmsstrcasecmp(Key, p->Keyword) == 0)
+-                    break;
++                break;
+         }
+-        }
++    }
+ 
+     if (p == NULL)
+         return FALSE;
+@@ -1155,11 +1168,13 @@
+ 
+     for (; p != NULL; p = p->NextSubkey) {
+ 
++        if (p ->Subkey == NULL) continue;
++
+         if (LastPtr) *LastPtr = p;
+ 
+         if (cmsstrcasecmp(Subkey, p->Subkey) == 0)
+-                    return TRUE;
+-        }
++            return TRUE;
++    }
+ 
+     return FALSE;
+ }
+@@ -1282,7 +1297,7 @@
+ 
+      it8 ->nTable = nTable;
+ 
+-     return nTable;
++     return (cmsInt32Number) nTable;
+ }
+ 
+ 
+@@ -1387,7 +1402,7 @@
+     cmsIT8* it8 = (cmsIT8*) hIT8;
+     char Buffer[1024];
+ 
+-    sprintf(Buffer, "%d", Val);
++    sprintf(Buffer, "%u", Val);
+ 
+     return AddToList(it8, &GetTable(it8)->HeaderList, cProp, NULL, Buffer, WRITE_HEXADECIMAL) != NULL;
+ }
+@@ -1424,6 +1439,8 @@
+ {
+     const char *v = cmsIT8GetProperty(hIT8, cProp);
+ 
++    if (v == NULL) return 0.0;
++
+     return ParseFloatNumber(v);
+ }
+ 
+@@ -1456,7 +1473,7 @@
+         t -> nSamples = 10;
+         }
+ 
+-    t -> DataFormat = (char**) AllocChunk (it8, (t->nSamples + 1) * sizeof(char *));
++    t -> DataFormat = (char**) AllocChunk (it8, ((cmsUInt32Number) t->nSamples + 1) * sizeof(char *));
+     if (t->DataFormat == NULL) {
+ 
+         SynError(it8, "AllocateDataFormat: Unable to allocate dataFormat array");
+@@ -1512,7 +1529,7 @@
+     t-> nSamples   = atoi(cmsIT8GetProperty(it8, "NUMBER_OF_FIELDS"));
+     t-> nPatches   = atoi(cmsIT8GetProperty(it8, "NUMBER_OF_SETS"));
+ 
+-    t-> Data = (char**)AllocChunk (it8, (t->nSamples + 1) * (t->nPatches + 1) *sizeof (char*));
++    t-> Data = (char**)AllocChunk (it8, ((cmsUInt32Number) t->nSamples + 1) * ((cmsUInt32Number) t->nPatches + 1) *sizeof (char*));
+     if (t->Data == NULL) {
+ 
+         SynError(it8, "AllocateDataSet: Unable to allocate data array");
+@@ -1571,7 +1588,7 @@
+     if (str == NULL)
+         str = " ";
+ 
+-    // Lenghth to write
++    // Length to write
+     len = (cmsUInt32Number) strlen(str);
+     f ->Used += len;
+ 
+@@ -2095,7 +2112,7 @@
+                                          NextCh(it8);
+ 
+                                      // If a newline is found, then this is a type string
+-                                    if (it8 ->ch == '\n') {
++                                    if (it8 ->ch == '\n' || it8->ch == '\r') {
+ 
+                                          cmsIT8SetSheetType(it8, it8 ->id);
+                                          InSymbol(it8);
+@@ -2210,7 +2227,7 @@
+                                         char Buffer[256];
+ 
+                                         char *Type  = p ->Value;
+-                                        int  nTable = k;
++                                        int  nTable = (int) k;
+ 
+                                         snprintf(Buffer, 255, "%s %d %s", Label, nTable, Type );
+ 
+@@ -2564,6 +2581,8 @@
+ 
+     Buffer = cmsIT8GetDataRowCol(hIT8, row, col);
+ 
++    if (Buffer == NULL) return 0.0;
++
+     return ParseFloatNumber(Buffer);
+ }
+ 
+@@ -2776,7 +2795,7 @@
+     if (Formatter == NULL)
+         strcpy(it8->DoubleFormatter, DEFAULT_DBL_FORMAT);
+     else
+-        strcpy(it8->DoubleFormatter, Formatter);
++        strncpy(it8->DoubleFormatter, Formatter, sizeof(it8->DoubleFormatter));
+ 
+     it8 ->DoubleFormatter[sizeof(it8 ->DoubleFormatter)-1] = 0;
+ }
+diff -r a7d42517d3f1 -r f09a3112e130 src/share/native/sun/java2d/cmm/lcms/cmscnvrt.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscnvrt.c	Thu Jan 16 18:08:15 2014 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmscnvrt.c	Tue Jan 21 08:47:30 2014 -0800
+@@ -270,7 +270,7 @@
+             // m2 holds CHAD from output white to D50 times abs. col. scaling
+ 
+             // Observer is not adapted, undo the chromatic adaptation
+-            _cmsMAT3per(m, &m3, ChromaticAdaptationMatrixOut);
++            _cmsMAT3per(m, &m2, ChromaticAdaptationMatrixOut);
+ 
+             m3 = *ChromaticAdaptationMatrixIn;
+             if (!_cmsMAT3inverse(&m3, &m4)) return FALSE;
+@@ -411,57 +411,61 @@
+     // Handle PCS mismatches. A specialized stage is added to the LUT in such case
+     switch (InPCS) {
+ 
+-        case cmsSigXYZData: // Input profile operates in XYZ
++    case cmsSigXYZData: // Input profile operates in XYZ
+ 
+-            switch (OutPCS) {
++        switch (OutPCS) {
+ 
+-            case cmsSigXYZData:  // XYZ -> XYZ
+-                if (!IsEmptyLayer(m, off))
+-                    cmsPipelineInsertStage(Result, cmsAT_END, cmsStageAllocMatrix(Result ->ContextID, 3, 3, m_as_dbl, off_as_dbl));
+-                break;
++        case cmsSigXYZData:  // XYZ -> XYZ
++            if (!IsEmptyLayer(m, off) &&
++                !cmsPipelineInsertStage(Result, cmsAT_END, cmsStageAllocMatrix(Result ->ContextID, 3, 3, m_as_dbl, off_as_dbl)))
++                return FALSE;
++            break;
+ 
+-            case cmsSigLabData:  // XYZ -> Lab
+-                if (!IsEmptyLayer(m, off))
+-                    cmsPipelineInsertStage(Result, cmsAT_END, cmsStageAllocMatrix(Result ->ContextID, 3, 3, m_as_dbl, off_as_dbl));
+-                cmsPipelineInsertStage(Result, cmsAT_END, _cmsStageAllocXYZ2Lab(Result ->ContextID));
+-                break;
++        case cmsSigLabData:  // XYZ -> Lab
++            if (!IsEmptyLayer(m, off) &&
++                !cmsPipelineInsertStage(Result, cmsAT_END, cmsStageAllocMatrix(Result ->ContextID, 3, 3, m_as_dbl, off_as_dbl)))
++                return FALSE;
++            if (!cmsPipelineInsertStage(Result, cmsAT_END, _cmsStageAllocXYZ2Lab(Result ->ContextID)))
++                return FALSE;
++            break;
+ 
+-            default:
+-                return FALSE;   // Colorspace mismatch
+-                }
+-                break;
++        default:
++            return FALSE;   // Colorspace mismatch
++        }
++        break;
+ 
++    case cmsSigLabData: // Input profile operates in Lab
+ 
+-        case cmsSigLabData: // Input profile operates in Lab
++        switch (OutPCS) {
+ 
+-            switch (OutPCS) {
++        case cmsSigXYZData:  // Lab -> XYZ
+ 
+-            case cmsSigXYZData:  // Lab -> XYZ
++            if (!cmsPipelineInsertStage(Result, cmsAT_END, _cmsStageAllocLab2XYZ(Result ->ContextID)))
++                return FALSE;
++            if (!IsEmptyLayer(m, off) &&
++                !cmsPipelineInsertStage(Result, cmsAT_END, cmsStageAllocMatrix(Result ->ContextID, 3, 3, m_as_dbl, off_as_dbl)))
++                return FALSE;
++            break;
+ 
+-                cmsPipelineInsertStage(Result, cmsAT_END, _cmsStageAllocLab2XYZ(Result ->ContextID));
+-                if (!IsEmptyLayer(m, off))
+-                    cmsPipelineInsertStage(Result, cmsAT_END, cmsStageAllocMatrix(Result ->ContextID, 3, 3, m_as_dbl, off_as_dbl));
+-                break;
++        case cmsSigLabData:  // Lab -> Lab
+ 
+-            case cmsSigLabData:  // Lab -> Lab
+-
+-                if (!IsEmptyLayer(m, off)) {
+-                    cmsPipelineInsertStage(Result, cmsAT_END, _cmsStageAllocLab2XYZ(Result ->ContextID));
+-                    cmsPipelineInsertStage(Result, cmsAT_END, cmsStageAllocMatrix(Result ->ContextID, 3, 3, m_as_dbl, off_as_dbl));
+-                    cmsPipelineInsertStage(Result, cmsAT_END, _cmsStageAllocXYZ2Lab(Result ->ContextID));
+-                }
+-                break;
+-
+-            default:
+-                return FALSE;  // Mismatch
++            if (!IsEmptyLayer(m, off)) {
++                if (!cmsPipelineInsertStage(Result, cmsAT_END, _cmsStageAllocLab2XYZ(Result ->ContextID)) ||
++                    !cmsPipelineInsertStage(Result, cmsAT_END, cmsStageAllocMatrix(Result ->ContextID, 3, 3, m_as_dbl, off_as_dbl)) ||
++                    !cmsPipelineInsertStage(Result, cmsAT_END, _cmsStageAllocXYZ2Lab(Result ->ContextID)))
++                    return FALSE;
+             }
+             break;
+ 
++        default:
++            return FALSE;  // Mismatch
++        }
++        break;
+ 
+-            // On colorspaces other than PCS, check for same space
+-        default:
+-            if (InPCS != OutPCS) return FALSE;
+-            break;
++        // On colorspaces other than PCS, check for same space
++    default:
++        if (InPCS != OutPCS) return FALSE;
++        break;
+     }
+ 
+     return TRUE;
+@@ -497,7 +501,8 @@
+                                cmsFloat64Number AdaptationStates[],
+                                cmsUInt32Number  dwFlags)
+ {
+-    cmsPipeline* Lut, *Result;
++    cmsPipeline* Lut = NULL;
++    cmsPipeline* Result;
+     cmsHPROFILE hProfile;
+     cmsMAT3 m;
+     cmsVEC3 off;
+@@ -593,8 +598,11 @@
+         }
+ 
+         // Concatenate to the output LUT
+-        cmsPipelineCat(Result, Lut);
++        if (!cmsPipelineCat(Result, Lut))
++            goto Error;
++
+         cmsPipelineFree(Lut);
++        Lut = NULL;
+ 
+         // Update current space
+         CurrentColorSpace = ColorSpaceOut;
+@@ -604,6 +612,7 @@
+ 
+ Error:
+ 
++    if (Lut != NULL) cmsPipelineFree(Lut);
+     if (Result != NULL) cmsPipelineFree(Result);
+     return NULL;
+ 
+@@ -742,7 +751,8 @@
+     if (CLUT == NULL) goto Error;
+ 
+     // This is the one and only MPE in this LUT
+-    cmsPipelineInsertStage(Result, cmsAT_BEGIN, CLUT);
++    if (!cmsPipelineInsertStage(Result, cmsAT_BEGIN, CLUT))
++        goto Error;
+ 
+     // Sample it. We cannot afford pre/post linearization this time.
+     if (!cmsStageSampleCLut16bit(CLUT, BlackPreservingGrayOnlySampler, (void*) &bp, 0))
+@@ -959,7 +969,8 @@
+     CLUT = cmsStageAllocCLut16bit(ContextID, nGridPoints, 4, 4, NULL);
+     if (CLUT == NULL) goto Cleanup;
+ 
+-    cmsPipelineInsertStage(Result, cmsAT_BEGIN, CLUT);
++    if (!cmsPipelineInsertStage(Result, cmsAT_BEGIN, CLUT))
++        goto Cleanup;
+ 
+     cmsStageSampleCLut16bit(CLUT, BlackPreservingSampler, (void*) &bp, 0);
+ 
+@@ -1057,7 +1068,7 @@
+ }
+ 
+ // The plug-in registration. User can add new intents or override default routines
+-cmsBool  _cmsRegisterRenderingIntentPlugin(cmsPluginBase* Data)
++cmsBool  _cmsRegisterRenderingIntentPlugin(cmsContext id, cmsPluginBase* Data)
+ {
+     cmsPluginRenderingIntent* Plugin = (cmsPluginRenderingIntent*) Data;
+     cmsIntentsList* fl;
+@@ -1072,7 +1083,7 @@
+     fl = SearchIntent(Plugin ->Intent);
+ 
+     if (fl == NULL) {
+-        fl = (cmsIntentsList*) _cmsPluginMalloc(sizeof(cmsIntentsList));
++        fl = (cmsIntentsList*) _cmsPluginMalloc(id, sizeof(cmsIntentsList));
+         if (fl == NULL) return FALSE;
+     }
+ 
+diff -r a7d42517d3f1 -r f09a3112e130 src/share/native/sun/java2d/cmm/lcms/cmserr.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmserr.c	Thu Jan 16 18:08:15 2014 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmserr.c	Tue Jan 21 08:47:30 2014 -0800
+@@ -302,8 +302,6 @@
+         return NULL;
+     }
+ 
+-
+-
+     chunk ->BlockSize = Initial;
+     chunk ->Used      = 0;
+     chunk ->next      = NULL;
+diff -r a7d42517d3f1 -r f09a3112e130 src/share/native/sun/java2d/cmm/lcms/cmsgamma.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgamma.c	Thu Jan 16 18:08:15 2014 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgamma.c	Tue Jan 21 08:47:30 2014 -0800
+@@ -30,7 +30,7 @@
+ //---------------------------------------------------------------------------------
+ //
+ //  Little Color Management System
+-//  Copyright (c) 1998-2012 Marti Maria Saguer
++//  Copyright (c) 1998-2013 Marti Maria Saguer
+ //
+ // Permission is hereby granted, free of charge, to any person obtaining
+ // a copy of this software and associated documentation files (the "Software"),
+@@ -99,7 +99,7 @@
+ static _cmsParametricCurvesCollection* ParametricCurves = &DefaultCurves;
+ 
+ // As a way to install new parametric curves
+-cmsBool _cmsRegisterParametricCurvesPlugin(cmsPluginBase* Data)
++cmsBool _cmsRegisterParametricCurvesPlugin(cmsContext id, cmsPluginBase* Data)
+ {
+     cmsPluginParametricCurves* Plugin = (cmsPluginParametricCurves*) Data;
+     _cmsParametricCurvesCollection* fl;
+@@ -110,7 +110,7 @@
+           return TRUE;
+     }
+ 
+-    fl = (_cmsParametricCurvesCollection*) _cmsPluginMalloc(sizeof(_cmsParametricCurvesCollection));
++    fl = (_cmsParametricCurvesCollection*) _cmsPluginMalloc(id, sizeof(_cmsParametricCurvesCollection));
+     if (fl == NULL) return FALSE;
+ 
+     // Copy the parameters
+@@ -258,7 +258,8 @@
+     }
+ 
+     p ->InterpParams = _cmsComputeInterpParams(ContextID, p ->nEntries, 1, 1, p->Table16, CMS_LERP_FLAGS_16BITS);
+-    return p;
++    if (p->InterpParams != NULL)
++        return p;
+ 
+ Error:
+     if (p -> Segments) _cmsFree(ContextID, p ->Segments);
+@@ -423,7 +424,7 @@
+             if (e > 0)
+                 Val = pow(e, Params[0]) + Params[5];
+             else
+-                Val = 0;
++                Val = Params[5];
+         }
+         else
+             Val = R*Params[3] + Params[6];
+@@ -458,7 +459,7 @@
+         e = Params[1]*R + Params[2];
+ 
+         if (e < 0)
+-            Val = 0;
++            Val = Params[3];
+         else
+             Val = pow(e, Params[0]) + Params[3];
+         break;
+@@ -478,7 +479,7 @@
+ 
+        e = Params[2] * pow(R, Params[0]) + Params[3];
+        if (e <= 0)
+-           Val = 0;
++           Val = Params[4];
+        else
+            Val = Params[1]*log10(e) + Params[4];
+        break;
+@@ -544,7 +545,7 @@
+             // Type == 0 means segment is sampled
+             if (g ->Segments[i].Type == 0) {
+ 
+-                cmsFloat32Number R1 = (cmsFloat32Number) (R - g ->Segments[i].x0);
++                cmsFloat32Number R1 = (cmsFloat32Number) (R - g ->Segments[i].x0) / (g ->Segments[i].x1 - g ->Segments[i].x0);
+                 cmsFloat32Number Out;
+ 
+                 // Setup the table (TODO: clean that)
+@@ -629,20 +630,21 @@
+ // Use a segmented curve to store the floating point table
+ cmsToneCurve* CMSEXPORT cmsBuildTabulatedToneCurveFloat(cmsContext ContextID, cmsUInt32Number nEntries, const cmsFloat32Number values[])
+ {
+-    cmsCurveSegment Seg[2];
++    cmsCurveSegment Seg[3];
+ 
+-    // Initialize segmented curve part up to 0
+-    Seg[0].x0 = -1;
++    // A segmented tone curve should have function segments in the first and last positions
++    // Initialize segmented curve part up to 0 to constant value = samples[0]
++    Seg[0].x0 = MINUS_INF;
+     Seg[0].x1 = 0;
+     Seg[0].Type = 6;
+ 
+     Seg[0].Params[0] = 1;
+     Seg[0].Params[1] = 0;
+     Seg[0].Params[2] = 0;
+-    Seg[0].Params[3] = 0;
++    Seg[0].Params[3] = values[0];
+     Seg[0].Params[4] = 0;
+ 
+-    // From zero to any
++    // From zero to 1
+     Seg[1].x0 = 0;
+     Seg[1].x1 = 1.0;
+     Seg[1].Type = 0;
+@@ -650,7 +652,19 @@
+     Seg[1].nGridPoints = nEntries;
+     Seg[1].SampledPoints = (cmsFloat32Number*) values;
+ 
+-    return cmsBuildSegmentedToneCurve(ContextID, 2, Seg);
++    // Final segment is constant = lastsample
++    Seg[2].x0 = 1.0;
++    Seg[2].x1 = PLUS_INF;
++    Seg[2].Type = 6;
++
++    Seg[2].Params[0] = 1;
++    Seg[2].Params[1] = 0;
++    Seg[2].Params[2] = 0;
++    Seg[2].Params[3] = values[nEntries-1];
++    Seg[2].Params[4] = 0;
++
++
++    return cmsBuildSegmentedToneCurve(ContextID, 3, Seg);
+ }
+ 
+ // Parametric curves
+@@ -993,7 +1007,7 @@
+ 
+     if (Tab == NULL) return FALSE;
+ 
+-    if (cmsIsToneCurveLinear(Tab)) return FALSE; // Nothing to do
++    if (cmsIsToneCurveLinear(Tab)) return TRUE; // Nothing to do
+ 
+     nItems = Tab -> nEntries;
+ 
+@@ -1020,11 +1034,20 @@
+ 
+         if (z[i] == 0.) Zeros++;
+         if (z[i] >= 65535.) Poles++;
+-        if (z[i] < z[i-1]) return FALSE; // Non-Monotonic
++        if (z[i] < z[i-1]) {
++            cmsSignalError(Tab ->InterpParams->ContextID, cmsERROR_RANGE, "cmsSmoothToneCurve: Non-Monotonic.");
++            return FALSE;
++        }
+     }
+ 
+-    if (Zeros > (nItems / 3)) return FALSE;  // Degenerated, mostly zeros
+-    if (Poles > (nItems / 3)) return FALSE;  // Degenerated, mostly poles
++    if (Zeros > (nItems / 3)) {
++        cmsSignalError(Tab ->InterpParams->ContextID, cmsERROR_RANGE, "cmsSmoothToneCurve: Degenerated, mostly zeros.");
++        return FALSE;
++    }
++    if (Poles > (nItems / 3)) {
++        cmsSignalError(Tab ->InterpParams->ContextID, cmsERROR_RANGE, "cmsSmoothToneCurve: Degenerated, mostly poles.");
++        return FALSE;
++    }
+ 
+     // Seems ok
+     for (i=0; i < nItems; i++) {
+diff -r a7d42517d3f1 -r f09a3112e130 src/share/native/sun/java2d/cmm/lcms/cmsgmt.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgmt.c	Thu Jan 16 18:08:15 2014 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsgmt.c	Tue Jan 21 08:47:30 2014 -0800
+@@ -249,13 +249,10 @@
+     cmsFloat64Number dE1, dE2, ErrorRatio;
+ 
+     // Assume in-gamut by default.
+-    dE1 = 0.;
+-    dE2 = 0;
+     ErrorRatio = 1.0;
+ 
+     // Convert input to Lab
+-    if (t -> hInput != NULL)
+-        cmsDoTransform(t -> hInput, In, &LabIn1, 1);
++    cmsDoTransform(t -> hInput, In, &LabIn1, 1);
+ 
+     // converts from PCS to colorant. This always
+     // does return in-gamut values,
+@@ -267,7 +264,7 @@
+     memmove(&LabIn2, &LabOut1, sizeof(cmsCIELab));
+ 
+     // Try again, but this time taking Check as input
+-    cmsDoTransform(t -> hForward, &LabOut1, Proof2,  1);
++    cmsDoTransform(t -> hForward, &LabOut1, Proof2, 1);
+     cmsDoTransform(t -> hReverse, Proof2, &LabOut2, 1);
+ 
+     // Take difference of direct value
+@@ -374,7 +371,7 @@
+     ProfileList[nGamutPCSposition] = hLab;
+     BPCList[nGamutPCSposition] = 0;
+     AdaptationList[nGamutPCSposition] = 1.0;
+-    Intents[nGamutPCSposition] = INTENT_RELATIVE_COLORIMETRIC;
++    IntentList[nGamutPCSposition] = INTENT_RELATIVE_COLORIMETRIC;
+ 
+ 
+     ColorSpace  = cmsGetColorSpace(hGamut);
+@@ -385,45 +382,48 @@
+ 
+     // 16 bits to Lab double
+     Chain.hInput = cmsCreateExtendedTransform(ContextID,
+-                                              nGamutPCSposition + 1,
+-                                              ProfileList,
+-                                              BPCList,
+-                                              Intents,
+-                                              AdaptationList,
+-                                              NULL, 0,
+-                                              dwFormat, TYPE_Lab_DBL,
+-                                              cmsFLAGS_NOCACHE);
++        nGamutPCSposition + 1,
++        ProfileList,
++        BPCList,
++        IntentList,
++        AdaptationList,
++        NULL, 0,
++        dwFormat, TYPE_Lab_DBL,
++        cmsFLAGS_NOCACHE);
+ 
+ 
+     // Does create the forward step. Lab double to device
+     dwFormat    = (CHANNELS_SH(nChannels)|BYTES_SH(2));
+     Chain.hForward = cmsCreateTransformTHR(ContextID,
+-                                           hLab, TYPE_Lab_DBL,
+-                                           hGamut, dwFormat,
+-                                           INTENT_RELATIVE_COLORIMETRIC,
+-                                           cmsFLAGS_NOCACHE);
++        hLab, TYPE_Lab_DBL,
++        hGamut, dwFormat,
++        INTENT_RELATIVE_COLORIMETRIC,
++        cmsFLAGS_NOCACHE);
+ 
+     // Does create the backwards step
+     Chain.hReverse = cmsCreateTransformTHR(ContextID, hGamut, dwFormat,
+-                                           hLab, TYPE_Lab_DBL,
+-                                           INTENT_RELATIVE_COLORIMETRIC,
+-                                           cmsFLAGS_NOCACHE);
++        hLab, TYPE_Lab_DBL,
++        INTENT_RELATIVE_COLORIMETRIC,
++        cmsFLAGS_NOCACHE);
+ 
+ 
+     // All ok?
+-    if (Chain.hForward && Chain.hReverse) {
++    if (Chain.hInput && Chain.hForward && Chain.hReverse) {
+ 
+         // Go on, try to compute gamut LUT from PCS. This consist on a single channel containing
+         // dE when doing a transform back and forth on the colorimetric intent.
+ 
+         Gamut = cmsPipelineAlloc(ContextID, 3, 1);
+-
+         if (Gamut != NULL) {
+ 
+-          CLUT = cmsStageAllocCLut16bit(ContextID, nGridpoints, nChannels, 1, NULL);
+-          cmsPipelineInsertStage(Gamut, cmsAT_BEGIN, CLUT);
+-
+-          cmsStageSampleCLut16bit(CLUT, GamutSampler, (void*) &Chain, 0);
++            CLUT = cmsStageAllocCLut16bit(ContextID, nGridpoints, nChannels, 1, NULL);
++            if (!cmsPipelineInsertStage(Gamut, cmsAT_BEGIN, CLUT)) {
++                cmsPipelineFree(Gamut);
++                Gamut = NULL;
++            }
++            else {
++                cmsStageSampleCLut16bit(CLUT, GamutSampler, (void*) &Chain, 0);
++            }
+         }
+     }
+     else
+diff -r a7d42517d3f1 -r f09a3112e130 src/share/native/sun/java2d/cmm/lcms/cmsintrp.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsintrp.c	Thu Jan 16 18:08:15 2014 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsintrp.c	Tue Jan 21 08:47:30 2014 -0800
+@@ -83,7 +83,6 @@
+ 
+ 
+ // Set the interpolation method
+-
+ cmsBool _cmsSetInterpolationRoutine(cmsInterpParams* p)
+ {
+     // Invoke factory, possibly in the Plug-in
+@@ -215,6 +214,11 @@
+     Output[0] = LinearInterp(rest, y0, y1);
+ }
+ 
++// To prevent out of bounds indexing
++cmsINLINE cmsFloat32Number fclamp(cmsFloat32Number v)
++{
++    return v < 0.0f ? 0.0f : (v > 1.0f ? 1.0f : v);
++}
+ 
+ // Floating-point version of 1D interpolation
+ static
+@@ -227,13 +231,15 @@
+        int cell0, cell1;
+        const cmsFloat32Number* LutTable = (cmsFloat32Number*) p ->Table;
+ 
++       val2 = fclamp(Value[0]);
++
+        // if last value...
+-       if (Value[0] == 1.0) {
++       if (val2 == 1.0) {
+            Output[0] = LutTable[p -> Domain[0]];
+            return;
+        }
+ 
+-       val2 = p -> Domain[0] * Value[0];
++       val2 *= p -> Domain[0];
+ 
+        cell0 = (int) floor(val2);
+        cell1 = (int) ceil(val2);
+@@ -292,13 +298,15 @@
+     cmsUInt32Number OutChan;
+     const cmsFloat32Number* LutTable = (cmsFloat32Number*) p ->Table;
+ 
++    val2 = fclamp(Value[0]);
++
+         // if last value...
+-       if (Value[0] == 1.0) {
++       if (val2 == 1.0) {
+            Output[0] = LutTable[p -> Domain[0]];
+            return;
+        }
+ 
+-       val2 = p -> Domain[0] * Value[0];
++       val2 *= p -> Domain[0];
+ 
+        cell0 = (int) floor(val2);
+        cell1 = (int) ceil(val2);
+@@ -339,8 +347,8 @@
+         dxy;
+ 
+     TotalOut   = p -> nOutputs;
+-    px = Input[0] * p->Domain[0];
+-    py = Input[1] * p->Domain[1];
++    px = fclamp(Input[0]) * p->Domain[0];
++    py = fclamp(Input[1]) * p->Domain[1];
+ 
+     x0 = (int) _cmsQuickFloor(px); fx = px - (cmsFloat32Number) x0;
+     y0 = (int) _cmsQuickFloor(py); fy = py - (cmsFloat32Number) y0;
+@@ -454,20 +462,9 @@
+     TotalOut   = p -> nOutputs;
+ 
+     // We need some clipping here
+-    px = Input[0];
+-    py = Input[1];
+-    pz = Input[2];
+-
+-    if (px < 0) px = 0;
+-    if (px > 1) px = 1;
+-    if (py < 0) py = 0;
+-    if (py > 1) py = 1;
+-    if (pz < 0) pz = 0;
+-    if (pz > 1) pz = 1;
+-
+-    px *= p->Domain[0];
+-    py *= p->Domain[1];
+-    pz *= p->Domain[2];
++    px = fclamp(Input[0]) * p->Domain[0];
++    py = fclamp(Input[1]) * p->Domain[1];
++    pz = fclamp(Input[2]) * p->Domain[2];
+ 
+     x0 = (int) _cmsQuickFloor(px); fx = px - (cmsFloat32Number) x0;
+     y0 = (int) _cmsQuickFloor(py); fy = py - (cmsFloat32Number) y0;
+@@ -609,20 +606,9 @@
+     TotalOut   = p -> nOutputs;
+ 
+     // We need some clipping here
+-    px = Input[0];
+-    py = Input[1];
+-    pz = Input[2];
+-
+-    if (px < 0) px = 0;
+-    if (px > 1) px = 1;
+-    if (py < 0) py = 0;
+-    if (py > 1) py = 1;
+-    if (pz < 0) pz = 0;
+-    if (pz > 1) pz = 1;
+-
+-    px *= p->Domain[0];
+-    py *= p->Domain[1];
+-    pz *= p->Domain[2];
++    px = fclamp(Input[0]) * p->Domain[0];
++    py = fclamp(Input[1]) * p->Domain[1];
++    pz = fclamp(Input[2]) * p->Domain[2];
+ 
+     x0 = (int) _cmsQuickFloor(px); rx = (px - (cmsFloat32Number) x0);
+     y0 = (int) _cmsQuickFloor(py); ry = (py - (cmsFloat32Number) y0);
+@@ -844,7 +830,7 @@
+                      register cmsUInt16Number Output[],
+                      register const cmsInterpParams* p16)
+ {
+-    const cmsUInt16Number* LutTable = (cmsUInt16Number*) p16 -> Table;
++    const cmsUInt16Number* LutTable;
+     cmsS15Fixed16Number fk;
+     cmsS15Fixed16Number k0, rk;
+     int K0, K1;
+@@ -1039,8 +1025,7 @@
+        cmsFloat32Number Tmp1[MAX_STAGE_CHANNELS], Tmp2[MAX_STAGE_CHANNELS];
+        cmsInterpParams p1;
+ 
+-
+-       pk = Input[0] * p->Domain[0];
++       pk = fclamp(Input[0]) * p->Domain[0];
+        k0 = _cmsQuickFloor(pk);
+        rest = pk - (cmsFloat32Number) k0;
+ 
+@@ -1127,7 +1112,7 @@
+        cmsFloat32Number Tmp1[MAX_STAGE_CHANNELS], Tmp2[MAX_STAGE_CHANNELS];
+        cmsInterpParams p1;
+ 
+-       pk = Input[0] * p->Domain[0];
++       pk = fclamp(Input[0]) * p->Domain[0];
+        k0 = _cmsQuickFloor(pk);
+        rest = pk - (cmsFloat32Number) k0;
+ 
+@@ -1214,7 +1199,7 @@
+        cmsFloat32Number Tmp1[MAX_STAGE_CHANNELS], Tmp2[MAX_STAGE_CHANNELS];
+        cmsInterpParams p1;
+ 
+-       pk = Input[0] * p->Domain[0];
++       pk = fclamp(Input[0]) * p->Domain[0];
+        k0 = _cmsQuickFloor(pk);
+        rest = pk - (cmsFloat32Number) k0;
+ 
+@@ -1299,7 +1284,7 @@
+        cmsFloat32Number Tmp1[MAX_STAGE_CHANNELS], Tmp2[MAX_STAGE_CHANNELS];
+        cmsInterpParams p1;
+ 
+-       pk = Input[0] * p->Domain[0];
++       pk = fclamp(Input[0]) * p->Domain[0];
+        k0 = _cmsQuickFloor(pk);
+        rest = pk - (cmsFloat32Number) k0;
+ 
+@@ -1384,7 +1369,7 @@
+        cmsFloat32Number Tmp1[MAX_STAGE_CHANNELS], Tmp2[MAX_STAGE_CHANNELS];
+        cmsInterpParams p1;
+ 
+-       pk = Input[0] * p->Domain[0];
++       pk = fclamp(Input[0]) * p->Domain[0];
+        k0 = _cmsQuickFloor(pk);
+        rest = pk - (cmsFloat32Number) k0;
+ 
+diff -r a7d42517d3f1 -r f09a3112e130 src/share/native/sun/java2d/cmm/lcms/cmsio0.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio0.c	Thu Jan 16 18:08:15 2014 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio0.c	Tue Jan 21 08:47:30 2014 -0800
+@@ -154,7 +154,6 @@
+     return iohandler;
+ 
+ Error:
+-    if (fm) _cmsFree(ContextID, fm);
+     if (iohandler) _cmsFree(ContextID, iohandler);
+     return NULL;
+ 
+@@ -223,12 +222,17 @@
+ 
+ // Writes data to memory, also keeps used space for further reference.
+ static
+-cmsBool  MemoryWrite(struct _cms_io_handler* iohandler, cmsUInt32Number size, const void *Ptr)
++cmsBool MemoryWrite(struct _cms_io_handler* iohandler, cmsUInt32Number size, const void *Ptr)
+ {
+     FILEMEM* ResData = (FILEMEM*) iohandler ->stream;
+ 
+     if (ResData == NULL) return FALSE; // Housekeeping
+ 
++    // Check for available space. Clip.
++    if (iohandler ->UsedSpace + size > ResData->Size) {
++        size = ResData ->Size - iohandler ->UsedSpace;
++    }
++
+     if (size == 0) return TRUE;     // Write zero bytes is ok, but does nothing
+ 
+     memmove(ResData ->Block + ResData ->Pointer, Ptr, size);
+@@ -389,13 +393,15 @@
+     return TRUE;
+ }
+ 
+-// Create a iohandler for disk based files. if FileName is NULL, then 'stream' member is also set
+-// to NULL and no real writting is performed. This only happens in writting access mode
++// Create a iohandler for disk based files.
+ cmsIOHANDLER* CMSEXPORT cmsOpenIOhandlerFromFile(cmsContext ContextID, const char* FileName, const char* AccessMode)
+ {
+     cmsIOHANDLER* iohandler = NULL;
+     FILE* fm = NULL;
+ 
++    _cmsAssert(FileName != NULL);
++    _cmsAssert(AccessMode != NULL);
++
+     iohandler = (cmsIOHANDLER*) _cmsMallocZero(ContextID, sizeof(cmsIOHANDLER));
+     if (iohandler == NULL) return NULL;
+ 
+@@ -432,11 +438,8 @@
+     iohandler ->UsedSpace = 0;
+ 
+     // Keep track of the original file
+-    if (FileName != NULL)  {
+-
+-        strncpy(iohandler -> PhysicalFile, FileName, sizeof(iohandler -> PhysicalFile)-1);
+-        iohandler -> PhysicalFile[sizeof(iohandler -> PhysicalFile)-1] = 0;
+-    }
++    strncpy(iohandler -> PhysicalFile, FileName, sizeof(iohandler -> PhysicalFile)-1);
++    iohandler -> PhysicalFile[sizeof(iohandler -> PhysicalFile)-1] = 0;
+ 
+     iohandler ->Read    = FileRead;
+     iohandler ->Seek    = FileSeek;
+@@ -616,6 +619,31 @@
+        return _cmsSearchTag(Icc, sig, FALSE) >= 0;
+ }
+ 
++/*
++ * Enforces that the profile version is per. spec.
++ * Operates on the big endian bytes from the profile.
++ * Called before converting to platform endianness.
++ * Byte 0 is BCD major version, so max 9.
++ * Byte 1 is 2 BCD digits, one per nibble.
++ * Reserved bytes 2 & 3 must be 0.
++ */
++static cmsUInt32Number _validatedVersion(cmsUInt32Number DWord)
++{
++    cmsUInt8Number* pByte = (cmsUInt8Number*)&DWord;
++    cmsUInt8Number temp1;
++    cmsUInt8Number temp2;
++
++    if (*pByte > 0x09) *pByte = (cmsUInt8Number)9;
++    temp1 = *(pByte+1) & 0xf0;
++    temp2 = *(pByte+1) & 0x0f;
++    if (temp1 > 0x90) temp1 = 0x90;
++    if (temp2 > 9) temp2 = 0x09;
++    *(pByte+1) = (cmsUInt8Number)(temp1 | temp2);
++    *(pByte+2) = (cmsUInt8Number)0;
++    *(pByte+3) = (cmsUInt8Number)0;
++
++    return DWord;
++}
+ 
+ // Read profile header and validate it
+ cmsBool _cmsReadHeader(_cmsICCPROFILE* Icc)
+@@ -643,12 +671,15 @@
+     Icc -> DeviceClass     = (cmsProfileClassSignature) _cmsAdjustEndianess32(Header.deviceClass);
+     Icc -> ColorSpace      = (cmsColorSpaceSignature)   _cmsAdjustEndianess32(Header.colorSpace);
+     Icc -> PCS             = (cmsColorSpaceSignature)   _cmsAdjustEndianess32(Header.pcs);
++
+     Icc -> RenderingIntent = _cmsAdjustEndianess32(Header.renderingIntent);
+     Icc -> flags           = _cmsAdjustEndianess32(Header.flags);
+     Icc -> manufacturer    = _cmsAdjustEndianess32(Header.manufacturer);
+     Icc -> model           = _cmsAdjustEndianess32(Header.model);
++    Icc -> creator         = _cmsAdjustEndianess32(Header.creator);
++
+     _cmsAdjustEndianess64(&Icc -> attributes, &Header.attributes);
+-    Icc -> Version         = _cmsAdjustEndianess32(Header.version);
++    Icc -> Version         = _cmsAdjustEndianess32(_validatedVersion(Header.version));
+ 
+     // Get size as reported in header
+     HeaderSize = _cmsAdjustEndianess32(Header.size);
+@@ -815,28 +846,33 @@
+ cmsUInt32Number CMSEXPORT cmsGetHeaderManufacturer(cmsHPROFILE hProfile)
+ {
+     _cmsICCPROFILE*  Icc = (_cmsICCPROFILE*) hProfile;
+-    return (cmsUInt32Number) Icc ->manufacturer;
++    return Icc ->manufacturer;
+ }
+ 
+ void CMSEXPORT cmsSetHeaderManufacturer(cmsHPROFILE hProfile, cmsUInt32Number manufacturer)
+ {
+     _cmsICCPROFILE*  Icc = (_cmsICCPROFILE*) hProfile;
+-    Icc -> manufacturer = (cmsUInt32Number) manufacturer;
++    Icc -> manufacturer = manufacturer;
++}
++
++cmsUInt32Number CMSEXPORT cmsGetHeaderCreator(cmsHPROFILE hProfile)
++{
++    _cmsICCPROFILE*  Icc = (_cmsICCPROFILE*) hProfile;
++    return Icc ->creator;
+ }
+ 
+ cmsUInt32Number CMSEXPORT cmsGetHeaderModel(cmsHPROFILE hProfile)
+ {
+     _cmsICCPROFILE*  Icc = (_cmsICCPROFILE*) hProfile;
+-    return (cmsUInt32Number) Icc ->model;
++    return Icc ->model;
+ }
+ 
+ void CMSEXPORT cmsSetHeaderModel(cmsHPROFILE hProfile, cmsUInt32Number model)
+ {
+     _cmsICCPROFILE*  Icc = (_cmsICCPROFILE*) hProfile;
+-    Icc -> model = (cmsUInt32Number) model;
++    Icc -> model = model;
+ }
+ 
+-
+ void CMSEXPORT cmsGetHeaderAttributes(cmsHPROFILE hProfile, cmsUInt64Number* Flags)
+ {
+     _cmsICCPROFILE*  Icc = (_cmsICCPROFILE*) hProfile;
+@@ -1073,11 +1109,16 @@
+     return cmsOpenProfileFromMemTHR(NULL, MemPtr, dwSize);
+ }
+ 
+-
+ static
+ cmsBool SanityCheck(_cmsICCPROFILE* profile)
+ {
+-    cmsIOHANDLER* io = profile->IOhandler;
++    cmsIOHANDLER* io;
++
++    if (!profile) {
++        return FALSE;
++    }
++
++    io = profile->IOhandler;
+     if (!io) {
+         return FALSE;
+     }
+@@ -1106,13 +1147,13 @@
+     cmsIOHANDLER* io = Icc ->IOhandler;
+     cmsTagDescriptor* TagDescriptor;
+     cmsTagTypeSignature TypeBase;
++    cmsTagTypeSignature Type;
+     cmsTagTypeHandler* TypeHandler;
+-
+-    if (!SanityCheck(FileOrig)) return FALSE;
++    cmsFloat64Number   Version = cmsGetProfileVersion((cmsHPROFILE) Icc);
++    cmsTagTypeHandler LocalTypeHandler;
+ 
+     for (i=0; i < Icc -> TagCount; i++) {
+ 
+-
+         if (Icc ->TagNames[i] == 0) continue;
+ 
+         // Linked tags are not written
+@@ -1126,7 +1167,7 @@
+ 
+             // Reach here if we are copying a tag from a disk-based ICC profile which has not been modified by user.
+             // In this case a blind copy of the block data is performed
+-            if (FileOrig != NULL && Icc -> TagOffsets[i]) {
++            if (SanityCheck(FileOrig) && Icc -> TagOffsets[i]) {
+ 
+                 cmsUInt32Number TagSize   = FileOrig -> TagSizes[i];
+                 cmsUInt32Number TagOffset = FileOrig -> TagOffsets[i];
+@@ -1164,7 +1205,16 @@
+             TagDescriptor = _cmsGetTagDescriptor(Icc -> TagNames[i]);
+             if (TagDescriptor == NULL) continue;                        // Unsupported, ignore it
+ 
+-            TypeHandler = Icc ->TagTypeHandlers[i];
++            if (TagDescriptor ->DecideType != NULL) {
++
++                Type = TagDescriptor ->DecideType(Version, Data);
++            }
++            else {
++
++                Type = TagDescriptor ->SupportedTypes[0];
++            }
++
++            TypeHandler =  _cmsGetTagTypeHandler(Type);
+ 
+             if (TypeHandler == NULL) {
+                 cmsSignalError(Icc ->ContextID, cmsERROR_INTERNAL, "(Internal) no handler for tag %x", Icc -> TagNames[i]);
+@@ -1175,9 +1225,10 @@
+             if (!_cmsWriteTypeBase(io, TypeBase))
+                 return FALSE;
+ 
+-            TypeHandler ->ContextID  = Icc ->ContextID;
+-            TypeHandler ->ICCVersion = Icc ->Version;
+-            if (!TypeHandler ->WritePtr(TypeHandler, io, Data, TagDescriptor ->ElemCount)) {
++            LocalTypeHandler = *TypeHandler;
++            LocalTypeHandler.ContextID  = Icc ->ContextID;
++            LocalTypeHandler.ICCVersion = Icc ->Version;
++            if (!LocalTypeHandler.WritePtr(&LocalTypeHandler, io, Data, TagDescriptor ->ElemCount)) {
+ 
+                 char String[5];
+ 
+@@ -1314,8 +1365,8 @@
+     // Should we just calculate the needed space?
+     if (MemPtr == NULL) {
+ 
+-        *BytesNeeded = cmsSaveProfileToIOhandler(hProfile, NULL);
+-        return (*BytesNeeded == 0 ? FALSE : TRUE);
++           *BytesNeeded =  cmsSaveProfileToIOhandler(hProfile, NULL);
++            return (*BytesNeeded == 0 ? FALSE : TRUE);
+     }
+ 
+     // That is a real write operation
+@@ -1353,10 +1404,11 @@
+             cmsTagTypeHandler* TypeHandler = Icc ->TagTypeHandlers[i];
+ 
+             if (TypeHandler != NULL) {
++                cmsTagTypeHandler LocalTypeHandler = *TypeHandler;
+ 
+-                TypeHandler ->ContextID = Icc ->ContextID;              // As an additional parameters
+-                TypeHandler ->ICCVersion = Icc ->Version;
+-                TypeHandler ->FreePtr(TypeHandler, Icc -> TagPtrs[i]);
++                LocalTypeHandler.ContextID = Icc ->ContextID;              // As an additional parameters
++                LocalTypeHandler.ICCVersion = Icc ->Version;
++                LocalTypeHandler.FreePtr(&LocalTypeHandler, Icc -> TagPtrs[i]);
+             }
+             else
+                 _cmsFree(Icc ->ContextID, Icc ->TagPtrs[i]);
+@@ -1400,6 +1452,7 @@
+     _cmsICCPROFILE* Icc = (_cmsICCPROFILE*) hProfile;
+     cmsIOHANDLER* io = Icc ->IOhandler;
+     cmsTagTypeHandler* TypeHandler;
++    cmsTagTypeHandler LocalTypeHandler;
+     cmsTagDescriptor*  TagDescriptor;
+     cmsTagTypeSignature BaseType;
+     cmsUInt32Number Offset, TagSize;
+@@ -1423,7 +1476,7 @@
+ 
+     // Seek to its location
+     if (!io -> Seek(io, Offset))
+-            return NULL;
++        return NULL;
+ 
+     // Search for support on this tag
+     TagDescriptor = _cmsGetTagDescriptor(sig);
+@@ -1440,14 +1493,15 @@
+     // Get type handler
+     TypeHandler = _cmsGetTagTypeHandler(BaseType);
+     if (TypeHandler == NULL) return NULL;
++    LocalTypeHandler = *TypeHandler;
+ 
+ 
+     // Read the tag
+     Icc -> TagTypeHandlers[n] = TypeHandler;
+ 
+-    TypeHandler ->ContextID = Icc ->ContextID;
+-    TypeHandler ->ICCVersion = Icc ->Version;
+-    Icc -> TagPtrs[n] = TypeHandler ->ReadPtr(TypeHandler, io, &ElemCount, TagSize);
++    LocalTypeHandler.ContextID = Icc ->ContextID;
++    LocalTypeHandler.ICCVersion = Icc ->Version;
++    Icc -> TagPtrs[n] = LocalTypeHandler.ReadPtr(&LocalTypeHandler, io, &ElemCount, TagSize);
+ 
+     // The tag type is supported, but something wrong happend and we cannot read the tag.
+     // let know the user about this (although it is just a warning)
+@@ -1468,7 +1522,7 @@
+ 
+         _cmsTagSignature2String(String, sig);
+         cmsSignalError(Icc ->ContextID, cmsERROR_CORRUPTION_DETECTED, "'%s' Inconsistent number of items: expected %d, got %d",
+-                                                             String, TagDescriptor ->ElemCount, ElemCount);
++            String, TagDescriptor ->ElemCount, ElemCount);
+     }
+ 
+ 
+@@ -1500,6 +1554,7 @@
+ {
+     _cmsICCPROFILE* Icc = (_cmsICCPROFILE*) hProfile;
+     cmsTagTypeHandler* TypeHandler = NULL;
++    cmsTagTypeHandler LocalTypeHandler;
+     cmsTagDescriptor* TagDescriptor = NULL;
+     cmsTagTypeSignature Type;
+     int i;
+@@ -1530,9 +1585,10 @@
+ 
+                 if (TypeHandler != NULL) {
+ 
+-                    TypeHandler ->ContextID = Icc ->ContextID;              // As an additional parameter
+-                    TypeHandler ->ICCVersion = Icc ->Version;
+-                    TypeHandler->FreePtr(TypeHandler, Icc -> TagPtrs[i]);
++                    LocalTypeHandler = *TypeHandler;
++                    LocalTypeHandler.ContextID = Icc ->ContextID;              // As an additional parameter
++                    LocalTypeHandler.ICCVersion = Icc ->Version;
++                    LocalTypeHandler.FreePtr(&LocalTypeHandler, Icc -> TagPtrs[i]);
+                 }
+             }
+         }
+@@ -1571,7 +1627,7 @@
+         // Let the tag descriptor to decide the type base on depending on
+         // the data. This is useful for example on parametric curves, where
+         // curves specified by a table cannot be saved as parametric and needs
+-        // to be revented to single v2-curves, even on v4 profiles.
++        // to be casted to single v2-curves, even on v4 profiles.
+ 
+         Type = TagDescriptor ->DecideType(Version, data);
+     }
+@@ -1609,9 +1665,10 @@
+     Icc ->TagSizes[i]         = 0;
+     Icc ->TagOffsets[i]       = 0;
+ 
+-    TypeHandler ->ContextID  = Icc ->ContextID;
+-    TypeHandler ->ICCVersion = Icc ->Version;
+-    Icc ->TagPtrs[i]         = TypeHandler ->DupPtr(TypeHandler, data, TagDescriptor ->ElemCount);
++    LocalTypeHandler = *TypeHandler;
++    LocalTypeHandler.ContextID  = Icc ->ContextID;
++    LocalTypeHandler.ICCVersion = Icc ->Version;
++    Icc ->TagPtrs[i]         = LocalTypeHandler.DupPtr(&LocalTypeHandler, data, TagDescriptor ->ElemCount);
+ 
+     if (Icc ->TagPtrs[i] == NULL)  {
+ 
+@@ -1638,6 +1695,7 @@
+     int i;
+     cmsIOHANDLER* MemIO;
+     cmsTagTypeHandler* TypeHandler = NULL;
++    cmsTagTypeHandler LocalTypeHandler;
+     cmsTagDescriptor* TagDescriptor = NULL;
+     cmsUInt32Number rc;
+     cmsUInt32Number Offset, TagSize;
+@@ -1653,15 +1711,16 @@
+         Offset   = Icc ->TagOffsets[i];
+         TagSize  = Icc ->TagSizes[i];
+ 
+-
+         // read the data directly, don't keep copy
+         if (data != NULL) {
+ 
+             if (BufferSize < TagSize)
+-                 TagSize = BufferSize;
++                TagSize = BufferSize;
+ 
+             if (!Icc ->IOhandler ->Seek(Icc ->IOhandler, Offset)) return 0;
+             if (!Icc ->IOhandler ->Read(Icc ->IOhandler, data, 1, TagSize)) return 0;
++
++            return TagSize;
+         }
+ 
+         return Icc ->TagSizes[i];
+@@ -1675,9 +1734,11 @@
+ 
+             TagSize  = Icc ->TagSizes[i];
+             if (BufferSize < TagSize)
+-                       TagSize = BufferSize;
++                TagSize = BufferSize;
+ 
+             memmove(data, Icc ->TagPtrs[i], TagSize);
++
++            return TagSize;
+         }
+ 
+         return Icc ->TagSizes[i];
+@@ -1693,7 +1754,7 @@
+     if (data == NULL) {
+         MemIO = cmsOpenIOhandlerFromNULL(cmsGetProfileContextID(hProfile));
+     } else{
+-      MemIO = cmsOpenIOhandlerFromMem(cmsGetProfileContextID(hProfile), data, BufferSize, "w");
++        MemIO = cmsOpenIOhandlerFromMem(cmsGetProfileContextID(hProfile), data, BufferSize, "w");
+     }
+     if (MemIO == NULL) return 0;
+ 
+@@ -1701,20 +1762,22 @@
+     TypeHandler = Icc ->TagTypeHandlers[i];
+     TagDescriptor = _cmsGetTagDescriptor(sig);
+     if (TagDescriptor == NULL) {
+-         cmsCloseIOhandler(MemIO);
+-         return 0;
++        cmsCloseIOhandler(MemIO);
++        return 0;
+     }
+ 
++    // FIXME: No handling for TypeHandler == NULL here?
+     // Serialize
+-    TypeHandler ->ContextID  = Icc ->ContextID;
+-    TypeHandler ->ICCVersion = Icc ->Version;
++    LocalTypeHandler = *TypeHandler;
++    LocalTypeHandler.ContextID  = Icc ->ContextID;
++    LocalTypeHandler.ICCVersion = Icc ->Version;
+ 
+     if (!_cmsWriteTypeBase(MemIO, TypeHandler ->Signature)) {
+         cmsCloseIOhandler(MemIO);
+         return 0;
+     }
+ 
+-    if (!TypeHandler ->WritePtr(TypeHandler, MemIO, Object, TagDescriptor ->ElemCount)) {
++    if (!LocalTypeHandler.WritePtr(&LocalTypeHandler, MemIO, Object, TagDescriptor ->ElemCount)) {
+         cmsCloseIOhandler(MemIO);
+         return 0;
+     }
+@@ -1752,7 +1815,7 @@
+ // Using this function you can collapse several tag entries to the same block in the profile
+ cmsBool CMSEXPORT cmsLinkTag(cmsHPROFILE hProfile, cmsTagSignature sig, cmsTagSignature dest)
+ {
+-     _cmsICCPROFILE* Icc = (_cmsICCPROFILE*) hProfile;
++    _cmsICCPROFILE* Icc = (_cmsICCPROFILE*) hProfile;
+     int i;
+ 
+     if (!_cmsNewTag(Icc, sig, &i)) return FALSE;
+diff -r a7d42517d3f1 -r f09a3112e130 src/share/native/sun/java2d/cmm/lcms/cmsio1.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio1.c	Thu Jan 16 18:08:15 2014 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsio1.c	Tue Jan 21 08:47:30 2014 -0800
+@@ -129,7 +129,6 @@
+     Tag = (cmsMAT3*) cmsReadTag(hProfile, cmsSigChromaticAdaptationTag);
+ 
+     if (Tag != NULL) {
+-
+         *Dest = *Tag;
+         return TRUE;
+     }
+@@ -193,7 +192,8 @@
+     if (GrayTRC == NULL) return NULL;
+ 
+     Lut = cmsPipelineAlloc(ContextID, 1, 3);
+-    if (Lut == NULL) return NULL;
++    if (Lut == NULL)
++        goto Error;
+ 
+     if (cmsGetPCS(hProfile) == cmsSigLabData) {
+ 
+@@ -204,28 +204,35 @@
+ 
+         EmptyTab = cmsBuildTabulatedToneCurve16(ContextID, 2, Zero);
+ 
+-        if (EmptyTab == NULL) {
+-
+-                 cmsPipelineFree(Lut);
+-                 return NULL;
+-        }
++        if (EmptyTab == NULL)
++            goto Error;
+ 
+         LabCurves[0] = GrayTRC;
+         LabCurves[1] = EmptyTab;
+         LabCurves[2] = EmptyTab;
+ 
+-        cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3,  1, OneToThreeInputMatrix, NULL));
+-        cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 3, LabCurves));
++        if (!cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3,  1, OneToThreeInputMatrix, NULL)) ||
++            !cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 3, LabCurves))) {
++                cmsFreeToneCurve(EmptyTab);
++                goto Error;
++        }
+ 
+         cmsFreeToneCurve(EmptyTab);
+ 
+     }
+     else  {
+-       cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 1, &GrayTRC));
+-       cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3,  1, GrayInputMatrix, NULL));
++
++        if (!cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 1, &GrayTRC)) ||
++            !cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3,  1, GrayInputMatrix, NULL)))
++            goto Error;
+     }
+ 
+     return Lut;
++
++Error:
++    cmsFreeToneCurve(GrayTRC);
++    cmsPipelineFree(Lut);
++    return NULL;
+ }
+ 
+ // RGB Matrix shaper
+@@ -259,49 +266,31 @@
+     Lut = cmsPipelineAlloc(ContextID, 3, 3);
+     if (Lut != NULL) {
+ 
+-        cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 3, Shapes));
+-        cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3, 3, (cmsFloat64Number*) &Mat, NULL));
++        if (!cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 3, Shapes)) ||
++            !cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3, 3, (cmsFloat64Number*) &Mat, NULL)))
++            goto Error;
+ 
+         // Note that it is certainly possible a single profile would have a LUT based
+         // tag for output working in lab and a matrix-shaper for the fallback cases.
+         // This is not allowed by the spec, but this code is tolerant to those cases
+         if (cmsGetPCS(hProfile) == cmsSigLabData) {
+ 
+-             cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocXYZ2Lab(ContextID));
++            if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocXYZ2Lab(ContextID)))
++                goto Error;
+         }
+ 
+     }
+ 
+     return Lut;
++
++Error:
++    cmsPipelineFree(Lut);
++    return NULL;
+ }
+ 
+ 
+ 
+ // Read the DToAX tag, adjusting the encoding of Lab or XYZ if neded
+-/*static
+-cmsPipeline* _cmsReadFloatInputTag(cmsHPROFILE hProfile, cmsTagSignature tagFloat)
+-{
+-    cmsContext ContextID       = cmsGetProfileContextID(hProfile);
+-    cmsPipeline* Lut           = cmsPipelineDup((cmsPipeline*) cmsReadTag(hProfile, tagFloat));
+-    cmsColorSpaceSignature spc = cmsGetColorSpace(hProfile);
+-
+-    if (Lut == NULL) return NULL;
+-
+-    // If PCS is Lab or XYZ, the floating point tag is accepting data in the space encoding,
+-    // and since the formatter has already accomodated to 0..1.0, we should undo this change
+-    if ( spc == cmsSigLabData)
+-    {
+-        cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromLabFloat(ContextID));
+-    }
+-    else
+-        if (spc == cmsSigXYZData)
+-        {
+-            cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromXyzFloat(ContextID));
+-        }
+-
+-    return Lut;
+-}
+-*/
+ static
+ cmsPipeline* _cmsReadFloatInputTag(cmsHPROFILE hProfile, cmsTagSignature tagFloat)
+ {
+@@ -316,23 +305,31 @@
+     //  these need to be normalized into the appropriate ranges (Lab = 100,0,0, XYZ=1.0,1.0,1.0)
+     if ( spc == cmsSigLabData)
+     {
+-        cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToLabFloat(ContextID));
++        if (!cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToLabFloat(ContextID)))
++            goto Error;
+     }
+     else if (spc == cmsSigXYZData)
+     {
+-        cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToXyzFloat(ContextID));
++        if (!cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToXyzFloat(ContextID)))
++            goto Error;
+     }
+ 
+     if ( PCS == cmsSigLabData)
+     {
+-        cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromLabFloat(ContextID));
++        if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromLabFloat(ContextID)))
++            goto Error;
+     }
+     else if( PCS == cmsSigXYZData)
+     {
+-        cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromXyzFloat(ContextID));
++        if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromXyzFloat(ContextID)))
++            goto Error;
+     }
+ 
+     return Lut;
++
++Error:
++    cmsPipelineFree(Lut);
++    return NULL;
+ }
+ 
+ 
+@@ -359,8 +356,11 @@
+             return NULL;
+         }
+ 
+-        cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageAllocNamedColor(nc, TRUE));
+-        cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocLabV2ToV4(ContextID));
++        if (!cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageAllocNamedColor(nc, TRUE)) ||
++            !cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocLabV2ToV4(ContextID))) {
++            cmsPipelineFree(Lut);
++            return NULL;
++        }
+         return Lut;
+     }
+ 
+@@ -395,12 +395,18 @@
+             return Lut;
+ 
+         // If the input is Lab, add also a conversion at the begin
+-        if (cmsGetColorSpace(hProfile) == cmsSigLabData)
+-            cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageAllocLabV4ToV2(ContextID));
++        if (cmsGetColorSpace(hProfile) == cmsSigLabData &&
++            !cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageAllocLabV4ToV2(ContextID)))
++            goto Error;
+ 
+         // Add a matrix for conversion V2 to V4 Lab PCS
+-        cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocLabV2ToV4(ContextID));
++        if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocLabV2ToV4(ContextID)))
++            goto Error;
++
+         return Lut;
++Error:
++        cmsPipelineFree(Lut);
++        return NULL;
+     }
+ 
+     // Lut was not found, try to create a matrix-shaper
+@@ -445,21 +451,27 @@
+ 
+     if (cmsGetPCS(hProfile) == cmsSigLabData) {
+ 
+-        cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 1,  3, PickLstarMatrix, NULL));
++        if (!cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 1,  3, PickLstarMatrix, NULL)))
++            goto Error;
+     }
+     else  {
+-        cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 1,  3, PickYMatrix, NULL));
++        if (!cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 1,  3, PickYMatrix, NULL)))
++            goto Error;
+     }
+ 
+-    cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 1, &RevGrayTRC));
++    if (!cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 1, &RevGrayTRC)))
++        goto Error;
++
+     cmsFreeToneCurve(RevGrayTRC);
++    return Lut;
+ 
+-    return Lut;
++Error:
++    cmsFreeToneCurve(RevGrayTRC);
++    cmsPipelineFree(Lut);
++    return NULL;
+ }
+ 
+ 
+-
+-
+ static
+ cmsPipeline* BuildRGBOutputMatrixShaper(cmsHPROFILE hProfile)
+ {
+@@ -506,15 +518,21 @@
+         // This is not allowed by the spec, but this code is tolerant to those cases
+         if (cmsGetPCS(hProfile) == cmsSigLabData) {
+ 
+-             cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocLab2XYZ(ContextID));
++            if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocLab2XYZ(ContextID)))
++                goto Error;
+         }
+ 
+-        cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3, 3, (cmsFloat64Number*) &Inv, NULL));
+-        cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 3, InvShapes));
++        if (!cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3, 3, (cmsFloat64Number*) &Inv, NULL)) ||
++            !cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 3, InvShapes)))
++            goto Error;
+     }
+ 
+     cmsFreeToneCurveTriple(InvShapes);
+     return Lut;
++Error:
++    cmsFreeToneCurveTriple(InvShapes);
++    cmsPipelineFree(Lut);
++    return NULL;
+ }
+ 
+ 
+@@ -540,30 +558,6 @@
+ 
+ 
+ // Read the DToAX tag, adjusting the encoding of Lab or XYZ if neded
+-/*static
+-cmsPipeline* _cmsReadFloatOutputTag(cmsHPROFILE hProfile, cmsTagSignature tagFloat)
+-{
+-    cmsContext ContextID       = cmsGetProfileContextID(hProfile);
+-    cmsPipeline* Lut           = cmsPipelineDup((cmsPipeline*) cmsReadTag(hProfile, tagFloat));
+-    cmsColorSpaceSignature PCS = cmsGetPCS(hProfile);
+-
+-    if (Lut == NULL) return NULL;
+-
+-    // If PCS is Lab or XYZ, the floating point tag is accepting data in the space encoding,
+-    // and since the formatter has already accomodated to 0..1.0, we should undo this change
+-    if ( PCS == cmsSigLabData)
+-    {
+-        cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToLabFloat(ContextID));
+-    }
+-    else
+-        if (PCS == cmsSigXYZData)
+-        {
+-            cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToXyzFloat(ContextID));
+-        }
+-
+-    return Lut;
+-}*/
+-
+ static
+ cmsPipeline* _cmsReadFloatOutputTag(cmsHPROFILE hProfile, cmsTagSignature tagFloat)
+ {
+@@ -578,25 +572,33 @@
+     // and since the formatter has already accomodated to 0..1.0, we should undo this change
+     if ( PCS == cmsSigLabData)
+     {
+-        cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToLabFloat(ContextID));
++        if (!cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToLabFloat(ContextID)))
++            goto Error;
+     }
+     else
+         if (PCS == cmsSigXYZData)
+         {
+-            cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToXyzFloat(ContextID));
++            if (!cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToXyzFloat(ContextID)))
++                goto Error;
+         }
+ 
+     // the output can be Lab or XYZ, in which case normalisation is needed on the end of the pipeline
+     if ( dataSpace == cmsSigLabData)
+     {
+-        cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromLabFloat(ContextID));
++        if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromLabFloat(ContextID)))
++            goto Error;
+     }
+-    else if ( dataSpace == cmsSigXYZData)
++    else if (dataSpace == cmsSigXYZData)
+     {
+-        cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromXyzFloat(ContextID));
++        if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromXyzFloat(ContextID)))
++            goto Error;
+     }
+ 
+     return Lut;
++
++Error:
++    cmsPipelineFree(Lut);
++    return NULL;
+ }
+ 
+ // Create an output MPE LUT from agiven profile. Version mismatches are handled here
+@@ -636,30 +638,35 @@
+         // Now it is time for a controversial stuff. I found that for 3D LUTS using
+         // Lab used as indexer space,  trilinear interpolation should be used
+         if (cmsGetPCS(hProfile) == cmsSigLabData)
+-                             ChangeInterpolationToTrilinear(Lut);
++            ChangeInterpolationToTrilinear(Lut);
+ 
+         // We need to adjust data only for Lab and Lut16 type
+         if (OriginalType != cmsSigLut16Type || cmsGetPCS(hProfile) != cmsSigLabData)
+             return Lut;
+ 
+         // Add a matrix for conversion V4 to V2 Lab PCS
+-        cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageAllocLabV4ToV2(ContextID));
++        if (!cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageAllocLabV4ToV2(ContextID)))
++            goto Error;
+ 
+         // If the output is Lab, add also a conversion at the end
+         if (cmsGetColorSpace(hProfile) == cmsSigLabData)
+-            cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocLabV2ToV4(ContextID));
++            if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocLabV2ToV4(ContextID)))
++                goto Error;
+ 
+         return Lut;
++Error:
++        cmsPipelineFree(Lut);
++        return NULL;
+     }
+ 
+     // Lut not found, try to create a matrix-shaper
+ 
+     // Check if this is a grayscale profile.
+-     if (cmsGetColorSpace(hProfile) == cmsSigGrayData) {
++    if (cmsGetColorSpace(hProfile) == cmsSigGrayData) {
+ 
+-              // if so, build appropiate conversion tables.
+-              // The tables are the PCS iluminant, scaled across GrayTRC
+-              return BuildGrayOutputPipeline(hProfile);
++        // if so, build appropiate conversion tables.
++        // The tables are the PCS iluminant, scaled across GrayTRC
++        return BuildGrayOutputPipeline(hProfile);
+     }
+ 
+     // Not gray, create a normal matrix-shaper, which only operates in XYZ space
+@@ -681,25 +688,32 @@
+ 
+     if (spc == cmsSigLabData)
+     {
+-        cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToLabFloat(ContextID));
++        if (!cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToLabFloat(ContextID)))
++            goto Error;
+     }
+     else
+         if (spc == cmsSigXYZData)
+         {
+-            cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToXyzFloat(ContextID));
++            if (!cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToXyzFloat(ContextID)))
++                goto Error;
+         }
+ 
+         if (PCS == cmsSigLabData)
+         {
+-            cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromLabFloat(ContextID));
++            if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromLabFloat(ContextID)))
++                goto Error;
+         }
+         else
+             if (PCS == cmsSigXYZData)
+             {
+-                cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromXyzFloat(ContextID));
++                if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromXyzFloat(ContextID)))
++                    goto Error;
+             }
+ 
+-            return Lut;
++    return Lut;
++Error:
++    cmsPipelineFree(Lut);
++    return NULL;
+ }
+ 
+ // This one includes abstract profiles as well. Matrix-shaper cannot be obtained on that device class. The
+@@ -721,15 +735,21 @@
+         if (nc == NULL) return NULL;
+ 
+         Lut = cmsPipelineAlloc(ContextID, 0, 0);
+-        if (Lut == NULL) {
+-            cmsFreeNamedColorList(nc);
+-            return NULL;
+-        }
++        if (Lut == NULL)
++            goto Error;
+ 
+-        cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageAllocNamedColor(nc, FALSE));
++        if (!cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageAllocNamedColor(nc, FALSE)))
++            goto Error;
++
+         if (cmsGetColorSpace(hProfile) == cmsSigLabData)
+-              cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocLabV2ToV4(ContextID));
++            if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocLabV2ToV4(ContextID)))
++                goto Error;
++
+         return Lut;
++Error:
++        cmsPipelineFree(Lut);
++        cmsFreeNamedColorList(nc);
++        return NULL;
+     }
+ 
+     if (cmsIsTag(hProfile, tagFloat)) {  // Float tag takes precedence
+@@ -760,10 +780,10 @@
+     Lut = cmsPipelineDup(Lut);
+     if (Lut == NULL) return NULL;
+ 
+-     // Now it is time for a controversial stuff. I found that for 3D LUTS using
+-     // Lab used as indexer space,  trilinear interpolation should be used
++    // Now it is time for a controversial stuff. I found that for 3D LUTS using
++    // Lab used as indexer space,  trilinear interpolation should be used
+     if (cmsGetColorSpace(hProfile) == cmsSigLabData)
+-                        ChangeInterpolationToTrilinear(Lut);
++        ChangeInterpolationToTrilinear(Lut);
+ 
+     // After reading it, we have info about the original type
+     OriginalType =  _cmsGetTagTrueType(hProfile, tag16);
+@@ -774,16 +794,20 @@
+     // Here it is possible to get Lab on both sides
+ 
+     if (cmsGetPCS(hProfile) == cmsSigLabData) {
+-            cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageAllocLabV4ToV2(ContextID));
++        if(!cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageAllocLabV4ToV2(ContextID)))
++            goto Error2;
+     }
+ 
+     if (cmsGetColorSpace(hProfile) == cmsSigLabData) {
+-            cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocLabV2ToV4(ContextID));
++        if(!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocLabV2ToV4(ContextID)))
++            goto Error2;
+     }
+ 
+     return Lut;
+ 
+-
++Error2:
++    cmsPipelineFree(Lut);
++    return NULL;
+ }
+ 
+ // ---------------------------------------------------------------------------------------------------------------
+diff -r a7d42517d3f1 -r f09a3112e130 src/share/native/sun/java2d/cmm/lcms/cmslut.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmslut.c	Thu Jan 16 18:08:15 2014 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmslut.c	Tue Jan 21 08:47:30 2014 -0800
+@@ -264,10 +264,10 @@
+     if (NewElem ->TheCurves != NULL) {
+         for (i=0; i < NewElem ->nCurves; i++) {
+             if (NewElem ->TheCurves[i])
+-                cmsFreeToneCurve(Data ->TheCurves[i]);
++                cmsFreeToneCurve(NewElem ->TheCurves[i]);
+         }
+     }
+-    _cmsFree(mpe ->ContextID, Data ->TheCurves);
++    _cmsFree(mpe ->ContextID, NewElem ->TheCurves);
+     _cmsFree(mpe ->ContextID, NewElem);
+     return NULL;
+ }
+@@ -392,6 +392,8 @@
+ void MatrixElemTypeFree(cmsStage* mpe)
+ {
+     _cmsStageMatrixData* Data = (_cmsStageMatrixData*) mpe ->Data;
++    if (Data == NULL)
++        return;
+     if (Data ->Double)
+         _cmsFree(mpe ->ContextID, Data ->Double);
+ 
+@@ -526,10 +528,15 @@
+ 
+     if (Data ->Tab.T) {
+ 
+-        if (Data ->HasFloatValues)
++        if (Data ->HasFloatValues) {
+             NewElem ->Tab.TFloat = (cmsFloat32Number*) _cmsDupMem(mpe ->ContextID, Data ->Tab.TFloat, Data ->nEntries * sizeof (cmsFloat32Number));
+-        else
++            if (NewElem ->Tab.TFloat == NULL)
++                goto Error;
++        } else {
+             NewElem ->Tab.T = (cmsUInt16Number*) _cmsDupMem(mpe ->ContextID, Data ->Tab.T, Data ->nEntries * sizeof (cmsUInt16Number));
++            if (NewElem ->Tab.TFloat == NULL)
++                goto Error;
++        }
+     }
+ 
+     NewElem ->Params   = _cmsComputeInterpParamsEx(mpe ->ContextID,
+@@ -538,8 +545,14 @@
+                                                    Data ->Params ->nOutputs,
+                                                    NewElem ->Tab.T,
+                                                    Data ->Params ->dwFlags);
+-
+-    return (void*) NewElem;
++    if (NewElem->Params != NULL)
++        return (void*) NewElem;
++ Error:
++    if (NewElem->Tab.T)
++        // This works for both types
++        _cmsFree(mpe ->ContextID, NewElem -> Tab.T);
++    _cmsFree(mpe ->ContextID, NewElem);
++    return NULL;
+ }
+ 
+ 
+@@ -636,7 +649,6 @@
+     for (i=0; i < MAX_INPUT_DIMENSIONS; i++)
+         Dimensions[i] = nGridPoints;
+ 
+-
+     return cmsStageAllocCLut16bitGranular(ContextID, Dimensions, inputChan, outputChan, Table);
+ }
+ 
+@@ -706,15 +718,12 @@
+         }
+     }
+ 
+-
+     NewElem ->Params = _cmsComputeInterpParamsEx(ContextID, clutPoints,  inputChan, outputChan, NewElem ->Tab.TFloat, CMS_LERP_FLAGS_FLOAT);
+     if (NewElem ->Params == NULL) {
+         cmsStageFree(NewMPE);
+         return NULL;
+     }
+ 
+-
+-
+     return NewMPE;
+ }
+ 
+@@ -772,7 +781,7 @@
+     int i, t, nTotalPoints, index, rest;
+     int nInputs, nOutputs;
+     cmsUInt32Number* nSamples;
+-    cmsUInt16Number In[cmsMAXCHANNELS], Out[MAX_STAGE_CHANNELS];
++    cmsUInt16Number In[MAX_INPUT_DIMENSIONS+1], Out[MAX_STAGE_CHANNELS];
+     _cmsStageCLutData* clut;
+ 
+     if (mpe == NULL) return FALSE;
+@@ -785,7 +794,9 @@
+     nInputs  = clut->Params ->nInputs;
+     nOutputs = clut->Params ->nOutputs;
+ 
+-    if (nInputs >= cmsMAXCHANNELS) return FALSE;
++    if (nInputs <= 0) return FALSE;
++    if (nOutputs <= 0) return FALSE;
++    if (nInputs > MAX_INPUT_DIMENSIONS) return FALSE;
+     if (nOutputs >= MAX_STAGE_CHANNELS) return FALSE;
+ 
+     nTotalPoints = CubeSize(nSamples, nInputs);
+@@ -832,14 +843,16 @@
+     int i, t, nTotalPoints, index, rest;
+     int nInputs, nOutputs;
+     cmsUInt32Number* nSamples;
+-    cmsFloat32Number In[cmsMAXCHANNELS], Out[MAX_STAGE_CHANNELS];
++    cmsFloat32Number In[MAX_INPUT_DIMENSIONS+1], Out[MAX_STAGE_CHANNELS];
+     _cmsStageCLutData* clut = (_cmsStageCLutData*) mpe->Data;
+ 
+     nSamples = clut->Params ->nSamples;
+     nInputs  = clut->Params ->nInputs;
+     nOutputs = clut->Params ->nOutputs;
+ 
+-    if (nInputs >= cmsMAXCHANNELS) return FALSE;
++    if (nInputs <= 0) return FALSE;
++    if (nOutputs <= 0) return FALSE;
++    if (nInputs  > MAX_INPUT_DIMENSIONS) return FALSE;
+     if (nOutputs >= MAX_STAGE_CHANNELS) return FALSE;
+ 
+     nTotalPoints = CubeSize(nSamples, nInputs);
+@@ -1021,7 +1034,7 @@
+     mpe = cmsStageAllocToneCurves(ContextID, 3, LabTable);
+     cmsFreeToneCurveTriple(LabTable);
+ 
+-    if (mpe == NULL) return mpe;
++    if (mpe == NULL) return NULL;
+     mpe ->Implements = cmsSigLabV2toV4;
+     return mpe;
+ }
+@@ -1247,12 +1260,22 @@
+                                      NULL);
+     if (NewMPE == NULL) return NULL;
+ 
+-    NewMPE ->Implements     = mpe ->Implements;
++    NewMPE ->Implements = mpe ->Implements;
+ 
+-    if (mpe ->DupElemPtr)
+-        NewMPE ->Data       = mpe ->DupElemPtr(mpe);
+-    else
++    if (mpe ->DupElemPtr) {
++
++        NewMPE ->Data = mpe ->DupElemPtr(mpe);
++
++        if (NewMPE->Data == NULL) {
++
++            cmsStageFree(NewMPE);
++            return NULL;
++        }
++
++    } else {
++
+         NewMPE ->Data       = NULL;
++    }
+ 
+     return NewMPE;
+ }
+@@ -1465,12 +1488,12 @@
+ }
+ 
+ 
+-void CMSEXPORT cmsPipelineInsertStage(cmsPipeline* lut, cmsStageLoc loc, cmsStage* mpe)
++int CMSEXPORT cmsPipelineInsertStage(cmsPipeline* lut, cmsStageLoc loc, cmsStage* mpe)
+ {
+     cmsStage* Anterior = NULL, *pt;
+ 
+-    _cmsAssert(lut != NULL);
+-    _cmsAssert(mpe != NULL);
++    if (lut == NULL || mpe == NULL)
++        return FALSE;
+ 
+     switch (loc) {
+ 
+@@ -1494,9 +1517,11 @@
+             }
+             break;
+         default:;
++            return FALSE;
+     }
+ 
+     BlessLUT(lut);
++    return TRUE;
+ }
+ 
+ // Unlink an element and return the pointer to it
+@@ -1558,7 +1583,7 @@
+ // Concatenate two LUT into a new single one
+ cmsBool  CMSEXPORT cmsPipelineCat(cmsPipeline* l1, const cmsPipeline* l2)
+ {
+-    cmsStage* mpe, *NewMPE;
++    cmsStage* mpe;
+ 
+     // If both LUTS does not have elements, we need to inherit
+     // the number of channels
+@@ -1573,17 +1598,12 @@
+          mpe = mpe ->Next) {
+ 
+             // We have to dup each element
+-             NewMPE = cmsStageDup(mpe);
+-
+-             if (NewMPE == NULL) {
+-                 return FALSE;
+-             }
+-
+-             cmsPipelineInsertStage(l1, cmsAT_END, NewMPE);
++            if (!cmsPipelineInsertStage(l1, cmsAT_END, cmsStageDup(mpe)))
++                return FALSE;
+     }
+ 
+-  BlessLUT(l1);
+-  return TRUE;
++    BlessLUT(l1);
++    return TRUE;
+ }
+ 
+ 
+@@ -1713,16 +1733,11 @@
+     cmsFloat32Number  fx[4], x[4], xd[4], fxd[4];
+     cmsVEC3 tmp, tmp2;
+     cmsMAT3 Jacobian;
+-    cmsFloat64Number LastResult[4];
+-
+ 
+     // Only 3->3 and 4->3 are supported
+     if (lut ->InputChannels != 3 && lut ->InputChannels != 4) return FALSE;
+     if (lut ->OutputChannels != 3) return FALSE;
+ 
+-    // Mark result of -1
+-    LastResult[0] = LastResult[1] = LastResult[2] = -1.0f;
+-
+     // Take the hint as starting point if specified
+     if (Hint == NULL) {
+ 
+diff -r a7d42517d3f1 -r f09a3112e130 src/share/native/sun/java2d/cmm/lcms/cmsmd5.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmd5.c	Thu Jan 16 18:08:15 2014 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsmd5.c	Tue Jan 21 08:47:30 2014 -0800
+@@ -338,7 +338,7 @@
+ Error:
+ 
+     // Free resources as something went wrong
+-    if (MD5 != NULL) _cmsFree(ContextID, MD5);
++    // "MD5" cannot be other than NULL here, so no need to free it
+     if (Mem != NULL) _cmsFree(ContextID, Mem);
+     memmove(Icc, &Keep, sizeof(_cmsICCPROFILE));
+     return FALSE;
+diff -r a7d42517d3f1 -r f09a3112e130 src/share/native/sun/java2d/cmm/lcms/cmsnamed.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsnamed.c	Thu Jan 16 18:08:15 2014 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsnamed.c	Tue Jan 21 08:47:30 2014 -0800
+@@ -359,9 +359,9 @@
+     if (Best == -1)
+         Best = 0;
+ 
+-     v = mlu ->Entries + Best;
++    v = mlu ->Entries + Best;
+ 
+-     if (UsedLanguageCode != NULL) *UsedLanguageCode = v ->Language;
++    if (UsedLanguageCode != NULL) *UsedLanguageCode = v ->Language;
+     if (UsedCountryCode  != NULL) *UsedCountryCode = v ->Country;
+ 
+     if (len != NULL) *len   = v ->Len;
+@@ -475,6 +475,35 @@
+ }
+ 
+ 
++
++// Get the number of translations in the MLU object
++cmsUInt32Number CMSEXPORT cmsMLUtranslationsCount(const cmsMLU* mlu)
++{
++    if (mlu == NULL) return 0;
++    return mlu->UsedEntries;
++}
++
++// Get the language and country codes for a specific MLU index
++cmsBool CMSEXPORT cmsMLUtranslationsCodes(const cmsMLU* mlu,
++                                          cmsUInt32Number idx,
++                                          char LanguageCode[3],
++                                          char CountryCode[3])
++{
++    _cmsMLUentry *entry;
++
++    if (mlu == NULL) return FALSE;
++
++    if (idx >= (cmsUInt32Number) mlu->UsedEntries) return FALSE;
++
++    entry = &mlu->Entries[idx];
++
++    *(cmsUInt16Number *)LanguageCode = _cmsAdjustEndianess16(entry->Language);
++    *(cmsUInt16Number *)CountryCode  = _cmsAdjustEndianess16(entry->Country);
++
++    return TRUE;
++}
++
++
+ // Named color lists --------------------------------------------------------------------------------------------
+ 
+ // Grow the list to keep at least NumElements
+@@ -517,9 +546,9 @@
+     while (v -> Allocated < n)
+         GrowNamedColorList(v);
+ 
+-    strncpy(v ->Prefix, Prefix, sizeof(v ->Prefix) - 1);
+-    strncpy(v ->Suffix, Suffix, sizeof(v ->Suffix) - 1);
+-    v->Prefix[sizeof(v ->Prefix) - 1] = v->Suffix[sizeof(v ->Suffix) - 1] = 0;
++    strncpy(v ->Prefix, Prefix, sizeof(v ->Prefix)-1);
++    strncpy(v ->Suffix, Suffix, sizeof(v ->Suffix)-1);
++    v->Prefix[32] = v->Suffix[32] = 0;
+ 
+     v -> ColorantCount = ColorantCount;
+ 
+@@ -529,8 +558,9 @@
+ // Free a list
+ void CMSEXPORT cmsFreeNamedColorList(cmsNAMEDCOLORLIST* v)
+ {
++    if (v == NULL) return;
+     if (v ->List) _cmsFree(v ->ContextID, v ->List);
+-    if (v) _cmsFree(v ->ContextID, v);
++    _cmsFree(v ->ContextID, v);
+ }
+ 
+ cmsNAMEDCOLORLIST* CMSEXPORT cmsDupNamedColorList(const cmsNAMEDCOLORLIST* v)
+@@ -576,11 +606,8 @@
+ 
+     if (Name != NULL) {
+ 
+-        strncpy(NamedColorList ->List[NamedColorList ->nColors].Name, Name,
+-                    sizeof(NamedColorList ->List[NamedColorList ->nColors].Name) - 1);
+-
+-        NamedColorList ->List[NamedColorList ->nColors].
+-            Name[sizeof(NamedColorList ->List[NamedColorList ->nColors].Name) - 1] = 0;
++        strncpy(NamedColorList ->List[NamedColorList ->nColors].Name, Name, cmsMAX_PATH-1);
++        NamedColorList ->List[NamedColorList ->nColors].Name[cmsMAX_PATH-1] = 0;
+ 
+     }
+     else
+@@ -891,7 +918,6 @@
+ {
+     _cmsDICT* old_dict = (_cmsDICT*) hDict;
+     cmsHANDLE hNew;
+-    _cmsDICT* new_dict;
+     cmsDICTentry *entry;
+ 
+     _cmsAssert(old_dict != NULL);
+@@ -899,8 +925,6 @@
+     hNew  = cmsDictAlloc(old_dict ->ContextID);
+     if (hNew == NULL) return NULL;
+ 
+-    new_dict = (_cmsDICT*) hNew;
+-
+     // Walk the list freeing all nodes
+     entry = old_dict ->head;
+     while (entry != NULL) {
+diff -r a7d42517d3f1 -r f09a3112e130 src/share/native/sun/java2d/cmm/lcms/cmsopt.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsopt.c	Thu Jan 16 18:08:15 2014 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsopt.c	Tue Jan 21 08:47:30 2014 -0800
+@@ -27,6 +27,7 @@
+ // However, the following notice accompanied the original version of this
+ // file:
+ //
++
+ //---------------------------------------------------------------------------------
+ //
+ //  Little Color Management System
+@@ -81,10 +82,6 @@
+     int nInputs;
+     int nOutputs;
+ 
+-    // Since there is no limitation of the output number of channels, this buffer holding the connexion CLUT-shaper
+-    // has to be dynamically allocated. This is not the case of first step shaper-CLUT, which is limited to max inputs
+-    cmsUInt16Number* StageDEF;
+-
+     _cmsInterpFn16 EvalCurveIn16[MAX_INPUT_DIMENSIONS];       // The maximum number of input channels is known in advance
+     cmsInterpParams*  ParamsCurveIn16[MAX_INPUT_DIMENSIONS];
+ 
+@@ -202,8 +199,6 @@
+ {
+     cmsBool AnyOpt = FALSE, Opt;
+ 
+-    AnyOpt = FALSE;
+-
+     do {
+ 
+         Opt = FALSE;
+@@ -253,6 +248,7 @@
+ {
+     Prelin16Data* p16 = (Prelin16Data*) D;
+     cmsUInt16Number  StageABC[MAX_INPUT_DIMENSIONS];
++    cmsUInt16Number  StageDEF[cmsMAXCHANNELS];
+     int i;
+ 
+     for (i=0; i < p16 ->nInputs; i++) {
+@@ -260,11 +256,11 @@
+         p16 ->EvalCurveIn16[i](&Input[i], &StageABC[i], p16 ->ParamsCurveIn16[i]);
+     }
+ 
+-    p16 ->EvalCLUT(StageABC, p16 ->StageDEF, p16 ->CLUTparams);
++    p16 ->EvalCLUT(StageABC, StageDEF, p16 ->CLUTparams);
+ 
+     for (i=0; i < p16 ->nOutputs; i++) {
+ 
+-        p16 ->EvalCurveOut16[i](&p16->StageDEF[i], &Output[i], p16 ->ParamsCurveOut16[i]);
++        p16 ->EvalCurveOut16[i](&StageDEF[i], &Output[i], p16 ->ParamsCurveOut16[i]);
+     }
+ }
+ 
+@@ -274,7 +270,6 @@
+ {
+     Prelin16Data* p16 = (Prelin16Data*) ptr;
+ 
+-    _cmsFree(ContextID, p16 ->StageDEF);
+     _cmsFree(ContextID, p16 ->EvalCurveOut16);
+     _cmsFree(ContextID, p16 ->ParamsCurveOut16);
+ 
+@@ -289,7 +284,6 @@
+ 
+     if (Duped == NULL) return NULL;
+ 
+-    Duped ->StageDEF         = _cmsCalloc(ContextID, p16 ->nOutputs, sizeof(cmsUInt16Number));
+     Duped ->EvalCurveOut16   = _cmsDupMem(ContextID, p16 ->EvalCurveOut16, p16 ->nOutputs * sizeof(_cmsInterpFn16));
+     Duped ->ParamsCurveOut16 = _cmsDupMem(ContextID, p16 ->ParamsCurveOut16, p16 ->nOutputs * sizeof(cmsInterpParams* ));
+ 
+@@ -328,7 +322,6 @@
+     p16 ->EvalCLUT   = ColorMap ->Interpolation.Lerp16;
+ 
+ 
+-    p16 -> StageDEF = _cmsCalloc(ContextID, p16 ->nOutputs, sizeof(cmsUInt16Number));
+     p16 -> EvalCurveOut16 = (_cmsInterpFn16*) _cmsCalloc(ContextID, nOutputs, sizeof(_cmsInterpFn16));
+     p16 -> ParamsCurveOut16 = (cmsInterpParams**) _cmsCalloc(ContextID, nOutputs, sizeof(cmsInterpParams* ));
+ 
+@@ -413,7 +406,7 @@
+     int        i, index;
+ 
+     if (CLUT -> Type != cmsSigCLutElemType) {
+-        cmsSignalError(CLUT->ContextID, cmsERROR_INTERNAL, "(internal) Attempt to PatchLUT on non-lut MPE");
++        cmsSignalError(CLUT->ContextID, cmsERROR_INTERNAL, "(internal) Attempt to PatchLUT on non-lut stage");
+         return FALSE;
+     }
+ 
+@@ -548,6 +541,10 @@
+         for (i=0; i < nOuts; i++) {
+ 
+             cmsToneCurve* InversePostLin = cmsReverseToneCurve(Curves[i]);
++            if (InversePostLin == NULL) {
++                WhiteOut[i] = 0;
++                continue;
++            }
+             WhiteOut[i] = cmsEvalToneCurve16(InversePostLin, WhitePointOut[i]);
+             cmsFreeToneCurve(InversePostLin);
+         }
+@@ -575,8 +572,8 @@
+ static
+ cmsBool OptimizeByResampling(cmsPipeline** Lut, cmsUInt32Number Intent, cmsUInt32Number* InputFormat, cmsUInt32Number* OutputFormat, cmsUInt32Number* dwFlags)
+ {
+-    cmsPipeline* Src;
+-    cmsPipeline* Dest;
++    cmsPipeline* Src = NULL;
++    cmsPipeline* Dest = NULL;
+     cmsStage* mpe;
+     cmsStage* CLUT;
+     cmsStage *KeepPreLin = NULL, *KeepPostLin = NULL;
+@@ -589,7 +586,6 @@
+     cmsToneCurve** DataSetOut;
+     Prelin16Data* p16;
+ 
+-
+     // This is a loosy optimization! does not apply in floating-point cases
+     if (_cmsFormatterIsFloat(*InputFormat) || _cmsFormatterIsFloat(*OutputFormat)) return FALSE;
+ 
+@@ -603,10 +599,10 @@
+ 
+     Src = *Lut;
+ 
+-   // Named color pipelines cannot be optimized either
+-   for (mpe = cmsPipelineGetPtrToFirstStage(Src);
+-         mpe != NULL;
+-         mpe = cmsStageNext(mpe)) {
++    // Named color pipelines cannot be optimized either
++    for (mpe = cmsPipelineGetPtrToFirstStage(Src);
++        mpe != NULL;
++        mpe = cmsStageNext(mpe)) {
+             if (cmsStageType(mpe) == cmsSigNamedColorElemType) return FALSE;
+     }
+ 
+@@ -628,7 +624,8 @@
+ 
+                 // All seems ok, proceed.
+                 NewPreLin = cmsStageDup(PreLin);
+-                cmsPipelineInsertStage(Dest, cmsAT_BEGIN, NewPreLin);
++                if(!cmsPipelineInsertStage(Dest, cmsAT_BEGIN, NewPreLin))
++                    goto Error;
+ 
+                 // Remove prelinearization. Since we have duplicated the curve
+                 // in destination LUT, the sampling shoud be applied after this stage.
+@@ -642,7 +639,9 @@
+     if (CLUT == NULL) return FALSE;
+ 
+     // Add the CLUT to the destination LUT
+-    cmsPipelineInsertStage(Dest, cmsAT_END, CLUT);
++    if (!cmsPipelineInsertStage(Dest, cmsAT_END, CLUT)) {
++        goto Error;
++    }
+ 
+     // Postlinearization tables are kept unless indicated by flags
+     if (*dwFlags & cmsFLAGS_CLUT_POST_LINEARIZATION) {
+@@ -658,7 +657,8 @@
+ 
+                 // All seems ok, proceed.
+                 NewPostLin = cmsStageDup(PostLin);
+-                cmsPipelineInsertStage(Dest, cmsAT_END, NewPostLin);
++                if (!cmsPipelineInsertStage(Dest, cmsAT_END, NewPostLin))
++                    goto Error;
+ 
+                 // In destination LUT, the sampling shoud be applied after this stage.
+                 cmsPipelineUnlinkStage(Src, cmsAT_END, &KeepPostLin);
+@@ -669,10 +669,18 @@
+     // Now its time to do the sampling. We have to ignore pre/post linearization
+     // The source LUT whithout pre/post curves is passed as parameter.
+     if (!cmsStageSampleCLut16bit(CLUT, XFormSampler16, (void*) Src, 0)) {
+-
++Error:
+         // Ops, something went wrong, Restore stages
+-        if (KeepPreLin != NULL)  cmsPipelineInsertStage(Src, cmsAT_BEGIN, KeepPreLin);
+-        if (KeepPostLin != NULL) cmsPipelineInsertStage(Src, cmsAT_END,   KeepPostLin);
++        if (KeepPreLin != NULL) {
++            if (!cmsPipelineInsertStage(Src, cmsAT_BEGIN, KeepPreLin)) {
++                _cmsAssert(0); // This never happens
++            }
++        }
++        if (KeepPostLin != NULL) {
++            if (!cmsPipelineInsertStage(Src, cmsAT_END,   KeepPostLin)) {
++                _cmsAssert(0); // This never happens
++            }
++        }
+         cmsPipelineFree(Dest);
+         return FALSE;
+     }
+@@ -699,12 +707,11 @@
+     else {
+ 
+         p16 = PrelinOpt16alloc(Dest ->ContextID,
+-                               DataCLUT ->Params,
+-                               Dest ->InputChannels,
+-                               DataSetIn,
+-                               Dest ->OutputChannels,
+-                               DataSetOut);
+-
++            DataCLUT ->Params,
++            Dest ->InputChannels,
++            DataSetIn,
++            Dest ->OutputChannels,
++            DataSetOut);
+ 
+         _cmsPipelineSetOptimizationParameters(Dest, PrelinEval16, (void*) p16, PrelinOpt16free, Prelin16dup);
+     }
+@@ -1058,7 +1065,8 @@
+     LutPlusCurves = cmsPipelineDup(OriginalLut);
+     if (LutPlusCurves == NULL) goto Error;
+ 
+-    cmsPipelineInsertStage(LutPlusCurves, cmsAT_BEGIN, cmsStageAllocToneCurves(OriginalLut ->ContextID, OriginalLut ->InputChannels, TransReverse));
++    if (!cmsPipelineInsertStage(LutPlusCurves, cmsAT_BEGIN, cmsStageAllocToneCurves(OriginalLut ->ContextID, OriginalLut ->InputChannels, TransReverse)))
++        goto Error;
+ 
+     // Create the result LUT
+     OptimizedLUT = cmsPipelineAlloc(OriginalLut ->ContextID, OriginalLut ->InputChannels, OriginalLut ->OutputChannels);
+@@ -1067,13 +1075,15 @@
+     OptimizedPrelinMpe = cmsStageAllocToneCurves(OriginalLut ->ContextID, OriginalLut ->InputChannels, Trans);
+ 
+     // Create and insert the curves at the beginning
+-    cmsPipelineInsertStage(OptimizedLUT, cmsAT_BEGIN, OptimizedPrelinMpe);
++    if (!cmsPipelineInsertStage(OptimizedLUT, cmsAT_BEGIN, OptimizedPrelinMpe))
++        goto Error;
+ 
+     // Allocate the CLUT for result
+     OptimizedCLUTmpe = cmsStageAllocCLut16bit(OriginalLut ->ContextID, nGridPoints, OriginalLut ->InputChannels, OriginalLut ->OutputChannels, NULL);
+ 
+     // Add the CLUT to the destination LUT
+-    cmsPipelineInsertStage(OptimizedLUT, cmsAT_END, OptimizedCLUTmpe);
++    if (!cmsPipelineInsertStage(OptimizedLUT, cmsAT_END, OptimizedCLUTmpe))
++        goto Error;
+ 
+     // Resample the LUT
+     if (!cmsStageSampleCLut16bit(OptimizedCLUTmpe, XFormSampler16, (void*) LutPlusCurves, 0)) goto Error;
+@@ -1201,13 +1211,14 @@
+     for (i=0; i < nCurves; i++) {
+ 
+         c16->Curves[i] = _cmsCalloc(ContextID, nElements, sizeof(cmsUInt16Number));
++
+         if (c16->Curves[i] == NULL) {
++
+             for (j=0; j < i; j++) {
+                 _cmsFree(ContextID, c16->Curves[j]);
+             }
+             _cmsFree(ContextID, c16->Curves);
+             _cmsFree(ContextID, c16);
+-
+             return NULL;
+         }
+ 
+@@ -1336,7 +1347,8 @@
+     // Maybe the curves are linear at the end
+     if (!AllCurvesAreLinear(ObtainedCurves)) {
+ 
+-        cmsPipelineInsertStage(Dest, cmsAT_BEGIN, ObtainedCurves);
++        if (!cmsPipelineInsertStage(Dest, cmsAT_BEGIN, ObtainedCurves))
++            goto Error;
+ 
+         // If the curves are to be applied in 8 bits, we can save memory
+         if (_cmsFormatterIs8bit(*InputFormat)) {
+@@ -1344,6 +1356,7 @@
+             _cmsStageToneCurvesData* Data = (_cmsStageToneCurvesData*) ObtainedCurves ->Data;
+              Curves16Data* c16 = CurvesAlloc(Dest ->ContextID, Data ->nCurves, 256, Data ->TheCurves);
+ 
++             if (c16 == NULL) goto Error;
+              *dwFlags |= cmsFLAGS_NOCACHE;
+             _cmsPipelineSetOptimizationParameters(Dest, FastEvaluateCurves8, c16, CurvesFree, CurvesDup);
+ 
+@@ -1353,6 +1366,7 @@
+             _cmsStageToneCurvesData* Data = (_cmsStageToneCurvesData*) cmsStageData(ObtainedCurves);
+              Curves16Data* c16 = CurvesAlloc(Dest ->ContextID, Data ->nCurves, 65536, Data ->TheCurves);
+ 
++             if (c16 == NULL) goto Error;
+              *dwFlags |= cmsFLAGS_NOCACHE;
+             _cmsPipelineSetOptimizationParameters(Dest, FastEvaluateCurves16, c16, CurvesFree, CurvesDup);
+         }
+@@ -1362,7 +1376,8 @@
+         // LUT optimizes to nothing. Set the identity LUT
+         cmsStageFree(ObtainedCurves);
+ 
+-        cmsPipelineInsertStage(Dest, cmsAT_BEGIN, cmsStageAllocIdentity(Dest ->ContextID, Src ->InputChannels));
++        if (!cmsPipelineInsertStage(Dest, cmsAT_BEGIN, cmsStageAllocIdentity(Dest ->ContextID, Src ->InputChannels)))
++            goto Error;
+ 
+         *dwFlags |= cmsFLAGS_NOCACHE;
+         _cmsPipelineSetOptimizationParameters(Dest, FastIdentity16, (void*) Dest, NULL, NULL);
+@@ -1592,10 +1607,14 @@
+     if (!Dest) return FALSE;
+ 
+     // Assamble the new LUT
+-    cmsPipelineInsertStage(Dest, cmsAT_BEGIN, cmsStageDup(Curve1));
++    if (!cmsPipelineInsertStage(Dest, cmsAT_BEGIN, cmsStageDup(Curve1)))
++        goto Error;
++
+     if (!IdentityMat)
+-        cmsPipelineInsertStage(Dest, cmsAT_END, cmsStageAllocMatrix(Dest ->ContextID, 3, 3, (const cmsFloat64Number*) &res, Data2 ->Offset));
+-    cmsPipelineInsertStage(Dest, cmsAT_END, cmsStageDup(Curve2));
++        if (!cmsPipelineInsertStage(Dest, cmsAT_END, cmsStageAllocMatrix(Dest ->ContextID, 3, 3, (const cmsFloat64Number*) &res, Data2 ->Offset)))
++            goto Error;
++    if (!cmsPipelineInsertStage(Dest, cmsAT_END, cmsStageDup(Curve2)))
++        goto Error;
+ 
+     // If identity on matrix, we can further optimize the curves, so call the join curves routine
+     if (IdentityMat) {
+@@ -1617,6 +1636,10 @@
+     cmsPipelineFree(Src);
+     *Lut = Dest;
+     return TRUE;
++Error:
++    // Leave Src unchanged
++    cmsPipelineFree(Dest);
++    return FALSE;
+ }
+ 
+ 
+@@ -1646,7 +1669,7 @@
+ static _cmsOptimizationCollection* OptimizationCollection = DefaultOptimization;
+ 
+ // Register new ways to optimize
+-cmsBool  _cmsRegisterOptimizationPlugin(cmsPluginBase* Data)
++cmsBool  _cmsRegisterOptimizationPlugin(cmsContext id, cmsPluginBase* Data)
+ {
+     cmsPluginOptimization* Plugin = (cmsPluginOptimization*) Data;
+     _cmsOptimizationCollection* fl;
+@@ -1660,7 +1683,7 @@
+     // Optimizer callback is required
+     if (Plugin ->OptimizePtr == NULL) return FALSE;
+ 
+-    fl = (_cmsOptimizationCollection*) _cmsPluginMalloc(sizeof(_cmsOptimizationCollection));
++    fl = (_cmsOptimizationCollection*) _cmsPluginMalloc(id, sizeof(_cmsOptimizationCollection));
+     if (fl == NULL) return FALSE;
+ 
+     // Copy the parameters
+diff -r a7d42517d3f1 -r f09a3112e130 src/share/native/sun/java2d/cmm/lcms/cmspack.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmspack.c	Thu Jan 16 18:08:15 2014 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmspack.c	Tue Jan 21 08:47:30 2014 -0800
+@@ -317,6 +317,23 @@
+ }
+ 
+ static
++cmsUInt8Number* Unroll3BytesSkip1SwapSwapFirst(register _cmsTRANSFORM* info,
++                                              register cmsUInt16Number wIn[],
++                                              register cmsUInt8Number* accum,
++                                              register cmsUInt32Number Stride)
++{
++    wIn[2] = FROM_8_TO_16(*accum); accum++; // B
++    wIn[1] = FROM_8_TO_16(*accum); accum++; // G
++    wIn[0] = FROM_8_TO_16(*accum); accum++; // R
++    accum++; // A
++
++    return accum;
++
++    cmsUNUSED_PARAMETER(info);
++    cmsUNUSED_PARAMETER(Stride);
++}
++
++static
+ cmsUInt8Number* Unroll3BytesSkip1SwapFirst(register _cmsTRANSFORM* info,
+                                            register cmsUInt16Number wIn[],
+                                            register cmsUInt8Number* accum,
+@@ -2901,6 +2918,9 @@
+     { CHANNELS_SH(3)|EXTRA_SH(1)|BYTES_SH(1)|DOSWAP_SH(1),     ANYSPACE,  Unroll3BytesSkip1Swap},
+     { CHANNELS_SH(3)|EXTRA_SH(1)|BYTES_SH(1)|SWAPFIRST_SH(1),  ANYSPACE,  Unroll3BytesSkip1SwapFirst},
+ 
++    { CHANNELS_SH(3)|EXTRA_SH(1)|BYTES_SH(1)|DOSWAP_SH(1)|SWAPFIRST_SH(1),
++                                                               ANYSPACE,  Unroll3BytesSkip1SwapSwapFirst},
++
+     { CHANNELS_SH(4)|BYTES_SH(1),                              ANYSPACE,  Unroll4Bytes},
+     { CHANNELS_SH(4)|BYTES_SH(1)|FLAVOR_SH(1),                 ANYSPACE,  Unroll4BytesReverse},
+     { CHANNELS_SH(4)|BYTES_SH(1)|SWAPFIRST_SH(1),              ANYSPACE,  Unroll4BytesSwapFirst},
+@@ -3166,7 +3186,7 @@
+ 
+ 
+ // Formatters management
+-cmsBool  _cmsRegisterFormattersPlugin(cmsPluginBase* Data)
++cmsBool  _cmsRegisterFormattersPlugin(cmsContext id, cmsPluginBase* Data)
+ {
+     cmsPluginFormatters* Plugin = (cmsPluginFormatters*) Data;
+     cmsFormattersFactoryList* fl ;
+@@ -3178,7 +3198,7 @@
+           return TRUE;
+     }
+ 
+-    fl = (cmsFormattersFactoryList*) _cmsPluginMalloc(sizeof(cmsFormattersFactoryList));
++    fl = (cmsFormattersFactoryList*) _cmsPluginMalloc(id, sizeof(cmsFormattersFactoryList));
+     if (fl == NULL) return FALSE;
+ 
+     fl ->Factory    = Plugin ->FormattersFactory;
+diff -r a7d42517d3f1 -r f09a3112e130 src/share/native/sun/java2d/cmm/lcms/cmspcs.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmspcs.c	Thu Jan 16 18:08:15 2014 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmspcs.c	Tue Jan 21 08:47:30 2014 -0800
+@@ -898,9 +898,11 @@
+ {
+     switch (ColorSpace) {
+ 
++    case cmsSigMCH1Data:
+     case cmsSig1colorData:
+     case cmsSigGrayData: return 1;
+ 
++    case cmsSigMCH2Data:
+     case cmsSig2colorData:  return 2;
+ 
+     case cmsSigXYZData:
+@@ -912,10 +914,12 @@
+     case cmsSigHsvData:
+     case cmsSigHlsData:
+     case cmsSigCmyData:
++    case cmsSigMCH3Data:
+     case cmsSig3colorData:  return 3;
+ 
+     case cmsSigLuvKData:
+     case cmsSigCmykData:
++    case cmsSigMCH4Data:
+     case cmsSig4colorData:  return 4;
+ 
+     case cmsSigMCH5Data:
+diff -r a7d42517d3f1 -r f09a3112e130 src/share/native/sun/java2d/cmm/lcms/cmsplugin.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsplugin.c	Thu Jan 16 18:08:15 2014 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsplugin.c	Tue Jan 21 08:47:30 2014 -0800
+@@ -125,10 +125,14 @@
+     pOut[0] = pIn[7];
+ 
+ #else
+-
+     _cmsAssert(Result != NULL);
+ 
++#  ifdef CMS_DONT_USE_INT64
++    (*Result)[0] = QWord[0];
++    (*Result)[1] = QWord[1];
++#  else
+     *Result = *QWord;
++#  endif
+ #endif
+ }
+ 
+@@ -543,10 +547,10 @@
+ static _cmsSubAllocator* PluginPool = NULL;
+ 
+ // Specialized malloc for plug-ins, that is freed upon exit.
+-void* _cmsPluginMalloc(cmsUInt32Number size)
++void* _cmsPluginMalloc(cmsContext id, cmsUInt32Number size)
+ {
+     if (PluginPool == NULL)
+-        PluginPool = _cmsCreateSubAlloc(0, 4*1024);
++        PluginPool = _cmsCreateSubAlloc(id, 4*1024);
+ 
+     return _cmsSubAlloc(PluginPool, size);
+ }
+@@ -555,6 +559,11 @@
+ // Main plug-in dispatcher
+ cmsBool CMSEXPORT cmsPlugin(void* Plug_in)
+ {
++  return cmsPluginTHR(NULL, Plug_in);
++}
++
++cmsBool CMSEXPORT cmsPluginTHR(cmsContext id, void* Plug_in)
++{
+     cmsPluginBase* Plugin;
+ 
+     for (Plugin = (cmsPluginBase*) Plug_in;
+@@ -583,35 +592,35 @@
+                     break;
+ 
+                 case cmsPluginTagTypeSig:
+-                    if (!_cmsRegisterTagTypePlugin(Plugin)) return FALSE;
++                    if (!_cmsRegisterTagTypePlugin(id, Plugin)) return FALSE;
+                     break;
+ 
+                 case cmsPluginTagSig:
+-                    if (!_cmsRegisterTagPlugin(Plugin)) return FALSE;
++                    if (!_cmsRegisterTagPlugin(id, Plugin)) return FALSE;
+                     break;
+ 
+                 case cmsPluginFormattersSig:
+-                    if (!_cmsRegisterFormattersPlugin(Plugin)) return FALSE;
++                    if (!_cmsRegisterFormattersPlugin(id, Plugin)) return FALSE;
+                     break;
+ 
+                 case cmsPluginRenderingIntentSig:
+-                    if (!_cmsRegisterRenderingIntentPlugin(Plugin)) return FALSE;
++                    if (!_cmsRegisterRenderingIntentPlugin(id, Plugin)) return FALSE;
+                     break;
+ 
+                 case cmsPluginParametricCurveSig:
+-                    if (!_cmsRegisterParametricCurvesPlugin(Plugin)) return FALSE;
++                    if (!_cmsRegisterParametricCurvesPlugin(id, Plugin)) return FALSE;
+                     break;
+ 
+                 case cmsPluginMultiProcessElementSig:
+-                    if (!_cmsRegisterMultiProcessElementPlugin(Plugin)) return FALSE;
++                    if (!_cmsRegisterMultiProcessElementPlugin(id, Plugin)) return FALSE;
+                     break;
+ 
+                 case cmsPluginOptimizationSig:
+-                    if (!_cmsRegisterOptimizationPlugin(Plugin)) return FALSE;
++                    if (!_cmsRegisterOptimizationPlugin(id, Plugin)) return FALSE;
+                     break;
+ 
+                 case cmsPluginTransformSig:
+-                    if (!_cmsRegisterTransformPlugin(Plugin)) return FALSE;
++                    if (!_cmsRegisterTransformPlugin(id, Plugin)) return FALSE;
+                     break;
+ 
+                 default:
+@@ -630,14 +639,14 @@
+ {
+     _cmsRegisterMemHandlerPlugin(NULL);
+     _cmsRegisterInterpPlugin(NULL);
+-    _cmsRegisterTagTypePlugin(NULL);
+-    _cmsRegisterTagPlugin(NULL);
+-    _cmsRegisterFormattersPlugin(NULL);
+-    _cmsRegisterRenderingIntentPlugin(NULL);
+-    _cmsRegisterParametricCurvesPlugin(NULL);
+-    _cmsRegisterMultiProcessElementPlugin(NULL);
+-    _cmsRegisterOptimizationPlugin(NULL);
+-    _cmsRegisterTransformPlugin(NULL);
++    _cmsRegisterTagTypePlugin(NULL, NULL);
++    _cmsRegisterTagPlugin(NULL, NULL);
++    _cmsRegisterFormattersPlugin(NULL, NULL);
++    _cmsRegisterRenderingIntentPlugin(NULL, NULL);
++    _cmsRegisterParametricCurvesPlugin(NULL, NULL);
++    _cmsRegisterMultiProcessElementPlugin(NULL, NULL);
++    _cmsRegisterOptimizationPlugin(NULL, NULL);
++    _cmsRegisterTransformPlugin(NULL, NULL);
+ 
+     if (PluginPool != NULL)
+         _cmsSubAllocDestroy(PluginPool);
+diff -r a7d42517d3f1 -r f09a3112e130 src/share/native/sun/java2d/cmm/lcms/cmsps2.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsps2.c	Thu Jan 16 18:08:15 2014 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsps2.c	Tue Jan 21 08:47:30 2014 -0800
+@@ -806,7 +806,6 @@
+ 
+     mpe = Pipeline ->Elements;
+ 
+-
+     switch (cmsStageInputChannels(mpe)) {
+     case 3:
+ 
+@@ -838,8 +837,6 @@
+         mpe = mpe ->Next;
+     }
+ 
+-
+-
+     if (cmsStageType(mpe) == cmsSigCLutElemType) {
+ 
+             _cmsIOPrintf(m, "/Table ");
+@@ -854,7 +851,6 @@
+     _cmsIOPrintf(m, "   >>\n");
+     _cmsIOPrintf(m, "]\n");
+ 
+-
+     return 1;
+ }
+ 
+@@ -950,6 +946,7 @@
+ 
+             rc = EmitCIEBasedDEF(m, DeviceLink, Intent, &BlackPointAdaptedToD50);
+             cmsPipelineFree(DeviceLink);
++            if (rc == 0) return 0;
+             }
+             break;
+ 
+diff -r a7d42517d3f1 -r f09a3112e130 src/share/native/sun/java2d/cmm/lcms/cmssamp.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmssamp.c	Thu Jan 16 18:08:15 2014 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmssamp.c	Tue Jan 21 08:47:30 2014 -0800
+@@ -56,6 +56,8 @@
+ #include "lcms2_internal.h"
+ 
+ 
++#define cmsmin(a, b) (((a) < (b)) ? (a) : (b))
++#define cmsmax(a, b) (((a) > (b)) ? (a) : (b))
+ 
+ // This file contains routines for resampling and LUT optimization, black point detection
+ // and black preservation.
+@@ -67,13 +69,13 @@
+ static
+ cmsHTRANSFORM CreateRoundtripXForm(cmsHPROFILE hProfile, cmsUInt32Number nIntent)
+ {
+-    cmsHPROFILE hLab = cmsCreateLab4Profile(NULL);
++    cmsContext ContextID = cmsGetProfileContextID(hProfile);
++    cmsHPROFILE hLab = cmsCreateLab4ProfileTHR(ContextID, NULL);
+     cmsHTRANSFORM xform;
+     cmsBool BPC[4] = { FALSE, FALSE, FALSE, FALSE };
+     cmsFloat64Number States[4] = { 1.0, 1.0, 1.0, 1.0 };
+     cmsHPROFILE hProfiles[4];
+     cmsUInt32Number Intents[4];
+-    cmsContext ContextID = cmsGetProfileContextID(hProfile);
+ 
+     hProfiles[0] = hLab; hProfiles[1] = hProfile; hProfiles[2] = hProfile; hProfiles[3] = hLab;
+     Intents[0]   = INTENT_RELATIVE_COLORIMETRIC; Intents[1] = nIntent; Intents[2] = INTENT_RELATIVE_COLORIMETRIC; Intents[3] = INTENT_RELATIVE_COLORIMETRIC;
+@@ -141,8 +143,8 @@
+     cmsCloseProfile(hLab);
+ 
+     if (xform == NULL) {
++
+         // Something went wrong. Get rid of open resources and return zero as black
+-
+         BlackPoint -> X = BlackPoint ->Y = BlackPoint -> Z = 0.0;
+         return FALSE;
+     }
+@@ -173,7 +175,6 @@
+ // Lab (0, 0, 0) -> [Perceptual] Profile -> CMYK -> [Rel. colorimetric] Profile -> Lab
+ static
+ cmsBool BlackPointUsingPerceptualBlack(cmsCIEXYZ* BlackPoint, cmsHPROFILE hProfile)
+-
+ {
+     cmsHTRANSFORM hRoundTrip;
+     cmsCIELab LabIn, LabOut;
+@@ -218,17 +219,27 @@
+ // involves to turn BP to neutral and to use only L component.
+ cmsBool CMSEXPORT cmsDetectBlackPoint(cmsCIEXYZ* BlackPoint, cmsHPROFILE hProfile, cmsUInt32Number Intent, cmsUInt32Number dwFlags)
+ {
++    cmsProfileClassSignature devClass;
+ 
+-    // Zero for black point
+-    if (cmsGetDeviceClass(hProfile) == cmsSigLinkClass) {
++    // Make sure the device class is adequate
++    devClass = cmsGetDeviceClass(hProfile);
++    if (devClass == cmsSigLinkClass ||
++        devClass == cmsSigAbstractClass ||
++        devClass == cmsSigNamedColorClass) {
++            BlackPoint -> X = BlackPoint ->Y = BlackPoint -> Z = 0.0;
++            return FALSE;
++    }
+ 
+-        BlackPoint -> X = BlackPoint ->Y = BlackPoint -> Z = 0.0;
+-        return FALSE;
++    // Make sure intent is adequate
++    if (Intent != INTENT_PERCEPTUAL &&
++        Intent != INTENT_RELATIVE_COLORIMETRIC &&
++        Intent != INTENT_SATURATION) {
++            BlackPoint -> X = BlackPoint ->Y = BlackPoint -> Z = 0.0;
++            return FALSE;
+     }
+ 
+     // v4 + perceptual & saturation intents does have its own black point, and it is
+     // well specified enough to use it. Black point tag is deprecated in V4.
+-
+     if ((cmsGetEncodedICCversion(hProfile) >= 0x4000000) &&
+         (Intent == INTENT_PERCEPTUAL || Intent == INTENT_SATURATION)) {
+ 
+@@ -303,7 +314,7 @@
+ {
+     double sum_x = 0, sum_x2 = 0, sum_x3 = 0, sum_x4 = 0;
+     double sum_y = 0, sum_yx = 0, sum_yx2 = 0;
+-    double disc;
++    double d, a, b, c;
+     int i;
+     cmsMAT3 m;
+     cmsVEC3 v, res;
+@@ -333,14 +344,32 @@
+ 
+     if (!_cmsMAT3solve(&res, &m, &v)) return 0;
+ 
+-    // y = t x2 + u x + c
+-    // x = ( - u + Sqrt( u^2 - 4 t c ) ) / ( 2 t )
+-    disc = res.n[1]*res.n[1] - 4.0 * res.n[0] * res.n[2];
+-    if (disc < 0) return -1;
+ 
+-    return ( -1.0 * res.n[1] + sqrt( disc )) / (2.0 * res.n[0]);
++    a = res.n[2];
++    b = res.n[1];
++    c = res.n[0];
++
++    if (fabs(a) < 1.0E-10) {
++
++        return cmsmin(0, cmsmax(50, -c/b ));
++    }
++    else {
++
++         d = b*b - 4.0 * a * c;
++         if (d <= 0) {
++             return 0;
++         }
++         else {
++
++             double rt = (-b + sqrt(d)) / (2.0 * a);
++
++             return cmsmax(0, cmsmin(50, rt));
++         }
++   }
++
+ }
+ 
++/*
+ static
+ cmsBool IsMonotonic(int n, const cmsFloat64Number Table[])
+ {
+@@ -361,6 +390,7 @@
+ 
+     return TRUE;
+ }
++*/
+ 
+ // Calculates the black point of a destination profile.
+ // This algorithm comes from the Adobe paper disclosing its black point compensation method.
+@@ -369,21 +399,30 @@
+     cmsColorSpaceSignature ColorSpace;
+     cmsHTRANSFORM hRoundTrip = NULL;
+     cmsCIELab InitialLab, destLab, Lab;
++    cmsFloat64Number inRamp[256], outRamp[256];
++    cmsFloat64Number MinL, MaxL;
++    cmsBool NearlyStraightMidrange = TRUE;
++    cmsFloat64Number yRamp[256];
++    cmsFloat64Number x[256], y[256];
++    cmsFloat64Number lo, hi;
++    int n, l;
++    cmsProfileClassSignature devClass;
+ 
+-    cmsFloat64Number MinL, MaxL;
+-    cmsBool NearlyStraightMidRange = FALSE;
+-    cmsFloat64Number L;
+-    cmsFloat64Number x[101], y[101];
+-    cmsFloat64Number lo, hi, NonMonoMin;
+-    int n, l, i, NonMonoIndx;
+-
++    // Make sure the device class is adequate
++    devClass = cmsGetDeviceClass(hProfile);
++    if (devClass == cmsSigLinkClass ||
++        devClass == cmsSigAbstractClass ||
++        devClass == cmsSigNamedColorClass) {
++            BlackPoint -> X = BlackPoint ->Y = BlackPoint -> Z = 0.0;
++            return FALSE;
++    }
+ 
+     // Make sure intent is adequate
+     if (Intent != INTENT_PERCEPTUAL &&
+         Intent != INTENT_RELATIVE_COLORIMETRIC &&
+         Intent != INTENT_SATURATION) {
+-        BlackPoint -> X = BlackPoint ->Y = BlackPoint -> Z = 0.0;
+-        return FALSE;
++            BlackPoint -> X = BlackPoint ->Y = BlackPoint -> Z = 0.0;
++            return FALSE;
+     }
+ 
+ 
+@@ -415,10 +454,8 @@
+         return cmsDetectBlackPoint(BlackPoint, hProfile, Intent, dwFlags);
+     }
+ 
+-    // It is one of the valid cases!, presto chargo hocus pocus, go for the Adobe magic
++    // It is one of the valid cases!, use Adobe algorithm
+ 
+-    // Step 1
+-    // ======
+ 
+     // Set a first guess, that should work on good profiles.
+     if (Intent == INTENT_RELATIVE_COLORIMETRIC) {
+@@ -449,71 +486,68 @@
+     hRoundTrip = CreateRoundtripXForm(hProfile, Intent);
+     if (hRoundTrip == NULL)  return FALSE;
+ 
+-    // Calculate Min L*
+-    Lab = InitialLab;
+-    Lab.L = 0;
+-    cmsDoTransform(hRoundTrip, &Lab, &destLab, 1);
+-    MinL = destLab.L;
++    // Compute ramps
+ 
+-    // Calculate Max L*
+-    Lab = InitialLab;
+-    Lab.L = 100;
+-    cmsDoTransform(hRoundTrip, &Lab, &destLab, 1);
+-    MaxL = destLab.L;
++    for (l=0; l < 256; l++) {
+ 
+-    // Step 3
+-    // ======
++        Lab.L = (cmsFloat64Number) (l * 100.0) / 255.0;
++        Lab.a = cmsmin(50, cmsmax(-50, InitialLab.a));
++        Lab.b = cmsmin(50, cmsmax(-50, InitialLab.b));
+ 
+-    // check if quadratic estimation needs to be done.
++        cmsDoTransform(hRoundTrip, &Lab, &destLab, 1);
++
++        inRamp[l]  = Lab.L;
++        outRamp[l] = destLab.L;
++    }
++
++    // Make monotonic
++    for (l = 254; l > 0; --l) {
++        outRamp[l] = cmsmin(outRamp[l], outRamp[l+1]);
++    }
++
++    // Check
++    if (! (outRamp[0] < outRamp[255])) {
++
++        cmsDeleteTransform(hRoundTrip);
++        BlackPoint -> X = BlackPoint ->Y = BlackPoint -> Z = 0.0;
++        return FALSE;
++    }
++
++
++    // Test for mid range straight (only on relative colorimetric)
++
++    NearlyStraightMidrange = TRUE;
++    MinL = outRamp[0]; MaxL = outRamp[255];
+     if (Intent == INTENT_RELATIVE_COLORIMETRIC) {
+ 
+-        // Conceptually, this code tests how close the source l and converted L are to one another in the mid-range
+-        // of the values. If the converted ramp of L values is close enough to a straight line y=x, then InitialLab
+-        // is good enough to be the DestinationBlackPoint,
+-        NearlyStraightMidRange = TRUE;
++        for (l=0; l < 256; l++) {
+ 
+-        for (l=0; l <= 100; l++) {
++            if (! ((inRamp[l] <= MinL + 0.2 * (MaxL - MinL) ) ||
++                (fabs(inRamp[l] - outRamp[l]) < 4.0 )))
++                NearlyStraightMidrange = FALSE;
++        }
+ 
+-            Lab.L = l;
+-            Lab.a = InitialLab.a;
+-            Lab.b = InitialLab.b;
++        // If the mid range is straight (as determined above) then the
++        // DestinationBlackPoint shall be the same as initialLab.
++        // Otherwise, the DestinationBlackPoint shall be determined
++        // using curve fitting.
+ 
+-            cmsDoTransform(hRoundTrip, &Lab, &destLab, 1);
++        if (NearlyStraightMidrange) {
+ 
+-            L = destLab.L;
+-
+-            // Check the mid range in 20% after MinL
+-            if (L > (MinL + 0.2 * (MaxL - MinL))) {
+-
+-                // Is close enough?
+-                if (fabs(L - l) > 4.0) {
+-
+-                    // Too far away, profile is buggy!
+-                    NearlyStraightMidRange = FALSE;
+-                    break;
+-                }
+-            }
++            cmsLab2XYZ(NULL, BlackPoint, &InitialLab);
++            cmsDeleteTransform(hRoundTrip);
++            return TRUE;
+         }
+     }
+-    else {
+-        // Check is always performed for perceptual and saturation intents
+-        NearlyStraightMidRange = FALSE;
+-    }
+ 
+ 
+-    // If no furter checking is needed, we are done
+-    if (NearlyStraightMidRange) {
+-
+-        cmsLab2XYZ(NULL, BlackPoint, &InitialLab);
+-        cmsDeleteTransform(hRoundTrip);
+-        return TRUE;
+-    }
+-
+-    // The round-trip curve normally looks like a nearly constant section at the black point,
++    // curve fitting: The round-trip curve normally looks like a nearly constant section at the black point,
+     // with a corner and a nearly straight line to the white point.
+ 
+-    // STEP 4
+-    // =======
++    for (l=0; l < 256; l++) {
++
++        yRamp[l] = (outRamp[l] - MinL) / (MaxL - MinL);
++    }
+ 
+     // find the black point using the least squares error quadratic curve fitting
+ 
+@@ -528,62 +562,32 @@
+         hi = 0.25;
+     }
+ 
+-    // Capture points for the fitting.
++    // Capture shadow points for the fitting.
+     n = 0;
+-    for (l=0; l <= 100; l++) {
++    for (l=0; l < 256; l++) {
+ 
+-        cmsFloat64Number ff;
+-
+-        Lab.L = (cmsFloat64Number) l;
+-        Lab.a = InitialLab.a;
+-        Lab.b = InitialLab.b;
+-
+-        cmsDoTransform(hRoundTrip, &Lab, &destLab, 1);
+-
+-        ff = (destLab.L - MinL)/(MaxL - MinL);
++        cmsFloat64Number ff = yRamp[l];
+ 
+         if (ff >= lo && ff < hi) {
+-
+-            x[n] = Lab.L;
+-            y[n] = ff;
++            x[n] = inRamp[l];
++            y[n] = yRamp[l];
+             n++;
+         }
+-
+-    }
+-
+-    // This part is not on the Adobe paper, but I found is necessary for getting any result.
+-
+-    if (IsMonotonic(n, y)) {
+-
+-        // Monotonic means lower point is stil valid
+-        cmsLab2XYZ(NULL, BlackPoint, &InitialLab);
+-        cmsDeleteTransform(hRoundTrip);
+-        return TRUE;
+-    }
+-
+-    // No suitable points, regret and use safer algorithm
+-    if (n == 0) {
+-        cmsDeleteTransform(hRoundTrip);
+-        return cmsDetectBlackPoint(BlackPoint, hProfile, Intent, dwFlags);
+-    }
+-
+-
+-    NonMonoMin = 100;
+-    NonMonoIndx = 0;
+-    for (i=0; i < n; i++) {
+-
+-        if (y[i] < NonMonoMin) {
+-            NonMonoIndx = i;
+-            NonMonoMin = y[i];
+-        }
+     }
+ 
+-    Lab.L = x[NonMonoIndx];
++
++    // No suitable points
++    if (n < 3 ) {
++        cmsDeleteTransform(hRoundTrip);
++        BlackPoint -> X = BlackPoint ->Y = BlackPoint -> Z = 0.0;
++        return FALSE;
++    }
++
+ 
+     // fit and get the vertex of quadratic curve
+     Lab.L = RootOfLeastSquaresFitQuadraticCurve(n, x, y);
+ 
+-    if (Lab.L < 0.0 || Lab.L > 50.0) { // clip to zero L* if the vertex is negative
++    if (Lab.L < 0.0) { // clip to zero L* if the vertex is negative
+         Lab.L = 0;
+     }
+ 
+diff -r a7d42517d3f1 -r f09a3112e130 src/share/native/sun/java2d/cmm/lcms/cmstypes.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmstypes.c	Thu Jan 16 18:08:15 2014 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmstypes.c	Tue Jan 21 08:47:30 2014 -0800
+@@ -91,7 +91,7 @@
+ 
+ // Register a new type handler. This routine is shared between normal types and MPE
+ static
+-cmsBool RegisterTypesPlugin(cmsPluginBase* Data, _cmsTagTypeLinkedList* LinkedList, cmsUInt32Number DefaultListCount)
++cmsBool RegisterTypesPlugin(cmsContext id, cmsPluginBase* Data, _cmsTagTypeLinkedList* LinkedList, cmsUInt32Number DefaultListCount)
+ {
+     cmsPluginTagType* Plugin = (cmsPluginTagType*) Data;
+     _cmsTagTypeLinkedList *pt, *Anterior = NULL;
+@@ -118,7 +118,7 @@
+     }
+ 
+     // Registering happens in plug-in memory pool
+-    pt = (_cmsTagTypeLinkedList*) _cmsPluginMalloc(sizeof(_cmsTagTypeLinkedList));
++    pt = (_cmsTagTypeLinkedList*) _cmsPluginMalloc(id, sizeof(_cmsTagTypeLinkedList));
+     if (pt == NULL) return FALSE;
+ 
+     pt ->Handler   = Plugin ->Handler;
+@@ -208,10 +208,10 @@
+     cmsUInt32Number *ElementOffsets = NULL, *ElementSizes = NULL;
+ 
+     // Let's take the offsets to each element
+-    ElementOffsets = (cmsUInt32Number *) _cmsCalloc(io ->ContextID, Count, sizeof(cmsUInt32Number *));
++    ElementOffsets = (cmsUInt32Number *) _cmsCalloc(io ->ContextID, Count, sizeof(cmsUInt32Number));
+     if (ElementOffsets == NULL) goto Error;
+ 
+-    ElementSizes = (cmsUInt32Number *) _cmsCalloc(io ->ContextID, Count, sizeof(cmsUInt32Number *));
++    ElementSizes = (cmsUInt32Number *) _cmsCalloc(io ->ContextID, Count, sizeof(cmsUInt32Number));
+     if (ElementSizes == NULL) goto Error;
+ 
+     for (i=0; i < Count; i++) {
+@@ -257,10 +257,10 @@
+     cmsUInt32Number *ElementOffsets = NULL, *ElementSizes = NULL;
+ 
+      // Create table
+-    ElementOffsets = (cmsUInt32Number *) _cmsCalloc(io ->ContextID, Count, sizeof(cmsUInt32Number *));
++    ElementOffsets = (cmsUInt32Number *) _cmsCalloc(io ->ContextID, Count, sizeof(cmsUInt32Number));
+     if (ElementOffsets == NULL) goto Error;
+ 
+-    ElementSizes = (cmsUInt32Number *) _cmsCalloc(io ->ContextID, Count, sizeof(cmsUInt32Number *));
++    ElementSizes = (cmsUInt32Number *) _cmsCalloc(io ->ContextID, Count, sizeof(cmsUInt32Number));
+     if (ElementSizes == NULL) goto Error;
+ 
+     // Keep starting position of curve offsets
+@@ -456,6 +456,7 @@
+ void* Type_Chromaticity_Dup(struct _cms_typehandler_struct* self, const void *Ptr, cmsUInt32Number n)
+ {
+     return _cmsDupMem(self ->ContextID, Ptr, sizeof(cmsCIExyYTRIPLE));
++
+     cmsUNUSED_PARAMETER(n);
+ }
+ 
+@@ -1106,8 +1107,6 @@
+ {
+     cmsUInt32Number Count;
+     cmsToneCurve* NewGamma;
+-    cmsUInt16Number Linear[2] = { 0, 0xffff };
+-
+ 
+     *nItems = 0;
+     if (!_cmsReadUInt32Number(io, &Count)) return NULL;
+@@ -1115,11 +1114,14 @@
+     switch (Count) {
+ 
+            case 0:   // Linear.
+-
+-               NewGamma = cmsBuildTabulatedToneCurve16(self ->ContextID, 2, Linear);
+-               if (!NewGamma) return NULL;
+-               *nItems = 1;
+-               return NewGamma;
++               {
++                   cmsFloat64Number SingleGamma = 1.0;
++
++                   NewGamma = cmsBuildParametricToneCurve(self ->ContextID, 1, &SingleGamma);
++                   if (!NewGamma) return NULL;
++                   *nItems = 1;
++                   return NewGamma;
++               }
+ 
+            case 1:  // Specified as the exponent of gamma function
+                {
+@@ -1210,6 +1212,7 @@
+     if (ICCVersion < 4.0) return cmsSigCurveType;
+     if (Curve ->nSegments != 1) return cmsSigCurveType;          // Only 1-segment curves can be saved as parametric
+     if (Curve ->Segments[0].Type < 0) return cmsSigCurveType;    // Only non-inverted curves
++    if (Curve ->Segments[0].Type > 5) return cmsSigCurveType;    // Only ICC parametric curves
+ 
+     return cmsSigParametricCurveType;
+ }
+@@ -1386,6 +1389,9 @@
+ {
+     cmsICCMeasurementConditions mc;
+ 
++
++    memset(&mc, 0, sizeof(mc));
++
+     if (!_cmsReadUInt32Number(io, &mc.Observer)) return NULL;
+     if (!_cmsReadXYZNumber(io,    &mc.Backing)) return NULL;
+     if (!_cmsReadUInt32Number(io, &mc.Geometry)) return NULL;
+@@ -1640,7 +1646,6 @@
+ static
+ cmsBool  Read8bitTables(cmsContext ContextID, cmsIOHANDLER* io, cmsPipeline* lut, int nChannels)
+ {
+-    cmsStage* mpe;
+     cmsUInt8Number* Temp = NULL;
+     int i, j;
+     cmsToneCurve* Tables[cmsMAXCHANNELS];
+@@ -1669,11 +1674,8 @@
+     _cmsFree(ContextID, Temp);
+     Temp = NULL;
+ 
+-
+-    mpe = cmsStageAllocToneCurves(ContextID, nChannels, Tables);
+-    if (mpe == NULL) goto Error;
+-
+-    cmsPipelineInsertStage(lut, cmsAT_END, mpe);
++    if (!cmsPipelineInsertStage(lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, nChannels, Tables)))
++        goto Error;
+ 
+     for (i=0; i < nChannels; i++)
+         cmsFreeToneCurve(Tables[i]);
+@@ -1701,21 +1703,30 @@
+ 
+         if (Tables) {
+ 
+-            if (Tables ->TheCurves[i]->nEntries != 256) {
+-                cmsSignalError(ContextID, cmsERROR_RANGE, "LUT8 needs 256 entries on prelinearization");
+-                return FALSE;
++            // Usual case of identity curves
++            if ((Tables ->TheCurves[i]->nEntries == 2) &&
++                (Tables->TheCurves[i]->Table16[0] == 0) &&
++                (Tables->TheCurves[i]->Table16[1] == 65535)) {
++
++                    for (j=0; j < 256; j++) {
++                        if (!_cmsWriteUInt8Number(io, (cmsUInt8Number) j)) return FALSE;
++                    }
+             }
+-
+-        }
+-
+-        for (j=0; j < 256; j++) {
+-
+-            if (Tables != NULL)
+-                val = (cmsUInt8Number) FROM_16_TO_8(Tables->TheCurves[i]->Table16[j]);
+             else
+-                val = (cmsUInt8Number) j;
+-
+-            if (!_cmsWriteUInt8Number(io, val)) return FALSE;
++                if (Tables ->TheCurves[i]->nEntries != 256) {
++                    cmsSignalError(ContextID, cmsERROR_RANGE, "LUT8 needs 256 entries on prelinearization");
++                    return FALSE;
++                }
++                else
++                    for (j=0; j < 256; j++) {
++
++                        if (Tables != NULL)
++                            val = (cmsUInt8Number) FROM_16_TO_8(Tables->TheCurves[i]->Table16[j]);
++                        else
++                            val = (cmsUInt8Number) j;
++
++                        if (!_cmsWriteUInt8Number(io, val)) return FALSE;
++                    }
+         }
+     }
+     return TRUE;
+@@ -1724,7 +1735,7 @@
+ 
+ // Check overflow
+ static
+-size_t uipow(cmsUInt32Number n, cmsUInt32Number a, cmsUInt32Number b)
++cmsUInt32Number uipow(cmsUInt32Number n, cmsUInt32Number a, cmsUInt32Number b)
+ {
+     cmsUInt32Number rv = 1, rc;
+ 
+@@ -1736,13 +1747,13 @@
+         rv *= a;
+ 
+         // Check for overflow
+-        if (rv > UINT_MAX / a) return (size_t) -1;
++        if (rv > UINT_MAX / a) return (cmsUInt32Number) -1;
+ 
+     }
+ 
+     rc = rv * n;
+ 
+-    if (rv != rc / n) return (size_t) -1;
++    if (rv != rc / n) return (cmsUInt32Number) -1;
+     return rc;
+ }
+ 
+@@ -1757,7 +1768,6 @@
+     cmsUInt8Number InputChannels, OutputChannels, CLUTpoints;
+     cmsUInt8Number* Temp = NULL;
+     cmsPipeline* NewLUT = NULL;
+-    cmsStage *mpemat, *mpeclut;
+     cmsUInt32Number nTabSize, i;
+     cmsFloat64Number Matrix[3*3];
+ 
+@@ -1796,9 +1806,8 @@
+     // Only operates if not identity...
+     if ((InputChannels == 3) && !_cmsMAT3isIdentity((cmsMAT3*) Matrix)) {
+ 
+-        mpemat = cmsStageAllocMatrix(self ->ContextID, 3, 3, Matrix, NULL);
+-        if (mpemat == NULL) goto Error;
+-        cmsPipelineInsertStage(NewLUT, cmsAT_BEGIN, mpemat);
++        if (!cmsPipelineInsertStage(NewLUT, cmsAT_BEGIN, cmsStageAllocMatrix(self ->ContextID, 3, 3, Matrix, NULL)))
++            goto Error;
+     }
+ 
+     // Get input tables
+@@ -1806,13 +1815,10 @@
+ 
+     // Get 3D CLUT. Check the overflow....
+     nTabSize = uipow(OutputChannels, CLUTpoints, InputChannels);
+-    if (nTabSize == (size_t) -1) goto Error;
++    if (nTabSize == (cmsUInt32Number) -1) goto Error;
+     if (nTabSize > 0) {
+ 
+         cmsUInt16Number *PtrW, *T;
+-        cmsUInt32Number Tsize;
+-
+-        Tsize = (cmsUInt32Number) nTabSize * sizeof(cmsUInt16Number);
+ 
+         PtrW = T  = (cmsUInt16Number*) _cmsCalloc(self ->ContextID, nTabSize, sizeof(cmsUInt16Number));
+         if (T  == NULL) goto Error;
+@@ -1829,10 +1835,8 @@
+         _cmsFree(self ->ContextID, Temp);
+         Temp = NULL;
+ 
+-
+-        mpeclut = cmsStageAllocCLut16bit(self ->ContextID, CLUTpoints, InputChannels, OutputChannels, T);
+-        if (mpeclut == NULL) goto Error;
+-        cmsPipelineInsertStage(NewLUT, cmsAT_END, mpeclut);
++        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, cmsStageAllocCLut16bit(self ->ContextID, CLUTpoints, InputChannels, OutputChannels, T)))
++            goto Error;
+         _cmsFree(self ->ContextID, T);
+     }
+ 
+@@ -1934,7 +1938,7 @@
+     if (!Write8bitTables(self ->ContextID, io, NewLUT ->InputChannels, PreMPE)) return FALSE;
+ 
+     nTabSize = uipow(NewLUT->OutputChannels, clutPoints, NewLUT ->InputChannels);
+-    if (nTabSize == (size_t) -1) return FALSE;
++    if (nTabSize == (cmsUInt32Number) -1) return FALSE;
+     if (nTabSize > 0) {
+ 
+         // The 3D CLUT.
+@@ -1983,7 +1987,6 @@
+ static
+ cmsBool  Read16bitTables(cmsContext ContextID, cmsIOHANDLER* io, cmsPipeline* lut, int nChannels, int nEntries)
+ {
+-    cmsStage* mpe;
+     int i;
+     cmsToneCurve* Tables[cmsMAXCHANNELS];
+ 
+@@ -2007,10 +2010,8 @@
+ 
+ 
+     // Add the table (which may certainly be an identity, but this is up to the optimizer, not the reading code)
+-    mpe = cmsStageAllocToneCurves(ContextID, nChannels, Tables);
+-    if (mpe == NULL) goto Error;
+-
+-    cmsPipelineInsertStage(lut, cmsAT_END, mpe);
++    if (!cmsPipelineInsertStage(lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, nChannels, Tables)))
++        goto Error;
+ 
+     for (i=0; i < nChannels; i++)
+         cmsFreeToneCurve(Tables[i]);
+@@ -2031,7 +2032,9 @@
+     int j;
+     cmsUInt32Number i;
+     cmsUInt16Number val;
+-    int nEntries = 256;
++    int nEntries;
++
++    _cmsAssert(Tables != NULL);
+ 
+     nEntries = Tables->TheCurves[0]->nEntries;
+ 
+@@ -2039,11 +2042,7 @@
+ 
+         for (j=0; j < nEntries; j++) {
+ 
+-            if (Tables != NULL)
+-                val = Tables->TheCurves[i]->Table16[j];
+-            else
+-                val = _cmsQuantizeVal(j, nEntries);
+-
++            val = Tables->TheCurves[i]->Table16[j];
+             if (!_cmsWriteUInt16Number(io, val)) return FALSE;
+         }
+     }
+@@ -2057,7 +2056,6 @@
+ {
+     cmsUInt8Number InputChannels, OutputChannels, CLUTpoints;
+     cmsPipeline* NewLUT = NULL;
+-    cmsStage *mpemat,  *mpeclut;
+     cmsUInt32Number nTabSize;
+     cmsFloat64Number Matrix[3*3];
+     cmsUInt16Number InputEntries, OutputEntries;
+@@ -2094,9 +2092,8 @@
+     // Only operates on 3 channels
+     if ((InputChannels == 3) && !_cmsMAT3isIdentity((cmsMAT3*) Matrix)) {
+ 
+-        mpemat = cmsStageAllocMatrix(self ->ContextID, 3, 3, Matrix, NULL);
+-        if (mpemat == NULL) goto Error;
+-        cmsPipelineInsertStage(NewLUT, cmsAT_END, mpemat);
++        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, cmsStageAllocMatrix(self ->ContextID, 3, 3, Matrix, NULL)))
++            goto Error;
+     }
+ 
+     if (!_cmsReadUInt16Number(io, &InputEntries)) goto Error;
+@@ -2110,7 +2107,7 @@
+ 
+     // Get 3D CLUT
+     nTabSize = uipow(OutputChannels, CLUTpoints, InputChannels);
+-    if (nTabSize == (size_t) -1) goto Error;
++    if (nTabSize == (cmsUInt32Number) -1) goto Error;
+     if (nTabSize > 0) {
+ 
+         cmsUInt16Number *T;
+@@ -2123,13 +2120,10 @@
+             goto Error;
+         }
+ 
+-        mpeclut = cmsStageAllocCLut16bit(self ->ContextID, CLUTpoints, InputChannels, OutputChannels, T);
+-        if (mpeclut == NULL) {
+-             _cmsFree(self ->ContextID, T);
++        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, cmsStageAllocCLut16bit(self ->ContextID, CLUTpoints, InputChannels, OutputChannels, T))) {
++            _cmsFree(self ->ContextID, T);
+             goto Error;
+         }
+-
+-        cmsPipelineInsertStage(NewLUT, cmsAT_END, mpeclut);
+         _cmsFree(self ->ContextID, T);
+     }
+ 
+@@ -2159,7 +2153,7 @@
+     _cmsStageToneCurvesData* PreMPE = NULL, *PostMPE = NULL;
+     _cmsStageMatrixData* MatMPE = NULL;
+     _cmsStageCLutData* clut = NULL;
+-    int InputChannels, OutputChannels, clutPoints;
++    int i, InputChannels, OutputChannels, clutPoints;
+ 
+     // Disassemble the LUT into components.
+     mpe = NewLUT -> Elements;
+@@ -2234,13 +2228,13 @@
+     if (PreMPE != NULL) {
+         if (!_cmsWriteUInt16Number(io, (cmsUInt16Number) PreMPE ->TheCurves[0]->nEntries)) return FALSE;
+     } else {
+-            if (!_cmsWriteUInt16Number(io, 0)) return FALSE;
++            if (!_cmsWriteUInt16Number(io, 2)) return FALSE;
+     }
+ 
+     if (PostMPE != NULL) {
+         if (!_cmsWriteUInt16Number(io, (cmsUInt16Number) PostMPE ->TheCurves[0]->nEntries)) return FALSE;
+     } else {
+-        if (!_cmsWriteUInt16Number(io, 0)) return FALSE;
++        if (!_cmsWriteUInt16Number(io, 2)) return FALSE;
+ 
+     }
+ 
+@@ -2249,9 +2243,16 @@
+     if (PreMPE != NULL) {
+         if (!Write16bitTables(self ->ContextID, io, PreMPE)) return FALSE;
+     }
++    else {
++        for (i=0; i < InputChannels; i++) {
++
++            if (!_cmsWriteUInt16Number(io, 0)) return FALSE;
++            if (!_cmsWriteUInt16Number(io, 0xffff)) return FALSE;
++        }
++    }
+ 
+     nTabSize = uipow(OutputChannels, clutPoints, InputChannels);
+-    if (nTabSize == (size_t) -1) return FALSE;
++    if (nTabSize == (cmsUInt32Number) -1) return FALSE;
+     if (nTabSize > 0) {
+         // The 3D CLUT.
+         if (clut != NULL) {
+@@ -2263,7 +2264,13 @@
+     if (PostMPE != NULL) {
+         if (!Write16bitTables(self ->ContextID, io, PostMPE)) return FALSE;
+     }
+-
++    else {
++        for (i=0; i < OutputChannels; i++) {
++
++            if (!_cmsWriteUInt16Number(io, 0)) return FALSE;
++            if (!_cmsWriteUInt16Number(io, 0xffff)) return FALSE;
++        }
++    }
+ 
+     return TRUE;
+ 
+@@ -2479,7 +2486,6 @@
+     cmsUInt32Number      offsetM;        // Offset to first "M" curve
+     cmsUInt32Number      offsetC;        // Offset to CLUT
+     cmsUInt32Number      offsetA;        // Offset to first "A" curve
+-    cmsStage* mpe;
+     cmsPipeline* NewLUT = NULL;
+ 
+ 
+@@ -2501,37 +2507,35 @@
+     if (NewLUT == NULL) return NULL;
+ 
+     if (offsetA!= 0) {
+-        mpe = ReadSetOfCurves(self, io, BaseOffset + offsetA, inputChan);
+-        if (mpe == NULL) { cmsPipelineFree(NewLUT); return NULL; }
+-        cmsPipelineInsertStage(NewLUT, cmsAT_END, mpe);
++        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, ReadSetOfCurves(self, io, BaseOffset + offsetA, inputChan)))
++            goto Error;
+     }
+ 
+     if (offsetC != 0) {
+-        mpe = ReadCLUT(self, io, BaseOffset + offsetC, inputChan, outputChan);
+-        if (mpe == NULL) { cmsPipelineFree(NewLUT); return NULL; }
+-        cmsPipelineInsertStage(NewLUT, cmsAT_END, mpe);
++        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, ReadCLUT(self, io, BaseOffset + offsetC, inputChan, outputChan)))
++            goto Error;
+     }
+ 
+     if (offsetM != 0) {
+-        mpe = ReadSetOfCurves(self, io, BaseOffset + offsetM, outputChan);
+-        if (mpe == NULL) { cmsPipelineFree(NewLUT); return NULL; }
+-        cmsPipelineInsertStage(NewLUT, cmsAT_END, mpe);
++        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, ReadSetOfCurves(self, io, BaseOffset + offsetM, outputChan)))
++            goto Error;
+     }
+ 
+     if (offsetMat != 0) {
+-        mpe = ReadMatrix(self, io, BaseOffset + offsetMat);
+-        if (mpe == NULL) { cmsPipelineFree(NewLUT); return NULL; }
+-        cmsPipelineInsertStage(NewLUT, cmsAT_END, mpe);
++        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, ReadMatrix(self, io, BaseOffset + offsetMat)))
++            goto Error;
+     }
+ 
+     if (offsetB != 0) {
+-        mpe = ReadSetOfCurves(self, io, BaseOffset + offsetB, outputChan);
+-        if (mpe == NULL) { cmsPipelineFree(NewLUT); return NULL; }
+-        cmsPipelineInsertStage(NewLUT, cmsAT_END, mpe);
++        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, ReadSetOfCurves(self, io, BaseOffset + offsetB, outputChan)))
++            goto Error;
+     }
+ 
+     *nItems = 1;
+     return NewLUT;
++Error:
++    cmsPipelineFree(NewLUT);
++    return NULL;
+ 
+     cmsUNUSED_PARAMETER(SizeOfTag);
+ }
+@@ -2798,7 +2802,6 @@
+     cmsUInt32Number      offsetM;        // Offset to first "M" curve
+     cmsUInt32Number      offsetC;        // Offset to CLUT
+     cmsUInt32Number      offsetA;        // Offset to first "A" curve
+-    cmsStage* mpe;
+     cmsPipeline* NewLUT = NULL;
+ 
+ 
+@@ -2821,37 +2824,35 @@
+     if (NewLUT == NULL) return NULL;
+ 
+     if (offsetB != 0) {
+-        mpe = ReadSetOfCurves(self, io, BaseOffset + offsetB, inputChan);
+-        if (mpe == NULL) { cmsPipelineFree(NewLUT); return NULL; }
+-        cmsPipelineInsertStage(NewLUT, cmsAT_END, mpe);
++        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, ReadSetOfCurves(self, io, BaseOffset + offsetB, inputChan)))
++            goto Error;
+     }
+ 
+     if (offsetMat != 0) {
+-        mpe = ReadMatrix(self, io, BaseOffset + offsetMat);
+-        if (mpe == NULL) { cmsPipelineFree(NewLUT); return NULL; }
+-        cmsPipelineInsertStage(NewLUT, cmsAT_END, mpe);
++        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, ReadMatrix(self, io, BaseOffset + offsetMat)))
++            goto Error;
+     }
+ 
+     if (offsetM != 0) {
+-        mpe = ReadSetOfCurves(self, io, BaseOffset + offsetM, inputChan);
+-        if (mpe == NULL) { cmsPipelineFree(NewLUT); return NULL; }
+-        cmsPipelineInsertStage(NewLUT, cmsAT_END, mpe);
++        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, ReadSetOfCurves(self, io, BaseOffset + offsetM, inputChan)))
++            goto Error;
+     }
+ 
+     if (offsetC != 0) {
+-        mpe = ReadCLUT(self, io, BaseOffset + offsetC, inputChan, outputChan);
+-        if (mpe == NULL) { cmsPipelineFree(NewLUT); return NULL; }
+-        cmsPipelineInsertStage(NewLUT, cmsAT_END, mpe);
++        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, ReadCLUT(self, io, BaseOffset + offsetC, inputChan, outputChan)))
++            goto Error;
+     }
+ 
+     if (offsetA!= 0) {
+-        mpe = ReadSetOfCurves(self, io, BaseOffset + offsetA, outputChan);
+-        if (mpe == NULL) { cmsPipelineFree(NewLUT); return NULL; }
+-        cmsPipelineInsertStage(NewLUT, cmsAT_END, mpe);
++        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, ReadSetOfCurves(self, io, BaseOffset + offsetA, outputChan)))
++            goto Error;
+     }
+ 
+     *nItems = 1;
+     return NewLUT;
++Error:
++    cmsPipelineFree(NewLUT);
++    return NULL;
+ 
+     cmsUNUSED_PARAMETER(SizeOfTag);
+ }
+@@ -3287,7 +3288,7 @@
+         SizeOfTag -= sizeof(cmsUInt32Number);
+ 
+         if (!_cmsReadUInt64Number(io, &sec ->attributes)) goto Error;
+-        if (SizeOfTag < sizeof(cmsUInt32Number)) goto Error;
++        if (SizeOfTag < sizeof(cmsUInt64Number)) goto Error;
+         SizeOfTag -= sizeof(cmsUInt64Number);
+ 
+         if (!_cmsReadUInt32Number(io, (cmsUInt32Number *)&sec ->technology)) goto Error;
+@@ -4292,6 +4293,9 @@
+     if (!_cmsReadUInt16Number(io, &InputChans)) return NULL;
+     if (!_cmsReadUInt16Number(io, &OutputChans)) return NULL;
+ 
++    if (InputChans == 0) goto Error;
++    if (OutputChans == 0) goto Error;
++
+     if (io ->Read(io, Dimensions8, sizeof(cmsUInt8Number), 16) != 16)
+         goto Error;
+ 
+@@ -4381,7 +4385,6 @@
+ {
+     cmsStageSignature ElementSig;
+     cmsTagTypeHandler* TypeHandler;
+-    cmsStage *mpe = NULL;
+     cmsUInt32Number nItems;
+     cmsPipeline *NewLUT = (cmsPipeline *) Cargo;
+ 
+@@ -4409,11 +4412,8 @@
+     if (TypeHandler ->ReadPtr != NULL) {
+ 
+         // This is a real element which should be read and processed
+-        mpe = (cmsStage*) TypeHandler ->ReadPtr(self, io, &nItems, SizeOfTag);
+-        if (mpe == NULL) return FALSE;
+-
+-        // All seems ok, insert element
+-        cmsPipelineInsertStage(NewLUT, cmsAT_END, mpe);
++        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, (cmsStage*) TypeHandler ->ReadPtr(self, io, &nItems, SizeOfTag)))
++            return FALSE;
+     }
+ 
+     return TRUE;
+@@ -4479,10 +4479,10 @@
+     outputChan = cmsPipelineOutputChannels(Lut);
+     ElemCount  = cmsPipelineStageCount(Lut);
+ 
+-    ElementOffsets = (cmsUInt32Number *) _cmsCalloc(self ->ContextID, ElemCount, sizeof(cmsUInt32Number *));
++    ElementOffsets = (cmsUInt32Number *) _cmsCalloc(self ->ContextID, ElemCount, sizeof(cmsUInt32Number));
+     if (ElementOffsets == NULL) goto Error;
+ 
+-    ElementSizes = (cmsUInt32Number *) _cmsCalloc(self ->ContextID, ElemCount, sizeof(cmsUInt32Number *));
++    ElementSizes = (cmsUInt32Number *) _cmsCalloc(self ->ContextID, ElemCount, sizeof(cmsUInt32Number));
+     if (ElementSizes == NULL) goto Error;
+ 
+     // Write the head
+@@ -4825,10 +4825,10 @@
+ static
+ cmsBool AllocElem(cmsContext ContextID, _cmsDICelem* e,  cmsUInt32Number Count)
+ {
+-    e->Offsets = (cmsUInt32Number *) _cmsCalloc(ContextID, Count, sizeof(cmsUInt32Number *));
++    e->Offsets = (cmsUInt32Number *) _cmsCalloc(ContextID, Count, sizeof(cmsUInt32Number));
+     if (e->Offsets == NULL) return FALSE;
+ 
+-    e->Sizes = (cmsUInt32Number *) _cmsCalloc(ContextID, Count, sizeof(cmsUInt32Number *));
++    e->Sizes = (cmsUInt32Number *) _cmsCalloc(ContextID, Count, sizeof(cmsUInt32Number));
+     if (e->Sizes == NULL) {
+ 
+         _cmsFree(ContextID, e -> Offsets);
+@@ -4844,7 +4844,7 @@
+ void FreeElem(_cmsDICelem* e)
+ {
+     if (e ->Offsets != NULL)  _cmsFree(e -> ContextID, e -> Offsets);
+-    if (e ->Sizes   != NULL)  _cmsFree(e -> ContextID, e ->Sizes);
++    if (e ->Sizes   != NULL)  _cmsFree(e -> ContextID, e -> Sizes);
+     e->Offsets = e ->Sizes = NULL;
+ }
+ 
+@@ -5084,7 +5084,7 @@
+     if (!_cmsReadUInt32Number(io, &Count)) return NULL;
+     SizeOfTag -= sizeof(cmsUInt32Number);
+ 
+-    // Get rec lenghth
++    // Get rec length
+     if (!_cmsReadUInt32Number(io, &Length)) return NULL;
+     SizeOfTag -= sizeof(cmsUInt32Number);
+ 
+@@ -5118,14 +5118,22 @@
+             if (!ReadOneMLUC(self, io, &a.DisplayValue, i, &DisplayValueMLU)) goto Error;
+         }
+ 
++        if (NameWCS == NULL || ValueWCS == NULL) {
++
++            cmsSignalError(self->ContextID, cmsERROR_CORRUPTION_DETECTED, "Bad dictionary Name/Value");
++            rc = FALSE;
++        }
++        else {
++
+         rc = cmsDictAddEntry(hDict, NameWCS, ValueWCS, DisplayNameMLU, DisplayValueMLU);
++        }
+ 
+         if (NameWCS != NULL) _cmsFree(self ->ContextID, NameWCS);
+         if (ValueWCS != NULL) _cmsFree(self ->ContextID, ValueWCS);
+         if (DisplayNameMLU != NULL) cmsMLUfree(DisplayNameMLU);
+         if (DisplayValueMLU != NULL) cmsMLUfree(DisplayValueMLU);
+ 
+-        if (!rc) return FALSE;
++        if (!rc) goto Error;
+     }
+ 
+    FreeArray(&a);
+@@ -5277,14 +5285,14 @@
+ #define DEFAULT_TAG_TYPE_COUNT  (sizeof(SupportedTagTypes) / sizeof(_cmsTagTypeLinkedList))
+ 
+ // Both kind of plug-ins share same structure
+-cmsBool  _cmsRegisterTagTypePlugin(cmsPluginBase* Data)
++cmsBool  _cmsRegisterTagTypePlugin(cmsContext id, cmsPluginBase* Data)
+ {
+-    return RegisterTypesPlugin(Data, SupportedTagTypes, DEFAULT_TAG_TYPE_COUNT);
++    return RegisterTypesPlugin(id, Data, SupportedTagTypes, DEFAULT_TAG_TYPE_COUNT);
+ }
+ 
+-cmsBool  _cmsRegisterMultiProcessElementPlugin(cmsPluginBase* Data)
++cmsBool  _cmsRegisterMultiProcessElementPlugin(cmsContext id, cmsPluginBase* Data)
+ {
+-    return RegisterTypesPlugin(Data, SupportedMPEtypes, DEFAULT_MPE_TYPE_COUNT);
++    return RegisterTypesPlugin(id, Data, SupportedMPEtypes, DEFAULT_MPE_TYPE_COUNT);
+ }
+ 
+ 
+@@ -5391,7 +5399,9 @@
+     { cmsSigScreeningTag,           { 1, 1, { cmsSigScreeningType},          NULL }, &SupportedTags[59]},
+     { cmsSigVcgtTag,                { 1, 1, { cmsSigVcgtType},               NULL }, &SupportedTags[60]},
+     { cmsSigMetaTag,                { 1, 1, { cmsSigDictType},               NULL }, &SupportedTags[61]},
+-    { cmsSigProfileSequenceIdTag,   { 1, 1, { cmsSigProfileSequenceIdType},  NULL},  NULL}
++    { cmsSigProfileSequenceIdTag,   { 1, 1, { cmsSigProfileSequenceIdType},  NULL },  &SupportedTags[62]},
++    { cmsSigProfileDescriptionMLTag,{ 1, 1, { cmsSigMultiLocalizedUnicodeType}, NULL}, NULL}
++
+ 
+ };
+ 
+@@ -5406,7 +5416,7 @@
+ 
+ #define DEFAULT_TAG_COUNT  (sizeof(SupportedTags) / sizeof(_cmsTagLinkedList))
+ 
+-cmsBool  _cmsRegisterTagPlugin(cmsPluginBase* Data)
++cmsBool  _cmsRegisterTagPlugin(cmsContext id, cmsPluginBase* Data)
+ {
+     cmsPluginTag* Plugin = (cmsPluginTag*) Data;
+     _cmsTagLinkedList *pt, *Anterior;
+@@ -5430,7 +5440,7 @@
+         pt = pt ->Next;
+     }
+ 
+-    pt = (_cmsTagLinkedList*) _cmsPluginMalloc(sizeof(_cmsTagLinkedList));
++    pt = (_cmsTagLinkedList*) _cmsPluginMalloc(id, sizeof(_cmsTagLinkedList));
+     if (pt == NULL) return FALSE;
+ 
+     pt ->Signature  = Plugin ->Signature;
+diff -r a7d42517d3f1 -r f09a3112e130 src/share/native/sun/java2d/cmm/lcms/cmsvirt.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsvirt.c	Thu Jan 16 18:08:15 2014 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsvirt.c	Tue Jan 21 08:47:30 2014 -0800
+@@ -208,9 +208,26 @@
+ 
+     if (TransferFunction) {
+ 
++        // Tries to minimize space. Thanks to Richard Hughes for this nice idea
+         if (!cmsWriteTag(hICC, cmsSigRedTRCTag,   (void*) TransferFunction[0])) goto Error;
+-        if (!cmsWriteTag(hICC, cmsSigGreenTRCTag, (void*) TransferFunction[1])) goto Error;
+-        if (!cmsWriteTag(hICC, cmsSigBlueTRCTag,  (void*) TransferFunction[2])) goto Error;
++
++        if (TransferFunction[1] == TransferFunction[0]) {
++
++            if (!cmsLinkTag (hICC, cmsSigGreenTRCTag, cmsSigRedTRCTag)) goto Error;
++
++        } else {
++
++            if (!cmsWriteTag(hICC, cmsSigGreenTRCTag, (void*) TransferFunction[1])) goto Error;
++        }
++
++        if (TransferFunction[2] == TransferFunction[0]) {
++
++            if (!cmsLinkTag (hICC, cmsSigBlueTRCTag, cmsSigRedTRCTag)) goto Error;
++
++        } else {
++
++            if (!cmsWriteTag(hICC, cmsSigBlueTRCTag, (void*) TransferFunction[2])) goto Error;
++        }
+     }
+ 
+     if (Primaries) {
+@@ -303,7 +320,6 @@
+ {
+     cmsHPROFILE hICC;
+     cmsPipeline* Pipeline;
+-    cmsStage* Lin;
+     int nChannels;
+ 
+     hICC = cmsCreateProfilePlaceholder(ContextID);
+@@ -327,10 +343,8 @@
+ 
+ 
+     // Copy tables to Pipeline
+-    Lin = cmsStageAllocToneCurves(ContextID, nChannels, TransferFunctions);
+-    if (Lin == NULL) goto Error;
+-
+-    cmsPipelineInsertStage(Pipeline, cmsAT_BEGIN, Lin);
++    if (!cmsPipelineInsertStage(Pipeline, cmsAT_BEGIN, cmsStageAllocToneCurves(ContextID, nChannels, TransferFunctions)))
++        goto Error;
+ 
+     // Create tags
+     if (!SetTextTags(hICC, L"Linearization built-in")) goto Error;
+@@ -344,6 +358,7 @@
+     return hICC;
+ 
+ Error:
++    cmsPipelineFree(Pipeline);
+     if (hICC)
+         cmsCloseProfile(hICC);
+ 
+@@ -451,9 +466,10 @@
+ 
+     if (!cmsStageSampleCLut16bit(CLUT, InkLimitingSampler, (void*) &Limit, 0)) goto Error;
+ 
+-    cmsPipelineInsertStage(LUT, cmsAT_BEGIN, _cmsStageAllocIdentityCurves(ContextID, nChannels));
+-    cmsPipelineInsertStage(LUT, cmsAT_END, CLUT);
+-    cmsPipelineInsertStage(LUT, cmsAT_END, _cmsStageAllocIdentityCurves(ContextID, nChannels));
++    if (!cmsPipelineInsertStage(LUT, cmsAT_BEGIN, _cmsStageAllocIdentityCurves(ContextID, nChannels)) ||
++        !cmsPipelineInsertStage(LUT, cmsAT_END, CLUT) ||
++        !cmsPipelineInsertStage(LUT, cmsAT_END, _cmsStageAllocIdentityCurves(ContextID, nChannels)))
++        goto Error;
+ 
+     // Create tags
+     if (!SetTextTags(hICC, L"ink-limiting built-in")) goto Error;
+@@ -504,7 +520,8 @@
+     LUT = cmsPipelineAlloc(ContextID, 3, 3);
+     if (LUT == NULL) goto Error;
+ 
+-    cmsPipelineInsertStage(LUT, cmsAT_BEGIN, _cmsStageAllocIdentityCLut(ContextID, 3));
++    if (!cmsPipelineInsertStage(LUT, cmsAT_BEGIN, _cmsStageAllocIdentityCLut(ContextID, 3)))
++        goto Error;
+ 
+     if (!cmsWriteTag(hProfile, cmsSigAToB0Tag, LUT)) goto Error;
+     cmsPipelineFree(LUT);
+@@ -550,7 +567,8 @@
+     LUT = cmsPipelineAlloc(ContextID, 3, 3);
+     if (LUT == NULL) goto Error;
+ 
+-    cmsPipelineInsertStage(LUT, cmsAT_BEGIN, _cmsStageAllocIdentityCurves(ContextID, 3));
++    if (!cmsPipelineInsertStage(LUT, cmsAT_BEGIN, _cmsStageAllocIdentityCurves(ContextID, 3)))
++        goto Error;
+ 
+     if (!cmsWriteTag(hProfile, cmsSigAToB0Tag, LUT)) goto Error;
+     cmsPipelineFree(LUT);
+@@ -595,7 +613,8 @@
+     LUT = cmsPipelineAlloc(ContextID, 3, 3);
+     if (LUT == NULL) goto Error;
+ 
+-    cmsPipelineInsertStage(LUT, cmsAT_BEGIN, _cmsStageAllocIdentityCurves(ContextID, 3));
++    if (!cmsPipelineInsertStage(LUT, cmsAT_BEGIN, _cmsStageAllocIdentityCurves(ContextID, 3)))
++        goto Error;
+ 
+     if (!cmsWriteTag(hProfile, cmsSigAToB0Tag, LUT)) goto Error;
+     cmsPipelineFree(LUT);
+@@ -734,81 +753,83 @@
+ // contrast, Saturation and white point displacement
+ 
+ cmsHPROFILE CMSEXPORT cmsCreateBCHSWabstractProfileTHR(cmsContext ContextID,
+-                                                     int nLUTPoints,
+-                                                     cmsFloat64Number Bright,
+-                                                     cmsFloat64Number Contrast,
+-                                                     cmsFloat64Number Hue,
+-                                                     cmsFloat64Number Saturation,
+-                                                     int TempSrc,
+-                                                     int TempDest)
++    int nLUTPoints,
++    cmsFloat64Number Bright,
++    cmsFloat64Number Contrast,
++    cmsFloat64Number Hue,
++    cmsFloat64Number Saturation,
++    int TempSrc,
++    int TempDest)
+ {
+-     cmsHPROFILE hICC;
+-     cmsPipeline* Pipeline;
+-     BCHSWADJUSTS bchsw;
+-     cmsCIExyY WhitePnt;
+-     cmsStage* CLUT;
+-     cmsUInt32Number Dimensions[MAX_INPUT_DIMENSIONS];
+-     int i;
++    cmsHPROFILE hICC;
++    cmsPipeline* Pipeline;
++    BCHSWADJUSTS bchsw;
++    cmsCIExyY WhitePnt;
++    cmsStage* CLUT;
++    cmsUInt32Number Dimensions[MAX_INPUT_DIMENSIONS];
++    int i;
+ 
++    bchsw.Brightness = Bright;
++    bchsw.Contrast   = Contrast;
++    bchsw.Hue        = Hue;
++    bchsw.Saturation = Saturation;
+ 
+-     bchsw.Brightness = Bright;
+-     bchsw.Contrast   = Contrast;
+-     bchsw.Hue        = Hue;
+-     bchsw.Saturation = Saturation;
++    cmsWhitePointFromTemp(&WhitePnt, TempSrc );
++    cmsxyY2XYZ(&bchsw.WPsrc, &WhitePnt);
+ 
+-     cmsWhitePointFromTemp(&WhitePnt, TempSrc );
+-     cmsxyY2XYZ(&bchsw.WPsrc, &WhitePnt);
++    cmsWhitePointFromTemp(&WhitePnt, TempDest);
++    cmsxyY2XYZ(&bchsw.WPdest, &WhitePnt);
+ 
+-     cmsWhitePointFromTemp(&WhitePnt, TempDest);
+-     cmsxyY2XYZ(&bchsw.WPdest, &WhitePnt);
++    hICC = cmsCreateProfilePlaceholder(ContextID);
++    if (!hICC)                          // can't allocate
++        return NULL;
+ 
+-      hICC = cmsCreateProfilePlaceholder(ContextID);
+-       if (!hICC)                          // can't allocate
+-            return NULL;
+ 
++    cmsSetDeviceClass(hICC,      cmsSigAbstractClass);
++    cmsSetColorSpace(hICC,       cmsSigLabData);
++    cmsSetPCS(hICC,              cmsSigLabData);
+ 
+-       cmsSetDeviceClass(hICC,      cmsSigAbstractClass);
+-       cmsSetColorSpace(hICC,       cmsSigLabData);
+-       cmsSetPCS(hICC,              cmsSigLabData);
++    cmsSetHeaderRenderingIntent(hICC,  INTENT_PERCEPTUAL);
+ 
+-       cmsSetHeaderRenderingIntent(hICC,  INTENT_PERCEPTUAL);
++    // Creates a Pipeline with 3D grid only
++    Pipeline = cmsPipelineAlloc(ContextID, 3, 3);
++    if (Pipeline == NULL) {
++        cmsCloseProfile(hICC);
++        return NULL;
++    }
+ 
++    for (i=0; i < MAX_INPUT_DIMENSIONS; i++) Dimensions[i] = nLUTPoints;
++    CLUT = cmsStageAllocCLut16bitGranular(ContextID, Dimensions, 3, 3, NULL);
++    if (CLUT == NULL) return NULL;
+ 
+-       // Creates a Pipeline with 3D grid only
+-       Pipeline = cmsPipelineAlloc(ContextID, 3, 3);
+-       if (Pipeline == NULL) {
+-           cmsCloseProfile(hICC);
+-           return NULL;
+-           }
+ 
+-       for (i=0; i < MAX_INPUT_DIMENSIONS; i++) Dimensions[i] = nLUTPoints;
+-       CLUT = cmsStageAllocCLut16bitGranular(ContextID, Dimensions, 3, 3, NULL);
+-       if (CLUT == NULL) return NULL;
++    if (!cmsStageSampleCLut16bit(CLUT, bchswSampler, (void*) &bchsw, 0)) {
+ 
++        // Shouldn't reach here
++        goto Error;
++    }
+ 
+-       if (!cmsStageSampleCLut16bit(CLUT, bchswSampler, (void*) &bchsw, 0)) {
++    if (!cmsPipelineInsertStage(Pipeline, cmsAT_END, CLUT)) {
++        goto Error;
++    }
+ 
+-                // Shouldn't reach here
+-                cmsPipelineFree(Pipeline);
+-                cmsCloseProfile(hICC);
+-                return NULL;
+-       }
++    // Create tags
++    if (!SetTextTags(hICC, L"BCHS built-in")) return NULL;
+ 
+-       cmsPipelineInsertStage(Pipeline, cmsAT_END, CLUT);
++    cmsWriteTag(hICC, cmsSigMediaWhitePointTag, (void*) cmsD50_XYZ());
+ 
+-       // Create tags
++    cmsWriteTag(hICC, cmsSigAToB0Tag, (void*) Pipeline);
+ 
+-       if (!SetTextTags(hICC, L"BCHS built-in")) return NULL;
++    // Pipeline is already on virtual profile
++    cmsPipelineFree(Pipeline);
+ 
+-       cmsWriteTag(hICC, cmsSigMediaWhitePointTag, (void*) cmsD50_XYZ());
++    // Ok, done
++    return hICC;
+ 
+-       cmsWriteTag(hICC, cmsSigAToB0Tag, (void*) Pipeline);
+-
+-       // Pipeline is already on virtual profile
+-       cmsPipelineFree(Pipeline);
+-
+-       // Ok, done
+-       return hICC;
++Error:
++    cmsPipelineFree(Pipeline);
++    cmsCloseProfile(hICC);
++    return NULL;
+ }
+ 
+ 
+@@ -856,7 +877,8 @@
+     PostLin = cmsStageAllocToneCurves(ContextID, 1, &EmptyTab);
+     cmsFreeToneCurve(EmptyTab);
+ 
+-    cmsPipelineInsertStage(LUT, cmsAT_END, PostLin);
++    if (!cmsPipelineInsertStage(LUT, cmsAT_END, PostLin))
++        goto Error;
+ 
+     if (!cmsWriteTag(hProfile, cmsSigBToA0Tag, (void*) LUT)) goto Error;
+     if (!cmsWriteTag(hProfile, cmsSigMediaWhitePointTag, cmsD50_XYZ())) goto Error;
+@@ -999,6 +1021,7 @@
+ 
+     { FALSE, 0,              cmsSigLut16Type,    4,  { cmsSigMatrixElemType,  cmsSigCurveSetElemType, cmsSigCLutElemType, cmsSigCurveSetElemType}},
+     { FALSE, 0,              cmsSigLut16Type,    3,  { cmsSigCurveSetElemType, cmsSigCLutElemType, cmsSigCurveSetElemType}},
++    { FALSE, 0,              cmsSigLut16Type,    2,  { cmsSigCurveSetElemType, cmsSigCLutElemType}},
+     { TRUE , 0,              cmsSigLutAtoBType,  1,  { cmsSigCurveSetElemType }},
+     { TRUE , cmsSigAToB0Tag, cmsSigLutAtoBType,  3,  { cmsSigCurveSetElemType, cmsSigMatrixElemType, cmsSigCurveSetElemType } },
+     { TRUE , cmsSigAToB0Tag, cmsSigLutAtoBType,  3,  { cmsSigCurveSetElemType, cmsSigCLutElemType, cmsSigCurveSetElemType   } },
+@@ -1059,6 +1082,7 @@
+     cmsContext ContextID = cmsGetTransformContextID(hTransform);
+     const cmsAllowedLUT* AllowedLUT;
+     cmsTagSignature DestinationTag;
++    cmsProfileClassSignature deviceClass;
+ 
+     _cmsAssert(hTransform != NULL);
+ 
+@@ -1080,13 +1104,15 @@
+     // Time to fix the Lab2/Lab4 issue.
+     if ((xform ->EntryColorSpace == cmsSigLabData) && (Version < 4.0)) {
+ 
+-        cmsPipelineInsertStage(LUT, cmsAT_BEGIN, _cmsStageAllocLabV2ToV4curves(ContextID));
++        if (!cmsPipelineInsertStage(LUT, cmsAT_BEGIN, _cmsStageAllocLabV2ToV4curves(ContextID)))
++            goto Error;
+     }
+ 
+     // On the output side too
+     if ((xform ->ExitColorSpace) == cmsSigLabData && (Version < 4.0)) {
+ 
+-        cmsPipelineInsertStage(LUT, cmsAT_END, _cmsStageAllocLabV4ToV2(ContextID));
++        if (!cmsPipelineInsertStage(LUT, cmsAT_END, _cmsStageAllocLabV4ToV2(ContextID)))
++            goto Error;
+     }
+ 
+ 
+@@ -1108,8 +1134,9 @@
+     FrmIn  = COLORSPACE_SH(ColorSpaceBitsIn) | CHANNELS_SH(ChansIn)|BYTES_SH(2);
+     FrmOut = COLORSPACE_SH(ColorSpaceBitsOut) | CHANNELS_SH(ChansOut)|BYTES_SH(2);
+ 
++    deviceClass = cmsGetDeviceClass(hProfile);
+ 
+-     if (cmsGetDeviceClass(hProfile) == cmsSigOutputClass)
++     if (deviceClass == cmsSigOutputClass)
+          DestinationTag = cmsSigBToA0Tag;
+      else
+          DestinationTag = cmsSigAToB0Tag;
+@@ -1136,10 +1163,12 @@
+ 
+         // Put identity curves if needed
+         if (cmsPipelineGetPtrToFirstStage(LUT) ->Type != cmsSigCurveSetElemType)
+-             cmsPipelineInsertStage(LUT, cmsAT_BEGIN, _cmsStageAllocIdentityCurves(ContextID, ChansIn));
++             if (!cmsPipelineInsertStage(LUT, cmsAT_BEGIN, _cmsStageAllocIdentityCurves(ContextID, ChansIn)))
++                 goto Error;
+ 
+         if (cmsPipelineGetPtrToLastStage(LUT) ->Type != cmsSigCurveSetElemType)
+-             cmsPipelineInsertStage(LUT, cmsAT_END,   _cmsStageAllocIdentityCurves(ContextID, ChansOut));
++             if (!cmsPipelineInsertStage(LUT, cmsAT_END,   _cmsStageAllocIdentityCurves(ContextID, ChansOut)))
++                 goto Error;
+ 
+         AllowedLUT = FindCombination(LUT, Version >= 4.0, DestinationTag);
+     }
+@@ -1168,10 +1197,22 @@
+            if (!cmsWriteTag(hProfile, cmsSigColorantTableOutTag, xform->OutputColorant)) goto Error;
+     }
+ 
+-    if (xform ->Sequence != NULL) {
++    if ((deviceClass == cmsSigLinkClass) && (xform ->Sequence != NULL)) {
+         if (!_cmsWriteProfileSequence(hProfile, xform ->Sequence)) goto Error;
+     }
+ 
++    // Set the white point
++    if (deviceClass == cmsSigInputClass) {
++        if (!cmsWriteTag(hProfile, cmsSigMediaWhitePointTag, &xform ->EntryWhitePoint)) goto Error;
++    }
++    else {
++         if (!cmsWriteTag(hProfile, cmsSigMediaWhitePointTag, &xform ->ExitWhitePoint)) goto Error;
++    }
++
++
++    // Per 7.2.15 in spec 4.3
++    cmsSetHeaderRenderingIntent(hProfile, xform ->RenderingIntent);
++
+     cmsPipelineFree(LUT);
+     return hProfile;
+ 
+diff -r a7d42517d3f1 -r f09a3112e130 src/share/native/sun/java2d/cmm/lcms/cmswtpnt.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmswtpnt.c	Thu Jan 16 18:08:15 2014 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmswtpnt.c	Tue Jan 21 08:47:30 2014 -0800
+@@ -30,7 +30,7 @@
+ //---------------------------------------------------------------------------------
+ //
+ //  Little Color Management System
+-//  Copyright (c) 1998-2010 Marti Maria Saguer
++//  Copyright (c) 1998-2012 Marti Maria Saguer
+ //
+ // Permission is hereby granted, free of charge, to any person obtaining
+ // a copy of this software and associated documentation files (the "Software"),
+@@ -76,48 +76,48 @@
+ // Obtains WhitePoint from Temperature
+ cmsBool  CMSEXPORT cmsWhitePointFromTemp(cmsCIExyY* WhitePoint, cmsFloat64Number TempK)
+ {
+-       cmsFloat64Number x, y;
+-       cmsFloat64Number T, T2, T3;
+-       // cmsFloat64Number M1, M2;
++    cmsFloat64Number x, y;
++    cmsFloat64Number T, T2, T3;
++    // cmsFloat64Number M1, M2;
+ 
+-       _cmsAssert(WhitePoint != NULL);
++    _cmsAssert(WhitePoint != NULL);
+ 
+-       T = TempK;
+-       T2 = T*T;            // Square
+-       T3 = T2*T;           // Cube
++    T = TempK;
++    T2 = T*T;            // Square
++    T3 = T2*T;           // Cube
+ 
+-       // For correlated color temperature (T) between 4000K and 7000K:
++    // For correlated color temperature (T) between 4000K and 7000K:
+ 
+-       if (T >= 4000. && T <= 7000.)
+-       {
+-              x = -4.6070*(1E9/T3) + 2.9678*(1E6/T2) + 0.09911*(1E3/T) + 0.244063;
+-       }
+-       else
+-              // or for correlated color temperature (T) between 7000K and 25000K:
++    if (T >= 4000. && T <= 7000.)
++    {
++        x = -4.6070*(1E9/T3) + 2.9678*(1E6/T2) + 0.09911*(1E3/T) + 0.244063;
++    }
++    else
++        // or for correlated color temperature (T) between 7000K and 25000K:
+ 
+-       if (T > 7000.0 && T <= 25000.0)
+-       {
+-              x = -2.0064*(1E9/T3) + 1.9018*(1E6/T2) + 0.24748*(1E3/T) + 0.237040;
+-       }
+-       else {
+-              cmsSignalError(0, cmsERROR_RANGE, "cmsWhitePointFromTemp: invalid temp");
+-              return FALSE;
+-              }
++        if (T > 7000.0 && T <= 25000.0)
++        {
++            x = -2.0064*(1E9/T3) + 1.9018*(1E6/T2) + 0.24748*(1E3/T) + 0.237040;
++        }
++        else {
++            cmsSignalError(0, cmsERROR_RANGE, "cmsWhitePointFromTemp: invalid temp");
++            return FALSE;
++        }
+ 
+-       // Obtain y(x)
++        // Obtain y(x)
+ 
+-       y = -3.000*(x*x) + 2.870*x - 0.275;
++        y = -3.000*(x*x) + 2.870*x - 0.275;
+ 
+-       // wave factors (not used, but here for futures extensions)
++        // wave factors (not used, but here for futures extensions)
+ 
+-       // M1 = (-1.3515 - 1.7703*x + 5.9114 *y)/(0.0241 + 0.2562*x - 0.7341*y);
+-       // M2 = (0.0300 - 31.4424*x + 30.0717*y)/(0.0241 + 0.2562*x - 0.7341*y);
++        // M1 = (-1.3515 - 1.7703*x + 5.9114 *y)/(0.0241 + 0.2562*x - 0.7341*y);
++        // M2 = (0.0300 - 31.4424*x + 30.0717*y)/(0.0241 + 0.2562*x - 0.7341*y);
+ 
+-       WhitePoint -> x = x;
+-       WhitePoint -> y = y;
+-       WhitePoint -> Y = 1.0;
++        WhitePoint -> x = x;
++        WhitePoint -> y = y;
++        WhitePoint -> Y = 1.0;
+ 
+-       return TRUE;
++        return TRUE;
+ }
+ 
+ 
+@@ -266,7 +266,7 @@
+         {{  0.8951,  0.2664, -0.1614 }},
+         {{ -0.7502,  1.7135,  0.0367 }},
+         {{  0.0389, -0.0685,  1.0296 }}
+-      }};
++    }};
+ 
+     if (ConeMatrix == NULL)
+         ConeMatrix = &LamRigg;
+diff -r a7d42517d3f1 -r f09a3112e130 src/share/native/sun/java2d/cmm/lcms/cmsxform.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c	Thu Jan 16 18:08:15 2014 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/cmsxform.c	Tue Jan 21 08:47:30 2014 -0800
+@@ -396,7 +396,7 @@
+ static _cmsTransformCollection* TransformCollection = NULL;
+ 
+ // Register new ways to transform
+-cmsBool  _cmsRegisterTransformPlugin(cmsPluginBase* Data)
++cmsBool  _cmsRegisterTransformPlugin(cmsContext id, cmsPluginBase* Data)
+ {
+     cmsPluginTransform* Plugin = (cmsPluginTransform*) Data;
+     _cmsTransformCollection* fl;
+@@ -412,7 +412,7 @@
+    if (Plugin ->Factory == NULL) return FALSE;
+ 
+ 
+-    fl = (_cmsTransformCollection*) _cmsPluginMalloc(sizeof(_cmsTransformCollection));
++    fl = (_cmsTransformCollection*) _cmsPluginMalloc(id, sizeof(_cmsTransformCollection));
+     if (fl == NULL) return FALSE;
+ 
+       // Copy the parameters
+@@ -651,6 +651,22 @@
+ 
+ // ----------------------------------------------------------------------------------------------------------------
+ 
++static
++void SetWhitePoint(cmsCIEXYZ* wtPt, const cmsCIEXYZ* src)
++{
++    if (src == NULL) {
++        wtPt ->X = cmsD50X;
++        wtPt ->Y = cmsD50Y;
++        wtPt ->Z = cmsD50Z;
++    }
++    else {
++        wtPt ->X = src->X;
++        wtPt ->Y = src->Y;
++        wtPt ->Z = src->Z;
++    }
++
++}
++
+ // New to lcms 2.0 -- have all parameters available.
+ cmsHTRANSFORM CMSEXPORT cmsCreateExtendedTransform(cmsContext ContextID,
+                                                    cmsUInt32Number nProfiles, cmsHPROFILE hProfiles[],
+@@ -664,7 +680,6 @@
+                                                    cmsUInt32Number dwFlags)
+ {
+     _cmsTRANSFORM* xform;
+-    cmsBool  FloatTransform;
+     cmsColorSpaceSignature EntryColorSpace;
+     cmsColorSpaceSignature ExitColorSpace;
+     cmsPipeline* Lut;
+@@ -681,9 +696,7 @@
+         if (hGamutProfile == NULL) dwFlags &= ~cmsFLAGS_GAMUTCHECK;
+     }
+ 
+-    // On floating point transforms, inhibit optimizations
+-    FloatTransform = (_cmsFormatterIsFloat(InputFormat) && _cmsFormatterIsFloat(OutputFormat));
+-
++    // On floating point transforms, inhibit cache
+     if (_cmsFormatterIsFloat(InputFormat) || _cmsFormatterIsFloat(OutputFormat))
+         dwFlags |= cmsFLAGS_NOCACHE;
+ 
+@@ -730,6 +743,10 @@
+     xform ->ExitColorSpace  = ExitColorSpace;
+     xform ->RenderingIntent = Intents[nProfiles-1];
+ 
++    // Take white points
++    SetWhitePoint(&xform->EntryWhitePoint, (cmsCIEXYZ*) cmsReadTag(hProfiles[0], cmsSigMediaWhitePointTag));
++    SetWhitePoint(&xform->ExitWhitePoint,  (cmsCIEXYZ*) cmsReadTag(hProfiles[nProfiles-1], cmsSigMediaWhitePointTag));
++
+ 
+     // Create a gamut check LUT if requested
+     if (hGamutProfile != NULL && (dwFlags & cmsFLAGS_GAMUTCHECK))
+diff -r a7d42517d3f1 -r f09a3112e130 src/share/native/sun/java2d/cmm/lcms/lcms2.h
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/lcms2.h	Thu Jan 16 18:08:15 2014 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/lcms2.h	Tue Jan 21 08:47:30 2014 -0800
+@@ -30,7 +30,7 @@
+ //---------------------------------------------------------------------------------
+ //
+ //  Little Color Management System
+-//  Copyright (c) 1998-2011 Marti Maria Saguer
++//  Copyright (c) 1998-2013 Marti Maria Saguer
+ //
+ // Permission is hereby granted, free of charge, to any person obtaining
+ // a copy of this software and associated documentation files (the "Software"),
+@@ -52,7 +52,7 @@
+ //
+ //---------------------------------------------------------------------------------
+ //
+-// Version 2.4
++// Version 2.5
+ //
+ 
+ #ifndef _lcms2_H
+@@ -101,7 +101,7 @@
+ #endif
+ 
+ // Version/release
+-#define LCMS_VERSION        2040
++#define LCMS_VERSION        2050
+ 
+ // I will give the chance of redefining basic types for compilers that are not fully C99 compliant
+ #ifndef CMS_BASIC_TYPES_ALREADY_DEFINED
+@@ -367,6 +367,7 @@
+     cmsSigPreview1Tag                       = 0x70726531,  // 'pre1'
+     cmsSigPreview2Tag                       = 0x70726532,  // 'pre2'
+     cmsSigProfileDescriptionTag             = 0x64657363,  // 'desc'
++    cmsSigProfileDescriptionMLTag           = 0x6473636d,  // 'dscm'
+     cmsSigProfileSequenceDescTag            = 0x70736571,  // 'pseq'
+     cmsSigProfileSequenceIdTag              = 0x70736964,  // 'psid'
+     cmsSigPs2CRD0Tag                        = 0x70736430,  // 'psd0'
+@@ -1014,6 +1015,7 @@
+ // Plug-In registering  ---------------------------------------------------------------------------------------------------
+ 
+ CMSAPI cmsBool           CMSEXPORT cmsPlugin(void* Plugin);
++CMSAPI cmsBool           CMSEXPORT cmsPluginTHR(cmsContext ContextID, void* Plugin);
+ CMSAPI void              CMSEXPORT cmsUnregisterPlugins(void);
+ 
+ // Error logging ----------------------------------------------------------------------------------------------------------
+@@ -1190,7 +1192,7 @@
+ // Where to place/locate the stages in the pipeline chain
+ typedef enum { cmsAT_BEGIN, cmsAT_END } cmsStageLoc;
+ 
+-CMSAPI void              CMSEXPORT cmsPipelineInsertStage(cmsPipeline* lut, cmsStageLoc loc, cmsStage* mpe);
++CMSAPI int               CMSEXPORT cmsPipelineInsertStage(cmsPipeline* lut, cmsStageLoc loc, cmsStage* mpe);
+ CMSAPI void              CMSEXPORT cmsPipelineUnlinkStage(cmsPipeline* lut, cmsStageLoc loc, cmsStage** mpe);
+ 
+ // This function is quite useful to analyze the structure of a Pipeline and retrieve the Stage elements
+@@ -1274,6 +1276,13 @@
+                                                          const char LanguageCode[3], const char CountryCode[3],
+                                                          char ObtainedLanguage[3], char ObtainedCountry[3]);
+ 
++CMSAPI cmsUInt32Number   CMSEXPORT cmsMLUtranslationsCount(const cmsMLU* mlu);
++
++CMSAPI cmsBool           CMSEXPORT cmsMLUtranslationsCodes(const cmsMLU* mlu,
++                                                             cmsUInt32Number idx,
++                                                             char LanguageCode[3],
++                                                             char CountryCode[3]);
++
+ // Undercolorremoval & black generation -------------------------------------------------------------------------------------
+ 
+ typedef struct {
+@@ -1424,6 +1433,7 @@
+ CMSAPI void              CMSEXPORT cmsSetHeaderFlags(cmsHPROFILE hProfile, cmsUInt32Number Flags);
+ CMSAPI cmsUInt32Number   CMSEXPORT cmsGetHeaderManufacturer(cmsHPROFILE hProfile);
+ CMSAPI void              CMSEXPORT cmsSetHeaderManufacturer(cmsHPROFILE hProfile, cmsUInt32Number manufacturer);
++CMSAPI cmsUInt32Number   CMSEXPORT cmsGetHeaderCreator(cmsHPROFILE hProfile);
+ CMSAPI cmsUInt32Number   CMSEXPORT cmsGetHeaderModel(cmsHPROFILE hProfile);
+ CMSAPI void              CMSEXPORT cmsSetHeaderModel(cmsHPROFILE hProfile, cmsUInt32Number model);
+ CMSAPI void              CMSEXPORT cmsSetHeaderAttributes(cmsHPROFILE hProfile, cmsUInt64Number Flags);
+diff -r a7d42517d3f1 -r f09a3112e130 src/share/native/sun/java2d/cmm/lcms/lcms2_internal.h
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/lcms2_internal.h	Thu Jan 16 18:08:15 2014 -0500
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/lcms2_internal.h	Tue Jan 21 08:47:30 2014 -0800
+@@ -27,7 +27,7 @@
+ // However, the following notice accompanied the original version of this
+ // file:
+ //
+-//---------------------------------------------------------------------------------
++
+ //
+ //  Little Color Management System
+ //  Copyright (c) 1998-2011 Marti Maria Saguer
+@@ -196,7 +196,7 @@
+ // Plug-In registering ---------------------------------------------------------------
+ 
+ // Specialized function for plug-in memory management. No pairing free() since whole pool is freed at once.
+-void* _cmsPluginMalloc(cmsUInt32Number size);
++void* _cmsPluginMalloc(cmsContext ContextID, cmsUInt32Number size);
+ 
+ // Memory management
+ cmsBool   _cmsRegisterMemHandlerPlugin(cmsPluginBase* Plugin);
+@@ -205,28 +205,28 @@
+ cmsBool  _cmsRegisterInterpPlugin(cmsPluginBase* Plugin);
+ 
+ // Parametric curves
+-cmsBool  _cmsRegisterParametricCurvesPlugin(cmsPluginBase* Plugin);
++cmsBool  _cmsRegisterParametricCurvesPlugin(cmsContext ContextID, cmsPluginBase* Plugin);
+ 
+ // Formatters management
+-cmsBool  _cmsRegisterFormattersPlugin(cmsPluginBase* Plugin);
++cmsBool  _cmsRegisterFormattersPlugin(cmsContext ContextID, cmsPluginBase* Plugin);
+ 
+ // Tag type management
+-cmsBool  _cmsRegisterTagTypePlugin(cmsPluginBase* Plugin);
++cmsBool  _cmsRegisterTagTypePlugin(cmsContext ContextID, cmsPluginBase* Plugin);
+ 
+ // Tag management
+-cmsBool  _cmsRegisterTagPlugin(cmsPluginBase* Plugin);
++cmsBool  _cmsRegisterTagPlugin(cmsContext ContextID, cmsPluginBase* Plugin);
+ 
+ // Intent management
+-cmsBool  _cmsRegisterRenderingIntentPlugin(cmsPluginBase* Plugin);
++cmsBool  _cmsRegisterRenderingIntentPlugin(cmsContext ContextID, cmsPluginBase* Plugin);
+ 
+ // Multi Process elements
+-cmsBool  _cmsRegisterMultiProcessElementPlugin(cmsPluginBase* Plugin);
++cmsBool  _cmsRegisterMultiProcessElementPlugin(cmsContext ContextID, cmsPluginBase* Plugin);
+ 
+ // Optimization
+-cmsBool  _cmsRegisterOptimizationPlugin(cmsPluginBase* Plugin);
++cmsBool  _cmsRegisterOptimizationPlugin(cmsContext ContextID, cmsPluginBase* Plugin);
+ 
+ // Transform
+-cmsBool  _cmsRegisterTransformPlugin(cmsPluginBase* Plugin);
++cmsBool  _cmsRegisterTransformPlugin(cmsContext ContextID, cmsPluginBase* Plugin);
+ 
+ // ---------------------------------------------------------------------------------------------------------
+ 
+@@ -263,7 +263,7 @@
+     cmsUInt16Number Country;
+ 
+     cmsUInt32Number StrW;       // Offset to current unicode string
+-    cmsUInt32Number Len;        // Lenght in bytes
++    cmsUInt32Number Len;        // Length in bytes
+ 
+ } _cmsMLUentry;
+ 
+@@ -330,9 +330,11 @@
+     cmsColorSpaceSignature   ColorSpace;
+     cmsColorSpaceSignature   PCS;
+     cmsUInt32Number          RenderingIntent;
++
+     cmsUInt32Number          flags;
+     cmsUInt32Number          manufacturer, model;
+     cmsUInt64Number          attributes;
++    cmsUInt32Number          creator;
+ 
+     cmsProfileID             ProfileID;
+ 
+@@ -585,6 +587,10 @@
+     cmsColorSpaceSignature EntryColorSpace;
+     cmsColorSpaceSignature ExitColorSpace;
+ 
++    // White points (informative only)
++    cmsCIEXYZ EntryWhitePoint;
++    cmsCIEXYZ ExitWhitePoint;
++
+     // Profiles used to create the transform
+     cmsSEQ* Sequence;
+ 
