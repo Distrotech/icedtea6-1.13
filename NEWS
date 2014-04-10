@@ -14,6 +14,73 @@ CVE-XXXX-YYYY: http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
 New in release 1.13.3 (2014-04-XX):
 
+* Security fixes
+  - S8023046: Enhance splashscreen support
+  - S8025005: Enhance CORBA initializations
+  - S8025010, CVE-2014-2412: Enhance AWT contexts
+  - S8025030, CVE-2014-2414: Enhance stream handling
+  - S8025152, CVE-2014-0458: Enhance activation set up
+  - S8026067: Enhance signed jar verification
+  - S8026163, CVE-2014-2427: Enhance media provisioning
+  - S8026188, CVE-2014-2423: Enhance envelope factory
+  - S8026200: Enhance RowSet Factory
+  - S8026736, CVE-2014-2398: Enhance Javadoc pages
+  - S8026797, CVE-2014-0451: Enhance data transfers
+  - S8026801, CVE-2014-0452: Enhance endpoint addressing
+  - S8027766, CVE-2014-0453: Enhance RSA processing
+  - S8027775: Enhance ICU code.
+  - S8027841, CVE-2014-0429: Enhance pixel manipulations
+  - S8028385: Enhance RowSet Factory
+  - S8029282, CVE-2014-2403: Enhance CharInfo set up
+  - S8029286: Enhance subject delegation
+  - S8029699: Update Poller demo
+  - S8029730: Improve audio device additions
+  - S8029735: Enhance service mgmt natives
+  - S8029740, CVE-2014-0446: Enhance handling of loggers
+  - S8029750: Enhance LCMS color processing
+  - S8029760, CVE-2014-0462: Enhance AWT image libraries
+  - S8029854, CVE-2014-2421: Enhance JPEG decodings
+  - S8029858, CVE-2014-0456: Enhance array copies
+  - S8030731, CVE-2014-0460: Improve name service robustness
+  - S8031330: Refactor ObjectFactory
+  - S8031335, CVE-2014-0459: Better color profiling (LCMS 2 only)
+  - S8031352, CVE-2014-2405: Enhance PNG handling
+  - S8031394, CVE-2014-0457: (sl) Fix exception handling in ServiceLoader
+  - S8031395: Enhance LDAP processing
+  - S8033618, CVE-2014-1876: Correct logging output
+  - S8034926, CVE-2014-2397: Attribute classes properly
+  - S8036794, CVE-2014-0461: Manage JavaScript instances
+* Import of OpenJDK6 b31
+  - OJ27: Change summary generator can leave out last changeset
+  - OJ28: Report generator should not include old changes
+  - OJ30: Remove @Override annotation on interfaces added by 2014/04/15 security fixes.
+  - S6680198: UnmarshalException caused by incompatible serialVersionUID
+  - S6742654: Code insertion/replacement attacks against signed jars
+  - S6779717: A Window does not show applet security warning icon on X platforms
+  - S6785058: Parent dn't get the focus after dialog is closed if security warning is applied
+  - S6799345: JFC demos threw exception in the Java Console when applets are closed
+  - S6828273: javax/swing/system/6799345/TestShutdown.java test fails with RuntimeException.
+  - S6867515: Reduce impact of D3D initializion on startup time
+  - S6891435: Improve D3D preloading
+  - S6911041: JCK api/signaturetest tests fails for Mixed Code PIT builds (b91) for all trains
+  - S6921823: JarVerifier csdomain field not initialized
+  - S6921839: Update trusted.libraries list
+  - S6924497: HotSpotDiagnosticsMXBean.getDiagnosticOptions throws NPE
+  - S6936389: FontManager.fileCloser may cause memory leak in applets
+  - S6946559: AWTToolKit thread crashes in JNU_GetEnv
+  - S6955783: ServiceUnavailableException caught even the secondary DNS is available
+  - S6987967: D3D preloading thread should initialize COM
+  - S7011446: ./windows/classes/sun/awt/windows/WToolkit.java needs to avoid spurious wakeup
+  - S7015232: missing copyright header in CheckZOrderChange.java
+  - S7119760: [macosx] The OpenGL queue flusher thread is created in the wrong thread group
+  - S7155051: DNS provider may return incorrect results
+  - S8002191: AWT-Shutdown thread does not start with the AppletSecurity on Linux
+  - S8028388: 9 jaxws tests failed in nightly build with java.lang.ClassCastException
+  - S8031032: SQE test failures after JDK-8025010 was fixed
+  - S8031477: [macosx] Loading AWT native library fails
+  - S8032370: No "Truncated file" warning from IIOReadWarningListener on JPEGImageReader
+  - S8035834: InetAddress.getLocalHost() can hang after JDK-8030731 was fixed
+
 New in release 1.13.2 (2014-03-28):
 
 * Backports
