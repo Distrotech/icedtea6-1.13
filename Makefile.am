@@ -1901,7 +1901,7 @@ stamps/add-nss-debug.stamp: stamps/icedtea-debug.stamp
 	rm -f stamps/add-nss-debug.stamp.tmp
 	touch stamps/add-nss-debug.stamp.tmp
 	all_patches_ok=yes; \
-	for dir in $(ECJ_BUILD_OUTPUT_DIR)/{j2sdk-image/jre,j2re-image} ; \
+	for dir in $(DEBUG_BUILD_OUTPUT_DIR)/{j2sdk-image/jre,j2re-image} ; \
 	do \
 	  pushd $$dir ; \
 	  cp -v $$dir/lib/security/java.security{,.old} ; \
