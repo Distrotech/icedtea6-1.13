@@ -1,3 +1,12 @@
+2014-05-22  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add new patch.
+	* NEWS: Updated.
+	* patches/openjdk/7027300-unsync_hashmap_causes_endless_loop.patch:
+	Backport fix to replace HashMap usage with ConcurrentHashMap,
+	avoiding deadlock.
+
 2014-05-09  Jiri Vanek  <jvanek@redhat.com>
 
 	* Makefile.am: (add-nss-debug.stamp): fixed ECJ_BUILD_OUTPUT_DIR
