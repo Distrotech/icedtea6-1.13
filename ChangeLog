@@ -1,3 +1,20 @@
+2014-07-08  Omair Majid  <omajid@redhat.com>
+
+	2014-07-15 CPU
+	* NEW: Update with fixes.
+	* Makefile.am
+	(OPENJDK_DATE, OPENJDK_SHA256SUM, OPENJDK_VERSION): Update for b32.
+	(ICEDTEA_PATCHES): Drop upstreamed patches.
+	* patches/openjdk/6636370-appcontext_simplification.patch,
+	* patches/openjdk/6729772-opt_cleanup.patch,
+	* patches/openjdk/6799141-split_out_versions.patch,
+	* patches/openjdk/6816311-compiler_name.patch,
+	* patches/windows-awt.patch: Update to apply on top of b32.
+	* patches/jtreg-T6638712-fix.patch,
+	* patches/openjdk/6638712-wildcard_types.patch,
+	* patches/openjdk/6650759-missing_inference.patch: Remove upstreamed
+	patch.
+
 2014-05-09  Jiri Vanek  <jvanek@redhat.com>
 
 	* Makefile.am: (add-nss-debug.stamp): fixed ECJ_BUILD_OUTPUT_DIR
