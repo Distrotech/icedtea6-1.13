@@ -17,17 +17,27 @@ New in release 1.13.5 (2014-XX-YY):
 New in release 1.13.4 (2014-07-15):
 
 * Security fixes
-  - S8029755: Enhance subject class
-  - S8031346: Enhance RSA key handling
-  - S8033301: Build more informative InfoBuilder
-  - S8035004: Provider provides less service
-  - S8035009: Make Proxy representations consistent
-  - S8035119: Fix exceptions to bytecode verification
-  - S8035699: File choosers should be choosier
-  - S8037076: Check constant pool constants
-  - S8037162: More robust DH exchanges
-  - S8037167: Better method signature resolution
-  - S8039520: More atomicity of atomic updates
+  - S8029755, CVE-2014-4209: Enhance subject class
+  - S8030763: Validate global memory allocation
+  - S8031346, CVE-2014-4244: Enhance RSA key handling
+  - S8031540: Introduce document horizon
+  - S8032536: JVM resolves wrong method in some unusual cases
+  - S8033055: Issues in 2d
+  - S8033301, CVE-2014-4266: Build more informative InfoBuilder
+  - S8034267: Probabilistic native crash
+  - S8034272: Do not cram data into CRAM arrays
+  - S8035004, CVE-2014-4252: Provider provides less service
+  - S8035009, CVE-2014-4218: Make Proxy representations consistent
+  - S8035119, CVE-2014-4219: Fix exceptions to bytecode verification
+  - S8035699, CVE-2014-4268: File choosers should be choosier
+  - S8036571: (process) Process process arguments carefully
+  - S8036800: Attribute OOM to correct part of code
+  - S8037046: Validate libraries to be loaded
+  - S8037157: Verify <init> call
+  - S8037076, CVE-2014-2490: Check constant pool constants
+  - S8037162, CVE-2014-4263: More robust DH exchanges
+  - S8037167, CVE-2014-4216: Better method signature resolution
+  - S8039520, CVE-2014-4262: More atomicity of atomic updates
 * Import of OpenJDK6 b32
   - OP32: OpenJDK6-b31 isn't compatible with Windows platform
   - OJ33: Update copyright headers introduced by the fix for OPENJDK6-32
@@ -39,16 +49,6 @@ New in release 1.13.4 (2014-07-15):
   - S8028111: XML readers share the same entity expansion counter
   - S8028285: RMI Thread can no longer call out to AWT
   - S8029038: Revise fix for XML readers share the same entity expansion counter
-  - S8030763: Validate global memory allocation
-  - S8031540: Introduce document horizon
-  - S8032536: JVM resolves wrong method in some unusual cases
-  - S8033055: Issues in 2d
-  - S8034267: Probabilistic native crash
-  - S8034272: Do not cram data into CRAM arrays
-  - S8036571: (process) Process process arguments carefully
-  - S8036800: Attribute OOM to correct part of code
-  - S8037046: Validate libraries to be loaded
-  - S8037157: Verify <init> call
   - S8042582: Test java/awt/KeyboardFocusmanager/ChangeKFMTest/ChangeKFMTest.html fails on Windows x64
   - S8042590: Running form URL throws NPE
   - S8042789: org.omg.CORBA.ORBSingletonClass loading no longer uses context class loader
