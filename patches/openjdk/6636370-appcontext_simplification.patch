@@ -1,6 +1,6 @@
-diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/AppContext.java openjdk/jdk/src/share/classes/sun/awt/AppContext.java
---- openjdk.orig/jdk/src/share/classes/sun/awt/AppContext.java	2013-08-05 16:49:37.120128300 +0100
-+++ openjdk/jdk/src/share/classes/sun/awt/AppContext.java	2013-08-05 17:02:51.304664462 +0100
+diff -ruN openjdk.orig/jdk/src/share/classes/sun/awt/AppContext.java openjdk/jdk/src/share/classes/sun/awt/AppContext.java
+--- openjdk.orig/jdk/src/share/classes/sun/awt/AppContext.java	2014-07-08 13:29:01.986811368 -0400
++++ openjdk/jdk/src/share/classes/sun/awt/AppContext.java	2014-07-08 13:34:11.529064569 -0400
 @@ -151,7 +151,7 @@
         contained in another AppContext. It is implicitly created for
         standalone apps only (i.e. not applets)
@@ -71,7 +71,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/AppContext.java openjdk/jdk
  
                      // Special case: we implicitly create the main app context
                      // if no contexts have been created yet. This covers standalone apps
-@@ -308,28 +297,29 @@
+@@ -308,42 +297,41 @@
                          }
                      }
  
@@ -79,26 +79,50 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/AppContext.java openjdk/jdk
 -            while (context == null) {
 -                threadGroup = threadGroup.getParent();
 -                if (threadGroup == null) {
--		    return null;
+-                    // We've got up to the root thread group and did not find an AppContext
+-                    // Try to get it from the security manager
+-                    SecurityManager securityManager = System.getSecurityManager();
+-                    if (securityManager != null) {
+-                        ThreadGroup smThreadGroup = securityManager.getThreadGroup();
+-                        if (smThreadGroup != null) {
+-                            /*
+-                             * If we get this far then it's likely that
+-                             * the ThreadGroup does not actually belong
+-                             * to the applet, so do not cache it.
+-                             */
+-                            return threadGroup2appContext.get(smThreadGroup);
 +                    AppContext context = threadGroup2appContext.get(threadGroup);
 +                    while (context == null) {
 +                        threadGroup = threadGroup.getParent();
 +                        if (threadGroup == null) {
++                            // We've got up to the root thread group and did not find an AppContext
++                            // Try to get it from the security manager
++                            SecurityManager securityManager = System.getSecurityManager();
++                            if (securityManager != null) {
++                                ThreadGroup smThreadGroup = securityManager.getThreadGroup();
++                                if (smThreadGroup != null) {
++                                    /*
++                                     * If we get this far then it's likely that
++                                     * the ThreadGroup does not actually belong
++                                     * to the applet, so do not cache it.
++                                     */
++                                    return threadGroup2appContext.get(smThreadGroup);
++                                }
++                            }
 +                            return null;
-+                        }
+                         }
 +                        context = threadGroup2appContext.get(threadGroup);
 +                    }
-+
 +                    // In case we did anything in the above while loop, we add
 +                    // all the intermediate ThreadGroups to threadGroup2appContext
 +                    // so we won't spin again.
 +                    for (ThreadGroup tg = currentThreadGroup; tg != threadGroup; tg = tg.getParent()) {
 +                        threadGroup2appContext.put(tg, context);
-+                    }
+                     }
+-                    return null;
 +
 +                    // Now we're done, so we cache the latest key/value pair.
 +                    threadAppContext.set(context);
-+
 +
 +                    return context;
                  }
@@ -122,7 +146,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/AppContext.java openjdk/jdk
          }
  
          return appContext;
-@@ -473,7 +463,7 @@
+@@ -487,7 +475,7 @@
          // Threads in the ThreadGroup to exit.
  
          long startTime = System.currentTimeMillis();
@@ -131,7 +155,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/AppContext.java openjdk/jdk
          while ((this.threadGroup.activeCount() > 0) &&
                 (System.currentTimeMillis() < endTime)) {
              try {
-@@ -488,7 +478,7 @@
+@@ -502,7 +490,7 @@
          // Threads in the ThreadGroup to die.
  
          startTime = System.currentTimeMillis();
@@ -140,7 +164,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/AppContext.java openjdk/jdk
          while ((this.threadGroup.activeCount() > 0) &&
                 (System.currentTimeMillis() < endTime)) {
              try {
-@@ -507,10 +497,7 @@
+@@ -521,10 +509,7 @@
          }
          threadGroup2appContext.remove(this.threadGroup);
  
@@ -152,7 +176,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/AppContext.java openjdk/jdk
  
          // Finally, we destroy the ThreadGroup entirely.
          try {
-@@ -693,6 +680,7 @@
+@@ -707,6 +692,7 @@
       * Returns a string representation of this AppContext.
       * @since   1.2
       */
@@ -160,7 +184,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/awt/AppContext.java openjdk/jdk
      public String toString() {
          return getClass().getName() + "[threadGroup=" + threadGroup.getName() + "]";
      }
-@@ -842,15 +830,6 @@
+@@ -856,15 +842,6 @@
      }
  }
  

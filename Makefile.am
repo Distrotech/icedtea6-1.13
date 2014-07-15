@@ -1,8 +1,8 @@
 # Dependencies
 
-OPENJDK_DATE = 15_apr_2014
-OPENJDK_SHA256SUM = 362d9bf20e91393b52dd0513896d39831cf320c49bd4bf1e28124f21569b72eb
-OPENJDK_VERSION = b31
+OPENJDK_DATE = 15_jul_2014
+OPENJDK_SHA256SUM = 9a5ad1b599953baac1b6b34189b9487ac5dcdb367aac5cc0aa5aa49700e73871
+OPENJDK_VERSION = b32
 OPENJDK_URL = https://java.net/downloads/openjdk6/
 
 CACAO_VERSION = 68fe50ac34ec
@@ -374,12 +374,8 @@ ICEDTEA_PATCHES = \
 	patches/ipv4-mapped-ipv6-addresses.patch \
 	patches/jtreg-OpenGLContextInit.patch \
 	patches/openjdk/6510892-httpserver_test.patch \
-	patches/openjdk/6638712-wildcard_types.patch \
-	patches/openjdk/6650759-missing_inference.patch \
 	patches/jtreg-international-fonts.patch \
 	patches/f14-fonts.patch \
-	patches/jtreg-T6638712-fix.patch \
-	patches/jtreg-T6650759m-fix.patch \
 	patches/openjdk/7003777-bad-html-entity-parse.patch \
 	patches/rendering-engine-tests.patch \
 	patches/openjdk/6800846-printing-quality.patch \
