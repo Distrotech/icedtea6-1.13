@@ -496,7 +496,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/8009165-inappropriate_method_in_reflectutil.patch \
 	patches/openjdk/8009217-fix_test_compile.patch \
 	patches/openjdk/8009610-blacklist_malware_certificate.patch \
-	patches/openjdk/8010213-set_socketoptions_windows.patch \
 	patches/openjdk/8010714-xml_dsig_retrievalmethod.patch \
 	patches/openjdk/8011154-awt_regression.patch \
 	patches/openjdk/8011313-OCSP_timeout_wrong_value.patch \
