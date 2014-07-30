@@ -609,7 +609,8 @@ ICEDTEA_PATCHES = \
 	patches/8003992_support_6.patch \
 	patches/shark-drop_compile_method_arg_following_7083786.patch \
 	patches/openjdk/7027300-unsync_hashmap_causes_endless_loop.patch \
-	patches/openjdk/7183251-netbeans_renders_text_wrong.patch
+	patches/openjdk/7183251-netbeans_renders_text_wrong.patch \
+	patches/openjdk/oj639-handle_fonts_with_no_canon_flag_set.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
