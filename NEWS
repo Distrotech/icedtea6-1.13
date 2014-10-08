@@ -12,10 +12,48 @@ JEPX - http://openjdk.java.net/jeps/X
 
 CVE-XXXX-YYYY: http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
-New in release 1.13.5 (2014-10-YY):
+New in release 1.13.5 (2014-10-14):
 
-* Backports
+* Security fixes
+  - S8015256: Better class accessibility
+  - S8022783, CVE-2014-6504: Optimize C2 optimizations
+  - S8035162: Service printing service
+  - S8035781: Improve equality for annotations
+  - S8036805: Correct linker method lookup.
+  - S8036810: Correct linker field lookup
+  - S8037066, CVE-2014-6457: Secure transport layer
+  - S8037846, CVE-2014-6558: Ensure streaming of input cipher streams
+  - S8038899: Safer safepoints
+  - S8038903: More native monitor monitoring
+  - S8038908: Make Signature more robust
+  - S8038913: Bolster XML support
+  - S8039509, CVE-2014-6512: Wrap sockets more thoroughly
+  - S8039533, CVE-2014-6517: Higher resolution resolvers
+  - S8041540, CVE-2014-6511: Better use of pages in font processing
+  - S8041545: Better validation of generated rasters
+  - S8041564, CVE-2014-6506: Improved management of logger resources
+  - S8041717, CVE-2014-6519: Issue with class file parser
+  - S8042609, CVE-2014-6513: Limit splashiness of splash images
+  - S8042797, CVE-2014-6502: Avoid strawberries in LogRecord
+  - S8044274, CVE-2014-6531: Proper property processing
+* Import of OpenJDK6 b33
+  - OJ37: OpenJDK6-b32 cannot be built on Windows
   - OJ39: Handle fonts with the non-canonical processing flag set
+  - OJ41: OpenJDK6 should be compatible with Windows SDK 7.1
+  - OJ42: Remove @Override annotation on interfaces added by 2014/10/14 security fixes.
+  - S6967684: httpserver using a non thread-safe SimpleDateFormat
+  - S7033534: Two tests fail just against jdk7 b136
+  - S7160837: DigestOutputStream does not turn off digest calculation when "close()" is called
+  - S7172149: ArrayIndexOutOfBoundsException from Signature.verify
+  - S8010213: Some api/javax_net/SocketFactory tests fail in 7u25 nightly build
+  - S8012637: Adjust CipherInputStream class to work in AEAD/GCM mode
+  - S8028192: Use of PKCS11-NSS provider in FIPS mode broken
+  - S8038000: java.awt.image.RasterFormatException: Incorrect scanline stride
+  - S8039396: NPE when writing a class descriptor object to a custom ObjectOutputStream
+  - S8042603: 'SafepointPollOffset' was not declared in static member function 'static bool Arguments::check_vm_args_consistency()'
+  - S8042850: Extra unused entries in ICU ScriptCodes enum
+  - S8052162: REGRESSION: sun/java2d/cmm/ColorConvertOp tests fail since 7u71 b01
+  - S8053963: (dc) Use DatagramChannel.receive() instead of read() in connect()
 
 New in release 1.13.4 (2014-07-15):
 

@@ -1,3 +1,19 @@
+2014-10-08  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* patches/openjdk/7027300-unsync_hashmap_causes_endless_loop.patch,
+	* patches/openjdk/7183251-netbeans_renders_text_wrong.patch,
+	* patches/openjdk/oj639-handle_fonts_with_no_canon_flag_set.patch:
+	Remove upstreamed patches.
+	* Makefile.am:
+	(OPENJDK_DATE): Bump to security update release date, 14th of October.
+	(OPENJDK_SHA256SUM): Update for b33 tarball.
+	(ICEDTEA_PATCHES): Drop above patches.
+	* NEWS: Add fixes from b33.
+	* patches/openjdk/6816311-compiler_name.patch:
+	Remove windows.h fragments added in OPENJDK6-41.
+	* patches/openjdk/p11cipher-6812738-native_cleanup.patch:
+	Remove fragment added by security update.
+
 2014-07-30  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* patches/openjdk/8010213-set_socketoptions_windows.patch:

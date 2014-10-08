@@ -1,7 +1,7 @@
 # Dependencies
 
-OPENJDK_DATE = 15_jul_2014
-OPENJDK_SHA256SUM = 9a5ad1b599953baac1b6b34189b9487ac5dcdb367aac5cc0aa5aa49700e73871
+OPENJDK_DATE = 14_oct_2014
+OPENJDK_SHA256SUM = cabc35587a90fa81edd8ba8537c0454348c37456de27e407bbb66d52031a1293
 OPENJDK_VERSION = b33
 OPENJDK_URL = https://java.net/downloads/openjdk6/
 
@@ -606,10 +606,7 @@ ICEDTEA_PATCHES = \
 	patches/windows-jdk-sizecalc.patch \
 	patches/shark_fixes_from_8003868.patch \
 	patches/8003992_support_6.patch \
-	patches/shark-drop_compile_method_arg_following_7083786.patch \
-	patches/openjdk/7027300-unsync_hashmap_causes_endless_loop.patch \
-	patches/openjdk/7183251-netbeans_renders_text_wrong.patch \
-	patches/openjdk/oj639-handle_fonts_with_no_canon_flag_set.patch
+	patches/shark-drop_compile_method_arg_following_7083786.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \

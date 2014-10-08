@@ -1,9 +1,6 @@
-diff -Nru openjdk.orig/jdk/make/common/Defs-windows.gmk openjdk/jdk/make/common/Defs-windows.gmk
---- openjdk.orig/jdk/make/common/Defs-windows.gmk	2013-09-02 16:35:07.688884584 +0100
-+++ openjdk/jdk/make/common/Defs-windows.gmk	2013-09-02 16:40:22.565779052 +0100
 diff -Nru openjdk.orig/jdk/make/common/shared/Compiler-gcc.gmk openjdk/jdk/make/common/shared/Compiler-gcc.gmk
---- openjdk.orig/jdk/make/common/shared/Compiler-gcc.gmk	2013-09-02 16:35:07.712884957 +0100
-+++ openjdk/jdk/make/common/shared/Compiler-gcc.gmk	2013-09-02 16:40:22.565779052 +0100
+--- openjdk.orig/jdk/make/common/shared/Compiler-gcc.gmk	2014-10-08 17:33:09.148697120 +0100
++++ openjdk/jdk/make/common/shared/Compiler-gcc.gmk	2014-10-08 17:33:51.573291086 +0100
 @@ -27,8 +27,6 @@
  # GCC Compiler settings
  #
@@ -22,8 +19,8 @@ diff -Nru openjdk.orig/jdk/make/common/shared/Compiler-gcc.gmk openjdk/jdk/make/
 +COMPILER_VERSION = $(COMPILER_NAME)
 +
 diff -Nru openjdk.orig/jdk/make/common/shared/Compiler-sun.gmk openjdk/jdk/make/common/shared/Compiler-sun.gmk
---- openjdk.orig/jdk/make/common/shared/Compiler-sun.gmk	2013-09-02 16:35:07.712884957 +0100
-+++ openjdk/jdk/make/common/shared/Compiler-sun.gmk	2013-09-02 16:41:13.914577209 +0100
+--- openjdk.orig/jdk/make/common/shared/Compiler-sun.gmk	2014-10-08 17:33:09.148697120 +0100
++++ openjdk/jdk/make/common/shared/Compiler-sun.gmk	2014-10-08 17:33:51.573291086 +0100
 @@ -27,13 +27,8 @@
  # Sun Studio Compiler settings
  #
@@ -66,8 +63,8 @@ diff -Nru openjdk.orig/jdk/make/common/shared/Compiler-sun.gmk openjdk/jdk/make/
  #  Starting in SS12 (5.9), the arch options changed.
  #  The assembler /usr/ccs/bin/as wants older SS11 (5.8) style options.
 diff -Nru openjdk.orig/jdk/make/common/shared/Defs-versions.gmk openjdk/jdk/make/common/shared/Defs-versions.gmk
---- openjdk.orig/jdk/make/common/shared/Defs-versions.gmk	2013-09-02 16:35:07.720885081 +0100
-+++ openjdk/jdk/make/common/shared/Defs-versions.gmk	2013-09-02 16:40:22.565779052 +0100
+--- openjdk.orig/jdk/make/common/shared/Defs-versions.gmk	2014-10-08 17:33:09.172697457 +0100
++++ openjdk/jdk/make/common/shared/Defs-versions.gmk	2014-10-08 17:33:51.573291086 +0100
 @@ -45,6 +45,12 @@
  # REQUIRED_CC_VER
  #   The primary C compiler version expected.
@@ -123,9 +120,9 @@ diff -Nru openjdk.orig/jdk/make/common/shared/Defs-versions.gmk openjdk/jdk/make
          REQUIRED_LINK_VER     = 8.00.40310.39
        endif
 diff -Nru openjdk.orig/jdk/make/common/shared/Sanity.gmk openjdk/jdk/make/common/shared/Sanity.gmk
---- openjdk.orig/jdk/make/common/shared/Sanity.gmk	2013-09-02 16:35:07.712884957 +0100
-+++ openjdk/jdk/make/common/shared/Sanity.gmk	2013-09-02 16:40:22.565779052 +0100
-@@ -123,7 +123,7 @@
+--- openjdk.orig/jdk/make/common/shared/Sanity.gmk	2014-10-08 17:33:09.148697120 +0100
++++ openjdk/jdk/make/common/shared/Sanity.gmk	2014-10-08 17:33:51.573291086 +0100
+@@ -129,7 +129,7 @@
    ifeq ($(_OS_VERSION),)
      OS_VERSION = 5.0
    else
@@ -134,7 +131,7 @@ diff -Nru openjdk.orig/jdk/make/common/shared/Sanity.gmk openjdk/jdk/make/common
    endif
    OS_VARIANT_NAME := $(WINDOWS_MAPPING-$(OS_VERSION))
    OS_VARIANT_VERSION := $(OS_VERSION)
-@@ -1320,8 +1320,8 @@
+@@ -1289,8 +1289,8 @@
  	fi
  	@if [ "$(LINK_CHECK)" != "same" ]; then \
  	  $(ECHO) "WARNING: To build Java 2 SDK $(JDK_VERSION) you need : \n" \
@@ -145,7 +142,7 @@ diff -Nru openjdk.orig/jdk/make/common/shared/Sanity.gmk openjdk/jdk/make/common
  	    "      $(YOU_ARE_USING) Linker version \"$(LINK_VER)\" \n" \
  	    "" >> $(WARNING_FILE) ; \
  	fi
-@@ -1338,21 +1338,13 @@
+@@ -1307,21 +1307,13 @@
  	fi
  ifndef OPENJDK
  	@if [ "$(CC_CHECK)" != "same" ]; then \
@@ -170,27 +167,3 @@ diff -Nru openjdk.orig/jdk/make/common/shared/Sanity.gmk openjdk/jdk/make/common
  endif
  
  ######################################################
-diff -Nru openjdk.orig/jdk/src/windows/native/sun/windows/awt.rc openjdk/jdk/src/windows/native/sun/windows/awt.rc
---- openjdk.orig/jdk/src/windows/native/sun/windows/awt.rc	2013-09-02 16:35:02.892810032 +0100
-+++ openjdk/jdk/src/windows/native/sun/windows/awt.rc	2013-09-02 16:40:22.565779052 +0100
-@@ -23,7 +23,7 @@
- // questions.
- //
- 
--#include "afxres.h"
-+#include "windows.h"
- 
- // Need 2 defines so macro argument to XSTR will get expanded before quoting.
- #define XSTR(x) STR(x)
-diff -Nru openjdk.orig/jdk/src/windows/resource/version.rc openjdk/jdk/src/windows/resource/version.rc
---- openjdk.orig/jdk/src/windows/resource/version.rc	2012-10-26 19:26:19.000000000 +0100
-+++ openjdk/jdk/src/windows/resource/version.rc	2013-09-02 16:40:22.565779052 +0100
-@@ -23,7 +23,7 @@
- // questions.
- //
- 
--#include "afxres.h"
-+#include "windows.h"
- 
- // Need 2 defines so macro argument to XSTR will get expanded before quoting.
- #define XSTR(x) STR(x)

@@ -1,7 +1,7 @@
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11RSACipher.java openjdk/jdk/src/share/classes/sun/security/pkcs11/P11RSACipher.java
---- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11RSACipher.java	2014-01-17 20:29:33.778742684 +0000
-+++ openjdk/jdk/src/share/classes/sun/security/pkcs11/P11RSACipher.java	2014-01-17 20:42:39.286333640 +0000
-@@ -190,7 +190,9 @@
+--- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11RSACipher.java	2014-10-08 16:35:09.000000000 +0100
++++ openjdk/jdk/src/share/classes/sun/security/pkcs11/P11RSACipher.java	2014-10-08 17:30:03.986103813 +0100
+@@ -202,7 +202,9 @@
                  throw new InvalidKeyException
                                  ("Unwrap has to be used with private keys");
              }
@@ -12,17 +12,9 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11RSACipher.ja
          } else {
              throw new InvalidKeyException("Unsupported mode: " + opmode);
          }
-@@ -418,6 +420,7 @@
-     protected Key engineUnwrap(byte[] wrappedKey, String algorithm,
-             int type) throws InvalidKeyException, NoSuchAlgorithmException {
-         // XXX implement unwrap using C_Unwrap() for all keys
-+        implInit(Cipher.DECRYPT_MODE, p11Key);
-         if (wrappedKey.length > maxInputSize) {
-             throw new InvalidKeyException("Key is too long for unwrapping");
-         }
 diff -Nru openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_convert.c openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_convert.c
---- openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_convert.c	2013-08-21 20:32:58.600240346 +0100
-+++ openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_convert.c	2014-01-17 20:41:19.141150649 +0000
+--- openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_convert.c	2014-10-08 16:35:09.000000000 +0100
++++ openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_convert.c	2014-10-08 17:30:03.986103813 +0100
 @@ -89,21 +89,24 @@
  
      /* load CK_DATE class */
@@ -1549,8 +1541,8 @@ diff -Nru openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_conv
      return ckParam ;
  }
 diff -Nru openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_crypt.c openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_crypt.c
---- openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_crypt.c	2013-08-21 20:32:58.600240346 +0100
-+++ openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_crypt.c	2014-01-17 20:41:19.141150649 +0000
+--- openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_crypt.c	2014-10-08 16:35:09.000000000 +0100
++++ openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_crypt.c	2014-10-08 17:30:03.986103813 +0100
 @@ -81,6 +81,7 @@
      ckSessionHandle = jLongToCKULong(jSessionHandle);
      ckKeyHandle = jLongToCKULong(jKeyHandle);
@@ -1694,8 +1686,8 @@ diff -Nru openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_cryp
          outBufP = OBUF;
        }
 diff -Nru openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_digest.c openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_digest.c
---- openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_digest.c	2013-08-21 20:32:58.600240346 +0100
-+++ openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_digest.c	2014-01-17 20:41:19.141150649 +0000
+--- openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_digest.c	2014-10-08 16:35:09.000000000 +0100
++++ openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_digest.c	2014-10-08 17:30:03.986103813 +0100
 @@ -75,6 +75,7 @@
  
      ckSessionHandle = jLongToCKULong(jSessionHandle);
@@ -1849,8 +1841,8 @@ diff -Nru openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_dige
  }
  #endif
 diff -Nru openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_dual.c openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_dual.c
---- openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_dual.c	2013-08-21 20:32:58.600240346 +0100
-+++ openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_dual.c	2014-01-17 20:41:19.145150708 +0000
+--- openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_dual.c	2014-10-08 16:35:09.000000000 +0100
++++ openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_dual.c	2014-10-08 17:30:03.986103813 +0100
 @@ -73,7 +73,7 @@
      CK_SESSION_HANDLE ckSessionHandle;
      CK_BYTE_PTR ckpPart = NULL_PTR, ckpEncryptedPart;
@@ -2041,8 +2033,8 @@ diff -Nru openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_dual
  }
  #endif
 diff -Nru openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_general.c openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_general.c
---- openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_general.c	2013-08-21 20:32:58.600240346 +0100
-+++ openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_general.c	2014-01-17 20:41:19.145150708 +0000
+--- openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_general.c	2014-10-08 16:35:09.000000000 +0100
++++ openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_general.c	2014-10-08 17:30:03.986103813 +0100
 @@ -102,6 +102,7 @@
  
  jclass fetchClass(JNIEnv *env, const char *name) {
@@ -2398,8 +2390,8 @@ diff -Nru openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_gene
      rv = (*ckpFunctions->C_SetPIN)(ckSessionHandle, ckpOldPin, ckOldPinLength,
                                     ckpNewPin, ckNewPinLength);
 diff -Nru openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_keymgmt.c openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_keymgmt.c
---- openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_keymgmt.c	2013-08-21 20:32:58.600240346 +0100
-+++ openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_keymgmt.c	2014-01-17 20:41:19.145150708 +0000
+--- openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_keymgmt.c	2014-10-08 16:35:09.000000000 +0100
++++ openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_keymgmt.c	2014-10-08 17:30:03.990103869 +0100
 @@ -74,7 +74,7 @@
      CK_ATTRIBUTE_PTR ckpAttributes = NULL_PTR;
      CK_ULONG ckAttributesLength;
@@ -2951,8 +2943,8 @@ diff -Nru openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_keym
      }
    }
 diff -Nru openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_mutex.c openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_mutex.c
---- openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_mutex.c	2013-08-21 20:32:58.600240346 +0100
-+++ openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_mutex.c	2014-01-17 20:41:19.145150708 +0000
+--- openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_mutex.c	2014-10-08 16:35:09.000000000 +0100
++++ openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_mutex.c	2014-10-08 17:30:03.990103869 +0100
 @@ -76,7 +76,7 @@
  CK_C_INITIALIZE_ARGS_PTR makeCKInitArgsAdapter(JNIEnv *env, jobject jInitArgs)
  {
@@ -3202,8 +3194,8 @@ diff -Nru openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_mute
          rv = jLongToCKULong(errorCode);
      }
 diff -Nru openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_objmgmt.c openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_objmgmt.c
---- openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_objmgmt.c	2013-08-21 20:32:58.600240346 +0100
-+++ openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_objmgmt.c	2014-01-17 20:41:19.145150708 +0000
+--- openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_objmgmt.c	2014-10-08 16:35:09.000000000 +0100
++++ openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_objmgmt.c	2014-10-08 17:30:03.990103869 +0100
 @@ -81,16 +81,14 @@
  
      ckSessionHandle = jLongToCKULong(jSessionHandle);
@@ -3400,8 +3392,8 @@ diff -Nru openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_objm
  }
  #endif
 diff -Nru openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_sessmgmt.c openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_sessmgmt.c
---- openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_sessmgmt.c	2013-08-21 20:32:58.600240346 +0100
-+++ openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_sessmgmt.c	2014-01-17 20:41:19.145150708 +0000
+--- openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_sessmgmt.c	2014-10-08 16:35:09.000000000 +0100
++++ openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_sessmgmt.c	2014-10-08 17:30:03.990103869 +0100
 @@ -97,6 +97,10 @@
  #ifndef NO_CALLBACKS
      if (jNotify != NULL) {
@@ -3588,8 +3580,8 @@ diff -Nru openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_sess
          rv = jLongToCKULong(errorCode);
      }
 diff -Nru openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_sign.c openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_sign.c
---- openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_sign.c	2013-08-21 20:32:58.600240346 +0100
-+++ openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_sign.c	2014-01-17 20:41:19.145150708 +0000
+--- openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_sign.c	2014-10-08 16:35:09.000000000 +0100
++++ openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_sign.c	2014-10-08 17:30:03.990103869 +0100
 @@ -77,15 +77,16 @@
  
      ckSessionHandle = jLongToCKULong(jSessionHandle);
@@ -3953,8 +3945,8 @@ diff -Nru openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_sign
  }
  #endif
 diff -Nru openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_util.c openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_util.c
---- openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_util.c	2013-08-21 20:32:58.604240411 +0100
-+++ openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_util.c	2014-01-17 20:41:19.145150708 +0000
+--- openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_util.c	2014-10-08 16:35:09.000000000 +0100
++++ openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_util.c	2014-10-08 17:30:03.990103869 +0100
 @@ -73,11 +73,11 @@
      jmethodID jConstructor;
  
@@ -4794,8 +4786,8 @@ diff -Nru openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_util
 +#endif
 +
 diff -Nru openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/pkcs11wrapper.h openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/pkcs11wrapper.h
---- openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/pkcs11wrapper.h	2013-08-21 20:32:58.604240411 +0100
-+++ openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/pkcs11wrapper.h	2014-01-17 20:41:19.145150708 +0000
+--- openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/pkcs11wrapper.h	2014-10-08 16:35:09.000000000 +0100
++++ openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/pkcs11wrapper.h	2014-10-08 17:30:03.990103869 +0100
 @@ -154,6 +154,7 @@
  
  #include "pkcs11.h"
