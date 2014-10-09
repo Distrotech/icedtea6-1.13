@@ -615,7 +615,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7033170-getmaxallowedkeylength_throws_exception.patch \
 	patches/openjdk/7044060-support_nsa_suite_b.patch \
 	patches/openjdk/8006935-long_keys_in_hmac_prf.patch \
-	patches/openjdk/7106773-512_bits_rsa.patch
+	patches/openjdk/7106773-512_bits_rsa.patch \
+	patches/pr1904-icedtea_and_distro_versioning.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
