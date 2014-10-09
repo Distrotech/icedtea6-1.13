@@ -1,0 +1,69 @@
+# HG changeset patch
+# User mullan
+# Date 1373562821 14400
+#      Thu Jul 11 13:13:41 2013 -0400
+# Node ID c5d869453212ac971258f818de8b158dc22b6e8c
+# Parent  3119569301137347116bc045e4010f477bbc7a72
+8017173: XMLCipher with RSA_OAEP Key Transport algorithm can't be instantiated
+Reviewed-by: xuelei, vinnie
+
+diff -r 311956930113 -r c5d869453212 src/share/classes/com/sun/org/apache/xml/internal/security/algorithms/JCEMapper.java
+--- openjdk/jdk/src/share/classes/com/sun/org/apache/xml/internal/security/algorithms/JCEMapper.java	Thu Jul 11 12:41:19 2013 +0400
++++ openjdk/jdk/src/share/classes/com/sun/org/apache/xml/internal/security/algorithms/JCEMapper.java	Thu Jul 11 13:13:41 2013 -0400
+@@ -160,7 +160,7 @@
+         );
+         algorithmsMap.put(
+             XMLCipher.RSA_OAEP,
+-            new Algorithm("RSA", "RSA/ECB/OAEPPadding", "KeyTransport")
++            new Algorithm("RSA", "RSA/ECB/OAEPWithSHA1AndMGF1Padding", "KeyTransport")
+         );
+         algorithmsMap.put(
+             XMLCipher.DIFFIE_HELLMAN,
+diff -r 311956930113 -r c5d869453212 test/com/sun/org/apache/xml/internal/security/encryption/XMLCipher/GetInstance.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/com/sun/org/apache/xml/internal/security/encryption/XMLCipher/GetInstance.java	Thu Jul 11 13:13:41 2013 -0400
+@@ -0,0 +1,44 @@
++/*
++ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/*
++ * @test
++ * @bug 8017173
++ * @summary Check that an XMLCipher with RSA_OAEP Key Transport algorithm can
++ *    be instantiated
++ * @compile -XDignore.symbol.file GetInstance.java
++ * @run main GetInstance
++ */
++import com.sun.org.apache.xml.internal.security.Init;
++import com.sun.org.apache.xml.internal.security.encryption.XMLCipher;
++
++public class GetInstance {
++
++    private static final String RSA_OAEP =
++        "http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p";
++
++    public static void main(String[] args) throws Exception {
++        Init.init();
++        XMLCipher.getInstance(RSA_OAEP);
++    }
++}
