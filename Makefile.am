@@ -606,7 +606,16 @@ ICEDTEA_PATCHES = \
 	patches/windows-jdk-sizecalc.patch \
 	patches/shark_fixes_from_8003868.patch \
 	patches/8003992_support_6.patch \
-	patches/shark-drop_compile_method_arg_following_7083786.patch
+	patches/shark-drop_compile_method_arg_following_7083786.patch \
+	patches/openjdk/4963723-implement_sha-224.patch \
+	patches/openjdk/7180907-jarsigner_sha-256.patch \
+	patches/openjdk/8049480-jarsigner_openjdk_9.patch \
+	patches/openjdk/6753664-sunmscapi_sha-256.patch \
+	patches/openjdk/6578658-sunmscapi_nonewithrsa.patch \
+	patches/openjdk/7033170-getmaxallowedkeylength_throws_exception.patch \
+	patches/openjdk/7044060-support_nsa_suite_b.patch \
+	patches/openjdk/8006935-long_keys_in_hmac_prf.patch \
+	patches/openjdk/7106773-512_bits_rsa.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \

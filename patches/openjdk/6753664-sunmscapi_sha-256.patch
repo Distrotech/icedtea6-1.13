@@ -1,0 +1,640 @@
+# HG changeset patch
+# User vinnie
+# Date 1412805283 -3600
+#      Wed Oct 08 22:54:43 2014 +0100
+# Node ID c4a0ef23f3c4f3f7ab264e518fe8c6b4fa4f6683
+# Parent  2adb6892881f4e3b359026854562b2ac70c63bef
+6753664: Support SHA256 (and higher) in SunMSCAPI
+Reviewed-by: mullan
+
+diff -r 2adb6892881f -r c4a0ef23f3c4 src/windows/classes/sun/security/mscapi/RSASignature.java
+--- openjdk/jdk/src/windows/classes/sun/security/mscapi/RSASignature.java	Wed Oct 08 22:42:49 2014 +0100
++++ openjdk/jdk/src/windows/classes/sun/security/mscapi/RSASignature.java	Wed Oct 08 22:54:43 2014 +0100
+@@ -50,6 +50,9 @@
+  *
+  *  . "SHA1withRSA"
+  *  . "SHA224withRSA"
++ *  . "SHA256withRSA"
++ *  . "SHA384withRSA"
++ *  . "SHA512withRSA"
+  *  . "MD5withRSA"
+  *  . "MD2withRSA"
+  *
+@@ -63,7 +66,10 @@
+     // message digest implementation we use
+     private final MessageDigest messageDigest;
+ 
+-    // flag indicating whether the digest is reset
++    // message digest name
++    private final String messageDigestAlgorithm;
++
++    // flag indicating whether the digest has been reset
+     private boolean needsReset;
+ 
+     // the signing key
+@@ -73,10 +79,15 @@
+     private Key publicKey = null;
+ 
+ 
++    /**
++     * Constructs a new RSASignature. Used by subclasses.
++     */
+     RSASignature(String digestName) {
+ 
+         try {
+             messageDigest = MessageDigest.getInstance(digestName);
++            // Get the digest's canonical name
++            messageDigestAlgorithm = messageDigest.getAlgorithm();
+ 
+         } catch (NoSuchAlgorithmException e) {
+            throw new ProviderException(e);
+@@ -97,6 +108,24 @@
+         }
+     }
+ 
++    public static final class SHA256 extends RSASignature {
++        public SHA256() {
++            super("SHA-256");
++        }
++    }
++
++    public static final class SHA384 extends RSASignature {
++        public SHA384() {
++            super("SHA-384");
++        }
++    }
++
++    public static final class SHA512 extends RSASignature {
++        public SHA512() {
++            super("SHA-512");
++        }
++    }
++
+     public static final class MD5 extends RSASignature {
+         public MD5() {
+             super("MD5");
+@@ -109,16 +138,7 @@
+         }
+     }
+ 
+-    /**
+-     * Initializes this signature object with the specified
+-     * public key for verification operations.
+-     *
+-     * @param publicKey the public key of the identity whose signature is
+-     * going to be verified.
+-     *
+-     * @exception InvalidKeyException if the key is improperly
+-     * encoded, parameters are missing, and so on.
+-     */
++    // initialize for signing. See JCA doc
+     protected void engineInitVerify(PublicKey key)
+         throws InvalidKeyException
+     {
+@@ -159,24 +179,12 @@
+             publicKey = (sun.security.mscapi.RSAPublicKey) key;
+         }
+ 
+-        if (needsReset) {
+-            messageDigest.reset();
+-            needsReset = false;
+-        }
++        this.privateKey = null;
++        resetDigest();
+     }
+ 
+-    /**
+-     * Initializes this signature object with the specified
+-     * private key for signing operations.
+-     *
+-     * @param privateKey the private key of the identity whose signature
+-     * will be generated.
+-     *
+-     * @exception InvalidKeyException if the key is improperly
+-     * encoded, parameters are missing, and so on.
+-     */
+-    protected void engineInitSign(PrivateKey key)
+-        throws InvalidKeyException
++    // initialize for signing. See JCA doc
++    protected void engineInitSign(PrivateKey key) throws InvalidKeyException
+     {
+         // This signature accepts only RSAPrivateKey
+         if ((key instanceof sun.security.mscapi.RSAPrivateKey) == false) {
+@@ -190,12 +198,25 @@
+             null, RSAKeyPairGenerator.KEY_SIZE_MIN,
+             RSAKeyPairGenerator.KEY_SIZE_MAX);
+ 
++        this.publicKey = null;
++        resetDigest();
++    }
++
++    /**
++     * Resets the message digest if needed.
++     */
++    private void resetDigest() {
+         if (needsReset) {
+             messageDigest.reset();
+             needsReset = false;
+         }
+     }
+ 
++    private byte[] getDigestValue() {
++        needsReset = false;
++        return messageDigest.digest();
++    }
++
+     /**
+      * Updates the data to be signed or verified
+      * using the specified byte.
+@@ -255,13 +276,12 @@
+      */
+     protected byte[] engineSign() throws SignatureException {
+ 
+-        byte[] hash = messageDigest.digest();
+-        needsReset = false;
++        byte[] hash = getDigestValue();
+ 
+         // Sign hash using MS Crypto APIs
+ 
+         byte[] result = signHash(hash, hash.length,
+-            messageDigest.getAlgorithm(), privateKey.getHCryptProvider(),
++            messageDigestAlgorithm, privateKey.getHCryptProvider(),
+             privateKey.getHCryptKey());
+ 
+         // Convert signature array from little endian to big endian
+@@ -315,11 +335,10 @@
+     protected boolean engineVerify(byte[] sigBytes)
+         throws SignatureException
+     {
+-        byte[] hash = messageDigest.digest();
+-        needsReset = false;
++        byte[] hash = getDigestValue();
+ 
+         return verifySignedHash(hash, hash.length,
+-            messageDigest.getAlgorithm(), convertEndianArray(sigBytes),
++            messageDigestAlgorithm, convertEndianArray(sigBytes),
+             sigBytes.length, publicKey.getHCryptProvider(),
+             publicKey.getHCryptKey());
+     }
+diff -r 2adb6892881f -r c4a0ef23f3c4 src/windows/classes/sun/security/mscapi/SunMSCAPI.java
+--- openjdk/jdk/src/windows/classes/sun/security/mscapi/SunMSCAPI.java	Wed Oct 08 22:42:49 2014 +0100
++++ openjdk/jdk/src/windows/classes/sun/security/mscapi/SunMSCAPI.java	Wed Oct 08 22:54:43 2014 +0100
+@@ -85,6 +85,20 @@
+             "sun.security.mscapi.RSASignature$SHA224");
+         map.put("Alg.Alias.Signature.1.2.840.113549.1.1.14",     "SHA224withRSA");
+         map.put("Alg.Alias.Signature.OID.1.2.840.113549.1.1.14", "SHA224withRSA");
++        map.put("Signature.SHA256withRSA",
++            "sun.security.mscapi.RSASignature$SHA256");
++        map.put("Alg.Alias.Signature.1.2.840.113549.1.1.11",     "SHA256withRSA");
++        map.put("Alg.Alias.Signature.OID.1.2.840.113549.1.1.11", "SHA256withRSA");
++        map.put("Signature.SHA384withRSA",
++            "sun.security.mscapi.RSASignature$SHA384");
++        map.put("Alg.Alias.Signature.1.2.840.113549.1.1.12",     "SHA384withRSA");
++        map.put("Alg.Alias.Signature.OID.1.2.840.113549.1.1.12", "SHA384withRSA");
++
++        map.put("Signature.SHA512withRSA",
++            "sun.security.mscapi.RSASignature$SHA512");
++        map.put("Alg.Alias.Signature.1.2.840.113549.1.1.13",     "SHA512withRSA");
++        map.put("Alg.Alias.Signature.OID.1.2.840.113549.1.1.13", "SHA512withRSA");
++
+         map.put("Signature.MD5withRSA",
+             "sun.security.mscapi.RSASignature$MD5");
+         map.put("Signature.MD2withRSA",
+@@ -95,12 +109,16 @@
+             "sun.security.mscapi.Key");
+         map.put("Signature.SHA224withRSA SupportedKeyClasses",
+             "sun.security.mscapi.Key");
++        map.put("Signature.SHA256withRSA SupportedKeyClasses",
++            "sun.security.mscapi.Key");
++        map.put("Signature.SHA384withRSA SupportedKeyClasses",
++            "sun.security.mscapi.Key");
++        map.put("Signature.SHA512withRSA SupportedKeyClasses",
++            "sun.security.mscapi.Key");
+         map.put("Signature.MD5withRSA SupportedKeyClasses",
+             "sun.security.mscapi.Key");
+         map.put("Signature.MD2withRSA SupportedKeyClasses",
+             "sun.security.mscapi.Key");
+-        map.put("Signature.NONEwithRSA SupportedKeyClasses",
+-            "sun.security.mscapi.Key");
+ 
+         /*
+          * Key Pair Generator engines
+diff -r 2adb6892881f -r c4a0ef23f3c4 src/windows/native/sun/security/mscapi/security.cpp
+--- openjdk/jdk/src/windows/native/sun/security/mscapi/security.cpp	Wed Oct 08 22:42:49 2014 +0100
++++ openjdk/jdk/src/windows/native/sun/security/mscapi/security.cpp	Wed Oct 08 22:54:43 2014 +0100
+@@ -481,6 +481,7 @@
+     jbyte* pHashBuffer = NULL;
+     jbyte* pSignedHashBuffer = NULL;
+     jbyteArray jSignedHash = NULL;
++    HCRYPTPROV hCryptProvAlt = NULL;
+ 
+     __try
+     {
+@@ -490,8 +491,32 @@
+         // Acquire a hash object handle.
+         if (::CryptCreateHash(HCRYPTPROV(hCryptProv), algId, 0, 0, &hHash) == FALSE)
+         {
+-            ThrowException(env, SIGNATURE_EXCEPTION, GetLastError());
+-            __leave;
++            // Failover to using the PROV_RSA_AES CSP
++
++            DWORD cbData = 256;
++            BYTE pbData[256];
++            pbData[0] = '\0';
++
++            // Get name of the key container
++            ::CryptGetProvParam((HCRYPTPROV)hCryptProv, PP_CONTAINER,
++                (BYTE *)pbData, &cbData, 0);
++
++            // Acquire an alternative CSP handle
++            if (::CryptAcquireContext(&hCryptProvAlt, LPCSTR(pbData), NULL,
++                PROV_RSA_AES, 0) == FALSE)
++            {
++
++                ThrowException(env, SIGNATURE_EXCEPTION, GetLastError());
++                __leave;
++            }
++
++            // Acquire a hash object handle.
++            if (::CryptCreateHash(HCRYPTPROV(hCryptProvAlt), algId, 0, 0,
++                &hHash) == FALSE)
++            {
++                ThrowException(env, SIGNATURE_EXCEPTION, GetLastError());
++                __leave;
++            }
+         }
+ 
+         // Copy hash from Java to native buffer
+@@ -544,6 +569,9 @@
+     }
+     __finally
+     {
++        if (hCryptProvAlt)
++            ::CryptReleaseContext(hCryptProvAlt, 0);
++
+         if (pSignedHashBuffer)
+             delete [] pSignedHashBuffer;
+ 
+@@ -572,6 +600,7 @@
+     jbyte* pSignedHashBuffer = NULL;
+     DWORD dwSignedHashBufferLen = jSignedHashSize;
+     jboolean result = JNI_FALSE;
++    HCRYPTPROV hCryptProvAlt = NULL;
+ 
+     __try
+     {
+@@ -582,8 +611,32 @@
+         if (::CryptCreateHash(HCRYPTPROV(hCryptProv), algId, 0, 0, &hHash)
+             == FALSE)
+         {
+-            ThrowException(env, SIGNATURE_EXCEPTION, GetLastError());
+-            __leave;
++            // Failover to using the PROV_RSA_AES CSP
++
++            DWORD cbData = 256;
++            BYTE pbData[256];
++            pbData[0] = '\0';
++
++            // Get name of the key container
++            ::CryptGetProvParam((HCRYPTPROV)hCryptProv, PP_CONTAINER,
++                (BYTE *)pbData, &cbData, 0);
++
++            // Acquire an alternative CSP handle
++            if (::CryptAcquireContext(&hCryptProvAlt, LPCSTR(pbData), NULL,
++                PROV_RSA_AES, 0) == FALSE)
++            {
++
++                ThrowException(env, SIGNATURE_EXCEPTION, GetLastError());
++                __leave;
++            }
++
++            // Acquire a hash object handle.
++            if (::CryptCreateHash(HCRYPTPROV(hCryptProvAlt), algId, 0, 0,
++                &hHash) == FALSE)
++            {
++                ThrowException(env, SIGNATURE_EXCEPTION, GetLastError());
++                __leave;
++            }
+         }
+ 
+         // Copy hash and signedHash from Java to native buffer
+@@ -614,6 +667,9 @@
+ 
+     __finally
+     {
++        if (hCryptProvAlt)
++            ::CryptReleaseContext(hCryptProvAlt, 0);
++
+         if (pSignedHashBuffer)
+             delete [] pSignedHashBuffer;
+ 
+@@ -646,15 +702,27 @@
+         pszKeyContainerName = env->GetStringUTFChars(keyContainerName, NULL);
+ 
+         // Acquire a CSP context (create a new key container).
++        // Prefer a PROV_RSA_AES CSP, when available, due to its support
++        // for SHA-2-based signatures.
+         if (::CryptAcquireContext(
+             &hCryptProv,
+             pszKeyContainerName,
+             NULL,
+-            PROV_RSA_FULL,
++            PROV_RSA_AES,
+             CRYPT_NEWKEYSET) == FALSE)
+         {
+-            ThrowException(env, KEY_EXCEPTION, GetLastError());
+-            __leave;
++            // Failover to using the default CSP (PROV_RSA_FULL)
++
++            if (::CryptAcquireContext(
++                &hCryptProv,
++                pszKeyContainerName,
++                NULL,
++                PROV_RSA_FULL,
++                CRYPT_NEWKEYSET) == FALSE)
++            {
++                ThrowException(env, KEY_EXCEPTION, GetLastError());
++                __leave;
++            }
+         }
+ 
+         // Generate an RSA keypair
+@@ -1847,15 +1915,27 @@
+         pbKeyBlob = (BYTE *) env->GetByteArrayElements(keyBlob, 0);
+ 
+         // Acquire a CSP context (create a new key container).
++        // Prefer a PROV_RSA_AES CSP, when available, due to its support
++        // for SHA-2-based signatures.
+         if (::CryptAcquireContext(
+             &hCryptProv,
+             NULL,
+             NULL,
+-            PROV_RSA_FULL,
++            PROV_RSA_AES,
+             CRYPT_VERIFYCONTEXT) == FALSE)
+         {
+-            ThrowException(env, KEYSTORE_EXCEPTION, GetLastError());
+-            __leave;
++            // Failover to using the default CSP (PROV_RSA_FULL)
++
++            if (::CryptAcquireContext(
++                &hCryptProv,
++                NULL,
++                NULL,
++                PROV_RSA_FULL,
++                CRYPT_VERIFYCONTEXT) == FALSE)
++            {
++                ThrowException(env, KEYSTORE_EXCEPTION, GetLastError());
++                __leave;
++            }
+         }
+ 
+         // Import the public key
+diff -r 2adb6892881f -r c4a0ef23f3c4 test/sun/security/mscapi/SignUsingSHA2withRSA.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/sun/security/mscapi/SignUsingSHA2withRSA.java	Wed Oct 08 22:54:43 2014 +0100
+@@ -0,0 +1,157 @@
++/*
++ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/**
++ * @see SignUsingSHA2withRSA.sh
++ */
++
++import java.security.*;
++import java.util.*;
++
++public class SignUsingSHA2withRSA {
++
++    private static final byte[] toBeSigned = new byte[] {
++        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10
++    };
++
++    private static List<byte[]> generatedSignatures = new ArrayList<byte[]>();
++
++    public static void main(String[] args) throws Exception {
++
++        Provider[] providers = Security.getProviders("Signature.SHA256withRSA");
++        if (providers == null) {
++            System.out.println("No JCE providers support the " +
++                "'Signature.SHA256withRSA' algorithm");
++            System.out.println("Skipping this test...");
++            return;
++
++        } else {
++            System.out.println("The following JCE providers support the " +
++                "'Signature.SHA256withRSA' algorithm: ");
++            for (Provider provider : providers) {
++                System.out.println("    " + provider.getName());
++            }
++        }
++        System.out.println("-------------------------------------------------");
++
++        KeyStore ks = KeyStore.getInstance("Windows-MY", "SunMSCAPI");
++        ks.load(null, null);
++        System.out.println("Loaded keystore: Windows-MY");
++
++        Enumeration e = ks.aliases();
++        PrivateKey privateKey = null;
++        PublicKey publicKey = null;
++
++        while (e.hasMoreElements()) {
++            String alias = (String) e.nextElement();
++            if (alias.equals("6753664")) {
++                System.out.println("Loaded entry: " + alias);
++                privateKey = (PrivateKey) ks.getKey(alias, null);
++                publicKey = (PublicKey) ks.getCertificate(alias).getPublicKey();
++            }
++        }
++        if (privateKey == null || publicKey == null) {
++            throw new Exception("Cannot load the keys need to run this test");
++        }
++        System.out.println("-------------------------------------------------");
++
++        generatedSignatures.add(signUsing("SHA256withRSA", privateKey));
++        generatedSignatures.add(signUsing("SHA384withRSA", privateKey));
++        generatedSignatures.add(signUsing("SHA512withRSA", privateKey));
++        generatedSignatures.add(signUsing("SHA224withRSA", privateKey));
++
++
++        System.out.println("-------------------------------------------------");
++
++        verifyUsing("SHA256withRSA", publicKey, generatedSignatures.get(0));
++        verifyUsing("SHA384withRSA", publicKey, generatedSignatures.get(1));
++        verifyUsing("SHA512withRSA", publicKey, generatedSignatures.get(2));
++        verifyUsing("SHA224withRSA", publicKey, generatedSignatures.get(3));
++
++
++        System.out.println("-------------------------------------------------");
++    }
++
++    private static byte[] signUsing(String signAlgorithm,
++        PrivateKey privateKey) throws Exception {
++
++        // Must explicitly specify the SunMSCAPI JCE provider
++        // (otherwise SunJCE is chosen because it appears earlier in the list)
++        Signature sig1 = Signature.getInstance(signAlgorithm, "SunMSCAPI");
++        if (sig1 == null) {
++            throw new Exception("'" + signAlgorithm + "' is not supported");
++        }
++        System.out.println("Using " + signAlgorithm + " signer from the " +
++            sig1.getProvider().getName() + " JCE provider");
++
++        System.out.println("Using key: " + privateKey);
++        sig1.initSign(privateKey);
++        sig1.update(toBeSigned);
++        byte [] sigBytes = null;
++
++        try {
++            sigBytes = sig1.sign();
++            System.out.println("Generated RSA signature over a " +
++                toBeSigned.length + "-byte data (signature length: " +
++                sigBytes.length * 8 + " bits)");
++            System.out.println(String.format("0x%0" +
++                (sigBytes.length * 2) + "x",
++                new java.math.BigInteger(1, sigBytes)));
++
++        } catch (SignatureException se) {
++                System.out.println("Error generating RSA signature: " + se);
++        }
++
++        return sigBytes;
++    }
++
++    private static void verifyUsing(String signAlgorithm, PublicKey publicKey,
++        byte[] signature) throws Exception {
++
++        // Must explicitly specify the SunMSCAPI JCE provider
++        // (otherwise SunJCE is chosen because it appears earlier in the list)
++        Signature sig1 = Signature.getInstance(signAlgorithm, "SunMSCAPI");
++        if (sig1 == null) {
++            throw new Exception("'" + signAlgorithm + "' is not supported");
++        }
++        System.out.println("Using " + signAlgorithm + " verifier from the "
++            + sig1.getProvider().getName() + " JCE provider");
++
++        System.out.println("Using key: " + publicKey);
++
++        System.out.println("\nVerifying RSA Signature over a " +
++            toBeSigned.length + "-byte data (signature length: " +
++            signature.length * 8 + " bits)");
++        System.out.println(String.format("0x%0" + (signature.length * 2) +
++            "x", new java.math.BigInteger(1, signature)));
++
++        sig1.initVerify(publicKey);
++        sig1.update(toBeSigned);
++
++        if (sig1.verify(signature)) {
++            System.out.println("Verify PASSED\n");
++        } else {
++            throw new Exception("Verify FAILED");
++        }
++    }
++}
+diff -r 2adb6892881f -r c4a0ef23f3c4 test/sun/security/mscapi/SignUsingSHA2withRSA.sh
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/sun/security/mscapi/SignUsingSHA2withRSA.sh	Wed Oct 08 22:54:43 2014 +0100
+@@ -0,0 +1,83 @@
++#!/bin/sh
++
++#
++# Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
++# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++#
++# This code is free software; you can redistribute it and/or modify it
++# under the terms of the GNU General Public License version 2 only, as
++# published by the Free Software Foundation.
++#
++# This code is distributed in the hope that it will be useful, but WITHOUT
++# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++# version 2 for more details (a copy is included in the LICENSE file that
++# accompanied this code).
++#
++# You should have received a copy of the GNU General Public License version
++# 2 along with this work; if not, write to the Free Software Foundation,
++# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++#
++# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++# or visit www.oracle.com if you need additional information or have any
++# questions.
++#
++
++
++# @test
++# @bug 6753664
++# @run shell SignUsingSHA2withRSA.sh
++# @summary Support SHA256 (and higher) in SunMSCAPI
++
++# set a few environment variables so that the shell-script can run stand-alone
++# in the source directory
++if [ "${TESTSRC}" = "" ] ; then
++   TESTSRC="."
++fi
++
++if [ "${TESTCLASSES}" = "" ] ; then
++   TESTCLASSES="."
++fi
++
++if [ "${TESTJAVA}" = "" ] ; then
++   echo "TESTJAVA not set.  Test cannot execute."
++   echo "FAILED!!!"
++   exit 1
++fi
++
++OS=`uname -s`
++case "$OS" in
++    Windows* | CYGWIN* )
++
++        echo "Creating a temporary RSA keypair in the Windows-My store..."
++        ${TESTJAVA}/bin/keytool \
++	    -genkeypair \
++	    -storetype Windows-My \
++	    -keyalg RSA \
++	    -alias 6753664 \
++	    -dname "cn=6753664,c=US" \
++	    -noprompt
++
++        echo
++	echo "Running the test..."
++        ${TESTJAVA}/bin/javac -d . ${TESTSRC}\\SignUsingSHA2withRSA.java
++        ${TESTJAVA}/bin/java SignUsingSHA2withRSA
++
++        rc=$?
++
++        echo
++        echo "Removing the temporary RSA keypair from the Windows-My store..."
++        ${TESTJAVA}/bin/keytool \
++	    -delete \
++	    -storetype Windows-My \
++	    -alias 6753664
++
++	echo done.
++        exit $rc
++        ;;
++
++    * )
++        echo "This test is not intended for '$OS' - passing test"
++        exit 0
++        ;;
++esac

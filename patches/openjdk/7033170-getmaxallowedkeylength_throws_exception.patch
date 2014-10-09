@@ -1,0 +1,117 @@
+# HG changeset patch
+# User valeriep
+# Date 1326944130 28800
+#      Wed Jan 18 19:35:30 2012 -0800
+# Node ID b2488252ba0c238d37b24069808b0ac8c2da1c76
+# Parent  9ec80e94c5cda0fb59fbfe217e3505f597ccbe90
+7033170: Cipher.getMaxAllowedKeyLength(String) throws NoSuchAlgorithmException
+Summary: Changed to always use full transformation as provider properties.
+Reviewed-by: mullan
+
+diff -r 9ec80e94c5cd -r b2488252ba0c src/share/classes/sun/security/pkcs11/SunPKCS11.java
+--- openjdk/jdk/src/share/classes/sun/security/pkcs11/SunPKCS11.java	Wed Jan 18 19:33:50 2012 -0800
++++ openjdk/jdk/src/share/classes/sun/security/pkcs11/SunPKCS11.java	Wed Jan 18 19:35:30 2012 -0800
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -606,24 +606,31 @@
+                 m(CKM_DES_CBC));
+         d(CIP, "DES/CBC/PKCS5Padding",          P11Cipher,
+                 m(CKM_DES_CBC_PAD, CKM_DES_CBC));
+-        d(CIP, "DES/ECB",                       P11Cipher,      s("DES"),
++        d(CIP, "DES/ECB/NoPadding",             P11Cipher,
+                 m(CKM_DES_ECB));
+-
++        d(CIP, "DES/ECB/PKCS5Padding",          P11Cipher,      s("DES"),
++                m(CKM_DES_ECB));
+         d(CIP, "DESede/CBC/NoPadding",          P11Cipher,
+                 m(CKM_DES3_CBC));
+         d(CIP, "DESede/CBC/PKCS5Padding",       P11Cipher,
+                 m(CKM_DES3_CBC_PAD, CKM_DES3_CBC));
+-        d(CIP, "DESede/ECB",                    P11Cipher,      s("DESede"),
++        d(CIP, "DESede/ECB/NoPadding",          P11Cipher,
++                m(CKM_DES3_ECB));
++        d(CIP, "DESede/ECB/PKCS5Padding",       P11Cipher,      s("DESede"),
+                 m(CKM_DES3_ECB));
+         d(CIP, "AES/CBC/NoPadding",             P11Cipher,
+                 m(CKM_AES_CBC));
+         d(CIP, "AES/CBC/PKCS5Padding",          P11Cipher,
+                 m(CKM_AES_CBC_PAD, CKM_AES_CBC));
+-        d(CIP, "AES/ECB",                       P11Cipher,      s("AES"),
++        d(CIP, "AES/ECB/NoPadding",             P11Cipher,
++                m(CKM_AES_ECB));
++        d(CIP, "AES/ECB/PKCS5Padding",          P11Cipher,      s("AES"),
+                 m(CKM_AES_ECB));
+         d(CIP, "AES/CTR/NoPadding",             P11Cipher,
+                 m(CKM_AES_CTR));
+-        d(CIP, "Blowfish/CBC",                  P11Cipher,
++        d(CIP, "Blowfish/CBC/NoPadding",        P11Cipher,
++                m(CKM_BLOWFISH_CBC));
++        d(CIP, "Blowfish/CBC/PKCS5Padding",     P11Cipher,
+                 m(CKM_BLOWFISH_CBC));
+ 
+         // XXX RSA_X_509, RSA_OAEP not yet supported
+diff -r 9ec80e94c5cd -r b2488252ba0c test/javax/crypto/Cipher/GetMaxAllowed.java
+--- openjdk/jdk/test/javax/crypto/Cipher/GetMaxAllowed.java	Wed Jan 18 19:33:50 2012 -0800
++++ openjdk/jdk/test/javax/crypto/Cipher/GetMaxAllowed.java	Wed Jan 18 19:35:30 2012 -0800
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, 2007, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -23,7 +23,7 @@
+ 
+ /**
+  * @test
+- * @bug 4807942
++ * @bug 4807942 7033170
+  * @summary Test the Cipher.getMaxAllowedKeyLength(String) and
+  * getMaxAllowedParameterSpec(String) methods
+  * @author Valerie Peng
+@@ -40,7 +40,7 @@
+ 
+ public class GetMaxAllowed {
+ 
+-    private static void runTest(boolean isUnlimited) throws Exception {
++    private static void runTest1(boolean isUnlimited) throws Exception {
+         System.out.println("Testing " + (isUnlimited? "un":"") +
+                            "limited policy...");
+ 
+@@ -78,6 +78,20 @@
+         System.out.println("All tests passed");
+     }
+ 
++    private static void runTest2() throws Exception {
++        System.out.println("Testing against Security.getAlgorithms()");
++
++        Set<String> algorithms = Security.getAlgorithms("Cipher");
++
++        for (String algorithm: algorithms) {
++            int keylength = -1;
++
++            // if 7033170 is not fixed, NoSuchAlgorithmException is thrown
++            keylength = Cipher.getMaxAllowedKeyLength(algorithm);
++
++        }
++    }
++
+     public static void main(String[] args) throws Exception {
+         // decide if the installed jurisdiction policy file is the
+         // unlimited version
+@@ -88,6 +102,9 @@
+         } catch (InvalidKeyException ike) {
+             isUnlimited = false;
+         }
+-        runTest(isUnlimited);
++        runTest1(isUnlimited);
++
++        // test using the set of algorithms returned by Security.getAlgorithms()
++        runTest2();
+     }
+ }

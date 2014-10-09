@@ -1,0 +1,602 @@
+# HG changeset patch
+# User vinnie
+# Date 1412805665 -3600
+#      Wed Oct 08 23:01:05 2014 +0100
+# Node ID 29dda8a543712fa28e76a963b6310e6a6a1b66d6
+# Parent  c4a0ef23f3c4f3f7ab264e518fe8c6b4fa4f6683
+6578658: Request for raw RSA (NONEwithRSA) Signature support in SunMSCAPI
+Reviewed-by: wetmore
+
+diff -r c4a0ef23f3c4 -r 29dda8a54371 src/windows/classes/sun/security/mscapi/RSASignature.java
+--- openjdk/jdk/src/windows/classes/sun/security/mscapi/RSASignature.java	Wed Oct 08 22:54:43 2014 +0100
++++ openjdk/jdk/src/windows/classes/sun/security/mscapi/RSASignature.java	Wed Oct 08 23:01:05 2014 +0100
+@@ -48,6 +48,7 @@
+  * Objects should be instantiated by calling Signature.getInstance() using the
+  * following algorithm names:
+  *
++ *  . "NONEwithRSA"
+  *  . "SHA1withRSA"
+  *  . "SHA224withRSA"
+  *  . "SHA256withRSA"
+@@ -56,7 +57,12 @@
+  *  . "MD5withRSA"
+  *  . "MD2withRSA"
+  *
+- * Note: RSA keys must be at least 512 bits long
++ * NOTE: RSA keys must be at least 512 bits long.
++ *
++ * NOTE: NONEwithRSA must be supplied with a pre-computed message digest.
++ *       Only the following digest algorithms are supported: MD5, SHA-1,
++ *       SHA-224, SHA-256, SHA-384, SHA-512 and a special-purpose digest
++ *       algorithm which is a concatenation of SHA-1 and MD5 digests.
+  *
+  * @since   1.6
+  * @author  Stanley Man-Kit Ho
+@@ -67,7 +73,7 @@
+     private final MessageDigest messageDigest;
+ 
+     // message digest name
+-    private final String messageDigestAlgorithm;
++    private String messageDigestAlgorithm;
+ 
+     // flag indicating whether the digest has been reset
+     private boolean needsReset;
+@@ -78,6 +84,13 @@
+     // the verification key
+     private Key publicKey = null;
+ 
++    /**
++     * Constructs a new RSASignature. Used by Raw subclass.
++     */
++    RSASignature() {
++        messageDigest = null;
++        messageDigestAlgorithm = null;
++    }
+ 
+     /**
+      * Constructs a new RSASignature. Used by subclasses.
+@@ -96,6 +109,96 @@
+         needsReset = false;
+     }
+ 
++    // Nested class for NONEwithRSA signatures
++    public static final class Raw extends RSASignature {
++
++        // the longest supported digest is 512 bits (SHA-512)
++        private static final int RAW_RSA_MAX = 64;
++
++        private final byte[] precomputedDigest;
++        private int offset = 0;
++
++        public Raw() {
++            precomputedDigest = new byte[RAW_RSA_MAX];
++        }
++
++        // Stores the precomputed message digest value.
++        @Override
++        protected void engineUpdate(byte b) throws SignatureException {
++            if (offset >= precomputedDigest.length) {
++                offset = RAW_RSA_MAX + 1;
++                return;
++            }
++            precomputedDigest[offset++] = b;
++        }
++
++        // Stores the precomputed message digest value.
++        @Override
++        protected void engineUpdate(byte[] b, int off, int len)
++                throws SignatureException {
++            if (offset + len > precomputedDigest.length) {
++                offset = RAW_RSA_MAX + 1;
++                return;
++            }
++            System.arraycopy(b, off, precomputedDigest, offset, len);
++            offset += len;
++        }
++
++        // Stores the precomputed message digest value.
++        @Override
++        protected void engineUpdate(ByteBuffer byteBuffer) {
++            int len = byteBuffer.remaining();
++            if (len <= 0) {
++                return;
++            }
++            if (offset + len > precomputedDigest.length) {
++                offset = RAW_RSA_MAX + 1;
++                return;
++            }
++            byteBuffer.get(precomputedDigest, offset, len);
++            offset += len;
++        }
++
++        @Override
++        protected void resetDigest(){
++            offset = 0;
++        }
++
++        // Returns the precomputed message digest value.
++        @Override
++        protected byte[] getDigestValue() throws SignatureException {
++            if (offset > RAW_RSA_MAX) {
++                throw new SignatureException("Message digest is too long");
++            }
++
++            // Determine the digest algorithm from the digest length
++            if (offset == 20) {
++                setDigestName("SHA1");
++            } else if (offset == 36) {
++                setDigestName("SHA1+MD5");
++            } else if (offset == 32) {
++                setDigestName("SHA-256");
++            } else if (offset == 48) {
++                setDigestName("SHA-384");
++            } else if (offset == 64) {
++                setDigestName("SHA-512");
++            } else if (offset == 16) {
++                setDigestName("MD5");
++            } else if (offset == 28) {
++                setDigestName("SHA-224");
++            } else {
++                throw new SignatureException(
++                    "Message digest length is not supported");
++            }
++
++            byte[] result = new byte[offset];
++            System.arraycopy(precomputedDigest, 0, result, 0, offset);
++            offset = 0;
++
++            return result;
++        }
++    }
++
+     public static final class SHA1 extends RSASignature {
+         public SHA1() {
+             super("SHA1");
+@@ -205,18 +308,22 @@
+     /**
+      * Resets the message digest if needed.
+      */
+-    private void resetDigest() {
++    protected void resetDigest() {
+         if (needsReset) {
+             messageDigest.reset();
+             needsReset = false;
+         }
+     }
+ 
+-    private byte[] getDigestValue() {
++    protected byte[] getDigestValue() throws SignatureException {
+         needsReset = false;
+         return messageDigest.digest();
+     }
+ 
++    protected void setDigestName(String name) {
++        messageDigestAlgorithm = name;
++    }
++
+     /**
+      * Updates the data to be signed or verified
+      * using the specified byte.
+@@ -278,9 +385,12 @@
+ 
+         byte[] hash = getDigestValue();
+ 
++        // Omit the hash OID when generating a Raw signature
++        boolean noHashOID = this instanceof Raw;
++
+         // Sign hash using MS Crypto APIs
+ 
+-        byte[] result = signHash(hash, hash.length,
++        byte[] result = signHash(noHashOID, hash, hash.length,
+             messageDigestAlgorithm, privateKey.getHCryptProvider(),
+             privateKey.getHCryptKey());
+ 
+@@ -309,8 +419,8 @@
+      * Sign hash using Microsoft Crypto API with HCRYPTKEY.
+      * The returned data is in little-endian.
+      */
+-    private native static byte[] signHash(byte[] hash, int hashSize,
+-        String hashAlgorithm, long hCryptProv, long hCryptKey)
++    private native static byte[] signHash(boolean noHashOID, byte[] hash,
++        int hashSize, String hashAlgorithm, long hCryptProv, long hCryptKey)
+             throws SignatureException;
+ 
+     /**
+diff -r c4a0ef23f3c4 -r 29dda8a54371 src/windows/classes/sun/security/mscapi/SunMSCAPI.java
+--- openjdk/jdk/src/windows/classes/sun/security/mscapi/SunMSCAPI.java	Wed Oct 08 22:54:43 2014 +0100
++++ openjdk/jdk/src/windows/classes/sun/security/mscapi/SunMSCAPI.java	Wed Oct 08 23:01:05 2014 +0100
+@@ -79,6 +79,12 @@
+         /*
+          * Signature engines
+          */
++        // NONEwithRSA must be supplied with a pre-computed message digest.
++        // Only the following digest algorithms are supported: MD5, SHA-1,
++        // SHA-224, SHA-256, SHA-384, SHA-512 and a special-purpose digest
++        // algorithm which is a concatenation of SHA-1 and MD5 digests.
++        map.put("Signature.NONEwithRSA",
++            "sun.security.mscapi.RSASignature$Raw");
+         map.put("Signature.SHA1withRSA",
+             "sun.security.mscapi.RSASignature$SHA1");
+         map.put("Signature.SHA224withRSA",
+@@ -105,6 +111,8 @@
+             "sun.security.mscapi.RSASignature$MD2");
+ 
+         // supported key classes
++        map.put("Signature.NONEwithRSA SupportedKeyClasses",
++            "sun.security.mscapi.Key");
+         map.put("Signature.SHA1withRSA SupportedKeyClasses",
+             "sun.security.mscapi.Key");
+         map.put("Signature.SHA224withRSA SupportedKeyClasses",
+diff -r c4a0ef23f3c4 -r 29dda8a54371 src/windows/native/sun/security/mscapi/security.cpp
+--- openjdk/jdk/src/windows/native/sun/security/mscapi/security.cpp	Wed Oct 08 22:54:43 2014 +0100
++++ openjdk/jdk/src/windows/native/sun/security/mscapi/security.cpp	Wed Oct 08 23:01:05 2014 +0100
+@@ -79,6 +79,8 @@
+         (strcmp("SHA-1", pszHashAlgorithm) == 0)) {
+ 
+         algId = CALG_SHA1;
++    } else if (strcmp("SHA1+MD5", pszHashAlgorithm) == 0) {
++        algId = CALG_SSL3_SHAMD5; // a 36-byte concatenation of SHA-1 and MD5
+     } else if (strcmp("SHA-256", pszHashAlgorithm) == 0) {
+         algId = CALG_SHA_256;
+     } else if (strcmp("SHA-384", pszHashAlgorithm) == 0) {
+@@ -471,11 +473,12 @@
+ /*
+  * Class:     sun_security_mscapi_RSASignature
+  * Method:    signHash
+- * Signature: ([BILjava/lang/String;JJ)[B
++ * Signature: (Z[BILjava/lang/String;JJ)[B
+  */
+ JNIEXPORT jbyteArray JNICALL Java_sun_security_mscapi_RSASignature_signHash
+-  (JNIEnv *env, jclass clazz, jbyteArray jHash, jint jHashSize,
+-        jstring jHashAlgorithm, jlong hCryptProv, jlong hCryptKey)
++  (JNIEnv *env, jclass clazz, jboolean noHashOID, jbyteArray jHash,
++        jint jHashSize, jstring jHashAlgorithm, jlong hCryptProv,
++        jlong hCryptKey)
+ {
+     HCRYPTHASH hHash = NULL;
+     jbyte* pHashBuffer = NULL;
+@@ -546,14 +549,20 @@
+ 
+         // Determine size of buffer
+         DWORD dwBufLen = 0;
+-        if (::CryptSignHash(hHash, dwKeySpec, NULL, NULL, NULL, &dwBufLen) == FALSE)
++        DWORD dwFlags = 0;
++
++        if (noHashOID == JNI_TRUE) {
++            dwFlags = CRYPT_NOHASHOID; // omit hash OID in NONEwithRSA signature
++        }
++
++        if (::CryptSignHash(hHash, dwKeySpec, NULL, dwFlags, NULL, &dwBufLen) == FALSE)
+         {
+             ThrowException(env, SIGNATURE_EXCEPTION, GetLastError());
+             __leave;
+         }
+ 
+         pSignedHashBuffer = new jbyte[dwBufLen];
+-        if (::CryptSignHash(hHash, dwKeySpec, NULL, NULL, (BYTE*)pSignedHashBuffer, &dwBufLen) == FALSE)
++        if (::CryptSignHash(hHash, dwKeySpec, NULL, dwFlags, (BYTE*)pSignedHashBuffer, &dwBufLen) == FALSE)
+         {
+             ThrowException(env, SIGNATURE_EXCEPTION, GetLastError());
+             __leave;
+diff -r c4a0ef23f3c4 -r 29dda8a54371 test/sun/security/mscapi/SignUsingNONEwithRSA.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/sun/security/mscapi/SignUsingNONEwithRSA.java	Wed Oct 08 23:01:05 2014 +0100
+@@ -0,0 +1,231 @@
++/*
++ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/**
++ * @see SignUsingNONEwithRSA.sh
++ */
++
++import java.security.*;
++import java.util.*;
++
++public class SignUsingNONEwithRSA {
++
++    private static final List<byte[]> precomputedHashes = Arrays.asList(
++        // A MD5 hash
++        new byte[] {
++            0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10,
++            0x11, 0x12, 0x13, 0x14, 0x15, 0x16
++        },
++        // A SHA-1 hash
++        new byte[] {
++            0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10,
++            0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x20
++        },
++        // A concatenation of SHA-1 and MD5 hashes (used during SSL handshake)
++        new byte[] {
++            0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10,
++            0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x20,
++            0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x30,
++            0x31, 0x32, 0x33, 0x34, 0x35, 0x36
++        },
++        // A SHA-224 hash
++        new byte[] {
++            0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10,
++            0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x20,
++            0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28
++        },
++        // A SHA-256 hash
++        new byte[] {
++            0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10,
++            0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x20,
++            0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x30,
++            0x31, 0x32
++        },
++        // A SHA-384 hash
++        new byte[] {
++            0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10,
++            0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x20,
++            0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x30,
++            0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x40,
++            0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48
++        },
++        // A SHA-512 hash
++        new byte[] {
++            0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10,
++            0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x20,
++            0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x30,
++            0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x40,
++            0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x50,
++            0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x60,
++            0x61, 0x62, 0x63, 0x64
++        });
++
++    private static List<byte[]> generatedSignatures = new ArrayList<>();
++
++    public static void main(String[] args) throws Exception {
++
++        Provider[] providers = Security.getProviders("Signature.NONEwithRSA");
++        if (providers == null) {
++            System.out.println("No JCE providers support the " +
++                "'Signature.NONEwithRSA' algorithm");
++            System.out.println("Skipping this test...");
++            return;
++
++        } else {
++            System.out.println("The following JCE providers support the " +
++                "'Signature.NONEwithRSA' algorithm: ");
++            for (Provider provider : providers) {
++                System.out.println("    " + provider.getName());
++            }
++        }
++        System.out.println("-------------------------------------------------");
++
++        KeyPair keys = getKeysFromKeyStore();
++        signAllUsing("SunMSCAPI", keys.getPrivate());
++        System.out.println("-------------------------------------------------");
++
++        verifyAllUsing("SunMSCAPI", keys.getPublic());
++        System.out.println("-------------------------------------------------");
++
++        verifyAllUsing("SunJCE", keys.getPublic());
++        System.out.println("-------------------------------------------------");
++
++        keys = generateKeys();
++        signAllUsing("SunJCE", keys.getPrivate());
++        System.out.println("-------------------------------------------------");
++
++        verifyAllUsing("SunMSCAPI", keys.getPublic());
++        System.out.println("-------------------------------------------------");
++
++    }
++
++    private static KeyPair getKeysFromKeyStore() throws Exception {
++        KeyStore ks = KeyStore.getInstance("Windows-MY", "SunMSCAPI");
++        ks.load(null, null);
++        System.out.println("Loaded keystore: Windows-MY");
++
++        Enumeration e = ks.aliases();
++        PrivateKey privateKey = null;
++        PublicKey publicKey = null;
++
++        while (e.hasMoreElements()) {
++            String alias = (String) e.nextElement();
++            if (alias.equals("6578658")) {
++                System.out.println("Loaded entry: " + alias);
++                privateKey = (PrivateKey) ks.getKey(alias, null);
++                publicKey = (PublicKey) ks.getCertificate(alias).getPublicKey();
++            }
++        }
++        if (privateKey == null || publicKey == null) {
++            throw new Exception("Cannot load the keys need to run this test");
++        }
++
++        return new KeyPair(publicKey, privateKey);
++    }
++
++
++    private static KeyPair generateKeys() throws Exception {
++        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
++        keyGen.initialize(1024, null);
++        KeyPair pair = keyGen.generateKeyPair();
++        PrivateKey privateKey = pair.getPrivate();
++        PublicKey publicKey = pair.getPublic();
++
++        if (privateKey == null || publicKey == null) {
++            throw new Exception("Cannot load the keys need to run this test");
++        }
++
++        return new KeyPair(publicKey, privateKey);
++    }
++
++    private static void signAllUsing(String providerName, PrivateKey privateKey)
++            throws Exception {
++        Signature sig1 = Signature.getInstance("NONEwithRSA", providerName);
++        if (sig1 == null) {
++            throw new Exception("'NONEwithRSA' is not supported");
++        }
++        if (sig1.getProvider() != null) {
++            System.out.println("Using NONEwithRSA signer from the " +
++                sig1.getProvider().getName() + " JCE provider");
++        } else {
++            System.out.println(
++                "Using NONEwithRSA signer from the internal JCE provider");
++        }
++
++        System.out.println("Using key: " + privateKey);
++        generatedSignatures.clear();
++        for (byte[] hash : precomputedHashes) {
++            sig1.initSign(privateKey);
++            sig1.update(hash);
++
++            try {
++
++                byte [] sigBytes = sig1.sign();
++                System.out.println("\nGenerated RSA signature over a " +
++                    hash.length + "-byte hash (signature length: " +
++                    sigBytes.length * 8 + " bits)");
++                System.out.println(String.format("0x%0" +
++                    (sigBytes.length * 2) + "x",
++                    new java.math.BigInteger(1, sigBytes)));
++                generatedSignatures.add(sigBytes);
++
++            } catch (SignatureException se) {
++                System.out.println("Error generating RSA signature: " + se);
++            }
++        }
++    }
++
++    private static void verifyAllUsing(String providerName, PublicKey publicKey)
++            throws Exception {
++        Signature sig1 = Signature.getInstance("NONEwithRSA", providerName);
++        if (sig1.getProvider() != null) {
++            System.out.println("\nUsing NONEwithRSA verifier from the " +
++                sig1.getProvider().getName() + " JCE provider");
++        } else {
++            System.out.println(
++                "\nUsing NONEwithRSA verifier from the internal JCE provider");
++        }
++
++        System.out.println("Using key: " + publicKey);
++
++        int i = 0;
++        for (byte[] hash : precomputedHashes) {
++
++            byte[] sigBytes = generatedSignatures.get(i++);
++            System.out.println("\nVerifying RSA Signature over a " +
++                hash.length + "-byte hash (signature length: " +
++                sigBytes.length * 8 + " bits)");
++            System.out.println(String.format("0x%0" +
++                (sigBytes.length * 2) + "x",
++                new java.math.BigInteger(1, sigBytes)));
++
++            sig1.initVerify(publicKey);
++            sig1.update(hash);
++            if (sig1.verify(sigBytes)) {
++                System.out.println("Verify PASSED");
++            } else {
++                throw new Exception("Verify FAILED");
++            }
++        }
++    }
++}
+diff -r c4a0ef23f3c4 -r 29dda8a54371 test/sun/security/mscapi/SignUsingNONEwithRSA.sh
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/sun/security/mscapi/SignUsingNONEwithRSA.sh	Wed Oct 08 23:01:05 2014 +0100
+@@ -0,0 +1,83 @@
++#!/bin/sh
++
++#
++# Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
++# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++#
++# This code is free software; you can redistribute it and/or modify it
++# under the terms of the GNU General Public License version 2 only, as
++# published by the Free Software Foundation.
++#
++# This code is distributed in the hope that it will be useful, but WITHOUT
++# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++# version 2 for more details (a copy is included in the LICENSE file that
++# accompanied this code).
++#
++# You should have received a copy of the GNU General Public License version
++# 2 along with this work; if not, write to the Free Software Foundation,
++# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++#
++# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++# or visit www.oracle.com if you need additional information or have any
++# questions.
++#
++
++
++# @test
++# @bug 6578658
++# @run shell SignUsingNONEwithRSA.sh
++# @summary Sign using the NONEwithRSA signature algorithm from SunMSCAPI
++
++# set a few environment variables so that the shell-script can run stand-alone
++# in the source directory
++if [ "${TESTSRC}" = "" ] ; then
++   TESTSRC="."
++fi
++
++if [ "${TESTCLASSES}" = "" ] ; then
++   TESTCLASSES="."
++fi
++
++if [ "${TESTJAVA}" = "" ] ; then
++   echo "TESTJAVA not set.  Test cannot execute."
++   echo "FAILED!!!"
++   exit 1
++fi
++
++OS=`uname -s`
++case "$OS" in
++    Windows* | CYGWIN* )
++
++        echo "Creating a temporary RSA keypair in the Windows-My store..."
++        ${TESTJAVA}/bin/keytool \
++	    -genkeypair \
++	    -storetype Windows-My \
++	    -keyalg RSA \
++	    -alias 6578658 \
++	    -dname "cn=6578658,c=US" \
++	    -noprompt
++
++        echo
++	echo "Running the test..."
++        ${TESTJAVA}/bin/javac -d . ${TESTSRC}\\SignUsingNONEwithRSA.java
++        ${TESTJAVA}/bin/java SignUsingNONEwithRSA
++
++        rc=$?
++
++        echo
++        echo "Removing the temporary RSA keypair from the Windows-My store..."
++        ${TESTJAVA}/bin/keytool \
++	    -delete \
++	    -storetype Windows-My \
++	    -alias 6578658
++
++	echo done.
++        exit $rc
++        ;;
++
++    * )
++        echo "This test is not intended for '$OS' - passing test"
++        exit 0
++        ;;
++esac

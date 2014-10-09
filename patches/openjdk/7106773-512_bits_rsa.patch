@@ -1,0 +1,1336 @@
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/util/KeyLength.java openjdk/jdk/src/share/classes/sun/security/util/KeyLength.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/util/KeyLength.java	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/jdk/src/share/classes/sun/security/util/KeyLength.java	2014-10-08 23:56:02.320447941 +0100
+@@ -0,0 +1,91 @@
++/*
++ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.  Oracle designates this
++ * particular file as subject to the "Classpath" exception as provided
++ * by Oracle in the LICENSE file that accompanied this code.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++package sun.security.util;
++
++import java.security.Key;
++import java.security.PrivilegedAction;
++import java.security.AccessController;
++import java.security.interfaces.ECKey;
++import java.security.interfaces.RSAKey;
++import java.security.interfaces.DSAKey;
++import javax.crypto.SecretKey;
++import javax.crypto.interfaces.DHKey;
++
++/**
++ * A utility class to get key length
++ */
++public final class KeyLength {
++
++    /**
++     * Returns the key size of the given key object in bits.
++     *
++     * @param key the key object, cannot be null
++     * @return the key size of the given key object in bits, or -1 if the
++     *       key size is not accessible
++     */
++    final public static int getKeySize(Key key) {
++        int size = -1;
++
++        if (key instanceof Length) {
++            try {
++                Length ruler = (Length)key;
++                size = ruler.length();
++            } catch (UnsupportedOperationException usoe) {
++                // ignore the exception
++            }
++
++            if (size >= 0) {
++                return size;
++            }
++        }
++
++        // try to parse the length from key specification
++        if (key instanceof SecretKey) {
++            SecretKey sk = (SecretKey)key;
++            String format = sk.getFormat();
++            if ("RAW".equals(format) && sk.getEncoded() != null) {
++                size = (sk.getEncoded().length * 8);
++            }   // Otherwise, it may be a unextractable key of PKCS#11, or
++                // a key we are not able to handle.
++        } else if (key instanceof RSAKey) {
++            RSAKey pubk = (RSAKey)key;
++            size = pubk.getModulus().bitLength();
++        } else if (key instanceof ECKey) {
++            ECKey pubk = (ECKey)key;
++            size = pubk.getParams().getOrder().bitLength();
++        } else if (key instanceof DSAKey) {
++            DSAKey pubk = (DSAKey)key;
++            size = pubk.getParams().getP().bitLength();
++        } else if (key instanceof DHKey) {
++            DHKey pubk = (DHKey)key;
++            size = pubk.getParams().getP().bitLength();
++        }   // Otherwise, it may be a unextractable key of PKCS#11, or
++            // a key we are not able to handle.
++
++        return size;
++    }
++}
++
+diff -Nru openjdk.orig/jdk/src/windows/classes/sun/security/mscapi/Key.java openjdk/jdk/src/windows/classes/sun/security/mscapi/Key.java
+--- openjdk.orig/jdk/src/windows/classes/sun/security/mscapi/Key.java	2014-07-14 04:24:44.000000000 +0100
++++ openjdk/jdk/src/windows/classes/sun/security/mscapi/Key.java	2014-10-08 23:56:02.320447941 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -25,6 +25,8 @@
+ 
+ package sun.security.mscapi;
+ 
++import sun.security.util.Length;
++
+ /**
+  * The handle for an RSA or DSA key using the Microsoft Crypto API.
+  *
+@@ -35,7 +37,7 @@
+  * @since 1.6
+  * @author  Stanley Man-Kit Ho
+  */
+-abstract class Key implements java.security.Key
++abstract class Key implements java.security.Key, Length
+ {
+ 
+     // Native handle
+@@ -81,7 +83,8 @@
+     /**
+      * Return bit length of the key.
+      */
+-    public int bitLength()
++    @Override
++    public int length()
+     {
+         return keyLength;
+     }
+diff -Nru openjdk.orig/jdk/src/windows/classes/sun/security/mscapi/RSACipher.java openjdk/jdk/src/windows/classes/sun/security/mscapi/RSACipher.java
+--- openjdk.orig/jdk/src/windows/classes/sun/security/mscapi/RSACipher.java	2014-07-14 04:24:44.000000000 +0100
++++ openjdk/jdk/src/windows/classes/sun/security/mscapi/RSACipher.java	2014-10-08 23:57:43.965856392 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2005, 2007, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -198,12 +198,12 @@
+             mode = encrypt ? MODE_ENCRYPT : MODE_VERIFY;
+             publicKey = (sun.security.mscapi.Key)key;
+             privateKey = null;
+-            outputSize = publicKey.bitLength() / 8;
++            outputSize = publicKey.length() / 8;
+         } else if (key instanceof PrivateKey) {
+             mode = encrypt ? MODE_SIGN : MODE_DECRYPT;
+             privateKey = (sun.security.mscapi.Key)key;
+             publicKey = null;
+-            outputSize = privateKey.bitLength() / 8;
++            outputSize = privateKey.length() / 8;
+         } else {
+             throw new InvalidKeyException("Unknown key type: " + key);
+         }
+@@ -358,7 +358,7 @@
+     protected int engineGetKeySize(Key key) throws InvalidKeyException {
+ 
+         if (key instanceof sun.security.mscapi.Key) {
+-            return ((sun.security.mscapi.Key) key).bitLength();
++            return ((sun.security.mscapi.Key) key).length();
+         } else {
+             throw new InvalidKeyException("Unsupported key type: " + key);
+         }
+diff -Nru openjdk.orig/jdk/src/windows/classes/sun/security/mscapi/RSASignature.java openjdk/jdk/src/windows/classes/sun/security/mscapi/RSASignature.java
+--- openjdk.orig/jdk/src/windows/classes/sun/security/mscapi/RSASignature.java	2014-10-08 23:52:11.237246746 +0100
++++ openjdk/jdk/src/windows/classes/sun/security/mscapi/RSASignature.java	2014-10-08 23:56:50.913121240 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2005, 2008, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -297,7 +297,7 @@
+ 
+         // Check against the local and global values to make sure
+         // the sizes are ok.  Round up to nearest byte.
+-        RSAKeyFactory.checkKeyLengths(((privateKey.bitLength() + 7) & ~7),
++        RSAKeyFactory.checkKeyLengths(((privateKey.length() + 7) & ~7),
+             null, RSAKeyPairGenerator.KEY_SIZE_MIN,
+             RSAKeyPairGenerator.KEY_SIZE_MAX);
+ 
+diff -Nru openjdk.orig/jdk/test/sun/security/mscapi/ShortRSAKey1024.sh openjdk/jdk/test/sun/security/mscapi/ShortRSAKey1024.sh
+--- openjdk.orig/jdk/test/sun/security/mscapi/ShortRSAKey1024.sh	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/jdk/test/sun/security/mscapi/ShortRSAKey1024.sh	2014-10-08 23:56:02.320447941 +0100
+@@ -0,0 +1,85 @@
++#!/bin/sh
++
++#
++# Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
++# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++#
++# This code is free software; you can redistribute it and/or modify it
++# under the terms of the GNU General Public License version 2 only, as
++# published by the Free Software Foundation.
++#
++# This code is distributed in the hope that it will be useful, but WITHOUT
++# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++# version 2 for more details (a copy is included in the LICENSE file that
++# accompanied this code).
++#
++# You should have received a copy of the GNU General Public License version
++# 2 along with this work; if not, write to the Free Software Foundation,
++# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++#
++# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++# or visit www.oracle.com if you need additional information or have any
++# questions.
++#
++
++
++# @test
++# @bug 7106773
++# @summary 512 bits RSA key cannot work with SHA384 and SHA512
++# @run shell ShortRSAKey1024.sh
++
++# set a few environment variables so that the shell-script can run stand-alone
++# in the source directory
++if [ "${TESTSRC}" = "" ] ; then
++   TESTSRC="."
++fi
++
++if [ "${TESTCLASSES}" = "" ] ; then
++   TESTCLASSES="."
++fi
++
++if [ "${TESTJAVA}" = "" ] ; then
++   echo "TESTJAVA not set.  Test cannot execute."
++   echo "FAILED!!!"
++   exit 1
++fi
++
++OS=`uname -s`
++case "$OS" in
++    Windows* | CYGWIN* )
++
++        echo "Creating a temporary RSA keypair in the Windows-My store..."
++        ${TESTJAVA}/bin/keytool \
++            -genkeypair \
++            -storetype Windows-My \
++            -keyalg RSA \
++            -alias 7106773.1024 \
++            -keysize 1024 \
++            -dname "cn=localhost,c=US" \
++            -noprompt
++
++        echo
++        echo "Running the test..."
++        ${TESTJAVA}/bin/javac -d . ${TESTSRC}\\ShortRSAKeyWithinTLS.java
++        ${TESTJAVA}/bin/java ShortRSAKeyWithinTLS 7106773.1024 1024 \
++            TLSv1.2 TLS_DHE_RSA_WITH_AES_128_CBC_SHA
++
++        rc=$?
++
++        echo
++        echo "Removing the temporary RSA keypair from the Windows-My store..."
++        ${TESTJAVA}/bin/keytool \
++            -delete \
++            -storetype Windows-My \
++            -alias 7106773.1024
++
++        echo done.
++        exit $rc
++        ;;
++
++    * )
++        echo "This test is not intended for '$OS' - passing test"
++        exit 0
++        ;;
++esac
+diff -Nru openjdk.orig/jdk/test/sun/security/mscapi/ShortRSAKey512.sh openjdk/jdk/test/sun/security/mscapi/ShortRSAKey512.sh
+--- openjdk.orig/jdk/test/sun/security/mscapi/ShortRSAKey512.sh	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/jdk/test/sun/security/mscapi/ShortRSAKey512.sh	2014-10-08 23:56:02.320447941 +0100
+@@ -0,0 +1,86 @@
++#!/bin/sh
++
++#
++# Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
++# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++#
++# This code is free software; you can redistribute it and/or modify it
++# under the terms of the GNU General Public License version 2 only, as
++# published by the Free Software Foundation.
++#
++# This code is distributed in the hope that it will be useful, but WITHOUT
++# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++# version 2 for more details (a copy is included in the LICENSE file that
++# accompanied this code).
++#
++# You should have received a copy of the GNU General Public License version
++# 2 along with this work; if not, write to the Free Software Foundation,
++# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++#
++# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++# or visit www.oracle.com if you need additional information or have any
++# questions.
++#
++
++
++# @test
++# @bug 7106773
++# @summary 512 bits RSA key cannot work with SHA384 and SHA512
++# @run shell ShortRSAKey512.sh
++
++# set a few environment variables so that the shell-script can run stand-alone
++# in the source directory
++if [ "${TESTSRC}" = "" ] ; then
++   TESTSRC="."
++fi
++
++if [ "${TESTCLASSES}" = "" ] ; then
++   TESTCLASSES="."
++fi
++
++if [ "${TESTJAVA}" = "" ] ; then
++   echo "TESTJAVA not set.  Test cannot execute."
++   echo "FAILED!!!"
++   exit 1
++fi
++
++OS=`uname -s`
++case "$OS" in
++    Windows* | CYGWIN* )
++
++        echo "Creating a temporary RSA keypair in the Windows-My store..."
++        ${TESTJAVA}/bin/keytool \
++            -genkeypair \
++            -storetype Windows-My \
++            -keyalg RSA \
++            -alias 7106773.512 \
++            -keysize 512 \
++            -dname "cn=localhost,c=US" \
++            -noprompt
++
++        echo
++        echo "Running the test..."
++        ${TESTJAVA}/bin/javac -d . ${TESTSRC}\\ShortRSAKeyWithinTLS.java
++        ${TESTJAVA}/bin/java ShortRSAKeyWithinTLS 7106773.512 512 \
++            TLSv1.2 TLS_DHE_RSA_WITH_AES_128_CBC_SHA
++
++
++        rc=$?
++
++        echo
++        echo "Removing the temporary RSA keypair from the Windows-My store..."
++        ${TESTJAVA}/bin/keytool \
++            -delete \
++            -storetype Windows-My \
++            -alias 7106773.512
++
++        echo done.
++        exit $rc
++        ;;
++
++    * )
++        echo "This test is not intended for '$OS' - passing test"
++        exit 0
++        ;;
++esac
+diff -Nru openjdk.orig/jdk/test/sun/security/mscapi/ShortRSAKey768.sh openjdk/jdk/test/sun/security/mscapi/ShortRSAKey768.sh
+--- openjdk.orig/jdk/test/sun/security/mscapi/ShortRSAKey768.sh	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/jdk/test/sun/security/mscapi/ShortRSAKey768.sh	2014-10-08 23:56:02.320447941 +0100
+@@ -0,0 +1,85 @@
++#!/bin/sh
++
++#
++# Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
++# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++#
++# This code is free software; you can redistribute it and/or modify it
++# under the terms of the GNU General Public License version 2 only, as
++# published by the Free Software Foundation.
++#
++# This code is distributed in the hope that it will be useful, but WITHOUT
++# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++# version 2 for more details (a copy is included in the LICENSE file that
++# accompanied this code).
++#
++# You should have received a copy of the GNU General Public License version
++# 2 along with this work; if not, write to the Free Software Foundation,
++# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++#
++# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++# or visit www.oracle.com if you need additional information or have any
++# questions.
++#
++
++
++# @test
++# @bug 7106773
++# @summary 512 bits RSA key cannot work with SHA384 and SHA512
++# @run shell ShortRSAKey768.sh
++
++# set a few environment variables so that the shell-script can run stand-alone
++# in the source directory
++if [ "${TESTSRC}" = "" ] ; then
++   TESTSRC="."
++fi
++
++if [ "${TESTCLASSES}" = "" ] ; then
++   TESTCLASSES="."
++fi
++
++if [ "${TESTJAVA}" = "" ] ; then
++   echo "TESTJAVA not set.  Test cannot execute."
++   echo "FAILED!!!"
++   exit 1
++fi
++
++OS=`uname -s`
++case "$OS" in
++    Windows* | CYGWIN* )
++
++        echo "Creating a temporary RSA keypair in the Windows-My store..."
++        ${TESTJAVA}/bin/keytool \
++            -genkeypair \
++            -storetype Windows-My \
++            -keyalg RSA \
++            -alias 7106773.768 \
++            -keysize 768 \
++            -dname "cn=localhost,c=US" \
++            -noprompt
++
++        echo
++        echo "Running the test..."
++        ${TESTJAVA}/bin/javac -d . ${TESTSRC}\\ShortRSAKeyWithinTLS.java
++        ${TESTJAVA}/bin/java ShortRSAKeyWithinTLS 7106773.768 768 \
++            TLSv1.2 TLS_DHE_RSA_WITH_AES_128_CBC_SHA
++
++        rc=$?
++
++        echo
++        echo "Removing the temporary RSA keypair from the Windows-My store..."
++        ${TESTJAVA}/bin/keytool \
++            -delete \
++            -storetype Windows-My \
++            -alias 7106773.768
++
++        echo done.
++        exit $rc
++        ;;
++
++    * )
++        echo "This test is not intended for '$OS' - passing test"
++        exit 0
++        ;;
++esac
+diff -Nru openjdk.orig/jdk/test/sun/security/mscapi/ShortRSAKeyWithinTLS.java openjdk/jdk/test/sun/security/mscapi/ShortRSAKeyWithinTLS.java
+--- openjdk.orig/jdk/test/sun/security/mscapi/ShortRSAKeyWithinTLS.java	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/jdk/test/sun/security/mscapi/ShortRSAKeyWithinTLS.java	2014-10-08 23:56:02.324447997 +0100
+@@ -0,0 +1,355 @@
++/*
++ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++import java.io.*;
++import java.net.*;
++import java.util.*;
++import java.security.*;
++import javax.net.*;
++import javax.net.ssl.*;
++import java.lang.reflect.*;
++
++import sun.security.util.KeyLength;
++
++public class ShortRSAKeyWithinTLS {
++
++    /*
++     * =============================================================
++     * Set the various variables needed for the tests, then
++     * specify what tests to run on each side.
++     */
++
++    /*
++     * Should we run the client or server in a separate thread?
++     * Both sides can throw exceptions, but do you have a preference
++     * as to which side should be the main thread.
++     */
++    static boolean separateServerThread = false;
++
++    /*
++     * Is the server ready to serve?
++     */
++    volatile static boolean serverReady = false;
++
++    /*
++     * Turn on SSL debugging?
++     */
++    static boolean debug = false;
++
++    /*
++     * If the client or server is doing some kind of object creation
++     * that the other side depends on, and that thread prematurely
++     * exits, you may experience a hang.  The test harness will
++     * terminate all hung threads after its timeout has expired,
++     * currently 3 minutes by default, but you might try to be
++     * smart about it....
++     */
++
++    /*
++     * Define the server side of the test.
++     *
++     * If the server prematurely exits, serverReady will be set to true
++     * to avoid infinite hangs.
++     */
++    void doServerSide() throws Exception {
++
++        // load the key store
++        KeyStore ks = KeyStore.getInstance("Windows-MY", "SunMSCAPI");
++        ks.load(null, null);
++        System.out.println("Loaded keystore: Windows-MY");
++
++        // check key size
++        checkKeySize(ks);
++
++        // initialize the SSLContext
++        KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
++        kmf.init(ks, null);
++
++        TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
++        tmf.init(ks);
++
++        SSLContext ctx = SSLContext.getInstance("TLS");
++        ctx.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
++
++        ServerSocketFactory ssf = ctx.getServerSocketFactory();
++        SSLServerSocket sslServerSocket = (SSLServerSocket)
++                                ssf.createServerSocket(serverPort);
++        sslServerSocket.setNeedClientAuth(true);
++        serverPort = sslServerSocket.getLocalPort();
++        System.out.println("serverPort = " + serverPort);
++
++        /*
++         * Signal Client, we're ready for his connect.
++         */
++        serverReady = true;
++
++        SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
++        InputStream sslIS = sslSocket.getInputStream();
++        OutputStream sslOS = sslSocket.getOutputStream();
++
++        sslIS.read();
++        sslOS.write(85);
++        sslOS.flush();
++
++        sslSocket.close();
++    }
++
++    /*
++     * Define the client side of the test.
++     *
++     * If the server prematurely exits, serverReady will be set to true
++     * to avoid infinite hangs.
++     */
++    void doClientSide() throws Exception {
++
++        /*
++         * Wait for server to get started.
++         */
++        while (!serverReady) {
++            Thread.sleep(50);
++        }
++
++        // load the key store
++        KeyStore ks = KeyStore.getInstance("Windows-MY", "SunMSCAPI");
++        ks.load(null, null);
++        System.out.println("Loaded keystore: Windows-MY");
++
++        // initialize the SSLContext
++        KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
++        kmf.init(ks, null);
++
++        TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
++        tmf.init(ks);
++
++        SSLContext ctx = SSLContext.getInstance("TLS");
++        ctx.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
++
++        SSLSocketFactory sslsf = ctx.getSocketFactory();
++        SSLSocket sslSocket = (SSLSocket)
++            sslsf.createSocket("localhost", serverPort);
++
++        if (clientProtocol != null) {
++            sslSocket.setEnabledProtocols(new String[] {clientProtocol});
++        }
++
++        if (clientCiperSuite != null) {
++            sslSocket.setEnabledCipherSuites(new String[] {clientCiperSuite});
++        }
++
++        InputStream sslIS = sslSocket.getInputStream();
++        OutputStream sslOS = sslSocket.getOutputStream();
++
++        sslOS.write(280);
++        sslOS.flush();
++        sslIS.read();
++
++        sslSocket.close();
++    }
++
++    private void checkKeySize(KeyStore ks) throws Exception {
++        PrivateKey privateKey = null;
++        PublicKey publicKey = null;
++
++        if (ks.containsAlias(keyAlias)) {
++            System.out.println("Loaded entry: " + keyAlias);
++            privateKey = (PrivateKey)ks.getKey(keyAlias, null);
++            publicKey = (PublicKey)ks.getCertificate(keyAlias).getPublicKey();
++
++            int privateKeySize = KeyLength.getKeySize(privateKey);
++            if (privateKeySize != keySize) {
++                throw new Exception("Expected key size is " + keySize +
++                        ", but the private key size is " + privateKeySize);
++            }
++
++            int publicKeySize = KeyLength.getKeySize(publicKey);
++            if (publicKeySize != keySize) {
++                throw new Exception("Expected key size is " + keySize +
++                        ", but the public key size is " + publicKeySize);
++            }
++        }
++    }
++
++    /*
++     * =============================================================
++     * The remainder is just support stuff
++     */
++
++    // use any free port by default
++    volatile int serverPort = 0;
++
++    volatile Exception serverException = null;
++    volatile Exception clientException = null;
++
++    private static String keyAlias;
++    private static int keySize;
++    private static String clientProtocol = null;
++    private static String clientCiperSuite = null;
++
++    private static void parseArguments(String[] args) {
++        keyAlias = args[0];
++        keySize = Integer.parseInt(args[1]);
++
++        if (args.length > 2) {
++            clientProtocol = args[2];
++        }
++
++        if (args.length > 3) {
++            clientCiperSuite = args[3];
++        }
++    }
++
++    public static void main(String[] args) throws Exception {
++        if (debug) {
++            System.setProperty("javax.net.debug", "all");
++        }
++
++        // Get the customized arguments.
++        parseArguments(args);
++
++        new ShortRSAKeyWithinTLS();
++    }
++
++    Thread clientThread = null;
++    Thread serverThread = null;
++
++    /*
++     * Primary constructor, used to drive remainder of the test.
++     *
++     * Fork off the other side, then do your work.
++     */
++    ShortRSAKeyWithinTLS() throws Exception {
++        try {
++            if (separateServerThread) {
++                startServer(true);
++                startClient(false);
++            } else {
++                startClient(true);
++                startServer(false);
++            }
++        } catch (Exception e) {
++            // swallow for now.  Show later
++        }
++
++        /*
++         * Wait for other side to close down.
++         */
++        if (separateServerThread) {
++            serverThread.join();
++        } else {
++            clientThread.join();
++        }
++
++        /*
++         * When we get here, the test is pretty much over.
++         * Which side threw the error?
++         */
++        Exception local;
++        Exception remote;
++        String whichRemote;
++
++        if (separateServerThread) {
++            remote = serverException;
++            local = clientException;
++            whichRemote = "server";
++        } else {
++            remote = clientException;
++            local = serverException;
++            whichRemote = "client";
++        }
++
++        /*
++         * If both failed, return the curthread's exception, but also
++         * print the remote side Exception
++         */
++        if ((local != null) && (remote != null)) {
++            System.out.println(whichRemote + " also threw:");
++            remote.printStackTrace();
++            System.out.println();
++            throw local;
++        }
++
++        if (remote != null) {
++            throw remote;
++        }
++
++        if (local != null) {
++            throw local;
++        }
++    }
++
++    void startServer(boolean newThread) throws Exception {
++        if (newThread) {
++            serverThread = new Thread() {
++                public void run() {
++                    try {
++                        doServerSide();
++                    } catch (Exception e) {
++                        /*
++                         * Our server thread just died.
++                         *
++                         * Release the client, if not active already...
++                         */
++                        System.err.println("Server died...");
++                        serverReady = true;
++                        serverException = e;
++                    }
++                }
++            };
++            serverThread.start();
++        } else {
++            try {
++                doServerSide();
++            } catch (Exception e) {
++                serverException = e;
++            } finally {
++                serverReady = true;
++            }
++        }
++    }
++
++    void startClient(boolean newThread) throws Exception {
++        if (newThread) {
++            clientThread = new Thread() {
++                public void run() {
++                    try {
++                        doClientSide();
++                    } catch (Exception e) {
++                        /*
++                         * Our client thread just died.
++                         */
++                        System.err.println("Client died...");
++                        clientException = e;
++                    }
++                }
++            };
++            clientThread.start();
++        } else {
++            try {
++                doClientSide();
++            } catch (Exception e) {
++                clientException = e;
++            }
++        }
++    }
++}
++
+diff -Nru openjdk.orig/jdk/test/sun/security/pkcs11/KeyStore/ClientAuth.java openjdk/jdk/test/sun/security/pkcs11/KeyStore/ClientAuth.java
+--- openjdk.orig/jdk/test/sun/security/pkcs11/KeyStore/ClientAuth.java	2014-07-14 04:24:44.000000000 +0100
++++ openjdk/jdk/test/sun/security/pkcs11/KeyStore/ClientAuth.java	2014-10-08 23:56:02.324447997 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, 2007, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -155,6 +155,14 @@
+         SSLSocket sslSocket = (SSLSocket)
+             sslsf.createSocket("localhost", serverPort);
+ 
++        if (clientProtocol != null) {
++            sslSocket.setEnabledProtocols(new String[] {clientProtocol});
++        }
++
++        if (clientCiperSuite != null) {
++            sslSocket.setEnabledCipherSuites(new String[] {clientCiperSuite});
++        }
++
+         InputStream sslIS = sslSocket.getInputStream();
+         OutputStream sslOS = sslSocket.getOutputStream();
+ 
+@@ -176,7 +184,22 @@
+     volatile Exception serverException = null;
+     volatile Exception clientException = null;
+ 
++    private static String clientProtocol = null;
++    private static String clientCiperSuite = null;
++
++    private static void parseArguments(String[] args) {
++        if (args.length > 0) {
++            clientProtocol = args[0];
++        }
++
++        if (args.length > 1) {
++            clientCiperSuite = args[1];
++        }
++    }
++
+     public static void main(String[] args) throws Exception {
++        // Get the customized arguments.
++        parseArguments(args);
+         main(new ClientAuth());
+     }
+ 
+diff -Nru openjdk.orig/jdk/test/sun/security/pkcs11/KeyStore/ClientAuth.sh openjdk/jdk/test/sun/security/pkcs11/KeyStore/ClientAuth.sh
+--- openjdk.orig/jdk/test/sun/security/pkcs11/KeyStore/ClientAuth.sh	2014-07-14 04:24:44.000000000 +0100
++++ openjdk/jdk/test/sun/security/pkcs11/KeyStore/ClientAuth.sh	2014-10-08 23:56:02.324447997 +0100
+@@ -1,5 +1,5 @@
+ #
+-# Copyright (c) 2003, 2006, Oracle and/or its affiliates. All rights reserved.
++# Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+ # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ #
+ # This code is free software; you can redistribute it and/or modify it
+@@ -22,8 +22,9 @@
+ #
+ 
+ # @test
+-# @bug 4938185
++# @bug 4938185 7106773
+ # @summary KeyStore support for NSS cert/key databases
++#          512 bits RSA key cannot work with SHA384 and SHA512
+ #
+ # @run shell ClientAuth.sh
+ 
+@@ -126,6 +127,7 @@
+ 	${TESTSRC}${FS}ClientAuth.java
+ 
+ # run test
++echo "Run ClientAuth ..."
+ ${TESTJAVA}${FS}bin${FS}java \
+ 	-classpath ${TESTCLASSES}${PS}${TESTSRC}${FS}loader.jar \
+ 	-DDIR=${TESTSRC}${FS}ClientAuthData${FS} \
+@@ -139,6 +141,27 @@
+ 
+ # save error status
+ status=$?
++
++# return if failed
++if [ "${status}" != "0" ] ; then
++    exit $status
++fi
++
++# run test with specified TLS protocol and cipher suite
++echo "Run ClientAuth TLSv1.2 TLS_DHE_RSA_WITH_AES_128_CBC_SHA"
++${TESTJAVA}${FS}bin${FS}java \
++	-classpath ${TESTCLASSES}${PS}${TESTSRC}${FS}loader.jar \
++	-DDIR=${TESTSRC}${FS}ClientAuthData${FS} \
++	-DCUSTOM_DB_DIR=${TESTCLASSES} \
++	-DCUSTOM_P11_CONFIG=${TESTSRC}${FS}ClientAuthData${FS}p11-nss.txt \
++	-DNO_DEFAULT=true \
++	-DNO_DEIMOS=true \
++	-Dtest.src=${TESTSRC} \
++	-Dtest.classes=${TESTCLASSES} \
++	ClientAuth TLSv1.2 TLS_DHE_RSA_WITH_AES_128_CBC_SHA
++
++# save error status
++status=$?
+ 
+ # return
+ exit $status
+diff -Nru openjdk.orig/jdk/test/sun/security/ssl/javax/net/ssl/TLSv12/ShortRSAKey512.java openjdk/jdk/test/sun/security/ssl/javax/net/ssl/TLSv12/ShortRSAKey512.java
+--- openjdk.orig/jdk/test/sun/security/ssl/javax/net/ssl/TLSv12/ShortRSAKey512.java	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/jdk/test/sun/security/ssl/javax/net/ssl/TLSv12/ShortRSAKey512.java	2014-10-08 23:56:03.904469889 +0100
+@@ -0,0 +1,414 @@
++/*
++ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.  Oracle designates this
++ * particular file as subject to the "Classpath" exception as provided
++ * by Oracle in the LICENSE file that accompanied this code.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/*
++ * @test
++ * @bug 7106773
++ * @summary 512 bits RSA key cannot work with SHA384 and SHA512
++ *
++ *     SunJSSE does not support dynamic system properties, no way to re-use
++ *     system properties in samevm/agentvm mode.
++ * @run main/othervm ShortRSAKey512 PKIX
++ * @run main/othervm ShortRSAKey512 SunX509
++ */
++
++import java.net.*;
++import java.util.*;
++import java.io.*;
++import javax.net.ssl.*;
++import java.security.KeyStore;
++import java.security.KeyFactory;
++import java.security.cert.Certificate;
++import java.security.cert.CertificateFactory;
++import java.security.spec.*;
++import java.security.interfaces.*;
++import sun.misc.BASE64Decoder;
++
++
++public class ShortRSAKey512 {
++
++    /*
++     * =============================================================
++     * Set the various variables needed for the tests, then
++     * specify what tests to run on each side.
++     */
++
++    /*
++     * Should we run the client or server in a separate thread?
++     * Both sides can throw exceptions, but do you have a preference
++     * as to which side should be the main thread.
++     */
++    static boolean separateServerThread = false;
++
++    /*
++     * Where do we find the keystores?
++     */
++    // Certificates and key used in the test.
++    static String trustedCertStr =
++        "-----BEGIN CERTIFICATE-----\n" +
++        "MIICkjCCAfugAwIBAgIBADANBgkqhkiG9w0BAQQFADA7MQswCQYDVQQGEwJVUzEN\n" +
++        "MAsGA1UEChMESmF2YTEdMBsGA1UECxMUU3VuSlNTRSBUZXN0IFNlcml2Y2UwHhcN\n" +
++        "MTEwODE5MDE1MjE5WhcNMzIwNzI5MDE1MjE5WjA7MQswCQYDVQQGEwJVUzENMAsG\n" +
++        "A1UEChMESmF2YTEdMBsGA1UECxMUU3VuSlNTRSBUZXN0IFNlcml2Y2UwgZ8wDQYJ\n" +
++        "KoZIhvcNAQEBBQADgY0AMIGJAoGBAM8orG08DtF98TMSscjGsidd1ZoN4jiDpi8U\n" +
++        "ICz+9dMm1qM1d7O2T+KH3/mxyox7Rc2ZVSCaUD0a3CkhPMnlAx8V4u0H+E9sqso6\n" +
++        "iDW3JpOyzMExvZiRgRG/3nvp55RMIUV4vEHOZ1QbhuqG4ebN0Vz2DkRft7+flthf\n" +
++        "vDld6f5JAgMBAAGjgaUwgaIwHQYDVR0OBBYEFLl81dnfp0wDrv0OJ1sxlWzH83Xh\n" +
++        "MGMGA1UdIwRcMFqAFLl81dnfp0wDrv0OJ1sxlWzH83XhoT+kPTA7MQswCQYDVQQG\n" +
++        "EwJVUzENMAsGA1UEChMESmF2YTEdMBsGA1UECxMUU3VuSlNTRSBUZXN0IFNlcml2\n" +
++        "Y2WCAQAwDwYDVR0TAQH/BAUwAwEB/zALBgNVHQ8EBAMCAQYwDQYJKoZIhvcNAQEE\n" +
++        "BQADgYEALlgaH1gWtoBZ84EW8Hu6YtGLQ/L9zIFmHonUPZwn3Pr//icR9Sqhc3/l\n" +
++        "pVTxOINuFHLRz4BBtEylzRIOPzK3tg8XwuLb1zd0db90x3KBCiAL6E6cklGEPwLe\n" +
++        "XYMHDn9eDsaq861Tzn6ZwzMgw04zotPMoZN0mVd/3Qca8UJFucE=\n" +
++        "-----END CERTIFICATE-----";
++
++    static String targetCertStr =
++        "-----BEGIN CERTIFICATE-----\n" +
++        "MIICNDCCAZ2gAwIBAgIBDDANBgkqhkiG9w0BAQQFADA7MQswCQYDVQQGEwJVUzEN\n" +
++        "MAsGA1UEChMESmF2YTEdMBsGA1UECxMUU3VuSlNTRSBUZXN0IFNlcml2Y2UwHhcN\n" +
++        "MTExMTA3MTM1NTUyWhcNMzEwNzI1MTM1NTUyWjBPMQswCQYDVQQGEwJVUzENMAsG\n" +
++        "A1UEChMESmF2YTEdMBsGA1UECxMUU3VuSlNTRSBUZXN0IFNlcml2Y2UxEjAQBgNV\n" +
++        "BAMTCWxvY2FsaG9zdDBcMA0GCSqGSIb3DQEBAQUAA0sAMEgCQQC3Pb49OSPfOD2G\n" +
++        "HSXFCFx1GJEZfqG9ZUf7xuIi/ra5dLjPGAaoY5QF2QOa8VnOriQCXDfyXHxsuRnE\n" +
++        "OomxL7EVAgMBAAGjeDB2MAsGA1UdDwQEAwID6DAdBgNVHQ4EFgQUXNCJK3/dtCIc\n" +
++        "xb+zlA/JINlvs/MwHwYDVR0jBBgwFoAUuXzV2d+nTAOu/Q4nWzGVbMfzdeEwJwYD\n" +
++        "VR0lBCAwHgYIKwYBBQUHAwEGCCsGAQUFBwMCBggrBgEFBQcDAzANBgkqhkiG9w0B\n" +
++        "AQQFAAOBgQB2qIDUxA2caMPpGtUACZAPRUtrGssCINIfItETXJZCx/cRuZ5sP4D9\n" +
++        "N1acoNDn0hCULe3lhXAeTC9NZ97680yJzregQMV5wATjo1FGsKY30Ma+sc/nfzQW\n" +
++        "+h/7RhYtoG0OTsiaDCvyhI6swkNJzSzrAccPY4+ZgU8HiDLzZTmM3Q==\n" +
++        "-----END CERTIFICATE-----";
++
++    // Private key in the format of PKCS#8, key size is 512 bits.
++    static String targetPrivateKey =
++        "MIIBVAIBADANBgkqhkiG9w0BAQEFAASCAT4wggE6AgEAAkEAtz2+PTkj3zg9hh0l\n" +
++        "xQhcdRiRGX6hvWVH+8biIv62uXS4zxgGqGOUBdkDmvFZzq4kAlw38lx8bLkZxDqJ\n" +
++        "sS+xFQIDAQABAkByx/5Oo2hQ/w2q4L8z+NTRlJ3vdl8iIDtC/4XPnfYfnGptnpG6\n" +
++        "ZThQRvbMZiai0xHQPQMszvAHjZVme1eDl3EBAiEA3aKJHynPVCEJhpfCLWuMwX5J\n" +
++        "1LntwJO7NTOyU5m8rPECIQDTpzn5X44r2rzWBDna/Sx7HW9IWCxNgUD2Eyi2nA7W\n" +
++        "ZQIgJerEorw4aCAuzQPxiGu57PB6GRamAihEAtoRTBQlH0ECIQDN08FgTtnesgCU\n" +
++        "DFYLLcw1CiHvc7fZw4neBDHCrC8NtQIgA8TOUkGnpCZlQ0KaI8KfKWI+vxFcgFnH\n" +
++        "3fnqsTgaUs4=";
++
++    static char passphrase[] = "passphrase".toCharArray();
++
++    /*
++     * Is the server ready to serve?
++     */
++    volatile static boolean serverReady = false;
++
++    /*
++     * Turn on SSL debugging?
++     */
++    static boolean debug = false;
++
++    /*
++     * Define the server side of the test.
++     *
++     * If the server prematurely exits, serverReady will be set to true
++     * to avoid infinite hangs.
++     */
++    void doServerSide() throws Exception {
++        SSLContext context = generateSSLContext(null, targetCertStr,
++                                            targetPrivateKey);
++        SSLServerSocketFactory sslssf = context.getServerSocketFactory();
++        SSLServerSocket sslServerSocket =
++            (SSLServerSocket)sslssf.createServerSocket(serverPort);
++        serverPort = sslServerSocket.getLocalPort();
++
++        /*
++         * Signal Client, we're ready for his connect.
++         */
++        serverReady = true;
++
++        SSLSocket sslSocket = (SSLSocket)sslServerSocket.accept();
++        InputStream sslIS = sslSocket.getInputStream();
++        OutputStream sslOS = sslSocket.getOutputStream();
++
++        sslIS.read();
++        sslOS.write('A');
++        sslOS.flush();
++
++        sslSocket.close();
++    }
++
++    /*
++     * Define the client side of the test.
++     *
++     * If the server prematurely exits, serverReady will be set to true
++     * to avoid infinite hangs.
++     */
++    void doClientSide() throws Exception {
++
++        /*
++         * Wait for server to get started.
++         */
++        while (!serverReady) {
++            Thread.sleep(50);
++        }
++
++        SSLContext context = generateSSLContext(trustedCertStr, null, null);
++        SSLSocketFactory sslsf = context.getSocketFactory();
++
++        SSLSocket sslSocket =
++            (SSLSocket)sslsf.createSocket("localhost", serverPort);
++
++        // enable TLSv1.2 only
++        sslSocket.setEnabledProtocols(new String[] {"TLSv1.2"});
++
++        // enable a block cipher
++        sslSocket.setEnabledCipherSuites(
++            new String[] {"TLS_DHE_RSA_WITH_AES_128_CBC_SHA"});
++
++        InputStream sslIS = sslSocket.getInputStream();
++        OutputStream sslOS = sslSocket.getOutputStream();
++
++        sslOS.write('B');
++        sslOS.flush();
++        sslIS.read();
++
++        sslSocket.close();
++    }
++
++    /*
++     * =============================================================
++     * The remainder is just support stuff
++     */
++    private static String tmAlgorithm;        // trust manager
++
++    private static void parseArguments(String[] args) {
++        tmAlgorithm = args[0];
++    }
++
++    private static SSLContext generateSSLContext(String trustedCertStr,
++            String keyCertStr, String keySpecStr) throws Exception {
++
++        // generate certificate from cert string
++        CertificateFactory cf = CertificateFactory.getInstance("X.509");
++
++        // create a key store
++        KeyStore ks = KeyStore.getInstance("JKS");
++        ks.load(null, null);
++
++        // import the trused cert
++        Certificate trusedCert = null;
++        ByteArrayInputStream is = null;
++        if (trustedCertStr != null) {
++            is = new ByteArrayInputStream(trustedCertStr.getBytes());
++            trusedCert = cf.generateCertificate(is);
++            is.close();
++
++            ks.setCertificateEntry("RSA Export Signer", trusedCert);
++        }
++
++        if (keyCertStr != null) {
++            // generate the private key.
++            PKCS8EncodedKeySpec priKeySpec = new PKCS8EncodedKeySpec(
++                                new BASE64Decoder().decodeBuffer(keySpecStr));
++            KeyFactory kf = KeyFactory.getInstance("RSA");
++            RSAPrivateKey priKey =
++                    (RSAPrivateKey)kf.generatePrivate(priKeySpec);
++
++            // generate certificate chain
++            is = new ByteArrayInputStream(keyCertStr.getBytes());
++            Certificate keyCert = cf.generateCertificate(is);
++            is.close();
++
++            Certificate[] chain = null;
++            if (trusedCert != null) {
++                chain = new Certificate[2];
++                chain[0] = keyCert;
++                chain[1] = trusedCert;
++            } else {
++                chain = new Certificate[1];
++                chain[0] = keyCert;
++            }
++
++            // import the key entry.
++            ks.setKeyEntry("Whatever", priKey, passphrase, chain);
++        }
++
++        // create SSL context
++        TrustManagerFactory tmf = TrustManagerFactory.getInstance(tmAlgorithm);
++        tmf.init(ks);
++
++        SSLContext ctx = SSLContext.getInstance("TLS");
++        if (keyCertStr != null && !keyCertStr.isEmpty()) {
++            KeyManagerFactory kmf = KeyManagerFactory.getInstance("NewSunX509");
++            kmf.init(ks, passphrase);
++
++            ctx.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
++            ks = null;
++        } else {
++            ctx.init(null, tmf.getTrustManagers(), null);
++        }
++
++        return ctx;
++    }
++
++
++    // use any free port by default
++    volatile int serverPort = 0;
++
++    volatile Exception serverException = null;
++    volatile Exception clientException = null;
++
++    public static void main(String[] args) throws Exception {
++        if (debug)
++            System.setProperty("javax.net.debug", "all");
++
++        /*
++         * Get the customized arguments.
++         */
++        parseArguments(args);
++
++        /*
++         * Start the tests.
++         */
++        new ShortRSAKey512();
++    }
++
++    Thread clientThread = null;
++    Thread serverThread = null;
++
++    /*
++     * Primary constructor, used to drive remainder of the test.
++     *
++     * Fork off the other side, then do your work.
++     */
++    ShortRSAKey512() throws Exception {
++        try {
++            if (separateServerThread) {
++                startServer(true);
++                startClient(false);
++            } else {
++                startClient(true);
++                startServer(false);
++            }
++        } catch (Exception e) {
++            // swallow for now.  Show later
++        }
++
++        /*
++         * Wait for other side to close down.
++         */
++        if (separateServerThread) {
++            serverThread.join();
++        } else {
++            clientThread.join();
++        }
++
++        /*
++         * When we get here, the test is pretty much over.
++         * Which side threw the error?
++         */
++        Exception local;
++        Exception remote;
++        String whichRemote;
++
++        if (separateServerThread) {
++            remote = serverException;
++            local = clientException;
++            whichRemote = "server";
++        } else {
++            remote = clientException;
++            local = serverException;
++            whichRemote = "client";
++        }
++
++        /*
++         * If both failed, return the curthread's exception, but also
++         * print the remote side Exception
++         */
++        if ((local != null) && (remote != null)) {
++            System.out.println(whichRemote + " also threw:");
++            remote.printStackTrace();
++            System.out.println();
++            throw local;
++        }
++
++        if (remote != null) {
++            throw remote;
++        }
++
++        if (local != null) {
++            throw local;
++        }
++    }
++
++    void startServer(boolean newThread) throws Exception {
++        if (newThread) {
++            serverThread = new Thread() {
++                public void run() {
++                    try {
++                        doServerSide();
++                    } catch (Exception e) {
++                        /*
++                         * Our server thread just died.
++                         *
++                         * Release the client, if not active already...
++                         */
++                        System.err.println("Server died...");
++                        serverReady = true;
++                        serverException = e;
++                    }
++                }
++            };
++            serverThread.start();
++        } else {
++            try {
++                doServerSide();
++            } catch (Exception e) {
++                serverException = e;
++            } finally {
++                serverReady = true;
++            }
++        }
++    }
++
++    void startClient(boolean newThread) throws Exception {
++        if (newThread) {
++            clientThread = new Thread() {
++                public void run() {
++                    try {
++                        doClientSide();
++                    } catch (Exception e) {
++                        /*
++                         * Our client thread just died.
++                         */
++                        System.err.println("Client died...");
++                        clientException = e;
++                    }
++                }
++            };
++            clientThread.start();
++        } else {
++            try {
++                doClientSide();
++            } catch (Exception e) {
++                clientException = e;
++            }
++        }
++    }
++}

@@ -54,6 +54,16 @@ New in release 1.13.5 (2014-10-14):
   - S8042850: Extra unused entries in ICU ScriptCodes enum
   - S8052162: REGRESSION: sun/java2d/cmm/ColorConvertOp tests fail since 7u71 b01
   - S8053963: (dc) Use DatagramChannel.receive() instead of read() in connect()
+ * Backports
+  - S4963723: Implement SHA-224
+  - S6578658: Request for raw RSA (NONEwithRSA) Signature support in SunMSCAPI
+  - S6753664: Support SHA256 (and higher) in SunMSCAPI
+  - S7033170: Cipher.getMaxAllowedKeyLength(String) throws NoSuchAlgorithmException
+  - S7044060: Need to support NSA Suite B Cryptography algorithms
+  - S7106773: 512 bits RSA key cannot work with SHA384 and SHA512
+  - S7180907: Jarsigner -verify fails if rsa file used sha-256 with authenticated attributes
+  - S8006935: Need to take care of long secret keys in HMAC/PRF compuation
+  - S8049480: Current versions of Java can't verify jars signed and timestamped with Java 9
 
 New in release 1.13.4 (2014-07-15):
 

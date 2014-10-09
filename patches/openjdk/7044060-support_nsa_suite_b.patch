@@ -1,0 +1,3223 @@
+diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/AESCipher.java openjdk/jdk/src/share/classes/com/sun/crypto/provider/AESCipher.java
+--- openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/AESCipher.java	2014-07-14 04:24:43.000000000 +0100
++++ openjdk/jdk/src/share/classes/com/sun/crypto/provider/AESCipher.java	2014-10-08 23:42:37.517304235 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2002, 2007, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -47,12 +47,115 @@
+  * @see OutputFeedback
+  */
+ 
+-public final class AESCipher extends CipherSpi {
++abstract class AESCipher extends CipherSpi {
++    public static final class General extends AESCipher {
++        public General() {
++            super(-1);
++        }
++    }
++    abstract static class OidImpl extends AESCipher {
++        protected OidImpl(int keySize, String mode, String padding) {
++            super(keySize);
++            try {
++                engineSetMode(mode);
++                engineSetPadding(padding);
++            } catch (GeneralSecurityException gse) {
++                // internal error; re-throw as provider exception
++                ProviderException pe =new ProviderException("Internal Error");
++                pe.initCause(gse);
++                throw pe;
++            }
++        }
++    }
++    public static final class AES128_ECB_NoPadding extends OidImpl {
++        public AES128_ECB_NoPadding() {
++            super(16, "ECB", "NOPADDING");
++        }
++    }
++    public static final class AES192_ECB_NoPadding extends OidImpl {
++        public AES192_ECB_NoPadding() {
++            super(24, "ECB", "NOPADDING");
++        }
++    }
++    public static final class AES256_ECB_NoPadding extends OidImpl {
++        public AES256_ECB_NoPadding() {
++            super(32, "ECB", "NOPADDING");
++        }
++    }
++    public static final class AES128_CBC_NoPadding extends OidImpl {
++        public AES128_CBC_NoPadding() {
++            super(16, "CBC", "NOPADDING");
++        }
++    }
++    public static final class AES192_CBC_NoPadding extends OidImpl {
++        public AES192_CBC_NoPadding() {
++            super(24, "CBC", "NOPADDING");
++        }
++    }
++    public static final class AES256_CBC_NoPadding extends OidImpl {
++        public AES256_CBC_NoPadding() {
++            super(32, "CBC", "NOPADDING");
++        }
++    }
++    public static final class AES128_OFB_NoPadding extends OidImpl {
++        public AES128_OFB_NoPadding() {
++            super(16, "OFB", "NOPADDING");
++        }
++    }
++    public static final class AES192_OFB_NoPadding extends OidImpl {
++        public AES192_OFB_NoPadding() {
++            super(24, "OFB", "NOPADDING");
++        }
++    }
++    public static final class AES256_OFB_NoPadding extends OidImpl {
++        public AES256_OFB_NoPadding() {
++            super(32, "OFB", "NOPADDING");
++        }
++    }
++    public static final class AES128_CFB_NoPadding extends OidImpl {
++        public AES128_CFB_NoPadding() {
++            super(16, "CFB", "NOPADDING");
++        }
++    }
++    public static final class AES192_CFB_NoPadding extends OidImpl {
++        public AES192_CFB_NoPadding() {
++            super(24, "CFB", "NOPADDING");
++        }
++    }
++    public static final class AES256_CFB_NoPadding extends OidImpl {
++        public AES256_CFB_NoPadding() {
++            super(32, "CFB", "NOPADDING");
++        }
++    }
++
++    // utility method used by AESCipher and AESWrapCipher
++    static final void checkKeySize(Key key, int fixedKeySize)
++        throws InvalidKeyException {
++        if (fixedKeySize != -1) {
++            if (key == null) {
++                throw new InvalidKeyException("The key must not be null");
++            }
++            byte[] value = key.getEncoded();
++            if (value == null) {
++                throw new InvalidKeyException("Key encoding must not be null");
++            } else if (value.length != fixedKeySize) {
++                throw new InvalidKeyException("The key must be " +
++                    fixedKeySize*8 + " bits");
++            }
++        }
++    }
++
+     /*
+      * internal CipherCore object which does the real work.
+      */
+     private CipherCore core = null;
+ 
++    /*
++     * needed to support AES oids which associates a fixed key size
++     * to the cipher object.
++     */
++    private final int fixedKeySize; // in bytes, -1 if no restriction
++
+     /**
+      * Creates an instance of AES cipher with default ECB mode and
+      * PKCS5Padding.
+@@ -60,9 +163,9 @@
+      * @exception SecurityException if this constructor fails to verify
+      * its own integrity
+      */
+-    public AESCipher() {
+-        SunJCE.ensureIntegrity(getClass());
++    protected AESCipher(int keySize) {
+         core = new CipherCore(new AESCrypt(), AESConstants.AES_BLOCK_SIZE);
++        fixedKeySize = keySize;
+     }
+ 
+     /**
+@@ -187,6 +290,7 @@
+      */
+     protected void engineInit(int opmode, Key key, SecureRandom random)
+         throws InvalidKeyException {
++        checkKeySize(key, fixedKeySize);
+         core.init(opmode, key, random);
+     }
+ 
+@@ -218,6 +322,7 @@
+                               AlgorithmParameterSpec params,
+                               SecureRandom random)
+         throws InvalidKeyException, InvalidAlgorithmParameterException {
++        checkKeySize(key, fixedKeySize);
+         core.init(opmode, key, params, random);
+     }
+ 
+@@ -225,6 +330,7 @@
+                               AlgorithmParameters params,
+                               SecureRandom random)
+         throws InvalidKeyException, InvalidAlgorithmParameterException {
++        checkKeySize(key, fixedKeySize);
+         core.init(opmode, key, params, random);
+     }
+ 
+diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/AESWrapCipher.java openjdk/jdk/src/share/classes/com/sun/crypto/provider/AESWrapCipher.java
+--- openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/AESWrapCipher.java	2014-07-14 04:24:43.000000000 +0100
++++ openjdk/jdk/src/share/classes/com/sun/crypto/provider/AESWrapCipher.java	2014-10-08 23:39:30.602719423 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2004, 2007, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2004, 2012, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -43,8 +43,27 @@
+  *
+  * @see AESCipher
+  */
+-public final class AESWrapCipher extends CipherSpi {
+-
++abstract class AESWrapCipher extends CipherSpi {
++    public static final class General extends AESWrapCipher {
++        public General() {
++            super(-1);
++        }
++    }
++    public static final class AES128 extends AESWrapCipher {
++        public AES128() {
++            super(16);
++        }
++    }
++    public static final class AES192 extends AESWrapCipher {
++        public AES192() {
++            super(24);
++        }
++    }
++    public static final class AES256 extends AESWrapCipher {
++        public AES256() {
++            super(32);
++        }
++    }
+     private static final byte[] IV = {
+         (byte) 0xA6, (byte) 0xA6, (byte) 0xA6, (byte) 0xA6,
+         (byte) 0xA6, (byte) 0xA6, (byte) 0xA6, (byte) 0xA6
+@@ -62,6 +81,12 @@
+      */
+     private boolean decrypting = false;
+ 
++    /*
++     * needed to support AES oids which associates a fixed key size
++     * to the cipher object.
++     */
++    private final int fixedKeySize; // in bytes, -1 if no restriction
++
+     /**
+      * Creates an instance of AES KeyWrap cipher with default
+      * mode, i.e. "ECB" and padding scheme, i.e. "NoPadding".
+@@ -69,9 +94,11 @@
+      * @exception SecurityException if this constructor fails to verify
+      * its own integrity
+      */
+-    public AESWrapCipher() {
++    public AESWrapCipher(int keySize) {
+         SunJCE.ensureIntegrity(getClass());
+         cipher = new AESCrypt();
++        fixedKeySize = keySize;
++
+     }
+ 
+     /**
+@@ -174,6 +201,7 @@
+             throw new UnsupportedOperationException("This cipher can " +
+                 "only be used for key wrapping and unwrapping");
+         }
++        AESCipher.checkKeySize(key, fixedKeySize);
+         cipher.init(decrypting, key.getAlgorithm(), key.getEncoded());
+     }
+ 
+diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/DHKeyPairGenerator.java openjdk/jdk/src/share/classes/com/sun/crypto/provider/DHKeyPairGenerator.java
+--- openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/DHKeyPairGenerator.java	2014-07-14 04:24:43.000000000 +0100
++++ openjdk/jdk/src/share/classes/com/sun/crypto/provider/DHKeyPairGenerator.java	2014-10-08 23:37:10.076777154 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -80,10 +80,10 @@
+      * @param random the source of randomness
+      */
+     public void initialize(int keysize, SecureRandom random) {
+-        if ((keysize < 512) || (keysize > 1024) || (keysize % 64 != 0)) {
++        if ((keysize < 512) || (keysize > 2048) || (keysize % 64 != 0)) {
+             throw new InvalidParameterException("Keysize must be multiple "
+                                                 + "of 64, and can only range "
+-                                                + "from 512 to 1024 "
++                                                + "from 512 to 2048 "
+                                                 + "(inclusive)");
+         }
+         this.pSize = keysize;
+@@ -115,11 +115,11 @@
+ 
+         params = (DHParameterSpec)algParams;
+         pSize = params.getP().bitLength();
+-        if ((pSize < 512) || (pSize > 1024) ||
++        if ((pSize < 512) || (pSize > 2048) ||
+             (pSize % 64 != 0)) {
+             throw new InvalidAlgorithmParameterException
+                 ("Prime size must be multiple of 64, and can only range "
+-                 + "from 512 to 1024 (inclusive)");
++                 + "from 512 to 2048 (inclusive)");
+         }
+ 
+         // exponent size is optional, could be 0
+@@ -156,10 +156,11 @@
+         BigInteger g = params.getG();
+ 
+         if (lSize <= 0) {
++            lSize = pSize >> 1;
+             // use an exponent size of (pSize / 2) but at least 384 bits
+-            lSize = Math.max(384, pSize >> 1);
+-            // if lSize is larger than pSize, limit by pSize
+-            lSize = Math.min(lSize, pSize);
++            if (lSize < 384) {
++                lSize = 384;
++            }
+         }
+ 
+         BigInteger x;
+diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/DHParameterGenerator.java openjdk/jdk/src/share/classes/com/sun/crypto/provider/DHParameterGenerator.java
+--- openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/DHParameterGenerator.java	2014-07-14 04:24:43.000000000 +0100
++++ openjdk/jdk/src/share/classes/com/sun/crypto/provider/DHParameterGenerator.java	2014-10-08 23:37:10.076777154 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -68,10 +68,10 @@
+      * @param random the source of randomness
+      */
+     protected void engineInit(int keysize, SecureRandom random) {
+-        if ((keysize < 512) || (keysize > 1024) || (keysize % 64 != 0)) {
++        if ((keysize < 512) || (keysize > 2048) || (keysize % 64 != 0)) {
+             throw new InvalidParameterException("Keysize must be multiple "
+                                                 + "of 64, and can only range "
+-                                                + "from 512 to 1024 "
++                                                + "from 512 to 2048 "
+                                                 + "(inclusive)");
+         }
+         this.primeSize = keysize;
+@@ -100,10 +100,10 @@
+             DHGenParameterSpec dhParamSpec = (DHGenParameterSpec)genParamSpec;
+ 
+             primeSize = dhParamSpec.getPrimeSize();
+-            if ((primeSize<512) || (primeSize>1024) || (primeSize%64 != 0)) {
++            if ((primeSize<512) || (primeSize>2048) || (primeSize%64 != 0)) {
+                 throw new InvalidAlgorithmParameterException
+                     ("Modulus size must be multiple of 64, and can only range "
+-                     + "from 512 to 1024 (inclusive)");
++                     + "from 512 to 2048 (inclusive)");
+             }
+ 
+             exponentSize = dhParamSpec.getExponentSize();
+diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/SunJCE.java openjdk/jdk/src/share/classes/com/sun/crypto/provider/SunJCE.java
+--- openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/SunJCE.java	2014-10-08 23:36:49.400491428 +0100
++++ openjdk/jdk/src/share/classes/com/sun/crypto/provider/SunJCE.java	2014-10-08 23:37:10.076777154 +0100
+@@ -176,16 +176,67 @@
+                 put("Cipher.Blowfish SupportedKeyFormats", "RAW");
+ 
+                 put("Cipher.AES", "com.sun.crypto.provider.AESCipher");
++                put("Cipher.AES", "com.sun.crypto.provider.AESCipher$General");
+                 put("Alg.Alias.Cipher.Rijndael", "AES");
+                 put("Cipher.AES SupportedModes", BLOCK_MODES128);
+                 put("Cipher.AES SupportedPaddings", BLOCK_PADS);
+                 put("Cipher.AES SupportedKeyFormats", "RAW");
+ 
+-                put("Cipher.AESWrap", "com.sun.crypto.provider.AESWrapCipher");
++                put("Cipher.AES_128/ECB/NoPadding", "com.sun.crypto.provider.AESCipher$AES128_ECB_NoPadding");
++                put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.1", "AES_128/ECB/NoPadding");
++                put("Alg.Alias.Cipher.OID.2.16.840.1.101.3.4.1.1", "AES_128/ECB/NoPadding");
++                put("Cipher.AES_128/CBC/NoPadding", "com.sun.crypto.provider.AESCipher$AES128_CBC_NoPadding");
++                put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.2", "AES_128/CBC/NoPadding");
++                put("Alg.Alias.Cipher.OID.2.16.840.1.101.3.4.1.2", "AES_128/CBC/NoPadding");
++                put("Cipher.AES_128/OFB/NoPadding", "com.sun.crypto.provider.AESCipher$AES128_OFB_NoPadding");
++                put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.3", "AES_128/OFB/NoPadding");
++                put("Alg.Alias.Cipher.OID.2.16.840.1.101.3.4.1.3", "AES_128/OFB/NoPadding");
++                put("Cipher.AES_128/CFB/NoPadding", "com.sun.crypto.provider.AESCipher$AES128_CFB_NoPadding");
++                put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.4", "AES_128/CFB/NoPadding");
++                put("Alg.Alias.Cipher.OID.2.16.840.1.101.3.4.1.4", "AES_128/CFB/NoPadding");
++
++                put("Cipher.AES_192/ECB/NoPadding", "com.sun.crypto.provider.AESCipher$AES192_ECB_NoPadding");
++		put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.21", "AES_192/ECB/NoPadding");
++		put("Alg.Alias.Cipher.OID.2.16.840.1.101.3.4.1.21", "AES_192/ECB/NoPadding");
++		put("Cipher.AES_192/CBC/NoPadding", "com.sun.crypto.provider.AESCipher$AES192_CBC_NoPadding");
++		put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.22", "AES_192/CBC/NoPadding");
++		put("Alg.Alias.Cipher.OID.2.16.840.1.101.3.4.1.22", "AES_192/CBC/NoPadding");
++		put("Cipher.AES_192/OFB/NoPadding", "com.sun.crypto.provider.AESCipher$AES192_OFB_NoPadding");
++		put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.23", "AES_192/OFB/NoPadding");
++		put("Alg.Alias.Cipher.OID.2.16.840.1.101.3.4.1.23", "AES_192/OFB/NoPadding");
++		put("Cipher.AES_192/CFB/NoPadding", "com.sun.crypto.provider.AESCipher$AES192_CFB_NoPadding");
++		put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.24", "AES_192/CFB/NoPadding");
++		put("Alg.Alias.Cipher.OID.2.16.840.1.101.3.4.1.24", "AES_192/CFB/NoPadding");
++
++
++		put("Cipher.AES_256/ECB/NoPadding", "com.sun.crypto.provider.AESCipher$AES256_ECB_NoPadding");
++		put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.41", "AES_256/ECB/NoPadding");
++		put("Alg.Alias.Cipher.OID.2.16.840.1.101.3.4.1.41", "AES_256/ECB/NoPadding");
++		put("Cipher.AES_256/CBC/NoPadding", "com.sun.crypto.provider.AESCipher$AES256_CBC_NoPadding");
++		put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.42", "AES_256/CBC/NoPadding");
++		put("Alg.Alias.Cipher.OID.2.16.840.1.101.3.4.1.42", "AES_256/CBC/NoPadding");
++		put("Cipher.AES_256/OFB/NoPadding", "com.sun.crypto.provider.AESCipher$AES256_OFB_NoPadding");
++		put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.43", "AES_256/OFB/NoPadding");
++		put("Alg.Alias.Cipher.OID.2.16.840.1.101.3.4.1.43", "AES_256/OFB/NoPadding");
++		put("Cipher.AES_256/CFB/NoPadding", "com.sun.crypto.provider.AESCipher$AES256_CFB_NoPadding");
++		put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.44", "AES_256/CFB/NoPadding");
++		put("Alg.Alias.Cipher.OID.2.16.840.1.101.3.4.1.44", "AES_256/CFB/NoPadding");
++		
++		put("Cipher.AESWrap", "com.sun.crypto.provider.AESWrapCipher$General");
+                 put("Cipher.AESWrap SupportedModes", "ECB");
+                 put("Cipher.AESWrap SupportedPaddings", "NOPADDING");
+                 put("Cipher.AESWrap SupportedKeyFormats", "RAW");
+ 
++		put("Cipher.AESWrap_128", "com.sun.crypto.provider.AESWrapCipher$AES128");
++		put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.5", "AESWrap_128");
++		put("Alg.Alias.Cipher.OID.2.16.840.1.101.3.4.1.5", "AESWrap_128");
++		put("Cipher.AESWrap_192", "com.sun.crypto.provider.AESWrapCipher$AES192");
++		put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.25", "AESWrap_192");
++		put("Alg.Alias.Cipher.OID.2.16.840.1.101.3.4.1.25", "AESWrap_192");
++		put("Cipher.AESWrap_256", "com.sun.crypto.provider.AESWrapCipher$AES256");
++		put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.45", "AESWrap_256");
++		put("Alg.Alias.Cipher.OID.2.16.840.1.101.3.4.1.45", "AESWrap_256");
++
+                 put("Cipher.RC2",
+                     "com.sun.crypto.provider.RC2Cipher");
+                 put("Cipher.RC2 SupportedModes", BLOCK_MODES);
+@@ -200,7 +251,7 @@
+                 put("Cipher.ARCFOUR SupportedKeyFormats", "RAW");
+ 
+                 /*
+-                 *  Key(pair) Generator engines
++                 * Key(pair) Generator engines
+                  */
+                 put("KeyGenerator.DES",
+                     "com.sun.crypto.provider.DESKeyGenerator");
+@@ -229,6 +280,8 @@
+ 
+                 put("KeyGenerator.HmacSHA1",
+                     "com.sun.crypto.provider.HmacSHA1KeyGenerator");
++		put("Alg.Alias.KeyGenerator.OID.1.2.840.113549.2.7", "HmacSHA1");
++		put("Alg.Alias.KeyGenerator.1.2.840.113549.2.7", "HmacSHA1");
+ 
+                 put("KeyGenerator.HmacSHA224",
+                     "com.sun.crypto.provider.KeyGeneratorCore$HmacSHA2KG$SHA224");
+@@ -411,6 +464,8 @@
+                  */
+                 put("Mac.HmacMD5", "com.sun.crypto.provider.HmacMD5");
+                 put("Mac.HmacSHA1", "com.sun.crypto.provider.HmacSHA1");
++		put("Alg.Alias.Mac.OID.1.2.840.113549.2.7", "HmacSHA1");
++		put("Alg.Alias.Mac.1.2.840.113549.2.7", "HmacSHA1");
+                 put("Mac.HmacSHA224",
+                     "com.sun.crypto.provider.HmacCore$HmacSHA224");
+                 put("Alg.Alias.Mac.OID.1.2.840.113549.2.8", "HmacSHA224");
+diff -Nru openjdk.orig/jdk/src/share/classes/java/security/interfaces/DSAKeyPairGenerator.java openjdk/jdk/src/share/classes/java/security/interfaces/DSAKeyPairGenerator.java
+--- openjdk.orig/jdk/src/share/classes/java/security/interfaces/DSAKeyPairGenerator.java	2014-07-14 04:24:45.000000000 +0100
++++ openjdk/jdk/src/share/classes/java/security/interfaces/DSAKeyPairGenerator.java	2014-10-08 23:37:10.076777154 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1997, 2005, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -62,6 +62,9 @@
+  * interface is all that is needed when you accept defaults for algorithm-specific
+  * parameters.
+  *
++ * <p>Note: Some earlier implementations of this interface may not support
++ * larger sizes of DSA parameters such as 2048 and 3072-bit.
++ *
+  * @see java.security.KeyPairGenerator
+  */
+ public interface DSAKeyPairGenerator {
+@@ -78,7 +81,7 @@
+      * can be null.
+      *
+      * @exception InvalidParameterException if the <code>params</code>
+-     * value is invalid or null.
++     * value is invalid, null, or unsupported.
+      */
+    public void initialize(DSAParams params, SecureRandom random)
+    throws InvalidParameterException;
+@@ -97,7 +100,7 @@
+      * default parameters for modulus lengths of 512 and 1024 bits.
+      *
+      * @param modlen the modulus length in bits. Valid values are any
+-     * multiple of 8 between 512 and 1024, inclusive.
++     * multiple of 64 between 512 and 1024, inclusive, 2048, and 3072.
+      *
+      * @param random the random bit source to use to generate key bits;
+      * can be null.
+@@ -105,10 +108,9 @@
+      * @param genParams whether or not to generate new parameters for
+      * the modulus length requested.
+      *
+-     * @exception InvalidParameterException if <code>modlen</code> is not
+-     * between 512 and 1024, or if <code>genParams</code> is false and
+-     * there are no precomputed parameters for the requested modulus
+-     * length.
++     * @exception InvalidParameterException if <code>modlen</code> is
++     * invalid, or unsupported, or if <code>genParams</code> is false and there
++     * are no precomputed parameters for the requested modulus length.
+      */
+     public void initialize(int modlen, boolean genParams, SecureRandom random)
+     throws InvalidParameterException;
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11Cipher.java openjdk/jdk/src/share/classes/sun/security/pkcs11/P11Cipher.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11Cipher.java	2014-10-08 23:36:47.440464344 +0100
++++ openjdk/jdk/src/share/classes/sun/security/pkcs11/P11Cipher.java	2014-10-08 23:38:45.190091692 +0100
+@@ -164,6 +164,10 @@
+     // if we do the padding
+     private int bytesBuffered;
+ 
++    // length of key size in bytes; currently only used by AES given its oid
++    // specification mandates a fixed size of the key
++    private int fixedKeySize = -1;
++
+     P11Cipher(Token token, String algorithm, long mechanism)
+             throws PKCS11Exception, NoSuchAlgorithmException {
+         super();
+@@ -172,19 +176,26 @@
+         this.mechanism = mechanism;
+ 
+         String algoParts[] = algorithm.split("/");
+-        keyAlgorithm = algoParts[0];
+ 
+-        if (keyAlgorithm.equals("AES")) {
++        if (algoParts[0].startsWith("AES")) {
+             blockSize = 16;
+-        } else if (keyAlgorithm.equals("RC4") ||
+-                keyAlgorithm.equals("ARCFOUR")) {
+-            blockSize = 0;
+-        } else { // DES, DESede, Blowfish
+-            blockSize = 8;
+-        }
+-        this.blockMode =
++            int index = algoParts[0].indexOf('_');
++            if (index != -1) {
++                // should be well-formed since we specify what we support
++                fixedKeySize = Integer.parseInt(algoParts[0].substring(index+1))/8;
++            }
++            keyAlgorithm = "AES";
++        } else {
++            keyAlgorithm = algoParts[0];
++            if (keyAlgorithm.equals("RC4") ||
++                    keyAlgorithm.equals("ARCFOUR")) {
++                blockSize = 0;
++            } else { // DES, DESede, Blowfish
++                blockSize = 8;
++            }
++            this.blockMode =
+                 (algoParts.length > 1 ? parseMode(algoParts[1]) : MODE_ECB);
+-
++        }
+         String defPadding = (blockSize == 0 ? "NoPadding" : "PKCS5Padding");
+         String paddingStr =
+                 (algoParts.length > 2 ? algoParts[2] : defPadding);
+@@ -333,6 +344,9 @@
+             SecureRandom random)
+             throws InvalidKeyException, InvalidAlgorithmParameterException {
+         cancelOperation();
++        if (fixedKeySize != -1 && key.getEncoded().length != fixedKeySize) {
++            throw new InvalidKeyException("Key size is invalid");
++        }
+         switch (opmode) {
+             case Cipher.ENCRYPT_MODE:
+                 encrypt = true;
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/SunPKCS11.java openjdk/jdk/src/share/classes/sun/security/pkcs11/SunPKCS11.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/SunPKCS11.java	2014-10-08 23:36:49.512492977 +0100
++++ openjdk/jdk/src/share/classes/sun/security/pkcs11/SunPKCS11.java	2014-10-08 23:38:03.717518477 +0100
+@@ -401,12 +401,8 @@
+         return System.identityHashCode(this);
+     }
+ 
+-    private static String[] s(String s1) {
+-        return new String[] {s1};
+-    }
+-
+-    private static String[] s(String s1, String s2) {
+-        return new String[] {s1, s2};
++    private static String[] s(String ...aliases) {
++        return aliases;
+     }
+ 
+     private static final class Descriptor {
+@@ -523,7 +519,8 @@
+                 m(CKM_MD2));
+         d(MD, "MD5",            P11Digest,
+                 m(CKM_MD5));
+-        d(MD, "SHA1",           P11Digest, s("SHA", "SHA-1"),
++        d(MD, "SHA1",           P11Digest,
++                s("SHA", "SHA-1", "1.3.14.3.2.26", "OID.1.3.14.3.2.26"),
+                 m(CKM_SHA_1));
+ 
+         d(MD, "SHA-224",        P11Digest,
+@@ -542,6 +539,7 @@
+         d(MAC, "HmacMD5",       P11MAC,
+                 m(CKM_MD5_HMAC));
+         d(MAC, "HmacSHA1",      P11MAC,
++                s("1.2.840.113549.2.7", "OID.1.2.840.113549.2.7"),
+                 m(CKM_SHA_1_HMAC));
+         d(MAC, "HmacSHA224",    P11MAC,
+                 s("1.2.840.113549.2.8", "OID.1.2.840.113549.2.8"),
+@@ -563,6 +561,7 @@
+         d(KPG, "RSA",           P11KeyPairGenerator,
+                 m(CKM_RSA_PKCS_KEY_PAIR_GEN));
+         d(KPG, "DSA",           P11KeyPairGenerator,
++                s("1.3.14.3.2.12", "1.2.840.10040.4.1", "OID.1.2.840.10040.4.1"),
+                 m(CKM_DSA_KEY_PAIR_GEN));
+         d(KPG, "DH",            P11KeyPairGenerator,    s("DiffieHellman"),
+                 m(CKM_DH_PKCS_KEY_PAIR_GEN));
+@@ -585,6 +584,7 @@
+         d(KF, "RSA",            P11RSAKeyFactory,
+                 m(CKM_RSA_PKCS_KEY_PAIR_GEN, CKM_RSA_PKCS, CKM_RSA_X_509));
+         d(KF, "DSA",            P11DSAKeyFactory,
++                s("1.3.14.3.2.12", "1.2.840.10040.4.1", "OID.1.2.840.10040.4.1"),
+                 m(CKM_DSA_KEY_PAIR_GEN, CKM_DSA, CKM_DSA_SHA1));
+         d(KF, "DH",             P11DHKeyFactory,        s("DiffieHellman"),
+                 m(CKM_DH_PKCS_KEY_PAIR_GEN, CKM_DH_PKCS_DERIVE));
+@@ -608,6 +608,7 @@
+         d(SKF, "DESede",        P11SecretKeyFactory,
+                 m(CKM_DES3_CBC));
+         d(SKF, "AES",           P11SecretKeyFactory,
++                s("2.16.840.1.101.3.4.1", "OID.2.16.840.1.101.3.4.1"),
+                 m(CKM_AES_CBC));
+         d(SKF, "Blowfish",      P11SecretKeyFactory,
+                 m(CKM_BLOWFISH_CBC));
+@@ -633,10 +634,28 @@
+                 m(CKM_DES3_ECB));
+         d(CIP, "AES/CBC/NoPadding",             P11Cipher,
+                 m(CKM_AES_CBC));
++        d(CIP, "AES_128/CBC/NoPadding",          P11Cipher,
++                s("2.16.840.1.101.3.4.1.2", "OID.2.16.840.1.101.3.4.1.2"),
++                m(CKM_AES_CBC));
++        d(CIP, "AES_192/CBC/NoPadding",          P11Cipher,
++                s("2.16.840.1.101.3.4.1.22", "OID.2.16.840.1.101.3.4.1.22"),
++                m(CKM_AES_CBC));
++        d(CIP, "AES_256/CBC/NoPadding",          P11Cipher,
++                s("2.16.840.1.101.3.4.1.42", "OID.2.16.840.1.101.3.4.1.42"),
++                m(CKM_AES_CBC));
+         d(CIP, "AES/CBC/PKCS5Padding",          P11Cipher,
+                 m(CKM_AES_CBC_PAD, CKM_AES_CBC));
+         d(CIP, "AES/ECB/NoPadding",             P11Cipher,
+                 m(CKM_AES_ECB));
++        d(CIP, "AES_128/ECB/NoPadding",          P11Cipher,
++                s("2.16.840.1.101.3.4.1.1", "OID.2.16.840.1.101.3.4.1.1"),
++                m(CKM_AES_ECB));
++        d(CIP, "AES_192/ECB/NoPadding",          P11Cipher,
++                s("2.16.840.1.101.3.4.1.21", "OID.2.16.840.1.101.3.4.1.21"),
++                m(CKM_AES_ECB));
++        d(CIP, "AES_256/ECB/NoPadding",          P11Cipher,
++                s("2.16.840.1.101.3.4.1.41", "OID.2.16.840.1.101.3.4.1.41"),
++                m(CKM_AES_ECB));
+         d(CIP, "AES/ECB/PKCS5Padding",          P11Cipher,      s("AES"),
+                 m(CKM_AES_ECB));
+         d(CIP, "AES/CTR/NoPadding",             P11Cipher,
+@@ -650,13 +669,16 @@
+         d(CIP, "RSA/ECB/PKCS1Padding",          P11RSACipher,
+                 m(CKM_RSA_PKCS));
+ 
+-        d(SIG, "RawDSA",        P11Signature,           s("NONEwithDSA"),
++        d(SIG, "RawDSA",        P11Signature,   s("NONEwithDSA"),
+                 m(CKM_DSA));
+-        d(SIG, "DSA",           P11Signature,           s("SHA1withDSA"),
++        d(SIG, "DSA",           P11Signature,
++                s("SHA1withDSA", "1.3.14.3.2.13", "1.3.14.3.2.27",
++                  "1.2.840.10040.4.3", "OID.1.2.840.10040.4.3"),
+                 m(CKM_DSA_SHA1, CKM_DSA));
+         d(SIG, "NONEwithECDSA", P11Signature,
+                 m(CKM_ECDSA));
+-        d(SIG, "SHA1withECDSA", P11Signature,           s("ECDSA"),
++        d(SIG, "SHA1withECDSA", P11Signature,
++                s("ECDSA", "1.2.840.10045.4.1", "OID.1.2.840.10045.4.1"),
+                 m(CKM_ECDSA_SHA1, CKM_ECDSA));
+         d(SIG, "SHA224withECDSA",       P11Signature,
+                 s("1.2.840.10045.4.3.1", "OID.1.2.840.10045.4.3.1"),
+@@ -671,10 +693,14 @@
+                 s("1.2.840.10045.4.3.4", "OID.1.2.840.10045.4.3.4"),
+                 m(CKM_ECDSA));
+         d(SIG, "MD2withRSA",    P11Signature,
++                s("1.2.840.113549.1.1.2", "OID.1.2.840.113549.1.1.2"),
+                 m(CKM_MD2_RSA_PKCS, CKM_RSA_PKCS, CKM_RSA_X_509));
+         d(SIG, "MD5withRSA",    P11Signature,
++                s("1.2.840.113549.1.1.4", "OID.1.2.840.113549.1.1.4"),
+                 m(CKM_MD5_RSA_PKCS, CKM_RSA_PKCS, CKM_RSA_X_509));
+         d(SIG, "SHA1withRSA",   P11Signature,
++                s("1.2.840.113549.1.1.5", "OID.1.2.840.113549.1.1.5",
++                  "1.3.14.3.2.29"),
+                 m(CKM_SHA1_RSA_PKCS, CKM_RSA_PKCS, CKM_RSA_X_509));
+         d(SIG, "SHA224withRSA", P11Signature,
+                 s("1.2.840.113549.1.1.14", "OID.1.2.840.113549.1.1.14"),
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/provider/DSA.java openjdk/jdk/src/share/classes/sun/security/provider/DSA.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/provider/DSA.java	2014-07-14 04:24:45.000000000 +0100
++++ openjdk/jdk/src/share/classes/sun/security/provider/DSA.java	2014-10-08 23:37:11.636798712 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1996, 2004, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1996, 2012, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -45,14 +45,15 @@
+ 
+ /**
+  * The Digital Signature Standard (using the Digital Signature
+- * Algorithm), as described in fips186 of the National Instute of
+- * Standards and Technology (NIST), using fips180-1 (SHA-1).
++ * Algorithm), as described in fips186-3 of the National Instute of
++ * Standards and Technology (NIST), using SHA digest algorithms
++ * from FIPS180-3.
+  *
+  * This file contains both the signature implementation for the
+- * commonly used SHA1withDSA (DSS) as well as RawDSA, used by TLS
+- * among others. RawDSA expects the 20 byte SHA-1 digest as input
+- * via update rather than the original data like other signature
+- * implementations.
++ * commonly used SHA1withDSA (DSS), SHA224withDSA, SHA256withDSA,
++ * as well as RawDSA, used by TLS among others. RawDSA expects
++ * the 20 byte SHA-1 digest as input via update rather than the
++ * original data like other signature implementations.
+  *
+  * @author Benjamin Renaud
+  *
+@@ -78,129 +79,19 @@
+     /* The private key, if any */
+     private BigInteger presetX;
+ 
+-    /* The random seed used to generate k */
+-    private int[] Kseed;
+-
+-    /* The random seed used to generate k (specified by application) */
+-    private byte[] KseedAsByteArray;
+-
+-    /*
+-     * The random seed used to generate k
+-     * (prevent the same Kseed from being used twice in a row
+-     */
+-    private int[] previousKseed;
+-
+     /* The RNG used to output a seed for generating k */
+     private SecureRandom signingRandom;
+ 
++    /* The message digest object used */
++    private final MessageDigest md;
++
+     /**
+      * Construct a blank DSA object. It must be
+      * initialized before being usable for signing or verifying.
+      */
+-    DSA() {
++    DSA(MessageDigest md) {
+         super();
+-    }
+-
+-    /**
+-     * Return the 20 byte hash value and reset the digest.
+-     */
+-    abstract byte[] getDigest() throws SignatureException;
+-
+-    /**
+-     * Reset the digest.
+-     */
+-    abstract void resetDigest();
+-
+-    /**
+-     * Standard SHA1withDSA implementation.
+-     */
+-    public static final class SHA1withDSA extends DSA {
+-
+-        /* The SHA hash for the data */
+-        private final MessageDigest dataSHA;
+-
+-        public SHA1withDSA() throws NoSuchAlgorithmException {
+-            dataSHA = MessageDigest.getInstance("SHA-1");
+-        }
+-
+-        /**
+-         * Update a byte to be signed or verified.
+-         */
+-        protected void engineUpdate(byte b) {
+-            dataSHA.update(b);
+-        }
+-
+-        /**
+-         * Update an array of bytes to be signed or verified.
+-         */
+-        protected void engineUpdate(byte[] data, int off, int len) {
+-            dataSHA.update(data, off, len);
+-        }
+-
+-        protected void engineUpdate(ByteBuffer b) {
+-            dataSHA.update(b);
+-        }
+-
+-        byte[] getDigest() {
+-            return dataSHA.digest();
+-        }
+-
+-        void resetDigest() {
+-            dataSHA.reset();
+-        }
+-    }
+-
+-    /**
+-     * RawDSA implementation.
+-     *
+-     * RawDSA requires the data to be exactly 20 bytes long. If it is
+-     * not, a SignatureException is thrown when sign()/verify() is called
+-     * per JCA spec.
+-     */
+-    public static final class RawDSA extends DSA {
+-
+-        // length of the SHA-1 digest (20 bytes)
+-        private final static int SHA1_LEN = 20;
+-
+-        // 20 byte digest buffer
+-        private final byte[] digestBuffer;
+-
+-        // offset into the buffer
+-        private int ofs;
+-
+-        public RawDSA() {
+-            digestBuffer = new byte[SHA1_LEN];
+-        }
+-
+-        protected void engineUpdate(byte b) {
+-            if (ofs == SHA1_LEN) {
+-                ofs = SHA1_LEN + 1;
+-                return;
+-            }
+-            digestBuffer[ofs++] = b;
+-        }
+-
+-        protected void engineUpdate(byte[] data, int off, int len) {
+-            if (ofs + len > SHA1_LEN) {
+-                ofs = SHA1_LEN + 1;
+-                return;
+-            }
+-            System.arraycopy(data, off, digestBuffer, ofs, len);
+-            ofs += len;
+-        }
+-
+-        byte[] getDigest() throws SignatureException {
+-            if (ofs != SHA1_LEN) {
+-                throw new SignatureException
+-                        ("Data for RawDSA must be exactly 20 bytes long");
+-            }
+-            ofs = 0;
+-            return digestBuffer;
+-        }
+-
+-        void resetDigest() {
+-            ofs = 0;
+-        }
++        this.md = md;
+     }
+ 
+     /**
+@@ -217,13 +108,25 @@
+             throw new InvalidKeyException("not a DSA private key: " +
+                                           privateKey);
+         }
++
+         java.security.interfaces.DSAPrivateKey priv =
+             (java.security.interfaces.DSAPrivateKey)privateKey;
++
++        // check for algorithm specific constraints before doing initialization
++        DSAParams params = priv.getParams();
++        if (params == null) {
++            throw new InvalidKeyException("DSA private key lacks parameters");
++        }
++        checkKey(params);
++
++        this.params = params;
+         this.presetX = priv.getX();
+         this.presetY = null;
+-        initialize(priv.getParams());
++        this.presetP = params.getP();
++        this.presetQ = params.getQ();
++        this.presetG = params.getG();
++        this.md.reset();
+     }
+-
+     /**
+      * Initialize the DSA object with a DSA public key.
+      *
+@@ -240,17 +143,43 @@
+         }
+         java.security.interfaces.DSAPublicKey pub =
+             (java.security.interfaces.DSAPublicKey)publicKey;
++
++        // check for algorithm specific constraints before doing initialization
++        DSAParams params = pub.getParams();
++        if (params == null) {
++            throw new InvalidKeyException("DSA public key lacks parameters");
++        }
++        checkKey(params);
++
++        this.params = params;
+         this.presetY = pub.getY();
+         this.presetX = null;
+-        initialize(pub.getParams());
++        this.presetP = params.getP();
++        this.presetQ = params.getQ();
++        this.presetG = params.getG();
++        this.md.reset();
+     }
+ 
+-    private void initialize(DSAParams params) throws InvalidKeyException {
+-        resetDigest();
+-        setParams(params);
++    /**
++     * Update a byte to be signed or verified.
++     */
++    protected void engineUpdate(byte b) {
++        md.update(b);
+     }
+ 
+     /**
++     * Update an array of bytes to be signed or verified.
++     */
++    protected void engineUpdate(byte[] data, int off, int len) {
++        md.update(data, off, len);
++    }
++
++    protected void engineUpdate(ByteBuffer b) {
++        md.update(b);
++    }
++
++
++    /**
+      * Sign all the data thus far updated. The signature is formatted
+      * according to the Canonical Encoding Rules, returned as a DER
+      * sequence of Integer, r and s.
+@@ -352,23 +281,51 @@
+         }
+     }
+ 
++    @Deprecated
++    protected void engineSetParameter(String key, Object param) {
++        throw new InvalidParameterException("No parameter accepted");
++    }
++
++    @Deprecated
++    protected Object engineGetParameter(String key) {
++        return null;
++    }
++
++    protected void checkKey(DSAParams params) throws InvalidKeyException {
++        // FIPS186-3 states in sec4.2 that a hash function which provides
++        // a lower security strength than the (L, N) pair ordinarily should
++        // not be used.
++        int valueN = params.getQ().bitLength();
++        if (valueN > md.getDigestLength()*8) {
++            throw new InvalidKeyException("Key is too strong for this signature algorithm");
++        }
++    }
++
+     private BigInteger generateR(BigInteger p, BigInteger q, BigInteger g,
+                          BigInteger k) {
+         BigInteger temp = g.modPow(k, p);
+-        return temp.remainder(q);
+-   }
++        return temp.mod(q);
++    }
+ 
+     private BigInteger generateS(BigInteger x, BigInteger q,
+             BigInteger r, BigInteger k) throws SignatureException {
+ 
+-        byte[] s2 = getDigest();
+-        BigInteger temp = new BigInteger(1, s2);
++        byte[] s2;
++        try {
++            s2 = md.digest();
++        } catch (RuntimeException re) {
++            // Only for RawDSA due to its 20-byte length restriction
++            throw new SignatureException(re.getMessage());
++        }
++        // get the leftmost min(N, outLen) bits of the digest value
++        int nBytes = q.bitLength()/8;
++        if (nBytes < s2.length) {
++            s2 = Arrays.copyOfRange(s2, 0, nBytes);
++        }
++        BigInteger z = new BigInteger(1, s2);
+         BigInteger k1 = k.modInverse(q);
+ 
+-        BigInteger s = x.multiply(r);
+-        s = temp.add(s);
+-        s = k1.multiply(s);
+-        return s.remainder(q);
++        return x.multiply(r).add(z).multiply(k1).mod(q);
+     }
+ 
+     private BigInteger generateW(BigInteger p, BigInteger q,
+@@ -380,54 +337,41 @@
+              BigInteger q, BigInteger g, BigInteger w, BigInteger r)
+              throws SignatureException {
+ 
+-        byte[] s2 = getDigest();
+-        BigInteger temp = new BigInteger(1, s2);
+-
+-        temp = temp.multiply(w);
+-        BigInteger u1 = temp.remainder(q);
++        byte[] s2;
++        try {
++            s2 = md.digest();
++        } catch (RuntimeException re) {
++            // Only for RawDSA due to its 20-byte length restriction
++            throw new SignatureException(re.getMessage());
++        }
++        // get the leftmost min(N, outLen) bits of the digest value
++        int nBytes = q.bitLength()/8;
++        if (nBytes < s2.length) {
++            s2 = Arrays.copyOfRange(s2, 0, nBytes);
++        }
++        BigInteger z = new BigInteger(1, s2);
+ 
+-        BigInteger u2 = (r.multiply(w)).remainder(q);
++        BigInteger u1 = z.multiply(w).mod(q);
++        BigInteger u2 = (r.multiply(w)).mod(q);
+ 
+         BigInteger t1 = g.modPow(u1,p);
+         BigInteger t2 = y.modPow(u2,p);
+         BigInteger t3 = t1.multiply(t2);
+-        BigInteger t5 = t3.remainder(p);
+-        return t5.remainder(q);
++        BigInteger t5 = t3.mod(p);
++        return t5.mod(q);
+     }
+ 
+-    /*
+-     * Please read bug report 4044247 for an alternative, faster,
+-     * NON-FIPS approved method to generate K
+-     */
+-    private BigInteger generateK(BigInteger q) {
+-
+-        BigInteger k = null;
+-
+-        // The application specified a Kseed for us to use.
+-        // Note that we do not allow usage of the same Kseed twice in a row
+-        if (Kseed != null && !Arrays.equals(Kseed, previousKseed)) {
+-            k = generateK(Kseed, q);
+-            if (k.signum() > 0 && k.compareTo(q) < 0) {
+-                previousKseed = new int [Kseed.length];
+-                System.arraycopy(Kseed, 0, previousKseed, 0, Kseed.length);
+-                return k;
+-            }
+-        }
+-
+-        // The application did not specify a Kseed for us to use.
+-        // We'll generate a new Kseed by getting random bytes from
+-        // a SecureRandom object.
++    // NOTE: This following impl is defined in FIPS 186-3 AppendixB.2.2.
++    // Original DSS algos such as SHA1withDSA and RawDSA uses a different
++    // algorithm defined in FIPS 186-1 Sec3.2, and thus need to override this.
++    protected BigInteger generateK(BigInteger q) {
+         SecureRandom random = getSigningRandom();
++        byte[] kValue = new byte[q.bitLength()/8];
+ 
+         while (true) {
+-            int[] seed = new int[5];
+-
+-            for (int i = 0; i < 5; i++)
+-                seed[i] = random.nextInt();
+-            k = generateK(seed, q);
++            random.nextBytes(kValue);
++            BigInteger k = new BigInteger(1, kValue).mod(q);
+             if (k.signum() > 0 && k.compareTo(q) < 0) {
+-                previousKseed = new int [seed.length];
+-                System.arraycopy(seed, 0, previousKseed, 0, seed.length);
+                 return k;
+             }
+         }
+@@ -435,7 +379,7 @@
+ 
+     // Use the application-specified SecureRandom Object if provided.
+     // Otherwise, use our default SecureRandom Object.
+-    private SecureRandom getSigningRandom() {
++    protected SecureRandom getSigningRandom() {
+         if (signingRandom == null) {
+             if (appRandom != null) {
+                 signingRandom = appRandom;
+@@ -447,171 +391,6 @@
+     }
+ 
+     /**
+-     * Compute k for a DSA signature.
+-     *
+-     * @param seed the seed for generating k. This seed should be
+-     * secure. This is what is refered to as the KSEED in the DSA
+-     * specification.
+-     *
+-     * @param g the g parameter from the DSA key pair.
+-     */
+-    private BigInteger generateK(int[] seed, BigInteger q) {
+-
+-        // check out t in the spec.
+-        int[] t = { 0xEFCDAB89, 0x98BADCFE, 0x10325476,
+-                    0xC3D2E1F0, 0x67452301 };
+-        //
+-        int[] tmp = DSA.SHA_7(seed, t);
+-        byte[] tmpBytes = new byte[tmp.length * 4];
+-        for (int i = 0; i < tmp.length; i++) {
+-            int k = tmp[i];
+-            for (int j = 0; j < 4; j++) {
+-                tmpBytes[(i * 4) + j] = (byte) (k >>> (24 - (j * 8)));
+-            }
+-        }
+-        BigInteger k = new BigInteger(1, tmpBytes).mod(q);
+-        return k;
+-    }
+-
+-   // Constants for each round
+-    private static final int round1_kt = 0x5a827999;
+-    private static final int round2_kt = 0x6ed9eba1;
+-    private static final int round3_kt = 0x8f1bbcdc;
+-    private static final int round4_kt = 0xca62c1d6;
+-
+-   /**
+-    * Computes set 1 thru 7 of SHA-1 on m1. */
+-   static int[] SHA_7(int[] m1, int[] h) {
+-
+-       int[] W = new int[80];
+-       System.arraycopy(m1,0,W,0,m1.length);
+-       int temp = 0;
+-
+-        for (int t = 16; t <= 79; t++){
+-            temp = W[t-3] ^ W[t-8] ^ W[t-14] ^ W[t-16];
+-            W[t] = ((temp << 1) | (temp >>>(32 - 1)));
+-        }
+-
+-       int a = h[0],b = h[1],c = h[2], d = h[3], e = h[4];
+-       for (int i = 0; i < 20; i++) {
+-            temp = ((a<<5) | (a>>>(32-5))) +
+-                ((b&c)|((~b)&d))+ e + W[i] + round1_kt;
+-            e = d;
+-            d = c;
+-            c = ((b<<30) | (b>>>(32-30)));
+-            b = a;
+-            a = temp;
+-        }
+-
+-        // Round 2
+-        for (int i = 20; i < 40; i++) {
+-            temp = ((a<<5) | (a>>>(32-5))) +
+-                (b ^ c ^ d) + e + W[i] + round2_kt;
+-            e = d;
+-            d = c;
+-            c = ((b<<30) | (b>>>(32-30)));
+-            b = a;
+-            a = temp;
+-        }
+-
+-        // Round 3
+-        for (int i = 40; i < 60; i++) {
+-            temp = ((a<<5) | (a>>>(32-5))) +
+-                ((b&c)|(b&d)|(c&d)) + e + W[i] + round3_kt;
+-            e = d;
+-            d = c;
+-            c = ((b<<30) | (b>>>(32-30)));
+-            b = a;
+-            a = temp;
+-        }
+-
+-        // Round 4
+-        for (int i = 60; i < 80; i++) {
+-            temp = ((a<<5) | (a>>>(32-5))) +
+-                (b ^ c ^ d) + e + W[i] + round4_kt;
+-            e = d;
+-            d = c;
+-            c = ((b<<30) | (b>>>(32-30)));
+-            b = a;
+-            a = temp;
+-        }
+-       int[] md = new int[5];
+-       md[0] = h[0] + a;
+-       md[1] = h[1] + b;
+-       md[2] = h[2] + c;
+-       md[3] = h[3] + d;
+-       md[4] = h[4] + e;
+-       return md;
+-   }
+-
+-
+-    /**
+-     * This implementation recognizes the following parameter:<dl>
+-     *
+-     * <dt><tt>Kseed</tt>
+-     *
+-     * <dd>a byte array.
+-     *
+-     * </dl>
+-     *
+-     * @deprecated
+-     */
+-    @Deprecated
+-    protected void engineSetParameter(String key, Object param) {
+-        if (key.equals("KSEED")) {
+-            if (param instanceof byte[]) {
+-                Kseed = byteArray2IntArray((byte[])param);
+-                KseedAsByteArray = (byte[])param;
+-            } else {
+-                debug("unrecognized param: " + key);
+-                throw new InvalidParameterException("Kseed not a byte array");
+-            }
+-        } else {
+-            throw new InvalidParameterException("invalid parameter");
+-        }
+-    }
+-
+-    /**
+-     * Return the value of the requested parameter. Recognized
+-     * parameters are:
+-     *
+-     * <dl>
+-     *
+-     * <dt><tt>Kseed</tt>
+-     *
+-     * <dd>a byte array.
+-     *
+-     * </dl>
+-     *
+-     * @return the value of the requested parameter.
+-     *
+-     * @see java.security.SignatureEngine
+-     *
+-     * @deprecated
+-     */
+-    @Deprecated
+-    protected Object engineGetParameter(String key) {
+-        if (key.equals("KSEED")) {
+-            return KseedAsByteArray;
+-        } else {
+-            return null;
+-        }
+-    }
+-
+-    /**
+-     * Set the algorithm object.
+-     */
+-    private void setParams(DSAParams params) throws InvalidKeyException {
+-        if (params == null) {
+-            throw new InvalidKeyException("DSA public key lacks parameters");
+-        }
+-        this.params = params;
+-        this.presetP = params.getP();
+-        this.presetQ = params.getQ();
+-        this.presetG = params.getG();
+-    }
+-
+-    /**
+      * Return a human readable rendition of the engine.
+      */
+     public String toString() {
+@@ -632,47 +411,336 @@
+         return printable;
+     }
+ 
+-    /*
+-     * Utility routine for converting a byte array into an int array
++    private static void debug(Exception e) {
++        if (debug) {
++            e.printStackTrace();
++        }
++    }
++
++    private static void debug(String s) {
++        if (debug) {
++            System.err.println(s);
++        }
++    }
++
++    /**
++     * Standard SHA224withDSA implementation as defined in FIPS186-3.
+      */
+-    private int[] byteArray2IntArray(byte[] byteArray) {
++    public static final class SHA224withDSA extends DSA {
++        public SHA224withDSA() throws NoSuchAlgorithmException {
++            super(MessageDigest.getInstance("SHA-224"));
++        }
++    }
++
++    /**
++     * Standard SHA256withDSA implementation as defined in FIPS186-3.
++     */
++    public static final class SHA256withDSA extends DSA {
++        public SHA256withDSA() throws NoSuchAlgorithmException {
++            super(MessageDigest.getInstance("SHA-256"));
++        }
++    }
++
++    static class LegacyDSA extends DSA {
++        /* The random seed used to generate k */
++        private int[] kSeed;
++        /* The random seed used to generate k (specified by application) */
++        private byte[] kSeedAsByteArray;
++        /*
++         * The random seed used to generate k
++         * (prevent the same Kseed from being used twice in a row
++         */
++        private int[] kSeedLast;
++
++        public LegacyDSA(MessageDigest md) throws NoSuchAlgorithmException {
++            super(md);
++        }
++
++        @Deprecated
++        protected void engineSetParameter(String key, Object param) {
++            if (key.equals("KSEED")) {
++                if (param instanceof byte[]) {
++                    kSeed = byteArray2IntArray((byte[])param);
++                    kSeedAsByteArray = (byte[])param;
++                } else {
++                    debug("unrecognized param: " + key);
++                    throw new InvalidParameterException("kSeed not a byte array");
++                }
++            } else {
++                throw new InvalidParameterException("Unsupported parameter");
++            }
++        }
++
++        @Deprecated
++        protected Object engineGetParameter(String key) {
++           if (key.equals("KSEED")) {
++               return kSeedAsByteArray;
++           } else {
++               return null;
++           }
++        }
++
++        @Override
++        protected void checkKey(DSAParams params) throws InvalidKeyException {
++            int valueL = params.getP().bitLength();
++            if (valueL > 1024) {
++                throw new InvalidKeyException("Key is too long for this algorithm");
++            }
++        }
++
++        /*
++         * Please read bug report 4044247 for an alternative, faster,
++         * NON-FIPS approved method to generate K
++         */
++        @Override
++        protected BigInteger generateK(BigInteger q) {
++            BigInteger k = null;
++
++            // The application specified a kSeed for us to use.
++            // Note: we dis-allow usage of the same Kseed twice in a row
++            if (kSeed != null && !Arrays.equals(kSeed, kSeedLast)) {
++                k = generateKUsingKSeed(kSeed, q);
++                if (k.signum() > 0 && k.compareTo(q) < 0) {
++                    kSeedLast = kSeed.clone();
++                    return k;
++                }
++            }
++
++            // The application did not specify a Kseed for us to use.
++            // We'll generate a new Kseed by getting random bytes from
++            // a SecureRandom object.
++            SecureRandom random = getSigningRandom();
++
++            while (true) {
++                int[] seed = new int[5];
++
++                for (int i = 0; i < 5; i++) seed[i] = random.nextInt();
++
++                k = generateKUsingKSeed(seed, q);
++                if (k.signum() > 0 && k.compareTo(q) < 0) {
++                    kSeedLast = seed;
++                    return k;
++                }
++            }
++        }
++
++        /**
++         * Compute k for the DSA signature as defined in the original DSS,
++         * i.e. FIPS186.
++         *
++         * @param seed the seed for generating k. This seed should be
++         * secure. This is what is refered to as the KSEED in the DSA
++         * specification.
++         *
++         * @param g the g parameter from the DSA key pair.
++         */
++        private BigInteger generateKUsingKSeed(int[] seed, BigInteger q) {
++
++            // check out t in the spec.
++            int[] t = { 0xEFCDAB89, 0x98BADCFE, 0x10325476,
++                        0xC3D2E1F0, 0x67452301 };
++            //
++            int[] tmp = SHA_7(seed, t);
++            byte[] tmpBytes = new byte[tmp.length * 4];
++            for (int i = 0; i < tmp.length; i++) {
++                int k = tmp[i];
++                for (int j = 0; j < 4; j++) {
++                    tmpBytes[(i * 4) + j] = (byte) (k >>> (24 - (j * 8)));
++                }
++            }
++            BigInteger k = new BigInteger(1, tmpBytes).mod(q);
++            return k;
++        }
++
++        // Constants for each round
++        private static final int round1_kt = 0x5a827999;
++        private static final int round2_kt = 0x6ed9eba1;
++        private static final int round3_kt = 0x8f1bbcdc;
++        private static final int round4_kt = 0xca62c1d6;
++
++        /**
++         * Computes set 1 thru 7 of SHA-1 on m1. */
++        static int[] SHA_7(int[] m1, int[] h) {
+ 
+-        int j = 0;
+-        byte[] newBA;
+-        int mod = byteArray.length % 4;
+-
+-        // guarantee that the incoming byteArray is a multiple of 4
+-        // (pad with 0's)
+-        switch (mod) {
++            int[] W = new int[80];
++            System.arraycopy(m1,0,W,0,m1.length);
++            int temp = 0;
++
++            for (int t = 16; t <= 79; t++){
++                temp = W[t-3] ^ W[t-8] ^ W[t-14] ^ W[t-16];
++                W[t] = ((temp << 1) | (temp >>>(32 - 1)));
++            }
++
++            int a = h[0],b = h[1],c = h[2], d = h[3], e = h[4];
++            for (int i = 0; i < 20; i++) {
++                temp = ((a<<5) | (a>>>(32-5))) +
++                    ((b&c)|((~b)&d))+ e + W[i] + round1_kt;
++                e = d;
++                d = c;
++                c = ((b<<30) | (b>>>(32-30)));
++                b = a;
++                a = temp;
++            }
++
++            // Round 2
++            for (int i = 20; i < 40; i++) {
++                temp = ((a<<5) | (a>>>(32-5))) +
++                    (b ^ c ^ d) + e + W[i] + round2_kt;
++                e = d;
++                d = c;
++                c = ((b<<30) | (b>>>(32-30)));
++                b = a;
++                a = temp;
++            }
++
++            // Round 3
++            for (int i = 40; i < 60; i++) {
++                temp = ((a<<5) | (a>>>(32-5))) +
++                    ((b&c)|(b&d)|(c&d)) + e + W[i] + round3_kt;
++                e = d;
++                d = c;
++                c = ((b<<30) | (b>>>(32-30)));
++                b = a;
++                a = temp;
++            }
++
++            // Round 4
++            for (int i = 60; i < 80; i++) {
++                temp = ((a<<5) | (a>>>(32-5))) +
++                    (b ^ c ^ d) + e + W[i] + round4_kt;
++                e = d;
++                d = c;
++                c = ((b<<30) | (b>>>(32-30)));
++                b = a;
++                a = temp;
++            }
++            int[] md = new int[5];
++            md[0] = h[0] + a;
++            md[1] = h[1] + b;
++            md[2] = h[2] + c;
++            md[3] = h[3] + d;
++            md[4] = h[4] + e;
++            return md;
++        }
++
++        /*
++         * Utility routine for converting a byte array into an int array
++         */
++        private int[] byteArray2IntArray(byte[] byteArray) {
++
++            int j = 0;
++            byte[] newBA;
++            int mod = byteArray.length % 4;
++
++            // guarantee that the incoming byteArray is a multiple of 4
++            // (pad with 0's)
++            switch (mod) {
+             case 3:     newBA = new byte[byteArray.length + 1]; break;
+             case 2:     newBA = new byte[byteArray.length + 2]; break;
+             case 1:     newBA = new byte[byteArray.length + 3]; break;
+             default:    newBA = new byte[byteArray.length + 0]; break;
+-        }
+-        System.arraycopy(byteArray, 0, newBA, 0, byteArray.length);
++            }
++            System.arraycopy(byteArray, 0, newBA, 0, byteArray.length);
+ 
+-        // copy each set of 4 bytes in the byte array into an integer
+-        int[] newSeed = new int[newBA.length / 4];
+-        for (int i = 0; i < newBA.length; i += 4) {
+-            newSeed[j] = newBA[i + 3] & 0xFF;
+-            newSeed[j] |= (newBA[i + 2] << 8) & 0xFF00;
+-            newSeed[j] |= (newBA[i + 1] << 16) & 0xFF0000;
+-            newSeed[j] |= (newBA[i + 0] << 24) & 0xFF000000;
+-            j++;
+-        }
++            // copy each set of 4 bytes in the byte array into an integer
++            int[] newSeed = new int[newBA.length / 4];
++            for (int i = 0; i < newBA.length; i += 4) {
++                newSeed[j] = newBA[i + 3] & 0xFF;
++                newSeed[j] |= (newBA[i + 2] << 8) & 0xFF00;
++                newSeed[j] |= (newBA[i + 1] << 16) & 0xFF0000;
++                newSeed[j] |= (newBA[i + 0] << 24) & 0xFF000000;
++                j++;
++            }
+ 
+-        return newSeed;
++            return newSeed;
++        }
+     }
+ 
+-    private static void debug(Exception e) {
+-        if (debug) {
+-            e.printStackTrace();
++    public static final class SHA1withDSA extends LegacyDSA {
++        public SHA1withDSA() throws NoSuchAlgorithmException {
++            super(MessageDigest.getInstance("SHA-1"));
+         }
+     }
+ 
+-    private static void debug(String s) {
+-        if (debug) {
+-            System.err.println(s);
++    /**
++     * RawDSA implementation.
++     *
++     * RawDSA requires the data to be exactly 20 bytes long. If it is
++     * not, a SignatureException is thrown when sign()/verify() is called
++     * per JCA spec.
++     */
++    public static final class RawDSA extends LegacyDSA {
++        // Internal special-purpose MessageDigest impl for RawDSA
++        // Only override whatever methods used
++        // NOTE: no clone support
++        public static final class NullDigest20 extends MessageDigest {
++            // 20 byte digest buffer
++            private final byte[] digestBuffer = new byte[20];
++
++            // offset into the buffer; use Integer.MAX_VALUE to indicate
++            // out-of-bound condition
++            private int ofs = 0;
++
++            protected NullDigest20() {
++                super("NullDigest20");
++            }
++            protected void engineUpdate(byte input) {
++                if (ofs == digestBuffer.length) {
++                    ofs = Integer.MAX_VALUE;
++                } else {
++                    digestBuffer[ofs++] = input;
++                }
++            }
++            protected void engineUpdate(byte[] input, int offset, int len) {
++                if (ofs + len > digestBuffer.length) {
++                    ofs = Integer.MAX_VALUE;
++                } else {
++                    System.arraycopy(input, offset, digestBuffer, ofs, len);
++                    ofs += len;
++                }
++            }
++            protected final void engineUpdate(ByteBuffer input) {
++                int inputLen = input.remaining();
++                if (ofs + inputLen > digestBuffer.length) {
++                    ofs = Integer.MAX_VALUE;
++                } else {
++                    input.get(digestBuffer, ofs, inputLen);
++                    ofs += inputLen;
++                }
++            }
++            protected byte[] engineDigest() throws RuntimeException {
++                if (ofs != digestBuffer.length) {
++                    throw new RuntimeException
++                        ("Data for RawDSA must be exactly 20 bytes long");
++                }
++                reset();
++                return digestBuffer;
++            }
++            protected int engineDigest(byte[] buf, int offset, int len)
++                throws DigestException {
++                if (ofs != digestBuffer.length) {
++                    throw new DigestException
++                        ("Data for RawDSA must be exactly 20 bytes long");
++                }
++                if (len < digestBuffer.length) {
++                    throw new DigestException
++                        ("Output buffer too small; must be at least 20 bytes");
++                }
++                System.arraycopy(digestBuffer, 0, buf, offset, digestBuffer.length);
++                reset();
++                return digestBuffer.length;
++            }
++
++            protected void engineReset() {
++                ofs = 0;
++            }
++            protected final int engineGetDigestLength() {
++                return digestBuffer.length;
++            }
++        }
++
++        public RawDSA() throws NoSuchAlgorithmException {
++            super(new NullDigest20());
+         }
+     }
+ }
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/provider/DSAKeyPairGenerator.java openjdk/jdk/src/share/classes/sun/security/provider/DSAKeyPairGenerator.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/provider/DSAKeyPairGenerator.java	2014-07-14 04:24:45.000000000 +0100
++++ openjdk/jdk/src/share/classes/sun/security/provider/DSAKeyPairGenerator.java	2014-10-08 23:37:11.636798712 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1997, 2005, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -48,8 +48,9 @@
+ public class DSAKeyPairGenerator extends KeyPairGenerator
+ implements java.security.interfaces.DSAKeyPairGenerator {
+ 
+-    /* The modulus length */
+-    private int modlen;
++    /* Length for prime P and subPrime Q in bits */
++    private int plen;
++    private int qlen;
+ 
+     /* whether to force new parameters to be generated for each KeyPair */
+     private boolean forceNewParameters;
+@@ -65,20 +66,23 @@
+         initialize(1024, null);
+     }
+ 
+-    private static void checkStrength(int strength) {
+-        if ((strength < 512) || (strength > 1024) || (strength % 64 != 0)) {
++    private static void checkStrength(int sizeP, int sizeQ) {
++        if ((sizeP >= 512) && (sizeP <= 1024) && (sizeP % 64 == 0)
++            && sizeQ == 160) {
++            // traditional - allow for backward compatibility
++            // L=multiples of 64 and between 512 and 1024 (inclusive)
++            // N=160
++        } else if (sizeP == 2048 && (sizeQ == 224 || sizeQ == 256)) {
++            // L=2048, N=224 or 256
++        } else {
+             throw new InvalidParameterException
+-                ("Modulus size must range from 512 to 1024 "
+-                 + "and be a multiple of 64");
++                ("Unsupported prime and subprime size combination: " +
++                 sizeP + ", " + sizeQ);
+         }
+     }
+ 
+     public void initialize(int modlen, SecureRandom random) {
+-        checkStrength(modlen);
+-        this.random = random;
+-        this.modlen = modlen;
+-        this.params = null;
+-        this.forceNewParameters = false;
++        initialize(modlen, false, random);
+     }
+ 
+     /**
+@@ -86,18 +90,27 @@
+      * is false, a set of pre-computed parameters is used.
+      */
+     public void initialize(int modlen, boolean genParams, SecureRandom random) {
+-        checkStrength(modlen);
++        int subPrimeLen = -1;
++        if (modlen <= 1024) {
++            subPrimeLen = 160;
++        } else if (modlen == 2048) {
++            subPrimeLen = 224;
++        }
++        checkStrength(modlen, subPrimeLen);
+         if (genParams) {
+             params = null;
+         } else {
+-            params = ParameterCache.getCachedDSAParameterSpec(modlen);
++            params = ParameterCache.getCachedDSAParameterSpec(modlen,
++                subPrimeLen);
+             if (params == null) {
+                 throw new InvalidParameterException
+                     ("No precomputed parameters for requested modulus size "
+                      + "available");
+             }
++
+         }
+-        this.modlen = modlen;
++        this.plen = modlen;
++        this.qlen = subPrimeLen;
+         this.random = random;
+         this.forceNewParameters = genParams;
+     }
+@@ -136,9 +149,11 @@
+     }
+ 
+     private void initialize0(DSAParameterSpec params, SecureRandom random) {
+-        int modlen = params.getP().bitLength();
+-        checkStrength(modlen);
+-        this.modlen = modlen;
++        int sizeP = params.getP().bitLength();
++        int sizeQ = params.getQ().bitLength();
++        checkStrength(sizeP, sizeQ);
++        this.plen = sizeP;
++        this.qlen = sizeQ;
+         this.params = params;
+         this.random = random;
+         this.forceNewParameters = false;
+@@ -156,11 +171,11 @@
+         try {
+             if (forceNewParameters) {
+                 // generate new parameters each time
+-                spec = ParameterCache.getNewDSAParameterSpec(modlen, random);
++                spec = ParameterCache.getNewDSAParameterSpec(plen, qlen, random);
+             } else {
+                 if (params == null) {
+                     params =
+-                        ParameterCache.getDSAParameterSpec(modlen, random);
++                        ParameterCache.getDSAParameterSpec(plen, qlen, random);
+                 }
+                 spec = params;
+             }
+@@ -203,43 +218,14 @@
+      */
+     private BigInteger generateX(SecureRandom random, BigInteger q) {
+         BigInteger x = null;
++        byte[] temp = new byte[qlen];
+         while (true) {
+-            int[] seed = new int[5];
+-            for (int i = 0; i < 5; i++) {
+-                seed[i] = random.nextInt();
+-            }
+-            x = generateX(seed, q);
++            random.nextBytes(temp);
++            x = new BigInteger(1, temp).mod(q);
+             if (x.signum() > 0 && (x.compareTo(q) < 0)) {
+-                break;
+-            }
+-        }
+-        return x;
+-    }
+-
+-    /**
+-     * Given a seed, generate the private key component of the key
+-     * pair. In the terminology used in the DSA specification
+-     * (FIPS-186) seed is the XSEED quantity.
+-     *
+-     * @param seed the seed to use to generate the private key.
+-     */
+-    BigInteger generateX(int[] seed, BigInteger q) {
+-
+-        // check out t in the spec.
+-        int[] t = { 0x67452301, 0xEFCDAB89, 0x98BADCFE,
+-                    0x10325476, 0xC3D2E1F0 };
+-        //
+-
+-        int[] tmp = DSA.SHA_7(seed, t);
+-        byte[] tmpBytes = new byte[tmp.length * 4];
+-        for (int i = 0; i < tmp.length; i++) {
+-            int k = tmp[i];
+-            for (int j = 0; j < 4; j++) {
+-                tmpBytes[(i * 4) + j] = (byte) (k >>> (24 - (j * 8)));
++                return x;
+             }
+         }
+-        BigInteger x = new BigInteger(1, tmpBytes).mod(q);
+-        return x;
+     }
+ 
+     /**
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/provider/DSAParameterGenerator.java openjdk/jdk/src/share/classes/sun/security/provider/DSAParameterGenerator.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/provider/DSAParameterGenerator.java	2014-07-14 04:24:45.000000000 +0100
++++ openjdk/jdk/src/share/classes/sun/security/provider/DSAParameterGenerator.java	2014-10-08 23:37:11.636798712 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1997, 2006, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -32,10 +32,12 @@
+ import java.security.NoSuchAlgorithmException;
+ import java.security.NoSuchProviderException;
+ import java.security.InvalidParameterException;
++import java.security.MessageDigest;
+ import java.security.SecureRandom;
+ import java.security.spec.AlgorithmParameterSpec;
+ import java.security.spec.InvalidParameterSpecException;
+ import java.security.spec.DSAParameterSpec;
++import sun.security.spec.DSAGenParameterSpec;
+ 
+ /**
+  * This class generates parameters for the DSA algorithm. It uses a default
+@@ -54,8 +56,14 @@
+ 
+ public class DSAParameterGenerator extends AlgorithmParameterGeneratorSpi {
+ 
+-    // the modulus length
+-    private int modLen = 1024; // default
++    // the default parameters
++    private static final DSAGenParameterSpec DEFAULTS =
++        new DSAGenParameterSpec(1024, 160, 160);
++
++    // the length of prime P, subPrime Q, and seed in bits
++    private int valueL = -1;
++    private int valueN = -1;
++    private int seedLen = -1;
+ 
+     // the source of randomness
+     private SecureRandom random;
+@@ -65,11 +73,7 @@
+     private static final BigInteger ONE = BigInteger.valueOf(1);
+     private static final BigInteger TWO = BigInteger.valueOf(2);
+ 
+-    // Make a SHA-1 hash function
+-    private SHA sha;
+-
+     public DSAParameterGenerator() {
+-        this.sha = new SHA();
+     }
+ 
+     /**
+@@ -80,19 +84,18 @@
+      * @param random the source of randomness
+      */
+     protected void engineInit(int strength, SecureRandom random) {
+-        /*
+-         * Bruce Schneier, "Applied Cryptography", 2nd Edition,
+-         * Description of DSA:
+-         * [...] The algorithm uses the following parameter:
+-         * p=a prime number L bits long, when L ranges from 512 to 1024 and is
+-         * a multiple of 64. [...]
+-         */
+-        if ((strength < 512) || (strength > 1024) || (strength % 64 != 0)) {
++        if ((strength >= 512) && (strength <= 1024) && (strength % 64 == 0)) {
++            this.valueN = 160;
++        } else if (strength == 2048) {
++            this.valueN = 224;
++//      } else if (strength == 3072) {
++//          this.valueN = 256;
++        } else {
+             throw new InvalidParameterException
+-                ("Prime size must range from 512 to 1024 "
+-                 + "and be a multiple of 64");
++                ("Prime size should be 512 - 1024, or 2048");
+         }
+-        this.modLen = strength;
++        this.valueL = strength;
++        this.seedLen = valueN;
+         this.random = random;
+     }
+ 
+@@ -100,7 +103,7 @@
+      * Initializes this parameter generator with a set of
+      * algorithm-specific parameter generation values.
+      *
+-     * @param params the set of algorithm-specific parameter generation values
++     * @param genParamSpec the set of algorithm-specific parameter generation values
+      * @param random the source of randomness
+      *
+      * @exception InvalidAlgorithmParameterException if the given parameter
+@@ -109,7 +112,19 @@
+     protected void engineInit(AlgorithmParameterSpec genParamSpec,
+                               SecureRandom random)
+         throws InvalidAlgorithmParameterException {
++        if (!(genParamSpec instanceof DSAGenParameterSpec)) {
+             throw new InvalidAlgorithmParameterException("Invalid parameter");
++        }
++        DSAGenParameterSpec dsaGenParams = (DSAGenParameterSpec) genParamSpec;
++        if (dsaGenParams.getPrimePLength() > 2048) {
++            throw new InvalidParameterException
++                ("Prime size should be 512 - 1024, or 2048");
++        }
++        // directly initialize using the already validated values
++        this.valueL = dsaGenParams.getPrimePLength();
++        this.valueN = dsaGenParams.getSubprimeQLength();
++        this.seedLen = dsaGenParams.getSeedLength();
++        this.random = random;
+     }
+ 
+     /**
+@@ -123,15 +138,21 @@
+             if (this.random == null) {
+                 this.random = new SecureRandom();
+             }
+-
+-            BigInteger[] pAndQ = generatePandQ(this.random, this.modLen);
++            if (valueL == -1) {
++                try {
++                    engineInit(DEFAULTS, this.random);
++                } catch (InvalidAlgorithmParameterException iape) {
++                    // should never happen
++                }
++            }
++            BigInteger[] pAndQ = generatePandQ(this.random, valueL,
++                                               valueN, seedLen);
+             BigInteger paramP = pAndQ[0];
+             BigInteger paramQ = pAndQ[1];
+             BigInteger paramG = generateG(paramP, paramQ);
+ 
+-            DSAParameterSpec dsaParamSpec = new DSAParameterSpec(paramP,
+-                                                                 paramQ,
+-                                                                 paramG);
++            DSAParameterSpec dsaParamSpec =
++                new DSAParameterSpec(paramP, paramQ, paramG);
+             algParams = AlgorithmParameters.getInstance("DSA", "SUN");
+             algParams.init(dsaParamSpec);
+         } catch (InvalidParameterSpecException e) {
+@@ -156,102 +177,98 @@
+      *
+      * @param random the source of randomness to generate the
+      * seed
+-     * @param L the size of <code>p</code>, in bits.
++     * @param valueL the size of <code>p</code>, in bits.
++     * @param valueN the size of <code>q</code>, in bits.
++     * @param seedLen the length of <code>seed</code>, in bits.
+      *
+      * @return an array of BigInteger, with <code>p</code> at index 0 and
+-     * <code>q</code> at index 1.
++     * <code>q</code> at index 1, the seed at index 2, and the counter value
++     * at index 3.
+      */
+-    BigInteger[] generatePandQ(SecureRandom random, int L) {
+-        BigInteger[] result = null;
+-        byte[] seed = new byte[20];
+-
+-        while(result == null) {
+-            for (int i = 0; i < 20; i++) {
+-                seed[i] = (byte)random.nextInt();
+-            }
+-            result = generatePandQ(seed, L);
++    private static BigInteger[] generatePandQ(SecureRandom random, int valueL,
++                                              int valueN, int seedLen) {
++        String hashAlg = null;
++        if (valueN == 160) {
++            hashAlg = "SHA";
++        } else if (valueN == 224) {
++            hashAlg = "SHA-224";
++        } else if (valueN == 256) {
++            hashAlg = "SHA-256";
++        }
++        MessageDigest hashObj = null;
++        try {
++            hashObj = MessageDigest.getInstance(hashAlg);
++        } catch (NoSuchAlgorithmException nsae) {
++            // should never happen
++            nsae.printStackTrace();
+         }
+-        return result;
+-    }
+ 
+-    /*
+-     * Generates the prime and subprime parameters for DSA.
+-     *
+-     * <p>The seed parameter corresponds to the <code>SEED</code> parameter
+-     * referenced in the FIPS specification of the DSA algorithm,
+-     * and L is the size of <code>p</code>, in bits.
+-     *
+-     * @param seed the seed to generate the parameters
+-     * @param L the size of <code>p</code>, in bits.
+-     *
+-     * @return an array of BigInteger, with <code>p</code> at index 0,
+-     * <code>q</code> at index 1, the seed at index 2, and the counter value
+-     * at index 3, or null if the seed does not yield suitable numbers.
+-     */
+-    BigInteger[] generatePandQ(byte[] seed, int L) {
++        /* Step 3, 4: Useful variables */
++        int outLen = hashObj.getDigestLength()*8;
++        int n = (valueL - 1) / outLen;
++        int b = (valueL - 1) % outLen;
++        byte[] seedBytes = new byte[seedLen/8];
++        BigInteger twoSl = TWO.pow(seedLen);
++        int primeCertainty = 80; // for 1024-bit prime P
++        if (valueL == 2048) {
++            primeCertainty = 112;
++            //} else if (valueL == 3072) {
++            //    primeCertainty = 128;
++        }
+ 
+-        /* Useful variables */
+-        int g = seed.length * 8;
+-        int n = (L - 1) / 160;
+-        int b = (L - 1) % 160;
+-
+-        BigInteger SEED = new BigInteger(1, seed);
+-        BigInteger TWOG = TWO.pow(2 * g);
+-
+-        /* Step 2 (Step 1 is getting seed). */
+-        byte[] U1 = SHA(seed);
+-        byte[] U2 = SHA(toByteArray((SEED.add(ONE)).mod(TWOG)));
+-
+-        xor(U1, U2);
+-        byte[] U = U1;
+-
+-        /* Step 3: For q by setting the msb and lsb to 1 */
+-        U[0] |= 0x80;
+-        U[19] |= 1;
+-        BigInteger q = new BigInteger(1, U);
+-
+-        /* Step 5 */
+-         if (!q.isProbablePrime(80)) {
+-             return null;
+-
+-         } else {
+-             BigInteger V[] = new BigInteger[n + 1];
+-             BigInteger offset = TWO;
+-
+-             /* Step 6 */
+-             for (int counter = 0; counter < 4096; counter++) {
+-
+-                 /* Step 7 */
+-                 for (int k = 0; k <= n; k++) {
+-                     BigInteger K = BigInteger.valueOf(k);
+-                     BigInteger tmp = (SEED.add(offset).add(K)).mod(TWOG);
+-                     V[k] = new BigInteger(1, SHA(toByteArray(tmp)));
+-                 }
+-
+-                 /* Step 8 */
+-                 BigInteger W = V[0];
+-                 for (int i = 1; i < n; i++) {
+-                     W = W.add(V[i].multiply(TWO.pow(i * 160)));
+-                 }
+-                 W = W.add((V[n].mod(TWO.pow(b))).multiply(TWO.pow(n * 160)));
+-
+-                 BigInteger TWOLm1 = TWO.pow(L - 1);
+-                 BigInteger X = W.add(TWOLm1);
+-
+-                 /* Step 9 */
+-                 BigInteger c = X.mod(q.multiply(TWO));
+-                 BigInteger p = X.subtract(c.subtract(ONE));
+-
+-                 /* Step 10 - 13 */
+-                 if (p.compareTo(TWOLm1) > -1 && p.isProbablePrime(80)) {
+-                     BigInteger[] result = {p, q, SEED,
+-                                            BigInteger.valueOf(counter)};
+-                     return result;
+-                 }
+-                 offset = offset.add(BigInteger.valueOf(n)).add(ONE);
++        BigInteger resultP, resultQ, seed = null;
++        int counter;
++        while (true) {
++            do {
++                /* Step 5 */
++                random.nextBytes(seedBytes);
++                seed = new BigInteger(1, seedBytes);
++
++                /* Step 6 */
++                BigInteger U = new BigInteger(1, hashObj.digest(seedBytes)).
++                    mod(TWO.pow(valueN - 1));
++
++                /* Step 7 */
++                resultQ = TWO.pow(valueN - 1).add(U).add(ONE). subtract(U.mod(TWO));
++            } while (!resultQ.isProbablePrime(primeCertainty));
++
++            /* Step 10 */
++            BigInteger offset = ONE;
++            /* Step 11 */
++            for (counter = 0; counter < 4*valueL; counter++) {
++                BigInteger V[] = new BigInteger[n + 1];
++                /* Step 11.1 */
++                for (int j = 0; j <= n; j++) {
++                    BigInteger J = BigInteger.valueOf(j);
++                    BigInteger tmp = (seed.add(offset).add(J)).mod(twoSl);
++                    byte[] vjBytes = hashObj.digest(toByteArray(tmp));
++                    V[j] = new BigInteger(1, vjBytes);
++                }
++                /* Step 11.2 */
++                BigInteger W = V[0];
++                for (int i = 1; i < n; i++) {
++                    W = W.add(V[i].multiply(TWO.pow(i * outLen)));
++                }
++                W = W.add((V[n].mod(TWO.pow(b))).multiply(TWO.pow(n * outLen)));
++                /* Step 11.3 */
++                BigInteger twoLm1 = TWO.pow(valueL - 1);
++                BigInteger X = W.add(twoLm1);
++                /* Step 11.4, 11.5 */
++                BigInteger c = X.mod(resultQ.multiply(TWO));
++                resultP = X.subtract(c.subtract(ONE));
++                /* Step 11.6, 11.7 */
++                if (resultP.compareTo(twoLm1) > -1
++                    && resultP.isProbablePrime(primeCertainty)) {
++                    /* Step 11.8 */
++                    BigInteger[] result = {resultP, resultQ, seed,
++                                           BigInteger.valueOf(counter)};
++                    return result;
++                }
++                /* Step 11.9 */
++                offset = offset.add(BigInteger.valueOf(n)).add(ONE);
+              }
+-             return null;
+-         }
++        }
++
+     }
+ 
+     /*
+@@ -262,31 +279,24 @@
+      *
+      * @param the <code>g</code>
+      */
+-    BigInteger generateG(BigInteger p, BigInteger q) {
++    private static BigInteger generateG(BigInteger p, BigInteger q) {
+         BigInteger h = ONE;
++        /* Step 1 */
+         BigInteger pMinusOneOverQ = (p.subtract(ONE)).divide(q);
+-        BigInteger g = ONE;
+-        while (g.compareTo(TWO) < 0) {
+-            g = h.modPow(pMinusOneOverQ, p);
++        BigInteger resultG = ONE;
++        while (resultG.compareTo(TWO) < 0) {
++            /* Step 3 */
++            resultG = h.modPow(pMinusOneOverQ, p);
+             h = h.add(ONE);
+         }
+-        return g;
+-    }
+-
+-    /*
+-     * Returns the SHA-1 digest of some data
+-     */
+-    private byte[] SHA(byte[] array) {
+-        sha.engineReset();
+-        sha.engineUpdate(array, 0, array.length);
+-        return sha.engineDigest();
++        return resultG;
+     }
+ 
+     /*
+      * Converts the result of a BigInteger.toByteArray call to an exact
+      * signed magnitude representation for any positive number.
+      */
+-    private byte[] toByteArray(BigInteger bigInt) {
++    private static byte[] toByteArray(BigInteger bigInt) {
+         byte[] result = bigInt.toByteArray();
+         if (result[0] == 0) {
+             byte[] tmp = new byte[result.length - 1];
+@@ -295,13 +305,4 @@
+         }
+         return result;
+     }
+-
+-    /*
+-     * XORs U2 into U1
+-     */
+-    private void xor(byte[] U1, byte[] U2) {
+-        for (int i = 0; i < U1.length; i++) {
+-            U1[i] ^= U2[i];
+-        }
+-    }
+ }
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/provider/ParameterCache.java openjdk/jdk/src/share/classes/sun/security/provider/ParameterCache.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/provider/ParameterCache.java	2014-07-14 04:24:45.000000000 +0100
++++ openjdk/jdk/src/share/classes/sun/security/provider/ParameterCache.java	2014-10-08 23:37:11.636798712 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -26,6 +26,7 @@
+ package sun.security.provider;
+ 
+ import java.util.*;
++import java.util.concurrent.ConcurrentHashMap;
+ import java.math.BigInteger;
+ 
+ import java.security.*;
+@@ -34,6 +35,8 @@
+ 
+ import javax.crypto.spec.DHParameterSpec;
+ 
++import sun.security.spec.DSAGenParameterSpec;
++
+ /**
+  * Cache for DSA and DH parameter specs. Used by the KeyPairGenerators
+  * in the Sun, SunJCE, and SunPKCS11 provider if no parameters have been
+@@ -55,11 +58,17 @@
+     private final static Map<Integer,DHParameterSpec> dhCache;
+ 
+     /**
+-     * Return cached DSA parameters for the given keylength, or null if none
+-     * are available in the cache.
++     * Return cached DSA parameters for the given length combination of
++     * prime and subprime, or null if none are available in the cache.
+      */
+-    public static DSAParameterSpec getCachedDSAParameterSpec(int keyLength) {
+-        return dsaCache.get(Integer.valueOf(keyLength));
++    public static DSAParameterSpec getCachedDSAParameterSpec(int primeLen,
++            int subprimeLen) {
++        // ensure the sum is unique in all cases, i.e.
++        // case#1: (512 <= p <= 1024) AND q=160
++        // case#2: p=2048 AND q=224
++        // case#3: p=2048 AND q=256
++        // (NOT-YET-SUPPORTED)case#4: p=3072 AND q=256
++        return dsaCache.get(Integer.valueOf(primeLen+subprimeLen));
+     }
+ 
+     /**
+@@ -71,18 +80,39 @@
+     }
+ 
+     /**
+-     * Return DSA parameters for the given keylength. Uses cache if possible,
+-     * generates new parameters and adds them to the cache otherwise.
++     * Return DSA parameters for the given primeLen. Uses cache if
++     * possible, generates new parameters and adds them to the cache
++     * otherwise.
+      */
+-    public static DSAParameterSpec getDSAParameterSpec(int keyLength,
++    public static DSAParameterSpec getDSAParameterSpec(int primeLen,
+             SecureRandom random)
+-            throws NoSuchAlgorithmException, InvalidParameterSpecException {
+-        DSAParameterSpec spec = getCachedDSAParameterSpec(keyLength);
++            throws NoSuchAlgorithmException, InvalidParameterSpecException,
++                   InvalidAlgorithmParameterException {
++        if (primeLen <= 1024) {
++            return getDSAParameterSpec(primeLen, 160, random);
++        } else if (primeLen == 2048) {
++            return getDSAParameterSpec(primeLen, 224, random);
++        } else {
++            return null;
++        }
++    }
++
++    /**
++     * Return DSA parameters for the given primeLen and subprimeLen.
++     * Uses cache if possible, generates new parameters and adds them to the
++     * cache otherwise.
++     */
++    public static DSAParameterSpec getDSAParameterSpec(int primeLen,
++            int subprimeLen, SecureRandom random)
++            throws NoSuchAlgorithmException, InvalidParameterSpecException,
++                   InvalidAlgorithmParameterException {
++        DSAParameterSpec spec =
++            getCachedDSAParameterSpec(primeLen, subprimeLen);
+         if (spec != null) {
+             return spec;
+         }
+-        spec = getNewDSAParameterSpec(keyLength, random);
+-        dsaCache.put(Integer.valueOf(keyLength), spec);
++        spec = getNewDSAParameterSpec(primeLen, subprimeLen, random);
++        dsaCache.put(Integer.valueOf(primeLen + subprimeLen), spec);
+         return spec;
+     }
+ 
+@@ -107,28 +137,28 @@
+     }
+ 
+     /**
+-     * Return new DSA parameters for the given keylength. Do not lookup in
+-     * cache and do not cache the newly generated parameters. This method
+-     * really only exists for the legacy method
++     * Return new DSA parameters for the given length combination of prime and
++     * sub prime. Do not lookup in cache and do not cache the newly generated
++     * parameters. This method really only exists for the legacy method
+      * DSAKeyPairGenerator.initialize(int, boolean, SecureRandom).
+      */
+-    public static DSAParameterSpec getNewDSAParameterSpec(int keyLength,
+-            SecureRandom random)
+-            throws NoSuchAlgorithmException, InvalidParameterSpecException {
++    public static DSAParameterSpec getNewDSAParameterSpec(int primeLen,
++            int subprimeLen, SecureRandom random)
++            throws NoSuchAlgorithmException, InvalidParameterSpecException,
++                   InvalidAlgorithmParameterException {
+         AlgorithmParameterGenerator gen =
+                 AlgorithmParameterGenerator.getInstance("DSA");
+-        gen.init(keyLength, random);
++        DSAGenParameterSpec genParams =
++            new DSAGenParameterSpec(primeLen, subprimeLen);
++        gen.init(genParams, random);
+         AlgorithmParameters params = gen.generateParameters();
+         DSAParameterSpec spec = params.getParameterSpec(DSAParameterSpec.class);
+         return spec;
+     }
+ 
+     static {
+-        // XXX change to ConcurrentHashMap once available
+-        dhCache = Collections.synchronizedMap
+-                        (new HashMap<Integer,DHParameterSpec>());
+-        dsaCache = Collections.synchronizedMap
+-                        (new HashMap<Integer,DSAParameterSpec>());
++        dhCache = new ConcurrentHashMap<Integer,DHParameterSpec>();
++        dsaCache = new ConcurrentHashMap<Integer,DSAParameterSpec>();
+ 
+         /*
+          * We support precomputed parameter for 512, 768 and 1024 bit
+@@ -210,17 +240,99 @@
+                            "83dfe15ae59f06928b665e807b552564014c3bfecf" +
+                            "492a", 16);
+ 
+-        dsaCache.put(Integer.valueOf(512),
++        dsaCache.put(Integer.valueOf(512+160),
+                                 new DSAParameterSpec(p512, q512, g512));
+-        dsaCache.put(Integer.valueOf(768),
++        dsaCache.put(Integer.valueOf(768+160),
+                                 new DSAParameterSpec(p768, q768, g768));
+-        dsaCache.put(Integer.valueOf(1024),
++        dsaCache.put(Integer.valueOf(1024+160),
+                                 new DSAParameterSpec(p1024, q1024, g1024));
++        /*
++         * L = 2048, N = 224
++         * SEED = 584236080cfa43c09b02354135f4cc5198a19efada08bd866d601ba4
++         * counter = 2666
++         */
++        BigInteger p2048_224 =
++            new BigInteger("8f7935d9b9aae9bfabed887acf4951b6f32ec59e3b" +
++                           "af3718e8eac4961f3efd3606e74351a9c4183339b8" +
++                           "09e7c2ae1c539ba7475b85d011adb8b47987754984" +
++                           "695cac0e8f14b3360828a22ffa27110a3d62a99345" +
++                           "3409a0fe696c4658f84bdd20819c3709a01057b195" +
++                           "adcd00233dba5484b6291f9d648ef883448677979c" +
++                           "ec04b434a6ac2e75e9985de23db0292fc1118c9ffa" +
++                           "9d8181e7338db792b730d7b9e349592f6809987215" +
++                           "3915ea3d6b8b4653c633458f803b32a4c2e0f27290" +
++                           "256e4e3f8a3b0838a1c450e4e18c1a29a37ddf5ea1" +
++                           "43de4b66ff04903ed5cf1623e158d487c608e97f21" +
++                           "1cd81dca23cb6e380765f822e342be484c05763939" +
++                           "601cd667", 16);
++
++        BigInteger q2048_224 =
++            new BigInteger("baf696a68578f7dfdee7fa67c977c785ef32b233ba" +
++                           "e580c0bcd5695d", 16);
++
++        BigInteger g2048_224 =
++            new BigInteger("16a65c58204850704e7502a39757040d34da3a3478" +
++                           "c154d4e4a5c02d242ee04f96e61e4bd0904abdac8f" +
++                           "37eeb1e09f3182d23c9043cb642f88004160edf9ca" +
++                           "09b32076a79c32a627f2473e91879ba2c4e744bd20" +
++                           "81544cb55b802c368d1fa83ed489e94e0fa0688e32" +
++                           "428a5c78c478c68d0527b71c9a3abb0b0be12c4468" +
++                           "9639e7d3ce74db101a65aa2b87f64c6826db3ec72f" +
++                           "4b5599834bb4edb02f7c90e9a496d3a55d535bebfc" +
++                           "45d4f619f63f3dedbb873925c2f224e07731296da8" +
++                           "87ec1e4748f87efb5fdeb75484316b2232dee553dd" +
++                           "af02112b0d1f02da30973224fe27aeda8b9d4b2922" +
++                           "d9ba8be39ed9e103a63c52810bc688b7e2ed4316e1" +
++                           "ef17dbde", 16);
++        dsaCache.put(Integer.valueOf(2048+224),
++                     new DSAParameterSpec(p2048_224, q2048_224, g2048_224));
++
++        /*
++         * L = 2048, N = 256
++         * SEED = b0b4417601b59cbc9d8ac8f935cadaec4f5fbb2f23785609ae466748d9b5a536
++         * counter = 497
++         */
++        BigInteger p2048_256 =
++            new BigInteger("95475cf5d93e596c3fcd1d902add02f427f5f3c721" +
++                           "0313bb45fb4d5bb2e5fe1cbd678cd4bbdd84c9836b" +
++                           "e1f31c0777725aeb6c2fc38b85f48076fa76bcd814" +
++                           "6cc89a6fb2f706dd719898c2083dc8d896f84062e2" +
++                           "c9c94d137b054a8d8096adb8d51952398eeca852a0" +
++                           "af12df83e475aa65d4ec0c38a9560d5661186ff98b" +
++                           "9fc9eb60eee8b030376b236bc73be3acdbd74fd61c" +
++                           "1d2475fa3077b8f080467881ff7e1ca56fee066d79" +
++                           "506ade51edbb5443a563927dbc4ba520086746175c" +
++                           "8885925ebc64c6147906773496990cb714ec667304" +
++                           "e261faee33b3cbdf008e0c3fa90650d97d3909c927" +
++                           "5bf4ac86ffcb3d03e6dfc8ada5934242dd6d3bcca2" +
++                           "a406cb0b", 16);
++
++        BigInteger q2048_256 =
++            new BigInteger("f8183668ba5fc5bb06b5981e6d8b795d30b8978d43" +
++                           "ca0ec572e37e09939a9773", 16);
++
++        BigInteger g2048_256 =
++            new BigInteger("42debb9da5b3d88cc956e08787ec3f3a09bba5f48b" +
++                           "889a74aaf53174aa0fbe7e3c5b8fcd7a53bef563b0" +
++                           "e98560328960a9517f4014d3325fc7962bf1e04937" +
++                           "0d76d1314a76137e792f3f0db859d095e4a5b93202" +
++                           "4f079ecf2ef09c797452b0770e1350782ed57ddf79" +
++                           "4979dcef23cb96f183061965c4ebc93c9c71c56b92" +
++                           "5955a75f94cccf1449ac43d586d0beee43251b0b22" +
++                           "87349d68de0d144403f13e802f4146d882e057af19" +
++                           "b6f6275c6676c8fa0e3ca2713a3257fd1b27d0639f" +
++                           "695e347d8d1cf9ac819a26ca9b04cb0eb9b7b03598" +
++                           "8d15bbac65212a55239cfc7e58fae38d7250ab9991" +
++                           "ffbc97134025fe8ce04c4399ad96569be91a546f49" +
++                           "78693c7a", 16);
++        dsaCache.put(Integer.valueOf(2048+256),
++                                new DSAParameterSpec(p2048_256, q2048_256, g2048_256));
+ 
+         // use DSA parameters for DH as well
+         dhCache.put(Integer.valueOf(512), new DHParameterSpec(p512, g512));
+         dhCache.put(Integer.valueOf(768), new DHParameterSpec(p768, g768));
+         dhCache.put(Integer.valueOf(1024), new DHParameterSpec(p1024, g1024));
++        dhCache.put(Integer.valueOf(2048), new DHParameterSpec(p2048_224, g2048_224));
+     }
+ 
+ }
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/provider/SunEntries.java openjdk/jdk/src/share/classes/sun/security/provider/SunEntries.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/provider/SunEntries.java	2014-10-08 23:36:49.404491484 +0100
++++ openjdk/jdk/src/share/classes/sun/security/provider/SunEntries.java	2014-10-08 23:37:11.636798712 +0100
+@@ -47,6 +47,10 @@
+  *   SHA-2 family of hash functions includes SHA-224, SHA-256, SHA-384,
+  *   and SHA-512.
+  *
++ * - SHA-224withDSA/SHA-256withDSA are the signature schemes
++ *   described in FIPS 186-3. The associated object identifiers are
++ *   "OID.2.16.840.1.101.3.4.3.1", and "OID.2.16.840.1.101.3.4.3.2".
++
+  * - DSA is the key generation scheme as described in FIPS 186.
+  *   Aliases for DSA include the OID strings "OID.1.3.14.3.2.12"
+  *   and "OID.1.2.840.10040.4.1".
+@@ -106,11 +110,15 @@
+         map.put("Signature.SHA1withDSA", "sun.security.provider.DSA$SHA1withDSA");
+         map.put("Signature.NONEwithDSA", "sun.security.provider.DSA$RawDSA");
+         map.put("Alg.Alias.Signature.RawDSA", "NONEwithDSA");
++        map.put("Signature.SHA224withDSA", "sun.security.provider.DSA$SHA224withDSA");
++        map.put("Signature.SHA256withDSA", "sun.security.provider.DSA$SHA256withDSA");
+ 
+         String dsaKeyClasses = "java.security.interfaces.DSAPublicKey" +
+                 "|java.security.interfaces.DSAPrivateKey";
+         map.put("Signature.SHA1withDSA SupportedKeyClasses", dsaKeyClasses);
+         map.put("Signature.NONEwithDSA SupportedKeyClasses", dsaKeyClasses);
++        map.put("Signature.SHA224withDSA SupportedKeyClasses", dsaKeyClasses);
++        map.put("Signature.SHA256withDSA SupportedKeyClasses", dsaKeyClasses);
+ 
+         map.put("Alg.Alias.Signature.DSA", "SHA1withDSA");
+         map.put("Alg.Alias.Signature.DSS", "SHA1withDSA");
+@@ -124,6 +132,10 @@
+         map.put("Alg.Alias.Signature.1.2.840.10040.4.3", "SHA1withDSA");
+         map.put("Alg.Alias.Signature.1.3.14.3.2.13", "SHA1withDSA");
+         map.put("Alg.Alias.Signature.1.3.14.3.2.27", "SHA1withDSA");
++        map.put("Alg.Alias.Signature.OID.2.16.840.1.101.3.4.3.1", "SHA224withDSA");
++        map.put("Alg.Alias.Signature.2.16.840.1.101.3.4.3.1", "SHA224withDSA");
++        map.put("Alg.Alias.Signature.OID.2.16.840.1.101.3.4.3.2", "SHA256withDSA");
++        map.put("Alg.Alias.Signature.2.16.840.1.101.3.4.3.2", "SHA256withDSA");
+ 
+         /*
+          *  Key Pair Generator engines
+@@ -143,6 +155,8 @@
+ 
+         map.put("Alg.Alias.MessageDigest.SHA-1", "SHA");
+         map.put("Alg.Alias.MessageDigest.SHA1", "SHA");
++        map.put("Alg.Alias.MessageDigest.1.3.14.3.2.26", "SHA");
++        map.put("Alg.Alias.MessageDigest.OID.1.3.14.3.2.26", "SHA");
+ 
+         map.put("MessageDigest.SHA-224", "sun.security.provider.SHA2$SHA224");
+         map.put("Alg.Alias.MessageDigest.2.16.840.1.101.3.4.2.4", "SHA-224");
+@@ -169,15 +183,17 @@
+          */
+         map.put("AlgorithmParameters.DSA",
+             "sun.security.provider.DSAParameters");
+-        map.put("Alg.Alias.AlgorithmParameters.1.3.14.3.2.12", "DSA");
++        map.put("Alg.Alias.AlgorithmParameters.OID.1.2.840.10040.4.1", "DSA");
+         map.put("Alg.Alias.AlgorithmParameters.1.2.840.10040.4.1", "DSA");
++        map.put("Alg.Alias.AlgorithmParameters.1.3.14.3.2.12", "DSA");
+ 
+         /*
+          * Key factories
+          */
+         map.put("KeyFactory.DSA", "sun.security.provider.DSAKeyFactory");
+-        map.put("Alg.Alias.KeyFactory.1.3.14.3.2.12", "DSA");
++        map.put("Alg.Alias.KeyFactory.OID.1.2.840.10040.4.1", "DSA");
+         map.put("Alg.Alias.KeyFactory.1.2.840.10040.4.1", "DSA");
++        map.put("Alg.Alias.KeyFactory.1.3.14.3.2.12", "DSA");
+ 
+         /*
+          * Certificates
+@@ -234,9 +250,13 @@
+         /*
+          * KeySize
+          */
++        map.put("Signature.NONEwithDSA KeySize", "1024");
+         map.put("Signature.SHA1withDSA KeySize", "1024");
+-        map.put("KeyPairGenerator.DSA KeySize", "1024");
+-        map.put("AlgorithmParameterGenerator.DSA KeySize", "1024");
++        map.put("Signature.SHA224withDSA KeySize", "2048");
++        map.put("Signature.SHA256withDSA KeySize", "2048");
++
++        map.put("KeyPairGenerator.DSA KeySize", "2048");
++        map.put("AlgorithmParameterGenerator.DSA KeySize", "2048");
+ 
+         /*
+          * Implementation type: software or hardware
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/spec/DSAGenParameterSpec.java openjdk/jdk/src/share/classes/sun/security/spec/DSAGenParameterSpec.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/spec/DSAGenParameterSpec.java	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/jdk/src/share/classes/sun/security/spec/DSAGenParameterSpec.java	2014-10-08 23:37:11.636798712 +0100
+@@ -0,0 +1,129 @@
++/*
++ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.  Oracle designates this
++ * particular file as subject to the "Classpath" exception as provided
++ * by Oracle in the LICENSE file that accompanied this code.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++package sun.security.spec;
++
++import java.security.spec.AlgorithmParameterSpec;
++
++/**
++ * This immutable class specifies the set of parameters used for
++ * generating DSA parameters as specified in
++ * <a href="http://csrc.nist.gov/publications/fips/fips186-3/fips_186-3.pdf">FIPS 186-3 Digital Signature Standard (DSS)</a>.
++ *
++ * @see AlgorithmParameterSpec
++ *
++ * @since 8
++ */
++public final class DSAGenParameterSpec implements AlgorithmParameterSpec {
++
++    private final int pLen;
++    private final int qLen;
++    private final int seedLen;
++
++    /**
++     * Creates a domain parameter specification for DSA parameter
++     * generation using <code>primePLen</code> and <code>subprimeQLen</code>.
++     * The value of <code>subprimeQLen</code> is also used as the default
++     * length of the domain parameter seed in bits.
++     * @param primePLen the desired length of the prime P in bits.
++     * @param subprimeQLen the desired length of the sub-prime Q in bits.
++     * @exception IllegalArgumentException if <code>primePLen</code>
++     * or <code>subprimeQLen</code> is illegal per the specification of
++     * FIPS 186-3.
++     */
++    public DSAGenParameterSpec(int primePLen, int subprimeQLen) {
++        this(primePLen, subprimeQLen, subprimeQLen);
++    }
++
++    /**
++     * Creates a domain parameter specification for DSA parameter
++     * generation using <code>primePLen</code>, <code>subprimeQLen</code>,
++     * and <code>seedLen</code>.
++     * @param primePLen the desired length of the prime P in bits.
++     * @param subprimeQLen the desired length of the sub-prime Q in bits.
++     * @param seedLen the desired length of the domain parameter seed in bits,
++     * shall be equal to or greater than <code>subprimeQLen</code>.
++     * @exception IllegalArgumentException if <code>primePLenLen</code>,
++     * <code>subprimeQLen</code>, or <code>seedLen</code> is illegal per the
++     * specification of FIPS 186-3.
++     */
++    public DSAGenParameterSpec(int primePLen, int subprimeQLen, int seedLen) {
++        switch (primePLen) {
++        case 1024:
++            if (subprimeQLen != 160) {
++                throw new IllegalArgumentException
++                    ("subprimeQLen must be 160 when primePLen=1024");
++            }
++            break;
++        case 2048:
++            if (subprimeQLen != 224 && subprimeQLen != 256) {
++               throw new IllegalArgumentException
++                   ("subprimeQLen must be 224 or 256 when primePLen=2048");
++            }
++            break;
++        case 3072:
++            if (subprimeQLen != 256) {
++                throw new IllegalArgumentException
++                    ("subprimeQLen must be 256 when primePLen=3072");
++            }
++            break;
++        default:
++            throw new IllegalArgumentException
++                ("primePLen must be 1024, 2048, or 3072");
++        }
++        if (seedLen < subprimeQLen) {
++            throw new IllegalArgumentException
++                ("seedLen must be equal to or greater than subprimeQLen");
++        }
++        this.pLen = primePLen;
++        this.qLen = subprimeQLen;
++        this.seedLen = seedLen;
++    }
++
++    /**
++     * Returns the desired length of the prime P of the
++     * to-be-generated DSA domain parameters in bits.
++     * @return the length of the prime P.
++     */
++    public int getPrimePLength() {
++        return pLen;
++    }
++
++    /**
++     * Returns the desired length of the sub-prime Q of the
++     * to-be-generated DSA domain parameters in bits.
++     * @return the length of the sub-prime Q.
++     */
++    public int getSubprimeQLength() {
++        return qLen;
++    }
++
++    /**
++     * Returns the desired length of the domain parameter seed in bits.
++     * @return the length of the domain parameter seed.
++     */
++    public int getSeedLength() {
++        return seedLen;
++    }
++}
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/x509/AlgorithmId.java openjdk/jdk/src/share/classes/sun/security/x509/AlgorithmId.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/x509/AlgorithmId.java	2014-10-08 23:36:49.476492479 +0100
++++ openjdk/jdk/src/share/classes/sun/security/x509/AlgorithmId.java	2014-10-08 23:37:11.636798712 +0100
+@@ -508,6 +508,9 @@
+         if (name.equalsIgnoreCase("EC")) {
+             return EC_oid;
+         }
++        if (name.equalsIgnoreCase("ECDH")) {
++            return AlgorithmId.ECDH_oid;
++        }
+ 
+         // Common signature types
+         if (name.equalsIgnoreCase("MD5withRSA")
+@@ -527,6 +530,12 @@
+             || name.equalsIgnoreCase("SHA-1/DSA")) {
+             return AlgorithmId.sha1WithDSA_oid;
+         }
++        if (name.equalsIgnoreCase("SHA224WithDSA")) {
++            return AlgorithmId.sha224WithDSA_oid;
++        }
++        if (name.equalsIgnoreCase("SHA256WithDSA")) {
++            return AlgorithmId.sha256WithDSA_oid;
++        }
+         if (name.equalsIgnoreCase("SHA1WithRSA")
+             || name.equalsIgnoreCase("SHA1/RSA")) {
+             return AlgorithmId.sha1WithRSAEncryption_oid;
+@@ -645,6 +654,7 @@
+     public static final ObjectIdentifier DSA_oid;
+     public static final ObjectIdentifier DSA_OIW_oid;
+     public static final ObjectIdentifier EC_oid = oid(1, 2, 840, 10045, 2, 1);
++    public static final ObjectIdentifier ECDH_oid = oid(1, 3, 132, 1, 12);
+     public static final ObjectIdentifier RSA_oid;
+     public static final ObjectIdentifier RSAEncryption_oid;
+ 
+@@ -685,6 +695,10 @@
+     public static final ObjectIdentifier shaWithDSA_OIW_oid;
+     public static final ObjectIdentifier sha1WithDSA_OIW_oid;
+     public static final ObjectIdentifier sha1WithDSA_oid;
++    public static final ObjectIdentifier sha224WithDSA_oid =
++                                            oid(2, 16, 840, 1, 101, 3, 4, 3, 1);
++    public static final ObjectIdentifier sha256WithDSA_oid =
++                                            oid(2, 16, 840, 1, 101, 3, 4, 3, 2);
+ 
+     public static final ObjectIdentifier sha1WithECDSA_oid =
+                                             oid(1, 2, 840, 10045, 4, 1);
+@@ -716,7 +730,6 @@
+     public static ObjectIdentifier pbeWithSHA1AndRC2_40_oid =
+         ObjectIdentifier.newInternal(new int[] {1, 2, 840, 113549, 1, 12, 1, 6});
+ 
+-
+     static {
+     /*
+      * Note the preferred OIDs are named simply with no "OIW" or
+@@ -876,6 +889,8 @@
+         nameTable.put(DSA_oid, "DSA");
+         nameTable.put(DSA_OIW_oid, "DSA");
+         nameTable.put(EC_oid, "EC");
++        nameTable.put(ECDH_oid, "ECDH");
++
+         nameTable.put(sha1WithECDSA_oid, "SHA1withECDSA");
+         nameTable.put(sha224WithECDSA_oid, "SHA224withECDSA");
+         nameTable.put(sha256WithECDSA_oid, "SHA256withECDSA");
+@@ -886,6 +901,8 @@
+         nameTable.put(sha1WithDSA_oid, "SHA1withDSA");
+         nameTable.put(sha1WithDSA_OIW_oid, "SHA1withDSA");
+         nameTable.put(shaWithDSA_OIW_oid, "SHA1withDSA");
++        nameTable.put(sha224WithDSA_oid, "SHA224withDSA");
++        nameTable.put(sha256WithDSA_oid, "SHA256withDSA");
+         nameTable.put(sha1WithRSAEncryption_oid, "SHA1withRSA");
+         nameTable.put(sha1WithRSAEncryption_OIW_oid, "SHA1withRSA");
+         nameTable.put(sha224WithRSAEncryption_oid, "SHA224withRSA");
+diff -Nru openjdk.orig/jdk/test/com/sun/crypto/provider/KeyAgreement/TestExponentSize.java openjdk/jdk/test/com/sun/crypto/provider/KeyAgreement/TestExponentSize.java
+--- openjdk.orig/jdk/test/com/sun/crypto/provider/KeyAgreement/TestExponentSize.java	2014-07-14 04:24:44.000000000 +0100
++++ openjdk/jdk/test/com/sun/crypto/provider/KeyAgreement/TestExponentSize.java	2014-10-08 23:37:11.636798712 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2005, 2007, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -23,7 +23,7 @@
+ 
+ /**
+  * @test
+- * @bug 6330287 6331386
++ * @bug 6330287 6331386 7044060
+  * @summary verify that DHKeyPairGenerator returns keys of the expected size
+  * (modulus and exponent)
+  * -and-
+@@ -57,7 +57,8 @@
+      * Sizes and values for various lengths.
+      */
+     private enum Sizes {
+-        two56(256), three84(384), five12(512), seven68(768), ten24(1024);
++        two56(256), three84(384), five12(512), seven68(768), ten24(1024),
++        twenty48(2048);
+ 
+         private final int intSize;
+         private final BigInteger bigIntValue;
+@@ -82,7 +83,8 @@
+         KeyPair kp;
+         KeyPairGenerator kpg = KeyPairGenerator.getInstance("DH", "SunJCE");
+ 
+-        // Sun's default uses a default psize of 1024/lsize of 512
++        // Sun's default uses a default psize of 1024 and
++        // lsize of (pSize / 2) but at least 384 bits
+         kp = kpg.generateKeyPair();
+         checkKeyPair(kp, Sizes.ten24, Sizes.five12);
+ 
+@@ -114,6 +116,20 @@
+         kp = kpg.generateKeyPair();
+         checkKeyPair(kp, Sizes.seven68, Sizes.three84);
+ 
++        // test w/ only pSize
++        kpg.initialize(Sizes.twenty48.getIntSize());
++        kp = kpg.generateKeyPair();
++        checkKeyPair(kp, Sizes.twenty48, Sizes.ten24);
++
++        publicKey = (DHPublicKey)kp.getPublic();
++        p = publicKey.getParams().getP();
++        g = publicKey.getParams().getG();
++
++        // test w/ all values specified
++        kpg.initialize(new DHParameterSpec(p, g, Sizes.five12.getIntSize()));
++        kp = kpg.generateKeyPair();
++        checkKeyPair(kp, Sizes.twenty48, Sizes.five12);
++
+         System.out.println("OK");
+     }
+ 
+diff -Nru openjdk.orig/jdk/test/sun/security/pkcs11/ec/TestECDH2.java openjdk/jdk/test/sun/security/pkcs11/ec/TestECDH2.java
+--- openjdk.orig/jdk/test/sun/security/pkcs11/ec/TestECDH2.java	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/jdk/test/sun/security/pkcs11/ec/TestECDH2.java	2014-10-08 23:37:11.636798712 +0100
+@@ -0,0 +1,127 @@
++/*
++ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/**
++ * @test
++ * @bug 6405536
++ * @summary basic test of ECDSA signatures for P-256 and P-384 from the
++ * example data in "Suite B Implementer's Guide to FIPS 186-3".
++ * @library ..
++ * @library ../../../../java/security/testlibrary
++ * @compile -XDignore.symbol.file TestECDH2.java
++ * @run main TestECDH2
++ */
++
++import java.io.*;
++import java.util.*;
++import java.math.BigInteger;
++
++import java.security.*;
++import java.security.spec.*;
++import java.security.interfaces.*;
++import javax.crypto.*;
++
++import sun.security.ec.NamedCurve;
++
++public class TestECDH2 extends PKCS11Test {
++
++    // values of the keys we use for the tests
++
++    // keypair using NIST P-256
++    private final static String privD256 = "70a12c2db16845ed56ff68cfc21a472b3f04d7d6851bf6349f2d7d5b3452b38a";
++    private final static String pubX256 = "8101ece47464a6ead70cf69a6e2bd3d88691a3262d22cba4f7635eaff26680a8";
++    private final static String pubY256 = "d8a12ba61d599235f67d9cb4d58f1783d3ca43e78f0a5abaa624079936c0c3a9";
++
++    // keypair using NIST P-384
++    private final static String privD384 = "c838b85253ef8dc7394fa5808a5183981c7deef5a69ba8f4f2117ffea39cfcd90e95f6cbc854abacab701d50c1f3cf24";
++    private final static String pubX384 = "1fbac8eebd0cbf35640b39efe0808dd774debff20a2a329e91713baf7d7f3c3e81546d883730bee7e48678f857b02ca0";
++    private final static String pubY384 = "eb213103bd68ce343365a8a4c3d4555fa385f5330203bdd76ffad1f3affb95751c132007e1b240353cb0a4cf1693bdf9";
++
++    private KeyFactory kf = null;
++    private KeyPairGenerator kpg = null;
++
++    private static void testKeyAgreement(KeyPair kpA, KeyPair kpB, Provider p)
++        throws Exception {
++        KeyAgreement ka1 = KeyAgreement.getInstance("ECDH", p);
++        ka1.init(kpA.getPrivate());
++        ka1.doPhase(kpB.getPublic(), true);
++        byte[] s1 = ka1.generateSecret();
++
++        KeyAgreement ka2 = KeyAgreement.getInstance("ECDH", p);
++        ka2.init(kpB.getPrivate());
++        ka2.doPhase(kpA.getPublic(), true);
++        byte[] s2 = ka2.generateSecret();
++        if (Arrays.equals(s1, s2) == false) {
++            System.out.println("expected: " + toString(s1));
++            System.out.println("actual:   " + toString(s2));
++            throw new Exception("Generated secrets do not match");
++        }
++    }
++
++    private KeyPair genECKeyPair(String curvName, String privD, String pubX,
++                                 String pubY) throws Exception {
++        ECParameterSpec ecParams = NamedCurve.getECParameterSpec(curvName);
++        ECPrivateKeySpec privKeySpec =
++            new ECPrivateKeySpec(new BigInteger(privD, 16), ecParams);
++        ECPublicKeySpec pubKeySpec =
++            new ECPublicKeySpec(new ECPoint(new BigInteger(pubX, 16),
++                                            new BigInteger(pubY, 16)),
++                                ecParams);
++        PrivateKey privKey = kf.generatePrivate(privKeySpec);
++        PublicKey pubKey = kf.generatePublic(pubKeySpec);
++        return new KeyPair(pubKey, privKey);
++    }
++    private KeyPair genECKeyPair(String curvName) throws Exception {
++        ECGenParameterSpec genParams = new ECGenParameterSpec(curvName);
++        kpg.initialize(genParams, null);
++        return kpg.generateKeyPair();
++    }
++    public static void main(String[] args) throws Exception {
++        main(new TestECDH2());
++    }
++
++    public void main(Provider provider) throws Exception {
++        if (provider.getService("KeyAgreement", "ECDH") == null) {
++            System.out.println("ECDH not supported, skipping");
++            return;
++        }
++
++        kf = KeyFactory.getInstance("EC", provider);
++        kpg = KeyPairGenerator.getInstance("EC", provider);
++
++        System.out.println("Testing against NIST P-256");
++
++        long start = System.currentTimeMillis();
++        KeyPair kp256A = genECKeyPair("secp256r1", privD256, pubX256, pubY256);
++        KeyPair kp256B = genECKeyPair("secp256r1");
++        testKeyAgreement(kp256A, kp256B, provider);
++
++        System.out.println("Testing against NIST P-384");
++        KeyPair kp384A = genECKeyPair("secp384r1", privD384, pubX384, pubY384);
++        KeyPair kp384B = genECKeyPair("secp384r1");
++        testKeyAgreement(kp384A, kp384B, provider);
++
++        long stop = System.currentTimeMillis();
++        System.out.println("All tests passed (" + (stop - start) + " ms).");
++    }
++}
+diff -Nru openjdk.orig/jdk/test/sun/security/pkcs11/ec/TestECDSA2.java openjdk/jdk/test/sun/security/pkcs11/ec/TestECDSA2.java
+--- openjdk.orig/jdk/test/sun/security/pkcs11/ec/TestECDSA2.java	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/jdk/test/sun/security/pkcs11/ec/TestECDSA2.java	2014-10-08 23:37:11.636798712 +0100
+@@ -0,0 +1,122 @@
++/*
++ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/**
++ * @test
++ * @bug 6405536
++ * @summary basic test of ECDSA signatures for P-256 and P-384 from the
++ * example data in "Suite B Implementer's Guide to FIPS 186-3".
++ * @library ..
++ * @library ../../../../java/security/testlibrary
++ * @compile -XDignore.symbol.file TestECDSA2.java
++ * @run main TestECDSA2
++ */
++
++import java.io.*;
++import java.util.*;
++import java.math.BigInteger;
++
++import java.security.*;
++import java.security.spec.*;
++import java.security.interfaces.*;
++
++import sun.security.ec.NamedCurve;
++
++public class TestECDSA2 extends PKCS11Test {
++
++    // values of the keys we use for the tests
++
++    // keypair using NIST P-256
++    private final static String privD256 = "70a12c2db16845ed56ff68cfc21a472b3f04d7d6851bf6349f2d7d5b3452b38a";
++    private final static String pubX256 = "8101ece47464a6ead70cf69a6e2bd3d88691a3262d22cba4f7635eaff26680a8";
++    private final static String pubY256 = "d8a12ba61d599235f67d9cb4d58f1783d3ca43e78f0a5abaa624079936c0c3a9";
++
++    // keypair using NIST P-384
++    private final static String privD384 = "c838b85253ef8dc7394fa5808a5183981c7deef5a69ba8f4f2117ffea39cfcd90e95f6cbc854abacab701d50c1f3cf24";
++    private final static String pubX384 = "1fbac8eebd0cbf35640b39efe0808dd774debff20a2a329e91713baf7d7f3c3e81546d883730bee7e48678f857b02ca0";
++    private final static String pubY384 = "eb213103bd68ce343365a8a4c3d4555fa385f5330203bdd76ffad1f3affb95751c132007e1b240353cb0a4cf1693bdf9";
++
++    // data to be signed
++    private final static byte[] data = "This is only a test message. It is 48 bytes long".getBytes();
++
++    private KeyFactory kf = null;
++
++    private static void testSignAndVerify(String alg, KeyPair kp, Provider p) throws Exception {
++        Signature s = Signature.getInstance(alg, p);
++        s.initSign(kp.getPrivate());
++        s.update(data);
++        byte[] result = s.sign();
++
++        s.initVerify(kp.getPublic());
++        s.update(data);
++        if (!s.verify(result)) {
++            throw new Exception("Error: Signature verification failed");
++        }
++        System.out.println(p.getName() + ": " + alg + " Passed");
++    }
++
++    private KeyPair genECKeyPair(String curvName, String privD, String pubX, String pubY) throws Exception {
++        ECParameterSpec ecParams = NamedCurve.getECParameterSpec(curvName);
++        ECPrivateKeySpec privKeySpec =
++            new ECPrivateKeySpec(new BigInteger(privD, 16), ecParams);
++        ECPublicKeySpec pubKeySpec =
++            new ECPublicKeySpec(new ECPoint(new BigInteger(pubX, 16), new BigInteger(pubY, 16)),
++                                ecParams);
++        PrivateKey privKey = kf.generatePrivate(privKeySpec);
++        PublicKey pubKey = kf.generatePublic(pubKeySpec);
++        return new KeyPair(pubKey, privKey);
++    }
++
++    public static void main(String[] args) throws Exception {
++        main(new TestECDSA2());
++    }
++
++    public void main(Provider provider) throws Exception {
++        boolean testP256 =
++            (provider.getService("Signature", "SHA256withECDSA") != null);
++
++        boolean testP384 =
++            (provider.getService("Signature", "SHA384withECDSA") != null);
++
++        if (!testP256 && !testP384) {
++            System.out.println("ECDSA not supported, skipping");
++            return;
++        }
++
++        kf = KeyFactory.getInstance("EC", provider);
++
++        long start = System.currentTimeMillis();
++        if (testP256) {
++            // can use secp256r1, NIST P-256, X9.62 prime256v1, or 1.2.840.10045.3.1.7
++            KeyPair kp = genECKeyPair("secp256r1", privD256, pubX256, pubY256);
++            testSignAndVerify("SHA256withECDSA", kp, provider);
++        }
++        if (testP384) {
++            // can use secp384r1, NIST P-384, 1.3.132.0.34
++            KeyPair kp = genECKeyPair("secp384r1", privD384, pubX384, pubY384);
++            testSignAndVerify("SHA384withECDSA", kp, provider);
++        }
++        long stop = System.currentTimeMillis();
++        System.out.println("All tests passed (" + (stop - start) + " ms).");
++    }
++}
+diff -Nru openjdk.orig/jdk/test/sun/security/provider/DSA/TestAlgParameterGenerator.java openjdk/jdk/test/sun/security/provider/DSA/TestAlgParameterGenerator.java
+--- openjdk.orig/jdk/test/sun/security/provider/DSA/TestAlgParameterGenerator.java	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/jdk/test/sun/security/provider/DSA/TestAlgParameterGenerator.java	2014-10-08 23:37:11.636798712 +0100
+@@ -0,0 +1,117 @@
++/*
++ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/*
++ * @test
++ * @bug 7044060
++ * @summary verify that DSA parameter generation works
++ * @run main/othervm/timeout=300 TestAlgParameterGenerator
++ */
++import java.security.*;
++import java.security.spec.*;
++import java.security.interfaces.*;
++
++public class TestAlgParameterGenerator {
++
++    private static void checkParamStrength(AlgorithmParameters param,
++                                           int strength) throws Exception {
++        String algo = param.getAlgorithm();
++        if (!algo.equalsIgnoreCase("DSA")) {
++            throw new Exception("Unexpected type of parameters: " + algo);
++        }
++        DSAParameterSpec spec = param.getParameterSpec(DSAParameterSpec.class);
++        int valueL = spec.getP().bitLength();
++        if (strength != valueL) {
++            System.out.println("Expected " + strength + " but actual " + valueL);
++            throw new Exception("Wrong P strength");
++        }
++    }
++    private static void checkParamStrength(AlgorithmParameters param,
++                                           DSAGenParameterSpec genParam)
++        throws Exception {
++        String algo = param.getAlgorithm();
++        if (!algo.equalsIgnoreCase("DSA")) {
++            throw new Exception("Unexpected type of parameters: " + algo);
++        }
++        DSAParameterSpec spec = param.getParameterSpec(DSAParameterSpec.class);
++        int valueL = spec.getP().bitLength();
++        int strength = genParam.getPrimePLength();
++        if (strength != valueL) {
++            System.out.println("P: Expected " + strength + " but actual " + valueL);
++            throw new Exception("Wrong P strength");
++        }
++        int valueN = spec.getQ().bitLength();
++        strength = genParam.getSubprimeQLength();
++        if (strength != valueN) {
++            System.out.println("Q: Expected " + strength + " but actual " + valueN);
++            throw new Exception("Wrong Q strength");
++        }
++    }
++
++    public static void main(String[] args) throws Exception {
++        AlgorithmParameterGenerator apg =
++            AlgorithmParameterGenerator.getInstance("DSA", "SUN");
++
++        long start, stop;
++        // make sure no-init still works
++        start = System.currentTimeMillis();
++        AlgorithmParameters param = apg.generateParameters();
++        stop = System.currentTimeMillis();
++        System.out.println("Time: " + (stop - start) + " ms.");
++        checkParamStrength(param, 1024);
++
++        // make sure the old model works
++        int[] strengths = { 512, 768, 1024 };
++        for (int i = 0; i < strengths.length; i++) {
++            int sizeP = strengths[i];
++            System.out.println("Generating " + sizeP + "-bit DSA Parameters");
++            start = System.currentTimeMillis();
++            apg.init(sizeP);
++            param = apg.generateParameters();
++            stop = System.currentTimeMillis();
++            System.out.println("Time: " + (stop - start) + " ms.");
++            checkParamStrength(param, sizeP);
++        }
++
++        // now the newer model
++        DSAGenParameterSpec spec1 = new DSAGenParameterSpec(1024, 160);
++        DSAGenParameterSpec spec2 = new DSAGenParameterSpec(2048, 224);
++        DSAGenParameterSpec spec3 = new DSAGenParameterSpec(2048, 256);
++        //DSAGenParameterSpec spec4 = new DSAGenParameterSpec(3072, 256);
++        DSAGenParameterSpec[] specSet = {
++            spec1, spec2, spec3//, spec4
++        };
++        for (int i = 0; i < specSet.length; i++) {
++            DSAGenParameterSpec genParam = specSet[i];
++            System.out.println("Generating (" + genParam.getPrimePLength() +
++                               ", " + genParam.getSubprimeQLength() +
++                               ") DSA Parameters");
++            start = System.currentTimeMillis();
++            apg.init(genParam, null);
++            param = apg.generateParameters();
++            stop = System.currentTimeMillis();
++            System.out.println("Time: " + (stop - start) + " ms.");
++            checkParamStrength(param, genParam);
++        }
++    }
++}
+diff -Nru openjdk.orig/jdk/test/sun/security/provider/DSA/TestDSA2.java openjdk/jdk/test/sun/security/provider/DSA/TestDSA2.java
+--- openjdk.orig/jdk/test/sun/security/provider/DSA/TestDSA2.java	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/jdk/test/sun/security/provider/DSA/TestDSA2.java	2014-10-08 23:37:11.636798712 +0100
+@@ -0,0 +1,96 @@
++/*
++ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++/*
++ * @test
++ * @bug 7044060
++ * @run main/othervm/timeout=250 TestDSA2
++ * @summary verify that DSA signature works using SHA and SHA-224 and SHA-256 digests.
++ */
++
++
++import java.security.*;
++import java.security.spec.*;
++import java.security.interfaces.*;
++
++public class TestDSA2 {
++
++    // NOTE: need to explictly specify provider since the more
++    // preferred provider SunPKCS11 provider only supports up
++    // 1024 bits.
++    private static final String PROV = "SUN";
++
++    private static final String[] SIG_ALGOS = {
++        "SHA1withDSA", "SHA224withDSA", "SHA256withDSA"
++    };
++
++    private static final int[] KEYSIZES = {
++        1024, 2048
++    };
++
++    public static void main(String[] args) throws Exception {
++        boolean[] expectedToPass = { true, true, true };
++        test(1024, expectedToPass);
++        boolean[] expectedToPass2 = { false, true, true };
++        test(2048, expectedToPass2);
++    }
++
++    private static void test(int keySize, boolean[] testStatus)
++        throws Exception {
++        byte[] data = "1234567890".getBytes();
++        System.out.println("Test against key size: " + keySize);
++
++        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DSA", PROV);
++        keyGen.initialize(keySize, new SecureRandom());
++        KeyPair pair = keyGen.generateKeyPair();
++
++        if (testStatus.length != SIG_ALGOS.length) {
++            throw new RuntimeException("TestError: incorrect status array!");
++        }
++        for (int i = 0; i < SIG_ALGOS.length; i++) {
++            Signature dsa = Signature.getInstance(SIG_ALGOS[i], PROV);
++            try {
++                dsa.initSign(pair.getPrivate());
++                dsa.update(data);
++                byte[] sig = dsa.sign();
++                dsa.initVerify(pair.getPublic());
++                dsa.update(data);
++                boolean verifies = dsa.verify(sig);
++                if (verifies == testStatus[i]) {
++                    System.out.println(SIG_ALGOS[i] + ": Passed");
++                } else {
++                    System.out.println(SIG_ALGOS[i] + ": should " +
++                                       (testStatus[i]? "pass":"fail"));
++                    throw new RuntimeException(SIG_ALGOS[i] + ": Unexpected Test result!");
++
++                }
++            } catch (Exception ex) {
++                if (testStatus[i]) {
++                    ex.printStackTrace();
++                    throw new RuntimeException(SIG_ALGOS[i] + ": Unexpected exception " + ex);
++                } else {
++                    System.out.println(SIG_ALGOS[i] + ": Passed, expected " + ex);
++                }
++            }
++        }
++    }
++}
+diff -Nru openjdk.orig/jdk/test/sun/security/provider/DSA/TestKeyPairGenerator.java openjdk/jdk/test/sun/security/provider/DSA/TestKeyPairGenerator.java
+--- openjdk.orig/jdk/test/sun/security/provider/DSA/TestKeyPairGenerator.java	2014-07-14 04:24:44.000000000 +0100
++++ openjdk/jdk/test/sun/security/provider/DSA/TestKeyPairGenerator.java	2014-10-08 23:37:11.636798712 +0100
+@@ -24,7 +24,7 @@
+ /*
+  * @test
+  * @bug 4800108
+- * @summary verify that precomputed DSA parameters are always used (512, 768, 1024 bit)
++ * @summary verify that precomputed DSA parameters are always used (512, 768, 1024, 2048 bit)
+  * @run main/othervm/timeout=15 TestKeyPairGenerator
+  */
+ 
+@@ -78,6 +78,10 @@
+         kp = kpg.generateKeyPair();
+         checkKeyLength(kp, 512);
+ 
++        kpg.initialize(2048);
++        kp = kpg.generateKeyPair();
++        checkKeyLength(kp, 2048);
++
+         long stop = System.currentTimeMillis();
+         System.out.println("Time: " + (stop - start) + " ms.");
+     }
