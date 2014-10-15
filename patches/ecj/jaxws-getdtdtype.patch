@@ -1,43 +1,29 @@
-diff -Nru openjdk-ecj.orig/jaxws/build.properties openjdk-ecj/jaxws/build.properties
---- openjdk-ecj.orig/jaxws/build.properties	2011-06-29 23:08:21.756066418 +0100
-+++ openjdk-ecj/jaxws/build.properties	2011-06-29 23:09:51.701491292 +0100
-@@ -81,7 +81,7 @@
- patches.dir=patches
+diff -Nru openjdk-ecj.orig/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/bind/v2/runtime/unmarshaller/StAXEventConnector.java openjdk-ecj/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/bind/v2/runtime/unmarshaller/StAXEventConnector.java
+--- openjdk-ecj.orig/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/bind/v2/runtime/unmarshaller/StAXEventConnector.java	2014-10-15 22:55:39.955155652 +0100
++++ openjdk-ecj/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/bind/v2/runtime/unmarshaller/StAXEventConnector.java	2014-10-15 22:56:29.899840571 +0100
+@@ -276,7 +276,7 @@
+                 qName = localName;
+             else
+                 qName = prefix + ':' + localName;
+-            String type = staxAttr.getDTDType();
++            String type = staxAttr.getDTDType().toString();
+             String value = staxAttr.getValue();
  
- # Patches to apply
--jaxws_src.patch.list=xjc.patch
-+jaxws_src.patch.list=xjc.patch getdtdtype.patch
+             attrs.addAttribute(uri, localName, qName, type, value);
+diff -Nru openjdk-ecj.orig/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/fastinfoset/stax/events/AttributeBase.java openjdk-ecj/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/fastinfoset/stax/events/AttributeBase.java
+--- openjdk-ecj.orig/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/fastinfoset/stax/events/AttributeBase.java	2014-10-15 22:55:18.002854659 +0100
++++ openjdk-ecj/jaxws/drop_included/jaxws_src/src/com/sun/xml/internal/fastinfoset/stax/events/AttributeBase.java	2014-10-15 22:56:29.899840571 +0100
+@@ -108,11 +108,10 @@
+    * the String "CDATA"
+    * @return the type as a String, default is "CDATA"
+    */
+-    public String getDTDType() {
+-        return _attributeType;
++    public QName getDTDType() {
++        return new QName(_attributeType);
+     }
  
- # Sanity information
- sanity.info= Sanity Settings:${line.separator}\
-diff -Nru openjdk-ecj.orig/jaxws/patches/jaxws_src/getdtdtype.patch openjdk-ecj/jaxws/patches/jaxws_src/getdtdtype.patch
---- openjdk-ecj.orig/jaxws/patches/jaxws_src/getdtdtype.patch	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk-ecj/jaxws/patches/jaxws_src/getdtdtype.patch	2011-06-29 23:09:34.609220483 +0100
-@@ -0,0 +1,27 @@
-+--- src/com/sun/xml/internal/bind/v2/runtime/unmarshaller/StAXEventConnector.java	2009-11-17 16:37:06.000000000 +0000
-++++ src/com/sun/xml/internal/bind/v2/runtime/unmarshaller/StAXEventConnector.java	2009-11-17 16:38:00.000000000 +0000
-+@@ -276,7 +276,7 @@
-+                 qName = localName;
-+             else
-+                 qName = prefix + ':' + localName;
-+-            String type = staxAttr.getDTDType();
-++            String type = staxAttr.getDTDType().toString();
-+             String value = staxAttr.getValue();
-+ 
-+             attrs.addAttribute(uri, localName, qName, type, value);
-+--- src/com/sun/xml/internal/fastinfoset/stax/events/AttributeBase.java.old	2009-11-17 19:46:11.000000000 +0000
-++++ src/com/sun/xml/internal/fastinfoset/stax/events/AttributeBase.java	2009-11-17 19:46:35.000000000 +0000
-+@@ -108,11 +108,10 @@
-+    * the String "CDATA"
-+    * @return the type as a String, default is "CDATA"
-+    */
-+-    public String getDTDType() {
-+-        return _attributeType;
-++    public QName getDTDType() {
-++        return new QName(_attributeType);
-+     }
-+ 
-+-
-+   /**
-+    * A flag indicating whether this attribute was actually
-+    * specified in the start-tag of its element, or was defaulted from the schema.
+-
+   /**
+    * A flag indicating whether this attribute was actually
+    * specified in the start-tag of its element, or was defaulted from the schema.
