@@ -1,3 +1,13 @@
+2014-10-24  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add new patches.
+	* NEWS: Updated.
+	* patches/openjdk/7122142-annotation_race_condition.patch:
+	Backport fix for annotation race condition.
+	* patches/openjdk/7161796-wrong_fetch_in_fetch_static_field.patch:
+	Fix for HotSpot bug hit by 7122142.
+
 2014-10-15  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	PR2033: patches/ecj/jaxws-getdtdtype.patch no
