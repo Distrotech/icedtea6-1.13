@@ -619,7 +619,8 @@ ICEDTEA_PATCHES = \
 	patches/pr1904-icedtea_and_distro_versioning.patch \
 	patches/openjdk/8017173-xml_cipher_rsa_oaep_cant_be_instantiated.patch \
 	patches/openjdk/7122142-annotation_race_condition.patch \
-	patches/openjdk/7161796-wrong_fetch_in_fetch_static_field.patch
+	patches/openjdk/7161796-wrong_fetch_in_fetch_static_field.patch \
+	patches/openjdk/8000897-use_corresponding_digest_length.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \

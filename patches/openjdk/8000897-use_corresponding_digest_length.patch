@@ -1,0 +1,29 @@
+# HG changeset patch
+# User valeriep
+# Date 1361905960 28800
+#      Tue Feb 26 11:12:40 2013 -0800
+# Node ID 5ffba58b541fb00dfd38a5ad5bc3ac7d8156f03f
+# Parent  210fb90ee33ad4785f949fdbae4b0e75f73f576c
+8000897: VM crash in CompileBroker
+Summary: Fixed to use the corresponding digest length when generating output.
+Reviewed-by: mullan
+
+diff -r 210fb90ee33a -r 5ffba58b541f src/share/classes/sun/security/provider/SHA2.java
+--- openjdk/jdk/src/share/classes/sun/security/provider/SHA2.java	Wed Feb 13 10:40:31 2013 +0000
++++ openjdk/jdk/src/share/classes/sun/security/provider/SHA2.java	Tue Feb 26 11:12:40 2013 -0800
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -101,7 +101,7 @@
+         i2bBig4((int)bitsProcessed, buffer, 60);
+         implCompress(buffer, 0);
+ 
+-        i2bBig(state, 0, out, ofs, 32);
++        i2bBig(state, 0, out, ofs, engineGetDigestLength());
+     }
+ 
+     /**
