@@ -1,6 +1,16 @@
 2015-01-19  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* Makefile.am:
+	(extract-openjdk): Use abs_top_builddir
+	instead of builddir to please older
+	versions of autotools. No need to set
+	fsg.sh executable either as we run it
+	via sh.
+	* NEWS: Updated.
+
+2015-01-19  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
 	(OPENJDK_SHA256SUM): Update for new b34 tarball.
 	* NEWS: Updated.
 

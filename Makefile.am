@@ -1211,8 +1211,7 @@ else
 	  mkdir openjdk ; \
 	  $(TAR) xf $(OPENJDK_SRC_ZIP) -C openjdk; \
 	  chmod -R ug+w openjdk ; \
-	  chmod +x $(builddir)/fsg.sh ; \
-	  sh $(builddir)/fsg.sh ; \
+	  sh $(abs_top_builddir)/fsg.sh ; \
 	fi
 endif
 endif
