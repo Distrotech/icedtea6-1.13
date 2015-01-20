@@ -2,7 +2,7 @@ AC_INIT([icedtea6],[1.13.6pre],[distro-pkg-dev@openjdk.java.net])
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([1.9 tar-pax foreign])
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile fsg.sh])
 
 # Older automake doesn't generate these correctly
 abs_top_builddir=`pwd -P`

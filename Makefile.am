@@ -938,7 +938,7 @@ EXTRA_DIST = generated \
 	contrib arm_port \
 	overlays \
 	jconsole.desktop policytool.desktop \
-	$(JTREG_SRCS) HACKING pulseaudio fsg.sh \
+	$(JTREG_SRCS) HACKING pulseaudio \
 	hotspot.map \
 	autogen.sh \
 	tapset/hotspot.stp.in \
@@ -1223,7 +1223,8 @@ else
 	  mkdir openjdk ; \
 	  $(TAR) xf $(OPENJDK_SRC_ZIP) -C openjdk; \
 	  chmod -R ug+w openjdk ; \
-	  sh $(abs_top_srcdir)/fsg.sh ; \
+	  chmod +x $(builddir)/fsg.sh ; \
+	  sh $(builddir)/fsg.sh ; \
 	fi
 endif
 endif

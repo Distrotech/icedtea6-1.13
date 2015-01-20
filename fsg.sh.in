@@ -89,3 +89,6 @@ rm -f openjdk/jdk/src/linux/doc/man/javaws.1 \
     openjdk/jdk/src/linux/doc/man/ja/javaws.1 \
     openjdk/jdk/src/solaris/doc/sun/man/man1/javaws.1 \
     openjdk/jdk/src/solaris/doc/sun/man/man1/ja/javaws.1
+
+echo "Syncing EC list with NSS"
+patch -Np0 < @abs_top_srcdir@/patches/pr2125.patch
