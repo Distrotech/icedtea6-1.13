@@ -453,9 +453,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/5082756-ImageIO_plugins_metadata_boolean_attributes.patch \
 	patches/openjdk/6296893-BMP_Writer_handles_TopDown_prop_incorrectly.patch \
 	patches/openjdk/7103610-_NET_WM_PID_and_WM_CLIENT_MACHINE_are_not_set.patch \
-	patches/openjdk/6706974-krb5_test_infrastructure.patch \
 	patches/openjdk/6764553-IdResolver_is_not_thread_safe.patch \
-	patches/openjdk/6761072-new_krb5_tests_fail_on_multiple_platforms.patch \
 	patches/ScriptEngineManager-doc.patch \
 	patches/openjdk/6883983-JarVerifier_removed_dependency_sun_security_pkcs.patch \
 	patches/openjdk/4465490-Suspicious_double-check_locking_idiom.patch \
@@ -506,24 +504,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/8014427-raster_regression.patch \
 	patches/openjdk/8014676-javadebugger_space_in_paths.patch \
 	patches/openjdk/8014968-OCSP_timeout_default.patch \
-	patches/openjdk/6541350-tz_display_names_l10n.patch \
-	patches/openjdk/6821191-tz_display_names_l10n.patch \
-	patches/openjdk/6925851-pt_br.patch \
-	patches/openjdk/6977550-tzdata2010l.patch \
-	patches/openjdk/6996686-tzdata2010o.patch \
-	patches/openjdk/7017800-tzdata2011b.patch \
-	patches/openjdk/7027387-tzdata2011d.patch \
-	patches/openjdk/7033174-tzdata2011e.patch \
-	patches/openjdk/7035073-missing_pt_br_timezones.patch \
-	patches/openjdk/7039469-tzdata2011g.patch \
-	patches/openjdk/7090843-tzdata2011j.patch \
-	patches/openjdk/7103108-tzdata2011l.patch \
-	patches/openjdk/7104126-headers_tzdata.patch \
-	patches/openjdk/7103405-correct_display_names.patch \
-	patches/openjdk/7158483-tzdata2012c.patch \
-	patches/openjdk/7198570-tzdata2012f.patch \
-	patches/openjdk/8002225-tzdata2012i.patch \
-	patches/openjdk/8009987-tzdata2013b.patch \
 	patches/openjdk/6636370-appcontext_simplification.patch \
 	patches/openjdk/6636331-appcontext_concurrentmodificationexception.patch \
 	patches/sparc-ptracefix.patch \
@@ -544,8 +524,6 @@ ICEDTEA_PATCHES = \
 	patches/print_lsb_release.patch \
 	patches/alternative_krb5_cache.patch \
 	patches/alternative_krb5_cache_fixup.patch \
-	patches/openjdk/8014469-tzdata2013c.patch \
-	patches/openjdk/8020054-tzdata2013d.patch \
 	patches/imageiojpeg_sync.patch \
 	patches/openjdk/8005194-scale_memory_leak.patch \
 	patches/openjdk/6563752-ss12_support.patch \
@@ -599,7 +577,6 @@ ICEDTEA_PATCHES = \
 	patches/hotspot/hs23/arm-hsdis.patch \
 	patches/openjdk/7025066-embedded_build.patch \
 	patches/s390_casts.patch \
-	patches/openjdk/8025255-tzdata2013g.patch \
 	patches/d729448-32_bit_alignment.patch \
 	patches/windows-awt.patch \
 	patches/windows-jdk-sizecalc.patch \

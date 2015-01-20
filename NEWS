@@ -14,52 +14,153 @@ CVE-XXXX-YYYY: http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
 New in release 1.13.6 (2015-01-XX):
 
+* Security fixes
+  - S8046656: Update protocol support
+  - S8047125, CVE-2015-0395: (ref) More phantom object references
+  - S8047130: Fewer escapes from escape analysis
+  - S8048035, CVE-2015-0400: Ensure proper proxy protocols
+  - S8049253: Better GC validation
+  - S8050807, CVE-2015-0383: Better performing performance data handling
+  - S8054367, CVE-2015-0412: More references for endpoints
+  - S8055304, CVE-2015-0407: More boxing for DirectoryComboBoxModel
+  - S8055309, CVE-2015-0408: RMI needs better transportation considerations
+  - S8055479: TLAB stability
+  - S8055489, CVE-2014-6585: Better substitution formats
+  - S8056264, CVE-2014-6587: Multicast support improvements
+  - S8056276, CVE-2014-6591: Fontmanager feature improvements
+  - S8057555, CVE-2014-6593: Less cryptic cipher suite management
+  - S8058982, CVE-2014-6601: Better verification of an exceptional invokespecial
+  - S8059485, CVE-2015-0410: Resolve parsing ambiguity
+  - S8061210, CVE-2014-3566: Issues in TLS
 * Import of OpenJDK6 b34
   - OJ43: Backport JAX_WS-945; Socket backlog may be limiting lwhs performance
+  - OJ44: Add missing TimeZone test cases included in OpenJDK 7 revision 0.
+  - OJ45: Fix copyright headers on imported files
+  - OJ46: Fix lost Classpath exception
+  - OJ47: Remove @Override annotation on interfaces added by 2015/01/20 security fixes.
+  - OJ48: Fix substitution error.
+  - S4873188: Support TLS 1.1
   - S6364329: jstat displays "invalid argument count" with usage
+  - S6461635: [TESTBUG] BasicTests.sh test fails intermittently
   - S6507067: TimeZone country/area message error
+  - S6545422: [TESTBUG] NativeErrors.java uses wrong path name in exec
+  - S6578647: Undefined requesting URL in java.net.Authenticator.getPasswordAuthentication()
   - S6585666: Spanish language names not compliant with CLDR
+  - S6587676: Krb5LoginModule failure if useTicketCache=true on Vista
   - S6608572: Currency change for Malta and Cyprus
   - S6610748: Dateformat - AM-PM indicator in Finnish appears to be from English
   - S6627549: ISO 3166 code addition: Saint Barthelemy and Saint Martin
+  - S6631048: Problem when writing on output stream of  HttpURLConnection
+  - S6641309: Wrong Cookie separator used in HttpURLConnection
+  - S6641312: Fix krb5 codes indentation problems
   - S6645271: Wrong date format for Croatian (hr) locale
   - S6646611: Incorrect spelling of month name in locale for Belarusian language ("be", "BY")
   - S6647452: Remove obfuscation, framework and provider self-verification checking
+  - S6653795: C2 intrinsic for Unsafe.getAddress performs pointer sign extension on 32-bit systems
+  - S6659779: HttpURLConnections logger should log tunnel requests
+  - S6670362: HTTP/SPNEGO should work across realms
   - S6716626: Integrate contributed language and country names for NL
+  - S6720866: Slow performance using HttpURLConnection for upload
+  - S6726695: HttpURLConnection shoul support 'Expect: 100-continue' headers for PUT
+  - S6729881: Compiler warning in networking native code
+  - S6765491: Krb5LoginModule a little too restrictive, and the doc is not clear.
+  - S6776102: sun/util/resources/TimeZone/Bug6317929.java test failed against 6u12b01 and passed against 6u11b03
   - S6786276: Locale.getISOCountries() still contains country code "CS"
+  - S6792180: Enhance to reject weak algorithms or conform to crypto recommendations
+  - S6811297: Add more logging to HTTP protocol handler
+  - S6822460: support self-issued certificate
+  - S6830658: Changeset 67e5d3e41b5b breaks the fastdebug build in NativeCreds.c
+  - S6835668: Use of /usr/include/linux/ files creates a dependence on kernel-headers
+  - S6855297: Windows build breaks after 6811297
+  - S6856856: NPE in HTTP protocol handler logging
   - S6868106: Ukrainian currency has wrong format
   - S6870908: reopen bug 4244752: month names in Estonian should be lowercase
   - S6873931: New Turkish currency since 2009
+  - S6882594: Remove static dependancy on NTLM authentication
+  - S6899503: Security code issue using Verisign root certificate
   - S6910489: Slovenia Locale, wrong firstDayOfWeek number
+  - S6911104: Tests do not work with CYGWIN: tools, sun/tools, and com/sun/tools
   - S6914413: abbreviation name for November is not correct in be_BY
   - S6916787: Ukrainian currency name needs to be fixed
   - S6919624: minimalDaysInFirstWeek ressource for hungarian is wrong
   - S6931564: Incorrect display name of Locale for south africa
+  - S6931566: NetworkInterface is not working when interface name is more than 15 characters long
   - S6938454: 2 new testcases for  bug: Unable to determine generic type in program that compiles under Java 6
   - S6938454: Unable to determine generic type in program that compiles under Java 6
+  - S6945604: wrong error message in CardImpl.java
+  - S6962617: Testcase changes, cleanup of problem list for jdk_tools targets
+  - S6964714: NetworkInterface getInetAddresses enumerates IPv6 addresses if java.net.preferIPvStack property set
+  - S6967937: Scope id no longer being set after 6931566
+  - S6972374: NetworkInterface.getNetworkInterfaces throws "java.net.SocketException" on Solaris zone
+  - S6976117: SSLContext.getInstance("TLSv1.1") returns SSLEngines/SSLSockets without TLSv1.1 enabled
+  - S7001720: copyright templates not rebranded
   - S7019267: Currency Display Names are not localized into pt_BR.
   - S7020583: Some currency names are missing in some locales
   - S7020960: CurrencyNames_sr_RS.properties is missing.
+  - S7022269: clean up fscanf usage in Linux networking native code
   - S7025837: fix plural currency display names in sr_Latn_(BA|ME|RS).properties
   - S7028073: The currency symbol for Peru is wrong
+  - S7035555: 4/4 attach/BasicTests.sh needs another tweak for Cygwin
+  - S7036025: java.security.AccessControlException when creating JFileChooser in signed applet
   - S7036905: [de] dem - the german mark display name is incorrect
+  - S7047033: (smartcardio) Card.disconnect(boolean reset) does not reset when reset is true
   - S7066203: Update currency data to the latest ISO 4217 standard
   - S7077119: remove past transition dates from CurrencyData.properties file
   - S7085757: Currency Data: ISO 4217 Amendment 152
   - S7122142, RH1151372: (ann) Race condition between isAnnotationPresent and getAnnotations
+  - S7153184: NullPointerException when calling SSLEngineImpl.getSupportedCipherSuites
   - S7161796, RH1151372: PhaseStringOpts::fetch_static_field tries to fetch field from the Klass instead of the mirror
   - S7171028: dots are missed in the datetime for Slovanian
+  - S7174244: NPE in Krb5ProxyImpl.getServerKeys()
   - S7185456: (ann) Optimize Annotation handling in java/sun.reflect.* code for small number of annotations
   - S7189611: Venezuela current Currency should be Bs.F.
   - S7195759: ISO 4217 Amendment 154
+  - S7199066: Typo in method name
   - S7201205: Add Makefile configuration option to build with unlimited crypto in OpenJDK.
   - S8005232: (JEP-149) Class Instance size reduction
   - S8006748: getISO3Country() returns wrong value
   - S8013836: getFirstDayOfWeek reports wrong day for pt-BR locale
+  - S8015421: NegativeArraySizeException occurs in ChunkedOutputStream() with Integer.MAX_VALUE
+  - S8015570: Use long comparison in Rule.getRules().
   - S8021121: ISO 4217 Amendment Number 156
+  - S8021372: NetworkInterface.getNetworkInterfaces() returns duplicate hardware address
   - S8022721: TEST_BUG: AnnotationTypeDeadlockTest.java throws java.lang.IllegalStateException: unexpected condition
+  - S8023956: Provide a work-around to broken Linux 32 bit "Exec Shield" using CS for NX emulation (crashing with SI_KERNEL)
+  - S8025051: Update resource files for TimeZone display names
+  - S8026772: test/sun/util/resources/TimeZone/Bug6317929.java failing
+  - S8027359: XML parser returns incorrect parsing results
+  - S8027370: Support tzdata2013h
   - S8027695: There should be a space before % sign in Swedish locale
+  - S8028627: Unsynchronized code path from javax.crypto.Cipher to the WeakHashMap used by JceSecurity to store codebase mappings
+  - S8028726: (prefs) Check src/solaris/native/java/util/FileSystemPreferences.c for JNI pending exceptions
+  - S8029153: [TESTBUG] test/compiler/7141637/SpreadNullArg.java fails because it expects NullPointerException
+  - S8029318: Native Windows ccache still reads DES tickets
+  - S8030822: (tz) Support tzdata2013i
+  - S8031046: Native Windows ccache might still get unsupported ticket
+  - S8032788: ImageIcon constructor throws an NPE and hangs when passed a null String parameter
+  - S8032909: XSLT string-length returns incorrect length when string includes complementary chars
+  - S8035613: With active Securitymanager JAXBContext.newInstance fails
+  - S8037012: (tz) Support tzdata2014a
+  - S8038306: (tz) Support tzdata2014b
+  - S8040617: [macosx] Large JTable cell results in a OutOfMemoryException
+  - S8041990: [macosx] Language specific keys does not work in applets when opened outside the browser
+  - S8043012: (tz) Support tzdata2014c
+  - S8046343: (smartcardio) CardTerminal.connect('direct') does not work on MacOSX
+  - S8049250: Need a flag to invert the Card.disconnect(reset) argument
+  - S8049343: (tz) Support tzdata2014g
+  - S8050485: super() in a try block in a ctor causes VerifyError
+  - S8051012: Regression in verifier for <init> method call from inside of a branch
+  - S8051614: smartcardio TCK tests fail due to lack of 'reset' permission
+  - S8054367: More references for endpoints
   - S8055222: Currency update needed for ISO 4217 Amendment #159
+  - S8056211: api/java_awt/Event/InputMethodEvent/serial/index.html#Input[serial2002] failure
+  - S8058715: stability issues when being launched as an embedded JVM via JNI
+  - S8059206: (tz) Support tzdata2014i
+  - S8060474: Resolve more parsing ambiguity
+  - S8061826: Part of JDK-8060474 should be reverted
+  - S8062561: Test bug8055304 fails if file system default directory has read access
+  - S8062807: Exporting RMI objects fails when run under restrictive SecurityManager
+  - S8064560: (tz) Support tzdata2014j
 * Backports
   - S8000897, RH1155012: VM crash in CompileBroker
 * Bug fixes

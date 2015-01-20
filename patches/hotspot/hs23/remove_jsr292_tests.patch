@@ -1,7 +1,6 @@
-diff --git a/test/compiler/6990212/Test6990212.java b/test/compiler/6990212/Test6990212.java
-deleted file mode 100644
---- openjdk/hotspot/test/compiler/6990212/Test6990212.java
-+++ /dev/null
+diff -r 0dd28ac12d7d test/compiler/6990212/Test6990212.java
+--- openjdk/hotspot/test/compiler/6990212/Test6990212.java	Mon Jan 19 07:36:09 2015 +0000
++++ /dev/null	Thu Jan 01 00:00:00 1970 +0000
 @@ -1,56 +0,0 @@
 -/*
 - * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
@@ -59,11 +58,10 @@ deleted file mode 100644
 -        }
 -    }
 -}
-diff --git a/test/compiler/7141637/SpreadNullArg.java b/test/compiler/7141637/SpreadNullArg.java
-deleted file mode 100644
---- openjdk/hotspot/test/compiler/7141637/SpreadNullArg.java
-+++ /dev/null
-@@ -1,62 +0,0 @@
+diff -r 0dd28ac12d7d test/compiler/7141637/SpreadNullArg.java
+--- openjdk/hotspot/test/compiler/7141637/SpreadNullArg.java	Mon Jan 19 07:36:09 2015 +0000
++++ /dev/null	Thu Jan 01 00:00:00 1970 +0000
+@@ -1,66 +0,0 @@
 -/*
 - * Copyright 2011 SAP AG.  All Rights Reserved.
 - * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -112,13 +110,17 @@ deleted file mode 100644
 -      mh_spread_target =
 -        MethodHandles.lookup().findStatic(SpreadNullArg.class, "target_spread_arg", mt_ref_arg);
 -      result = (int) mh_spreadInvoker.invokeExact(mh_spread_target, (Object[]) null);
--    } catch(NullPointerException e) {
--      // Expected exception - do nothing!
--    } catch(Throwable e) {
+-      throw new Error("Expected IllegalArgumentException was not thrown");
+-    } catch (IllegalArgumentException e) {
+-      System.out.println("Expected exception : " + e);
+-    } catch (Throwable e) {
 -      throw new Error(e);
 -    }
 -
--    if (result != 42) throw new Error("Expected NullPointerException was not thrown");
+-    if (result != 42) {
+-      throw new Error("result [" + result
+-        + "] != 42 : Expected IllegalArgumentException was not thrown?");
+-    }
 -  }
 -
 -  public static int target_spread_arg(Integer i1) {
@@ -126,10 +128,9 @@ deleted file mode 100644
 -  }
 -
 -}
-diff --git a/test/compiler/7158807/Test7158807.java b/test/compiler/7158807/Test7158807.java
-deleted file mode 100644
---- openjdk/hotspot/test/compiler/7158807/Test7158807.java
-+++ /dev/null
+diff -r 0dd28ac12d7d test/compiler/7158807/Test7158807.java
+--- openjdk/hotspot/test/compiler/7158807/Test7158807.java	Mon Jan 19 07:36:09 2015 +0000
++++ /dev/null	Thu Jan 01 00:00:00 1970 +0000
 @@ -1,66 +0,0 @@
 -/*
 - * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
