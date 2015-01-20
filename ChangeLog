@@ -1,3 +1,17 @@
+2015-01-06  Andrew John Hughes  <gnu.andrew@member.fsf.org>
+
+	PR2062: Unset OS before running OpenJDK build
+	* Makefile.am:
+	(ICEDTEA_UNSET): Introduce variable to
+	store unsetting of environment variables.
+	(ICEDTEA_ENV): Move JAVAC, JAVA_HOME and
+	JDK_HOME to ICEDTEA_UNSET.
+	(icedtea): Unset variables prior to running
+	$(MAKE).
+	(icedtea-debug): Likewise.
+	(icedtea-ecj): Likewise.
+	* NEWS: Updated.
+
 2014-06-10  Andrew John Hughes  <gnu.andrew@member.fsf.org>
 
 	PR1832, RH1022017: Report elliptic curves
