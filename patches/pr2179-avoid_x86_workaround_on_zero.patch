@@ -1,0 +1,33 @@
+# HG changeset patch
+# User andrew
+# Date 1405461315 -3600
+#      Tue Jul 15 22:55:15 2014 +0100
+# Node ID fae3b09fe959294f7a091a6ecaae91daf1cb4f5c
+# Parent  a61c666945e741b9b69ba9b27f93eb0951dda696
+PR1868: Avoid x86 workaround when running Zero rather than a JIT
+Contributed-by: Matthias Klose <doko@ubuntu.com>
+
+diff -r a61c666945e7 -r fae3b09fe959 src/os/linux/vm/os_linux.cpp
+--- openjdk/hotspot/src/os/linux/vm/os_linux.cpp	Tue Jun 03 17:16:46 2014 +0100
++++ openjdk/hotspot/src/os/linux/vm/os_linux.cpp	Tue Jul 15 22:55:15 2014 +0100
+@@ -4925,7 +4925,7 @@
+ 
+   Linux::capture_initial_stack(JavaThread::stack_size_at_create());
+ 
+-#if defined(IA32)
++#if defined(IA32) && !defined(ZERO)
+   workaround_expand_exec_shield_cs_limit();
+ #endif
+ 
+diff -r a61c666945e7 -r fae3b09fe959 src/os_cpu/linux_x86/vm/os_linux_x86.cpp
+--- openjdk/hotspot/src/os_cpu/linux_x86/vm/os_linux_x86.cpp	Tue Jun 03 17:16:46 2014 +0100
++++ openjdk/hotspot/src/os_cpu/linux_x86/vm/os_linux_x86.cpp	Tue Jul 15 22:55:15 2014 +0100
+@@ -880,7 +880,7 @@
+  * updates (JDK-8023956).
+  */
+ void os::workaround_expand_exec_shield_cs_limit() {
+-#if defined(IA32)
++#if defined(IA32) && !defined(ZERO)
+   size_t page_size = os::vm_page_size();
+   /*
+    * Take the highest VA the OS will give us and exec

@@ -1,7 +1,7 @@
 # Dependencies
 
 OPENJDK_DATE = 20_jan_2015
-OPENJDK_SHA256SUM = c32e6f607eb08cda8cbedb9e10976b627c6e4a1fa1537d073e7630c99deacbb9
+OPENJDK_SHA256SUM = 9dc8f95d340e77ba2b64677c8ce4f2adf830478b972afdb7e00d4835208af6b5
 OPENJDK_VERSION = b34
 OPENJDK_URL = https://java.net/downloads/openjdk6/
 
@@ -600,7 +600,8 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/8061785-pr2177-test_bug-corrupted_utf8_character.patch \
 	patches/pr2070-type_punning_warnings.patch \
 	patches/pr2082-s390_type_fixes.patch \
-	patches/pr2096-4096-bit_dh.patch
+	patches/pr2096-4096-bit_dh.patch \
+	patches/pr2179-avoid_x86_workaround_on_zero.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \

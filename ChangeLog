@@ -1,5 +1,14 @@
 2015-01-19  Andrew John Hughes  <gnu.andrew@redhat.com>
 
+	* Makefile.am:
+	(OPENJDK_SHA256SUM): Update for new b34 tarball.
+	(ICEDTEA_PATCHES): Add fix for PR2179.
+	* NEWS: Updated.
+	* patches/pr2179-avoid_x86_workaround_on_zero.patch:
+	Don't apply 8023956 when building Zero on x86.
+
+2015-01-19  Andrew John Hughes  <gnu.andrew@redhat.com>
+
 	* NEWS: Set release date to 20th of January,
 	2015 for 1.13.6.
 	* configure.ac: Bump to 1.13.6.
