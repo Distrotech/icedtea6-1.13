@@ -852,13 +852,6 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11Cipher.java 
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/SunPKCS11.java openjdk/jdk/src/share/classes/sun/security/pkcs11/SunPKCS11.java
 --- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/SunPKCS11.java	2012-09-21 20:03:48.000000000 +0100
 +++ openjdk/jdk/src/share/classes/sun/security/pkcs11/SunPKCS11.java	2012-10-23 18:09:25.964291180 +0100
-@@ -1,5 +1,5 @@
- /*
-- * Copyright (c) 2003, 2007, Oracle and/or its affiliates. All rights reserved.
-+ * Copyright (c) 2003, 2008, Oracle and/or its affiliates. All rights reserved.
-  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
-  *
-  * This code is free software; you can redistribute it and/or modify it
 @@ -601,14 +601,26 @@
          // XXX attributes for Ciphers (supported modes, padding)
          d(CIP, "ARCFOUR",                       P11Cipher,      s("RC4"),

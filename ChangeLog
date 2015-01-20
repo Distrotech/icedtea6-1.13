@@ -1,3 +1,44 @@
+2015-01-19  Andrew John Hughes  <gnu.andrew@member.fsf.org>
+
+	* patches/clean-crypto.patch: Removed; replaced by
+	inclusion of UNLIMITED_CRYPTO=true solution upstream.
+	* patches/openjdk/7122142-annotation_race_condition.patch,
+	* patches/openjdk/7161796-wrong_fetch_in_fetch_static_field.patch:
+	Remove patches included upstream.
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Remove above patches.
+	(ICEDTEA_ENV): Set UNLIMITED_CRYPTO=true.
+	* NEWS: Updated.
+	* patches/openjdk/4963723-implement_sha-224.patch:
+	Regenerated following backport of 6647452 upstream.
+	* patches/openjdk/7044060-support_nsa_suite_b.patch:
+	Likewise.
+	* patches/openjdk/7106773-512_bits_rsa.patch: Likewise.
+	* patches/openjdk/8006935-long_keys_in_hmac_prf.patch: Likewise.
+	* patches/openjdk/p11cipher-4898461-support_ecb_and_cbc.patch:
+	Likewise.
+	* patches/openjdk/p11cipher-6604496-support_ckm_aes_ctr.patch:
+	Likewise.
+
+2015-01-05  Andrew John Hughes  <gnu.andrew@member.fsf.org>
+
+	* patches/ecj/pr64174.patch: Drop the Lithuanian
+	changeover date now, as it's in the past.
+
+2014-12-04  Andrew John Hughes  <gnu.andrew@member.fsf.org>
+
+	* Makefile.am:
+	(ICEDTEA_ECJ_PATCHES): Add workaround for bug
+	in parsing end-of-year dates (Classpath PR64174).
+	* acinclude.m4:
+	(IT_PR64174_CHECK): Detect if the boot JDK suffers
+	from PR64174 and apply the patch if so.
+	* configure.ac: Call IT_PR64174_CHECK.
+	* patches/ecj/pr64174.patch: Drop the Latvian
+	Euro changeover date, which is in the past anyway,
+	and move Lithuania's two hours forward so it enters
+	2015 and avoids the bug.
+
 2014-10-24  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* Makefile.am:

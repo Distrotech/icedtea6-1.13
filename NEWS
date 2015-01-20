@@ -14,9 +14,53 @@ CVE-XXXX-YYYY: http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
 New in release 1.13.6 (2015-01-XX):
 
-* Backports
+* Import of OpenJDK6 b34
+  - OJ43: Backport JAX_WS-945; Socket backlog may be limiting lwhs performance
+  - S6364329: jstat displays "invalid argument count" with usage
+  - S6507067: TimeZone country/area message error
+  - S6585666: Spanish language names not compliant with CLDR
+  - S6608572: Currency change for Malta and Cyprus
+  - S6610748: Dateformat - AM-PM indicator in Finnish appears to be from English
+  - S6627549: ISO 3166 code addition: Saint Barthelemy and Saint Martin
+  - S6645271: Wrong date format for Croatian (hr) locale
+  - S6646611: Incorrect spelling of month name in locale for Belarusian language ("be", "BY")
+  - S6647452: Remove obfuscation, framework and provider self-verification checking
+  - S6716626: Integrate contributed language and country names for NL
+  - S6786276: Locale.getISOCountries() still contains country code "CS"
+  - S6868106: Ukrainian currency has wrong format
+  - S6870908: reopen bug 4244752: month names in Estonian should be lowercase
+  - S6873931: New Turkish currency since 2009
+  - S6910489: Slovenia Locale, wrong firstDayOfWeek number
+  - S6914413: abbreviation name for November is not correct in be_BY
+  - S6916787: Ukrainian currency name needs to be fixed
+  - S6919624: minimalDaysInFirstWeek ressource for hungarian is wrong
+  - S6931564: Incorrect display name of Locale for south africa
+  - S6938454: 2 new testcases for  bug: Unable to determine generic type in program that compiles under Java 6
+  - S6938454: Unable to determine generic type in program that compiles under Java 6
+  - S7019267: Currency Display Names are not localized into pt_BR.
+  - S7020583: Some currency names are missing in some locales
+  - S7020960: CurrencyNames_sr_RS.properties is missing.
+  - S7025837: fix plural currency display names in sr_Latn_(BA|ME|RS).properties
+  - S7028073: The currency symbol for Peru is wrong
+  - S7036905: [de] dem - the german mark display name is incorrect
+  - S7066203: Update currency data to the latest ISO 4217 standard
+  - S7077119: remove past transition dates from CurrencyData.properties file
+  - S7085757: Currency Data: ISO 4217 Amendment 152
   - S7122142, RH1151372: (ann) Race condition between isAnnotationPresent and getAnnotations
   - S7161796, RH1151372: PhaseStringOpts::fetch_static_field tries to fetch field from the Klass instead of the mirror
+  - S7171028: dots are missed in the datetime for Slovanian
+  - S7185456: (ann) Optimize Annotation handling in java/sun.reflect.* code for small number of annotations
+  - S7189611: Venezuela current Currency should be Bs.F.
+  - S7195759: ISO 4217 Amendment 154
+  - S7201205: Add Makefile configuration option to build with unlimited crypto in OpenJDK.
+  - S8005232: (JEP-149) Class Instance size reduction
+  - S8006748: getISO3Country() returns wrong value
+  - S8013836: getFirstDayOfWeek reports wrong day for pt-BR locale
+  - S8021121: ISO 4217 Amendment Number 156
+  - S8022721: TEST_BUG: AnnotationTypeDeadlockTest.java throws java.lang.IllegalStateException: unexpected condition
+  - S8027695: There should be a space before % sign in Swedish locale
+  - S8055222: Currency update needed for ISO 4217 Amendment #159
+* Backports
   - S8000897, RH1155012: VM crash in CompileBroker
 * Bug fixes
   - PR1831: Drop version requirement for LCMS 2

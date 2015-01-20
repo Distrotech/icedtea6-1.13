@@ -1,9 +1,9 @@
 diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/HmacCore.java openjdk/jdk/src/share/classes/com/sun/crypto/provider/HmacCore.java
---- openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/HmacCore.java	2014-07-14 04:24:43.000000000 +0100
-+++ openjdk/jdk/src/share/classes/com/sun/crypto/provider/HmacCore.java	2014-10-08 23:26:07.127607311 +0100
+--- openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/HmacCore.java	2014-12-24 18:49:01.960433052 +0000
++++ openjdk/jdk/src/share/classes/com/sun/crypto/provider/HmacCore.java	2014-12-24 20:08:44.235133898 +0000
 @@ -1,5 +1,5 @@
  /*
-- * Copyright (c) 2002, 2007, Oracle and/or its affiliates. All rights reserved.
+- * Copyright (c) 2002, 2009, Oracle and/or its affiliates. All rights reserved.
 + * Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
   * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
   *
@@ -125,7 +125,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/HmacCore.ja
          if (first == false) {
              md.reset();
              first = true;
-@@ -234,118 +228,38 @@
+@@ -234,115 +228,38 @@
       * Clones this object.
       */
      public Object clone() throws CloneNotSupportedException {
@@ -149,7 +149,6 @@ diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/HmacCore.ja
 -        private final HmacCore core;
 +    public static final class HmacSHA256 extends HmacCore {
          public HmacSHA256() throws NoSuchAlgorithmException {
--            SunJCE.ensureIntegrity(getClass());
 -            core = new HmacCore("SHA-256", 64);
 -        }
 -        private HmacSHA256(HmacSHA256 base) throws CloneNotSupportedException {
@@ -188,7 +187,6 @@ diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/HmacCore.ja
 -        private final HmacCore core;
 +    public static final class HmacSHA384 extends HmacCore {
          public HmacSHA384() throws NoSuchAlgorithmException {
--            SunJCE.ensureIntegrity(getClass());
 -            core = new HmacCore("SHA-384", 128);
 -        }
 -        private HmacSHA384(HmacSHA384 base) throws CloneNotSupportedException {
@@ -227,7 +225,6 @@ diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/HmacCore.ja
 -        private final HmacCore core;
 +    public static final class HmacSHA512 extends HmacCore {
          public HmacSHA512() throws NoSuchAlgorithmException {
--            SunJCE.ensureIntegrity(getClass());
 -            core = new HmacCore("SHA-512", 128);
 -        }
 -        private HmacSHA512(HmacSHA512 base) throws CloneNotSupportedException {
@@ -263,16 +260,16 @@ diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/HmacCore.ja
 -
  }
 diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/HmacMD5.java openjdk/jdk/src/share/classes/com/sun/crypto/provider/HmacMD5.java
---- openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/HmacMD5.java	2014-07-14 04:24:43.000000000 +0100
-+++ openjdk/jdk/src/share/classes/com/sun/crypto/provider/HmacMD5.java	2014-10-08 23:26:07.127607311 +0100
+--- openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/HmacMD5.java	2014-12-24 18:49:01.960433052 +0000
++++ openjdk/jdk/src/share/classes/com/sun/crypto/provider/HmacMD5.java	2014-12-24 20:05:44.309011863 +0000
 @@ -1,5 +1,5 @@
  /*
-- * Copyright (c) 1998, 2007, Oracle and/or its affiliates. All rights reserved.
+- * Copyright (c) 1998, 2009, Oracle and/or its affiliates. All rights reserved.
 + * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
   * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
   *
   * This code is free software; you can redistribute it and/or modify it
-@@ -37,11 +37,7 @@
+@@ -37,97 +37,11 @@
   *
   * @author Jan Luehe
   */
@@ -284,15 +281,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/HmacMD5.jav
 +public final class HmacMD5 extends HmacCore {
      /**
       * Standard constructor, creates a new HmacMD5 instance.
-      * Verify the SunJCE provider in the constructor.
-@@ -50,92 +46,6 @@
-      * its own integrity
       */
      public HmacMD5() throws NoSuchAlgorithmException {
--        if (!SunJCE.verifySelfIntegrity(this.getClass())) {
--            throw new SecurityException("The SunJCE provider may have " +
--                                        "been tampered.");
--        }
 -        hmac = new HmacCore(MessageDigest.getInstance("MD5"),
 -                            MD5_BLOCK_LENGTH);
 -    }
@@ -380,16 +370,16 @@ diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/HmacMD5.jav
      }
  }
 diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/HmacPKCS12PBESHA1.java openjdk/jdk/src/share/classes/com/sun/crypto/provider/HmacPKCS12PBESHA1.java
---- openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/HmacPKCS12PBESHA1.java	2014-07-14 04:24:43.000000000 +0100
-+++ openjdk/jdk/src/share/classes/com/sun/crypto/provider/HmacPKCS12PBESHA1.java	2014-10-08 23:26:07.127607311 +0100
+--- openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/HmacPKCS12PBESHA1.java	2014-12-24 18:49:01.960433052 +0000
++++ openjdk/jdk/src/share/classes/com/sun/crypto/provider/HmacPKCS12PBESHA1.java	2014-12-24 20:04:48.704357000 +0000
 @@ -1,5 +1,5 @@
  /*
-- * Copyright (c) 2003, 2007, Oracle and/or its affiliates. All rights reserved.
+- * Copyright (c) 2003, 2009, Oracle and/or its affiliates. All rights reserved.
 + * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
   * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
   *
   * This code is free software; you can redistribute it and/or modify it
-@@ -41,10 +41,7 @@
+@@ -41,26 +41,13 @@
   *
   * @author Valerie Peng
   */
@@ -401,11 +391,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/HmacPKCS12P
  
      /**
       * Standard constructor, creates a new HmacSHA1 instance.
-@@ -54,18 +51,7 @@
-      * its own integrity
       */
      public HmacPKCS12PBESHA1() throws NoSuchAlgorithmException {
--        SunJCE.ensureIntegrity(this.getClass());
 -        this.hmac = new HmacCore(MessageDigest.getInstance("SHA1"),
 -                                 SHA1_BLOCK_LENGTH);
 -    }
@@ -421,7 +408,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/HmacPKCS12P
      }
  
      /**
-@@ -76,7 +62,7 @@
+@@ -71,7 +58,7 @@
       *
       * @exception InvalidKeyException if the given key is inappropriate for
       * initializing this MAC.
@@ -430,7 +417,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/HmacPKCS12P
       * parameters are inappropriate for this MAC.
       */
      protected void engineInit(Key key, AlgorithmParameterSpec params)
-@@ -145,64 +131,8 @@
+@@ -140,64 +127,8 @@
                  ("IterationCount must be a positive number");
          }
          byte[] derivedKey = PKCS12PBECipherCore.derive(passwdChars, salt,
@@ -498,16 +485,16 @@ diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/HmacPKCS12P
      }
  }
 diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/HmacSHA1.java openjdk/jdk/src/share/classes/com/sun/crypto/provider/HmacSHA1.java
---- openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/HmacSHA1.java	2014-07-14 04:24:43.000000000 +0100
-+++ openjdk/jdk/src/share/classes/com/sun/crypto/provider/HmacSHA1.java	2014-10-08 23:26:07.127607311 +0100
+--- openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/HmacSHA1.java	2014-12-24 18:49:01.960433052 +0000
++++ openjdk/jdk/src/share/classes/com/sun/crypto/provider/HmacSHA1.java	2014-12-24 20:03:59.847781984 +0000
 @@ -1,5 +1,5 @@
  /*
-- * Copyright (c) 1998, 2007, Oracle and/or its affiliates. All rights reserved.
+- * Copyright (c) 1998, 2009, Oracle and/or its affiliates. All rights reserved.
 + * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
   * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
   *
   * This code is free software; you can redistribute it and/or modify it
-@@ -37,11 +37,7 @@
+@@ -37,97 +37,11 @@
   *
   * @author Jan Luehe
   */
@@ -519,15 +506,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/HmacSHA1.ja
 +public final class HmacSHA1 extends HmacCore {
      /**
       * Standard constructor, creates a new HmacSHA1 instance.
-      * Verify the SunJCE provider in the constructor.
-@@ -50,92 +46,6 @@
-      * its own integrity
       */
      public HmacSHA1() throws NoSuchAlgorithmException {
--        if (!SunJCE.verifySelfIntegrity(this.getClass())) {
--            throw new SecurityException("The SunJCE provider may have " +
--                                        "been tampered.");
--        }
 -        this.hmac = new HmacCore(MessageDigest.getInstance("SHA1"),
 -                                 SHA1_BLOCK_LENGTH);
 -    }
@@ -615,16 +595,16 @@ diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/HmacSHA1.ja
      }
  }
 diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/KeyGeneratorCore.java openjdk/jdk/src/share/classes/com/sun/crypto/provider/KeyGeneratorCore.java
---- openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/KeyGeneratorCore.java	2014-07-14 04:24:43.000000000 +0100
-+++ openjdk/jdk/src/share/classes/com/sun/crypto/provider/KeyGeneratorCore.java	2014-10-08 23:26:07.127607311 +0100
+--- openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/KeyGeneratorCore.java	2014-12-24 18:49:01.960433052 +0000
++++ openjdk/jdk/src/share/classes/com/sun/crypto/provider/KeyGeneratorCore.java	2014-12-24 20:02:30.166727408 +0000
 @@ -1,5 +1,5 @@
  /*
-- * Copyright (c) 2003, 2007, Oracle and/or its affiliates. All rights reserved.
+- * Copyright (c) 2003, 2009, Oracle and/or its affiliates. All rights reserved.
 + * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
   * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
   *
   * This code is free software; you can redistribute it and/or modify it
-@@ -105,12 +105,12 @@
+@@ -105,11 +105,11 @@
          return new SecretKeySpec(b, name);
      }
  
@@ -634,24 +614,42 @@ diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/KeyGenerato
 +    abstract static class HmacSHA2KG extends KeyGeneratorSpi {
          private final KeyGeneratorCore core;
 -        public HmacSHA256KG() {
-+        protected HmacSHA2KG(String algoName, int len) {
-             SunJCE.ensureIntegrity(getClass());
 -            core = new KeyGeneratorCore("HmacSHA256", 256);
++        protected HmacSHA2KG(String algoName, int len) {
 +            core = new KeyGeneratorCore(algoName, len);
          }
          protected void engineInit(SecureRandom random) {
              core.implInit(random);
-@@ -125,49 +125,25 @@
+@@ -124,50 +124,27 @@
          protected SecretKey engineGenerateKey() {
              return core.implGenerateKey();
          }
--    }
++        public static final class SHA224 extends HmacSHA2KG {
++            public SHA224() {
++                super("HmacSHA224", 224);
++            }
++        }
++        public static final class SHA256 extends HmacSHA2KG {
++            public SHA256() {
++                super("HmacSHA256", 256);
++            }
++        }
++        public static final class SHA384 extends HmacSHA2KG {
++            public SHA384() {
++                super("HmacSHA384", 384);
++            }
++        }
++        public static final class SHA512 extends HmacSHA2KG {
++            public SHA512() {
++                super("HmacSHA512", 512);
++            }
++	}
+     }
 -
 -    // nested static class for the HmacSHA384 key generator
 -    public static final class HmacSHA384KG extends KeyGeneratorSpi {
 -        private final KeyGeneratorCore core;
 -        public HmacSHA384KG() {
--            SunJCE.ensureIntegrity(getClass());
 -            core = new KeyGeneratorCore("HmacSHA384", 384);
 -        }
 -        protected void engineInit(SecureRandom random) {
@@ -673,7 +671,6 @@ diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/KeyGenerato
 -    public static final class HmacSHA512KG extends KeyGeneratorSpi {
 -        private final KeyGeneratorCore core;
 -        public HmacSHA512KG() {
--            SunJCE.ensureIntegrity(getClass());
 -            core = new KeyGeneratorCore("HmacSHA512", 512);
 -        }
 -        protected void engineInit(SecureRandom random) {
@@ -688,31 +685,15 @@ diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/KeyGenerato
 -        }
 -        protected SecretKey engineGenerateKey() {
 -            return core.implGenerateKey();
-+        public static final class SHA224 extends HmacSHA2KG {
-+            public SHA224() {
-+                super("HmacSHA224", 224);
-+            }
-+        }
-+        public static final class SHA256 extends HmacSHA2KG {
-+            public SHA256() {
-+                super("HmacSHA256", 256);
-+            }
-+        }
-+        public static final class SHA384 extends HmacSHA2KG {
-+            public SHA384() {
-+                super("HmacSHA384", 384);
-+            }
-+        }
-+        public static final class SHA512 extends HmacSHA2KG {
-+            public SHA512() {
-+                super("HmacSHA512", 512);
-+            }
-         }
-     }
- 
+-        }
+-    }
+-
+     // nested static class for the RC2 key generator
+     public static final class RC2KeyGenerator extends KeyGeneratorSpi {
+         private final KeyGeneratorCore core;
 diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/OAEPParameters.java openjdk/jdk/src/share/classes/com/sun/crypto/provider/OAEPParameters.java
---- openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/OAEPParameters.java	2014-07-14 04:24:43.000000000 +0100
-+++ openjdk/jdk/src/share/classes/com/sun/crypto/provider/OAEPParameters.java	2014-10-08 23:26:07.127607311 +0100
+--- openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/OAEPParameters.java	2013-08-21 20:33:04.180330661 +0100
++++ openjdk/jdk/src/share/classes/com/sun/crypto/provider/OAEPParameters.java	2014-12-24 19:58:20.000164073 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2003, 2007, Oracle and/or its affiliates. All rights reserved.
@@ -730,11 +711,11 @@ diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/OAEPParamet
                      mgfSpec = MGF1ParameterSpec.SHA256;
                  } else if (mgfDigestName.equals("SHA-384")) {
 diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/SunJCE.java openjdk/jdk/src/share/classes/com/sun/crypto/provider/SunJCE.java
---- openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/SunJCE.java	2014-07-14 04:24:43.000000000 +0100
-+++ openjdk/jdk/src/share/classes/com/sun/crypto/provider/SunJCE.java	2014-10-08 23:26:07.127607311 +0100
+--- openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/SunJCE.java	2014-12-24 18:49:01.964433104 +0000
++++ openjdk/jdk/src/share/classes/com/sun/crypto/provider/SunJCE.java	2014-12-24 19:58:39.268401924 +0000
 @@ -1,5 +1,5 @@
  /*
-- * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.
+- * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
 + * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
   * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
   *
@@ -748,7 +729,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/SunJCE.java
   *
   */
  
-@@ -121,6 +121,7 @@
+@@ -117,6 +117,7 @@
                          "NOPADDING|PKCS1PADDING|OAEPWITHMD5ANDMGF1PADDING"
                          + "|OAEPWITHSHA1ANDMGF1PADDING"
                          + "|OAEPWITHSHA-1ANDMGF1PADDING"
@@ -756,7 +737,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/SunJCE.java
                          + "|OAEPWITHSHA-256ANDMGF1PADDING"
                          + "|OAEPWITHSHA-384ANDMGF1PADDING"
                          + "|OAEPWITHSHA-512ANDMGF1PADDING");
-@@ -229,12 +230,25 @@
+@@ -225,12 +226,25 @@
                  put("KeyGenerator.HmacSHA1",
                      "com.sun.crypto.provider.HmacSHA1KeyGenerator");
  
@@ -785,7 +766,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/SunJCE.java
  
                  put("KeyPairGenerator.DiffieHellman",
                      "com.sun.crypto.provider.DHKeyPairGenerator");
-@@ -397,12 +411,23 @@
+@@ -393,12 +407,23 @@
                   */
                  put("Mac.HmacMD5", "com.sun.crypto.provider.HmacMD5");
                  put("Mac.HmacSHA1", "com.sun.crypto.provider.HmacSHA1");
@@ -809,7 +790,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/SunJCE.java
                  put("Mac.HmacPBESHA1",
                      "com.sun.crypto.provider.HmacPKCS12PBESHA1");
  
-@@ -413,6 +438,7 @@
+@@ -409,6 +434,7 @@
  
                  put("Mac.HmacMD5 SupportedKeyFormats", "RAW");
                  put("Mac.HmacSHA1 SupportedKeyFormats", "RAW");
@@ -818,8 +799,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/com/sun/crypto/provider/SunJCE.java
                  put("Mac.HmacSHA384 SupportedKeyFormats", "RAW");
                  put("Mac.HmacSHA512 SupportedKeyFormats", "RAW");
 diff -Nru openjdk.orig/jdk/src/share/classes/java/security/spec/MGF1ParameterSpec.java openjdk/jdk/src/share/classes/java/security/spec/MGF1ParameterSpec.java
---- openjdk.orig/jdk/src/share/classes/java/security/spec/MGF1ParameterSpec.java	2014-07-14 04:24:45.000000000 +0100
-+++ openjdk/jdk/src/share/classes/java/security/spec/MGF1ParameterSpec.java	2014-10-08 23:26:07.131607366 +0100
+--- openjdk.orig/jdk/src/share/classes/java/security/spec/MGF1ParameterSpec.java	2013-08-21 20:33:07.812389433 +0100
++++ openjdk/jdk/src/share/classes/java/security/spec/MGF1ParameterSpec.java	2014-12-24 19:58:20.000164073 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2003, 2006, Oracle and/or its affiliates. All rights reserved.
@@ -836,8 +817,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/security/spec/MGF1ParameterSpe
   *   { OID id-sha384 PARAMETERS NULL }|
   *   { OID id-sha512 PARAMETERS NULL },
 diff -Nru openjdk.orig/jdk/src/share/classes/java/security/spec/PSSParameterSpec.java openjdk/jdk/src/share/classes/java/security/spec/PSSParameterSpec.java
---- openjdk.orig/jdk/src/share/classes/java/security/spec/PSSParameterSpec.java	2014-07-14 04:24:45.000000000 +0100
-+++ openjdk/jdk/src/share/classes/java/security/spec/PSSParameterSpec.java	2014-10-08 23:26:07.131607366 +0100
+--- openjdk.orig/jdk/src/share/classes/java/security/spec/PSSParameterSpec.java	2013-08-21 20:33:07.812389433 +0100
++++ openjdk/jdk/src/share/classes/java/security/spec/PSSParameterSpec.java	2014-12-24 19:58:20.000164073 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2001, 2006, Oracle and/or its affiliates. All rights reserved.
@@ -854,8 +835,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/java/security/spec/PSSParameterSpec
   *   { OID id-sha384 PARAMETERS NULL }|
   *   { OID id-sha512 PARAMETERS NULL },
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11Digest.java openjdk/jdk/src/share/classes/sun/security/pkcs11/P11Digest.java
---- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11Digest.java	2014-10-08 23:21:44.807972437 +0100
-+++ openjdk/jdk/src/share/classes/sun/security/pkcs11/P11Digest.java	2014-10-08 23:26:07.131607366 +0100
+--- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11Digest.java	2014-12-24 19:57:29.151536657 +0000
++++ openjdk/jdk/src/share/classes/sun/security/pkcs11/P11Digest.java	2014-12-24 19:58:20.000164073 +0000
 @@ -39,7 +39,7 @@
  
  /**
@@ -876,8 +857,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11Digest.java 
              digestLength = 32;
              break;
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11Mac.java openjdk/jdk/src/share/classes/sun/security/pkcs11/P11Mac.java
---- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11Mac.java	2014-07-14 04:24:45.000000000 +0100
-+++ openjdk/jdk/src/share/classes/sun/security/pkcs11/P11Mac.java	2014-10-08 23:26:07.131607366 +0100
+--- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11Mac.java	2013-08-21 20:33:03.292316290 +0100
++++ openjdk/jdk/src/share/classes/sun/security/pkcs11/P11Mac.java	2014-12-24 19:58:20.000164073 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
@@ -907,8 +888,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11Mac.java ope
              macLength = 32;
              break;
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11Signature.java openjdk/jdk/src/share/classes/sun/security/pkcs11/P11Signature.java
---- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11Signature.java	2014-07-14 04:24:45.000000000 +0100
-+++ openjdk/jdk/src/share/classes/sun/security/pkcs11/P11Signature.java	2014-10-08 23:26:07.131607366 +0100
+--- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11Signature.java	2013-08-21 20:33:03.296316354 +0100
++++ openjdk/jdk/src/share/classes/sun/security/pkcs11/P11Signature.java	2014-12-24 19:58:20.000164073 +0000
 @@ -54,12 +54,14 @@
   *   . MD2withRSA
   *   . MD5withRSA
@@ -961,8 +942,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11Signature.ja
              encodedLength = 51;
          } else if (algorithm.equals("SHA384withRSA")) {
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/SunPKCS11.java openjdk/jdk/src/share/classes/sun/security/pkcs11/SunPKCS11.java
---- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/SunPKCS11.java	2014-10-08 23:21:44.783972104 +0100
-+++ openjdk/jdk/src/share/classes/sun/security/pkcs11/SunPKCS11.java	2014-10-08 23:26:07.131607366 +0100
+--- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/SunPKCS11.java	2014-12-24 19:57:29.063535572 +0000
++++ openjdk/jdk/src/share/classes/sun/security/pkcs11/SunPKCS11.java	2014-12-24 19:58:20.000164073 +0000
 @@ -328,6 +328,7 @@
                  System.out.println("Library info:");
                  System.out.println(p11Info);
@@ -971,7 +952,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/SunPKCS11.java 
              if ((slotID < 0) || showInfo) {
                  long[] slots = p11.C_GetSlotList(false);
                  if (showInfo) {
-@@ -522,24 +523,37 @@
+@@ -504,24 +505,37 @@
                  m(CKM_MD2));
          d(MD, "MD5",            P11Digest,
                  m(CKM_MD5));
@@ -1010,7 +991,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/SunPKCS11.java 
                  m(CKM_SHA512_HMAC));
          d(MAC, "SslMacMD5",     P11MAC,
                  m(CKM_SSL3_MD5_MAC));
-@@ -637,11 +651,17 @@
+@@ -619,11 +633,17 @@
                  m(CKM_ECDSA));
          d(SIG, "SHA1withECDSA", P11Signature,           s("ECDSA"),
                  m(CKM_ECDSA_SHA1, CKM_ECDSA));
@@ -1028,7 +1009,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/SunPKCS11.java 
                  m(CKM_ECDSA));
          d(SIG, "MD2withRSA",    P11Signature,
                  m(CKM_MD2_RSA_PKCS, CKM_RSA_PKCS, CKM_RSA_X_509));
-@@ -649,11 +669,17 @@
+@@ -631,11 +651,17 @@
                  m(CKM_MD5_RSA_PKCS, CKM_RSA_PKCS, CKM_RSA_X_509));
          d(SIG, "SHA1withRSA",   P11Signature,
                  m(CKM_SHA1_RSA_PKCS, CKM_RSA_PKCS, CKM_RSA_X_509));
@@ -1047,8 +1028,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/SunPKCS11.java 
  
          d(KG, "SunTlsRsaPremasterSecret", "sun.security.pkcs11.P11TlsRsaPremasterSecretGenerator",
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/wrapper/Functions.java openjdk/jdk/src/share/classes/sun/security/pkcs11/wrapper/Functions.java
---- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/wrapper/Functions.java	2014-07-14 04:24:45.000000000 +0100
-+++ openjdk/jdk/src/share/classes/sun/security/pkcs11/wrapper/Functions.java	2014-10-08 23:26:07.131607366 +0100
+--- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/wrapper/Functions.java	2013-08-21 20:33:03.308316548 +0100
++++ openjdk/jdk/src/share/classes/sun/security/pkcs11/wrapper/Functions.java	2014-12-24 19:58:20.000164073 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2003, 2005, Oracle and/or its affiliates. All rights reserved.
@@ -1083,8 +1064,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/wrapper/Functio
          addMech(CKM_SHA384_KEY_DERIVATION,      "CKM_SHA384_KEY_DERIVATION");
          addMech(CKM_SHA512_KEY_DERIVATION,      "CKM_SHA512_KEY_DERIVATION");
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/provider/DigestBase.java openjdk/jdk/src/share/classes/sun/security/provider/DigestBase.java
---- openjdk.orig/jdk/src/share/classes/sun/security/provider/DigestBase.java	2014-07-14 04:24:45.000000000 +0100
-+++ openjdk/jdk/src/share/classes/sun/security/provider/DigestBase.java	2014-10-08 23:26:07.131607366 +0100
+--- openjdk.orig/jdk/src/share/classes/sun/security/provider/DigestBase.java	2013-08-21 20:33:03.316316678 +0100
++++ openjdk/jdk/src/share/classes/sun/security/provider/DigestBase.java	2014-12-24 19:58:20.000164073 +0000
 @@ -39,7 +39,6 @@
   *  . abstract void implCompress(byte[] b, int ofs);
   *  . abstract void implDigest(byte[] out, int ofs);
@@ -1146,8 +1127,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/provider/DigestBase.ja
 -
  }
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/provider/MD2.java openjdk/jdk/src/share/classes/sun/security/provider/MD2.java
---- openjdk.orig/jdk/src/share/classes/sun/security/provider/MD2.java	2014-07-14 04:24:45.000000000 +0100
-+++ openjdk/jdk/src/share/classes/sun/security/provider/MD2.java	2014-10-08 23:26:07.131607366 +0100
+--- openjdk.orig/jdk/src/share/classes/sun/security/provider/MD2.java	2013-08-21 20:33:03.320316743 +0100
++++ openjdk/jdk/src/share/classes/sun/security/provider/MD2.java	2014-12-24 19:58:20.000164073 +0000
 @@ -39,14 +39,14 @@
  public final class MD2 extends DigestBase {
  
@@ -1189,8 +1170,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/provider/MD2.java open
  
      // reset state and checksum
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/provider/MD4.java openjdk/jdk/src/share/classes/sun/security/provider/MD4.java
---- openjdk.orig/jdk/src/share/classes/sun/security/provider/MD4.java	2014-07-14 04:24:45.000000000 +0100
-+++ openjdk/jdk/src/share/classes/sun/security/provider/MD4.java	2014-10-08 23:26:07.131607366 +0100
+--- openjdk.orig/jdk/src/share/classes/sun/security/provider/MD4.java	2013-08-21 20:33:03.320316743 +0100
++++ openjdk/jdk/src/share/classes/sun/security/provider/MD4.java	2014-12-24 19:58:20.000164073 +0000
 @@ -44,9 +44,9 @@
  public final class MD4 extends DigestBase {
  
@@ -1226,8 +1207,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/provider/MD4.java open
  
      /**
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/provider/MD5.java openjdk/jdk/src/share/classes/sun/security/provider/MD5.java
---- openjdk.orig/jdk/src/share/classes/sun/security/provider/MD5.java	2014-07-14 04:24:45.000000000 +0100
-+++ openjdk/jdk/src/share/classes/sun/security/provider/MD5.java	2014-10-08 23:26:07.131607366 +0100
+--- openjdk.orig/jdk/src/share/classes/sun/security/provider/MD5.java	2013-08-21 20:33:03.320316743 +0100
++++ openjdk/jdk/src/share/classes/sun/security/provider/MD5.java	2014-12-24 19:58:20.000164073 +0000
 @@ -39,9 +39,9 @@
  public final class MD5 extends DigestBase {
  
@@ -1263,8 +1244,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/provider/MD5.java open
  
      /**
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/provider/SHA2.java openjdk/jdk/src/share/classes/sun/security/provider/SHA2.java
---- openjdk.orig/jdk/src/share/classes/sun/security/provider/SHA2.java	2014-07-14 04:24:45.000000000 +0100
-+++ openjdk/jdk/src/share/classes/sun/security/provider/SHA2.java	2014-10-08 23:26:07.131607366 +0100
+--- openjdk.orig/jdk/src/share/classes/sun/security/provider/SHA2.java	2013-08-21 20:33:03.324316807 +0100
++++ openjdk/jdk/src/share/classes/sun/security/provider/SHA2.java	2014-12-24 19:58:20.000164073 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2002, 2006, Oracle and/or its affiliates. All rights reserved.
@@ -1377,8 +1358,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/provider/SHA2.java ope
 +    }
  }
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/provider/SHA5.java openjdk/jdk/src/share/classes/sun/security/provider/SHA5.java
---- openjdk.orig/jdk/src/share/classes/sun/security/provider/SHA5.java	2014-07-14 04:24:45.000000000 +0100
-+++ openjdk/jdk/src/share/classes/sun/security/provider/SHA5.java	2014-10-08 23:26:07.131607366 +0100
+--- openjdk.orig/jdk/src/share/classes/sun/security/provider/SHA5.java	2013-08-21 20:33:03.324316807 +0100
++++ openjdk/jdk/src/share/classes/sun/security/provider/SHA5.java	2014-12-24 19:58:20.004164123 +0000
 @@ -82,10 +82,10 @@
      };
  
@@ -1454,8 +1435,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/provider/SHA5.java ope
 -
  }
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/provider/SHA.java openjdk/jdk/src/share/classes/sun/security/provider/SHA.java
---- openjdk.orig/jdk/src/share/classes/sun/security/provider/SHA.java	2014-07-14 04:24:45.000000000 +0100
-+++ openjdk/jdk/src/share/classes/sun/security/provider/SHA.java	2014-10-08 23:26:07.131607366 +0100
+--- openjdk.orig/jdk/src/share/classes/sun/security/provider/SHA.java	2013-08-21 20:33:03.324316807 +0100
++++ openjdk/jdk/src/share/classes/sun/security/provider/SHA.java	2014-12-24 19:58:20.004164123 +0000
 @@ -47,10 +47,10 @@
      // 64 bytes are included in each hash block so the low order
      // bits of count are used to know how to pack the bytes into ints
@@ -1495,8 +1476,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/provider/SHA.java open
  
      /**
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/provider/SunEntries.java openjdk/jdk/src/share/classes/sun/security/provider/SunEntries.java
---- openjdk.orig/jdk/src/share/classes/sun/security/provider/SunEntries.java	2014-07-14 04:24:45.000000000 +0100
-+++ openjdk/jdk/src/share/classes/sun/security/provider/SunEntries.java	2014-10-08 23:26:07.131607366 +0100
+--- openjdk.orig/jdk/src/share/classes/sun/security/provider/SunEntries.java	2013-08-21 20:33:03.328316872 +0100
++++ openjdk/jdk/src/share/classes/sun/security/provider/SunEntries.java	2014-12-24 19:58:20.004164123 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1996, 2006, Oracle and/or its affiliates. All rights reserved.
@@ -1537,8 +1518,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/provider/SunEntries.ja
          /*
           * Algorithm Parameter Generator engines
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/rsa/RSASignature.java openjdk/jdk/src/share/classes/sun/security/rsa/RSASignature.java
---- openjdk.orig/jdk/src/share/classes/sun/security/rsa/RSASignature.java	2014-07-14 04:24:45.000000000 +0100
-+++ openjdk/jdk/src/share/classes/sun/security/rsa/RSASignature.java	2014-10-08 23:26:07.131607366 +0100
+--- openjdk.orig/jdk/src/share/classes/sun/security/rsa/RSASignature.java	2013-08-21 20:33:03.348317196 +0100
++++ openjdk/jdk/src/share/classes/sun/security/rsa/RSASignature.java	2014-12-24 19:58:20.004164123 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2003, 2006, Oracle and/or its affiliates. All rights reserved.
@@ -1572,8 +1553,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/rsa/RSASignature.java 
      public static final class SHA256withRSA extends RSASignature {
          public SHA256withRSA() {
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/rsa/SunRsaSignEntries.java openjdk/jdk/src/share/classes/sun/security/rsa/SunRsaSignEntries.java
---- openjdk.orig/jdk/src/share/classes/sun/security/rsa/SunRsaSignEntries.java	2014-07-14 04:24:45.000000000 +0100
-+++ openjdk/jdk/src/share/classes/sun/security/rsa/SunRsaSignEntries.java	2014-10-08 23:26:07.131607366 +0100
+--- openjdk.orig/jdk/src/share/classes/sun/security/rsa/SunRsaSignEntries.java	2013-08-21 20:33:03.348317196 +0100
++++ openjdk/jdk/src/share/classes/sun/security/rsa/SunRsaSignEntries.java	2014-12-24 19:58:20.004164123 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2003, 2006, Oracle and/or its affiliates. All rights reserved.
@@ -1609,8 +1590,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/rsa/SunRsaSignEntries.
          map.put("Alg.Alias.Signature.OID.1.2.840.113549.1.1.11", "SHA256withRSA");
  
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/x509/AlgorithmId.java openjdk/jdk/src/share/classes/sun/security/x509/AlgorithmId.java
---- openjdk.orig/jdk/src/share/classes/sun/security/x509/AlgorithmId.java	2014-10-08 23:21:44.739971495 +0100
-+++ openjdk/jdk/src/share/classes/sun/security/x509/AlgorithmId.java	2014-10-08 23:26:20.231788929 +0100
+--- openjdk.orig/jdk/src/share/classes/sun/security/x509/AlgorithmId.java	2014-12-24 19:57:29.027535128 +0000
++++ openjdk/jdk/src/share/classes/sun/security/x509/AlgorithmId.java	2014-12-24 19:58:20.004164123 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.
@@ -1710,8 +1691,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/x509/AlgorithmId.java 
          nameTable.put(sha384WithRSAEncryption_oid, "SHA384withRSA");
          nameTable.put(sha512WithRSAEncryption_oid, "SHA512withRSA");
 diff -Nru openjdk.orig/jdk/src/windows/classes/sun/security/mscapi/RSASignature.java openjdk/jdk/src/windows/classes/sun/security/mscapi/RSASignature.java
---- openjdk.orig/jdk/src/windows/classes/sun/security/mscapi/RSASignature.java	2014-07-14 04:24:44.000000000 +0100
-+++ openjdk/jdk/src/windows/classes/sun/security/mscapi/RSASignature.java	2014-10-08 23:26:07.131607366 +0100
+--- openjdk.orig/jdk/src/windows/classes/sun/security/mscapi/RSASignature.java	2013-08-21 20:32:57.876228625 +0100
++++ openjdk/jdk/src/windows/classes/sun/security/mscapi/RSASignature.java	2014-12-24 19:58:20.004164123 +0000
 @@ -49,6 +49,7 @@
   * following algorithm names:
   *
@@ -1734,8 +1715,8 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/security/mscapi/RSASignature.
          public MD5() {
              super("MD5");
 diff -Nru openjdk.orig/jdk/src/windows/classes/sun/security/mscapi/SunMSCAPI.java openjdk/jdk/src/windows/classes/sun/security/mscapi/SunMSCAPI.java
---- openjdk.orig/jdk/src/windows/classes/sun/security/mscapi/SunMSCAPI.java	2014-07-14 04:24:44.000000000 +0100
-+++ openjdk/jdk/src/windows/classes/sun/security/mscapi/SunMSCAPI.java	2014-10-08 23:26:07.131607366 +0100
+--- openjdk.orig/jdk/src/windows/classes/sun/security/mscapi/SunMSCAPI.java	2014-12-24 18:49:01.976433264 +0000
++++ openjdk/jdk/src/windows/classes/sun/security/mscapi/SunMSCAPI.java	2014-12-24 19:58:20.004164123 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2005, 2007, Oracle and/or its affiliates. All rights reserved.
@@ -1764,8 +1745,8 @@ diff -Nru openjdk.orig/jdk/src/windows/classes/sun/security/mscapi/SunMSCAPI.jav
              "sun.security.mscapi.Key");
          map.put("Signature.MD2withRSA SupportedKeyClasses",
 diff -Nru openjdk.orig/jdk/test/com/sun/crypto/provider/Cipher/RSA/TestOAEP.java openjdk/jdk/test/com/sun/crypto/provider/Cipher/RSA/TestOAEP.java
---- openjdk.orig/jdk/test/com/sun/crypto/provider/Cipher/RSA/TestOAEP.java	2014-07-14 04:24:44.000000000 +0100
-+++ openjdk/jdk/test/com/sun/crypto/provider/Cipher/RSA/TestOAEP.java	2014-10-08 23:26:07.135607422 +0100
+--- openjdk.orig/jdk/test/com/sun/crypto/provider/Cipher/RSA/TestOAEP.java	2013-08-21 20:32:58.220234193 +0100
++++ openjdk/jdk/test/com/sun/crypto/provider/Cipher/RSA/TestOAEP.java	2014-12-24 19:58:20.004164123 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2003, 2007, Oracle and/or its affiliates. All rights reserved.
@@ -1809,8 +1790,8 @@ diff -Nru openjdk.orig/jdk/test/com/sun/crypto/provider/Cipher/RSA/TestOAEP.java
          System.out.println("Testing OAEP with hash " + hashAlg + ", " + dataLength + " bytes");
          Cipher c = Cipher.getInstance("RSA/ECB/OAEPwith" + hashAlg + "andMGF1Padding", cp);
 diff -Nru openjdk.orig/jdk/test/com/sun/crypto/provider/Cipher/RSA/TestOAEPParameterSpec.java openjdk/jdk/test/com/sun/crypto/provider/Cipher/RSA/TestOAEPParameterSpec.java
---- openjdk.orig/jdk/test/com/sun/crypto/provider/Cipher/RSA/TestOAEPParameterSpec.java	2014-07-14 04:24:44.000000000 +0100
-+++ openjdk/jdk/test/com/sun/crypto/provider/Cipher/RSA/TestOAEPParameterSpec.java	2014-10-08 23:26:07.135607422 +0100
+--- openjdk.orig/jdk/test/com/sun/crypto/provider/Cipher/RSA/TestOAEPParameterSpec.java	2013-08-21 20:32:58.220234193 +0100
++++ openjdk/jdk/test/com/sun/crypto/provider/Cipher/RSA/TestOAEPParameterSpec.java	2014-12-24 19:58:20.004164123 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2003, 2007, Oracle and/or its affiliates. All rights reserved.
@@ -1827,8 +1808,8 @@ diff -Nru openjdk.orig/jdk/test/com/sun/crypto/provider/Cipher/RSA/TestOAEPParam
          status &= runTest("SHA-384", MGF1ParameterSpec.SHA384, p);
          status &= runTest("SHA-512", MGF1ParameterSpec.SHA512, p);
 diff -Nru openjdk.orig/jdk/test/com/sun/crypto/provider/Cipher/RSA/TestOAEPWithParams.java openjdk/jdk/test/com/sun/crypto/provider/Cipher/RSA/TestOAEPWithParams.java
---- openjdk.orig/jdk/test/com/sun/crypto/provider/Cipher/RSA/TestOAEPWithParams.java	2014-07-14 04:24:44.000000000 +0100
-+++ openjdk/jdk/test/com/sun/crypto/provider/Cipher/RSA/TestOAEPWithParams.java	2014-10-08 23:26:07.135607422 +0100
+--- openjdk.orig/jdk/test/com/sun/crypto/provider/Cipher/RSA/TestOAEPWithParams.java	2013-08-21 20:32:58.220234193 +0100
++++ openjdk/jdk/test/com/sun/crypto/provider/Cipher/RSA/TestOAEPWithParams.java	2014-12-24 19:58:20.004164123 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2003, 2007, Oracle and/or its affiliates. All rights reserved.
@@ -1850,8 +1831,8 @@ diff -Nru openjdk.orig/jdk/test/com/sun/crypto/provider/Cipher/RSA/TestOAEPWithP
      public static void main(String[] args) throws Exception {
          long start = System.currentTimeMillis();
 diff -Nru openjdk.orig/jdk/test/com/sun/crypto/provider/KeyGenerator/Test4628062.java openjdk/jdk/test/com/sun/crypto/provider/KeyGenerator/Test4628062.java
---- openjdk.orig/jdk/test/com/sun/crypto/provider/KeyGenerator/Test4628062.java	2014-07-14 04:24:44.000000000 +0100
-+++ openjdk/jdk/test/com/sun/crypto/provider/KeyGenerator/Test4628062.java	2014-10-08 23:26:07.135607422 +0100
+--- openjdk.orig/jdk/test/com/sun/crypto/provider/KeyGenerator/Test4628062.java	2013-08-21 20:32:58.228234324 +0100
++++ openjdk/jdk/test/com/sun/crypto/provider/KeyGenerator/Test4628062.java	2014-12-24 19:58:20.004164123 +0000
 @@ -23,7 +23,7 @@
  
  /*
@@ -1953,8 +1934,8 @@ diff -Nru openjdk.orig/jdk/test/com/sun/crypto/provider/KeyGenerator/Test4628062
      }
  }
 diff -Nru openjdk.orig/jdk/test/com/sun/crypto/provider/Mac/MacClone.java openjdk/jdk/test/com/sun/crypto/provider/Mac/MacClone.java
---- openjdk.orig/jdk/test/com/sun/crypto/provider/Mac/MacClone.java	2014-07-14 04:24:44.000000000 +0100
-+++ openjdk/jdk/test/com/sun/crypto/provider/Mac/MacClone.java	2014-10-08 23:26:07.135607422 +0100
+--- openjdk.orig/jdk/test/com/sun/crypto/provider/Mac/MacClone.java	2013-08-21 20:32:58.228234324 +0100
++++ openjdk/jdk/test/com/sun/crypto/provider/Mac/MacClone.java	2014-12-24 19:58:20.004164123 +0000
 @@ -28,15 +28,33 @@
   * @author Jan Luehe
   */
@@ -2030,8 +2011,8 @@ diff -Nru openjdk.orig/jdk/test/com/sun/crypto/provider/Mac/MacClone.java openjd
      }
  }
 diff -Nru openjdk.orig/jdk/test/com/sun/crypto/provider/Mac/MacKAT.java openjdk/jdk/test/com/sun/crypto/provider/Mac/MacKAT.java
---- openjdk.orig/jdk/test/com/sun/crypto/provider/Mac/MacKAT.java	2014-07-14 04:24:44.000000000 +0100
-+++ openjdk/jdk/test/com/sun/crypto/provider/Mac/MacKAT.java	2014-10-08 23:26:07.135607422 +0100
+--- openjdk.orig/jdk/test/com/sun/crypto/provider/Mac/MacKAT.java	2013-08-21 20:32:58.228234324 +0100
++++ openjdk/jdk/test/com/sun/crypto/provider/Mac/MacKAT.java	2014-12-24 19:58:20.004164123 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2003, 2007, Oracle and/or its affiliates. All rights reserved.
@@ -2112,8 +2093,8 @@ diff -Nru openjdk.orig/jdk/test/com/sun/crypto/provider/Mac/MacKAT.java openjdk/
          KeyGenerator.getInstance("HmacSHA384", p);
          KeyGenerator.getInstance("HmacSHA512", p);
 diff -Nru openjdk.orig/jdk/test/sun/security/pkcs11/ec/TestCurves.java openjdk/jdk/test/sun/security/pkcs11/ec/TestCurves.java
---- openjdk.orig/jdk/test/sun/security/pkcs11/ec/TestCurves.java	2014-07-14 04:24:44.000000000 +0100
-+++ openjdk/jdk/test/sun/security/pkcs11/ec/TestCurves.java	2014-10-08 23:26:07.135607422 +0100
+--- openjdk.orig/jdk/test/sun/security/pkcs11/ec/TestCurves.java	2013-08-21 20:32:58.012230826 +0100
++++ openjdk/jdk/test/sun/security/pkcs11/ec/TestCurves.java	2014-12-24 19:58:20.004164123 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2006, 2007, Oracle and/or its affiliates. All rights reserved.
@@ -2130,8 +2111,8 @@ diff -Nru openjdk.orig/jdk/test/sun/security/pkcs11/ec/TestCurves.java openjdk/j
              testSigning(p, "SHA384withECDSA", data, kp1, kp2);
              testSigning(p, "SHA512withECDSA", data, kp1, kp2);
 diff -Nru openjdk.orig/jdk/test/sun/security/pkcs11/MessageDigest/DigestKAT.java openjdk/jdk/test/sun/security/pkcs11/MessageDigest/DigestKAT.java
---- openjdk.orig/jdk/test/sun/security/pkcs11/MessageDigest/DigestKAT.java	2014-07-14 04:24:44.000000000 +0100
-+++ openjdk/jdk/test/sun/security/pkcs11/MessageDigest/DigestKAT.java	2014-10-08 23:26:07.135607422 +0100
+--- openjdk.orig/jdk/test/sun/security/pkcs11/MessageDigest/DigestKAT.java	2013-08-21 20:32:58.000230633 +0100
++++ openjdk/jdk/test/sun/security/pkcs11/MessageDigest/DigestKAT.java	2014-12-24 19:58:20.004164123 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
@@ -2153,8 +2134,8 @@ diff -Nru openjdk.orig/jdk/test/sun/security/pkcs11/MessageDigest/DigestKAT.java
          t("SHA-256", s("a"), "ca:97:81:12:ca:1b:bd:ca:fa:c2:31:b3:9a:23:dc:4d:a7:86:ef:f8:14:7c:4e:72:b9:80:77:85:af:ee:48:bb"),
          t("SHA-256", s("abc"), "ba:78:16:bf:8f:01:cf:ea:41:41:40:de:5d:ae:22:23:b0:03:61:a3:96:17:7a:9c:b4:10:ff:61:f2:00:15:ad"),
 diff -Nru openjdk.orig/jdk/test/sun/security/pkcs11/rsa/TestKeyPairGenerator.java openjdk/jdk/test/sun/security/pkcs11/rsa/TestKeyPairGenerator.java
---- openjdk.orig/jdk/test/sun/security/pkcs11/rsa/TestKeyPairGenerator.java	2014-07-14 04:24:44.000000000 +0100
-+++ openjdk/jdk/test/sun/security/pkcs11/rsa/TestKeyPairGenerator.java	2014-10-08 23:26:07.135607422 +0100
+--- openjdk.orig/jdk/test/sun/security/pkcs11/rsa/TestKeyPairGenerator.java	2013-08-21 20:32:58.024231021 +0100
++++ openjdk/jdk/test/sun/security/pkcs11/rsa/TestKeyPairGenerator.java	2014-12-24 19:58:20.004164123 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
@@ -2171,8 +2152,8 @@ diff -Nru openjdk.orig/jdk/test/sun/security/pkcs11/rsa/TestKeyPairGenerator.jav
          RSAPublicKey rsaKey = (RSAPublicKey)publicKey;
          if (rsaKey.getModulus().bitLength() > 512) {
 diff -Nru openjdk.orig/jdk/test/sun/security/pkcs11/rsa/TestSignatures.java openjdk/jdk/test/sun/security/pkcs11/rsa/TestSignatures.java
---- openjdk.orig/jdk/test/sun/security/pkcs11/rsa/TestSignatures.java	2014-07-14 04:24:44.000000000 +0100
-+++ openjdk/jdk/test/sun/security/pkcs11/rsa/TestSignatures.java	2014-10-08 23:26:07.135607422 +0100
+--- openjdk.orig/jdk/test/sun/security/pkcs11/rsa/TestSignatures.java	2013-08-21 20:32:58.024231021 +0100
++++ openjdk/jdk/test/sun/security/pkcs11/rsa/TestSignatures.java	2014-12-24 19:58:20.004164123 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
@@ -2189,8 +2170,8 @@ diff -Nru openjdk.orig/jdk/test/sun/security/pkcs11/rsa/TestSignatures.java open
          RSAPublicKey rsaKey = (RSAPublicKey)publicKey;
          if (rsaKey.getModulus().bitLength() > 512) {
 diff -Nru openjdk.orig/jdk/test/sun/security/pkcs11/Signature/TestRSAKeyLength.java openjdk/jdk/test/sun/security/pkcs11/Signature/TestRSAKeyLength.java
---- openjdk.orig/jdk/test/sun/security/pkcs11/Signature/TestRSAKeyLength.java	2014-07-14 04:24:44.000000000 +0100
-+++ openjdk/jdk/test/sun/security/pkcs11/Signature/TestRSAKeyLength.java	2014-10-08 23:26:07.135607422 +0100
+--- openjdk.orig/jdk/test/sun/security/pkcs11/Signature/TestRSAKeyLength.java	2013-08-21 20:32:58.012230826 +0100
++++ openjdk/jdk/test/sun/security/pkcs11/Signature/TestRSAKeyLength.java	2014-12-24 19:58:20.004164123 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
@@ -2208,8 +2189,8 @@ diff -Nru openjdk.orig/jdk/test/sun/security/pkcs11/Signature/TestRSAKeyLength.j
          KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA", p);
          kpg.initialize(512);
 diff -Nru openjdk.orig/jdk/test/sun/security/provider/MessageDigest/DigestKAT.java openjdk/jdk/test/sun/security/provider/MessageDigest/DigestKAT.java
---- openjdk.orig/jdk/test/sun/security/provider/MessageDigest/DigestKAT.java	2014-07-14 04:24:44.000000000 +0100
-+++ openjdk/jdk/test/sun/security/provider/MessageDigest/DigestKAT.java	2014-10-08 23:26:07.135607422 +0100
+--- openjdk.orig/jdk/test/sun/security/provider/MessageDigest/DigestKAT.java	2013-08-21 20:32:58.044231344 +0100
++++ openjdk/jdk/test/sun/security/provider/MessageDigest/DigestKAT.java	2014-12-24 19:58:20.004164123 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2003, 2005, Oracle and/or its affiliates. All rights reserved.
@@ -2240,8 +2221,8 @@ diff -Nru openjdk.orig/jdk/test/sun/security/provider/MessageDigest/DigestKAT.ja
          t("SHA-256", s("a"), "ca:97:81:12:ca:1b:bd:ca:fa:c2:31:b3:9a:23:dc:4d:a7:86:ef:f8:14:7c:4e:72:b9:80:77:85:af:ee:48:bb"),
          t("SHA-256", s("abc"), "ba:78:16:bf:8f:01:cf:ea:41:41:40:de:5d:ae:22:23:b0:03:61:a3:96:17:7a:9c:b4:10:ff:61:f2:00:15:ad"),
 diff -Nru openjdk.orig/jdk/test/sun/security/provider/MessageDigest/Offsets.java openjdk/jdk/test/sun/security/provider/MessageDigest/Offsets.java
---- openjdk.orig/jdk/test/sun/security/provider/MessageDigest/Offsets.java	2014-07-14 04:24:44.000000000 +0100
-+++ openjdk/jdk/test/sun/security/provider/MessageDigest/Offsets.java	2014-10-08 23:26:07.135607422 +0100
+--- openjdk.orig/jdk/test/sun/security/provider/MessageDigest/Offsets.java	2013-08-21 20:32:58.044231344 +0100
++++ openjdk/jdk/test/sun/security/provider/MessageDigest/Offsets.java	2014-12-24 19:58:20.004164123 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
@@ -2258,8 +2239,8 @@ diff -Nru openjdk.orig/jdk/test/sun/security/provider/MessageDigest/Offsets.java
          test("SHA-384", 0, 128, 0, 256);
          test("SHA-512", 0, 128, 0, 256);
 diff -Nru openjdk.orig/jdk/test/sun/security/provider/MessageDigest/TestSHAClone.java openjdk/jdk/test/sun/security/provider/MessageDigest/TestSHAClone.java
---- openjdk.orig/jdk/test/sun/security/provider/MessageDigest/TestSHAClone.java	2014-07-14 04:24:44.000000000 +0100
-+++ openjdk/jdk/test/sun/security/provider/MessageDigest/TestSHAClone.java	2014-10-08 23:26:07.135607422 +0100
+--- openjdk.orig/jdk/test/sun/security/provider/MessageDigest/TestSHAClone.java	2013-08-21 20:32:58.052231474 +0100
++++ openjdk/jdk/test/sun/security/provider/MessageDigest/TestSHAClone.java	2014-12-24 19:58:20.008164172 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
@@ -2286,8 +2267,8 @@ diff -Nru openjdk.orig/jdk/test/sun/security/provider/MessageDigest/TestSHAClone
  
      private static byte[] input1 = {
 diff -Nru openjdk.orig/jdk/test/sun/security/rsa/TestKeyPairGenerator.java openjdk/jdk/test/sun/security/rsa/TestKeyPairGenerator.java
---- openjdk.orig/jdk/test/sun/security/rsa/TestKeyPairGenerator.java	2014-07-14 04:24:44.000000000 +0100
-+++ openjdk/jdk/test/sun/security/rsa/TestKeyPairGenerator.java	2014-10-08 23:26:07.135607422 +0100
+--- openjdk.orig/jdk/test/sun/security/rsa/TestKeyPairGenerator.java	2013-08-21 20:32:58.088232056 +0100
++++ openjdk/jdk/test/sun/security/rsa/TestKeyPairGenerator.java	2014-12-24 19:58:20.008164172 +0000
 @@ -23,7 +23,7 @@
  
  /**
@@ -2306,8 +2287,8 @@ diff -Nru openjdk.orig/jdk/test/sun/security/rsa/TestKeyPairGenerator.java openj
          RSAPublicKey rsaKey = (RSAPublicKey)publicKey;
          if (rsaKey.getModulus().bitLength() > 512) {
 diff -Nru openjdk.orig/jdk/test/sun/security/rsa/TestSignatures.java openjdk/jdk/test/sun/security/rsa/TestSignatures.java
---- openjdk.orig/jdk/test/sun/security/rsa/TestSignatures.java	2014-07-14 04:24:44.000000000 +0100
-+++ openjdk/jdk/test/sun/security/rsa/TestSignatures.java	2014-10-08 23:26:07.135607422 +0100
+--- openjdk.orig/jdk/test/sun/security/rsa/TestSignatures.java	2013-08-21 20:32:58.088232056 +0100
++++ openjdk/jdk/test/sun/security/rsa/TestSignatures.java	2014-12-24 19:58:20.008164172 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.

@@ -345,7 +345,6 @@ ICEDTEA_PATCHES = \
 	patches/nomotif-mtoolkit.patch \
 	patches/alt-jar.patch \
 	patches/jdk-use-ssize_t.patch \
-	patches/clean-crypto.patch \
 	patches/arch.patch \
 	patches/lc_ctype.patch \
 	patches/xjc.patch \
@@ -618,8 +617,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7106773-512_bits_rsa.patch \
 	patches/pr1904-icedtea_and_distro_versioning.patch \
 	patches/openjdk/8017173-xml_cipher_rsa_oaep_cant_be_instantiated.patch \
-	patches/openjdk/7122142-annotation_race_condition.patch \
-	patches/openjdk/7161796-wrong_fetch_in_fetch_static_field.patch \
 	patches/openjdk/8000897-use_corresponding_digest_length.patch
 
 if WITH_RHINO
@@ -741,6 +738,12 @@ if !WITH_PAX
 ICEDTEA_ECJ_PATCHES += patches/ecj/no-test_gamma.patch
 endif
 
+# If date parsing bug is present, drop Lithuania and Latvia EUR transition
+# dates as they are already in the past anyway.
+if CP64174
+ICEDTEA_ECJ_PATCHES += patches/ecj/pr64174.patch
+endif
+
 ICEDTEA_ECJ_PATCHES += $(DISTRIBUTION_ECJ_PATCHES)
 
 # OpenJDK build environment.
@@ -818,7 +821,8 @@ ICEDTEA_ENV = \
 	STATIC_CXX="false" \
 	BUILD_GCC=gcc$(GCC_SUFFIX) \
 	BUILD_CXX=g++$(GCC_SUFFIX) \
-	COMPILER_WARNINGS_FATAL="$(WERROR_STATUS)"
+	COMPILER_WARNINGS_FATAL="$(WERROR_STATUS)" \
+	UNLIMITED_CRYPTO="true"
 
 if ENABLE_CACAO
 ICEDTEA_ENV += \
