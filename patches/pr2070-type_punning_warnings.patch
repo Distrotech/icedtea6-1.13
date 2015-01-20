@@ -1,0 +1,36 @@
+# HG changeset patch
+# User andrew
+# Date 1415202016 0
+#      Wed Nov 05 15:40:16 2014 +0000
+# Node ID e4aec8a11c8a1ee10edc85d5f0c62119e86aca46
+# Parent  0af95754ffc5d63e2eeb472e3e87e8d8b7ed3048
+PR2070: Type-punning warnings still evident on RHEL 5
+Summary: Add -fno-strict-aliasing to the whole of sun/font and to waiters.cpp
+
+diff -r 0af95754ffc5 -r e4aec8a11c8a make/mkdemo/jvmti/waiters/Makefile
+--- openjdk/jdk/make/mkdemo/jvmti/waiters/Makefile	Tue Feb 26 11:12:40 2013 -0800
++++ openjdk/jdk/make/mkdemo/jvmti/waiters/Makefile	Wed Nov 05 15:40:16 2014 +0000
+@@ -41,3 +41,7 @@
+ #
+ include $(BUILDDIR)/common/Demo.gmk
+ 
++# Turn off aliasing with GCC
++ifeq ($(PLATFORM), linux)
++  CXXFLAGS += -fno-strict-aliasing
++endif
+diff -r 0af95754ffc5 -r e4aec8a11c8a make/sun/font/Makefile
+--- openjdk/jdk/make/sun/font/Makefile	Tue Feb 26 11:12:40 2013 -0800
++++ openjdk/jdk/make/sun/font/Makefile	Wed Nov 05 15:40:16 2014 +0000
+@@ -94,10 +94,9 @@
+ 
+ endif # PLATFORM
+ 
+-# Turn off aliasing with GCC for ExtensionSubtables.cpp
++# Turn off aliasing with GCC
+ ifeq ($(PLATFORM), linux)
+-  CXXFLAGS += $(CXXFLAGS_$(@F))
+-  CXXFLAGS_ExtensionSubtables.o = -fno-strict-aliasing
++  CXXFLAGS += -fno-strict-aliasing
+ endif
+ 
+ # Turn on infinality rendering support when requested

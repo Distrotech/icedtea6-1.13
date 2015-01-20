@@ -1,0 +1,20 @@
+# HG changeset patch
+# User andrew
+# Date 1379536490 -3600
+#      Wed Sep 18 21:34:50 2013 +0100
+# Node ID 034276a67ecac35b850d90f0746de1bee471a255
+# Parent  1bb9fd504ded29203baab49faf18b0d16f87dba9
+Cast should use same type as GCDrainStackTargetSize (uintx).
+
+diff -r 1bb9fd504ded -r 034276a67eca src/share/vm/gc_implementation/g1/concurrentMark.cpp
+--- openjdk/hotspot/src/share/vm/gc_implementation/g1/concurrentMark.cpp	Wed Sep 11 16:55:12 2013 +0100
++++ openjdk/hotspot/src/share/vm/gc_implementation/g1/concurrentMark.cpp	Wed Sep 18 21:34:50 2013 +0100
+@@ -3632,7 +3632,7 @@
+   // of things to do) or totally (at the very end).
+   size_t target_size;
+   if (partially) {
+-    target_size = MIN2((size_t)_task_queue->max_elems()/3, GCDrainStackTargetSize);
++    target_size = MIN2((uintx)_task_queue->max_elems()/3, GCDrainStackTargetSize);
+   } else {
+     target_size = 0;
+   }

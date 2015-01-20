@@ -162,12 +162,18 @@ New in release 1.13.6 (2015-01-XX):
   - S8062807: Exporting RMI objects fails when run under restrictive SecurityManager
   - S8064560: (tz) Support tzdata2014j
 * Backports
-  - S8000897, RH1155012: VM crash in CompileBroker
+  - S8000897, PR2173, RH1155012: VM crash in CompileBroker
+  - S8020190, PR2174, RH1176718: Fatal: Bug in native code: jfieldID must match object
+  - S8028623, PR2177, RH1168693: SA: hash codes in SymbolTable mismatching java_lang_String::hash_code for extended characters.
+  - S8061785, PR2177: [TEST_BUG] serviceability/sa/jmap-hashcode/Test8028623.java has utf8 character corrupted by earlier merge
 * Bug fixes
   - PR1831: Drop version requirement for LCMS 2
   - PR1832, RH1022017: Report elliptic curves supported by NSS, not the SunEC library
   - PR2033: patches/ecj/jaxws-getdtdtype.patch no longer applies since removal of JAXWS drop
   - PR2062: Unset OS before running OpenJDK build
+  - PR2070: Type-punning warnings still evident on RHEL 5
+  - PR2082: Cast should use same type as GCDrainStackTargetSize (uintx).
+  - PR2096, RH1163501: 2048-bit DH upper bound too small for Fedora infrastructure
   - PR2125: Synchronise elliptic curves in sun.security.ec.NamedCurve with those listed by NSS
 
 New in release 1.13.5 (2014-10-14):

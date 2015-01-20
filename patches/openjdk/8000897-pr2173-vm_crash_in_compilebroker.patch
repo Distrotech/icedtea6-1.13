@@ -2,14 +2,14 @@
 # User valeriep
 # Date 1361905960 28800
 #      Tue Feb 26 11:12:40 2013 -0800
-# Node ID 5ffba58b541fb00dfd38a5ad5bc3ac7d8156f03f
-# Parent  210fb90ee33ad4785f949fdbae4b0e75f73f576c
-8000897: VM crash in CompileBroker
+# Node ID 0af95754ffc5d63e2eeb472e3e87e8d8b7ed3048
+# Parent  f94c09f6a10e9ba492b8ad2fc6fe0900bca4374f
+8000897, PR2173, RH1155012: VM crash in CompileBroker
 Summary: Fixed to use the corresponding digest length when generating output.
 Reviewed-by: mullan
 
-diff -r 210fb90ee33a -r 5ffba58b541f src/share/classes/sun/security/provider/SHA2.java
---- openjdk/jdk/src/share/classes/sun/security/provider/SHA2.java	Wed Feb 13 10:40:31 2013 +0000
+diff -r f94c09f6a10e -r 0af95754ffc5 src/share/classes/sun/security/provider/SHA2.java
+--- openjdk/jdk/src/share/classes/sun/security/provider/SHA2.java	Thu Oct 16 17:30:05 2014 +0100
 +++ openjdk/jdk/src/share/classes/sun/security/provider/SHA2.java	Tue Feb 26 11:12:40 2013 -0800
 @@ -1,5 +1,5 @@
  /*

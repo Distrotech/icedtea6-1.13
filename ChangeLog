@@ -1,5 +1,22 @@
 2015-01-19  Andrew John Hughes  <gnu.andrew@member.fsf.org>
 
+	* patches/openjdk/8000897-use_corresponding_digest_length.patch:
+	Moved to...
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add new patches.
+	* NEWS: Updated.
+	* patches/openjdk/8000897-pr2173-vm_crash_in_compilebroker.patch:
+	...here.
+	* patches/openjdk/8020190-pr2174-jfieldid_must_match_object.patch,
+	* patches/openjdk/8028623-pr2177-hash_code_mismatch_for_extended_characters.patch,
+	* patches/openjdk/8061785-pr2177-test_bug-corrupted_utf8_character.patch,
+	* patches/pr2070-type_punning_warnings.patch,
+	* patches/pr2082-s390_type_fixes.patch,
+	* patches/pr2096-4096-bit_dh.patch:
+	New backports from IcedTea 2.x.
+
+2015-01-19  Andrew John Hughes  <gnu.andrew@member.fsf.org>
+
 	* patches/openjdk/6541350-tz_display_names_l10n.patch,
 	* patches/openjdk/6706974-krb5_test_infrastructure.patch,
 	* patches/openjdk/6761072-new_krb5_tests_fail_on_multiple_platforms.patch,

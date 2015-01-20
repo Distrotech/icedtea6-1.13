@@ -1,0 +1,36 @@
+# HG changeset patch
+# User kevinw
+# Date 1416851563 28800
+#      Mon Nov 24 09:52:43 2014 -0800
+# Node ID 2b280bce222a48a7e1b961f6eeb9a9375b50483d
+# Parent  94b076895e5dcb781379b85d7fbe522cd3347dfa
+8061785, PR2177: [TEST_BUG] serviceability/sa/jmap-hashcode/Test8028623.java has utf8 character corrupted by earlier merge
+Reviewed-by: poonam
+
+diff -r 94b076895e5d -r 2b280bce222a test/serviceability/sa/jmap-hashcode/Test8028623.java
+--- openjdk/hotspot/test/serviceability/sa/jmap-hashcode/Test8028623.java	Tue Oct 21 11:39:21 2014 -0700
++++ openjdk/hotspot/test/serviceability/sa/jmap-hashcode/Test8028623.java	Mon Nov 24 09:52:43 2014 -0800
+@@ -26,6 +26,8 @@
+  * @bug 8028623
+  * @summary Test hashing of extended characters in Serviceability Agent.
+  * @library /testlibrary
++ * @compile -encoding utf8 Test8028623.java
++ * @run main Test8028623
+  */
+ 
+ import com.oracle.java.testlibrary.JDKToolLauncher;
+@@ -36,12 +38,12 @@
+ 
+ public class Test8028623 {
+ 
+-  public static int Ã = 1;
++  public static int \u00CB = 1;
+   public static String dumpFile = "heap.out";
+ 
+   public static void main (String[] args) {
+ 
+-    System.out.println(Ã);
++    System.out.println(\u00CB);
+ 
+     try {
+         int pid = ProcessTools.getProcessId();

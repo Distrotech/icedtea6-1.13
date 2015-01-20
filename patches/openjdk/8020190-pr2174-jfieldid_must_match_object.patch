@@ -1,0 +1,80 @@
+# HG changeset patch
+# User prr
+# Date 1380312407 25200
+#      Fri Sep 27 13:06:47 2013 -0700
+# Node ID 993c08c0fcc7c6f404f708728679e6e707a95f8c
+# Parent  6a11347bf5dcf44fc72ed83b451b89bbc16aea03
+8020190, PR2174, RH1176718: Fatal: Bug in native code: jfieldID must match object
+Reviewed-by: jgodinez, vadim
+
+diff -r 7fc691671bf0 src/share/classes/sun/font/FreetypeFontScaler.java
+--- openjdk/jdk/src/share/classes/sun/font/FreetypeFontScaler.java	Tue Jan 20 03:06:20 2015 +0000
++++ openjdk/jdk/src/share/classes/sun/font/FreetypeFontScaler.java	Tue Jan 20 05:06:26 2015 +0000
+@@ -164,7 +164,7 @@
+ 
+     public synchronized void dispose() {
+         if (nativeScaler != 0L) {
+-            disposeNativeScaler(nativeScaler);
++            disposeNativeScaler(font.get(), nativeScaler);
+             nativeScaler = 0L;
+         }
+     }
+@@ -185,7 +185,7 @@
+ 
+     synchronized int getGlyphCode(char charCode) throws FontScalerException {
+         if (nativeScaler != 0L) {
+-            return getGlyphCodeNative(nativeScaler, charCode);
++            return getGlyphCodeNative(font.get(), nativeScaler, charCode);
+         }
+         return FontManager.getNullScaler().getGlyphCode(charCode);
+     }
+@@ -239,9 +239,9 @@
+ 
+     private native long getLayoutTableCacheNative(long pScaler);
+ 
+-    private native void disposeNativeScaler(long pScaler);
++    private native void disposeNativeScaler(Font2D font2D, long pScaler);
+ 
+-    private native int getGlyphCodeNative(long pScaler, char charCode);
++    private native int getGlyphCodeNative(Font2D font, long pScaler, char charCode);
+     private native int getNumGlyphsNative(long pScaler);
+     private native int getMissingGlyphCodeNative(long pScaler);
+ 
+diff -r 7fc691671bf0 src/share/native/sun/font/freetypeScaler.c
+--- openjdk/jdk/src/share/native/sun/font/freetypeScaler.c	Tue Jan 20 03:06:20 2015 +0000
++++ openjdk/jdk/src/share/native/sun/font/freetypeScaler.c	Tue Jan 20 05:06:26 2015 +0000
+@@ -884,13 +884,13 @@
+  */
+ JNIEXPORT void JNICALL
+ Java_sun_font_FreetypeFontScaler_disposeNativeScaler(
+-        JNIEnv *env, jobject scaler, jlong pScaler) {
++        JNIEnv *env, jobject scaler, jobject font2D, jlong pScaler) {
+     FTScalerInfo* scalerInfo = (FTScalerInfo *) jlong_to_ptr(pScaler);
+     
+     /* Freetype functions *may* cause callback to java
+        that can use cached values. Make sure our cache is up to date. 
+        NB: scaler context is not important at this point, can use NULL. */
+-    int errCode = setupFTContext(env, scaler, scalerInfo, NULL);
++    int errCode = setupFTContext(env, font2D, scalerInfo, NULL);
+     if (errCode) {
+         return;
+     }
+@@ -939,7 +939,8 @@
+  */
+ JNIEXPORT jint JNICALL
+ Java_sun_font_FreetypeFontScaler_getGlyphCodeNative(
+-        JNIEnv *env, jobject scaler, jlong pScaler, jchar charCode) {
++        JNIEnv *env, jobject scaler,
++        jobject font2D, jlong pScaler, jchar charCode) {
+ 
+     FTScalerInfo* scalerInfo = (FTScalerInfo *) jlong_to_ptr(pScaler);
+     int errCode;
+@@ -952,7 +953,7 @@
+     /* Freetype functions *may* cause callback to java
+        that can use cached values. Make sure our cache is up to date.
+        Scaler context is not important here, can use NULL. */
+-    errCode = setupFTContext(env, scaler, scalerInfo, NULL);
++    errCode = setupFTContext(env, font2D, scalerInfo, NULL);
+     if (errCode) {
+         return 0;
+     }
