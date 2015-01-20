@@ -659,6 +659,7 @@ ICEDTEA_PATCHES += patches/hotspot/hs23/systemtap.patch \
 endif
 
 if ENABLE_NSS
+ICEDTEA_PATCHES += patches/rh1022017.patch
 NSS_PATCHES = patches/nss-config.patch
 else
 NSS_PATCHES = patches/nss-not-enabled-config.patch
