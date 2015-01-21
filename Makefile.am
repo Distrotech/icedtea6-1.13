@@ -601,7 +601,13 @@ ICEDTEA_PATCHES = \
 	patches/pr2070-type_punning_warnings.patch \
 	patches/pr2082-s390_type_fixes.patch \
 	patches/pr2096-4096-bit_dh.patch \
-	patches/pr2179-avoid_x86_workaround_on_zero.patch
+	patches/pr2179-avoid_x86_workaround_on_zero.patch \
+	patches/openjdk/6730740-pr2186-64-bit_breakage_in_6729881.patch \
+	patches/openjdk/oj51-pr2187-sync_4873188.patch \
+	patches/openjdk/7031830-pr2183-bad_record_mac_failure.patch \
+	patches/openjdk/oj52-pr2185-no_serbia_montenegro.patch \
+	patches/openjdk/oj53-pr2181-strict_aliasing_on_ppc32.patch \
+	patches/openjdk/oj54-pr2182-6911104_reintroduces_test_fragment.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \

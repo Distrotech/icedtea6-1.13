@@ -1,0 +1,15 @@
+diff -r 7fc691671bf0 test/sun/tools/common/CommonSetup.sh
+--- openjdk/jdk/test/sun/tools/common/CommonSetup.sh	Tue Jan 20 03:06:20 2015 +0000
++++ openjdk/jdk/test/sun/tools/common/CommonSetup.sh	Wed Jan 21 01:23:27 2015 +0000
+@@ -111,11 +111,6 @@
+     PS=";"
+     isWindows=true
+     ;;
+-  CYGWIN* )
+-    PS=";"
+-    OS="Windows"
+-    isCygwin=true
+-    ;;
+   * )
+     isUnknownOS=true
+     ;;

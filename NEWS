@@ -164,6 +164,12 @@ New in release 1.13.6 (2015-01-20):
   - S8062807: Exporting RMI objects fails when run under restrictive SecurityManager
   - S8064560: (tz) Support tzdata2014j
 * Backports
+  - OJ51, PR2187: Sync patch for 4873188 with 7 version
+  - OJ52, PR2185: Application of 6786276 introduces compatibility issue
+  - OJ53, PR2181: strict-aliasing warnings issued on PPC32
+  - OJ54, PR2182: 6911104 reintroduces test fragment removed in existing 6964018 backport
+  - S6730740, PR2186: Fix for 6729881 has apparently broken several 64 bit tests:  "Bad address"
+  - S7031830, PR2183: bad_record_mac failure on TLSv1.2 enabled connection with SSLEngine
   - S8000897, PR2173, RH1155012: VM crash in CompileBroker
   - S8020190, PR2174, RH1176718: Fatal: Bug in native code: jfieldID must match object
   - S8028623, PR2177, RH1168693: SA: hash codes in SymbolTable mismatching java_lang_String::hash_code for extended characters.
