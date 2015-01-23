@@ -646,6 +646,11 @@ ICEDTEA_PATCHES += patches/hotspot/hs23/systemtap.patch \
 	patches/hotspot/hs23/systemtap-alloc-size-workaround.patch
 endif
 
+if BUILD_JAMVM
+ICEDTEA_PATCHES += \
+	patches/jamvm/pr2190-find_class_from_caller.patch
+endif
+
 if ENABLE_NSS
 ICEDTEA_PATCHES += patches/rh1022017.patch
 NSS_PATCHES = patches/nss-config.patch
