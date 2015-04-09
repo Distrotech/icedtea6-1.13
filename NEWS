@@ -12,13 +12,49 @@ JEPX - http://openjdk.java.net/jeps/X
 
 CVE-XXXX-YYYY: http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
-New in release 1.13.7 (2015-04-XX):
+New in release 1.13.7 (2015-04-12):
 
- * Backports
+* Security fixes
+  - S8059064: Better G1 log caching
+  - S8060461: Fix for JDK-8042609 uncovers additional issue
+  - S8064601: Improve jar file handling
+  - S8065286: Fewer subtable substitutions
+  - S8065291: Improved font lookups
+  - S8066479: Better certificate chain validation
+  - S8067050: Better font consistency checking
+  - S8067684: Better font substitutions
+  - S8067699: Better glyph storage
+  - S8068320: Limit applet requests
+  - S8068720: Better certificate options checking
+  - S8069198: Upgrade image library
+  - S8071726: Better RSA optimizations
+  - S8071818: Better vectorization on SPARC
+  - S8071931: Return of the phantom menace
+* Import of OpenJDK6 b35
+  - OJ55: Synchronise whitespace in TimeZoneNames files with OpenJDK 7 versions.
+  - OJ56: Update 3rd party readme and license for LibPNG v 1.6.16
+  - OJ57: Remove mistakenly added patching fragment
+  - S6672144: HttpURLConnection.getInputStream sends POST request after failed chunked
+  - S6989721: awt native code compiler warnings
+  - S7088287: libpng need to be updated.
+  - S7090424: TestGlyphVectorLayout failed automately with java.lang.StackOverflowError
+  - S7170655: Frame size does not follow font size change with XToolkit
+  - S7176479: G1: JVM crashes on T5-8 system with 1.5 TB heap
+  - S8019623: Lack of synchronization in AppContext.getAppContext()
+  - S8040790: [TEST_BUG] tools/javac/innerClassFile/Driver.sh fails to cleanup files after it
+  - S8043123: Hard crash with access violation exception when blitting to very large image
+  - S8051359: JPopupMenu creation in headless mode with JDK9b23 causes NPE
+  - S8064454: [TEST_BUG] Test tools/javac/innerClassFile/Driver.sh fails for Mac and Linux
+  - S8065072: sun/net/www/http/HttpClient/StreamingRetry.java failed intermittently
+  - S8065709: Deadlock in awt/logging apparently introduced by 8019623
+  - S8072042: (tz) Support tzdata2015a
+  - S8074662: Update 3rd party readme and license for LibPNG v 1.6.16
+  - S8075211: [TEST_BUG] Test sun/net/www/http/HttpClient/StreamingRetry.java fails with compilation error
+* Backports
   - S6584008, PR2195, RH1173326: jvmtiStringPrimitiveCallback should not be invoked when string value is null
   - S7199862, PR2198: Make sure that a connection is still alive when retrieved from KeepAliveCache in certain cases
   - S8074312, PR2255: Enable hotspot builds on Linux 4.x
- * Bug fixes
+* Bug fixes
   - PR2197: jhat man page has broken URL
   - PR2201: Support giflib 5.1.0
   - PR2211: DGifCloseFile call should check the return value, not the error code, for failure
