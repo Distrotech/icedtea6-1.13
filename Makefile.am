@@ -602,12 +602,6 @@ ICEDTEA_PATCHES = \
 	patches/pr2082-s390_type_fixes.patch \
 	patches/pr2096-4096-bit_dh.patch \
 	patches/pr2179-avoid_x86_workaround_on_zero.patch \
-	patches/openjdk/6730740-pr2186-64-bit_breakage_in_6729881.patch \
-	patches/openjdk/oj51-pr2187-sync_4873188.patch \
-	patches/openjdk/7031830-pr2183-bad_record_mac_failure.patch \
-	patches/openjdk/oj52-pr2185-no_serbia_montenegro.patch \
-	patches/openjdk/oj53-pr2181-strict_aliasing_on_ppc32.patch \
-	patches/openjdk/oj54-pr2182-6911104_reintroduces_test_fragment.patch \
 	patches/openjdk/6584008-pr2195-jvmtistringprimitivecallback_null_string.patch \
 	patches/openjdk/7199862-pr2198-ensure_cache_connection_still_alive.patch \
 	patches/openjdk/8074312-pr2255-support_linux_4.patch \
