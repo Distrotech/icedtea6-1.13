@@ -595,9 +595,6 @@ ICEDTEA_PATCHES = \
 	patches/pr1904-icedtea_and_distro_versioning.patch \
 	patches/openjdk/8017173-xml_cipher_rsa_oaep_cant_be_instantiated.patch \
 	patches/openjdk/8000897-pr2173-vm_crash_in_compilebroker.patch \
-	patches/openjdk/8020190-pr2174-jfieldid_must_match_object.patch \
-	patches/openjdk/8028623-pr2177-hash_code_mismatch_for_extended_characters.patch \
-	patches/openjdk/8061785-pr2177-test_bug-corrupted_utf8_character.patch \
 	patches/pr2070-type_punning_warnings.patch \
 	patches/pr2082-s390_type_fixes.patch \
 	patches/pr2096-4096-bit_dh.patch \
