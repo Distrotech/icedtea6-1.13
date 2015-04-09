@@ -1,0 +1,52 @@
+# HG changeset patch
+# User andrew
+# Date 1423073807 0
+#      Wed Feb 04 18:16:47 2015 +0000
+# Node ID a7b145722afff8d0677f991b43b35d1e6ec9d23a
+# Parent  6e761a451703610814e2099ba709dc22725e10d0
+PR2196, RH1164762: jhat man page has broken URL
+Summary: Fix link to HPROF web page to point to version for Oracle JDK 7
+Contributed-by: jvanek@redhat.com
+
+diff -r 6e761a451703 -r a7b145722aff src/linux/doc/man/jhat.1
+--- openjdk/jdk/src/linux/doc/man/jhat.1	Wed Feb 04 16:52:13 2015 +0000
++++ openjdk/jdk/src/linux/doc/man/jhat.1	Wed Feb 04 18:16:47 2015 +0000
+@@ -77,7 +77,7 @@
+ .na
+ \f2hprof\fP @
+ .fi
+-http://java.sun.com/developer/technicalArticles/Programming/HPROF.html. 
++https://docs.oracle.com/javase/7/docs/technotes/samples/hprof.html.
+ .RE
+ 
+ .LP
+@@ -134,7 +134,7 @@
+ .na
+ \f2hprof \- Heap and CPU profiling tool\fP @
+ .fi
+-http://java.sun.com/developer/technicalArticles/Programming/HPROF.html 
++https://docs.oracle.com/javase/7/docs/technotes/samples/hprof.html.
+ .RE
+ 
+ .LP
+diff -r 6e761a451703 -r a7b145722aff src/solaris/doc/sun/man/man1/jhat.1
+--- openjdk/jdk/src/solaris/doc/sun/man/man1/jhat.1	Wed Feb 04 16:52:13 2015 +0000
++++ openjdk/jdk/src/solaris/doc/sun/man/man1/jhat.1	Wed Feb 04 18:16:47 2015 +0000
+@@ -77,7 +77,7 @@
+ .na
+ \f2hprof\fP @
+ .fi
+-http://java.sun.com/developer/technicalArticles/Programming/HPROF.html. 
++https://docs.oracle.com/javase/7/docs/technotes/samples/hprof.html.
+ .RE
+ 
+ .LP
+@@ -134,7 +134,7 @@
+ .na
+ \f2hprof \- Heap and CPU profiling tool\fP @
+ .fi
+-http://java.sun.com/developer/technicalArticles/Programming/HPROF.html 
++https://docs.oracle.com/javase/7/docs/technotes/samples/hprof.html.
+ .RE
+ 
+ .LP

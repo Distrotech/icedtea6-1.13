@@ -1,0 +1,21 @@
+# HG changeset patch
+# User andrew
+# Date 1423585468 0
+#      Tue Feb 10 16:24:28 2015 +0000
+# Node ID 8e740701950bbfd435a8bbe1a39694bf8096d96e
+# Parent  f8795ed79ba60e5ae655b74ebc27228597419b71
+PR2225: giflib 5.1 conditional excludes 6.0, 7.0, etc.
+Summary: Future-proof the giflib 5.1 support
+
+diff -r f8795ed79ba6 -r 8e740701950b src/share/native/sun/awt/splashscreen/splashscreen_gif.c
+--- openjdk/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c	Thu Feb 05 16:11:10 2015 +0000
++++ openjdk/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c	Tue Feb 10 16:24:28 2015 +0000
+@@ -310,7 +310,7 @@
+     free(pBitmapBits);
+     free(pOldBitmapBits);
+ 
+-#if GIFLIB_MAJOR >= 5 && GIFLIB_MINOR >= 1
++#if GIFLIB_MAJOR > 5 || (GIFLIB_MAJOR == 5 && GIFLIB_MINOR >= 1)
+     if (DGifCloseFile(gif, NULL) == GIF_ERROR)
+         return 0;
+ #else

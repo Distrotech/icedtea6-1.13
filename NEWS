@@ -14,6 +14,16 @@ CVE-XXXX-YYYY: http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
 New in release 1.13.7 (2015-04-XX):
 
+ * Backports
+  - S6584008, PR2195, RH1173326: jvmtiStringPrimitiveCallback should not be invoked when string value is null
+  - S7199862, PR2198: Make sure that a connection is still alive when retrieved from KeepAliveCache in certain cases
+  - S8074312, PR2255: Enable hotspot builds on Linux 4.x
+ * Bug fixes
+  - PR2197: jhat man page has broken URL
+  - PR2201: Support giflib 5.1.0
+  - PR2211: DGifCloseFile call should check the return value, not the error code, for failure
+  - PR2226: giflib 5.1 conditional excludes 6.0, 7.0, etc.
+
 New in release 1.13.6 (2015-01-23):
 
 * Security fixes

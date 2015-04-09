@@ -1,0 +1,27 @@
+# HG changeset patch
+# User andrew
+# Date 1423074043 0
+#      Wed Feb 04 18:20:43 2015 +0000
+# Node ID 1d647255f65b9561d9821b30b2eb6fd18fad6bad
+# Parent  a7b145722afff8d0677f991b43b35d1e6ec9d23a
+PR2200: Support giflib 5.1.0
+Contributed-by: fridrich.strba@suse.com
+
+diff -r a7b145722aff -r 1d647255f65b src/share/native/sun/awt/splashscreen/splashscreen_gif.c
+--- openjdk/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c	Wed Feb 04 18:16:47 2015 +0000
++++ openjdk/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c	Wed Feb 04 18:20:43 2015 +0000
+@@ -310,7 +310,14 @@
+     free(pBitmapBits);
+     free(pOldBitmapBits);
+ 
++#if GIFLIB_MAJOR >= 5 && GIFLIB_MINOR >= 1
++    int error = 0;
++    DGifCloseFile(gif, &error);
++    if (error)
++        return 0;
++#else
+     DGifCloseFile(gif);
++#endif
+ 
+     return 1;
+ }

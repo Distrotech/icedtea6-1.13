@@ -607,7 +607,14 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7031830-pr2183-bad_record_mac_failure.patch \
 	patches/openjdk/oj52-pr2185-no_serbia_montenegro.patch \
 	patches/openjdk/oj53-pr2181-strict_aliasing_on_ppc32.patch \
-	patches/openjdk/oj54-pr2182-6911104_reintroduces_test_fragment.patch
+	patches/openjdk/oj54-pr2182-6911104_reintroduces_test_fragment.patch \
+	patches/openjdk/6584008-pr2195-jvmtistringprimitivecallback_null_string.patch \
+	patches/openjdk/7199862-pr2198-ensure_cache_connection_still_alive.patch \
+	patches/openjdk/8074312-pr2255-support_linux_4.patch \
+	patches/pr2197-jhat_man_page_url.patch \
+	patches/pr2201-support_giflib_5.1.patch \
+	patches/pr2211-check_dgifclosefile_return.patch \
+	patches/pr2226-support_future_giflib_6_and_up.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \

@@ -1,0 +1,30 @@
+# HG changeset patch
+# User aph
+# Date 1421396122 -3600
+#      Fri Jan 16 09:15:22 2015 +0100
+# Node ID 9686a796c829bf0d5a4303947474a97e0fd5826c
+# Parent  1830156c6b7ee6ccc6ee21113fb537df507d2974
+6584008: jvmtiStringPrimitiveCallback should not be invoked when string value is null
+Reviewed-by: sla, sspitsyn
+
+diff -r 1830156c6b7e -r 9686a796c829 src/share/vm/prims/jvmtiTagMap.cpp
+--- openjdk/hotspot/src/share/vm/prims/jvmtiTagMap.cpp	Wed Feb 04 04:31:38 2015 -0500
++++ openjdk/hotspot/src/share/vm/prims/jvmtiTagMap.cpp	Fri Jan 16 09:15:22 2015 +0100
+@@ -1045,10 +1045,16 @@
+ {
+   assert(str->klass() == SystemDictionary::String_klass(), "not a string");
+ 
++  typeArrayOop s_value = java_lang_String::value(str);
++
++  // JDK-6584008: the value field may be null if a String instance is
++  // partially constructed.
++  if (s_value == NULL) {
++    return 0;
++  }
+   // get the string value and length
+   // (string value may be offset from the base)
+   int s_len = java_lang_String::length(str);
+-  typeArrayOop s_value = java_lang_String::value(str);
+   int s_offset = java_lang_String::offset(str);
+   jchar* value;
+   if (s_len > 0) {

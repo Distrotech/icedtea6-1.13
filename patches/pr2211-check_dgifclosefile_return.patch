@@ -1,0 +1,23 @@
+# HG changeset patch
+# User andrew
+# Date 1423101914 0
+#      Thu Feb 05 02:05:14 2015 +0000
+# Node ID 3b9f3d7c767ec8d2e8d65c7b819aa135cf9af21e
+# Parent  1d647255f65b9561d9821b30b2eb6fd18fad6bad
+PR2210: DGifCloseFile call should check the return value, not the error code, for failure
+Summary: Avoid passing in an integer reference at all and just use the return value.
+
+diff -r 1d647255f65b -r 3b9f3d7c767e src/share/native/sun/awt/splashscreen/splashscreen_gif.c
+--- openjdk/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c	Wed Feb 04 18:20:43 2015 +0000
++++ openjdk/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c	Thu Feb 05 02:05:14 2015 +0000
+@@ -311,9 +311,7 @@
+     free(pOldBitmapBits);
+ 
+ #if GIFLIB_MAJOR >= 5 && GIFLIB_MINOR >= 1
+-    int error = 0;
+-    DGifCloseFile(gif, &error);
+-    if (error)
++    if (DGifCloseFile(gif, NULL) == GIF_ERROR)
+         return 0;
+ #else
+     DGifCloseFile(gif);
