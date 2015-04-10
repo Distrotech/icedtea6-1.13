@@ -934,7 +934,6 @@ EXTRA_DIST = generated \
 	$(top_srcdir)/patches/* \
 	contrib arm_port \
 	overlays \
-	jconsole.desktop policytool.desktop \
 	$(JTREG_SRCS) HACKING pulseaudio \
 	hotspot.map \
 	autogen.sh \
