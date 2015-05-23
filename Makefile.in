@@ -175,7 +175,8 @@ target_triplet = @target@
 @BUILD_CACAO_TRUE@	patches/cacao/launcher.patch \
 @BUILD_CACAO_TRUE@	patches/cacao/memory.patch \
 @BUILD_CACAO_TRUE@	patches/cacao/hotspot/original/memory.patch \
-@BUILD_CACAO_TRUE@	patches/cacao/armhf.patch
+@BUILD_CACAO_TRUE@	patches/cacao/armhf.patch \
+@BUILD_CACAO_TRUE@	patches/cacao/pr2184.patch
 
 @BUILD_CACAO_FALSE@@USING_CACAO_TRUE@am__append_23 = \
 @BUILD_CACAO_FALSE@@USING_CACAO_TRUE@	patches/cacao/memory.patch \
@@ -192,109 +193,118 @@ target_triplet = @target@
 @ENABLE_SYSTEMTAP_TRUE@	patches/hotspot/hs23/systemtap_gc.patch \
 @ENABLE_SYSTEMTAP_TRUE@	patches/hotspot/hs23/systemtap-alloc-size-workaround.patch
 
-@WITH_PAX_TRUE@am__append_27 = \
+@BUILD_JAMVM_TRUE@am__append_27 = \
+@BUILD_JAMVM_TRUE@	patches/jamvm/pr2190-find_class_from_caller.patch
+
+@ENABLE_NSS_TRUE@am__append_28 = patches/rh1022017.patch
+@WITH_PAX_TRUE@am__append_29 = \
 @WITH_PAX_TRUE@	patches/no-test_gamma.patch \
 @WITH_PAX_TRUE@	patches/pax-mark-rmic-java.patch
 
-@USE_SYSTEM_ZLIB_TRUE@am__append_28 = \
+@USE_SYSTEM_ZLIB_TRUE@am__append_30 = \
 @USE_SYSTEM_ZLIB_TRUE@	patches/libraries-zlib.patch \
 @USE_SYSTEM_ZLIB_TRUE@	patches/linker-libs-order-zlib.patch
 
-@USE_SYSTEM_JPEG_TRUE@am__append_29 = \
+@USE_SYSTEM_JPEG_TRUE@am__append_31 = \
 @USE_SYSTEM_JPEG_TRUE@	patches/libraries-jpeg.patch \
 @USE_SYSTEM_JPEG_TRUE@	patches/rh661505-jpeg.patch
 
-@USE_SYSTEM_PNG_TRUE@am__append_30 = \
+@USE_SYSTEM_PNG_TRUE@am__append_32 = \
 @USE_SYSTEM_PNG_TRUE@	patches/libraries-png.patch
 
-@USE_SYSTEM_GIF_TRUE@am__append_31 = \
+@USE_SYSTEM_GIF_TRUE@am__append_33 = \
 @USE_SYSTEM_GIF_TRUE@	patches/libraries-gif.patch
 
-@DTDTYPE_QNAME_TRUE@am__append_32 = \
+@DTDTYPE_QNAME_TRUE@am__append_34 = \
 @DTDTYPE_QNAME_TRUE@	patches/ecj/jaxws-getdtdtype.patch
 
-@ENABLE_XRENDER_TRUE@am__append_33 = patches/ecj/needs-6.patch
-@CP40188_JAVAH_TRUE@@ENABLE_XRENDER_TRUE@am__append_34 = patches/ecj/cp40188-opengl.patch
-@DISABLE_BOOTSTRAP_TOOLS_FALSE@am__append_35 = \
+@ENABLE_XRENDER_TRUE@am__append_35 = patches/ecj/needs-6.patch
+@CP40188_JAVAH_TRUE@@ENABLE_XRENDER_TRUE@am__append_36 = patches/ecj/cp40188-opengl.patch
+@DISABLE_BOOTSTRAP_TOOLS_FALSE@am__append_37 = \
 @DISABLE_BOOTSTRAP_TOOLS_FALSE@	patches/ecj/bootstrap-tools.patch
 
-@VM_SUPPORTS_XBOOTCLASSPATH_FALSE@am__append_36 = \
+@VM_SUPPORTS_XBOOTCLASSPATH_FALSE@am__append_38 = \
 @VM_SUPPORTS_XBOOTCLASSPATH_FALSE@	patches/ecj/xbootclasspath.patch
 
-@WITH_PAX_FALSE@am__append_37 = patches/ecj/no-test_gamma.patch
-@ENABLE_CACAO_TRUE@am__append_38 = \
+@WITH_PAX_FALSE@am__append_39 = patches/ecj/no-test_gamma.patch
+
+# If date parsing bug is present, drop Lithuania and Latvia EUR transition
+# dates as they are already in the past anyway.
+@CP64174_TRUE@am__append_40 = patches/ecj/pr64174.patch
+@ENABLE_CACAO_TRUE@am__append_41 = \
 @ENABLE_CACAO_TRUE@	ALT_HOTSPOT_IMPORT_PATH="$(CACAO_IMPORT_PATH)"
 
-@ENABLE_JAMVM_TRUE@am__append_39 = \
+@ENABLE_JAMVM_TRUE@am__append_42 = \
 @ENABLE_JAMVM_TRUE@	ALT_HOTSPOT_IMPORT_PATH="$(JAMVM_IMPORT_PATH)"
 
-@DISABLE_OPTIMIZATIONS_TRUE@am__append_40 = \
+@DISABLE_OPTIMIZATIONS_TRUE@am__append_43 = \
 @DISABLE_OPTIMIZATIONS_TRUE@	NO_OPTIMIZATIONS="true" \
 @DISABLE_OPTIMIZATIONS_TRUE@	CC_NO_OPT="-O0 -g"
 
-@ENABLE_DOCS_FALSE@am__append_41 = \
+@ENABLE_DOCS_FALSE@am__append_44 = \
 @ENABLE_DOCS_FALSE@	NO_DOCS="true"
 
-@ENABLE_CROSS_COMPILATION_TRUE@am__append_42 = \
+@ENABLE_CROSS_COMPILATION_TRUE@am__append_45 = \
 @ENABLE_CROSS_COMPILATION_TRUE@	CROSS_COMPILATION="true" \
 @ENABLE_CROSS_COMPILATION_TRUE@	CROSS_TARGET_ARCH="$(CROSS_TARGET_ARCH)"
 
-@USE_ALT_JAR_TRUE@am__append_43 = \
+@USE_ALT_JAR_TRUE@am__append_46 = \
 @USE_ALT_JAR_TRUE@	ALT_JAR_CMD="$(ALT_JAR_CMD)"
 
-@HAS_HOTSPOT_REVISION_TRUE@am__append_44 = \
+@HAS_HOTSPOT_REVISION_TRUE@am__append_47 = \
 @HAS_HOTSPOT_REVISION_TRUE@	HOTSPOT_BUILD_VERSION="$(HOTSPOT_REVISION)" 
 
-@WITH_RHINO_TRUE@am__append_45 = \
+@WITH_RHINO_TRUE@am__append_48 = \
 @WITH_RHINO_TRUE@	RHINO_JAR="$(abs_top_builddir)/rhino/rhino.jar"
 
-@USE_SYSTEM_ZLIB_TRUE@am__append_46 = \
+@USE_SYSTEM_ZLIB_TRUE@am__append_49 = \
 @USE_SYSTEM_ZLIB_TRUE@	SYSTEM_ZLIB="true" \
 @USE_SYSTEM_ZLIB_TRUE@	ZLIB_LIBS="${ZLIB_LIBS}" \
 @USE_SYSTEM_ZLIB_TRUE@	ZLIB_CFLAGS="${ZLIB_CFLAGS}"
 
-@USE_SYSTEM_LCMS_TRUE@am__append_47 = \
+@USE_SYSTEM_LCMS_TRUE@am__append_50 = \
 @USE_SYSTEM_LCMS_TRUE@	SYSTEM_LCMS="true" \
 @USE_SYSTEM_LCMS_TRUE@	LCMS_LIBS="${LCMS2_LIBS}" \
 @USE_SYSTEM_LCMS_TRUE@	LCMS_CFLAGS="${LCMS2_CFLAGS}"
 
-@USE_SYSTEM_JPEG_TRUE@am__append_48 = \
+@USE_SYSTEM_JPEG_TRUE@am__append_51 = \
 @USE_SYSTEM_JPEG_TRUE@	SYSTEM_JPEG="true" \
 @USE_SYSTEM_JPEG_TRUE@	JPEG_LIBS="${JPEG_LIBS}" \
 @USE_SYSTEM_JPEG_TRUE@	JPEG_CFLAGS="${JPEG_CFLAGS}"
 
-@USE_SYSTEM_PNG_TRUE@am__append_49 = \
+@USE_SYSTEM_PNG_TRUE@am__append_52 = \
 @USE_SYSTEM_PNG_TRUE@	SYSTEM_PNG="true" \
 @USE_SYSTEM_PNG_TRUE@	PNG_LIBS="${PNG_LIBS}" \
 @USE_SYSTEM_PNG_TRUE@	PNG_CFLAGS="${PNG_CFLAGS}"
 
-@USE_SYSTEM_GIF_TRUE@am__append_50 = \
+@USE_SYSTEM_GIF_TRUE@am__append_53 = \
 @USE_SYSTEM_GIF_TRUE@	SYSTEM_GIF="true" \
 @USE_SYSTEM_GIF_TRUE@	GIF_LIBS="${GIF_LIBS}" \
 @USE_SYSTEM_GIF_TRUE@	GIF_CFLAGS="${GIF_CFLAGS}"
 
-@USE_SYSTEM_KERBEROS_TRUE@am__append_51 = \
+@USE_SYSTEM_KERBEROS_TRUE@am__append_54 = \
 @USE_SYSTEM_KERBEROS_TRUE@	SYSTEM_KRB5="true" \
 @USE_SYSTEM_KERBEROS_TRUE@	KRB5_LIBS="${KRB5_LIBS}" \
 @USE_SYSTEM_KERBEROS_TRUE@	KRB5_CFLAGS="${KRB5_CFLAGS}"
 
-@ENABLE_JAR_COMPRESSION_TRUE@am__append_52 = \
+@ENABLE_JAR_COMPRESSION_TRUE@am__append_55 = \
 @ENABLE_JAR_COMPRESSION_TRUE@	COMPRESS_JARS="true"
 
-@ADD_SHARK_BUILD_TRUE@am__append_53 = \
+@ADD_SHARK_BUILD_TRUE@am__append_56 = \
 @ADD_SHARK_BUILD_TRUE@	--enable-shark
 
-@WITH_ALT_HSBUILD_TRUE@am__append_54 = \
+@WITH_ALT_HSBUILD_TRUE@am__append_57 = \
 @WITH_ALT_HSBUILD_TRUE@	$(if $(findstring --with-hotspot-src-zip=, $(CONFIGURE_ARGS)),, \
 @WITH_ALT_HSBUILD_TRUE@	  --with-hotspot-src-zip=$(abs_top_builddir)/$(HOTSPOT_SRC_ZIP))
 
 subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
-	$(srcdir)/jvm.cacao.cfg.in $(srcdir)/jvm.jamvm.cfg.in \
-	$(srcdir)/jvm.cfg.in $(srcdir)/ergo.c.in $(srcdir)/nss.cfg.in \
-	$(srcdir)/javac.in $(srcdir)/javap.in \
-	$(srcdir)/tz.properties.in $(srcdir)/pax-mark-vm.in \
+	$(srcdir)/fsg.sh.in $(srcdir)/jvm.cacao.cfg.in \
+	$(srcdir)/jvm.jamvm.cfg.in $(srcdir)/jvm.cfg.in \
+	$(srcdir)/ergo.c.in $(srcdir)/nss.cfg.in $(srcdir)/javac.in \
+	$(srcdir)/javap.in $(srcdir)/tz.properties.in \
+	$(srcdir)/pax-mark-vm.in \
 	$(srcdir)/remove-intree-libraries.sh.in \
 	$(srcdir)/jconsole.desktop.in $(srcdir)/policytool.desktop.in \
 	$(top_srcdir)/tapset/hotspot.stp.in \
@@ -311,7 +321,7 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
-CONFIG_CLEAN_FILES = jvm.cacao.cfg jvm.jamvm.cfg jvm.cfg ergo.c \
+CONFIG_CLEAN_FILES = fsg.sh jvm.cacao.cfg jvm.jamvm.cfg jvm.cfg ergo.c \
 	nss.cfg javac javap tz.properties pax-mark-vm \
 	remove-intree-libraries.sh jconsole.desktop policytool.desktop \
 	tapset/hotspot.stp tapset/hotspot_jni.stp tapset/jstack.stp \
@@ -586,9 +596,9 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-OPENJDK_DATE = 15_jul_2014
-OPENJDK_SHA256SUM = 9a5ad1b599953baac1b6b34189b9487ac5dcdb367aac5cc0aa5aa49700e73871
-OPENJDK_VERSION = b32
+OPENJDK_DATE = 14_apr_2015
+OPENJDK_SHA256SUM = 131cde181fbca08ac4d47bd13f6c3a64806fe2ae2106c03afe7ba651c24a4f9b
+OPENJDK_VERSION = b35
 OPENJDK_URL = https://java.net/downloads/openjdk6/
 CACAO_VERSION = 68fe50ac34ec
 CACAO_SHA256SUM = b8230f20d7022f9230bbfea13b2f3f179b2f42db40138ac6d32c82fc418ffc3a
@@ -760,8 +770,7 @@ ICEDTEA_PATCHES = $(DROP_PATCHES) $(SECURITY_PATCHES) \
 	patches/uname.patch patches/nomotif-6706121.patch \
 	patches/nomotif.patch patches/nomotif-mtoolkit.patch \
 	patches/alt-jar.patch patches/jdk-use-ssize_t.patch \
-	patches/clean-crypto.patch patches/arch.patch \
-	patches/lc_ctype.patch patches/xjc.patch \
+	patches/arch.patch patches/lc_ctype.patch patches/xjc.patch \
 	patches/linker-libs-order.patch patches/testenv.patch \
 	patches/samejvm-safe.patch patches/pr261.patch \
 	patches/sparc-buildfixes.patch patches/sparc64-linux.patch \
@@ -816,7 +825,6 @@ ICEDTEA_PATCHES = $(DROP_PATCHES) $(SECURITY_PATCHES) \
 	patches/openjdk/7023591-AAShapePipe.patch \
 	patches/openjdk/7027667-AAShapePipeRegTest.patch \
 	patches/openjdk/7019861-AA-regression-fix.patch \
-	patches/g356743-libpng-1.5.patch \
 	patches/openjdk/6986968-crash_on_xim_restart.patch \
 	patches/openjdk/7036754-stroker-nan.patch \
 	patches/openjdk/pgram-pipe-regression.patch \
@@ -857,9 +865,7 @@ ICEDTEA_PATCHES = $(DROP_PATCHES) $(SECURITY_PATCHES) \
 	patches/openjdk/5082756-ImageIO_plugins_metadata_boolean_attributes.patch \
 	patches/openjdk/6296893-BMP_Writer_handles_TopDown_prop_incorrectly.patch \
 	patches/openjdk/7103610-_NET_WM_PID_and_WM_CLIENT_MACHINE_are_not_set.patch \
-	patches/openjdk/6706974-krb5_test_infrastructure.patch \
 	patches/openjdk/6764553-IdResolver_is_not_thread_safe.patch \
-	patches/openjdk/6761072-new_krb5_tests_fail_on_multiple_platforms.patch \
 	patches/ScriptEngineManager-doc.patch \
 	patches/openjdk/6883983-JarVerifier_removed_dependency_sun_security_pkcs.patch \
 	patches/openjdk/4465490-Suspicious_double-check_locking_idiom.patch \
@@ -897,7 +903,6 @@ ICEDTEA_PATCHES = $(DROP_PATCHES) $(SECURITY_PATCHES) \
 	patches/openjdk/8009165-inappropriate_method_in_reflectutil.patch \
 	patches/openjdk/8009217-fix_test_compile.patch \
 	patches/openjdk/8009610-blacklist_malware_certificate.patch \
-	patches/openjdk/8010213-set_socketoptions_windows.patch \
 	patches/openjdk/8010714-xml_dsig_retrievalmethod.patch \
 	patches/openjdk/8011154-awt_regression.patch \
 	patches/openjdk/8011313-OCSP_timeout_wrong_value.patch \
@@ -909,24 +914,6 @@ ICEDTEA_PATCHES = $(DROP_PATCHES) $(SECURITY_PATCHES) \
 	patches/openjdk/8014427-raster_regression.patch \
 	patches/openjdk/8014676-javadebugger_space_in_paths.patch \
 	patches/openjdk/8014968-OCSP_timeout_default.patch \
-	patches/openjdk/6541350-tz_display_names_l10n.patch \
-	patches/openjdk/6821191-tz_display_names_l10n.patch \
-	patches/openjdk/6925851-pt_br.patch \
-	patches/openjdk/6977550-tzdata2010l.patch \
-	patches/openjdk/6996686-tzdata2010o.patch \
-	patches/openjdk/7017800-tzdata2011b.patch \
-	patches/openjdk/7027387-tzdata2011d.patch \
-	patches/openjdk/7033174-tzdata2011e.patch \
-	patches/openjdk/7035073-missing_pt_br_timezones.patch \
-	patches/openjdk/7039469-tzdata2011g.patch \
-	patches/openjdk/7090843-tzdata2011j.patch \
-	patches/openjdk/7103108-tzdata2011l.patch \
-	patches/openjdk/7104126-headers_tzdata.patch \
-	patches/openjdk/7103405-correct_display_names.patch \
-	patches/openjdk/7158483-tzdata2012c.patch \
-	patches/openjdk/7198570-tzdata2012f.patch \
-	patches/openjdk/8002225-tzdata2012i.patch \
-	patches/openjdk/8009987-tzdata2013b.patch \
 	patches/openjdk/6636370-appcontext_simplification.patch \
 	patches/openjdk/6636331-appcontext_concurrentmodificationexception.patch \
 	patches/sparc-ptracefix.patch \
@@ -943,8 +930,6 @@ ICEDTEA_PATCHES = $(DROP_PATCHES) $(SECURITY_PATCHES) \
 	patches/sparc-trapsfix.patch patches/print_lsb_release.patch \
 	patches/alternative_krb5_cache.patch \
 	patches/alternative_krb5_cache_fixup.patch \
-	patches/openjdk/8014469-tzdata2013c.patch \
-	patches/openjdk/8020054-tzdata2013d.patch \
 	patches/imageiojpeg_sync.patch \
 	patches/openjdk/8005194-scale_memory_leak.patch \
 	patches/openjdk/6563752-ss12_support.patch \
@@ -997,18 +982,39 @@ ICEDTEA_PATCHES = $(DROP_PATCHES) $(SECURITY_PATCHES) \
 	patches/hotspot/hs23/arm-hsdis.patch \
 	patches/openjdk/7025066-embedded_build.patch \
 	patches/s390_casts.patch \
-	patches/openjdk/8025255-tzdata2013g.patch \
 	patches/d729448-32_bit_alignment.patch \
 	patches/windows-awt.patch patches/windows-jdk-sizecalc.patch \
 	patches/shark_fixes_from_8003868.patch \
 	patches/8003992_support_6.patch \
 	patches/shark-drop_compile_method_arg_following_7083786.patch \
-	patches/openjdk/7027300-unsync_hashmap_causes_endless_loop.patch \
-	patches/openjdk/7183251-netbeans_renders_text_wrong.patch \
+	patches/openjdk/4963723-implement_sha-224.patch \
+	patches/openjdk/7180907-jarsigner_sha-256.patch \
+	patches/openjdk/8049480-jarsigner_openjdk_9.patch \
+	patches/openjdk/6753664-sunmscapi_sha-256.patch \
+	patches/openjdk/6578658-sunmscapi_nonewithrsa.patch \
+	patches/openjdk/7033170-getmaxallowedkeylength_throws_exception.patch \
+	patches/openjdk/7044060-support_nsa_suite_b.patch \
+	patches/openjdk/8006935-long_keys_in_hmac_prf.patch \
+	patches/openjdk/7106773-512_bits_rsa.patch \
+	patches/pr1904-icedtea_and_distro_versioning.patch \
+	patches/openjdk/8017173-xml_cipher_rsa_oaep_cant_be_instantiated.patch \
+	patches/openjdk/8000897-pr2173-vm_crash_in_compilebroker.patch \
+	patches/pr2070-type_punning_warnings.patch \
+	patches/pr2082-s390_type_fixes.patch \
+	patches/pr2096-4096-bit_dh.patch \
+	patches/pr2179-avoid_x86_workaround_on_zero.patch \
+	patches/openjdk/6584008-pr2195-jvmtistringprimitivecallback_null_string.patch \
+	patches/openjdk/7199862-pr2198-ensure_cache_connection_still_alive.patch \
+	patches/openjdk/8074312-pr2255-support_linux_4.patch \
+	patches/pr2197-jhat_man_page_url.patch \
+	patches/pr2201-support_giflib_5.1.patch \
+	patches/pr2211-check_dgifclosefile_return.patch \
+	patches/pr2226-support_future_giflib_6_and_up.patch \
 	$(am__append_21) $(am__append_22) $(am__append_23) \
 	$(am__append_24) $(am__append_25) $(am__append_26) \
 	$(am__append_27) $(am__append_28) $(am__append_29) \
-	$(am__append_30) $(am__append_31) $(DISTRIBUTION_PATCHES)
+	$(am__append_30) $(am__append_31) $(am__append_32) \
+	$(am__append_33) $(DISTRIBUTION_PATCHES)
 @ENABLE_NSS_FALSE@NSS_PATCHES = patches/nss-not-enabled-config.patch
 @ENABLE_NSS_TRUE@NSS_PATCHES = patches/nss-config.patch
 
@@ -1023,9 +1029,10 @@ ICEDTEA_ECJ_PATCHES = patches/ecj/icedtea.patch \
 	patches/ecj/jaxws-jdk-dependency.patch \
 	patches/ecj/hotspot/hs23/hotspot-jdk-dependency.patch \
 	patches/ecj/fphexconstants.patch \
-	patches/ecj/no-sun-classes.patch $(am__append_32) \
-	$(am__append_33) $(am__append_34) $(am__append_35) \
-	$(am__append_36) $(am__append_37) $(DISTRIBUTION_ECJ_PATCHES)
+	patches/ecj/no-sun-classes.patch $(am__append_34) \
+	$(am__append_35) $(am__append_36) $(am__append_37) \
+	$(am__append_38) $(am__append_39) $(am__append_40) \
+	$(DISTRIBUTION_ECJ_PATCHES)
 @ZERO_BUILD_FALSE@ICEDTEA_ZERO_BUILD = 
 
 # OpenJDK build environment.
@@ -1039,6 +1046,12 @@ ICEDTEA_NAME = IcedTea6
 @HAS_PKGVERSION_TRUE@ICEDTEA_PKG = $(EMPTY) (${PKGVERSION})
 @ENABLE_WERROR_FALSE@WERROR_STATUS = false
 @ENABLE_WERROR_TRUE@WERROR_STATUS = true
+ICEDTEA_UNSET = \
+	JAVAC= \
+	JAVA_HOME= \
+	JDK_HOME= \
+	OS=
+
 ICEDTEA_ENV = ALT_JDK_IMPORT_PATH="$(BOOT_DIR)" ANT="$(ANT)" \
 	BUILD_NUMBER="$(OPENJDK_VERSION)" \
 	JDK_UPDATE_VERSION="$(JDK_UPDATE_VERSION)" \
@@ -1059,19 +1072,20 @@ ICEDTEA_ENV = ALT_JDK_IMPORT_PATH="$(BOOT_DIR)" ANT="$(ANT)" \
 	FREETYPE2_HEADERS="$(FREETYPE2_CFLAGS)" \
 	FT2_LIB="$(FREETYPE2_LIBS)" \
 	ALT_PARALLEL_COMPILE_JOBS="$(PARALLEL_JOBS)" \
-	HOTSPOT_BUILD_JOBS="$(PARALLEL_JOBS)" JAVAC="" JAVA_HOME="" \
-	JDK_HOME="" ANT_RESPECT_JAVA_HOME="TRUE" \
-	DISTRIBUTION_ID="$(DIST_ID)" DERIVATIVE_ID="$(ICEDTEA_NAME) \
+	HOTSPOT_BUILD_JOBS="$(PARALLEL_JOBS)" \
+	ANT_RESPECT_JAVA_HOME="TRUE" DISTRIBUTION_ID="$(DIST_ID)" \
+	DERIVATIVE_ID="$(ICEDTEA_NAME) \
 	$(PACKAGE_VERSION)$(ICEDTEA_REV)" DEBUG_CLASSFILES="true" \
 	DEBUG_BINARIES="true" VERBOSE="$(VERBOSE)" \
 	ALT_OUTPUTDIR="$(BUILD_OUTPUT_DIR)" STATIC_CXX="false" \
 	BUILD_GCC=gcc$(GCC_SUFFIX) BUILD_CXX=g++$(GCC_SUFFIX) \
-	COMPILER_WARNINGS_FATAL="$(WERROR_STATUS)" $(am__append_38) \
-	$(am__append_39) $(am__append_40) $(am__append_41) \
-	$(am__append_42) $(am__append_43) $(am__append_44) \
-	$(am__append_45) $(am__append_46) $(am__append_47) \
-	$(am__append_48) $(am__append_49) $(am__append_50) \
-	$(am__append_51) $(am__append_52)
+	COMPILER_WARNINGS_FATAL="$(WERROR_STATUS)" \
+	UNLIMITED_CRYPTO="true" $(am__append_41) $(am__append_42) \
+	$(am__append_43) $(am__append_44) $(am__append_45) \
+	$(am__append_46) $(am__append_47) $(am__append_48) \
+	$(am__append_49) $(am__append_50) $(am__append_51) \
+	$(am__append_52) $(am__append_53) $(am__append_54) \
+	$(am__append_55)
 
 # OpenJDK ecj build environment.
 ICEDTEA_ENV_ECJ = $(ICEDTEA_ENV) \
@@ -1101,8 +1115,7 @@ EXTRA_DIST = generated \
 	$(top_srcdir)/patches/* \
 	contrib arm_port \
 	overlays \
-	jconsole.desktop policytool.desktop \
-	$(JTREG_SRCS) HACKING pulseaudio fsg.sh \
+	$(JTREG_SRCS) HACKING pulseaudio \
 	hotspot.map \
 	autogen.sh \
 	tapset/hotspot.stp.in \
@@ -1118,14 +1131,14 @@ EXTRA_DIST = generated \
 
 ADD_ZERO_CONFIGURE_ARGS =  \
 	--with-jdk-home=$(BUILD_OUTPUT_DIR)/j2sdk-image --enable-zero \
-	$(am__append_53) --disable-docs $(filter-out \
+	$(am__append_56) --disable-docs $(filter-out \
 	'--with-jdk-home=% '--with-ecj=% '--with-java=% \
 	'--with-javah=% '--with-javac=% '--with-javac=% '--with-rmic=% \
 	'--with-additional-vms=% '--with-openjdk '--with-openjdk=% , \
 	$(CONFIGURE_ARGS)) $(if $(findstring --with-openjdk-src-zip=, \
 	$(CONFIGURE_ARGS)),, \
 	--with-openjdk-src-zip=$(abs_top_builddir)/$(OPENJDK_SRC_ZIP)) \
-	$(am__append_54) --disable-bootstrap
+	$(am__append_57) --disable-bootstrap
 ADD_ZERO_EXTRA_BUILD_ENV = \
 	BUILD_LANGTOOLS=false ALT_LANGTOOLS_DIST=$(BUILD_OUTPUT_DIR)/langtools/dist \
 	BUILD_JAXP=false      ALT_JAXP_DIST=$(BUILD_OUTPUT_DIR)/jaxp/dist \
@@ -1180,6 +1193,8 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	$(am__cd) $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
 $(am__aclocal_m4_deps):
+fsg.sh: $(top_builddir)/config.status $(srcdir)/fsg.sh.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
 jvm.cacao.cfg: $(top_builddir)/config.status $(srcdir)/jvm.cacao.cfg.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 jvm.jamvm.cfg: $(top_builddir)/config.status $(srcdir)/jvm.jamvm.cfg.in
@@ -1739,7 +1754,7 @@ stamps/extract-openjdk.stamp: stamps/download.stamp
 @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	  mkdir openjdk ; \
 @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	  $(TAR) xf $(OPENJDK_SRC_ZIP) -C openjdk; \
 @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	  chmod -R ug+w openjdk ; \
-@OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	  sh $(abs_top_srcdir)/fsg.sh ; \
+@OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	  sh $(abs_top_builddir)/fsg.sh ; \
 @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	fi
 @ENABLE_CACAO_TRUE@	mkdir -p openjdk/jdk/src/solaris/bin/$(JRE_ARCH_DIR)
 @ENABLE_CACAO_TRUE@	cp jvm.cacao.cfg openjdk/jdk/src/solaris/bin/$(JRE_ARCH_DIR)/jvm.cfg
@@ -2156,7 +2171,7 @@ clean-bootstrap-directory-symlink:
 stamps/icedtea.stamp: stamps/bootstrap-directory-symlink.stamp \
  $(OPENJDK_TREE) stamps/cacao.stamp stamps/rewrite-rhino.stamp \
  stamps/jamvm.stamp
-	$(ARCH_PREFIX) $(MAKE) -j1 \
+	$(ICEDTEA_UNSET) $(ARCH_PREFIX) $(MAKE) -j1 \
 	  $(ICEDTEA_ENV) \
 	  -C openjdk \
 	  $(ICEDTEA_BUILD_TARGET)
@@ -2179,7 +2194,7 @@ clean-icedtea:
 stamps/icedtea-debug.stamp: stamps/bootstrap-directory-symlink.stamp \
  $(OPENJDK_TREE) stamps/cacao.stamp stamps/rewrite-rhino.stamp \
  stamps/jamvm.stamp
-	$(ARCH_PREFIX) $(MAKE) -j1 \
+	$(ICEDTEA_UNSET) $(ARCH_PREFIX) $(MAKE) -j1 \
 	  $(ICEDTEA_ENV) \
 	  -C openjdk \
 	  $(ICEDTEA_DEBUG_BUILD_TARGET)
@@ -2514,7 +2529,7 @@ clean-check-crypto-debug:
 stamps/icedtea-ecj.stamp: stamps/bootstrap-directory-symlink-ecj.stamp \
  $(OPENJDK_ECJ_TREE) stamps/jamvm.stamp stamps/cacao.stamp \
  stamps/rewrite-rhino.stamp
-	$(ARCH_PREFIX) $(MAKE) -j1 \
+	$(ICEDTEA_UNSET) $(ARCH_PREFIX) $(MAKE) -j1 \
 	  $(ICEDTEA_ENV_ECJ) \
 	  -C openjdk-ecj/ \
 	  $(ICEDTEA_BUILD_TARGET)
