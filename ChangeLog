@@ -1,5 +1,18 @@
 2015-07-20  Andrew John Hughes  <gnu.andrew@redhat.com>
 
+	* patches/openjdk/8074312-pr2255-support_linux_4.patch:
+	Removed; upstreamed.
+	* patches/pax-mark-rmic-java.patch: Likewise.
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Drop above patches. Drop
+	WITH_PAX block as no longer required.
+	(ICEDTEA_ECJ_PATCHES): Drop !WITH_PAX block,
+	merging into main unconditional definition.
+	* patches/openjdk/4963723-implement_sha-224.patch:
+	Regenerated due to copyright header change.
+
+2015-07-20  Andrew John Hughes  <gnu.andrew@redhat.com>
+
 	* Makefile.am:
 	(OPENJDK_VERSION): Bump to next release, b36.
 

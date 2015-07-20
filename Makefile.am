@@ -600,7 +600,6 @@ ICEDTEA_PATCHES = \
 	patches/pr2179-avoid_x86_workaround_on_zero.patch \
 	patches/openjdk/6584008-pr2195-jvmtistringprimitivecallback_null_string.patch \
 	patches/openjdk/7199862-pr2198-ensure_cache_connection_still_alive.patch \
-	patches/openjdk/8074312-pr2255-support_linux_4.patch \
 	patches/pr2197-jhat_man_page_url.patch \
 	patches/pr2201-support_giflib_5.1.patch \
 	patches/pr2211-check_dgifclosefile_return.patch \
@@ -687,12 +686,6 @@ else
 NSS_PATCHES = patches/nss-not-enabled-config.patch
 endif
 
-if WITH_PAX
-ICEDTEA_PATCHES += \
-	patches/no-test_gamma.patch \
-	patches/pax-mark-rmic-java.patch
-endif
-
 if USE_SYSTEM_ZLIB
 ICEDTEA_PATCHES += \
 	patches/libraries-zlib.patch \
@@ -739,7 +732,8 @@ ICEDTEA_ECJ_PATCHES = \
 	patches/ecj/jaxws-jdk-dependency.patch \
 	patches/ecj/hotspot/hs23/hotspot-jdk-dependency.patch \
 	patches/ecj/fphexconstants.patch \
-	patches/ecj/no-sun-classes.patch
+	patches/ecj/no-sun-classes.patch \
+	patches/ecj/no-test_gamma.patch
 
 if DTDTYPE_QNAME
 ICEDTEA_ECJ_PATCHES += \
@@ -761,10 +755,6 @@ endif
 if !VM_SUPPORTS_XBOOTCLASSPATH
 ICEDTEA_ECJ_PATCHES += \
 	patches/ecj/xbootclasspath.patch
-endif
-
-if !WITH_PAX
-ICEDTEA_ECJ_PATCHES += patches/ecj/no-test_gamma.patch
 endif
 
 # If date parsing bug is present, drop Lithuania and Latvia EUR transition
