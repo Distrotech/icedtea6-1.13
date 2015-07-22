@@ -1,0 +1,205 @@
+# HG changeset patch
+# User coffeys
+# Date 1331819128 0
+#      Thu Mar 15 13:45:28 2012 +0000
+# Node ID 11c1617c57bf122d8467fdea12f779725165ba2f
+# Parent  cb04b01f447a6759b454836d3869b0602b305612
+7133138, PR2298: Improve io performance around timezone lookups
+Reviewed-by: okutsu
+
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/javazic/Mappings.java openjdk/jdk/make/tools/src/build/tools/javazic/Mappings.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/javazic/Mappings.java	2015-07-22 02:47:07.639801608 +0100
++++ openjdk/jdk/make/tools/src/build/tools/javazic/Mappings.java	2015-07-22 02:47:47.703103268 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -26,6 +26,7 @@
+ package build.tools.javazic;
+ 
+ import  java.util.ArrayList;
++import  java.util.HashMap;
+ import  java.util.LinkedList;
+ import  java.util.List;
+ import  java.util.Map;
+@@ -162,6 +163,20 @@
+         for (String key : toBeRemoved) {
+             aliases.remove(key);
+         }
++        // Eliminate any alias-to-alias mappings. For example, if
++        // there are A->B and B->C, A->B is changed to A->C.
++        Map<String, String> newMap = new HashMap<String, String>();
++        for (String key : aliases.keySet()) {
++            String realid = aliases.get(key);
++            String leaf = realid;
++            while (aliases.get(leaf) != null) {
++                leaf = aliases.get(leaf);
++            }
++            if (!realid.equals(leaf)) {
++                newMap.put(key, leaf);
++            }
++        }
++        aliases.putAll(newMap);
+     }
+ 
+     Map<String,String> getAliases() {
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/util/calendar/ZoneInfoFile.java openjdk/jdk/src/share/classes/sun/util/calendar/ZoneInfoFile.java
+--- openjdk.orig/jdk/src/share/classes/sun/util/calendar/ZoneInfoFile.java	2015-07-22 02:47:03.783868821 +0100
++++ openjdk/jdk/src/share/classes/sun/util/calendar/ZoneInfoFile.java	2015-07-22 02:49:30.453312238 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2000, 2009, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -474,6 +474,7 @@
+     public static final byte    TAG_ExcludedZones = 69;
+ 
+     private static Map<String, ZoneInfo> zoneInfoObjects = null;
++    private static final ZoneInfo GMT = new ZoneInfo("GMT", 0);
+ 
+     private static final String ziDir;
+ 
+@@ -589,8 +590,15 @@
+      * id.
+      */
+     public static ZoneInfo getZoneInfo(String id) {
++        //treat GMT zone as special
++        if ("GMT".equals(id))
++            return (ZoneInfo) GMT.clone();
+         ZoneInfo zi = getFromCache(id);
+         if (zi == null) {
++            Map<String, String> aliases = ZoneInfo.getCachedAliasTable();
++            if (aliases != null && aliases.get(id) != null) {
++                return null;
++            }
+             zi = createZoneInfo(id);
+             if (zi == null) {
+                 return null;
+@@ -1067,30 +1075,26 @@
+      * @return the buffer, or null if any I/O error occurred.
+      */
+     private static byte[] readZoneInfoFile(final String fileName) {
++        if (fileName.indexOf("..") >= 0) {
++            return null;
++        }
+         byte[] buffer = null;
+ 
+         try {
+             buffer = AccessController.doPrivileged(new PrivilegedExceptionAction<byte[]>() {
+                 public byte[] run() throws IOException {
+                     File file = new File(ziDir, fileName);
+-                    if (!file.exists() || !file.isFile()) {
+-                        return null;
+-                    }
+-                    file = file.getCanonicalFile();
+-                    String path = file.getCanonicalPath();
+                     byte[] buf = null;
+-                    if (path != null && path.startsWith(ziDir)) {
+-                        int filesize = (int)file.length();
+-                        if (filesize > 0) {
+-                            FileInputStream fis = new FileInputStream(file);
+-                            buf = new byte[filesize];
+-                            try {
+-                                if (fis.read(buf) != filesize) {
+-                                    throw new IOException("read error on " + fileName);
+-                                }
+-                            } finally {
+-                                fis.close();
++                    int filesize = (int)file.length();
++                    if (filesize > 0) {
++                        FileInputStream fis = new FileInputStream(file);
++                        buf = new byte[filesize];
++                        try {
++                            if (fis.read(buf) != filesize) {
++                                throw new IOException("read error on " + fileName);
+                             }
++                        } finally {
++                            fis.close();
+                         }
+                     }
+                     return buf;
+diff -Nru openjdk.orig/jdk/src/share/classes/sun/util/calendar/ZoneInfo.java openjdk/jdk/src/share/classes/sun/util/calendar/ZoneInfo.java
+--- openjdk.orig/jdk/src/share/classes/sun/util/calendar/ZoneInfo.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/src/share/classes/sun/util/calendar/ZoneInfo.java	2015-07-22 02:48:02.190850734 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2000, 2005, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -80,13 +80,18 @@
+     private static final int TRANSITION_NSHIFT = 12;
+ 
+     // Flag for supporting JDK backward compatible IDs, such as "EST".
+-    private static final boolean USE_OLDMAPPING;
++    static final boolean USE_OLDMAPPING;
+     static {
+       String oldmapping = AccessController.doPrivileged(
+           new sun.security.action.GetPropertyAction("sun.timezone.ids.oldmapping", "false")).toLowerCase(Locale.ROOT);
+       USE_OLDMAPPING = (oldmapping.equals("yes") || oldmapping.equals("true"));
+     }
+ 
++    // IDs having conflicting data between Olson and JDK 1.1
++    static final String[] conflictingIDs = {
++        "EST", "MST", "HST"
++    };
++
+     private static final CalendarSystem gcal = CalendarSystem.getGregorianCalendar();
+ 
+     /**
+@@ -771,7 +776,17 @@
+         return (checksum == ((ZoneInfo)other).checksum);
+     }
+ 
+-    private static SoftReference<Map> aliasTable;
++    private static SoftReference<Map<String, String>> aliasTable;
++
++    static Map<String, String> getCachedAliasTable() {
++        Map<String, String> aliases = null;
++
++        SoftReference<Map<String, String>> cache = aliasTable;
++        if (cache != null) {
++            aliases = cache.get();
++        }
++        return aliases;
++    }
+ 
+     /**
+      * Returns a Map from alias time zone IDs to their standard
+@@ -782,20 +797,19 @@
+      *    <code>ZoneInfoMappings</code> file is not available.
+      */
+     public synchronized static Map<String, String> getAliasTable() {
+-        Map<String, String> aliases = null;
+-
+-        SoftReference<Map> cache = aliasTable;
+-        if (cache != null) {
+-            aliases = cache.get();
++        Map<String, String> aliases = getCachedAliasTable();
++        if (aliases == null) {
++            aliases = ZoneInfoFile.getZoneAliases();
+             if (aliases != null) {
+-                return aliases;
++                if (!USE_OLDMAPPING) {
++                    // Remove the conflicting IDs from the alias table.
++                    for (String key : conflictingIDs) {
++                        aliases.remove(key);
++                    }
++                }
++                aliasTable = new SoftReference<Map<String, String>>(aliases);
+             }
+         }
+-
+-        aliases = ZoneInfoFile.getZoneAliases();
+-        if (aliases != null) {
+-            aliasTable = new SoftReference<Map>(aliases);
+-        }
+         return aliases;
+     }
+ 

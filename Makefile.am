@@ -604,7 +604,38 @@ ICEDTEA_PATCHES = \
 	patches/pr2197-jhat_man_page_url.patch \
 	patches/pr2201-support_giflib_5.1.patch \
 	patches/pr2211-check_dgifclosefile_return.patch \
-	patches/pr2226-support_future_giflib_6_and_up.patch
+	patches/pr2226-support_future_giflib_6_and_up.patch \
+	patches/openjdk/4890063-hprof_truncation.patch \
+	patches/openjdk/6562615-compiler_warnings.patch \
+	patches/openjdk/6956398-ephemeraldhkeysize.patch \
+	patches/openjdk/6989466-compiler_warnings.patch \
+	patches/openjdk/6991580-ipv6_nameservers.patch \
+	patches/openjdk/7007905-javazic_line_numbers.patch \
+	patches/openjdk/7058708-javazic_warnings.patch \
+	patches/openjdk/7069870-generic_array_initializers.patch \
+	patches/openjdk/7090844-support_multi_offset_change_timezones.patch \
+	patches/openjdk/7133138-timezone_io_improvement.patch \
+	patches/openjdk/8011709-canonshaping_memory_leak.patch \
+	patches/openjdk/8023052-jvm_crash_in_native_layout.patch \
+	patches/openjdk/8039921-sha1_1024plus.patch \
+	patches/openjdk/8041451-ldap_read_timeout_abandon.patch \
+	patches/openjdk/8042855-indiclayoutengine_null_dereference.patch \
+	patches/openjdk/7094377-ldaps_timeout.patch \
+	patches/openjdk/6997561-better_jndi_error_handling.patch \
+	patches/openjdk/7017176-missing_gpl_headers.patch \
+	patches/openjdk/8000487-jndi_connection_not_honouring_timeout.patch \
+	patches/openjdk/8042857-14_stuck_threads_on_ldaprequest.patch \
+	patches/openjdk/8065238-ldap_namingexception_8041451_regression.patch \
+	patches/openjdk/8074761-ldap_empty_optional_params.patch \
+	patches/openjdk/8078654-closettfontfilefunc.patch \
+	patches/openjdk/8078666-widen_increases.patch \
+	patches/openjdk/8081315-giflib_interlacing.patch \
+	patches/openjdk/8087120-zero_gcc5.patch \
+	patches/pr2319-policy_jar_checksum.patch \
+	patches/pr2460-policy_jar_timestamp.patch \
+	patches/pr2481_sysconfig_clock_spaces.patch \
+	patches/pr2486-768_dh.patch \
+	patches/pr2488-1024_dh.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -638,9 +669,10 @@ ICEDTEA_PATCHES += patches/openjdk/6307603-xrender-01.patch \
 endif
 
 if ENABLE_SYSTEMTAP
-ICEDTEA_PATCHES += patches/hotspot/hs23/systemtap.patch \
+ICEDTEA_PATCHES += patches/openjdk/7170638-systemtap.patch \
 	patches/hotspot/hs23/systemtap_gc.patch \
-	patches/hotspot/hs23/systemtap-alloc-size-workaround.patch
+	patches/hotspot/hs23/systemtap-alloc-size-workaround.patch \
+	patches/openjdk/8081475-systemtap-gcc5.patch
 endif
 
 if BUILD_JAMVM

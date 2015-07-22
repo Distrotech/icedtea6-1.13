@@ -1,0 +1,292 @@
+# HG changeset patch
+# User coleenp
+# Date 1349702334 14400
+#      Mon Oct 08 09:18:54 2012 -0400
+# Node ID c707a5af0d71958eb3f4e9512c7d3a71c06450e0
+# Parent  9e00e448460e8bf3a4c0b7a7894c073907997c1e
+7170638, PR2495: Use DTRACE_PROBE[N] in JNI Set and SetStatic Field.
+Summary: Don't use HS_DTRACE_PROBE_CDECL_N and HS_DTRACE_PROBE_N directly.
+Reviewed-by: coleenp, kamg, dholmes, sspitsyn
+Contributed-by: Mark Wielaard <mjw@redhat.com>
+
+diff -Nru openjdk.orig/hotspot/make/bsd/makefiles/buildtree.make openjdk/hotspot/make/bsd/makefiles/buildtree.make
+--- openjdk.orig/hotspot/make/bsd/makefiles/buildtree.make	2015-04-09 02:20:24.000000000 +0100
++++ openjdk/hotspot/make/bsd/makefiles/buildtree.make	2015-07-22 03:46:03.362170724 +0100
+@@ -162,6 +162,13 @@
+   endif
+ endif
+ 
++# if hotspot-only build and/or OPENJDK isn't passed down, need to set OPENJDK
++ifndef OPENJDK
++  ifneq ($(call if-has-altsrc,$(HS_COMMON_SRC)/,true,false),true)
++    OPENJDK=true
++  endif
++endif
++
+ BUILDTREE_VARS += HOTSPOT_RELEASE_VERSION=$(HS_BUILD_VER) HOTSPOT_BUILD_VERSION=  JRE_RELEASE_VERSION=$(JRE_RELEASE_VERSION)
+ 
+ BUILDTREE	= \
+@@ -204,6 +211,7 @@
+ 	echo "SA_BUILD_VERSION = $(HS_BUILD_VER)"; \
+ 	echo "HOTSPOT_BUILD_USER = $(HOTSPOT_BUILD_USER)"; \
+ 	echo "HOTSPOT_VM_DISTRO = $(HOTSPOT_VM_DISTRO)"; \
++	echo "OPENJDK = $(OPENJDK)"; \
+ 	echo; \
+ 	echo "# Used for platform dispatching"; \
+ 	echo "TARGET_DEFINES  = -DTARGET_OS_FAMILY_\$$(Platform_os_family)"; \
+diff -Nru openjdk.orig/hotspot/make/linux/makefiles/buildtree.make openjdk/hotspot/make/linux/makefiles/buildtree.make
+--- openjdk.orig/hotspot/make/linux/makefiles/buildtree.make	2015-07-22 03:45:38.710600424 +0100
++++ openjdk/hotspot/make/linux/makefiles/buildtree.make	2015-07-22 03:46:19.929881934 +0100
+@@ -155,6 +155,13 @@
+   endif
+ endif
+ 
++# if hotspot-only build and/or OPENJDK isn't passed down, need to set OPENJDK
++ifndef OPENJDK
++  ifneq ($(call if-has-altsrc,$(HS_COMMON_SRC)/,true,false),true)
++    OPENJDK=true
++  endif
++endif
++
+ BUILDTREE_VARS += HOTSPOT_RELEASE_VERSION=$(HS_BUILD_VER) HOTSPOT_BUILD_VERSION=  JRE_RELEASE_VERSION=$(JRE_RELEASE_VERSION)
+ 
+ BUILDTREE	= \
+@@ -197,6 +204,7 @@
+ 	echo "SA_BUILD_VERSION = $(HS_BUILD_VER)"; \
+ 	echo "HOTSPOT_BUILD_USER = $(HOTSPOT_BUILD_USER)"; \
+ 	echo "HOTSPOT_VM_DISTRO = $(HOTSPOT_VM_DISTRO)"; \
++	echo "OPENJDK = $(OPENJDK)"; \
+ 	echo "DERIVATIVE_ID = $(DERIVATIVE_ID)"; \
+ 	echo "DISTRIBUTION_ID = $(DISTRIBUTION_ID)"; \
+ 	echo; \
+diff -Nru openjdk.orig/hotspot/make/linux/makefiles/dtrace.make openjdk/hotspot/make/linux/makefiles/dtrace.make
+--- openjdk.orig/hotspot/make/linux/makefiles/dtrace.make	2015-04-09 02:20:11.000000000 +0100
++++ openjdk/hotspot/make/linux/makefiles/dtrace.make	2015-07-22 03:46:03.362170724 +0100
+@@ -1,5 +1,6 @@
+ #
+-# Copyright (c) 2005, 2008, Oracle and/or its affiliates. All rights reserved.
++# Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
++# Copyright (c) 2012 Red Hat, Inc.
+ # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ #
+ # This code is free software; you can redistribute it and/or modify it
+@@ -25,3 +26,40 @@
+ # Linux does not build jvm_db
+ LIBJVM_DB =
+ 
++# Only OPENJDK builds test and support SDT probes currently.
++ifndef OPENJDK
++REASON = "This JDK does not support SDT probes"
++else
++
++# We need a recent GCC for the default
++ifeq "$(shell expr \( $(CC_VER_MAJOR) \>= 4 \) \& \( $(CC_VER_MINOR) \>= 4 \) )" "0"
++REASON = "gcc version is too old"
++else
++
++# But it does have a SystemTap dtrace compatible sys/sdt.h
++ifneq ($(ALT_SDT_H),)
++  SDT_H_FILE = $(ALT_SDT_H)
++else
++  SDT_H_FILE = /usr/include/sys/sdt.h
++endif
++DTRACE_ENABLED = $(shell test -f $(SDT_H_FILE) && echo $(SDT_H_FILE))
++REASON = "$(SDT_H_FILE) not found"
++
++ifneq ($(DTRACE_ENABLED),)
++  CFLAGS += -DDTRACE_ENABLED
++endif
++
++endif
++endif
++
++# Phony target used in vm.make build target to check whether enabled.
++.PHONY: dtraceCheck
++ifeq ($(DTRACE_ENABLED),)
++dtraceCheck:
++	$(QUIETLY) echo "**NOTICE** Dtrace support disabled: $(REASON)"
++else
++dtraceCheck:
++endif
++
++# It doesn't support HAVE_DTRACE_H though.
++
+diff -Nru openjdk.orig/hotspot/make/linux/makefiles/vm.make openjdk/hotspot/make/linux/makefiles/vm.make
+--- openjdk.orig/hotspot/make/linux/makefiles/vm.make	2015-07-22 03:45:38.714600354 +0100
++++ openjdk/hotspot/make/linux/makefiles/vm.make	2015-07-22 03:46:42.457489257 +0100
+@@ -394,7 +394,7 @@
+ 
+ #----------------------------------------------------------------------
+ 
+-build: $(LIBJVM) $(LAUNCHER) $(LIBJSIG) $(LIBJVM_DB) $(BUILDLIBSAPROC)
++build: $(LIBJVM) $(LAUNCHER) $(LIBJSIG) $(LIBJVM_DB) $(BUILDLIBSAPROC) dtraceCheck
+ 
+ install: install_jvm install_jsig install_saproc
+ 
+diff -Nru openjdk.orig/hotspot/make/solaris/makefiles/buildtree.make openjdk/hotspot/make/solaris/makefiles/buildtree.make
+--- openjdk.orig/hotspot/make/solaris/makefiles/buildtree.make	2015-04-09 02:20:13.000000000 +0100
++++ openjdk/hotspot/make/solaris/makefiles/buildtree.make	2015-07-22 03:46:03.362170724 +0100
+@@ -147,6 +147,13 @@
+   endif
+ endif
+ 
++# if hotspot-only build and/or OPENJDK isn't passed down, need to set OPENJDK
++ifndef OPENJDK
++  ifneq ($(call if-has-altsrc,$(HS_COMMON_SRC)/,true,false),true)
++    OPENJDK=true
++  endif
++endif
++
+ BUILDTREE_VARS += HOTSPOT_RELEASE_VERSION=$(HS_BUILD_VER) HOTSPOT_BUILD_VERSION= JRE_RELEASE_VERSION=$(JRE_RELEASE_VERSION) 
+ 
+ BUILDTREE	= \
+@@ -189,6 +196,7 @@
+ 	echo "SA_BUILD_VERSION = $(HS_BUILD_VER)"; \
+ 	echo "HOTSPOT_BUILD_USER = $(HOTSPOT_BUILD_USER)"; \
+ 	echo "HOTSPOT_VM_DISTRO = $(HOTSPOT_VM_DISTRO)"; \
++	echo "OPENJDK = $(OPENJDK)"; \
+ 	echo "$(LP64_SETTING/$(DATA_MODE))"; \
+ 	echo; \
+ 	echo "# Used for platform dispatching"; \
+diff -Nru openjdk.orig/hotspot/src/share/vm/prims/jni.cpp openjdk/hotspot/src/share/vm/prims/jni.cpp
+--- openjdk.orig/hotspot/src/share/vm/prims/jni.cpp	2015-04-09 02:20:26.000000000 +0100
++++ openjdk/hotspot/src/share/vm/prims/jni.cpp	2015-07-22 03:46:03.366170655 +0100
+@@ -1,5 +1,6 @@
+ /*
+  * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2012 Red Hat, Inc.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -2819,10 +2820,9 @@
+ JNI_QUICK_ENTRY(void, jni_Set##Result##Field(JNIEnv *env, jobject obj, jfieldID fieldID, Argument value)) \
+   JNIWrapper("Set" XSTR(Result) "Field"); \
+ \
+-  HS_DTRACE_PROBE_CDECL_N(hotspot_jni, Set##Result##Field__entry, \
+-    ( JNIEnv*, jobject, jfieldID FP_SELECT_##Result(COMMA Argument,/*empty*/) ) ); \
+-  HS_DTRACE_PROBE_N(hotspot_jni, Set##Result##Field__entry, \
+-    ( env, obj, fieldID FP_SELECT_##Result(COMMA value,/*empty*/) ) ); \
++  FP_SELECT_##Result( \
++    DTRACE_PROBE4(hotspot_jni, Set##Result##Field__entry, env, obj, fieldID, value), \
++    DTRACE_PROBE3(hotspot_jni, Set##Result##Field__entry, env, obj, fieldID)); \
+ \
+   oop o = JNIHandles::resolve_non_null(obj); \
+   klassOop k = o->klass(); \
+@@ -3129,10 +3129,9 @@
+ \
+ JNI_ENTRY(void, jni_SetStatic##Result##Field(JNIEnv *env, jclass clazz, jfieldID fieldID, Argument value)) \
+   JNIWrapper("SetStatic" XSTR(Result) "Field"); \
+-  HS_DTRACE_PROBE_CDECL_N(hotspot_jni, SetStatic##Result##Field__entry,\
+-    ( JNIEnv*, jclass, jfieldID FP_SELECT_##Result(COMMA Argument,/*empty*/) ) ); \
+-  HS_DTRACE_PROBE_N(hotspot_jni, SetStatic##Result##Field__entry, \
+-    ( env, clazz, fieldID FP_SELECT_##Result(COMMA value,/*empty*/) ) ); \
++  FP_SELECT_##Result( \
++     DTRACE_PROBE4(hotspot_jni, SetStatic##Result##Field__entry, env, clazz, fieldID, value), \
++     DTRACE_PROBE3(hotspot_jni, SetStatic##Result##Field__entry, env, clazz, fieldID)); \
+ \
+   JNIid* id = jfieldIDWorkaround::from_static_jfieldID(fieldID); \
+   assert(id->is_static_field_id(), "invalid static field id"); \
+diff -Nru openjdk.orig/hotspot/src/share/vm/utilities/dtrace.hpp openjdk/hotspot/src/share/vm/utilities/dtrace.hpp
+--- openjdk.orig/hotspot/src/share/vm/utilities/dtrace.hpp	2015-04-09 02:20:21.000000000 +0100
++++ openjdk/hotspot/src/share/vm/utilities/dtrace.hpp	2015-07-22 03:46:03.366170655 +0100
+@@ -1,5 +1,6 @@
+ /*
+- * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2009, 2012 Red Hat, Inc.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -32,13 +33,17 @@
+ #define DTRACE_ONLY(x) x
+ #define NOT_DTRACE(x)
+ 
++#if defined(SOLARIS)
+ // Work around dtrace tail call bug 6672627 until it is fixed in solaris 10.
+ #define HS_DTRACE_WORKAROUND_TAIL_CALL_BUG() \
+   do { volatile size_t dtrace_workaround_tail_call_bug = 1; } while (0)
+ 
+-#if defined(SOLARIS)
++#define USDT1 1
++#elif defined(LINUX)
++#define HS_DTRACE_WORKAROUND_TAIL_CALL_BUG()
+ #define USDT1 1
+ #elif defined(__APPLE__)
++#define HS_DTRACE_WORKAROUND_TAIL_CALL_BUG()
+ #define USDT2 1
+ #include <sys/types.h>
+ #include "dtracefiles/hotspot.h"
+@@ -63,6 +68,11 @@
+ #define DTRACE_PROBE3(a,b,c,d,e) {;}
+ #define DTRACE_PROBE4(a,b,c,d,e,f) {;}
+ #define DTRACE_PROBE5(a,b,c,d,e,f,g) {;}
++#define DTRACE_PROBE6(a,b,c,d,e,f,g,h) {;}
++#define DTRACE_PROBE7(a,b,c,d,e,f,g,h,i) {;}
++#define DTRACE_PROBE8(a,b,c,d,e,f,g,h,i,j) {;}
++#define DTRACE_PROBE9(a,b,c,d,e,f,g,h,i,j,k) {;}
++#define DTRACE_PROBE10(a,b,c,d,e,f,g,h,i,j,k,l) {;}
+ 
+ #else /* USDT2 */
+ 
+@@ -76,10 +86,18 @@
+ #define HS_DTRACE_PROBE_FN(provider,name)\
+   __dtrace_##provider##___##name
+ 
++#ifdef SOLARIS
++// Solaris dtrace needs actual extern function decls.
+ #define HS_DTRACE_PROBE_DECL_N(provider,name,args) \
+   DTRACE_ONLY(extern "C" void HS_DTRACE_PROBE_FN(provider,name) args)
+ #define HS_DTRACE_PROBE_CDECL_N(provider,name,args) \
+   DTRACE_ONLY(extern void HS_DTRACE_PROBE_FN(provider,name) args)
++#else
++// Systemtap dtrace compatible probes on GNU/Linux don't.
++// If dtrace is disabled this macro becomes NULL
++#define HS_DTRACE_PROBE_DECL_N(provider,name,args)
++#define HS_DTRACE_PROBE_CDECL_N(provider,name,args)
++#endif
+ 
+ /* Dtrace probe declarations */
+ #define HS_DTRACE_PROBE_DECL(provider,name) \
+@@ -118,6 +136,8 @@
+     uintptr_t,uintptr_t,uintptr_t))
+ 
+ /* Dtrace probe definitions */
++#if defined(SOLARIS)
++// Solaris dtrace uses actual function calls.
+ #define HS_DTRACE_PROBE_N(provider,name, args) \
+   DTRACE_ONLY(HS_DTRACE_PROBE_FN(provider,name) args)
+ 
+@@ -153,6 +173,33 @@
+   HS_DTRACE_PROBE_N(provider,name,((uintptr_t)a0,(uintptr_t)a1,(uintptr_t)a2,\
+     (uintptr_t)a3,(uintptr_t)a4,(uintptr_t)a5,(uintptr_t)a6,(uintptr_t)a7,\
+     (uintptr_t)a8,(uintptr_t)a9))
++#else
++// Systemtap dtrace compatible probes on GNU/Linux use direct macros.
++// If dtrace is disabled this macro becomes NULL
++#define HS_DTRACE_PROBE(provider,name) HS_DTRACE_PROBE0(provider,name)
++#define HS_DTRACE_PROBE0(provider,name)\
++  DTRACE_PROBE(provider,name)
++#define HS_DTRACE_PROBE1(provider,name,a0)\
++  DTRACE_PROBE1(provider,name,a0)
++#define HS_DTRACE_PROBE2(provider,name,a0,a1)\
++  DTRACE_PROBE2(provider,name,a0,a1)
++#define HS_DTRACE_PROBE3(provider,name,a0,a1,a2)\
++  DTRACE_PROBE3(provider,name,a0,a1,a2)
++#define HS_DTRACE_PROBE4(provider,name,a0,a1,a2,a3)\
++  DTRACE_PROBE4(provider,name,a0,a1,a2,a3)
++#define HS_DTRACE_PROBE5(provider,name,a0,a1,a2,a3,a4)\
++  DTRACE_PROBE5(provider,name,a0,a1,a2,a3,a4)
++#define HS_DTRACE_PROBE6(provider,name,a0,a1,a2,a3,a4,a5)\
++  DTRACE_PROBE6(provider,name,a0,a1,a2,a3,a4,a5)
++#define HS_DTRACE_PROBE7(provider,name,a0,a1,a2,a3,a4,a5,a6)\
++  DTRACE_PROBE7(provider,name,a0,a1,a2,a3,a4,a5,a6)
++#define HS_DTRACE_PROBE8(provider,name,a0,a1,a2,a3,a4,a5,a6,a7)\
++  DTRACE_PROBE8(provider,name,a0,a1,a2,a3,a4,a5,a6,a7)
++#define HS_DTRACE_PROBE9(provider,name,a0,a1,a2,a3,a4,a5,a6,a7,a8)\
++  DTRACE_PROBE9(provider,name,a0,a1,a2,a3,a4,a5,a6,a7,a8)
++#define HS_DTRACE_PROBE10(provider,name,a0,a1,a2,a3,a4,a5,a6,a7,a8,a9)\
++  DTRACE_PROBE10(provider,name,a0,a1,a2,a3,a4,a5,a6,a7,a8,a9)
++#endif
+ 
+ #endif /* !USDT2 */
+ 

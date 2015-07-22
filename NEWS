@@ -14,6 +14,43 @@ CVE-XXXX-YYYY: http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
 New in release 1.13.8 (2015-07-XX):
 
+* Security fixes
+  - PR2488, CVE-2015-4000: Make jdk8 mode the default for jdk.tls.ephemeralDHKeySize
+* Backports
+  - S4890063, PR2306, RH1214835: HPROF: default text truncated when using doe=n option
+  - S6562614, PR2555: Compiler warnings for gettimeofday in Inet4/Inet6AddressImpl.c
+  - S6956398, PR2486: make ephemeral DH key match the length of the certificate key
+  - S6989466, PR2555: Miscellaneous compiler warnings in java/lang, java/util, java/io, sun/misc native code
+  - S6991580, PR2309: IPv6 Nameservers in resolv.conf throws NumberFormatException
+  - S6997561, PR2479: A request for better error handling in JNDI
+  - S7007905, PR2298: javazic produces wrong line numbers
+  - S7017176, PR2479: Several JNDI tests are mssing GPL header
+  - S7058708, PR2298: Eliminate JDK build tools build warnings
+  - S7069870, PR2298: Parts of the JDK erroneously rely on generic array initializers with diamond
+  - S7090844, PR2298: Support a timezone whose offset is changed more than once in the future
+  - S7094377, PR2479: Com.sun.jndi.ldap.read.timeout doesn't work with ldaps.
+  - S7133138, PR2298: Improve io performance around timezone lookups
+  - S7170638, PR2495: Use DTRACE_PROBE[N] in JNI Set and SetStatic Field.
+  - S8000487, PR2479: Java JNDI connection library on ldap conn is not honoring configured timeout
+  - S8011709, PR2510: [parfait] False positive: memory leak in jdk/src/share/native/sun/font/layout/CanonShaping.cpp
+  - S8023052, PR2510: JVM crash in native layout
+  - S8039921, PR2468: SHA1WithDSA with key > 1024 bits not working
+  - S8041451, PR2480: com.sun.jndi.ldap.Connection:ReadTimeout should abandon ldap request
+  - S8042855, PR2510: [parfait] Potential null pointer dereference in IndicLayoutEngine.cpp
+  - S8042857, PR2479: 14 stuck threads waiting for notification on LDAPRequest
+  - S8065238, PR2479: javax.naming.NamingException after upgrade to JDK 8
+  - S8074761, PR2469: Empty optional parameters of LDAP query are not interpreted as empty
+  - S8078654, PR2334: CloseTTFontFileFunc callback should be removed
+  - S8078666, PR2327: JVM fastdebug build compiled with GCC 5 asserts with "widen increases"
+  - S8081315, PR2406: Avoid giflib interlacing workaround with giflib 5.0.0 on
+  - S8081475, PR2495: SystemTap does not work when JDK is compiled with GCC 5
+  - S8087120, RH1206656, PR2554: [GCC5] java.lang.StackOverflowError on Zero JVM initialization on non x86 platforms.
+ * Bug fixes
+  - PR2319: Checksum of policy JAR files changes on every build
+  - PR2460: Policy JAR files should be timestamped with the date of the policy file they hold
+  - PR2481, RH489586, RH1236619: OpenJDK can't handle spaces in zone names in /etc/sysconfig/clock
+  - PR2486: JSSE server is still limited to 768-bit DHE
+
 New in release 1.13.7 (2015-04-14):
 
 * Security fixes

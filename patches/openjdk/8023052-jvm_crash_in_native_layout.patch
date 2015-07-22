@@ -1,0 +1,23 @@
+# HG changeset patch
+# User vadim
+# Date 1377252818 -14400
+#      Fri Aug 23 14:13:38 2013 +0400
+# Node ID 12ac08d79c9b72efb06873194caf26b4d5789854
+# Parent  0c950b2be7ab894d253c136d6dec07698dbb9c46
+8023052, PR2510: JVM crash in native layout
+Reviewed-by: bae, prr
+
+diff -r 0c950b2be7ab -r 12ac08d79c9b src/share/native/sun/font/layout/SunLayoutEngine.cpp
+--- openjdk/jdk/src/share/native/sun/font/layout/SunLayoutEngine.cpp	Mon Aug 19 11:21:19 2013 -0700
++++ openjdk/jdk/src/share/native/sun/font/layout/SunLayoutEngine.cpp	Fri Aug 23 14:13:38 2013 +0400
+@@ -179,6 +179,10 @@
+   FontInstanceAdapter fia(env, font2d, strike, mat, 72, 72, (le_int32) upem, (TTLayoutTableCache *) layoutTables);
+   LEErrorCode success = LE_NO_ERROR;
+   LayoutEngine *engine = LayoutEngine::layoutEngineFactory(&fia, script, lang, typo_flags & TYPO_MASK, success);
++  if (engine == NULL) {
++    env->SetIntField(gvdata, gvdCountFID, -1); // flag failure
++    return;
++  }
+ 
+   if (min < 0) min = 0; if (max < min) max = min; /* defensive coding */
+   // have to copy, yuck, since code does upcalls now.  this will be soooo slow

@@ -1,0 +1,21 @@
+# HG changeset patch
+# User robm
+# Date 1400870536 -3600
+#      Fri May 23 19:42:16 2014 +0100
+# Node ID 44be5963aee520ebb0f3d71580a52d5cf81deb0f
+# Parent  e8a342b73ad03697c28de4ded2bfe556158f1645
+8041451, PR2480: com.sun.jndi.ldap.Connection:ReadTimeout should abandon ldap request
+Reviewed-by: vinnie
+
+diff -r e8a342b73ad0 -r 44be5963aee5 src/share/classes/com/sun/jndi/ldap/Connection.java
+--- openjdk/jdk/src/share/classes/com/sun/jndi/ldap/Connection.java	Sun Jul 13 22:42:00 2014 +0400
++++ openjdk/jdk/src/share/classes/com/sun/jndi/ldap/Connection.java	Fri May 23 19:42:16 2014 +0100
+@@ -479,7 +479,7 @@
+         }
+ 
+         if ((rber == null) && waited) {
+-            removeRequest(ldr);
++            abandonRequest(ldr, null);
+             throw new NamingException("LDAP response read timed out, timeout used:"
+                             + readTimeout + "ms." );
+ 

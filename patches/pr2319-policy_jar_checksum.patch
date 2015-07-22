@@ -1,0 +1,103 @@
+# HG changeset patch
+# User andrew
+# Date 1411090681 -3600
+#      Fri Sep 19 02:38:01 2014 +0100
+# Node ID d5d2aed90aa8bc68632698585d2fa18cf35da232
+# Parent  930f4626048e3bdc1044580d82b477ad9794720c
+PR2319: Checksum of policy JAR files changes on every build
+
+diff -Nru openjdk.orig/jdk/make/javax/crypto/Makefile openjdk/jdk/make/javax/crypto/Makefile
+--- openjdk.orig/jdk/make/javax/crypto/Makefile	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/javax/crypto/Makefile	2015-07-22 03:23:52.477369268 +0100
+@@ -258,6 +258,8 @@
+ 
+ POLICY_DESTDIR			= $(LIBDIR)/security
+ UNSIGNED_POLICY_BUILDDIR	= $(UNSIGNED_DIR)/policy
++TEMPDIR_UNLIMITED		= $(TEMPDIR)/unlimited
++TEMPDIR_LIMITED 		= $(TEMPDIR)/limited
+ 
+ build-policy: unlimited limited
+ 
+@@ -270,21 +272,37 @@
+ 
+ $(UNSIGNED_POLICY_BUILDDIR)/unlimited/US_export_policy.jar:		\
+ 	    policy/unlimited/default_US_export.policy			\
+-	    policy/unlimited/UNLIMITED
++	    $(TEMPDIR_UNLIMITED)/META-INF/MANIFEST.MF
+ 	$(prep-target)
+-	$(BOOT_JAR_CMD) cmf policy/unlimited/UNLIMITED $@		\
+-	    -C policy/unlimited default_US_export.policy		\
+-	    $(JAR_JFLAGS)
+-	@$(java-vm-cleanup)
++	$(CP) policy/unlimited/default_US_export.policy			\
++	    $(TEMPDIR_UNLIMITED)
++	$(TOUCH) -r $(TEMPDIR_UNLIMITED)/META-INF			\
++	    $(TEMPDIR_UNLIMITED)/default_US_export.policy
++	( $(CD) $(TEMPDIR_UNLIMITED) && $(ZIPEXE) -Xr $@ META-INF	\
++	    default_US_export.policy )
+ 
+ $(UNSIGNED_POLICY_BUILDDIR)/unlimited/local_policy.jar:			\
+ 	    policy/unlimited/default_local.policy			\
++	    $(TEMPDIR_UNLIMITED)/META-INF/MANIFEST.MF
++	$(prep-target)
++	$(CP) policy/unlimited/default_local.policy			\
++	    $(TEMPDIR_UNLIMITED)
++	$(TOUCH) -r $(TEMPDIR_UNLIMITED)/META-INF			\
++	    $(TEMPDIR_UNLIMITED)/default_local.policy
++	( $(CD) $(TEMPDIR_UNLIMITED) && $(ZIPEXE) -Xr $@ META-INF	\
++	    default_local.policy )
++
++$(TEMPDIR_UNLIMITED)/META-INF/MANIFEST.MF:				\
+ 	    policy/unlimited/UNLIMITED
+ 	$(prep-target)
+-	$(BOOT_JAR_CMD) cmf policy/unlimited/UNLIMITED $@		\
+-	    -C policy/unlimited default_local.policy			\
+-	    $(JAR_JFLAGS)
+-	@$(java-vm-cleanup)
++	$(MKDIR) -p $(TEMPDIR_UNLIMITED)/META-INF
++	$(ECHO) "Manifest-Version: 1.0" > 				\
++	    $(TEMPDIR_UNLIMITED)/META-INF/MANIFEST.MF
++	$(CAT) policy/unlimited/UNLIMITED >> 				\
++	    $(TEMPDIR_UNLIMITED)/META-INF/MANIFEST.MF
++	$(TOUCH) -t 198001010000 $(TEMPDIR_UNLIMITED)/META-INF
++	$(TOUCH) -r $(TEMPDIR_UNLIMITED)/META-INF			\
++	    $(TEMPDIR_UNLIMITED)/META-INF/MANIFEST.MF
+ 
+ #
+ # Build the unsigned limited policy files.
+@@ -303,13 +321,30 @@
+ $(UNSIGNED_POLICY_BUILDDIR)/limited/local_policy.jar:			\
+ 	    policy/limited/default_local.policy				\
+ 	    policy/limited/exempt_local.policy				\
++	    $(TEMPDIR_LIMITED)/META-INF/MANIFEST.MF
++	$(prep-target)
++	$(CP) policy/limited/default_local.policy			\
++	    $(TEMPDIR_LIMITED)
++	$(CP) policy/limited/exempt_local.policy			\
++	    $(TEMPDIR_LIMITED)
++	$(TOUCH) -r $(TEMPDIR_LIMITED)/META-INF				\
++	    $(TEMPDIR_LIMITED)/default_local.policy
++	$(TOUCH) -r $(TEMPDIR_LIMITED)/META-INF				\
++	    $(TEMPDIR_LIMITED)/exempt_local.policy
++	( $(CD) $(TEMPDIR_UNLIMITED) && $(ZIPEXE) -Xr $@ META-INF	\
++	    default_local.policy exempt_local.policy )
++
++$(TEMPDIR_LIMITED)/META-INF/MANIFEST.MF:				\
+ 	    policy/limited/LIMITED
+ 	$(prep-target)
+-	$(BOOT_JAR_CMD) cmf policy/limited/LIMITED $@			\
+-	    -C policy/limited default_local.policy			\
+-	    -C policy/limited exempt_local.policy			\
+-	    $(JAR_JFLAGS)
+-	@$(java-vm-cleanup)
++	$(MKDIR) -p $(TEMPDIR_LIMITED)/META-INF
++	$(ECHO) "Manifest-Version: 1.0" > 				\
++	    $(TEMPDIR_LIMITED)/META-INF/MANIFEST.MF
++	$(CAT) policy/limited/LIMITED >> 				\
++	    $(TEMPDIR_LIMITED)/META-INF/MANIFEST.MF
++	$(TOUCH) -t 198001010000 $(TEMPDIR_LIMITED)/META-INF
++	$(TOUCH) -r $(TEMPDIR_LIMITED)/META-INF 			\
++	    $(TEMPDIR_LIMITED)/META-INF/MANIFEST.MF
+ 
+ UNSIGNED_POLICY_FILES = \
+     $(UNSIGNED_POLICY_BUILDDIR)/unlimited/US_export_policy.jar		\

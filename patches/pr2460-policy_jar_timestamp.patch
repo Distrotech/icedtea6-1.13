@@ -1,0 +1,108 @@
+# HG changeset patch
+# User andrew
+# Date 1436290019 -3600
+#      Tue Jul 07 18:26:59 2015 +0100
+# Node ID 2940b1683e2273626d57879c01a97dc9989713f6
+# Parent  38e2f59188166b2dcc2c7655a4c4d6ad948c4c59
+PR2460: Policy JAR files should be timestamped with the date of the policy file they hold
+Summary: Retain timestamps across copies, touch the final JAR file with the date and use last policy change date (2007/12/01)
+
+diff -Nru openjdk.orig/jdk/make/javax/crypto/Makefile openjdk/jdk/make/javax/crypto/Makefile
+--- openjdk.orig/jdk/make/javax/crypto/Makefile	2015-07-22 03:26:28.454650441 +0100
++++ openjdk/jdk/make/javax/crypto/Makefile	2015-07-22 03:27:45.521307098 +0100
+@@ -274,23 +274,25 @@
+ 	    policy/unlimited/default_US_export.policy			\
+ 	    $(TEMPDIR_UNLIMITED)/META-INF/MANIFEST.MF
+ 	$(prep-target)
+-	$(CP) policy/unlimited/default_US_export.policy			\
++	$(CP) -p policy/unlimited/default_US_export.policy		\
+ 	    $(TEMPDIR_UNLIMITED)
+ 	$(TOUCH) -r $(TEMPDIR_UNLIMITED)/META-INF			\
+ 	    $(TEMPDIR_UNLIMITED)/default_US_export.policy
+ 	( $(CD) $(TEMPDIR_UNLIMITED) && $(ZIPEXE) -Xr $@ META-INF	\
+ 	    default_US_export.policy )
++	$(TOUCH) -r $(TEMPDIR_UNLIMITED)/META-INF $@
+ 
+ $(UNSIGNED_POLICY_BUILDDIR)/unlimited/local_policy.jar:			\
+ 	    policy/unlimited/default_local.policy			\
+ 	    $(TEMPDIR_UNLIMITED)/META-INF/MANIFEST.MF
+ 	$(prep-target)
+-	$(CP) policy/unlimited/default_local.policy			\
++	$(CP) -p policy/unlimited/default_local.policy			\
+ 	    $(TEMPDIR_UNLIMITED)
+ 	$(TOUCH) -r $(TEMPDIR_UNLIMITED)/META-INF			\
+ 	    $(TEMPDIR_UNLIMITED)/default_local.policy
+ 	( $(CD) $(TEMPDIR_UNLIMITED) && $(ZIPEXE) -Xr $@ META-INF	\
+ 	    default_local.policy )
++	$(TOUCH) -r $(TEMPDIR_UNLIMITED)/META-INF $@
+ 
+ $(TEMPDIR_UNLIMITED)/META-INF/MANIFEST.MF:				\
+ 	    policy/unlimited/UNLIMITED
+@@ -300,7 +302,7 @@
+ 	    $(TEMPDIR_UNLIMITED)/META-INF/MANIFEST.MF
+ 	$(CAT) policy/unlimited/UNLIMITED >> 				\
+ 	    $(TEMPDIR_UNLIMITED)/META-INF/MANIFEST.MF
+-	$(TOUCH) -t 198001010000 $(TEMPDIR_UNLIMITED)/META-INF
++	$(TOUCH) -t 200712010000 $(TEMPDIR_UNLIMITED)/META-INF
+ 	$(TOUCH) -r $(TEMPDIR_UNLIMITED)/META-INF			\
+ 	    $(TEMPDIR_UNLIMITED)/META-INF/MANIFEST.MF
+ 
+@@ -316,16 +318,17 @@
+ 
+ $(UNSIGNED_POLICY_BUILDDIR)/limited/US_export_policy.jar:		\
+ 	    $(UNSIGNED_POLICY_BUILDDIR)/unlimited/US_export_policy.jar
+-	$(install-file)
++	$(prep-target)
++	$(CP) -p $< $@
+ 
+ $(UNSIGNED_POLICY_BUILDDIR)/limited/local_policy.jar:			\
+ 	    policy/limited/default_local.policy				\
+ 	    policy/limited/exempt_local.policy				\
+ 	    $(TEMPDIR_LIMITED)/META-INF/MANIFEST.MF
+ 	$(prep-target)
+-	$(CP) policy/limited/default_local.policy			\
++	$(CP) -p policy/limited/default_local.policy			\
+ 	    $(TEMPDIR_LIMITED)
+-	$(CP) policy/limited/exempt_local.policy			\
++	$(CP) -p policy/limited/exempt_local.policy			\
+ 	    $(TEMPDIR_LIMITED)
+ 	$(TOUCH) -r $(TEMPDIR_LIMITED)/META-INF				\
+ 	    $(TEMPDIR_LIMITED)/default_local.policy
+@@ -333,6 +336,7 @@
+ 	    $(TEMPDIR_LIMITED)/exempt_local.policy
+ 	( $(CD) $(TEMPDIR_UNLIMITED) && $(ZIPEXE) -Xr $@ META-INF	\
+ 	    default_local.policy exempt_local.policy )
++	$(TOUCH) -r $(TEMPDIR_UNLIMITED)/META-INF $@
+ 
+ $(TEMPDIR_LIMITED)/META-INF/MANIFEST.MF:				\
+ 	    policy/limited/LIMITED
+@@ -342,9 +346,10 @@
+ 	    $(TEMPDIR_LIMITED)/META-INF/MANIFEST.MF
+ 	$(CAT) policy/limited/LIMITED >> 				\
+ 	    $(TEMPDIR_LIMITED)/META-INF/MANIFEST.MF
+-	$(TOUCH) -t 198001010000 $(TEMPDIR_LIMITED)/META-INF
++	$(TOUCH) -t 200712010000 $(TEMPDIR_LIMITED)/META-INF
+ 	$(TOUCH) -r $(TEMPDIR_LIMITED)/META-INF 			\
+ 	    $(TEMPDIR_LIMITED)/META-INF/MANIFEST.MF
++	$(TOUCH) -r $(TEMPDIR_UNLIMITED)/META-INF $@
+ 
+ UNSIGNED_POLICY_FILES = \
+     $(UNSIGNED_POLICY_BUILDDIR)/unlimited/US_export_policy.jar		\
+@@ -472,7 +477,7 @@
+ 	$(RM) \
+ 	    $(POLICY_DESTDIR)/US_export_policy.jar		\
+ 	    $(POLICY_DESTDIR)/local_policy.jar
+-	$(CP) $^ $(POLICY_DESTDIR)
++	$(CP) -p $^ $(POLICY_DESTDIR)
+ ifndef OPENJDK
+ 	$(release-warning)
+ endif
+@@ -484,7 +489,7 @@
+ 	$(RM) \
+ 	    $(POLICY_DESTDIR)/US_export_policy.jar		\
+ 	    $(POLICY_DESTDIR)/local_policy.jar
+-	$(CP) $^ $(POLICY_DESTDIR)
++	$(CP) -p $^ $(POLICY_DESTDIR)
+ ifndef OPENJDK
+ 	$(release-warning)
+ endif

@@ -1,0 +1,24 @@
+# HG changeset patch
+# User jjg
+# Date 1311636039 25200
+#      Mon Jul 25 16:20:39 2011 -0700
+# Node ID 9cf5ed6b45d6c7499d90a7268e69d3d7faa42d15
+# Parent  32e5be69954d983fac2d8d579531c2fa0f5f4b63
+7069870, PR2298: Parts of the JDK erroneously rely on generic array initializers with diamond
+Reviewed-by: ksrini, mcimadamore
+Contributed-by: alexandre.boulgakov@oracle.com
+
+diff -r 32e5be69954d -r 9cf5ed6b45d6 make/tools/src/build/tools/jarsplit/JarSplit.java
+--- openjdk/jdk/make/tools/src/build/tools/jarsplit/JarSplit.java	Fri Jul 08 10:25:57 2011 -0700
++++ openjdk/jdk/make/tools/src/build/tools/jarsplit/JarSplit.java	Mon Jul 25 16:20:39 2011 -0700
+@@ -43,8 +43,8 @@
+     /* classlist[0] contains class file list
+      * classlist[1] contains non-class file list
+      */
+-    @SuppressWarnings("unchecked")
+-    private static Vector<String>[] classlist = new Vector<String>[2];
++    @SuppressWarnings({ "unchecked", "rawtypes" })
++    private static Vector<String>[] classlist = new Vector[2];
+ 
+     /* The 2 class list name passed as arguments. */
+     private static String[] fileNamelist = new String[2];

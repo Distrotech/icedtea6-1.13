@@ -1,0 +1,42 @@
+# HG changeset patch
+# User prr
+# Date 1433343160 -3600
+#      Wed Jun 03 15:52:40 2015 +0100
+# Node ID 78da0280399f25f7cec8a8354f2be5e813db2acc
+# Parent  871094d6431aa9f277169e824a5694f27a01f0c0
+8078654, PR2334: CloseTTFontFileFunc callback should be removed
+Reviewed-by: prr, martin
+
+diff -r 871094d6431a -r 78da0280399f src/share/native/sun/font/freetypeScaler.c
+--- openjdk/jdk/src/share/native/sun/font/freetypeScaler.c	Mon Apr 27 17:17:07 2015 +0100
++++ openjdk/jdk/src/share/native/sun/font/freetypeScaler.c	Wed Jun 03 15:52:40 2015 +0100
+@@ -151,20 +151,6 @@
+ 
+ #define FILEDATACACHESIZE 1024
+ 
+-/* NB: is it ever called? */
+-static void CloseTTFontFileFunc(FT_Stream stream) {
+-    FTScalerInfo *scalerInfo = (FTScalerInfo *) stream->pathname.pointer;
+-    JNIEnv* env = scalerInfo->env;
+-    jclass tmpClass = (*env)->FindClass(env, "sun/font/TrueTypeFont");
+-    jfieldID platNameField =
+-         (*env)->GetFieldID(env, tmpClass, "platName", "Ljava/lang/String;");
+-    jstring platName = (*env)->GetObjectField(env,
+-                                              scalerInfo->font2D,
+-                                              platNameField);
+-    const char *name = JNU_GetStringPlatformChars(env, platName, NULL);
+-    JNU_ReleaseStringPlatformChars(env, platName, name);
+-}
+-
+ static unsigned long ReadTTFontFileFunc(FT_Stream stream,
+                                         unsigned long offset,
+                                         unsigned char* destBuffer,
+@@ -309,7 +295,7 @@
+                 ftstream->size = filesize;
+                 ftstream->pos = 0;
+                 ftstream->read = (FT_Stream_IoFunc) ReadTTFontFileFunc;
+-                ftstream->close = (FT_Stream_CloseFunc) CloseTTFontFileFunc;
++                ftstream->close = NULL;
+                 ftstream->pathname.pointer = (void *) scalerInfo;
+ 
+                 memset(&ft_open_args, 0, sizeof(FT_Open_Args));

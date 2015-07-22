@@ -1,0 +1,67 @@
+# HG changeset patch
+# User andrew
+# Date 1436295959 -3600
+#      Tue Jul 07 20:05:59 2015 +0100
+# Node ID 014438c072c8bcb593e80dba4f6c703a3e9abc5b
+# Parent  db440b7618ee0d2bf6bf69a1e22653a5818cb41a
+PR2481, RH489586, RH1236619: OpenJDK can't handle spaces in zone names in /etc/sysconfig/clock
+Summary: Replace ' ' with '_' in zone name, as RHEL tools do.
+
+diff -Nrub openjdk.orig/jdk/src/solaris/native/java/util/TimeZone_md.c openjdk/jdk/src/solaris/native/java/util/TimeZone_md.c
+--- openjdk.orig/jdk/src/solaris/native/java/util/TimeZone_md.c	2015-07-22 03:29:30.915469980 +0100
++++ openjdk/jdk/src/solaris/native/java/util/TimeZone_md.c	2015-07-22 03:35:53.944793428 +0100
+@@ -52,7 +52,6 @@
+ #ifdef __linux__
+ 
+ static const char *ETC_TIMEZONE_FILE = "/etc/timezone";
+-static const char *REDHAT_RELEASE_FILE = "/etc/redhat-release";
+ static const char *SYSCONFIG_CLOCK_FILE = "/etc/sysconfig/clock";
+ static const char *ZONEINFO_DIR = "/usr/share/zoneinfo";
+ static const char *DEFAULT_ZONEINFO_FILE = "/etc/localtime";
+@@ -229,13 +228,6 @@
+     /*
+      * Next, try the ZONE entry in /etc/sysconfig/clock.
+      */
+-    if ((fp = fopen(REDHAT_RELEASE_FILE, "r")) != NULL) {
+-	char id[7];
+-
+-	/* Avoid this file on Fedora as may be buggy; RH489586 */
+-	if (fgets(id, sizeof (id), fp) != NULL && 
+-	  strncmp(id, "Fedora", 6) != 0) {
+-	    (void) fclose(fp);
+ 	    if ((fp = fopen(SYSCONFIG_CLOCK_FILE, "r")) != NULL) {
+ 		char line[256];
+ 		
+@@ -266,8 +258,11 @@
+ 			    break;
+ 			}
+ 		    }
+-		    for (s = p; *s && *s != '"'; s++)
+-			;
++	    for (s = p; *s && *s != '"'; s++) {
++		/* Old files may contain spaces; RH489586 */
++		if (*s == ' ')
++		    *s = '_';
++	    }
+ 		    if (*s != '"') {
+ 			/* this ZONE entry is broken. */
+ 			break;
+@@ -276,13 +271,16 @@
+ 		    tz = strdup(p);
+ 		    break; 
+ 		}
++
++ 	if (fp != NULL) {
+ 		(void) fclose(fp);
++ 	    fp = NULL;
++	}
+ 		if (tz != NULL) {
+ 		    return tz;
+ 		}
+ 	    }
+-	}
+-    }
++      
+ 
+     /*
+      * Next, try /etc/localtime to find the zone ID.

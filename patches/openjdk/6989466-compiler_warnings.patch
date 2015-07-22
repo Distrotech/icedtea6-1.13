@@ -1,0 +1,405 @@
+# HG changeset patch
+# User alanb
+# Date 1286458577 -3600
+#      Thu Oct 07 14:36:17 2010 +0100
+# Node ID 871cffb21423dee3d1692af8bd209d1ff4366031
+# Parent  a2b1ef1294c57cadeffe012e30c353d491fa853f
+6989466, PR2555: Miscellaneous compiler warnings in java/lang, java/util, java/io, sun/misc native code
+Reviewed-by: andrew, mchung, ohair
+
+diff -Nru openjdk.orig/jdk/src/share/native/common/jni_util.c openjdk/jdk/src/share/native/common/jni_util.c
+--- openjdk.orig/jdk/src/share/native/common/jni_util.c	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/src/share/native/common/jni_util.c	2015-07-22 02:17:04.999223287 +0100
+@@ -433,7 +433,7 @@
+     for (i=0; i<len; i++) {
+         jchar unicode = str[i];
+         if (unicode <= 0x00ff)
+-            result[i] = unicode;
++            result[i] = (char)unicode;
+         else
+             result[i] = '?';
+     }
+@@ -498,7 +498,7 @@
+     for (i=0; i<len; i++) {
+         jchar unicode = str[i];
+         if (unicode <= 0x007f )
+-            result[i] = unicode;
++            result[i] = (char)unicode;
+         else
+             result[i] = '?';
+     }
+@@ -569,7 +569,7 @@
+     for (i=0; i<len; i++) {
+         jchar c = str[i];
+         if (c < 256)
+-            result[i] = c;
++            result[i] = (char)c;
+         else switch(c) {
+             case 0x20AC: result[i] = (char)0x80; break;
+             case 0x201A: result[i] = (char)0x82; break;
+diff -Nru openjdk.orig/jdk/src/share/native/java/lang/Class.c openjdk/jdk/src/share/native/java/lang/Class.c
+--- openjdk.orig/jdk/src/share/native/java/lang/Class.c	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/src/share/native/java/lang/Class.c	2015-07-22 02:17:04.999223287 +0100
+@@ -102,8 +102,8 @@
+     char *clname;
+     jclass cls = 0;
+     char buf[128];
+-    int len;
+-    int unicode_len;
++    jsize len;
++    jsize unicode_len;
+ 
+     if (classname == NULL) {
+         JNU_ThrowNullPointerException(env, 0);
+@@ -112,7 +112,7 @@
+ 
+     len = (*env)->GetStringUTFLength(env, classname);
+     unicode_len = (*env)->GetStringLength(env, classname);
+-    if (len >= sizeof(buf)) {
++    if (len >= (jsize)sizeof(buf)) {
+         clname = malloc(len + 1);
+         if (clname == NULL) {
+             JNU_ThrowOutOfMemoryError(env, NULL);
+diff -Nru openjdk.orig/jdk/src/share/native/java/lang/ClassLoader.c openjdk/jdk/src/share/native/java/lang/ClassLoader.c
+--- openjdk.orig/jdk/src/share/native/java/lang/ClassLoader.c	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/src/share/native/java/lang/ClassLoader.c	2015-07-22 02:17:04.999223287 +0100
+@@ -330,7 +330,7 @@
+     if (handle) {
+         const char *onLoadSymbols[] = JNI_ONLOAD_SYMBOLS;
+         JNI_OnLoad_t JNI_OnLoad;
+-        int i;
++        unsigned int i;
+         for (i = 0; i < sizeof(onLoadSymbols) / sizeof(char *); i++) {
+             JNI_OnLoad = (JNI_OnLoad_t)
+                 JVM_FindLibraryEntry(handle, onLoadSymbols[i]);
+@@ -368,7 +368,7 @@
+         cause = (*env)->ExceptionOccurred(env);
+         if (cause) {
+             (*env)->ExceptionClear(env);
+-            (*env)->SetLongField(env, this, handleID, (jlong)NULL);
++            (*env)->SetLongField(env, this, handleID, (jlong)0);
+             (*env)->Throw(env, cause);
+         }
+         goto done;
+@@ -391,7 +391,7 @@
+     const char *onUnloadSymbols[] = JNI_ONUNLOAD_SYMBOLS;
+     void *handle;
+     JNI_OnUnload_t JNI_OnUnload;
+-    int i;
++    unsigned int i;
+ 
+     if (!initIDs(env))
+         return;
+diff -Nru openjdk.orig/jdk/src/share/native/java/lang/fdlibm/include/fdlibm.h openjdk/jdk/src/share/native/java/lang/fdlibm/include/fdlibm.h
+--- openjdk.orig/jdk/src/share/native/java/lang/fdlibm/include/fdlibm.h	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/src/share/native/java/lang/fdlibm/include/fdlibm.h	2015-07-22 02:17:04.999223287 +0100
+@@ -47,11 +47,13 @@
+ #define __LOp(x) *(1+(int*)x)
+ #endif
+ 
++#ifndef __P
+ #ifdef __STDC__
+ #define __P(p)  p
+ #else
+ #define __P(p)  ()
+ #endif
++#endif
+ 
+ /*
+  * ANSI/POSIX
+diff -Nru openjdk.orig/jdk/src/share/native/java/lang/reflect/Proxy.c openjdk/jdk/src/share/native/java/lang/reflect/Proxy.c
+--- openjdk.orig/jdk/src/share/native/java/lang/reflect/Proxy.c	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/src/share/native/java/lang/reflect/Proxy.c	2015-07-22 02:17:04.999223287 +0100
+@@ -82,9 +82,9 @@
+         goto free_body;
+ 
+     if (name != NULL) {
+-        int len = (*env)->GetStringUTFLength(env, name);
+-        int unicode_len = (*env)->GetStringLength(env, name);
+-        if (len >= sizeof(buf)) {
++        jsize len = (*env)->GetStringUTFLength(env, name);
++        jsize unicode_len = (*env)->GetStringLength(env, name);
++        if (len >= (jsize)sizeof(buf)) {
+             utfName = malloc(len + 1);
+             if (utfName == NULL) {
+                 JNU_ThrowOutOfMemoryError(env, NULL);
+diff -Nru openjdk.orig/jdk/src/share/native/java/nio/Bits.c openjdk/jdk/src/share/native/java/nio/Bits.c
+--- openjdk.orig/jdk/src/share/native/java/nio/Bits.c	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/src/share/native/java/nio/Bits.c	2015-07-22 02:17:04.999223287 +0100
+@@ -111,7 +111,7 @@
+                                       jlong srcPos, jlong dstAddr, jlong length)
+ {
+     jbyte *bytes;
+-    size_t i, size;
++    size_t size;
+     jshort *srcShort, *dstShort, *endShort;
+     jshort tmpShort;
+ 
+@@ -122,7 +122,7 @@
+         if (length > MBYTE)
+             size = MBYTE;
+         else
+-            size = length;
++            size = (size_t)length;
+ 
+         GETCRITICAL(bytes, env, src);
+ 
+@@ -146,7 +146,7 @@
+                                     jobject dst, jlong dstPos, jlong length)
+ {
+     jbyte *bytes;
+-    size_t i, size;
++    size_t size;
+     jshort *srcShort, *dstShort, *endShort;
+     jshort tmpShort;
+ 
+@@ -157,7 +157,7 @@
+         if (length > MBYTE)
+             size = MBYTE;
+         else
+-            size = length;
++            size = (size_t)length;
+ 
+         GETCRITICAL(bytes, env, dst);
+ 
+@@ -181,7 +181,7 @@
+                                     jlong srcPos, jlong dstAddr, jlong length)
+ {
+     jbyte *bytes;
+-    size_t i, size;
++    size_t size;
+     jint *srcInt, *dstInt, *endInt;
+     jint tmpInt;
+ 
+@@ -192,7 +192,7 @@
+         if (length > MBYTE)
+             size = MBYTE;
+         else
+-            size = length;
++            size = (size_t)length;
+ 
+         GETCRITICAL(bytes, env, src);
+ 
+@@ -216,7 +216,7 @@
+                                   jobject dst, jlong dstPos, jlong length)
+ {
+     jbyte *bytes;
+-    size_t i, size;
++    size_t size;
+     jint *srcInt, *dstInt, *endInt;
+     jint tmpInt;
+ 
+@@ -227,7 +227,7 @@
+         if (length > MBYTE)
+             size = MBYTE;
+         else
+-            size = length;
++            size = (size_t)length;
+ 
+         GETCRITICAL(bytes, env, dst);
+ 
+@@ -251,7 +251,7 @@
+                                      jlong srcPos, jlong dstAddr, jlong length)
+ {
+     jbyte *bytes;
+-    size_t i, size;
++    size_t size;
+     jlong *srcLong, *dstLong, *endLong;
+     jlong tmpLong;
+ 
+@@ -262,7 +262,7 @@
+         if (length > MBYTE)
+             size = MBYTE;
+         else
+-            size = length;
++            size = (size_t)length;
+ 
+         GETCRITICAL(bytes, env, src);
+ 
+@@ -286,7 +286,7 @@
+                                    jobject dst, jlong dstPos, jlong length)
+ {
+     jbyte *bytes;
+-    size_t i, size;
++    size_t size;
+     jlong *srcLong, *dstLong, *endLong;
+     jlong tmpLong;
+ 
+@@ -297,7 +297,7 @@
+         if (length > MBYTE)
+             size = MBYTE;
+         else
+-            size = length;
++            size = (size_t)length;
+ 
+         GETCRITICAL(bytes, env, dst);
+ 
+diff -Nru openjdk.orig/jdk/src/share/native/sun/management/Flag.c openjdk/jdk/src/share/native/sun/management/Flag.c
+--- openjdk.orig/jdk/src/share/native/sun/management/Flag.c	2015-04-10 16:39:21.000000000 +0100
++++ openjdk/jdk/src/share/native/sun/management/Flag.c	2015-07-22 02:17:04.999223287 +0100
+@@ -25,6 +25,7 @@
+ 
+ #include <stdlib.h>
+ #include <stdio.h>
++#include <string.h>
+ #include <jni.h>
+ #include "management.h"
+ #include "sun_management_Flag.h"
+diff -Nru openjdk.orig/jdk/src/share/native/sun/misc/VM.c openjdk/jdk/src/share/native/sun/misc/VM.c
+--- openjdk.orig/jdk/src/share/native/sun/misc/VM.c	2015-04-10 16:39:21.000000000 +0100
++++ openjdk/jdk/src/share/native/sun/misc/VM.c	2015-07-22 02:23:29.104527979 +0100
+@@ -23,6 +23,8 @@
+  * questions.
+  */
+ 
++#include <string.h>
++
+ #include "jni.h"
+ #include "jni_util.h"
+ #include "jlong.h"
+@@ -111,8 +113,6 @@
+ 
+ JNIEXPORT void JNICALL
+ Java_sun_misc_VM_initialize(JNIEnv *env, jclass cls) {
+-    char errmsg[128];
+-
+     if (!JDK_InitJvmHandle()) {
+         JNU_ThrowInternalError(env, "Handle for JVM not found for symbol lookup");
+     }
+diff -Nru openjdk.orig/jdk/src/share/native/sun/misc/VMSupport.c openjdk/jdk/src/share/native/sun/misc/VMSupport.c
+--- openjdk.orig/jdk/src/share/native/sun/misc/VMSupport.c	2015-04-10 16:39:21.000000000 +0100
++++ openjdk/jdk/src/share/native/sun/misc/VMSupport.c	2015-07-22 02:17:04.999223287 +0100
+@@ -38,8 +38,6 @@
+ JNIEXPORT jobject JNICALL
+ Java_sun_misc_VMSupport_initAgentProperties(JNIEnv *env, jclass cls, jobject props)
+ {
+-    char errmsg[128];
+-
+     if (InitAgentProperties_fp == NULL) {
+         if (!JDK_InitJvmHandle()) {
+             JNU_ThrowInternalError(env,
+diff -Nru openjdk.orig/jdk/src/solaris/native/java/io/canonicalize_md.c openjdk/jdk/src/solaris/native/java/io/canonicalize_md.c
+--- openjdk.orig/jdk/src/solaris/native/java/io/canonicalize_md.c	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/src/solaris/native/java/io/canonicalize_md.c	2015-07-22 02:17:05.003223216 +0100
+@@ -246,7 +246,7 @@
+         if (r != NULL) {
+             /* Append unresolved subpath to resolved subpath */
+             int rn = strlen(r);
+-            if (rn + strlen(p) >= len) {
++            if (rn + (int)strlen(p) >= len) {
+                 /* Buffer overflow */
+                 errno = ENAMETOOLONG;
+                 return -1;
+diff -Nru openjdk.orig/jdk/src/solaris/native/java/io/UnixFileSystem_md.c openjdk/jdk/src/solaris/native/java/io/UnixFileSystem_md.c
+--- openjdk.orig/jdk/src/solaris/native/java/io/UnixFileSystem_md.c	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/src/solaris/native/java/io/UnixFileSystem_md.c	2015-07-22 02:17:05.003223216 +0100
+@@ -191,7 +191,7 @@
+                                         jobject file, jint a)
+ {
+     jboolean rv = JNI_FALSE;
+-    int mode;
++    int mode = 0;
+     switch (a) {
+     case java_io_FileSystem_ACCESS_READ:
+         mode = R_OK;
+@@ -223,7 +223,8 @@
+     jboolean rv = JNI_FALSE;
+ 
+     WITH_FIELD_PLATFORM_STRING(env, file, ids.path, path) {
+-        int amode, mode;
++        int amode = 0;
++        int mode;
+         switch (access) {
+         case java_io_FileSystem_ACCESS_READ:
+             if (owneronly)
+diff -Nru openjdk.orig/jdk/src/solaris/native/java/lang/java_props_md.c openjdk/jdk/src/solaris/native/java/lang/java_props_md.c
+--- openjdk.orig/jdk/src/solaris/native/java/lang/java_props_md.c	2015-07-22 02:15:53.772464834 +0100
++++ openjdk/jdk/src/solaris/native/java/lang/java_props_md.c	2015-07-22 02:17:05.003223216 +0100
+@@ -46,7 +46,9 @@
+ #include "java_props.h"
+ 
+ #ifdef __linux__
+-#define CODESET _NL_CTYPE_CODESET_NAME
++  #ifndef CODESET
++  #define CODESET _NL_CTYPE_CODESET_NAME
++  #endif
+ #else
+ #ifdef ALT_CODESET_KEY
+ #define CODESET ALT_CODESET_KEY
+@@ -121,7 +123,7 @@
+ java_props_t *
+ GetJavaProperties(JNIEnv *env)
+ {
+-    static java_props_t sprops = {0};
++    static java_props_t sprops;
+     char *v; /* tmp var */
+ 
+     if (sprops.user_dir) {
+diff -Nru openjdk.orig/jdk/src/windows/native/java/lang/java_props_md.c openjdk/jdk/src/windows/native/java/lang/java_props_md.c
+--- openjdk.orig/jdk/src/windows/native/java/lang/java_props_md.c	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/src/windows/native/java/lang/java_props_md.c	2015-07-22 02:17:14.903050654 +0100
+@@ -800,7 +800,7 @@
+             break;
+         }
+         sprintf(buf, "%d.%d", ver.dwMajorVersion, ver.dwMinorVersion);
+-        sprops.os_version = strdup(buf);
++        sprops.os_version = _strdup(buf);
+ #if _M_IA64
+         sprops.os_arch = "ia64";
+ #elif _M_AMD64
+@@ -811,7 +811,7 @@
+         sprops.os_arch = "unknown";
+ #endif
+ 
+-        sprops.patch_level = strdup(ver.szCSDVersion);
++        sprops.patch_level = _strdup(ver.szCSDVersion);
+ 
+         sprops.desktop = "windows";
+     }
+diff -Nru openjdk.orig/jdk/src/windows/native/java/util/TimeZone_md.c openjdk/jdk/src/windows/native/java/util/TimeZone_md.c
+--- openjdk.orig/jdk/src/windows/native/java/util/TimeZone_md.c	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/src/windows/native/java/util/TimeZone_md.c	2015-07-22 02:17:14.903050654 +0100
+@@ -26,6 +26,7 @@
+ #include <windows.h>
+ #include <stdio.h>
+ #include <stdlib.h>
++#include "jvm.h"
+ #include "TimeZone_md.h"
+ 
+ #define VALUE_UNKNOWN           0
+@@ -463,7 +464,7 @@
+                 /*
+                  * Found the time zone in the mapping table.
+                  */
+-                javaTZName = strdup(items[TZ_JAVA_NAME]);
++                javaTZName = _strdup(items[TZ_JAVA_NAME]);
+                 break;
+             }
+             /*
+@@ -473,7 +474,7 @@
+                 strncpy(bestMatch, items[TZ_JAVA_NAME], MAX_ZONE_CHAR);
+             } else if (country != NULL && strcmp(items[TZ_REGION], country) == 0) {
+                 if (value_type == VALUE_MAPID) {
+-                    javaTZName = strdup(items[TZ_JAVA_NAME]);
++                    javaTZName = _strdup(items[TZ_JAVA_NAME]);
+                     break;
+                 }
+                 strncpy(bestMatch, items[TZ_JAVA_NAME], MAX_ZONE_CHAR);
+@@ -490,7 +491,7 @@
+     fclose(fp);
+ 
+     if (javaTZName == NULL && bestMatch[0] != '\0') {
+-        javaTZName = strdup(bestMatch);
++        javaTZName = _strdup(bestMatch);
+     }
+     return javaTZName;
+ 
+@@ -515,7 +516,7 @@
+ 
+     if (result != VALUE_UNKNOWN) {
+         if (result == VALUE_GMTOFFSET) {
+-            std_timezone = strdup(winZoneName);
++            std_timezone = _strdup(winZoneName);
+         } else {
+             std_timezone = matchJavaTZ(java_home_dir, result,
+                                        winZoneName, winMapID, country);

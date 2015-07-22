@@ -1,0 +1,33 @@
+# HG changeset patch
+# User andrew
+# Date 1247326988 -3600
+#      Sat Jul 11 16:43:08 2009 +0100
+# Node ID 880896883a4757145a278ecb55e6b730124a2e47
+# Parent  6f26e2e5f4f3eb6722541d37007739b174de5142
+6562614, PR2555: Compiler warnings for gettimeofday in Inet4/Inet6AddressImpl.c
+Summary: Add missing header to remove compiler warnings.
+Reviewed-by: martin
+Contributed-by: Matthew Flaschen <matthew.flaschen@gatech.edu>
+
+diff -r 6f26e2e5f4f3 -r 880896883a47 src/solaris/native/java/net/Inet4AddressImpl.c
+--- openjdk/jdk/src/solaris/native/java/net/Inet4AddressImpl.c	Fri Jul 10 17:27:13 2009 +0800
++++ openjdk/jdk/src/solaris/native/java/net/Inet4AddressImpl.c	Sat Jul 11 16:43:08 2009 +0100
+@@ -24,6 +24,7 @@
+  */
+ 
+ #include <errno.h>
++#include <sys/time.h>
+ #include <sys/types.h>
+ #include <sys/socket.h>
+ #include <netinet/in_systm.h>
+diff -r 6f26e2e5f4f3 -r 880896883a47 src/solaris/native/java/net/Inet6AddressImpl.c
+--- openjdk/jdk/src/solaris/native/java/net/Inet6AddressImpl.c	Fri Jul 10 17:27:13 2009 +0800
++++ openjdk/jdk/src/solaris/native/java/net/Inet6AddressImpl.c	Sat Jul 11 16:43:08 2009 +0100
+@@ -24,6 +24,7 @@
+  */
+ 
+ #include <errno.h>
++#include <sys/time.h>
+ #include <sys/types.h>
+ #include <sys/socket.h>
+ #include <netinet/in.h>

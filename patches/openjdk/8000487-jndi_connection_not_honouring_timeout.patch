@@ -1,0 +1,720 @@
+# HG changeset patch
+# User robm
+# Date 1350655502 -3600
+#      Fri Oct 19 15:05:02 2012 +0100
+# Node ID 58522e691f9dd9ecc908a6e81726c78b45ca222e
+# Parent  eb23e6bd0d714439e64a99b7c2863d31b974e615
+8000487, PR2479: Java JNDI connection library on ldap conn is not honoring configured timeout
+Reviewed-by: vinnie
+
+diff -r eb23e6bd0d71 -r 58522e691f9d src/share/classes/com/sun/jndi/ldap/Connection.java
+--- openjdk/jdk/src/share/classes/com/sun/jndi/ldap/Connection.java	Thu Apr 12 10:43:04 2012 -0700
++++ openjdk/jdk/src/share/classes/com/sun/jndi/ldap/Connection.java	Fri Oct 19 15:05:02 2012 +0100
+@@ -157,7 +157,8 @@
+     volatile IOException closureReason = null;
+     volatile boolean useable = true;  // is Connection still useable
+ 
+-    private int readTimeout;
++    int readTimeout;
++    int connectTimeout;
+ 
+     // true means v3; false means v2
+     // Called in LdapClient.authenticate() (which is synchronized)
+@@ -187,6 +188,7 @@
+         this.port = port;
+         this.parent = parent;
+         this.readTimeout = readTimeout;
++        this.connectTimeout = connectTimeout;
+ 
+         if (trace != null) {
+             traceFile = trace;
+diff -r eb23e6bd0d71 -r 58522e691f9d src/share/classes/com/sun/jndi/ldap/LdapClient.java
+--- openjdk/jdk/src/share/classes/com/sun/jndi/ldap/LdapClient.java	Thu Apr 12 10:43:04 2012 -0700
++++ openjdk/jdk/src/share/classes/com/sun/jndi/ldap/LdapClient.java	Fri Oct 19 15:05:02 2012 +0100
+@@ -149,149 +149,155 @@
+         String authMechanism, Control[] ctls,  Hashtable env)
+         throws NamingException {
+ 
+-        authenticateCalled = true;
++        int readTimeout = conn.readTimeout;
++        conn.readTimeout = conn.connectTimeout;
++        LdapResult res = null;
+ 
+         try {
+-            ensureOpen();
+-        } catch (IOException e) {
+-            NamingException ne = new CommunicationException();
+-            ne.setRootCause(e);
+-            throw ne;
+-        }
++            authenticateCalled = true;
+ 
+-        switch (version) {
+-        case LDAP_VERSION3_VERSION2:
+-        case LDAP_VERSION3:
+-            isLdapv3 = true;
+-            break;
+-        case LDAP_VERSION2:
+-            isLdapv3 = false;
+-            break;
+-        default:
+-            throw new CommunicationException("Protocol version " + version +
+-                " not supported");
+-        }
++            try {
++                ensureOpen();
++            } catch (IOException e) {
++                NamingException ne = new CommunicationException();
++                ne.setRootCause(e);
++                throw ne;
++            }
+ 
+-        LdapResult res = null;
++            switch (version) {
++            case LDAP_VERSION3_VERSION2:
++            case LDAP_VERSION3:
++                isLdapv3 = true;
++                break;
++            case LDAP_VERSION2:
++                isLdapv3 = false;
++                break;
++            default:
++                throw new CommunicationException("Protocol version " + version +
++                    " not supported");
++            }
+ 
+-        if (authMechanism.equalsIgnoreCase("none") ||
+-            authMechanism.equalsIgnoreCase("anonymous")) {
++            if (authMechanism.equalsIgnoreCase("none") ||
++                authMechanism.equalsIgnoreCase("anonymous")) {
+ 
+-            // Perform LDAP bind if we are reauthenticating, using LDAPv2,
+-            // supporting failover to LDAPv2, or controls have been supplied.
+-            if (!initial ||
+-                (version == LDAP_VERSION2) ||
+-                (version == LDAP_VERSION3_VERSION2) ||
+-                ((ctls != null) && (ctls.length > 0))) {
++                // Perform LDAP bind if we are reauthenticating, using LDAPv2,
++                // supporting failover to LDAPv2, or controls have been supplied.
++                if (!initial ||
++                    (version == LDAP_VERSION2) ||
++                    (version == LDAP_VERSION3_VERSION2) ||
++                    ((ctls != null) && (ctls.length > 0))) {
++                    try {
++                        // anonymous bind; update name/pw for LDAPv2 retry
++                        res = ldapBind(name=null, (byte[])(pw=null), ctls, null,
++                            false);
++                        if (res.status == LdapClient.LDAP_SUCCESS) {
++                            conn.setBound();
++                        }
++                    } catch (IOException e) {
++                        NamingException ne =
++                            new CommunicationException("anonymous bind failed: " +
++                            conn.host + ":" + conn.port);
++                        ne.setRootCause(e);
++                        throw ne;
++                    }
++                } else {
++                    // Skip LDAP bind for LDAPv3 anonymous bind
++                    res = new LdapResult();
++                    res.status = LdapClient.LDAP_SUCCESS;
++                }
++            } else if (authMechanism.equalsIgnoreCase("simple")) {
++                // simple authentication
++                byte[] encodedPw = null;
+                 try {
+-                    // anonymous bind; update name/pw for LDAPv2 retry
+-                    res = ldapBind(name=null, (byte[])(pw=null), ctls, null,
+-                        false);
++                    encodedPw = encodePassword(pw, isLdapv3);
++                    res = ldapBind(name, encodedPw, ctls, null, false);
+                     if (res.status == LdapClient.LDAP_SUCCESS) {
+                         conn.setBound();
+                     }
+                 } catch (IOException e) {
+                     NamingException ne =
+-                        new CommunicationException("anonymous bind failed: " +
++                        new CommunicationException("simple bind failed: " +
++                            conn.host + ":" + conn.port);
++                    ne.setRootCause(e);
++                    throw ne;
++                } finally {
++                    // If pw was copied to a new array, clear that array as
++                    // a security precaution.
++                    if (encodedPw != pw && encodedPw != null) {
++                        for (int i = 0; i < encodedPw.length; i++) {
++                            encodedPw[i] = 0;
++                        }
++                    }
++                }
++            } else if (isLdapv3) {
++                // SASL authentication
++                try {
++                    res = LdapSasl.saslBind(this, conn, conn.host, name, pw,
++                        authMechanism, env, ctls);
++                    if (res.status == LdapClient.LDAP_SUCCESS) {
++                        conn.setBound();
++                    }
++                } catch (IOException e) {
++                    NamingException ne =
++                        new CommunicationException("SASL bind failed: " +
+                         conn.host + ":" + conn.port);
+                     ne.setRootCause(e);
+                     throw ne;
+                 }
+             } else {
+-                // Skip LDAP bind for LDAPv3 anonymous bind
+-                res = new LdapResult();
+-                res.status = LdapClient.LDAP_SUCCESS;
++                throw new AuthenticationNotSupportedException(authMechanism);
+             }
+-        } else if (authMechanism.equalsIgnoreCase("simple")) {
+-            // simple authentication
+-            byte[] encodedPw = null;
+-            try {
+-                encodedPw = encodePassword(pw, isLdapv3);
+-                res = ldapBind(name, encodedPw, ctls, null, false);
+-                if (res.status == LdapClient.LDAP_SUCCESS) {
+-                    conn.setBound();
+-                }
+-            } catch (IOException e) {
+-                NamingException ne =
+-                    new CommunicationException("simple bind failed: " +
+-                        conn.host + ":" + conn.port);
+-                ne.setRootCause(e);
+-                throw ne;
+-            } finally {
+-                // If pw was copied to a new array, clear that array as
+-                // a security precaution.
+-                if (encodedPw != pw && encodedPw != null) {
+-                    for (int i = 0; i < encodedPw.length; i++) {
+-                        encodedPw[i] = 0;
++
++            //
++            // re-try login using v2 if failing over
++            //
++            if (initial &&
++                (res.status == LdapClient.LDAP_PROTOCOL_ERROR) &&
++                (version == LdapClient.LDAP_VERSION3_VERSION2) &&
++                (authMechanism.equalsIgnoreCase("none") ||
++                    authMechanism.equalsIgnoreCase("anonymous") ||
++                    authMechanism.equalsIgnoreCase("simple"))) {
++
++                byte[] encodedPw = null;
++                try {
++                    isLdapv3 = false;
++                    encodedPw = encodePassword(pw, false);
++                    res = ldapBind(name, encodedPw, ctls, null, false);
++                    if (res.status == LdapClient.LDAP_SUCCESS) {
++                        conn.setBound();
++                    }
++                } catch (IOException e) {
++                    NamingException ne =
++                        new CommunicationException(authMechanism + ":" +
++                            conn.host +     ":" + conn.port);
++                    ne.setRootCause(e);
++                    throw ne;
++                } finally {
++                    // If pw was copied to a new array, clear that array as
++                    // a security precaution.
++                    if (encodedPw != pw && encodedPw != null) {
++                        for (int i = 0; i < encodedPw.length; i++) {
++                            encodedPw[i] = 0;
++                        }
+                     }
+                 }
+             }
+-        } else if (isLdapv3) {
+-            // SASL authentication
+-            try {
+-                res = LdapSasl.saslBind(this, conn, conn.host, name, pw,
+-                    authMechanism, env, ctls);
+-                if (res.status == LdapClient.LDAP_SUCCESS) {
+-                    conn.setBound();
+-                }
+-            } catch (IOException e) {
+-                NamingException ne =
+-                    new CommunicationException("SASL bind failed: " +
+-                    conn.host + ":" + conn.port);
+-                ne.setRootCause(e);
+-                throw ne;
++
++            // principal name not found
++            // (map NameNotFoundException to AuthenticationException)
++            // %%% This is a workaround for Netscape servers returning
++            // %%% no such object when the principal name is not found
++            // %%% Note that when this workaround is applied, it does not allow
++            // %%% response controls to be recorded by the calling context
++            if (res.status == LdapClient.LDAP_NO_SUCH_OBJECT) {
++                throw new AuthenticationException(
++                    getErrorMessage(res.status, res.errorMessage));
+             }
+-        } else {
+-            throw new AuthenticationNotSupportedException(authMechanism);
++            conn.setV3(isLdapv3);
++            return res;
++        } finally {
++            conn.readTimeout = readTimeout;
+         }
+-
+-        //
+-        // re-try login using v2 if failing over
+-        //
+-        if (initial &&
+-            (res.status == LdapClient.LDAP_PROTOCOL_ERROR) &&
+-            (version == LdapClient.LDAP_VERSION3_VERSION2) &&
+-            (authMechanism.equalsIgnoreCase("none") ||
+-                authMechanism.equalsIgnoreCase("anonymous") ||
+-                authMechanism.equalsIgnoreCase("simple"))) {
+-
+-            byte[] encodedPw = null;
+-            try {
+-                isLdapv3 = false;
+-                encodedPw = encodePassword(pw, false);
+-                res = ldapBind(name, encodedPw, ctls, null, false);
+-                if (res.status == LdapClient.LDAP_SUCCESS) {
+-                    conn.setBound();
+-                }
+-            } catch (IOException e) {
+-                NamingException ne =
+-                    new CommunicationException(authMechanism + ":" +
+-                        conn.host +     ":" + conn.port);
+-                ne.setRootCause(e);
+-                throw ne;
+-            } finally {
+-                // If pw was copied to a new array, clear that array as
+-                // a security precaution.
+-                if (encodedPw != pw && encodedPw != null) {
+-                    for (int i = 0; i < encodedPw.length; i++) {
+-                        encodedPw[i] = 0;
+-                    }
+-                }
+-            }
+-        }
+-
+-        // principal name not found
+-        // (map NameNotFoundException to AuthenticationException)
+-        // %%% This is a workaround for Netscape servers returning
+-        // %%% no such object when the principal name is not found
+-        // %%% Note that when this workaround is applied, it does not allow
+-        // %%% response controls to be recorded by the calling context
+-        if (res.status == LdapClient.LDAP_NO_SUCH_OBJECT) {
+-            throw new AuthenticationException(
+-                getErrorMessage(res.status, res.errorMessage));
+-        }
+-        conn.setV3(isLdapv3);
+-        return res;
+     }
+ 
+     /**
+diff -r eb23e6bd0d71 -r 58522e691f9d test/com/sun/jndi/ldap/LdapTimeoutTest.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/com/sun/jndi/ldap/LdapTimeoutTest.java	Fri Oct 19 15:05:02 2012 +0100
+@@ -0,0 +1,177 @@
++/*
++ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/**
++ * @test
++ * @bug 7094377 8000487 6176036 7056489
++ * @summary Timeout tests for ldap
++ */
++
++import java.net.Socket;
++import java.net.ServerSocket;
++import java.net.SocketTimeoutException;
++import java.io.*;
++import javax.naming.*;
++import javax.naming.directory.*;
++import java.util.Hashtable;
++import java.util.concurrent.Callable;
++import java.util.concurrent.Executors;
++import java.util.concurrent.ScheduledExecutorService;
++import java.util.concurrent.ScheduledFuture;
++import java.util.concurrent.TimeUnit;
++
++public class LdapTimeoutTest {
++    private static final ScheduledExecutorService pool =
++        Executors.newScheduledThreadPool(1);
++    static volatile int passed = 0, failed = 0;
++    static void pass() {passed++;}
++    static void fail() {failed++; Thread.dumpStack();}
++
++    public static void main(String[] args) throws Exception {
++        ServerSocket serverSock = new ServerSocket(0);
++        Server s = new Server(serverSock);
++        s.start();
++        Thread.sleep(200);
++
++        Hashtable env = new Hashtable(11);
++        env.put(Context.INITIAL_CONTEXT_FACTORY,
++            "com.sun.jndi.ldap.LdapCtxFactory");
++        env.put(Context.PROVIDER_URL, "ldap://localhost:" +
++            serverSock.getLocalPort());
++
++        env.put(Context.SECURITY_AUTHENTICATION,"simple");
++
++        env.put(Context.SECURITY_PRINCIPAL, "user");
++        env.put(Context.SECURITY_CREDENTIALS, "password");
++
++        env.put("com.sun.jndi.ldap.connect.timeout", "10");
++        env.put("com.sun.jndi.ldap.read.timeout", "3000");
++
++        InitialContext ctx = null;
++        try {
++            new LdapTimeoutTest().ldapReadTimeoutTest(env, false);
++            new LdapTimeoutTest().ldapReadTimeoutTest(env, true);
++            new LdapTimeoutTest().simpleAuthConnectTest(env);
++        } finally {
++            s.interrupt();
++            LdapTimeoutTest.pool.shutdown();
++        }
++
++        System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
++        if (failed > 0) throw new AssertionError("Some tests failed");
++    }
++
++    void ldapReadTimeoutTest(Hashtable env, boolean ssl) {
++        InitialContext ctx = null;
++        if (ssl) env.put(Context.SECURITY_PROTOCOL, "ssl");
++        ScheduledFuture killer = killSwitch();
++        long start = System.nanoTime();
++        try {
++            ctx = new InitialDirContext(env);
++            SearchControls scl = new SearchControls();
++            scl.setSearchScope(SearchControls.SUBTREE_SCOPE);
++            NamingEnumeration<SearchResult> answer = ((InitialDirContext)ctx)
++                .search("ou=People,o=JNDITutorial", "(objectClass=*)", scl);
++            // shouldn't reach here
++            fail();
++        } catch (NamingException e) {
++            if (ssl) {
++                if (e.getCause() instanceof SocketTimeoutException) {
++                    pass();
++                } else if (e.getCause() instanceof InterruptedIOException) {
++                    Thread.interrupted();
++                    fail();
++                }
++            } else {
++                pass();
++            }
++        } finally {
++            if (!shutItDown(killer, ctx)) fail();
++        }
++    }
++
++    void simpleAuthConnectTest(Hashtable env) {
++        InitialContext ctx = null;
++        ScheduledFuture killer = killSwitch();
++        long start = System.nanoTime();
++        try {
++            ctx = new InitialDirContext(env);
++            // shouldn't reach here
++            System.err.println("Fail: InitialDirContext succeeded");
++            fail();
++        } catch (NamingException e) {
++            long end = System.nanoTime();
++            if (e.getCause() instanceof SocketTimeoutException) {
++                if (TimeUnit.NANOSECONDS.toMillis(end - start) < 2900) {
++                    pass();
++                } else {
++                    System.err.println("Fail: Waited too long");
++                    fail();
++                }
++            } else if (e.getCause() instanceof InterruptedIOException) {
++                Thread.interrupted();
++                fail();
++            } else {
++                fail();
++            }
++        } finally {
++            if (!shutItDown(killer, ctx)) fail();
++        }
++    }
++
++    boolean shutItDown(ScheduledFuture killer, InitialContext ctx) {
++        killer.cancel(true);
++        try {
++            if (ctx != null) ctx.close();
++            return true;
++        } catch (NamingException ex) {
++            return false;
++        }
++    }
++
++    ScheduledFuture killSwitch() {
++        final Thread current = Thread.currentThread();
++        return LdapTimeoutTest.pool.schedule(new Callable<Void>() {
++            public Void call() throws Exception {
++                System.err.println("Fail: killSwitch()");
++                current.interrupt();
++                return null;
++            }
++        }, 5000, TimeUnit.MILLISECONDS);
++    }
++
++    static class Server extends Thread {
++        final ServerSocket serverSock;
++
++        Server(ServerSocket serverSock) {
++            this.serverSock = serverSock;
++        }
++
++        public void run() {
++            try {
++                Socket socket = serverSock.accept();
++            } catch (IOException e) {}
++        }
++    }
++}
++
+diff -r eb23e6bd0d71 -r 58522e691f9d test/com/sun/jndi/ldap/LdapsReadTimeoutTest.java
+--- openjdk/jdk/test/com/sun/jndi/ldap/LdapsReadTimeoutTest.java	Thu Apr 12 10:43:04 2012 -0700
++++ /dev/null	Thu Jan 01 00:00:00 1970 +0000
+@@ -1,118 +0,0 @@
+-/*
+- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+- *
+- * This code is free software; you can redistribute it and/or modify it
+- * under the terms of the GNU General Public License version 2 only, as
+- * published by the Free Software Foundation.
+- *
+- * This code is distributed in the hope that it will be useful, but WITHOUT
+- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+- * version 2 for more details (a copy is included in the LICENSE file that
+- * accompanied this code).
+- *
+- * You should have received a copy of the GNU General Public License version
+- * 2 along with this work; if not, write to the Free Software Foundation,
+- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+- *
+- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+- * or visit www.oracle.com if you need additional information or have any
+- * questions.
+- */
+-
+-/**
+- * @test
+- * @bug 7094377
+- * @summary Com.sun.jndi.ldap.read.timeout doesn't work with ldaps.
+- */
+-
+-import java.net.Socket;
+-import java.net.ServerSocket;
+-import java.io.*;
+-import javax.naming.*;
+-import javax.naming.directory.*;
+-import java.util.Hashtable;
+-
+-public class LdapsReadTimeoutTest {
+-
+-    public static void main(String[] args) throws Exception {
+-        boolean passed = false;
+-
+-        // create the server
+-        try (Server server = Server.create()) {
+-            // Set up the environment for creating the initial context
+-            Hashtable<String,Object> env = new Hashtable<>(11);
+-            env.put(Context.INITIAL_CONTEXT_FACTORY,
+-                "com.sun.jndi.ldap.LdapCtxFactory");
+-            env.put("com.sun.jndi.ldap.connect.timeout", "1000");
+-            env.put("com.sun.jndi.ldap.read.timeout", "1000");
+-            env.put(Context.PROVIDER_URL, "ldaps://localhost:" + server.port());
+-
+-
+-            // Create initial context
+-            DirContext ctx = new InitialDirContext(env);
+-            try {
+-                System.out.println("LDAP Client: Connected to the Server");
+-
+-                SearchControls scl = new SearchControls();
+-                scl.setSearchScope(SearchControls.SUBTREE_SCOPE);
+-                System.out.println("Performing Search");
+-                NamingEnumeration<SearchResult> answer =
+-                    ctx.search("ou=People,o=JNDITutorial", "(objectClass=*)", scl);
+-            } finally {
+-                // Close the context when we're done
+-                ctx.close();
+-            }
+-        } catch (NamingException e) {
+-            passed = true;
+-            e.printStackTrace();
+-        }
+-
+-        if (!passed) {
+-            throw new Exception("Read timeout test failed," +
+-                         " read timeout exception not thrown");
+-        }
+-        System.out.println("The test PASSED");
+-    }
+-
+-    static class Server implements Runnable, Closeable {
+-        private final ServerSocket ss;
+-        private Socket sref;
+-
+-        private Server(ServerSocket ss) {
+-            this.ss = ss;
+-        }
+-
+-        static Server create() throws IOException {
+-            Server server = new Server(new ServerSocket(0));
+-            new Thread(server).start();
+-            return server;
+-        }
+-
+-        int port() {
+-            return ss.getLocalPort();
+-        }
+-
+-        public void run() {
+-            try (Socket s = ss.accept()) {
+-                sref = s;
+-                System.out.println("Server: Connection accepted");
+-                BufferedInputStream bis =
+-                    new BufferedInputStream(s.getInputStream());
+-                byte[] buf = new byte[100];
+-                int n;
+-                do {
+-                    n = bis.read(buf);
+-                } while (n > 0);
+-            } catch (IOException e) {
+-                // ignore
+-            }
+-        }
+-
+-        public void close() throws IOException {
+-            ss.close();
+-            sref.close();
+-        }
+-    }
+-}
+diff -r eb23e6bd0d71 -r 58522e691f9d test/com/sun/jndi/ldap/ReadTimeoutTest.java
+--- openjdk/jdk/test/com/sun/jndi/ldap/ReadTimeoutTest.java	Thu Apr 12 10:43:04 2012 -0700
++++ /dev/null	Thu Jan 01 00:00:00 1970 +0000
+@@ -1,104 +0,0 @@
+-/*
+- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+- *
+- * This code is free software; you can redistribute it and/or modify it
+- * under the terms of the GNU General Public License version 2 only, as
+- * published by the Free Software Foundation.
+- *
+- * This code is distributed in the hope that it will be useful, but WITHOUT
+- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+- * version 2 for more details (a copy is included in the LICENSE file that
+- * accompanied this code).
+- *
+- * You should have received a copy of the GNU General Public License version
+- * 2 along with this work; if not, write to the Free Software Foundation,
+- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+- *
+- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+- * or visit www.oracle.com if you need additional information or have any
+- * questions.
+- */
+-
+-/**
+- * @test
+- * @bug 6176036
+- * @summary Read-timeout specification for LDAP operations
+- */
+-
+-import java.net.Socket;
+-import java.net.ServerSocket;
+-import java.io.*;
+-import javax.naming.*;
+-import javax.naming.directory.*;
+-import java.util.Hashtable;
+-
+-public class ReadTimeoutTest {
+-
+-    public static void main(String[] args) throws Exception {
+-
+-        boolean passed = false;
+-
+-        // Set up the environment for creating the initial context
+-        Hashtable env = new Hashtable(11);
+-        env.put(Context.INITIAL_CONTEXT_FACTORY,
+-            "com.sun.jndi.ldap.LdapCtxFactory");
+-        env.put("com.sun.jndi.ldap.read.timeout", "1000");
+-        env.put(Context.PROVIDER_URL, "ldap://localhost:2001");
+-
+-        Server s = new Server();
+-
+-        try {
+-
+-            // start the server
+-            s.start();
+-
+-            // Create initial context
+-            DirContext ctx = new InitialDirContext(env);
+-            System.out.println("LDAP Client: Connected to the Server");
+-
+-            SearchControls scl = new SearchControls();
+-            scl.setSearchScope(SearchControls.SUBTREE_SCOPE);
+-            System.out.println("Performing Search");
+-            NamingEnumeration answer =
+-                ctx.search("ou=People,o=JNDITutorial", "(objectClass=*)", scl);
+-
+-            // Close the context when we're done
+-            ctx.close();
+-        } catch (NamingException e) {
+-            passed = true;
+-            e.printStackTrace();
+-        }
+-        s.interrupt();
+-        if (!passed) {
+-            throw new Exception("Read timeout test failed," +
+-                         " read timeout exception not thrown");
+-        }
+-        System.out.println("The test PASSED");
+-    }
+-
+-    static class Server extends Thread {
+-
+-        static int serverPort = 2001;
+-
+-        Server() {
+-        }
+-
+-        public void run() {
+-            try {
+-                ServerSocket serverSock = new ServerSocket(serverPort);
+-                Socket socket = serverSock.accept();
+-                System.out.println("Server: Connection accepted");
+-
+-                BufferedInputStream bin = new BufferedInputStream(socket.
+-                                getInputStream());
+-                while (true) {
+-                    bin.read();
+-                }
+-            } catch (IOException e) {
+-                // ignore
+-            }
+-    }
+-}
+-}

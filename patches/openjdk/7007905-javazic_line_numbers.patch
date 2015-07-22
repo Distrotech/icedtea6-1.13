@@ -1,0 +1,20 @@
+# HG changeset patch
+# User okutsu
+# Date 1292898032 -32400
+#      Tue Dec 21 11:20:32 2010 +0900
+# Node ID 8da79c7d137ef3fb2f51973f53485fc56da33c54
+# Parent  89d065844fb6c9be02c85d4c63ad45f224ccb3dd
+7007905, PR2298: javazic produces wrong line numbers
+Reviewed-by: peytoia
+
+diff -r 89d065844fb6 -r 8da79c7d137e make/tools/src/build/tools/javazic/Zoneinfo.java
+--- openjdk/jdk/make/tools/src/build/tools/javazic/Zoneinfo.java	Tue Dec 21 10:58:23 2010 +0900
++++ openjdk/jdk/make/tools/src/build/tools/javazic/Zoneinfo.java	Tue Dec 21 11:20:32 2010 +0900
+@@ -222,6 +222,7 @@
+         boolean continued = false;
+         Zone zone = null;
+         String l;
++        lineNum = 0;
+ 
+         try {
+             while ((line = in.readLine()) != null) {

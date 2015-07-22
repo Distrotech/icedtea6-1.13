@@ -1,0 +1,2586 @@
+# HG changeset patch
+# User jjg
+# Date 1309481953 25200
+#      Thu Jun 30 17:59:13 2011 -0700
+# Node ID 91781ef3032e7557e8e661caf33f07c9fefb5d27
+# Parent  483d8dacfbd886badc6fd60e151b798c15b29e26
+7058708, PR2298: Eliminate JDK build tools build warnings
+Reviewed-by: ohair, jjg
+Contributed-by: alexandre.boulgakov@oracle.com
+
+diff -Nru openjdk.orig/jdk/make/tools/Makefile openjdk/jdk/make/tools/Makefile
+--- openjdk.orig/jdk/make/tools/Makefile	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/Makefile	2015-07-22 02:28:56.362823566 +0100
+@@ -28,6 +28,8 @@
+ #
+ 
+ BUILDDIR = ..
++
++SUBDIRS_MAKEFLAGS += JAVAC_MAX_WARNINGS=true
+ include $(BUILDDIR)/common/Defs.gmk
+ 
+ SUBDIRS =                   \
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/buildmetaindex/BuildMetaIndex.java openjdk/jdk/make/tools/src/build/tools/buildmetaindex/BuildMetaIndex.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/buildmetaindex/BuildMetaIndex.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/buildmetaindex/BuildMetaIndex.java	2015-07-22 02:28:32.243243992 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -114,8 +114,8 @@
+                  */
+ 
+                 out.println(jmi.getJarFileKind().getMarkerChar() + " " + filename);
+-                for (Iterator<String> iter = index.iterator(); iter.hasNext(); ) {
+-                    out.println(iter.next());
++                for (String entry : index) {
++                    out.println(entry);
+                 }
+ 
+             }
+@@ -171,8 +171,7 @@
+      * A hashmap contains a mapping from the prefix string to
+      * a hashset which contains a set of the second level of prefix string.
+      */
+-    private HashMap<String, HashSet<String>> knownPrefixMap = new
+-        HashMap<String, HashSet<String>>();
++    private HashMap<String, HashSet<String>> knownPrefixMap = new HashMap<String, HashSet<String>>();
+ 
+     /*
+      * We add maximum 5 second level entries to "sun", "java" and
+@@ -196,11 +195,11 @@
+             synchronized(this) {
+                 if (indexSet == null) {
+                     indexSet = new HashSet<String>();
+-                    Enumeration entries = jar.entries();
++                    Enumeration<JarEntry> entries = jar.entries();
+                     boolean containsOnlyClass = true;
+                     boolean containsOnlyResource = true;
+                     while (entries.hasMoreElements()) {
+-                        JarEntry entry = (JarEntry) entries.nextElement();
++                        JarEntry entry = entries.nextElement();
+                         String name = entry.getName();
+                         /* We only look at the non-directory entry.
+                            MANIFEST file is also skipped. */
+@@ -338,9 +337,7 @@
+         /* Iterate through the hash map, add the second level package names
+          * to the indexSet if has any.
+          */
+-        for (Iterator<String> keysIterator = knownPrefixMap.keySet().iterator();
+-             keysIterator.hasNext();) {
+-            String key = keysIterator.next();
++        for (String key : knownPrefixMap.keySet()) {
+             HashSet<String> pkgSetStartsWithKey = knownPrefixMap.get(key);
+             int setSize = pkgSetStartsWithKey.size();
+ 
+@@ -353,9 +350,8 @@
+                 /* If the set contains less than MAX_PKGS_WITH_KNOWN_PREFIX, add
+                  * them to the indexSet of the MetaIndex object.
+                  */
+-                for (Iterator<String> secondPkgElements = pkgSetStartsWithKey.iterator();
+-                     secondPkgElements.hasNext();) {
+-                    indexSet.add(key + "/" + secondPkgElements.next());
++                for (String secondPkgElement : pkgSetStartsWithKey) {
++                    indexSet.add(key + "/" + secondPkgElement);
+                 }
+             }
+         } // end the outer "for"
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/compileproperties/CompileProperties.java openjdk/jdk/make/tools/src/build/tools/compileproperties/CompileProperties.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/compileproperties/CompileProperties.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/compileproperties/CompileProperties.java	2015-07-22 02:28:32.243243992 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2002, 2005, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -36,7 +36,6 @@
+ import java.text.MessageFormat;
+ import java.util.ArrayList;
+ import java.util.Collections;
+-import java.util.Iterator;
+ import java.util.List;
+ import java.util.Properties;
+ 
+@@ -228,13 +227,11 @@
+                 sortedKeys.add((String)key);
+             }
+             Collections.sort(sortedKeys);
+-            Iterator keys = sortedKeys.iterator();
+ 
+             StringBuffer data = new StringBuffer();
+ 
+-            while (keys.hasNext()) {
+-                Object key = keys.next();
+-                data.append("            { \"" + escape((String)key) + "\", \"" +
++            for (String key : sortedKeys) {
++                data.append("            { \"" + escape(key) + "\", \"" +
+                         escape((String)p.get(key)) + "\" },\n");
+             }
+ 
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/dirdiff/DirDiff.java openjdk/jdk/make/tools/src/build/tools/dirdiff/DirDiff.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/dirdiff/DirDiff.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/dirdiff/DirDiff.java	2015-07-22 02:28:32.243243992 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -164,7 +164,7 @@
+       }
+ 
+       File[] currentGoldenDirs = null;
+-      TreeSet goldDirSet = new TreeSet();
++      TreeSet<String> goldDirSet = new TreeSet<String>();
+       if (goldenDir != null) {
+           currentGoldenDirs = goldenDir.listFiles();
+           for (int i=0; i<currentGoldenDirs.length; i++) {
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/dtdbuilder/DTDBuilder.java openjdk/jdk/make/tools/src/build/tools/dtdbuilder/DTDBuilder.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/dtdbuilder/DTDBuilder.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/dtdbuilder/DTDBuilder.java	2015-07-22 02:28:32.243243992 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1998, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -63,9 +63,9 @@
+     static PublicMapping mapping = null;
+ 
+     // Hash from name to Integer
+-    private Hashtable namesHash = new Hashtable();
++    private Hashtable<String, Integer> namesHash = new Hashtable<String, Integer>();
+     // Vector of all names
+-    private Vector namesVector = new Vector();
++    private Vector<String> namesVector = new Vector<String>();
+ 
+     /**
+      * Create a new DTD.
+@@ -87,15 +87,15 @@
+         int numNames = namesVector.size();
+         out.writeShort((short) (namesVector.size()));
+         for (int i = 0; i < namesVector.size(); i++) {
+-            String nm = (String) namesVector.elementAt(i);
++            String nm = namesVector.elementAt(i);
+             out.writeUTF(nm);
+         }
+ 
+         saveEntities(out);
+ 
+         out.writeShort((short) (elements.size()));
+-        for (Enumeration e = elements.elements() ; e.hasMoreElements() ; ) {
+-            saveElement(out, (Element)e.nextElement());
++        for (Enumeration<Element> e = elements.elements() ; e.hasMoreElements() ; ) {
++            saveElement(out, e.nextElement());
+         }
+ 
+         if (namesVector.size() != numNames) {
+@@ -106,21 +106,21 @@
+     }
+ 
+     private void buildNamesTable() {
+-        for (Enumeration e = entityHash.elements() ; e.hasMoreElements() ; ) {
+-            Entity ent = (Entity) e.nextElement();
++        for (Enumeration<Entity> e = entityHash.elements() ; e.hasMoreElements() ; ) {
++            Entity ent = e.nextElement();
+             // Do even if not isGeneral().  That way, exclusions and inclusions
+             // will definitely have their element.
+             getNameId(ent.getName());
+         }
+-        for (Enumeration e = elements.elements() ; e.hasMoreElements() ; ) {
+-            Element el = (Element) e.nextElement();
++        for (Enumeration<Element> e = elements.elements() ; e.hasMoreElements() ; ) {
++            Element el = e.nextElement();
+             getNameId(el.getName());
+             for (AttributeList atts = el.getAttributes() ; atts != null ; atts = atts.getNext()) {
+                 getNameId(atts.getName());
+                 if (atts.getValue() != null) {
+                     getNameId(atts.getValue());
+                 }
+-                Enumeration vals = atts.getValues();
++                Enumeration<?> vals = atts.getValues();
+                 while (vals != null && vals.hasMoreElements()) {
+                     String s = (String) vals.nextElement();
+                     getNameId(s);
+@@ -133,9 +133,9 @@
+     // The the id of a name from the list of names
+     //
+     private short getNameId(String name)  {
+-        Object o = namesHash.get(name);
++        Integer o = namesHash.get(name);
+         if (o != null) {
+-            return (short) ((Integer) o).intValue();
++            return (short) o.intValue();
+         }
+         int i = namesVector.size();
+         namesVector.addElement(name);
+@@ -149,16 +149,16 @@
+      */
+     void saveEntities(DataOutputStream out) throws IOException {
+         int num = 0;
+-        for (Enumeration e = entityHash.elements() ; e.hasMoreElements() ; ) {
+-            Entity ent = (Entity) e.nextElement();
++        for (Enumeration<Entity> e = entityHash.elements() ; e.hasMoreElements() ; ) {
++            Entity ent = e.nextElement();
+             if (ent.isGeneral()) {
+                 num++;
+             }
+         }
+ 
+         out.writeShort((short) num);
+-        for (Enumeration e = entityHash.elements() ; e.hasMoreElements() ; ) {
+-            Entity ent = (Entity) e.nextElement();
++        for (Enumeration<Entity> e = entityHash.elements() ; e.hasMoreElements() ; ) {
++            Entity ent = e.nextElement();
+             if (ent.isGeneral()) {
+                 out.writeShort(getNameId(ent.getName()));
+                 out.writeByte(ent.getType() & ~GENERAL);
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/dtdbuilder/DTDInputStream.java openjdk/jdk/make/tools/src/build/tools/dtdbuilder/DTDInputStream.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/dtdbuilder/DTDInputStream.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/dtdbuilder/DTDInputStream.java	2015-07-22 02:28:32.243243992 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1998, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -48,7 +48,7 @@
+ public final
+ class DTDInputStream extends FilterReader implements DTDConstants {
+     public DTD dtd;
+-    public Stack stack = new Stack();
++    public Stack<Object> stack = new Stack<Object>();
+     public char str[] = new char[64];
+     public int replace = 0;
+     public int ln = 1;
+@@ -105,6 +105,7 @@
+      * parameter entities.
+      * [60] 350:22
+      */
++    @SuppressWarnings("fallthrough")
+     public int read() throws IOException {
+         switch (ch) {
+           case '%': {
+@@ -134,6 +135,7 @@
+             switch (ch) {
+               case '\r':
+                 ln++;
++                /* fall through */
+               case ';':
+                 ch = in.read();
+                 break;
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/dtdbuilder/DTDParser.java openjdk/jdk/make/tools/src/build/tools/dtdbuilder/DTDParser.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/dtdbuilder/DTDParser.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/dtdbuilder/DTDParser.java	2015-07-22 02:28:32.243243992 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1998, 2000, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -87,7 +87,7 @@
+             return null;
+         }
+ 
+-        return MessageFormat.format(prop, args);
++        return MessageFormat.format(prop, (Object[])args);
+     }
+ 
+     /**
+@@ -201,6 +201,7 @@
+      * Parse identifier. Uppercase characters are automatically
+      * folded to lowercase. Returns falsed if no identifier is found.
+      */
++    @SuppressWarnings("fallthrough")
+     boolean parseIdentifier(boolean lower) throws IOException {
+         switch (ch) {
+           case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+@@ -211,6 +212,7 @@
+             if (lower) {
+                 ch = 'a' + (ch - 'A');
+             }
++            /* fall through */
+ 
+           case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+           case 'g': case 'h': case 'i': case 'j': case 'k': case 'l':
+@@ -233,6 +235,7 @@
+      * Parses name token. If <code>lower</code> is true, upper case letters
+      * are folded to lower case. Returns falsed if no token is found.
+      */
++    @SuppressWarnings("fallthrough")
+     boolean parseNameToken(boolean lower) throws IOException {
+         boolean first = true;
+ 
+@@ -246,6 +249,7 @@
+                 if (lower) {
+                     ch = 'a' + (ch - 'A');
+                 }
++                /* fall through */
+ 
+               case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+               case 'g': case 'h': case 'i': case 'j': case 'k': case 'l':
+@@ -271,8 +275,8 @@
+     /**
+      * Parse a list of identifiers.
+      */
+-    Vector parseIdentifierList(boolean lower) throws IOException {
+-        Vector elems = new Vector();
++    Vector<String> parseIdentifierList(boolean lower) throws IOException {
++        Vector<String> elems = new Vector<String>();
+         skipSpace();
+         switch (ch) {
+           case '(':
+@@ -507,7 +511,7 @@
+      * [116] 405:6
+      */
+     void parseElementDeclaration() throws IOException {
+-        Vector elems = parseIdentifierList(true);
++        Vector<String> elems = parseIdentifierList(true);
+         BitSet inclusions = null;
+         BitSet exclusions = null;
+         boolean omitStart = false;
+@@ -544,26 +548,26 @@
+         if ((type == MODEL) || (type == ANY)) {
+             if (ch == '-') {
+                 ch = in.read();
+-                Vector v = parseIdentifierList(true);
++                Vector<String> v = parseIdentifierList(true);
+                 exclusions = new BitSet();
+-                for (Enumeration e = v.elements() ; e.hasMoreElements() ;) {
+-                    exclusions.set(dtd.getElement((String)e.nextElement()).getIndex());
++                for (Enumeration<String> e = v.elements() ; e.hasMoreElements() ;) {
++                    exclusions.set(dtd.getElement(e.nextElement()).getIndex());
+                 }
+             }
+             if (ch == '+') {
+                 ch = in.read();
+-                Vector v = parseIdentifierList(true);
++                Vector<String> v = parseIdentifierList(true);
+                 inclusions = new BitSet();
+-                for (Enumeration e = v.elements() ; e.hasMoreElements() ;) {
+-                    inclusions.set(dtd.getElement((String)e.nextElement()).getIndex());
++                for (Enumeration<String> e = v.elements() ; e.hasMoreElements() ;) {
++                    inclusions.set(dtd.getElement(e.nextElement()).getIndex());
+                 }
+             }
+         }
+         expect('>');
+ 
+         if (in.replace == 0) {
+-            for (Enumeration e = elems.elements() ; e.hasMoreElements() ;) {
+-                dtd.defineElement((String)e.nextElement(), type, omitStart, omitEnd, content, exclusions, inclusions, null);
++            for (Enumeration<String> e = elems.elements() ; e.hasMoreElements() ;) {
++                dtd.defineElement(e.nextElement(), type, omitStart, omitEnd, content, exclusions, inclusions, null);
+             }
+         }
+     }
+@@ -582,7 +586,7 @@
+             error("invalid", "attribute value");
+             return;
+         }
+-        atts.type = atts.name2type(getString(0));
++        atts.type = AttributeList.name2type(getString(0));
+         skipParameterSpace();
+         if (atts.type == NOTATION) {
+             atts.values = parseIdentifierList(true);
+@@ -593,6 +597,7 @@
+      * Parse an attribute value specification.
+      * [33] 331:1
+      */
++    @SuppressWarnings("fallthrough")
+     String parseAttributeValueSpecification() throws IOException {
+         int delim = -1;
+         switch (ch) {
+@@ -627,6 +632,7 @@
+                     ch = in.read();
+                     return getString(0);
+                 }
++                /* fall through */
+ 
+               default:
+                 addString(ch & 0xFF);
+@@ -648,7 +654,7 @@
+                 return;
+             }
+             skipParameterSpace();
+-            atts.modifier = atts.name2type(getString(0));
++            atts.modifier = AttributeList.name2type(getString(0));
+             if (atts.modifier != FIXED) {
+                 return;
+             }
+@@ -663,7 +669,7 @@
+      * REMIND: associated notation name
+      */
+     void parseAttlistDeclaration() throws IOException {
+-        Vector elems = parseIdentifierList(true);
++        Vector<String> elems = parseIdentifierList(true);
+         AttributeList attlist = null, atts = null;
+ 
+         while (parseIdentifier(true)) {
+@@ -685,8 +691,8 @@
+         expect('>');
+ 
+         if (in.replace == 0) {
+-            for (Enumeration e = elems.elements() ; e.hasMoreElements() ;) {
+-                dtd.defineAttributes((String)e.nextElement(), attlist);
++            for (Enumeration<String> e = elems.elements() ; e.hasMoreElements() ;) {
++                dtd.defineAttributes(e.nextElement(), attlist);
+             }
+         }
+     }
+@@ -810,6 +816,7 @@
+     /**
+      * Parse a section of the input upto EOF or ']'.
+      */
++    @SuppressWarnings("fallthrough")
+     void parseSection() throws IOException {
+         while (true) {
+             switch (ch) {
+@@ -883,6 +890,7 @@
+               default:
+                 char str[] = {(char)ch};
+                 error("invalid.arg", "character", "'" + new String(str) + "' / " + ch);
++                /* fall through */
+ 
+               case ' ':
+               case '\t':
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/dtdbuilder/PublicMapping.java openjdk/jdk/make/tools/src/build/tools/dtdbuilder/PublicMapping.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/dtdbuilder/PublicMapping.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/dtdbuilder/PublicMapping.java	2015-07-22 02:28:32.243243992 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1998, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -44,7 +44,7 @@
+ final class PublicMapping {
+ 
+     String baseStr;
+-    Hashtable tab = new Hashtable();
++    Hashtable<String, String> tab = new Hashtable<String, String>();
+ 
+     /**
+      * Create a mapping.
+@@ -103,6 +103,6 @@
+      */
+     public String get(String id) {
+         // System.err.println(" id = "+id);
+-        return (String) tab.get(id);
++        return tab.get(id);
+     }
+ }
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/generatebreakiteratordata/CharSet.java openjdk/jdk/make/tools/src/build/tools/generatebreakiteratordata/CharSet.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/generatebreakiteratordata/CharSet.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/generatebreakiteratordata/CharSet.java	2015-07-22 02:28:32.247243923 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -66,7 +66,7 @@
+      * A cache which is used to speed up parseString() whenever it is
+      * used to parse a description that has been parsed before
+      */
+-    private static Hashtable expressionCache = null;
++    private static Hashtable<String, CharSet> expressionCache = null;
+ 
+     /**
+      * Builds a CharSet based on a textual description.  For the syntax of
+@@ -79,7 +79,7 @@
+         // if "s" is in the expression cache, pull the result out
+         // of the expresison cache
+         if (expressionCache != null) {
+-            result = (CharSet)expressionCache.get(s);
++            result = expressionCache.get(s);
+         }
+ 
+         // otherwise, use doParseString() to actually parse the string,
+@@ -87,7 +87,7 @@
+         if (result == null) {
+             result = doParseString(s);
+             if (expressionCache == null) {
+-                expressionCache = new Hashtable();
++                expressionCache = new Hashtable<String, CharSet>();
+             }
+             expressionCache.put(s, result);
+         }
+@@ -336,8 +336,8 @@
+      * Returns a copy of CharSet's expression cache and sets CharSet's
+      * expression cache to empty.
+      */
+-    public static Hashtable releaseExpressionCache() {
+-        Hashtable result = expressionCache;
++    public static Hashtable<String, CharSet> releaseExpressionCache() {
++        Hashtable<String, CharSet> result = expressionCache;
+         expressionCache = null;
+         return result;
+     }
+@@ -778,7 +778,7 @@
+      * An Enumeration that can be used to extract the character ranges
+      * from a CharSet one at a time
+      */
+-    public class Enumeration implements java.util.Enumeration {
++    public class Enumeration implements java.util.Enumeration<int[]> {
+         /**
+          * Initializes a CharSet.Enumeration
+          */
+@@ -798,7 +798,7 @@
+         /**
+          * Returns the next range in the CarSet
+          */
+-        public Object nextElement() {
++        public int[] nextElement() {
+             int[] result = new int[2];
+             result[0] = chars[p++];
+             result[1] = chars[p++];
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/generatebreakiteratordata/DictionaryBasedBreakIteratorBuilder.java openjdk/jdk/make/tools/src/build/tools/generatebreakiteratordata/DictionaryBasedBreakIteratorBuilder.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/generatebreakiteratordata/DictionaryBasedBreakIteratorBuilder.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/generatebreakiteratordata/DictionaryBasedBreakIteratorBuilder.java	2015-07-22 02:28:32.247243923 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -78,12 +78,12 @@
+      * contains "true" for every character category that includes a dictionary
+      * character.
+      */
+-    protected void buildCharCategories(Vector tempRuleList) {
++    protected void buildCharCategories(Vector<String> tempRuleList) {
+         super.buildCharCategories(tempRuleList);
+ 
+         categoryFlags = new boolean[categories.size()];
+         for (int i = 0; i < categories.size(); i++) {
+-            CharSet cs = (CharSet)categories.elementAt(i);
++            CharSet cs = categories.elementAt(i);
+             if (!(cs.intersection(dictionaryChars).empty())) {
+                 categoryFlags[i] = true;
+             }
+@@ -95,7 +95,7 @@
+     // the function above. This gives us a way to create a separate character
+     // category for the dictionary characters even when
+     // RuleBasedBreakIteratorBuilder isn't making a distinction.
+-    protected void mungeExpressionList(Hashtable expressions) {
++    protected void mungeExpressionList(Hashtable<String, Object> expressions) {
+         expressions.put(dictionaryExpression, dictionaryChars);
+     }
+ 
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/generatebreakiteratordata/GenerateBreakIteratorData.java openjdk/jdk/make/tools/src/build/tools/generatebreakiteratordata/GenerateBreakIteratorData.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/generatebreakiteratordata/GenerateBreakIteratorData.java	2015-07-22 02:27:27.340375309 +0100
++++ openjdk/jdk/make/tools/src/build/tools/generatebreakiteratordata/GenerateBreakIteratorData.java	2015-07-22 02:28:32.247243923 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -91,9 +91,9 @@
+         try {
+             info = (ResourceBundle)Class.forName("sun.text.resources.BreakIteratorInfo" + localeName).newInstance();
+ 
+-            Enumeration keys = info.getKeys();
++            Enumeration<String> keys = info.getKeys();
+             while (keys.hasMoreElements()) {
+-                String key = (String)keys.nextElement();
++                String key = keys.nextElement();
+ 
+                 if (key.equals("CharacterData")) {
+                     generateDataFile(info.getString(key),
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/generatebreakiteratordata/RuleBasedBreakIteratorBuilder.java openjdk/jdk/make/tools/src/build/tools/generatebreakiteratordata/RuleBasedBreakIteratorBuilder.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/generatebreakiteratordata/RuleBasedBreakIteratorBuilder.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/generatebreakiteratordata/RuleBasedBreakIteratorBuilder.java	2015-07-22 02:28:32.247243923 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -110,13 +110,13 @@
+      * A temporary holding place used for calculating the character categories.
+      * This object contains CharSet objects.
+      */
+-    protected Vector categories = null;
++    protected Vector<CharSet> categories = null;
+ 
+     /**
+      * A table used to map parts of regexp text to lists of character
+      * categories, rather than having to figure them out from scratch each time
+      */
+-    protected Hashtable expressions = null;
++    protected Hashtable<String, Object> expressions = null;
+ 
+     /**
+      * A temporary holding place for the list of ignore characters
+@@ -126,32 +126,32 @@
+     /**
+      * A temporary holding place where the forward state table is built
+      */
+-    protected Vector tempStateTable = null;
++    protected Vector<short[]> tempStateTable = null;
+ 
+     /**
+      * A list of all the states that have to be filled in with transitions to
+      * the next state that is created.  Used when building the state table from
+      * the regular expressions.
+      */
+-    protected Vector decisionPointList = null;
++    protected Vector<Integer> decisionPointList = null;
+ 
+     /**
+      * A stack for holding decision point lists.  This is used to handle nested
+      * parentheses and braces in regexps.
+      */
+-    protected Stack decisionPointStack = null;
++    protected Stack<Vector<Integer>> decisionPointStack = null;
+ 
+     /**
+      * A list of states that loop back on themselves.  Used to handle .*?
+      */
+-    protected Vector loopingStates = null;
++    protected Vector<Integer> loopingStates = null;
+ 
+     /**
+      * Looping states actually have to be backfilled later in the process
+      * than everything else.  This is where a the list of states to backfill
+      * is accumulated.  This is also used to handle .*?
+      */
+-    protected Vector statesToBackfill = null;
++    protected Vector<Integer> statesToBackfill = null;
+ 
+     /**
+      * A list mapping pairs of state numbers for states that are to be combined
+@@ -159,7 +159,7 @@
+      * in the process of making the state table deterministic to prevent
+      * infinite recursion.
+      */
+-    protected Vector mergeList = null;
++    protected Vector<int[]> mergeList = null;
+ 
+     /**
+      * A flag that is used to indicate when the list of looping states can
+@@ -198,7 +198,7 @@
+      * just vectors different parts of the job off to other functions.
+      */
+     public RuleBasedBreakIteratorBuilder(String description) {
+-        Vector tempRuleList = buildRuleList(description);
++        Vector<String> tempRuleList = buildRuleList(description);
+         buildCharCategories(tempRuleList);
+         buildStateTable(tempRuleList);
+         buildBackwardsStateTable(tempRuleList);
+@@ -213,7 +213,7 @@
+      * variable names)
+      * </ul>
+      */
+-    private Vector buildRuleList(String description) {
++    private Vector<String> buildRuleList(String description) {
+         // invariants:
+         // - parentheses must be balanced: ()[]{}<>
+         // - nothing can be nested inside <>
+@@ -240,8 +240,8 @@
+         // set up a vector to contain the broken-up description (each entry in the
+         // vector is a separate rule) and a stack for keeping track of opening
+         // punctuation
+-        Vector tempRuleList = new Vector();
+-        Stack parenStack = new Stack();
++        Vector<String> tempRuleList = new Vector<String>();
++        Stack<Character> parenStack = new Stack<Character>();
+ 
+         int p = 0;
+         int ruleStart = 0;
+@@ -326,7 +326,7 @@
+                     }
+                     parenStack.pop();
+                     if (!parenStack.empty()) {
+-                        lastOpen = ((Character)(parenStack.peek())).charValue();
++                        lastOpen = parenStack.peek().charValue();
+                     }
+                     else {
+                         lastOpen = '\u0000';
+@@ -552,7 +552,8 @@
+      * character category numbers everywhere a literal character or a [] expression
+      * originally occurred.
+      */
+-    protected void buildCharCategories(Vector tempRuleList) {
++    @SuppressWarnings("fallthrough")
++    protected void buildCharCategories(Vector<String> tempRuleList) {
+         int bracketLevel = 0;
+         int p = 0;
+         int lineNum = 0;
+@@ -560,9 +561,9 @@
+         // build hash table of every literal character or [] expression in the rule list
+         // and use CharSet.parseString() to derive a CharSet object representing the
+         // characters each refers to
+-        expressions = new Hashtable();
++        expressions = new Hashtable<String, Object>();
+         while (lineNum < tempRuleList.size()) {
+-            String line = (String)(tempRuleList.elementAt(lineNum));
++            String line = tempRuleList.elementAt(lineNum);
+             p = 0;
+             while (p < line.length()) {
+                 int c = line.codePointAt(p);
+@@ -618,7 +619,7 @@
+         CharSet.releaseExpressionCache();
+ 
+         // create the temporary category table (which is a vector of CharSet objects)
+-        categories = new Vector();
++        categories = new Vector<CharSet>();
+         if (ignoreChars != null) {
+             categories.addElement(ignoreChars);
+         }
+@@ -643,8 +644,7 @@
+         // At no time should a character ever occur in more than one character category.
+ 
+         // for each expression in the expressions list, do...
+-        Enumeration iter = expressions.elements();
+-        while (iter.hasMoreElements()) {
++        for (Enumeration<Object> iter = expressions.elements(); iter.hasMoreElements(); ) {
+             // initialize the working char set to the chars in the current expression
+             CharSet e = (CharSet)iter.nextElement();
+ 
+@@ -653,7 +653,7 @@
+ 
+                 // if there's overlap between the current working set of chars
+                 // and the current category...
+-                CharSet that = (CharSet)(categories.elementAt(j));
++                CharSet that = categories.elementAt(j);
+                 if (!that.intersection(e).empty()) {
+ 
+                     // add a new category for the characters that were in the
+@@ -686,9 +686,9 @@
+         // up in some other category
+         CharSet allChars = new CharSet();
+         for (int i = 1; i < categories.size(); i++) {
+-            allChars = allChars.union((CharSet)(categories.elementAt(i)));
++            allChars = allChars.union(categories.elementAt(i));
+         }
+-        CharSet ignoreChars = (CharSet)(categories.elementAt(0));
++        CharSet ignoreChars = categories.elementAt(0);
+         ignoreChars = ignoreChars.difference(allChars);
+         categories.setElementAt(ignoreChars, 0);
+ 
+@@ -697,9 +697,9 @@
+         // character categories that expression refers to.  The String is encoded: each
+         // character is a character category number (plus 0x100 to avoid confusing them
+         // with syntax characters in the rule grammar)
+-        iter = expressions.keys();
+-        while (iter.hasMoreElements()) {
+-            String key = (String)iter.nextElement();
++
++        for (Enumeration<String> iter = expressions.keys(); iter.hasMoreElements(); ) {
++            String key = iter.nextElement();
+             CharSet cs = (CharSet)expressions.get(key);
+             StringBuffer cats = new StringBuffer();
+ 
+@@ -707,7 +707,7 @@
+             for (int j = 0; j < categories.size(); j++) {
+ 
+                 // if the current expression contains characters in that category...
+-                CharSet temp = cs.intersection((CharSet)(categories.elementAt(j)));
++                CharSet temp = cs.intersection(categories.elementAt(j));
+                 if (!temp.empty()) {
+ 
+                     // then add the encoded category number to the String for this
+@@ -732,12 +732,12 @@
+ 
+         // for each category...
+         for (int i = 0; i < categories.size(); i++) {
+-            CharSet chars = (CharSet)(categories.elementAt(i));
++            CharSet chars = categories.elementAt(i);
+ 
+             // go through the character ranges in the category one by one...
+-            Enumeration enum_ = chars.getChars();
++            Enumeration<int[]> enum_ = chars.getChars();
+             while (enum_.hasMoreElements()) {
+-                int[] range = (int[])(enum_.nextElement());
++                int[] range = enum_.nextElement();
+ 
+                 // and set the corresponding elements in the CompactArray accordingly
+                 if (i != 0) {
+@@ -782,7 +782,7 @@
+         numCategories = categories.size();
+     }
+ 
+-    protected void mungeExpressionList(Hashtable expressions) {
++    protected void mungeExpressionList(Hashtable<String, Object> expressions) {
+         // empty in the parent class.  This function provides a hook for subclasses
+         // to mess with the character category table.
+     }
+@@ -792,19 +792,19 @@
+      * work is done in parseRule(), which is called once for each rule in the
+      * description.
+      */
+-    private void buildStateTable(Vector tempRuleList) {
++    private void buildStateTable(Vector<String> tempRuleList) {
+         // initialize our temporary state table, and fill it with two states:
+         // state 0 is a dummy state that allows state 1 to be the starting state
+         // and 0 to represent "stop".  State 1 is added here to seed things
+         // before we start parsing
+-        tempStateTable = new Vector();
++        tempStateTable = new Vector<short[]>();
+         tempStateTable.addElement(new short[numCategories + 1]);
+         tempStateTable.addElement(new short[numCategories + 1]);
+ 
+         // call parseRule() for every rule in the rule list (except those which
+         // start with !, which are actually backwards-iteration rules)
+         for (int i = 0; i < tempRuleList.size(); i++) {
+-            String rule = (String)tempRuleList.elementAt(i);
++            String rule = tempRuleList.elementAt(i);
+             if (rule.charAt(0) != '!') {
+                 parseRule(rule, true);
+             }
+@@ -891,10 +891,10 @@
+         int lastState = currentState;
+         String pendingChars = "";
+ 
+-        decisionPointStack = new Stack();
+-        decisionPointList = new Vector();
+-        loopingStates = new Vector();
+-        statesToBackfill = new Vector();
++        decisionPointStack = new Stack<Vector<Integer>>();
++        decisionPointList = new Vector<Integer>();
++        loopingStates = new Vector<Integer>();
++        statesToBackfill = new Vector<Integer>();
+ 
+         short[] state;
+         boolean sawEarlyBreak = false;
+@@ -972,8 +972,8 @@
+ 
+                 // if the character we're on is a period, we end up down here
+                 else {
+-                    int rowNum = ((Integer)decisionPointList.lastElement()).intValue();
+-                    state = (short[])tempStateTable.elementAt(rowNum);
++                    int rowNum = decisionPointList.lastElement().intValue();
++                    state = tempStateTable.elementAt(rowNum);
+ 
+                     // if the period is followed by an asterisk, then just set the current
+                     // state to loop back on itself
+@@ -1001,7 +1001,9 @@
+                     // of the current desicion point list onto the stack (this is
+                     // the same thing we do on an opening brace)
+                     if (p + 1 < rule.length() && rule.charAt(p + 1) == '*') {
+-                        decisionPointStack.push(decisionPointList.clone());
++                        @SuppressWarnings("unchecked")
++                        Vector<Integer> clone = (Vector<Integer>)decisionPointList.clone();
++                        decisionPointStack.push(clone);
+                     }
+ 
+                     // create a new state, add it to the list of states to backfill
+@@ -1040,7 +1042,9 @@
+             // it, preventing it from being affected by whatever's inside the parentheses.
+             // This decision point list is restored when a } is encountered.
+             else if (c == '{') {
+-                decisionPointStack.push(decisionPointList.clone());
++                @SuppressWarnings("unchecked")
++                Vector<Integer> clone = (Vector<Integer>)decisionPointList.clone();
++                decisionPointStack.push(clone);
+             }
+ 
+             // a } marks the end of an optional run of characters.  Pop the last decision
+@@ -1053,7 +1057,7 @@
+                 // on the character categories that caused us to enter this state
+                 if (c == '*') {
+                     for (int i = lastState + 1; i < tempStateTable.size(); i++) {
+-                        Vector temp = new Vector();
++                        Vector<Integer> temp = new Vector<Integer>();
+                         temp.addElement(new Integer(i));
+                         updateStateTable(temp, pendingChars, (short)(lastState + 1));
+                     }
+@@ -1063,7 +1067,7 @@
+                 // it with the current decision point list (this causes the divergent
+                 // paths through the state table to come together again on the next
+                 // new state)
+-                Vector temp = (Vector)decisionPointStack.pop();
++                Vector<Integer> temp = decisionPointStack.pop();
+                 for (int i = 0; i < decisionPointList.size(); i++)
+                     temp.addElement(decisionPointList.elementAt(i));
+                 decisionPointList = temp;
+@@ -1123,8 +1127,10 @@
+                 // stack (this keeps track of the active decision point list before
+                 // the () expression), followed by an empty decision point list
+                 // (this will hold the exit points)
+-                decisionPointStack.push(decisionPointList.clone());
+-                decisionPointStack.push(new Vector());
++                @SuppressWarnings("unchecked")
++                Vector<Integer> clone = (Vector<Integer>)decisionPointList.clone();
++                decisionPointStack.push(clone);
++                decisionPointStack.push(new Vector<Integer>());
+             }
+ 
+             // a | separates alternative character sequences in a () expression.  When
+@@ -1133,8 +1139,8 @@
+             else if (c == '|') {
+ 
+                 // pick out the top two decision point lists on the stack
+-                Vector oneDown = (Vector)decisionPointStack.pop();
+-                Vector twoDown = (Vector)decisionPointStack.peek();
++                Vector<Integer> oneDown = decisionPointStack.pop();
++                Vector<Integer> twoDown = decisionPointStack.peek();
+                 decisionPointStack.push(oneDown);
+ 
+                 // append the current decision point list to the list below it
+@@ -1142,7 +1148,9 @@
+                 // current decision point list to its state before the () expression
+                 for (int i = 0; i < decisionPointList.size(); i++)
+                     oneDown.addElement(decisionPointList.elementAt(i));
+-                decisionPointList = (Vector)twoDown.clone();
++                @SuppressWarnings("unchecked")
++                Vector<Integer> clone = (Vector<Integer>)twoDown.clone();
++                decisionPointList = clone;
+             }
+ 
+             // a ) marks the end of a sequence of characters.  We do one of two things
+@@ -1160,7 +1168,7 @@
+                 // pull the exit point list off the stack, merge it with the current
+                 // decision point list, and make the merged version the current
+                 // decision point list
+-                Vector exitPoints = (Vector)decisionPointStack.pop();
++                Vector<Integer> exitPoints = decisionPointStack.pop();
+                 for (int i = 0; i < decisionPointList.size(); i++)
+                     exitPoints.addElement(decisionPointList.elementAt(i));
+                 decisionPointList = exitPoints;
+@@ -1176,16 +1184,18 @@
+ 
+                     // now exitPoints and decisionPointList have to point to equivalent
+                     // vectors, but not the SAME vector
+-                    exitPoints = (Vector)decisionPointList.clone();
++                    @SuppressWarnings("unchecked")
++                    Vector<Integer> clone = (Vector<Integer>)decisionPointList.clone();
++                    exitPoints = clone;
+ 
+                     // pop the original decision point list off the stack
+-                    Vector temp = (Vector)decisionPointStack.pop();
++                    Vector<Integer> temp = decisionPointStack.pop();
+ 
+                     // we squirreled away the row number of our entry point list
+                     // at the beginning of the original decision point list.  Fish
+                     // that state number out and retrieve the entry point list
+-                    int tempStateNum = ((Integer)temp.firstElement()).intValue();
+-                    short[] tempState = (short[])tempStateTable.elementAt(tempStateNum);
++                    int tempStateNum = temp.firstElement().intValue();
++                    short[] tempState = tempStateTable.elementAt(tempStateNum);
+ 
+                     // merge the original decision point list with the current
+                     // decision point list
+@@ -1217,8 +1227,8 @@
+             else if (c == '/') {
+                 sawEarlyBreak = true;
+                 for (int i = 0; i < decisionPointList.size(); i++) {
+-                    state = (short[])tempStateTable.elementAt(((Integer)decisionPointList.
+-                                    elementAt(i)).intValue());
++                    state = tempStateTable.elementAt(decisionPointList.
++                                    elementAt(i).intValue());
+                     state[numCategories] |= LOOKAHEAD_STATE_FLAG;
+                 }
+             }
+@@ -1261,8 +1271,8 @@
+         // signals that these states cause the break position to be updated to the
+         // position of the slash rather than the current break position.
+         for (int i = 0; i < decisionPointList.size(); i++) {
+-            int rowNum = ((Integer)decisionPointList.elementAt(i)).intValue();
+-            state = (short[])tempStateTable.elementAt(rowNum);
++            int rowNum = decisionPointList.elementAt(i).intValue();
++            state = tempStateTable.elementAt(rowNum);
+             state[numCategories] |= END_STATE_FLAG;
+             if (sawEarlyBreak) {
+                 state[numCategories] |= LOOKAHEAD_STATE_FLAG;
+@@ -1279,7 +1289,7 @@
+      * list of the columns that need updating.
+      * @param newValue Update the cells specfied above to contain this value
+      */
+-    private void updateStateTable(Vector rows,
++    private void updateStateTable(Vector<Integer> rows,
+                                   String pendingChars,
+                                   short newValue) {
+         // create a dummy state that has the specified row number (newValue) in
+@@ -1292,7 +1302,7 @@
+         // go through the list of rows to update, and update them by calling
+         // mergeStates() to merge them the the dummy state we created
+         for (int i = 0; i < rows.size(); i++) {
+-            mergeStates(((Integer)rows.elementAt(i)).intValue(), newValues, rows);
++            mergeStates(rows.elementAt(i).intValue(), newValues, rows);
+         }
+     }
+ 
+@@ -1318,8 +1328,8 @@
+      */
+     private void mergeStates(int rowNum,
+                              short[] newValues,
+-                             Vector rowsBeingUpdated) {
+-        short[] oldValues = (short[])(tempStateTable.elementAt(rowNum));
++                             Vector<Integer> rowsBeingUpdated) {
++        short[] oldValues = tempStateTable.elementAt(rowNum);
+         boolean isLoopingState = loopingStates.contains(new Integer(rowNum));
+ 
+         // for each of the cells in the rows we're reconciling, do...
+@@ -1375,7 +1385,7 @@
+                     // add this pair of row numbers to the merge list (create it first
+                     // if we haven't created the merge list yet)
+                     if (mergeList == null) {
+-                        mergeList = new Vector();
++                        mergeList = new Vector<int[]>();
+                     }
+                     mergeList.addElement(new int[] { oldRowNum, newRowNum, combinedRowNum });
+ 
+@@ -1384,7 +1394,7 @@
+                     // state table and update the original row (oldValues) to point
+                     // to the new, merged, state
+                     short[] newRow = new short[numCategories + 1];
+-                    short[] oldRow = (short[])(tempStateTable.elementAt(oldRowNum));
++                    short[] oldRow = tempStateTable.elementAt(oldRowNum);
+                     System.arraycopy(oldRow, 0, newRow, 0, numCategories + 1);
+                     tempStateTable.addElement(newRow);
+                     oldValues[i] = (short)combinedRowNum;
+@@ -1408,7 +1418,7 @@
+                     // now (groan) do the same thing for all the entries on the
+                     // decision point stack
+                     for (int k = 0; k < decisionPointStack.size(); k++) {
+-                        Vector dpl = (Vector)decisionPointStack.elementAt(k);
++                        Vector<Integer> dpl = decisionPointStack.elementAt(k);
+                         if ((dpl.contains(new Integer(oldRowNum))
+                                 || dpl.contains(new Integer(newRowNum)))
+                             && !dpl.contains(new Integer(combinedRowNum))
+@@ -1420,8 +1430,8 @@
+                     // FINALLY (puff puff puff), call mergeStates() recursively to copy
+                     // the row referred to by newValues into the new row and resolve any
+                     // conflicts that come up at that level
+-                    mergeStates(combinedRowNum, (short[])(tempStateTable.elementAt(
+-                                    newValues[i])), rowsBeingUpdated);
++                    mergeStates(combinedRowNum, tempStateTable.elementAt(
++                                    newValues[i]), rowsBeingUpdated);
+                 }
+             }
+         }
+@@ -1445,7 +1455,7 @@
+         else {
+             int[] entry;
+             for (int i = 0; i < mergeList.size(); i++) {
+-                entry = (int[])(mergeList.elementAt(i));
++                entry = mergeList.elementAt(i);
+ 
+                 // we have a hit if the two row numbers match the two row numbers
+                 // in the beginning of the entry (the two that combine), in either
+@@ -1477,20 +1487,21 @@
+      * @param endStates The list of states to treat as end states (states that
+      * can exit the loop).
+      */
+-    private void setLoopingStates(Vector newLoopingStates, Vector endStates) {
++    private void setLoopingStates(Vector<Integer> newLoopingStates,
++                                  Vector<Integer> endStates) {
+ 
+         // if the current list of looping states isn't empty, we have to backfill
+         // values from the looping states into the states that are waiting to be
+         // backfilled
+         if (!loopingStates.isEmpty()) {
+-            int loopingState = ((Integer)loopingStates.lastElement()).intValue();
++            int loopingState = loopingStates.lastElement().intValue();
+             int rowNum;
+ 
+             // don't backfill into an end state OR any state reachable from an end state
+             // (since the search for reachable states is recursive, it's split out into
+             // a separate function, eliminateBackfillStates(), below)
+             for (int i = 0; i < endStates.size(); i++) {
+-                eliminateBackfillStates(((Integer)endStates.elementAt(i)).intValue());
++                eliminateBackfillStates(endStates.elementAt(i).intValue());
+             }
+ 
+             // we DON'T actually backfill the states that need to be backfilled here.
+@@ -1501,8 +1512,8 @@
+             // for backfilling by putting the row number of the state to copy from
+             // into the flag cell at the end of the row
+             for (int i = 0; i < statesToBackfill.size(); i++) {
+-                rowNum = ((Integer)statesToBackfill.elementAt(i)).intValue();
+-                short[] state = (short[])tempStateTable.elementAt(rowNum);
++                rowNum = statesToBackfill.elementAt(i).intValue();
++                short[] state = tempStateTable.elementAt(rowNum);
+                 state[numCategories] =
+                     (short)((state[numCategories] & ALL_FLAGS) | loopingState);
+             }
+@@ -1511,7 +1522,9 @@
+         }
+ 
+         if (newLoopingStates != null) {
+-            loopingStates = (Vector)newLoopingStates.clone();
++            @SuppressWarnings("unchecked")
++            Vector<Integer> clone = (Vector<Integer>)newLoopingStates.clone();
++            loopingStates = clone;
+         }
+     }
+ 
+@@ -1530,7 +1543,7 @@
+ 
+             // then go through and recursively call this function for every
+             // state that the base state points to
+-            short[] state = (short[])tempStateTable.elementAt(baseState);
++            short[] state = tempStateTable.elementAt(baseState);
+             for (int i = 0; i < numCategories; i++) {
+                 if (state[i] != 0) {
+                     eliminateBackfillStates(state[i]);
+@@ -1551,7 +1564,7 @@
+ 
+         // for each state in the state table...
+         for (int i = 0; i < tempStateTable.size(); i++) {
+-            state = (short[])tempStateTable.elementAt(i);
++            state = tempStateTable.elementAt(i);
+ 
+             // check the state's flag word to see if it's marked for backfilling
+             // (it's marked for backfilling if any bits other than the two high-order
+@@ -1563,7 +1576,7 @@
+                 // load up the state to copy from (if we haven't already)
+                 if (fromState != loopingStateRowNum) {
+                     loopingStateRowNum = fromState;
+-                    loopingState = (short[])tempStateTable.elementAt(loopingStateRowNum);
++                    loopingState = tempStateTable.elementAt(loopingStateRowNum);
+                 }
+ 
+                 // clear out the backfill part of the flag word
+@@ -1594,7 +1607,7 @@
+         backfillLoopingStates();
+ 
+         int[] rowNumMap = new int[tempStateTable.size()];
+-        Stack rowsToFollow = new Stack();
++        Stack<Integer> rowsToFollow = new Stack<Integer>();
+         rowsToFollow.push(new Integer(1));
+         rowNumMap[1] = 1;
+ 
+@@ -1602,8 +1615,8 @@
+         // (the reachable states will have their row numbers in the row number
+         // map, and the nonreachable states will have zero in the row number map)
+         while (rowsToFollow.size() != 0) {
+-            int rowNum = ((Integer)rowsToFollow.pop()).intValue();
+-            short[] row = (short[])(tempStateTable.elementAt(rowNum));
++            int rowNum = rowsToFollow.pop().intValue();
++            short[] row = tempStateTable.elementAt(rowNum);
+ 
+             for (int i = 0; i < numCategories; i++) {
+                 if (row[i] != 0) {
+@@ -1632,7 +1645,7 @@
+             if (rowNumMap[i] == 0) {
+                 continue;
+             }
+-            state1 = (short[])tempStateTable.elementAt(i);
++            state1 = tempStateTable.elementAt(i);
+             for (int j = 0; j < numCategories; j++) {
+                 if (state1[j] != 0) {
+                     ++stateClasses[i];
+@@ -1663,10 +1676,10 @@
+                 for (int i = 0; i < stateClasses.length; i++) {
+                     if (stateClasses[i] == currentClass) {
+                         if (state1 == null) {
+-                            state1 = (short[])tempStateTable.elementAt(i);
++                            state1 = tempStateTable.elementAt(i);
+                         }
+                         else {
+-                            state2 = (short[])tempStateTable.elementAt(i);
++                            state2 = tempStateTable.elementAt(i);
+                             for (int j = 0; j < state2.length; j++) {
+                                 if ((j == numCategories && state1[j] != state2[j] && forward)
+                                         || (j != numCategories && stateClasses[state1[j]]
+@@ -1733,7 +1746,7 @@
+             int p = 0;
+             int p2 = 0;
+             for (int i = 0; i < tempStateTable.size(); i++) {
+-                short[] row = (short[])(tempStateTable.elementAt(i));
++                short[] row = tempStateTable.elementAt(i);
+                 if (row == null) {
+                     continue;
+                 }
+@@ -1752,7 +1765,7 @@
+             backwardsStateTable = new short[newRowNum * numCategories];
+             int p = 0;
+             for (int i = 0; i < tempStateTable.size(); i++) {
+-                short[] row = (short[])(tempStateTable.elementAt(i));
++                short[] row = tempStateTable.elementAt(i);
+                 if (row == null) {
+                     continue;
+                 }
+@@ -1769,12 +1782,12 @@
+      * table and any additional rules (identified by the ! on the front)
+      * supplied in the description
+      */
+-    private void buildBackwardsStateTable(Vector tempRuleList) {
++    private void buildBackwardsStateTable(Vector<String> tempRuleList) {
+ 
+         // create the temporary state table and seed it with two rows (row 0
+         // isn't used for anything, and we have to create row 1 (the initial
+         // state) before we can do anything else
+-        tempStateTable = new Vector();
++        tempStateTable = new Vector<short[]>();
+         tempStateTable.addElement(new short[numCategories + 1]);
+         tempStateTable.addElement(new short[numCategories + 1]);
+ 
+@@ -1786,7 +1799,7 @@
+         // the same syntax as the normal break rules, but begin with '!' to distinguish
+         // them from normal break rules
+         for (int i = 0; i < tempRuleList.size(); i++) {
+-            String rule = (String)tempRuleList.elementAt(i);
++            String rule = tempRuleList.elementAt(i);
+             if (rule.charAt(0) == '!') {
+                 parseRule(rule.substring(1), false);
+             }
+@@ -1831,7 +1844,7 @@
+         for (int i = 0; i < numCategories + 1; i++)
+             tempStateTable.addElement(new short[numCategories + 1]);
+ 
+-        short[] state = (short[])tempStateTable.elementAt(backTableOffset - 1);
++        short[] state = tempStateTable.elementAt(backTableOffset - 1);
+         for (int i = 0; i < numCategories; i++)
+             state[i] = (short)(i + backTableOffset);
+ 
+@@ -1855,7 +1868,7 @@
+                     for (int nextColumn = 0; nextColumn < numCategories; nextColumn++) {
+                         int cellValue = lookupState(nextRow, nextColumn);
+                         if (cellValue != 0) {
+-                            state = (short[])tempStateTable.elementAt(nextColumn +
++                            state = tempStateTable.elementAt(nextColumn +
+                                             backTableOffset);
+                             state[column] = (short)(column + backTableOffset);
+                         }
+@@ -1876,9 +1889,9 @@
+             // populated that is also populated in row 1 of the rule-based
+             // sub-table, copy the value from row 1 over the value in the
+             // auto-generated sub-table
+-            state = (short[])tempStateTable.elementAt(1);
++            state = tempStateTable.elementAt(1);
+             for (int i = backTableOffset - 1; i < tempStateTable.size(); i++) {
+-                short[] state2 = (short[])tempStateTable.elementAt(i);
++                short[] state2 = tempStateTable.elementAt(i);
+                 for (int j = 0; j < numCategories; j++) {
+                     if (state[j] != 0 && state2[j] != 0) {
+                         state2[j] = state[j];
+@@ -1890,9 +1903,9 @@
+             // an end state, fill in all unpopulated cells with the values
+             // of the corresponding cells in the first row of the auto-
+             // generated sub-table.
+-            state = (short[])tempStateTable.elementAt(backTableOffset - 1);
++            state = tempStateTable.elementAt(backTableOffset - 1);
+             for (int i = 1; i < backTableOffset - 1; i++) {
+-                short[] state2 = (short[])tempStateTable.elementAt(i);
++                short[] state2 = tempStateTable.elementAt(i);
+                 if ((state2[numCategories] & END_STATE_FLAG) == 0) {
+                     for (int j = 0; j < numCategories; j++) {
+                         if (state2[j] == 0) {
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/generatebreakiteratordata/SupplementaryCharacterData.java openjdk/jdk/make/tools/src/build/tools/generatebreakiteratordata/SupplementaryCharacterData.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/generatebreakiteratordata/SupplementaryCharacterData.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/generatebreakiteratordata/SupplementaryCharacterData.java	2015-07-22 02:28:32.247243923 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -128,7 +128,7 @@
+         int new_index = 0;
+         int loop_count = dataCount - 1;
+         long data = tempTable[old_index];
+-        int start = (int)((long)(data>>32)) & CODEPOINT_MASK;
++        int start = (int)(data>>32) & CODEPOINT_MASK;
+         int end   = (int)(data>>8) & CODEPOINT_MASK;
+ 
+         /*
+@@ -142,7 +142,7 @@
+         newTempTable[new_index++] = composeEntry(start, (int)data);
+         for (int i = 0; i < loop_count; i++) {
+             data = tempTable[++old_index];
+-            int nextStart = (int)((long)(data>>32)) & CODEPOINT_MASK;
++            int nextStart = (int)(data>>32) & CODEPOINT_MASK;
+ 
+             /*
+              * If the previous end code point is not equal to the previous start
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/generatecharacter/GenerateCharacter.java openjdk/jdk/make/tools/src/build/tools/generatecharacter/GenerateCharacter.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/generatecharacter/GenerateCharacter.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/generatecharacter/GenerateCharacter.java	2015-07-22 02:32:36.406987994 +0100
+@@ -1,6 +1,6 @@
+ 
+ /*
+- * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -1234,7 +1234,7 @@
+                     else if (bits == 32 || bits < 8)
+                         result.append(hex8((int)val));
+                     else {
+-                        result.append(hex16((long)val));
++                        result.append(hex16(val));
+                         if (!Csyntax)
+                             result.append("L");
+                     }
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/generatecharacter/SpecialCaseMap.java openjdk/jdk/make/tools/src/build/tools/generatecharacter/SpecialCaseMap.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/generatecharacter/SpecialCaseMap.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/generatecharacter/SpecialCaseMap.java	2015-07-22 02:28:32.247243923 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -39,7 +39,7 @@
+  * <p>
+  * @author John O'Conner
+  */
+-public class SpecialCaseMap implements Comparable {
++public class SpecialCaseMap implements Comparable<SpecialCaseMap> {
+ 
+     SpecialCaseMap() {
+         chSource = 0xFFFF;
+@@ -55,7 +55,7 @@
+      */
+ 
+     public static SpecialCaseMap[] readSpecFile(File file, int plane) throws FileNotFoundException {
+-        ArrayList caseMaps = new ArrayList(150);
++        ArrayList<SpecialCaseMap> caseMaps = new ArrayList<SpecialCaseMap>(150);
+         int count = 0;
+         BufferedReader f = new BufferedReader(new FileReader(file));
+                 String line = null;
+@@ -69,7 +69,7 @@
+                 SpecialCaseMap item = parse(line.trim());
+                 if (item != null) {
+                                 if(item.getCharSource() >> 16 < plane) continue;
+-                                if((int)(item.getCharSource() >> 16) > plane) break;
++                                if(item.getCharSource() >> 16 > plane) break;
+                                 caseMaps.add(item);
+                 ++count;
+             }
+@@ -83,7 +83,7 @@
+ 
+     }
+ 
+-    /**
++   /**
+     * Given one line of a Unicode special casing data file as a String, parse the line
+     * and return a SpecialCaseMap object that contains the case mapping.
+     *
+@@ -177,25 +177,25 @@
+         else return -1;
+     }
+ 
+-        /*
++    /*
+      * Extracts and returns the high surrogate value from a UTF-32 code point.
+      * If argument is a BMP character, then it is converted to a char and returned;
+      * otherwise the high surrogate value is extracted.
+      * @param codePoint a UTF-32 codePoint with value greater than 0xFFFF.
+      * @return the high surrogate value that helps create <code>codePoint</code>; else
+      *         the char representation of <code>codePoint</code> if it is a BMP character.
+-         * @since 1.5
++     * @since 1.5
+      */
+-        static char getHighSurrogate(int codePoint) {
+-                char high = (char)codePoint;
+-                if (codePoint > 0xFFFF) {
+-                    high = (char)((codePoint - 0x10000)/0x0400 + 0xD800);
+-                }
+-                return high;
++    static char getHighSurrogate(int codePoint) {
++        char high = (char)codePoint;
++        if (codePoint > 0xFFFF) {
++            high = (char)((codePoint - 0x10000)/0x0400 + 0xD800);
+         }
++        return high;
++    }
+ 
+ 
+-        /*
++    /*
+      * Extracts and returns the low surrogate value from a UTF-32 code point.
+      * If argument is a BMP character, then it is converted to a char and returned;
+      * otherwise the high surrogate value is extracted.
+@@ -204,29 +204,28 @@
+      *         the char representation of <code>codePoint</code> if it is a BMP character.
+      * @since 1.5
+      */
+-        static char getLowSurrogate(int codePoint) {
+-                char low = (char)codePoint;
+-                if(codePoint > 0xFFFF) {
+-                        low = (char)((codePoint - 0x10000)%0x0400 + 0xDC00);
+-                }
+-                return low;
++    static char getLowSurrogate(int codePoint) {
++        char low = (char)codePoint;
++        if(codePoint > 0xFFFF) {
++                low = (char)((codePoint - 0x10000)%0x0400 + 0xDC00);
+         }
++        return low;
++    }
+ 
+-        static String hex6(int n) {
+-                String str = Integer.toHexString(n & 0xFFFFFF).toUpperCase();
+-                return "000000".substring(Math.min(6, str.length())) + str;
+-
+-        }
++    static String hex6(int n) {
++        String str = Integer.toHexString(n & 0xFFFFFF).toUpperCase();
++        return "000000".substring(Math.min(6, str.length())) + str;
++    }
+ 
+-        static String hex6(char[] map){
+-                StringBuffer buff = new StringBuffer();
+-                int x=0;
+-                buff.append(hex6(map[x++]));
+-                while(x<map.length) {
+-                        buff.append(" " + hex6(map[x++]));
+-                }
+-                return buff.toString();
++    static String hex6(char[] map){
++        StringBuffer buff = new StringBuffer();
++        int x=0;
++        buff.append(hex6(map[x++]));
++        while(x<map.length) {
++            buff.append(" " + hex6(map[x++]));
+         }
++        return buff.toString();
++    }
+ 
+     void setCharSource(int ch) {
+         chSource = ch;
+@@ -302,56 +301,62 @@
+     static String CONTEXT_MODERN = "MODERN";
+     static String CONTEXT_NONMODERN = "NON_MODERN";
+ 
+-    public int compareTo(Object otherObject) {
+-                SpecialCaseMap other = (SpecialCaseMap)otherObject;
+-        if (chSource < other.chSource) {
++    public int compareTo(SpecialCaseMap otherObject) {
++        if (chSource < otherObject.chSource) {
+             return -1;
+         }
+-        else if (chSource > other.chSource) {
++        else if (chSource > otherObject.chSource) {
+             return 1;
+         }
+         else return 0;
+     }
+ 
+     public boolean equals(Object o1) {
+-                boolean bEqual = false;
+-                if (0 == compareTo(o1)) {
+-                        bEqual = true;
+-                }
++        if (this == o1) {
++            return true;
++        }
++        if (o1 == null || !(o1 instanceof SpecialCaseMap)) {
++            return false;
++        }
++        SpecialCaseMap other = (SpecialCaseMap)o1;
++        boolean bEqual = false;
++        if (0 == compareTo(other)) {
++            bEqual = true;
++        }
+         return bEqual;
+     }
+ 
+-        public String toString() {
+-                StringBuffer buff = new StringBuffer();
+-                buff.append(hex6(getCharSource()));
+-                buff.append("|" + hex6(lowerCaseMap));
+-                buff.append("|" + hex6(upperCaseMap));
+-                buff.append("|" + hex6(titleCaseMap));
+-                buff.append("|" + context);
+-                return buff.toString();
+-        }
+-
+-        public int hashCode() {
+-                return (int)chSource;
+-        }
+-
+-        public static void main(String[] args) {
+-                SpecialCaseMap[] spec = null;
+-                if (args.length == 2 ) {
+-                        try {
+-                                File file = new File(args[0]);
+-                                int plane = Integer.parseInt(args[1]);
+-                                spec = SpecialCaseMap.readSpecFile(file, plane);
+-                                System.out.println("SpecialCaseMap[" + spec.length + "]:");
+-                                for (int x=0; x<spec.length; x++) {
+-                                        System.out.println(spec[x].toString());
+-                                }
+-                        }
+-                        catch(Exception e) {
+-                                e.printStackTrace();
+-                        }
+-                }
++    public String toString() {
++        StringBuffer buff = new StringBuffer();
++        buff.append(hex6(getCharSource()));
++        buff.append("|" + hex6(lowerCaseMap));
++        buff.append("|" + hex6(upperCaseMap));
++        buff.append("|" + hex6(titleCaseMap));
++        buff.append("|" + context);
++        return buff.toString();
++    }
++
++    public int hashCode() {
++        return chSource;
++    }
+ 
++    public static void main(String[] args) {
++        SpecialCaseMap[] spec = null;
++        if (args.length == 2 ) {
++            try {
++                File file = new File(args[0]);
++                int plane = Integer.parseInt(args[1]);
++                spec = SpecialCaseMap.readSpecFile(file, plane);
++                System.out.println("SpecialCaseMap[" + spec.length + "]:");
++                for (int x=0; x<spec.length; x++) {
++                    System.out.println(spec[x].toString());
++                }
++            }
++            catch(Exception e) {
++                e.printStackTrace();
++            }
+         }
+ 
++    }
++
+ }
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/generatecharacter/UnicodeSpec.java openjdk/jdk/make/tools/src/build/tools/generatecharacter/UnicodeSpec.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/generatecharacter/UnicodeSpec.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/generatecharacter/UnicodeSpec.java	2015-07-22 02:28:32.247243923 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2002, 2004, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -391,31 +391,31 @@
+     */
+ 
+     public static UnicodeSpec[] readSpecFile(File file, int plane) throws FileNotFoundException {
+-                ArrayList list = new ArrayList(3000);
++        ArrayList<UnicodeSpec> list = new ArrayList<UnicodeSpec>(3000);
+         UnicodeSpec[] result = null;
+         int count = 0;
+         BufferedReader f = new BufferedReader(new FileReader(file));
+-                String line = null;
++        String line = null;
+         loop:
+         while(true) {
+             try {
+                 line = f.readLine();
+             }
+             catch (IOException e) {
+-                                break loop;
+-                        }
++                break loop;
++            }
+             if (line == null) break loop;
+             UnicodeSpec item = parse(line.trim());
+-                        int specPlane = (int)(item.getCodePoint() >>> 16);
+-                        if (specPlane < plane) continue;
+-                        if (specPlane > plane) break;
++            int specPlane = item.getCodePoint() >>> 16;
++            if (specPlane < plane) continue;
++            if (specPlane > plane) break;
+ 
+             if (item != null) {
+-                                list.add(item);
++                list.add(item);
+             }
+         }
+-                result = new UnicodeSpec[list.size()];
+-                list.toArray(result);
++        result = new UnicodeSpec[list.size()];
++        list.toArray(result);
+         return result;
+     }
+ 
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/generatecurrencydata/GenerateCurrencyData.java openjdk/jdk/make/tools/src/build/tools/generatecurrencydata/GenerateCurrencyData.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/generatecurrencydata/GenerateCurrencyData.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/generatecurrencydata/GenerateCurrencyData.java	2015-07-22 02:32:14.647367285 +0100
+@@ -250,10 +250,10 @@
+         return Integer.parseInt(numericCode);
+     }
+ 
+-    static HashMap specialCaseMap = new HashMap();
++    static HashMap<String, Integer> specialCaseMap = new HashMap<String, Integer>();
+ 
+     private static int makeSpecialCaseEntry(String currencyInfo) throws Exception {
+-        Integer oldEntry = (Integer) specialCaseMap.get(currencyInfo);
++        Integer oldEntry = specialCaseMap.get(currencyInfo);
+         if (oldEntry != null) {
+             return oldEntry.intValue();
+         }
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/hasher/Hasher.java openjdk/jdk/make/tools/src/build/tools/hasher/Hasher.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/hasher/Hasher.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/hasher/Hasher.java	2015-07-22 02:28:32.247243923 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2004, 2005, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2004, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -51,15 +51,15 @@
+ 
+     boolean verbose = false;
+ 
+-    List keys = new ArrayList();        // Key strings
+-    List values = new ArrayList();      // Value expressions
+-    String pkg = null;                  // Package prefix for generated class
+-    String cln = null;                  // Name of generated class
+-    String vtype = "String";            // Value type
+-    int maxBits = 11;                   // lg table size
+-    int maxDepth = 3;                   // Max chain depth
+-    boolean inner = false;              // Generating an inner class?
+-    boolean empty = false;              // Generating an empty table?
++    List<String> keys = new ArrayList<String>();      // Key strings
++    List<String> values = new ArrayList<String>();    // Value expressions
++    String pkg = null;                          // Package prefix for generated class
++    String cln = null;                          // Name of generated class
++    String vtype = "String";                    // Value type
++    int maxBits = 11;                           // lg table size
++    int maxDepth = 3;                           // Max chain depth
++    boolean inner = false;                      // Generating an inner class?
++    boolean empty = false;                      // Generating an empty table?
+ 
+     void usage() {
+         err.println("usage: java Hasher [options] [[pkgName.]ClassName]");
+@@ -76,9 +76,9 @@
+     }
+ 
+     Hasher(String[] args) {
+-        List as = Arrays.asList(args);
+-        for (Iterator i = as.iterator(); i.hasNext();) {
+-            String a = (String)i.next();
++        List<String> as = Arrays.asList(args);
++        for (Iterator<String> i = as.iterator(); i.hasNext();) {
++            String a = i.next();
+             if (a.equals("-e")) {
+                 empty = true;
+             } else if (a.equals("-i")) {
+@@ -88,15 +88,15 @@
+             } else if (a.equals("-md")) {
+                 if (!i.hasNext())
+                     usage();
+-                maxDepth = Integer.parseInt((String)i.next());
++                maxDepth = Integer.parseInt(i.next());
+             } else if (a.equals("-mb")) {
+                 if (!i.hasNext())
+                     usage();
+-                maxBits = Integer.parseInt((String)i.next());
++                maxBits = Integer.parseInt(i.next());
+             } else if (a.equals("-t")) {
+                 if (!i.hasNext())
+                     usage();
+-                vtype = (String)i.next();
++                vtype = i.next();
+             } else if (a.startsWith("-")) {
+                 usage();
+             } else {
+@@ -153,8 +153,8 @@
+         int nw = keys.size();
+ 
+         for (int i = 0; i < nw; i++) {
+-            String w = (String)keys.get(i);
+-            String v = (String)values.get(i);
++            String w = keys.get(i);
++            String v = values.get(i);
+             int h = hash(w);
+             if (ht[h] == null)
+                 ht[h] = new Object[] { w, v };
+@@ -217,7 +217,7 @@
+         if (verbose)
+             err.println();
+         for (int i = 0, n = keys.size(); i < n; i++) {
+-            String w = (String)keys.get(i);
++            String w = keys.get(i);
+             String v = get(w);
+             if (verbose)
+                 err.println(hash(w) + "\t" + w);
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/jarsplit/JarSplit.java openjdk/jdk/make/tools/src/build/tools/jarsplit/JarSplit.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/jarsplit/JarSplit.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/jarsplit/JarSplit.java	2015-07-22 02:28:32.247243923 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -43,7 +43,8 @@
+     /* classlist[0] contains class file list
+      * classlist[1] contains non-class file list
+      */
+-    private static Vector<String>[] classlist = (Vector<String>[])(new Vector[2]);
++    @SuppressWarnings("unchecked")
++    private static Vector<String>[] classlist = new Vector<String>[2];
+ 
+     /* The 2 class list name passed as arguments. */
+     private static String[] fileNamelist = new String[2];
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/javazic/GenDoc.java openjdk/jdk/make/tools/src/build/tools/javazic/GenDoc.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/javazic/GenDoc.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/javazic/GenDoc.java	2015-07-22 02:28:32.251243853 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2001, 2006, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -31,12 +31,8 @@
+ import  java.io.FileReader;
+ import  java.io.FileWriter;
+ import  java.io.IOException;
+-import  java.util.ArrayList;
+-import  java.util.Calendar;
+ import  java.util.Date;
+ import  java.util.HashMap;
+-import  java.util.Iterator;
+-import  java.util.LinkedList;
+ import  java.util.List;
+ import  java.util.Map;
+ import  java.util.Set;
+@@ -189,7 +185,7 @@
+ 
+             out.write(header1 + new Date() + header3 + zonename + header4);
+             out.write(body1 + "<FONT size=\"+2\"><B>" + zonename + "</B></FONT>");
+-            LatitudeAndLongitude location = (LatitudeAndLongitude)mapList.get(zonename);
++            LatitudeAndLongitude location = mapList.get(zonename);
+             if (location != null) {
+                 int deg, min, sec;
+ 
+@@ -608,12 +604,12 @@
+                        "<BR>\n\n" + "<TABLE BORDER=\"0\" WIDTH=\"100%\">\n" +
+                        "<TR>\n<TD NOWRAP>\n");
+ 
+-            Set aliasSet = a.keySet();
++            Set<String> aliasSet = a.keySet();
+             len = aliasSet.size();
+-            Object aliasNames[] = aliasSet.toArray();
++            String aliasNames[] = aliasSet.toArray(new String[0]);
+             for (int i = 0; i < len; i++) {
+-                displayNameList.put(transform((String)aliasNames[i]),
+-                                    (String)aliasNames[i]);
++                displayNameList.put(transform(aliasNames[i]),
++                                    aliasNames[i]);
+             }
+ 
+             o = displayNameList.keySet().toArray();
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/javazic/Gen.java openjdk/jdk/make/tools/src/build/tools/javazic/Gen.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/javazic/Gen.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/javazic/Gen.java	2015-07-22 02:28:32.251243853 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2000, 2005, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -30,14 +30,9 @@
+ import  java.io.FileOutputStream;
+ import  java.io.DataOutputStream;
+ import  java.io.RandomAccessFile;
+-import  java.util.ArrayList;
+-import  java.util.Iterator;
+-import  java.util.LinkedList;
+ import  java.util.List;
+ import  java.util.Map;
+ import  java.util.Set;
+-import  java.util.TreeMap;
+-import  java.util.TreeSet;
+ import  sun.util.calendar.ZoneInfoFile;
+ 
+ /**
+@@ -105,14 +100,13 @@
+                     /* if DST offset is 0, this means DST isn't used.
+                      * (NOT: offset's index is 0.)
+                      */
+-                    if ((dstoffset =
+-                         ((Integer)dstOffsets.get(i)).intValue()) == -1) {
++                    if ((dstoffset = dstOffsets.get(i).intValue()) == -1) {
+                         dstoffset = 0;
+                     }
+ 
+-                    dos.writeLong((((Long)transitions.get(i)).longValue() << 12)
++                    dos.writeLong((transitions.get(i).longValue() << 12)
+                                   | (dstoffset << 4)
+-                                  | ((Integer)offsets.get(i)).intValue());
++                                  | offsets.get(i).intValue());
+ 
+                 }
+ 
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/javazic/Main.java openjdk/jdk/make/tools/src/build/tools/javazic/Main.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/javazic/Main.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/javazic/Main.java	2015-07-22 02:28:32.251243853 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2000, 2004, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -26,7 +26,6 @@
+ package build.tools.javazic;
+ 
+ import java.util.ArrayList;
+-import java.util.Iterator;
+ import java.util.List;
+ 
+ /**
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/javazic/Mappings.java openjdk/jdk/make/tools/src/build/tools/javazic/Mappings.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/javazic/Mappings.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/javazic/Mappings.java	2015-07-22 02:28:32.251243853 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2000, 2004, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -26,9 +26,6 @@
+ package build.tools.javazic;
+ 
+ import  java.util.ArrayList;
+-import  java.util.HashMap;
+-import  java.util.HashSet;
+-import  java.util.Iterator;
+ import  java.util.LinkedList;
+ import  java.util.List;
+ import  java.util.Map;
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/javazic/Simple.java openjdk/jdk/make/tools/src/build/tools/javazic/Simple.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/javazic/Simple.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/javazic/Simple.java	2015-07-22 02:28:32.251243853 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2000, 2006, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -29,10 +29,7 @@
+ import  java.io.File;
+ import  java.io.FileWriter;
+ import  java.io.IOException;
+-import  java.util.ArrayList;
+ import  java.util.HashMap;
+-import  java.util.Iterator;
+-import  java.util.LinkedList;
+ import  java.util.List;
+ import  java.util.Map;
+ import  java.util.Set;
+@@ -51,22 +48,19 @@
+     /**
+      * Zone records which are applied for given year.
+      */
+-    private static Map<String,ZoneRec> lastZoneRecs
+-        = new HashMap<String,ZoneRec>();
++    private static Map<String,ZoneRec> lastZoneRecs = new HashMap<String,ZoneRec>();
+ 
+     /**
+      * Rule records which are applied for given year.
+      */
+-    private static Map<String,List<RuleRec>> lastRules
+-        = new TreeMap<String,List<RuleRec>>();
++    private static Map<String,List<RuleRec>> lastRules = new TreeMap<String,List<RuleRec>>();
+ 
+     /**
+      * zone IDs sorted by their GMT offsets. If zone's GMT
+      * offset will change in the future, its last known offset is
+      * used.
+      */
+-    private SortedMap<Integer, Set<String>> zonesByOffset
+-        = new TreeMap<Integer,  Set<String>>();
++    private SortedMap<Integer, Set<String>> zonesByOffset = new TreeMap<Integer, Set<String>>();
+ 
+     /**
+      * Sets last Rule records and Zone records for given timezone to
+@@ -101,16 +95,11 @@
+      */
+     int generateSrc(Mappings map) {
+         try {
+-            String outputDir = Main.getOutputDir();
+-            File outD = new File(outputDir);
+-
+-            if (!outputDir.endsWith(File.separator)) {
+-                outputDir += outD.separator;
+-            }
++            File outD = new File(Main.getOutputDir());
+             outD.mkdirs();
+ 
+             FileWriter fw =
+-                new FileWriter(outputDir + "TimeZoneData.java", false);
++                new FileWriter(new File(outD, "TimeZoneData.java"), false);
+             BufferedWriter out = new BufferedWriter(fw);
+ 
+             out.write("import java.util.SimpleTimeZone;\n\n");
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/javazic/Time.java openjdk/jdk/make/tools/src/build/tools/javazic/Time.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/javazic/Time.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/javazic/Time.java	2015-07-22 02:28:32.251243853 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2000, 2004, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -268,16 +268,16 @@
+         if (index < time.length()) {
+             char c = time.charAt(index++);
+             if (c == 's') {
+-                tm.setType(tm.STD);
++                tm.setType(Time.STD);
+             } else if (c == 'u' || c == 'g' || c == 'z') {
+-                tm.setType(tm.UTC);
++                tm.setType(Time.UTC);
+             } else if (c == 'w') {
+-                tm.setType(tm.WALL);
++                tm.setType(Time.WALL);
+             } else {
+                 Main.panic("unknown time mode: "+c);
+             }
+         } else {
+-            tm.setType(tm.WALL);
++            tm.setType(Time.WALL);
+         }
+         return tm;
+     }
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/javazic/Zoneinfo.java openjdk/jdk/make/tools/src/build/tools/javazic/Zoneinfo.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/javazic/Zoneinfo.java	2015-07-22 02:27:29.380339751 +0100
++++ openjdk/jdk/make/tools/src/build/tools/javazic/Zoneinfo.java	2015-07-22 02:31:07.088544897 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2000, 2006, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -29,9 +29,7 @@
+ import java.io.FileReader;
+ import java.io.FileNotFoundException;
+ import java.io.IOException;
+-import java.util.ArrayList;
+ import java.util.HashMap;
+-import java.util.Iterator;
+ import java.util.List;
+ import java.util.Map;
+ import java.util.StringTokenizer;
+@@ -407,9 +405,9 @@
+                 if (!zrec.hasUntil()) {
+                     if (tz.getNTransitions() > 0) {
+                         if (stdOffset == 0) {
+-                            tz.setDSTType(tz.X_DST);
++                            tz.setDSTType(Timezone.X_DST);
+                         } else {
+-                            tz.setDSTType(tz.LAST_DST);
++                            tz.setDSTType(Timezone.LAST_DST);
+                         }
+                         long time = Time.getLocalTime(maxYear,
+                                                       Month.JANUARY, 1, 0);
+@@ -419,7 +417,7 @@
+                                          tz.getDstOffsetIndex(stdOffset));
+                         tz.addUsedRec(zrec);
+                     } else {
+-                        tz.setDSTType(tz.NO_DST);
++                        tz.setDSTType(Timezone.NO_DST);
+                     }
+                     break;
+                 }
+@@ -527,7 +525,7 @@
+                         if (year == endYear && !zrec.hasUntil()) {
+                             if (tz.getNTransitions() > 0) {
+                                 // Assume that this Zone stopped DST
+-                                tz.setDSTType(tz.X_DST);
++                                tz.setDSTType(Timezone.X_DST);
+                                 long time = Time.getLocalTime(maxYear, Month.JANUARY,
+                                                               1, 0);
+                                 time -= zrec.getGmtOffset();
+@@ -536,7 +534,7 @@
+                                                  tz.getDstOffsetIndex(0));
+                                 usedZone = true;
+                             } else {
+-                                tz.setDSTType(tz.NO_DST);
++                                tz.setDSTType(Timezone.NO_DST);
+                             }
+                         }
+                     }
+@@ -552,8 +550,8 @@
+             }
+         }
+ 
+-        if (tz.getDSTType() == tz.UNDEF_DST) {
+-            tz.setDSTType(tz.DST);
++        if (tz.getDSTType() == Timezone.UNDEF_DST) {
++            tz.setDSTType(Timezone.DST);
+         }
+         tz.optimize();
+         tz.checksum();
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/jdwpgen/AbstractCommandNode.java openjdk/jdk/make/tools/src/build/tools/jdwpgen/AbstractCommandNode.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/jdwpgen/AbstractCommandNode.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/jdwpgen/AbstractCommandNode.java	2015-07-22 02:28:32.251243853 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1998, 1999, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -25,7 +25,6 @@
+ 
+ package build.tools.jdwpgen;
+ 
+-import java.util.*;
+ import java.io.*;
+ 
+ class AbstractCommandNode extends AbstractNamedNode {
+@@ -35,8 +34,8 @@
+                        " Command</a> (" + nameNode.value() + ")</h5>");
+         writer.println(comment());
+         writer.println("<dl>");
+-        for (Iterator it = components.iterator(); it.hasNext();) {
+-            ((Node)it.next()).document(writer);
++        for (Node node : components) {
++            node.document(writer);
+         }
+         writer.println("</dl>");
+     }
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/jdwpgen/AbstractGroupNode.java openjdk/jdk/make/tools/src/build/tools/jdwpgen/AbstractGroupNode.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/jdwpgen/AbstractGroupNode.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/jdwpgen/AbstractGroupNode.java	2015-07-22 02:28:32.251243853 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1998, 1999, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -25,14 +25,13 @@
+ 
+ package build.tools.jdwpgen;
+ 
+-import java.util.*;
+ import java.io.*;
+ 
+ abstract class AbstractGroupNode extends AbstractTypeListNode {
+ 
+     void document(PrintWriter writer) {
+-        for (Iterator it = components.iterator(); it.hasNext();) {
+-            ((Node)it.next()).document(writer);
++        for (Node node : components) {
++            node.document(writer);
+         }
+     }
+ 
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/jdwpgen/AbstractNamedNode.java openjdk/jdk/make/tools/src/build/tools/jdwpgen/AbstractNamedNode.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/jdwpgen/AbstractNamedNode.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/jdwpgen/AbstractNamedNode.java	2015-07-22 02:28:32.251243853 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1998, 1999, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -38,10 +38,10 @@
+     }
+ 
+     void prune() {
+-        Iterator it = components.iterator();
++        Iterator<Node> it = components.iterator();
+ 
+         if (it.hasNext()) {
+-            Node nameNode = (Node)it.next();
++            Node nameNode = it.next();
+ 
+             if (nameNode instanceof NameNode) {
+                 this.nameNode = (NameNode)nameNode;
+@@ -64,8 +64,8 @@
+     void document(PrintWriter writer) {
+         writer.println("<h4><a name=" + name + ">" + name +
+                        " Command Set</a></h4>");
+-        for (Iterator it = components.iterator(); it.hasNext();) {
+-            ((Node)it.next()).document(writer);
++        for (Node node : components) {
++            node.document(writer);
+         }
+     }
+ 
+@@ -90,8 +90,8 @@
+         writer.print("class " + javaClassName());
+         writer.println(javaClassImplements() + " {");
+         genJavaClassSpecifics(writer, depth+1);
+-        for (Iterator it = components.iterator(); it.hasNext();) {
+-            ((Node)it.next()).genJava(writer, depth+1);
++        for (Node node : components) {
++            node.genJava(writer, depth+1);
+         }
+         indent(writer, depth);
+         writer.println("}");
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/jdwpgen/AbstractTypeListNode.java openjdk/jdk/make/tools/src/build/tools/jdwpgen/AbstractTypeListNode.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/jdwpgen/AbstractTypeListNode.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/jdwpgen/AbstractTypeListNode.java	2015-07-22 02:28:32.251243853 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1998, 2002, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -40,7 +40,7 @@
+ 
+     void document(PrintWriter writer) {
+         writer.println("<dt>" + name() + " Data");
+-        if (components.size() == 0) {
++        if (components.isEmpty()) {
+             writer.println("<dd>(None)");
+         } else {
+             writer.println("<dd><table border=1 cellpadding=3 cellspacing=0 width=\"90%\" summary=\"\"><tr>");
+@@ -49,24 +49,24 @@
+             }
+             writer.println("<th width=\"15%\"><th width=\"65%\">");
+             writer.println("");
+-            for (Iterator it = components.iterator(); it.hasNext();) {
+-                ((Node)it.next()).document(writer);
++            for (Node node : components) {
++                node.document(writer);
+             }
+             writer.println("</table>");
+         }
+     }
+ 
+     void genJavaClassBodyComponents(PrintWriter writer, int depth) {
+-        for (Iterator it = components.iterator(); it.hasNext();) {
+-            TypeNode tn = (TypeNode)it.next();
++        for (Node node : components) {
++            TypeNode tn = (TypeNode)node;
+ 
+             tn.genJavaDeclaration(writer, depth);
+         }
+     }
+ 
+     void genJavaReads(PrintWriter writer, int depth) {
+-        for (Iterator it = components.iterator(); it.hasNext();) {
+-            TypeNode tn = (TypeNode)it.next();
++        for (Node node : components) {
++            TypeNode tn = (TypeNode)node;
+             tn.genJavaRead(writer, depth, tn.name());
+         }
+     }
+@@ -88,7 +88,7 @@
+ 
+     String javaParams() {
+         StringBuffer sb = new StringBuffer();
+-        for (Iterator it = components.iterator(); it.hasNext();) {
++        for (Iterator<Node> it = components.iterator(); it.hasNext();) {
+             TypeNode tn = (TypeNode)it.next();
+             sb.append(tn.javaParam());
+             if (it.hasNext()) {
+@@ -99,8 +99,8 @@
+     }
+ 
+     void genJavaWrites(PrintWriter writer, int depth) {
+-        for (Iterator it = components.iterator(); it.hasNext();) {
+-            TypeNode tn = (TypeNode)it.next();
++        for (Node node : components) {
++            TypeNode tn = (TypeNode)node;
+             tn.genJavaWrite(writer, depth, tn.name());
+         }
+     }
+@@ -111,8 +111,8 @@
+         writer.println();
+         indent(writer, depth);
+         writer.println(className + "(" + javaParams() + ") {");
+-        for (Iterator it = components.iterator(); it.hasNext();) {
+-            TypeNode tn = (TypeNode)it.next();
++        for (Node node : components) {
++            TypeNode tn = (TypeNode)node;
+             indent(writer, depth+1);
+             writer.println("this." + tn.name() + " = " + tn.name() + ";");
+         }
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/jdwpgen/AltNode.java openjdk/jdk/make/tools/src/build/tools/jdwpgen/AltNode.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/jdwpgen/AltNode.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/jdwpgen/AltNode.java	2015-07-22 02:28:32.251243853 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1998, 1999, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -100,7 +100,7 @@
+         indent(writer, depth+1);
+         writer.print("return new " + select.name() + "(");
+         writer.print("ALT_ID, new " + javaClassName() + "(");
+-        for (Iterator it = components.iterator(); it.hasNext();) {
++        for (Iterator<Node> it = components.iterator(); it.hasNext();) {
+             TypeNode tn = (TypeNode)it.next();
+             writer.print(tn.name());
+             if (it.hasNext()) {
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/jdwpgen/CommandSetNode.java openjdk/jdk/make/tools/src/build/tools/jdwpgen/CommandSetNode.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/jdwpgen/CommandSetNode.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/jdwpgen/CommandSetNode.java	2015-07-22 02:28:32.251243853 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1998, 1999, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -25,7 +25,6 @@
+ 
+ package build.tools.jdwpgen;
+ 
+-import java.util.*;
+ import java.io.*;
+ 
+ class CommandSetNode extends AbstractNamedNode {
+@@ -43,8 +42,8 @@
+                        " Command Set</a> (" +
+                        nameNode.value() + ")</h4>");
+         writer.println(comment());
+-        for (Iterator it = components.iterator(); it.hasNext();) {
+-            ((Node)it.next()).document(writer);
++        for (Node node : components) {
++            node.document(writer);
+         }
+     }
+ 
+@@ -53,8 +52,8 @@
+         writer.println(name() + "</a> Command Set (" +
+                        nameNode.value() + ")");
+         writer.println("<ul>");
+-        for (Iterator it = components.iterator(); it.hasNext();) {
+-            ((Node)it.next()).documentIndex(writer);
++        for (Node node : components) {
++            node.documentIndex(writer);
+         }
+         writer.println("</ul>");
+     }
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/jdwpgen/ConstantSetNode.java openjdk/jdk/make/tools/src/build/tools/jdwpgen/ConstantSetNode.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/jdwpgen/ConstantSetNode.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/jdwpgen/ConstantSetNode.java	2015-07-22 02:30:45.232925861 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1998, 2004, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -44,8 +44,8 @@
+     void prune() {
+         List<Node> addons = new ArrayList<Node>();
+ 
+-        for (Iterator it = components.iterator(); it.hasNext(); ) {
+-            Node node = (Node)it.next();
++        for (Iterator<Node> it = components.iterator(); it.hasNext(); ) {
++            Node node = it.next();
+         }
+         if (!addons.isEmpty()) {
+             components.addAll(addons);
+@@ -69,8 +69,8 @@
+         writer.println("<dd><table border=1 cellpadding=3 cellspacing=0 width=\"90%\" summary=\"\"><tr>");
+         writer.println("<th width=\"20%\"><th width=\"5%\"><th width=\"65%\">");
+         ConstantNode n;
+-        for (Iterator it = components.iterator(); it.hasNext();) {
+-            n = ((ConstantNode)it.next());
++        for (Node node : components) {
++            n = (ConstantNode)node;
+             writer.println("<a NAME=\"" + name + "_" + n.name + "\"></a>");
+             n.document(writer);
+         }
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/jdwpgen/ErrorSetNode.java openjdk/jdk/make/tools/src/build/tools/jdwpgen/ErrorSetNode.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/jdwpgen/ErrorSetNode.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/jdwpgen/ErrorSetNode.java	2015-07-22 02:28:32.251243853 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2001, 2002, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -25,7 +25,6 @@
+ 
+ package build.tools.jdwpgen;
+ 
+-import java.util.*;
+ import java.io.*;
+ 
+ class ErrorSetNode extends AbstractSimpleNode {
+@@ -41,12 +40,12 @@
+     void document(PrintWriter writer) {
+ 
+         writer.println("<dt>" + "Error Data");
+-        if (components.size() == 0) {
++        if (components.isEmpty()) {
+             writer.println("<dd>(None)");
+         } else {
+             writer.println("<dd><table border=1 cellpadding=3 cellspacing=0 width=\"90%\" summary=\"\">");
+-        for (Iterator it = components.iterator(); it.hasNext();) {
+-            ((Node)it.next()).document(writer);
++        for (Node node : components) {
++            node.document(writer);
+         }
+         writer.println("</table>");
+         }
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/jdwpgen/Node.java openjdk/jdk/make/tools/src/build/tools/jdwpgen/Node.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/jdwpgen/Node.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/jdwpgen/Node.java	2015-07-22 02:28:32.251243853 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1998, 1999, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -50,8 +50,8 @@
+     }
+ 
+     void parentAndExtractComments() {
+-        for (Iterator it = components.iterator(); it.hasNext();) {
+-            Node node = (Node)it.next();
++        for (Iterator<Node> it = components.iterator(); it.hasNext();) {
++            Node node = it.next();
+             if (node instanceof CommentNode) {
+                 it.remove();
+                 commentList.add(((CommentNode)node).text());
+@@ -63,16 +63,14 @@
+     }
+ 
+     void prune() {
+-        for (Iterator it = components.iterator(); it.hasNext();) {
+-            Node node = (Node)it.next();
++        for (Node node : components) {
+             node.prune();
+         }
+     }
+ 
+     void constrain(Context ctx) {
+         context = ctx;
+-        for (Iterator it = components.iterator(); it.hasNext();) {
+-            Node node = (Node)it.next();
++        for (Node node : components) {
+             constrainComponent(ctx, node);
+         }
+     }
+@@ -109,9 +107,9 @@
+         if (commentList.size() > 0) {
+             indent(writer, depth);
+             writer.println("/**");
+-            for (Iterator it = commentList.iterator(); it.hasNext();) {
++            for (String comment : commentList) {
+                 indent(writer, depth);
+-                writer.println(" * " + (String)it.next());
++                writer.println(" * " + comment);
+             }
+             indent(writer, depth);
+             writer.println(" */");
+@@ -123,15 +121,13 @@
+     }
+ 
+     void genJava(PrintWriter writer, int depth) {
+-        for (Iterator it = components.iterator(); it.hasNext();) {
+-            Node node = (Node)it.next();
++        for (Node node : components) {
+             node.genJava(writer, depth);
+         }
+     }
+ 
+     void genCInclude(PrintWriter writer) {
+-        for (Iterator it = components.iterator(); it.hasNext();) {
+-            Node node = (Node)it.next();
++        for (Node node : components) {
+             node.genCInclude(writer);
+         }
+     }
+@@ -184,8 +180,7 @@
+     }
+ 
+     void genJavaPreDef(PrintWriter writer, int depth) {
+-        for (Iterator it = components.iterator(); it.hasNext();) {
+-            Node node = (Node)it.next();
++        for (Node node : components) {
+             node.genJavaPreDef(writer, depth);
+         }
+     }
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/jdwpgen/OutNode.java openjdk/jdk/make/tools/src/build/tools/jdwpgen/OutNode.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/jdwpgen/OutNode.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/jdwpgen/OutNode.java	2015-07-22 02:28:32.251243853 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1998, 1999, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -48,8 +48,8 @@
+         indent(writer, depth);
+         writer.print(
+             "static " + cmdName + " process(VirtualMachineImpl vm");
+-        for (Iterator it = components.iterator(); it.hasNext();) {
+-            TypeNode tn = (TypeNode)it.next();
++        for (Node node : components) {
++            TypeNode tn = (TypeNode)node;
+             writer.println(", ");
+             indent(writer, depth+5);
+             writer.print(tn.javaParam());
+@@ -59,8 +59,8 @@
+         writer.println("throws JDWPException {");
+         indent(writer, depth+1);
+         writer.print("PacketStream ps = enqueueCommand(vm");
+-        for (Iterator it = components.iterator(); it.hasNext();) {
+-            TypeNode tn = (TypeNode)it.next();
++        for (Node node : components) {
++            TypeNode tn = (TypeNode)node;
+             writer.print(", ");
+             writer.print(tn.name());
+         }
+@@ -76,8 +76,8 @@
+         indent(writer, depth);
+         writer.print(
+             "static PacketStream enqueueCommand(VirtualMachineImpl vm");
+-        for (Iterator it = components.iterator(); it.hasNext();) {
+-            TypeNode tn = (TypeNode)it.next();
++        for (Node node : components) {
++            TypeNode tn = (TypeNode)node;
+             writer.println(", ");
+             indent(writer, depth+5);
+             writer.print(tn.javaParam());
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/jdwpgen/RootNode.java openjdk/jdk/make/tools/src/build/tools/jdwpgen/RootNode.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/jdwpgen/RootNode.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/jdwpgen/RootNode.java	2015-07-22 02:28:32.251243853 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1998, 1999, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -42,11 +42,11 @@
+     void document(PrintWriter writer) {
+         writer.println("<html><head><title>" + comment() + "</title></head>");
+         writer.println("<body bgcolor=\"white\">");
+-        for (Iterator it = components.iterator(); it.hasNext();) {
+-            ((Node)it.next()).documentIndex(writer);
++        for (Node node : components) {
++            node.documentIndex(writer);
+         }
+-        for (Iterator it = components.iterator(); it.hasNext();) {
+-            ((Node)it.next()).document(writer);
++        for (Node node : components) {
++            node.document(writer);
+         }
+         writer.println("</body></html>");
+     }
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/jdwpgen/SelectNode.java openjdk/jdk/make/tools/src/build/tools/jdwpgen/SelectNode.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/jdwpgen/SelectNode.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/jdwpgen/SelectNode.java	2015-07-22 02:28:32.251243853 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1998, 1999, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -34,10 +34,10 @@
+ 
+     void prune() {
+         super.prune();
+-        Iterator it = components.iterator();
++        Iterator<Node> it = components.iterator();
+ 
+         if (it.hasNext()) {
+-            Node typeNode = (Node)it.next();
++            Node typeNode = it.next();
+ 
+             if (typeNode instanceof ByteTypeNode ||
+                       typeNode instanceof IntTypeNode) {
+@@ -131,8 +131,8 @@
+         typeNode.genJavaRead(writer, depth, typeNode.name());
+         indent(writer, depth);
+         writer.println("switch (" + typeNode.name() + ") {");
+-        for (Iterator it = components.iterator(); it.hasNext();) {
+-            AltNode alt = (AltNode)it.next();
++        for (Node node : components) {
++            AltNode alt = (AltNode)node;
+             alt.genJavaReadsSelectCase(writer, depth+1, commonVar());
+         }
+         indent(writer, depth);
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/makeclasslist/MakeClasslist.java openjdk/jdk/make/tools/src/build/tools/makeclasslist/MakeClasslist.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/makeclasslist/MakeClasslist.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/makeclasslist/MakeClasslist.java	2015-07-22 02:28:32.251243853 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, 2006, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -38,7 +38,7 @@
+ 
+ public class MakeClasslist {
+   public static void main(String[] args) throws IOException {
+-    List/*<String>*/ classes = new ArrayList();
++    List<String> classes = new ArrayList<String>();
+     String origJavaHome = System.getProperty("java.home");
+     String javaHome     = origJavaHome.toLowerCase();
+     if (javaHome.endsWith("jre")) {
+@@ -84,10 +84,9 @@
+       }
+     }
+ 
+-    Set/*<String>*/  seenClasses = new HashSet();
++    Set<String> seenClasses = new HashSet<String>();
+ 
+-    for (Iterator iter = classes.iterator(); iter.hasNext(); ) {
+-      String str = (String) iter.next();
++    for (String str : seenClasses) {
+       if (seenClasses.add(str)) {
+         System.out.println(str);
+       }
+@@ -109,13 +108,13 @@
+     // completePackage(seenClasses, rtJar, "java/lang");
+   }
+ 
+-  private static void completePackage(Set seenClasses,
++  private static void completePackage(Set<String> seenClasses,
+                                       JarFile jar,
+                                       String packageName) {
+     int len = packageName.length();
+-    Enumeration entries = jar.entries();
++    Enumeration<JarEntry> entries = jar.entries();
+     while (entries.hasMoreElements()) {
+-      JarEntry entry = (JarEntry) entries.nextElement();
++      JarEntry entry = entries.nextElement();
+       String name = entry.getName();
+       if (name.startsWith(packageName) &&
+           name.endsWith(".class") &&
+diff -Nru openjdk.orig/jdk/make/tools/src/build/tools/stripproperties/StripProperties.java openjdk/jdk/make/tools/src/build/tools/stripproperties/StripProperties.java
+--- openjdk.orig/jdk/make/tools/src/build/tools/stripproperties/StripProperties.java	2015-04-10 16:39:20.000000000 +0100
++++ openjdk/jdk/make/tools/src/build/tools/stripproperties/StripProperties.java	2015-07-22 02:28:32.255243784 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2001, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -246,7 +246,7 @@
+     throws IOException {
+         BufferedWriter awriter;
+         awriter = new BufferedWriter(new OutputStreamWriter(out, "8859_1"));
+-        for (Enumeration e = properties.keys(); e.hasMoreElements();) {
++        for (Enumeration<Object> e = properties.keys(); e.hasMoreElements();) {
+             String key = (String)e.nextElement();
+             String val = (String)properties.get(key);
+             key = saveConvert(key, true);

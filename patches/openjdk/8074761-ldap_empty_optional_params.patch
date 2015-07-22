@@ -1,0 +1,168 @@
+# HG changeset patch
+# User omajid
+# Date 1429811282 14400
+#      Thu Apr 23 13:48:02 2015 -0400
+# Node ID db440b7618ee0d2bf6bf69a1e22653a5818cb41a
+# Parent  2940b1683e2273626d57879c01a97dc9989713f6
+8074761, PR2469: Empty optional parameters of LDAP query are not interpreted as empty
+Reviewed-by: vinnie
+Contributed-by: Stanislav Baiduzhyi <sbaiduzh@redhat.com>
+
+diff -r 2940b1683e22 -r db440b7618ee src/share/classes/com/sun/jndi/ldap/LdapURL.java
+--- openjdk/jdk/src/share/classes/com/sun/jndi/ldap/LdapURL.java	Tue Jul 07 18:26:59 2015 +0100
++++ openjdk/jdk/src/share/classes/com/sun/jndi/ldap/LdapURL.java	Thu Apr 23 13:48:02 2015 -0400
+@@ -26,9 +26,6 @@
+ package com.sun.jndi.ldap;
+ 
+ import javax.naming.*;
+-import javax.naming.directory.*;
+-import javax.naming.spi.*;
+-import java.net.URL;
+ import java.net.MalformedURLException;
+ import java.io.UnsupportedEncodingException;
+ import java.util.StringTokenizer;
+@@ -211,43 +208,52 @@
+ 
+         // query begins with a '?' or is null
+ 
+-        if (query == null) {
++        if (query == null || query.length() < 2) {
+             return;
+         }
+ 
+-        int qmark2 = query.indexOf('?', 1);
++        int currentIndex = 1;
++        int nextQmark;
++        int endIndex;
+ 
+-        if (qmark2 < 0) {
+-            attributes = query.substring(1);
++        // attributes:
++        nextQmark = query.indexOf('?', currentIndex);
++        endIndex = nextQmark == -1 ? query.length() : nextQmark;
++        if (endIndex - currentIndex > 0) {
++            attributes = query.substring(currentIndex, endIndex);
++        }
++        currentIndex = endIndex + 1;
++        if (currentIndex >= query.length()) {
+             return;
+-        } else if (qmark2 != 1) {
+-            attributes = query.substring(1, qmark2);
+         }
+ 
+-        int qmark3 = query.indexOf('?', qmark2 + 1);
+-
+-        if (qmark3 < 0) {
+-            scope = query.substring(qmark2 + 1);
++        // scope:
++        nextQmark = query.indexOf('?', currentIndex);
++        endIndex = nextQmark == -1 ? query.length() : nextQmark;
++        if (endIndex - currentIndex > 0) {
++            scope = query.substring(currentIndex, endIndex);
++        }
++        currentIndex = endIndex + 1;
++        if (currentIndex >= query.length()) {
+             return;
+-        } else if (qmark3 != qmark2 + 1) {
+-            scope = query.substring(qmark2 + 1, qmark3);
+         }
+ 
+-        int qmark4 = query.indexOf('?', qmark3 + 1);
++        // filter:
++        nextQmark = query.indexOf('?', currentIndex);
++        endIndex = nextQmark == -1 ? query.length() : nextQmark;
++        if (endIndex - currentIndex > 0) {
++            filter = query.substring(currentIndex, endIndex);
++            filter = UrlUtil.decode(filter, "UTF8");
++        }
++        currentIndex = endIndex + 1;
++        if (currentIndex >= query.length()) {
++            return;
++        }
+ 
+-        if (qmark4 < 0) {
+-            filter = query.substring(qmark3 + 1);
+-        } else {
+-            if (qmark4 != qmark3 + 1) {
+-                filter = query.substring(qmark3 + 1, qmark4);
+-            }
+-            extensions = query.substring(qmark4 + 1);
+-            if (extensions.length() > 0) {
+-                extensions = UrlUtil.decode(extensions, "UTF8");
+-            }
+-        }
+-        if (filter != null && filter.length() > 0) {
+-            filter = UrlUtil.decode(filter, "UTF8");
++        // extensions:
++        if (query.length() - currentIndex > 0) {
++            extensions = query.substring(currentIndex);
++            extensions = UrlUtil.decode(extensions, "UTF8");
+         }
+     }
+ 
+diff -r 2940b1683e22 -r db440b7618ee test/com/sun/jndi/ldap/LdapURLOptionalFields.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/test/com/sun/jndi/ldap/LdapURLOptionalFields.java	Thu Apr 23 13:48:02 2015 -0400
+@@ -0,0 +1,62 @@
++/*
++ * Copyright (c) 2015, Red Hat, Inc.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/**
++ * @test
++ * @bug 8074761
++ * @summary RFC-2255 allows attribute, scope and filter to be empty.
++ */
++
++import com.sun.jndi.ldap.LdapURL;
++
++public class LdapURLOptionalFields {
++
++    private static final String[] TEST_URLS = {
++        "ldap://localhost:10389/ou=RefPeople,dc=example,dc=com",
++        "ldap://localhost:10389/ou=RefPeople,dc=example,dc=com?",
++        "ldap://localhost:10389/ou=RefPeople,dc=example,dc=com??",
++        "ldap://localhost:10389/ou=RefPeople,dc=example,dc=com???",
++        "ldap://localhost:10389/ou=RefPeople,dc=example,dc=com????"
++    };
++
++    public static void main(String[] args) throws Exception {
++        for (int i = 0; i < TEST_URLS.length; i++) {
++            String url = TEST_URLS[i];
++            checkEmptyAttributes(url);
++        }
++    }
++
++    private static void checkEmptyAttributes(String urlString) throws Exception {
++        LdapURL url = new LdapURL(urlString);
++        if (url.getAttributes() != null) {
++            throw new Exception("Expected null attributes for url: '" + urlString + "'");
++        }
++        if (url.getScope() != null) {
++            throw new Exception("Expected null scope for url: '" + urlString + "'");
++        }
++        if (url.getFilter() != null) {
++            throw new Exception("Expected null filter for url: '" + urlString + "'");
++        }
++    }
++
++}

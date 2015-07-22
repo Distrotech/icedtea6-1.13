@@ -1,0 +1,72 @@
+# HG changeset patch
+# User andrew
+# Date 1436281501 -3600
+#      Tue Jul 07 16:05:01 2015 +0100
+# Node ID 67d5d1b652e7c475140d9eabe687681c6e55b0af
+# Parent  660aa5687b95d9084714b3270c053af09c5bf51a
+S8081315, PR2406: Avoid giflib interlacing workaround with giflib 5.0.0 on
+Summary: Sync with version of splashscreen_gif.c in OpenJDK 8 post-8081315.
+
+diff -Nru openjdk.orig/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c openjdk/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c
+--- openjdk.orig/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c	2015-07-22 03:15:18.106335225 +0100
++++ openjdk/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c	2015-07-22 03:16:09.965431275 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -212,16 +212,16 @@
+             byte_t *pSrc = image->RasterBits;
+             ImageFormat srcFormat;
+             ImageRect srcRect, dstRect;
+-            int pass, npass;
++            int pass = 4, npass = 5;
+ 
++#if GIFLIB_MAJOR < 5
++            /* Interlaced gif support is broken in giflib < 5
++               so we need to work around this */
+             if (desc->Interlace) {
+                 pass = 0;
+                 npass = 4;
+             }
+-            else {
+-                pass = 4;
+-                npass = 5;
+-            }
++#endif
+ 
+             srcFormat.colorMap = colorMapBuf;
+             srcFormat.depthBytes = 1;
+@@ -312,8 +312,9 @@
+     free(pOldBitmapBits);
+ 
+ #if GIFLIB_MAJOR > 5 || (GIFLIB_MAJOR == 5 && GIFLIB_MINOR >= 1)
+-    if (DGifCloseFile(gif, NULL) == GIF_ERROR)
++    if (DGifCloseFile(gif, NULL) == GIF_ERROR) {
+         return 0;
++    }
+ #else
+     DGifCloseFile(gif);
+ #endif
+@@ -325,17 +326,12 @@
+ SplashDecodeGifStream(Splash * splash, SplashStream * stream)
+ {
+ #if GIFLIB_MAJOR >= 5
+-    int error = 0;
+-    GifFileType *gif = DGifOpen((void *) stream, SplashStreamGifInputFunc, &error);
+-
+-    if (error)
+-	return 0;
++    GifFileType *gif = DGifOpen((void *) stream, SplashStreamGifInputFunc, NULL);
+ #else
+     GifFileType *gif = DGifOpen((void *) stream, SplashStreamGifInputFunc);
++#endif
+ 
+     if (!gif)
+         return 0;
+-#endif
+-
+     return SplashDecodeGif(splash, gif);
+ }

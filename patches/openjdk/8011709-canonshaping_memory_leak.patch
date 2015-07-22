@@ -1,0 +1,29 @@
+# HG changeset patch
+# User jchen
+# Date 1374694826 25200
+#      Wed Jul 24 12:40:26 2013 -0700
+# Node ID db2e3a686cf3576f963238e4af224d8d950accde
+# Parent  784589c7bc552e2530745a0427831538e86b806f
+8011709, PR2510: [parfait] False positive: memory leak in jdk/src/share/native/sun/font/layout/CanonShaping.cpp
+Reviewed-by: jgodinez, prr
+
+diff -r 784589c7bc55 -r db2e3a686cf3 src/share/native/sun/font/layout/CanonShaping.cpp
+--- openjdk/jdk/src/share/native/sun/font/layout/CanonShaping.cpp	Wed Jul 24 13:38:17 2013 +0400
++++ openjdk/jdk/src/share/native/sun/font/layout/CanonShaping.cpp	Wed Jul 24 12:40:26 2013 -0700
+@@ -66,6 +66,16 @@
+     le_int32 *indices = LE_NEW_ARRAY(le_int32, charCount);
+     le_int32 i;
+ 
++    if (combiningClasses == NULL || indices == NULL) {
++        if (combiningClasses != NULL) {
++            LE_DELETE_ARRAY(combiningClasses);
++        }
++        if (indices != NULL) {
++            LE_DELETE_ARRAY(indices);
++        }
++        return;
++    }
++
+     for (i = 0; i < charCount; i += 1) {
+       combiningClasses[i] = classTable->getGlyphClass(classTable, (LEGlyphID) inChars[i], success);
+         indices[i] = i;
