@@ -1,3 +1,18 @@
+2015-07-06  Andrew John Hughes  <gnu.andrew@member.fsf.org>
+
+	PR2342: Update README & INSTALL files
+	* INSTALL: Remove dead --with-xalan2-jar,
+	--with-xalan2-serializer-jar,
+	--with-xerces2-jar options. Document --with-jdk-home.
+	Move --enable-system-kerberos to be listed with other
+	system library options. Mention ARM32 JIT.
+	* NEWS: Updated.
+	* README: Mention ARM32 JIT and OpenJDK
+	compatibility testing page.
+	* acinclude.m4:
+	(IT_CHECK_FOR_JDK): Add plain java-1.6.0-openjdk to
+	ICEDTEA6_VMS.
+
 2014-06-12  Andrew John Hughes  <gnu.andrew@member.fsf.org>
 
 	PR2340: Fail early if there is no native HotSpot JIT

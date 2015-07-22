@@ -91,6 +91,9 @@ to configure:
   downloading and extracting a tarball.
 * --enable-system-lcms: Build using the system installation of LCMS2, not
   the version in-tree.
+* --enable-system-kerberos: Link against the system Kerberos library and
+  query it at runtime to obtain the cache location, rather than using a
+  hardcoded value.
 * --with-gcj: Compile ecj to native code with gcj prior to building.
 * --disable-bootstrap: Perform a quick build using an installed
   copy of IcedTea6.  If a directory is not specified, a check against
@@ -128,22 +131,6 @@ to configure:
     - /usr/share/java/eclipse-ecj.jar
     - /usr/share/java/ecj.jar
     - /usr/share/eclipse-ecj-3.{2,3,4,5}/lib/ecj.jar
-* --with-xalan2-jar: Specify the location of a xalan2 JAR file.  By default, the
-  following paths are checked:
-    - /usr/share/java/xalan-j2.jar
-    - /usr/share/java/xalan2.jar
-    - /usr/share/xalan/lib/xalan.jar
-* --with-xalan2-serializer-jar: Specify the location of a xalan2 serializer JAR file.
-  By default, the following paths are checked:
-    - /usr/share/java/xalan-j2-serializer.jar
-    - /usr/share/xalan-serializer/lib/serializer.jar
-    - /usr/share/java/serializer.jar
-* --with-xerces2-jar: Specify the location of a xerces2 JAR file.  By default, the
-  following paths are checked:
-    - /usr/share/java/xerces-j2.jar
-    - /usr/share/java/xerces2.jar
-    - /usr/share/xerces-2/lib/xercesImpl.jar
-    - /usr/share/java/xercesImpl.jar
 * --with-openjdk-src-zip: Specify the location of the OpenJDK tarball to avoid downloading.
 * --with-hotspot-src-zip: Specify the location of the HotSpot tarball to avoid downloading.
 * --with-alt-jar: Use the specified jar binary in the second stage rather than the one just built.
@@ -174,9 +161,6 @@ These are documented fully in the relevant section below.
 * --with-additional-vms=vm-list: Additional VMs to build using the system described
   below.
 * --enable-lcms2: Use LCMS 2 backport from OpenJDK 7 rather than LCMS 1.
-* --enable-system-kerberos: Link against the system Kerberos library and
-  query it at runtime to obtain the cache location, rather than using a
-  hardcoded value.
 
 Testing
 =======
@@ -288,6 +272,9 @@ called Shark has been developed.  This performs Just-In-Time compilation
 on any architecture supported by LLVM.  To enable it, pass the option
 --enable-shark to configure.  Please note that Shark is still in
 development and builds are still likely to fail at present.
+
+On ARM32, there is also a native JIT port built on top of Zero, which
+is built on this platform by default.
 
 Support for Different Versions of HotSpot
 =========================================

@@ -32,8 +32,11 @@ Java compatibility
 IcedTea6 is derived from OpenJDK6, Oracle's open-source implementation of
 the Java SE 6 platform and implements the Java SE 6 Platform
 Specification.  Binaries produced by IcedTea6 have been known to pass
-the TCK for Java 6.  IcedTea6 additionally provides autotools support,
-and ARM support.
+the TCK for Java 6.  IcedTea6 provides additional features including
+autotools support and ARM32 support.
+
+See http://openjdk.java.net/groups/conformance/ for information on
+compatibility testing.
 
 A Note About License Headers
 ----------------------------
@@ -41,7 +44,7 @@ A Note About License Headers
 Some sources downloaded from openjdk.java.net do not display the GPL
 license header.  Instances are:
 
- - We are assuming that these files are owned by Sun:
+ - We are assuming that these files are owned by Sun/Oracle:
    openjdk/jdk/src/share/classes/**/resources/*.properties
 
 The Zero Assembler and Shark Ports
@@ -61,6 +64,9 @@ provide better performance on platforms which need to use the Zero port.
 This makes use of LLVM.
 
 Both Zero and Shark are now part of upstream OpenJDK.
+
+On ARM32, IcedTea6 adds a native JIT port built on top of Zero, which
+is built on this platform by default.
 
 CACAO as VM
 ===========
