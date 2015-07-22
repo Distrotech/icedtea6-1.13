@@ -1,7 +1,7 @@
 # Dependencies
 
-OPENJDK_DATE = 14_apr_2015
-OPENJDK_SHA256SUM = 131cde181fbca08ac4d47bd13f6c3a64806fe2ae2106c03afe7ba651c24a4f9b
+OPENJDK_DATE = 22_jul_2015
+OPENJDK_SHA256SUM = c9df23d208b3b61f5f57c030accca2f7b3218a97bd140668506265ececdf26f4
 OPENJDK_VERSION = b36
 OPENJDK_URL = https://java.net/downloads/openjdk6/
 
@@ -627,7 +627,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/8065238-ldap_namingexception_8041451_regression.patch \
 	patches/openjdk/8074761-ldap_empty_optional_params.patch \
 	patches/openjdk/8078654-closettfontfilefunc.patch \
-	patches/openjdk/8078666-widen_increases.patch \
 	patches/openjdk/8081315-giflib_interlacing.patch \
 	patches/openjdk/8087120-zero_gcc5.patch \
 	patches/pr2319-policy_jar_checksum.patch \

@@ -8,20 +8,21 @@
 Reviewed-by: weijun
 
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/ssl/ServerHandshaker.java openjdk/jdk/src/share/classes/sun/security/ssl/ServerHandshaker.java
---- openjdk.orig/jdk/src/share/classes/sun/security/ssl/ServerHandshaker.java	2015-04-10 16:39:22.000000000 +0100
-+++ openjdk/jdk/src/share/classes/sun/security/ssl/ServerHandshaker.java	2015-07-22 02:13:30.458962919 +0100
-@@ -47,6 +47,8 @@
+--- openjdk.orig/jdk/src/share/classes/sun/security/ssl/ServerHandshaker.java	2015-07-20 17:24:47.000000000 +0100
++++ openjdk/jdk/src/share/classes/sun/security/ssl/ServerHandshaker.java	2015-07-22 21:02:12.190511032 +0100
+@@ -48,7 +48,9 @@
  
  import com.sun.net.ssl.internal.ssl.X509ExtendedTrustManager;
  
-+import sun.security.util.KeyUtil;
 +import sun.security.action.GetPropertyAction;
+ import sun.security.util.AlgorithmConstraints;
++import sun.security.util.KeyUtil;
+ import sun.security.util.LegacyAlgorithmConstraints;
  import sun.security.ssl.HandshakeMessage.*;
  import sun.security.ssl.CipherSuite.*;
- import static sun.security.ssl.CipherSuite.*;
-@@ -97,6 +99,50 @@
- 
-     private SupportedEllipticCurvesExtension supportedCurves;
+@@ -106,6 +108,50 @@
+                     LegacyAlgorithmConstraints.PROPERTY_TLS_LEGACY_ALGS,
+                     new SSLAlgorithmDecomposer());
  
 +    // Flag to use smart ephemeral DH key which size matches the corresponding
 +    // authentication key
@@ -70,7 +71,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/ssl/ServerHandshaker.j
      /*
       * Constructor ... use the keys found in the auth context.
       */
-@@ -875,7 +921,7 @@
+@@ -898,7 +944,7 @@
                      return false;
                  }
              } else if (keyExchange == K_DHE_RSA) {
@@ -79,7 +80,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/ssl/ServerHandshaker.j
              } else if (keyExchange == K_ECDHE_RSA) {
                  if (setupEphemeralECDHKeys() == false) {
                      return false;
-@@ -887,7 +933,8 @@
+@@ -910,7 +956,8 @@
              if (setupPrivateKeyAndChain("DSA") == false) {
                  return false;
              }
@@ -89,7 +90,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/ssl/ServerHandshaker.j
              break;
          case K_ECDHE_ECDSA:
              // need EC cert signed using EC
-@@ -921,7 +968,7 @@
+@@ -944,7 +991,7 @@
              break;
          case K_DH_ANON:
              // no certs needed for anonymous
@@ -98,7 +99,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/ssl/ServerHandshaker.j
              break;
          case K_ECDH_ANON:
              // no certs needed for anonymous
-@@ -962,15 +1009,70 @@
+@@ -985,15 +1032,70 @@
       * Acquire some "ephemeral" Diffie-Hellman  keys for this handshake.
       * We don't reuse these, for improved forward secrecy.
       */
@@ -176,7 +177,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/ssl/ServerHandshaker.j
      }
  
      // Setup the ephemeral ECDH parameters.
-@@ -1448,4 +1550,100 @@
+@@ -1483,4 +1585,100 @@
  
          session.setPeerCertificates(peerCerts);
      }
@@ -279,7 +280,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/ssl/ServerHandshaker.j
  }
 diff -Nru openjdk.orig/jdk/test/sun/security/ssl/com/sun/net/ssl/internal/ssl/DHKeyExchange/DHEKeySizing.java openjdk/jdk/test/sun/security/ssl/com/sun/net/ssl/internal/ssl/DHKeyExchange/DHEKeySizing.java
 --- openjdk.orig/jdk/test/sun/security/ssl/com/sun/net/ssl/internal/ssl/DHKeyExchange/DHEKeySizing.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/test/sun/security/ssl/com/sun/net/ssl/internal/ssl/DHKeyExchange/DHEKeySizing.java	2015-07-22 02:10:13.262400236 +0100
++++ openjdk/jdk/test/sun/security/ssl/com/sun/net/ssl/internal/ssl/DHKeyExchange/DHEKeySizing.java	2015-07-22 21:01:02.635723436 +0100
 @@ -0,0 +1,477 @@
 +/*
 + * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.

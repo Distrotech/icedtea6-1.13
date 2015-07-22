@@ -15,7 +15,75 @@ CVE-XXXX-YYYY: http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 New in release 1.13.8 (2015-07-XX):
 
 * Security fixes
+  - S8043202, CVE-2015-2808: Prohibit RC4 cipher suites
+  - S8067694, CVE-2015-2625: Improved certification checking
+  - S8071715, CVE-2015-4760: Tune font layout engine
+  - S8071731: Better scaling for C1
+  - S8072490: Better font morphing redux
+  - S8072887: Better font handling improvements
+  - S8073334: Improved font substitutions
+  - S8073773: Presume path preparedness
+  - S8073894: Getting to the root of certificate chains
+  - S8074330: Set font anchors more solidly
+  - S8074335: Substitute for substitution formats
+  - S8074865, CVE-2015-2601: General crypto resilience changes
+  - S8074871: Adjust device table handling
+  - S8075374, CVE-2015-4748: Responding to OCSP responses
+  - S8075378, CVE-2015-4749: JNDI DnsClient Exception Handling
+  - S8075738: Better multi-JVM sharing
+  - S8075833, CVE-2015-2613: Straighter Elliptic Curves
+  - S8075838: Method for typing MethodTypes
+  - S8075853, CVE-2015-2621: Proxy for MBean proxies
+  - S8076328, CVE-2015-4000: Enforce key exchange constraints
+  - S8076376, CVE-2015-2628: Enhance IIOP operations
+  - S8076397, CVE-2015-4731: Better MBean connections
+  - S8076401, CVE-2015-2590: Serialize OIS data
+  - S8076405, CVE-2015-4732: Improve serial serialization
+  - S8076409, CVE-2015-4733: Reinforce RMI framework
+  - S8077520, CVE-2015-2632: Morph tables into improved form
   - PR2488, CVE-2015-4000: Make jdk8 mode the default for jdk.tls.ephemeralDHKeySize
+* Import of OpenJDK6 b36
+  - OJ58: Allow OpenJDK to build on PaX-enabled kernels
+  - OJ59: Only apply PaX-marking when needed by a running PaX kernel
+  - OJ60, PR2484: Disable export ciphers by default
+  - OJ61: Remove translation strings for ErrorMsg.JAXP_INVALID_ATTR_VALUE_ERR which doesn't exist in OpenJDK 6
+  - OJ62, PR2552: Restrict key size of RSA certificates to >= 1024
+  - OJ63: Remove @Override annotation on interfaces added by 2015/07/14 security fixes.
+  - S6787645: CRL validation code should permit some clock skew when checking validity of CRLs
+  - S6996365: Evaluate the priorities of cipher suites
+  - S7185471: Avoid key expansion when AES cipher is re-init w/ the same key
+  - S8007142: Add utility classes for writing better multiprocess tests in jtreg
+  - S8008089: Delete OS dependent check in JdkFinder.getExecutable()
+  - S8024861: Incomplete token triggers GSS-API NullPointerException
+  - S8027058: sun/management/jmxremote/bootstrap/RmiBootstrapTest.sh Failed to initialize connector
+  - S8036786: Update jdk7 testlibrary to match jdk8
+  - S8042205: javax/management/monitor/*: some tests didn't  get all the notifications
+  - S8042982: Unexpected RuntimeExceptions being thrown by SSLEngine
+  - S8043200, PR2485: Decrease the preference mode of RC4 in the enabled cipher suite list
+  - S8043201: Deprecate RC4 in SunJSSE provider
+  - S8046817: JDK 8 schemagen tool does not generate xsd files for enum types
+  - S8048194: GSSContext.acceptSecContext fails when a supported mech is not initiator preferred
+  - S8050158: Introduce system property to maintain RC4 preference order
+  - S8062923: XSL: Run-time internal error in 'substring()'
+  - S8062924: XSL: wrong answer from substring() function
+  - S8064546: CipherInputStream throws BadPaddingException if stream is not fully read
+  - S8065764: javax/management/monitor/CounterMonitorTest.java hangs
+  - S8066952: [TEST-BUG] javax/management/monitor/CounterMonitorTest.java hangs
+  - S8073357: schema1.xsd has wrong content. Sequence of the enum values has been changed
+  - S8073385: Bad error message on parsing illegal character in XML attribute
+  - S8074098: 2D_Font/Bug8067699 test fails with SIGBUS crash on Solaris Sparc
+  - S8074297: substring in XSLT returns wrong character if string contains supplementary chars
+  - S8075575: com/sun/security/auth/login/ConfigFile/InconsistentError.java failed in certain env.
+  - S8075576: com/sun/security/auth/module/KeyStoreLoginModule/OptionTest.java failed in certain env.
+  - S8075667: (tz) Support tzdata2015b
+  - S8076290: JCK test api/xsl/conf/string/string17 starts failing after JDK-8074297
+  - S8077685: (tz) Support tzdata2015d
+  - S8078348: sun/security/pkcs11/sslecc/ClientJSSEServerJSSE.java fails with BindException
+  - S8078439: SPNEGO auth fails if client proposes MS krb5 OID
+  - S8078666, PR2327: JVM fastdebug build compiled with GCC 5 asserts with "widen increases"
+  - S8080318: jdk8u51 l10n resource file translation update
+  - S8081386: Test sun/management/jmxremote/bootstrap/RmiSslBootstrapTest.sh test has RC4 dependencies
+  - S8081775: two lib/testlibrary tests are failing with "Error. failed to clean up files after test" with jtreg 4.1 b12
 * Backports
   - S4890063, PR2306, RH1214835: HPROF: default text truncated when using doe=n option
   - S6562614, PR2555: Compiler warnings for gettimeofday in Inet4/Inet6AddressImpl.c
@@ -41,7 +109,6 @@ New in release 1.13.8 (2015-07-XX):
   - S8065238, PR2479: javax.naming.NamingException after upgrade to JDK 8
   - S8074761, PR2469: Empty optional parameters of LDAP query are not interpreted as empty
   - S8078654, PR2334: CloseTTFontFileFunc callback should be removed
-  - S8078666, PR2327: JVM fastdebug build compiled with GCC 5 asserts with "widen increases"
   - S8081315, PR2406: Avoid giflib interlacing workaround with giflib 5.0.0 on
   - S8081475, PR2495: SystemTap does not work when JDK is compiled with GCC 5
   - S8087120, RH1206656, PR2554: [GCC5] java.lang.StackOverflowError on Zero JVM initialization on non x86 platforms.
@@ -251,7 +318,6 @@ New in release 1.13.6 (2015-01-23):
   - S8050485: super() in a try block in a ctor causes VerifyError
   - S8051012: Regression in verifier for <init> method call from inside of a branch
   - S8051614: smartcardio TCK tests fail due to lack of 'reset' permission
-  - S8054367: More references for endpoints
   - S8055222: Currency update needed for ISO 4217 Amendment #159
   - S8056211: api/java_awt/Event/InputMethodEvent/serial/index.html#Input[serial2002] failure
   - S8058715: stability issues when being launched as an embedded JVM via JNI
