@@ -1,5 +1,14 @@
 2015-07-22  Andrew John Hughes  <gnu.andrew@redhat.com>
 
+	PR2559: generated directory gets confused with
+	generated alias
+	* Makefile.am:
+	(EXTRA_DIST): Change 'generated' to
+	'$(top_srcdir)/generated'.
+	* NEWS: Updated.
+
+2015-07-22  Andrew John Hughes  <gnu.andrew@redhat.com>
+
 	* NEWS: Set release date to 23rd of July,
 	2015 for 1.13.8.
 	* configure.ac: Bump to 1.13.8.
