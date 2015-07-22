@@ -1381,6 +1381,7 @@ stamps/fonts.stamp: stamps/generated.stamp
 	cp $(FONTCONFIG_PATH)/linux.fontconfig.Fedora.properties $(FONTCONFIG_PATH)/linux.fontconfig.Fedora.10.properties
 	cp $(FONTCONFIG_PATH)/linux.fontconfig.Fedora.properties $(FONTCONFIG_PATH)/linux.fontconfig.Fedora.11.properties
 	cp $(FONTCONFIG_PATH)/linux.fontconfig.Fedora.properties $(FONTCONFIG_PATH)/linux.fontconfig.Fedora.12.properties
+	cp linux.fontconfig.Gentoo.properties $(FONTCONFIG_PATH)
 	mkdir -p stamps
 	touch $@
 

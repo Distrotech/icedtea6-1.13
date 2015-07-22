@@ -63,6 +63,9 @@ IT_DISABLE_HOTSPOT_TESTS
 IT_DISABLE_LANGTOOLS_TESTS
 IT_DISABLE_JDK_TESTS
 
+IT_WITH_FONTS_DIR
+AC_CONFIG_FILES([linux.fontconfig.Gentoo.properties])
+
 dnl PR42003 - Missing javax.swing.plaf.basic.BasicDirectoryModel methods cause OpenJDK build failure 
 IT_CHECK_FOR_METHOD([JAVAX_SWING_PLAF_BASIC_BASICDIRECTORYMODEL_ADDPROPERTYCHANGELISTENER],
   [javax.swing.plaf.basic.BasicDirectoryModel.addPropertyChangeListener(PropertyChangeListener)],
