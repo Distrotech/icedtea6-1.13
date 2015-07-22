@@ -681,7 +681,6 @@ ICEDTEA_PATCHES += \
 endif
 
 if ENABLE_NSS
-ICEDTEA_PATCHES += patches/rh1022017.patch
 NSS_PATCHES = patches/nss-config.patch
 else
 NSS_PATCHES = patches/nss-not-enabled-config.patch
@@ -715,6 +714,10 @@ endif
 if USE_SYSTEM_GIF
 ICEDTEA_PATCHES += \
 	patches/libraries-gif.patch
+endif
+
+if !USE_NON_NSS_CURVES
+ICEDTEA_PATCHES += patches/rh1022017.patch
 endif
 
 ICEDTEA_PATCHES += $(DISTRIBUTION_PATCHES)

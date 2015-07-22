@@ -1,3 +1,32 @@
+2015-07-15  Andrew John Hughes  <gnu_andrew@member.fsf.org>
+
+	PR2391: Make elliptic curve removal
+	optional
+	* acinclude.m4:
+	(IT_ENABLE_NON_NSS_CURVES): Check ${enableval}
+	to catch values other than yes/no.
+
+2015-07-13  Andrew John Hughes  <gnu_andrew@member.fsf.org>
+
+	PR2391: Make elliptic curve removal
+	optional
+	* INSTALL:
+	Document --enable-non-nss-curves.
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Only apply
+	the RH1022017 patch when non-NSS
+	curves are not enabled.
+	* NEWS: Updated.
+	* acinclude.m4:
+	(IT_ENABLE_NON_NSS_CURVES): New
+	macro to allow non-NSS curves to
+	be turned on.
+	* configure.ac:
+	Invoke IT_ENABLE_NON_NSS_CURVES.
+	* fsg.sh.in:
+	Don't alter the curve list when
+	non-NSS curves are enabled.
+
 2015-07-22  Andrew John Hughes  <gnu.andrew@member.fsf.org>
 
 	PR2360: Ensure all stamp targets have aliases
