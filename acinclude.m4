@@ -722,6 +722,7 @@ AC_DEFUN_ONCE([IT_ENABLE_ZERO_BUILD],
   AC_REQUIRE([IT_ENABLE_CACAO])
   AC_REQUIRE([IT_ENABLE_JAMVM])
   AC_REQUIRE([IT_SET_SHARK_BUILD])
+  AC_REQUIRE([IT_HAS_NATIVE_HOTSPOT_PORT])
   AC_MSG_CHECKING([whether to use the zero-assembler port])
   use_zero=no
   AC_ARG_ENABLE([zero],
@@ -740,21 +741,14 @@ AC_DEFUN_ONCE([IT_ENABLE_ZERO_BUILD],
   [
     if test "x${use_shark}" = "xyes"; then
       use_zero=yes;
-    else
-      case "${host}" in
-        i?86-*-*) ;;
-        sparc*-*-*) ;;
-        x86_64-*-*) ;;
-        *)
-          if test "x${ENABLE_CACAO}" != xno || \
-	     test "x${ENABLE_JAMVM}" = xyes; then
-            use_zero=no
-          else
-            use_zero=yes
-          fi
-          ;;
-      esac
-    fi
+    else if test "x$has_native_hotspot_port" = "xno"; then
+      if test "x${ENABLE_CACAO}" = xyes || \
+         test "x${ENABLE_JAMVM}" = xyes; then
+           use_zero=no
+      else
+           use_zero=yes
+      fi
+    fi; fi
   ])
   AC_MSG_RESULT($use_zero)
   AM_CONDITIONAL(ZERO_BUILD, test "x${use_zero}" = xyes)
@@ -827,7 +821,14 @@ AC_DEFUN_ONCE([IT_ENABLE_JAMVM],
   AC_ARG_ENABLE([jamvm],
 	      [AS_HELP_STRING(--enable-jamvm,use JamVM as VM [[default=no]])],
   [
-    ENABLE_JAMVM="${enableval}"
+    case "${enableval}" in
+      yes)
+        ENABLE_JAMVM=yes
+        ;;
+      *)
+        ENABLE_JAMVM=no
+        ;;
+    esac
   ],
   [
     ENABLE_JAMVM=no
@@ -866,7 +867,14 @@ AC_DEFUN_ONCE([IT_ENABLE_CACAO],
   AC_ARG_ENABLE([cacao],
 	      [AS_HELP_STRING(--enable-cacao,use CACAO as VM [[default=no]])],
   [
-    ENABLE_CACAO="${enableval}"
+    case "${enableval}" in
+      yes)
+        ENABLE_CACAO=yes
+        ;;
+      *)
+        ENABLE_CACAO=no
+        ;;
+    esac
   ],
   [
     ENABLE_CACAO=no
@@ -1342,6 +1350,19 @@ AC_DEFUN_ONCE([IT_FIND_NUMBER_OF_PROCESSORS],[
     fi
   ])
   AC_PROVIDE([$0])dnl
+])
+
+AC_DEFUN_ONCE([IT_HAS_NATIVE_HOTSPOT_PORT],
+[
+  AC_MSG_CHECKING([if a native HotSpot port is available for this architecture])
+  has_native_hotspot_port=yes;
+  case "${host_cpu}" in
+    i?86) ;;
+    sparc) ;;
+    x86_64) ;;
+    *) has_native_hotspot_port=no;
+  esac
+  AC_MSG_RESULT([$has_native_hotspot_port])
 ])
 
 AC_DEFUN_ONCE([IT_GETDTDTYPE_CHECK],[
