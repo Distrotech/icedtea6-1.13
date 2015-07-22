@@ -2879,6 +2879,42 @@ add-archive-debug: stamps/add-archive-debug.stamp
 
 add-archive-ecj: stamps/add-archive-ecj.stamp
 
+add-cacao: stamps/add-cacao.stamp
+
+add-cacao-debug: stamps/add-cacao-debug.stamp
+
+add-jamvm: stamps/add-jamvm.stamp
+
+add-jamvm-debug: stamps/add-jamvm-debug.stamp
+
+add-nss: stamps/add-nss.stamp
+
+add-nss-debug: stamps/add-nss-debug.stamp
+
+add-nss-ecj: stamps/add-nss-ecj.stamp
+
+add-pulseaudio: stamps/add-pulseaudio.stamp
+
+add-pulseaudio-debug: stamps/add-pulseaudio-debug.stamp
+
+add-pulseaudio-ecj: stamps/add-pulseaudio-ecj.stamp
+
+add-systemtap: stamps/add-systemtap.stamp
+
+add-systemtap-debug: stamps/add-systemtap-debug.stamp
+
+add-systemtap-ecj: stamps/add-systemtap-ecj.stamp
+
+add-tzdata-support: stamps/add-tzdata-support.stamp
+
+add-tzdata-support-debug: stamps/add-tzdata-support-debug.stamp
+
+add-tzdata-support-ecj: stamps/add-tzdata-support-ecj.stamp
+
+add-zero: stamps/add-zero.stamp
+
+add-zero-debug: stamps/add-zero-debug.stamp
+
 bootstrap-directory-ecj: stamps/bootstrap-directory-ecj.stamp
 
 bootstrap-directory: stamps/bootstrap-directory.stamp
@@ -2897,8 +2933,6 @@ check-crypto-debug: stamps/check-crypto-debug.stamp
 
 cryptocheck: stamps/cryptocheck.stamp
 
-nbplatform: stamps/nbplatform.stamp
-
 download: stamps/download.stamp
 
 download-cacao: stamps/download-cacao.stamp
@@ -2916,6 +2950,14 @@ extract-cacao: stamps/extract-cacao.stamp
 extract-ecj: stamps/extract-ecj.stamp
 
 extract-jamvm: stamps/extract-jamvm.stamp
+
+extract-openjdk: stamps/extract-openjdk.stamp
+
+fonts: stamps/fonts.stamp
+
+generated: stamps/generated.stamp
+
+hgforest: stamps/hgforest.stamp
 
 hotspot-ports: stamps/ports.stamp
 
@@ -2955,7 +2997,17 @@ pax-mark-vm-debug: stamps/pax-mark-vm-debug.stamp
 
 pax-mark-vm-ecj: stamps/pax-mark-vm-ecj.stamp
 
+ports: stamps/ports.stamp
+
 pulse-java: stamps/pulse-java.stamp
+
+pulse-java-class: stamps/pulse-java-class.stamp
+
+pulse-java-headers: stamps/pulse-java-headers.stamp
+
+pulse-java-jar: stamps/pulse-java-jar.stamp
+
+remove-intree-libraries: stamps/remove-intree-libraries.stamp
 
 rewriter: stamps/rewriter.stamp
 
@@ -2963,8 +3015,14 @@ rewrite-rhino: stamps/rewrite-rhino.stamp
 
 replace-hotspot: stamps/replace-hotspot.stamp
 
-rt-jar: stamps/rt.stamp
+rt: stamps/rt.stamp
 
 rt-class-files: stamps/rt-class-files.stamp
+
+runnable-icedtea: stamps/runnable-icedtea.stamp
+
+runnable-icedtea-debug: stamps/runnable-icedtea-debug.stamp
+
+runnable-icedtea-ecj: stamps/runnable-icedtea-ecj.stamp
 
 tools-jar: stamps/tools.stamp

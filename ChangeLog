@@ -1,3 +1,23 @@
+2015-07-22  Andrew John Hughes  <gnu.andrew@member.fsf.org>
+
+	PR2360: Ensure all stamp targets have aliases
+	* Makefile.am:
+	Add missing aliases for add-cacao,
+	add-cacao-debug, add-jamvm, add-jamvm-debug,
+	add-nss, add-nss-debug, add-nss-ecj,
+	add-pulseaudio, add-pulseaudio-debug,
+	add-pulseaudio-ecj, add-systemtap,
+	add-systemtap-debug, add-systemtap-ecj,
+	add-tzdata-support, add-tzdata-support-debug,
+	add-tzdata-support-ecj, add-zero, add-zero-debug,
+	extract-openjdk, fonts, generated, hgforest,
+	ports, pulse-java, pulse-java-class,
+	pulse-java-headers, pulse-java-jar,
+	remove-intree-libraries, runnable-icedtea,
+	runnable-icedtea-debug and runnable-icedtea-ecj.
+	Remove dead nbplatform and rename rt-jar to rt.
+	* NEWS: Updated.
+
 2015-07-06  Andrew John Hughes  <gnu.andrew@member.fsf.org>
 
 	PR2342: Update README & INSTALL files
