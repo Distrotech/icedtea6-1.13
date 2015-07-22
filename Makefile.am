@@ -677,7 +677,8 @@ endif
 
 if BUILD_JAMVM
 ICEDTEA_PATCHES += \
-	patches/jamvm/pr2190-find_class_from_caller.patch
+	patches/jamvm/pr2190-find_class_from_caller.patch \
+	patches/jamvm/noexecstack.patch
 endif
 
 if ENABLE_NSS
@@ -2422,7 +2423,6 @@ clean-rewrite-rhino:
 stamps/jamvm.stamp: $(OPENJDK_TREE) stamps/rt.stamp
 if BUILD_JAMVM
 	cd jamvm/jamvm && \
-	LDFLAGS="-Xlinker -z -Xlinker noexecstack" \
 	./autogen.sh --with-java-runtime-library=openjdk6 \
 	  --prefix=$(abs_top_builddir)/jamvm/install ; \
 	$(MAKE) ; \
