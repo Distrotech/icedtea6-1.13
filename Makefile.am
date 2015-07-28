@@ -371,6 +371,7 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6967533-pre_epoch.patch \
 	patches/fonts-gentoo.patch \
 	patches/ipv4-mapped-ipv6-addresses.patch \
+	patches/openjdk/6882910-ipv6only.patch \
 	patches/jtreg-OpenGLContextInit.patch \
 	patches/openjdk/6510892-httpserver_test.patch \
 	patches/jtreg-international-fonts.patch \
