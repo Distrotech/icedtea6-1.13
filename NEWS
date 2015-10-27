@@ -12,7 +12,16 @@ JEPX - http://openjdk.java.net/jeps/X
 
 CVE-XXXX-YYYY: http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
-New in release 1.13.8 (2015-10-XX):
+New in release 1.13.9 (2015-10-XX):
+
+* Backports
+  - S6440786, PR363: Cannot create a ZIP file containing zero entries
+  - S6599383, PR363: Unable to open zip files more than 2GB in size
+  - S6929479, PR363: Add a system property sun.zip.disableMemoryMapping to disable mmap use in ZipFile
+  - S7105461, PR2662: Large JTables are not rendered correctly with Xrender pipeline
+  - S7150134, PR2662: JCK api/java_awt/Graphics/index.html#DrawLine fails with OOM for jdk8 with XRender pipeline
+* Bug fixes
+  - PR2513: Reset success following calls in LayoutManager.cpp
 
 New in release 1.13.8 (2015-07-29):
 

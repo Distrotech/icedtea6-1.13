@@ -1,0 +1,331 @@
+# HG changeset patch
+# User sherman
+# Date 1268345169 28800
+#      Thu Mar 11 14:06:09 2010 -0800
+# Node ID ee385b4e2ffb8b05bbbb2d13fc2b5a2f52e82c1b
+# Parent  c6f8c58ed51a54ec68cac33031aa743ad2810231
+6929479, PR363: Add a system property sun.zip.disableMemoryMapping to disable mmap use in ZipFile
+Summary: system property sun.zip.disableMemoryMapping to disable mmap use
+Reviewed-by: alanb
+
+diff -Nru openjdk.orig/jdk/src/share/classes/java/util/zip/ZipFile.java openjdk/jdk/src/share/classes/java/util/zip/ZipFile.java
+--- openjdk.orig/jdk/src/share/classes/java/util/zip/ZipFile.java	2015-07-20 17:22:20.000000000 +0100
++++ openjdk/jdk/src/share/classes/java/util/zip/ZipFile.java	2015-10-05 01:22:49.405289000 +0100
+@@ -32,6 +32,8 @@
+ import java.util.Vector;
+ import java.util.Enumeration;
+ import java.util.NoSuchElementException;
++import java.security.AccessController;
++import sun.security.action.GetPropertyAction;
+ 
+ /**
+  * This class is used to read entries from a zip file.
+@@ -74,6 +76,17 @@
+ 
+     private static native void initIDs();
+ 
++    private static final boolean usemmap;
++
++    static {
++        // A system prpperty to disable mmap use to avoid vm crash when
++        // in-use zip file is accidently overwritten by others.
++        String prop = AccessController.doPrivileged(
++            new GetPropertyAction("sun.zip.disableMemoryMapping"));
++        usemmap = (prop == null ||
++                   !(prop.length() == 0 || prop.equalsIgnoreCase("true")));
++    }
++
+     /**
+      * Opens a zip file for reading.
+      *
+@@ -129,7 +142,7 @@
+                 sm.checkDelete(name);
+             }
+         }
+-        jzfile = open(name, mode, file.lastModified());
++        jzfile = open(name, mode, file.lastModified(), usemmap);
+ 
+         this.name = name;
+         this.total = getTotal(jzfile);
+@@ -154,7 +167,8 @@
+         return locsig;
+     }
+ 
+-    private static native long open(String name, int mode, long lastModified);
++    private static native long open(String name, int mode, long lastModified,
++                                    boolean usemmap);
+     private static native int getTotal(long jzfile);
+     private static native boolean startsWithLOC(long jzfile);
+ 
+diff -Nru openjdk.orig/jdk/src/share/native/java/util/zip/ZipFile.c openjdk/jdk/src/share/native/java/util/zip/ZipFile.c
+--- openjdk.orig/jdk/src/share/native/java/util/zip/ZipFile.c	2015-07-20 17:22:14.000000000 +0100
++++ openjdk/jdk/src/share/native/java/util/zip/ZipFile.c	2015-10-05 01:22:49.405289000 +0100
+@@ -79,7 +79,8 @@
+ 
+ JNIEXPORT jlong JNICALL
+ Java_java_util_zip_ZipFile_open(JNIEnv *env, jclass cls, jstring name,
+-                                        jint mode, jlong lastModified)
++                                        jint mode, jlong lastModified,
++                                        jboolean usemmap)
+ {
+     const char *path = JNU_GetStringPlatformChars(env, name, 0);
+     char *msg = 0;
+@@ -105,7 +106,7 @@
+ #endif
+ 
+             if (zfd >= 0) {
+-                zip = ZIP_Put_In_Cache(path, zfd, &msg, lastModified);
++                zip = ZIP_Put_In_Cache0(path, zfd, &msg, lastModified, usemmap);
+             }
+         }
+ 
+diff -Nru openjdk.orig/jdk/src/share/native/java/util/zip/zip_util.c openjdk/jdk/src/share/native/java/util/zip/zip_util.c
+--- openjdk.orig/jdk/src/share/native/java/util/zip/zip_util.c	2015-10-05 01:21:13.782879361 +0100
++++ openjdk/jdk/src/share/native/java/util/zip/zip_util.c	2015-10-05 01:26:14.377878666 +0100
+@@ -251,11 +251,16 @@
+     if (zip->lock != NULL) MDESTROY(zip->lock);
+     free(zip->name);
+     freeCEN(zip);
++
+ #ifdef USE_MMAP
+-    if (zip->maddr != NULL) munmap((char *)zip->maddr, zip->mlen);
+-#else
+-    free(zip->cencache.data);
++    if (zip->usemmap) {
++        if (zip->maddr != NULL)
++            munmap((char *)zip->maddr, zip->mlen);
++    } else
+ #endif
++    {
++        free(zip->cencache.data);
++    }
+     if (zip->zfd != -1) ZFILE_Close(zip->zfd);
+     free(zip);
+ }
+@@ -502,49 +507,52 @@
+         ZIP_FORMAT_ERROR("invalid END header (bad central directory offset)");
+ 
+ #ifdef USE_MMAP
+-     /* On Solaris & Linux prior to JDK 6, we used to mmap the whole jar file to
+-      * read the jar file contents. However, this greatly increased the perceived
+-      * footprint numbers because the mmap'ed pages were adding into the totals shown
+-      * by 'ps' and 'top'. We switched to mmaping only the central directory of jar
+-      * file while calling 'read' to read the rest of jar file. Here are a list of
+-      * reasons apart from above of why we are doing so:
+-      * 1. Greatly reduces mmap overhead after startup complete;
+-      * 2. Avoids dual path code maintainance;
+-      * 3. Greatly reduces risk of address space (not virtual memory) exhaustion.
+-      */
+-    if (pagesize == 0) {
+-        pagesize = (jlong)sysconf(_SC_PAGESIZE);
+-        if (pagesize == 0) goto Catch;
+-    }
+-    if (cenpos > pagesize) {
+-        offset = cenpos & ~(pagesize - 1);
+-    } else {
+-        offset = 0;
+-    }
+-    /* When we are not calling recursively, knownTotal is -1. */
+-    if (knownTotal == -1) {
+-        void* mappedAddr;
+-        /* Mmap the CEN and END part only. We have to figure
+-           out the page size in order to make offset to be multiples of
+-           page size.
+-        */
+-        zip->mlen = cenpos - offset + cenlen + ENDHDR;
+-        zip->offset = offset;
+-        mappedAddr = mmap64(0, zip->mlen, PROT_READ, MAP_SHARED, zip->zfd, (off64_t) offset);
+-        zip->maddr = (mappedAddr == (void*) MAP_FAILED) ? NULL :
+-            (unsigned char*)mappedAddr;
+-
+-        if (zip->maddr == NULL) {
+-            jio_fprintf(stderr, "mmap failed for CEN and END part of zip file\n");
+-            goto Catch;
+-        }
+-    }
+-    cenbuf = zip->maddr + cenpos - offset;
+-#else
+-    if ((cenbuf = malloc((size_t) cenlen)) == NULL ||
+-        (readFullyAt(zip->zfd, cenbuf, cenlen, cenpos) == -1))
+-        goto Catch;
++    if (zip->usemmap) {
++      /* On Solaris & Linux prior to JDK 6, we used to mmap the whole jar file to
++       * read the jar file contents. However, this greatly increased the perceived
++       * footprint numbers because the mmap'ed pages were adding into the totals shown
++       * by 'ps' and 'top'. We switched to mmaping only the central directory of jar
++       * file while calling 'read' to read the rest of jar file. Here are a list of
++       * reasons apart from above of why we are doing so:
++       * 1. Greatly reduces mmap overhead after startup complete;
++       * 2. Avoids dual path code maintainance;
++       * 3. Greatly reduces risk of address space (not virtual memory) exhaustion.
++       */
++        if (pagesize == 0) {
++            pagesize = (jlong)sysconf(_SC_PAGESIZE);
++            if (pagesize == 0) goto Catch;
++        }
++        if (cenpos > pagesize) {
++            offset = cenpos & ~(pagesize - 1);
++        } else {
++            offset = 0;
++        }
++        /* When we are not calling recursively, knownTotal is -1. */
++        if (knownTotal == -1) {
++            void* mappedAddr;
++            /* Mmap the CEN and END part only. We have to figure
++               out the page size in order to make offset to be multiples of
++               page size.
++            */
++            zip->mlen = cenpos - offset + cenlen + ENDHDR;
++            zip->offset = offset;
++            mappedAddr = mmap64(0, zip->mlen, PROT_READ, MAP_SHARED, zip->zfd, (off64_t) offset);
++            zip->maddr = (mappedAddr == (void*) MAP_FAILED) ? NULL :
++                (unsigned char*)mappedAddr;
++
++            if (zip->maddr == NULL) {
++                jio_fprintf(stderr, "mmap failed for CEN and END part of zip file\n");
++                goto Catch;
++            }
++        }
++        cenbuf = zip->maddr + cenpos - offset;
++    } else
+ #endif
++    {
++        if ((cenbuf = malloc((size_t) cenlen)) == NULL ||
++            (readFullyAt(zip->zfd, cenbuf, cenlen, cenpos) == -1))
++        goto Catch;
++    }
+     cenend = cenbuf + cenlen;
+ 
+     /* Initialize zip file data structures based on the total number
+@@ -613,9 +621,11 @@
+     cenpos = -1;
+ 
+  Finally:
+-#ifndef USE_MMAP
+-    free(cenbuf);
++#ifdef USE_MMAP
++    if (!zip->usemmap)
+ #endif
++        free(cenbuf);
++
+     return cenpos;
+ }
+ 
+@@ -695,9 +705,17 @@
+  * If a zip error occurs, then *pmsg will be set to the error message text if
+  * pmsg != 0. Otherwise, *pmsg will be set to NULL.
+  */
++
+ jzfile *
+ ZIP_Put_In_Cache(const char *name, ZFILE zfd, char **pmsg, jlong lastModified)
+ {
++    return ZIP_Put_In_Cache0(name, zfd, pmsg, lastModified, JNI_TRUE);
++}
++
++jzfile *
++ZIP_Put_In_Cache0(const char *name, ZFILE zfd, char **pmsg, jlong lastModified,
++                 jboolean usemmap)
++{
+     static char errbuf[256];
+     jlong len;
+     jzfile *zip;
+@@ -706,6 +724,9 @@
+         return NULL;
+     }
+ 
++#ifdef USE_MMAP
++    zip->usemmap = usemmap;
++#endif
+     zip->refs = 1;
+     zip->lastModified = lastModified;
+ 
+@@ -798,8 +819,6 @@
+     return;
+ }
+ 
+-#ifndef USE_MMAP
+-
+ /* Empirically, most CEN headers are smaller than this. */
+ #define AMPLE_CEN_HEADER_SIZE 160
+ 
+@@ -849,7 +868,6 @@
+     cache->pos  = cenpos;
+     return cen;
+ }
+-#endif /* not USE_MMAP */
+ 
+ typedef enum { ACCESS_RANDOM, ACCESS_SEQUENTIAL } AccessHint;
+ 
+@@ -873,14 +891,17 @@
+     ze->comment = NULL;
+ 
+ #ifdef USE_MMAP
+-    cen = (char*) zip->maddr + zc->cenpos - zip->offset;
+-#else
+-    if (accessHint == ACCESS_RANDOM)
+-        cen = readCENHeader(zip, zc->cenpos, AMPLE_CEN_HEADER_SIZE);
+-    else
+-        cen = sequentialAccessReadCENHeader(zip, zc->cenpos);
+-    if (cen == NULL) goto Catch;
++    if (zip->usemmap) {
++        cen = (char*) zip->maddr + zc->cenpos - zip->offset;
++    } else
+ #endif
++    {
++        if (accessHint == ACCESS_RANDOM)
++            cen = readCENHeader(zip, zc->cenpos, AMPLE_CEN_HEADER_SIZE);
++        else
++            cen = sequentialAccessReadCENHeader(zip, zc->cenpos);
++        if (cen == NULL) goto Catch;
++    }
+ 
+     nlen      = CENNAM(cen);
+     elen      = CENEXT(cen);
+@@ -919,9 +940,10 @@
+     ze = NULL;
+ 
+  Finally:
+-#ifndef USE_MMAP
+-    if (cen != NULL && accessHint == ACCESS_RANDOM) free(cen);
++#ifdef USE_MMAP
++    if (!zip->usemmap)
+ #endif
++        if (cen != NULL && accessHint == ACCESS_RANDOM) free(cen);
+     return ze;
+ }
+ 
+diff -Nru openjdk.orig/jdk/src/share/native/java/util/zip/zip_util.h openjdk/jdk/src/share/native/java/util/zip/zip_util.h
+--- openjdk.orig/jdk/src/share/native/java/util/zip/zip_util.h	2015-10-05 01:21:13.786879294 +0100
++++ openjdk/jdk/src/share/native/java/util/zip/zip_util.h	2015-10-05 01:23:43.816383879 +0100
+@@ -41,9 +41,6 @@
+ /*
+  * Header sizes including signatures
+  */
+-#ifdef USE_MMAP
+-#define SIGSIZ  4
+-#endif
+ #define LOCHDR 30
+ #define EXTHDR 16
+ #define CENHDR 46
+@@ -176,9 +173,9 @@
+     jlong mlen;           /* length (in bytes) mmaped */
+     jlong offset;         /* offset of the mmapped region from the
+                              start of the file. */
+-#else
+-    cencache cencache;    /* CEN header cache */
++    jboolean usemmap;     /* if mmap is used. */
+ #endif
++    cencache cencache;    /* CEN header cache */
+     jboolean locsig;      /* if zip file starts with LOCSIG */
+     ZFILE zfd;            /* open file descriptor */
+     void *lock;           /* read lock */
+@@ -224,6 +221,9 @@
+ jzfile *
+ ZIP_Put_In_Cache(const char *name, ZFILE zfd, char **pmsg, jlong lastModified);
+ 
++jzfile *
++ZIP_Put_In_Cache0(const char *name, ZFILE zfd, char **pmsg, jlong lastModified, jboolean usemmap);
++
+ void JNICALL
+ ZIP_Close(jzfile *zip);
+ 

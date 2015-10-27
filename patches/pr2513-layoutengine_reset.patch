@@ -1,0 +1,22 @@
+# HG changeset patch
+# User andrew
+# Date 1443896894 -3600
+#      Sat Oct 03 19:28:14 2015 +0100
+# Node ID 32f25e4cc4aa55ed72c9d2d92cdc54d085a0b851
+# Parent  7dd31da3f90a3f631be8ee3083264f9815c10973
+PR2513: Reset success following calls in LayoutManager.cpp
+
+diff -Nru openjdk.orig/jdk/src/share/native/sun/font/layout/LayoutEngine.cpp openjdk/jdk/src/share/native/sun/font/layout/LayoutEngine.cpp
+--- openjdk.orig/jdk/src/share/native/sun/font/layout/LayoutEngine.cpp	2015-07-20 17:22:21.000000000 +0100
++++ openjdk/jdk/src/share/native/sun/font/layout/LayoutEngine.cpp	2015-10-05 01:40:33.895560477 +0100
+@@ -661,6 +661,10 @@
+             break;
+         }
+     } else {
++        if (LE_FAILURE(success)) {
++	    // Reset if gsubTable failed
++            success = LE_NO_ERROR;
++        }
+         LEReferenceTo<MorphTableHeader> mortTable(fontInstance, mortTableTag, success);
+ 
+         if (LE_SUCCESS(success) && mortTable.isValid() && SWAPL(mortTable->version)==0x00010000) { // mort

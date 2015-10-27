@@ -634,7 +634,11 @@ ICEDTEA_PATCHES = \
 	patches/pr2460-policy_jar_timestamp.patch \
 	patches/pr2481_sysconfig_clock_spaces.patch \
 	patches/pr2486-768_dh.patch \
-	patches/pr2488-1024_dh.patch
+	patches/pr2488-1024_dh.patch \
+	patches/openjdk/6440786-pr363-zero_entry_zips.patch \
+	patches/openjdk/6599383-pr363-large_zip_files.patch \
+	patches/openjdk/6929479-pr363-disable_mmap_zip.patch \
+	patches/pr2513-layoutengine_reset.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
@@ -664,7 +668,9 @@ endif
 if ENABLE_XRENDER
 ICEDTEA_PATCHES += patches/openjdk/6307603-xrender-01.patch \
 	patches/openjdk/6961633-xrender-02.patch \
-	patches/openjdk/7018387-xrender_gc_leak.patch
+	patches/openjdk/7018387-xrender_gc_leak.patch \
+	patches/openjdk/7150134-pr2662-xrender_drawline_oom.patch \
+	patches/openjdk/7105461-pr2662-xrender_jtables.patch
 endif
 
 if ENABLE_SYSTEMTAP

@@ -1,0 +1,237 @@
+# HG changeset patch
+# User bristor
+# Date 1221170337 25200
+#      Thu Sep 11 14:58:57 2008 -0700
+# Node ID bee470ba5b243162ca0f84e49f794e94381876cd
+# Parent  3e7b9a0f3a6f40b1feb22990ed005e15e6ab6b5e
+6440786, PR363: Cannot create a ZIP file containing zero entries
+Summary: Allow reading and writing of ZIP files with zero entries.
+Reviewed-by: alanb
+
+diff -Nru openjdk.orig/jdk/src/share/classes/java/util/zip/ZipOutputStream.java openjdk/jdk/src/share/classes/java/util/zip/ZipOutputStream.java
+--- openjdk.orig/jdk/src/share/classes/java/util/zip/ZipOutputStream.java	2015-07-20 17:22:20.000000000 +0100
++++ openjdk/jdk/src/share/classes/java/util/zip/ZipOutputStream.java	2015-10-05 01:17:22.830735488 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1996, 2006, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1996, 2008, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -317,9 +317,6 @@
+         if (current != null) {
+             closeEntry();
+         }
+-        if (xentries.size() < 1) {
+-            throw new ZipException("ZIP file must have at least one entry");
+-        }
+         // write central directory
+         long off = written;
+         for (XEntry xentry : xentries)
+diff -Nru openjdk.orig/jdk/src/share/native/java/util/zip/zip_util.c openjdk/jdk/src/share/native/java/util/zip/zip_util.c
+--- openjdk.orig/jdk/src/share/native/java/util/zip/zip_util.c	2015-07-20 17:22:14.000000000 +0100
++++ openjdk/jdk/src/share/native/java/util/zip/zip_util.c	2015-10-05 01:17:05.587024552 +0100
+@@ -730,16 +730,22 @@
+     }
+ 
+     len = zip->len = ZFILE_Lseek(zfd, 0, SEEK_END);
+-    if (len == -1) {
+-        if (pmsg && JVM_GetLastErrorString(errbuf, sizeof(errbuf)) > 0)
+-            *pmsg = errbuf;
++    if (len <= 0) {
++        if (len == 0) { /* zip file is empty */
++            if (pmsg) {
++                *pmsg = "zip file is empty";
++            }
++        } else { /* error */
++            if (pmsg && JVM_GetLastErrorString(errbuf, sizeof(errbuf)) > 0)
++                *pmsg = errbuf;
++        }
+         ZFILE_Close(zfd);
+         freeZip(zip);
+         return NULL;
+     }
+ 
+     zip->zfd = zfd;
+-    if (readCEN(zip, -1) <= 0) {
++    if (readCEN(zip, -1) < 0) {
+         /* An error occurred while trying to read the zip file */
+         if (pmsg != 0) {
+             /* Set the zip error message */
+@@ -955,10 +961,15 @@
+ ZIP_GetEntry(jzfile *zip, char *name, jint ulen)
+ {
+     unsigned int hsh = hash(name);
+-    jint idx = zip->table[hsh % zip->tablelen];
+-    jzentry *ze;
++    jint idx;
++    jzentry *ze = 0;
+ 
+     ZIP_Lock(zip);
++    if (zip->total == 0) {
++        goto Finally;
++    }
++
++    idx = zip->table[hsh % zip->tablelen];
+ 
+     /*
+      * This while loop is an optimization where a double lookup
+@@ -1033,6 +1044,7 @@
+         ulen = 0;
+     }
+ 
++Finally:
+     ZIP_Unlock(zip);
+     return ze;
+ }
+diff -Nru openjdk.orig/jdk/test/java/util/zip/TestEmptyZip.java openjdk/jdk/test/java/util/zip/TestEmptyZip.java
+--- openjdk.orig/jdk/test/java/util/zip/TestEmptyZip.java	1970-01-01 01:00:00.000000000 +0100
++++ openjdk/jdk/test/java/util/zip/TestEmptyZip.java	2015-10-05 01:19:15.676843719 +0100
+@@ -0,0 +1,147 @@
++/*
++ * Copyright (c) 2008, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/* @test
++ * @bug 6334003 6440786
++ * @summary Test ability to write and read zip files that have no entries.
++ * @author Dave Bristor
++ */
++
++import java.io.*;
++import java.util.*;
++import java.util.zip.*;
++
++public class TestEmptyZip {
++    public static void realMain(String[] args) throws Throwable {
++        String zipName = "foo.zip";
++        File f = new File(System.getProperty("test.scratch", "."), zipName);
++        if (f.exists() && !f.delete()) {
++            throw new Exception("failed to delete " + zipName);
++        }
++
++        // Verify 0-length file cannot be read
++        f.createNewFile();
++        ZipFile zf = null;
++        try {
++            zf = new ZipFile(f);
++            fail();
++        } catch (Exception ex) {
++            check(ex.getMessage().contains("zip file is empty"));
++        } finally {
++            if (zf != null) {
++                zf.close();
++            }
++        }
++
++        ZipInputStream zis = null;
++        try {
++            zis = new ZipInputStream(new FileInputStream(f));
++            ZipEntry ze = zis.getNextEntry();
++            check(ze == null);
++        } catch (Exception ex) {
++            unexpected(ex);
++        } finally {
++            if (zis != null) {
++                zis.close();
++            }
++        }
++
++        f.delete();
++
++        // Verify 0-entries file can be written
++        write(f);
++
++        // Verify 0-entries file can be read
++        readFile(f);
++        readStream(f);
++
++        f.delete();
++    }
++
++    static void write(File f) throws Exception {
++        ZipOutputStream zos = null;
++        try {
++            zos = new ZipOutputStream(new FileOutputStream(f));
++            zos.finish();
++            zos.close();
++            pass();
++        } catch (Exception ex) {
++            unexpected(ex);
++        } finally {
++            if (zos != null) {
++                zos.close();
++            }
++        }
++    }
++
++    static void readFile(File f) throws Exception {
++        ZipFile zf = null;
++        try {
++            zf = new ZipFile(f);
++
++            Enumeration e = zf.entries();
++            while (e.hasMoreElements()) {
++                ZipEntry entry = (ZipEntry) e.nextElement();
++                fail();
++            }
++            zf.close();
++            pass();
++        } catch (Exception ex) {
++            unexpected(ex);
++        } finally {
++            if (zf != null) {
++                zf.close();
++            }
++        }
++    }
++
++    static void readStream(File f) throws Exception {
++        ZipInputStream zis = null;
++        try {
++            zis = new ZipInputStream(new FileInputStream(f));
++            ZipEntry ze = zis.getNextEntry();
++            check(ze == null);
++            byte[] buf = new byte[1024];
++            check(zis.read(buf, 0, 1024) == -1);
++        } finally {
++            if (zis != null) {
++                zis.close();
++            }
++        }
++    }
++
++    //--------------------- Infrastructure ---------------------------
++    static volatile int passed = 0, failed = 0;
++    static boolean pass() {passed++; return true;}
++    static boolean fail() {failed++; Thread.dumpStack(); return false;}
++    static boolean fail(String msg) {System.out.println(msg); return fail();}
++    static void unexpected(Throwable t) {failed++; t.printStackTrace();}
++    static boolean check(boolean cond) {if (cond) pass(); else fail(); return cond;}
++    static boolean equal(Object x, Object y) {
++        if (x == null ? y == null : x.equals(y)) return pass();
++        else return fail(x + " not equal to " + y);}
++    public static void main(String[] args) throws Throwable {
++        try {realMain(args);} catch (Throwable t) {unexpected(t);}
++        System.out.println("\nPassed = " + passed + " failed = " + failed);
++        if (failed > 0) throw new AssertionError("Some tests failed");}
++}
