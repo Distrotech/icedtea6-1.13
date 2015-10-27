@@ -14,6 +14,85 @@ CVE-XXXX-YYYY: http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
 New in release 1.13.9 (2015-10-XX):
 
+* Security fixes
+  - S8048030, CVE-2015-4734: Expectations should be consistent
+  - S8068842, CVE-2015-4803: Better JAXP data handling
+  - S8076339, CVE-2015-4903: Better handling of remote object invocation
+  - S8076383, CVE-2015-4835: Better CORBA exception handling
+  - S8076387, CVE-2015-4882: Better CORBA value handling
+  - S8076392, CVE-2015-4881: Improve IIOPInputStream consistency
+  - S8076413, CVE-2015-4883: Better JRMP message handling
+  - S8078427, CVE-2015-4842: More supportive home environment
+  - S8078440: Safer managed types
+  - S8080541: More direct property handling
+  - S8080688, CVE-2015-4860: Service for DGC services
+  - S8081760: Better group dynamics
+  - S8086733, CVE-2015-4893: Improve namespace handling
+  - S8087350: Improve array conversions
+  - S8103671, CVE-2015-4805: More objective stream classes
+  - S8103675: Better Binary searches
+  - S8130078, CVE-2015-4911: Document better processing
+  - S8130193, CVE-2015-4806: Improve HTTP connections
+  - S8130864: Better server identity handling
+  - S8130891, CVE-2015-4843: (bf) More direct buffering
+  - S8131291, CVE-2015-4872: Perfect parameter patterning
+  - S8132042, CVE-2015-4844: Preserve layout presentation
+* Import of OpenJDK6 b37
+  - OJ64: Backport hashtable to map changes from jaxp
+  - OJ65: Remove @Override annotation on interfaces added by 2015/10/20 security fixes
+  - S6570619: (bf) DirectByteBuffer.get/put(byte[]) does not scale well
+  - S6590930: reed/write does not match for ccache
+  - S6648972: KDCReq.init always read padata
+  - S6676075: RegistryContext (com.sun.jndi.url.rmi.rmiURLContext) coding problem
+  - S6682516: SPNEGO_HTTP_AUTH/WWW_KRB and SPNEGO_HTTP_AUTH/WWW_SPNEGO failed on all non-windows platforms
+  - S6710360: export Kerberos session key to applications
+  - S6785456: Read Kerberos setting from Windows environment variables
+  - S6843127: krb5 should not try to access unavailable kdc too often
+  - S6844193: support max_retries in krb5.conf
+  - S6844907: krb5 etype order should be from strong to weak
+  - S6844909: support allow_weak_crypto in krb5.conf
+  - S6849275: enhance krb5 reg tests
+  - S6853328: Support OK-AS-DELEGATE flag
+  - S6854308: more ktab options
+  - S6856069: PrincipalName.clone() does not invoke super.clone()
+  - S6857795: krb5.conf ignored if system properties on realm and kdc are provided
+  - S6858589: more changes to Config on system properties
+  - S6862679: ESC: AD Authentication with user with umlauts fails
+  - S6877357: IPv6 address does not work
+  - S6888701: Change all template java source files to a .java-template file suffix
+  - S6893158: AP_REQ check should use key version number
+  - S6932525: Incorrect encryption types of KDC_REQ_BODY of AS-REQ with pre-authentication
+  - S6946669: SSL/Krb5 should not call EncryptedData.reset(data, false)
+  - S6950546: "ktab -d name etype" to "ktab -d name [-e etype] [kvno | all | old]"
+  - S6951366: kerberos login failure on win2008 with AD set to win2000 compat mode
+  - S6952519: kdc_timeout is not being honoured when using TCP
+  - S6959292: regression: cannot login if session key and preauth does not use the same etype
+  - S6960894: Better AS-REQ creation and processing
+  - S6966259: Make PrincipalName and Realm immutable
+  - S6984764: kerberos fails if service side keytab is generated using JDK ktab
+  - S7032354: no-addresses should not be used on acceptor side
+  - S7061379: [Kerberos] Cross-realm authentication fails, due to nameType problem
+  - S7142596: RMI JPRT tests are failing
+  - S7157610: NullPointerException occurs when parsing XML doc
+  - S7158329: NPE in sun.security.krb5.Credentials.acquireDefaultCreds()
+  - S8004317: TestLibrary.getUnusedRandomPort() fails intermittently, but exception not reported
+  - S8005226: java/rmi/transport/pinClientSocketFactory/PinClientSocketFactory.java fails intermittently
+  - S8006534: CLONE - TestLibrary.getUnusedRandomPort() fails intermittently-doesn't retry enough times
+  - S8014097: add doPrivileged methods with limited privilege scope
+  - S8021191: Add isAuthorized check to limited doPrivileged methods
+  - S8022213: Intermittent test failures in java/net/URLClassLoader
+  - S8028583: Add helper methods to test libraries
+  - S8028780: JDK KRB5 module throws OutOfMemoryError when CCache is corrupt
+  - S8058608: JVM crash during Kerberos logins using des3-cbc-md5 on OSX
+  - S8064331: JavaSecurityAccess.doIntersectionPrivilege() drops the information about the domain combiner of the stack ACC
+  - S8072932: Test fails with java.security.AccessControlException: access denied ("java.security.SecurityPermission" "getDomainCombiner")
+  - S8078822: 8068842 fix missed one new file PrimeNumberSequenceGenerator.java
+  - S8079323: Serialization compatibility for Templates: need to exclude Hashtable from serialization
+  - S8087118: Remove missing package from java.security files
+  - S8098547: (tz) Support tzdata2015e
+  - S8130253: ObjectStreamClass.getFields too restrictive
+  - S8133321: (tz) Support tzdata2015f
+  - S8135043: ObjectStreamClass.getField(String) too restrictive
 * Backports
   - S6440786, PR363: Cannot create a ZIP file containing zero entries
   - S6599383, PR363: Unable to open zip files more than 2GB in size

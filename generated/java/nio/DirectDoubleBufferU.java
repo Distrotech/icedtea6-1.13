@@ -1,12 +1,12 @@
 /*
- * Copyright 2000-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2000, 2005, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 // -- This file was mechanically generated: Do not edit! -- //
@@ -46,6 +46,9 @@ class DirectDoubleBufferU
 
     // Cached unsafe-access object
     protected static final Unsafe unsafe = Bits.unsafe();
+
+    // Cached array base offset
+    private static final long arrayBaseOffset = (long)unsafe.arrayBaseOffset(double[].class);
 
     // Cached unaligned-access capability
     protected static final boolean unaligned = Bits.unaligned();
@@ -216,7 +219,7 @@ class DirectDoubleBufferU
     }
 
     private long ix(int i) {
-        return address + (i << 3);
+        return address + ((long)i << 3);
     }
 
     public double get() {
@@ -229,7 +232,7 @@ class DirectDoubleBufferU
 
     public DoubleBuffer get(double[] dst, int offset, int length) {
 
-        if ((length << 3) > Bits.JNI_COPY_TO_ARRAY_THRESHOLD) {
+        if (((long)length << 3) > Bits.JNI_COPY_TO_ARRAY_THRESHOLD) {
             checkBounds(offset, length, dst.length);
             int pos = position();
             int lim = limit();
@@ -238,14 +241,16 @@ class DirectDoubleBufferU
             if (length > rem)
                 throw new BufferUnderflowException();
 
+
             if (order() != ByteOrder.nativeOrder())
                 Bits.copyToLongArray(ix(pos), dst,
-                                          offset << 3,
-                                          length << 3);
+                                          (long)offset << 3,
+                                          (long)length << 3);
             else
-                Bits.copyToByteArray(ix(pos), dst,
-                                     offset << 3,
-                                     length << 3);
+
+                Bits.copyToArray(ix(pos), dst, arrayBaseOffset,
+                                 (long)offset << 3,
+                                 (long)length << 3);
             position(pos + length);
         } else {
             super.get(dst, offset, length);
@@ -295,7 +300,7 @@ class DirectDoubleBufferU
 
             if (srem > rem)
                 throw new BufferOverflowException();
-            unsafe.copyMemory(sb.ix(spos), ix(pos), srem << 3);
+            unsafe.copyMemory(sb.ix(spos), ix(pos), (long)srem << 3);
             sb.position(spos + srem);
             position(pos + srem);
         } else if (src.hb != null) {
@@ -319,7 +324,7 @@ class DirectDoubleBufferU
 
     public DoubleBuffer put(double[] src, int offset, int length) {
 
-        if ((length << 3) > Bits.JNI_COPY_FROM_ARRAY_THRESHOLD) {
+        if (((long)length << 3) > Bits.JNI_COPY_FROM_ARRAY_THRESHOLD) {
             checkBounds(offset, length, src.length);
             int pos = position();
             int lim = limit();
@@ -328,12 +333,18 @@ class DirectDoubleBufferU
             if (length > rem)
                 throw new BufferOverflowException();
 
+
             if (order() != ByteOrder.nativeOrder())
-                Bits.copyFromLongArray(src, offset << 3,
-                                            ix(pos), length << 3);
+                Bits.copyFromLongArray(src,
+                                            (long)offset << 3,
+                                            ix(pos),
+                                            (long)length << 3);
             else
-                Bits.copyFromByteArray(src, offset << 3,
-                                       ix(pos), length << 3);
+
+                Bits.copyFromArray(src, arrayBaseOffset,
+                                   (long)offset << 3,
+                                   ix(pos),
+                                   (long)length << 3);
             position(pos + length);
         } else {
             super.put(src, offset, length);
@@ -351,7 +362,7 @@ class DirectDoubleBufferU
         assert (pos <= lim);
         int rem = (pos <= lim ? lim - pos : 0);
 
-        unsafe.copyMemory(ix(pos), ix(0), rem << 3);
+        unsafe.copyMemory(ix(pos), ix(0), (long)rem << 3);
         position(rem);
         limit(capacity());
         discardMark();

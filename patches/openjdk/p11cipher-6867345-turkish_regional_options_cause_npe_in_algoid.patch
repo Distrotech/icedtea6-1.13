@@ -1,15 +1,15 @@
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/krb5/Credentials.java openjdk/jdk/src/share/classes/sun/security/krb5/Credentials.java
---- openjdk.orig/jdk/src/share/classes/sun/security/krb5/Credentials.java	2011-11-14 22:12:05.000000000 +0000
-+++ openjdk/jdk/src/share/classes/sun/security/krb5/Credentials.java	2012-05-10 00:33:46.400831829 +0100
-@@ -38,6 +38,7 @@
- import java.io.File;
+--- openjdk.orig/jdk/src/share/classes/sun/security/krb5/Credentials.java	2015-10-26 18:40:10.645524086 +0000
++++ openjdk/jdk/src/share/classes/sun/security/krb5/Credentials.java	2015-10-27 01:13:22.017703153 +0000
+@@ -35,6 +35,7 @@
+ import sun.security.krb5.internal.crypto.EType;
  import java.io.IOException;
  import java.util.Date;
 +import java.util.Locale;
- import java.util.Vector;
- import java.io.BufferedReader;
- import java.io.InputStreamReader;
-@@ -261,7 +262,7 @@
+ import java.net.InetAddress;
+ 
+ /**
+@@ -268,7 +269,7 @@
              // The default ticket cache on Windows is not a file.
              String os = java.security.AccessController.doPrivileged(
                          new sun.security.action.GetPropertyAction("os.name"));
@@ -19,8 +19,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/krb5/Credentials.java 
                  if (creds == null) {
                      if (DEBUG) {
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs/PKCS9Attribute.java openjdk/jdk/src/share/classes/sun/security/pkcs/PKCS9Attribute.java
---- openjdk.orig/jdk/src/share/classes/sun/security/pkcs/PKCS9Attribute.java	2011-11-14 22:12:05.000000000 +0000
-+++ openjdk/jdk/src/share/classes/sun/security/pkcs/PKCS9Attribute.java	2012-05-10 00:33:27.400535064 +0100
+--- openjdk.orig/jdk/src/share/classes/sun/security/pkcs/PKCS9Attribute.java	2015-10-26 18:40:10.741522482 +0000
++++ openjdk/jdk/src/share/classes/sun/security/pkcs/PKCS9Attribute.java	2015-10-27 01:13:09.697910241 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1997, 2006, Oracle and/or its affiliates. All rights reserved.
@@ -46,8 +46,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs/PKCS9Attribute.ja
  
      /**
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11Cipher.java openjdk/jdk/src/share/classes/sun/security/pkcs11/P11Cipher.java
---- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11Cipher.java	2012-05-09 23:52:55.654306629 +0100
-+++ openjdk/jdk/src/share/classes/sun/security/pkcs11/P11Cipher.java	2012-05-10 00:33:27.412535252 +0100
+--- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11Cipher.java	2015-10-27 00:25:34.802092132 +0000
++++ openjdk/jdk/src/share/classes/sun/security/pkcs11/P11Cipher.java	2015-10-27 01:13:09.701910173 +0000
 @@ -26,6 +26,7 @@
  
  import java.nio.ByteBuffer;
@@ -56,7 +56,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11Cipher.java 
  
  import java.security.*;
  import java.security.spec.*;
-@@ -200,7 +201,7 @@
+@@ -201,7 +202,7 @@
      }
  
      private int parseMode(String mode) throws NoSuchAlgorithmException {
@@ -65,7 +65,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11Cipher.java 
          int result;
          if (mode.equals("ECB")) {
              result = MODE_ECB;
-@@ -221,7 +222,7 @@
+@@ -222,7 +223,7 @@
              throws NoSuchPaddingException {
          paddingObj = null;
          padBuffer = null;
@@ -75,8 +75,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11Cipher.java 
              paddingType = PAD_NONE;
          } else if (padding.equals("PKCS5PADDING")) {
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11RSACipher.java openjdk/jdk/src/share/classes/sun/security/pkcs11/P11RSACipher.java
---- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11RSACipher.java	2011-11-14 22:12:05.000000000 +0000
-+++ openjdk/jdk/src/share/classes/sun/security/pkcs11/P11RSACipher.java	2012-05-10 00:33:27.412535252 +0100
+--- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11RSACipher.java	2015-10-27 00:25:35.530079682 +0000
++++ openjdk/jdk/src/share/classes/sun/security/pkcs11/P11RSACipher.java	2015-10-27 01:13:09.701910173 +0000
 @@ -29,6 +29,8 @@
  import java.security.spec.AlgorithmParameterSpec;
  import java.security.spec.*;
@@ -86,7 +86,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11RSACipher.ja
  import javax.crypto.*;
  import javax.crypto.spec.*;
  
-@@ -110,7 +112,7 @@
+@@ -118,7 +120,7 @@
  
      protected void engineSetPadding(String padding)
              throws NoSuchPaddingException {
@@ -96,8 +96,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11RSACipher.ja
              // empty
          } else {
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/provider/certpath/URICertStore.java openjdk/jdk/src/share/classes/sun/security/provider/certpath/URICertStore.java
---- openjdk.orig/jdk/src/share/classes/sun/security/provider/certpath/URICertStore.java	2011-11-14 22:12:06.000000000 +0000
-+++ openjdk/jdk/src/share/classes/sun/security/provider/certpath/URICertStore.java	2012-05-10 00:34:30.061514202 +0100
+--- openjdk.orig/jdk/src/share/classes/sun/security/provider/certpath/URICertStore.java	2015-10-26 18:40:10.833520945 +0000
++++ openjdk/jdk/src/share/classes/sun/security/provider/certpath/URICertStore.java	2015-10-27 01:13:09.701910173 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
@@ -123,8 +123,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/provider/certpath/URIC
              ldapCertStore =
                  LDAPCertStore.getInstance(LDAPCertStore.getParameters(uri));
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/util/Debug.java openjdk/jdk/src/share/classes/sun/security/util/Debug.java
---- openjdk.orig/jdk/src/share/classes/sun/security/util/Debug.java	2011-11-14 22:12:06.000000000 +0000
-+++ openjdk/jdk/src/share/classes/sun/security/util/Debug.java	2012-05-10 00:33:27.412535252 +0100
+--- openjdk.orig/jdk/src/share/classes/sun/security/util/Debug.java	2015-10-26 18:40:10.933519274 +0000
++++ openjdk/jdk/src/share/classes/sun/security/util/Debug.java	2015-10-27 01:13:09.701910173 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1998, 2007, Oracle and/or its affiliates. All rights reserved.
@@ -150,8 +150,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/util/Debug.java openjd
              return target.toString();
          }
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/x509/AlgorithmId.java openjdk/jdk/src/share/classes/sun/security/x509/AlgorithmId.java
---- openjdk.orig/jdk/src/share/classes/sun/security/x509/AlgorithmId.java	2011-11-14 22:12:06.000000000 +0000
-+++ openjdk/jdk/src/share/classes/sun/security/x509/AlgorithmId.java	2012-05-10 00:33:58.949027881 +0100
+--- openjdk.orig/jdk/src/share/classes/sun/security/x509/AlgorithmId.java	2015-10-26 18:40:10.973518606 +0000
++++ openjdk/jdk/src/share/classes/sun/security/x509/AlgorithmId.java	2015-10-27 01:13:09.701910173 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1996, 2006, Oracle and/or its affiliates. All rights reserved.
@@ -204,8 +204,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/x509/AlgorithmId.java 
  
      private static ObjectIdentifier oid(int ... values) {
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/x509/AVA.java openjdk/jdk/src/share/classes/sun/security/x509/AVA.java
---- openjdk.orig/jdk/src/share/classes/sun/security/x509/AVA.java	2011-11-14 22:12:06.000000000 +0000
-+++ openjdk/jdk/src/share/classes/sun/security/x509/AVA.java	2012-05-10 00:34:07.773165778 +0100
+--- openjdk.orig/jdk/src/share/classes/sun/security/x509/AVA.java	2015-10-26 18:40:10.973518606 +0000
++++ openjdk/jdk/src/share/classes/sun/security/x509/AVA.java	2015-10-27 01:13:09.701910173 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1996, 2006, Oracle and/or its affiliates. All rights reserved.
@@ -223,8 +223,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/x509/AVA.java openjdk/
              if (keyword.startsWith(" ") || keyword.endsWith(" ")) {
                  throw new IOException("Invalid leading or trailing space " +
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/x509/DNSName.java openjdk/jdk/src/share/classes/sun/security/x509/DNSName.java
---- openjdk.orig/jdk/src/share/classes/sun/security/x509/DNSName.java	2011-11-14 22:12:07.000000000 +0000
-+++ openjdk/jdk/src/share/classes/sun/security/x509/DNSName.java	2012-05-10 00:33:27.412535252 +0100
+--- openjdk.orig/jdk/src/share/classes/sun/security/x509/DNSName.java	2015-10-26 18:40:10.985518405 +0000
++++ openjdk/jdk/src/share/classes/sun/security/x509/DNSName.java	2015-10-27 01:13:09.701910173 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1997, 2000, Oracle and/or its affiliates. All rights reserved.
@@ -253,8 +253,8 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/x509/DNSName.java open
                  constraintType = NAME_MATCH;
              else if (thisName.endsWith(inName)) {
 diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/x509/RFC822Name.java openjdk/jdk/src/share/classes/sun/security/x509/RFC822Name.java
---- openjdk.orig/jdk/src/share/classes/sun/security/x509/RFC822Name.java	2011-11-14 22:12:07.000000000 +0000
-+++ openjdk/jdk/src/share/classes/sun/security/x509/RFC822Name.java	2012-05-10 00:33:27.412535252 +0100
+--- openjdk.orig/jdk/src/share/classes/sun/security/x509/RFC822Name.java	2015-10-26 18:40:11.001518138 +0000
++++ openjdk/jdk/src/share/classes/sun/security/x509/RFC822Name.java	2015-10-27 01:13:09.701910173 +0000
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 1997, 2000, Oracle and/or its affiliates. All rights reserved.
@@ -284,7 +284,7 @@ diff -Nru openjdk.orig/jdk/src/share/classes/sun/security/x509/RFC822Name.java o
              } else if (thisName.endsWith(inName)) {
 diff -Nru openjdk.orig/jdk/test/sun/security/x509/AlgorithmId/TurkishRegion.java openjdk/jdk/test/sun/security/x509/AlgorithmId/TurkishRegion.java
 --- openjdk.orig/jdk/test/sun/security/x509/AlgorithmId/TurkishRegion.java	1970-01-01 01:00:00.000000000 +0100
-+++ openjdk/jdk/test/sun/security/x509/AlgorithmId/TurkishRegion.java	2012-05-10 00:33:27.412535252 +0100
++++ openjdk/jdk/test/sun/security/x509/AlgorithmId/TurkishRegion.java	2015-10-27 01:13:09.701910173 +0000
 @@ -0,0 +1,40 @@
 +/*
 + * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
