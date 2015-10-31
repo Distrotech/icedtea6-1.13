@@ -1,0 +1,138 @@
+# HG changeset patch
+# User alanb
+# Date 1226393983 0
+#      Tue Nov 11 08:59:43 2008 +0000
+# Node ID 275fa248e808ed809fd1f402ba205f72d0ae05e9
+# Parent  7df3f9183f67ffad9af7ef91bd5db38449209dd2
+6763122: ZipFile ctor does not throw exception when file is not a zip file
+Reviewed-by: bristor
+
+diff -r 7df3f9183f67 -r 275fa248e808 src/share/native/java/util/zip/zip_util.c
+--- openjdk/jdk/src/share/native/java/util/zip/zip_util.c	Mon Oct 20 01:39:38 2008 -0700
++++ openjdk/jdk/src/share/native/java/util/zip/zip_util.c	Tue Nov 11 08:59:43 2008 +0000
+@@ -273,8 +273,8 @@
+ /*
+  * Searches for end of central directory (END) header. The contents of
+  * the END header will be read and placed in endbuf. Returns the file
+- * position of the END header, otherwise returns 0 if the END header
+- * was not found or -1 if an error occurred.
++ * position of the END header, otherwise returns -1 if the END header
++ * was not found or an error occurred.
+  */
+ static jlong
+ findEND(jzfile *zip, void *endbuf)
+@@ -314,7 +314,7 @@
+             }
+         }
+     }
+-    return 0; /* END header not found */
++    return -1; /* END header not found */
+ }
+ 
+ /*
+@@ -460,9 +460,8 @@
+ 
+ /*
+  * Reads zip file central directory. Returns the file position of first
+- * CEN header, otherwise returns 0 if central directory not found or -1
+- * if an error occurred. If zip->msg != NULL then the error was a zip
+- * format error and zip->msg has the error text.
++ * CEN header, otherwise returns -1 if an error occured. If zip->msg != NULL
++ * then the error was a zip format error and zip->msg has the error text.
+  * Always pass in -1 for knownTotal; it's used for a recursive call.
+  */
+ static jlong
+@@ -488,9 +487,9 @@
+ 
+     /* Get position of END header */
+     if ((endpos = findEND(zip, endbuf)) == -1)
+-        return -1; /* system error */
++        return -1; /* no END header or system error */
+ 
+-    if (endpos == 0) return 0;  /* END header not found */
++    if (endpos == 0) return 0;  /* only END header present */
+ 
+     freeCEN(zip);
+ 
+diff -r 7df3f9183f67 -r 275fa248e808 test/java/util/zip/TestEmptyZip.java
+--- openjdk/jdk/test/java/util/zip/TestEmptyZip.java	Mon Oct 20 01:39:38 2008 -0700
++++ openjdk/jdk/test/java/util/zip/TestEmptyZip.java	Tue Nov 11 08:59:43 2008 +0000
+@@ -39,35 +39,24 @@
+             throw new Exception("failed to delete " + zipName);
+         }
+ 
+-        // Verify 0-length file cannot be read
+         f.createNewFile();
+-        ZipFile zf = null;
+         try {
+-            zf = new ZipFile(f);
+-            fail();
+-        } catch (Exception ex) {
+-            check(ex.getMessage().contains("zip file is empty"));
++            // Verify 0-length file cannot be read
++            checkCannotRead(f);
++
++            // Verify non-zip file cannot be read
++            OutputStream out = new FileOutputStream(f);
++            try {
++                out.write("class Foo { }".getBytes());
++            } finally {
++                out.close();
++            }
++            checkCannotRead(f);
++
+         } finally {
+-            if (zf != null) {
+-                zf.close();
+-            }
++            f.delete();
+         }
+ 
+-        ZipInputStream zis = null;
+-        try {
+-            zis = new ZipInputStream(new FileInputStream(f));
+-            ZipEntry ze = zis.getNextEntry();
+-            check(ze == null);
+-        } catch (Exception ex) {
+-            unexpected(ex);
+-        } finally {
+-            if (zis != null) {
+-                zis.close();
+-            }
+-        }
+-
+-        f.delete();
+-
+         // Verify 0-entries file can be written
+         write(f);
+ 
+@@ -78,6 +67,29 @@
+         f.delete();
+     }
+ 
++    static void checkCannotRead(File f) throws IOException {
++        try {
++            new ZipFile(f).close();
++            fail();
++        } catch (ZipException ze) {
++            if (f.length() == 0) {
++                check(ze.getMessage().contains("zip file is empty"));
++            } else {
++                pass();
++            }
++        }
++        ZipInputStream zis = null;
++        try {
++            zis = new ZipInputStream(new FileInputStream(f));
++            ZipEntry ze = zis.getNextEntry();
++            check(ze == null);
++        } catch (IOException ex) {
++            unexpected(ex);
++        } finally {
++            if (zis != null) zis.close();
++        }
++    }
++
+     static void write(File f) throws Exception {
+         ZipOutputStream zos = null;
+         try {

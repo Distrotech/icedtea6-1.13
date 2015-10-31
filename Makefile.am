@@ -636,6 +636,7 @@ ICEDTEA_PATCHES = \
 	patches/pr2486-768_dh.patch \
 	patches/pr2488-1024_dh.patch \
 	patches/openjdk/6440786-pr363-zero_entry_zips.patch \
+	patches/openjdk/6763122-no_zipfile_ctor_exception.patch \
 	patches/openjdk/6599383-pr363-large_zip_files.patch \
 	patches/openjdk/6929479-pr363-disable_mmap_zip.patch \
 	patches/pr2513-layoutengine_reset.patch
