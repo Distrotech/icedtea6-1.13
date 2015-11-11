@@ -12,7 +12,7 @@ JEPX - http://openjdk.java.net/jeps/X
 
 CVE-XXXX-YYYY: http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
-New in release 1.13.9 (2015-10-29):
+New in release 1.13.9 (2015-11-13):
 
 * Security fixes
   - S8048030, CVE-2015-4734: Expectations should be consistent
@@ -40,13 +40,18 @@ New in release 1.13.9 (2015-10-29):
 * Import of OpenJDK6 b37
   - OJ64: Backport hashtable to map changes from jaxp
   - OJ65: Remove @Override annotation on interfaces added by 2015/10/20 security fixes
+  - OJ66: Revert 7110373 & 7149751 test removals now 6706974 is present (krb5 test infrastructure)
+  - OJ67: Fix copyright headers on imported files
+  - OJ68: Ensure SharedSecrets are initialised
   - S6570619: (bf) DirectByteBuffer.get/put(byte[]) does not scale well
   - S6590930: reed/write does not match for ccache
   - S6648972: KDCReq.init always read padata
   - S6676075: RegistryContext (com.sun.jndi.url.rmi.rmiURLContext) coding problem
   - S6682516: SPNEGO_HTTP_AUTH/WWW_KRB and SPNEGO_HTTP_AUTH/WWW_SPNEGO failed on all non-windows platforms
   - S6710360: export Kerberos session key to applications
+  - S6733095: Failure when SPNEGO request non-Mutual
   - S6785456: Read Kerberos setting from Windows environment variables
+  - S6821190: more InquireType values for ExtendedGSSContext
   - S6843127: krb5 should not try to access unavailable kdc too often
   - S6844193: support max_retries in krb5.conf
   - S6844907: krb5 etype order should be from strong to weak
@@ -56,11 +61,14 @@ New in release 1.13.9 (2015-10-29):
   - S6854308: more ktab options
   - S6856069: PrincipalName.clone() does not invoke super.clone()
   - S6857795: krb5.conf ignored if system properties on realm and kdc are provided
+  - S6857802: GSS getRemainingInitLifetime method returns milliseconds not seconds
   - S6858589: more changes to Config on system properties
   - S6862679: ESC: AD Authentication with user with umlauts fails
   - S6877357: IPv6 address does not work
   - S6888701: Change all template java source files to a .java-template file suffix
   - S6893158: AP_REQ check should use key version number
+  - S6907425: JCK Kerberos tests fail since b77
+  - S6919610: KeyTabInputStream uses static field for per-instance value
   - S6932525: Incorrect encryption types of KDC_REQ_BODY of AS-REQ with pre-authentication
   - S6946669: SSL/Krb5 should not call EncryptedData.reset(data, false)
   - S6950546: "ktab -d name etype" to "ktab -d name [-e etype] [kvno | all | old]"
@@ -69,12 +77,16 @@ New in release 1.13.9 (2015-10-29):
   - S6959292: regression: cannot login if session key and preauth does not use the same etype
   - S6960894: Better AS-REQ creation and processing
   - S6966259: Make PrincipalName and Realm immutable
+  - S6975866: api/org_ietf/jgss/GSSContext/index.html#wrapUnwrapIOTest started to fail since jdk7 b102
   - S6984764: kerberos fails if service side keytab is generated using JDK ktab
+  - S6997740: ktab entry related test compilation error
+  - S7018928: test failure: sun/security/krb5/auto/SSL.java
   - S7032354: no-addresses should not be used on acceptor side
   - S7061379: [Kerberos] Cross-realm authentication fails, due to nameType problem
   - S7142596: RMI JPRT tests are failing
   - S7157610: NullPointerException occurs when parsing XML doc
   - S7158329: NPE in sun.security.krb5.Credentials.acquireDefaultCreds()
+  - S7197159: accept different kvno if there no match
   - S8004317: TestLibrary.getUnusedRandomPort() fails intermittently, but exception not reported
   - S8005226: java/rmi/transport/pinClientSocketFactory/PinClientSocketFactory.java fails intermittently
   - S8006534: CLONE - TestLibrary.getUnusedRandomPort() fails intermittently-doesn't retry enough times
@@ -91,6 +103,7 @@ New in release 1.13.9 (2015-10-29):
   - S8087118: Remove missing package from java.security files
   - S8098547: (tz) Support tzdata2015e
   - S8130253: ObjectStreamClass.getFields too restrictive
+  - S8133196, RH1251935: HTTPS hostname invalid issue with InetAddress
   - S8133321: (tz) Support tzdata2015f
   - S8135043: ObjectStreamClass.getField(String) too restrictive
 * Backports
