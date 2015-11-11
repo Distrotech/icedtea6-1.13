@@ -1,7 +1,7 @@
 # Dependencies
 
-OPENJDK_DATE = 10_nov_2015
-OPENJDK_SHA256SUM = 498d6df9794862cadc8cb96bf72bcdf7e4c1028298014cbf0de73f4f32bfeb1d
+OPENJDK_DATE = 11_nov_2015
+OPENJDK_SHA256SUM = 462ac2c28f6dbfb4a18eb46efca232b907d6027f7618715cbc4de5dd73b89e8d
 OPENJDK_VERSION = b37
 OPENJDK_URL = https://java.net/downloads/openjdk6/
 
