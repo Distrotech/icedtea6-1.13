@@ -14,6 +14,37 @@ CVE-XXXX-YYYY: http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
 New in release 1.13.10 (2016-01-XX):
 
+* Security fixes
+  - S8059054, CVE-2016-0402: Better URL processing
+  - S8130710, CVE-2016-0448: Better attributes processing
+  - S8133962, CVE-2016-0466: More general limits
+  - S8137060: JMX memory management improvements
+  - S8139012: Better font substitutions
+  - S8139017, CVE-2016-0483: More stable image decoding
+  - S8140543, CVE-2016-0494: Arrange font actions
+  - S8143185: Cleanup for handling proxies
+  - S8143941, CVE-2015-8126, CVE-2015-8472: Update splashscreen displays
+* Import of OpenJDK6 b38
+  - OJ69: Windows build broken after b37 changes
+  - OJ70: Allow versions of ALSA >= 1.1.0
+  - S6720721: CRL check with circular depency support needed
+  - S6852744: PIT b61: PKI test suite fails because self signed certificates are being rejected [Tests only]
+  - S7166570: JSSE certificate validation has started to fail for certificate chains
+  - S7167988: PKIX CertPathBuilder in reverse mode doesn't work if more than one trust anchor is specified
+  - S7171223: Building ExtensionSubtables.cpp should use -fno-strict-aliasing
+  - S8068761: [TEST_BUG] java/nio/channels/ServerSocketChannel/AdaptServerSocket.java failed with SocketTimeoutException
+  - S8074068: Cleanup in src/share/classes/sun/security/x509/
+  - S8075773: jps running as root fails after the fix of JDK-8050807
+  - S8081297: SSL Problem with Tomcat
+  - S8134605: Partial rework of the fix for 8081297
+  - S8135307: CompletionFailure thrown when calling FieldDoc.type, if the field's type is missing
+  - S8138716: (tz) Support tzdata2015g
+  - S8141213: [Parfait]Potentially blocking function GetArrayLength called in JNI critical region at line 239 of jdk/src/share/native/sun/awt/image/jpeg/jpegdecoder.c in function GET_ARRAYS
+  - S8141287: Add MD5 to jdk.certpath.disabledAlgorithms - Take 2
+  - S8142928: [TEST_BUG] sun/security/provider/certpath/ReverseBuilder/ReverseBuild.java 8u71 failure
+  - S8144955: Wrong changes were pushed with 8143942
+  - S8145551: Test failed with Crash for Improved font lookups
+  - S8147466: Add -fno-strict-overflow to IndicRearrangementProcessor{,2}.cpp
 * Backports
   - S7169111, PR2757: Unreadable menu bar with Ambiance theme in GTK L&F
   - S8140620, PR2711: Find and load default.sf2 as the default soundbank on Linux

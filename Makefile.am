@@ -1,8 +1,8 @@
 # Dependencies
 
-OPENJDK_DATE = 11_nov_2015
-OPENJDK_SHA256SUM = 462ac2c28f6dbfb4a18eb46efca232b907d6027f7618715cbc4de5dd73b89e8d
-OPENJDK_VERSION = b37
+OPENJDK_DATE = 20_jan_2016
+OPENJDK_SHA256SUM = ff88dbcbda6c3c7d80b7cbd28065a455cdb009de9874fcf9ff9ca8205d38a257
+OPENJDK_VERSION = b38
 OPENJDK_URL = https://java.net/downloads/openjdk6/
 
 CACAO_VERSION = 68fe50ac34ec
@@ -463,11 +463,9 @@ ICEDTEA_PATCHES = \
 	patches/remove-gcm-test.patch \
 	patches/skip_wrap_mode.patch \
 	patches/remove_multicatch_in_testrsa.patch \
-	patches/openjdk/p11cipher-4898461-support_ecb_and_cbc.patch \
 	patches/openjdk/p11cipher-6682411-fix_indexoutofboundsexception.patch \
 	patches/openjdk/p11cipher-6682417-fix_decrypted_data_not_multiple_of_blocks.patch \
 	patches/openjdk/p11cipher-6812738-native_cleanup.patch \
-	patches/openjdk/p11cipher-6867345-turkish_regional_options_cause_npe_in_algoid.patch \
 	patches/openjdk/p11cipher-6687725-throw_illegalblocksizeexception.patch \
 	patches/openjdk/p11cipher-6924489-ckr_operation_not_initialized.patch \
 	patches/openjdk/p11cipher-6604496-support_ckm_aes_ctr.patch \

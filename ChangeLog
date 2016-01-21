@@ -1,3 +1,26 @@
+2016-01-20  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(OPENJDK_DATE): Bump to b38 creation date;
+	20th of January, 2016.
+	(OPENJDK_SHA256SUM): Update for b38 tarball.
+
+2016-01-19  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* patches/openjdk/p11cipher-4898461-support_ecb_and_cbc.patch,
+	* patches/openjdk/p11cipher-6867345-turkish_regional_options_cause_npe_in_algoid.patch:
+	Removed; added upstream in OpenJDK 6 b38.
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Remove above patches.
+	* NEWS: Updated.
+	* patches/openjdk/6799141-split_out_versions.patch:
+	Fixed to apply against OPENJDK6-70.
+
+2015-11-26  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(OPENJDK_VERSION): Bump to next release, b38.
+
 2016-01-19  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* Makefile.am:
