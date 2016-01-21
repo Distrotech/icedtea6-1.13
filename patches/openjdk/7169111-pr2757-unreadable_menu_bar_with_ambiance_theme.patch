@@ -1,0 +1,54 @@
+# HG changeset patch
+# User rupashka
+# Date 1342090033 -14400
+#      Thu Jul 12 14:47:13 2012 +0400
+# Node ID 05c69338ee73c1e454aa632ced5cbc057420b404
+# Parent  0039f5c7fb512e1ec2e22bceb69ee324426a684f
+7169111, PR2757: Unreadable menu bar with Ambiance theme in GTK L&F
+Reviewed-by: kizune
+
+diff -r 0039f5c7fb51 -r 05c69338ee73 src/share/classes/com/sun/java/swing/plaf/gtk/GTKLookAndFeel.java
+--- openjdk/jdk/src/share/classes/com/sun/java/swing/plaf/gtk/GTKLookAndFeel.java	Wed Jul 11 16:19:41 2012 -0700
++++ openjdk/jdk/src/share/classes/com/sun/java/swing/plaf/gtk/GTKLookAndFeel.java	Thu Jul 12 14:47:13 2012 +0400
+@@ -796,9 +796,10 @@
+             "Menu.margin", zeroInsets,
+             "Menu.cancelMode", "hideMenuTree",
+             "Menu.alignAcceleratorText", Boolean.FALSE,
++            "Menu.useMenuBarForTopLevelMenus", Boolean.TRUE,
+ 
+ 
+-            "MenuBar.windowBindings", new Object[] {
++                "MenuBar.windowBindings", new Object[] {
+                 "F10", "takeFocus" },
+             "MenuBar.font", new FontLazyValue(Region.MENU_BAR),
+ 
+diff -r 0039f5c7fb51 -r 05c69338ee73 src/share/classes/com/sun/java/swing/plaf/gtk/GTKStyleFactory.java
+--- openjdk/jdk/src/share/classes/com/sun/java/swing/plaf/gtk/GTKStyleFactory.java	Wed Jul 11 16:19:41 2012 -0700
++++ openjdk/jdk/src/share/classes/com/sun/java/swing/plaf/gtk/GTKStyleFactory.java	Thu Jul 12 14:47:13 2012 +0400
+@@ -92,7 +92,13 @@
+                 boolean defaultCapable = btn.isDefaultCapable();
+                 key = new ComplexKey(wt, toolButton, defaultCapable);
+             }
++        } else if (id == Region.MENU) {
++            if (c instanceof JMenu && ((JMenu) c).isTopLevelMenu() &&
++                    UIManager.getBoolean("Menu.useMenuBarForTopLevelMenus")) {
++                wt = WidgetType.MENU_BAR;
++            }
+         }
++
+         if (key == null) {
+             // Otherwise, just use the WidgetType as the key.
+             key = wt;
+diff -r 0039f5c7fb51 -r 05c69338ee73 src/share/classes/javax/swing/plaf/synth/SynthMenuUI.java
+--- openjdk/jdk/src/share/classes/javax/swing/plaf/synth/SynthMenuUI.java	Wed Jul 11 16:19:41 2012 -0700
++++ openjdk/jdk/src/share/classes/javax/swing/plaf/synth/SynthMenuUI.java	Thu Jul 12 14:47:13 2012 +0400
+@@ -299,7 +299,8 @@
+      */
+     @Override
+     public void propertyChange(PropertyChangeEvent e) {
+-        if (SynthLookAndFeel.shouldUpdateStyle(e)) {
++        if (SynthLookAndFeel.shouldUpdateStyle(e) ||
++                (e.getPropertyName().equals("ancestor") && UIManager.getBoolean("Menu.useMenuBarForTopLevelMenus"))) {
+             updateStyle((JMenu)e.getSource());
+         }
+     }
