@@ -1,0 +1,21 @@
+--- a/openjdk/jdk/make/common/shared/Defs-linux.gmk	2013-12-17 09:43:38.644604054 +0000
++++ b/openjdk/jdk/make/common/shared/Defs-linux.gmk	2013-12-17 09:44:14.832897239 +0000
+@@ -27,6 +27,18 @@
+ # Definitions for Linux.
+ #
+ 
++ifeq ($(ARCH), amd64)
++OTHER_LDFLAGS  +=      -L=/usr/lib64 -L=/usr/lib64/x86_64
++else
++ifeq ($(ARCH), ilp32)
++OTHER_LDFLAGS  +=      -L=/usr/libx32 -L=/usr/libx32/i686
++else
++ifeq ($(ARCH), i586)
++OTHER_LDFLAGS  +=      -L=/usr/lib -L=/usr/lib/i686
++endif
++endif
++endif
++
+ # MOTIF_REQUIRED setting must be true or false
+ ifdef MOTIF_REQUIRED
+   ifneq ($(MOTIF_REQUIRED), false)

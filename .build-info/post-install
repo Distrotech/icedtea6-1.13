@@ -1,0 +1,9 @@
+#!/bin/bash
+
+mkdir -p ${3}/usr/${B_LIBDIRS}/jvm/
+
+rsync -avP openjdk.build/j2re-image/ ${3}/usr/${B_LIBDIRS}/jvm/jre-${JAVA6_VER}/
+rsync -avP openjdk.build/j2sdk-image/ ${3}/usr/${B_LIBDIRS}/jvm/jdk-${JAVA6_VER}/
+
+ln -srf ${3}/etc/ssl/certs/java/cacerts ${3}/usr/${B_LIBDIRS}/jvm/jre-${JAVA6_VER}/lib/security/cacerts
+ln -srf ${3}/etc/ssl/certs/java/cacerts ${3}/usr/${B_LIBDIRS}/jvm/jdk-${JAVA6_VER}/jre/lib/security/cacerts
