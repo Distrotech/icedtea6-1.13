@@ -1,0 +1,16 @@
+#!/bin/bash
+
+if [ ! -d ../.build-info/src/${1} ];then
+  mkdir -p ../.build-info/src/${1}
+ else
+  /bin/cp ../.build-info/src/${1}/* ./
+fi;
+
+make patch
+
+cp *.tar.gz ../.build-info/src/${1}/
+
+for dpatch in X11R7 mlib cur gcc5;do
+  echo "Applying distrotech ${dpatch} patch"
+  patch -p1 -N -s -r - -i ../.build-info/distrotech-icedtea6-${dpatch}.patch
+done
