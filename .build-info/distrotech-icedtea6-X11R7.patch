@@ -26,21 +26,24 @@ diff -ur a/openjdk/jdk/make/common/Defs-linux.gmk b/openjdk/jdk/make/common/Defs
 diff -ur a/openjdk/jdk/make/sun/awt/mawt.gmk b/openjdk/jdk/make/sun/awt/mawt.gmk
 --- a/openjdk/jdk/make/sun/awt/mawt.gmk	2013-12-10 22:33:53.543390949 +0000
 +++ b/openjdk/jdk/make/sun/awt/mawt.gmk	2013-12-10 22:37:11.292367576 +0000
-@@ -146,11 +146,11 @@
-             LIBXT = -lXt
-         else
-         # Allows for builds on Debian GNU Linux, X11 is in a different place 
--	    LIBXT = $(firstword $(wildcard /usr/X11R6/lib/libXt.a) \
-+	    LIBXT = $(firstword $(wildcard /opt/Xorg/lib/libXt.a) \
-                             $(wildcard /usr/lib/libXt.a))
--	    LIBSM = $(firstword $(wildcard /usr/X11R6/lib/libSM.a) \
-+	    LIBSM = $(firstword $(wildcard /opt/Xorg/lib/libSM.a) \
-                             $(wildcard /usr/lib/libSM.a))
--	    LIBICE = $(firstword $(wildcard /usr/X11R6/lib/libICE.a) \
-+	    LIBICE = $(firstword $(wildcard /opt/Xorg/lib/libICE.a) \
-                              $(wildcard /usr/lib/libICE.a))
- 	endif
-     endif
+@@ -149,13 +149,13 @@
+         LIBXT = -lXt
+     else
+     # Allows for builds on Debian GNU Linux, X11 is in a different place 
+-       LIBXT = $(firstword $(wildcard /usr/X11R6/lib/libXt.a) \
++       LIBXT = $(firstword $(wildcard /opt/Xorg/lib/libXt.a) \
+                         $(wildcard /usr/lib/libXt.a))
+-       LIBSM = $(firstword $(wildcard /usr/X11R6/lib/libSM.a) \
++       LIBSM = $(firstword $(wildcard /opt/Xorg/lib/libSM.a) \
+                         $(wildcard /usr/lib/libSM.a))
+-       LIBICE = $(firstword $(wildcard /usr/X11R6/lib/libICE.a) \
++       LIBICE = $(firstword $(wildcard /opt/Xorg/lib/libICE.a) \
+                          $(wildcard /usr/lib/libICE.a))
+-       LIBXTST = $(firstword $(wildcard /usr/X11R6/lib/libXtst.a) \
++       LIBXTST = $(firstword $(wildcard /opt/Xorg/lib/libXtst.a) \
+                          $(wildcard /usr/lib/libXtst.a))
+    endif
+ endif
 @@ -225,8 +225,7 @@
  
  ifeq ($(PLATFORM), linux)
@@ -54,12 +57,13 @@ diff -ur a/openjdk/jdk/make/sun/awt/mawt.gmk b/openjdk/jdk/make/sun/awt/mawt.gmk
 diff -ur a/openjdk/jdk/make/sun/font/Makefile b/openjdk/jdk/make/sun/font/Makefile
 --- a/openjdk/jdk/make/sun/font/Makefile	2013-12-10 22:33:55.252416823 +0000
 +++ b/openjdk/jdk/make/sun/font/Makefile	2013-12-10 22:37:11.297367651 +0000
-@@ -163,7 +163,7 @@
- ifndef OPENJDK
+@@ -170,7 +170,8 @@
    CPPFLAGS += -I$(CLOSED_SRC)/share/native/$(PKGDIR)/t2k
  else
--  CPPFLAGS += -I$(FREETYPE_HEADERS_PATH) -I$(FREETYPE_HEADERS_PATH)/freetype2
-+  CPPFLAGS += -I=$(FREETYPE_HEADERS_PATH) -I=$(FREETYPE_HEADERS_PATH)/freetype2 -I=/opt/Xorg/include
+   CPPFLAGS += $(FREETYPE_HEADERS) $(FREETYPE_HEADERS)/freetype2 \
+-	-I$(FREETYPE_HEADERS_PATH) -I$(FREETYPE_HEADERS_PATH)/freetype2
++	-I=$(FREETYPE_HEADERS_PATH) -I=$(FREETYPE_HEADERS_PATH)/freetype2 \
++	-I=/opt/Xorg/include
    OTHER_LDLIBS += $(FREETYPE_LIB)
  endif
  
