@@ -434,13 +434,16 @@ public:
 ]])], [AC_MSG_RESULT([yes])], [AC_MSG_ERROR([systemtap sdt.h or g++ too old])])
   AC_LANG_POP([C++])
 
-  if test "x${SDT_H_FOUND}" = "xyes"; then
-    AC_PATH_TOOL([PERL],[perl])
-    if test x"${PERL}" = x ; then
-      AC_MSG_WARN([Perl not found in PATH; SystemTap tests will not be able to run])
-    fi
-    AC_SUBST(PERL)
+  AC_PATH_TOOL([PERL],[perl])
+  if test x"${PERL}" = x ; then
+    AC_MSG_WARN([Perl not found in PATH; SystemTap tests will not be able to run])
   fi
+  AC_SUBST(PERL)
+  AC_PATH_TOOL([STAP],[stap])
+  if test x"${STAP}" = x ; then
+    AC_MSG_WARN([stap not found in PATH; SystemTap tests will not be able to run])
+  fi
+  AC_SUBST(STAP)
 
   ABS_CLIENT_LIBJVM_SO="${ABS_JAVA_HOME_DIR}/jre/lib/${INSTALL_ARCH_DIR}/client/libjvm.so"
   ABS_SERVER_LIBJVM_SO="${ABS_JAVA_HOME_DIR}/jre/lib/${INSTALL_ARCH_DIR}/server/libjvm.so"
@@ -450,6 +453,7 @@ public:
   AC_CONFIG_FILES([tapset/hotspot_jni.stp])
   AC_CONFIG_FILES([tapset/jstack.stp])
   AC_CONFIG_FILES([tapset/hotspot_gc.stp])
+  AC_CONFIG_FILES([test/tapset/jstaptest.pl])
 fi
 
 dnl Check for libXtst headers and libraries.

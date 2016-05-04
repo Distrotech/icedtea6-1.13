@@ -1,3 +1,26 @@
+2016-05-03  Andrew John Hughes  <gnu.andrew@member.fsf.org>
+
+	PR2887: Location of 'stap' executable is hard-coded
+	* configure.ac:
+	Remove SDT_H_FOUND conditional around perl and stap
+	tests as, in 1.x, we still have --enable-systemtap
+	and fail if sdt.h is not found.
+
+2016-03-18  Andrew John Hughes  <gnu.andrew@member.fsf.org>
+
+	PR2887: Location of 'stap' executable is hard-coded
+	* Makefile.am:
+	(check-tapset-probes): Check for STAP and invoke
+	generated script from build directory.
+	(check-tapset-jstack): Likewise.
+	* NEWS: Updated.
+	* configure.ac: Detect stap and warn if not found.
+	Generate test/tapset/jstaptest.pl.
+	* test/tapset/jstaptest.pl.in:
+	Moved from test/tapset/jstaptest.pl. Fill in location
+	of stap and perl binaries from configure output.
+	Fix capitalisation of "IcedTea".
+
 2016-01-29  Andrew John Hughes  <gnu.andrew@member.fsf.org>
 
 	PR2952: test/tapset/jstaptest.pl requires Perl
