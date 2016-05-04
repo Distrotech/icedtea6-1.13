@@ -14,6 +14,68 @@ CVE-XXXX-YYYY: http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
 New in release 1.13.11 (2016-04-XX):
 
+* Security fixes
+  - S8129952, CVE-2016-0686: Ensure thread consistency
+  - S8132051, CVE-2016-0687: Better byte behavior
+  - S8138593, CVE-2016-0695: Make DSA more fair
+  - S8139008: Better state table management
+  - S8143167, CVE-2016-3425: Better buffering of XML strings
+  - S8144430, CVE-2016-3427: Improve JMX connections
+  - S8146494: Better ligature substitution
+  - S8146498: Better device table adjustments
+* Import of OpenJDK6 b38
+  - S4459600: java -jar fails to run Main-Class if classname followed by whitespace.
+  - S6378099: RFE: Use libfontconfig to create/synthesise a fontconfig.properties
+  - S6452854: Provide a flag to print the java configuration
+  - S6742159: (launcher) improve the java launching mechanism
+  - S6752622: java.awt.Font.getPeer throws "java.lang.InternalError: Not implemented" on Linux
+  - S6758881: (launcher) needs to throw NoClassDefFoundError instead of JavaRuntimeException
+  - S6856415: Enabling java security manager will make program thrown wrong exception ( main method not found )
+  - S6892493: potential memory leaks in 2D font code indentified by parfait.
+  - S6925851: Localize JRE into pt_BR (corba)
+  - S6968053: (launcher) hide exceptions under certain launcher failures
+  - S6977738: Deadlock between java.lang.ClassLoader and java.util.Properties
+  - S6981001: (launcher) EnsureJREInstallation is not being called in order
+  - S7017734: jdk7 message drop 1 translation integration
+  - S7026184: (launcher) Regression: class with unicode name can't be launched by java.
+  - S7104161: test/sun/tools/jinfo/Basic.sh fails on Ubuntu
+  - S7125442: jar application located in two bytes character named folder cannot be run with JRE 7 u1/u2
+  - S7127906: (launcher) convert the launcher regression tests to java
+  - S7141141: Add 3 new test scenarios for testing Main-Class attribute in jar manifest file
+  - S7158988: jvm crashes while debugging on x86_32 and x86_64
+  - S7189944: (launcher) test/tools/launcher/Arrrrghs.java needs a couple of minor fixes
+  - S7193318: C2: remove number of inputs requirement from Node's new operator
+  - S8002116: This JdbReadTwiceTest.sh gets an exit 1
+  - S8004007: test/sun/tools/jinfo/Basic.sh fails on when runSA is set to true
+  - S8023990: Regression: postscript size increase from 6u18
+  - S8027705: com/sun/jdi/JdbMethodExitTest.sh fails when a background thread is generating events.
+  - S8028537: PPC64: Updated the JDK regression tests to run on AIX
+  - S8036132: Tab characters in test/com/sun/jdi files
+  - S8038963: com/sun/jdi tests fail because cygwin's ps sometimes misses processes
+  - S8044419: TEST_BUG: com/sun/jdi/JdbReadTwiceTest.sh fails when run under root
+  - S8059661: Test SoftReference and OOM behavior
+  - S8067364: Printing to Postscript doesn't support dieresis
+  - S8072753: Nondeterministic wrong answer on arithmetic
+  - S8073735: [TEST_BUG] compiler/loopopts/CountedLoopProblem.java got OOME
+  - S8074146: [TEST_BUG] jdb has succeded to read an unreadable file
+  - S8075584: test for 8067364 depends on hardwired text advance
+  - S8134297: NPE in GSSNameElement nameType check
+  - S8134650: Xsl transformation gives different results in 8u66
+  - S8141229: [Parfait] Null pointer dereference in cmsstrcasecmp of cmserr.c
+  - S8143002: [Parfait] JNI exception pending in fontpath.c:1300
+  - S8146477: [TEST_BUG] ClientJSSEServerJSSE.java failing again
+  - S8146967: [TEST_BUG] javax/security/auth/SubjectDomainCombiner/Optimize.java should use 4-args ProtectionDomain constructor
+  - S8147567: InterpreterRuntime::post_field_access not updated for boolean in JDK-8132051
+  - S8148446: (tz) Support tzdata2016a
+  - S8148475: Missing SA Bytecode updates.
+  - S8149170: Better byte behavior for native arguments
+  - S8149367: PolicyQualifierInfo/index_Ctor JCk test fails with IOE: Invalid encoding for PolicyQualifierInfo
+  - S8150012: Better byte behavior for reflection
+  - S8150790: 8u75 L10n resource file translation update
+  - S8154210: Zero: Better byte behaviour
+  - S8155261: Zero broken since HS23 update
+  - S8155699: Resolve issues created by backports in OpenJDK 6 b39
+  - S8155746: Sync Windows export list in make/java/jli/Makefile with make/java/jli/mapfile-vers
 * Backports
   - S6863746, PR2951: javap should not scan ct.sym by default
   - S8071705, PR2820, RH1182694: Java application menu misbehaves when running multiple screen stacked vertically

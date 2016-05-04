@@ -1,3 +1,51 @@
+2016-05-03  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(OPENJDK_DATE): Bump to b39 creation date;
+	3rd of May, 2016.
+	(OPENJDK_SHA256SUM): Update for b39 tarball.
+
+2016-05-03  Andrew John Hughes  <gnu.andrew@member.fsf.org>
+
+	* patches/openjdk/8039921-sha1_1024plus.patch:
+	Remove further b39 patch missed in earlier batch.
+
+2016-05-03  Andrew John Hughes  <gnu.andrew@member.fsf.org>
+
+	* patches/openjdk/4963723-implement_sha-224.patch,
+	* patches/openjdk/6578658-sunmscapi_nonewithrsa.patch,
+	* patches/openjdk/6753664-sunmscapi_sha-256.patch,
+	* patches/openjdk/6956398-ephemeraldhkeysize.patch,
+	* patches/openjdk/7033170-getmaxallowedkeylength_throws_exception.patch,
+	* patches/openjdk/7044060-support_nsa_suite_b.patch,
+	* patches/openjdk/7106773-512_bits_rsa.patch,
+	* patches/openjdk/8006935-long_keys_in_hmac_prf.patch,
+	* patches/openjdk/8087120-zero_gcc5.patch,
+	* patches/openjdk/p11cipher-6414899-p11digest_should_support_cloning.patch,
+	* patches/openjdk/p11cipher-6604496-support_ckm_aes_ctr.patch,
+	* patches/openjdk/p11cipher-6812738-native_cleanup.patch,
+	* patches/openjdk/p11cipher-6924489-ckr_operation_not_initialized.patch,
+	* patches/pr2486-768_dh.patch,
+	* patches/pr2488-1024_dh.patch:
+	Remove patches upstreamed in b39.
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Remove above patches.
+	* NEWS: Updated.
+	* patches/openjdk/7170638-systemtap.patch:
+	Regenerated due to copyright header change in jni.cpp.
+
+2016-05-03  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* patches/hotspot/hs23/zero_fixes.patch:
+	Remove fragments upstreamed in 8155261.
+	* patches/hotspot/hs23/zero_hs22.patch:
+	Likewise.
+
+2016-01-29  Andrew John Hughes  <gnu.andrew@redhat.com>
+
+	* Makefile.am:
+	(OPENJDK_VERSION): Bump to next release, b39.
+
 2016-05-03  Andrew John Hughes  <gnu.andrew@member.fsf.org>
 
 	PR2887: Location of 'stap' executable is hard-coded

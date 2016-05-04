@@ -10,8 +10,8 @@ Reviewed-by: coleenp, kamg, dholmes, sspitsyn
 Contributed-by: Mark Wielaard <mjw@redhat.com>
 
 diff -Nru openjdk.orig/hotspot/make/bsd/makefiles/buildtree.make openjdk/hotspot/make/bsd/makefiles/buildtree.make
---- openjdk.orig/hotspot/make/bsd/makefiles/buildtree.make	2015-04-09 02:20:24.000000000 +0100
-+++ openjdk/hotspot/make/bsd/makefiles/buildtree.make	2015-07-22 03:46:03.362170724 +0100
+--- openjdk.orig/hotspot/make/bsd/makefiles/buildtree.make	2016-05-03 23:39:23.113016118 +0100
++++ openjdk/hotspot/make/bsd/makefiles/buildtree.make	2016-05-04 00:26:06.226759102 +0100
 @@ -162,6 +162,13 @@
    endif
  endif
@@ -35,8 +35,8 @@ diff -Nru openjdk.orig/hotspot/make/bsd/makefiles/buildtree.make openjdk/hotspot
  	echo "# Used for platform dispatching"; \
  	echo "TARGET_DEFINES  = -DTARGET_OS_FAMILY_\$$(Platform_os_family)"; \
 diff -Nru openjdk.orig/hotspot/make/linux/makefiles/buildtree.make openjdk/hotspot/make/linux/makefiles/buildtree.make
---- openjdk.orig/hotspot/make/linux/makefiles/buildtree.make	2015-07-22 03:45:38.710600424 +0100
-+++ openjdk/hotspot/make/linux/makefiles/buildtree.make	2015-07-22 03:46:19.929881934 +0100
+--- openjdk.orig/hotspot/make/linux/makefiles/buildtree.make	2016-05-04 00:25:18.651544017 +0100
++++ openjdk/hotspot/make/linux/makefiles/buildtree.make	2016-05-04 00:26:06.226759102 +0100
 @@ -155,6 +155,13 @@
    endif
  endif
@@ -60,8 +60,8 @@ diff -Nru openjdk.orig/hotspot/make/linux/makefiles/buildtree.make openjdk/hotsp
  	echo "DISTRIBUTION_ID = $(DISTRIBUTION_ID)"; \
  	echo; \
 diff -Nru openjdk.orig/hotspot/make/linux/makefiles/dtrace.make openjdk/hotspot/make/linux/makefiles/dtrace.make
---- openjdk.orig/hotspot/make/linux/makefiles/dtrace.make	2015-04-09 02:20:11.000000000 +0100
-+++ openjdk/hotspot/make/linux/makefiles/dtrace.make	2015-07-22 03:46:03.362170724 +0100
+--- openjdk.orig/hotspot/make/linux/makefiles/dtrace.make	2016-05-03 23:39:06.653287621 +0100
++++ openjdk/hotspot/make/linux/makefiles/dtrace.make	2016-05-04 00:26:06.226759102 +0100
 @@ -1,5 +1,6 @@
  #
 -# Copyright (c) 2005, 2008, Oracle and/or its affiliates. All rights reserved.
@@ -112,8 +112,8 @@ diff -Nru openjdk.orig/hotspot/make/linux/makefiles/dtrace.make openjdk/hotspot/
 +# It doesn't support HAVE_DTRACE_H though.
 +
 diff -Nru openjdk.orig/hotspot/make/linux/makefiles/vm.make openjdk/hotspot/make/linux/makefiles/vm.make
---- openjdk.orig/hotspot/make/linux/makefiles/vm.make	2015-07-22 03:45:38.714600354 +0100
-+++ openjdk/hotspot/make/linux/makefiles/vm.make	2015-07-22 03:46:42.457489257 +0100
+--- openjdk.orig/hotspot/make/linux/makefiles/vm.make	2016-05-04 00:25:18.651544017 +0100
++++ openjdk/hotspot/make/linux/makefiles/vm.make	2016-05-04 00:26:06.226759102 +0100
 @@ -394,7 +394,7 @@
  
  #----------------------------------------------------------------------
@@ -124,8 +124,8 @@ diff -Nru openjdk.orig/hotspot/make/linux/makefiles/vm.make openjdk/hotspot/make
  install: install_jvm install_jsig install_saproc
  
 diff -Nru openjdk.orig/hotspot/make/solaris/makefiles/buildtree.make openjdk/hotspot/make/solaris/makefiles/buildtree.make
---- openjdk.orig/hotspot/make/solaris/makefiles/buildtree.make	2015-04-09 02:20:13.000000000 +0100
-+++ openjdk/hotspot/make/solaris/makefiles/buildtree.make	2015-07-22 03:46:03.362170724 +0100
+--- openjdk.orig/hotspot/make/solaris/makefiles/buildtree.make	2016-05-03 23:39:09.757236421 +0100
++++ openjdk/hotspot/make/solaris/makefiles/buildtree.make	2016-05-04 00:26:06.226759102 +0100
 @@ -147,6 +147,13 @@
    endif
  endif
@@ -149,16 +149,16 @@ diff -Nru openjdk.orig/hotspot/make/solaris/makefiles/buildtree.make openjdk/hot
  	echo; \
  	echo "# Used for platform dispatching"; \
 diff -Nru openjdk.orig/hotspot/src/share/vm/prims/jni.cpp openjdk/hotspot/src/share/vm/prims/jni.cpp
---- openjdk.orig/hotspot/src/share/vm/prims/jni.cpp	2015-04-09 02:20:26.000000000 +0100
-+++ openjdk/hotspot/src/share/vm/prims/jni.cpp	2015-07-22 03:46:03.366170655 +0100
+--- openjdk.orig/hotspot/src/share/vm/prims/jni.cpp	2016-05-03 23:59:23.705202879 +0100
++++ openjdk/hotspot/src/share/vm/prims/jni.cpp	2016-05-04 00:26:20.690520468 +0100
 @@ -1,5 +1,6 @@
  /*
-  * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+  * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
 + * Copyright (c) 2012 Red Hat, Inc.
   * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
   *
   * This code is free software; you can redistribute it and/or modify it
-@@ -2819,10 +2820,9 @@
+@@ -2841,10 +2842,9 @@
  JNI_QUICK_ENTRY(void, jni_Set##Result##Field(JNIEnv *env, jobject obj, jfieldID fieldID, Argument value)) \
    JNIWrapper("Set" XSTR(Result) "Field"); \
  \
@@ -172,7 +172,7 @@ diff -Nru openjdk.orig/hotspot/src/share/vm/prims/jni.cpp openjdk/hotspot/src/sh
  \
    oop o = JNIHandles::resolve_non_null(obj); \
    klassOop k = o->klass(); \
-@@ -3129,10 +3129,9 @@
+@@ -3152,10 +3152,9 @@
  \
  JNI_ENTRY(void, jni_SetStatic##Result##Field(JNIEnv *env, jclass clazz, jfieldID fieldID, Argument value)) \
    JNIWrapper("SetStatic" XSTR(Result) "Field"); \
@@ -187,8 +187,8 @@ diff -Nru openjdk.orig/hotspot/src/share/vm/prims/jni.cpp openjdk/hotspot/src/sh
    JNIid* id = jfieldIDWorkaround::from_static_jfieldID(fieldID); \
    assert(id->is_static_field_id(), "invalid static field id"); \
 diff -Nru openjdk.orig/hotspot/src/share/vm/utilities/dtrace.hpp openjdk/hotspot/src/share/vm/utilities/dtrace.hpp
---- openjdk.orig/hotspot/src/share/vm/utilities/dtrace.hpp	2015-04-09 02:20:21.000000000 +0100
-+++ openjdk/hotspot/src/share/vm/utilities/dtrace.hpp	2015-07-22 03:46:03.366170655 +0100
+--- openjdk.orig/hotspot/src/share/vm/utilities/dtrace.hpp	2016-05-03 23:39:18.405093776 +0100
++++ openjdk/hotspot/src/share/vm/utilities/dtrace.hpp	2016-05-04 00:26:06.226759102 +0100
 @@ -1,5 +1,6 @@
  /*
 - * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.

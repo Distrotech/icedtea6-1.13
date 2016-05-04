@@ -1,8 +1,8 @@
 # Dependencies
 
-OPENJDK_DATE = 20_jan_2016
-OPENJDK_SHA256SUM = ff88dbcbda6c3c7d80b7cbd28065a455cdb009de9874fcf9ff9ca8205d38a257
-OPENJDK_VERSION = b38
+OPENJDK_DATE = 03_may_2016
+OPENJDK_SHA256SUM = d11dc2ababe88e7891f1abbd7fa4fe033a65dea22c071331a641374b3247717f
+OPENJDK_VERSION = b39
 OPENJDK_URL = https://java.net/downloads/openjdk6/
 
 CACAO_VERSION = 68fe50ac34ec
@@ -465,11 +465,7 @@ ICEDTEA_PATCHES = \
 	patches/remove_multicatch_in_testrsa.patch \
 	patches/openjdk/p11cipher-6682411-fix_indexoutofboundsexception.patch \
 	patches/openjdk/p11cipher-6682417-fix_decrypted_data_not_multiple_of_blocks.patch \
-	patches/openjdk/p11cipher-6812738-native_cleanup.patch \
 	patches/openjdk/p11cipher-6687725-throw_illegalblocksizeexception.patch \
-	patches/openjdk/p11cipher-6924489-ckr_operation_not_initialized.patch \
-	patches/openjdk/p11cipher-6604496-support_ckm_aes_ctr.patch \
-	patches/openjdk/p11cipher-6414899-p11digest_should_support_cloning.patch \
 	patches/traceable.patch \
 	patches/pr1319-support_giflib_5.patch \
 	patches/openjdk/6718364-inference_failure.patch \
@@ -581,15 +577,8 @@ ICEDTEA_PATCHES = \
 	patches/shark_fixes_from_8003868.patch \
 	patches/8003992_support_6.patch \
 	patches/shark-drop_compile_method_arg_following_7083786.patch \
-	patches/openjdk/4963723-implement_sha-224.patch \
 	patches/openjdk/7180907-jarsigner_sha-256.patch \
 	patches/openjdk/8049480-jarsigner_openjdk_9.patch \
-	patches/openjdk/6753664-sunmscapi_sha-256.patch \
-	patches/openjdk/6578658-sunmscapi_nonewithrsa.patch \
-	patches/openjdk/7033170-getmaxallowedkeylength_throws_exception.patch \
-	patches/openjdk/7044060-support_nsa_suite_b.patch \
-	patches/openjdk/8006935-long_keys_in_hmac_prf.patch \
-	patches/openjdk/7106773-512_bits_rsa.patch \
 	patches/pr1904-icedtea_and_distro_versioning.patch \
 	patches/openjdk/8017173-xml_cipher_rsa_oaep_cant_be_instantiated.patch \
 	patches/openjdk/8000897-pr2173-vm_crash_in_compilebroker.patch \
@@ -605,7 +594,6 @@ ICEDTEA_PATCHES = \
 	patches/pr2226-support_future_giflib_6_and_up.patch \
 	patches/openjdk/4890063-hprof_truncation.patch \
 	patches/openjdk/6562615-compiler_warnings.patch \
-	patches/openjdk/6956398-ephemeraldhkeysize.patch \
 	patches/openjdk/6989466-compiler_warnings.patch \
 	patches/openjdk/6991580-ipv6_nameservers.patch \
 	patches/openjdk/7007905-javazic_line_numbers.patch \
@@ -615,7 +603,6 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/7133138-timezone_io_improvement.patch \
 	patches/openjdk/8011709-canonshaping_memory_leak.patch \
 	patches/openjdk/8023052-jvm_crash_in_native_layout.patch \
-	patches/openjdk/8039921-sha1_1024plus.patch \
 	patches/openjdk/8041451-ldap_read_timeout_abandon.patch \
 	patches/openjdk/8042855-indiclayoutengine_null_dereference.patch \
 	patches/openjdk/7094377-ldaps_timeout.patch \
@@ -627,12 +614,9 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/8074761-ldap_empty_optional_params.patch \
 	patches/openjdk/8078654-closettfontfilefunc.patch \
 	patches/openjdk/8081315-giflib_interlacing.patch \
-	patches/openjdk/8087120-zero_gcc5.patch \
 	patches/pr2319-policy_jar_checksum.patch \
 	patches/pr2460-policy_jar_timestamp.patch \
 	patches/pr2481_sysconfig_clock_spaces.patch \
-	patches/pr2486-768_dh.patch \
-	patches/pr2488-1024_dh.patch \
 	patches/openjdk/6440786-pr363-zero_entry_zips.patch \
 	patches/openjdk/6763122-no_zipfile_ctor_exception.patch \
 	patches/openjdk/6599383-pr363-large_zip_files.patch \
