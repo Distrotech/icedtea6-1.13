@@ -1,5 +1,14 @@
 2016-05-03  Andrew John Hughes  <gnu.andrew@redhat.com>
 
+	PR2953: make dist fails after PR2887 made
+	jstaptest.pl auto-generated
+	* Makefile.am:
+	(TAPSET_TEST_SRCS): Remove jstaptest.pl which
+	is now auto-generated and handled by autotools.
+	* NEWS: Updated.
+
+2016-05-03  Andrew John Hughes  <gnu.andrew@redhat.com>
+
 	* NEWS: Set provisional release date of the 5th.
 	* configure.ac: Bump to 1.13.11.
 

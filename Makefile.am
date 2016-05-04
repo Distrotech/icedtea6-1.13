@@ -270,7 +270,6 @@ TAPSET_TEST_SRCS = \
 	$(top_srcdir)/test/tapset/JNITestClass.c \
 	$(top_srcdir)/test/tapset/JNITestClass.h \
 	$(top_srcdir)/test/tapset/JNITestClass.java \
-	$(top_srcdir)/test/tapset/jstaptest.pl \
 	$(top_srcdir)/test/tapset/RunWrapper.java \
 	$(top_srcdir)/test/tapset/StapJNIClassLoader.java \
 	$(top_srcdir)/test/tapset/StapURLClassLoader.java \
