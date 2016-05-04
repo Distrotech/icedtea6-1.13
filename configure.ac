@@ -327,8 +327,8 @@ then
   AC_MSG_ERROR([Could not find Xproto headers - \
   Try installing xorg-x11-proto-devel.])
 fi
-AC_SUBST(XT_CFLAGS)
-AC_SUBST(XT_LIBS)
+AC_SUBST(XPROTO_CFLAGS)
+AC_SUBST(XPROTO_LIBS)
 
 dnl Check for libXt headers and libraries.
 PKG_CHECK_MODULES(XT, xt,[XT_FOUND=yes],[XT_FOUND=no])
@@ -360,6 +360,13 @@ then
 fi
 AC_SUBST(XINERAMA_CFLAGS)
 AC_SUBST(XINERAMA_LIBS)
+
+PKG_CHECK_MODULES(XCOMPOSITE, xcomposite, [XCOMPOSITE_FOUND=yes], [XCOMPOSITE_FOUND=no])
+if test "x${XCOMPOSITE_FOUND}" = xno
+then AC_MSG_ERROR([Could not find Xcomposite extension.  Try installing libXcomposite-devel.])
+fi
+AC_SUBST(XCOMPOSITE_CFLAGS)
+AC_SUBST(XCOMPOSITE_LIBS)
 
 if test "x${ENABLE_XRENDER}" = "xyes"
 then

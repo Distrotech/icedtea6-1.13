@@ -1,0 +1,111 @@
+# HG changeset patch
+# User jjg
+# Date 1248472021 25200
+#      Fri Jul 24 14:47:01 2009 -0700
+# Node ID 6314258404082d265b65fd8dce47de6ad550a50a
+# Parent  49387c1440d088a737f21c332835fcb06fc0d1b2
+6863746: javap should not scan ct.sym by default
+Reviewed-by: mcimadamore
+
+diff -r 49387c1440d0 -r 631425840408 src/share/classes/com/sun/tools/javap/JavapFileManager.java
+--- openjdk/langtools/src/share/classes/com/sun/tools/javap/JavapFileManager.java	Thu Jul 23 14:15:58 2009 -0700
++++ openjdk/langtools/src/share/classes/com/sun/tools/javap/JavapFileManager.java	Fri Jul 24 14:47:01 2009 -0700
+@@ -44,6 +44,7 @@
+ class JavapFileManager extends JavacFileManager {
+     private JavapFileManager(Context context, Charset charset) {
+         super(context, true, charset);
++        setIgnoreSymbolFile(true);
+     }
+ 
+     static JavapFileManager create(final DiagnosticListener<? super JavaFileObject> dl, PrintWriter log, Options options) {
+diff -r 49387c1440d0 -r 631425840408 src/share/classes/com/sun/tools/javap/JavapTask.java
+--- openjdk/langtools/src/share/classes/com/sun/tools/javap/JavapTask.java	Thu Jul 23 14:15:58 2009 -0700
++++ openjdk/langtools/src/share/classes/com/sun/tools/javap/JavapTask.java	Fri Jul 24 14:47:01 2009 -0700
+@@ -235,12 +235,6 @@
+             }
+         },
+ 
+-        new Option(false, "-XDignore.symbol.file") {
+-            void process(JavapTask task, String opt, String arg) {
+-                task.options.ignoreSymbolFile = true;
+-            }
+-        },
+-
+         new Option(false, "-XDdetails") {
+             void process(JavapTask task, String opt, String arg) {
+                 task.options.details = EnumSet.allOf(InstructionDetailWriter.Kind.class);
+@@ -477,9 +471,6 @@
+             throw new BadArgs("err.incompatible.options", sb);
+         }
+ 
+-        if (options.ignoreSymbolFile && fileManager instanceof JavapFileManager)
+-            ((JavapFileManager) fileManager).setIgnoreSymbolFile(true);
+-
+         if ((classes == null || classes.size() == 0) &&
+                 !(noArgs || options.help || options.version || options.fullVersion)) {
+             throw new BadArgs("err.no.classes.specified");
+diff -r 49387c1440d0 -r 631425840408 src/share/classes/com/sun/tools/javap/Options.java
+--- openjdk/langtools/src/share/classes/com/sun/tools/javap/Options.java	Thu Jul 23 14:15:58 2009 -0700
++++ openjdk/langtools/src/share/classes/com/sun/tools/javap/Options.java	Fri Jul 24 14:47:01 2009 -0700
+@@ -88,5 +88,4 @@
+ 
+     public boolean compat;             // bug-for-bug compatibility mode with old javap
+     public boolean jsr277;
+-    public boolean ignoreSymbolFile;   // file manager should ignore ct.sym
+ }
+diff -r 49387c1440d0 -r 631425840408 test/tools/javap/T6863746.java
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/langtools/test/tools/javap/T6863746.java	Fri Jul 24 14:47:01 2009 -0700
+@@ -0,0 +1,52 @@
++/*
++ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
++ * CA 95054 USA or visit www.sun.com if you need additional information or
++ * have any questions.
++ */
++
++import java.io.*;
++
++/*
++ * @test
++ * @bug 6863746
++ * @summary javap should not scan ct.sym by default
++ */
++
++public class T6863746 {
++    public static void main(String... args) throws Exception{
++        new T6863746().run();
++    }
++
++    public void run() throws Exception {
++        String[] args = { "-c", "java.lang.Object" };
++        StringWriter sw = new StringWriter();
++        PrintWriter pw = new PrintWriter(sw);
++        int rc = com.sun.tools.javap.Main.run(args, pw);
++        pw.close();
++        String out = sw.toString();
++        System.out.println(out);
++        String[] lines = out.split("\n");
++        // If ct.sym is being read, the output does not include
++        // Code attributes, so check for Code attributes as a
++        // way of detecting that ct.sym is not being used.
++        if (lines.length < 50 || out.indexOf("Code:") == -1)
++            throw new Exception("unexpected output from javap");
++    }
++}

@@ -1,0 +1,79 @@
+# HG changeset patch
+# User andrew
+# Date 1458776818 0
+#      Wed Mar 23 23:46:58 2016 +0000
+# Node ID a8a1f3433cf6221d727d500514d6ec593ad7ac9c
+# Parent  c850c5110affb0dc26cf147af79316a70f891b31
+8150954, PR2868, RH1176206: AWT Robot not compatible with GNOME Shell
+Summary: Use the overlay window rather than the root window when on a composite display.
+
+diff -Nru openjdk.orig/jdk/make/sun/xawt/Makefile openjdk/jdk/make/sun/xawt/Makefile
+--- openjdk.orig/jdk/make/sun/xawt/Makefile	2016-01-20 01:42:04.000000000 +0000
++++ openjdk/jdk/make/sun/xawt/Makefile	2016-05-03 22:01:06.150486940 +0100
+@@ -87,7 +87,7 @@
+ vpath %.c   $(PLATFORM_SRC)/native/sun/java2d/opengl
+ vpath %.c   $(PLATFORM_SRC)/native/sun/java2d/x11
+ 
+-OTHER_LDLIBS = $(LIBM) -lawt -lXext -lX11 -ldl \
++OTHER_LDLIBS = $(LIBM) -lawt -lXext -lX11 -lXcomposite -ldl \
+                    $(LDFLAGS_COMMON) $(AWT_RUNPATH) $(OTHER_LDFLAGS) -lXtst -lXi
+ 
+ ifeq  ($(PLATFORM), solaris)
+diff -Nru openjdk.orig/jdk/src/solaris/native/sun/awt/awt_Robot.c openjdk/jdk/src/solaris/native/sun/awt/awt_Robot.c
+--- openjdk.orig/jdk/src/solaris/native/sun/awt/awt_Robot.c	2016-05-03 21:56:41.430889964 +0100
++++ openjdk/jdk/src/solaris/native/sun/awt/awt_Robot.c	2016-05-03 22:01:48.157788289 +0100
+@@ -39,6 +39,7 @@
+ #include <X11/extensions/XTest.h>
+ #include <X11/extensions/XInput.h>
+ #include <X11/extensions/XI.h>
++#include <X11/extensions/Xcomposite.h>
+ #include <jni.h>
+ #include <sizecalc.h>
+ #include "robot_common.h"
+@@ -131,6 +132,33 @@
+     }
+ }
+ 
++static Bool hasXCompositeOverlayExtension(Display *display) {
++
++    int xoverlay = False;
++    int eventBase, errorBase;
++    if (XCompositeQueryExtension(display, &eventBase, &errorBase)) {
++        int major = 0;
++        int minor = 0;
++
++        XCompositeQueryVersion(display, &major, &minor);
++        if (major > 0 || minor >= 3)
++            xoverlay = True;
++    }
++
++    return xoverlay;
++}
++
++static jboolean isXCompositeDisplay(Display *display, int screenNumber) {
++
++    char NET_WM_CM_Sn[25];
++    snprintf(NET_WM_CM_Sn, sizeof(NET_WM_CM_Sn), "_NET_WM_CM_S%d\0", screenNumber);
++
++    Atom managerSelection = XInternAtom(display, NET_WM_CM_Sn, 0);
++    Window owner = XGetSelectionOwner(display, managerSelection);
++
++    return owner != 0;
++}
++
+ static XImage *getWindowImage(Display * display, Window window,
+                               int32_t x, int32_t y,
+                               int32_t w, int32_t h) {
+@@ -258,6 +286,12 @@
+     DASSERT(adata != NULL);
+ 
+     rootWindow = XRootWindow(awt_display, adata->awt_visInfo.screen);
++    if (isXCompositeDisplay(awt_display, adata->awt_visInfo.screen) &&
++        hasXCompositeOverlayExtension(awt_display))
++    {
++        rootWindow = XCompositeGetOverlayWindow(awt_display, rootWindow);
++    }
++
+     image = getWindowImage(awt_display, rootWindow, x, y, width, height);
+ 
+     /* Array to use to crunch around the pixel values */

@@ -1,0 +1,39 @@
+# HG changeset patch
+# User andrew
+# Date 1460692925 -3600
+#      Fri Apr 15 05:02:05 2016 +0100
+# Node ID 3fc5cbcd46dd9ac3c7a8eae4758e067eb701d129
+# Parent  a8a1f3433cf6221d727d500514d6ec593ad7ac9c
+PR2890: OpenJDK should check for system cacerts database (e.g. /etc/pki/java/cacerts)
+
+diff -r a8a1f3433cf6 -r 3fc5cbcd46dd src/share/classes/sun/security/ssl/TrustManagerFactoryImpl.java
+--- openjdk/jdk/src/share/classes/sun/security/ssl/TrustManagerFactoryImpl.java	Wed Mar 23 23:46:58 2016 +0000
++++ openjdk/jdk/src/share/classes/sun/security/ssl/TrustManagerFactoryImpl.java	Fri Apr 15 05:02:05 2016 +0100
+@@ -170,15 +170,20 @@
+                 storeFile = new File(storeFileName);
+                 fis = getFileInputStream(storeFile);
+             } else {
+-                String javaHome = props.get("javaHome");
+-                storeFile = new File(javaHome + sep + "lib" + sep
+-                                                + "security" + sep +
+-                                                "jssecacerts");
++                /* Check system cacerts DB first; /etc/pki/java/cacerts */
++                storeFile = new File(sep + "etc" + sep + "pki" + sep
++                                     + "java" + sep + "cacerts");
+                 if ((fis = getFileInputStream(storeFile)) == null) {
++                    String javaHome = props.get("javaHome");
+                     storeFile = new File(javaHome + sep + "lib" + sep
+-                                                + "security" + sep +
+-                                                "cacerts");
+-                    fis = getFileInputStream(storeFile);
++                                         + "security" + sep +
++                                         "jssecacerts");
++                    if ((fis = getFileInputStream(storeFile)) == null) {
++                        storeFile = new File(javaHome + sep + "lib" + sep
++                                             + "security" + sep +
++                                             "cacerts");
++                        fis = getFileInputStream(storeFile);
++                    }
+                 }
+             }
+ 

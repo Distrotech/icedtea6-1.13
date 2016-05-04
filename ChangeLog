@@ -1,3 +1,26 @@
+2016-05-03  Andrew John Hughes  <gnu.andrew@member.fsf.org>
+
+	* Makefile.am:
+	(ICEDTEA_PATCHES): Add new patches.
+	* NEWS: Updated.
+	* patches/openjdk/6307603-xrender-01.patch:
+	Regenerated after application of 8150954 / PR2868.
+	* patches/openjdk/6863746-pr2951-no_ct.sym_in_javap.patch,
+	* patches/openjdk/8071705-pr2820-menu_misbehaviour.patch,
+	* patches/openjdk/8150954-pr2868-composite_desktop.patch,
+	* patches/pr2890-system_cacerts.patch:
+	New backports for issues to be fixed in 1.13.11.
+
+2016-03-24  Andrew John Hughes  <gnu.andrew@member.fsf.org>
+
+	S8150954, PR2868, RH1176206: AWT Robot not
+	compatible with GNOME Shell
+	* INSTALL: Update X11 dependency documentation.
+	* configure.ac: Add check
+	for libXcomposite as required by fix
+	for PR2868. Correct variables used by
+	xproto check.
+
 2016-01-25  Andrew John Hughes  <gnu.andrew@redhat.com>
 
 	* NEWS: Add 1.13.11 section.

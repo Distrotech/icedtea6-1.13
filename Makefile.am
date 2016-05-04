@@ -639,7 +639,11 @@ ICEDTEA_PATCHES = \
 	patches/openjdk/6929479-pr363-disable_mmap_zip.patch \
 	patches/pr2513-layoutengine_reset.patch \
 	patches/openjdk/7169111-pr2757-unreadable_menu_bar_with_ambiance_theme.patch \
-	patches/openjdk/8140620-pr2711-find_default.sf2.patch
+	patches/openjdk/8140620-pr2711-find_default.sf2.patch \
+	patches/openjdk/8071705-pr2820-menu_misbehaviour.patch \
+	patches/openjdk/8150954-pr2868-composite_desktop.patch \
+	patches/pr2890-system_cacerts.patch \
+	patches/openjdk/6863746-pr2951-no_ct.sym_in_javap.patch
 
 if WITH_RHINO
 ICEDTEA_PATCHES += \
