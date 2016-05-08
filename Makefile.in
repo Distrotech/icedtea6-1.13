@@ -310,7 +310,8 @@ DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/tapset/hotspot.stp.in \
 	$(top_srcdir)/tapset/hotspot_jni.stp.in \
 	$(top_srcdir)/tapset/jstack.stp.in \
-	$(top_srcdir)/tapset/hotspot_gc.stp.in AUTHORS COPYING \
+	$(top_srcdir)/tapset/hotspot_gc.stp.in \
+	$(top_srcdir)/test/tapset/jstaptest.pl.in AUTHORS COPYING \
 	ChangeLog INSTALL NEWS README compile config.guess config.sub \
 	install-sh missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -325,7 +326,8 @@ CONFIG_CLEAN_FILES = fsg.sh jvm.cacao.cfg jvm.jamvm.cfg jvm.cfg ergo.c \
 	nss.cfg linux.fontconfig.Gentoo.properties javac javap \
 	tz.properties pax-mark-vm remove-intree-libraries.sh \
 	jconsole.desktop policytool.desktop tapset/hotspot.stp \
-	tapset/hotspot_jni.stp tapset/jstack.stp tapset/hotspot_gc.stp
+	tapset/hotspot_jni.stp tapset/jstack.stp tapset/hotspot_gc.stp \
+	test/tapset/jstaptest.pl
 CONFIG_CLEAN_VPATH_FILES =
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -498,6 +500,7 @@ PATCH = @PATCH@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PAX_COMMAND = @PAX_COMMAND@
 PAX_COMMAND_ARGS = @PAX_COMMAND_ARGS@
+PERL = @PERL@
 PKGVERSION = @PKGVERSION@
 PKG_CONFIG = @PKG_CONFIG@
 PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
@@ -509,6 +512,7 @@ RMIC = @RMIC@
 SET_MAKE = @SET_MAKE@
 SHA256SUM = @SHA256SUM@
 SHELL = @SHELL@
+STAP = @STAP@
 STRIP = @STRIP@
 SYSTEM_ANT_DIR = @SYSTEM_ANT_DIR@
 SYSTEM_JDK_DIR = @SYSTEM_JDK_DIR@
@@ -521,6 +525,8 @@ VERSION = @VERSION@
 WGET = @WGET@
 X11_CFLAGS = @X11_CFLAGS@
 X11_LIBS = @X11_LIBS@
+XCOMPOSITE_CFLAGS = @XCOMPOSITE_CFLAGS@
+XCOMPOSITE_LIBS = @XCOMPOSITE_LIBS@
 XINERAMA_CFLAGS = @XINERAMA_CFLAGS@
 XINERAMA_LIBS = @XINERAMA_LIBS@
 XPROTO_CFLAGS = @XPROTO_CFLAGS@
@@ -598,9 +604,9 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-OPENJDK_DATE = 20_jan_2016
-OPENJDK_SHA256SUM = ff88dbcbda6c3c7d80b7cbd28065a455cdb009de9874fcf9ff9ca8205d38a257
-OPENJDK_VERSION = b38
+OPENJDK_DATE = 03_may_2016
+OPENJDK_SHA256SUM = d11dc2ababe88e7891f1abbd7fa4fe033a65dea22c071331a641374b3247717f
+OPENJDK_VERSION = b39
 OPENJDK_URL = https://java.net/downloads/openjdk6/
 CACAO_VERSION = 68fe50ac34ec
 CACAO_SHA256SUM = b8230f20d7022f9230bbfea13b2f3f179b2f42db40138ac6d32c82fc418ffc3a
@@ -724,7 +730,6 @@ TAPSET_TEST_SRCS = \
 	$(top_srcdir)/test/tapset/JNITestClass.c \
 	$(top_srcdir)/test/tapset/JNITestClass.h \
 	$(top_srcdir)/test/tapset/JNITestClass.java \
-	$(top_srcdir)/test/tapset/jstaptest.pl \
 	$(top_srcdir)/test/tapset/RunWrapper.java \
 	$(top_srcdir)/test/tapset/StapJNIClassLoader.java \
 	$(top_srcdir)/test/tapset/StapURLClassLoader.java \
@@ -879,11 +884,7 @@ ICEDTEA_PATCHES = $(DROP_PATCHES) $(SECURITY_PATCHES) \
 	patches/remove_multicatch_in_testrsa.patch \
 	patches/openjdk/p11cipher-6682411-fix_indexoutofboundsexception.patch \
 	patches/openjdk/p11cipher-6682417-fix_decrypted_data_not_multiple_of_blocks.patch \
-	patches/openjdk/p11cipher-6812738-native_cleanup.patch \
 	patches/openjdk/p11cipher-6687725-throw_illegalblocksizeexception.patch \
-	patches/openjdk/p11cipher-6924489-ckr_operation_not_initialized.patch \
-	patches/openjdk/p11cipher-6604496-support_ckm_aes_ctr.patch \
-	patches/openjdk/p11cipher-6414899-p11digest_should_support_cloning.patch \
 	patches/traceable.patch patches/pr1319-support_giflib_5.patch \
 	patches/openjdk/6718364-inference_failure.patch \
 	patches/openjdk/6682380-foreach_crash.patch \
@@ -988,15 +989,8 @@ ICEDTEA_PATCHES = $(DROP_PATCHES) $(SECURITY_PATCHES) \
 	patches/shark_fixes_from_8003868.patch \
 	patches/8003992_support_6.patch \
 	patches/shark-drop_compile_method_arg_following_7083786.patch \
-	patches/openjdk/4963723-implement_sha-224.patch \
 	patches/openjdk/7180907-jarsigner_sha-256.patch \
 	patches/openjdk/8049480-jarsigner_openjdk_9.patch \
-	patches/openjdk/6753664-sunmscapi_sha-256.patch \
-	patches/openjdk/6578658-sunmscapi_nonewithrsa.patch \
-	patches/openjdk/7033170-getmaxallowedkeylength_throws_exception.patch \
-	patches/openjdk/7044060-support_nsa_suite_b.patch \
-	patches/openjdk/8006935-long_keys_in_hmac_prf.patch \
-	patches/openjdk/7106773-512_bits_rsa.patch \
 	patches/pr1904-icedtea_and_distro_versioning.patch \
 	patches/openjdk/8017173-xml_cipher_rsa_oaep_cant_be_instantiated.patch \
 	patches/openjdk/8000897-pr2173-vm_crash_in_compilebroker.patch \
@@ -1012,7 +1006,6 @@ ICEDTEA_PATCHES = $(DROP_PATCHES) $(SECURITY_PATCHES) \
 	patches/pr2226-support_future_giflib_6_and_up.patch \
 	patches/openjdk/4890063-hprof_truncation.patch \
 	patches/openjdk/6562615-compiler_warnings.patch \
-	patches/openjdk/6956398-ephemeraldhkeysize.patch \
 	patches/openjdk/6989466-compiler_warnings.patch \
 	patches/openjdk/6991580-ipv6_nameservers.patch \
 	patches/openjdk/7007905-javazic_line_numbers.patch \
@@ -1022,7 +1015,6 @@ ICEDTEA_PATCHES = $(DROP_PATCHES) $(SECURITY_PATCHES) \
 	patches/openjdk/7133138-timezone_io_improvement.patch \
 	patches/openjdk/8011709-canonshaping_memory_leak.patch \
 	patches/openjdk/8023052-jvm_crash_in_native_layout.patch \
-	patches/openjdk/8039921-sha1_1024plus.patch \
 	patches/openjdk/8041451-ldap_read_timeout_abandon.patch \
 	patches/openjdk/8042855-indiclayoutengine_null_dereference.patch \
 	patches/openjdk/7094377-ldaps_timeout.patch \
@@ -1034,11 +1026,9 @@ ICEDTEA_PATCHES = $(DROP_PATCHES) $(SECURITY_PATCHES) \
 	patches/openjdk/8074761-ldap_empty_optional_params.patch \
 	patches/openjdk/8078654-closettfontfilefunc.patch \
 	patches/openjdk/8081315-giflib_interlacing.patch \
-	patches/openjdk/8087120-zero_gcc5.patch \
 	patches/pr2319-policy_jar_checksum.patch \
 	patches/pr2460-policy_jar_timestamp.patch \
 	patches/pr2481_sysconfig_clock_spaces.patch \
-	patches/pr2486-768_dh.patch patches/pr2488-1024_dh.patch \
 	patches/openjdk/6440786-pr363-zero_entry_zips.patch \
 	patches/openjdk/6763122-no_zipfile_ctor_exception.patch \
 	patches/openjdk/6599383-pr363-large_zip_files.patch \
@@ -1046,6 +1036,10 @@ ICEDTEA_PATCHES = $(DROP_PATCHES) $(SECURITY_PATCHES) \
 	patches/pr2513-layoutengine_reset.patch \
 	patches/openjdk/7169111-pr2757-unreadable_menu_bar_with_ambiance_theme.patch \
 	patches/openjdk/8140620-pr2711-find_default.sf2.patch \
+	patches/openjdk/8071705-pr2820-menu_misbehaviour.patch \
+	patches/openjdk/8150954-pr2868-composite_desktop.patch \
+	patches/pr2890-system_cacerts.patch \
+	patches/openjdk/6863746-pr2951-no_ct.sym_in_javap.patch \
 	$(am__append_21) $(am__append_22) $(am__append_23) \
 	$(am__append_24) $(am__append_25) $(am__append_26) \
 	$(am__append_27) $(am__append_28) $(am__append_29) \
@@ -1264,6 +1258,8 @@ tapset/hotspot_jni.stp: $(top_builddir)/config.status $(top_srcdir)/tapset/hotsp
 tapset/jstack.stp: $(top_builddir)/config.status $(top_srcdir)/tapset/jstack.stp.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 tapset/hotspot_gc.stp: $(top_builddir)/config.status $(top_srcdir)/tapset/hotspot_gc.stp.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+test/tapset/jstaptest.pl: $(top_builddir)/config.status $(top_srcdir)/test/tapset/jstaptest.pl.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 tags TAGS:
 
@@ -3166,12 +3162,24 @@ jtregcheck: jtreg $(TEST_SUITES:%=check-%)
 	fi
 
 check-tapset-probes: 
-@ENABLE_SYSTEMTAP_TRUE@	$(abs_top_srcdir)/test/tapset/jstaptest.pl \
+@ENABLE_SYSTEMTAP_TRUE@	if test "x${PERL}" = "x"; then \
+@ENABLE_SYSTEMTAP_TRUE@	  echo "ERROR: Perl not found"; exit -1; \
+@ENABLE_SYSTEMTAP_TRUE@	fi
+@ENABLE_SYSTEMTAP_TRUE@	if test "x${STAP}" = "x"; then \
+@ENABLE_SYSTEMTAP_TRUE@	  echo "ERROR: stap not found"; exit -1; \
+@ENABLE_SYSTEMTAP_TRUE@	fi
+@ENABLE_SYSTEMTAP_TRUE@	${PERL} $(abs_top_builddir)/test/tapset/jstaptest.pl \
 @ENABLE_SYSTEMTAP_TRUE@	  -B $(BUILD_OUTPUT_DIR) -A $(BUILD_ARCH_DIR) \
 @ENABLE_SYSTEMTAP_TRUE@	  -S $(abs_top_srcdir)/test/tapset \
 @ENABLE_SYSTEMTAP_TRUE@	  -a test/check-stap.log -p
 check-tapset-jstack: 
-@ENABLE_SYSTEMTAP_TRUE@	$(abs_top_srcdir)/test/tapset/jstaptest.pl \
+@ENABLE_SYSTEMTAP_TRUE@	if test "x${PERL}" = "x"; then \
+@ENABLE_SYSTEMTAP_TRUE@	  echo "ERROR: Perl not found"; exit -1; \
+@ENABLE_SYSTEMTAP_TRUE@	fi
+@ENABLE_SYSTEMTAP_TRUE@	if test "x${STAP}" = "x"; then \
+@ENABLE_SYSTEMTAP_TRUE@	  echo "ERROR: stap not found"; exit -1; \
+@ENABLE_SYSTEMTAP_TRUE@	fi
+@ENABLE_SYSTEMTAP_TRUE@	${PERL} $(abs_top_builddir)/test/tapset/jstaptest.pl \
 @ENABLE_SYSTEMTAP_TRUE@	  -B $(BUILD_OUTPUT_DIR) -A $(BUILD_ARCH_DIR) \
 @ENABLE_SYSTEMTAP_TRUE@	  -S $(abs_top_srcdir)/test/tapset \
 @ENABLE_SYSTEMTAP_TRUE@	  -a test/check-stap.log -j
