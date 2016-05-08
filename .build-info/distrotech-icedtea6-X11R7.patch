@@ -14,7 +14,7 @@ Only in b/openjdk/hotspot/test: serviceability
 diff -ur a/openjdk/jdk/make/common/Defs-linux.gmk b/openjdk/jdk/make/common/Defs-linux.gmk
 --- a/openjdk/jdk/make/common/Defs-linux.gmk	2013-12-10 22:33:55.319417838 +0000
 +++ b/openjdk/jdk/make/common/Defs-linux.gmk	2013-12-10 22:37:11.279367381 +0000
-@@ -331,7 +331,7 @@
+@@ -327,7 +327,7 @@
  override LIBTHREAD               =
  override MOOT_PRIORITIES         = true
  override NO_INTERRUPTIBLE_IO     = true
@@ -24,49 +24,49 @@ diff -ur a/openjdk/jdk/make/common/Defs-linux.gmk b/openjdk/jdk/make/common/Defs
  override OPENWIN_LIB             = $(OPENWIN_HOME)/lib64
  else
 diff -ur a/openjdk/jdk/make/sun/awt/mawt.gmk b/openjdk/jdk/make/sun/awt/mawt.gmk
---- a/openjdk/jdk/make/sun/awt/mawt.gmk	2013-12-10 22:33:53.543390949 +0000
-+++ b/openjdk/jdk/make/sun/awt/mawt.gmk	2013-12-10 22:37:11.292367576 +0000
-@@ -149,13 +149,13 @@
+--- a/openjdk/jdk/make/sun/awt/mawt.gmk	2016-05-08 15:59:46.519190389 +0200
++++ b/openjdk/jdk/make/sun/awt/mawt.gmk	2016-05-08 16:17:30.657097973 +0200
+@@ -149,14 +149,10 @@
          LIBXT = -lXt
      else
      # Allows for builds on Debian GNU Linux, X11 is in a different place 
 -       LIBXT = $(firstword $(wildcard /usr/X11R6/lib/libXt.a) \
-+       LIBXT = $(firstword $(wildcard /opt/Xorg/lib/libXt.a) \
-                         $(wildcard /usr/lib/libXt.a))
+-                        $(wildcard /usr/lib/libXt.a))
 -       LIBSM = $(firstword $(wildcard /usr/X11R6/lib/libSM.a) \
-+       LIBSM = $(firstword $(wildcard /opt/Xorg/lib/libSM.a) \
-                         $(wildcard /usr/lib/libSM.a))
+-                        $(wildcard /usr/lib/libSM.a))
 -       LIBICE = $(firstword $(wildcard /usr/X11R6/lib/libICE.a) \
-+       LIBICE = $(firstword $(wildcard /opt/Xorg/lib/libICE.a) \
-                          $(wildcard /usr/lib/libICE.a))
+-                         $(wildcard /usr/lib/libICE.a))
 -       LIBXTST = $(firstword $(wildcard /usr/X11R6/lib/libXtst.a) \
-+       LIBXTST = $(firstword $(wildcard /opt/Xorg/lib/libXtst.a) \
-                          $(wildcard /usr/lib/libXtst.a))
+-                         $(wildcard /usr/lib/libXtst.a))
++       LIBXT = -lXt
++       LIBSM = -lSM
++       LIBICE = -lICE
++       LIBXTST = -lXtst
     endif
  endif
-@@ -225,8 +225,7 @@
+ 
+@@ -225,8 +221,7 @@
  
  ifeq ($(PLATFORM), linux)
  # Checking for the X11/extensions headers at the additional location
 -  CPPFLAGS += -I/X11R6/include/X11/extensions \
 -              -I/usr/include/X11/extensions
-+  CPPFLAGS += -I=/opt/Xorg/include/X11/extensions -I=/opt/Xorg/include
++  CPPFLAGS += -I=$(OPENWIN_HOME)/include/X11/extensions -I=$(OPENWIN_HOME)/include
  endif
  
  ifeq ($(PLATFORM), solaris)
 diff -ur a/openjdk/jdk/make/sun/font/Makefile b/openjdk/jdk/make/sun/font/Makefile
 --- a/openjdk/jdk/make/sun/font/Makefile	2013-12-10 22:33:55.252416823 +0000
 +++ b/openjdk/jdk/make/sun/font/Makefile	2013-12-10 22:37:11.297367651 +0000
-@@ -170,7 +170,8 @@
+@@ -178,7 +178,7 @@
    CPPFLAGS += -I$(CLOSED_SRC)/share/native/$(PKGDIR)/t2k
  else
    CPPFLAGS += $(FREETYPE_HEADERS) $(FREETYPE_HEADERS)/freetype2 \
 -	-I$(FREETYPE_HEADERS_PATH) -I$(FREETYPE_HEADERS_PATH)/freetype2
-+	-I=$(FREETYPE_HEADERS_PATH) -I=$(FREETYPE_HEADERS_PATH)/freetype2 \
-+	-I=/opt/Xorg/include
++	-I=$(FREETYPE_HEADERS_PATH) -I=$(FREETYPE_HEADERS_PATH)/freetype2 -I=/opt/Xorg/include
    OTHER_LDLIBS += $(FREETYPE_LIB)
  endif
- 
+
 diff -ur a/openjdk/jdk/make/sun/xawt/Makefile b/openjdk/jdk/make/sun/xawt/Makefile
 --- a/openjdk/jdk/make/sun/xawt/Makefile	2013-12-10 22:33:55.379418746 +0000
 +++ b/openjdk/jdk/make/sun/xawt/Makefile	2013-12-10 22:37:11.308367815 +0000
@@ -80,3 +80,4 @@ diff -ur a/openjdk/jdk/make/sun/xawt/Makefile b/openjdk/jdk/make/sun/xawt/Makefi
                -I$(MOTIF_DIR)/include \
                -I$(OPENWIN_HOME)/include 
  endif
+ 

@@ -1,0 +1,22 @@
+--- a/openjdk/hotspot/make/linux/makefiles/gcc.make	2016-05-08 16:31:47.128023592 +0200
++++ b/openjdk/hotspot/make/linux/makefiles/gcc.make	2016-05-08 16:31:56.932022741 +0200
+@@ -88,6 +88,7 @@
+ CFLAGS += -fno-exceptions
+ CFLAGS += -D_REENTRANT
+ CFLAGS += -fcheck-new
++CFLAGS += -std=gnu++98 -fno-delete-null-pointer-checks -fno-lifetime-dse
+ # version 4 and above support fvisibility=hidden (matches jni_x86.h file)
+ # except 4.1.2 gives pointless warnings that can't be disabled (afaik)
+ ifneq "$(shell expr \( $(CC_VER_MAJOR) \> 4 \) \| \( \( $(CC_VER_MAJOR) = 4 \) \& \( $(CC_VER_MINOR) \>= 3 \) \))" "0"
+--- a/openjdk/jdk/make/common/Defs.gmk	2016-05-08 16:33:55.098012478 +0200
++++ b/openjdk/jdk/make/common/Defs.gmk	2016-05-08 17:14:45.474799673 +0200
+@@ -582,7 +583,8 @@
+ #
+ ASFLAGS         = $(ASFLAGS_$(VARIANT)) $(ASFLAGS_COMMON) $(OTHER_ASFLAGS)
+ CFLAGS          = $(CFLAGS_$(VARIANT)/BYFILE)   $(CFLAGS_COMMON) $(OTHER_CFLAGS)
+-CXXFLAGS        = $(CXXFLAGS_$(VARIANT)/BYFILE) $(CXXFLAGS_COMMON) $(OTHER_CXXFLAGS)
++CXXFLAGS        = $(CXXFLAGS_$(VARIANT)/BYFILE) $(CXXFLAGS_COMMON) $(OTHER_CXXFLAGS) \
++		  -std=gnu++98 -fno-delete-null-pointer-checks -fno-lifetime-dse
+ CPPFLAGS        = $(CPPFLAGS_$(VARIANT)) $(CPPFLAGS_COMMON) $(OTHER_CPPFLAGS) \
+ 		  $(DEFINES) $(OPTIONS:%=-D%)
+ LDFLAGS         = $(LDFLAGS_$(VARIANT)) $(LDFLAGS_COMMON) $(OTHER_LDFLAGS)
